@@ -12,7 +12,7 @@ import { auth } from "@/lib/firebase/config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Zap, Database, Loader2, Chrome, ShieldAlert, AlertTriangle, ExternalLink } from "lucide-react";
+import { Zap, Database, Loader2, Chrome, ShieldAlert, AlertTriangle, ExternalLink, Key } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -22,6 +22,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [apiErrorUrl, setApiErrorUrl] = useState<string | null>(null);
+  const [isBlocked, setIsBlocked] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -29,6 +30,7 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setApiErrorUrl(null);
+    setIsBlocked(false);
     try {
       if (isRegistering) {
         await createUserWithEmailAndPassword(auth, email, password);
@@ -54,6 +56,7 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     setLoading(true);
     setApiErrorUrl(null);
+    setIsBlocked(false);
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
     
@@ -61,18 +64,23 @@ export default function LoginPage() {
       await signInWithPopup(auth, provider);
       router.push("/dashboard");
     } catch (error: any) {
-      console.error("DEBUG_OAUTH:", error);
+      console.error("DEBUG_OAUTH_CRITICAL:", error);
       
-      // Captura del fallo exacto de API desactivada
-      if (error.message?.includes("identitytoolkit.googleapis.com") || error.code === 'auth/operation-not-allowed') {
-        // Enlace exacto para el proyecto reportado en el error
-        const fixUrl = "https://console.developers.google.com/apis/api/identitytoolkit.googleapis.com/overview?project=659509021859";
-        setApiErrorUrl(fixUrl);
-        
+      const errorStr = error.message || "";
+      
+      if (errorStr.includes("identitytoolkit.googleapis.com") || error.code === 'auth/operation-not-allowed') {
+        setApiErrorUrl("https://console.developers.google.com/apis/api/identitytoolkit.googleapis.com/overview?project=659509021859");
         toast({
           variant: "destructive",
           title: "API_DESACTIVADA",
           description: "Se requiere intervención manual en Google Cloud.",
+        });
+      } else if (errorStr.includes("are-blocked") || error.code === 'auth/internal-error') {
+        setIsBlocked(true);
+        toast({
+          variant: "destructive",
+          title: "LLAVE_BLOQUEADA",
+          description: "La API Key tiene restricciones de acceso.",
         });
       } else {
         toast({
@@ -112,7 +120,7 @@ export default function LoginPage() {
               <AlertTriangle className="h-5 w-5" />
               <AlertTitle className="text-xs font-black uppercase tracking-widest mb-2">ACCIÓN_REQUERIDA</AlertTitle>
               <AlertDescription className="text-[10px] uppercase leading-relaxed space-y-4">
-                <p>La API de Identidad está desactivada en Google Cloud. Debes habilitarla para usar el acceso por Google.</p>
+                <p>La API de Identidad está desactivada. Debes habilitarla en Google Cloud.</p>
                 <a 
                   href={apiErrorUrl} 
                   target="_blank" 
@@ -121,7 +129,23 @@ export default function LoginPage() {
                 >
                   <ExternalLink className="h-3 w-3" /> HABILITAR_API_SISTEMA
                 </a>
-                <p className="text-[8px] text-white/30 lowercase">Habilita y espera 2 minutos antes de reintentar.</p>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {isBlocked && (
+            <Alert variant="destructive" className="bg-amber-500/10 border-amber-500/50 animate-in fade-in slide-in-from-top-4 duration-500 rounded-none border-l-4">
+              <Key className="h-5 w-5 text-amber-500" />
+              <AlertTitle className="text-xs font-black uppercase tracking-widest mb-2 text-amber-500">LLAVE_RESTRINGIDA</AlertTitle>
+              <AlertDescription className="text-[10px] uppercase leading-relaxed space-y-4">
+                <p>Tu API Key tiene restricciones. Sigue estos pasos para desbloquearla:</p>
+                <ol className="list-decimal pl-4 space-y-2">
+                  <li>Ve a <a href="https://console.cloud.google.com/apis/credentials" target="_blank" className="underline text-primary">Google Cloud Credentials</a>.</li>
+                  <li>Selecciona tu API Key principal.</li>
+                  <li>En "API restrictions", selecciona <b>"Don't restrict key"</b> temporalmente para probar.</li>
+                  <li>O asegúrate de marcar <b>"Identity Toolkit API"</b> en la lista.</li>
+                </ol>
+                <p className="text-[8px] opacity-50">Los cambios pueden tardar 5 minutos.</p>
               </AlertDescription>
             </Alert>
           )}
