@@ -28,7 +28,6 @@ import {
   SheetHeader, 
   SheetTitle, 
   SheetDescription,
-  SheetTrigger,
   SheetFooter
 } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
@@ -52,6 +51,8 @@ const PERMISSION_MODULES = [
 export default function GlobalRolesPage() {
   const [roles, setRoles] = useState(INITIAL_ROLES);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [editingRole, setEditingRole] = useState<any>(null);
   const { toast } = useToast();
 
   const handleToggleStatus = (id: string) => {
@@ -79,11 +80,15 @@ export default function GlobalRolesPage() {
     }));
   };
 
-  const handleConfigure = (name: string) => {
-    toast({
-      title: "CONFIG_TERMINAL_OPEN",
-      description: `Sincronizando matriz de permisos para el rol ${name}.`,
-    });
+  const openSheet = (role: any = null) => {
+    setEditingRole(role);
+    setIsSheetOpen(true);
+    if (role) {
+      toast({
+        title: "CONFIG_TERMINAL_OPEN",
+        description: `Sincronizando matriz de permisos para el rol ${role.name}.`,
+      });
+    }
   };
 
   const filteredRoles = roles.filter(r => 
@@ -105,21 +110,29 @@ export default function GlobalRolesPage() {
           </h1>
         </div>
         
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button className="rounded-2xl bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest h-14 px-10 shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:scale-105 transition-all border-none">
-              <Plus className="h-5 w-5 mr-2" /> Crear Nuevo Rol
-            </Button>
-          </SheetTrigger>
+        <Button 
+          onClick={() => openSheet()}
+          className="rounded-2xl bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest h-14 px-10 shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:scale-105 transition-all border-none"
+        >
+          <Plus className="h-5 w-5 mr-2" /> Crear Nuevo Rol
+        </Button>
+
+        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
           <SheetContent side="right" className="bg-[#04070c]/95 backdrop-blur-3xl border-l border-emerald-500/20 text-white w-full sm:max-w-2xl shadow-[-20px_0_50px_rgba(0,0,0,0.5)] overflow-y-auto custom-scrollbar">
             <SheetHeader className="pb-8">
-              <SheetTitle className="text-3xl font-black italic tracking-tighter text-emerald-400 emerald-text-glow uppercase text-left">Configurar Identidad de Rol</SheetTitle>
+              <SheetTitle className="text-3xl font-black italic tracking-tighter text-emerald-400 emerald-text-glow uppercase text-left">
+                {editingRole ? `Editar Rol: ${editingRole.name}` : "Configurar Identidad de Rol"}
+              </SheetTitle>
               <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left">Define el alcance de autoridad para este nodo de usuario.</SheetDescription>
             </SheetHeader>
             <div className="space-y-8 py-4">
               <div className="space-y-3">
                 <label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Identificador de Rol</label>
-                <Input placeholder="EJ: ANALISTA_TACTICO" className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold uppercase focus:border-emerald-500/50 transition-all" />
+                <Input 
+                  defaultValue={editingRole?.name || ""}
+                  placeholder="EJ: ANALISTA_TACTICO" 
+                  className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold uppercase focus:border-emerald-500/50 transition-all" 
+                />
               </div>
               
               <div className="space-y-4">
@@ -142,7 +155,12 @@ export default function GlobalRolesPage() {
               </div>
             </div>
             <SheetFooter className="mt-12">
-              <Button className="w-full h-16 bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:scale-[1.02] transition-all">Sincronizar Protocolo</Button>
+              <Button 
+                onClick={() => setIsSheetOpen(false)}
+                className="w-full h-16 bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:scale-[1.02] transition-all"
+              >
+                {editingRole ? "Actualizar Protocolo" : "Sincronizar Protocolo"}
+              </Button>
             </SheetFooter>
           </SheetContent>
         </Sheet>
@@ -213,7 +231,7 @@ export default function GlobalRolesPage() {
                           variant="ghost" 
                           size="icon" 
                           className="h-10 w-10 rounded-xl text-white/20 hover:text-emerald-400 hover:bg-emerald-500/10 border border-white/5 hover:border-emerald-500/20 transition-all"
-                          onClick={() => handleConfigure(role.name)}
+                          onClick={() => openSheet(role)}
                           title="Modificar Protocolo"
                           aria-label="Modificar Protocolo"
                         >
