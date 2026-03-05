@@ -19,7 +19,10 @@ import {
   Activity,
   ChevronRight,
   Lock,
-  UserCog
+  UserCog,
+  Pencil,
+  Pause,
+  Play
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -349,10 +352,22 @@ export default function GlobalPlansPage() {
 }
 
 function PlanTerminalCard({ title, price, users, icon: Icon, features, featured }: any) {
+  const [isActive, setIsActive] = useState(true);
+  const { toast } = useToast();
+
+  const handleToggleActive = () => {
+    setIsActive(!isActive);
+    toast({
+      title: isActive ? "PROTOCOLO_SUSPENDIDO" : "PROTOCOLO_REACTIVADO",
+      description: `El plan ${title} ha sido ${isActive ? 'desconectado de la red' : 'sincronizado nuevamente'}.`,
+    });
+  };
+
   return (
     <Card className={cn(
       "glass-panel overflow-hidden relative group flex flex-col min-h-[500px]",
-      featured && "border-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.1)]"
+      featured && "border-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.1)]",
+      !isActive && "grayscale opacity-60"
     )}>
       <div className="absolute top-0 right-0 p-4 opacity-10">
         <Icon className="h-12 w-12 text-emerald-500" />
@@ -375,9 +390,25 @@ function PlanTerminalCard({ title, price, users, icon: Icon, features, featured 
           ))}
         </ul>
       </CardContent>
-      <CardFooter className="mt-auto p-6 border-t border-white/5">
-        <Button className="w-full h-12 rounded-none border border-emerald-500/40 bg-transparent text-emerald-400 font-black uppercase text-[10px] tracking-widest hover:bg-emerald-500 hover:text-black transition-all">
-          Modificar Configuración
+      <CardFooter className="mt-auto p-6 border-t border-white/5 flex gap-3">
+        <Button 
+          className="flex-1 h-12 rounded-none border border-emerald-500/40 bg-transparent text-emerald-400 font-black uppercase text-[10px] tracking-widest hover:bg-emerald-500 hover:text-black transition-all"
+          onClick={() => toast({ title: "MODO_EDICIÓN", description: `Abriendo terminal de configuración para ${title}.` })}
+        >
+          <Pencil className="h-3.5 w-3.5 mr-2" /> Modificar
+        </Button>
+        <Button 
+          variant="ghost" 
+          className={cn(
+            "h-12 w-12 rounded-none border transition-all",
+            isActive 
+              ? "border-white/10 text-white/20 hover:text-amber-400 hover:border-amber-500/50 hover:bg-amber-500/10" 
+              : "border-emerald-500/30 text-emerald-400 bg-emerald-500/5 hover:bg-emerald-500 hover:text-black"
+          )}
+          onClick={handleToggleActive}
+          title={isActive ? "Pausar Protocolo" : "Activar Protocolo"}
+        >
+          {isActive ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
         </Button>
       </CardFooter>
     </Card>
