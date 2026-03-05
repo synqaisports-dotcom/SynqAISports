@@ -2,7 +2,7 @@
 "use client";
 
 import { TicketPercent, Plus, Zap, Shield, Crown } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -55,7 +55,7 @@ export default function GlobalPlansPage() {
 function PlanTerminalCard({ title, price, users, icon: Icon, features, featured }: any) {
   return (
     <Card className={cn(
-      "glass-panel overflow-hidden relative group",
+      "glass-panel overflow-hidden relative group flex flex-col",
       featured && "border-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.1)]"
     )}>
       <div className="absolute top-0 right-0 p-4 opacity-10">
@@ -66,7 +66,7 @@ function PlanTerminalCard({ title, price, users, icon: Icon, features, featured 
         <CardTitle className="text-2xl font-black text-white italic tracking-tighter uppercase mt-2">{title}</CardTitle>
         <div className="text-3xl font-black text-emerald-400 emerald-text-glow mt-4 font-headline">{price}</div>
       </CardHeader>
-      <CardContent className="space-y-6 pt-6">
+      <CardContent className="space-y-6 pt-6 flex-1">
         <div className="flex flex-col items-center gap-1 border-y border-white/5 py-4 bg-white/[0.01]">
            <span className="text-[8px] font-black uppercase text-white/20 tracking-widest">Capacidad de Nodos</span>
            <span className="text-xs font-black text-white">{users} Usuarios Activos</span>
@@ -78,10 +78,12 @@ function PlanTerminalCard({ title, price, users, icon: Icon, features, featured 
             </li>
           ))}
         </ul>
+      </CardContent>
+      <CardFooter className="pt-0 p-6">
         <Button className="w-full h-12 rounded-none border border-emerald-500/40 bg-transparent text-emerald-400 font-black uppercase text-[10px] tracking-widest hover:bg-emerald-500 hover:text-black transition-all">
           Modificar Configuración
         </Button>
-      </CardContent>
+      </CardFooter>
     </Card>
   );
 }
