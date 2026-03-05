@@ -1,5 +1,69 @@
 {
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Information about a user within the SynqAi system.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["superadmin", "club_admin", "coach", "tutor", "athlete"] },
+        "clubId": { "type": "string" },
+        "planId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "role"]
+    },
+    "Club": {
+      "title": "Sports Club",
+      "description": "A sports organization managed within the platform.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "category": { "type": "string" },
+        "planId": { "type": "string" },
+        "status": { "type": "string", "enum": ["Active", "Overdue", "Inactive"] },
+        "activeUsersCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "ownerId", "status"]
+    },
+    "Role": {
+      "title": "System Role",
+      "description": "Defines permissions for a specific user category.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "permissions": {
+          "type": "object",
+          "properties": {
+            "clubs": { "type": "array", "items": { "type": "string" } },
+            "users": { "type": "array", "items": { "type": "string" } },
+            "tactics": { "type": "array", "items": { "type": "string" } },
+            "billing": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    }
+  },
+  "auth": {
+    "providers": ["google.com", "password"]
+  },
   "firestore": {
-    "rules": "firestore.rules"
+    "rules": "firestore.rules",
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles and roles."
+    },
+    "/clubs/{clubId}": {
+      "schema": "Club",
+      "description": "Clubs within the network."
+    },
+    "/roles/{roleId}": {
+      "schema": "Role",
+      "description": "Permission definitions for the platform."
+    }
   }
 }

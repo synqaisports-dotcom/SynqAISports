@@ -16,7 +16,8 @@ import {
   LogOut,
   ShieldCheck,
   UserPlus,
-  Dumbbell
+  Dumbbell,
+  Fingerprint
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -28,15 +29,16 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  // CONTROL_GLOBAL (Admin Global)
+  // CONTROL_GLOBAL (Admin Global) - EMERALD THEME
   { title: "Dashboard", href: "/admin-global", icon: LayoutDashboard, category: "global" },
   { title: "Gestión Clubes", href: "/admin-global/clubs", icon: Building2, category: "global" },
   { title: "Gestión Planes", href: "/admin-global/plans", icon: TicketPercent, category: "global" },
+  { title: "Gestión Roles", href: "/admin-global/roles", icon: Fingerprint, category: "global" },
   { title: "Promos AI", href: "/admin-global/promos", icon: Zap, category: "global" },
   { title: "Gen. Usuarios", href: "/admin-global/users", icon: UserPlus, category: "global" },
   { title: "Analytics Global", href: "/admin-global/analytics", icon: BarChart3, category: "global" },
   
-  // OPERATIVA_ELITE
+  // OPERATIVA_ELITE - CYAN THEME
   { title: "Coach Hub", href: "/dashboard", icon: Cpu, category: "operational" },
   { title: "Tactical Board", href: "/board", icon: Monitor, category: "operational" },
   { title: "Biblioteca Táctica", href: "/dashboard/coach/exercises", icon: Dumbbell, category: "operational" },
@@ -75,7 +77,7 @@ export function DashboardSidebar() {
           <p className="px-3 mb-4 text-[8px] font-black uppercase tracking-[0.4em] text-emerald-400 emerald-text-glow animate-pulse">Control_Global</p>
           <div className="space-y-1">
             {navItems.filter(i => i.category === "global").map((item) => (
-              <SidebarLink key={item.href} item={item} isActive={pathname === item.href} />
+              <SidebarLink key={item.href} item={item} isActive={pathname === item.href} isGlobal />
             ))}
           </div>
         </div>
@@ -111,25 +113,25 @@ export function DashboardSidebar() {
   );
 }
 
-function SidebarLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
+function SidebarLink({ item, isActive, isGlobal }: { item: NavItem; isActive: boolean; isGlobal?: boolean }) {
+  const activeClass = isGlobal 
+    ? "bg-emerald-500/5 text-emerald-400 border-l-2 border-emerald-500 shadow-[inset_4px_0_10px_rgba(16,185,129,0.05)]"
+    : "bg-primary/5 text-primary border-l-2 border-primary shadow-[inset_4px_0_10px_rgba(0,242,255,0.05)]";
+
+  const iconClass = isGlobal 
+    ? (isActive ? "text-emerald-400 emerald-text-glow scale-110" : "group-hover:text-emerald-400 group-hover:scale-110")
+    : (isActive ? "text-primary cyan-text-glow scale-110" : "group-hover:text-primary group-hover:scale-110");
+
   return (
     <Link
       href={item.href}
       className={cn(
         "flex items-center gap-4 px-4 py-3 rounded-none transition-all relative group",
-        isActive 
-          ? "bg-primary/5 text-primary border-l-2 border-primary shadow-[inset_4px_0_10px_rgba(0,242,255,0.05)]" 
-          : "text-white/40 hover:text-white hover:bg-white/5"
+        isActive ? activeClass : "text-white/40 hover:text-white hover:bg-white/5"
       )}
     >
-      <item.icon className={cn(
-        "h-4 w-4 transition-all duration-300",
-        isActive ? "text-primary cyan-text-glow scale-110" : "group-hover:text-primary group-hover:scale-110"
-      )} />
+      <item.icon className={cn("h-4 w-4 transition-all duration-300", iconClass)} />
       <span className="font-bold text-[9px] uppercase tracking-[0.2em]">{item.title}</span>
-      {isActive && (
-        <div className="absolute right-0 top-0 h-full w-[1px] bg-primary/20 blur-[1px]" />
-      )}
     </Link>
   );
 }
