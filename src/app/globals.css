@@ -52,6 +52,31 @@
   }
 }
 
+/* PROTOCOLO_SCROLL_TACTICO */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 3px;
+  height: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: hsla(183, 100%, 50%, 0.1);
+  border-radius: 0px;
+  transition: all 0.3s ease;
+}
+
+.custom-scrollbar:hover::-webkit-scrollbar-thumb {
+  background: hsla(183, 100%, 50%, 0.3);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsla(183, 100%, 50%, 0.8);
+  box-shadow: 0 0 10px hsla(183, 100%, 50%, 0.5);
+}
+
 .bg-grid-pattern {
   background-size: 60px 60px;
   background-image:
