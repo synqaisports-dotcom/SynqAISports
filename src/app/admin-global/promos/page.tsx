@@ -16,7 +16,9 @@ import {
   Sparkles,
   ArrowRight,
   Copy,
-  Target
+  Target,
+  Layers,
+  Youtube
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,6 +44,12 @@ import {
 import { generatePromoCampaign, GenerateCampaignOutput } from "@/ai/flows/generate-promo-campaign";
 import { useToast } from "@/hooks/use-toast";
 
+const AVAILABLE_PLANS = [
+  { id: "PROMO_LINK", name: "Promo Link (Ads Mode)" },
+  { id: "VOLUMEN_CORE", name: "Volumen Core (1€/niño)" },
+  { id: "ENTERPRISE_SCALE", name: "Enterprise Scale (0.70€/niño)" },
+];
+
 export default function GlobalPromosPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -50,7 +58,8 @@ export default function GlobalPromosPage() {
 
   const [formData, setFormData] = useState({
     objective: "",
-    platform: "Facebook" as any
+    platform: "Facebook" as any,
+    planId: "PROMO_LINK"
   });
 
   const handleGenerate = async (e: React.FormEvent) => {
@@ -234,22 +243,45 @@ export default function GlobalPromosPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Plataforma_Destino</label>
-                <Select 
-                  value={formData.platform} 
-                  onValueChange={(v) => setFormData({...formData, platform: v})}
-                >
-                  <SelectTrigger className="h-14 bg-white/5 border-white/10 rounded-none font-bold uppercase tracking-widest">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#04070c] border-emerald-500/20 rounded-none">
-                    <SelectItem value="Facebook">FACEBOOK ADS</SelectItem>
-                    <SelectItem value="Instagram">INSTAGRAM REELS</SelectItem>
-                    <SelectItem value="LinkedIn">LINKEDIN PROFESSIONAL</SelectItem>
-                    <SelectItem value="Google Ads">GOOGLE SEARCH</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Plataforma_Destino</label>
+                  <Select 
+                    value={formData.platform} 
+                    onValueChange={(v) => setFormData({...formData, platform: v})}
+                  >
+                    <SelectTrigger className="h-14 bg-white/5 border-white/10 rounded-none font-bold uppercase tracking-widest">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#04070c] border-emerald-500/20 rounded-none">
+                      <SelectItem value="Facebook">FACEBOOK ADS</SelectItem>
+                      <SelectItem value="Instagram">INSTAGRAM REELS</SelectItem>
+                      <SelectItem value="YouTube">YOUTUBE ADS</SelectItem>
+                      <SelectItem value="LinkedIn">LINKEDIN PROFESSIONAL</SelectItem>
+                      <SelectItem value="Google Ads">GOOGLE SEARCH</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Protocolo_Plan_Asociado</label>
+                  <Select 
+                    value={formData.planId} 
+                    onValueChange={(v) => setFormData({...formData, planId: v})}
+                  >
+                    <SelectTrigger className="h-14 bg-white/5 border-white/10 rounded-none font-bold uppercase tracking-widest">
+                      <div className="flex items-center gap-2">
+                        <Layers className="h-3 w-3 text-emerald-500/40" />
+                        <SelectValue />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#04070c] border-emerald-500/20 rounded-none">
+                      {AVAILABLE_PLANS.map(plan => (
+                        <SelectItem key={plan.id} value={plan.id}>{plan.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <Button 
@@ -275,14 +307,18 @@ export default function GlobalPromosPage() {
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">Copy_Publicitario</p>
+                      <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">Copy_Publicitario / Guion</p>
                       <Button variant="ghost" size="icon" className="h-6 w-6 text-white/20 hover:text-emerald-400" onClick={() => copyToClipboard(result.socialMediaCopy)}>
                         <Copy className="h-3 w-3" />
                       </Button>
                     </div>
-                    <p className="text-xs text-white/60 leading-relaxed font-medium bg-black/40 p-4 border border-white/5">
+                    <div className="text-xs text-white/60 leading-relaxed font-medium bg-black/40 p-4 border border-white/5 whitespace-pre-wrap">
                       {result.socialMediaCopy}
-                    </p>
+                    </div>
+                  </div>
+                  <div className="space-y-2 pt-2">
+                    <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">Estrategia_Segmentación</p>
+                    <p className="text-[10px] text-white/50 uppercase italic font-bold leading-tight">{result.adStrategy}</p>
                   </div>
                 </div>
               </div>
