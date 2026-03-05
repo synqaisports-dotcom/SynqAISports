@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
@@ -26,6 +25,7 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
 });
 
+// Emails con bypass de administración total
 const SUPERADMIN_EMAILS = ["munozmartinez.ismael@gmail.com", "synqaisports@gmail.com"];
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -37,31 +37,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
       if (user) {
-        // Check for superadmin bypass
+        // 1. Verificar si es Superadmin (Prioridad Máxima)
         if (SUPERADMIN_EMAILS.includes(user.email || "")) {
           setProfile({
             email: user.email || "",
             role: "superadmin",
             clubId: "global",
           });
+          setLoading(false);
         } else {
-          // Fetch user profile from Firestore
+          // 2. Intentar recuperar perfil de Firestore para otros usuarios
           try {
             const userDoc = await getDoc(doc(db, "users", user.uid));
             if (userDoc.exists()) {
               setProfile(userDoc.data() as UserProfile);
             } else {
+              // Si el documento no existe, el perfil queda en null
+              // Esto disparará la pantalla de Acceso Denegado en el Layout
               setProfile(null);
             }
           } catch (error) {
-            console.error("Error fetching user profile:", error);
+            console.error("FIREWALL_BLOCK: No se pudo leer el perfil del activo.", error);
             setProfile(null);
+          } finally {
+            setLoading(false);
           }
         }
       } else {
         setProfile(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();
