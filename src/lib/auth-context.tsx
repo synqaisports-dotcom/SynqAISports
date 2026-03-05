@@ -38,7 +38,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(user);
         const isElite = SUPERADMIN_EMAILS.includes(user.email || "");
         
-        // Perfil por defecto (Fail-safe)
+        // Perfil por defecto (Fail-safe para desarrollo)
         const defaultProfile: UserProfile = {
           email: user.email || "",
           role: isElite ? "superadmin" : "coach",
@@ -52,12 +52,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (userDoc.exists()) {
             setProfile(userDoc.data() as UserProfile);
           } else {
-            // Intentar crear el perfil pero no bloquear si falla
-            setDoc(userDocRef, defaultProfile).catch(console.warn);
+            // Intentar crear el perfil pero no bloquear si falla por reglas
+            setDoc(userDocRef, defaultProfile).catch(() => {
+              console.warn("No se pudo guardar el perfil en Firestore, usando local.");
+            });
             setProfile(defaultProfile);
           }
         } catch (error) {
-          // Si Firestore falla (por reglas o red), entramos con el perfil por defecto
           console.warn("FIRESTORE_ACCESS_BYPASS: Usando perfil local de emergencia.");
           setProfile(defaultProfile);
         } finally {
