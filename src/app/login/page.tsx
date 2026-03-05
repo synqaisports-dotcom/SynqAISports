@@ -41,7 +41,7 @@ export default function LoginPage() {
       toast({
         variant: "destructive",
         title: "FALLO_DE_SISTEMA",
-        description: isRegistering ? "Error al crear cuenta. Intente otro email." : "Credenciales no válidas.",
+        description: isRegistering ? "Error al crear cuenta. Email ya en uso o clave débil." : "Credenciales no válidas en este sector.",
       });
     } finally {
       setLoading(false);
@@ -58,7 +58,7 @@ export default function LoginPage() {
       toast({
         variant: "destructive",
         title: "FALLO_OAUTH",
-        description: "El acceso vía Google ha sido rechazado.",
+        description: "La sincronización con Google ha sido interrumpida.",
       });
     } finally {
       setLoading(false);
@@ -66,7 +66,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-background px-[5%] relative overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,255,255,0.05),transparent_70%)]" />
       
       <Card className="w-full max-w-md border border-white/10 bg-black/60 backdrop-blur-2xl rounded-none relative z-10 overflow-hidden shadow-2xl">
@@ -77,18 +77,18 @@ export default function LoginPage() {
               <Database className="h-8 w-8 text-primary -rotate-45" />
             </div>
           </div>
-          <CardTitle className="text-3xl font-headline font-black text-white tracking-[0.3em]">
+          <CardTitle className="text-3xl font-headline font-black text-white tracking-[0.3em] uppercase">
             {isRegistering ? "NUEVA_IDENTIDAD" : "TERMINAL_ACCESO"}
           </CardTitle>
           <CardDescription className="uppercase text-[10px] tracking-[0.2em] text-white/40 mt-4">
             {isRegistering ? "Inicializando secuencia de registro" : "Sincronización requerida"}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-8 pb-14 px-12">
+        <CardContent className="space-y-8 pb-14 px-[10%]">
           
           <Button
             variant="outline"
-            className="w-full h-14 border-primary/30 rounded-none text-white hover:bg-primary/10 hover:border-primary transition-all font-black tracking-[0.2em] text-xs bg-transparent flex gap-3"
+            className="w-full h-14 border-primary/30 rounded-none text-white hover:bg-primary/10 hover:border-primary transition-all font-black tracking-[0.2em] text-xs bg-transparent flex gap-3 uppercase"
             onClick={handleGoogleLogin}
             disabled={loading}
           >
@@ -134,7 +134,7 @@ export default function LoginPage() {
               </div>
             </div>
             <Button
-              className="w-full h-14 bg-primary hover:bg-primary/80 text-primary-foreground font-black rounded-none transition-all active:scale-95 cyan-glow flex gap-3 text-sm tracking-widest"
+              className="w-full h-14 bg-primary hover:bg-primary/80 text-primary-foreground font-black rounded-none transition-all active:scale-95 cyan-glow flex gap-3 text-sm tracking-widest uppercase"
               type="submit"
               disabled={loading}
             >
@@ -154,7 +154,7 @@ export default function LoginPage() {
             onClick={() => setIsRegistering(!isRegistering)}
             className="w-full text-[9px] text-white/40 hover:text-primary transition-colors font-bold uppercase tracking-[0.2em]"
           >
-            {isRegistering ? "<< Volver al Login" : "¿No tienes cuenta? Registrarse >>"}
+            {isRegistering ? "<< Volver al Terminal" : "¿Nuevo Usuario? Registrar Identidad >>"}
           </button>
 
           <div className="flex items-center gap-2 justify-center text-[9px] text-white/20 uppercase tracking-[0.3em] font-medium pt-2">
@@ -163,7 +163,7 @@ export default function LoginPage() {
         </CardContent>
       </Card>
 
-      <div className="absolute bottom-8 left-8 flex items-center gap-3 opacity-20 hover:opacity-100 transition-all duration-500">
+      <div className="absolute bottom-8 left-[5%] flex items-center gap-3 opacity-20 hover:opacity-100 transition-all duration-500">
         <div className="h-8 w-8 rounded-full border border-white flex items-center justify-center font-black text-xs text-white">S</div>
         <div className="text-[8px] font-bold text-white tracking-widest uppercase">System Protocol v1.0.4</div>
       </div>

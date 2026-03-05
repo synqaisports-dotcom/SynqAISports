@@ -36,37 +36,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
       if (user) {
-        if (SUPERADMIN_EMAILS.includes(user.email || "")) {
-          const adminProfile: UserProfile = {
-            email: user.email || "",
-            role: "superadmin",
-            clubId: "global",
-          };
-          setProfile(adminProfile);
-          // Opcional: Asegurar que el perfil de admin exista en Firestore
-          await setDoc(doc(db, "users", user.uid), adminProfile, { merge: true });
-          setLoading(false);
-        } else {
-          try {
-            const userDoc = await getDoc(doc(db, "users", user.uid));
-            if (userDoc.exists()) {
-              setProfile(userDoc.data() as UserProfile);
-            } else {
-              // AUTO-PROVISIÓN: Si el usuario no existe, creamos uno básico de Coach
-              const newProfile: UserProfile = {
-                email: user.email || "",
-                role: "coach",
-                clubId: "guest_node",
-              };
-              await setDoc(doc(db, "users", user.uid), newProfile);
-              setProfile(newProfile);
-            }
-          } catch (error) {
-            console.error("FIREWALL_BLOCK:", error);
-            setProfile(null);
-          } finally {
-            setLoading(false);
+        try {
+          // Primero intentamos recuperar el perfil existente
+          const userDocRef = doc(db, "users", user.uid);
+          const userDoc = await getDoc(userDocRef);
+
+          if (userDoc.exists()) {
+            setProfile(userDoc.data() as UserProfile);
+          } else {
+            // AUTO-PROVISIÓN: Determinamos el rol inicial
+            const isElite = SUPERADMIN_EMAILS.includes(user.email || "");
+            const newProfile: UserProfile = {
+              email: user.email || "",
+              role: isElite ? "superadmin" : "coach",
+              clubId: isElite ? "global" : "guest_node",
+            };
+
+            // Creamos el registro en Firestore de forma asíncrona
+            await setDoc(userDocRef, newProfile);
+            setProfile(newProfile);
           }
+        } catch (error) {
+          console.error("FIREWALL_AUTH_ERROR:", error);
+          // Si falla por permisos, intentamos al menos setear el perfil localmente si es Elite
+          if (SUPERADMIN_EMAILS.includes(user.email || "")) {
+            setProfile({
+              email: user.email || "",
+              role: "superadmin",
+              clubId: "global",
+            });
+          }
+        } finally {
+          setLoading(false);
         }
       } else {
         setProfile(null);
