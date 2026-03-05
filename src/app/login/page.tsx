@@ -58,18 +58,20 @@ export default function LoginPage() {
       await signInWithPopup(auth, provider);
       router.push("/dashboard");
     } catch (error: any) {
+      // REGISTRO DETALLADO DEL ERROR PARA DEPURACIÓN
       console.error("GOOGLE_OAUTH_ERROR:", error.code, error.message);
       
       let errorTitle = "FALLO_OAUTH";
       let errorMsg = "Sincronización interrumpida.";
       
-      if (error.message.includes("identitytoolkit.googleapis.com")) {
-        errorTitle = "API_DESACTIVADA";
-        errorMsg = "Debes activar 'Identity Toolkit API' en tu consola de Google Cloud para este proyecto.";
+      // DETECCIÓN ESPECÍFICA DE API DESACTIVADA
+      if (error.message.includes("identitytoolkit.googleapis.com") || error.code === 'auth/operation-not-allowed') {
+        errorTitle = "API_DE_IDENTIDAD_REQUERIDA";
+        errorMsg = "Debes activar 'Identity Toolkit API' en Google Cloud Console para permitir el acceso.";
       } else if (error.code === 'auth/popup-blocked') {
-        errorMsg = "Bloqueador de ventanas detectado.";
-      } else if (error.code === 'auth/operation-not-allowed') {
-        errorMsg = "Proveedor Google no habilitado en Firebase Console.";
+        errorMsg = "Bloqueador de ventanas detectado. Permite el popup para continuar.";
+      } else if (error.code === 'auth/popup-closed-by-user') {
+        errorMsg = "El terminal fue cerrado antes de completar la validación.";
       }
       
       toast({
