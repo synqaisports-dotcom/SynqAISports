@@ -1,7 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { Fingerprint, Plus, Shield, Check, X, Search, MoreHorizontal, Settings2, Activity } from "lucide-react";
+import { 
+  Fingerprint, 
+  Plus, 
+  Shield, 
+  Check, 
+  X, 
+  Search, 
+  MoreHorizontal, 
+  Settings2, 
+  Activity, 
+  Pause, 
+  Play, 
+  Pencil 
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -17,8 +30,10 @@ import {
   DialogTrigger,
   DialogFooter
 } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
-const MOCK_ROLES = [
+const INITIAL_ROLES = [
   { id: "r1", name: "Superadmin", users: 3, status: "System", permissions: ["ALL"] },
   { id: "r2", name: "Club Admin", users: 24, status: "Active", permissions: ["Club_Manage", "User_Manage"] },
   { id: "r3", name: "Coach", users: 120, status: "Active", permissions: ["Tactics_Create", "Session_Manage"] },
@@ -34,7 +49,46 @@ const PERMISSION_MODULES = [
 ];
 
 export default function GlobalRolesPage() {
+  const [roles, setRoles] = useState(INITIAL_ROLES);
   const [searchTerm, setSearchTerm] = useState("");
+  const { toast } = useToast();
+
+  const handleToggleStatus = (id: string) => {
+    setRoles(prev => prev.map(role => {
+      if (role.id === id) {
+        if (role.status === "System") {
+          toast({
+            variant: "destructive",
+            title: "ACCESO_DENEGADO",
+            description: "No se pueden suspender protocolos críticos del sistema.",
+          });
+          return role;
+        }
+        const isCurrentlyActive = role.status === "Active";
+        const newStatus = isCurrentlyActive ? "Inactive" : "Active";
+        
+        toast({
+          title: isCurrentlyActive ? "IDENTIDAD_SUSPENDIDA" : "IDENTIDAD_REACTIVADA",
+          description: `El rol ${role.name} ha cambiado su estado a ${newStatus.toUpperCase()}.`,
+        });
+        
+        return { ...role, status: newStatus };
+      }
+      return role;
+    }));
+  };
+
+  const handleConfigure = (name: string) => {
+    toast({
+      title: "CONFIG_TERMINAL_OPEN",
+      description: `Sincronizando matriz de permisos para el rol ${name}.`,
+    });
+  };
+
+  const filteredRoles = roles.filter(r => 
+    r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    r.id.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
@@ -114,11 +168,11 @@ export default function GlobalRolesPage() {
                   <TableHead className="font-black text-[11px] uppercase tracking-[0.2em] text-white/40 h-16 pl-10">Identidad_Rol</TableHead>
                   <TableHead className="font-black text-[11px] uppercase tracking-[0.2em] text-white/40">Nodos_Asignados</TableHead>
                   <TableHead className="font-black text-[11px] uppercase tracking-[0.2em] text-white/40 text-center">Estatus</TableHead>
-                  <TableHead className="text-right font-black text-[11px] uppercase tracking-[0.2em] text-white/40 pr-10">Terminal</TableHead>
+                  <TableHead className="text-right font-black text-[11px] uppercase tracking-[0.2em] text-white/40 pr-10">Terminal_Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {MOCK_ROLES.map((role) => (
+                {filteredRoles.map((role) => (
                   <TableRow key={role.id} className="border-white/5 hover:bg-white/[0.03] transition-all group">
                     <TableCell className="pl-10 py-6">
                       <div className="flex items-center gap-5">
@@ -141,14 +195,47 @@ export default function GlobalRolesPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-center">
-                      <Badge variant="outline" className={`rounded-full font-black text-[9px] uppercase tracking-widest px-4 py-1.5 ${role.status === 'System' ? 'border-emerald-500/40 text-emerald-400 bg-emerald-500/5' : 'border-white/10 text-white/40'}`}>
-                        {role.status}
-                      </Badge>
+                      <div className="flex flex-col items-center gap-1">
+                        <Badge variant="outline" className={cn(
+                          "rounded-full font-black text-[9px] uppercase tracking-widest px-4 py-1.5",
+                          role.status === 'System' ? 'border-emerald-500/40 text-emerald-400 bg-emerald-500/5' : 
+                          role.status === 'Active' ? 'border-emerald-500/20 text-emerald-400/70 bg-emerald-500/5' :
+                          'border-white/10 text-white/30 bg-white/5'
+                        )}>
+                          {role.status}
+                        </Badge>
+                      </div>
                     </TableCell>
                     <TableCell className="text-right pr-10">
-                      <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-white/20 hover:text-emerald-400 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-500/20">
-                        <Settings2 className="h-5 w-5" />
-                      </Button>
+                      <div className="flex items-center justify-end gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-10 w-10 rounded-xl text-white/20 hover:text-emerald-400 hover:bg-emerald-500/10 border border-white/5 hover:border-emerald-500/20 transition-all"
+                          onClick={() => handleConfigure(role.name)}
+                          title="Configurar Protocolo"
+                        >
+                          <Settings2 className="h-5 w-5" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className={cn(
+                            "h-10 w-10 rounded-xl border border-white/5 transition-all",
+                            role.status === "Active" 
+                              ? "hover:border-amber-500/50 hover:bg-amber-500/10 text-white/20 hover:text-amber-400" 
+                              : "hover:border-emerald-500/50 hover:bg-emerald-500/10 text-white/20 hover:text-emerald-400"
+                          )}
+                          title={role.status === "Active" ? "Suspender Identidad" : "Reactivar Identidad"}
+                          onClick={() => handleToggleStatus(role.id)}
+                          disabled={role.status === "System"}
+                        >
+                          {role.status === "Active" ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-white/20 hover:text-emerald-400 hover:bg-emerald-500/10 border border-white/5">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -173,14 +260,14 @@ export default function GlobalRolesPage() {
               <div className="p-6 bg-black/60 rounded-2xl border border-white/5 space-y-2 group-hover:border-emerald-500/30 transition-all">
                 <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Roles de Sistema Bloqueados</p>
                 <div className="flex items-end gap-3">
-                  <p className="text-4xl font-black italic text-white tracking-tighter">02</p>
-                  <span className="text-[10px] text-emerald-400 font-bold mb-1 uppercase tracking-widest">Inmutables</span>
+                  <p className="text-4xl font-black italic text-white tracking-tighter">01</p>
+                  <span className="text-[10px] text-emerald-400 font-bold mb-1 uppercase tracking-widest">InmutaBLE</span>
                 </div>
               </div>
               <div className="p-6 bg-black/60 rounded-2xl border border-white/5 space-y-2 group-hover:border-emerald-500/30 transition-all">
                 <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Roles Personalizados</p>
                 <div className="flex items-end gap-3">
-                  <p className="text-4xl font-black italic text-emerald-400 tracking-tighter">14</p>
+                  <p className="text-4xl font-black italic text-emerald-400 tracking-tighter">{filteredRoles.filter(r => r.status !== 'System').length}</p>
                   <span className="text-[10px] text-white/30 font-bold mb-1 uppercase tracking-widest">Activos</span>
                 </div>
               </div>
