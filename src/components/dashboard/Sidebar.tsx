@@ -18,7 +18,12 @@ import {
   UserPlus,
   Dumbbell,
   Fingerprint,
-  ChevronLeft
+  ChevronLeft,
+  Building,
+  MapPin,
+  UserCog,
+  Sprout,
+  Users
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { 
@@ -52,6 +57,11 @@ const navItems: NavItem[] = [
   
   // OPERATIVA_ELITE - CYAN THEME
   { title: "Coach Hub", href: "/dashboard", icon: Cpu, category: "operational" },
+  { title: "Club", href: "/dashboard/club", icon: Building, category: "operational" },
+  { title: "Instalaciones", href: "/dashboard/facilities", icon: MapPin, category: "operational" },
+  { title: "Staff", href: "/dashboard/staff", icon: UserCog, category: "operational" },
+  { title: "Cantera", href: "/dashboard/academy", icon: Sprout, category: "operational" },
+  { title: "Jugadores", href: "/dashboard/players", icon: Users, category: "operational" },
   { title: "Tactical Board", href: "/board", icon: Monitor, category: "operational" },
   { title: "Biblioteca Táctica", href: "/dashboard/coach/exercises", icon: Dumbbell, category: "operational" },
   { title: "Neural Planner", href: "/dashboard/coach/planner", icon: Activity, category: "operational" },
