@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -145,7 +144,7 @@ export default function GlobalPlansPage() {
             <span className="text-[10px] font-black text-emerald-400 tracking-[0.5em] uppercase">Subscription_Protocols</span>
           </div>
           <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic emerald-text-glow">
-            PLAN_CONFIGURATION
+            CONFIGURACIÓN DE PLANES
           </h1>
         </div>
         
