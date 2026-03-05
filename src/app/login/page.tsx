@@ -56,31 +56,32 @@ export default function LoginPage() {
     setApiError(null);
     const provider = new GoogleAuthProvider();
     
-    // Configuración específica del cliente
+    // Configuración específica del cliente para forzar selección de cuenta
     provider.setCustomParameters({ 
-      prompt: 'select_account',
-      client_id: '116171513626-elfpqoqa7apefapulnnp9ajrctlv0e5k.apps.googleusercontent.com'
+      prompt: 'select_account'
     });
     
     try {
       await signInWithPopup(auth, provider);
       router.push("/dashboard");
     } catch (error: any) {
-      // Manejo específico del error de API desactivada para el proyecto 659509021859
+      console.error("FALLO_OAUTH_DEBUG:", error);
+      
+      // El fallo exacto reportado por NextJS/Firebase
       if (error.message?.includes("identitytoolkit.googleapis.com") || error.code === 'auth/operation-not-allowed') {
         const activationUrl = "https://console.developers.google.com/apis/api/identitytoolkit.googleapis.com/overview?project=659509021859";
         setApiError(activationUrl);
         
         toast({
           variant: "destructive",
-          title: "API_REQUERIDA",
-          description: "La API de Identidad no está activa en tu consola de Google.",
+          title: "ACTIVACIÓN_REQUERIDA",
+          description: "Debes habilitar la API de Identidad en Google Cloud.",
         });
       } else {
         toast({
           variant: "destructive",
-          title: "FALLO_OAUTH",
-          description: "Sincronización interrumpida. Inténtelo de nuevo.",
+          title: "FALLO_SINCRO",
+          description: error.message || "Sincronización interrumpida.",
         });
       }
     } finally {
@@ -90,6 +91,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#070a0f] px-[5%] relative overflow-hidden font-body">
+      {/* Background Effect */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,255,255,0.03),transparent_70%)]" />
       
       <Card className="w-full max-w-md border border-white/10 bg-black/40 backdrop-blur-2xl rounded-none relative z-10 overflow-hidden shadow-2xl border-t-2 border-t-primary">
@@ -106,21 +108,23 @@ export default function LoginPage() {
             {isRegistering ? "Inicializando secuencia de registro" : "Sincronización requerida"}
           </CardDescription>
         </CardHeader>
+
         <CardContent className="space-y-8 pb-14 px-[10%]">
           
+          {/* Alerta de Error de API Crítica */}
           {apiError && (
-            <Alert variant="destructive" className="bg-destructive/10 border-destructive/50 animate-in fade-in slide-in-from-top-2 duration-500">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle className="text-xs font-black uppercase tracking-widest">ACTIVACIÓN_PENDIENTE</AlertTitle>
-              <AlertDescription className="text-[10px] uppercase leading-relaxed mt-2 space-y-3">
-                <p>Debes habilitar manualmente la API de Identidad en tu consola de Google para permitir el acceso.</p>
+            <Alert variant="destructive" className="bg-destructive/10 border-destructive/50 animate-in fade-in slide-in-from-top-2 duration-500 rounded-none">
+              <AlertTriangle className="h-5 w-5" />
+              <AlertTitle className="text-xs font-black uppercase tracking-widest mb-2">FALLO_DE_CONFIGURACIÓN</AlertTitle>
+              <AlertDescription className="text-[10px] uppercase leading-relaxed space-y-4">
+                <p>La API de Identidad de Google está desactivada en tu consola. Debes activarla para permitir el acceso por Google.</p>
                 <a 
                   href={apiError} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-primary hover:underline font-black bg-primary/10 p-2 border border-primary/20"
+                  className="flex items-center justify-center gap-2 text-primary hover:bg-primary/20 font-black bg-primary/10 p-3 border border-primary/40 transition-colors"
                 >
-                  <ExternalLink className="h-3 w-3" /> HABILITAR_API_EN_GOOGLE_CLOUD
+                  <ExternalLink className="h-3 w-3" /> HABILITAR_API_AHORA
                 </a>
               </AlertDescription>
             </Alert>
