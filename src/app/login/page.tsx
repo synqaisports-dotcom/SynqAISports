@@ -21,14 +21,14 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
-  const [apiError, setApiError] = useState<string | null>(null);
+  const [apiErrorUrl, setApiErrorUrl] = useState<string | null>(null);
   const router = useRouter();
   const { toast } = useToast();
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setApiError(null);
+    setApiErrorUrl(null);
     try {
       if (isRegistering) {
         await createUserWithEmailAndPassword(auth, email, password);
@@ -53,29 +53,26 @@ export default function LoginPage() {
 
   const handleGoogleLogin = async () => {
     setLoading(true);
-    setApiError(null);
+    setApiErrorUrl(null);
     const provider = new GoogleAuthProvider();
-    
-    // Configuración específica del cliente para forzar selección de cuenta
-    provider.setCustomParameters({ 
-      prompt: 'select_account'
-    });
+    provider.setCustomParameters({ prompt: 'select_account' });
     
     try {
       await signInWithPopup(auth, provider);
       router.push("/dashboard");
     } catch (error: any) {
-      console.error("FALLO_OAUTH_DEBUG:", error);
+      console.error("DEBUG_OAUTH:", error);
       
-      // El fallo exacto reportado por NextJS/Firebase
+      // Captura del fallo exacto de API desactivada
       if (error.message?.includes("identitytoolkit.googleapis.com") || error.code === 'auth/operation-not-allowed') {
-        const activationUrl = "https://console.developers.google.com/apis/api/identitytoolkit.googleapis.com/overview?project=659509021859";
-        setApiError(activationUrl);
+        // Enlace exacto para el proyecto reportado en el error
+        const fixUrl = "https://console.developers.google.com/apis/api/identitytoolkit.googleapis.com/overview?project=659509021859";
+        setApiErrorUrl(fixUrl);
         
         toast({
           variant: "destructive",
-          title: "ACTIVACIÓN_REQUERIDA",
-          description: "Debes habilitar la API de Identidad en Google Cloud.",
+          title: "API_DESACTIVADA",
+          description: "Se requiere intervención manual en Google Cloud.",
         });
       } else {
         toast({
@@ -91,7 +88,6 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#070a0f] px-[5%] relative overflow-hidden font-body">
-      {/* Background Effect */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,255,255,0.03),transparent_70%)]" />
       
       <Card className="w-full max-w-md border border-white/10 bg-black/40 backdrop-blur-2xl rounded-none relative z-10 overflow-hidden shadow-2xl border-t-2 border-t-primary">
@@ -111,21 +107,21 @@ export default function LoginPage() {
 
         <CardContent className="space-y-8 pb-14 px-[10%]">
           
-          {/* Alerta de Error de API Crítica */}
-          {apiError && (
-            <Alert variant="destructive" className="bg-destructive/10 border-destructive/50 animate-in fade-in slide-in-from-top-2 duration-500 rounded-none">
+          {apiErrorUrl && (
+            <Alert variant="destructive" className="bg-destructive/10 border-destructive/50 animate-in fade-in slide-in-from-top-4 duration-500 rounded-none border-l-4">
               <AlertTriangle className="h-5 w-5" />
-              <AlertTitle className="text-xs font-black uppercase tracking-widest mb-2">FALLO_DE_CONFIGURACIÓN</AlertTitle>
+              <AlertTitle className="text-xs font-black uppercase tracking-widest mb-2">ACCIÓN_REQUERIDA</AlertTitle>
               <AlertDescription className="text-[10px] uppercase leading-relaxed space-y-4">
-                <p>La API de Identidad de Google está desactivada en tu consola. Debes activarla para permitir el acceso por Google.</p>
+                <p>La API de Identidad está desactivada en Google Cloud. Debes habilitarla para usar el acceso por Google.</p>
                 <a 
-                  href={apiError} 
+                  href={apiErrorUrl} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 text-primary hover:bg-primary/20 font-black bg-primary/10 p-3 border border-primary/40 transition-colors"
+                  className="flex items-center justify-center gap-2 text-primary hover:bg-primary/20 font-black bg-primary/10 p-3 border border-primary/40 transition-all active:scale-95"
                 >
-                  <ExternalLink className="h-3 w-3" /> HABILITAR_API_AHORA
+                  <ExternalLink className="h-3 w-3" /> HABILITAR_API_SISTEMA
                 </a>
+                <p className="text-[8px] text-white/30 lowercase">Habilita y espera 2 minutos antes de reintentar.</p>
               </AlertDescription>
             </Alert>
           )}
