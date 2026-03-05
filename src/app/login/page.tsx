@@ -12,7 +12,7 @@ import { auth } from "@/lib/firebase/config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Zap, Database, Loader2, Chrome, ShieldAlert } from "lucide-react";
+import { Zap, Database, Loader2, Chrome, ShieldAlert, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
@@ -52,7 +52,6 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     setLoading(true);
     const provider = new GoogleAuthProvider();
-    // Forzamos la selección de cuenta para evitar bucles de caché
     provider.setCustomParameters({ prompt: 'select_account' });
     
     try {
@@ -60,17 +59,22 @@ export default function LoginPage() {
       router.push("/dashboard");
     } catch (error: any) {
       console.error("GOOGLE_OAUTH_ERROR:", error.code, error.message);
+      
+      let errorTitle = "FALLO_OAUTH";
       let errorMsg = "Sincronización interrumpida.";
       
-      if (error.code === 'auth/popup-blocked') {
+      if (error.message.includes("identitytoolkit.googleapis.com")) {
+        errorTitle = "API_DESACTIVADA";
+        errorMsg = "Debes activar 'Identity Toolkit API' en tu consola de Google Cloud para este proyecto.";
+      } else if (error.code === 'auth/popup-blocked') {
         errorMsg = "Bloqueador de ventanas detectado.";
       } else if (error.code === 'auth/operation-not-allowed') {
-        errorMsg = "Proveedor Google no habilitado en consola.";
+        errorMsg = "Proveedor Google no habilitado en Firebase Console.";
       }
       
       toast({
         variant: "destructive",
-        title: "FALLO_OAUTH",
+        title: errorTitle,
         description: errorMsg,
       });
     } finally {
