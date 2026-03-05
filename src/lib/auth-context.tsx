@@ -7,8 +7,10 @@ export type UserRole = "superadmin" | "club_admin" | "coach" | "tutor" | "athlet
 interface UserProfile {
   email: string;
   role: UserRole;
-  clubId: string;
+  clubId: string | null;
   name: string;
+  plan: "basic" | "pro" | "elite" | null;
+  clubCreated: boolean;
 }
 
 interface AuthContextType {
@@ -31,13 +33,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // PROTOCOLO_DE_ACCESO_LIBRE: Identidad de Root por defecto para reconstrucción
+    // PROTOCOLO_DE_ACCESO: En desarrollo, asignamos un Superadmin por defecto
     const mockUser = { uid: "synq-root-dev", email: "root@synqai.sports" };
     const mockProfile: UserProfile = {
       email: "root@synqai.sports",
       name: "SynqAi Root",
       role: "superadmin",
       clubId: "global-hq",
+      plan: "elite",
+      clubCreated: true,
     };
     
     setUser(mockUser);
@@ -45,7 +49,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(false);
   }, []);
 
-  const loginAsGuest = () => {};
+  const loginAsGuest = () => {
+    const guestUser = { uid: "guest-club-dev", email: "nuevo@club.sports" };
+    const guestProfile: UserProfile = {
+      email: "nuevo@club.sports",
+      name: "Nuevo Entrenador",
+      role: "coach",
+      clubId: null, // Sin club inicial
+      plan: "pro",
+      clubCreated: false, // Forzará el onboarding de club
+    };
+    setUser(guestUser);
+    setProfile(guestProfile);
+  };
 
   return (
     <AuthContext.Provider value={{ user, profile, loading, loginAsGuest }}>

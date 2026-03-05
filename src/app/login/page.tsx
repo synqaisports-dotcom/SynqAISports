@@ -1,228 +1,153 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword,
-  signInWithPopup, 
-  GoogleAuthProvider 
-} from "firebase/auth";
-import { auth } from "@/lib/firebase/config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Database, Loader2, Chrome, Terminal, ExternalLink, ShieldAlert } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  Database, 
+  QrCode, 
+  Key, 
+  Mail, 
+  Terminal, 
+  ShieldCheck, 
+  Zap, 
+  UserPlus,
+  ArrowRight
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from "@/lib/auth-context";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [isRegistering, setIsRegistering] = useState(false);
-  const [errorStatus, setErrorStatus] = useState<string | null>(null);
-  const router = useRouter();
+  const { loginAsGuest } = useAuth();
   const { toast } = useToast();
-  const { loginAsGuest, user } = useAuth();
-
-  useEffect(() => {
-    const bypass = localStorage.getItem("dev_bypass");
-    if (user || bypass === "true") {
-      window.location.href = "/dashboard";
-    }
-  }, [user]);
+  const router = useRouter();
 
   const handleBypass = () => {
     setLoading(true);
     loginAsGuest();
     toast({
-      title: "ACCESO_FORZADO",
-      description: "Protocolo de emergencia activo. Entrando al sistema...",
+      title: "ACCESO_AUTORIZADO",
+      description: "Sincronizando con el nodo central...",
     });
     setTimeout(() => {
       window.location.href = "/dashboard";
-    }, 500);
-  };
-
-  const handleAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setErrorStatus(null);
-    try {
-      if (isRegistering) {
-        await createUserWithEmailAndPassword(auth, email, password);
-      } else {
-        await signInWithEmailAndPassword(auth, email, password);
-      }
-      window.location.href = "/dashboard";
-    } catch (error: any) {
-      console.error("AUTH_ERROR:", error.code);
-      setErrorStatus(error.code);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    setLoading(true);
-    setErrorStatus(null);
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: 'select_account' });
-    
-    try {
-      await signInWithPopup(auth, provider);
-      window.location.href = "/dashboard";
-    } catch (error: any) {
-      console.error("GOOGLE_OAUTH_ERROR:", error.code, error.message);
-      setErrorStatus(error.code);
-      toast({
-        variant: "destructive",
-        title: "ERROR_SINCRO",
-        description: error.code,
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const renderErrorMessage = () => {
-    if (!errorStatus) return null;
-
-    const isConfigError = errorStatus === 'auth/configuration-not-found';
-    const isBlockedError = errorStatus.includes('blocked');
-    const isApiError = errorStatus.includes('identitytoolkit');
-
-    return (
-      <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
-        <Alert variant="destructive" className="bg-primary/10 border-primary/50 rounded-none border-l-4">
-          <ShieldAlert className="h-5 w-5 text-primary" />
-          <AlertTitle className="text-xs font-black uppercase tracking-widest mb-2 text-primary">
-            BLOQUEO_SISTEMA: {errorStatus}
-          </AlertTitle>
-          <AlertDescription className="text-[10px] uppercase leading-relaxed text-white/80">
-            {isConfigError 
-              ? `El ID del proyecto en el código debe ser "studio-5944752012-52b7a". Verifica Authentication > Sign-in Method en Firebase.`
-              : isBlockedError 
-                ? "La Clave de API tiene restricciones. Debes permitir 'Identity Toolkit API' en Google Cloud Console."
-                : "La API de Identidad no está respondiendo correctamente."}
-          </AlertDescription>
-        </Alert>
-
-        <Button 
-          onClick={handleBypass}
-          className="w-full h-14 bg-primary text-primary-foreground hover:bg-primary/90 font-black rounded-none transition-all flex gap-3 text-xs tracking-[0.2em] uppercase shadow-[0_0_15px_rgba(0,255,255,0.3)]"
-        >
-          <Terminal className="h-4 w-4" /> {">> FORZAR_ACCESO_INMEDIATO (MODO_DEV) <<"}
-        </Button>
-
-        {(isApiError || isBlockedError) && (
-          <Button 
-            variant="outline"
-            onClick={() => window.open(`https://console.developers.google.com/apis/api/identitytoolkit.googleapis.com/overview?project=1077364844635`, '_blank')}
-            className="w-full h-10 border-white/20 text-white/60 text-[9px] uppercase tracking-widest"
-          >
-            <ExternalLink className="h-3 w-3 mr-2" /> Reparar Configuración en Google Cloud
-          </Button>
-        )}
-      </div>
-    );
+    }, 800);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#070a0f] px-[5%] relative overflow-hidden font-body">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,255,255,0.03),transparent_70%)]" />
+    <div className="min-h-screen flex items-center justify-center bg-[#070a0f] px-6 relative overflow-hidden font-body">
+      {/* BACKGROUND EFFECTS */}
+      <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,255,255,0.05),transparent_70%)]" />
       
-      <Card className="w-full max-w-md border border-white/10 bg-black/40 backdrop-blur-2xl rounded-none relative z-10 overflow-hidden shadow-2xl border-t-2 border-t-primary">
-        <CardHeader className="pt-12 pb-6 text-center">
-          <div className="inline-flex justify-center mb-8">
-            <div className="p-4 border border-primary/40 bg-primary/5 rounded-sm rotate-45 cyan-glow">
-              <Database className="h-8 w-8 text-primary -rotate-45" />
+      <Card className="w-full max-w-xl glass-panel shadow-2xl relative z-10 overflow-hidden border-t-2 border-t-primary">
+        <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+          <Zap className="h-32 w-32 text-primary" />
+        </div>
+
+        <CardHeader className="pt-12 pb-8 text-center">
+          <div className="flex justify-center mb-8">
+            <div className="relative group">
+              <div className="absolute inset-0 bg-primary/40 blur-xl rounded-full animate-pulse" />
+              <div className="relative p-5 border border-primary/40 bg-black/60 rounded-sm rotate-45 cyan-glow">
+                <Database className="h-10 w-10 text-primary -rotate-45" />
+              </div>
             </div>
           </div>
-          <CardTitle className="text-3xl font-headline font-black text-white tracking-[0.3em] uppercase">
-            TERMINAL_ACCESO
+          <CardTitle className="text-4xl font-headline font-black text-white tracking-[0.2em] uppercase italic">
+            Synq<span className="text-primary cyan-text-glow">AI</span>_ACCESS
           </CardTitle>
-          <CardDescription className="uppercase text-[10px] tracking-[0.2em] text-white/40 mt-4 font-bold">
-            Sincronización: studio-5944752012-52b7a
+          <CardDescription className="uppercase text-[9px] tracking-[0.5em] text-white/30 mt-4 font-bold">
+            Protocolo de Identidad y Sincronización
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-6 pb-14 px-[10%]">
-          
-          {renderErrorMessage()}
-
-          {!errorStatus && (
-            <div className="space-y-6">
-              <Button
-                variant="outline"
-                className="w-full h-14 border-primary/30 rounded-none text-primary hover:bg-primary/10 hover:border-primary transition-all font-black tracking-[0.2em] text-xs bg-transparent flex gap-3 uppercase"
-                onClick={handleGoogleLogin}
-                disabled={loading}
+        <CardContent className="px-8 pb-12">
+          <Tabs defaultValue="activation" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 bg-black/40 h-14 rounded-none border border-white/5 p-1 mb-8">
+              <TabsTrigger 
+                value="activation" 
+                className="rounded-none font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-black transition-all"
               >
-                {loading ? <Loader2 className="animate-spin h-4 w-4" /> : <Chrome className="h-4 w-4" />} 
-                ACCESO_GOOGLE_SINCRO
-              </Button>
+                <Key className="h-3 w-3 mr-2" /> Código Activación
+              </TabsTrigger>
+              <TabsTrigger 
+                value="qr" 
+                className="rounded-none font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-black transition-all"
+              >
+                <QrCode className="h-3 w-3 mr-2" /> Escaneo de Nodo
+              </TabsTrigger>
+            </TabsList>
 
-              <div className="relative py-2">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-white/5"></span>
+            {/* FORMULARIO DE ALTA CON CÓDIGO */}
+            <TabsContent value="activation" className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-500">
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1">NOMBRE_USUARIO</label>
+                    <Input placeholder="EJ. MARC" className="h-12 bg-white/5 border-white/10 rounded-none text-white font-bold uppercase placeholder:text-white/10" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1">MAIL_ACCESO</label>
+                    <Input type="email" placeholder="USER@SYNQ.PRO" className="h-12 bg-white/5 border-white/10 rounded-none text-white font-bold uppercase placeholder:text-white/10" />
+                  </div>
                 </div>
-                <div className="relative flex justify-center text-[8px] uppercase tracking-[0.5em] font-black">
-                  <span className="bg-[#0b0e14] px-4 text-white/20">O PROTOCOLO MANUAL</span>
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1">CÓDIGO_DE_ACTIVACIÓN</label>
+                  <Input placeholder="XXXX-XXXX-XXXX" className="h-12 bg-primary/5 border-primary/30 rounded-none text-xl font-headline font-black text-center tracking-[0.3em] text-primary cyan-text-glow placeholder:text-primary/10" />
                 </div>
               </div>
 
-              <form onSubmit={handleAuth} className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary block">EMAIL_USUARIO</label>
-                  <Input
-                    type="email"
-                    placeholder="usuario@synqsports.pro"
-                    className="h-12 bg-white border-none rounded-none text-black placeholder:text-black/30 text-sm font-bold"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary block">CONTRASEÑA_ACCESO</label>
-                  <Input
-                    type="password"
-                    placeholder="••••••••"
-                    className="h-12 bg-white border-none rounded-none text-black placeholder:text-black/30 text-sm"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-                <Button
-                  className="w-full h-12 bg-primary hover:bg-primary/80 text-primary-foreground font-black rounded-none transition-all active:scale-95 cyan-glow flex gap-3 text-xs tracking-widest uppercase"
-                  type="submit"
-                  disabled={loading}
-                >
-                  {loading ? <Loader2 className="animate-spin h-5 w-5" /> : "VALIDAR_CREDENCIALES"}
-                </Button>
-              </form>
-            </div>
-          )}
+              <Button 
+                onClick={handleBypass}
+                className="w-full h-16 bg-primary text-black font-black uppercase tracking-[0.3em] text-xs rounded-none cyan-glow hover:scale-[1.01] transition-all"
+              >
+                VINCULAR_IDENTIDAD <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </TabsContent>
 
-          <div className="pt-4 flex flex-col gap-4">
-            <button 
-              type="button"
-              onClick={() => setIsRegistering(!isRegistering)}
-              className="text-[9px] text-white/40 hover:text-primary transition-colors font-bold uppercase tracking-[0.2em]"
-            >
-              {isRegistering ? "<< Volver al Terminal" : "¿Nuevo Usuario? Registrar Identidad >>"}
-            </button>
+            {/* SECCIÓN DE QR / PROMO */}
+            <TabsContent value="qr" className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+              <div className="flex flex-col items-center py-6 space-y-6 border border-dashed border-primary/20 bg-primary/5">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-primary/20 blur-2xl animate-pulse" />
+                  <QrCode className="h-24 w-24 text-primary relative" />
+                </div>
+                <div className="text-center space-y-2">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-white">ESCANEA TU CÓDIGO_NODO</p>
+                  <p className="text-[8px] font-bold uppercase tracking-widest text-white/40">Sincronización automática de Plan y Promo</p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[9px] font-black uppercase tracking-widest text-white/40 ml-1 text-center block w-full">O INTRODUCE CÓDIGO_PROMOCIONAL</label>
+                <Input placeholder="PROMO_CODE_2024" className="h-12 bg-white/5 border-white/10 rounded-none text-white font-bold text-center uppercase tracking-widest" />
+              </div>
+
+              <Button 
+                onClick={handleBypass}
+                className="w-full h-16 bg-white/5 border border-white/10 text-white font-black uppercase tracking-[0.3em] text-xs rounded-none hover:bg-white/10 transition-all"
+              >
+                SINCRONIZAR_NODO
+              </Button>
+            </TabsContent>
+          </Tabs>
+
+          <div className="mt-12 pt-8 border-t border-white/5 flex flex-col items-center gap-6">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-primary opacity-50" />
+              <span className="text-[8px] font-black text-white/20 uppercase tracking-[0.5em]">Seguridad por Encriptación de Nodo Activa</span>
+            </div>
             
             <button 
-              type="button"
               onClick={handleBypass}
-              className="text-[10px] text-primary hover:bg-primary/10 transition-all font-black uppercase tracking-[0.3em] border-2 border-primary/40 py-4 shadow-[0_0_10px_rgba(0,255,255,0.2)]"
+              className="text-[9px] text-primary/40 hover:text-primary transition-all font-black uppercase tracking-[0.3em] border border-primary/20 px-8 py-3 hover:bg-primary/5"
             >
-              {loading ? "SINCRONIZANDO..." : ">> FORZAR_ACCESO_INMEDIATO (MODO_DEV) <<"}
+              [ BYPASS_ADMIN_SISTEMA_DEV ]
             </button>
           </div>
         </CardContent>
