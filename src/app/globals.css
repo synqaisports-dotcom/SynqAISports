@@ -101,6 +101,10 @@
   text-shadow: 0 0 15px hsla(183, 100%, 50%, 0.8);
 }
 
+.emerald-text-glow {
+  text-shadow: 0 0 15px hsla(142, 70%, 50%, 0.8);
+}
+
 .pulse-glow {
   animation: pulse-cyan 3s infinite;
 }

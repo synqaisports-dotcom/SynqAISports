@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -73,7 +72,7 @@ export function DashboardSidebar() {
       <div className="flex-1 px-4 py-8 space-y-8 overflow-y-auto custom-scrollbar">
         {/* GLOBAL CONTROL */}
         <div>
-          <p className="px-3 mb-4 text-[8px] font-black uppercase tracking-[0.4em] text-white/20">Control_Global</p>
+          <p className="px-3 mb-4 text-[8px] font-black uppercase tracking-[0.4em] text-emerald-400 emerald-text-glow animate-pulse">Control_Global</p>
           <div className="space-y-1">
             {navItems.filter(i => i.category === "global").map((item) => (
               <SidebarLink key={item.href} item={item} isActive={pathname === item.href} />
