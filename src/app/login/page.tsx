@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -12,7 +13,7 @@ import { auth } from "@/lib/firebase/config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Database, Loader2, Chrome, Terminal, AlertTriangle, ExternalLink } from "lucide-react";
+import { Database, Loader2, Chrome, Terminal, AlertTriangle, ExternalLink, ShieldAlert } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from "@/lib/auth-context";
@@ -28,22 +29,24 @@ export default function LoginPage() {
   const { loginAsGuest, user } = useAuth();
 
   useEffect(() => {
-    if (user) {
+    const bypass = localStorage.getItem("dev_bypass");
+    if (user || bypass === "true") {
       router.push("/dashboard");
     }
   }, [user, router]);
 
   const handleBypass = () => {
     setLoading(true);
+    localStorage.setItem("dev_bypass", "true");
     loginAsGuest();
     toast({
       title: "PROTOCOLO_BYPASS_INICIADO",
-      description: "Accediendo como Administrador de Élite (Bypass Local).",
+      description: "Accediendo como Administrador de Élite. Forzando entrada...",
     });
-    // Forzamos navegación física para asegurar que el contexto se refresque
+    // Forzamos navegación física absoluta
     setTimeout(() => {
       window.location.href = "/dashboard";
-    }, 500);
+    }, 300);
   };
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -90,11 +93,61 @@ export default function LoginPage() {
       toast({
         variant: "destructive",
         title: "FALLO_SINCRO",
-        description: "Error en configuración de Google Cloud.",
+        description: `Error detectado: ${error.code}`,
       });
     } finally {
       setLoading(false);
     }
+  };
+
+  const renderErrorMessage = () => {
+    if (!errorStatus) return null;
+
+    const isConfigError = errorStatus === 'auth/configuration-not-found';
+    const isApiError = errorStatus.includes('api-has-not-been-used') || errorStatus.includes('requests-to-this-api');
+
+    return (
+      <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
+        <Alert variant="destructive" className="bg-primary/10 border-primary/50 rounded-none border-l-4">
+          <ShieldAlert className="h-5 w-5 text-primary" />
+          <AlertTitle className="text-xs font-black uppercase tracking-widest mb-2 text-primary">
+            BLOQUEO_CRÍTICO: {errorStatus}
+          </AlertTitle>
+          <AlertDescription className="text-[10px] uppercase leading-relaxed text-white/80">
+            {isConfigError 
+              ? "Debes habilitar el método 'Google' en la pestaña 'Sign-in method' de tu Consola de Firebase para que el login funcione."
+              : "La configuración de Google Cloud está impidiendo el acceso real. Activa la API o usa el acceso de emergencia."}
+          </AlertDescription>
+        </Alert>
+
+        {isConfigError && (
+          <Button 
+            variant="outline"
+            onClick={() => window.open(`https://console.firebase.google.com/project/synqaisports/authentication/providers`, '_blank')}
+            className="w-full h-10 border-white/20 text-white/60 text-[9px] uppercase tracking-widest"
+          >
+            <ExternalLink className="h-3 w-3 mr-2" /> Habilitar Google en Firebase Console
+          </Button>
+        )}
+
+        {isApiError && (
+          <Button 
+            variant="outline"
+            onClick={() => window.open(`https://console.developers.google.com/apis/api/identitytoolkit.googleapis.com/overview?project=659509021859`, '_blank')}
+            className="w-full h-10 border-white/20 text-white/60 text-[9px] uppercase tracking-widest"
+          >
+            <ExternalLink className="h-3 w-3 mr-2" /> Activar API en Google Cloud
+          </Button>
+        )}
+
+        <Button 
+          onClick={handleBypass}
+          className="w-full h-14 bg-primary text-primary-foreground hover:bg-primary/90 font-black rounded-none transition-all flex gap-3 text-xs tracking-[0.2em] uppercase shadow-[0_0_15px_rgba(0,255,255,0.3)]"
+        >
+          <Terminal className="h-4 w-4" /> FORZAR_ACCESO_INMEDIATO (MODO_DEV)
+        </Button>
+      </div>
+    );
   };
 
   return (
@@ -118,34 +171,7 @@ export default function LoginPage() {
 
         <CardContent className="space-y-6 pb-14 px-[10%]">
           
-          {errorStatus && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
-              <Alert variant="destructive" className="bg-primary/10 border-primary/50 rounded-none border-l-4">
-                <AlertTriangle className="h-5 w-5 text-primary" />
-                <AlertTitle className="text-xs font-black uppercase tracking-widest mb-2 text-primary">BLOQUEO_DETECTADO: {errorStatus}</AlertTitle>
-                <AlertDescription className="text-[10px] uppercase leading-relaxed text-white/60">
-                  Fallo de configuración en Google Cloud/Firebase. Pulsa el botón de abajo para entrar inmediatamente por la puerta trasera.
-                </AlertDescription>
-              </Alert>
-
-              {(errorStatus.includes('api-has-not-been-used') || errorStatus.includes('requests-to-this-api')) && (
-                <Button 
-                  variant="outline"
-                  onClick={() => window.open(`https://console.developers.google.com/apis/api/identitytoolkit.googleapis.com/overview?project=659509021859`, '_blank')}
-                  className="w-full h-10 border-white/20 text-white/60 text-[9px] uppercase tracking-widest"
-                >
-                  <ExternalLink className="h-3 w-3 mr-2" /> Habilitar API en Google Cloud
-                </Button>
-              )}
-
-              <Button 
-                onClick={handleBypass}
-                className="w-full h-14 bg-primary text-primary-foreground hover:bg-primary/90 font-black rounded-none transition-all flex gap-3 text-xs tracking-[0.2em] uppercase shadow-[0_0_15px_rgba(0,255,255,0.3)]"
-              >
-                <Terminal className="h-4 w-4" /> FORZAR_ACCESO_DASHBOARD
-              </Button>
-            </div>
-          )}
+          {renderErrorMessage()}
 
           {!errorStatus && (
             <Button
