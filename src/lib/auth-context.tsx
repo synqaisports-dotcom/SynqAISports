@@ -18,6 +18,7 @@ interface AuthContextType {
   profile: UserProfile | null;
   loading: boolean;
   loginAsGuest: () => void;
+  completeOnboarding: (clubData: any) => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -25,6 +26,7 @@ const AuthContext = createContext<AuthContextType>({
   profile: null,
   loading: true,
   loginAsGuest: () => {},
+  completeOnboarding: () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -64,8 +66,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setProfile(guestProfile);
   };
 
+  const completeOnboarding = (clubData: any) => {
+    if (profile) {
+      setProfile({
+        ...profile,
+        clubCreated: true,
+        clubId: clubData.id || "new-club-id",
+      });
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, profile, loading, loginAsGuest }}>
+    <AuthContext.Provider value={{ user, profile, loading, loginAsGuest, completeOnboarding }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,12 +1,27 @@
-
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
 import { DashboardSidebar } from "@/components/dashboard/Sidebar";
 import { Loader2 } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { profile, loading } = useAuth();
+  const pathname = usePathname();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && profile) {
+      // Si es un admin de club o coach y no ha creado su club, redirigir a onboarding
+      // Excepto si ya está en la página de onboarding
+      if ((profile.role === "club_admin" || profile.role === "coach") && 
+          !profile.clubCreated && 
+          pathname !== "/dashboard/coach/onboarding") {
+        router.push("/dashboard/coach/onboarding");
+      }
+    }
+  }, [profile, loading, pathname, router]);
 
   if (loading) {
     return (
@@ -20,10 +35,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
+  const isOnboarding = pathname === "/dashboard/coach/onboarding";
+
   return (
     <div className="min-h-screen bg-[#04070c] flex">
-      <DashboardSidebar />
-      <main className="flex-1 ml-64 p-8 overflow-y-auto relative custom-scrollbar">
+      {!isOnboarding && <DashboardSidebar />}
+      <main className={`flex-1 ${isOnboarding ? '' : 'ml-64'} p-8 overflow-y-auto relative custom-scrollbar`}>
         <div className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none" />
         
         <div className="max-w-7xl mx-auto relative z-10 animate-in fade-in slide-in-from-bottom-2 duration-700">
