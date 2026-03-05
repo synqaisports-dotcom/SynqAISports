@@ -68,7 +68,7 @@ export default function GlobalUsersPage() {
       </div>
 
       {/* MAIN DATA TERMINAL */}
-      <Card className="glass-panel border-none shadow-2xl overflow-hidden relative">
+      <Card className="glass-panel shadow-2xl overflow-hidden relative">
         <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
         
         <CardHeader className="bg-black/40 border-b border-white/5 p-6 space-y-4 md:space-y-0 md:flex md:flex-row md:items-center md:justify-between">
@@ -124,9 +124,11 @@ export default function GlobalUsersPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2 text-white/60">
-                      <Mail className="h-3 w-3 text-primary/40" />
-                      <span className="text-[10px] font-mono tracking-tighter">{user.email}</span>
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-primary/60" />
+                      <span className="text-xs font-headline font-bold text-primary tracking-wide uppercase">
+                        {user.email}
+                      </span>
                     </div>
                   </TableCell>
                   <TableCell>
