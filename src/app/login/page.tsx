@@ -31,10 +31,10 @@ export default function LoginPage() {
     loginAsGuest();
     toast({
       title: "ACCESO_AUTORIZADO",
-      description: "Sincronizando con el nodo central...",
+      description: "Sincronizando con el nodo central de administración...",
     });
     setTimeout(() => {
-      window.location.href = "/dashboard";
+      window.location.href = "/admin-global";
     }, 800);
   };
 

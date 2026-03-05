@@ -50,14 +50,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const loginAsGuest = () => {
-    const guestUser = { uid: "guest-club-dev", email: "nuevo@club.sports" };
+    // BYPASS_PROTOCOL: Identificamos como Superadmin para el acceso directo al núcleo
+    const guestUser = { uid: "synq-root-dev", email: "admin@synqai.sports" };
     const guestProfile: UserProfile = {
-      email: "nuevo@club.sports",
-      name: "Nuevo Entrenador",
-      role: "coach",
-      clubId: null, // Sin club inicial
-      plan: "pro",
-      clubCreated: false, // Forzará el onboarding de club
+      email: "admin@synqai.sports",
+      name: "SynqAi Administrator",
+      role: "superadmin",
+      clubId: "global-hq",
+      plan: "elite",
+      clubCreated: true,
     };
     setUser(guestUser);
     setProfile(guestProfile);
