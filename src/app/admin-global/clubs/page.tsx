@@ -19,7 +19,7 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, MoreHorizontal, Building2, Globe2, Activity } from "lucide-react";
+import { Plus, Search, MoreHorizontal, Building2, Globe2, Activity, Pencil, Pause } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -45,18 +45,18 @@ export default function ManageClubsPage() {
             GESTIÓN DE CLUBES
           </h1>
         </div>
-        <Button className="rounded-none bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 transition-all border-none">
+        <Button className="rounded-2xl bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 transition-all border-none">
           <Plus className="h-4 w-4 mr-2" /> Vincular Nuevo Nodo
         </Button>
       </div>
 
-      <Card className="glass-panel overflow-hidden relative">
+      <Card className="glass-panel overflow-hidden relative border-none">
         <CardHeader className="bg-black/40 border-b border-white/5 flex flex-col md:flex-row items-start md:items-center justify-between space-y-4 md:space-y-0 p-6">
           <div className="relative w-full max-w-sm">
-            <Search className="absolute left-3 top-3.5 h-4 w-4 text-emerald-500 opacity-50" />
+            <Search className="absolute left-4 top-4 h-4 w-4 text-emerald-500 opacity-50" />
             <Input 
               placeholder="BUSCAR IDENTIDAD DE CLUB..." 
-              className="pl-10 h-12 bg-white/5 border-white/10 rounded-none text-white placeholder:text-white/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-emerald-500/50"
+              className="pl-12 h-12 bg-white/5 border-white/10 rounded-xl text-white placeholder:text-white/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-emerald-500/50"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -66,7 +66,7 @@ export default function ManageClubsPage() {
                <span className="text-[9px] font-black text-white/30 uppercase tracking-widest">Estado de Sincronización</span>
                <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest italic">ESTABLE_100%</span>
             </div>
-            <Badge variant="outline" className="rounded-none border-emerald-500/20 text-emerald-400 font-black text-[9px] px-3 py-1 uppercase tracking-widest">
+            <Badge variant="outline" className="rounded-full border-emerald-500/20 text-emerald-400 font-black text-[9px] px-4 py-1.5 uppercase tracking-widest">
               Total: {MOCK_CLUBS.length}
             </Badge>
           </div>
@@ -75,7 +75,7 @@ export default function ManageClubsPage() {
           <Table>
             <TableHeader className="bg-white/[0.02] border-b border-white/5">
               <TableRow className="hover:bg-transparent border-white/5">
-                <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-white/40 h-14 pl-8">Identificador_Club</TableHead>
+                <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-white/40 h-16 pl-8">Identificador_Club</TableHead>
                 <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-white/40">Protocolo_Plan</TableHead>
                 <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-white/40 text-center">Nodos_Activos</TableHead>
                 <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-white/40">Estatus_Red</TableHead>
@@ -86,9 +86,9 @@ export default function ManageClubsPage() {
               {MOCK_CLUBS.map((club) => (
                 <TableRow key={club.id} className="border-white/5 hover:bg-white/[0.03] transition-colors group">
                   <TableCell className="pl-8">
-                    <div className="flex items-center gap-4 py-2">
-                      <div className="h-10 w-10 bg-emerald-500/5 border border-emerald-500/20 flex items-center justify-center relative overflow-hidden group-hover:bg-emerald-500/10 transition-all rotate-45">
-                        <Building2 className="h-4 w-4 text-emerald-500 -rotate-45" />
+                    <div className="flex items-center gap-4 py-3">
+                      <div className="h-12 w-12 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl flex items-center justify-center relative overflow-hidden group-hover:bg-emerald-500/10 transition-all rotate-12 group-hover:rotate-0 duration-500">
+                        <Building2 className="h-5 w-5 text-emerald-500" />
                         <div className="absolute inset-0 bg-emerald-500/5 scan-line" />
                       </div>
                       <div>
@@ -102,19 +102,19 @@ export default function ManageClubsPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="rounded-none border-white/10 text-white/60 font-black text-[9px] uppercase tracking-widest bg-white/5">
+                    <Badge variant="outline" className="rounded-full border-white/10 text-white/60 font-black text-[9px] uppercase tracking-widest bg-white/5 px-3">
                       {club.plan}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-center">
-                    <span className="text-xs font-headline font-bold text-white group-hover:text-emerald-400 transition-colors">
+                    <span className="text-sm font-headline font-bold text-white group-hover:text-emerald-400 transition-colors">
                       {club.users}
                     </span>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <div className={cn(
-                        "w-1.5 h-1.5 rounded-full animate-pulse",
+                        "w-2 h-2 rounded-full animate-pulse",
                         club.status === "Active" ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-amber-400"
                       )} />
                       <span className={cn(
@@ -126,18 +126,26 @@ export default function ManageClubsPage() {
                     </div>
                   </TableCell>
                   <TableCell className="text-right pr-8">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-none border border-white/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 text-white/20 hover:text-emerald-400 transition-all">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center justify-end gap-2">
+                      <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl border border-white/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 text-white/20 hover:text-emerald-400 transition-all" title="Modificar Protocolo">
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl border border-white/5 hover:border-amber-500/50 hover:bg-amber-500/10 text-white/20 hover:text-amber-400 transition-all" title="Pausar Nodo">
+                        <Pause className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl border border-white/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 text-white/20 hover:text-emerald-400 transition-all">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </CardContent>
-        <div className="p-4 bg-black/20 border-t border-white/5 flex justify-between items-center text-[8px] font-black text-white/20 uppercase tracking-[0.5em]">
+        <div className="p-6 bg-black/20 border-t border-white/5 flex justify-between items-center text-[9px] font-black text-white/20 uppercase tracking-[0.5em] rounded-b-3xl">
           <span>Mostrando {MOCK_CLUBS.length} de 24 registros globales</span>
-          <span className="flex items-center gap-2"><Activity className="h-2 w-2 text-emerald-500 animate-pulse" /> Sincronización: Estable</span>
+          <span className="flex items-center gap-2"><Activity className="h-3 w-3 text-emerald-500 animate-pulse" /> Sincronización de Red: Óptima</span>
         </div>
       </Card>
     </div>
