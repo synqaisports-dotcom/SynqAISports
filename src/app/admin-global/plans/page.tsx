@@ -2,7 +2,24 @@
 "use client";
 
 import { useState } from "react";
-import { TicketPercent, Plus, Zap, Shield, Crown, Check, X, Layers, DollarSign, Users } from "lucide-react";
+import { 
+  TicketPercent, 
+  Plus, 
+  Zap, 
+  Shield, 
+  Crown, 
+  Check, 
+  X, 
+  Layers, 
+  DollarSign, 
+  Users, 
+  ShieldAlert,
+  Cpu,
+  Monitor,
+  Activity,
+  ChevronRight,
+  Lock
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,27 +33,57 @@ import {
   SheetFooter,
   SheetClose
 } from "@/components/ui/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
+const ACCESS_MODULES = [
+  { id: "ia_planner", label: "Neural IA Planner", description: "Generación de planes tácticos con IA.", icon: Cpu },
+  { id: "tactical_board", label: "Elite Tactical Board", description: "Pizarra 3D y análisis de video.", icon: Monitor },
+  { id: "academy_pro", label: "Gestión de Cantera", description: "Control total de categorías inferiores.", icon: Activity },
+  { id: "live_metrics", label: "Métricas en Vivo", description: "Sincronización con Smartwatch y GPS.", icon: Zap },
+  { id: "tutor_portal", label: "Portal de Tutores", description: "Terminal de comunicación con familias.", icon: Users },
+];
+
 export default function GlobalPlansPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isAccessDialogOpen, setIsAccessDialogOpen] = useState(false);
   const { toast } = useToast();
+  
   const [newPlan, setNewPlan] = useState({
     title: "",
     price: "",
     users: "",
-    features: ["", "", ""]
+    features: ["", "", ""],
+    access: [] as string[]
   });
+
+  const handleToggleAccess = (moduleId: string) => {
+    setNewPlan(prev => ({
+      ...prev,
+      access: prev.access.includes(moduleId) 
+        ? prev.access.filter(id => id !== moduleId) 
+        : [...prev.access, moduleId]
+    }));
+  };
 
   const handleCreateProtocol = (e: React.FormEvent) => {
     e.preventDefault();
     toast({
       title: "PROTOCOLO_SINC_EXITOSA",
-      description: `El nuevo nodo de suscripción "${newPlan.title || 'SIN_NOMBRE'}" ha sido desplegado en la red global.`,
+      description: `El nuevo nodo "${newPlan.title || 'SIN_NOMBRE'}" con ${newPlan.access.length} módulos activos ha sido desplegado.`,
     });
     setIsSheetOpen(false);
-    setNewPlan({ title: "", price: "", users: "", features: ["", "", ""] });
+    setNewPlan({ title: "", price: "", users: "", features: ["", "", ""], access: [] });
   };
 
   return (
@@ -92,7 +139,7 @@ export default function GlobalPlansPage() {
             <SheetHeader className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400">Deploy_Manager_v1.2</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400">Deploy_Manager_v1.5</span>
               </div>
               <SheetTitle className="text-3xl font-black italic tracking-tighter text-white uppercase text-left">
                 CONFIG_NUEVO_PLAN
@@ -143,8 +190,87 @@ export default function GlobalPlansPage() {
                 </div>
               </div>
 
+              {/* SECCIÓN DE MATRIZ DE ACCESO */}
+              <div className="space-y-4 pt-4">
+                <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Control_de_Permisos</Label>
+                <Dialog open={isAccessDialogOpen} onOpenChange={setIsAccessDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      className="w-full h-14 bg-emerald-500/5 border-emerald-500/30 text-emerald-400 font-black uppercase text-[10px] tracking-widest hover:bg-emerald-500/10 rounded-none flex justify-between px-6 group"
+                    >
+                      <span className="flex items-center gap-3">
+                        <Lock className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                        Configurar Matriz de Acceso
+                      </span>
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="bg-[#04070c]/98 border-emerald-500/20 text-white max-w-lg rounded-none shadow-[0_0_50px_rgba(0,0,0,0.9)]">
+                    <DialogHeader className="space-y-4">
+                      <div className="flex items-center gap-2">
+                        <ShieldAlert className="h-4 w-4 text-emerald-400" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400">Security_Protocol_v2</span>
+                      </div>
+                      <DialogTitle className="text-2xl font-black italic tracking-tighter uppercase">MATRIZ_DE_ACCESO_PLAN</DialogTitle>
+                      <DialogDescription className="text-[10px] font-bold uppercase tracking-widest text-white/30">Habilita los sectores operativos para este protocolo.</DialogDescription>
+                    </DialogHeader>
+                    
+                    <div className="space-y-4 py-8">
+                      {ACCESS_MODULES.map((module) => (
+                        <div 
+                          key={module.id} 
+                          className={cn(
+                            "p-4 border transition-all cursor-pointer group flex items-center justify-between",
+                            newPlan.access.includes(module.id) ? "bg-emerald-500/10 border-emerald-500/40" : "bg-white/5 border-white/10 hover:border-emerald-500/20"
+                          )}
+                          onClick={() => handleToggleAccess(module.id)}
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className={cn(
+                              "h-10 w-10 flex items-center justify-center border",
+                              newPlan.access.includes(module.id) ? "bg-emerald-500/20 border-emerald-500/40" : "bg-black border-white/5"
+                            )}>
+                              <module.icon className={cn("h-5 w-5", newPlan.access.includes(module.id) ? "text-emerald-400" : "text-white/20")} />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className={cn("text-xs font-black uppercase tracking-widest", newPlan.access.includes(module.id) ? "text-white" : "text-white/40")}>{module.label}</span>
+                              <span className="text-[8px] font-bold text-white/20 uppercase tracking-widest mt-0.5">{module.description}</span>
+                            </div>
+                          </div>
+                          <Checkbox 
+                            checked={newPlan.access.includes(module.id)} 
+                            onCheckedChange={() => handleToggleAccess(module.id)}
+                            className="rounded-none border-white/20 data-[state=checked]:bg-emerald-500 data-[state=checked]:text-black"
+                          />
+                        </div>
+                      ))}
+                    </div>
+
+                    <DialogFooter className="pt-4 border-t border-white/5">
+                      <Button 
+                        onClick={() => setIsAccessDialogOpen(false)}
+                        className="w-full h-14 bg-emerald-500 text-black font-black uppercase text-[11px] tracking-widest rounded-none shadow-[0_0_20px_rgba(16,185,129,0.2)]"
+                      >
+                        CONFIRMAR_CONFIGURACIÓN
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+                <div className="px-2 flex flex-wrap gap-2">
+                   {newPlan.access.map(id => {
+                     const mod = ACCESS_MODULES.find(m => m.id === id);
+                     return (
+                       <span key={id} className="text-[8px] font-black text-emerald-400 bg-emerald-500/5 border border-emerald-500/20 px-2 py-1 uppercase tracking-widest">
+                         {mod?.label}
+                       </span>
+                     );
+                   })}
+                </div>
+              </div>
+
               <div className="space-y-4">
-                <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Características_Base</Label>
+                <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Atributos Visuales (Preview)</Label>
                 {newPlan.features.map((feature, idx) => (
                   <Input 
                     key={idx}
