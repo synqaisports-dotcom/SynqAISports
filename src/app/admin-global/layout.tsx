@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/auth-context";
 import { DashboardSidebar } from "@/components/dashboard/Sidebar";
 import { Loader2 } from "lucide-react";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function AdminGlobalLayout({ children }: { children: React.ReactNode }) {
   const { profile, loading } = useAuth();
 
   if (loading) {
@@ -15,7 +15,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
           <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse" />
         </div>
-        <p className="text-[10px] font-black text-primary tracking-[0.5em] uppercase">Sincronizando_Terminal_Elite...</p>
+        <p className="text-[10px] font-black text-primary tracking-[0.5em] uppercase">Sincronizando_Terminal_Global...</p>
       </div>
     );
   }
@@ -24,7 +24,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="min-h-screen bg-[#04070c] flex">
       <DashboardSidebar />
       <main className="flex-1 ml-64 p-8 overflow-y-auto relative custom-scrollbar">
-        <div className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none" />
+        {/* GRID OVERLAY PARA TODO EL SECTOR GLOBAL */}
+        <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
         
         <div className="max-w-7xl mx-auto relative z-10 animate-in fade-in slide-in-from-bottom-2 duration-700">
           {children}

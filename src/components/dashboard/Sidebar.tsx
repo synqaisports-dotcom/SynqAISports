@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -6,9 +7,7 @@ import {
   Zap, 
   LayoutDashboard, 
   Building2, 
-  Users, 
-  BrainCircuit, 
-  Settings,
+  Cpu, 
   Activity,
   Monitor,
   Watch,
@@ -17,7 +16,8 @@ import {
   TicketPercent,
   LogOut,
   ShieldCheck,
-  UserPlus
+  UserPlus,
+  Dumbbell
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -29,7 +29,7 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  // GLOBAL CONTROL (Admin Global)
+  // CONTROL_GLOBAL (Admin Global)
   { title: "Dashboard", href: "/admin-global", icon: LayoutDashboard, category: "global" },
   { title: "Gestión Clubes", href: "/admin-global/clubs", icon: Building2, category: "global" },
   { title: "Gestión Planes", href: "/admin-global/plans", icon: TicketPercent, category: "global" },
@@ -37,15 +37,16 @@ const navItems: NavItem[] = [
   { title: "Gen. Usuarios", href: "/admin-global/users", icon: UserPlus, category: "global" },
   { title: "Analytics Global", href: "/admin-global/analytics", icon: BarChart3, category: "global" },
   
-  // OPERATIONAL
-  { title: "Coach Hub", href: "/dashboard", icon: BrainCircuit, category: "operational" },
+  // OPERATIVA_ELITE
+  { title: "Coach Hub", href: "/dashboard", icon: Cpu, category: "operational" },
   { title: "Tactical Board", href: "/board", icon: Monitor, category: "operational" },
-  { title: "Club Admin", href: "/admin", icon: ShieldCheck, category: "operational" },
-  { title: "Analytics Hub", href: "/analytics", icon: Activity, category: "operational" },
+  { title: "Biblioteca Táctica", href: "/dashboard/coach/exercises", icon: Dumbbell, category: "operational" },
+  { title: "Neural Planner", href: "/dashboard/coach/planner", icon: Activity, category: "operational" },
   
-  // USER ACCESS
+  // TERMINALES_ACCESO
   { title: "Tutor Portal", href: "/tutor", icon: UserCircle, category: "user" },
   { title: "Smartwatch Link", href: "/smartwatch", icon: Watch, category: "user" },
+  { title: "Admin Club", href: "/admin", icon: ShieldCheck, category: "user" },
 ];
 
 export function DashboardSidebar() {
@@ -55,6 +56,7 @@ export function DashboardSidebar() {
 
   return (
     <div className="flex flex-col h-full bg-[#04070c] border-r border-primary/10 w-64 fixed left-0 top-0 z-30">
+      {/* LOGO SECTION */}
       <div className="p-6 flex flex-col gap-2 border-b border-white/5 bg-black/40">
         <div className="flex items-center gap-3">
           <div className="bg-primary p-1.5 rounded-sm rotate-45 cyan-glow shadow-[0_0_15px_rgba(0,242,255,0.4)]">
@@ -67,7 +69,9 @@ export function DashboardSidebar() {
         <span className="text-[8px] font-bold text-white/30 tracking-[0.6em] uppercase ml-9">SPORTS</span>
       </div>
 
+      {/* NAVIGATION SECTIONS */}
       <div className="flex-1 px-4 py-8 space-y-8 overflow-y-auto custom-scrollbar">
+        {/* GLOBAL CONTROL */}
         <div>
           <p className="px-3 mb-4 text-[8px] font-black uppercase tracking-[0.4em] text-white/20">Control_Global</p>
           <div className="space-y-1">
@@ -77,6 +81,7 @@ export function DashboardSidebar() {
           </div>
         </div>
 
+        {/* OPERATIONAL ELITE */}
         <div>
           <p className="px-3 mb-4 text-[8px] font-black uppercase tracking-[0.4em] text-primary cyan-text-glow animate-pulse">Operativa_Elite</p>
           <div className="space-y-1">
@@ -86,6 +91,7 @@ export function DashboardSidebar() {
           </div>
         </div>
 
+        {/* USER TERMINALS */}
         <div>
           <p className="px-3 mb-4 text-[8px] font-black uppercase tracking-[0.4em] text-white/20">Terminales_Acceso</p>
           <div className="space-y-1">
@@ -96,6 +102,7 @@ export function DashboardSidebar() {
         </div>
       </div>
 
+      {/* FOOTER ACTIONS */}
       <div className="p-6 border-t border-white/5 bg-black/40">
         <Link href="/" className="flex items-center gap-4 w-full px-4 py-3 text-white/20 hover:text-white transition-all font-bold text-[10px] uppercase tracking-widest hover:cyan-text-glow">
           <LogOut className="h-4 w-4" /> SALIR_A_INICIO
