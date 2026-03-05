@@ -41,7 +41,6 @@ export default function LoginPage() {
       }
       router.push("/dashboard");
     } catch (error: any) {
-      console.error("AUTH_ERROR:", error.code, error.message);
       toast({
         variant: "destructive",
         title: "FALLO_DE_SISTEMA",
@@ -56,6 +55,8 @@ export default function LoginPage() {
     setLoading(true);
     setApiError(null);
     const provider = new GoogleAuthProvider();
+    
+    // Configuración específica del cliente
     provider.setCustomParameters({ 
       prompt: 'select_account',
       client_id: '116171513626-elfpqoqa7apefapulnnp9ajrctlv0e5k.apps.googleusercontent.com'
@@ -65,26 +66,23 @@ export default function LoginPage() {
       await signInWithPopup(auth, provider);
       router.push("/dashboard");
     } catch (error: any) {
-      console.error("GOOGLE_OAUTH_ERROR:", error.code, error.message);
-      
-      let errorTitle = "FALLO_OAUTH";
-      let errorMsg = "Sincronización interrumpida.";
-      
-      if (error.message.includes("identitytoolkit.googleapis.com") || error.code === 'auth/operation-not-allowed') {
-        setApiError("https://console.developers.google.com/apis/api/identitytoolkit.googleapis.com/overview?project=659509021859");
-        errorTitle = "API_BLOQUEADA";
-        errorMsg = "La API de Identidad no está activa en tu consola.";
-      } else if (error.code === 'auth/popup-blocked') {
-        errorMsg = "Bloqueador de ventanas detectado.";
-      } else if (error.code === 'auth/popup-closed-by-user') {
-        errorMsg = "Terminal cerrado por el usuario.";
+      // Manejo específico del error de API desactivada para el proyecto 659509021859
+      if (error.message?.includes("identitytoolkit.googleapis.com") || error.code === 'auth/operation-not-allowed') {
+        const activationUrl = "https://console.developers.google.com/apis/api/identitytoolkit.googleapis.com/overview?project=659509021859";
+        setApiError(activationUrl);
+        
+        toast({
+          variant: "destructive",
+          title: "API_REQUERIDA",
+          description: "La API de Identidad no está activa en tu consola de Google.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "FALLO_OAUTH",
+          description: "Sincronización interrumpida. Inténtelo de nuevo.",
+        });
       }
-      
-      toast({
-        variant: "destructive",
-        title: errorTitle,
-        description: errorMsg,
-      });
     } finally {
       setLoading(false);
     }
@@ -111,18 +109,18 @@ export default function LoginPage() {
         <CardContent className="space-y-8 pb-14 px-[10%]">
           
           {apiError && (
-            <Alert variant="destructive" className="bg-destructive/10 border-destructive/50 animate-pulse">
+            <Alert variant="destructive" className="bg-destructive/10 border-destructive/50 animate-in fade-in slide-in-from-top-2 duration-500">
               <AlertTriangle className="h-4 w-4" />
-              <AlertTitle className="text-xs font-black uppercase tracking-widest">ERROR_DE_PROTOCOLO</AlertTitle>
-              <AlertDescription className="text-[10px] uppercase leading-relaxed mt-2">
-                Debes activar la API en tu consola de Google para permitir el acceso por Google.
+              <AlertTitle className="text-xs font-black uppercase tracking-widest">ACTIVACIÓN_PENDIENTE</AlertTitle>
+              <AlertDescription className="text-[10px] uppercase leading-relaxed mt-2 space-y-3">
+                <p>Debes habilitar manualmente la API de Identidad en tu consola de Google para permitir el acceso.</p>
                 <a 
                   href={apiError} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="mt-2 flex items-center gap-1 text-primary hover:underline font-black"
+                  className="flex items-center gap-2 text-primary hover:underline font-black bg-primary/10 p-2 border border-primary/20"
                 >
-                  ACTIVAR_API_AHORA <ExternalLink className="h-3 w-3" />
+                  <ExternalLink className="h-3 w-3" /> HABILITAR_API_EN_GOOGLE_CLOUD
                 </a>
               </AlertDescription>
             </Alert>
@@ -134,7 +132,8 @@ export default function LoginPage() {
             onClick={handleGoogleLogin}
             disabled={loading}
           >
-            <Chrome className="h-4 w-4" /> ACCESO_GOOGLE
+            {loading ? <Loader2 className="animate-spin h-4 w-4" /> : <Chrome className="h-4 w-4" />} 
+            ACCESO_GOOGLE
           </Button>
 
           <div className="relative py-2">
