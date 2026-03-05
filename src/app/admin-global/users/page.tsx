@@ -45,7 +45,7 @@ export default function GlobalUsersPage() {
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
       {/* HEADER SECTOR */}
-      <div className="flex justify-between items-end border-b border-primary/10 pb-6">
+      <div className="flex justify-between items-end border-b border-white/5 pb-6">
         <div className="space-y-1">
           <div className="flex items-center gap-3 mb-2">
             <Shield className="h-5 w-5 text-primary animate-pulse" />
@@ -169,7 +169,7 @@ export default function GlobalUsersPage() {
 
 function MetricMiniCard({ label, value, color }: any) {
   return (
-    <Card className="glass-panel border-none p-4 relative group overflow-hidden">
+    <Card className="glass-panel p-4 relative group overflow-hidden">
       <div className="absolute top-0 right-0 p-2 opacity-5">
         <Activity className="h-8 w-8 text-primary" />
       </div>
