@@ -21,7 +21,9 @@ import {
   UserCog,
   Pencil,
   Pause,
-  Play
+  Play,
+  TrendingDown,
+  Megaphone
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -58,7 +60,8 @@ import { cn } from "@/lib/utils";
 
 const ACCESS_MODULES = [
   { id: "ia_planner", label: "Neural IA Planner", description: "Generación de planes tácticos con IA.", icon: Cpu },
-  { id: "tactical_board", label: "Elite Tactical Board", description: "Pizarra 3D y análisis de video.", icon: Monitor },
+  { id: "tactical_board_pro", label: "Elite Tactical Board PRO", description: "Pizarra 3D sin publicidad.", icon: Monitor },
+  { id: "tactical_board_promo", label: "Tactical Board (MODO PROMO)", description: "Versión gratuita con inserciones publicitarias.", icon: Megaphone },
   { id: "academy_pro", label: "Gestión de Cantera", description: "Control total de categorías inferiores.", icon: Activity },
   { id: "live_metrics", label: "Métricas en Vivo", description: "Sincronización con Smartwatch y GPS.", icon: Zap },
   { id: "tutor_portal", label: "Portal de Tutores", description: "Terminal de comunicación con familias.", icon: Users },
@@ -80,8 +83,8 @@ export default function GlobalPlansPage() {
   
   const [newPlan, setNewPlan] = useState({
     title: "",
-    price: "",
-    users: "",
+    pricePerNode: "",
+    minNodes: "",
     features: ["", "", ""],
     access: [] as string[],
     defaultRole: "club_admin"
@@ -100,8 +103,8 @@ export default function GlobalPlansPage() {
     setIsEditing(false);
     setNewPlan({ 
       title: "", 
-      price: "", 
-      users: "", 
+      pricePerNode: "", 
+      minNodes: "", 
       features: ["", "", ""], 
       access: [], 
       defaultRole: "club_admin" 
@@ -113,17 +116,13 @@ export default function GlobalPlansPage() {
     setIsEditing(true);
     setNewPlan({
       title: plan.title,
-      price: plan.price,
-      users: plan.users,
+      pricePerNode: plan.pricePerNode || "1.00",
+      minNodes: plan.users || "100",
       features: plan.features || ["", "", ""],
       access: plan.access || [],
       defaultRole: plan.defaultRole || "club_admin"
     });
     setIsSheetOpen(true);
-    toast({
-      title: "PROTOCOLO_CARGADO",
-      description: `Sincronizando parámetros de ${plan.title} para modificación.`,
-    });
   };
 
   const handleSincProtocol = (e: React.FormEvent) => {
@@ -158,29 +157,31 @@ export default function GlobalPlansPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <PlanTerminalCard 
-          title="BASIC_NODE" 
-          price="$199" 
-          users="10" 
-          icon={Zap} 
-          features={["Gestión Base", "5 Entrenadores", "Analítica Simple"]} 
+          title="PROMO_LINK" 
+          price="DESDE 0,80€" 
+          users="ILIMITADOS" 
+          icon={Megaphone} 
+          features={["Pizarra con Publicidad", "Captación de Leads", "Informes ROI"]} 
           onEdit={handleOpenEdit}
+          badge="GANCHO_REDES"
         />
         <PlanTerminalCard 
-          title="PRO_NETWORK" 
-          price="$499" 
-          users="50" 
+          title="VOLUMEN_CORE" 
+          price="1,00€ / NIÑO" 
+          users="HASTA 500" 
           icon={Shield} 
           featured
-          features={["Todo en Basic", "IA Neural Planner", "API Acceso", "Soporte 24/7"]} 
+          features={["Todo en Promo", "Sin Publicidad", "Gestión Base", "Soporte Técnico"]} 
           onEdit={handleOpenEdit}
         />
         <PlanTerminalCard 
-          title="ELITE_CORE" 
-          price="CUSTOM" 
-          users="ILIMITADOS" 
+          title="ENTERPRISE_SCALE" 
+          price="0,70€ / NIÑO" 
+          users="+800 NIÑOS" 
           icon={Crown} 
-          features={["Todo en Pro", "Despliegue On-Premise", "IA Personalizada", "Gestión Multiclub"]} 
+          features={["Todo en Volumen", "IA Neural Planner", "API Acceso", "Marca Blanca"]} 
           onEdit={handleOpenEdit}
+          badge="ESCALADO_ÉLITE"
         />
       </div>
 
@@ -196,7 +197,7 @@ export default function GlobalPlansPage() {
                 {isEditing ? "MODIFICAR_PROTOCOLO" : "CONFIG_NUEVO_PLAN"}
               </SheetTitle>
               <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left">
-                {isEditing ? "Actualizando parámetros operativos del nodo." : "Definición de parámetros económicos y operativos de red."}
+                Defina el escalado por niño y la matriz operativa del club.
               </SheetDescription>
             </SheetHeader>
           </div>
@@ -210,7 +211,7 @@ export default function GlobalPlansPage() {
                   <Input 
                     value={newPlan.title}
                     onChange={(e) => setNewPlan({...newPlan, title: e.target.value.toUpperCase()})}
-                    placeholder="EJ: NEXUS_ENTERPRISE" 
+                    placeholder="EJ: VOLUMEN_ESCALADO_800" 
                     className="pl-10 h-12 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-emerald-500/50 transition-all placeholder:text-white/10" 
                   />
                 </div>
@@ -218,25 +219,25 @@ export default function GlobalPlansPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Tarifa_Mensual</Label>
+                  <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Tarifa_Por_Niño (€)</Label>
                   <div className="relative">
-                    <DollarSign className="absolute left-3 top-3 h-4 w-4 text-emerald-500/30" />
+                    <TrendingDown className="absolute left-3 top-3 h-4 w-4 text-emerald-500/30" />
                     <Input 
-                      value={newPlan.price}
-                      onChange={(e) => setNewPlan({...newPlan, price: e.target.value})}
-                      placeholder="$999" 
+                      value={newPlan.pricePerNode}
+                      onChange={(e) => setNewPlan({...newPlan, pricePerNode: e.target.value})}
+                      placeholder="0.70" 
                       className="pl-10 h-12 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-emerald-500/50" 
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Capacidad_Nodos</Label>
+                  <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Volumen_Mínimo</Label>
                   <div className="relative">
                     <Users className="absolute left-3 top-3 h-4 w-4 text-emerald-500/30" />
                     <Input 
-                      value={newPlan.users}
-                      onChange={(e) => setNewPlan({...newPlan, users: e.target.value})}
-                      placeholder="100" 
+                      value={newPlan.minNodes}
+                      onChange={(e) => setNewPlan({...newPlan, minNodes: e.target.value})}
+                      placeholder="800" 
                       className="pl-10 h-12 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-emerald-500/50" 
                     />
                   </div>
@@ -268,7 +269,7 @@ export default function GlobalPlansPage() {
               </div>
 
               <div className="space-y-4 pt-4">
-                <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Control_de_Permisos</Label>
+                <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Configuración_Accesos_Publicitarios</Label>
                 <Dialog open={isAccessDialogOpen} onOpenChange={setIsAccessDialogOpen}>
                   <DialogTrigger asChild>
                     <Button 
@@ -277,7 +278,7 @@ export default function GlobalPlansPage() {
                     >
                       <span className="flex items-center gap-3">
                         <Lock className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                        Configurar Matriz de Acceso
+                        Matriz de Sectores Operativos
                       </span>
                       <ChevronRight className="h-4 w-4" />
                     </Button>
@@ -286,10 +287,9 @@ export default function GlobalPlansPage() {
                     <DialogHeader className="space-y-4">
                       <div className="flex items-center gap-2">
                         <ShieldAlert className="h-4 w-4 text-emerald-400" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400">Security_Protocol_v2</span>
+                        <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400">Access_Matrix_V2</span>
                       </div>
-                      <DialogTitle className="text-2xl font-black italic tracking-tighter uppercase">MATRIZ_DE_ACCESO_PLAN</DialogTitle>
-                      <DialogDescription className="text-[10px] font-bold uppercase tracking-widest text-white/30">Habilita los sectores operativos para este protocolo.</DialogDescription>
+                      <DialogTitle className="text-2xl font-black italic tracking-tighter uppercase">CONFIGURAR ACCESOS</DialogTitle>
                     </DialogHeader>
                     
                     <div className="space-y-4 py-8">
@@ -323,26 +323,13 @@ export default function GlobalPlansPage() {
                       ))}
                     </div>
 
-                    <DialogFooter className="pt-4 border-t border-white/5">
-                      <Button 
-                        onClick={() => setIsAccessDialogOpen(false)}
-                        className="w-full h-14 bg-emerald-500 text-black font-black uppercase text-[11px] tracking-widest rounded-none shadow-[0_0_20px_rgba(16,185,129,0.2)]"
-                      >
-                        CONFIRMAR_CONFIGURACIÓN
+                    <DialogFooter>
+                      <Button onClick={() => setIsAccessDialogOpen(false)} className="w-full bg-emerald-500 text-black font-black uppercase tracking-widest rounded-none h-14">
+                        CONFIRMAR_ACCESOS
                       </Button>
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
-                <div className="px-2 flex flex-wrap gap-2">
-                   {newPlan.access.map(id => {
-                     const mod = ACCESS_MODULES.find(m => m.id === id);
-                     return (
-                       <span key={id} className="text-[8px] font-black text-emerald-400 bg-emerald-500/5 border border-emerald-500/20 px-2 py-1 uppercase tracking-widest">
-                         {mod?.label}
-                       </span>
-                     );
-                   })}
-                </div>
               </div>
 
               <div className="space-y-4">
@@ -383,7 +370,7 @@ export default function GlobalPlansPage() {
   );
 }
 
-function PlanTerminalCard({ title, price, users, icon: Icon, features, featured, onEdit }: any) {
+function PlanTerminalCard({ title, price, users, icon: Icon, features, featured, onEdit, badge }: any) {
   const [isActive, setIsActive] = useState(true);
   const { toast } = useToast();
 
@@ -401,18 +388,23 @@ function PlanTerminalCard({ title, price, users, icon: Icon, features, featured,
       featured && "border-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.1)]",
       !isActive && "grayscale opacity-60"
     )}>
+      {badge && (
+        <div className="absolute top-0 left-0 bg-emerald-500 text-black text-[8px] font-black px-3 py-1 uppercase tracking-widest z-10">
+          {badge}
+        </div>
+      )}
       <div className="absolute top-0 right-0 p-4 opacity-10">
         <Icon className="h-12 w-12 text-emerald-500" />
       </div>
-      <CardHeader className="text-center pt-8">
-        <CardDescription className="text-[9px] font-black uppercase tracking-[0.4em] text-white/30">{featured ? 'RECOMENDADO' : 'NIVEL_ACCESO'}</CardDescription>
+      <CardHeader className="text-center pt-10">
+        <CardDescription className="text-[9px] font-black uppercase tracking-[0.4em] text-white/30">{featured ? 'MÁS_RENTABLE' : 'NIVEL_ACCESO'}</CardDescription>
         <CardTitle className="text-2xl font-black text-white italic tracking-tighter uppercase mt-2">{title}</CardTitle>
         <div className="text-3xl font-black text-emerald-400 emerald-text-glow mt-4 font-headline">{price}</div>
       </CardHeader>
       <CardContent className="space-y-6 pt-6 flex-1">
         <div className="flex flex-col items-center gap-1 border-y border-white/5 py-4 bg-white/[0.01]">
-           <span className="text-[8px] font-black uppercase text-white/20 tracking-widest">Capacidad de Nodos</span>
-           <span className="text-xs font-black text-white">{users} Usuarios Activos</span>
+           <span className="text-[8px] font-black uppercase text-white/20 tracking-widest">Escalado de Red</span>
+           <span className="text-xs font-black text-white">{users}</span>
         </div>
         <ul className="space-y-3">
           {features.map((f: any, i: number) => (
@@ -425,7 +417,7 @@ function PlanTerminalCard({ title, price, users, icon: Icon, features, featured,
       <CardFooter className="mt-auto p-6 border-t border-white/5 flex gap-3">
         <Button 
           className="flex-1 h-12 rounded-none border border-emerald-500/40 bg-transparent text-emerald-400 font-black uppercase text-[10px] tracking-widest hover:bg-emerald-500 hover:text-black transition-all"
-          onClick={() => onEdit({ title, price, users, features })}
+          onClick={() => onEdit({ title, users, features })}
         >
           <Pencil className="h-3.5 w-3.5 mr-2" /> Modificar
         </Button>
