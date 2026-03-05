@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
@@ -12,13 +13,9 @@ import { Button } from "@/components/ui/button";
 import { 
   Users, 
   TrendingUp,
-  BrainCircuit,
   Calendar,
   Dumbbell,
-  Zap,
   Activity,
-  ArrowUpRight,
-  ShieldAlert,
   UserCog,
   Clock,
   ChevronRight,
@@ -57,12 +54,6 @@ export default function DashboardPage() {
               <Link href="/admin-global"><Globe className="h-4 w-4 mr-2" /> Núcleo Global</Link>
             </Button>
           )}
-          <Button variant="outline" className="rounded-2xl border-white/10 text-white/60 hover:text-primary hover:bg-primary/5 uppercase text-[10px] tracking-widest h-14 px-8 font-black" asChild>
-            <Link href="/dashboard/coach/exercises">Biblioteca Táctica</Link>
-          </Button>
-          <Button className="rounded-2xl shadow-lg cyan-glow flex gap-3 h-14 uppercase text-[10px] tracking-[0.2em] font-black px-10 bg-primary text-black hover:scale-105 transition-all" asChild>
-            <Link href="/dashboard/coach/planner"><BrainCircuit className="h-4 w-4" /> Nuevo Ciclo AI</Link>
-          </Button>
         </div>
       </div>
       
