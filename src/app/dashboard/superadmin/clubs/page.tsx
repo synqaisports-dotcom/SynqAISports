@@ -19,8 +19,9 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, MoreHorizontal, Building2 } from "lucide-react";
+import { Plus, Search, MoreHorizontal, Building2, Globe } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 const MOCK_CLUBS = [
   { id: "c1", name: "Elite Soccer Academy", plan: "Enterprise", users: 120, status: "Active" },
@@ -34,67 +35,80 @@ export default function ManageClubsPage() {
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-end">
-        <div>
-          <h1 className="text-3xl font-headline font-bold">Club Management</h1>
-          <p className="text-slate-500">Configure and monitor club instances.</p>
+        <div className="space-y-1">
+          <h1 className="text-3xl font-headline font-black text-white uppercase tracking-tighter italic">
+            SECTOR_CLUB_MANAGEMENT
+          </h1>
+          <p className="text-[10px] font-black text-primary tracking-[0.5em] uppercase">Sincronización de Nodos Locales</p>
         </div>
-        <Button className="rounded-xl shadow-lg shadow-primary/20 flex gap-2">
-          <Plus className="h-4 w-4" /> New Club
+        <Button className="rounded-none bg-primary text-primary-foreground font-black uppercase text-[10px] tracking-widest h-12 px-8 cyan-glow hover:scale-105 transition-all">
+          <Plus className="h-4 w-4 mr-2" /> Vincular Nuevo Club
         </Button>
       </div>
 
-      <Card className="border-none shadow-sm overflow-hidden">
-        <CardHeader className="bg-white border-b flex flex-row items-center justify-between space-y-0">
+      <Card className="glass-panel border-none shadow-2xl overflow-hidden">
+        <CardHeader className="bg-black/20 border-b border-white/5 flex flex-col md:flex-row items-start md:items-center justify-between space-y-4 md:space-y-0 p-6">
           <div className="relative w-full max-w-sm">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3 top-3.5 h-4 w-4 text-primary opacity-50" />
             <Input 
-              placeholder="Search clubs..." 
-              className="pl-10 rounded-xl bg-slate-50 border-slate-100"
+              placeholder="BUSCAR NODOS DE CLUB..." 
+              className="pl-10 h-12 bg-white/5 border-white/10 rounded-none text-white placeholder:text-white/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-primary/50"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+          <div className="flex gap-2">
+            <Badge variant="outline" className="rounded-none border-primary/20 text-primary font-black text-[9px] px-3 py-1 uppercase tracking-widest">
+              Total: {MOCK_CLUBS.length}
+            </Badge>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
-            <TableHeader className="bg-slate-50">
-              <TableRow>
-                <TableHead className="font-bold">Club Name</TableHead>
-                <TableHead className="font-bold">Plan</TableHead>
-                <TableHead className="font-bold text-center">Active Users</TableHead>
-                <TableHead className="font-bold">Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+            <TableHeader className="bg-white/[0.02] border-b border-white/5">
+              <TableRow className="hover:bg-transparent border-white/5">
+                <TableHead className="font-black text-[10px] uppercase tracking-widest text-white/40 h-14">Identificador_Club</TableHead>
+                <TableHead className="font-black text-[10px] uppercase tracking-widest text-white/40">Protocolo_Plan</TableHead>
+                <TableHead className="font-black text-[10px] uppercase tracking-widest text-white/40 text-center">Nodos_Activos</TableHead>
+                <TableHead className="font-black text-[10px] uppercase tracking-widest text-white/40">Estatus_Red</TableHead>
+                <TableHead className="text-right font-black text-[10px] uppercase tracking-widest text-white/40">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {MOCK_CLUBS.map((club) => (
-                <TableRow key={club.id} className="hover:bg-slate-50/50 transition-colors">
+                <TableRow key={club.id} className="border-white/5 hover:bg-white/[0.03] transition-colors group">
                   <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center">
-                        <Building2 className="h-4 w-4 text-slate-500" />
+                    <div className="flex items-center gap-4">
+                      <div className="h-10 w-10 bg-primary/10 border border-primary/20 flex items-center justify-center rotate-45 group-hover:bg-primary/20 transition-all">
+                        <Building2 className="h-4 w-4 text-primary -rotate-45" />
                       </div>
-                      <span className="font-semibold text-slate-700">{club.name}</span>
+                      <span className="font-black text-white uppercase text-xs tracking-tighter italic group-hover:cyan-text-glow">{club.name}</span>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="rounded-lg font-bold text-[10px] uppercase tracking-wider">
+                    <Badge variant="outline" className="rounded-none border-white/10 text-white/60 font-black text-[9px] uppercase tracking-widest bg-white/5">
                       {club.plan}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-center font-medium text-slate-600">
+                  <TableCell className="text-center font-black text-white/80 font-mono text-sm">
                     {club.users}
                   </TableCell>
                   <TableCell>
-                    <Badge className={cn(
-                      "rounded-lg text-[10px] font-bold uppercase",
-                      club.status === "Active" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
-                    )}>
-                      {club.status}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <div className={cn(
+                        "w-1.5 h-1.5 rounded-full animate-pulse",
+                        club.status === "Active" ? "bg-primary shadow-[0_0_8px_var(--primary)]" : "bg-amber-400"
+                      )} />
+                      <span className={cn(
+                        "text-[9px] font-black uppercase tracking-[0.2em]",
+                        club.status === "Active" ? "text-primary" : "text-amber-400"
+                      )}>
+                        {club.status}
+                      </span>
+                    </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon">
+                    <Button variant="ghost" size="icon" className="hover:bg-white/10 text-white/40 hover:text-primary">
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </TableCell>
@@ -106,8 +120,4 @@ export default function ManageClubsPage() {
       </Card>
     </div>
   );
-}
-
-function cn(...classes: any[]) {
-  return classes.filter(Boolean).join(" ");
 }
