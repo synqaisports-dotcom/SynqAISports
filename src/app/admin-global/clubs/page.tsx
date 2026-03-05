@@ -37,20 +37,20 @@ export default function ManageClubsPage() {
   const { toast } = useToast();
 
   const handleToggleStatus = (id: string) => {
-    setClubs(prev => prev.map(club => {
-      if (club.id === id) {
-        const isCurrentlyActive = club.status === "Active";
-        const newStatus = isCurrentlyActive ? "Inactive" : "Active";
-        
-        toast({
-          title: isCurrentlyActive ? "NODO_SUSPENDIDO" : "NODO_ACTIVADO",
-          description: `El nodo ${club.name} ha cambiado su protocolo a ${newStatus.toUpperCase()}.`,
-        });
-        
-        return { ...club, status: newStatus };
-      }
-      return club;
-    }));
+    const club = clubs.find(c => c.id === id);
+    if (!club) return;
+
+    const isCurrentlyActive = club.status === "Active";
+    const newStatus = isCurrentlyActive ? "Inactive" : "Active";
+
+    setClubs(prev => prev.map(c => 
+      c.id === id ? { ...c, status: newStatus } : c
+    ));
+
+    toast({
+      title: isCurrentlyActive ? "NODO_SUSPENDIDO" : "NODO_ACTIVADO",
+      description: `El nodo ${club.name} ha cambiado su protocolo a ${newStatus.toUpperCase()}.`,
+    });
   };
 
   const handleEdit = (name: string) => {
@@ -74,7 +74,7 @@ export default function ManageClubsPage() {
             <span className="text-[10px] font-black text-emerald-400 tracking-[0.5em] uppercase">Club_Network_Active</span>
           </div>
           <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic emerald-text-glow">
-            GESTIÓN DE CLUBES
+            Gestión de clubes
           </h1>
         </div>
         <Button className="rounded-2xl bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 transition-all border-none">

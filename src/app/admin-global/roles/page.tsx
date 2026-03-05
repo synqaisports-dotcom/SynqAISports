@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -104,28 +105,29 @@ export default function GlobalRolesPage() {
   const { toast } = useToast();
 
   const handleToggleStatus = (id: string) => {
-    setRoles(prev => prev.map(role => {
-      if (role.id === id) {
-        if (role.status === "System") {
-          toast({
-            variant: "destructive",
-            title: "ACCESO_DENEGADO",
-            description: "No se pueden suspender protocolos críticos del sistema.",
-          });
-          return role;
-        }
-        const isCurrentlyActive = role.status === "Active";
-        const newStatus = isCurrentlyActive ? "Inactive" : "Active";
-        
-        toast({
-          title: isCurrentlyActive ? "IDENTIDAD_SUSPENDIDA" : "IDENTIDAD_REACTIVADA",
-          description: `El rol ${role.name} ha cambiado su estado a ${newStatus.toUpperCase()}.`,
-        });
-        
-        return { ...role, status: newStatus };
-      }
-      return role;
-    }));
+    const role = roles.find(r => r.id === id);
+    if (!role) return;
+
+    if (role.status === "System") {
+      toast({
+        variant: "destructive",
+        title: "ACCESO_DENEGADO",
+        description: "No se pueden suspender protocolos críticos del sistema.",
+      });
+      return;
+    }
+
+    const isCurrentlyActive = role.status === "Active";
+    const newStatus = isCurrentlyActive ? "Inactive" : "Active";
+
+    setRoles(prev => prev.map(r => 
+      r.id === id ? { ...r, status: newStatus } : r
+    ));
+
+    toast({
+      title: isCurrentlyActive ? "IDENTIDAD_SUSPENDIDA" : "IDENTIDAD_REACTIVADA",
+      description: `El rol ${role.name} ha cambiado su estado a ${newStatus.toUpperCase()}.`,
+    });
   };
 
   const openSheet = (role: any = null) => {
