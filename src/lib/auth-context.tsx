@@ -14,7 +14,7 @@ interface UserProfile {
 }
 
 interface AuthContextType {
-  user: User | any | null;
+  user: any | null;
   profile: UserProfile | null;
   loading: boolean;
   loginAsGuest: () => void;
@@ -35,11 +35,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   const loginAsGuest = () => {
-    console.log("EJECUTANDO_BYPASS_DE_EMERGENCIA...");
     const guestUser = {
       uid: "guest-dev-uid",
       email: "admin@synqsports.pro",
-      displayName: "Administrador de Élite (Emergencia)",
+      displayName: "Administrador de Élite (Bypass)",
     };
     const guestProfile: UserProfile = {
       email: guestUser.email,
@@ -54,10 +53,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    // Verificar bypass inmediatamente al montar
+    // Comprobación instantánea de bypass
     const bypass = localStorage.getItem("dev_bypass");
     if (bypass === "true") {
-      loginAsGuest();
+      setUser({ uid: "guest-dev-uid", email: "admin@synqsports.pro" });
+      setProfile({ role: "superadmin", email: "admin@synqsports.pro", clubId: "global" });
+      setLoading(false);
       return;
     }
 
@@ -79,10 +80,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (userDoc.exists()) {
             setProfile(userDoc.data() as UserProfile);
           } else {
+            // Guardado silencioso de perfil por defecto
             setDoc(userDocRef, defaultProfile).catch(() => {});
             setProfile(defaultProfile);
           }
         } catch (error) {
+          // Si falla Firestore por reglas de seguridad, usamos el perfil por defecto
           setProfile(defaultProfile);
         } finally {
           setLoading(false);
