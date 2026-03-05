@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -213,9 +214,10 @@ export default function GlobalRolesPage() {
                           size="icon" 
                           className="h-10 w-10 rounded-xl text-white/20 hover:text-emerald-400 hover:bg-emerald-500/10 border border-white/5 hover:border-emerald-500/20 transition-all"
                           onClick={() => handleConfigure(role.name)}
-                          title="Configurar Protocolo"
+                          title="Modificar Protocolo"
+                          aria-label="Modificar Protocolo"
                         >
-                          <Settings2 className="h-5 w-5" />
+                          <Pencil className="h-4 w-4" />
                         </Button>
                         <Button 
                           variant="ghost" 
@@ -227,6 +229,7 @@ export default function GlobalRolesPage() {
                               : "hover:border-emerald-500/50 hover:bg-emerald-500/10 text-white/20 hover:text-emerald-400"
                           )}
                           title={role.status === "Active" ? "Suspender Identidad" : "Reactivar Identidad"}
+                          aria-label={role.status === "Active" ? "Suspender Identidad" : "Reactivar Identidad"}
                           onClick={() => handleToggleStatus(role.id)}
                           disabled={role.status === "System"}
                         >

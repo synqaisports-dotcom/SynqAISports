@@ -166,6 +166,7 @@ export default function ManageClubsPage() {
                         size="icon" 
                         className="h-10 w-10 rounded-xl border border-white/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 text-white/20 hover:text-emerald-400 transition-all" 
                         title="Modificar Protocolo"
+                        aria-label="Modificar Protocolo"
                         onClick={() => handleEdit(club.name)}
                       >
                         <Pencil className="h-4 w-4" />
@@ -180,6 +181,7 @@ export default function ManageClubsPage() {
                             : "hover:border-emerald-500/50 hover:bg-emerald-500/10 text-white/20 hover:text-emerald-400"
                         )}
                         title={club.status === "Active" ? "Pausar Nodo" : "Activar Nodo"}
+                        aria-label={club.status === "Active" ? "Pausar Nodo" : "Activar Nodo"}
                         onClick={() => handleToggleStatus(club.id)}
                       >
                         {club.status === "Active" ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
