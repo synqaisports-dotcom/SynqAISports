@@ -14,7 +14,9 @@ import {
   Activity, 
   Pause, 
   Play, 
-  Pencil 
+  Pencil,
+  ShieldCheck,
+  Crown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -32,6 +34,7 @@ import {
 } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth-context";
 
 const INITIAL_ROLES = [
   { id: "r1", name: "Superadmin", users: 3, status: "System", permissions: ["ALL"] },
@@ -49,6 +52,7 @@ const PERMISSION_MODULES = [
 ];
 
 export default function GlobalRolesPage() {
+  const { profile } = useAuth();
   const [roles, setRoles] = useState(INITIAL_ROLES);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -126,6 +130,31 @@ export default function GlobalRolesPage() {
               <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left">Define el alcance de autoridad para este nodo de usuario.</SheetDescription>
             </SheetHeader>
             <div className="space-y-8 py-4">
+              
+              {/* OPCIÓN DE ACCESO TOTAL - EXCLUSIVO SUPERADMIN */}
+              {profile?.role === "superadmin" && (
+                <div className="p-8 bg-emerald-500/10 border-2 border-emerald-500/30 rounded-[2rem] space-y-4 group relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-all">
+                    <Crown className="h-12 w-12 text-emerald-400" />
+                  </div>
+                  <div className="flex items-center justify-between relative z-10">
+                    <div className="flex items-center gap-4">
+                      <div className="h-10 w-10 bg-emerald-500/20 rounded-xl flex items-center justify-center border border-emerald-500/40">
+                        <ShieldCheck className="h-5 w-5 text-emerald-400 animate-pulse" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[11px] font-black uppercase tracking-[0.2em] text-emerald-400">PROTOCOLO_ACCESO_TOTAL</span>
+                        <span className="text-[8px] font-bold uppercase text-white/40 tracking-widest">Autoridad Raíz del Sistema</span>
+                      </div>
+                    </div>
+                    <Checkbox className="h-6 w-6 rounded-lg border-emerald-400/50 data-[state=checked]:bg-emerald-500 data-[state=checked]:text-black border-2" />
+                  </div>
+                  <p className="text-[10px] text-emerald-400/60 font-bold uppercase tracking-widest leading-relaxed pr-12">
+                    Habilita autoridad absoluta sobre todos los nodos, bases de datos y protocolos del sistema. Esta opción es exclusiva para identidades de nivel Superusuario.
+                  </p>
+                </div>
+              )}
+
               <div className="space-y-3">
                 <label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Identificador de Rol</label>
                 <Input 
@@ -136,7 +165,7 @@ export default function GlobalRolesPage() {
               </div>
               
               <div className="space-y-4">
-                <label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest block mb-4 ml-1">Matriz de Permisos</label>
+                <label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest block mb-4 ml-1">Matriz de Permisos Específicos</label>
                 <div className="grid grid-cols-1 gap-4">
                   {PERMISSION_MODULES.map(module => (
                     <div key={module.id} className="flex flex-col gap-4 p-6 bg-white/[0.03] border border-white/5 rounded-3xl hover:border-emerald-500/30 transition-all group">
