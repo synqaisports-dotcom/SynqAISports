@@ -1,9 +1,14 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // 1. Acceso total para los administradores de élite
     match /{document=**} {
-      // Acceso restringido exclusivamente a los correos de administración de élite
       allow read, write: if request.auth.token.email in ['munozmartinez.ismael@gmail.com', 'synqaisports@gmail.com'];
+    }
+    
+    // 2. Permitir que cualquier usuario autenticado gestione su propio perfil
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
   }
 }

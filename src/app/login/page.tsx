@@ -1,34 +1,47 @@
-
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword,
+  signInWithPopup, 
+  GoogleAuthProvider 
+} from "firebase/auth";
 import { auth } from "@/lib/firebase/config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Zap, Mail, Lock, Loader2, Database, ShieldAlert, Chrome } from "lucide-react";
+import { Zap, Mail, Lock, Loader2, Database, ShieldAlert, Chrome, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      if (isRegistering) {
+        await createUserWithEmailAndPassword(auth, email, password);
+        toast({
+          title: "IDENTIDAD_CREADA",
+          description: "Bienvenido al sector operativo de SynqSports.",
+        });
+      } else {
+        await signInWithEmailAndPassword(auth, email, password);
+      }
       router.push("/dashboard");
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "FALLO_DE_AUTENTICACIÓN",
-        description: "Credenciales no válidas. Verifique su email y contraseña.",
+        title: "FALLO_DE_SISTEMA",
+        description: isRegistering ? "Error al crear cuenta. Intente otro email." : "Credenciales no válidas.",
       });
     } finally {
       setLoading(false);
@@ -45,7 +58,7 @@ export default function LoginPage() {
       toast({
         variant: "destructive",
         title: "FALLO_OAUTH",
-        description: "El acceso vía Google ha sido rechazado o cancelado.",
+        description: "El acceso vía Google ha sido rechazado.",
       });
     } finally {
       setLoading(false);
@@ -54,7 +67,6 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
-      {/* Decoración de Fondo NASA */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,255,255,0.05),transparent_70%)]" />
       
       <Card className="w-full max-w-md border border-white/10 bg-black/60 backdrop-blur-2xl rounded-none relative z-10 overflow-hidden shadow-2xl">
@@ -65,8 +77,12 @@ export default function LoginPage() {
               <Database className="h-8 w-8 text-primary -rotate-45" />
             </div>
           </div>
-          <CardTitle className="text-3xl font-headline font-black text-white tracking-[0.3em]">TERMINAL_DE_ACCESO</CardTitle>
-          <CardDescription className="uppercase text-[10px] tracking-[0.2em] text-white/40 mt-4">Sincronización de credenciales requerida</CardDescription>
+          <CardTitle className="text-3xl font-headline font-black text-white tracking-[0.3em]">
+            {isRegistering ? "NUEVA_IDENTIDAD" : "TERMINAL_ACCESO"}
+          </CardTitle>
+          <CardDescription className="uppercase text-[10px] tracking-[0.2em] text-white/40 mt-4">
+            {isRegistering ? "Inicializando secuencia de registro" : "Sincronización requerida"}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-8 pb-14 px-12">
           
@@ -76,7 +92,7 @@ export default function LoginPage() {
             onClick={handleGoogleLogin}
             disabled={loading}
           >
-            <Chrome className="h-4 w-4 text-primary" /> ACCESO_RÁPIDO_GOOGLE
+            <Chrome className="h-4 w-4 text-primary" /> ACCESO_GOOGLE
           </Button>
 
           <div className="relative py-2">
@@ -84,11 +100,11 @@ export default function LoginPage() {
               <span className="w-full border-t border-white/5"></span>
             </div>
             <div className="relative flex justify-center text-[8px] uppercase tracking-[0.5em]">
-              <span className="bg-[#070a0f] px-4 text-white/20">O IDENTIDAD MANUAL</span>
+              <span className="bg-[#070a0f] px-4 text-white/20">O PROTOCOLO MANUAL</span>
             </div>
           </div>
 
-          <form onSubmit={handleEmailLogin} className="space-y-6">
+          <form onSubmit={handleAuth} className="space-y-6">
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary block">EMAIL_USUARIO</label>
               <div className="relative">
@@ -122,17 +138,31 @@ export default function LoginPage() {
               type="submit"
               disabled={loading}
             >
-              {loading ? <Loader2 className="animate-spin h-5 w-5" /> : <>VALIDAR_IDENTIDAD <Zap className="h-4 w-4 fill-current" /></>}
+              {loading ? (
+                <Loader2 className="animate-spin h-5 w-5" />
+              ) : (
+                <>
+                  {isRegistering ? "REGISTRAR_IDENTIDAD" : "VALIDAR_IDENTIDAD"} 
+                  {isRegistering ? <UserPlus className="h-4 w-4" /> : <Zap className="h-4 w-4 fill-current" />}
+                </>
+              )}
             </Button>
           </form>
 
+          <button 
+            type="button"
+            onClick={() => setIsRegistering(!isRegistering)}
+            className="w-full text-[9px] text-white/40 hover:text-primary transition-colors font-bold uppercase tracking-[0.2em]"
+          >
+            {isRegistering ? "<< Volver al Login" : "¿No tienes cuenta? Registrarse >>"}
+          </button>
+
           <div className="flex items-center gap-2 justify-center text-[9px] text-white/20 uppercase tracking-[0.3em] font-medium pt-2">
-            <ShieldAlert className="h-3.5 w-3.5" /> ENCRIPTACIÓN_AES_256_ACTIVA
+            <ShieldAlert className="h-3.5 w-3.5" /> ENCRIPTACIÓN_ACTIVA
           </div>
         </CardContent>
       </Card>
 
-      {/* Identificador Lateral */}
       <div className="absolute bottom-8 left-8 flex items-center gap-3 opacity-20 hover:opacity-100 transition-all duration-500">
         <div className="h-8 w-8 rounded-full border border-white flex items-center justify-center font-black text-xs text-white">S</div>
         <div className="text-[8px] font-bold text-white tracking-widest uppercase">System Protocol v1.0.4</div>

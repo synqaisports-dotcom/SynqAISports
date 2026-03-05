@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase/config";
 
 export type UserRole = "superadmin" | "club_admin" | "coach" | "tutor";
@@ -25,7 +25,6 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
 });
 
-// Emails con bypass de administración total
 const SUPERADMIN_EMAILS = ["munozmartinez.ismael@gmail.com", "synqaisports@gmail.com"];
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -37,27 +36,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
       if (user) {
-        // 1. Verificar si es Superadmin (Prioridad Máxima)
         if (SUPERADMIN_EMAILS.includes(user.email || "")) {
-          setProfile({
+          const adminProfile: UserProfile = {
             email: user.email || "",
             role: "superadmin",
             clubId: "global",
-          });
+          };
+          setProfile(adminProfile);
+          // Opcional: Asegurar que el perfil de admin exista en Firestore
+          await setDoc(doc(db, "users", user.uid), adminProfile, { merge: true });
           setLoading(false);
         } else {
-          // 2. Intentar recuperar perfil de Firestore para otros usuarios
           try {
             const userDoc = await getDoc(doc(db, "users", user.uid));
             if (userDoc.exists()) {
               setProfile(userDoc.data() as UserProfile);
             } else {
-              // Si el documento no existe, el perfil queda en null
-              // Esto disparará la pantalla de Acceso Denegado en el Layout
-              setProfile(null);
+              // AUTO-PROVISIÓN: Si el usuario no existe, creamos uno básico de Coach
+              const newProfile: UserProfile = {
+                email: user.email || "",
+                role: "coach",
+                clubId: "guest_node",
+              };
+              await setDoc(doc(db, "users", user.uid), newProfile);
+              setProfile(newProfile);
             }
           } catch (error) {
-            console.error("FIREWALL_BLOCK: No se pudo leer el perfil del activo.", error);
+            console.error("FIREWALL_BLOCK:", error);
             setProfile(null);
           } finally {
             setLoading(false);
