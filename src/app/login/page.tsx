@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -9,11 +8,11 @@ import {
   signInWithPopup, 
   GoogleAuthProvider 
 } from "firebase/auth";
-import { auth, db } from "@/lib/firebase/config";
+import { auth } from "@/lib/firebase/config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Database, Loader2, Chrome, Terminal, ExternalLink, ShieldAlert, AlertCircle } from "lucide-react";
+import { Database, Loader2, Chrome, Terminal, ExternalLink, ShieldAlert } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from "@/lib/auth-context";
@@ -42,7 +41,6 @@ export default function LoginPage() {
       title: "ACCESO_FORZADO",
       description: "Protocolo de emergencia activo. Entrando al sistema...",
     });
-    // Navegación física absoluta para romper cualquier bucle
     setTimeout(() => {
       window.location.href = "/dashboard";
     }, 500);
@@ -93,19 +91,22 @@ export default function LoginPage() {
     if (!errorStatus) return null;
 
     const isConfigError = errorStatus === 'auth/configuration-not-found';
-    const isApiError = errorStatus.includes('api-has-not-been-used') || errorStatus.includes('requests-to-this-api');
+    const isBlockedError = errorStatus.includes('blocked');
+    const isApiError = errorStatus.includes('identitytoolkit');
 
     return (
       <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
         <Alert variant="destructive" className="bg-primary/10 border-primary/50 rounded-none border-l-4">
           <ShieldAlert className="h-5 w-5 text-primary" />
           <AlertTitle className="text-xs font-black uppercase tracking-widest mb-2 text-primary">
-            BLOQUEO_CRÍTICO: {errorStatus}
+            BLOQUEO_SISTEMA: {errorStatus}
           </AlertTitle>
           <AlertDescription className="text-[10px] uppercase leading-relaxed text-white/80">
             {isConfigError 
-              ? `Firebase no reconoce este proyecto. Revisa que el ID "synqaisports" coincida con tu consola.`
-              : "La configuración de Google Cloud está impidiendo el acceso real."}
+              ? `El ID del proyecto en el código debe ser "studio-5944752012-52b7a". Verifica Authentication > Sign-in Method en Firebase.`
+              : isBlockedError 
+                ? "La Clave de API tiene restricciones. Debes permitir 'Identity Toolkit API' en Google Cloud Console."
+                : "La API de Identidad no está respondiendo correctamente."}
           </AlertDescription>
         </Alert>
 
@@ -116,13 +117,13 @@ export default function LoginPage() {
           <Terminal className="h-4 w-4" /> >> FORZAR_ACCESO_INMEDIATO (MODO_DEV) <<
         </Button>
 
-        {isApiError && (
+        {(isApiError || isBlockedError) && (
           <Button 
             variant="outline"
-            onClick={() => window.open(`https://console.developers.google.com/apis/api/identitytoolkit.googleapis.com/overview?project=659509021859`, '_blank')}
+            onClick={() => window.open(`https://console.developers.google.com/apis/api/identitytoolkit.googleapis.com/overview?project=1077364844635`, '_blank')}
             className="w-full h-10 border-white/20 text-white/60 text-[9px] uppercase tracking-widest"
           >
-            <ExternalLink className="h-3 w-3 mr-2" /> Habilitar Identity API en Google Cloud
+            <ExternalLink className="h-3 w-3 mr-2" /> Reparar Configuración en Google Cloud
           </Button>
         )}
       </div>
@@ -144,7 +145,7 @@ export default function LoginPage() {
             TERMINAL_ACCESO
           </CardTitle>
           <CardDescription className="uppercase text-[10px] tracking-[0.2em] text-white/40 mt-4 font-bold">
-            Sincronización de Identidad Requerida
+            Sincronización: studio-5944752012-52b7a
           </CardDescription>
         </CardHeader>
 
