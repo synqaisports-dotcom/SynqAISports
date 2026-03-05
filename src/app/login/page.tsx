@@ -12,20 +12,23 @@ import { auth } from "@/lib/firebase/config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Zap, Database, Loader2, Chrome, ShieldAlert, AlertTriangle } from "lucide-react";
+import { Zap, Database, Loader2, Chrome, ShieldAlert, AlertTriangle, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
   const router = useRouter();
   const { toast } = useToast();
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setApiError(null);
     try {
       if (isRegistering) {
         await createUserWithEmailAndPassword(auth, email, password);
@@ -51,27 +54,30 @@ export default function LoginPage() {
 
   const handleGoogleLogin = async () => {
     setLoading(true);
+    setApiError(null);
     const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: 'select_account' });
+    provider.setCustomParameters({ 
+      prompt: 'select_account',
+      client_id: '116171513626-elfpqoqa7apefapulnnp9ajrctlv0e5k.apps.googleusercontent.com'
+    });
     
     try {
       await signInWithPopup(auth, provider);
       router.push("/dashboard");
     } catch (error: any) {
-      // REGISTRO DETALLADO DEL ERROR PARA DEPURACIÓN
       console.error("GOOGLE_OAUTH_ERROR:", error.code, error.message);
       
       let errorTitle = "FALLO_OAUTH";
       let errorMsg = "Sincronización interrumpida.";
       
-      // DETECCIÓN ESPECÍFICA DE API DESACTIVADA
       if (error.message.includes("identitytoolkit.googleapis.com") || error.code === 'auth/operation-not-allowed') {
-        errorTitle = "API_DE_IDENTIDAD_REQUERIDA";
-        errorMsg = "Debes activar 'Identity Toolkit API' en Google Cloud Console para permitir el acceso.";
+        setApiError("https://console.developers.google.com/apis/api/identitytoolkit.googleapis.com/overview?project=659509021859");
+        errorTitle = "API_BLOQUEADA";
+        errorMsg = "La API de Identidad no está activa en tu consola.";
       } else if (error.code === 'auth/popup-blocked') {
-        errorMsg = "Bloqueador de ventanas detectado. Permite el popup para continuar.";
+        errorMsg = "Bloqueador de ventanas detectado.";
       } else if (error.code === 'auth/popup-closed-by-user') {
-        errorMsg = "El terminal fue cerrado antes de completar la validación.";
+        errorMsg = "Terminal cerrado por el usuario.";
       }
       
       toast({
@@ -104,6 +110,24 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent className="space-y-8 pb-14 px-[10%]">
           
+          {apiError && (
+            <Alert variant="destructive" className="bg-destructive/10 border-destructive/50 animate-pulse">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle className="text-xs font-black uppercase tracking-widest">ERROR_DE_PROTOCOLO</AlertTitle>
+              <AlertDescription className="text-[10px] uppercase leading-relaxed mt-2">
+                Debes activar la API en tu consola de Google para permitir el acceso por Google.
+                <a 
+                  href={apiError} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="mt-2 flex items-center gap-1 text-primary hover:underline font-black"
+                >
+                  ACTIVAR_API_AHORA <ExternalLink className="h-3 w-3" />
+                </a>
+              </AlertDescription>
+            </Alert>
+          )}
+
           <Button
             variant="outline"
             className="w-full h-14 border-primary/30 rounded-none text-primary hover:bg-primary/10 hover:border-primary transition-all font-black tracking-[0.2em] text-xs bg-transparent flex gap-3 uppercase"
