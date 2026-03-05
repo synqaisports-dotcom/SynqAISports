@@ -53,7 +53,7 @@ export default function GlobalUsersPage() {
             <span className="text-[10px] font-black text-emerald-400 tracking-[0.5em] uppercase">Security_Protocol_Active</span>
           </div>
           <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic emerald-text-glow">
-            USER_ACCESS_COMMAND
+            Gestión de Usuarios
           </h1>
         </div>
         <Button className="rounded-none bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 transition-all border-none">
