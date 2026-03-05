@@ -37,35 +37,47 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(user);
       if (user) {
         try {
-          // Primero intentamos recuperar el perfil existente
+          const isElite = SUPERADMIN_EMAILS.includes(user.email || "");
           const userDocRef = doc(db, "users", user.uid);
-          const userDoc = await getDoc(userDocRef);
+          
+          let profileData: UserProfile | null = null;
+          
+          try {
+            const userDoc = await getDoc(userDocRef);
+            if (userDoc.exists()) {
+              profileData = userDoc.data() as UserProfile;
+            }
+          } catch (e) {
+            // Si falla la lectura por permisos pero es Elite, forzamos perfil local
+            if (isElite) {
+              profileData = {
+                email: user.email || "",
+                role: "superadmin",
+                clubId: "global",
+              };
+            }
+          }
 
-          if (userDoc.exists()) {
-            setProfile(userDoc.data() as UserProfile);
-          } else {
-            // AUTO-PROVISIÓN: Determinamos el rol inicial
-            const isElite = SUPERADMIN_EMAILS.includes(user.email || "");
+          if (!profileData) {
+            // Auto-provisión si no existe
             const newProfile: UserProfile = {
               email: user.email || "",
               role: isElite ? "superadmin" : "coach",
               clubId: isElite ? "global" : "guest_node",
             };
 
-            // Creamos el registro en Firestore de forma asíncrona
-            await setDoc(userDocRef, newProfile);
-            setProfile(newProfile);
+            try {
+              await setDoc(userDocRef, newProfile);
+              profileData = newProfile;
+            } catch (e) {
+              // Si falla setDoc (ej. por config de Firebase), pero es Elite, permitimos entrar
+              if (isElite) profileData = newProfile;
+            }
           }
+          
+          setProfile(profileData);
         } catch (error) {
-          console.error("FIREWALL_AUTH_ERROR:", error);
-          // Si falla por permisos, intentamos al menos setear el perfil localmente si es Elite
-          if (SUPERADMIN_EMAILS.includes(user.email || "")) {
-            setProfile({
-              email: user.email || "",
-              role: "superadmin",
-              clubId: "global",
-            });
-          }
+          console.error("AUTH_ORCHESTRATION_ERROR:", error);
         } finally {
           setLoading(false);
         }

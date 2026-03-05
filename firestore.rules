@@ -1,18 +1,18 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // 1. Acceso total para los administradores de élite basado en email
+    // 1. PROTOCOLO_ELITE: Acceso total para administradores autorizados
     match /{document=**} {
-      allow read, write: if request.auth != null && request.auth.token.email in ['munozmartinez.ismael@gmail.com', 'synqaisports@gmail.com'];
+      allow read, write: if request.auth != null && 
+        request.auth.token.email in ['munozmartinez.ismael@gmail.com', 'synqaisports@gmail.com'];
     }
     
-    // 2. Protocolo de Auto-Gestión de Perfil
-    // Permite que cualquier usuario autenticado cree y gestione su propio nodo de datos
+    // 2. PROTOCOLO_USUARIO: Cada entidad gestiona su propio nodo de perfil
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // 3. Reglas por defecto: Denegar todo lo demás para seguridad máxima
+    // 3. REGLA_RESIDUAL: Bloqueo de seguridad por defecto
     match /{document=**} {
       allow read, write: if false;
     }
