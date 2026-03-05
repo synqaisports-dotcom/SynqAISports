@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -51,9 +50,13 @@ import { useAuth } from "@/lib/auth-context";
 
 const INITIAL_ROLES = [
   { id: "r1", name: "Superadmin", users: 3, status: "System", permissions: ["ALL"] },
-  { id: "r2", name: "Club Admin", users: 24, status: "Active", permissions: ["Club_Manage", "User_Manage"] },
-  { id: "r3", name: "Coach", users: 120, status: "Active", permissions: ["Tactics_Create", "Session_Manage"] },
-  { id: "r4", name: "Tutor", users: 45, status: "Active", permissions: ["Consult_Only"] },
+  { id: "r2", name: "Administrador del Club", users: 12, status: "Active", permissions: ["Club_Manage", "User_Manage"] },
+  { id: "r3", name: "Director de Cantera", users: 5, status: "Active", permissions: ["Academy_Manage"] },
+  { id: "r4", name: "Director de Metodología", users: 4, status: "Active", permissions: ["Methodology_Manage"] },
+  { id: "r5", name: "Coordinador de Etapa", users: 8, status: "Active", permissions: ["Stage_Manage"] },
+  { id: "r6", name: "Entrenador", users: 85, status: "Active", permissions: ["Tactics_Create", "Session_Manage"] },
+  { id: "r7", name: "Delegado", users: 20, status: "Active", permissions: ["Match_Report"] },
+  { id: "r8", name: "Tutor", users: 150, status: "Active", permissions: ["Consult_Only"] },
 ];
 
 const SECTOR_PERMISSIONS = [
@@ -128,7 +131,6 @@ export default function GlobalRolesPage() {
   const openSheet = (role: any = null) => {
     setEditingRole(role);
     setIsSheetOpen(true);
-    // En un caso real, cargaríamos los sectores activos desde el rol
     if (role) {
       toast({
         title: "CONFIG_TERMINAL_OPEN",
@@ -151,14 +153,13 @@ export default function GlobalRolesPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
-      {/* HEADER SECTOR */}
       <div className="flex justify-between items-end border-b border-white/5 pb-8">
         <div className="space-y-2">
           <div className="flex items-center gap-3 mb-1">
             <Fingerprint className="h-5 w-5 text-emerald-400 animate-pulse" />
             <span className="text-[10px] font-black text-emerald-400 tracking-[0.5em] uppercase">Auth_Protocol_Matrix</span>
           </div>
-          <h1 className="text-5xl font-headline font-black text-white uppercase tracking-tighter italic emerald-text-glow">
+          <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic emerald-text-glow">
             GESTIÓN DE ROLES
           </h1>
         </div>
@@ -187,7 +188,6 @@ export default function GlobalRolesPage() {
 
             <div className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10">
               
-              {/* ACCESO TOTAL (Solo Superadmin) */}
               {profile?.role === "superadmin" && (
                 <div className="p-8 bg-emerald-500/5 border border-emerald-500/30 rounded-3xl space-y-4 relative overflow-hidden group">
                   <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-all">
@@ -293,7 +293,6 @@ export default function GlobalRolesPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8">
-        {/* MAIN ROLES TABLE */}
         <Card className="glass-panel overflow-hidden border-none relative bg-black/40">
           <CardHeader className="p-8 pb-4">
             <div className="relative w-full max-w-md">
@@ -395,7 +394,6 @@ export default function GlobalRolesPage() {
           </div>
         </Card>
 
-        {/* PERMISSIONS INSIGHT */}
         <div className="space-y-6">
           <Card className="glass-panel border-emerald-500/20 bg-emerald-500/[0.03] overflow-hidden group">
             <CardHeader className="pb-2">

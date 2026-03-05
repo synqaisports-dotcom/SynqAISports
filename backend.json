@@ -7,7 +7,7 @@
       "properties": {
         "name": { "type": "string" },
         "email": { "type": "string", "format": "email" },
-        "role": { "type": "string", "enum": ["superadmin", "club_admin", "coach", "tutor", "athlete"] },
+        "role": { "type": "string", "enum": ["superadmin", "club_admin", "academy_director", "methodology_director", "stage_coordinator", "coach", "delegate", "tutor", "athlete"] },
         "clubId": { "type": "string" },
         "planId": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
