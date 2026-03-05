@@ -1,0 +1,17 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "hero-sports",
+      "description": "Athletes training in a professional environment",
+      "imageUrl": "https://picsum.photos/seed/sports1/1200/800",
+      "imageHint": "athlete training"
+    },
+    {
+      "id": "club-logo-placeholder",
+      "description": "Minimalist sports club logo",
+      "imageUrl": "https://picsum.photos/seed/club/200/200",
+      "imageHint": "sports logo"
+    }
+  ]
+}
