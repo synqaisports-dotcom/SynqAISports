@@ -66,11 +66,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-[5%] relative overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,255,255,0.05),transparent_70%)]" />
+    <div className="min-h-screen flex items-center justify-center bg-[#070a0f] px-[5%] relative overflow-hidden font-body">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,255,255,0.03),transparent_70%)]" />
       
-      <Card className="w-full max-w-md border border-white/10 bg-black/60 backdrop-blur-2xl rounded-none relative z-10 overflow-hidden shadow-2xl">
-        <div className="h-1 bg-primary cyan-glow" />
+      <Card className="w-full max-w-md border border-white/10 bg-black/40 backdrop-blur-2xl rounded-none relative z-10 overflow-hidden shadow-2xl border-t-2 border-t-primary">
         <CardHeader className="pt-12 pb-6 text-center">
           <div className="inline-flex justify-center mb-8">
             <div className="p-4 border border-primary/40 bg-primary/5 rounded-sm rotate-45 cyan-glow">
@@ -78,9 +77,9 @@ export default function LoginPage() {
             </div>
           </div>
           <CardTitle className="text-3xl font-headline font-black text-white tracking-[0.3em] uppercase">
-            {isRegistering ? "NUEVA_IDENTIDAD" : "TERMINAL_ACCESO"}
+            {isRegistering ? "NUEVA_IDENTIDAD" : "TERMINAL_ACCES"}
           </CardTitle>
-          <CardDescription className="uppercase text-[10px] tracking-[0.2em] text-white/40 mt-4">
+          <CardDescription className="uppercase text-[10px] tracking-[0.2em] text-white/40 mt-4 font-bold">
             {isRegistering ? "Inicializando secuencia de registro" : "Sincronización requerida"}
           </CardDescription>
         </CardHeader>
@@ -88,19 +87,19 @@ export default function LoginPage() {
           
           <Button
             variant="outline"
-            className="w-full h-14 border-primary/30 rounded-none text-white hover:bg-primary/10 hover:border-primary transition-all font-black tracking-[0.2em] text-xs bg-transparent flex gap-3 uppercase"
+            className="w-full h-14 border-primary/30 rounded-none text-primary hover:bg-primary/10 hover:border-primary transition-all font-black tracking-[0.2em] text-xs bg-transparent flex gap-3 uppercase"
             onClick={handleGoogleLogin}
             disabled={loading}
           >
-            <Chrome className="h-4 w-4 text-primary" /> ACCESO_GOOGLE
+            <Chrome className="h-4 w-4" /> ACCESO_GOOGLE
           </Button>
 
           <div className="relative py-2">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t border-white/5"></span>
             </div>
-            <div className="relative flex justify-center text-[8px] uppercase tracking-[0.5em]">
-              <span className="bg-[#070a0f] px-4 text-white/20">O PROTOCOLO MANUAL</span>
+            <div className="relative flex justify-center text-[8px] uppercase tracking-[0.5em] font-black">
+              <span className="bg-[#0b0e14] px-4 text-white/20">O PROTOCOLO MANUAL</span>
             </div>
           </div>
 
@@ -108,11 +107,10 @@ export default function LoginPage() {
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary block">EMAIL_USUARIO</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
                 <Input
                   type="email"
                   placeholder="admin@synqsports.pro"
-                  className="pl-10 h-14 bg-white/5 border-white/10 rounded-none focus:border-primary/50 focus:ring-0 text-white placeholder:text-white/10 text-sm tracking-wider"
+                  className="h-14 bg-white border-none rounded-none focus:ring-2 focus:ring-primary/50 text-black placeholder:text-black/30 text-sm font-bold tracking-wider"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -122,11 +120,10 @@ export default function LoginPage() {
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary block">CONTRASEÑA_ACCESO</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
                 <Input
                   type="password"
                   placeholder="••••••••"
-                  className="pl-10 h-14 bg-white/5 border-white/10 rounded-none focus:border-primary/50 focus:ring-0 text-white placeholder:text-white/10 text-sm"
+                  className="h-14 bg-white border-none rounded-none focus:ring-2 focus:ring-primary/50 text-black placeholder:text-black/30 text-sm"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -134,7 +131,7 @@ export default function LoginPage() {
               </div>
             </div>
             <Button
-              className="w-full h-14 bg-primary hover:bg-primary/80 text-primary-foreground font-black rounded-none transition-all active:scale-95 cyan-glow flex gap-3 text-sm tracking-widest uppercase"
+              className="w-full h-14 bg-primary hover:bg-primary/80 text-primary-foreground font-black rounded-none transition-all active:scale-95 cyan-glow flex gap-3 text-sm tracking-widest uppercase border-none"
               type="submit"
               disabled={loading}
             >
@@ -142,8 +139,8 @@ export default function LoginPage() {
                 <Loader2 className="animate-spin h-5 w-5" />
               ) : (
                 <>
-                  {isRegistering ? "REGISTRAR_IDENTIDAD" : "VALIDAR_IDENTIDAD"} 
-                  {isRegistering ? <UserPlus className="h-4 w-4" /> : <Zap className="h-4 w-4 fill-current" />}
+                  {isRegistering ? "REGISTRAR IDENTIDAD" : "VALIDAR IDENTIDAD"} 
+                  <Zap className="h-4 w-4 fill-current" />
                 </>
               )}
             </Button>
@@ -157,7 +154,7 @@ export default function LoginPage() {
             {isRegistering ? "<< Volver al Terminal" : "¿Nuevo Usuario? Registrar Identidad >>"}
           </button>
 
-          <div className="flex items-center gap-2 justify-center text-[9px] text-white/20 uppercase tracking-[0.3em] font-medium pt-2">
+          <div className="flex items-center gap-2 justify-center text-[9px] text-white/20 uppercase tracking-[0.3em] font-black pt-2">
             <ShieldAlert className="h-3.5 w-3.5" /> ENCRIPTACIÓN_ACTIVA
           </div>
         </CardContent>
