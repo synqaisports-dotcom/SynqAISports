@@ -87,7 +87,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-3">
             <Activity className="h-4 w-4 text-primary animate-pulse" />
             <span className="text-[10px] font-black text-primary tracking-[0.5em] uppercase italic">
-              Terminal Operativa: {profile.clubId?.toUpperCase()}
+              Terminal Operativa: {profile.clubId?.toUpperCase() || "SIN_NODO"}
             </span>
           </div>
           <h1 className="text-5xl font-headline font-black text-white italic tracking-tighter uppercase italic cyan-text-glow">
