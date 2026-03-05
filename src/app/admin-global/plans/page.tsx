@@ -4,6 +4,7 @@
 import { TicketPercent, Plus, Zap, Shield, Crown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export default function GlobalPlansPage() {
   return (
