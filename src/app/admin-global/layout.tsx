@@ -1,10 +1,12 @@
-
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
 import { DashboardSidebar } from "@/components/dashboard/Sidebar";
-import { Loader2, ChevronsRight, ChevronLeft } from "lucide-react";
+import { Loader2, ChevronsRight, ChevronLeft, ShieldAlert } from "lucide-react";
 import { SidebarProvider, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
 
 function GlobalTabTrigger() {
   const { state } = useSidebar();
@@ -30,6 +32,13 @@ function GlobalTabTrigger() {
 
 export default function AdminGlobalLayout({ children }: { children: React.ReactNode }) {
   const { profile, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && profile && profile.role !== "superadmin") {
+      router.push("/dashboard");
+    }
+  }, [profile, loading, router]);
 
   if (loading) {
     return (
@@ -39,6 +48,19 @@ export default function AdminGlobalLayout({ children }: { children: React.ReactN
           <div className="absolute inset-0 bg-emerald-500/20 blur-xl rounded-full animate-pulse" />
         </div>
         <p className="text-[10px] font-black text-emerald-500 tracking-[0.5em] uppercase">Sincronizando_Terminal_Global...</p>
+      </div>
+    );
+  }
+
+  if (profile?.role !== "superadmin") {
+    return (
+      <div className="h-screen w-full flex flex-col items-center justify-center bg-[#04070c] p-8 text-center">
+        <ShieldAlert className="h-16 w-16 text-rose-500 mb-6" />
+        <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-2">ACCESO_DENEGADO</h2>
+        <p className="text-white/40 font-bold uppercase text-[10px] tracking-widest mb-8">No tiene privilegios para acceder al Núcleo Global.</p>
+        <Button onClick={() => router.push("/dashboard")} className="bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 h-12">
+          Volver a mi Nodo
+        </Button>
       </div>
     );
   }

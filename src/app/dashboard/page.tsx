@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
@@ -47,16 +46,14 @@ export default function DashboardPage() {
             </span>
           </div>
           <h1 className="text-5xl font-headline font-black text-white italic tracking-tighter uppercase italic cyan-text-glow">
-            {isSuperAdmin ? "SUPERADMIN_OPERATIONS" : "COACH_DASHBOARD"}
+            COACH_DASHBOARD
           </h1>
-          {isSuperAdmin && (
-            <p className="text-[10px] font-black text-white/30 tracking-[0.2em] uppercase">Visualizando métricas operativas del nodo raíz</p>
-          )}
+          <p className="text-[10px] font-black text-white/30 tracking-[0.2em] uppercase">Métricas operativas y cronograma del club</p>
         </div>
         
         <div className="flex flex-wrap gap-4">
           {isSuperAdmin && (
-            <Button variant="outline" className="rounded-2xl border-primary/40 text-primary hover:bg-primary/10 uppercase text-[10px] tracking-widest h-14 px-8 font-black shadow-[0_0_15px_rgba(0,242,255,0.1)]" asChild>
+            <Button variant="outline" className="rounded-2xl border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 uppercase text-[10px] tracking-widest h-14 px-8 font-black shadow-[0_0_15px_rgba(16,185,129,0.1)]" asChild>
               <Link href="/admin-global"><Globe className="h-4 w-4 mr-2" /> Núcleo Global</Link>
             </Button>
           )}
@@ -69,7 +66,7 @@ export default function DashboardPage() {
         </div>
       </div>
       
-      {/* MÉTRICAS OPERATIVAS (LO QUE NO SE VEÍA) */}
+      {/* MÉTRICAS OPERATIVAS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <OperationalMetricCard 
           title="Total Jugadores" 

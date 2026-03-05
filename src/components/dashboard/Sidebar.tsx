@@ -26,6 +26,7 @@ import {
   Users
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth-context";
 import { 
   Sidebar, 
   SidebarContent, 
@@ -75,12 +76,14 @@ const navItems: NavItem[] = [
 export function DashboardSidebar() {
   const pathname = usePathname();
   const { toggleSidebar } = useSidebar();
+  const { profile } = useAuth();
   
   if (pathname === "/dashboard/coach/onboarding") return null;
 
+  const isSuperAdmin = profile?.role === "superadmin";
+
   return (
     <Sidebar collapsible="offcanvas" className="border-r border-white/5 bg-[#04070c] shadow-[4px_0_24px_rgba(0,0,0,0.5)]">
-      {/* LOGO SECTION - MARCA LIMPIA SIN INTERRUPCIONES */}
       <SidebarHeader className="p-8 border-b border-white/5 bg-black/60 backdrop-blur-md">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -94,7 +97,6 @@ export function DashboardSidebar() {
               <span className="text-[9px] font-black text-white/30 tracking-[0.4em] uppercase">SPORTS_PRO</span>
             </div>
           </div>
-          {/* BOTÓN DE OCULTACIÓN INTERNO DISCRETO */}
           <button 
             onClick={toggleSidebar}
             className="h-8 w-8 rounded-xl bg-white/5 flex items-center justify-center text-white/40 hover:text-primary transition-all border border-white/5 lg:hidden"
@@ -105,18 +107,19 @@ export function DashboardSidebar() {
         </div>
       </SidebarHeader>
 
-      {/* NAVIGATION SECTIONS */}
       <SidebarContent className="px-3 py-8 space-y-10 custom-scrollbar overflow-x-hidden">
-        {/* GLOBAL CONTROL */}
-        <SidebarGroupWrapper title="Control_Global" color="text-emerald-400">
-          <SidebarMenu>
-            {navItems.filter(i => i.category === "global").map((item) => (
-              <SidebarMenuItem key={item.href}>
-                <SidebarLink item={item} isActive={pathname === item.href} isGlobal />
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarGroupWrapper>
+        {/* GLOBAL CONTROL - ONLY FOR SUPERADMIN */}
+        {isSuperAdmin && (
+          <SidebarGroupWrapper title="Control_Global" color="text-emerald-400">
+            <SidebarMenu>
+              {navItems.filter(i => i.category === "global").map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarLink item={item} isActive={pathname === item.href} isGlobal />
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupWrapper>
+        )}
 
         {/* OPERATIONAL ELITE */}
         <SidebarGroupWrapper title="Operativa_Elite" color="text-primary">
@@ -141,7 +144,6 @@ export function DashboardSidebar() {
         </SidebarGroupWrapper>
       </SidebarContent>
 
-      {/* FOOTER ACTIONS */}
       <SidebarFooter className="p-6 border-t border-white/5 bg-black/60 backdrop-blur-md">
         <Link href="/" className="flex items-center gap-4 px-4 py-4 text-white/30 hover:text-white transition-all font-black text-[10px] uppercase tracking-widest hover:bg-white/5 rounded-2xl group overflow-hidden w-full">
           <LogOut className="h-5 w-5 shrink-0 group-hover:translate-x-1 transition-transform" />
