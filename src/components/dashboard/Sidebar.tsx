@@ -50,6 +50,9 @@ const navItems: NavItem[] = [
 
 export function DashboardSidebar() {
   const pathname = usePathname();
+  
+  // Hide global sidebar in onboarding tunnel to match the requested design
+  if (pathname === "/dashboard/coach/onboarding") return null;
 
   return (
     <div className="flex flex-col h-full bg-background border-r border-white/5 w-64 fixed left-0 top-0 z-30">

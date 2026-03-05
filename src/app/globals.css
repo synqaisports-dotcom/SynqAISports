@@ -4,24 +4,22 @@
 
 @layer base {
   :root {
-    /* Deep Night: #0F172A */
-    --background: 222 47% 8%; 
+    --background: 222 47% 4%; 
     --foreground: 213 31% 91%;
     
-    --card: 222 47% 10%;
+    --card: 222 47% 6%;
     --card-foreground: 213 31% 91%;
     
-    --popover: 222 47% 8%;
+    --popover: 222 47% 4%;
     --popover-foreground: 215 20.2% 65.1%;
     
-    /* Electric Cyan: #00F2FF */
     --primary: 183 100% 50%; 
     --primary-foreground: 222 47% 11%;
     
-    --secondary: 222 47% 15%;
+    --secondary: 222 47% 10%;
     --secondary-foreground: 210 40% 98%;
     
-    --muted: 223 47% 12%;
+    --muted: 223 47% 8%;
     --muted-foreground: 215.4 16.3% 56.9%;
     
     --accent: 183 100% 50%;
@@ -30,11 +28,11 @@
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
     
-    --border: 216 34% 17%;
-    --input: 216 34% 17%;
+    --border: 183 100% 50% / 0.2;
+    --input: 183 100% 50% / 0.1;
     --ring: 183 100% 50%;
     
-    --radius: 0.5rem;
+    --radius: 0rem;
   }
 }
 
@@ -46,7 +44,7 @@
     @apply bg-background text-foreground font-body;
     background-image: 
       radial-gradient(at 0% 0%, hsla(183, 100%, 50%, 0.05) 0, transparent 50%),
-      radial-gradient(at 100% 100%, hsla(183, 100%, 50%, 0.03) 0, transparent 50%);
+      radial-gradient(at 100% 100%, hsla(183, 100%, 50% / 0.03) 0, transparent 50%);
     background-attachment: fixed;
   }
   h1, h2, h3, h4, h5, h6 {
@@ -54,8 +52,15 @@
   }
 }
 
+.bg-grid-pattern {
+  background-size: 60px 60px;
+  background-image:
+    linear-gradient(to right, rgba(0, 242, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 242, 255, 0.05) 1px, transparent 1px);
+}
+
 .glass-panel {
-  @apply bg-white/[0.03] backdrop-blur-xl border border-primary/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] transition-all;
+  @apply bg-white/[0.02] backdrop-blur-xl border border-primary/20 shadow-[0_0_40px_rgba(0,0,0,0.5)] transition-all;
 }
 
 .glass-panel:hover {
@@ -63,32 +68,21 @@
 }
 
 .cyan-glow {
-  box-shadow: 0 0 25px hsla(183, 100%, 50%, 0.35);
+  box-shadow: 0 0 30px hsla(183, 100%, 50%, 0.4);
 }
 
 .cyan-text-glow {
-  text-shadow: 0 0 12px hsla(183, 100%, 50%, 0.6);
+  text-shadow: 0 0 15px hsla(183, 100%, 50%, 0.8);
 }
 
-.gradient-cyan-emerald {
-  @apply bg-gradient-to-br from-[#00F2FF] to-[#10B981];
+.pulse-glow {
+  animation: pulse-cyan 3s infinite;
 }
 
-/* Custom Scrollbar Elite */
-::-webkit-scrollbar {
-  width: 5px;
-}
-::-webkit-scrollbar-track {
-  @apply bg-black/20;
-}
-::-webkit-scrollbar-thumb {
-  @apply bg-primary/20 rounded-full hover:bg-primary/50 transition-colors;
-}
-
-/* Animación de escaneo NASA */
-@keyframes scan {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(100%); }
+@keyframes pulse-cyan {
+  0% { box-shadow: 0 0 10px hsla(183, 100%, 50%, 0.2); }
+  50% { box-shadow: 0 0 25px hsla(183, 100%, 50%, 0.5); }
+  100% { box-shadow: 0 0 10px hsla(183, 100%, 50%, 0.2); }
 }
 
 .scan-line {
@@ -99,4 +93,9 @@
   opacity: 0.1;
   animation: scan 4s linear infinite;
   pointer-events: none;
+}
+
+@keyframes scan {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
 }
