@@ -1,29 +1,30 @@
+
 'use server';
 /**
- * @fileOverview Flujo de IA para la generación de campañas de marketing deportivo.
+ * @fileOverview Flujo de IA para la generación de tokens de acceso y campañas de marketing regional.
  * 
- * - generatePromoCampaign - Función que maneja la creación de campañas.
- * - GenerateCampaignInput - Esquema de entrada.
- * - GenerateCampaignOutput - Esquema de salida.
+ * - generatePromoCampaign - Función que maneja la creación de campañas y tokens.
+ * - GenerateCampaignInput - Esquema de entrada (Región, Plan, Plataforma).
+ * - GenerateCampaignOutput - Esquema de salida (Token, Hook, Copy, Estrategia).
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const GenerateCampaignInputSchema = z.object({
-  objective: z.string().describe('El objetivo de la campaña (ej. "Captar clubes con pizarra gratis", "Escalado de 0.70€ por niño").'),
-  platform: z.enum(['Facebook', 'Instagram', 'LinkedIn', 'Google Ads', 'YouTube']).describe('La plataforma principal de difusión.'),
-  planId: z.string().describe('El identificador del plan de suscripción vinculado a esta campaña.'),
+  objective: z.string().describe('El objetivo demográfico y de captación (ej. "Primeros 10 entrenadores de Argentina", "Clubes élite en Madrid").'),
+  platform: z.enum(['Facebook', 'Instagram', 'LinkedIn', 'Google Ads', 'YouTube']).describe('La plataforma principal de difusión del Magic Link.'),
+  planId: z.string().describe('El identificador del plan de suscripción que desbloqueará el token.'),
 });
 export type GenerateCampaignInput = z.infer<typeof GenerateCampaignInputSchema>;
 
 const GenerateCampaignOutputSchema = z.object({
-  campaignTitle: z.string().describe('Título interno de la campaña.'),
-  mainHook: z.string().describe('El gancho principal de venta (Lead Magnet).'),
-  socialMediaCopy: z.string().describe('Texto publicitario optimizado para la plataforma seleccionada.'),
-  suggestedPromoCode: z.string().describe('Código promocional sugerido.'),
-  suggestedPlanId: z.string().describe('ID del plan recomendado para vincular a esta campaña.'),
-  adStrategy: z.string().describe('Breve estrategia de segmentación para la plataforma seleccionada.'),
+  campaignTitle: z.string().describe('Título interno de la campaña/token.'),
+  mainHook: z.string().describe('La oferta irresistible que justifica el uso del Magic Link (ej. Acceso vitalicio a Pizarra Pro para los primeros 10).'),
+  socialMediaCopy: z.string().describe('Texto publicitario optimizado que incluye la instrucción de usar el código o link.'),
+  suggestedPromoCode: z.string().describe('Token de acceso único sugerido (ej. ARG-ELITE-10).'),
+  suggestedPlanId: z.string().describe('ID del plan vinculado.'),
+  adStrategy: z.string().describe('Estrategia de segmentación para la región indicada.'),
 });
 export type GenerateCampaignOutput = z.infer<typeof GenerateCampaignOutputSchema>;
 
@@ -31,19 +32,18 @@ const prompt = ai.definePrompt({
   name: 'generatePromoCampaignPrompt',
   input: {schema: GenerateCampaignInputSchema},
   output: {schema: GenerateCampaignOutputSchema},
-  prompt: `Actúa como un experto en marketing deportivo para SynqAI.
-Tu misión es generar una campaña publicitaria de alto impacto basada en este objetivo: {{{objective}}}
+  prompt: `Actúa como un estratega de crecimiento para SynqAI.
+Tu misión es generar un "Magic Token" de acceso y su correspondiente campaña para este objetivo: {{{objective}}}
 Plataforma: {{{platform}}}
 Plan Vinculado: {{{planId}}}
 
-Contexto Estratégico:
-1. Usamos la Pizarra Táctica (Modo Promo con Ads) como gancho gratuito (Lead Magnet).
-2. El modelo de negocio es volumen por niño (1€ a 0.70€ según escalado).
-3. Los clubes ganan dinero aumentando su cuota anual.
+Instrucciones Estratégicas:
+1. Generación de Token: Crea un token alfanumérico corto y potente (ej: MAD-PRO-50).
+2. Gancho de Escasez: La campaña debe centrarse en que el acceso es limitado (ej: "Solo para los 10 primeros").
+3. Contexto de Producto: El gancho puede ser la Pizarra Táctica (Modo Promo gratis) o el acceso a funcionalidades de élite.
+4. Si la plataforma es YouTube, genera una estructura de guion de 15s enfocada en el beneficio de entrar ahora con el token.
 
-Si la plataforma es YouTube, genera una estructura de guion breve para un anuncio de 15-30 segundos centrado en el beneficio económico para el club.
-
-Genera un plan de campaña profesional con un lenguaje de élite, técnico y motivador.
+Genera un plan de token profesional con un lenguaje de élite, técnico y altamente persuasivo.
 Idioma: Español.`,
 });
 
