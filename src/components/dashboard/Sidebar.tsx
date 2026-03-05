@@ -17,9 +17,7 @@ import {
   ShieldCheck,
   UserPlus,
   Dumbbell,
-  Fingerprint,
-  ChevronLeft,
-  ChevronRight
+  Fingerprint
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { 
@@ -31,7 +29,8 @@ import {
   SidebarMenuItem, 
   SidebarMenuButton,
   useSidebar,
-  SidebarTrigger
+  SidebarTrigger,
+  SidebarGroup
 } from "@/components/ui/sidebar";
 
 interface NavItem {
@@ -65,7 +64,7 @@ const navItems: NavItem[] = [
 
 export function DashboardSidebar() {
   const pathname = usePathname();
-  const { state, toggleSidebar } = useSidebar();
+  const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
   
   if (pathname === "/dashboard/coach/onboarding") return null;
@@ -73,14 +72,23 @@ export function DashboardSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r border-white/5 bg-[#04070c] shadow-[4px_0_24px_rgba(0,0,0,0.5)]">
       {/* LOGO SECTION */}
-      <SidebarHeader className="p-4 border-b border-white/5 bg-black/60 backdrop-blur-md">
-        <div className="flex items-center justify-between gap-2 overflow-hidden">
-          <div className="flex items-center gap-3">
-            <div className="bg-primary p-2 rounded-xl cyan-glow shadow-[0_0_20px_rgba(0,242,255,0.4)]">
+      <SidebarHeader className={cn(
+        "border-b border-white/5 bg-black/60 backdrop-blur-md transition-all duration-300",
+        isCollapsed ? "p-2" : "p-4"
+      )}>
+        <div className={cn(
+          "flex items-center gap-3 overflow-hidden",
+          isCollapsed ? "flex-col justify-center" : "justify-between"
+        )}>
+          <div className={cn(
+            "flex items-center gap-3",
+            isCollapsed && "flex-col"
+          )}>
+            <div className="bg-primary p-2 rounded-xl shrink-0 cyan-glow shadow-[0_0_20px_rgba(0,242,255,0.4)]">
               <Zap className="h-5 w-5 text-black" />
             </div>
             {!isCollapsed && (
-              <div className="flex flex-col animate-in fade-in duration-500">
+              <div className="flex flex-col animate-in fade-in duration-500 overflow-hidden">
                 <span className="font-headline font-black text-xl tracking-tighter text-white uppercase italic">
                   Synq<span className="text-primary cyan-text-glow">AI</span>
                 </span>
@@ -88,7 +96,10 @@ export function DashboardSidebar() {
               </div>
             )}
           </div>
-          <SidebarTrigger className="text-white/40 hover:text-primary hover:bg-white/5" />
+          <SidebarTrigger className={cn(
+            "text-white/40 hover:text-primary hover:bg-white/5 transition-all",
+            isCollapsed && "mt-2"
+          )} />
         </div>
       </SidebarHeader>
 
@@ -129,13 +140,16 @@ export function DashboardSidebar() {
       </SidebarContent>
 
       {/* FOOTER ACTIONS */}
-      <SidebarFooter className="p-4 border-t border-white/5 bg-black/60 backdrop-blur-md">
+      <SidebarFooter className={cn(
+        "border-t border-white/5 bg-black/60 backdrop-blur-md transition-all duration-300",
+        isCollapsed ? "p-2" : "p-4"
+      )}>
         <Link href="/" className={cn(
           "flex items-center gap-4 px-3 py-3 text-white/30 hover:text-white transition-all font-black text-[10px] uppercase tracking-widest hover:bg-white/5 rounded-2xl group overflow-hidden",
-          isCollapsed && "justify-center px-0"
+          isCollapsed ? "justify-center px-0" : "w-full"
         )}>
           <LogOut className="h-4 w-4 shrink-0 group-hover:translate-x-1 transition-transform" />
-          {!isCollapsed && <span className="animate-in fade-in duration-500">SALIR_A_INICIO</span>}
+          {!isCollapsed && <span className="animate-in fade-in duration-500 whitespace-nowrap">SALIR_A_INICIO</span>}
         </Link>
       </SidebarFooter>
     </Sidebar>
@@ -144,14 +158,14 @@ export function DashboardSidebar() {
 
 function SidebarGroupWrapper({ children, title, isCollapsed, color }: any) {
   return (
-    <div className="space-y-2">
+    <SidebarGroup className="p-0">
       {!isCollapsed && (
         <p className={cn("px-4 mb-3 text-[8px] font-black uppercase tracking-[0.4em] animate-in fade-in duration-500", color)}>
           {title}
         </p>
       )}
       {children}
-    </div>
+    </SidebarGroup>
   );
 }
 
@@ -177,7 +191,7 @@ function SidebarLink({ item, isActive, isGlobal, isCollapsed }: { item: NavItem;
     >
       <Link href={item.href}>
         <item.icon className={cn("h-4 w-4 shrink-0 transition-all duration-500", iconClass)} />
-        {!isCollapsed && <span className="font-bold text-[9px] uppercase tracking-[0.2em] animate-in fade-in duration-500">{item.title}</span>}
+        {!isCollapsed && <span className="font-bold text-[9px] uppercase tracking-[0.2em] animate-in fade-in duration-500 whitespace-nowrap">{item.title}</span>}
         {isActive && !isCollapsed && (
           <div className={cn(
             "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-1/2 rounded-full",
