@@ -51,18 +51,17 @@ const navItems: NavItem[] = [
 export function DashboardSidebar() {
   const pathname = usePathname();
   
-  // Hide global sidebar in onboarding tunnel to match the requested design
   if (pathname === "/dashboard/coach/onboarding") return null;
 
   return (
-    <div className="flex flex-col h-full bg-background border-r border-white/5 w-64 fixed left-0 top-0 z-30">
-      <div className="p-6 flex flex-col gap-2 border-b border-white/5">
+    <div className="flex flex-col h-full bg-[#04070c] border-r border-primary/10 w-64 fixed left-0 top-0 z-30">
+      <div className="p-6 flex flex-col gap-2 border-b border-white/5 bg-black/40">
         <div className="flex items-center gap-3">
-          <div className="bg-primary p-1.5 rounded-sm rotate-45 cyan-glow">
-            <Zap className="h-4 w-4 text-primary-foreground -rotate-45" />
+          <div className="bg-primary p-1.5 rounded-sm rotate-45 cyan-glow shadow-[0_0_15px_rgba(0,242,255,0.4)]">
+            <Zap className="h-4 w-4 text-black -rotate-45" />
           </div>
           <span className="font-headline font-bold text-xl tracking-tighter text-white uppercase italic">
-            Synq<span className="text-primary">AI</span>
+            Synq<span className="text-primary cyan-text-glow">AI</span>
           </span>
         </div>
         <span className="text-[8px] font-bold text-white/30 tracking-[0.6em] uppercase ml-9">SPORTS</span>
@@ -79,7 +78,7 @@ export function DashboardSidebar() {
         </div>
 
         <div>
-          <p className="px-3 mb-4 text-[8px] font-black uppercase tracking-[0.4em] text-white/20">Operativa_Elite</p>
+          <p className="px-3 mb-4 text-[8px] font-black uppercase tracking-[0.4em] text-primary cyan-text-glow animate-pulse">Operativa_Elite</p>
           <div className="space-y-1">
             {navItems.filter(i => i.category === "operational").map((item) => (
               <SidebarLink key={item.href} item={item} isActive={pathname === item.href} />
@@ -97,8 +96,8 @@ export function DashboardSidebar() {
         </div>
       </div>
 
-      <div className="p-6 border-t border-white/5 bg-black/20">
-        <Link href="/" className="flex items-center gap-4 w-full px-4 py-3 text-white/20 hover:text-white transition-all font-bold text-[10px] uppercase tracking-widest">
+      <div className="p-6 border-t border-white/5 bg-black/40">
+        <Link href="/" className="flex items-center gap-4 w-full px-4 py-3 text-white/20 hover:text-white transition-all font-bold text-[10px] uppercase tracking-widest hover:cyan-text-glow">
           <LogOut className="h-4 w-4" /> SALIR_A_INICIO
         </Link>
       </div>
@@ -113,15 +112,18 @@ function SidebarLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
       className={cn(
         "flex items-center gap-4 px-4 py-3 rounded-none transition-all relative group",
         isActive 
-          ? "bg-primary/10 text-primary border-l-2 border-primary" 
+          ? "bg-primary/5 text-primary border-l-2 border-primary shadow-[inset_4px_0_10px_rgba(0,242,255,0.05)]" 
           : "text-white/40 hover:text-white hover:bg-white/5"
       )}
     >
       <item.icon className={cn(
-        "h-4 w-4",
-        isActive ? "text-primary cyan-text-glow" : "group-hover:text-primary transition-colors"
+        "h-4 w-4 transition-all duration-300",
+        isActive ? "text-primary cyan-text-glow scale-110" : "group-hover:text-primary group-hover:scale-110"
       )} />
       <span className="font-bold text-[9px] uppercase tracking-[0.2em]">{item.title}</span>
+      {isActive && (
+        <div className="absolute right-0 top-0 h-full w-[1px] bg-primary/20 blur-[1px]" />
+      )}
     </Link>
   );
 }
