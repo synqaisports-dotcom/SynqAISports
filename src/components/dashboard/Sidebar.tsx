@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { 
   Zap, 
   LayoutDashboard, 
@@ -81,12 +81,26 @@ const navItems: NavItem[] = [
 export function DashboardSidebar() {
   const { profile } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
 
   if (!profile) return null;
 
   const filteredItems = navItems.filter((item) =>
     item.roles.includes(profile.role)
   );
+
+  const handleLogout = async () => {
+    // Limpiamos el bypass de desarrollo
+    localStorage.removeItem("dev_bypass");
+    // Cerramos sesión en Firebase
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("LOGOUT_ERROR:", error);
+    }
+    // Redirección forzada al terminal de acceso
+    window.location.href = "/login";
+  };
 
   return (
     <div className="flex flex-col h-full bg-background border-r border-white/5 w-64 fixed left-0 top-0 z-30">
@@ -144,7 +158,7 @@ export function DashboardSidebar() {
           </div>
         </div>
         <button
-          onClick={() => signOut(auth)}
+          onClick={handleLogout}
           className="flex items-center gap-4 w-full px-4 py-3 text-white/40 hover:text-destructive hover:bg-destructive/10 transition-all font-bold text-[10px] uppercase tracking-widest"
         >
           <LogOut className="h-4 w-4" />
