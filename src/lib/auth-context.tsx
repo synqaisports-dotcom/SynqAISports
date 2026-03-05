@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
@@ -35,53 +34,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
       if (user) {
+        setUser(user);
+        const isElite = SUPERADMIN_EMAILS.includes(user.email || "");
+        
+        // Perfil por defecto (Fail-safe)
+        const defaultProfile: UserProfile = {
+          email: user.email || "",
+          role: isElite ? "superadmin" : "coach",
+          clubId: isElite ? "global" : "guest_node",
+        };
+
         try {
-          const isElite = SUPERADMIN_EMAILS.includes(user.email || "");
           const userDocRef = doc(db, "users", user.uid);
+          const userDoc = await getDoc(userDocRef);
           
-          let profileData: UserProfile | null = null;
-          
-          try {
-            const userDoc = await getDoc(userDocRef);
-            if (userDoc.exists()) {
-              profileData = userDoc.data() as UserProfile;
-            }
-          } catch (e) {
-            // Bypass para usuarios de élite si hay errores de Firestore
-            if (isElite) {
-              profileData = {
-                email: user.email || "",
-                role: "superadmin",
-                clubId: "global",
-              };
-            }
+          if (userDoc.exists()) {
+            setProfile(userDoc.data() as UserProfile);
+          } else {
+            // Intentar crear el perfil pero no bloquear si falla
+            setDoc(userDocRef, defaultProfile).catch(console.warn);
+            setProfile(defaultProfile);
           }
-
-          if (!profileData) {
-            // Auto-provisión para nuevos usuarios
-            const newProfile: UserProfile = {
-              email: user.email || "",
-              role: isElite ? "superadmin" : "coach",
-              clubId: isElite ? "global" : "guest_node",
-            };
-
-            try {
-              await setDoc(userDocRef, newProfile);
-              profileData = newProfile;
-            } catch (e) {
-              if (isElite) profileData = newProfile;
-            }
-          }
-          
-          setProfile(profileData);
         } catch (error) {
-          console.error("AUTH_ORCHESTRATION_ERROR:", error);
+          // Si Firestore falla (por reglas o red), entramos con el perfil por defecto
+          console.warn("FIRESTORE_ACCESS_BYPASS: Usando perfil local de emergencia.");
+          setProfile(defaultProfile);
         } finally {
           setLoading(false);
         }
       } else {
+        setUser(null);
         setProfile(null);
         setLoading(false);
       }

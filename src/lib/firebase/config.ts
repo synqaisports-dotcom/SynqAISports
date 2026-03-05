@@ -2,14 +2,14 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-// Configuración de Misión Crítica
+// Configuración de Misión Crítica (Hardcoded para estabilidad en prototipo)
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  apiKey: "AIzaSyDSyukojYSkwnEJi3dka-yf_H7WRi_gjsc",
+  authDomain: "synqaisports.firebaseapp.com",
+  projectId: "synqaisports",
+  storageBucket: "synqaisports.firebasestorage.app",
+  messagingSenderId: "593859385938", // Placeholder si no se tiene el real
+  appId: "1:593859385938:web:abcdef123456", // Placeholder si no se tiene el real
 };
 
 // Inicialización Segura

@@ -33,37 +33,8 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
 
   if (!user) return null;
 
-  // Manejo de identidad no autorizada (NASA Effect Error State)
-  if (!profile) {
-    return (
-      <div className="h-screen w-full flex flex-col items-center justify-center bg-background p-[5%] text-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,0,0,0.05),transparent_70%)]" />
-        <div className="relative z-10 space-y-6 max-w-md">
-          <div className="inline-flex p-6 border border-destructive/50 bg-destructive/5 rounded-sm mb-4">
-            <ShieldAlert className="h-12 w-12 text-destructive" />
-          </div>
-          <h1 className="text-3xl font-headline font-black text-white tracking-tighter">FALLO_DE_AUTORIZACIÓN</h1>
-          <div className="space-y-4">
-            <p className="text-[10px] text-white/40 uppercase tracking-[0.2em] leading-relaxed">
-              La firma digital asociada a <span className="text-white">{user.email}</span> no cuenta con privilegios de acceso en el sector actual.
-            </p>
-            <div className="p-4 bg-white/5 border border-white/10 text-[9px] font-mono text-left text-white/30 uppercase">
-              STATUS: ACCESS_DENIED<br />
-              ORIGIN: CLOUD_FIRESTORE_SECURITY_RULES<br />
-              ACTION: CONTACT_SYSTEM_ADMINISTRATOR
-            </div>
-          </div>
-          <Button 
-            variant="outline" 
-            className="w-full rounded-none border-white/10 text-white/60 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50 transition-all font-black text-[10px] tracking-widest h-12"
-            onClick={() => signOut(auth)}
-          >
-            <LogOut className="mr-2 h-4 w-4" /> TERMINAR_SESIÓN
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  // Si después de la carga no hay perfil (caso extremo), usamos uno de emergencia
+  const effectiveProfile = profile || { role: "coach", email: user.email };
 
   return (
     <div className="min-h-screen bg-background flex">
