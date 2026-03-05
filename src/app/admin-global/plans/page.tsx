@@ -76,6 +76,7 @@ const AVAILABLE_ROLES = [
 export default function GlobalPlansPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isAccessDialogOpen, setIsAccessDialogOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const { toast } = useToast();
   
   const [newPlan, setNewPlan] = useState({
@@ -96,14 +97,43 @@ export default function GlobalPlansPage() {
     }));
   };
 
-  const handleCreateProtocol = (e: React.FormEvent) => {
+  const handleOpenCreate = () => {
+    setIsEditing(false);
+    setNewPlan({ 
+      title: "", 
+      price: "", 
+      users: "", 
+      features: ["", "", ""], 
+      access: [], 
+      defaultRole: "club_admin" 
+    });
+    setIsSheetOpen(true);
+  };
+
+  const handleOpenEdit = (plan: any) => {
+    setIsEditing(true);
+    setNewPlan({
+      title: plan.title,
+      price: plan.price,
+      users: plan.users,
+      features: plan.features || ["", "", ""],
+      access: plan.access || [],
+      defaultRole: plan.defaultRole || "club_admin"
+    });
+    setIsSheetOpen(true);
+    toast({
+      title: "PROTOCOLO_CARGADO",
+      description: `Sincronizando parámetros de ${plan.title} para modificación.`,
+    });
+  };
+
+  const handleSincProtocol = (e: React.FormEvent) => {
     e.preventDefault();
     toast({
-      title: "PROTOCOLO_SINC_EXITOSA",
-      description: `El nuevo nodo "${newPlan.title || 'SIN_NOMBRE'}" con rol ${newPlan.defaultRole} ha sido desplegado.`,
+      title: isEditing ? "PROTOCOLO_ACTUALIZADO" : "PROTOCOLO_SINC_EXITOSA",
+      description: `El nodo "${newPlan.title || 'SIN_NOMBRE'}" ha sido ${isEditing ? 'actualizado' : 'desplegado'} correctamente.`,
     });
     setIsSheetOpen(false);
-    setNewPlan({ title: "", price: "", users: "", features: ["", "", ""], access: [], defaultRole: "club_admin" });
   };
 
   return (
@@ -120,7 +150,7 @@ export default function GlobalPlansPage() {
         </div>
         
         <Button 
-          onClick={() => setIsSheetOpen(true)}
+          onClick={handleOpenCreate}
           className="rounded-none bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 transition-all border-none"
         >
           <Plus className="h-4 w-4 mr-2" /> Nuevo Protocolo
@@ -130,18 +160,20 @@ export default function GlobalPlansPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <PlanTerminalCard 
           title="BASIC_NODE" 
-          price="$199/mes" 
+          price="$199" 
           users="10" 
           icon={Zap} 
           features={["Gestión Base", "5 Entrenadores", "Analítica Simple"]} 
+          onEdit={handleOpenEdit}
         />
         <PlanTerminalCard 
           title="PRO_NETWORK" 
-          price="$499/mes" 
+          price="$499" 
           users="50" 
           icon={Shield} 
           featured
           features={["Todo en Basic", "IA Neural Planner", "API Acceso", "Soporte 24/7"]} 
+          onEdit={handleOpenEdit}
         />
         <PlanTerminalCard 
           title="ELITE_CORE" 
@@ -149,10 +181,10 @@ export default function GlobalPlansPage() {
           users="ILIMITADOS" 
           icon={Crown} 
           features={["Todo en Pro", "Despliegue On-Premise", "IA Personalizada", "Gestión Multiclub"]} 
+          onEdit={handleOpenEdit}
         />
       </div>
 
-      {/* TERMINAL DE CREACIÓN LATERAL */}
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-emerald-500/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
           <div className="p-8 border-b border-white/5 bg-black/40">
@@ -162,13 +194,15 @@ export default function GlobalPlansPage() {
                 <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400">Deploy_Manager_v1.5</span>
               </div>
               <SheetTitle className="text-3xl font-black italic tracking-tighter text-white uppercase text-left">
-                CONFIG_NUEVO_PLAN
+                {isEditing ? "MODIFICAR_PROTOCOLO" : "CONFIG_NUEVO_PLAN"}
               </SheetTitle>
-              <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left">Definición de parámetros económicos y operativos de red.</SheetDescription>
+              <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left">
+                {isEditing ? "Actualizando parámetros operativos del nodo." : "Definición de parámetros económicos y operativos de red."}
+              </SheetDescription>
             </SheetHeader>
           </div>
 
-          <form onSubmit={handleCreateProtocol} className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-8">
+          <form onSubmit={handleSincProtocol} className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-8">
             <div className="space-y-6">
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Identificador_Protocolo</Label>
@@ -234,7 +268,6 @@ export default function GlobalPlansPage() {
                 </div>
               </div>
 
-              {/* SECCIÓN DE MATRIZ DE ACCESO */}
               <div className="space-y-4 pt-4">
                 <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Control_de_Permisos</Label>
                 <Dialog open={isAccessDialogOpen} onOpenChange={setIsAccessDialogOpen}>
@@ -339,10 +372,10 @@ export default function GlobalPlansPage() {
               </Button>
             </SheetClose>
             <Button 
-              onClick={handleCreateProtocol}
+              onClick={handleSincProtocol}
               className="flex-[2] h-14 bg-emerald-500 text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-none shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:scale-[1.02] transition-all border-none"
             >
-              SINCRONIZAR_PLAN
+              {isEditing ? "ACTUALIZAR_NODO" : "SINCRONIZAR_PLAN"}
             </Button>
           </div>
         </SheetContent>
@@ -351,7 +384,7 @@ export default function GlobalPlansPage() {
   );
 }
 
-function PlanTerminalCard({ title, price, users, icon: Icon, features, featured }: any) {
+function PlanTerminalCard({ title, price, users, icon: Icon, features, featured, onEdit }: any) {
   const [isActive, setIsActive] = useState(true);
   const { toast } = useToast();
 
@@ -393,7 +426,7 @@ function PlanTerminalCard({ title, price, users, icon: Icon, features, featured 
       <CardFooter className="mt-auto p-6 border-t border-white/5 flex gap-3">
         <Button 
           className="flex-1 h-12 rounded-none border border-emerald-500/40 bg-transparent text-emerald-400 font-black uppercase text-[10px] tracking-widest hover:bg-emerald-500 hover:text-black transition-all"
-          onClick={() => toast({ title: "MODO_EDICIÓN", description: `Abriendo terminal de configuración para ${title}.` })}
+          onClick={() => onEdit({ title, price, users, features })}
         >
           <Pencil className="h-3.5 w-3.5 mr-2" /> Modificar
         </Button>
