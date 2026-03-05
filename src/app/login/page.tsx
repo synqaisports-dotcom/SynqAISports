@@ -114,7 +114,7 @@ export default function LoginPage() {
           onClick={handleBypass}
           className="w-full h-14 bg-primary text-primary-foreground hover:bg-primary/90 font-black rounded-none transition-all flex gap-3 text-xs tracking-[0.2em] uppercase shadow-[0_0_15px_rgba(0,255,255,0.3)]"
         >
-          <Terminal className="h-4 w-4" /> >> FORZAR_ACCESO_INMEDIATO (MODO_DEV) <<
+          <Terminal className="h-4 w-4" /> {">> FORZAR_ACCESO_INMEDIATO (MODO_DEV) <<"}
         </Button>
 
         {(isApiError || isBlockedError) && (
