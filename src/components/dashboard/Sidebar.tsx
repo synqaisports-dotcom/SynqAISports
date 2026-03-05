@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -13,7 +12,8 @@ import {
   Settings,
   CalendarDays,
   Activity,
-  Cpu
+  Cpu,
+  Dumbbell
 } from "lucide-react";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase/config";
@@ -50,6 +50,12 @@ const navItems: NavItem[] = [
     title: "Neural Planner",
     href: "/dashboard/coach/planner",
     icon: BrainCircuit,
+    roles: ["coach", "superadmin"],
+  },
+  {
+    title: "Módulos Tácticos",
+    href: "/dashboard/coach/exercises",
+    icon: Dumbbell,
     roles: ["coach", "superadmin"],
   },
   {
