@@ -16,14 +16,14 @@ function GlobalTabTrigger() {
         isExpanded ? 'left-[16rem]' : 'left-0'
       }`}
     >
-      <SidebarTrigger className="h-24 w-6 rounded-r-xl bg-primary text-black hover:w-8 transition-all shadow-[0_0_30px_rgba(16,185,129,0.5)] flex items-center justify-center border-none p-0 group">
+      <SidebarTrigger className="h-24 w-6 rounded-r-xl bg-emerald-500 text-black hover:w-8 transition-all shadow-[0_0_30px_rgba(16,185,129,0.5)] flex items-center justify-center border-none p-0 group">
          {isExpanded ? (
            <ChevronLeft className="h-5 w-5 transition-transform group-hover:-translate-x-0.5" />
          ) : (
            <ChevronsRight className="h-5 w-5 animate-pulse text-black" />
          )}
       </SidebarTrigger>
-      <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-r-xl -z-10 animate-pulse" />
+      <div className="absolute inset-0 bg-emerald-500/20 blur-2xl rounded-r-xl -z-10 animate-pulse" />
     </div>
   );
 }
@@ -50,10 +50,10 @@ export default function AdminGlobalLayout({ children }: { children: React.ReactN
         
         <GlobalTabTrigger />
 
-        <main className="flex-1 p-8 overflow-y-auto relative custom-scrollbar">
+        <main className="flex-1 p-8 lg:p-12 overflow-y-auto relative custom-scrollbar">
           <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
           
-          <div className="max-w-7xl mx-auto relative z-10 pt-16 lg:pt-0 animate-in fade-in slide-in-from-bottom-2 duration-700">
+          <div className="max-w-[1600px] mx-auto relative z-10 pt-16 lg:pt-0 animate-in fade-in slide-in-from-bottom-2 duration-700">
             {children}
           </div>
         </main>

@@ -64,7 +64,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="min-h-screen bg-[#04070c] flex">
         <main className="flex-1 p-8 overflow-y-auto relative custom-scrollbar">
           <div className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none" />
-          <div className="max-w-7xl mx-auto relative z-10 animate-in fade-in slide-in-from-bottom-2 duration-700">
+          <div className="max-w-[1600px] mx-auto relative z-10 animate-in fade-in slide-in-from-bottom-2 duration-700">
             {children}
           </div>
         </main>
@@ -79,10 +79,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         <OperationalTabTrigger />
 
-        <main className="flex-1 p-8 overflow-y-auto relative custom-scrollbar">
+        <main className="flex-1 p-8 lg:p-12 overflow-y-auto relative custom-scrollbar">
           <div className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none" />
           
-          <div className="max-w-7xl mx-auto relative z-10 pt-16 lg:pt-0 animate-in fade-in slide-in-from-bottom-2 duration-700">
+          <div className="max-w-[1600px] mx-auto relative z-10 pt-16 lg:pt-0 animate-in fade-in slide-in-from-bottom-2 duration-700">
             {children}
           </div>
         </main>
