@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -42,13 +43,11 @@
   body {
     @apply bg-background text-foreground font-body;
     background-image: 
-      radial-gradient(at 0% 0%, hsla(180, 100%, 50%, 0.05) 0, transparent 50%),
-      radial-gradient(at 100% 100%, hsla(180, 100%, 50%, 0.03) 0, transparent 50%);
+      radial-gradient(at 50% 50%, hsla(180, 100%, 50%, 0.03) 0, transparent 80%);
     background-attachment: fixed;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-headline tracking-tight uppercase;
-    text-shadow: 0 0 20px hsla(180, 100%, 50%, 0.2);
   }
 }
 
@@ -57,9 +56,25 @@
 }
 
 .cyan-glow {
-  box-shadow: 0 0 15px hsla(180, 100%, 50%, 0.3);
+  box-shadow: 0 0 20px hsla(180, 100%, 50%, 0.3);
 }
 
 .cyan-text-glow {
   text-shadow: 0 0 10px hsla(180, 100%, 50%, 0.5);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-white/10 rounded-full hover:bg-primary/30 transition-colors;
+}
+
+/* Toast Styling for NASA Effect */
+[data-radix-toast-root][data-variant="destructive"] {
+  @apply bg-destructive/90 border-none backdrop-blur-md text-destructive-foreground shadow-2xl;
 }
