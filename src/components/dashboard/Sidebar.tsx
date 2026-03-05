@@ -35,7 +35,7 @@ const navItems: NavItem[] = [
   { title: "Gestión Planes", href: "/admin-global/plans", icon: TicketPercent, category: "global" },
   { title: "Promos AI", href: "/admin-global/promos", icon: Zap, category: "global" },
   { title: "Gen. Usuarios", href: "/admin-global/users", icon: UserPlus, category: "global" },
-  { title: "Analitics Global", href: "/admin-global/analytics", icon: BarChart3, category: "global" },
+  { title: "Analytics Global", href: "/admin-global/analytics", icon: BarChart3, category: "global" },
   
   // OPERATIONAL
   { title: "Coach Hub", href: "/dashboard", icon: BrainCircuit, category: "operational" },
