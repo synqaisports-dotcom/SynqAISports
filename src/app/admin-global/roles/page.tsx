@@ -22,14 +22,14 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription,
-  DialogTrigger,
-  DialogFooter
-} from "@/components/ui/dialog";
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetDescription,
+  SheetTrigger,
+  SheetFooter
+} from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -104,18 +104,18 @@ export default function GlobalRolesPage() {
           </h1>
         </div>
         
-        <Dialog>
-          <DialogTrigger asChild>
+        <Sheet>
+          <SheetTrigger asChild>
             <Button className="rounded-2xl bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest h-14 px-10 shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:scale-105 transition-all border-none">
               <Plus className="h-5 w-5 mr-2" /> Crear Nuevo Rol
             </Button>
-          </DialogTrigger>
-          <DialogContent className="bg-[#04070c]/95 backdrop-blur-3xl border border-emerald-500/20 text-white rounded-3xl max-w-2xl shadow-[0_0_100px_rgba(0,0,0,0.8)]">
-            <DialogHeader>
-              <DialogTitle className="text-3xl font-black italic tracking-tighter text-emerald-400 emerald-text-glow uppercase">Configurar Identidad de Rol</DialogTitle>
-              <DialogDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest">Define el alcance de autoridad para este nodo de usuario.</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-6 py-6">
+          </SheetTrigger>
+          <SheetContent side="right" className="bg-[#04070c]/95 backdrop-blur-3xl border-l border-emerald-500/20 text-white w-full sm:max-w-2xl shadow-[-20px_0_50px_rgba(0,0,0,0.5)] overflow-y-auto custom-scrollbar">
+            <SheetHeader className="pb-8">
+              <SheetTitle className="text-3xl font-black italic tracking-tighter text-emerald-400 emerald-text-glow uppercase text-left">Configurar Identidad de Rol</SheetTitle>
+              <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left">Define el alcance de autoridad para este nodo de usuario.</SheetDescription>
+            </SheetHeader>
+            <div className="space-y-8 py-4">
               <div className="space-y-3">
                 <label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Identificador de Rol</label>
                 <Input placeholder="EJ: ANALISTA_TACTICO" className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold uppercase focus:border-emerald-500/50 transition-all" />
@@ -123,15 +123,15 @@ export default function GlobalRolesPage() {
               
               <div className="space-y-4">
                 <label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest block mb-4 ml-1">Matriz de Permisos</label>
-                <div className="grid grid-cols-1 gap-3">
+                <div className="grid grid-cols-1 gap-4">
                   {PERMISSION_MODULES.map(module => (
-                    <div key={module.id} className="flex items-center justify-between p-5 bg-white/[0.03] border border-white/5 rounded-2xl hover:border-emerald-500/30 transition-all group">
-                      <span className="text-xs font-bold uppercase tracking-wide group-hover:text-emerald-400 transition-colors">{module.label}</span>
-                      <div className="flex gap-4">
+                    <div key={module.id} className="flex flex-col gap-4 p-6 bg-white/[0.03] border border-white/5 rounded-3xl hover:border-emerald-500/30 transition-all group">
+                      <span className="text-xs font-black uppercase tracking-widest group-hover:text-emerald-400 transition-colors">{module.label}</span>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                         {['VER', 'CREAR', 'EDIT', 'DEL'].map(action => (
-                          <div key={action} className="flex items-center gap-2">
+                          <div key={action} className="flex items-center gap-3 bg-black/40 p-3 rounded-xl border border-white/5 transition-all hover:bg-black/60">
                              <Checkbox className="rounded-md border-emerald-500/40 data-[state=checked]:bg-emerald-500 data-[state=checked]:text-black" />
-                             <span className="text-[9px] font-black text-white/40">{action}</span>
+                             <span className="text-[9px] font-black text-white/40 uppercase tracking-tighter">{action}</span>
                           </div>
                         ))}
                       </div>
@@ -140,11 +140,11 @@ export default function GlobalRolesPage() {
                 </div>
               </div>
             </div>
-            <DialogFooter>
-              <Button className="w-full h-16 bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:cyan-glow transition-all">Sincronizar Protocolo</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            <SheetFooter className="mt-12">
+              <Button className="w-full h-16 bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:scale-[1.02] transition-all">Sincronizar Protocolo</Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8">
