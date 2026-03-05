@@ -17,9 +17,22 @@ import {
   ShieldCheck,
   UserPlus,
   Dumbbell,
-  Fingerprint
+  Fingerprint,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { 
+  Sidebar, 
+  SidebarContent, 
+  SidebarFooter, 
+  SidebarHeader, 
+  SidebarMenu, 
+  SidebarMenuItem, 
+  SidebarMenuButton,
+  useSidebar,
+  SidebarTrigger
+} from "@/components/ui/sidebar";
 
 interface NavItem {
   title: string;
@@ -52,68 +65,97 @@ const navItems: NavItem[] = [
 
 export function DashboardSidebar() {
   const pathname = usePathname();
+  const { state, toggleSidebar } = useSidebar();
+  const isCollapsed = state === "collapsed";
   
   if (pathname === "/dashboard/coach/onboarding") return null;
 
   return (
-    <div className="flex flex-col h-full bg-[#04070c] border-r border-white/5 w-64 fixed left-0 top-0 z-30 shadow-[4px_0_24px_rgba(0,0,0,0.5)]">
+    <Sidebar collapsible="icon" className="border-r border-white/5 bg-[#04070c] shadow-[4px_0_24px_rgba(0,0,0,0.5)]">
       {/* LOGO SECTION */}
-      <div className="p-8 flex flex-col gap-2 border-b border-white/5 bg-black/60 backdrop-blur-md">
-        <div className="flex items-center gap-4">
-          <div className="bg-primary p-2 rounded-xl rotate-12 cyan-glow shadow-[0_0_20px_rgba(0,242,255,0.4)] transition-transform hover:rotate-0 duration-500">
-            <Zap className="h-5 w-5 text-black -rotate-12 group-hover:rotate-0 transition-transform" />
+      <SidebarHeader className="p-4 border-b border-white/5 bg-black/60 backdrop-blur-md">
+        <div className="flex items-center justify-between gap-2 overflow-hidden">
+          <div className="flex items-center gap-3">
+            <div className="bg-primary p-2 rounded-xl cyan-glow shadow-[0_0_20px_rgba(0,242,255,0.4)]">
+              <Zap className="h-5 w-5 text-black" />
+            </div>
+            {!isCollapsed && (
+              <div className="flex flex-col animate-in fade-in duration-500">
+                <span className="font-headline font-black text-xl tracking-tighter text-white uppercase italic">
+                  Synq<span className="text-primary cyan-text-glow">AI</span>
+                </span>
+                <span className="text-[8px] font-black text-white/30 tracking-[0.4em] uppercase">SPORTS_PRO</span>
+              </div>
+            )}
           </div>
-          <span className="font-headline font-black text-2xl tracking-tighter text-white uppercase italic">
-            Synq<span className="text-primary cyan-text-glow">AI</span>
-          </span>
+          <SidebarTrigger className="text-white/40 hover:text-primary hover:bg-white/5" />
         </div>
-        <span className="text-[9px] font-black text-white/30 tracking-[0.6em] uppercase ml-12">SPORTS_PRO</span>
-      </div>
+      </SidebarHeader>
 
       {/* NAVIGATION SECTIONS */}
-      <div className="flex-1 px-4 py-8 space-y-10 overflow-y-auto custom-scrollbar">
+      <SidebarContent className="px-2 py-6 space-y-8 custom-scrollbar overflow-x-hidden">
         {/* GLOBAL CONTROL */}
-        <div>
-          <p className="px-4 mb-5 text-[9px] font-black uppercase tracking-[0.5em] text-emerald-400 emerald-text-glow animate-pulse">Control_Global</p>
-          <div className="space-y-2">
+        <SidebarGroupWrapper title="Control_Global" isCollapsed={isCollapsed} color="text-emerald-400">
+          <SidebarMenu>
             {navItems.filter(i => i.category === "global").map((item) => (
-              <SidebarLink key={item.href} item={item} isActive={pathname === item.href} isGlobal />
+              <SidebarMenuItem key={item.href}>
+                <SidebarLink item={item} isActive={pathname === item.href} isGlobal isCollapsed={isCollapsed} />
+              </SidebarMenuItem>
             ))}
-          </div>
-        </div>
+          </SidebarMenu>
+        </SidebarGroupWrapper>
 
         {/* OPERATIONAL ELITE */}
-        <div>
-          <p className="px-4 mb-5 text-[9px] font-black uppercase tracking-[0.5em] text-primary cyan-text-glow animate-pulse">Operativa_Elite</p>
-          <div className="space-y-2">
+        <SidebarGroupWrapper title="Operativa_Elite" isCollapsed={isCollapsed} color="text-primary">
+          <SidebarMenu>
             {navItems.filter(i => i.category === "operational").map((item) => (
-              <SidebarLink key={item.href} item={item} isActive={pathname === item.href} />
+              <SidebarMenuItem key={item.href}>
+                <SidebarLink item={item} isActive={pathname === item.href} isCollapsed={isCollapsed} />
+              </SidebarMenuItem>
             ))}
-          </div>
-        </div>
+          </SidebarMenu>
+        </SidebarGroupWrapper>
 
         {/* USER TERMINALS */}
-        <div>
-          <p className="px-4 mb-5 text-[9px] font-black uppercase tracking-[0.5em] text-white/20">Terminales_Acceso</p>
-          <div className="space-y-2">
+        <SidebarGroupWrapper title="Terminales_Acceso" isCollapsed={isCollapsed} color="text-white/20">
+          <SidebarMenu>
             {navItems.filter(i => i.category === "user").map((item) => (
-              <SidebarLink key={item.href} item={item} isActive={pathname === item.href} />
+              <SidebarMenuItem key={item.href}>
+                <SidebarLink item={item} isActive={pathname === item.href} isCollapsed={isCollapsed} />
+              </SidebarMenuItem>
             ))}
-          </div>
-        </div>
-      </div>
+          </SidebarMenu>
+        </SidebarGroupWrapper>
+      </SidebarContent>
 
       {/* FOOTER ACTIONS */}
-      <div className="p-6 border-t border-white/5 bg-black/60 backdrop-blur-md">
-        <Link href="/" className="flex items-center gap-4 w-full px-5 py-4 text-white/30 hover:text-white transition-all font-black text-[10px] uppercase tracking-widest hover:bg-white/5 rounded-2xl group">
-          <LogOut className="h-4 w-4 group-hover:translate-x-1 transition-transform" /> SALIR_A_INICIO
+      <SidebarFooter className="p-4 border-t border-white/5 bg-black/60 backdrop-blur-md">
+        <Link href="/" className={cn(
+          "flex items-center gap-4 px-3 py-3 text-white/30 hover:text-white transition-all font-black text-[10px] uppercase tracking-widest hover:bg-white/5 rounded-2xl group overflow-hidden",
+          isCollapsed && "justify-center px-0"
+        )}>
+          <LogOut className="h-4 w-4 shrink-0 group-hover:translate-x-1 transition-transform" />
+          {!isCollapsed && <span className="animate-in fade-in duration-500">SALIR_A_INICIO</span>}
         </Link>
-      </div>
+      </SidebarFooter>
+    </Sidebar>
+  );
+}
+
+function SidebarGroupWrapper({ children, title, isCollapsed, color }: any) {
+  return (
+    <div className="space-y-2">
+      {!isCollapsed && (
+        <p className={cn("px-4 mb-3 text-[8px] font-black uppercase tracking-[0.4em] animate-in fade-in duration-500", color)}>
+          {title}
+        </p>
+      )}
+      {children}
     </div>
   );
 }
 
-function SidebarLink({ item, isActive, isGlobal }: { item: NavItem; isActive: boolean; isGlobal?: boolean }) {
+function SidebarLink({ item, isActive, isGlobal, isCollapsed }: { item: NavItem; isActive: boolean; isGlobal?: boolean; isCollapsed: boolean }) {
   const activeClass = isGlobal 
     ? "bg-emerald-500/10 text-emerald-400 shadow-[0_4px_12px_rgba(16,185,129,0.1)] emerald-text-glow"
     : "bg-primary/10 text-primary shadow-[0_4px_12px_rgba(0,242,255,0.1)] cyan-text-glow";
@@ -123,21 +165,26 @@ function SidebarLink({ item, isActive, isGlobal }: { item: NavItem; isActive: bo
     : (isActive ? "text-primary scale-110" : "group-hover:text-primary group-hover:scale-110");
 
   return (
-    <Link
-      href={item.href}
+    <SidebarMenuButton
+      asChild
+      isActive={isActive}
       className={cn(
-        "flex items-center gap-4 px-5 py-3.5 rounded-2xl transition-all relative group overflow-hidden",
-        isActive ? activeClass : "text-white/40 hover:text-white hover:bg-white/[0.03]"
+        "flex items-center gap-4 px-4 py-3 rounded-2xl transition-all relative group overflow-hidden h-11",
+        isActive ? activeClass : "text-white/40 hover:text-white hover:bg-white/[0.03]",
+        isCollapsed && "justify-center px-0"
       )}
+      tooltip={isCollapsed ? item.title : undefined}
     >
-      <item.icon className={cn("h-4 w-4 transition-all duration-500", iconClass)} />
-      <span className="font-bold text-[10px] uppercase tracking-[0.2em]">{item.title}</span>
-      {isActive && (
-        <div className={cn(
-          "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-1/2 rounded-full",
-          isGlobal ? "bg-emerald-500" : "bg-primary"
-        )} />
-      )}
-    </Link>
+      <Link href={item.href}>
+        <item.icon className={cn("h-4 w-4 shrink-0 transition-all duration-500", iconClass)} />
+        {!isCollapsed && <span className="font-bold text-[9px] uppercase tracking-[0.2em] animate-in fade-in duration-500">{item.title}</span>}
+        {isActive && !isCollapsed && (
+          <div className={cn(
+            "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-1/2 rounded-full",
+            isGlobal ? "bg-emerald-500" : "bg-primary"
+          )} />
+        )}
+      </Link>
+    </SidebarMenuButton>
   );
 }

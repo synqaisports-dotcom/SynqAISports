@@ -5,6 +5,7 @@ import { DashboardSidebar } from "@/components/dashboard/Sidebar";
 import { Loader2 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { profile, loading } = useAuth();
@@ -37,16 +38,31 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const isOnboarding = pathname === "/dashboard/coach/onboarding";
 
+  if (isOnboarding) {
+    return (
+      <div className="min-h-screen bg-[#04070c] flex">
+        <main className="flex-1 p-8 overflow-y-auto relative custom-scrollbar">
+          <div className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none" />
+          <div className="max-w-7xl mx-auto relative z-10 animate-in fade-in slide-in-from-bottom-2 duration-700">
+            {children}
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-[#04070c] flex">
-      {!isOnboarding && <DashboardSidebar />}
-      <main className={`flex-1 ${isOnboarding ? '' : 'ml-64'} p-8 overflow-y-auto relative custom-scrollbar`}>
-        <div className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none" />
-        
-        <div className="max-w-7xl mx-auto relative z-10 animate-in fade-in slide-in-from-bottom-2 duration-700">
-          {children}
-        </div>
-      </main>
-    </div>
+    <SidebarProvider>
+      <div className="min-h-screen bg-[#04070c] flex w-full">
+        <DashboardSidebar />
+        <main className="flex-1 p-8 overflow-y-auto relative custom-scrollbar">
+          <div className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none" />
+          
+          <div className="max-w-7xl mx-auto relative z-10 animate-in fade-in slide-in-from-bottom-2 duration-700">
+            {children}
+          </div>
+        </main>
+      </div>
+    </SidebarProvider>
   );
 }

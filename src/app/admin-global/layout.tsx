@@ -3,7 +3,7 @@
 import { useAuth } from "@/lib/auth-context";
 import { DashboardSidebar } from "@/components/dashboard/Sidebar";
 import { Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 export default function AdminGlobalLayout({ children }: { children: React.ReactNode }) {
   const { profile, loading } = useAuth();
@@ -21,16 +21,18 @@ export default function AdminGlobalLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <div className="min-h-screen bg-[#04070c] flex admin-global-theme">
-      <DashboardSidebar />
-      <main className="flex-1 ml-64 p-8 overflow-y-auto relative custom-scrollbar">
-        {/* GRID OVERLAY PARA TODO EL SECTOR GLOBAL */}
-        <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
-        
-        <div className="max-w-7xl mx-auto relative z-10 animate-in fade-in slide-in-from-bottom-2 duration-700">
-          {children}
-        </div>
-      </main>
-    </div>
+    <SidebarProvider>
+      <div className="min-h-screen bg-[#04070c] flex admin-global-theme w-full">
+        <DashboardSidebar />
+        <main className="flex-1 p-8 overflow-y-auto relative custom-scrollbar">
+          {/* GRID OVERLAY PARA TODO EL SECTOR GLOBAL */}
+          <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
+          
+          <div className="max-w-7xl mx-auto relative z-10 animate-in fade-in slide-in-from-bottom-2 duration-700">
+            {children}
+          </div>
+        </main>
+      </div>
+    </SidebarProvider>
   );
 }
