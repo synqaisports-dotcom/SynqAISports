@@ -18,7 +18,8 @@ import {
   Monitor,
   Activity,
   ChevronRight,
-  Lock
+  Lock,
+  UserCog
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,13 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -54,6 +62,14 @@ const ACCESS_MODULES = [
   { id: "tutor_portal", label: "Portal de Tutores", description: "Terminal de comunicación con familias.", icon: Users },
 ];
 
+const AVAILABLE_ROLES = [
+  { value: "club_admin", label: "Administrador del Club" },
+  { value: "academy_director", label: "Director de Cantera" },
+  { value: "coach", label: "Entrenador" },
+  { value: "tutor", label: "Tutor / Familia" },
+  { value: "athlete", label: "Atleta / Jugador" },
+];
+
 export default function GlobalPlansPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isAccessDialogOpen, setIsAccessDialogOpen] = useState(false);
@@ -64,7 +80,8 @@ export default function GlobalPlansPage() {
     price: "",
     users: "",
     features: ["", "", ""],
-    access: [] as string[]
+    access: [] as string[],
+    defaultRole: "club_admin"
   });
 
   const handleToggleAccess = (moduleId: string) => {
@@ -80,10 +97,10 @@ export default function GlobalPlansPage() {
     e.preventDefault();
     toast({
       title: "PROTOCOLO_SINC_EXITOSA",
-      description: `El nuevo nodo "${newPlan.title || 'SIN_NOMBRE'}" con ${newPlan.access.length} módulos activos ha sido desplegado.`,
+      description: `El nuevo nodo "${newPlan.title || 'SIN_NOMBRE'}" con rol ${newPlan.defaultRole} ha sido desplegado.`,
     });
     setIsSheetOpen(false);
-    setNewPlan({ title: "", price: "", users: "", features: ["", "", ""], access: [] });
+    setNewPlan({ title: "", price: "", users: "", features: ["", "", ""], access: [], defaultRole: "club_admin" });
   };
 
   return (
@@ -187,6 +204,30 @@ export default function GlobalPlansPage() {
                       className="pl-10 h-12 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-emerald-500/50" 
                     />
                   </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Rol_Predeterminado_Invitación</Label>
+                <div className="relative">
+                  <Select 
+                    value={newPlan.defaultRole} 
+                    onValueChange={(v) => setNewPlan({...newPlan, defaultRole: v})}
+                  >
+                    <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-[0.2em] focus:border-emerald-500/50 transition-all">
+                      <div className="flex items-center gap-3">
+                        <UserCog className="h-4 w-4 text-emerald-500/40" />
+                        <SelectValue placeholder="SELECCIONAR ROL..." />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#04070c] border-emerald-500/20 rounded-none">
+                      {AVAILABLE_ROLES.map((role) => (
+                        <SelectItem key={role.value} value={role.value} className="text-[10px] font-black uppercase tracking-widest text-white/70 focus:bg-emerald-500 focus:text-black">
+                          {role.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
