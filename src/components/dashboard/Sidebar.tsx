@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -11,7 +12,6 @@ import {
   LogOut, 
   Settings,
   CalendarDays,
-  UserCircle,
   Activity,
   Cpu
 } from "lucide-react";
@@ -29,19 +29,19 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   {
-    title: "Terminal Dashboard",
+    title: "Terminal Central",
     href: "/dashboard",
     icon: LayoutDashboard,
     roles: ["superadmin", "club_admin", "coach", "tutor"],
   },
   {
-    title: "Node Management",
+    title: "Gestión de Nodos",
     href: "/dashboard/superadmin/clubs",
     icon: Building2,
     roles: ["superadmin"],
   },
   {
-    title: "Personnel Database",
+    title: "Base de Personal",
     href: "/dashboard/clubadmin/users",
     icon: Users,
     roles: ["club_admin"],
@@ -53,19 +53,19 @@ const navItems: NavItem[] = [
     roles: ["coach", "superadmin"],
   },
   {
-    title: "Asset Monitoring",
+    title: "Monitoreo de Activos",
     href: "/dashboard/coach/athletes",
     icon: Activity,
     roles: ["coach"],
   },
   {
-    title: "Mission Calendar",
+    title: "Calendario de Misión",
     href: "/dashboard/schedule",
     icon: CalendarDays,
     roles: ["coach", "tutor", "club_admin"],
   },
   {
-    title: "System Config",
+    title: "Configuración",
     href: "/dashboard/settings",
     icon: Settings,
     roles: ["superadmin", "club_admin", "coach", "tutor"],
@@ -95,7 +95,7 @@ export function DashboardSidebar() {
 
       <div className="flex-1 px-4 py-8 space-y-2 overflow-y-auto custom-scrollbar">
         <p className="px-3 mb-6 text-[8px] font-black uppercase tracking-[0.4em] text-white/20">
-          Operation_Center
+          Centro_de_Operaciones
         </p>
         <div className="space-y-1">
           {filteredItems.map((item) => {
@@ -142,7 +142,7 @@ export function DashboardSidebar() {
           className="flex items-center gap-4 w-full px-4 py-3 text-white/40 hover:text-destructive hover:bg-destructive/10 transition-all font-bold text-[10px] uppercase tracking-widest"
         >
           <LogOut className="h-4 w-4" />
-          TERMINATE_SESSION
+          TERMINAR_SESIÓN
         </button>
       </div>
     </div>

@@ -1,43 +1,44 @@
+
 'use server';
 /**
- * @fileOverview A GenAI tool to assist coaches in creating tailored training schedules and exercise recommendations.
+ * @fileOverview Una herramienta de IA generativa para asistir a entrenadores en la creación de planes de entrenamiento personalizados.
  *
- * - generateTrainingPlan - A function that handles the generation of training plans.
- * - GenerateTrainingPlanInput - The input type for the generateTrainingPlan function.
- * - GenerateTrainingPlanOutput - The return type for the generateTrainingPlan function.
+ * - generateTrainingPlan - Función que maneja la generación de planes de entrenamiento.
+ * - GenerateTrainingPlanInput - Tipo de entrada para la función.
+ * - GenerateTrainingPlanOutput - Tipo de salida para la función.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const TrainingSessionSchema = z.object({
-  day: z.string().describe('The day of the week for the session (e.g., Monday, Tuesday).'),
-  focus: z.string().describe('The primary focus of the training session (e.g., Strength, Cardio, Skill Development, Recovery).'),
-  exercises: z.array(z.string()).describe('A list of exercises for the session, including sets and reps if applicable (e.g., "Warm-up: 10 min dynamic stretching", "Bench Press: 3 sets of 8-10 reps", "30 min steady-state cardio").'),
-  notes: z.string().optional().describe('Any specific notes or tips for this session.'),
+  day: z.string().describe('El día de la semana para la sesión (ej. Lunes, Martes).'),
+  focus: z.string().describe('El enfoque principal de la sesión (ej. Fuerza, Cardio, Técnica, Recuperación).'),
+  exercises: z.array(z.string()).describe('Lista de ejercicios, incluyendo series y repeticiones (ej. "Press de banca: 3 series de 10 reps").'),
+  notes: z.string().optional().describe('Notas específicas para esta sesión.'),
 });
 
 const WeeklyScheduleSchema = z.object({
-  weekNumber: z.number().int().min(1).describe('The number of the training week.'),
-  sessions: z.array(TrainingSessionSchema).describe('A list of training sessions for this week.'),
+  weekNumber: z.number().int().min(1).describe('El número de la semana de entrenamiento.'),
+  sessions: z.array(TrainingSessionSchema).describe('Lista de sesiones para esta semana.'),
 });
 
 const GenerateTrainingPlanInputSchema = z.object({
-  sportType: z.string().describe('The type of sport (e.g., Basketball, Soccer, Swimming).'),
-  athleteRole: z.string().describe('The specific role of the athlete within the sport (e.g., Point Guard, Goalkeeper, Freestyle Swimmer).'),
-  athleteLevel: z.enum(['beginner', 'intermediate', 'advanced']).describe('The current skill level of the athlete.'),
-  trainingGoal: z.string().describe('The primary goal of the training plan (e.g., improve speed, build endurance, prepare for a specific competition, strength training).'),
-  durationWeeks: z.number().int().min(1).max(24).describe('The duration of the training plan in weeks.'),
-  sessionsPerWeek: z.number().int().min(1).max(7).describe('The number of training sessions per week.'),
-  additionalNotes: z.string().optional().describe('Any additional specific considerations or preferences for the athlete or plan.'),
+  sportType: z.string().describe('El tipo de deporte (ej. Baloncesto, Fútbol, Natación).'),
+  athleteRole: z.string().describe('El rol específico del atleta (ej. Base, Portero, Nadador de Estilo Libre).'),
+  athleteLevel: z.enum(['beginner', 'intermediate', 'advanced']).describe('El nivel actual del atleta.'),
+  trainingGoal: z.string().describe('El objetivo principal del plan (ej. mejorar velocidad, resistencia, fuerza).'),
+  durationWeeks: z.number().int().min(1).max(24).describe('Duración del plan en semanas.'),
+  sessionsPerWeek: z.number().int().min(1).max(7).describe('Número de sesiones por semana.'),
+  additionalNotes: z.string().optional().describe('Consideraciones adicionales o preferencias.'),
 });
 export type GenerateTrainingPlanInput = z.infer<typeof GenerateTrainingPlanInputSchema>;
 
 const GenerateTrainingPlanOutputSchema = z.object({
-  planTitle: z.string().describe('A concise and descriptive title for the generated training plan.'),
-  overview: z.string().describe('A brief overview and philosophy of the training plan.'),
-  weeklySchedule: z.array(WeeklyScheduleSchema).describe('A detailed weekly breakdown of training sessions.'),
-  generalRecommendations: z.array(z.string()).describe('General recommendations for the athlete (e.g., nutrition tips, rest advice, mental preparation).'),
+  planTitle: z.string().describe('Un título descriptivo para el plan generado.'),
+  overview: z.string().describe('Un resumen breve y la filosofía del plan.'),
+  weeklySchedule: z.array(WeeklyScheduleSchema).describe('Desglose semanal detallado de las sesiones.'),
+  generalRecommendations: z.array(z.string()).describe('Recomendaciones generales (nutrición, descanso, preparación mental).'),
 });
 export type GenerateTrainingPlanOutput = z.infer<typeof GenerateTrainingPlanOutputSchema>;
 
@@ -45,29 +46,27 @@ const prompt = ai.definePrompt({
   name: 'generateTrainingPlanPrompt',
   input: {schema: GenerateTrainingPlanInputSchema},
   output: {schema: GenerateTrainingPlanOutputSchema},
-  prompt: `You are an expert sports coach and training plan generator. Your task is to create a personalized training schedule and exercise recommendations for an athlete based on the provided details.
+  prompt: `Eres un experto entrenador deportivo y generador de planes de entrenamiento. Tu tarea es crear un calendario de entrenamiento personalizado para un atleta basado en los siguientes detalles.
 
-The output should be a structured JSON object.
+IMPORTANTE: El idioma de salida debe ser exclusivamente ESPAÑOL.
 
-Here are the athlete's details:
-Sport Type: {{{sportType}}}
-Athlete Role: {{{athleteRole}}}
-Athlete Level: {{{athleteLevel}}}
-Training Goal: {{{trainingGoal}}}
-Duration: {{{durationWeeks}}} weeks
-Sessions Per Week: {{{sessionsPerWeek}}}
+Detalles del Atleta:
+Deporte: {{{sportType}}}
+Rol/Posición: {{{athleteRole}}}
+Nivel: {{{athleteLevel}}}
+Objetivo: {{{trainingGoal}}}
+Duración: {{{durationWeeks}}} semanas
+Sesiones por semana: {{{sessionsPerWeek}}}
 
 {{#if additionalNotes}}
-Additional Notes: {{{additionalNotes}}}
+Notas adicionales: {{{additionalNotes}}}
 {{/if}}
 
-Please generate a comprehensive training plan following these guidelines:
-1.  **Plan Title**: Provide a catchy and relevant title.
-2.  **Overview**: Write a brief overview explaining the plan's philosophy and how it addresses the athlete's goals.
-3.  **Weekly Schedule**: For each of the {{durationWeeks}} weeks, detail {{sessionsPerWeek}} training sessions. Each session should specify the day (e.g., "Monday"), a primary focus (e.g., "Strength Training", "Skill Work", "Cardio"), and a list of specific exercises with recommended sets and reps or duration. Include notes if necessary. Distribute the sessions logically across the week. Ensure progression over the weeks where appropriate for the athlete's level and goal.
-4.  **General Recommendations**: Offer general advice on nutrition, recovery, mental preparation, or other relevant aspects to support the training plan.
-
-Ensure the plan is realistic, effective, and tailored to the athlete's specific needs, sport type, and role.`,
+Por favor, genera un plan integral siguiendo estas directrices:
+1. **Título del Plan**: Un título profesional y motivador.
+2. **Resumen**: Una breve explicación de la filosofía del plan.
+3. **Calendario Semanal**: Para cada una de las {{durationWeeks}} semanas, detalla {{sessionsPerWeek}} sesiones. Cada sesión debe especificar el día, enfoque y ejercicios específicos.
+4. **Recomendaciones Generales**: Consejos sobre nutrición y recuperación.`,
 });
 
 const generateTrainingPlanFlow = ai.defineFlow(

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -26,8 +27,8 @@ export default function LoginPage() {
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "AUTH_ERROR",
-        description: error.message,
+        title: "ERROR_DE_AUTENTICACIÓN",
+        description: "Credenciales no válidas en la base de datos.",
       });
     } finally {
       setLoading(false);
@@ -43,8 +44,8 @@ export default function LoginPage() {
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "OAUTH_FAILED",
-        description: error.message,
+        title: "FALLO_OAUTH",
+        description: "El bypass de Google ha sido rechazado.",
       });
     } finally {
       setLoading(false);
@@ -53,7 +54,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
-      {/* Background Decor */}
+      {/* Decoración de Fondo */}
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
 
@@ -65,18 +66,18 @@ export default function LoginPage() {
               <Database className="h-8 w-8 text-primary -rotate-45" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-headline font-black text-white tracking-[0.2em]">ACCESS_TERMINAL</CardTitle>
-          <CardDescription className="uppercase text-[10px] tracking-widest text-white/40 mt-2">Authorization required for club access</CardDescription>
+          <CardTitle className="text-2xl font-headline font-black text-white tracking-[0.2em]">TERMINAL_DE_ACCESO</CardTitle>
+          <CardDescription className="uppercase text-[10px] tracking-widest text-white/40 mt-2">Autorización requerida para acceso al club</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6 pb-12 px-10">
           <form onSubmit={handleEmailLogin} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-primary ml-1">Identity_ID</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-primary ml-1">ID_Identidad</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-3 h-4 w-4 text-white/30" />
                 <Input
                   type="email"
-                  placeholder="USER@SYNQSPORTS.PRO"
+                  placeholder="USUARIO@SYNQSPORTS.PRO"
                   className="pl-10 h-12 bg-white/5 border-white/10 rounded-none focus:border-primary focus:ring-0 text-white placeholder:text-white/10"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -85,7 +86,7 @@ export default function LoginPage() {
               </div>
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-primary ml-1">Secure_Token</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-primary ml-1">Token_Seguridad</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-3 h-4 w-4 text-white/30" />
                 <Input
@@ -103,7 +104,7 @@ export default function LoginPage() {
               type="submit"
               disabled={loading}
             >
-              {loading ? <Loader2 className="animate-spin h-5 w-5" /> : <>AUTHENTICATE <Zap className="h-4 w-4 fill-current" /></>}
+              {loading ? <Loader2 className="animate-spin h-5 w-5" /> : <>AUTENTICAR <Zap className="h-4 w-4 fill-current" /></>}
             </Button>
           </form>
 
@@ -112,7 +113,7 @@ export default function LoginPage() {
               <span className="w-full border-t border-white/5"></span>
             </div>
             <div className="relative flex justify-center text-[8px] uppercase tracking-[0.4em]">
-              <span className="bg-black/40 px-4 text-white/20">External_Bypass</span>
+              <span className="bg-black/40 px-4 text-white/20">Bypass_Externo</span>
             </div>
           </div>
 
@@ -126,7 +127,7 @@ export default function LoginPage() {
           </Button>
 
           <div className="flex items-center gap-2 justify-center text-[8px] text-white/20 uppercase tracking-widest">
-            <ShieldAlert className="h-3 w-3" /> Encrypted Connection via Firebase v11
+            <ShieldAlert className="h-3 w-3" /> Conexión Cifrada vía Firebase
           </div>
         </CardContent>
       </Card>
