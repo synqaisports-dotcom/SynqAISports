@@ -16,7 +16,13 @@ import {
   Play, 
   Pencil,
   ShieldCheck,
-  Crown
+  Crown,
+  Cpu,
+  Globe,
+  Monitor,
+  ChevronDown,
+  Zap,
+  Lock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -24,6 +30,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { 
   Sheet, 
   SheetContent, 
@@ -32,6 +39,12 @@ import {
   SheetDescription,
   SheetFooter
 } from "@/components/ui/sheet";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
@@ -43,12 +56,39 @@ const INITIAL_ROLES = [
   { id: "r4", name: "Tutor", users: 45, status: "Active", permissions: ["Consult_Only"] },
 ];
 
-const PERMISSION_MODULES = [
-  { id: "clubs", label: "Gestión de Clubes" },
-  { id: "users", label: "Usuarios y Staff" },
-  { id: "tactics", label: "Pizarras y Táctica" },
-  { id: "billing", label: "Facturación y Planes" },
-  { id: "analytics", label: "Métricas Globales" },
+const SECTOR_PERMISSIONS = [
+  {
+    id: "global",
+    label: "Control Global",
+    icon: Globe,
+    color: "text-emerald-400",
+    modules: [
+      { id: "clubs", label: "Gestión de Clubes", features: ["Ver", "Crear", "Editar", "Suspender"] },
+      { id: "plans", label: "Gestión de Planes", features: ["Ver", "Modificar Precios", "Crear Protocolos"] },
+      { id: "promos", label: "Promociones IA", features: ["Ver", "Generar Códigos", "Analítica ROI"] },
+    ]
+  },
+  {
+    id: "elite",
+    label: "Operativa Élite",
+    icon: Cpu,
+    color: "text-primary",
+    modules: [
+      { id: "coach_hub", label: "Coach Hub", features: ["Dashboard", "Gestión Atletas", "Informes"] },
+      { id: "tactical_board", label: "Tactical Board", features: ["Acceso", "Guardar Tácticas", "Exportar Video"] },
+      { id: "neural_planner", label: "Neural Planner", features: ["Generar Planes", "Biblioteca IA", "Ajustes Avanzados"] },
+    ]
+  },
+  {
+    id: "terminals",
+    label: "Terminales de Acceso",
+    icon: Monitor,
+    color: "text-white/60",
+    modules: [
+      { id: "tutor", label: "Portal Tutor", features: ["Consultas", "Chat Directo", "Pagos"] },
+      { id: "smartwatch", label: "Link Reloj Inteligente", features: ["Sincronización", "Métricas en Vivo"] },
+    ]
+  }
 ];
 
 export default function GlobalRolesPage() {
@@ -57,6 +97,7 @@ export default function GlobalRolesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<any>(null);
+  const [activeSectors, setActiveSectors] = useState<Record<string, boolean>>({ global: true });
   const { toast } = useToast();
 
   const handleToggleStatus = (id: string) => {
@@ -87,12 +128,20 @@ export default function GlobalRolesPage() {
   const openSheet = (role: any = null) => {
     setEditingRole(role);
     setIsSheetOpen(true);
+    // En un caso real, cargaríamos los sectores activos desde el rol
     if (role) {
       toast({
         title: "CONFIG_TERMINAL_OPEN",
-        description: `Sincronizando matriz de permisos para el rol ${role.name}.`,
+        description: `Sincronizando matriz de niveles para el rol ${role.name}.`,
       });
     }
+  };
+
+  const toggleSector = (sectorId: string) => {
+    setActiveSectors(prev => ({
+      ...prev,
+      [sectorId]: !prev[sectorId]
+    }));
   };
 
   const filteredRoles = roles.filter(r => 
@@ -122,75 +171,123 @@ export default function GlobalRolesPage() {
         </Button>
 
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-          <SheetContent side="right" className="bg-[#04070c]/95 backdrop-blur-3xl border-l border-emerald-500/20 text-white w-full sm:max-w-2xl shadow-[-20px_0_50px_rgba(0,0,0,0.5)] overflow-y-auto custom-scrollbar">
-            <SheetHeader className="pb-8">
-              <SheetTitle className="text-3xl font-black italic tracking-tighter text-emerald-400 emerald-text-glow uppercase text-left">
-                {editingRole ? `Editar Rol: ${editingRole.name}` : "Configurar Identidad de Rol"}
-              </SheetTitle>
-              <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left">Define el alcance de autoridad para este nodo de usuario.</SheetDescription>
-            </SheetHeader>
-            <div className="space-y-8 py-4">
+          <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-emerald-500/20 text-white w-full sm:max-w-2xl shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+            <div className="p-10 pb-6 border-b border-white/5">
+              <SheetHeader className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400">Terminal_Identidad_v2.5</span>
+                </div>
+                <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left">
+                  {editingRole ? `EDITAR: ${editingRole.name}` : "CONFIG_NUEVO_ROL"}
+                </SheetTitle>
+                <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left">Matriz de autoridad multinivel y sectores de acceso.</SheetDescription>
+              </SheetHeader>
+            </div>
+
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10">
               
-              {/* OPCIÓN DE ACCESO TOTAL - EXCLUSIVO SUPERADMIN */}
+              {/* ACCESO TOTAL (Solo Superadmin) */}
               {profile?.role === "superadmin" && (
-                <div className="p-8 bg-emerald-500/10 border-2 border-emerald-500/30 rounded-[2rem] space-y-4 group relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-all">
-                    <Crown className="h-12 w-12 text-emerald-400" />
+                <div className="p-8 bg-emerald-500/5 border border-emerald-500/30 rounded-3xl space-y-4 relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-all">
+                    <Crown className="h-16 w-16 text-emerald-400" />
                   </div>
                   <div className="flex items-center justify-between relative z-10">
                     <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 bg-emerald-500/20 rounded-xl flex items-center justify-center border border-emerald-500/40">
-                        <ShieldCheck className="h-5 w-5 text-emerald-400 animate-pulse" />
+                      <div className="h-12 w-12 bg-emerald-500/20 rounded-2xl flex items-center justify-center border border-emerald-500/40">
+                        <ShieldCheck className="h-6 w-6 text-emerald-400 animate-pulse" />
                       </div>
                       <div className="flex flex-col">
                         <span className="text-[11px] font-black uppercase tracking-[0.2em] text-emerald-400">PROTOCOLO_ACCESO_TOTAL</span>
-                        <span className="text-[8px] font-bold uppercase text-white/40 tracking-widest">Autoridad Raíz del Sistema</span>
+                        <span className="text-[8px] font-bold uppercase text-white/40 tracking-widest">AUTORIDAD RAÍZ DEL SISTEMA</span>
                       </div>
                     </div>
-                    <Checkbox className="h-6 w-6 rounded-lg border-emerald-400/50 data-[state=checked]:bg-emerald-500 data-[state=checked]:text-black border-2" />
+                    <Switch className="data-[state=checked]:bg-emerald-500" />
                   </div>
-                  <p className="text-[10px] text-emerald-400/60 font-bold uppercase tracking-widest leading-relaxed pr-12">
-                    Habilita autoridad absoluta sobre todos los nodos, bases de datos y protocolos del sistema. Esta opción es exclusiva para identidades de nivel Superusuario.
-                  </p>
                 </div>
               )}
 
-              <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Identificador de Rol</label>
+              <div className="space-y-4">
+                <label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Identificador_Nodo</label>
                 <Input 
                   defaultValue={editingRole?.name || ""}
-                  placeholder="EJ: ANALISTA_TACTICO" 
-                  className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold uppercase focus:border-emerald-500/50 transition-all" 
+                  placeholder="EJ: ANALISTA_TACTICO_PRO" 
+                  className="h-16 bg-white/5 border-white/10 rounded-2xl font-bold uppercase focus:border-emerald-500/50 transition-all text-lg placeholder:text-white/10" 
                 />
               </div>
               
-              <div className="space-y-4">
-                <label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest block mb-4 ml-1">Matriz de Permisos Específicos</label>
-                <div className="grid grid-cols-1 gap-4">
-                  {PERMISSION_MODULES.map(module => (
-                    <div key={module.id} className="flex flex-col gap-4 p-6 bg-white/[0.03] border border-white/5 rounded-3xl hover:border-emerald-500/30 transition-all group">
-                      <span className="text-xs font-black uppercase tracking-widest group-hover:text-emerald-400 transition-colors">{module.label}</span>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        {['VER', 'CREAR', 'EDIT', 'DEL'].map(action => (
-                          <div key={action} className="flex items-center gap-3 bg-black/40 p-3 rounded-xl border border-white/5 transition-all hover:bg-black/60">
-                             <Checkbox className="rounded-md border-emerald-500/40 data-[state=checked]:bg-emerald-500 data-[state=checked]:text-black" />
-                             <span className="text-[9px] font-black text-white/40 uppercase tracking-tighter">{action}</span>
+              <div className="space-y-6">
+                <label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest block ml-1">Configuración de Sectores y Niveles</label>
+                
+                <Accordion type="multiple" className="space-y-4">
+                  {SECTOR_PERMISSIONS.map(sector => (
+                    <AccordionItem 
+                      key={sector.id} 
+                      value={sector.id} 
+                      className={cn(
+                        "border border-white/5 rounded-3xl overflow-hidden bg-white/[0.02] transition-all",
+                        activeSectors[sector.id] ? "border-emerald-500/20" : "opacity-50"
+                      )}
+                    >
+                      <div className="px-6 py-4 flex items-center justify-between bg-black/40">
+                        <div className="flex items-center gap-4">
+                          <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center bg-white/5", sector.color)}>
+                            <sector.icon className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <span className="text-xs font-black uppercase tracking-widest text-white">{sector.label}</span>
+                            <p className="text-[8px] font-bold text-white/30 uppercase tracking-widest mt-0.5">Acceso a Sector</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-6">
+                          <Switch 
+                            checked={activeSectors[sector.id]} 
+                            onCheckedChange={() => toggleSector(sector.id)}
+                            className="data-[state=checked]:bg-emerald-500"
+                          />
+                          <AccordionTrigger className="hover:no-underline p-0 h-8 w-8 rounded-full hover:bg-white/5 justify-center" />
+                        </div>
+                      </div>
+
+                      <AccordionContent className="p-6 pt-2 space-y-6">
+                        {sector.modules.map(module => (
+                          <div key={module.id} className="space-y-4 p-5 bg-black/60 rounded-2xl border border-white/5 relative group/module">
+                            <div className="flex items-center justify-between mb-4">
+                               <div className="flex items-center gap-3">
+                                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-500/50" />
+                                  <span className="text-[10px] font-black uppercase tracking-widest text-white/70">{module.label}</span>
+                               </div>
+                               <Checkbox className="rounded-md border-emerald-500/40 data-[state=checked]:bg-emerald-500 data-[state=checked]:text-black" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              {module.features.map(feature => (
+                                <div key={feature} className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/5 hover:border-emerald-500/20 transition-all cursor-pointer">
+                                   <Checkbox className="h-3.5 w-3.5 rounded-sm border-white/20 data-[state=checked]:bg-emerald-500 data-[state=checked]:text-black" />
+                                   <span className="text-[9px] font-bold text-white/40 uppercase tracking-tighter group-hover/module:text-white/60">{feature}</span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         ))}
-                      </div>
-                    </div>
+                      </AccordionContent>
+                    </AccordionItem>
                   ))}
-                </div>
+                </Accordion>
               </div>
             </div>
-            <SheetFooter className="mt-12">
+
+            <div className="p-10 pt-6 border-t border-white/5 bg-black/40">
               <Button 
-                onClick={() => setIsSheetOpen(false)}
-                className="w-full h-16 bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:scale-[1.02] transition-all"
+                onClick={() => {
+                  toast({ title: "SINC_ESTABLECIDA", description: "La matriz de niveles ha sido actualizada en la red." });
+                  setIsSheetOpen(false);
+                }}
+                className="w-full h-16 bg-emerald-500 text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-2xl shadow-[0_0_40px_rgba(16,185,129,0.2)] hover:scale-[1.02] transition-all border-none"
               >
-                {editingRole ? "Actualizar Protocolo" : "Sincronizar Protocolo"}
+                {editingRole ? "ACTUALIZAR_PROTOCOLO" : "SINCRONIZAR_IDENTIDAD"}
               </Button>
-            </SheetFooter>
+            </div>
           </SheetContent>
         </Sheet>
       </div>
@@ -203,7 +300,7 @@ export default function GlobalRolesPage() {
               <Search className="absolute left-4 top-4 h-5 w-5 text-emerald-500 opacity-50" />
               <Input 
                 placeholder="BUSCAR IDENTIDAD DE ROL..." 
-                className="pl-12 h-14 bg-white/[0.03] border-white/10 rounded-2xl text-white font-bold uppercase text-[11px] tracking-widest focus:ring-emerald-500/30"
+                className="pl-12 h-14 bg-white/[0.03] border-white/10 rounded-2xl text-white font-bold uppercase text-[11px] tracking-widest focus:ring-emerald-500/30 transition-all"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -243,16 +340,14 @@ export default function GlobalRolesPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-center">
-                      <div className="flex flex-col items-center gap-1">
-                        <Badge variant="outline" className={cn(
-                          "rounded-full font-black text-[9px] uppercase tracking-widest px-4 py-1.5",
-                          role.status === 'System' ? 'border-emerald-500/40 text-emerald-400 bg-emerald-500/5' : 
-                          role.status === 'Active' ? 'border-emerald-500/20 text-emerald-400/70 bg-emerald-500/5' :
-                          'border-white/10 text-white/30 bg-white/5'
-                        )}>
-                          {role.status}
-                        </Badge>
-                      </div>
+                      <Badge variant="outline" className={cn(
+                        "rounded-full font-black text-[9px] uppercase tracking-widest px-4 py-1.5",
+                        role.status === 'System' ? 'border-emerald-500/40 text-emerald-400 bg-emerald-500/5' : 
+                        role.status === 'Active' ? 'border-emerald-500/20 text-emerald-400/70 bg-emerald-500/5' :
+                        'border-white/10 text-white/30 bg-white/5'
+                      )}>
+                        {role.status}
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-right pr-10">
                       <div className="flex items-center justify-end gap-2">
@@ -262,7 +357,6 @@ export default function GlobalRolesPage() {
                           className="h-10 w-10 rounded-xl text-white/20 hover:text-emerald-400 hover:bg-emerald-500/10 border border-white/5 hover:border-emerald-500/20 transition-all"
                           onClick={() => openSheet(role)}
                           title="Modificar Protocolo"
-                          aria-label="Modificar Protocolo"
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -276,7 +370,6 @@ export default function GlobalRolesPage() {
                               : "hover:border-emerald-500/50 hover:bg-emerald-500/10 text-white/20 hover:text-emerald-400"
                           )}
                           title={role.status === "Active" ? "Suspender Identidad" : "Reactivar Identidad"}
-                          aria-label={role.status === "Active" ? "Suspender Identidad" : "Reactivar Identidad"}
                           onClick={() => handleToggleStatus(role.id)}
                           disabled={role.status === "System"}
                         >
@@ -293,8 +386,12 @@ export default function GlobalRolesPage() {
             </Table>
           </CardContent>
           <div className="p-6 bg-black/20 text-[9px] font-black text-white/20 uppercase tracking-[0.4em] flex justify-between rounded-b-3xl">
-            <span>Sincronización de matriz activa</span>
-            <span>Seguridad Nivel 4</span>
+            <span className="flex items-center gap-2">
+              <Activity className="h-3 w-3 text-emerald-500 animate-pulse" /> Sincronización de matriz activa
+            </span>
+            <span className="flex items-center gap-2">
+              <Lock className="h-3 w-3 text-emerald-500/50" /> Seguridad Nivel 4
+            </span>
           </div>
         </Card>
 
@@ -308,17 +405,17 @@ export default function GlobalRolesPage() {
             </CardHeader>
             <CardContent className="space-y-4 pt-4">
               <div className="p-6 bg-black/60 rounded-2xl border border-white/5 space-y-2 group-hover:border-emerald-500/30 transition-all">
-                <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Roles de Sistema Bloqueados</p>
+                <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Nodos Críticos Inmutables</p>
                 <div className="flex items-end gap-3">
                   <p className="text-4xl font-black italic text-white tracking-tighter">01</p>
-                  <span className="text-[10px] text-emerald-400 font-bold mb-1 uppercase tracking-widest">InmutaBLE</span>
+                  <span className="text-[10px] text-emerald-400 font-bold mb-1 uppercase tracking-widest italic">Estable</span>
                 </div>
               </div>
               <div className="p-6 bg-black/60 rounded-2xl border border-white/5 space-y-2 group-hover:border-emerald-500/30 transition-all">
-                <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Roles Personalizados</p>
+                <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Protocolos Personalizados</p>
                 <div className="flex items-end gap-3">
                   <p className="text-4xl font-black italic text-emerald-400 tracking-tighter">{filteredRoles.filter(r => r.status !== 'System').length}</p>
-                  <span className="text-[10px] text-white/30 font-bold mb-1 uppercase tracking-widest">Activos</span>
+                  <span className="text-[10px] text-white/30 font-bold mb-1 uppercase tracking-widest italic">Sincronizados</span>
                 </div>
               </div>
             </CardContent>
@@ -333,7 +430,7 @@ export default function GlobalRolesPage() {
                 <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/60">Operativa_Matrix</span>
              </div>
              <p className="text-[10px] text-white/40 leading-relaxed font-bold uppercase italic tracking-wider">
-               Los cambios en la matriz de roles afectan a la capacidad de acceso en tiempo real de todos los nodos vinculados. Use con precaución operativa.
+               La matriz multinivel permite activar sectores completos y refinar permisos específicos dentro de cada módulo. Use con precaución operativa.
              </p>
           </div>
         </div>
