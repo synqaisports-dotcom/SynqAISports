@@ -14,14 +14,14 @@ export default function GlobalPromosPage() {
       <div className="flex justify-between items-end border-b border-white/5 pb-6">
         <div className="space-y-1">
           <div className="flex items-center gap-3 mb-2">
-            <Zap className="h-5 w-5 text-primary animate-pulse" />
-            <span className="text-[10px] font-black text-primary tracking-[0.5em] uppercase">Promo_Neural_Generator</span>
+            <Zap className="h-5 w-5 text-emerald-400 animate-pulse" />
+            <span className="text-[10px] font-black text-emerald-400 tracking-[0.5em] uppercase">Promo_Neural_Generator</span>
           </div>
-          <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic cyan-text-glow">
+          <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic emerald-text-glow">
             CAMPAIGN_COMMAND
           </h1>
         </div>
-        <Button className="rounded-none bg-primary text-primary-foreground font-black uppercase text-[10px] tracking-widest h-12 px-8 cyan-glow hover:scale-105 transition-all">
+        <Button className="rounded-none bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 transition-all border-none">
           <Plus className="h-4 w-4 mr-2" /> Generar Código IA
         </Button>
       </div>
@@ -35,13 +35,13 @@ export default function GlobalPromosPage() {
       <Card className="glass-panel overflow-hidden">
         <CardHeader className="bg-black/40 border-b border-white/5 p-6 space-y-4 md:space-y-0 md:flex md:flex-row md:items-center md:justify-between">
           <div className="relative w-full max-w-sm">
-            <Search className="absolute left-3 top-3.5 h-4 w-4 text-primary opacity-50" />
+            <Search className="absolute left-3 top-3.5 h-4 w-4 text-emerald-500 opacity-50" />
             <Input 
               placeholder="BUSCAR CÓDIGO_TOKEN..." 
-              className="pl-10 h-12 bg-white/5 border-white/10 rounded-none text-white placeholder:text-white/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-primary/50"
+              className="pl-10 h-12 bg-white/5 border-white/10 rounded-none text-white placeholder:text-white/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-emerald-500/50"
             />
           </div>
-          <Badge variant="outline" className="rounded-none border-primary/20 text-primary font-black text-[9px] px-3 py-1 uppercase tracking-widest">
+          <Badge variant="outline" className="rounded-none border-emerald-500/20 text-emerald-400 font-black text-[9px] px-3 py-1 uppercase tracking-widest">
             Tokens Activos: 12
           </Badge>
         </CardHeader>
@@ -59,7 +59,7 @@ export default function GlobalPromosPage() {
             <TableBody>
                <TableRow className="border-white/5">
                   <TableCell className="pl-8">
-                     <span className="font-headline font-bold text-primary italic">LAUNCH_2024</span>
+                     <span className="font-headline font-bold text-emerald-400 italic">LAUNCH_2024</span>
                   </TableCell>
                   <TableCell>
                      <span className="text-xs font-black text-white">20%</span>
@@ -71,7 +71,7 @@ export default function GlobalPromosPage() {
                      <span className="text-xs font-black text-white">45/100</span>
                   </TableCell>
                   <TableCell className="text-right pr-8">
-                     <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/5 rounded-none font-black text-[9px] uppercase tracking-widest">Desactivar</Button>
+                     <Button variant="ghost" size="sm" className="text-emerald-400 hover:bg-emerald-500/5 rounded-none font-black text-[9px] uppercase tracking-widest">Desactivar</Button>
                   </TableCell>
                </TableRow>
             </TableBody>
@@ -85,8 +85,8 @@ export default function GlobalPromosPage() {
 function PromoMiniStat({ icon: Icon, label, value }: any) {
   return (
     <Card className="glass-panel p-4 flex items-center gap-4">
-       <div className="h-10 w-10 bg-primary/10 flex items-center justify-center border border-primary/20">
-          <Icon className="h-5 w-5 text-primary" />
+       <div className="h-10 w-10 bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+          <Icon className="h-5 w-5 text-emerald-500" />
        </div>
        <div>
           <p className="text-[8px] font-black text-white/30 uppercase tracking-widest">{label}</p>

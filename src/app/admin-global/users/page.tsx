@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -48,35 +49,35 @@ export default function GlobalUsersPage() {
       <div className="flex justify-between items-end border-b border-white/5 pb-6">
         <div className="space-y-1">
           <div className="flex items-center gap-3 mb-2">
-            <Shield className="h-5 w-5 text-primary animate-pulse" />
-            <span className="text-[10px] font-black text-primary tracking-[0.5em] uppercase">Security_Protocol_Active</span>
+            <Shield className="h-5 w-5 text-emerald-400 animate-pulse" />
+            <span className="text-[10px] font-black text-emerald-400 tracking-[0.5em] uppercase">Security_Protocol_Active</span>
           </div>
-          <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic cyan-text-glow">
+          <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic emerald-text-glow">
             USER_ACCESS_COMMAND
           </h1>
         </div>
-        <Button className="rounded-none bg-primary text-primary-foreground font-black uppercase text-[10px] tracking-widest h-12 px-8 cyan-glow hover:scale-105 transition-all">
+        <Button className="rounded-none bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 transition-all border-none">
           <UserPlus className="h-4 w-4 mr-2" /> Nueva Credencial
         </Button>
       </div>
 
       {/* METRICS ROW */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <MetricMiniCard label="Solicitudes Pendientes" value="14" color="text-primary" />
+        <MetricMiniCard label="Solicitudes Pendientes" value="14" color="text-emerald-400" />
         <MetricMiniCard label="Nodos Activos Hoy" value="1.2k" color="text-white" />
         <MetricMiniCard label="Alertas de Acceso" value="0" color="text-emerald-400" />
       </div>
 
       {/* MAIN DATA TERMINAL */}
       <Card className="glass-panel shadow-2xl overflow-hidden relative">
-        <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+        <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
         
         <CardHeader className="bg-black/40 border-b border-white/5 p-6 space-y-4 md:space-y-0 md:flex md:flex-row md:items-center md:justify-between">
           <div className="relative w-full max-w-md">
-            <Search className="absolute left-3 top-3.5 h-4 w-4 text-primary opacity-50" />
+            <Search className="absolute left-3 top-3.5 h-4 w-4 text-emerald-500 opacity-50" />
             <Input 
               placeholder="BUSCAR IDENTIDAD O PAÍS..." 
-              className="pl-10 h-12 bg-white/5 border-white/10 rounded-none text-white placeholder:text-white/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-primary/50 transition-all"
+              className="pl-10 h-12 bg-white/5 border-white/10 rounded-none text-white placeholder:text-white/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-emerald-500/50 transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -85,7 +86,7 @@ export default function GlobalUsersPage() {
             <span className="text-[9px] font-black text-white/30 uppercase tracking-widest">Filtrar por Status:</span>
             <div className="flex gap-1">
               {['Todos', 'Pendiente', 'Activo'].map(f => (
-                <button key={f} className="text-[9px] font-black uppercase px-3 py-1 border border-white/5 hover:border-primary/40 text-white/40 hover:text-primary transition-all">
+                <button key={f} className="text-[9px] font-black uppercase px-3 py-1 border border-white/5 hover:border-emerald-500/40 text-white/40 hover:text-emerald-400 transition-all">
                   {f}
                 </button>
               ))}
@@ -109,12 +110,12 @@ export default function GlobalUsersPage() {
                 <TableRow key={user.id} className="border-white/5 hover:bg-white/[0.03] transition-colors group">
                   <TableCell className="pl-8">
                     <div className="flex items-center gap-4 py-2">
-                      <div className="h-10 w-10 bg-primary/5 border border-primary/20 flex items-center justify-center relative overflow-hidden group-hover:bg-primary/10 transition-all">
-                        <Activity className="h-4 w-4 text-primary opacity-40 group-hover:opacity-100 transition-opacity" />
-                        <div className="absolute inset-0 bg-primary/5 scan-line" />
+                      <div className="h-10 w-10 bg-emerald-500/5 border border-emerald-500/20 flex items-center justify-center relative overflow-hidden group-hover:bg-emerald-500/10 transition-all">
+                        <Activity className="h-4 w-4 text-emerald-500 opacity-40 group-hover:opacity-100 transition-opacity" />
+                        <div className="absolute inset-0 bg-emerald-500/5 scan-line" />
                       </div>
                       <div>
-                        <p className="font-black text-white uppercase text-xs italic group-hover:cyan-text-glow transition-all">
+                        <p className="font-black text-white uppercase text-xs italic group-hover:emerald-text-glow transition-all">
                           {user.name} {user.surname}
                         </p>
                         <p className="text-[8px] text-white/30 font-bold uppercase tracking-widest mt-1">
@@ -125,15 +126,15 @@ export default function GlobalUsersPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-primary/60" />
-                      <span className="text-xs font-headline font-bold text-primary tracking-wide uppercase">
+                      <Mail className="h-4 w-4 text-emerald-500/60" />
+                      <span className="text-xs font-headline font-bold text-emerald-400 tracking-wide uppercase">
                         {user.email}
                       </span>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Globe2 className="h-3 w-3 text-primary/40" />
+                      <Globe2 className="h-3 w-3 text-emerald-500/40" />
                       <span className="text-[10px] font-black uppercase text-white/70">{user.country}</span>
                     </div>
                   </TableCell>
@@ -150,7 +151,7 @@ export default function GlobalUsersPage() {
                       <Button variant="ghost" size="icon" className="h-8 w-8 rounded-none border border-white/5 hover:border-rose-500/50 hover:bg-rose-500/10 text-white/20 hover:text-rose-400 transition-all">
                         <UserX className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-none border border-white/5 hover:border-primary/50 hover:bg-primary/10 text-white/20 hover:text-primary transition-all">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-none border border-white/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 text-white/20 hover:text-emerald-400 transition-all">
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </div>
@@ -173,7 +174,7 @@ function MetricMiniCard({ label, value, color }: any) {
   return (
     <Card className="glass-panel p-4 relative group overflow-hidden">
       <div className="absolute top-0 right-0 p-2 opacity-5">
-        <Activity className="h-8 w-8 text-primary" />
+        <Activity className="h-8 w-8 text-emerald-500" />
       </div>
       <p className="text-[8px] font-black uppercase tracking-[0.3em] text-white/30 mb-1">{label}</p>
       <p className={cn("text-2xl font-black italic", color)}>{value}</p>

@@ -10,10 +10,10 @@ export default function GlobalAnalyticsPage() {
       <div className="flex justify-between items-end border-b border-white/5 pb-6">
         <div className="space-y-1">
           <div className="flex items-center gap-3 mb-2">
-            <BarChart3 className="h-5 w-5 text-primary animate-pulse" />
-            <span className="text-[10px] font-black text-primary tracking-[0.5em] uppercase">Neural_Network_Analytics</span>
+            <BarChart3 className="h-5 w-5 text-emerald-400 animate-pulse" />
+            <span className="text-[10px] font-black text-emerald-400 tracking-[0.5em] uppercase">Neural_Network_Analytics</span>
           </div>
-          <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic cyan-text-glow">
+          <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic emerald-text-glow">
             ANALYTICS_COMMAND
           </h1>
         </div>
@@ -28,13 +28,13 @@ export default function GlobalAnalyticsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="glass-panel h-80 flex flex-col items-center justify-center p-12 relative overflow-hidden">
-           <div className="absolute top-0 right-0 p-4 opacity-5"><TrendingUp className="h-40 w-40 text-primary" /></div>
-           <BarChart3 className="h-12 w-12 text-primary/20 mb-4" />
+           <div className="absolute top-0 right-0 p-4 opacity-5"><TrendingUp className="h-40 w-40 text-emerald-500" /></div>
+           <BarChart3 className="h-12 w-12 text-emerald-500/20 mb-4" />
            <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.5em]">Generando_Gráficas_de_Rendimiento...</span>
         </Card>
         <Card className="glass-panel h-80 flex flex-col items-center justify-center p-12 relative overflow-hidden">
-           <div className="absolute top-0 right-0 p-4 opacity-5"><Users className="h-40 w-40 text-primary" /></div>
-           <Activity className="h-12 w-12 text-primary/20 mb-4" />
+           <div className="absolute top-0 right-0 p-4 opacity-5"><Users className="h-40 w-40 text-emerald-500" /></div>
+           <Activity className="h-12 w-12 text-emerald-500/20 mb-4" />
            <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.5em]">Sincronizando_Datos_de_Atletas...</span>
         </Card>
       </div>
@@ -46,7 +46,7 @@ function AnalyticsMiniCard({ label, value, trend, icon: Icon }: any) {
   return (
     <Card className="glass-panel p-6 relative group">
       <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-20 transition-all">
-        <Icon className="h-8 w-8 text-primary" />
+        <Icon className="h-8 w-8 text-emerald-500" />
       </div>
       <p className="text-[8px] font-black text-white/30 uppercase tracking-widest mb-1">{label}</p>
       <div className="flex items-end gap-3">

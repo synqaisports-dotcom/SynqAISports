@@ -38,14 +38,14 @@ export default function ManageClubsPage() {
       <div className="flex justify-between items-end border-b border-white/5 pb-6">
         <div className="space-y-1">
           <div className="flex items-center gap-3 mb-2">
-            <Globe2 className="h-5 w-5 text-primary animate-pulse" />
-            <span className="text-[10px] font-black text-primary tracking-[0.5em] uppercase">Club_Network_Active</span>
+            <Globe2 className="h-5 w-5 text-emerald-400 animate-pulse" />
+            <span className="text-[10px] font-black text-emerald-400 tracking-[0.5em] uppercase">Club_Network_Active</span>
           </div>
-          <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic cyan-text-glow">
-            NODE_CLUB_MANAGEMENT
+          <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic emerald-text-glow">
+            GESTIÓN DE CLUBES
           </h1>
         </div>
-        <Button className="rounded-none bg-primary text-primary-foreground font-black uppercase text-[10px] tracking-widest h-12 px-8 cyan-glow hover:scale-105 transition-all">
+        <Button className="rounded-none bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 transition-all border-none">
           <Plus className="h-4 w-4 mr-2" /> Vincular Nuevo Nodo
         </Button>
       </div>
@@ -53,10 +53,10 @@ export default function ManageClubsPage() {
       <Card className="glass-panel overflow-hidden relative">
         <CardHeader className="bg-black/40 border-b border-white/5 flex flex-col md:flex-row items-start md:items-center justify-between space-y-4 md:space-y-0 p-6">
           <div className="relative w-full max-w-sm">
-            <Search className="absolute left-3 top-3.5 h-4 w-4 text-primary opacity-50" />
+            <Search className="absolute left-3 top-3.5 h-4 w-4 text-emerald-500 opacity-50" />
             <Input 
               placeholder="BUSCAR IDENTIDAD DE CLUB..." 
-              className="pl-10 h-12 bg-white/5 border-white/10 rounded-none text-white placeholder:text-white/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-primary/50"
+              className="pl-10 h-12 bg-white/5 border-white/10 rounded-none text-white placeholder:text-white/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-emerald-500/50"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -66,7 +66,7 @@ export default function ManageClubsPage() {
                <span className="text-[9px] font-black text-white/30 uppercase tracking-widest">Estado de Sincronización</span>
                <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest italic">ESTABLE_100%</span>
             </div>
-            <Badge variant="outline" className="rounded-none border-primary/20 text-primary font-black text-[9px] px-3 py-1 uppercase tracking-widest">
+            <Badge variant="outline" className="rounded-none border-emerald-500/20 text-emerald-400 font-black text-[9px] px-3 py-1 uppercase tracking-widest">
               Total: {MOCK_CLUBS.length}
             </Badge>
           </div>
@@ -87,12 +87,12 @@ export default function ManageClubsPage() {
                 <TableRow key={club.id} className="border-white/5 hover:bg-white/[0.03] transition-colors group">
                   <TableCell className="pl-8">
                     <div className="flex items-center gap-4 py-2">
-                      <div className="h-10 w-10 bg-primary/5 border border-primary/20 flex items-center justify-center relative overflow-hidden group-hover:bg-primary/10 transition-all rotate-45">
-                        <Building2 className="h-4 w-4 text-primary -rotate-45" />
-                        <div className="absolute inset-0 bg-primary/5 scan-line" />
+                      <div className="h-10 w-10 bg-emerald-500/5 border border-emerald-500/20 flex items-center justify-center relative overflow-hidden group-hover:bg-emerald-500/10 transition-all rotate-45">
+                        <Building2 className="h-4 w-4 text-emerald-500 -rotate-45" />
+                        <div className="absolute inset-0 bg-emerald-500/5 scan-line" />
                       </div>
                       <div>
-                        <p className="font-black text-white uppercase text-xs italic group-hover:cyan-text-glow transition-all tracking-tighter">
+                        <p className="font-black text-white uppercase text-xs italic group-hover:emerald-text-glow transition-all tracking-tighter">
                           {club.name}
                         </p>
                         <p className="text-[8px] text-white/30 font-bold uppercase tracking-widest mt-1">
@@ -107,7 +107,7 @@ export default function ManageClubsPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-center">
-                    <span className="text-xs font-headline font-bold text-white group-hover:text-primary transition-colors">
+                    <span className="text-xs font-headline font-bold text-white group-hover:text-emerald-400 transition-colors">
                       {club.users}
                     </span>
                   </TableCell>
@@ -115,18 +115,18 @@ export default function ManageClubsPage() {
                     <div className="flex items-center gap-2">
                       <div className={cn(
                         "w-1.5 h-1.5 rounded-full animate-pulse",
-                        club.status === "Active" ? "bg-primary shadow-[0_0_8px_var(--primary)]" : "bg-amber-400"
+                        club.status === "Active" ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-amber-400"
                       )} />
                       <span className={cn(
                         "text-[9px] font-black uppercase tracking-[0.2em]",
-                        club.status === "Active" ? "text-primary" : "text-amber-400"
+                        club.status === "Active" ? "text-emerald-400" : "text-amber-400"
                       )}>
                         {club.status}
                       </span>
                     </div>
                   </TableCell>
                   <TableCell className="text-right pr-8">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-none border border-white/5 hover:border-primary/50 hover:bg-primary/10 text-white/20 hover:text-primary transition-all">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-none border border-white/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 text-white/20 hover:text-emerald-400 transition-all">
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </TableCell>
@@ -137,7 +137,7 @@ export default function ManageClubsPage() {
         </CardContent>
         <div className="p-4 bg-black/20 border-t border-white/5 flex justify-between items-center text-[8px] font-black text-white/20 uppercase tracking-[0.5em]">
           <span>Mostrando {MOCK_CLUBS.length} de 24 registros globales</span>
-          <span className="flex items-center gap-2"><Activity className="h-2 w-2 text-primary animate-pulse" /> Sincronización: Estable</span>
+          <span className="flex items-center gap-2"><Activity className="h-2 w-2 text-emerald-500 animate-pulse" /> Sincronización: Estable</span>
         </div>
       </Card>
     </div>

@@ -12,14 +12,14 @@ export default function GlobalPlansPage() {
       <div className="flex justify-between items-end border-b border-white/5 pb-6">
         <div className="space-y-1">
           <div className="flex items-center gap-3 mb-2">
-            <TicketPercent className="h-5 w-5 text-primary animate-pulse" />
-            <span className="text-[10px] font-black text-primary tracking-[0.5em] uppercase">Subscription_Protocols</span>
+            <TicketPercent className="h-5 w-5 text-emerald-400 animate-pulse" />
+            <span className="text-[10px] font-black text-emerald-400 tracking-[0.5em] uppercase">Subscription_Protocols</span>
           </div>
-          <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic cyan-text-glow">
+          <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic emerald-text-glow">
             PLAN_CONFIGURATION
           </h1>
         </div>
-        <Button className="rounded-none bg-primary text-primary-foreground font-black uppercase text-[10px] tracking-widest h-12 px-8 cyan-glow hover:scale-105 transition-all">
+        <Button className="rounded-none bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 transition-all border-none">
           <Plus className="h-4 w-4 mr-2" /> Nuevo Protocolo
         </Button>
       </div>
@@ -56,15 +56,15 @@ function PlanTerminalCard({ title, price, users, icon: Icon, features, featured 
   return (
     <Card className={cn(
       "glass-panel overflow-hidden relative group",
-      featured && "border-primary shadow-[0_0_30px_rgba(0,242,255,0.1)]"
+      featured && "border-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.1)]"
     )}>
       <div className="absolute top-0 right-0 p-4 opacity-10">
-        <Icon className="h-12 w-12 text-primary" />
+        <Icon className="h-12 w-12 text-emerald-500" />
       </div>
       <CardHeader className="text-center pt-8">
         <CardDescription className="text-[9px] font-black uppercase tracking-[0.4em] text-white/30">{featured ? 'RECOMENDADO' : 'NIVEL_ACCESO'}</CardDescription>
         <CardTitle className="text-2xl font-black text-white italic tracking-tighter uppercase mt-2">{title}</CardTitle>
-        <div className="text-3xl font-black text-primary cyan-text-glow mt-4 font-headline">{price}</div>
+        <div className="text-3xl font-black text-emerald-400 emerald-text-glow mt-4 font-headline">{price}</div>
       </CardHeader>
       <CardContent className="space-y-6 pt-6">
         <div className="flex flex-col items-center gap-1 border-y border-white/5 py-4 bg-white/[0.01]">
@@ -74,11 +74,11 @@ function PlanTerminalCard({ title, price, users, icon: Icon, features, featured 
         <ul className="space-y-3">
           {features.map((f: any, i: number) => (
             <li key={i} className="flex items-center gap-3 text-[10px] font-bold text-white/50 uppercase tracking-widest">
-              <div className="h-1 w-1 bg-primary" /> {f}
+              <div className="h-1 w-1 bg-emerald-500" /> {f}
             </li>
           ))}
         </ul>
-        <Button className="w-full h-12 rounded-none border border-primary/40 bg-transparent text-primary font-black uppercase text-[10px] tracking-widest hover:bg-primary hover:text-black transition-all">
+        <Button className="w-full h-12 rounded-none border border-emerald-500/40 bg-transparent text-emerald-400 font-black uppercase text-[10px] tracking-widest hover:bg-emerald-500 hover:text-black transition-all">
           Modificar Configuración
         </Button>
       </CardContent>
