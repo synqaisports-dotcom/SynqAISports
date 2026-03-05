@@ -12,7 +12,7 @@ import { auth } from "@/lib/firebase/config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Zap, Database, Loader2, Chrome, ShieldAlert, AlertTriangle, ExternalLink, Key, Terminal } from "lucide-react";
+import { Database, Loader2, Chrome, ShieldAlert, Terminal } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from "@/lib/auth-context";
@@ -34,7 +34,10 @@ export default function LoginPage() {
       title: "BYPASS_ACTIVADO",
       description: "Accediendo al sistema en modo emergencia.",
     });
-    router.push("/dashboard");
+    // Forzamos la navegación con un pequeño delay para asegurar que el estado se propaga
+    setTimeout(() => {
+      window.location.href = "/dashboard";
+    }, 500);
   };
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -76,7 +79,6 @@ export default function LoginPage() {
       router.push("/dashboard");
     } catch (error: any) {
       console.error("DEBUG_OAUTH_CRITICAL:", error);
-      
       const errorStr = error.message || "";
       
       if (errorStr.includes("identitytoolkit.googleapis.com") || error.code === 'auth/operation-not-allowed') {
@@ -196,7 +198,6 @@ export default function LoginPage() {
               {isRegistering ? "<< Volver al Terminal" : "¿Nuevo Usuario? Registrar Identidad >>"}
             </button>
             
-            {/* Acceso de emergencia siempre visible en el pie si falla algo */}
             <button 
               type="button"
               onClick={handleBypass}

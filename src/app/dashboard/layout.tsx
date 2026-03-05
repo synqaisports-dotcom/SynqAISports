@@ -1,16 +1,13 @@
 "use client";
 
-import { AuthProvider, useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/lib/auth-context";
 import { DashboardSidebar } from "@/components/dashboard/Sidebar";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { Loader2, ShieldAlert, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase/config";
+import { Loader2 } from "lucide-react";
 
-function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
-  const { user, profile, loading } = useAuth();
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -33,9 +30,6 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
 
   if (!user) return null;
 
-  // Si después de la carga no hay perfil (caso extremo), usamos uno de emergencia
-  const effectiveProfile = profile || { role: "coach", email: user.email };
-
   return (
     <div className="min-h-screen bg-background flex">
       <DashboardSidebar />
@@ -45,13 +39,5 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
         </div>
       </main>
     </div>
-  );
-}
-
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <AuthProvider>
-      <DashboardLayoutContent>{children}</DashboardLayoutContent>
-    </AuthProvider>
   );
 }

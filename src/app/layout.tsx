@@ -1,6 +1,7 @@
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
+import { AuthProvider } from "@/lib/auth-context";
 
 export const metadata: Metadata = {
   title: 'SynqSports Pro | Gestión de Élite para Clubes',
@@ -21,8 +22,10 @@ export default function RootLayout({
         <meta name="google-signin-client_id" content="116171513626-elfpqoqa7apefapulnnp9ajrctlv0e5k.apps.googleusercontent.com" />
       </head>
       <body className="font-body antialiased selection:bg-accent/30 selection:text-primary">
-        {children}
-        <Toaster />
+        <AuthProvider>
+          {children}
+          <Toaster />
+        </AuthProvider>
       </body>
     </html>
   );
