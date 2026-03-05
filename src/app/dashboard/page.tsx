@@ -17,7 +17,8 @@ import {
   Trophy, 
   TrendingUp,
   BrainCircuit,
-  Calendar
+  Calendar,
+  Dumbbell
 } from "lucide-react";
 import Link from "next/link";
 
@@ -61,102 +62,72 @@ export default function DashboardPage() {
     </div>
   );
 
-  const renderClubAdmin = () => (
-    <div className="space-y-8">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-headline font-bold">Gestión de Club</h1>
-          <p className="text-white/50 tracking-widest">ID_NODO: {profile.clubId}</p>
-        </div>
-        <Button className="rounded-none shadow-lg cyan-glow flex gap-2" asChild>
-          <Link href="/dashboard/clubadmin/users"><Plus className="h-4 w-4" /> Invitar Personal</Link>
-        </Button>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="glass-panel border-none shadow-sm hover:shadow-primary/10 transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-white/40">Entrenadores</CardTitle>
-            <Users className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">8</div>
-          </CardContent>
-        </Card>
-        <Card className="glass-panel border-none shadow-sm hover:shadow-primary/10 transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-white/40">Atletas</CardTitle>
-            <Trophy className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">142</div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-
   const renderCoach = () => (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-headline font-bold">Hub de Entrenador</h1>
-          <p className="text-white/50 tracking-widest">ACCESO_AUTORIZADO: COACH</p>
+          <h1 className="text-3xl font-headline font-bold text-white">Hub de Entrenador</h1>
+          <p className="text-white/50 tracking-widest text-[10px] uppercase">Estatus: Activo | Rol: Operativo</p>
         </div>
-        <Button className="rounded-none shadow-lg cyan-glow flex gap-2" asChild>
-          <Link href="/dashboard/coach/planner"><BrainCircuit className="h-4 w-4" /> Nuevo Plan AI</Link>
-        </Button>
+        <div className="flex gap-4">
+          <Button variant="outline" className="rounded-none border-primary/30 text-primary hover:bg-primary/5 uppercase text-[10px] tracking-widest h-12" asChild>
+            <Link href="/dashboard/coach/exercises"><Dumbbell className="h-4 w-4 mr-2" /> Módulo Táctico</Link>
+          </Button>
+          <Button className="rounded-none shadow-lg cyan-glow flex gap-2 h-12 uppercase text-[10px] tracking-widest font-black" asChild>
+            <Link href="/dashboard/coach/planner"><BrainCircuit className="h-4 w-4" /> Nuevo Plan AI</Link>
+          </Button>
+        </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="glass-panel border-none shadow-sm group hover:ring-1 hover:ring-primary/40 transition-all">
           <CardHeader>
-            <div className="h-10 w-10 bg-primary/10 rounded-sm flex items-center justify-center mb-4">
+            <div className="h-10 w-10 bg-primary/10 rounded-sm flex items-center justify-center mb-4 border border-primary/20">
               <Calendar className="h-5 w-5 text-primary" />
             </div>
-            <CardTitle>Sesiones Programadas</CardTitle>
-            <CardDescription>Tiene 4 misiones asignadas para hoy.</CardDescription>
+            <CardTitle className="text-sm font-bold uppercase tracking-widest">Sesiones Hoy</CardTitle>
+            <CardDescription>Misiones asignadas para el periodo actual.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button variant="outline" className="w-full rounded-none border-white/10 uppercase text-[10px] tracking-widest">Ver Calendario</Button>
+            <div className="text-3xl font-black text-white mb-4">04</div>
+            <Button variant="outline" className="w-full rounded-none border-white/10 uppercase text-[10px] tracking-widest h-10">Ver Calendario</Button>
           </CardContent>
         </Card>
+
         <Card className="glass-panel border-none shadow-sm group hover:ring-1 hover:ring-primary/40 transition-all">
           <CardHeader>
-            <div className="h-10 w-10 bg-primary/10 rounded-sm flex items-center justify-center mb-4">
+            <div className="h-10 w-10 bg-primary/10 rounded-sm flex items-center justify-center mb-4 border border-primary/20">
               <TrendingUp className="h-5 w-5 text-primary" />
             </div>
-            <CardTitle>Métricas de Rendimiento</CardTitle>
-            <CardDescription>Los promedios han subido un 12% en el grupo primario.</CardDescription>
+            <CardTitle className="text-sm font-bold uppercase tracking-widest">Rendimiento</CardTitle>
+            <CardDescription>Crecimiento promedio del grupo primario.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button variant="outline" className="w-full rounded-none border-white/10 uppercase text-[10px] tracking-widest">Analítica Completa</Button>
+            <div className="text-3xl font-black text-primary mb-4">+12%</div>
+            <Button variant="outline" className="w-full rounded-none border-white/10 uppercase text-[10px] tracking-widest h-10">Analítica</Button>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-panel border-none shadow-sm group hover:ring-1 hover:ring-primary/40 transition-all border-t-2 border-t-primary/40">
+          <CardHeader>
+            <div className="h-10 w-10 bg-primary/10 rounded-sm flex items-center justify-center mb-4 border border-primary/20">
+              <Users className="h-5 w-5 text-primary" />
+            </div>
+            <CardTitle className="text-sm font-bold uppercase tracking-widest">Atletas</CardTitle>
+            <CardDescription>Activos bajo tu supervisión táctica.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-black text-white mb-4">24</div>
+            <Button variant="outline" className="w-full rounded-none border-white/10 uppercase text-[10px] tracking-widest h-10">Gestionar</Button>
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
-
-  const renderTutor = () => (
-    <div className="space-y-8">
-      <h1 className="text-3xl font-headline font-bold">Monitoreo de Atletas</h1>
-      <Card className="glass-panel border-none shadow-sm">
-        <CardHeader>
-          <CardTitle>Progreso del Atleta</CardTitle>
-          <CardDescription>Visualice rendimiento y asistencia de los atletas vinculados.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="bg-black/20 rounded-none p-12 text-center text-white/20 font-light italic border border-white/5">
-            Sin métricas activas para el periodo actual.
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 
   switch (profile.role) {
     case "superadmin": return renderSuperAdmin();
-    case "club_admin": return renderClubAdmin();
     case "coach": return renderCoach();
-    case "tutor": return renderTutor();
     default: return <div className="p-8">Nivel de Acceso No Definido</div>;
   }
 }

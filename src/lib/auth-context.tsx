@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
@@ -48,7 +49,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               profileData = userDoc.data() as UserProfile;
             }
           } catch (e) {
-            // Si falla la lectura por permisos pero es Elite, forzamos perfil local
+            // Bypass para usuarios de élite si hay errores de Firestore
             if (isElite) {
               profileData = {
                 email: user.email || "",
@@ -59,7 +60,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }
 
           if (!profileData) {
-            // Auto-provisión si no existe
+            // Auto-provisión para nuevos usuarios
             const newProfile: UserProfile = {
               email: user.email || "",
               role: isElite ? "superadmin" : "coach",
@@ -70,7 +71,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               await setDoc(userDocRef, newProfile);
               profileData = newProfile;
             } catch (e) {
-              // Si falla setDoc (ej. por config de Firebase), pero es Elite, permitimos entrar
               if (isElite) profileData = newProfile;
             }
           }
