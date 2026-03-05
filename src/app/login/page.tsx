@@ -8,7 +8,7 @@ import { auth } from "@/lib/firebase/config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Zap, Mail, Lock, Loader2, Database, ShieldAlert } from "lucide-react";
+import { Zap, Mail, Lock, Loader2, Database, ShieldAlert, Chrome } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
@@ -28,7 +28,7 @@ export default function LoginPage() {
       toast({
         variant: "destructive",
         title: "FALLO_DE_AUTENTICACIÓN",
-        description: "Credenciales no válidas en la base de datos.",
+        description: "Credenciales no válidas. Verifique su email y contraseña.",
       });
     } finally {
       setLoading(false);
@@ -45,7 +45,7 @@ export default function LoginPage() {
       toast({
         variant: "destructive",
         title: "FALLO_OAUTH",
-        description: "El bypass de Google ha sido rechazado.",
+        description: "El acceso vía Google ha sido rechazado o cancelado.",
       });
     } finally {
       setLoading(false);
@@ -54,7 +54,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
-      {/* Decoración de Fondo */}
+      {/* Decoración de Fondo NASA */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,255,255,0.05),transparent_70%)]" />
       
       <Card className="w-full max-w-md border border-white/10 bg-black/60 backdrop-blur-2xl rounded-none relative z-10 overflow-hidden shadow-2xl">
@@ -66,17 +66,36 @@ export default function LoginPage() {
             </div>
           </div>
           <CardTitle className="text-3xl font-headline font-black text-white tracking-[0.3em]">TERMINAL_DE_ACCESO</CardTitle>
-          <CardDescription className="uppercase text-[10px] tracking-[0.2em] text-white/40 mt-4">Autorización requerida para acceso al club</CardDescription>
+          <CardDescription className="uppercase text-[10px] tracking-[0.2em] text-white/40 mt-4">Sincronización de credenciales requerida</CardDescription>
         </CardHeader>
         <CardContent className="space-y-8 pb-14 px-12">
+          
+          <Button
+            variant="outline"
+            className="w-full h-14 border-primary/30 rounded-none text-white hover:bg-primary/10 hover:border-primary transition-all font-black tracking-[0.2em] text-xs bg-transparent flex gap-3"
+            onClick={handleGoogleLogin}
+            disabled={loading}
+          >
+            <Chrome className="h-4 w-4 text-primary" /> ACCESO_RÁPIDO_GOOGLE
+          </Button>
+
+          <div className="relative py-2">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-white/5"></span>
+            </div>
+            <div className="relative flex justify-center text-[8px] uppercase tracking-[0.5em]">
+              <span className="bg-[#070a0f] px-4 text-white/20">O IDENTIDAD MANUAL</span>
+            </div>
+          </div>
+
           <form onSubmit={handleEmailLogin} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary block">ID_IDENTIDAD</label>
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary block">EMAIL_USUARIO</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
                 <Input
                   type="email"
-                  placeholder="USUARIO@SYNQSPORTS.PRO"
+                  placeholder="admin@synqsports.pro"
                   className="pl-10 h-14 bg-white/5 border-white/10 rounded-none focus:border-primary/50 focus:ring-0 text-white placeholder:text-white/10 text-sm tracking-wider"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -85,7 +104,7 @@ export default function LoginPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary block">TOKEN_SEGURIDAD</label>
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary block">CONTRASEÑA_ACCESO</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
                 <Input
@@ -103,37 +122,20 @@ export default function LoginPage() {
               type="submit"
               disabled={loading}
             >
-              {loading ? <Loader2 className="animate-spin h-5 w-5" /> : <>AUTENTICAR <Zap className="h-4 w-4 fill-current" /></>}
+              {loading ? <Loader2 className="animate-spin h-5 w-5" /> : <>VALIDAR_IDENTIDAD <Zap className="h-4 w-4 fill-current" /></>}
             </Button>
           </form>
 
-          <div className="relative py-4">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-white/5"></span>
-            </div>
-            <div className="relative flex justify-center text-[9px] uppercase tracking-[0.5em]">
-              <span className="bg-[#070a0f] px-4 text-white/20">BYPASS_EXTERNO</span>
-            </div>
-          </div>
-
-          <Button
-            variant="outline"
-            className="w-full h-14 border-white/10 rounded-none text-white/70 hover:bg-white/5 hover:text-white transition-all font-black tracking-[0.2em] text-xs bg-transparent"
-            onClick={handleGoogleLogin}
-            disabled={loading}
-          >
-            GOOGLE_SECURE_AUTH
-          </Button>
-
           <div className="flex items-center gap-2 justify-center text-[9px] text-white/20 uppercase tracking-[0.3em] font-medium pt-2">
-            <ShieldAlert className="h-3.5 w-3.5" /> CONEXIÓN CIFRADA VÍA FIREBASE
+            <ShieldAlert className="h-3.5 w-3.5" /> ENCRIPTACIÓN_AES_256_ACTIVA
           </div>
         </CardContent>
       </Card>
 
-      {/* Logo Decorativo Inferior Izquierda */}
-      <div className="absolute bottom-8 left-8 flex items-center gap-3 opacity-20 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-500 cursor-default">
-        <div className="h-8 w-8 rounded-full border border-white flex items-center justify-center font-black text-xs text-white">N</div>
+      {/* Identificador Lateral */}
+      <div className="absolute bottom-8 left-8 flex items-center gap-3 opacity-20 hover:opacity-100 transition-all duration-500">
+        <div className="h-8 w-8 rounded-full border border-white flex items-center justify-center font-black text-xs text-white">S</div>
+        <div className="text-[8px] font-bold text-white tracking-widest uppercase">System Protocol v1.0.4</div>
       </div>
     </div>
   );
