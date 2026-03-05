@@ -2,19 +2,10 @@
 
 import { useAuth } from "@/lib/auth-context";
 import { DashboardSidebar } from "@/components/dashboard/Sidebar";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push("/login");
-    }
-  }, [user, loading, router]);
+  const { profile, loading } = useAuth();
 
   if (loading) {
     return (
@@ -28,7 +19,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
-  if (!user) return null;
+  // Bypass para desarrollo: si no hay perfil, mostramos el contenido igualmente
+  // aunque el AuthProvider ya debería estar dando uno mockeado.
 
   return (
     <div className="min-h-screen bg-background flex">

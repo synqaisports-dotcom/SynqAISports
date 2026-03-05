@@ -1,9 +1,6 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged, User } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase/config";
 
 export type UserRole = "superadmin" | "club_admin" | "coach" | "tutor";
 
@@ -27,78 +24,26 @@ const AuthContext = createContext<AuthContextType>({
   loginAsGuest: () => {},
 });
 
-const SUPERADMIN_EMAILS = ["munozmartinez.ismael@gmail.com", "synqaisports@gmail.com"];
-
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<any | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const loginAsGuest = () => {
-    const guestUser = {
-      uid: "guest-dev-uid",
+  useEffect(() => {
+    // PROTOCOLO_DE_RECONSTRUCCIÓN: Acceso total automático
+    const mockUser = { uid: "dev-root", email: "admin@synqsports.pro" };
+    const mockProfile: UserProfile = {
       email: "admin@synqsports.pro",
-      displayName: "Administrador de Élite (Bypass)",
-    };
-    const guestProfile: UserProfile = {
-      email: guestUser.email,
       role: "superadmin",
       clubId: "global",
     };
     
-    setUser(guestUser);
-    setProfile(guestProfile);
-    localStorage.setItem("dev_bypass", "true");
+    setUser(mockUser);
+    setProfile(mockProfile);
     setLoading(false);
-  };
-
-  useEffect(() => {
-    // Comprobación instantánea de bypass
-    const bypass = localStorage.getItem("dev_bypass");
-    if (bypass === "true") {
-      setUser({ uid: "guest-dev-uid", email: "admin@synqsports.pro" });
-      setProfile({ role: "superadmin", email: "admin@synqsports.pro", clubId: "global" });
-      setLoading(false);
-      return;
-    }
-
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        setUser(firebaseUser);
-        const isElite = SUPERADMIN_EMAILS.includes(firebaseUser.email || "");
-        
-        const defaultProfile: UserProfile = {
-          email: firebaseUser.email || "",
-          role: isElite ? "superadmin" : "coach",
-          clubId: isElite ? "global" : "guest_node",
-        };
-
-        try {
-          const userDocRef = doc(db, "users", firebaseUser.uid);
-          const userDoc = await getDoc(userDocRef);
-          
-          if (userDoc.exists()) {
-            setProfile(userDoc.data() as UserProfile);
-          } else {
-            // Guardado silencioso de perfil por defecto
-            setDoc(userDocRef, defaultProfile).catch(() => {});
-            setProfile(defaultProfile);
-          }
-        } catch (error) {
-          // Si falla Firestore por reglas de seguridad, usamos el perfil por defecto
-          setProfile(defaultProfile);
-        } finally {
-          setLoading(false);
-        }
-      } else {
-        setUser(null);
-        setProfile(null);
-        setLoading(false);
-      }
-    });
-
-    return () => unsubscribe();
   }, []);
+
+  const loginAsGuest = () => {};
 
   return (
     <AuthContext.Provider value={{ user, profile, loading, loginAsGuest }}>
