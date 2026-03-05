@@ -1,5 +1,7 @@
-# Firebase Studio
+# SynqSports Pro - Migración en curso
 
-This is a NextJS starter in Firebase Studio.
+Este proyecto está en proceso de migración desde un repositorio externo de GitHub.
 
-To get started, take a look at src/app/page.tsx.
+### Estado:
+- Esperando archivos del usuario para reconstrucción total.
+- El sistema anterior de SynqSports Pro será reemplazado por la nueva arquitectura proporcionada.
