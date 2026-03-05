@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -22,7 +21,10 @@ import {
   QrCode,
   Globe,
   Users,
-  MapPin
+  MapPin,
+  ExternalLink,
+  Trash2,
+  RefreshCw
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -47,6 +49,7 @@ import {
 } from "@/components/ui/select";
 import { generatePromoCampaign, GenerateCampaignOutput } from "@/ai/flows/generate-promo-campaign";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 const AVAILABLE_PLANS = [
   { id: "PROMO_LINK", name: "Promo Link (Ads Mode)" },
@@ -68,7 +71,14 @@ export default function GlobalPromosPage() {
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.objective) return;
+    if (!formData.objective) {
+      toast({
+        variant: "destructive",
+        title: "ERROR_PARAMETROS",
+        description: "Debe definir un objetivo y una región para la IA.",
+      });
+      return;
+    }
     
     setLoading(true);
     try {
@@ -92,50 +102,57 @@ export default function GlobalPromosPage() {
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({
-      description: "URL de acceso copiada al portapapeles.",
+      description: "Elemento copiado al portapapeles.",
     });
   };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
+      {/* HEADER TÁCTICO */}
       <div className="flex justify-between items-end border-b border-white/5 pb-6">
         <div className="space-y-1">
           <div className="flex items-center gap-3 mb-2">
             <QrCode className="h-5 w-5 text-emerald-400 animate-pulse" />
-            <span className="text-[10px] font-black text-emerald-400 tracking-[0.5em] uppercase">Access_Token_Factory</span>
+            <span className="text-[10px] font-black text-emerald-400 tracking-[0.5em] uppercase">Magic_Link_Factory</span>
           </div>
           <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic emerald-text-glow">
             PROMO_COMMAND
           </h1>
         </div>
         <Button 
-          onClick={() => setIsSheetOpen(true)}
+          onClick={() => {
+            setResult(null);
+            setIsSheetOpen(true);
+          }}
           className="rounded-none bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 transition-all border-none"
         >
-          <Plus className="h-4 w-4 mr-2" /> Crear Token IA
+          <Plus className="h-4 w-4 mr-2" /> Crear Token de Acceso
         </Button>
       </div>
 
+      {/* MÉTRICAS DE RED */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <PromoMiniStat icon={Layers} label="Tokens Activos" value="12" trend="+2" />
         <PromoMiniStat icon={Users} label="Conversiones" value="142" trend="+14%" />
-        <PromoMiniStat icon={Globe} label="Regiones" value="05" trend="LatAm/ES" />
-        <PromoMiniStat icon={Zap} label="Estado Red" value="Óptima" trend="100%" />
+        <PromoMiniStat icon={Globe} label="Regiones Activas" value="05" trend="LatAm / ES" />
+        <PromoMiniStat icon={Zap} label="Estado Nodo Promo" value="ESTABLE" trend="100%" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <Card className="glass-panel lg:col-span-2 overflow-hidden">
-          <CardHeader className="bg-black/40 border-b border-white/5 p-6 space-y-4 md:space-y-0 md:flex md:flex-row md:items-center md:justify-between">
+        {/* LISTADO DE MAGIC LINKS */}
+        <Card className="glass-panel lg:col-span-2 overflow-hidden bg-black/40 border-none">
+          <CardHeader className="border-b border-white/5 p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="relative w-full max-w-sm">
               <Search className="absolute left-3 top-3.5 h-4 w-4 text-emerald-400 opacity-50" />
               <Input 
-                placeholder="BUSCAR TOKEN O CAMPAÑA..." 
+                placeholder="BUSCAR CAMPAÑA O TOKEN..." 
                 className="pl-10 h-12 bg-white/5 border-white/10 rounded-none text-white placeholder:text-white/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-emerald-500/50"
               />
             </div>
-            <Badge variant="outline" className="rounded-none border-emerald-500/20 text-emerald-400 font-black text-[9px] px-3 py-1 uppercase tracking-widest">
-              Sincronizado con Nodo Login
-            </Badge>
+            <div className="flex items-center gap-2">
+              <RefreshCw className="h-4 w-4 text-white/20 hover:text-emerald-400 cursor-pointer transition-colors" />
+              <span className="text-[9px] font-black text-white/30 uppercase tracking-widest">Sincronización Global: OK</span>
+            </div>
           </CardHeader>
           <CardContent className="p-0">
             <Table>
@@ -143,56 +160,74 @@ export default function GlobalPromosPage() {
                 <TableRow className="border-white/5">
                   <TableHead className="font-black text-[10px] uppercase tracking-widest text-white/40 h-14 pl-8">Campaña / Región</TableHead>
                   <TableHead className="font-black text-[10px] uppercase tracking-widest text-white/40">Identificador_Token</TableHead>
-                  <TableHead className="font-black text-[10px] uppercase tracking-widest text-white/40 text-center">Usos</TableHead>
-                  <TableHead className="text-right font-black text-[10px] uppercase tracking-widest text-white/40 pr-8">Acciones</TableHead>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest text-white/40 text-center">Protocolo_Uso</TableHead>
+                  <TableHead className="text-right font-black text-[10px] uppercase tracking-widest text-white/40 pr-8">Terminal</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                 <TableRow className="border-white/5 hover:bg-white/[0.02] transition-colors">
+                 <TableRow className="border-white/5 hover:bg-white/[0.02] transition-colors group">
                     <TableCell className="pl-8">
                        <div className="flex flex-col">
-                          <span className="font-black text-white text-xs uppercase italic tracking-tighter">ARG_TOP10_COACHES</span>
+                          <span className="font-black text-white text-xs uppercase italic tracking-tighter group-hover:emerald-text-glow transition-all">ARG_TOP10_COACHES</span>
                           <span className="text-[8px] text-white/30 font-bold uppercase tracking-widest mt-0.5 flex items-center gap-1">
-                             <MapPin className="h-2 w-2" /> Argentina • Plan: Enterprise
+                             <MapPin className="h-2 w-2 text-emerald-500" /> Argentina • Plan: Enterprise
                           </span>
                        </div>
                     </TableCell>
                     <TableCell>
-                       <span className="font-headline font-bold text-emerald-400 italic">ARG-ELITE-MAGIC</span>
+                       <Badge variant="outline" className="rounded-none border-emerald-500/20 text-emerald-400 font-headline font-bold text-[10px] italic tracking-widest bg-emerald-500/5">
+                        ARG-ELITE-MAGIC
+                       </Badge>
                     </TableCell>
                     <TableCell className="text-center">
-                       <span className="text-xs font-black text-white">07 / 10</span>
+                       <div className="flex flex-col items-center">
+                          <span className="text-xs font-black text-white">07 / 10</span>
+                          <div className="w-16 h-1 bg-white/5 mt-1 overflow-hidden">
+                             <div className="h-full bg-emerald-500 w-[70%]" />
+                          </div>
+                       </div>
                     </TableCell>
                     <TableCell className="text-right pr-8">
                        <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-white/20 hover:text-emerald-400" onClick={() => copyToClipboard("https://synqai.sports/login?token=ARG-ELITE-MAGIC")}>
+                          <Button variant="ghost" size="icon" className="h-9 w-9 text-white/20 hover:text-emerald-400 border border-white/5" onClick={() => copyToClipboard("https://synqai.sports/login?token=ARG-ELITE-MAGIC")} title="Copiar URL">
                              <Share2 className="h-3.5 w-3.5" />
                           </Button>
-                          <Button variant="ghost" size="sm" className="text-rose-400 hover:bg-rose-500/5 rounded-none font-black text-[9px] uppercase tracking-widest">Revocar</Button>
+                          <Button variant="ghost" size="icon" className="h-9 w-9 text-white/20 hover:text-rose-400 border border-white/5" title="Revocar Token">
+                             <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
                        </div>
                     </TableCell>
                  </TableRow>
-                 <TableRow className="border-white/5 hover:bg-white/[0.02] transition-colors">
+                 <TableRow className="border-white/5 hover:bg-white/[0.02] transition-colors group">
                     <TableCell className="pl-8">
                        <div className="flex flex-col">
-                          <span className="font-black text-white text-xs uppercase italic tracking-tighter">ES_PIZARRA_ADS_FREE</span>
+                          <span className="font-black text-white text-xs uppercase italic tracking-tighter group-hover:emerald-text-glow transition-all">ES_PIZARRA_FREE_ADS</span>
                           <span className="text-[8px] text-white/30 font-bold uppercase tracking-widest mt-0.5 flex items-center gap-1">
-                             <MapPin className="h-2 w-2" /> España • Plan: Promo Link
+                             <MapPin className="h-2 w-2 text-emerald-500" /> España • Plan: Promo Link
                           </span>
                        </div>
                     </TableCell>
                     <TableCell>
-                       <span className="font-headline font-bold text-emerald-400 italic">ES-BOARD-PROMO</span>
+                       <Badge variant="outline" className="rounded-none border-emerald-500/20 text-emerald-400 font-headline font-bold text-[10px] italic tracking-widest bg-emerald-500/5">
+                        ES-BOARD-PROMO
+                       </Badge>
                     </TableCell>
                     <TableCell className="text-center">
-                       <span className="text-xs font-black text-white">42 / ∞</span>
+                       <div className="flex flex-col items-center">
+                          <span className="text-xs font-black text-white">42 / ∞</span>
+                          <div className="w-16 h-1 bg-white/5 mt-1 overflow-hidden">
+                             <div className="h-full bg-emerald-500 w-[40%] animate-pulse" />
+                          </div>
+                       </div>
                     </TableCell>
                     <TableCell className="text-right pr-8">
                        <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-white/20 hover:text-emerald-400" onClick={() => copyToClipboard("https://synqai.sports/login?token=ES-BOARD-PROMO")}>
+                          <Button variant="ghost" size="icon" className="h-9 w-9 text-white/20 hover:text-emerald-400 border border-white/5" onClick={() => copyToClipboard("https://synqai.sports/login?token=ES-BOARD-PROMO")}>
                              <Share2 className="h-3.5 w-3.5" />
                           </Button>
-                          <Button variant="ghost" size="sm" className="text-rose-400 hover:bg-rose-500/5 rounded-none font-black text-[9px] uppercase tracking-widest">Revocar</Button>
+                          <Button variant="ghost" size="icon" className="h-9 w-9 text-white/20 hover:text-rose-400 border border-white/5">
+                             <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
                        </div>
                     </TableCell>
                  </TableRow>
@@ -201,102 +236,130 @@ export default function GlobalPromosPage() {
           </CardContent>
         </Card>
 
-        <Card className="glass-panel border-emerald-500/20 bg-emerald-500/[0.02]">
-           <CardHeader>
-              <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
-                 <QrCode className="h-4 w-4 text-emerald-400" /> Magic Link Builder
-              </CardTitle>
-           </CardHeader>
-           <CardContent className="space-y-6">
-              <div className="p-6 bg-black/40 border border-white/5 flex flex-col items-center justify-center space-y-4">
-                 <div className="h-32 w-32 bg-white/5 border border-emerald-500/20 flex items-center justify-center p-2">
-                    <QrCode className="h-full w-full text-emerald-400/50" />
-                 </div>
-                 <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.4em] text-center">Incrustar este QR en creatividades publicitarias</p>
-              </div>
-              <div className="space-y-2">
-                 <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">URL de Acceso Directo</p>
-                 <div className="flex gap-2">
-                    <Input readOnly value="https://synqai.sports/l/..." className="h-10 bg-white/5 border-white/10 rounded-none text-[10px] font-mono text-emerald-400/60" />
-                    <Button size="icon" variant="ghost" className="h-10 w-10 border border-white/10 rounded-none hover:text-emerald-400">
-                       <Copy className="h-4 w-4" />
-                    </Button>
-                 </div>
-              </div>
-              <Button className="w-full h-12 bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest">
-                 DESCARGAR ASSETS DE CAMPAÑA
-              </Button>
-           </CardContent>
-        </Card>
+        {/* PREVIEW DE MAGIC LINK Y QR */}
+        <div className="space-y-6">
+          <Card className="glass-panel border-emerald-500/20 bg-emerald-500/[0.02] overflow-hidden relative">
+            <div className="absolute top-0 right-0 bg-emerald-500 text-black text-[8px] font-black px-3 py-1 uppercase tracking-widest z-10">Live_Preview</div>
+            <CardHeader className="pb-4">
+                <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
+                  <QrCode className="h-4 w-4 text-emerald-400" /> Magic Link Builder
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div className="p-8 bg-black/60 border border-white/5 flex flex-col items-center justify-center space-y-4 rounded-3xl group cursor-pointer relative overflow-hidden">
+                  <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="h-40 w-40 bg-white/5 border border-emerald-500/30 flex items-center justify-center p-4 relative z-10 group-hover:border-emerald-500/60 transition-all">
+                      <QrCode className="h-full w-full text-emerald-400/50 group-hover:text-emerald-400 group-hover:scale-105 transition-all" />
+                      <div className="absolute inset-0 scan-line" />
+                  </div>
+                  <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.4em] text-center relative z-10">Incrustar QR en Artes de Campaña</p>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex justify-between items-end px-1">
+                    <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">URL de Acceso Directo</p>
+                    <span className="text-[8px] font-black text-emerald-400 uppercase tracking-widest">Sincronizada</span>
+                  </div>
+                  <div className="flex gap-2">
+                      <Input readOnly value={result ? `https://synqai.sports/l?t=${result.suggestedPromoCode}` : "Sincronizando URL..."} className="h-12 bg-white/5 border-white/10 rounded-none text-[10px] font-mono text-emerald-400/60 focus:ring-0" />
+                      <Button size="icon" variant="ghost" className="h-12 w-12 border border-white/10 rounded-none hover:text-emerald-400 bg-white/5" onClick={() => copyToClipboard(result ? `https://synqai.sports/l?t=${result.suggestedPromoCode}` : "")}>
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                  </div>
+                </div>
+
+                <div className="pt-4 space-y-3">
+                  <Button className="w-full h-14 bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest rounded-none shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:scale-[1.02] transition-all">
+                    DESCARGAR ASSETS DE CAMPAÑA
+                  </Button>
+                  <Button variant="ghost" className="w-full h-12 text-white/30 font-black uppercase text-[9px] tracking-widest hover:text-emerald-400 flex items-center justify-center gap-2">
+                    <ExternalLink className="h-3 w-3" /> Ver Vista Previa del Nodo
+                  </Button>
+                </div>
+            </CardContent>
+          </Card>
+
+          <div className="p-8 rounded-3xl border border-white/5 bg-black/40 space-y-4">
+             <div className="flex items-center gap-3">
+                <Target className="h-4 w-4 text-emerald-400" />
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/60">Estrategia_Escasez</span>
+             </div>
+             <p className="text-[10px] text-white/40 leading-relaxed font-bold uppercase italic tracking-wider">
+               Los tokens con límite de uso generan un 40% más de conversión. Use el generador IA para redactar ganchos que enfaticen la exclusividad regional.
+             </p>
+          </div>
+        </div>
       </div>
 
+      {/* TERMINAL DE GENERACIÓN IA */}
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-emerald-500/20 text-white w-full sm:max-w-xl shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
-          <div className="p-8 border-b border-white/5 bg-black/40">
+          <div className="p-10 border-b border-white/5 bg-black/40">
             <SheetHeader className="space-y-4">
               <div className="flex items-center gap-3">
-                <Sparkles className="h-4 w-4 text-emerald-400 animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400">Access_Token_Architect_IA</span>
+                <Sparkles className="h-5 w-5 text-emerald-400 animate-pulse" />
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400">Magic_Token_Architect_IA</span>
               </div>
-              <SheetTitle className="text-3xl font-black italic tracking-tighter text-white uppercase text-left">
-                GENERAR TOKEN DE ACCESO
+              <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left">
+                GENERAR TOKEN DE RED
               </SheetTitle>
               <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left">
-                Configure el nodo de entrada para su campaña de captación regional.
+                Configure el nodo de entrada y la estrategia de captación por país.
               </SheetDescription>
             </SheetHeader>
           </div>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-10">
-            <form onSubmit={handleGenerate} className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Objetivo_y_Región</label>
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-12">
+            <form onSubmit={handleGenerate} className="space-y-8">
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Objetivo_Demográfico_y_Región</label>
                 <div className="relative">
-                   <Target className="absolute left-3 top-3.5 h-4 w-4 text-emerald-500/30" />
+                   <Target className="absolute left-4 top-4.5 h-5 w-5 text-emerald-500/30" />
                    <Input 
                     value={formData.objective}
                     onChange={(e) => setFormData({...formData, objective: e.target.value})}
-                    placeholder="EJ: ACCESO A 10 ENTRENADORES EN ARGENTINA CON PLAN ÉLITE..." 
-                    className="pl-10 h-14 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-emerald-500/50 placeholder:text-white/10" 
+                    placeholder="EJ: PRIMEROS 10 ENTRENADORES EN ARGENTINA..." 
+                    className="pl-12 h-16 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-emerald-500/50 placeholder:text-white/10 text-lg" 
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-3">
                   <label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Protocolo_Plan_Vinculado</label>
                   <Select 
                     value={formData.planId} 
                     onValueChange={(v) => setFormData({...formData, planId: v})}
                   >
-                    <SelectTrigger className="h-14 bg-white/5 border-white/10 rounded-none font-bold uppercase tracking-widest">
-                      <div className="flex items-center gap-2">
-                        <Layers className="h-3 w-3 text-emerald-500/40" />
+                    <SelectTrigger className="h-16 bg-white/5 border-white/10 rounded-none font-bold uppercase tracking-widest text-xs">
+                      <div className="flex items-center gap-3">
+                        <Layers className="h-4 w-4 text-emerald-500/40" />
                         <SelectValue />
                       </div>
                     </SelectTrigger>
                     <SelectContent className="bg-[#04070c] border-emerald-500/20 rounded-none">
                       {AVAILABLE_PLANS.map(plan => (
-                        <SelectItem key={plan.id} value={plan.id}>{plan.name}</SelectItem>
+                        <SelectItem key={plan.id} value={plan.id} className="text-[10px] font-black uppercase tracking-widest focus:bg-emerald-500">{plan.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Plataforma_Target</label>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Canal_de_Difusión</label>
                   <Select 
                     value={formData.platform} 
                     onValueChange={(v) => setFormData({...formData, platform: v})}
                   >
-                    <SelectTrigger className="h-14 bg-white/5 border-white/10 rounded-none font-bold uppercase tracking-widest">
+                    <SelectTrigger className="h-16 bg-white/5 border-white/10 rounded-none font-bold uppercase tracking-widest text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#04070c] border-emerald-500/20 rounded-none">
-                      <SelectItem value="Facebook">FACEBOOK ADS</SelectItem>
-                      <SelectItem value="Instagram">INSTAGRAM REELS</SelectItem>
-                      <SelectItem value="YouTube">YOUTUBE ADS</SelectItem>
-                      <SelectItem value="LinkedIn">LINKEDIN</SelectItem>
+                      <SelectItem value="Facebook" className="text-[10px] font-black uppercase">FACEBOOK ADS</SelectItem>
+                      <SelectItem value="Instagram" className="text-[10px] font-black uppercase">INSTAGRAM REELS</SelectItem>
+                      <SelectItem value="YouTube" className="text-[10px] font-black uppercase">YOUTUBE ADS</SelectItem>
+                      <SelectItem value="LinkedIn" className="text-[10px] font-black uppercase">LINKEDIN</SelectItem>
+                      <SelectItem value="Google Ads" className="text-[10px] font-black uppercase">GOOGLE SEARCH</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -305,41 +368,45 @@ export default function GlobalPromosPage() {
               <Button 
                 type="submit" 
                 disabled={loading}
-                className="w-full h-16 bg-emerald-500 text-black font-black uppercase tracking-[0.3em] rounded-none hover:scale-[1.02] transition-all"
+                className="w-full h-20 bg-emerald-500 text-black font-black uppercase tracking-[0.4em] rounded-none hover:scale-[1.01] transition-all text-xs shadow-[0_0_30px_rgba(16,185,129,0.3)] border-none"
               >
-                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "SINTETIZAR TOKEN DE RED IA"}
+                {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : "SINTETIZAR TOKEN DE RED IA"}
               </Button>
             </form>
 
             {result && (
-              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                <div className="p-6 bg-emerald-500/5 border border-emerald-500/20 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">MAGIC_ACCESS_IDENTITIES</span>
-                    <Badge className="bg-emerald-500 text-black font-black text-[9px] rounded-none">ACTIVO</Badge>
+              <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
+                <div className="p-8 bg-emerald-500/5 border border-emerald-500/30 space-y-6 relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-all">
+                    <Sparkles className="h-24 w-24 text-emerald-400" />
                   </div>
-                  <h3 className="text-xl font-black italic uppercase tracking-tighter text-white">{result.campaignTitle}</h3>
+                  <div className="flex items-center justify-between relative z-10">
+                    <span className="text-[11px] font-black text-emerald-400 uppercase tracking-widest">MAGIC_TOKEN_IDENTITIES</span>
+                    <Badge className="bg-emerald-500 text-black font-black text-[9px] rounded-none px-3">ESTADO: ACTIVO</Badge>
+                  </div>
+                  <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white relative z-10">{result.campaignTitle}</h3>
                   
-                  <div className="space-y-2 p-4 bg-black/40 border border-white/5">
-                    <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">Promo_Token_Único</p>
+                  <div className="space-y-3 p-6 bg-black/60 border border-white/10 rounded-2xl relative z-10">
+                    <p className="text-[10px] font-black text-white/30 uppercase tracking-widest">Token_Único_Sugerido</p>
                     <div className="flex items-center justify-between">
-                       <p className="text-2xl font-headline font-bold text-emerald-400 italic tracking-widest">{result.suggestedPromoCode}</p>
-                       <Button variant="ghost" size="icon" className="h-8 w-8 text-white/20 hover:text-emerald-400" onClick={() => copyToClipboard(result.suggestedPromoCode)}>
+                       <p className="text-3xl font-headline font-bold text-emerald-400 italic tracking-[0.2em]">{result.suggestedPromoCode}</p>
+                       <Button variant="ghost" size="icon" className="h-10 w-10 text-white/20 hover:text-emerald-400 border border-white/5" onClick={() => copyToClipboard(result.suggestedPromoCode)}>
                           <Copy className="h-4 w-4" />
                        </Button>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">Estrategia_IA_de_Captación</p>
-                    <p className="text-[11px] text-white/60 leading-relaxed font-bold italic">{result.mainHook}</p>
+                  <div className="space-y-3 relative z-10">
+                    <p className="text-[10px] font-black text-white/30 uppercase tracking-widest">Estrategia_IA_de_Ganchos</p>
+                    <p className="text-sm text-white/80 leading-relaxed font-bold italic border-l-2 border-emerald-500/40 pl-4">{result.mainHook}</p>
                   </div>
 
-                  <div className="space-y-2 pt-2">
+                  <div className="space-y-3 pt-4 relative z-10">
                     <div className="flex items-center justify-between">
-                      <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">Copy_Publicitario_Sugerido</p>
+                      <p className="text-[10px] font-black text-white/30 uppercase tracking-widest">Copy_Publicitario_Optimizado</p>
+                      <Button variant="link" className="h-auto p-0 text-[9px] font-black text-emerald-400/60 uppercase" onClick={() => copyToClipboard(result.socialMediaCopy)}>Copiar Copy</Button>
                     </div>
-                    <div className="text-[10px] text-white/40 leading-tight uppercase font-bold bg-black/20 p-4 border border-white/5 whitespace-pre-wrap">
+                    <div className="text-[11px] text-white/50 leading-relaxed uppercase font-bold bg-black/40 p-6 border border-white/5 whitespace-pre-wrap rounded-2xl">
                       {result.socialMediaCopy}
                     </div>
                   </div>
@@ -348,10 +415,10 @@ export default function GlobalPromosPage() {
             )}
           </div>
 
-          <div className="p-8 bg-black/40 border-t border-white/5">
+          <div className="p-10 bg-black/60 border-t border-white/5">
             <SheetClose asChild>
-              <Button variant="ghost" className="w-full h-14 border border-white/10 text-white/40 font-black uppercase text-[10px] tracking-widest hover:bg-white/5">
-                CERRAR_TERMINAL
+              <Button variant="ghost" className="w-full h-16 border border-white/10 text-white/40 font-black uppercase text-[10px] tracking-widest hover:bg-white/5">
+                CERRAR_TERMINAL_IA
               </Button>
             </SheetClose>
           </div>
@@ -363,15 +430,15 @@ export default function GlobalPromosPage() {
 
 function PromoMiniStat({ icon: Icon, label, value, trend }: any) {
   return (
-    <Card className="glass-panel p-4 flex items-center gap-4 relative overflow-hidden group">
-       <div className="h-10 w-10 bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 group-hover:bg-emerald-500/20 transition-all">
-          <Icon className="h-5 w-5 text-emerald-500" />
+    <Card className="glass-panel p-5 flex items-center gap-5 relative overflow-hidden group border-none bg-black/20">
+       <div className="h-12 w-12 bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 group-hover:bg-emerald-500/20 transition-all rotate-3 group-hover:rotate-0 duration-500">
+          <Icon className="h-6 w-6 text-emerald-400" />
        </div>
-       <div>
-          <p className="text-[8px] font-black text-white/30 uppercase tracking-widest">{label}</p>
+       <div className="relative z-10">
+          <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">{label}</p>
           <div className="flex items-baseline gap-2">
-             <p className="text-xl font-black text-white italic">{value}</p>
-             <span className="text-[8px] font-black text-emerald-400">{trend}</span>
+             <p className="text-2xl font-black text-white italic tracking-tighter">{value}</p>
+             <span className="text-[9px] font-black text-emerald-400 italic">{trend}</span>
           </div>
        </div>
        <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 scan-line" />

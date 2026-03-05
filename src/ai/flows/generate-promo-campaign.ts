@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview Flujo de IA para la generación de tokens de acceso y campañas de marketing regional.
@@ -38,9 +37,9 @@ Plataforma: {{{platform}}}
 Plan Vinculado: {{{planId}}}
 
 Instrucciones Estratégicas:
-1. Generación de Token: Crea un token alfanumérico corto y potente (ej: MAD-PRO-50).
+1. Generación de Token: Crea un token alfanumérico corto y potente (ej: ARG-PRO-10).
 2. Gancho de Escasez: La campaña debe centrarse en que el acceso es limitado (ej: "Solo para los 10 primeros").
-3. Contexto de Producto: El gancho puede ser la Pizarra Táctica (Modo Promo gratis) o el acceso a funcionalidades de élite.
+3. Contexto de Producto: El gancho principal es el acceso a la Pizarra Táctica (Modo Promo gratis) o funcionalidades de élite del plan {{{planId}}}.
 4. Si la plataforma es YouTube, genera una estructura de guion de 15s enfocada en el beneficio de entrar ahora con el token.
 
 Genera un plan de token profesional con un lenguaje de élite, técnico y altamente persuasivo.
