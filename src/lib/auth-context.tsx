@@ -2,12 +2,13 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-export type UserRole = "superadmin" | "club_admin" | "coach" | "tutor";
+export type UserRole = "superadmin" | "club_admin" | "coach" | "tutor" | "athlete";
 
 interface UserProfile {
   email: string;
   role: UserRole;
   clubId: string;
+  name: string;
 }
 
 interface AuthContextType {
@@ -30,12 +31,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // PROTOCOLO_DE_RECONSTRUCCIÓN: Acceso total automático
-    const mockUser = { uid: "dev-root", email: "admin@synqsports.pro" };
+    // PROTOCOLO_DE_ACCESO_LIBRE: Identidad de Root por defecto para reconstrucción
+    const mockUser = { uid: "synq-root-dev", email: "root@synqai.sports" };
     const mockProfile: UserProfile = {
-      email: "admin@synqsports.pro",
+      email: "root@synqai.sports",
+      name: "SynqAi Root",
       role: "superadmin",
-      clubId: "global",
+      clubId: "global-hq",
     };
     
     setUser(mockUser);
