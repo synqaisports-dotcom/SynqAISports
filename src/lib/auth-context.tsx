@@ -14,52 +14,75 @@ interface UserProfile {
 }
 
 interface AuthContextType {
-  user: User | null;
+  user: User | any | null;
   profile: UserProfile | null;
   loading: boolean;
+  loginAsGuest: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   profile: null,
   loading: true,
+  loginAsGuest: () => {},
 });
 
 const SUPERADMIN_EMAILS = ["munozmartinez.ismael@gmail.com", "synqaisports@gmail.com"];
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<any | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const loginAsGuest = () => {
+    setLoading(true);
+    const guestUser = {
+      uid: "guest-dev-uid",
+      email: "admin@synqsports.pro",
+      displayName: "Administrador de Élite (Emergencia)",
+    };
+    const guestProfile: UserProfile = {
+      email: guestUser.email,
+      role: "superadmin",
+      clubId: "global",
+    };
+    
+    setUser(guestUser);
+    setProfile(guestProfile);
+    localStorage.setItem("dev_bypass", "true");
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        setUser(user);
-        const isElite = SUPERADMIN_EMAILS.includes(user.email || "");
+    // Verificar si hay bypass activo
+    const bypass = localStorage.getItem("dev_bypass");
+    if (bypass === "true") {
+      loginAsGuest();
+      return;
+    }
+
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        setUser(firebaseUser);
+        const isElite = SUPERADMIN_EMAILS.includes(firebaseUser.email || "");
         
-        // Perfil por defecto (Fail-safe para desarrollo)
         const defaultProfile: UserProfile = {
-          email: user.email || "",
+          email: firebaseUser.email || "",
           role: isElite ? "superadmin" : "coach",
           clubId: isElite ? "global" : "guest_node",
         };
 
         try {
-          const userDocRef = doc(db, "users", user.uid);
+          const userDocRef = doc(db, "users", firebaseUser.uid);
           const userDoc = await getDoc(userDocRef);
           
           if (userDoc.exists()) {
             setProfile(userDoc.data() as UserProfile);
           } else {
-            // Intentar crear el perfil pero no bloquear si falla por reglas
-            setDoc(userDocRef, defaultProfile).catch(() => {
-              console.warn("No se pudo guardar el perfil en Firestore, usando local.");
-            });
+            setDoc(userDocRef, defaultProfile).catch(() => {});
             setProfile(defaultProfile);
           }
         } catch (error) {
-          console.warn("FIRESTORE_ACCESS_BYPASS: Usando perfil local de emergencia.");
           setProfile(defaultProfile);
         } finally {
           setLoading(false);
@@ -75,7 +98,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading }}>
+    <AuthContext.Provider value={{ user, profile, loading, loginAsGuest }}>
       {children}
     </AuthContext.Provider>
   );

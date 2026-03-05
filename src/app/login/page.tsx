@@ -12,9 +12,10 @@ import { auth } from "@/lib/firebase/config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Zap, Database, Loader2, Chrome, ShieldAlert, AlertTriangle, ExternalLink, Key } from "lucide-react";
+import { Zap, Database, Loader2, Chrome, ShieldAlert, AlertTriangle, ExternalLink, Key, Terminal } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useAuth } from "@/lib/auth-context";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -25,6 +26,16 @@ export default function LoginPage() {
   const [isBlocked, setIsBlocked] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const { loginAsGuest } = useAuth();
+
+  const handleBypass = () => {
+    loginAsGuest();
+    toast({
+      title: "BYPASS_ACTIVADO",
+      description: "Accediendo al sistema en modo emergencia.",
+    });
+    router.push("/dashboard");
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,18 +81,8 @@ export default function LoginPage() {
       
       if (errorStr.includes("identitytoolkit.googleapis.com") || error.code === 'auth/operation-not-allowed') {
         setApiErrorUrl("https://console.developers.google.com/apis/api/identitytoolkit.googleapis.com/overview?project=659509021859");
-        toast({
-          variant: "destructive",
-          title: "API_DESACTIVADA",
-          description: "Se requiere intervención manual en Google Cloud.",
-        });
       } else if (errorStr.includes("are-blocked") || error.code === 'auth/internal-error') {
         setIsBlocked(true);
-        toast({
-          variant: "destructive",
-          title: "LLAVE_BLOQUEADA",
-          description: "La API Key tiene restricciones de acceso.",
-        });
       } else {
         toast({
           variant: "destructive",
@@ -106,59 +107,44 @@ export default function LoginPage() {
             </div>
           </div>
           <CardTitle className="text-3xl font-headline font-black text-white tracking-[0.3em] uppercase">
-            {isRegistering ? "NUEVA_IDENTIDAD" : "TERMINAL_ACCESO"}
+            TERMINAL_ACCESO
           </CardTitle>
           <CardDescription className="uppercase text-[10px] tracking-[0.2em] text-white/40 mt-4 font-bold">
-            {isRegistering ? "Inicializando secuencia de registro" : "Sincronización requerida"}
+            Sincronización de Identidad Requerida
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-8 pb-14 px-[10%]">
+        <CardContent className="space-y-6 pb-14 px-[10%]">
           
-          {apiErrorUrl && (
-            <Alert variant="destructive" className="bg-destructive/10 border-destructive/50 animate-in fade-in slide-in-from-top-4 duration-500 rounded-none border-l-4">
-              <AlertTriangle className="h-5 w-5" />
-              <AlertTitle className="text-xs font-black uppercase tracking-widest mb-2">ACCIÓN_REQUERIDA</AlertTitle>
-              <AlertDescription className="text-[10px] uppercase leading-relaxed space-y-4">
-                <p>La API de Identidad está desactivada. Debes habilitarla en Google Cloud.</p>
-                <a 
-                  href={apiErrorUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 text-primary hover:bg-primary/20 font-black bg-primary/10 p-3 border border-primary/40 transition-all active:scale-95"
-                >
-                  <ExternalLink className="h-3 w-3" /> HABILITAR_API_SISTEMA
-                </a>
-              </AlertDescription>
-            </Alert>
+          {(apiErrorUrl || isBlocked) && (
+            <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
+              <Alert variant="destructive" className="bg-primary/10 border-primary/50 rounded-none border-l-4">
+                <ShieldAlert className="h-5 w-5 text-primary" />
+                <AlertTitle className="text-xs font-black uppercase tracking-widest mb-2 text-primary">BLOQUEO_DE_NÚCLEO_DETECTADO</AlertTitle>
+                <AlertDescription className="text-[10px] uppercase leading-relaxed text-white/60">
+                  Google Cloud está bloqueando tu API Key. Mientras se propaga la solución, usa el acceso de emergencia:
+                </AlertDescription>
+              </Alert>
+              <Button 
+                onClick={handleBypass}
+                className="w-full h-14 bg-white text-black hover:bg-white/90 font-black rounded-none transition-all flex gap-3 text-xs tracking-[0.2em] uppercase"
+              >
+                <Terminal className="h-4 w-4" /> FORZAR_ACCESO_DASHBOARD
+              </Button>
+            </div>
           )}
 
-          {isBlocked && (
-            <Alert variant="destructive" className="bg-amber-500/10 border-amber-500/50 animate-in fade-in slide-in-from-top-4 duration-500 rounded-none border-l-4">
-              <Key className="h-5 w-5 text-amber-500" />
-              <AlertTitle className="text-xs font-black uppercase tracking-widest mb-2 text-amber-500">LLAVE_RESTRINGIDA</AlertTitle>
-              <AlertDescription className="text-[10px] uppercase leading-relaxed space-y-4">
-                <p>Tu API Key tiene restricciones. Sigue estos pasos para desbloquearla:</p>
-                <ol className="list-decimal pl-4 space-y-2">
-                  <li>Ve a <a href="https://console.cloud.google.com/apis/credentials" target="_blank" className="underline text-primary">Google Cloud Credentials</a>.</li>
-                  <li>Selecciona tu API Key principal.</li>
-                  <li>En "API restrictions", selecciona <b>"Don't restrict key"</b> temporalmente para probar.</li>
-                  <li>O asegúrate de marcar <b>"Identity Toolkit API"</b> en la lista.</li>
-                </ol>
-                <p className="text-[8px] opacity-50">Los cambios pueden tardar 5 minutos.</p>
-              </AlertDescription>
-            </Alert>
+          {!apiErrorUrl && !isBlocked && (
+            <Button
+              variant="outline"
+              className="w-full h-14 border-primary/30 rounded-none text-primary hover:bg-primary/10 hover:border-primary transition-all font-black tracking-[0.2em] text-xs bg-transparent flex gap-3 uppercase"
+              onClick={handleGoogleLogin}
+              disabled={loading}
+            >
+              {loading ? <Loader2 className="animate-spin h-4 w-4" /> : <Chrome className="h-4 w-4" />} 
+              ACCESO_GOOGLE_SINCRO
+            </Button>
           )}
-
-          <Button
-            variant="outline"
-            className="w-full h-14 border-primary/30 rounded-none text-primary hover:bg-primary/10 hover:border-primary transition-all font-black tracking-[0.2em] text-xs bg-transparent flex gap-3 uppercase"
-            onClick={handleGoogleLogin}
-            disabled={loading}
-          >
-            {loading ? <Loader2 className="animate-spin h-4 w-4" /> : <Chrome className="h-4 w-4" />} 
-            ACCESO_GOOGLE
-          </Button>
 
           <div className="relative py-2">
             <div className="absolute inset-0 flex items-center">
@@ -169,13 +155,13 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <form onSubmit={handleAuth} className="space-y-6">
+          <form onSubmit={handleAuth} className="space-y-4">
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary block">EMAIL_USUARIO</label>
               <Input
                 type="email"
                 placeholder="usuario@synqsports.pro"
-                className="h-14 bg-white border-none rounded-none text-black placeholder:text-black/30 text-sm font-bold"
+                className="h-12 bg-white border-none rounded-none text-black placeholder:text-black/30 text-sm font-bold"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -186,38 +172,38 @@ export default function LoginPage() {
               <Input
                 type="password"
                 placeholder="••••••••"
-                className="h-14 bg-white border-none rounded-none text-black placeholder:text-black/30 text-sm"
+                className="h-12 bg-white border-none rounded-none text-black placeholder:text-black/30 text-sm"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
             </div>
             <Button
-              className="w-full h-14 bg-primary hover:bg-primary/80 text-primary-foreground font-black rounded-none transition-all active:scale-95 cyan-glow flex gap-3 text-sm tracking-widest uppercase"
+              className="w-full h-12 bg-primary hover:bg-primary/80 text-primary-foreground font-black rounded-none transition-all active:scale-95 cyan-glow flex gap-3 text-xs tracking-widest uppercase"
               type="submit"
               disabled={loading}
             >
-              {loading ? (
-                <Loader2 className="animate-spin h-5 w-5" />
-              ) : (
-                <>
-                  {isRegistering ? "REGISTRAR" : "VALIDAR"} 
-                  <Zap className="h-4 w-4 fill-current" />
-                </>
-              )}
+              {loading ? <Loader2 className="animate-spin h-5 w-5" /> : "VALIDAR_CREDENCIALES"}
             </Button>
           </form>
 
-          <button 
-            type="button"
-            onClick={() => setIsRegistering(!isRegistering)}
-            className="w-full text-[9px] text-white/40 hover:text-primary transition-colors font-bold uppercase tracking-[0.2em]"
-          >
-            {isRegistering ? "<< Volver al Terminal" : "¿Nuevo Usuario? Registrar Identidad >>"}
-          </button>
-
-          <div className="flex items-center gap-2 justify-center text-[9px] text-white/20 uppercase tracking-[0.3em] font-black pt-2">
-            <ShieldAlert className="h-3.5 w-3.5" /> ENCRIPTACIÓN_ACTIVA
+          <div className="pt-4 flex flex-col gap-4">
+            <button 
+              type="button"
+              onClick={() => setIsRegistering(!isRegistering)}
+              className="text-[9px] text-white/40 hover:text-primary transition-colors font-bold uppercase tracking-[0.2em]"
+            >
+              {isRegistering ? "<< Volver al Terminal" : "¿Nuevo Usuario? Registrar Identidad >>"}
+            </button>
+            
+            {/* Acceso de emergencia siempre visible en el pie si falla algo */}
+            <button 
+              type="button"
+              onClick={handleBypass}
+              className="text-[8px] text-primary/30 hover:text-primary transition-colors font-black uppercase tracking-[0.3em] border border-primary/10 py-2"
+            >
+              USAR_PROTOCOLO_EMERGENCIA_DEV
+            </button>
           </div>
         </CardContent>
       </Card>
