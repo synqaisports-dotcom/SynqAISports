@@ -8,7 +8,7 @@ export default function SynqAiIndex() {
   const modules = [
     { label: "Admin Global", icon: Globe, href: "/admin-global" },
     { label: "Tactical Board", icon: Monitor, href: "/board" },
-    { label: "Coach Hub", icon: BrainCircuit, href: "/coach" },
+    { label: "Coach Hub", icon: BrainCircuit, href: "/dashboard" },
     { label: "Analytics", icon: Activity, href: "/analytics" },
     { label: "Smartwatch", icon: Watch, href: "/smartwatch" },
     { label: "Tutor Portal", icon: UserCircle, href: "/tutor" },
@@ -22,21 +22,30 @@ export default function SynqAiIndex() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,242,255,0.05),transparent_70%)] pointer-events-none" />
       
       <div className="max-w-6xl w-full space-y-16 relative z-10 text-center">
-        <div className="space-y-6">
-          <div className="inline-flex items-center gap-3 px-4 py-1 rounded-full border border-primary/30 bg-primary/5 mb-8 animate-in fade-in slide-in-from-top-4 duration-1000">
-            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary cyan-text-glow">ESTADO_NÚCLEO: ÓPTIMO</span>
+        {/* LOGO RECONSTRUCTION */}
+        <div className="flex flex-col items-center gap-6 animate-in fade-in slide-in-from-top-4 duration-1000">
+          <div className="relative group">
+            <div className="absolute inset-0 bg-primary/40 blur-[40px] rounded-full group-hover:bg-primary/60 transition-all duration-700 animate-pulse" />
+            <div className="relative w-32 h-32 flex items-center justify-center border-2 border-primary/30 rounded-full bg-black/40 backdrop-blur-sm shadow-[0_0_50px_rgba(0,242,255,0.2)]">
+              <svg viewBox="0 0 100 100" className="w-20 h-20 text-primary drop-shadow-[0_0_10px_rgba(0,242,255,0.8)]">
+                <path d="M30 40 C30 20, 70 20, 70 40 C70 50, 50 50, 50 60 C50 80, 10 80, 10 60" fill="none" stroke="currentColor" strokeWidth="8" strokeLinecap="round" className="opacity-80" />
+                <path d="M70 60 C70 80, 30 80, 30 60 C30 50, 50 50, 50 40 C50 20, 90 20, 90 40" fill="none" stroke="currentColor" strokeWidth="8" strokeLinecap="round" />
+              </svg>
+            </div>
           </div>
           
-          <h1 className="text-7xl md:text-9xl font-headline font-black tracking-tighter uppercase italic leading-none">
-            SYNQ<span className="text-primary italic cyan-text-glow">AI</span> <br />
-            <span className="text-white/10">SPORTS</span>
-          </h1>
+          <div className="space-y-0">
+            <h1 className="text-7xl md:text-8xl font-headline font-bold tracking-tighter uppercase leading-none">
+              Synq<span className="text-primary cyan-text-glow">AI</span>
+            </h1>
+            <p className="text-white/40 font-bold tracking-[1em] text-lg uppercase ml-4">
+              SPORTS
+            </p>
+          </div>
           
-          <p className="text-white/40 font-bold tracking-[0.6em] text-[10px] uppercase max-w-lg mx-auto leading-loose">
-            Arquitectura de Inteligencia Deportiva <br /> 
-            <span className="text-primary/60 tracking-[0.2em]">Protocolo Elite Activo</span>
-          </p>
+          <div className="inline-flex items-center gap-3 px-4 py-1 mt-4 rounded-none border-l-2 border-primary bg-primary/5">
+            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">PROTOCOLO_ELITE_ACTIVO</span>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -52,7 +61,7 @@ export default function SynqAiIndex() {
 
         <div className="pt-12">
           <Button size="lg" className="bg-primary text-black font-black rounded-none h-16 px-16 cyan-glow uppercase tracking-[0.3em] text-xs hover:scale-105 transition-transform" asChild>
-            <Link href="/admin-global">INICIAR_COMANDO_CENTRAL</Link>
+            <Link href="/admin-global">INICIAR_SISTEMA_DE_CONTROL</Link>
           </Button>
         </div>
       </div>

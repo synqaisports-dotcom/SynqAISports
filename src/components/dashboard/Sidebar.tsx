@@ -38,7 +38,7 @@ const navItems: NavItem[] = [
   { title: "Analitics Global", href: "/admin-global/analytics", icon: BarChart3, category: "global" },
   
   // OPERATIONAL
-  { title: "Coach Hub", href: "/coach", icon: BrainCircuit, category: "operational" },
+  { title: "Coach Hub", href: "/dashboard", icon: BrainCircuit, category: "operational" },
   { title: "Tactical Board", href: "/board", icon: Monitor, category: "operational" },
   { title: "Club Admin", href: "/admin", icon: ShieldCheck, category: "operational" },
   { title: "Analytics Hub", href: "/analytics", icon: Activity, category: "operational" },
@@ -53,13 +53,16 @@ export function DashboardSidebar() {
 
   return (
     <div className="flex flex-col h-full bg-background border-r border-white/5 w-64 fixed left-0 top-0 z-30">
-      <div className="p-8 flex items-center gap-3 border-b border-white/5">
-        <div className="bg-primary p-2 rounded-sm rotate-45 cyan-glow">
-          <Zap className="h-5 w-5 text-primary-foreground -rotate-45" />
+      <div className="p-6 flex flex-col gap-2 border-b border-white/5">
+        <div className="flex items-center gap-3">
+          <div className="bg-primary p-1.5 rounded-sm rotate-45 cyan-glow">
+            <Zap className="h-4 w-4 text-primary-foreground -rotate-45" />
+          </div>
+          <span className="font-headline font-bold text-xl tracking-tighter text-white uppercase italic">
+            Synq<span className="text-primary">AI</span>
+          </span>
         </div>
-        <span className="font-headline font-black text-xl tracking-tighter text-white uppercase italic">
-          SYNQ<span className="text-primary">AI</span>
-        </span>
+        <span className="text-[8px] font-bold text-white/30 tracking-[0.6em] uppercase ml-9">SPORTS</span>
       </div>
 
       <div className="flex-1 px-4 py-8 space-y-8 overflow-y-auto custom-scrollbar">
