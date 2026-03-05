@@ -12,7 +12,7 @@ import { auth } from "@/lib/firebase/config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Database, Loader2, Chrome, ShieldAlert, Terminal } from "lucide-react";
+import { Database, Loader2, Chrome, ShieldAlert, Terminal, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from "@/lib/auth-context";
@@ -22,29 +22,28 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
-  const [apiErrorUrl, setApiErrorUrl] = useState<string | null>(null);
-  const [isBlocked, setIsBlocked] = useState(false);
+  const [errorStatus, setErrorStatus] = useState<string | null>(null);
   const router = useRouter();
   const { toast } = useToast();
   const { loginAsGuest } = useAuth();
 
   const handleBypass = () => {
+    setLoading(true);
     loginAsGuest();
     toast({
       title: "BYPASS_ACTIVADO",
       description: "Accediendo al sistema en modo emergencia.",
     });
-    // Forzamos la navegación con un pequeño delay para asegurar que el estado se propaga
+    // Forzamos la navegación con un delay para asegurar la persistencia en localStorage
     setTimeout(() => {
       window.location.href = "/dashboard";
-    }, 500);
+    }, 800);
   };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setApiErrorUrl(null);
-    setIsBlocked(false);
+    setErrorStatus(null);
     try {
       if (isRegistering) {
         await createUserWithEmailAndPassword(auth, email, password);
@@ -57,6 +56,8 @@ export default function LoginPage() {
       }
       router.push("/dashboard");
     } catch (error: any) {
+      console.error("AUTH_ERROR:", error.code);
+      setErrorStatus(error.code);
       toast({
         variant: "destructive",
         title: "FALLO_DE_SISTEMA",
@@ -69,8 +70,7 @@ export default function LoginPage() {
 
   const handleGoogleLogin = async () => {
     setLoading(true);
-    setApiErrorUrl(null);
-    setIsBlocked(false);
+    setErrorStatus(null);
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
     
@@ -78,20 +78,14 @@ export default function LoginPage() {
       await signInWithPopup(auth, provider);
       router.push("/dashboard");
     } catch (error: any) {
-      console.error("DEBUG_OAUTH_CRITICAL:", error);
-      const errorStr = error.message || "";
+      console.error("DEBUG_OAUTH_CRITICAL:", error.code, error.message);
+      setErrorStatus(error.code);
       
-      if (errorStr.includes("identitytoolkit.googleapis.com") || error.code === 'auth/operation-not-allowed') {
-        setApiErrorUrl("https://console.developers.google.com/apis/api/identitytoolkit.googleapis.com/overview?project=659509021859");
-      } else if (errorStr.includes("are-blocked") || error.code === 'auth/internal-error') {
-        setIsBlocked(true);
-      } else {
-        toast({
-          variant: "destructive",
-          title: "FALLO_SINCRO",
-          description: error.message || "Sincronización interrumpida.",
-        });
-      }
+      toast({
+        variant: "destructive",
+        title: "FALLO_SINCRO",
+        description: "Sincronización interrumpida. Revise configuración de consola.",
+      });
     } finally {
       setLoading(false);
     }
@@ -118,25 +112,25 @@ export default function LoginPage() {
 
         <CardContent className="space-y-6 pb-14 px-[10%]">
           
-          {(apiErrorUrl || isBlocked) && (
+          {errorStatus && (
             <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
               <Alert variant="destructive" className="bg-primary/10 border-primary/50 rounded-none border-l-4">
-                <ShieldAlert className="h-5 w-5 text-primary" />
-                <AlertTitle className="text-xs font-black uppercase tracking-widest mb-2 text-primary">BLOQUEO_DE_NÚCLEO_DETECTADO</AlertTitle>
+                <AlertTriangle className="h-5 w-5 text-primary" />
+                <AlertTitle className="text-xs font-black uppercase tracking-widest mb-2 text-primary">BLOQUEO_DETECTADO: {errorStatus}</AlertTitle>
                 <AlertDescription className="text-[10px] uppercase leading-relaxed text-white/60">
-                  Google Cloud está bloqueando tu API Key. Mientras se propaga la solución, usa el acceso de emergencia:
+                  Firebase detecta un error de configuración. Usa el acceso de emergencia para entrar al Dashboard ahora mismo:
                 </AlertDescription>
               </Alert>
               <Button 
                 onClick={handleBypass}
-                className="w-full h-14 bg-white text-black hover:bg-white/90 font-black rounded-none transition-all flex gap-3 text-xs tracking-[0.2em] uppercase"
+                className="w-full h-14 bg-white text-black hover:bg-white/90 font-black rounded-none transition-all flex gap-3 text-xs tracking-[0.2em] uppercase shadow-[0_0_15px_rgba(255,255,255,0.3)]"
               >
-                <Terminal className="h-4 w-4" /> FORZAR_ACCESO_DASHBOARD
+                <Terminal className="h-4 w-4" /> FORZAR_ENTRADA_DIRECTA
               </Button>
             </div>
           )}
 
-          {!apiErrorUrl && !isBlocked && (
+          {!errorStatus && (
             <Button
               variant="outline"
               className="w-full h-14 border-primary/30 rounded-none text-primary hover:bg-primary/10 hover:border-primary transition-all font-black tracking-[0.2em] text-xs bg-transparent flex gap-3 uppercase"
@@ -201,9 +195,9 @@ export default function LoginPage() {
             <button 
               type="button"
               onClick={handleBypass}
-              className="text-[8px] text-primary/30 hover:text-primary transition-colors font-black uppercase tracking-[0.3em] border border-primary/10 py-2"
+              className="text-[10px] text-primary hover:bg-primary/10 transition-all font-black uppercase tracking-[0.3em] border-2 border-primary/40 py-4 shadow-[0_0_10px_rgba(0,255,255,0.2)]"
             >
-              USAR_PROTOCOLO_EMERGENCIA_DEV
+              {loading ? "SINCRONIZANDO..." : ">> FORZAR_ACCESO_INMEDIATO (MODO_DEV) <<"}
             </button>
           </div>
         </CardContent>

@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   const loginAsGuest = () => {
-    setLoading(true);
+    console.log("EJECUTANDO_BYPASS_DE_EMERGENCIA...");
     const guestUser = {
       uid: "guest-dev-uid",
       email: "admin@synqsports.pro",
@@ -54,7 +54,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    // Verificar si hay bypass activo
+    // Verificar bypass inmediatamente al montar
     const bypass = localStorage.getItem("dev_bypass");
     if (bypass === "true") {
       loginAsGuest();
