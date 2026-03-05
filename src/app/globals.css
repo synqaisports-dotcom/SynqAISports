@@ -33,6 +33,17 @@
     --ring: 183 100% 50%;
     
     --radius: 1rem;
+
+    /* TECH_SCROLL_VARS */
+    --scroll-color: hsla(183, 100%, 50%, 0.1);
+    --scroll-hover: hsla(183, 100%, 50%, 0.6);
+    --scroll-glow: hsla(183, 100%, 50%, 0.4);
+  }
+
+  .admin-global-theme {
+    --scroll-color: hsla(142, 70%, 50%, 0.1);
+    --scroll-hover: hsla(142, 70%, 50%, 0.6);
+    --scroll-glow: hsla(142, 70%, 50%, 0.4);
   }
 }
 
@@ -52,25 +63,31 @@
   }
 }
 
-/* PROTOCOLO_SCROLL_TACTICO_V2 */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+/* GLOBAL_TECH_SCROLLBAR_SYSTEM */
+::-webkit-scrollbar {
+  width: 2px;
+  height: 2px;
 }
 
-.custom-scrollbar::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: hsla(183, 100%, 50%, 0.1);
-  @apply rounded-full;
-  transition: all 0.5s ease;
+::-webkit-scrollbar-thumb {
+  background: var(--scroll-color);
+  border-radius: 10px;
+  transition: all 0.3s ease;
 }
 
-.custom-scrollbar:hover::-webkit-scrollbar-thumb {
-  background: hsla(183, 100%, 50%, 0.4);
-  box-shadow: 0 0 15px hsla(183, 100%, 50%, 0.3);
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scroll-hover);
+  box-shadow: 0 0 10px var(--scroll-glow);
+}
+
+/* Firefox Support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-color) transparent;
 }
 
 .bg-grid-pattern {
