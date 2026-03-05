@@ -30,7 +30,6 @@ import {
   SidebarMenuItem, 
   SidebarMenuButton,
   useSidebar,
-  SidebarTrigger,
   SidebarGroup
 } from "@/components/ui/sidebar";
 
@@ -71,23 +70,24 @@ export function DashboardSidebar() {
 
   return (
     <Sidebar collapsible="offcanvas" className="border-r border-white/5 bg-[#04070c] shadow-[4px_0_24px_rgba(0,0,0,0.5)]">
-      {/* LOGO SECTION */}
-      <SidebarHeader className="p-6 border-b border-white/5 bg-black/60 backdrop-blur-md">
+      {/* LOGO SECTION - MARCA LIMPIA SIN INTERRUPCIONES */}
+      <SidebarHeader className="p-8 border-b border-white/5 bg-black/60 backdrop-blur-md">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-primary p-2 rounded-xl shrink-0 cyan-glow shadow-[0_0_20px_rgba(0,242,255,0.4)]">
-              <Zap className="h-5 w-5 text-black" />
+          <div className="flex items-center gap-4">
+            <div className="bg-primary p-2.5 rounded-xl shrink-0 cyan-glow shadow-[0_0_25px_rgba(0,242,255,0.4)]">
+              <Zap className="h-6 w-6 text-black" />
             </div>
             <div className="flex flex-col overflow-hidden">
-              <span className="font-headline font-black text-xl tracking-tighter text-white uppercase italic">
+              <span className="font-headline font-black text-2xl tracking-tighter text-white uppercase italic">
                 Synq<span className="text-primary cyan-text-glow">AI</span>
               </span>
-              <span className="text-[8px] font-black text-white/30 tracking-[0.4em] uppercase">SPORTS_PRO</span>
+              <span className="text-[9px] font-black text-white/30 tracking-[0.4em] uppercase">SPORTS_PRO</span>
             </div>
           </div>
+          {/* BOTÓN DE OCULTACIÓN INTERNO DISCRETO */}
           <button 
             onClick={toggleSidebar}
-            className="h-8 w-8 rounded-xl bg-white/5 flex items-center justify-center text-white/40 hover:text-primary transition-all border border-white/5"
+            className="h-8 w-8 rounded-xl bg-white/5 flex items-center justify-center text-white/40 hover:text-primary transition-all border border-white/5 lg:hidden"
             title="Ocultar Terminal"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -96,7 +96,7 @@ export function DashboardSidebar() {
       </SidebarHeader>
 
       {/* NAVIGATION SECTIONS */}
-      <SidebarContent className="px-2 py-6 space-y-8 custom-scrollbar overflow-x-hidden">
+      <SidebarContent className="px-3 py-8 space-y-10 custom-scrollbar overflow-x-hidden">
         {/* GLOBAL CONTROL */}
         <SidebarGroupWrapper title="Control_Global" color="text-emerald-400">
           <SidebarMenu>
@@ -132,10 +132,10 @@ export function DashboardSidebar() {
       </SidebarContent>
 
       {/* FOOTER ACTIONS */}
-      <SidebarFooter className="p-4 border-t border-white/5 bg-black/60 backdrop-blur-md">
-        <Link href="/" className="flex items-center gap-4 px-3 py-3 text-white/30 hover:text-white transition-all font-black text-[10px] uppercase tracking-widest hover:bg-white/5 rounded-2xl group overflow-hidden w-full">
-          <LogOut className="h-4 w-4 shrink-0 group-hover:translate-x-1 transition-transform" />
-          <span className="whitespace-nowrap">SALIR_A_INICIO</span>
+      <SidebarFooter className="p-6 border-t border-white/5 bg-black/60 backdrop-blur-md">
+        <Link href="/" className="flex items-center gap-4 px-4 py-4 text-white/30 hover:text-white transition-all font-black text-[10px] uppercase tracking-widest hover:bg-white/5 rounded-2xl group overflow-hidden w-full">
+          <LogOut className="h-5 w-5 shrink-0 group-hover:translate-x-1 transition-transform" />
+          <span className="whitespace-nowrap font-bold">SALIR_A_INICIO</span>
         </Link>
       </SidebarFooter>
     </Sidebar>
@@ -145,7 +145,7 @@ export function DashboardSidebar() {
 function SidebarGroupWrapper({ children, title, color }: any) {
   return (
     <SidebarGroup className="p-0">
-      <p className={cn("px-4 mb-3 text-[8px] font-black uppercase tracking-[0.4em]", color)}>
+      <p className={cn("px-4 mb-4 text-[8px] font-black uppercase tracking-[0.5em] opacity-50", color)}>
         {title}
       </p>
       {children}
@@ -155,8 +155,8 @@ function SidebarGroupWrapper({ children, title, color }: any) {
 
 function SidebarLink({ item, isActive, isGlobal }: { item: NavItem; isActive: boolean; isGlobal?: boolean }) {
   const activeClass = isGlobal 
-    ? "bg-emerald-500/10 text-emerald-400 shadow-[0_4px_12px_rgba(16,185,129,0.1)] emerald-text-glow"
-    : "bg-primary/10 text-primary shadow-[0_4px_12px_rgba(0,242,255,0.1)] cyan-text-glow";
+    ? "bg-emerald-500/10 text-emerald-400 shadow-[0_4px_15px_rgba(16,185,129,0.15)] emerald-text-glow"
+    : "bg-primary/10 text-primary shadow-[0_4px_15px_rgba(0,242,255,0.15)] cyan-text-glow";
 
   const iconClass = isGlobal 
     ? (isActive ? "text-emerald-400 scale-110" : "group-hover:text-emerald-400 group-hover:scale-110")
@@ -167,16 +167,16 @@ function SidebarLink({ item, isActive, isGlobal }: { item: NavItem; isActive: bo
       asChild
       isActive={isActive}
       className={cn(
-        "flex items-center gap-4 px-4 py-3 rounded-2xl transition-all relative group overflow-hidden h-11",
-        isActive ? activeClass : "text-white/40 hover:text-white hover:bg-white/[0.03]"
+        "flex items-center gap-4 px-5 py-4 rounded-2xl transition-all relative group overflow-hidden h-12",
+        isActive ? activeClass : "text-white/40 hover:text-white hover:bg-white/[0.04]"
       )}
     >
       <Link href={item.href}>
-        <item.icon className={cn("h-4 w-4 shrink-0 transition-all duration-500", iconClass)} />
-        <span className="font-bold text-[9px] uppercase tracking-[0.2em] whitespace-nowrap">{item.title}</span>
+        <item.icon className={cn("h-5 w-5 shrink-0 transition-all duration-500", iconClass)} />
+        <span className="font-bold text-[10px] uppercase tracking-[0.25em] whitespace-nowrap">{item.title}</span>
         {isActive && (
           <div className={cn(
-            "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-1/2 rounded-full",
+            "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-3/5 rounded-full",
             isGlobal ? "bg-emerald-500" : "bg-primary"
           )} />
         )}
