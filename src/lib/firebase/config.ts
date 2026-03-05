@@ -5,14 +5,15 @@ import { getFirestore } from "firebase/firestore";
 /**
  * CONFIGURACIÓN_SÍNCRONA_SISTEMA
  * Estos valores vinculan la terminal con el núcleo de datos de Firebase.
+ * IMPORTANTE: Verifica que estos valores coincidan con tu Consola de Firebase > Configuración del proyecto.
  */
 const firebaseConfig = {
   apiKey: "AIzaSyDSyukojYSkwnEJi3dka-yf_H7WRi_gjsc",
   authDomain: "synqaisports.firebaseapp.com",
   projectId: "synqaisports",
   storageBucket: "synqaisports.firebasestorage.app",
-  messagingSenderId: "593859385938",
-  appId: "1:593859385938:web:7c7c7c7c7c7c7c7c", 
+  messagingSenderId: "659509021859", // Sincronizado con tu ID de proyecto real
+  appId: "1:659509021859:web:7c7c7c7c7c7c7c7c", 
 };
 
 // Inicialización de Protocolos
