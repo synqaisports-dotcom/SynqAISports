@@ -12,7 +12,7 @@ import { auth } from "@/lib/firebase/config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Zap, Mail, Lock, Loader2, Database, ShieldAlert, Chrome, UserPlus } from "lucide-react";
+import { Zap, Database, Loader2, Chrome, ShieldAlert } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
@@ -38,10 +38,11 @@ export default function LoginPage() {
       }
       router.push("/dashboard");
     } catch (error: any) {
+      console.error("AUTH_ERROR:", error.code, error.message);
       toast({
         variant: "destructive",
         title: "FALLO_DE_SISTEMA",
-        description: isRegistering ? "Error al crear cuenta. Email ya en uso o clave débil." : "Credenciales no válidas en este sector.",
+        description: "Error de validación. Verifique credenciales.",
       });
     } finally {
       setLoading(false);
@@ -51,14 +52,26 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     setLoading(true);
     const provider = new GoogleAuthProvider();
+    // Forzamos la selección de cuenta para evitar bucles de caché
+    provider.setCustomParameters({ prompt: 'select_account' });
+    
     try {
       await signInWithPopup(auth, provider);
       router.push("/dashboard");
     } catch (error: any) {
+      console.error("GOOGLE_OAUTH_ERROR:", error.code, error.message);
+      let errorMsg = "Sincronización interrumpida.";
+      
+      if (error.code === 'auth/popup-blocked') {
+        errorMsg = "Bloqueador de ventanas detectado.";
+      } else if (error.code === 'auth/operation-not-allowed') {
+        errorMsg = "Proveedor Google no habilitado en consola.";
+      }
+      
       toast({
         variant: "destructive",
         title: "FALLO_OAUTH",
-        description: "La sincronización con Google ha sido interrumpida.",
+        description: errorMsg,
       });
     } finally {
       setLoading(false);
@@ -77,7 +90,7 @@ export default function LoginPage() {
             </div>
           </div>
           <CardTitle className="text-3xl font-headline font-black text-white tracking-[0.3em] uppercase">
-            {isRegistering ? "NUEVA_IDENTIDAD" : "TERMINAL_ACCES"}
+            {isRegistering ? "NUEVA_IDENTIDAD" : "TERMINAL_ACCESO"}
           </CardTitle>
           <CardDescription className="uppercase text-[10px] tracking-[0.2em] text-white/40 mt-4 font-bold">
             {isRegistering ? "Inicializando secuencia de registro" : "Sincronización requerida"}
@@ -106,32 +119,28 @@ export default function LoginPage() {
           <form onSubmit={handleAuth} className="space-y-6">
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary block">EMAIL_USUARIO</label>
-              <div className="relative">
-                <Input
-                  type="email"
-                  placeholder="admin@synqsports.pro"
-                  className="h-14 bg-white border-none rounded-none focus:ring-2 focus:ring-primary/50 text-black placeholder:text-black/30 text-sm font-bold tracking-wider"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
+              <Input
+                type="email"
+                placeholder="usuario@synqsports.pro"
+                className="h-14 bg-white border-none rounded-none text-black placeholder:text-black/30 text-sm font-bold"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary block">CONTRASEÑA_ACCESO</label>
-              <div className="relative">
-                <Input
-                  type="password"
-                  placeholder="••••••••"
-                  className="h-14 bg-white border-none rounded-none focus:ring-2 focus:ring-primary/50 text-black placeholder:text-black/30 text-sm"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
+              <Input
+                type="password"
+                placeholder="••••••••"
+                className="h-14 bg-white border-none rounded-none text-black placeholder:text-black/30 text-sm"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
             </div>
             <Button
-              className="w-full h-14 bg-primary hover:bg-primary/80 text-primary-foreground font-black rounded-none transition-all active:scale-95 cyan-glow flex gap-3 text-sm tracking-widest uppercase border-none"
+              className="w-full h-14 bg-primary hover:bg-primary/80 text-primary-foreground font-black rounded-none transition-all active:scale-95 cyan-glow flex gap-3 text-sm tracking-widest uppercase"
               type="submit"
               disabled={loading}
             >
@@ -139,7 +148,7 @@ export default function LoginPage() {
                 <Loader2 className="animate-spin h-5 w-5" />
               ) : (
                 <>
-                  {isRegistering ? "REGISTRAR IDENTIDAD" : "VALIDAR IDENTIDAD"} 
+                  {isRegistering ? "REGISTRAR" : "VALIDAR"} 
                   <Zap className="h-4 w-4 fill-current" />
                 </>
               )}
@@ -159,11 +168,6 @@ export default function LoginPage() {
           </div>
         </CardContent>
       </Card>
-
-      <div className="absolute bottom-8 left-[5%] flex items-center gap-3 opacity-20 hover:opacity-100 transition-all duration-500">
-        <div className="h-8 w-8 rounded-full border border-white flex items-center justify-center font-black text-xs text-white">S</div>
-        <div className="text-[8px] font-bold text-white tracking-widest uppercase">System Protocol v1.0.4</div>
-      </div>
     </div>
   );
 }
