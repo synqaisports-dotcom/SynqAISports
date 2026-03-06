@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
@@ -19,7 +18,8 @@ import {
   UserCog,
   Clock,
   ChevronRight,
-  Globe
+  Globe,
+  Heart
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -37,15 +37,15 @@ export default function DashboardPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-white/5 pb-8">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
-            <Activity className="h-4 w-4 text-primary animate-pulse" />
+            <Heart className="h-4 w-4 text-primary animate-pulse" />
             <span className="text-[10px] font-black text-primary tracking-[0.5em] uppercase italic">
-              Terminal Operativa: {profile.clubId?.toUpperCase() || "SIN_NODO"}
+              Gestión de Cantera: {profile.clubId?.toUpperCase() || "SIN_NODO"}
             </span>
           </div>
           <h1 className="text-5xl font-headline font-black text-white italic tracking-tighter uppercase italic cyan-text-glow">
-            COACH_DASHBOARD
+            ACADEMY_CONTROL
           </h1>
-          <p className="text-[10px] font-black text-white/30 tracking-[0.2em] uppercase">Métricas operativas y cronograma del club</p>
+          <p className="text-[10px] font-black text-white/30 tracking-[0.2em] uppercase">Optimización del Fútbol Base y Formación</p>
         </div>
         
         <div className="flex flex-wrap gap-4">
@@ -60,30 +60,30 @@ export default function DashboardPage() {
       {/* MÉTRICAS OPERATIVAS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <OperationalMetricCard 
-          title="Total Jugadores" 
-          value="42" 
+          title="Total Niños/as" 
+          value="142" 
           icon={Users} 
-          desc="Atletas en Sistema"
-          trend="+4 este mes"
+          desc="Alumnos en Sistema"
+          trend="+12 este mes"
         />
         <OperationalMetricCard 
-          title="Staff Técnico" 
-          value="08" 
+          title="Monitores" 
+          value="12" 
           icon={UserCog} 
-          desc="Entrenadores Activos"
+          desc="Staff de Cantera Activo"
         />
         <OperationalMetricCard 
           title="Sesiones Mes" 
-          value="24" 
+          value="48" 
           icon={Calendar} 
           desc="Entrenamientos Cursados"
-          trend="98% asistencia"
+          trend="85% asistencia media"
         />
         <OperationalMetricCard 
-          title="Rendimiento Global" 
-          value="+14%" 
+          title="Impacto Formativo" 
+          value="+24%" 
           icon={TrendingUp} 
-          desc="Crecimiento Táctico"
+          desc="Mejora en Metodología"
           highlight
         />
       </div>
@@ -94,9 +94,9 @@ export default function DashboardPage() {
           <CardHeader className="p-8 border-b border-white/5 flex flex-row items-center justify-between">
             <div className="space-y-1">
               <CardTitle className="text-lg font-black uppercase tracking-widest flex items-center gap-3">
-                <Dumbbell className="h-5 w-5 text-primary" /> Próximos Entrenamientos
+                <Dumbbell className="h-5 w-5 text-primary" /> Horarios de Entrenamiento
               </CardTitle>
-              <CardDescription className="text-[10px] text-white/30 uppercase font-bold tracking-widest">Calendario de misiones tácticas inmediatas</CardDescription>
+              <CardDescription className="text-[10px] text-white/30 uppercase font-bold tracking-widest">Cronograma de categorías inferiores</CardDescription>
             </div>
             <Button variant="link" className="text-primary font-black text-[10px] uppercase tracking-widest p-0" asChild>
               <Link href="/dashboard/coach/planner">Ver Todo <ChevronRight className="h-3 w-3 ml-1" /></Link>
@@ -105,31 +105,31 @@ export default function DashboardPage() {
           <CardContent className="p-0">
             <div className="divide-y divide-white/5">
               <TrainingItem 
-                time="16:30" 
-                category="Sub-19 Elite" 
-                focus="Presión Alta" 
-                location="Campo 1"
+                time="17:00" 
+                category="Alevín A" 
+                focus="Técnica de Pase" 
+                location="Campo B"
                 status="ready"
               />
               <TrainingItem 
-                time="18:00" 
-                category="Cadete A" 
-                focus="Transiciones" 
-                location="Campo Principal"
+                time="17:00" 
+                category="Benjamín B" 
+                focus="Psicomotricidad" 
+                location="Pabellón"
                 status="ready"
               />
               <TrainingItem 
-                time="19:30" 
-                category="Sénior B" 
-                focus="ABP Defensivo" 
-                location="Campo 2"
+                time="18:30" 
+                category="Infantil C" 
+                focus="Posicionamiento" 
+                location="Campo A"
                 status="pending"
               />
               <TrainingItem 
                 time="Mañana" 
-                category="Alevín C" 
-                focus="Técnica Individual" 
-                location="Pabellón"
+                category="Pre-Benjamín" 
+                focus="Juegos Recreativos" 
+                location="Campo B"
                 status="pending"
               />
             </div>
@@ -139,28 +139,28 @@ export default function DashboardPage() {
         {/* ÚLTIMOS REPORTES / ALERTAS */}
         <Card className="glass-panel rounded-3xl border-none bg-black/40 overflow-hidden">
           <CardHeader className="p-8 border-b border-white/5">
-            <CardTitle className="text-sm font-black uppercase tracking-widest">Actividad del Nodo</CardTitle>
+            <CardTitle className="text-sm font-black uppercase tracking-widest">Actividad de la Cantera</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <div className="p-8 space-y-6">
               <ActivityLog 
                 type="info" 
-                title="Nuevo_Perfil_Atleta" 
-                desc="Se ha incorporado un mediocentro al Cadete B." 
+                title="Nueva_Inscripción" 
+                desc="Un nuevo alumno se ha unido al Pre-Benjamín." 
               />
               <ActivityLog 
                 type="success" 
-                title="Sesión_Finalizada" 
-                desc="Reporte táctico del Juvenil A sincronizado con éxito." 
+                title="Plan_Metodológico" 
+                desc="Se han actualizado los ejercicios de la etapa Infantil." 
               />
               <ActivityLog 
                 type="warning" 
-                title="Baja_Médica" 
-                desc="Jugador ID-342 (Sénior) fuera por 2 semanas." 
+                title="Comunicado_Padres" 
+                desc="Aviso de lluvia enviado a los tutores del grupo A." 
               />
             </div>
             <div className="p-8 pt-0">
-               <Button variant="outline" className="w-full h-12 rounded-2xl border-white/10 uppercase text-[10px] tracking-widest font-black hover:text-primary hover:border-primary/30 transition-all">Ver Logs Completos</Button>
+               <Button variant="outline" className="w-full h-12 rounded-2xl border-white/10 uppercase text-[10px] tracking-widest font-black hover:text-primary hover:border-primary/30 transition-all">Ver Actividad Completa</Button>
             </div>
           </CardContent>
         </Card>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { 
@@ -24,7 +23,8 @@ import {
   ChevronDown,
   Mail,
   Building2,
-  Send
+  Send,
+  Heart
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -57,7 +57,7 @@ export default function SynqAiLandingPage() {
       ]
     },
     {
-      title: "Operativa Élite",
+      title: "Operativa de Cantera",
       description: "Terminales de rendimiento y táctica",
       color: "text-primary",
       nodes: [
@@ -118,27 +118,27 @@ export default function SynqAiLandingPage() {
           
           <div className="max-w-5xl text-center space-y-12 relative">
              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/20 bg-primary/5 mb-4 animate-in fade-in slide-in-from-bottom-2 duration-700">
-                <Activity className="h-3 w-3 text-primary" />
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Sincronización Deportiva 1.0</span>
+                <Heart className="h-3 w-3 text-primary" />
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Tecnología Profesional para el Fútbol Base</span>
              </div>
 
              <h1 className="text-6xl md:text-8xl lg:text-9xl font-headline font-black italic tracking-tighter uppercase leading-[0.85] cyan-text-glow">
-               EL FUTURO DEL <br />
-               <span className="text-primary">DEPORTE ÉLITE</span>
+               ÉLITE PARA <br />
+               <span className="text-primary">TODOS</span>
              </h1>
 
              <p className="max-w-2xl mx-auto text-white/40 font-bold uppercase text-[11px] md:text-xs tracking-[0.5em] leading-relaxed">
-               Inteligencia Artificial aplicada al análisis táctico, <br />
-               gestión de canteras y optimización de redes globales.
+               Democratizando las herramientas profesionales de fútbol. <br />
+               Porque cada niño, en cada club de barrio, merece entrenar como los mejores.
              </p>
 
              <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-8">
                 <Button size="lg" className="bg-primary text-black font-black h-16 px-12 rounded-none cyan-glow uppercase tracking-[0.3em] text-[11px] shadow-[0_0_30px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none" asChild>
-                  <Link href="/login">EXPLORAR LA RED <ArrowRight className="h-4 w-4 ml-3" /></Link>
+                  <Link href="/login">UNIR MI CLUB A LA RED <ArrowRight className="h-4 w-4 ml-3" /></Link>
                 </Button>
                 <div className="flex items-center gap-4 px-8 py-4 border border-white/5 bg-white/[0.02] backdrop-blur-md">
                    <Users className="h-4 w-4 text-primary/40" />
-                   <span className="text-[10px] font-black uppercase tracking-widest text-white/30">+1.2k NODOS ACTIVOS</span>
+                   <span className="text-[10px] font-black uppercase tracking-widest text-white/30">+1.2k CANTERAS UNIDAS</span>
                 </div>
              </div>
           </div>
@@ -153,46 +153,46 @@ export default function SynqAiLandingPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
             <div className="relative aspect-video rounded-3xl overflow-hidden glass-panel border-none group">
                <Image 
-                src="https://picsum.photos/seed/tech/1200/800" 
-                alt="SynqAI Vision" 
+                src="https://picsum.photos/seed/youth-sports/1200/800" 
+                alt="SynqAI Grassroots Vision" 
                 fill 
                 className="object-cover opacity-40 group-hover:scale-105 transition-all duration-1000 grayscale group-hover:grayscale-0"
-                data-ai-hint="artificial intelligence"
+                data-ai-hint="youth football"
                />
                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
                <div className="absolute bottom-8 left-8 flex items-center gap-4">
                   <div className="h-12 w-12 rounded-2xl bg-primary/20 flex items-center justify-center border border-primary/40">
-                    <Rocket className="h-6 w-6 text-primary" />
+                    <Sprout className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-primary">Operativa HQ</p>
-                    <p className="text-xs font-black italic uppercase">The Neural Leap</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-primary">Operativa Local</p>
+                    <p className="text-xs font-black italic uppercase">Grassroots Revolution</p>
                   </div>
                </div>
             </div>
 
             <div className="space-y-10">
                <div className="space-y-4">
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">Quienes Somos</h3>
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">Nuestra Misión</h3>
                   <h2 className="text-5xl font-headline font-black italic tracking-tighter uppercase leading-tight">
-                    NO SOMOS SOFTWARE, <br />
-                    SOMOS EL <span className="text-primary">SISTEMA OPERATIVO</span>
+                    LA TECNOLOGÍA PRO, <br />
+                    AL PRECIO DE <span className="text-primary">UN CAFÉ</span>
                   </h2>
                </div>
                
                <p className="text-white/40 font-bold uppercase text-xs leading-loose tracking-widest">
-                 SynqAI nació con una visión clara: la democratización de la tecnología de élite. <br /><br />
-                 Eliminamos la fricción entre la recolección de datos y la toma de decisiones tácticas. Nuestra red permite que un club de base en Argentina o una academia Pro en Madrid operen bajo los mismos protocolos de eficiencia aeroespacial.
+                 SynqAI nació con un objetivo social: que el fútbol base deje de ser el olvidado de la tecnología. <br /><br />
+                 Hemos roto la barrera del precio para que cualquier coordinador de cantera pueda tener las mismas herramientas que un club de Champions. Automatizamos la táctica y la gestión para que los entrenadores se centren en lo que importa: formar personas y deportistas.
                </p>
 
                <div className="grid grid-cols-2 gap-8 pt-6">
                   <div className="space-y-2">
-                    <p className="text-3xl font-black italic text-primary">0.14ms</p>
-                    <p className="text-[9px] font-black uppercase tracking-widest text-white/20">LATENCIA IA</p>
+                    <p className="text-3xl font-black italic text-primary">1€</p>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-white/20">POR NIÑO AL MES</p>
                   </div>
                   <div className="space-y-2">
-                    <p className="text-3xl font-black italic text-primary">100%</p>
-                    <p className="text-[9px] font-black uppercase tracking-widest text-white/20">SEGURIDAD NODO</p>
+                    <p className="text-3xl font-black italic text-primary">0.70€</p>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-white/20">EN REDES DE APOYO</p>
                   </div>
                </div>
             </div>
@@ -204,28 +204,28 @@ export default function SynqAiLandingPage() {
           <div className="absolute inset-0 bg-grid-pattern opacity-5" />
           <div className="max-w-7xl mx-auto px-6 relative">
              <div className="text-center space-y-4 mb-20">
-                <h3 className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">Sostenibilidad de Red</h3>
-                <h2 className="text-5xl font-headline font-black italic tracking-tighter uppercase">PROTOCOLOS DE VOLUMEN</h2>
+                <h3 className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">Protocolo de Apoyo Social</h3>
+                <h2 className="text-5xl font-headline font-black italic tracking-tighter uppercase">COSTES PARA CANTERAS</h2>
              </div>
 
              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <PricingStep 
                   step="01" 
-                  title="Nodo Base" 
+                  title="Club Local" 
                   price="1.00€" 
-                  desc="Gestión integral para clubes en fase de crecimiento." 
+                  desc="Gestión total para clubes pequeños con grandes sueños." 
                 />
                 <PricingStep 
                   step="02" 
-                  title="Escalado Red" 
+                  title="Alianza Regional" 
                   price="0.85€" 
-                  desc="Optimización automática al superar los 400 niños." 
+                  desc="Para academias que superan los 400 niños en su red." 
                 />
                 <PricingStep 
                   step="03" 
-                  title="Enterprise Élite" 
+                  title="Red de Canteras" 
                   price="0.70€" 
-                  desc="Protocolo total para redes de más de 800 niños." 
+                  desc="Protocolo especial para federaciones o redes de +800 niños." 
                   featured
                 />
              </div>
@@ -237,10 +237,10 @@ export default function SynqAiLandingPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
             <div className="space-y-8">
               <div className="space-y-4">
-                <h3 className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">Alianza Estratégica</h3>
-                <h2 className="text-5xl font-headline font-black italic tracking-tighter uppercase">VINCULA TU CLUB A LA RED</h2>
+                <h3 className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">Suma tu Club</h3>
+                <h2 className="text-5xl font-headline font-black italic tracking-tighter uppercase">DIGITALIZA TU CANTERA</h2>
                 <p className="text-white/40 font-bold uppercase text-[10px] tracking-[0.4em] leading-relaxed">
-                  Solicite una auditoría táctica y descubra el ahorro proyectado según su volumen de nodos.
+                  ¿Quieres que tus entrenadores tengan herramientas pro? Solicita tu acceso y únete a la red de canteras más avanzada.
                 </p>
               </div>
 
@@ -256,7 +256,7 @@ export default function SynqAiLandingPage() {
                   <Building2 className="h-6 w-6 text-primary/40" />
                   <div className="flex flex-col">
                     <span className="text-[8px] font-black uppercase text-white/20 tracking-widest">Sede Central</span>
-                    <span className="text-xs font-black uppercase text-white">NEURAL DISTRICT 01, ES</span>
+                    <span className="text-xs font-black uppercase text-white">CANTERA HUB DISTRICT, ES</span>
                   </div>
                 </div>
               </div>
@@ -269,27 +269,27 @@ export default function SynqAiLandingPage() {
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-[8px] font-black uppercase tracking-widest text-primary/60 ml-1">NOMBRE_OFICIAL_CLUB</label>
-                  <Input placeholder="EJ: ACADEMIA PRO" className="h-12 bg-black/40 border-white/10 rounded-none font-bold uppercase text-[10px] tracking-widest" />
+                  <label className="text-[8px] font-black uppercase tracking-widest text-primary/60 ml-1">NOMBRE_OFICIAL_CANTERA</label>
+                  <Input placeholder="EJ: CLUB DEPORTIVO LOCAL" className="h-12 bg-black/40 border-white/10 rounded-none font-bold uppercase text-[10px] tracking-widest" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[8px] font-black uppercase tracking-widest text-primary/60 ml-1">VOLUMEN_NIÑOS</label>
-                  <Input placeholder="+400" className="h-12 bg-black/40 border-white/10 rounded-none font-bold uppercase text-[10px] tracking-widest" />
+                  <label className="text-[8px] font-black uppercase tracking-widest text-primary/60 ml-1">Nº_DE_NIÑOS</label>
+                  <Input placeholder="+200" className="h-12 bg-black/40 border-white/10 rounded-none font-bold uppercase text-[10px] tracking-widest" />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[8px] font-black uppercase tracking-widest text-primary/60 ml-1">EMAIL_PROFESIONAL</label>
-                <Input type="email" placeholder="ADMIN@CLUB.COM" className="h-12 bg-black/40 border-white/10 rounded-none font-bold uppercase text-[10px] tracking-widest" />
+                <label className="text-[8px] font-black uppercase tracking-widest text-primary/60 ml-1">EMAIL_COORDINADOR</label>
+                <Input type="email" placeholder="COORDINACION@CLUB.COM" className="h-12 bg-black/40 border-white/10 rounded-none font-bold uppercase text-[10px] tracking-widest" />
               </div>
 
               <div className="space-y-2">
-                <label className="text-[8px] font-black uppercase tracking-widest text-primary/60 ml-1">MENSAJE_TÁCTICO</label>
-                <Textarea placeholder="INDIQUE SUS OBJETIVOS OPERATIVOS..." className="min-h-[120px] bg-black/40 border-white/10 rounded-none font-bold uppercase text-[10px] tracking-widest" />
+                <label className="text-[8px] font-black uppercase tracking-widest text-primary/60 ml-1">MENSAJE_PARA_EL_EQUIPO</label>
+                <Textarea placeholder="CUÉNTANOS SOBRE TU PROYECTO DE CANTERA..." className="min-h-[120px] bg-black/40 border-white/10 rounded-none font-bold uppercase text-[10px] tracking-widest" />
               </div>
 
               <Button type="submit" className="w-full h-16 bg-primary text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-none cyan-glow hover:scale-[1.02] transition-all">
-                ENVIAR_SOLICITUD_VINCULACIÓN <Send className="h-4 w-4 ml-2" />
+                ENVIAR_SOLICITUD_DE_ACCESO <Send className="h-4 w-4 ml-2" />
               </Button>
             </form>
           </div>
@@ -298,8 +298,8 @@ export default function SynqAiLandingPage() {
         {/* ACCESO AL SISTEMA (PORTAL DE LANZAMIENTO) */}
         <section className="py-32 px-6 max-w-7xl mx-auto space-y-24">
           <div className="text-center space-y-4">
-             <h3 className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">Acceso Directo</h3>
-             <h2 className="text-5xl font-headline font-black italic tracking-tighter uppercase leading-tight">PORTAL DE LANZAMIENTO</h2>
+             <h3 className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">Terminales de Gestión</h3>
+             <h2 className="text-5xl font-headline font-black italic tracking-tighter uppercase leading-tight">ACCESO A LA RED</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
@@ -344,14 +344,14 @@ export default function SynqAiLandingPage() {
                   <span className="font-headline font-black text-2xl tracking-tighter uppercase italic">SynqAI</span>
                </div>
                <p className="text-[10px] font-bold uppercase tracking-widest text-white/20 leading-loose">
-                 Diseñando el tejido neural del deporte moderno. <br />
-                 © 2024 SynqSports Neural Systems. Todos los derechos reservados bajo protocolo de encriptación 0X1.
+                 Digitalizando el fútbol base. <br />
+                 © 2024 SynqSports Neural Systems. Porque el futuro está en la cantera.
                </p>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-16">
-               <FooterGroup title="Plataforma" items={['IA Planner', 'Tactical Board', 'Global Red']} />
-               <FooterGroup title="Empresa" items={['Visión', 'Socio', 'Seguridad']} />
+               <FooterGroup title="Plataforma" items={['IA Planner', 'Tactical Board', 'Gestión Cantera']} />
+               <FooterGroup title="Proyecto" items={['Misión', 'Precios', 'Seguridad']} />
                <FooterGroup title="Legal" items={['Privacidad', 'Protocolos', 'GDPR']} />
             </div>
          </div>
@@ -368,7 +368,7 @@ function PricingStep({ step, title, price, desc, featured }: any) {
     )}>
        <span className="absolute top-8 right-8 text-4xl font-black italic opacity-5 group-hover:opacity-10 transition-all">{step}</span>
        <div className="space-y-1">
-          <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/30">Protocolo</p>
+          <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/30">Tarifa</p>
           <h4 className="text-xl font-black uppercase italic tracking-tighter">{title}</h4>
        </div>
        <div className="text-4xl font-black text-primary font-headline italic">{price} <span className="text-xs opacity-40">/ niño</span></div>
@@ -392,3 +392,11 @@ function FooterGroup({ title, items }: any) {
     </div>
   );
 }
+
+const Sprout = ({ className }: any) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M7 20h10" />
+    <path d="M10 20c5.5-2.5 8-6.4 8-10 0-4.4-3.6-8-8-8s-8 3.6-8 8c0 3.6 2.5 7.5 8 10Z" />
+    <path d="M12 20V2" />
+  </svg>
+);
