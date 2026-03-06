@@ -19,18 +19,16 @@ import {
   ArrowRight,
   Sparkles,
   Lock,
-  Globe
-} from "lucide-center";
+  Globe,
+  ChevronLeft
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth-context";
 import { Badge } from "@/components/ui/badge";
 
-// Corregimos la importación de iconos de lucide-react
-import { LucideIcon } from "lucide-react";
-import * as Lucide from "lucide-react";
-
 function LoginContent() {
   const [loading, setLoading] = useState(false);
+  const [forceStandard, setForceStandard] = useState(false);
   const { loginAsGuest, loginWithToken } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
@@ -41,10 +39,9 @@ function LoginContent() {
 
   useEffect(() => {
     const t = searchParams.get("token") || searchParams.get("t");
-    if (t) {
+    if (t && !forceStandard) {
       setToken(t);
       // Simulación de búsqueda de datos del token
-      // En producción esto vendría de Firestore
       setCampaignData({
         plan: "Enterprise Scale",
         price: "0.70€ / niño",
@@ -57,7 +54,7 @@ function LoginContent() {
         description: `Sincronizando campaña regional: ${t}`,
       });
     }
-  }, [searchParams, toast]);
+  }, [searchParams, toast, forceStandard]);
 
   const handleBypass = () => {
     setLoading(true);
@@ -75,7 +72,6 @@ function LoginContent() {
     e.preventDefault();
     setLoading(true);
     
-    // Simulamos la creación de cuenta con el plan y país del token
     loginWithToken(token!, campaignData.plan, campaignData.countryCode);
     
     toast({
@@ -88,11 +84,12 @@ function LoginContent() {
     }, 1000);
   };
 
-  if (token && campaignData) {
+  // VISTA DE RECLAMAR TOKEN (QR / MAGIC LINK)
+  if (token && campaignData && !forceStandard) {
     return (
       <Card className="w-full max-w-xl glass-panel shadow-2xl relative z-10 overflow-hidden border-t-2 border-primary animate-in fade-in zoom-in-95 duration-500">
         <div className="absolute top-0 right-0 p-4 opacity-10">
-          <Lucide.Sparkles className="h-24 w-24 text-primary" />
+          <Sparkles className="h-24 w-24 text-primary" />
         </div>
         
         <CardHeader className="pt-12 pb-8 text-center">
@@ -117,7 +114,7 @@ function LoginContent() {
             </div>
             <div className="flex items-center justify-between pt-2 border-t border-white/5">
               <div className="flex items-center gap-2">
-                <Lucide.Lock className="h-3 w-3 text-primary/40" />
+                <Lock className="h-3 w-3 text-primary/40" />
                 <span className="text-[8px] font-black uppercase text-white/20 tracking-widest italic">Datos bloqueados por campaña</span>
               </div>
               <Badge variant="outline" className="text-[8px] border-primary/20 text-primary font-black uppercase">Solo {campaignData.limit}</Badge>
@@ -141,22 +138,28 @@ function LoginContent() {
               disabled={loading}
               className="w-full h-16 bg-primary text-black font-black uppercase tracking-[0.3em] text-xs rounded-none cyan-glow hover:scale-[1.01] transition-all"
             >
-              {loading ? "CONFIGURANDO_NODO..." : "ACTIVAR_MI_NODO_DE_CLUB"} <Lucide.ArrowRight className="h-4 w-4 ml-2" />
+              {loading ? "CONFIGURANDO_NODO..." : "ACTIVAR_MI_NODO_DE_CLUB"} <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </form>
 
-          <p className="text-[8px] text-center font-bold text-white/20 uppercase tracking-[0.4em]">
-            Al activar el nodo, aceptas los términos de la red SynqAi regional.
-          </p>
+          <div className="pt-6 border-t border-white/5 flex flex-col items-center gap-4">
+            <button 
+              onClick={() => setForceStandard(true)}
+              className="text-[9px] text-white/40 hover:text-white transition-all font-black uppercase tracking-[0.3em] flex items-center gap-2"
+            >
+              <ChevronLeft className="h-3 w-3" /> Ignorar invitación e iniciar sesión de sistema
+            </button>
+          </div>
         </CardContent>
       </Card>
     );
   }
 
+  // VISTA ESTÁNDAR / BYPASS ADMIN
   return (
     <Card className="w-full max-w-xl glass-panel shadow-2xl relative z-10 overflow-hidden border-t-2 border-t-primary">
       <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-        <Lucide.Zap className="h-32 w-32 text-primary" />
+        <Zap className="h-32 w-32 text-primary" />
       </div>
 
       <CardHeader className="pt-12 pb-8 text-center">
@@ -164,7 +167,7 @@ function LoginContent() {
           <div className="relative group">
             <div className="absolute inset-0 bg-primary/40 blur-xl rounded-full animate-pulse" />
             <div className="relative p-5 border border-primary/40 bg-black/60 rounded-sm rotate-45 cyan-glow">
-              <Lucide.Database className="h-10 w-10 text-primary -rotate-45" />
+              <Database className="h-10 w-10 text-primary -rotate-45" />
             </div>
           </div>
         </div>
@@ -183,13 +186,13 @@ function LoginContent() {
               value="activation" 
               className="rounded-none font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-black transition-all"
             >
-              <Lucide.Key className="h-3 w-3 mr-2" /> Código Activación
+              <Key className="h-3 w-3 mr-2" /> Código Activación
             </TabsTrigger>
             <TabsTrigger 
               value="qr" 
               className="rounded-none font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-black transition-all"
             >
-              <Lucide.QrCode className="h-3 w-3 mr-2" /> Escaneo de Nodo
+              <QrCode className="h-3 w-3 mr-2" /> Escaneo de Nodo
             </TabsTrigger>
           </TabsList>
 
@@ -215,7 +218,7 @@ function LoginContent() {
               onClick={handleBypass}
               className="w-full h-16 bg-primary text-black font-black uppercase tracking-[0.3em] text-xs rounded-none cyan-glow hover:scale-[1.01] transition-all"
             >
-              VINCULAR_IDENTIDAD <Lucide.ArrowRight className="h-4 w-4 ml-2" />
+              VINCULAR_IDENTIDAD <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </TabsContent>
 
@@ -223,7 +226,7 @@ function LoginContent() {
             <div className="flex flex-col items-center py-6 space-y-6 border border-dashed border-primary/20 bg-primary/5">
               <div className="relative">
                 <div className="absolute inset-0 bg-primary/20 blur-2xl animate-pulse" />
-                <Lucide.QrCode className="h-24 w-24 text-primary relative" />
+                <QrCode className="h-24 w-24 text-primary relative" />
               </div>
               <div className="text-center space-y-2">
                 <p className="text-[10px] font-black uppercase tracking-widest text-white">ESCANEA TU CÓDIGO_NODO</p>
@@ -247,7 +250,7 @@ function LoginContent() {
 
         <div className="mt-12 pt-8 border-t border-white/5 flex flex-col items-center gap-6">
           <div className="flex items-center gap-2">
-            <Lucide.ShieldCheck className="h-4 w-4 text-primary opacity-50" />
+            <ShieldCheck className="h-4 w-4 text-primary opacity-50" />
             <span className="text-[8px] font-black text-white/20 uppercase tracking-[0.5em]">Seguridad por Encriptación de Nodo Activa</span>
           </div>
           
