@@ -96,9 +96,9 @@ const MOCK_CAMPAIGNS = [
   },
 ];
 
-// Componente de QR de alta calidad con marca central
+// Componente de QR de alta calidad con marca central en verde eléctrico
 const BrandedQR = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 100 100" className={className} fill="currentColor">
+  <svg viewBox="0 0 100 100" className={cn("text-emerald-400", className)} fill="currentColor">
     {/* Generamos una cuadrícula densa para simular un QR de alta calidad */}
     {Array.from({ length: 25 }).map((_, i) => (
       Array.from({ length: 25 }).map((_, j) => {
@@ -115,8 +115,8 @@ const BrandedQR = ({ className }: { className?: string }) => (
     {/* Cuadrados de posicionamiento clásicos de un QR */}
     <path d="M0 0h28v28H0zM4 4h20v20H4zM8 8h12v12H8zM72 0h28v28H72zM76 4h20v20h-20zM80 8h12v12h-12zM0 72h28v28H0zM4 76h20v20H4zM8 80h12v12H8z" />
     
-    {/* Placa Central SynQAI */}
-    <rect x="28" y="44" width="44" height="12" rx="2" fill="white" />
+    {/* Placa Central SynQAI con fondo verde eléctrico */}
+    <rect x="28" y="44" width="44" height="12" rx="2" className="fill-emerald-400" />
     <text x="50" y="52.5" fontSize="7" fontWeight="900" textAnchor="middle" letterSpacing="-0.2" fill="black" style={{ fontFamily: 'var(--font-headline)' }}>SynQAI</text>
   </svg>
 );
@@ -334,14 +334,14 @@ export default function GlobalPromosPage() {
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                <div className="p-8 bg-black/60 border border-white/5 flex flex-col items-center justify-center space-y-4 rounded-3xl group cursor-pointer relative overflow-hidden">
+                <div className="p-8 bg-black/60 border border-emerald-500/20 flex flex-col items-center justify-center space-y-4 rounded-3xl group cursor-pointer relative overflow-hidden">
                   <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <div className="h-44 w-44 bg-white border border-emerald-500/30 flex items-center justify-center p-6 relative z-10 group-hover:border-emerald-500/60 transition-all duration-500 shadow-[0_0_30px_rgba(255,255,255,0.1)]">
-                      <BrandedQR className="h-full w-full text-black group-hover:scale-[1.05] transition-all duration-500" />
-                      <div className="absolute inset-0 scan-line opacity-5" />
+                  <div className="h-44 w-44 bg-emerald-500/5 border border-emerald-500/40 flex items-center justify-center p-6 relative z-10 group-hover:border-emerald-500/60 transition-all duration-500 shadow-[0_0_30px_rgba(16,185,129,0.1)]">
+                      <BrandedQR className="h-full w-full group-hover:scale-[1.05] transition-all duration-500" />
+                      <div className="absolute inset-0 scan-line opacity-20" />
                   </div>
-                  <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.4em] text-center relative z-10">
-                    {currentToken ? 'QR SINCRONIZADO CON TOKEN' : 'ESPERANDO SELECCIÓN DE NODO'}
+                  <p className="text-[9px] font-black text-emerald-400/40 uppercase tracking-[0.4em] text-center relative z-10 group-hover:text-emerald-400 transition-colors">
+                    {currentToken ? 'QR_ENCRYPT_SYNC' : 'ESPERANDO_NODO'}
                   </p>
                 </div>
 
@@ -374,7 +374,7 @@ export default function GlobalPromosPage() {
                        {currentHook || 'Defina un objetivo regional para generar el gancho de escasez.'}
                      </p>
                   </div>
-                  <Button className="w-full h-14 bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest rounded-none shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:scale-[1.02] transition-all">
+                  <Button className="w-full h-14 bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest rounded-none shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:scale-[1.02] transition-all border-none">
                     DESCARGAR PACK DE CAMPAÑA (QR + LINK)
                   </Button>
                 </div>
@@ -501,8 +501,9 @@ export default function GlobalPromosPage() {
                          </Button>
                       </div>
                     </div>
-                    <div className="h-[120px] w-[120px] bg-white border border-emerald-500/40 p-2 flex items-center justify-center">
-                       <BrandedQR className="h-full w-full text-black" />
+                    <div className="h-[120px] w-[120px] bg-emerald-500/5 border border-emerald-500/40 p-3 flex items-center justify-center relative overflow-hidden">
+                       <BrandedQR className="h-full w-full" />
+                       <div className="absolute inset-0 scan-line opacity-20" />
                     </div>
                   </div>
 
