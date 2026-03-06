@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
@@ -9,8 +10,9 @@ interface UserProfile {
   role: UserRole;
   clubId: string | null;
   name: string;
-  plan: "basic" | "pro" | "elite" | null;
+  plan: string | null;
   clubCreated: boolean;
+  claimedToken?: string;
 }
 
 interface AuthContextType {
@@ -18,6 +20,7 @@ interface AuthContextType {
   profile: UserProfile | null;
   loading: boolean;
   loginAsGuest: () => void;
+  loginWithToken: (token: string, plan: string) => void;
   completeOnboarding: (clubData: any) => void;
 }
 
@@ -26,6 +29,7 @@ const AuthContext = createContext<AuthContextType>({
   profile: null,
   loading: true,
   loginAsGuest: () => {},
+  loginWithToken: () => {},
   completeOnboarding: () => {},
 });
 
@@ -42,7 +46,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       name: "SynqAi Root",
       role: "superadmin",
       clubId: "global-hq",
-      plan: "elite",
+      plan: "enterprise_scale",
       clubCreated: true,
     };
     
@@ -52,18 +56,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const loginAsGuest = () => {
-    // BYPASS_PROTOCOL: Identificamos como Superadmin para el acceso directo al núcleo
     const guestUser = { uid: "synq-root-dev", email: "admin@synqai.sports" };
     const guestProfile: UserProfile = {
       email: "admin@synqai.sports",
       name: "SynqAi Administrator",
       role: "superadmin",
       clubId: "global-hq",
-      plan: "elite",
+      plan: "enterprise_scale",
       clubCreated: true,
     };
     setUser(guestUser);
     setProfile(guestProfile);
+  };
+
+  const loginWithToken = (token: string, plan: string) => {
+    // Simulamos el login de un nuevo administrador de club vía Token
+    const newUser = { uid: `user-${Math.random().toString(36).substr(2, 9)}`, email: "pending@club.com" };
+    const newProfile: UserProfile = {
+      email: "pending@club.com",
+      name: "New Admin",
+      role: "club_admin",
+      clubId: null,
+      plan: plan,
+      clubCreated: false,
+      claimedToken: token
+    };
+    setUser(newUser);
+    setProfile(newProfile);
   };
 
   const completeOnboarding = (clubData: any) => {
@@ -77,7 +96,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, loginAsGuest, completeOnboarding }}>
+    <AuthContext.Provider value={{ user, profile, loading, loginAsGuest, loginWithToken, completeOnboarding }}>
       {children}
     </AuthContext.Provider>
   );
