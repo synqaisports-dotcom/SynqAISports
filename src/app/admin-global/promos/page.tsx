@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Zap, 
   Plus, 
@@ -26,7 +26,8 @@ import {
   ExternalLink,
   Trash2,
   RefreshCw,
-  Download
+  Download,
+  Eye
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -60,15 +61,46 @@ const AVAILABLE_PLANS = [
 ];
 
 const MOCK_CAMPAIGNS = [
-  { id: "c1", title: "ARG_TOP10_COACHES", region: "Argentina", plan: "Enterprise", token: "ARG-ELITE-MAGIC", used: 7, total: 10 },
-  { id: "c2", title: "ES_PIZARRA_FREE_ADS", region: "España", plan: "Promo Link", token: "ES-BOARD-PROMO", used: 42, total: 0 },
-  { id: "c3", title: "MEX_ACADEMY_VOL", region: "México", plan: "Volumen Core", token: "MEX-CORE-800", used: 12, total: 50 },
+  { 
+    id: "c1", 
+    title: "ARG_TOP10_COACHES", 
+    region: "Argentina", 
+    plan: "Enterprise Scale", 
+    planId: "ENTERPRISE_SCALE",
+    token: "ARG-ELITE-MAGIC", 
+    used: 7, 
+    total: 10,
+    hook: "Acceso exclusivo para los 10 primeros entrenadores de Argentina con un coste reducido de 0.70€ por niño."
+  },
+  { 
+    id: "c2", 
+    title: "ES_PIZARRA_FREE_ADS", 
+    region: "España", 
+    plan: "Promo Link", 
+    planId: "PROMO_LINK",
+    token: "ES-BOARD-PROMO", 
+    used: 42, 
+    total: 0,
+    hook: "Consigue la pizarra táctica profesional gratis. Incluye anuncios integrados en el modo promo."
+  },
+  { 
+    id: "c3", 
+    title: "MEX_ACADEMY_VOL", 
+    region: "México", 
+    plan: "Volumen Core", 
+    planId: "VOLUMEN_CORE",
+    token: "MEX-CORE-800", 
+    used: 12, 
+    total: 50,
+    hook: "Plan de volumen para academias en México. Sincroniza hasta 800 niños a 1€/mes."
+  },
 ];
 
 export default function GlobalPromosPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<GenerateCampaignOutput | null>(null);
+  const [selectedCampaign, setSelectedCampaign] = useState<any>(MOCK_CAMPAIGNS[0]);
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -92,6 +124,15 @@ export default function GlobalPromosPage() {
     try {
       const data = await generatePromoCampaign(formData);
       setResult(data);
+      // Al generar uno nuevo, lo ponemos como seleccionado para previsualizarlo
+      setSelectedCampaign({
+        title: data.campaignTitle,
+        region: formData.objective,
+        planId: data.suggestedPlanId,
+        token: data.suggestedPromoCode,
+        hook: data.mainHook,
+        copy: data.socialMediaCopy
+      });
       toast({
         title: "MAGIC_LINK_GENERADO",
         description: "Token de red y QR configurados con éxito.",
@@ -108,11 +149,16 @@ export default function GlobalPromosPage() {
   };
 
   const copyToClipboard = (text: string) => {
+    if (!text) return;
     navigator.clipboard.writeText(text);
     toast({
       description: "Copiado al portapapeles.",
     });
   };
+
+  const currentToken = selectedCampaign?.token || result?.suggestedPromoCode;
+  const currentHook = selectedCampaign?.hook || result?.mainHook;
+  const currentUrl = currentToken ? `https://synqai.sports/l?t=${currentToken}` : "";
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
@@ -140,10 +186,10 @@ export default function GlobalPromosPage() {
 
       {/* MÉTRICAS DE RED */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <PromoMiniStat icon={Layers} label="Tokens de Red" value="12" trend="+2" />
+        <PromoMiniStat icon={Layers} label="Tokens de Red" value={MOCK_CAMPAIGNS.length.toString()} trend="+2" />
         <PromoMiniStat icon={Users} label="Altas por QR" value="142" trend="+14%" />
-        <PromoMiniStat icon={Globe} label="Regiones Activas" value="05" trend="LatAm / ES" />
-        <PromoMiniStat icon={Zap} label="Ahorro Clubes" value="24%" trend="ROI_UP" />
+        <PromoMiniStat icon={Globe} label="Regiones Activas" value="03" trend="LatAm / ES" />
+        <PromoMiniStat icon={Zap} label="ROI_Captación" value="24%" trend="UP_LINK" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -174,7 +220,14 @@ export default function GlobalPromosPage() {
               </TableHeader>
               <TableBody>
                  {MOCK_CAMPAIGNS.map((camp) => (
-                   <TableRow key={camp.id} className="border-white/5 hover:bg-white/[0.02] transition-colors group">
+                   <TableRow 
+                    key={camp.id} 
+                    className={cn(
+                      "border-white/5 hover:bg-white/[0.02] transition-colors group cursor-pointer",
+                      selectedCampaign?.id === camp.id && "bg-emerald-500/5 border-emerald-500/20"
+                    )}
+                    onClick={() => setSelectedCampaign(camp)}
+                   >
                     <TableCell className="pl-8 py-5">
                        <div className="flex flex-col">
                           <span className="font-black text-white text-xs uppercase italic tracking-tighter group-hover:emerald-text-glow transition-all">{camp.title}</span>
@@ -205,7 +258,22 @@ export default function GlobalPromosPage() {
                             variant="ghost" 
                             size="icon" 
                             className="h-9 w-9 text-white/20 hover:text-emerald-400 border border-white/5" 
-                            onClick={() => copyToClipboard(`https://synqai.sports/login?token=${camp.token}`)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedCampaign(camp);
+                            }}
+                            title="Previsualizar QR"
+                          >
+                             <Eye className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-9 w-9 text-white/20 hover:text-emerald-400 border border-white/5" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              copyToClipboard(`https://synqai.sports/login?token=${camp.token}`);
+                            }}
                             title="Copiar Magic Link"
                           >
                              <Share2 className="h-3.5 w-3.5" />
@@ -213,16 +281,9 @@ export default function GlobalPromosPage() {
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-9 w-9 text-white/20 hover:text-emerald-400 border border-white/5"
-                            title="Descargar QR"
-                          >
-                             <Download className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
                             className="h-9 w-9 text-white/20 hover:text-rose-400 border border-white/5"
                             title="Revocar Token"
+                            onClick={(e) => e.stopPropagation()}
                           >
                              <Trash2 className="h-3.5 w-3.5" />
                           </Button>
@@ -243,35 +304,38 @@ export default function GlobalPromosPage() {
                 <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
                   <QrCode className="h-4 w-4 text-emerald-400" /> Magic Link Architect
                 </CardTitle>
+                <CardDescription className="text-[9px] font-black uppercase tracking-widest text-white/30">
+                  {selectedCampaign?.title || 'Sincronizando Nodo...'}
+                </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className="p-8 bg-black/60 border border-white/5 flex flex-col items-center justify-center space-y-4 rounded-3xl group cursor-pointer relative overflow-hidden">
                   <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <div className="h-44 w-44 bg-white/5 border border-emerald-500/30 flex items-center justify-center p-6 relative z-10 group-hover:border-emerald-500/60 transition-all duration-500">
-                      <QrCode className="h-full w-full text-emerald-400/50 group-hover:text-emerald-400 group-hover:scale-110 transition-all duration-500" />
-                      <div className="absolute inset-0 scan-line" />
+                  <div className="h-44 w-44 bg-white border border-emerald-500/30 flex items-center justify-center p-6 relative z-10 group-hover:border-emerald-500/60 transition-all duration-500 shadow-[0_0_30px_rgba(255,255,255,0.1)]">
+                      <QrCode className="h-full w-full text-black group-hover:scale-110 transition-all duration-500" />
+                      <div className="absolute inset-0 scan-line opacity-5" />
                   </div>
                   <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.4em] text-center relative z-10">
-                    {result ? 'QR SINCRONIZADO CON TOKEN' : 'ESPERANDO CONFIGURACIÓN DE NODO'}
+                    {currentToken ? 'QR SINCRONIZADO CON TOKEN' : 'ESPERANDO SELECCIÓN DE NODO'}
                   </p>
                 </div>
 
                 <div className="space-y-3">
                   <div className="flex justify-between items-end px-1">
                     <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">URL de Acceso Directo</p>
-                    <span className="text-[8px] font-black text-emerald-400 uppercase tracking-widest italic">{result ? 'Sincronizada' : 'Pendiente'}</span>
+                    <span className="text-[8px] font-black text-emerald-400 uppercase tracking-widest italic">{currentToken ? 'Sincronizada' : 'Pendiente'}</span>
                   </div>
                   <div className="flex gap-2">
                       <Input 
                         readOnly 
-                        value={result ? `https://synqai.sports/l?t=${result.suggestedPromoCode}` : "Sincronizando URL..."} 
+                        value={currentUrl || "Sincronizando URL..."} 
                         className="h-12 bg-white/5 border-white/10 rounded-none text-[10px] font-mono text-emerald-400/60 focus:ring-0" 
                       />
                       <Button 
                         size="icon" 
                         variant="ghost" 
                         className="h-12 w-12 border border-white/10 rounded-none hover:text-emerald-400 bg-white/5" 
-                        onClick={() => copyToClipboard(result ? `https://synqai.sports/l?t=${result.suggestedPromoCode}` : "")}
+                        onClick={() => copyToClipboard(currentUrl)}
                       >
                         <Copy className="h-4 w-4" />
                       </Button>
@@ -279,11 +343,14 @@ export default function GlobalPromosPage() {
                 </div>
 
                 <div className="pt-4 space-y-3">
+                  <div className="p-5 bg-black/40 border border-white/5 space-y-3 rounded-2xl">
+                     <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">Hook Táctico Vincuado</p>
+                     <p className="text-[10px] text-white/60 leading-relaxed font-bold italic uppercase">
+                       {currentHook || 'Defina un objetivo regional para generar el gancho de escasez.'}
+                     </p>
+                  </div>
                   <Button className="w-full h-14 bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest rounded-none shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:scale-[1.02] transition-all">
                     DESCARGAR PACK DE CAMPAÑA (QR + LINK)
-                  </Button>
-                  <Button variant="ghost" className="w-full h-12 text-white/30 font-black uppercase text-[9px] tracking-widest hover:text-emerald-400 flex items-center justify-center gap-2">
-                    <ExternalLink className="h-3 w-3" /> Previsualizar Landing de Acceso
                   </Button>
                 </div>
             </CardContent>
@@ -295,7 +362,7 @@ export default function GlobalPromosPage() {
                 <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/60">Estrategia_Escasez_Regional</span>
              </div>
              <p className="text-[10px] text-white/40 leading-relaxed font-bold uppercase italic tracking-wider">
-               La limitación de usos ("Solo los 10 primeros") aumenta la conversión en un 40%. Los Magic Links vinculados a planes de volumen (0.70€) optimizan el ROI del club.
+               Al seleccionar una campaña de la lista, el sistema carga el token regional. El QR es inmutable y siempre llevará al usuario a la configuración de plan seleccionada.
              </p>
           </div>
         </div>
