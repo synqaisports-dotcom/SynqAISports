@@ -25,7 +25,7 @@ import {
   UserCog,
   Sprout,
   Users
-} from "lucide-round"; // Error in original import, should be lucide-react. Correcting.
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { 
@@ -39,9 +39,6 @@ import {
   useSidebar,
   SidebarGroup
 } from "@/components/ui/sidebar";
-
-// Re-importing from lucide-react to be safe
-import { LucideIcon } from "lucide-react";
 
 interface NavItem {
   title: string;
