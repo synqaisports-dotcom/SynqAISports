@@ -72,6 +72,7 @@ export default function ClubManagementPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000 pb-24">
+      {/* SECCIÓN DE CABECERA Y TÍTULO */}
       <div className="flex justify-between items-end border-b border-white/5 pb-6">
         <div className="space-y-1">
           <div className="flex items-center gap-3 mb-2">
@@ -188,30 +189,29 @@ export default function ClubManagementPage() {
         </Sheet>
       </div>
 
-      {/* SECTOR CABECERA */}
-      <div className="relative mb-48">
-        <div className="relative h-80 rounded-[3rem] overflow-hidden group border border-white/5 shadow-2xl">
-          <Image 
-            src="https://picsum.photos/seed/stadium/1200/400" 
-            alt="Club Banner" 
-            fill 
-            className="object-cover opacity-40 group-hover:scale-105 transition-all duration-1000 grayscale group-hover:grayscale-0"
-            data-ai-hint="stadium tech"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#04070c] via-transparent to-transparent" />
-          
-          <div className="absolute top-8 right-8">
-             <Button variant="ghost" className="h-10 bg-black/40 backdrop-blur-md border border-white/10 rounded-xl text-white/40 hover:text-primary transition-all">
-                <Camera className="h-4 w-4 mr-2" /> Editar Portada
-             </Button>
-          </div>
+      {/* BANNER VISUAL */}
+      <div className="relative h-80 rounded-[3rem] overflow-hidden border border-white/5 shadow-2xl">
+        <Image 
+          src="https://picsum.photos/seed/stadium/1200/400" 
+          alt="Club Banner" 
+          fill 
+          className="object-cover opacity-40 grayscale"
+          data-ai-hint="stadium tech"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#04070c] via-transparent to-transparent" />
+        <div className="absolute top-8 right-8">
+           <Button variant="ghost" className="h-10 bg-black/40 backdrop-blur-md border border-white/10 rounded-xl text-white/40 hover:text-primary transition-all">
+              <Camera className="h-4 w-4 mr-2" /> Editar Portada
+           </Button>
         </div>
+      </div>
 
-        {/* IDENTIDAD FLOTANTE */}
-        <div className="absolute -bottom-20 left-12 flex items-end gap-10 z-20">
+      {/* IDENTIDAD DEL CLUB (BLOQUE DE FLUJO CON MARGEN NEGATIVO) */}
+      <div className="px-12 -mt-32 relative z-20 space-y-6 mb-16">
+        <div className="flex flex-col md:flex-row items-end gap-10">
           <div className="relative group/logo">
              <div className="absolute inset-0 bg-primary/30 blur-3xl rounded-full opacity-0 group-hover/logo:opacity-100 transition-opacity" />
-             <div className="h-52 w-52 bg-black border-2 border-primary/40 rounded-[3.5rem] flex items-center justify-center relative z-10 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.9)] group-hover/logo:border-primary transition-all duration-500">
+             <div className="h-56 w-52 bg-black border-2 border-primary/40 rounded-[3.5rem] flex items-center justify-center relative z-10 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.9)] group-hover/logo:border-primary transition-all duration-500">
                 <Image 
                   src="https://picsum.photos/seed/clublogo/300/300" 
                   alt="Club Logo" 
@@ -226,10 +226,11 @@ export default function ClubManagementPage() {
                 </button>
              </div>
           </div>
-          <div className="pb-10 space-y-3">
+          
+          <div className="pb-6 space-y-4">
              <div className="space-y-1">
                 <span className="text-[10px] font-black text-primary/60 uppercase tracking-[0.5em] ml-1">Identidad de Nodo</span>
-                <h2 className="text-7xl font-headline font-black text-white uppercase italic tracking-tighter leading-[0.85] cyan-text-glow drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)]">
+                <h2 className="text-6xl lg:text-7xl font-headline font-black text-white uppercase italic tracking-tighter leading-[0.85] cyan-text-glow drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)]">
                   {clubData.name}
                 </h2>
              </div>
@@ -245,7 +246,8 @@ export default function ClubManagementPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 mt-24">
+      {/* MATRIZ DE DATOS Y TERMINALES */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         <div className="lg:col-span-2 space-y-10">
            <Card className="glass-panel border-none bg-black/40 overflow-hidden shadow-2xl">
              <CardHeader className="border-b border-white/5 p-10">
