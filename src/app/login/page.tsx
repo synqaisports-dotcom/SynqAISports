@@ -20,10 +20,14 @@ import {
   Sparkles,
   Lock,
   Globe
-} from "lucide-react";
+} from "lucide-center";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth-context";
 import { Badge } from "@/components/ui/badge";
+
+// Corregimos la importación de iconos de lucide-react
+import { LucideIcon } from "lucide-react";
+import * as Lucide from "lucide-react";
 
 function LoginContent() {
   const [loading, setLoading] = useState(false);
@@ -45,6 +49,7 @@ function LoginContent() {
         plan: "Enterprise Scale",
         price: "0.70€ / niño",
         region: "Argentina",
+        countryCode: "AR",
         limit: "10 primeros",
       });
       toast({
@@ -70,8 +75,8 @@ function LoginContent() {
     e.preventDefault();
     setLoading(true);
     
-    // Simulamos la creación de cuenta con el plan del token
-    loginWithToken(token!, campaignData.plan);
+    // Simulamos la creación de cuenta con el plan y país del token
+    loginWithToken(token!, campaignData.plan, campaignData.countryCode);
     
     toast({
       title: "VINCULACIÓN_INICIADA",
@@ -87,7 +92,7 @@ function LoginContent() {
     return (
       <Card className="w-full max-w-xl glass-panel shadow-2xl relative z-10 overflow-hidden border-t-2 border-primary animate-in fade-in zoom-in-95 duration-500">
         <div className="absolute top-0 right-0 p-4 opacity-10">
-          <Sparkles className="h-24 w-24 text-primary" />
+          <Lucide.Sparkles className="h-24 w-24 text-primary" />
         </div>
         
         <CardHeader className="pt-12 pb-8 text-center">
@@ -107,12 +112,12 @@ function LoginContent() {
               <span className="text-xs font-black text-primary italic uppercase">{campaignData.plan}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase text-white/40 tracking-widest">Tarifa Sincronizada</span>
-              <span className="text-xs font-black text-white">{campaignData.price}</span>
+              <span className="text-[10px] font-black uppercase text-white/40 tracking-widest">País Vinculado</span>
+              <span className="text-xs font-black text-white uppercase">{campaignData.region}</span>
             </div>
             <div className="flex items-center justify-between pt-2 border-t border-white/5">
               <div className="flex items-center gap-2">
-                <Lock className="h-3 w-3 text-primary/40" />
+                <Lucide.Lock className="h-3 w-3 text-primary/40" />
                 <span className="text-[8px] font-black uppercase text-white/20 tracking-widest italic">Datos bloqueados por campaña</span>
               </div>
               <Badge variant="outline" className="text-[8px] border-primary/20 text-primary font-black uppercase">Solo {campaignData.limit}</Badge>
@@ -136,7 +141,7 @@ function LoginContent() {
               disabled={loading}
               className="w-full h-16 bg-primary text-black font-black uppercase tracking-[0.3em] text-xs rounded-none cyan-glow hover:scale-[1.01] transition-all"
             >
-              {loading ? "CONFIGURANDO_NODO..." : "ACTIVAR_MI_NODO_DE_CLUB"} <ArrowRight className="h-4 w-4 ml-2" />
+              {loading ? "CONFIGURANDO_NODO..." : "ACTIVAR_MI_NODO_DE_CLUB"} <Lucide.ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </form>
 
@@ -151,7 +156,7 @@ function LoginContent() {
   return (
     <Card className="w-full max-w-xl glass-panel shadow-2xl relative z-10 overflow-hidden border-t-2 border-t-primary">
       <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-        <Zap className="h-32 w-32 text-primary" />
+        <Lucide.Zap className="h-32 w-32 text-primary" />
       </div>
 
       <CardHeader className="pt-12 pb-8 text-center">
@@ -159,7 +164,7 @@ function LoginContent() {
           <div className="relative group">
             <div className="absolute inset-0 bg-primary/40 blur-xl rounded-full animate-pulse" />
             <div className="relative p-5 border border-primary/40 bg-black/60 rounded-sm rotate-45 cyan-glow">
-              <Database className="h-10 w-10 text-primary -rotate-45" />
+              <Lucide.Database className="h-10 w-10 text-primary -rotate-45" />
             </div>
           </div>
         </div>
@@ -178,13 +183,13 @@ function LoginContent() {
               value="activation" 
               className="rounded-none font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-black transition-all"
             >
-              <Key className="h-3 w-3 mr-2" /> Código Activación
+              <Lucide.Key className="h-3 w-3 mr-2" /> Código Activación
             </TabsTrigger>
             <TabsTrigger 
               value="qr" 
               className="rounded-none font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-black transition-all"
             >
-              <QrCode className="h-3 w-3 mr-2" /> Escaneo de Nodo
+              <Lucide.QrCode className="h-3 w-3 mr-2" /> Escaneo de Nodo
             </TabsTrigger>
           </TabsList>
 
@@ -210,7 +215,7 @@ function LoginContent() {
               onClick={handleBypass}
               className="w-full h-16 bg-primary text-black font-black uppercase tracking-[0.3em] text-xs rounded-none cyan-glow hover:scale-[1.01] transition-all"
             >
-              VINCULAR_IDENTIDAD <ArrowRight className="h-4 w-4 ml-2" />
+              VINCULAR_IDENTIDAD <Lucide.ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </TabsContent>
 
@@ -218,7 +223,7 @@ function LoginContent() {
             <div className="flex flex-col items-center py-6 space-y-6 border border-dashed border-primary/20 bg-primary/5">
               <div className="relative">
                 <div className="absolute inset-0 bg-primary/20 blur-2xl animate-pulse" />
-                <QrCode className="h-24 w-24 text-primary relative" />
+                <Lucide.QrCode className="h-24 w-24 text-primary relative" />
               </div>
               <div className="text-center space-y-2">
                 <p className="text-[10px] font-black uppercase tracking-widest text-white">ESCANEA TU CÓDIGO_NODO</p>
@@ -242,7 +247,7 @@ function LoginContent() {
 
         <div className="mt-12 pt-8 border-t border-white/5 flex flex-col items-center gap-6">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-primary opacity-50" />
+            <Lucide.ShieldCheck className="h-4 w-4 text-primary opacity-50" />
             <span className="text-[8px] font-black text-white/20 uppercase tracking-[0.5em]">Seguridad por Encriptación de Nodo Activa</span>
           </div>
           

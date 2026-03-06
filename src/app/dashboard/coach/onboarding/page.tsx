@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -10,7 +11,8 @@ import {
   User,
   Zap,
   Building2,
-  Cpu
+  Cpu,
+  Globe
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -25,12 +27,25 @@ import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 
+const COUNTRIES = [
+  { value: "ES", label: "España" },
+  { value: "AR", label: "Argentina" },
+  { value: "MX", label: "México" },
+  { value: "CO", label: "Colombia" },
+  { value: "CL", label: "Chile" },
+  { value: "US", label: "USA" },
+];
+
 export default function OnboardingTunnel() {
   const { profile, completeOnboarding } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  
   const [clubName, setClubName] = useState("");
+  const [selectedCountry, setSelectedCountry] = useState(profile?.country || "ES");
   const [loading, setLoading] = useState(false);
+
+  const isFromPromo = !!profile?.claimedToken;
 
   const handleFinish = () => {
     if (!clubName) {
@@ -43,10 +58,14 @@ export default function OnboardingTunnel() {
     }
     setLoading(true);
     setTimeout(() => {
-      completeOnboarding({ name: clubName, id: "club-" + Math.random().toString(36).substr(2, 9) });
+      completeOnboarding({ 
+        name: clubName, 
+        id: "club-" + Math.random().toString(36).substr(2, 9),
+        country: selectedCountry
+      });
       toast({
         title: "SINC_COMPLETA",
-        description: `El nodo ${clubName} ha sido vinculado a su identidad.`,
+        description: `El nodo ${clubName} ha sido vinculado a su identidad en el sector ${selectedCountry}.`,
       });
       router.push("/dashboard");
     }, 1500);
@@ -54,28 +73,8 @@ export default function OnboardingTunnel() {
 
   return (
     <div className="min-h-screen bg-[#04070c] relative overflow-hidden flex">
-      {/* FUTURISTIC GRID OVERLAY */}
       <div className="absolute inset-0 bg-grid-pattern opacity-40 pointer-events-none" />
       
-      {/* SIDEBAR (INACTIVE VISUAL) */}
-      <aside className="w-64 border-r border-white/5 bg-black/40 flex flex-col p-6 opacity-20 grayscale pointer-events-none z-20">
-        <div className="flex items-center gap-3 mb-12">
-           <div className="w-8 h-8 rounded-full border border-primary/40 flex items-center justify-center">
-             <Zap className="h-4 w-4 text-primary" />
-           </div>
-           <span className="font-headline font-black text-white italic tracking-tighter">SYNQAI Coach</span>
-        </div>
-        <nav className="space-y-4 flex-1">
-          {['Dashboard', 'Plantilla', 'Tácticas', 'Informes'].map(item => (
-            <div key={item} className="flex items-center gap-3 px-3 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-white/30">
-              <div className="w-1 h-1 rounded-full bg-white/10" />
-              {item}
-            </div>
-          ))}
-        </nav>
-      </aside>
-
-      {/* MAIN CONTENT AREA */}
       <main className="flex-1 relative z-10 flex flex-col items-center justify-center p-12">
         <div className="w-full max-w-4xl space-y-12">
           
@@ -87,24 +86,35 @@ export default function OnboardingTunnel() {
             <h1 className="text-6xl font-headline font-black text-white italic tracking-tighter cyan-text-glow">
               GENERAR PERFIL DE CLUB
             </h1>
-            <p className="text-white/40 font-bold uppercase text-[10px] tracking-[0.5em]">Identidad Única para UID: {profile?.email.split('@')[0].toUpperCase()}</p>
+            <p className="text-white/40 font-bold uppercase text-[10px] tracking-[0.5em]">
+              Sincronizando Identidad: {profile?.name.toUpperCase()}
+            </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-12 items-stretch">
-            {/* SECURITY STATUS */}
+            {/* HERENCIA DE PLAN Y REGIÓN */}
             <div className="glass-panel p-10 flex flex-col justify-center space-y-8 relative overflow-hidden group">
                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-all">
                   <ShieldCheck className="h-32 w-32 text-primary" />
                </div>
-               <div className="space-y-4 relative z-10">
+               <div className="space-y-6 relative z-10">
                   <div className="h-16 w-16 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center pulse-glow">
                     <Lock className="h-8 w-8 text-primary" />
                   </div>
-                  <div>
-                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary">Estado: Validando Identidad</h3>
-                    <p className="text-[10px] text-white/40 uppercase mt-2 leading-relaxed">
-                      Este proceso vinculará su cuenta de forma irreversible como Administrador Fundador del nuevo nodo de club.
-                    </p>
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Protocolo de Plan</h3>
+                      <p className="text-sm font-black text-white uppercase italic mt-1">{profile?.plan?.replace('_', ' ') || 'STANDARD_NODE'}</p>
+                    </div>
+                    <div>
+                      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Estado de Acceso</h3>
+                      <p className="text-[10px] text-white/40 uppercase mt-1 leading-relaxed">
+                        {isFromPromo 
+                          ? "ACCESO_PRE_AUTORIZADO: Se han bloqueado los parámetros regionales según la campaña activa."
+                          : "ACCESO_ORGÁNICO: Defina sus parámetros operativos manualmente."
+                        }
+                      </p>
+                    </div>
                   </div>
                </div>
                <div className="pt-6 border-t border-white/5 space-y-2">
@@ -113,7 +123,7 @@ export default function OnboardingTunnel() {
                </div>
             </div>
 
-            {/* CLUB FORM */}
+            {/* FORMULARIO DE CLUB */}
             <div className="glass-panel p-12 space-y-10 relative">
               <div className="space-y-6">
                 <div className="space-y-3">
@@ -129,27 +139,52 @@ export default function OnboardingTunnel() {
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50 ml-1">Sector Operativo</label>
-                  <Select defaultValue="elite">
-                    <SelectTrigger className="h-16 bg-white/5 border-white/10 rounded-2xl text-white/40 font-bold uppercase tracking-widest px-6">
-                      <SelectValue placeholder="SELECCIONAR CATEGORÍA..." />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-2xl">
-                      <SelectItem value="elite">Academia de Élite</SelectItem>
-                      <SelectItem value="pro">Club Profesional</SelectItem>
-                      <SelectItem value="grassroots">Fútbol Base</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50 ml-1">Sector / País</label>
+                    <Select 
+                      value={selectedCountry} 
+                      onValueChange={setSelectedCountry}
+                      disabled={isFromPromo}
+                    >
+                      <SelectTrigger className="h-16 bg-white/5 border-white/10 rounded-2xl text-white font-bold uppercase tracking-widest px-6">
+                        <div className="flex items-center gap-3">
+                          <Globe className="h-4 w-4 text-primary/40" />
+                          <SelectValue placeholder="PAÍS..." />
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-2xl">
+                        {COUNTRIES.map(c => (
+                          <SelectItem key={c.value} value={c.value} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary">
+                            {c.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50 ml-1">Tipo de Entidad</label>
+                    <Select defaultValue="elite">
+                      <SelectTrigger className="h-16 bg-white/5 border-white/10 rounded-2xl text-white font-bold uppercase tracking-widest px-6">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-2xl">
+                        <SelectItem value="elite" className="text-[10px] font-black uppercase">Academia de Élite</SelectItem>
+                        <SelectItem value="pro" className="text-[10px] font-black uppercase">Club Profesional</SelectItem>
+                        <SelectItem value="grassroots" className="text-[10px] font-black uppercase">Fútbol Base</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
 
               <Button 
                 onClick={handleFinish}
                 disabled={loading}
-                className="w-full h-16 bg-primary text-black font-black text-xs uppercase tracking-[0.4em] rounded-2xl cyan-glow hover:scale-[1.02] active:scale-95 transition-all"
+                className="w-full h-20 bg-primary text-black font-black text-xs uppercase tracking-[0.4em] rounded-2xl cyan-glow hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_30px_rgba(0,242,255,0.2)] border-none"
               >
-                {loading ? "SINCRONIZANDO..." : "VINCULAR_NODO_AL_SISTEMA"}
+                {loading ? "SINC_OPERATIVA..." : "FINALIZAR_VINCULACIÓN_NODO"}
               </Button>
             </div>
           </div>

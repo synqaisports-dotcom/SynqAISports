@@ -11,6 +11,7 @@ interface UserProfile {
   clubId: string | null;
   name: string;
   plan: string | null;
+  country: string | null;
   clubCreated: boolean;
   claimedToken?: string;
 }
@@ -20,7 +21,7 @@ interface AuthContextType {
   profile: UserProfile | null;
   loading: boolean;
   loginAsGuest: () => void;
-  loginWithToken: (token: string, plan: string) => void;
+  loginWithToken: (token: string, plan: string, country: string) => void;
   completeOnboarding: (clubData: any) => void;
 }
 
@@ -47,6 +48,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       role: "superadmin",
       clubId: "global-hq",
       plan: "enterprise_scale",
+      country: "ES",
       clubCreated: true,
     };
     
@@ -63,13 +65,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       role: "superadmin",
       clubId: "global-hq",
       plan: "enterprise_scale",
+      country: "ES",
       clubCreated: true,
     };
     setUser(guestUser);
     setProfile(guestProfile);
   };
 
-  const loginWithToken = (token: string, plan: string) => {
+  const loginWithToken = (token: string, plan: string, country: string) => {
     // Simulamos el login de un nuevo administrador de club vía Token
     const newUser = { uid: `user-${Math.random().toString(36).substr(2, 9)}`, email: "pending@club.com" };
     const newProfile: UserProfile = {
@@ -78,6 +81,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       role: "club_admin",
       clubId: null,
       plan: plan,
+      country: country,
       clubCreated: false,
       claimedToken: token
     };
@@ -91,6 +95,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         ...profile,
         clubCreated: true,
         clubId: clubData.id || "new-club-id",
+        country: clubData.country || profile.country
       });
     }
   };
