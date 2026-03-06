@@ -23,6 +23,7 @@ interface AuthContextType {
   loginAsGuest: () => void;
   loginWithToken: (token: string, plan: string, country: string) => void;
   completeOnboarding: (clubData: any) => void;
+  logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -32,6 +33,7 @@ const AuthContext = createContext<AuthContextType>({
   loginAsGuest: () => {},
   loginWithToken: () => {},
   completeOnboarding: () => {},
+  logout: () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -87,8 +89,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const logout = () => {
+    setUser(null);
+    setProfile(null);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, profile, loading, loginAsGuest, loginWithToken, completeOnboarding }}>
+    <AuthContext.Provider value={{ user, profile, loading, loginAsGuest, loginWithToken, completeOnboarding, logout }}>
       {children}
     </AuthContext.Provider>
   );

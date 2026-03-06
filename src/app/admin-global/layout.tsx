@@ -1,8 +1,9 @@
+
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
 import { DashboardSidebar } from "@/components/dashboard/Sidebar";
-import { Loader2, ChevronsRight, ChevronLeft, ShieldAlert } from "lucide-react";
+import { Loader2, ChevronsRight, ChevronLeft, ShieldAlert, LogOut } from "lucide-react";
 import { SidebarProvider, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -31,12 +32,13 @@ function GlobalTabTrigger() {
 }
 
 export default function AdminGlobalLayout({ children }: { children: React.ReactNode }) {
-  const { profile, loading } = useAuth();
+  const { profile, loading, logout } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (!loading && profile && profile.role !== "superadmin") {
-      router.push("/dashboard");
+      // Si no es superadmin, mostramos la pantalla de denegado en lugar de redirigir a ciegas
+      // para que el usuario pueda ver qué pasa.
     }
   }, [profile, loading, router]);
 
@@ -57,10 +59,15 @@ export default function AdminGlobalLayout({ children }: { children: React.ReactN
       <div className="h-screen w-full flex flex-col items-center justify-center bg-[#04070c] p-8 text-center">
         <ShieldAlert className="h-16 w-16 text-rose-500 mb-6" />
         <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-2">ACCESO_DENEGADO</h2>
-        <p className="text-white/40 font-bold uppercase text-[10px] tracking-widest mb-8">No tiene privilegios para acceder al Núcleo Global.</p>
-        <Button onClick={() => router.push("/dashboard")} className="bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 h-12">
-          Volver a mi Nodo
-        </Button>
+        <p className="text-white/40 font-bold uppercase text-[10px] tracking-widest mb-8">No tiene privilegios para acceder al Núcleo Global con esta identidad.</p>
+        <div className="flex flex-col gap-4">
+          <Button onClick={() => router.push("/dashboard")} className="bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 h-12">
+            Volver a mi Nodo de Club
+          </Button>
+          <Button variant="ghost" onClick={() => { logout(); router.push("/login"); }} className="text-rose-400 hover:text-rose-300 font-black uppercase text-[9px] tracking-widest">
+            <LogOut className="h-3 w-3 mr-2" /> Cerrar Sesión y Cambiar de Perfil
+          </Button>
+        </div>
       </div>
     );
   }

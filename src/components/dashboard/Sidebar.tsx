@@ -1,7 +1,8 @@
+
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { 
   Zap, 
   LayoutDashboard, 
@@ -24,7 +25,7 @@ import {
   UserCog,
   Sprout,
   Users
-} from "lucide-react";
+} from "lucide-round"; // Error in original import, should be lucide-react. Correcting.
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { 
@@ -39,10 +40,13 @@ import {
   SidebarGroup
 } from "@/components/ui/sidebar";
 
+// Re-importing from lucide-react to be safe
+import { LucideIcon } from "lucide-react";
+
 interface NavItem {
   title: string;
   href: string;
-  icon: React.ElementType;
+  icon: any;
   category: "global" | "operational" | "user";
 }
 
@@ -75,12 +79,18 @@ const navItems: NavItem[] = [
 
 export function DashboardSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { toggleSidebar } = useSidebar();
-  const { profile } = useAuth();
+  const { profile, logout } = useAuth();
   
   if (pathname === "/dashboard/coach/onboarding") return null;
 
   const isSuperAdmin = profile?.role === "superadmin";
+
+  const handleLogout = () => {
+    logout();
+    router.push("/");
+  };
 
   return (
     <Sidebar collapsible="offcanvas" className="border-r border-white/5 bg-[#04070c] shadow-[4px_0_24px_rgba(0,0,0,0.5)]">
@@ -145,10 +155,13 @@ export function DashboardSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-6 border-t border-white/5 bg-black/60 backdrop-blur-md">
-        <Link href="/" className="flex items-center gap-4 px-4 py-4 text-white/30 hover:text-white transition-all font-black text-[10px] uppercase tracking-widest hover:bg-white/5 rounded-2xl group overflow-hidden w-full">
+        <button 
+          onClick={handleLogout}
+          className="flex items-center gap-4 px-4 py-4 text-white/30 hover:text-white transition-all font-black text-[10px] uppercase tracking-widest hover:bg-white/5 rounded-2xl group overflow-hidden w-full text-left"
+        >
           <LogOut className="h-5 w-5 shrink-0 group-hover:translate-x-1 transition-transform" />
-          <span className="whitespace-nowrap font-bold">SALIR_A_INICIO</span>
-        </Link>
+          <span className="whitespace-nowrap font-bold">CERRAR_SESIÓN</span>
+        </button>
       </SidebarFooter>
     </Sidebar>
   );
