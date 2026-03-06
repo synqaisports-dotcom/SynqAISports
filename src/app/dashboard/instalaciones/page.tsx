@@ -87,13 +87,14 @@ export default function FacilitiesManagementPage() {
     sport: "Fútbol",
     status: "Active",
     capacity: "",
-    // Campos específicos de fútbol
     startTime: "16:00",
     endTime: "22:00",
     days: ["L", "M", "X", "J", "V"] as string[],
     footballType: "F11",
     subdivisions: "1"
   });
+
+  const isSubdivided = formData.subdivisions !== "1";
 
   const handleOpenCreate = () => {
     setEditingId(null);
@@ -377,16 +378,26 @@ export default function FacilitiesManagementPage() {
                 </div>
               </div>
 
-              {/* CONFIGURACIÓN ESPECÍFICA DE FÚTBOL */}
               {formData.sport === "Fútbol" && (
-                <div className="space-y-8 p-8 border border-primary/30 bg-primary/5 rounded-3xl animate-in fade-in slide-in-from-top-4 duration-500 relative overflow-hidden">
+                <div className={cn(
+                  "space-y-8 p-8 border rounded-3xl animate-in fade-in slide-in-from-top-4 duration-500 relative overflow-hidden transition-all",
+                  isSubdivided ? "border-emerald-500/30 bg-emerald-500/5" : "border-primary/30 bg-primary/5"
+                )}>
                   <div className="absolute top-0 right-0 p-4 opacity-5">
-                    <Trophy className="h-24 w-24 text-primary" />
+                    <Trophy className={cn("h-24 w-24", isSubdivided ? "text-emerald-500" : "text-primary")} />
                   </div>
                   
-                  <div className="flex items-center gap-3 border-b border-primary/20 pb-4 mb-6">
-                    <LayoutGrid className="h-4 w-4 text-primary" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Parámetros Técnicos de Fútbol</span>
+                  <div className={cn(
+                    "flex items-center gap-3 border-b pb-4 mb-6",
+                    isSubdivided ? "border-emerald-500/20" : "border-primary/20"
+                  )}>
+                    <LayoutGrid className={cn("h-4 w-4", isSubdivided ? "text-emerald-500" : "text-primary")} />
+                    <span className={cn(
+                      "text-[10px] font-black uppercase tracking-[0.3em]",
+                      isSubdivided ? "text-emerald-500" : "text-primary"
+                    )}>
+                      Parámetros Técnicos de Fútbol {isSubdivided && "(Modo Subdivisión)"}
+                    </span>
                   </div>
 
                   <div className="space-y-4">
@@ -400,7 +411,9 @@ export default function FacilitiesManagementPage() {
                           className={cn(
                             "h-10 w-10 flex items-center justify-center font-black text-[10px] border transition-all",
                             formData.days.includes(day.id)
-                              ? "bg-primary text-black border-primary shadow-[0_0_15px_rgba(0,242,255,0.3)]"
+                              ? (isSubdivided 
+                                  ? "bg-emerald-500 text-black border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]" 
+                                  : "bg-primary text-black border-primary shadow-[0_0_15px_rgba(0,242,255,0.3)]")
                               : "bg-white/5 border-white/10 text-white/30 hover:border-primary/40"
                           )}
                         >
@@ -414,24 +427,30 @@ export default function FacilitiesManagementPage() {
                     <div className="space-y-2">
                       <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Horario Apertura</Label>
                       <div className="relative">
-                        <Clock className="absolute left-3 top-3 h-4 w-4 text-primary/40" />
+                        <Clock className={cn("absolute left-3 top-3 h-4 w-4", isSubdivided ? "text-emerald-500/40" : "text-primary/40")} />
                         <Input 
                           type="time" 
                           value={formData.startTime}
                           onChange={(e) => setFormData({...formData, startTime: e.target.value})}
-                          className="pl-10 h-11 bg-white/5 border-white/10 rounded-none font-bold text-xs focus:border-primary/50" 
+                          className={cn(
+                            "pl-10 h-11 bg-white/5 border-white/10 rounded-none font-bold text-xs",
+                            isSubdivided ? "focus:border-emerald-500/50" : "focus:border-primary/50"
+                          )} 
                         />
                       </div>
                     </div>
                     <div className="space-y-2">
                       <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Horario Cierre</Label>
                       <div className="relative">
-                        <Clock className="absolute left-3 top-3 h-4 w-4 text-primary/40" />
+                        <Clock className={cn("absolute left-3 top-3 h-4 w-4", isSubdivided ? "text-emerald-500/40" : "text-primary/40")} />
                         <Input 
                           type="time" 
                           value={formData.endTime}
                           onChange={(e) => setFormData({...formData, endTime: e.target.value})}
-                          className="pl-10 h-11 bg-white/5 border-white/10 rounded-none font-bold text-xs focus:border-primary/50" 
+                          className={cn(
+                            "pl-10 h-11 bg-white/5 border-white/10 rounded-none font-bold text-xs",
+                            isSubdivided ? "focus:border-emerald-500/50" : "focus:border-primary/50"
+                          )} 
                         />
                       </div>
                     </div>
@@ -444,10 +463,13 @@ export default function FacilitiesManagementPage() {
                         value={formData.footballType} 
                         onValueChange={(v) => setFormData({...formData, footballType: v})}
                       >
-                        <SelectTrigger className="h-11 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase text-[10px] tracking-widest">
+                        <SelectTrigger className={cn(
+                          "h-11 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase text-[10px] tracking-widest",
+                          isSubdivided ? "focus:ring-emerald-500/30" : "focus:ring-primary/30"
+                        )}>
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
+                        <SelectContent className="bg-[#04070c] border-white/10 rounded-none">
                           <SelectItem value="F11" className="text-[10px] font-black uppercase">FÚTBOL 11</SelectItem>
                           <SelectItem value="F7" className="text-[10px] font-black uppercase">FÚTBOL 7</SelectItem>
                           <SelectItem value="FSala" className="text-[10px] font-black uppercase">FÚTBOL SALA</SelectItem>
@@ -460,13 +482,16 @@ export default function FacilitiesManagementPage() {
                         value={formData.subdivisions} 
                         onValueChange={(v) => setFormData({...formData, subdivisions: v})}
                       >
-                        <SelectTrigger className="h-11 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase text-[10px] tracking-widest">
+                        <SelectTrigger className={cn(
+                          "h-11 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase text-[10px] tracking-widest",
+                          isSubdivided ? "border-emerald-500/50 text-emerald-400" : ""
+                        )}>
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
+                        <SelectContent className="bg-[#04070c] border-white/10 rounded-none">
                           <SelectItem value="1" className="text-[10px] font-black uppercase">CAMPO ENTERO</SelectItem>
-                          <SelectItem value="2" className="text-[10px] font-black uppercase">2 MITADES</SelectItem>
-                          <SelectItem value="4" className="text-[10px] font-black uppercase">4 CUARTOS</SelectItem>
+                          <SelectItem value="2" className="text-[10px] font-black uppercase text-emerald-400">2 MITADES (VERDE)</SelectItem>
+                          <SelectItem value="4" className="text-[10px] font-black uppercase text-emerald-400">4 CUARTOS (VERDE)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -524,7 +549,10 @@ export default function FacilitiesManagementPage() {
             <Button 
               onClick={handleSaveFacility}
               disabled={loading}
-              className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-none shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] transition-all border-none"
+              className={cn(
+                "flex-[2] h-16 text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-none transition-all border-none shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02]",
+                isSubdivided ? "bg-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.3)]" : "bg-primary"
+              )}
             >
               {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (editingId ? "SINCRONIZAR_CAMBIOS" : "VINCULAR_ACTIVO")}
             </Button>
