@@ -21,7 +21,8 @@ import {
   ShieldCheck,
   CheckCircle2,
   Loader2,
-  Trophy
+  Trophy,
+  LayoutGrid
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -56,6 +57,16 @@ const SPORTS = [
   { value: "Balonmano", label: "Balonmano" },
 ];
 
+const WEEK_DAYS = [
+  { id: "L", label: "L" },
+  { id: "M", label: "M" },
+  { id: "X", label: "X" },
+  { id: "J", label: "J" },
+  { id: "V", label: "V" },
+  { id: "S", label: "S" },
+  { id: "D", label: "D" },
+];
+
 const INITIAL_FACILITIES = [
   { id: "f1", name: "Campo de Fútbol Principal", type: "Campo Exterior", sport: "Fútbol", status: "Active", capacity: "22 Jugadores", nextMaintenance: "12 Oct" },
   { id: "f2", name: "Pabellón Cubierto A", type: "Pabellón", sport: "Baloncesto", status: "Active", capacity: "40 Atletas", nextMaintenance: "05 Nov" },
@@ -75,12 +86,29 @@ export default function FacilitiesManagementPage() {
     type: "Campo Exterior",
     sport: "Fútbol",
     status: "Active",
-    capacity: ""
+    capacity: "",
+    // Campos específicos de fútbol
+    startTime: "16:00",
+    endTime: "22:00",
+    days: ["L", "M", "X", "J", "V"] as string[],
+    footballType: "F11",
+    subdivisions: "1"
   });
 
   const handleOpenCreate = () => {
     setEditingId(null);
-    setFormData({ name: "", type: "Campo Exterior", sport: "Fútbol", status: "Active", capacity: "" });
+    setFormData({ 
+      name: "", 
+      type: "Campo Exterior", 
+      sport: "Fútbol", 
+      status: "Active", 
+      capacity: "",
+      startTime: "16:00",
+      endTime: "22:00",
+      days: ["L", "M", "X", "J", "V"],
+      footballType: "F11",
+      subdivisions: "1"
+    });
     setIsSheetOpen(true);
   };
 
@@ -91,9 +119,23 @@ export default function FacilitiesManagementPage() {
       type: facility.type,
       sport: facility.sport || "Fútbol",
       status: facility.status,
-      capacity: facility.capacity
+      capacity: facility.capacity,
+      startTime: facility.startTime || "16:00",
+      endTime: facility.endTime || "22:00",
+      days: facility.days || ["L", "M", "X", "J", "V"],
+      footballType: facility.footballType || "F11",
+      subdivisions: facility.subdivisions || "1"
     });
     setIsSheetOpen(true);
+  };
+
+  const toggleDay = (dayId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      days: prev.days.includes(dayId) 
+        ? prev.days.filter(d => d !== dayId) 
+        : [...prev.days, dayId]
+    }));
   };
 
   const handleDelete = (id: string, name: string) => {
@@ -123,11 +165,7 @@ export default function FacilitiesManagementPage() {
       } else {
         const newFacility = {
           id: `f${Date.now()}`,
-          name: formData.name,
-          type: formData.type,
-          sport: formData.sport,
-          status: formData.status,
-          capacity: formData.capacity,
+          ...formData,
           nextMaintenance: "Próximamente"
         };
         setFacilities([newFacility, ...facilities]);
@@ -267,12 +305,12 @@ export default function FacilitiesManagementPage() {
       </div>
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-xl shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
           <div className="p-10 border-b border-white/5 bg-black/40">
             <SheetHeader className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Facility_Deploy_v1.0</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Facility_Deploy_v2.0</span>
               </div>
               <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left">
                 {editingId ? "MODIFICAR_ACTIVO" : "AÑADIR_ACTIVO"}
@@ -283,7 +321,7 @@ export default function FacilitiesManagementPage() {
             </SheetHeader>
           </div>
 
-          <form onSubmit={handleSaveFacility} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-8">
+          <form onSubmit={handleSaveFacility} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10">
             <div className="space-y-6">
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Nombre de la Instalación</Label>
@@ -291,55 +329,154 @@ export default function FacilitiesManagementPage() {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})}
-                  placeholder="EJ: PABELLÓN NORTE" 
-                  className="h-12 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-primary/50 transition-all placeholder:text-white/10" 
+                  placeholder="EJ: CAMPO FEDERATIVO A" 
+                  className="h-14 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-primary/50 transition-all placeholder:text-white/10 text-lg" 
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Tipo de Espacio</Label>
-                <Select 
-                  value={formData.type} 
-                  onValueChange={(v) => setFormData({...formData, type: v})}
-                >
-                  <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary/50 transition-all">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
-                    <SelectItem value="Campo Exterior" className="text-[10px] font-black uppercase">CAMPO EXTERIOR</SelectItem>
-                    <SelectItem value="Pabellón" className="text-[10px] font-black uppercase">PABELLÓN CUBIERTO</SelectItem>
-                    <SelectItem value="Fitness" className="text-[10px] font-black uppercase">GIMNASIO / SALA</SelectItem>
-                    <SelectItem value="Acuática" className="text-[10px] font-black uppercase">ZONA ACUÁTICA</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Disciplina Deportiva</Label>
-                <Select 
-                  value={formData.sport} 
-                  onValueChange={(v) => setFormData({...formData, sport: v})}
-                >
-                  <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary/50 transition-all">
-                    <div className="flex items-center gap-3">
-                      <Dumbbell className="h-4 w-4 text-primary/40" />
-                      <SelectValue placeholder="SELECCIONAR DEPORTE..." />
-                    </div>
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
-                    {SPORTS.map(s => (
-                      <SelectItem key={s.value} value={s.value} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary">
-                        {s.label}
-                      </SelectItem>
-                    ))}
-                    <SelectItem value="Multideporte" className="text-[10px] font-black uppercase">MULTIDEPORTE</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Capacidad Máx.</Label>
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Tipo de Espacio</Label>
+                  <Select 
+                    value={formData.type} 
+                    onValueChange={(v) => setFormData({...formData, type: v})}
+                  >
+                    <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary/50 transition-all">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
+                      <SelectItem value="Campo Exterior" className="text-[10px] font-black uppercase">CAMPO EXTERIOR</SelectItem>
+                      <SelectItem value="Pabellón" className="text-[10px] font-black uppercase">PABELLÓN CUBIERTO</SelectItem>
+                      <SelectItem value="Fitness" className="text-[10px] font-black uppercase">GIMNASIO / SALA</SelectItem>
+                      <SelectItem value="Acuática" className="text-[10px] font-black uppercase">ZONA ACUÁTICA</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Disciplina Deportiva</Label>
+                  <Select 
+                    value={formData.sport} 
+                    onValueChange={(v) => setFormData({...formData, sport: v})}
+                  >
+                    <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary/50 transition-all">
+                      <div className="flex items-center gap-3">
+                        <Dumbbell className="h-4 w-4 text-primary/40" />
+                        <SelectValue placeholder="DEPORTE..." />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
+                      {SPORTS.map(s => (
+                        <SelectItem key={s.value} value={s.value} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary">
+                          {s.label}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="Multideporte" className="text-[10px] font-black uppercase">MULTIDEPORTE</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* CONFIGURACIÓN ESPECÍFICA DE FÚTBOL */}
+              {formData.sport === "Fútbol" && (
+                <div className="space-y-8 p-8 border border-primary/30 bg-primary/5 rounded-3xl animate-in fade-in slide-in-from-top-4 duration-500 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-4 opacity-5">
+                    <Trophy className="h-24 w-24 text-primary" />
+                  </div>
+                  
+                  <div className="flex items-center gap-3 border-b border-primary/20 pb-4 mb-6">
+                    <LayoutGrid className="h-4 w-4 text-primary" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Parámetros Técnicos de Fútbol</span>
+                  </div>
+
+                  <div className="space-y-4">
+                    <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Días de Operatividad</Label>
+                    <div className="flex gap-2">
+                      {WEEK_DAYS.map(day => (
+                        <button
+                          key={day.id}
+                          type="button"
+                          onClick={() => toggleDay(day.id)}
+                          className={cn(
+                            "h-10 w-10 flex items-center justify-center font-black text-[10px] border transition-all",
+                            formData.days.includes(day.id)
+                              ? "bg-primary text-black border-primary shadow-[0_0_15px_rgba(0,242,255,0.3)]"
+                              : "bg-white/5 border-white/10 text-white/30 hover:border-primary/40"
+                          )}
+                        >
+                          {day.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Horario Apertura</Label>
+                      <div className="relative">
+                        <Clock className="absolute left-3 top-3 h-4 w-4 text-primary/40" />
+                        <Input 
+                          type="time" 
+                          value={formData.startTime}
+                          onChange={(e) => setFormData({...formData, startTime: e.target.value})}
+                          className="pl-10 h-11 bg-white/5 border-white/10 rounded-none font-bold text-xs focus:border-primary/50" 
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Horario Cierre</Label>
+                      <div className="relative">
+                        <Clock className="absolute left-3 top-3 h-4 w-4 text-primary/40" />
+                        <Input 
+                          type="time" 
+                          value={formData.endTime}
+                          onChange={(e) => setFormData({...formData, endTime: e.target.value})}
+                          className="pl-10 h-11 bg-white/5 border-white/10 rounded-none font-bold text-xs focus:border-primary/50" 
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Tipo de Disciplina</Label>
+                      <Select 
+                        value={formData.footballType} 
+                        onValueChange={(v) => setFormData({...formData, footballType: v})}
+                      >
+                        <SelectTrigger className="h-11 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase text-[10px] tracking-widest">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
+                          <SelectItem value="F11" className="text-[10px] font-black uppercase">FÚTBOL 11</SelectItem>
+                          <SelectItem value="F7" className="text-[10px] font-black uppercase">FÚTBOL 7</SelectItem>
+                          <SelectItem value="FSala" className="text-[10px] font-black uppercase">FÚTBOL SALA</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Subdivisión de Campo</Label>
+                      <Select 
+                        value={formData.subdivisions} 
+                        onValueChange={(v) => setFormData({...formData, subdivisions: v})}
+                      >
+                        <SelectTrigger className="h-11 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase text-[10px] tracking-widest">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
+                          <SelectItem value="1" className="text-[10px] font-black uppercase">CAMPO ENTERO</SelectItem>
+                          <SelectItem value="2" className="text-[10px] font-black uppercase">2 MITADES</SelectItem>
+                          <SelectItem value="4" className="text-[10px] font-black uppercase">4 CUARTOS</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Capacidad Máx. Atletas</Label>
                   <Input 
                     required
                     value={formData.capacity}
@@ -373,7 +510,7 @@ export default function FacilitiesManagementPage() {
                 <span className="text-[9px] font-black uppercase text-primary tracking-widest">Protocolo de Seguridad</span>
               </div>
               <p className="text-[9px] text-white/40 leading-relaxed font-bold uppercase italic">
-                La asignación de un deporte específico permite optimizar el algoritmo de reservas y la asignación de material técnico para las sesiones tácticas.
+                La configuración detallada permite al algoritmo de la red SynQAI optimizar las cargas de entrenamiento y evitar solapamientos en las sesiones de formación técnica.
               </p>
             </div>
           </form>
