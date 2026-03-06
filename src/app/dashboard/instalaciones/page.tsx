@@ -20,7 +20,8 @@ import {
   LayoutDashboard,
   ShieldCheck,
   CheckCircle2,
-  Loader2
+  Loader2,
+  Trophy
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -47,11 +48,18 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
+const SPORTS = [
+  { value: "Fútbol", label: "Fútbol" },
+  { value: "Baloncesto", label: "Baloncesto" },
+  { value: "Waterpolo", label: "Waterpolo" },
+  { value: "Voleibol", label: "Voleibol" },
+  { value: "Balonmano", label: "Balonmano" },
+];
+
 const INITIAL_FACILITIES = [
-  { id: "f1", name: "Campo de Fútbol Principal", type: "Campo Exterior", status: "Active", capacity: "22 Jugadores", nextMaintenance: "12 Oct" },
-  { id: "f2", name: "Pabellón Cubierto A", type: "Pabellón", status: "Active", capacity: "40 Atletas", nextMaintenance: "05 Nov" },
-  { id: "f3", name: "Gimnasio de Alto Rendimiento", type: "Fitness", status: "Maintenance", capacity: "15 Atletas", nextMaintenance: "Hoy" },
-  { id: "f4", name: "Piscina Olímpica", type: "Acuática", status: "Active", capacity: "30 Nadadores", nextMaintenance: "20 Oct" },
+  { id: "f1", name: "Campo de Fútbol Principal", type: "Campo Exterior", sport: "Fútbol", status: "Active", capacity: "22 Jugadores", nextMaintenance: "12 Oct" },
+  { id: "f2", name: "Pabellón Cubierto A", type: "Pabellón", sport: "Baloncesto", status: "Active", capacity: "40 Atletas", nextMaintenance: "05 Nov" },
+  { id: "f3", name: "Gimnasio de Alto Rendimiento", type: "Fitness", sport: "Multideporte", status: "Maintenance", capacity: "15 Atletas", nextMaintenance: "Hoy" },
 ];
 
 export default function FacilitiesManagementPage() {
@@ -65,13 +73,14 @@ export default function FacilitiesManagementPage() {
   const [formData, setFormData] = useState({
     name: "",
     type: "Campo Exterior",
+    sport: "Fútbol",
     status: "Active",
     capacity: ""
   });
 
   const handleOpenCreate = () => {
     setEditingId(null);
-    setFormData({ name: "", type: "Campo Exterior", status: "Active", capacity: "" });
+    setFormData({ name: "", type: "Campo Exterior", sport: "Fútbol", status: "Active", capacity: "" });
     setIsSheetOpen(true);
   };
 
@@ -80,6 +89,7 @@ export default function FacilitiesManagementPage() {
     setFormData({
       name: facility.name,
       type: facility.type,
+      sport: facility.sport || "Fútbol",
       status: facility.status,
       capacity: facility.capacity
     });
@@ -115,6 +125,7 @@ export default function FacilitiesManagementPage() {
           id: `f${Date.now()}`,
           name: formData.name,
           type: formData.type,
+          sport: formData.sport,
           status: formData.status,
           capacity: formData.capacity,
           nextMaintenance: "Próximamente"
@@ -133,7 +144,8 @@ export default function FacilitiesManagementPage() {
 
   const filteredFacilities = facilities.filter(f => 
     f.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    f.type.toLowerCase().includes(searchTerm.toLowerCase())
+    f.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    f.sport?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -169,7 +181,7 @@ export default function FacilitiesManagementPage() {
           <div className="relative w-full max-w-md">
             <Search className="absolute left-3 top-3.5 h-4 w-4 text-primary opacity-50" />
             <Input 
-              placeholder="BUSCAR INSTALACIÓN..." 
+              placeholder="BUSCAR POR NOMBRE O DEPORTE..." 
               className="pl-10 h-12 bg-white/5 border-white/10 rounded-none text-white placeholder:text-white/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-primary/50"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -203,6 +215,10 @@ export default function FacilitiesManagementPage() {
               <CardTitle className="text-xl font-black text-white italic tracking-tighter uppercase mb-1 group-hover:cyan-text-glow transition-all">
                 {f.name}
               </CardTitle>
+              <div className="flex items-center gap-2 mb-1">
+                <Dumbbell className="h-3 w-3 text-primary/60" />
+                <span className="text-[9px] font-black uppercase tracking-widest text-primary/80 italic">{f.sport}</span>
+              </div>
               <CardDescription className="text-[9px] font-black uppercase tracking-widest text-white/30 italic">
                 {f.type}
               </CardDescription>
@@ -298,6 +314,29 @@ export default function FacilitiesManagementPage() {
                 </Select>
               </div>
 
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Disciplina Deportiva</Label>
+                <Select 
+                  value={formData.sport} 
+                  onValueChange={(v) => setFormData({...formData, sport: v})}
+                >
+                  <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary/50 transition-all">
+                    <div className="flex items-center gap-3">
+                      <Dumbbell className="h-4 w-4 text-primary/40" />
+                      <SelectValue placeholder="SELECCIONAR DEPORTE..." />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
+                    {SPORTS.map(s => (
+                      <SelectItem key={s.value} value={s.value} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary">
+                        {s.label}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="Multideporte" className="text-[10px] font-black uppercase">MULTIDEPORTE</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Capacidad Máx.</Label>
@@ -334,7 +373,7 @@ export default function FacilitiesManagementPage() {
                 <span className="text-[9px] font-black uppercase text-primary tracking-widest">Protocolo de Seguridad</span>
               </div>
               <p className="text-[9px] text-white/40 leading-relaxed font-bold uppercase italic">
-                La activación de un nuevo espacio permite su reserva inmediata en el cronograma de sesiones tácticas del club.
+                La asignación de un deporte específico permite optimizar el algoritmo de reservas y la asignación de material técnico para las sesiones tácticas.
               </p>
             </div>
           </form>
