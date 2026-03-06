@@ -12,6 +12,7 @@ interface UserProfile {
   name: string;
   plan: string | null;
   country: string | null;
+  sport?: string;
   clubCreated: boolean;
   clubName?: string;
   claimedToken?: string;
@@ -23,7 +24,7 @@ interface AuthContextType {
   loading: boolean;
   loginAsGuest: () => void;
   loginWithToken: (token: string, plan: string, country: string) => void;
-  completeOnboarding: (clubData: { name: string; id: string; country: string }) => void;
+  completeOnboarding: (clubData: { name: string; id: string; country: string; sport: string }) => void;
   logout: () => void;
 }
 
@@ -62,6 +63,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       clubId: "global-hq",
       plan: "enterprise_scale",
       country: "ES",
+      sport: "Multideporte",
       clubCreated: true,
     };
     
@@ -92,14 +94,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.setItem("synq_profile", JSON.stringify(newProfile));
   };
 
-  const completeOnboarding = (clubData: { name: string; id: string; country: string }) => {
+  const completeOnboarding = (clubData: { name: string; id: string; country: string; sport: string }) => {
     if (profile) {
       const updatedProfile: UserProfile = {
         ...profile,
         clubCreated: true,
         clubId: clubData.id,
         clubName: clubData.name,
-        country: clubData.country
+        country: clubData.country,
+        sport: clubData.sport
       };
       setProfile(updatedProfile);
       localStorage.setItem("synq_profile", JSON.stringify(updatedProfile));
@@ -112,7 +115,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         plan: profile.plan || "Standard",
         users: 0,
         status: "Active",
-        country: clubData.country
+        country: clubData.country,
+        sport: clubData.sport
       };
       localStorage.setItem("synq_global_clubs", JSON.stringify([...existingClubs, newClubEntry]));
     }

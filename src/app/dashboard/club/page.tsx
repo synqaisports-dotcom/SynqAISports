@@ -21,7 +21,8 @@ import {
   Mail,
   Smartphone,
   Trophy,
-  ArrowRight
+  ArrowRight,
+  Dumbbell
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -38,10 +39,25 @@ import {
   SheetClose,
   SheetTrigger
 } from "@/components/ui/sheet";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+
+const SPORTS = [
+  { value: "Fútbol", label: "Fútbol" },
+  { value: "Baloncesto", label: "Baloncesto" },
+  { value: "Waterpolo", label: "Waterpolo" },
+  { value: "Voleibol", label: "Voleibol" },
+  { value: "Balonmano", label: "Balonmano" },
+];
 
 export default function ClubManagementPage() {
   const { profile } = useAuth();
@@ -51,6 +67,7 @@ export default function ClubManagementPage() {
   const [clubData, setClubData] = useState({
     name: profile?.clubName || profile?.clubId || "Nodo de Cantera",
     country: profile?.country || "España",
+    sport: profile?.sport || "Fútbol",
     foundation: "2024",
     members: "142",
     website: "www.cantera-synqai.com",
@@ -115,6 +132,25 @@ export default function ClubManagementPage() {
                     onChange={(e) => setClubData({...clubData, name: e.target.value.toUpperCase()})}
                     className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold uppercase focus:border-primary/50 text-lg" 
                   />
+                </div>
+
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Disciplina Deportiva</Label>
+                  <Select 
+                    value={clubData.sport} 
+                    onValueChange={(v) => setClubData({...clubData, sport: v})}
+                  >
+                    <SelectTrigger className="h-14 bg-white/5 border-white/10 rounded-2xl text-white font-bold uppercase tracking-widest px-6">
+                      <SelectValue placeholder="DEPORTE..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-2xl">
+                      {SPORTS.map(s => (
+                        <SelectItem key={s.value} value={s.value} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary">
+                          {s.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="grid grid-cols-2 gap-6">
@@ -236,11 +272,16 @@ export default function ClubManagementPage() {
              </div>
              <div className="flex items-center gap-4 px-1">
                <div className="flex items-center gap-2">
-                 <MapPin className="h-3.5 w-3.5 text-primary" />
+                 <Dumbbell className="h-3.5 w-3.5 text-primary" />
+                 <span className="text-[11px] font-black text-primary uppercase tracking-widest">{clubData.sport}</span>
+               </div>
+               <div className="h-1 w-1 rounded-full bg-white/10" />
+               <div className="flex items-center gap-2">
+                 <MapPin className="h-3.5 w-3.5 text-white/40" />
                  <span className="text-[11px] font-black text-white/40 uppercase tracking-widest">{clubData.country}</span>
                </div>
                <div className="h-1 w-1 rounded-full bg-white/10" />
-               <span className="text-[11px] font-black text-white/20 uppercase tracking-[0.3em]">Protocolo de Cantera Activo</span>
+               <span className="text-[11px] font-black text-white/20 uppercase tracking-[0.3em]">Protocolo Activo</span>
              </div>
           </div>
         </div>
@@ -257,9 +298,9 @@ export default function ClubManagementPage() {
              </CardHeader>
              <CardContent className="p-10">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
+                   <DataNode label="Disciplina" value={clubData.sport} icon={Dumbbell} highlight />
                    <DataNode label="Año de Fundación" value={clubData.foundation} icon={Calendar} />
                    <DataNode label="Capacidad Cantera" value={`${clubData.members} Atletas`} icon={Users} />
-                   <DataNode label="Status de Red" value="Sincronizado" icon={Trophy} highlight />
                 </div>
 
                 <div className="mt-16 p-10 border border-primary/20 bg-primary/5 rounded-[2.5rem] space-y-5 relative overflow-hidden group">

@@ -12,7 +12,8 @@ import {
   Globe,
   Loader2,
   CheckCircle2,
-  Zap
+  Zap,
+  Dumbbell
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,14 @@ const COUNTRIES = [
   { value: "US", label: "USA" },
 ];
 
+const SPORTS = [
+  { value: "Fútbol", label: "Fútbol" },
+  { value: "Baloncesto", label: "Baloncesto" },
+  { value: "Waterpolo", label: "Waterpolo" },
+  { value: "Voleibol", label: "Voleibol" },
+  { value: "Balonmano", label: "Balonmano" },
+];
+
 export default function OnboardingTunnel() {
   const { profile, completeOnboarding } = useAuth();
   const router = useRouter();
@@ -43,6 +52,7 @@ export default function OnboardingTunnel() {
   
   const [clubName, setClubName] = useState("");
   const [selectedCountry, setSelectedCountry] = useState(profile?.country || "ES");
+  const [selectedSport, setSelectedSport] = useState("Fútbol");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -72,7 +82,8 @@ export default function OnboardingTunnel() {
       completeOnboarding({ 
         name: clubName, 
         id: generatedClubId,
-        country: selectedCountry
+        country: selectedCountry,
+        sport: selectedSport
       });
 
       setSuccess(true);
@@ -173,6 +184,25 @@ export default function OnboardingTunnel() {
                       className="h-16 bg-white/5 border-primary/20 rounded-2xl pl-12 text-lg font-black italic tracking-tighter focus:border-primary transition-all placeholder:text-white/10"
                     />
                   </div>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50 ml-1">Disciplina Deportiva</label>
+                  <Select value={selectedSport} onValueChange={setSelectedSport}>
+                    <SelectTrigger className="h-16 bg-white/5 border-white/10 rounded-2xl text-white font-bold uppercase tracking-widest px-6">
+                      <div className="flex items-center gap-3">
+                        <Dumbbell className="h-4 w-4 text-primary/40" />
+                        <SelectValue placeholder="DEPORTE..." />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-2xl">
+                      {SPORTS.map(s => (
+                        <SelectItem key={s.value} value={s.value} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary">
+                          {s.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="grid grid-cols-2 gap-6">
