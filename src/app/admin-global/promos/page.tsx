@@ -109,18 +109,10 @@ const BrandedQR = ({ value, size = 280 }: { value: string; size?: number }) => (
       fgColor="#10b981" // Verde Eléctrico SynQAI
       bgColor="#000000"
       includeMargin={false}
-      imageSettings={{
-        src: "", // Reservado para logo SVG si fuera necesario, usamos el overlay CSS por ahora
-        x: undefined,
-        y: undefined,
-        height: 60,
-        width: 60,
-        excavate: true,
-      }}
     />
     
     {/* Sello de Marca Central Reforzado - Tamaño aumentado */}
-    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-emerald-500 px-5 py-2.5 rounded-xl shadow-[0_0_30px_rgba(16,185,129,0.8)] border-2 border-black group-hover:scale-110 transition-transform duration-500">
+    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-emerald-500 px-5 py-2.5 rounded-xl shadow-[0_0_30px_rgba(16,185,129,0.8)] border-2 border-black group-hover:scale-110 transition-transform duration-500 z-10">
       <span className="text-[16px] font-black text-black uppercase tracking-tighter italic">SynQAI</span>
     </div>
     
