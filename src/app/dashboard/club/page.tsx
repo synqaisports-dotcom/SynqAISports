@@ -90,9 +90,9 @@ export default function ClubManagementPage() {
         </Button>
       </div>
 
-      {/* SECTOR CABECERA SIN RECORTE */}
-      <div className="relative mb-32">
-        <div className="relative h-80 rounded-[2rem] overflow-hidden group border border-white/5">
+      {/* SECTOR CABECERA CON ESPACIADO MEJORADO */}
+      <div className="relative mb-48">
+        <div className="relative h-80 rounded-[3rem] overflow-hidden group border border-white/5 shadow-2xl">
           <Image 
             src="https://picsum.photos/seed/stadium/1200/400" 
             alt="Club Banner" 
@@ -109,112 +109,122 @@ export default function ClubManagementPage() {
           </div>
         </div>
 
-        {/* IDENTIDAD FLOTANTE (FUERA DEL OVERFLOW DEL BANNER) */}
-        <div className="absolute -bottom-16 left-12 flex items-end gap-8 z-20">
+        {/* IDENTIDAD FLOTANTE - ARQUITECTURA REFORZADA */}
+        <div className="absolute -bottom-20 left-12 flex items-end gap-10 z-20">
           <div className="relative group/logo">
-             <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full opacity-0 group-hover/logo:opacity-100 transition-opacity" />
-             <div className="h-44 w-44 bg-black border-2 border-primary/40 rounded-[2.5rem] flex items-center justify-center relative z-10 overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.8)]">
+             <div className="absolute inset-0 bg-primary/30 blur-3xl rounded-full opacity-0 group-hover/logo:opacity-100 transition-opacity" />
+             <div className="h-52 w-52 bg-black border-2 border-primary/40 rounded-[3.5rem] flex items-center justify-center relative z-10 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.9)] group-hover/logo:border-primary transition-all duration-500">
                 <Image 
-                  src="https://picsum.photos/seed/clublogo/200/200" 
+                  src="https://picsum.photos/seed/clublogo/300/300" 
                   alt="Club Logo" 
-                  width={140} 
-                  height={140} 
-                  className="opacity-80 group-hover/logo:scale-110 transition-transform duration-500"
+                  width={180} 
+                  height={180} 
+                  className="opacity-90 group-hover/logo:scale-110 transition-transform duration-700"
                   data-ai-hint="sports logo"
                 />
                 <button className="absolute inset-0 bg-black/60 opacity-0 group-hover/logo:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
                    <Camera className="h-6 w-6 text-primary" />
-                   <span className="text-[8px] font-black uppercase tracking-widest">Cambiar Escudo</span>
+                   <span className="text-[10px] font-black uppercase tracking-[0.2em]">Sincronizar Escudo</span>
                 </button>
              </div>
           </div>
-          <div className="pb-6 space-y-2">
-             <h2 className="text-6xl font-headline font-black text-white uppercase italic tracking-tighter leading-[0.9] cyan-text-glow">
-               {clubData.name}
-             </h2>
-             <div className="flex items-center gap-3">
-               <MapPin className="h-3 w-3 text-primary" />
-               <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">{clubData.country} • Sector de Cantera 01</span>
+          <div className="pb-10 space-y-3">
+             <div className="space-y-1">
+                <span className="text-[10px] font-black text-primary/60 uppercase tracking-[0.5em] ml-1">Identidad de Nodo</span>
+                <h2 className="text-7xl font-headline font-black text-white uppercase italic tracking-tighter leading-[0.85] cyan-text-glow drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)]">
+                  {clubData.name}
+                </h2>
+             </div>
+             <div className="flex items-center gap-4 px-1">
+               <div className="flex items-center gap-2">
+                 <MapPin className="h-3.5 w-3.5 text-primary" />
+                 <span className="text-[11px] font-black text-white/40 uppercase tracking-widest">{clubData.country}</span>
+               </div>
+               <div className="h-1 w-1 rounded-full bg-white/10" />
+               <span className="text-[11px] font-black text-white/20 uppercase tracking-[0.3em]">Protocolo de Cantera Activo</span>
              </div>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-12">
-        <div className="lg:col-span-2 space-y-8">
-           <Card className="glass-panel border-none bg-black/40 overflow-hidden">
-             <CardHeader className="border-b border-white/5 p-8">
-                <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-3">
-                  <ShieldCheck className="h-4 w-4 text-primary" /> Atributos de la Entidad
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 mt-24">
+        <div className="lg:col-span-2 space-y-10">
+           <Card className="glass-panel border-none bg-black/40 overflow-hidden shadow-2xl">
+             <CardHeader className="border-b border-white/5 p-10">
+                <CardTitle className="text-xs font-black uppercase tracking-[0.4em] flex items-center gap-4 text-white/60">
+                  <ShieldCheck className="h-5 w-5 text-primary" /> Atributos de la Entidad
                 </CardTitle>
              </CardHeader>
-             <CardContent className="p-8">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+             <CardContent className="p-10">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
                    <DataNode label="Año de Fundación" value={clubData.foundation} icon={Calendar} />
                    <DataNode label="Capacidad Cantera" value={`${clubData.members} Atletas`} icon={Users} />
                    <DataNode label="Status de Red" value="Sincronizado" icon={Trophy} highlight />
                 </div>
 
-                <div className="mt-12 p-8 border border-primary/20 bg-primary/5 rounded-[2rem] space-y-4">
-                   <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-black uppercase text-primary tracking-widest">Protocolo de Plan Activo</span>
-                      <Badge className="bg-primary text-black font-black uppercase text-[8px] px-3">
+                <div className="mt-16 p-10 border border-primary/20 bg-primary/5 rounded-[2.5rem] space-y-5 relative overflow-hidden group">
+                   <div className="absolute top-0 right-0 p-4 opacity-5">
+                      <Trophy className="h-32 w-32 text-primary" />
+                   </div>
+                   <div className="flex items-center justify-between relative z-10">
+                      <span className="text-[11px] font-black uppercase text-primary tracking-[0.3em]">Protocolo de Plan Activo</span>
+                      <Badge className="bg-primary text-black font-black uppercase text-[9px] px-4 py-1.5 tracking-widest rounded-none">
                         {profile?.plan?.replace('_', ' ') || 'Enterprise Scale'}
                       </Badge>
                    </div>
-                   <p className="text-[10px] text-white/40 leading-relaxed uppercase font-bold tracking-wide italic">
-                     Nodo centralizado vinculado a la red SynQAI. El escalado de costes se aplicará automáticamente según el volumen de atletas registrados.
+                   <p className="text-[11px] text-white/40 leading-relaxed uppercase font-bold tracking-widest italic relative z-10 max-w-2xl">
+                     Nodo centralizado vinculado a la red SynQAI. El sistema optimiza automáticamente los recursos según el volumen de atletas en formación detectado en este nodo.
                    </p>
                 </div>
              </CardContent>
            </Card>
 
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <Card className="glass-panel border-none bg-black/40">
-                <CardHeader className="p-8 pb-4">
-                   <CardTitle className="text-[10px] font-black uppercase tracking-widest text-white/30">Terminales de Contacto</CardTitle>
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              <Card className="glass-panel border-none bg-black/40 shadow-xl">
+                <CardHeader className="p-10 pb-4">
+                   <CardTitle className="text-[11px] font-black uppercase tracking-[0.4em] text-white/20">Terminales de Contacto</CardTitle>
                 </CardHeader>
-                <CardContent className="px-8 pb-8 space-y-4">
+                <CardContent className="px-10 pb-10 space-y-5">
                    <ContactLink icon={Globe} label="Portal Web" value={clubData.website} />
                    <ContactLink icon={Mail} label="Mail Administrativo" value={profile?.email || "admin@club.com"} />
                    <ContactLink icon={Smartphone} label="Línea Directa" value="+34 900 000 000" />
                 </CardContent>
               </Card>
 
-              <Card className="glass-panel border-none bg-black/40">
-                <CardHeader className="p-8 pb-4">
-                   <CardTitle className="text-[10px] font-black uppercase tracking-widest text-white/30">Nodos Sociales</CardTitle>
+              <Card className="glass-panel border-none bg-black/40 shadow-xl">
+                <CardHeader className="p-10 pb-4">
+                   <CardTitle className="text-[11px] font-black uppercase tracking-[0.4em] text-white/20">Nodos Sociales</CardTitle>
                 </CardHeader>
-                <CardContent className="px-8 pb-8 space-y-4">
+                <CardContent className="px-10 pb-10 space-y-5">
                    <ContactLink icon={Instagram} label="Instagram" value={clubData.socials.instagram} />
                    <ContactLink icon={Youtube} label="YouTube" value={clubData.socials.youtube} />
                    <ContactLink icon={Twitter} label="Twitter / X" value={clubData.socials.twitter} />
                 </CardContent>
-              </Card>
            </div>
         </div>
 
-        <div className="space-y-8">
-           <Card className="glass-panel border-primary/20 bg-primary/5 p-10 relative group overflow-hidden">
+        <div className="space-y-10">
+           <Card className="glass-panel border-primary/20 bg-primary/5 p-12 relative group overflow-hidden shadow-[0_0_50px_rgba(0,242,255,0.05)]">
               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-all">
-                <Share2 className="h-24 w-24 text-primary" />
+                <Share2 className="h-32 w-32 text-primary" />
               </div>
-              <h3 className="text-lg font-black italic uppercase tracking-tighter text-white mb-4">Exportar Perfil</h3>
-              <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest mb-8 leading-loose">
-                Genere un informe PDF de la estructura del club para patrocinadores o federaciones.
+              <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white mb-6">Exportar Perfil</h3>
+              <p className="text-[11px] font-bold text-white/40 uppercase tracking-widest mb-10 leading-loose">
+                Genere un informe PDF técnico de la estructura del club para patrocinadores, federaciones o redes de formación.
               </p>
-              <Button className="w-full h-14 bg-black/60 border border-primary/30 text-primary font-black uppercase text-[10px] tracking-widest rounded-xl hover:bg-primary hover:text-black transition-all">
-                Generar Informe <ArrowRight className="h-4 w-4 ml-2" />
+              <Button className="w-full h-16 bg-black/60 border border-primary/30 text-primary font-black uppercase text-[11px] tracking-[0.2em] rounded-2xl hover:bg-primary hover:text-black transition-all shadow-xl">
+                Generar Informe <ArrowRight className="h-4 w-4 ml-3" />
               </Button>
            </Card>
 
-           <div className="p-8 rounded-[2rem] border border-white/5 bg-white/[0.02] space-y-4">
-              <div className="flex items-center gap-2">
-                 <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-                 <span className="text-[10px] font-black uppercase tracking-widest text-white/60">Operativa_Activa</span>
+           <div className="p-10 rounded-[3rem] border border-white/5 bg-white/[0.02] space-y-5 relative overflow-hidden">
+              <div className="absolute inset-0 bg-grid-pattern opacity-5" />
+              <div className="flex items-center gap-3 relative z-10">
+                 <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                 <span className="text-[11px] font-black uppercase tracking-[0.4em] text-white/60">Operativa_Activa</span>
               </div>
-              <p className="text-[10px] text-white/20 uppercase font-bold tracking-widest leading-relaxed italic">
-                La identidad visual de su club es la que verán los padres y atletas en sus terminales portátiles. Mantenga sus datos actualizados.
+              <p className="text-[11px] text-white/20 uppercase font-bold tracking-widest leading-relaxed italic relative z-10">
+                La identidad visual de su nodo es el núcleo de confianza para las familias. Mantenga el escudo y los datos actualizados para garantizar la integridad de la red.
               </p>
            </div>
         </div>
@@ -222,79 +232,79 @@ export default function ClubManagementPage() {
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
-          <div className="p-8 border-b border-white/5 bg-black/40">
+          <div className="p-10 border-b border-white/5 bg-black/40">
             <SheetHeader className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
                 <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Identity_Deploy_v2.0</span>
               </div>
-              <SheetTitle className="text-3xl font-black italic tracking-tighter text-white uppercase text-left">
+              <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left">
                 MODIFICAR_NODO
               </SheetTitle>
               <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left">
-                Ajuste la matriz de información del club para la red.
+                Ajuste la matriz de información del club para la red de canteras.
               </SheetDescription>
             </SheetHeader>
           </div>
 
-          <form onSubmit={handleUpdate} className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-8">
-            <div className="space-y-6">
-              <div className="space-y-2">
+          <form onSubmit={handleUpdate} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10">
+            <div className="space-y-8">
+              <div className="space-y-3">
                 <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Nombre de la Entidad</Label>
                 <Input 
                   value={clubData.name}
                   onChange={(e) => setClubData({...clubData, name: e.target.value})}
-                  className="h-12 bg-white/5 border-white/10 rounded-xl font-bold uppercase focus:border-primary/50" 
+                  className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold uppercase focus:border-primary/50 text-lg" 
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-3">
                   <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Fundación</Label>
                   <Input 
                     value={clubData.foundation}
                     onChange={(e) => setClubData({...clubData, foundation: e.target.value})}
-                    className="h-12 bg-white/5 border-white/10 rounded-xl font-bold uppercase" 
+                    className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold uppercase" 
                   />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">País</Label>
                   <Input 
                     value={clubData.country}
                     readOnly
-                    className="h-12 bg-white/5 border-white/10 rounded-xl font-bold uppercase opacity-50" 
+                    className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold uppercase opacity-50" 
                   />
                 </div>
               </div>
 
-              <div className="space-y-2 pt-4 border-t border-white/5">
+              <div className="space-y-3 pt-6 border-t border-white/5">
                 <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Instagram (@)</Label>
                 <Input 
                   value={clubData.socials.instagram}
                   onChange={(e) => setClubData({...clubData, socials: {...clubData.socials, instagram: e.target.value}})}
-                  className="h-12 bg-white/5 border-white/10 rounded-xl font-bold" 
+                  className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold" 
                 />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">YouTube</Label>
                 <Input 
                   value={clubData.socials.youtube}
                   onChange={(e) => setClubData({...clubData, socials: {...clubData.socials, youtube: e.target.value}})}
-                  className="h-12 bg-white/5 border-white/10 rounded-xl font-bold" 
+                  className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold" 
                 />
               </div>
             </div>
           </form>
 
-          <div className="p-8 bg-black/40 border-t border-white/5 flex gap-4">
+          <div className="p-10 bg-black/40 border-t border-white/5 flex gap-6">
             <SheetClose asChild>
-              <Button variant="ghost" className="flex-1 h-14 border border-white/10 text-white/40 font-black uppercase text-[10px] tracking-widest hover:bg-white/5">
+              <Button variant="ghost" className="flex-1 h-16 border border-white/10 text-white/40 font-black uppercase text-[11px] tracking-widest hover:bg-white/5 rounded-2xl">
                 CANCELAR
               </Button>
             </SheetClose>
             <Button 
               onClick={handleUpdate}
-              className="flex-[2] h-14 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] transition-all border-none"
+              className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] transition-all border-none"
             >
               SINCRONIZAR_CAMBIOS
             </Button>
@@ -307,13 +317,13 @@ export default function ClubManagementPage() {
 
 function DataNode({ label, value, icon: Icon, highlight }: any) {
   return (
-    <div className="space-y-3">
-       <div className="flex items-center gap-2">
-          <Icon className={cn("h-3 w-3", highlight ? "text-primary" : "text-white/20")} />
-          <span className="text-[9px] font-black uppercase tracking-widest text-white/30">{label}</span>
+    <div className="space-y-4">
+       <div className="flex items-center gap-3">
+          <Icon className={cn("h-4 w-4", highlight ? "text-primary" : "text-white/20")} />
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30">{label}</span>
        </div>
        <p className={cn(
-         "text-2xl font-black italic tracking-tighter uppercase",
+         "text-3xl font-black italic tracking-tighter uppercase",
          highlight ? "text-primary cyan-text-glow" : "text-white"
        )}>{value}</p>
     </div>
@@ -322,17 +332,17 @@ function DataNode({ label, value, icon: Icon, highlight }: any) {
 
 function ContactLink({ icon: Icon, label, value }: any) {
   return (
-    <div className="flex items-center justify-between group cursor-pointer p-2 hover:bg-white/5 rounded-xl transition-all">
-       <div className="flex items-center gap-4">
-          <div className="h-9 w-9 bg-white/5 rounded-lg flex items-center justify-center border border-white/5 group-hover:border-primary/40 transition-all">
-             <Icon className="h-4 w-4 text-white/40 group-hover:text-primary transition-all" />
+    <div className="flex items-center justify-between group cursor-pointer p-3 hover:bg-white/5 rounded-2xl transition-all border border-transparent hover:border-white/5">
+       <div className="flex items-center gap-5">
+          <div className="h-11 w-11 bg-white/5 rounded-xl flex items-center justify-center border border-white/5 group-hover:border-primary/40 transition-all">
+             <Icon className="h-5 w-5 text-white/40 group-hover:text-primary transition-all" />
           </div>
           <div className="flex flex-col">
-             <span className="text-[8px] font-black uppercase text-white/20 tracking-widest">{label}</span>
-             <span className="text-[10px] font-bold text-white/80 group-hover:text-white transition-colors">{value}</span>
+             <span className="text-[9px] font-black uppercase text-white/20 tracking-widest">{label}</span>
+             <span className="text-[11px] font-bold text-white/80 group-hover:text-white transition-colors uppercase tracking-tight">{value}</span>
           </div>
        </div>
-       <ArrowUpRight className="h-3 w-3 text-white/5 group-hover:text-primary transition-all" />
+       <ArrowUpRight className="h-4 w-4 text-white/5 group-hover:text-primary transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
     </div>
   );
 }
