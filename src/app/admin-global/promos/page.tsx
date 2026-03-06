@@ -96,22 +96,37 @@ const MOCK_CAMPAIGNS = [
   },
 ];
 
-// Componente de QR Profesional con Branding Central Reforzado
-const BrandedQR = ({ value, size = 200 }: { value: string; size?: number }) => (
-  <div className="relative flex items-center justify-center p-3 bg-black rounded-2xl overflow-hidden shadow-[0_0_40px_rgba(16,185,129,0.25)] border border-emerald-500/10">
+/**
+ * Componente de QR de Alta Definición con Sello SynQAI Reforzado.
+ * Optimizado para lectura en móviles y calidad de impresión.
+ */
+const BrandedQR = ({ value, size = 280 }: { value: string; size?: number }) => (
+  <div className="relative flex items-center justify-center p-4 bg-black rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(16,185,129,0.3)] border border-emerald-500/20 group">
     <QRCodeCanvas
       value={value}
       size={size}
-      level="H"
-      fgColor="#10b981"
+      level="H" // Máxima corrección de errores para permitir logo central grande
+      fgColor="#10b981" // Verde Eléctrico SynQAI
       bgColor="#000000"
       includeMargin={false}
+      imageSettings={{
+        src: "", // Reservado para logo SVG si fuera necesario, usamos el overlay CSS por ahora
+        x: undefined,
+        y: undefined,
+        height: 60,
+        width: 60,
+        excavate: true,
+      }}
     />
-    {/* Overlay de Marca Central - Aumentado */}
-    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black px-4 py-2 border border-emerald-500/50 rounded-md shadow-[0_0_15px_rgba(16,185,129,0.4)]">
-      <span className="text-[14px] font-black text-emerald-400 uppercase tracking-tight italic">SynQAI</span>
+    
+    {/* Sello de Marca Central Reforzado - Tamaño aumentado */}
+    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-emerald-500 px-5 py-2.5 rounded-xl shadow-[0_0_30px_rgba(16,185,129,0.8)] border-2 border-black group-hover:scale-110 transition-transform duration-500">
+      <span className="text-[16px] font-black text-black uppercase tracking-tighter italic">SynQAI</span>
     </div>
-    <div className="absolute inset-0 scan-line opacity-20 pointer-events-none" />
+    
+    {/* Efecto de Escaneo Técnico */}
+    <div className="absolute inset-0 bg-emerald-500/5 scan-line opacity-30 pointer-events-none" />
+    <div className="absolute inset-0 border border-emerald-500/10 rounded-3xl pointer-events-none" />
   </div>
 );
 
@@ -134,7 +149,7 @@ export default function GlobalPromosPage() {
       toast({
         variant: "destructive",
         title: "ERROR_PARAMETROS",
-        description: "Debe definir un objetivo y una región (ej. 10 primeros de Argentina).",
+        description: "Debe definir un objetivo y una región.",
       });
       return;
     }
@@ -143,7 +158,6 @@ export default function GlobalPromosPage() {
     try {
       const data = await generatePromoCampaign(formData);
       setResult(data);
-      // Al generar uno nuevo, lo ponemos como seleccionado para previsualizarlo
       setSelectedCampaign({
         title: data.campaignTitle,
         region: formData.objective,
@@ -153,8 +167,8 @@ export default function GlobalPromosPage() {
         copy: data.socialMediaCopy
       });
       toast({
-        title: "MAGIC_LINK_GENERADO",
-        description: "Token de red y QR configurados con éxito.",
+        title: "NODO_IA_SINCRO",
+        description: "Protocolo de Magic Link y QR generado en alta resolución.",
       });
     } catch (error) {
       toast({
@@ -171,8 +185,23 @@ export default function GlobalPromosPage() {
     if (!text) return;
     navigator.clipboard.writeText(text);
     toast({
-      description: "Copiado al portapapeles.",
+      description: "URL de red copiada al portapapeles.",
     });
+  };
+
+  const downloadQR = () => {
+    const canvas = document.querySelector('canvas');
+    if (canvas) {
+      const url = canvas.toDataURL("image/png");
+      const link = document.createElement('a');
+      link.download = `SynQAI_QR_${selectedCampaign?.token || 'PROMO'}.png`;
+      link.href = url;
+      link.click();
+      toast({
+        title: "EXPORTACIÓN_EXITOSA",
+        description: "QR de alta definición listo para cartelería y anuncios.",
+      });
+    }
   };
 
   const currentToken = selectedCampaign?.token || result?.suggestedPromoCode;
@@ -181,12 +210,11 @@ export default function GlobalPromosPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
-      {/* HEADER TÁCTICO */}
       <div className="flex justify-between items-end border-b border-white/5 pb-6">
         <div className="space-y-1">
           <div className="flex items-center gap-3 mb-2">
             <QrCode className="h-5 w-5 text-emerald-400 animate-pulse" />
-            <span className="text-[10px] font-black text-emerald-400 tracking-[0.5em] uppercase">Magic_Link_Factory</span>
+            <span className="text-[10px] font-black text-emerald-400 tracking-[0.5em] uppercase">Magic_Link_Factory_v2.0</span>
           </div>
           <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic emerald-text-glow">
             PROMO_COMMAND
@@ -203,16 +231,14 @@ export default function GlobalPromosPage() {
         </Button>
       </div>
 
-      {/* MÉTRICAS DE RED */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <PromoMiniStat icon={Layers} label="Tokens de Red" value={MOCK_CAMPAIGNS.length.toString()} trend="+2" />
-        <PromoMiniStat icon={Users} label="Altas por QR" value="142" trend="+14%" />
-        <PromoMiniStat icon={Globe} label="Regiones Activas" value="03" trend="LatAm / ES" />
-        <PromoMiniStat icon={Zap} label="ROI_Captación" value="24%" trend="UP_LINK" />
+        <PromoMiniStat icon={Layers} label="Tokens Activos" value={MOCK_CAMPAIGNS.length.toString()} trend="+2" />
+        <PromoMiniStat icon={Users} label="Sincronizaciones" value="142" trend="+14%" />
+        <PromoMiniStat icon={Globe} label="Sectores" value="03" trend="LatAm / ES" />
+        <PromoMiniStat icon={Zap} label="Conversión" value="24%" trend="UP_LINK" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* LISTADO DE MAGIC LINKS */}
         <Card className="glass-panel lg:col-span-2 overflow-hidden bg-black/40 border-none">
           <CardHeader className="border-b border-white/5 p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="relative w-full max-w-sm">
@@ -224,7 +250,7 @@ export default function GlobalPromosPage() {
             </div>
             <div className="flex items-center gap-2">
               <RefreshCw className="h-4 w-4 text-white/20 hover:text-emerald-400 cursor-pointer transition-colors" />
-              <span className="text-[9px] font-black text-white/30 uppercase tracking-widest">Estado Red: Sincronizada</span>
+              <span className="text-[9px] font-black text-white/30 uppercase tracking-widest">Sincronización: Activa</span>
             </div>
           </CardHeader>
           <CardContent className="p-0">
@@ -232,8 +258,8 @@ export default function GlobalPromosPage() {
               <TableHeader className="bg-white/[0.02]">
                 <TableRow className="border-white/5">
                   <TableHead className="font-black text-[10px] uppercase tracking-widest text-white/40 h-14 pl-8">Campaña / Región</TableHead>
-                  <TableHead className="font-black text-[10px] uppercase tracking-widest text-white/40">Identificador_Token</TableHead>
-                  <TableHead className="font-black text-[10px] uppercase tracking-widest text-white/40 text-center">Protocolo_Uso</TableHead>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest text-white/40">Token</TableHead>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest text-white/40 text-center">Uso</TableHead>
                   <TableHead className="text-right font-black text-[10px] uppercase tracking-widest text-white/40 pr-8">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
@@ -251,7 +277,7 @@ export default function GlobalPromosPage() {
                        <div className="flex flex-col">
                           <span className="font-black text-white text-xs uppercase italic tracking-tighter group-hover:emerald-text-glow transition-all">{camp.title}</span>
                           <span className="text-[8px] text-white/30 font-bold uppercase tracking-widest mt-0.5 flex items-center gap-1">
-                             <MapPin className="h-2 w-2 text-emerald-500" /> {camp.region} • Plan: {camp.plan}
+                             <MapPin className="h-2 w-2 text-emerald-500" /> {camp.region}
                           </span>
                        </div>
                     </TableCell>
@@ -261,49 +287,17 @@ export default function GlobalPromosPage() {
                        </Badge>
                     </TableCell>
                     <TableCell className="text-center">
-                       <div className="flex flex-col items-center">
-                          <span className="text-xs font-black text-white">{camp.used} / {camp.total === 0 ? '∞' : camp.total}</span>
-                          <div className="w-16 h-1 bg-white/5 mt-1 overflow-hidden">
-                             <div 
-                               className="h-full bg-emerald-500 transition-all duration-1000" 
-                               style={{ width: camp.total === 0 ? '40%' : `${(camp.used / camp.total) * 100}%` }} 
-                             />
-                          </div>
-                       </div>
+                       <span className="text-xs font-black text-white">{camp.used} / {camp.total === 0 ? '∞' : camp.total}</span>
                     </TableCell>
                     <TableCell className="text-right pr-8">
                        <div className="flex justify-end gap-2">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-9 w-9 text-white/20 hover:text-emerald-400 border border-white/5" 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedCampaign(camp);
-                            }}
-                            title="Previsualizar QR"
-                          >
+                          <Button variant="ghost" size="icon" className="h-9 w-9 text-white/20 hover:text-emerald-400 border border-white/5" onClick={(e) => { e.stopPropagation(); setSelectedCampaign(camp); }}>
                              <Eye className="h-3.5 w-3.5" />
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-9 w-9 text-white/20 hover:text-emerald-400 border border-white/5" 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              copyToClipboard(`https://synqai.sports/login?token=${camp.token}`);
-                            }}
-                            title="Copiar Magic Link"
-                          >
-                             <Share2 className="h-3.5 w-3.5" />
+                          <Button variant="ghost" size="icon" className="h-9 w-9 text-white/20 hover:text-emerald-400 border border-white/5" onClick={(e) => { e.stopPropagation(); downloadQR(); }}>
+                             <Download className="h-3.5 w-3.5" />
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-9 w-9 text-white/20 hover:text-rose-400 border border-white/5"
-                            title="Revocar Token"
-                            onClick={(e) => e.stopPropagation()}
-                          >
+                          <Button variant="ghost" size="icon" className="h-9 w-9 text-white/20 hover:text-rose-400 border border-white/5">
                              <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                        </div>
@@ -315,42 +309,35 @@ export default function GlobalPromosPage() {
           </CardContent>
         </Card>
 
-        {/* PREVIEW DE MAGIC LINK Y QR */}
         <div className="space-y-6">
           <Card className="glass-panel border-emerald-500/20 bg-emerald-500/[0.02] overflow-hidden relative">
-            <div className="absolute top-0 right-0 bg-emerald-500 text-black text-[8px] font-black px-3 py-1 uppercase tracking-widest z-10">Live_QR_Builder</div>
+            <div className="absolute top-0 right-0 bg-emerald-500 text-black text-[8px] font-black px-3 py-1 uppercase tracking-widest z-10 italic">High_Res_Node</div>
             <CardHeader className="pb-4">
                 <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
-                  <QrCode className="h-4 w-4 text-emerald-400" /> Magic Link Architect
+                  <QrCode className="h-4 w-4 text-emerald-400" /> Digital Asset Preview
                 </CardTitle>
-                <CardDescription className="text-[9px] font-black uppercase tracking-widest text-white/30">
-                  {selectedCampaign?.title || 'Sincronizando Nodo...'}
+                <CardDescription className="text-[9px] font-black uppercase tracking-widest text-white/30 italic">
+                  Optimizado para impresión y medios digitales
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                <div className="p-10 bg-black/60 border border-emerald-500/20 flex flex-col items-center justify-center space-y-4 rounded-3xl group cursor-pointer relative overflow-hidden">
-                  <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="p-8 bg-black/80 border border-emerald-500/30 flex flex-col items-center justify-center space-y-4 rounded-3xl group cursor-pointer relative overflow-hidden">
+                  <div className="absolute inset-0 bg-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                   
-                  {/* QR INTEGRADO CON LIBRERÍA - Aumentado un poco en el preview */}
-                  <div className="group-hover:scale-[1.05] transition-all duration-500">
-                    <BrandedQR value={currentUrl || "https://synqai.sports"} size={220} />
-                  </div>
+                  <BrandedQR value={currentUrl || "https://synqai.sports"} size={260} />
 
-                  <p className="text-[9px] font-black text-emerald-400/40 uppercase tracking-[0.4em] text-center relative z-10 group-hover:text-emerald-400 transition-colors">
-                    {currentToken ? 'QR_ENCRYPT_SYNC' : 'ESPERANDO_NODO'}
+                  <p className="text-[9px] font-black text-emerald-400 uppercase tracking-[0.5em] text-center relative z-10 mt-4 italic">
+                    {currentToken ? 'SYNC_READY_HD' : 'WAITING_FOR_TOKEN'}
                   </p>
                 </div>
 
                 <div className="space-y-3">
-                  <div className="flex justify-between items-end px-1">
-                    <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">URL de Acceso Directo</p>
-                    <span className="text-[8px] font-black text-emerald-400 uppercase tracking-widest italic">{currentToken ? 'Sincronizada' : 'Pendiente'}</span>
-                  </div>
+                  <p className="text-[9px] font-black text-white/40 uppercase tracking-widest px-1">Magic Link de Red</p>
                   <div className="flex gap-2">
                       <Input 
                         readOnly 
-                        value={currentUrl || "Sincronizando URL..."} 
-                        className="h-12 bg-white/5 border-white/10 rounded-none text-[10px] font-mono text-emerald-400/60 focus:ring-0" 
+                        value={currentUrl || "Sincronizando..."} 
+                        className="h-12 bg-white/5 border-white/10 rounded-none text-[10px] font-mono text-emerald-400/80" 
                       />
                       <Button 
                         size="icon" 
@@ -363,46 +350,33 @@ export default function GlobalPromosPage() {
                   </div>
                 </div>
 
-                <div className="pt-4 space-y-3">
-                  <div className="p-5 bg-black/40 border border-white/5 space-y-3 rounded-2xl">
-                     <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">Hook Táctico Vincuado</p>
-                     <p className="text-[10px] text-white/60 leading-relaxed font-bold italic uppercase">
-                       {currentHook || 'Defina un objetivo regional para generar el gancho de escasez.'}
-                     </p>
-                  </div>
-                  <Button className="w-full h-14 bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest rounded-none shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:scale-[1.02] transition-all border-none">
-                    DESCARGAR PACK DE CAMPAÑA (QR + LINK)
+                <div className="pt-2 space-y-4">
+                  <Button 
+                    onClick={downloadQR}
+                    className="w-full h-16 bg-emerald-500 text-black font-black uppercase text-[10px] tracking-[0.2em] rounded-none shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:scale-[1.02] transition-all border-none"
+                  >
+                    <Download className="h-4 w-4 mr-2" /> DESCARGAR PACK DE IMPRESIÓN (HD)
                   </Button>
+                  <p className="text-[8px] text-white/30 text-center uppercase font-bold tracking-widest">Formatos: PNG HD (Canvas Render)</p>
                 </div>
             </CardContent>
           </Card>
-
-          <div className="p-8 rounded-3xl border border-white/5 bg-black/40 space-y-4">
-             <div className="flex items-center gap-3">
-                <Target className="h-4 w-4 text-emerald-400" />
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/60">Estrategia_Escasez_Regional</span>
-             </div>
-             <p className="text-[10px] text-white/40 leading-relaxed font-bold uppercase italic tracking-wider">
-               Al seleccionar una campaña de la lista, el sistema carga el token regional. El QR es inmutable y siempre llevará al usuario a la configuración de plan seleccionada.
-             </p>
-          </div>
         </div>
       </div>
 
-      {/* TERMINAL DE GENERACIÓN IA Y CONFIGURACIÓN QR */}
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-emerald-500/20 text-white w-full sm:max-w-xl shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
           <div className="p-10 border-b border-white/5 bg-black/40">
             <SheetHeader className="space-y-4">
               <div className="flex items-center gap-3">
                 <Sparkles className="h-5 w-5 text-emerald-400 animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400">Magic_Token_Architect_IA</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400">Architect_IA_v2.0</span>
               </div>
               <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left leading-none">
-                CONFIGURAR MAGIC LINK & QR
+                CONFIG_MAGIC_LINK
               </SheetTitle>
               <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left">
-                Vincule un país, un plan de volumen y un límite de captación para generar el acceso regional.
+                Genere activos de marketing regional con sello de marca SynQAI.
               </SheetDescription>
             </SheetHeader>
           </div>
@@ -410,34 +384,31 @@ export default function GlobalPromosPage() {
           <div className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-12">
             <form onSubmit={handleGenerate} className="space-y-8">
               <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Región y Objetivo de Captación</label>
+                <label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Objetivo de Captación</label>
                 <div className="relative">
-                   <Target className="absolute left-4 top-4.5 h-5 w-5 text-emerald-500/30" />
+                   <Target className="absolute left-4 top-5 h-5 w-5 text-emerald-500/30" />
                    <Input 
                     value={formData.objective}
                     onChange={(e) => setFormData({...formData, objective: e.target.value})}
-                    placeholder="EJ: PRIMEROS 10 ENTRENADORES EN ARGENTINA..." 
-                    className="pl-12 h-16 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-emerald-500/50 placeholder:text-white/10 text-lg" 
+                    placeholder="EJ: TOP 10 CLUBES EN BUENOS AIRES..." 
+                    className="pl-12 h-16 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-emerald-500/50 text-lg" 
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Protocolo_Plan (Escalado)</label>
+                  <label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Protocolo_Plan</label>
                   <Select 
                     value={formData.planId} 
                     onValueChange={(v) => setFormData({...formData, planId: v})}
                   >
                     <SelectTrigger className="h-16 bg-white/5 border-white/10 rounded-none font-bold uppercase tracking-widest text-xs">
-                      <div className="flex items-center gap-3">
-                        <Layers className="h-4 w-4 text-emerald-500/40" />
-                        <SelectValue />
-                      </div>
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#04070c] border-emerald-500/20 rounded-none">
                       {AVAILABLE_PLANS.map(plan => (
-                        <SelectItem key={plan.id} value={plan.id} className="text-[10px] font-black uppercase tracking-widest focus:bg-emerald-500">
+                        <SelectItem key={plan.id} value={plan.id} className="text-[10px] font-black uppercase tracking-widest">
                           {plan.name}
                         </SelectItem>
                       ))}
@@ -446,7 +417,7 @@ export default function GlobalPromosPage() {
                 </div>
                 
                 <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Canal de Difusión (Plataforma)</label>
+                  <label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Canal de Difusión</label>
                   <Select 
                     value={formData.platform} 
                     onValueChange={(v) => setFormData({...formData, platform: v})}
@@ -455,10 +426,10 @@ export default function GlobalPromosPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#04070c] border-emerald-500/20 rounded-none">
-                      <SelectItem value="Facebook" className="text-[10px] font-black uppercase">FACEBOOK / INSTAGRAM ADS</SelectItem>
-                      <SelectItem value="YouTube" className="text-[10px] font-black uppercase">YOUTUBE VIDEO ADS</SelectItem>
-                      <SelectItem value="LinkedIn" className="text-[10px] font-black uppercase">LINKEDIN PROFESSIONAL</SelectItem>
-                      <SelectItem value="Google Ads" className="text-[10px] font-black uppercase">GOOGLE SEARCH</SelectItem>
+                      <SelectItem value="Facebook" className="text-[10px] font-black uppercase">SOCIAL ADS</SelectItem>
+                      <SelectItem value="YouTube" className="text-[10px] font-black uppercase">VIDEO ADS</SelectItem>
+                      <SelectItem value="LinkedIn" className="text-[10px] font-black uppercase">PROFESSIONAL</SelectItem>
+                      <SelectItem value="Google Ads" className="text-[10px] font-black uppercase">SEARCH</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -467,55 +438,38 @@ export default function GlobalPromosPage() {
               <Button 
                 type="submit" 
                 disabled={loading}
-                className="w-full h-20 bg-emerald-500 text-black font-black uppercase tracking-[0.4em] rounded-none hover:scale-[1.01] transition-all text-xs shadow-[0_0_30px_rgba(16,185,129,0.3)] border-none"
+                className="w-full h-20 bg-emerald-500 text-black font-black uppercase tracking-[0.4em] rounded-none hover:scale-[1.01] transition-all text-xs border-none"
               >
-                {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : "GENERAR MAGIC LINK & ESTRATEGIA IA"}
+                {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : "GENERAR ASSETS DE CAMPAÑA IA"}
               </Button>
             </form>
 
             {result && (
               <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
                 <div className="p-8 bg-emerald-500/5 border border-emerald-500/30 space-y-6 relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-all">
+                  <div className="absolute top-0 right-0 p-4 opacity-10">
                     <Sparkles className="h-24 w-24 text-emerald-400" />
                   </div>
                   
-                  <div className="flex items-center justify-between relative z-10">
-                    <span className="text-[11px] font-black text-emerald-400 uppercase tracking-widest">MAGIC_TOKEN_CONFIG_READY</span>
-                    <Badge className="bg-emerald-500 text-black font-black text-[9px] rounded-none px-3">PROTOCOLO: {formData.planId}</Badge>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-black text-emerald-400 uppercase tracking-widest">ASSET_SYNC_COMPLETE</span>
                   </div>
 
-                  <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white relative z-10">{result.campaignTitle}</h3>
+                  <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white">{result.campaignTitle}</h3>
                   
-                  <div className="grid grid-cols-[1fr_200px] gap-6 items-center relative z-10">
-                    <div className="space-y-3 p-6 bg-black/60 border border-white/10 rounded-2xl">
-                      <p className="text-[10px] font-black text-white/30 uppercase tracking-widest">Token_Único_Generado</p>
-                      <div className="flex items-center justify-between">
-                         <p className="text-3xl font-headline font-bold text-emerald-400 italic tracking-[0.2em]">{result.suggestedPromoCode}</p>
-                         <Button variant="ghost" size="icon" className="h-10 w-10 text-white/20 hover:text-emerald-400 border border-white/5" onClick={() => copyToClipboard(result.suggestedPromoCode)}>
-                            <Copy className="h-4 w-4" />
-                         </Button>
-                      </div>
+                  <div className="grid grid-cols-[1fr_auto] gap-8 items-center">
+                    <div className="space-y-4 p-6 bg-black/60 border border-white/10 rounded-2xl">
+                      <p className="text-[10px] font-black text-white/30 uppercase tracking-widest">Token Generado</p>
+                      <p className="text-4xl font-headline font-bold text-emerald-400 italic tracking-[0.2em]">{result.suggestedPromoCode}</p>
                     </div>
-                    {/* QR PRO EN LA TERMINAL */}
                     <BrandedQR value={currentUrl} size={180} />
                   </div>
 
-                  <div className="space-y-3 relative z-10">
-                    <p className="text-[10px] font-black text-white/30 uppercase tracking-widest">Gancho de Captación (Estrategia IA)</p>
+                  <div className="space-y-3">
+                    <p className="text-[10px] font-black text-white/30 uppercase tracking-widest">Estrategia de Captación</p>
                     <p className="text-sm text-white/80 leading-relaxed font-bold italic border-l-2 border-emerald-500/40 pl-4 bg-white/5 p-4">
                       {result.mainHook}
                     </p>
-                  </div>
-
-                  <div className="space-y-3 pt-4 relative z-10">
-                    <div className="flex items-center justify-between">
-                      <p className="text-[10px] font-black text-white/30 uppercase tracking-widest">Copy_Anuncio_Personalizado</p>
-                      <Button variant="link" className="h-auto p-0 text-[9px] font-black text-emerald-400/60 uppercase" onClick={() => copyToClipboard(result.socialMediaCopy)}>Copiar Texto</Button>
-                    </div>
-                    <div className="text-[11px] text-white/50 leading-relaxed uppercase font-bold bg-black/40 p-6 border border-white/5 whitespace-pre-wrap rounded-2xl">
-                      {result.socialMediaCopy}
-                    </div>
                   </div>
                 </div>
               </div>
@@ -524,8 +478,8 @@ export default function GlobalPromosPage() {
 
           <div className="p-10 bg-black/60 border-t border-white/5">
             <SheetClose asChild>
-              <Button variant="ghost" className="w-full h-16 border border-white/10 text-white/40 font-black uppercase text-[10px] tracking-widest hover:bg-white/5">
-                CERRAR_TERMINAL_CONFIG
+              <Button variant="ghost" className="w-full h-16 border border-white/10 text-white/40 font-black uppercase text-[10px] tracking-widest">
+                CERRAR_TERMINAL
               </Button>
             </SheetClose>
           </div>
