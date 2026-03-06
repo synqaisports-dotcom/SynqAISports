@@ -53,6 +53,7 @@ import {
 import { generatePromoCampaign, GenerateCampaignOutput } from "@/ai/flows/generate-promo-campaign";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { QRCodeCanvas } from "qrcode.react";
 
 const AVAILABLE_PLANS = [
   { id: "PROMO_LINK", name: "Promo Link (Pizarra + Ads)" },
@@ -96,29 +97,23 @@ const MOCK_CAMPAIGNS = [
   },
 ];
 
-// Componente de QR de alta calidad con marca central en verde eléctrico
-const BrandedQR = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 100 100" className={cn("text-emerald-400", className)} fill="currentColor">
-    {/* Generamos una cuadrícula densa para simular un QR de alta calidad */}
-    {Array.from({ length: 25 }).map((_, i) => (
-      Array.from({ length: 25 }).map((_, j) => {
-        // Dejamos el centro libre para el logo (módulo 9 a 16 aprox)
-        if (i > 8 && i < 16 && j > 10 && j < 14) return null;
-        // Patrón aleatorio controlado para que parezca un QR real
-        const isFilled = (Math.sin(i * 1.5 + j * 2.1) * Math.cos(j * 0.8)) > -0.2;
-        if (isFilled) {
-          return <rect key={`${i}-${j}`} x={i * 4} y={j * 4} width="3.2" height="3.2" rx="0.5" />;
-        }
-        return null;
-      })
-    ))}
-    {/* Cuadrados de posicionamiento clásicos de un QR */}
-    <path d="M0 0h28v28H0zM4 4h20v20H4zM8 8h12v12H8zM72 0h28v28H72zM76 4h20v20h-20zM80 8h12v12h-12zM0 72h28v28H0zM4 76h20v20H4zM8 80h12v12H8z" />
-    
-    {/* Placa Central SynQAI con fondo verde eléctrico */}
-    <rect x="28" y="44" width="44" height="12" rx="2" className="fill-emerald-400" />
-    <text x="50" y="52.5" fontSize="7" fontWeight="900" textAnchor="middle" letterSpacing="-0.2" fill="black" style={{ fontFamily: 'var(--font-headline)' }}>SynQAI</text>
-  </svg>
+// Componente de QR Profesional con Branding Central
+const BrandedQR = ({ value, size = 200 }: { value: string; size?: number }) => (
+  <div className="relative flex items-center justify-center p-2 bg-black rounded-xl overflow-hidden shadow-[0_0_30px_rgba(16,185,129,0.2)]">
+    <QRCodeCanvas
+      value={value}
+      size={size}
+      level="H"
+      fgColor="#10b981"
+      bgColor="#000000"
+      includeMargin={false}
+    />
+    {/* Overlay de Marca Central */}
+    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black px-2 py-1 border border-emerald-500/40 rounded-sm">
+      <span className="text-[10px] font-black text-emerald-400 uppercase tracking-tighter">SynQAI</span>
+    </div>
+    <div className="absolute inset-0 scan-line opacity-10 pointer-events-none" />
+  </div>
 );
 
 export default function GlobalPromosPage() {
@@ -183,7 +178,7 @@ export default function GlobalPromosPage() {
 
   const currentToken = selectedCampaign?.token || result?.suggestedPromoCode;
   const currentHook = selectedCampaign?.hook || result?.mainHook;
-  const currentUrl = currentToken ? `https://synqai.sports/l?t=${currentToken}` : "";
+  const currentUrl = currentToken ? `https://synqai.sports/login?token=${currentToken}` : "";
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
@@ -334,12 +329,14 @@ export default function GlobalPromosPage() {
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                <div className="p-8 bg-black/60 border border-emerald-500/20 flex flex-col items-center justify-center space-y-4 rounded-3xl group cursor-pointer relative overflow-hidden">
+                <div className="p-10 bg-black/60 border border-emerald-500/20 flex flex-col items-center justify-center space-y-4 rounded-3xl group cursor-pointer relative overflow-hidden">
                   <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <div className="h-44 w-44 bg-emerald-500/5 border border-emerald-500/40 flex items-center justify-center p-6 relative z-10 group-hover:border-emerald-500/60 transition-all duration-500 shadow-[0_0_30px_rgba(16,185,129,0.1)]">
-                      <BrandedQR className="h-full w-full group-hover:scale-[1.05] transition-all duration-500" />
-                      <div className="absolute inset-0 scan-line opacity-20" />
+                  
+                  {/* QR INTEGRADO CON LIBRERÍA */}
+                  <div className="group-hover:scale-[1.05] transition-all duration-500">
+                    <BrandedQR value={currentUrl || "https://synqai.sports"} size={220} />
                   </div>
+
                   <p className="text-[9px] font-black text-emerald-400/40 uppercase tracking-[0.4em] text-center relative z-10 group-hover:text-emerald-400 transition-colors">
                     {currentToken ? 'QR_ENCRYPT_SYNC' : 'ESPERANDO_NODO'}
                   </p>
@@ -491,7 +488,7 @@ export default function GlobalPromosPage() {
 
                   <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white relative z-10">{result.campaignTitle}</h3>
                   
-                  <div className="grid grid-cols-[1fr_120px] gap-6 items-center relative z-10">
+                  <div className="grid grid-cols-[1fr_200px] gap-6 items-center relative z-10">
                     <div className="space-y-3 p-6 bg-black/60 border border-white/10 rounded-2xl">
                       <p className="text-[10px] font-black text-white/30 uppercase tracking-widest">Token_Único_Generado</p>
                       <div className="flex items-center justify-between">
@@ -501,10 +498,8 @@ export default function GlobalPromosPage() {
                          </Button>
                       </div>
                     </div>
-                    <div className="h-[120px] w-[120px] bg-emerald-500/5 border border-emerald-500/40 p-3 flex items-center justify-center relative overflow-hidden">
-                       <BrandedQR className="h-full w-full" />
-                       <div className="absolute inset-0 scan-line opacity-20" />
-                    </div>
+                    {/* QR PRO EN LA TERMINAL */}
+                    <BrandedQR value={currentUrl} size={180} />
                   </div>
 
                   <div className="space-y-3 relative z-10">
