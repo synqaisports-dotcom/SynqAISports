@@ -40,20 +40,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // PROTOCOLO_DE_ACCESO: En desarrollo, asignamos un Superadmin por defecto
-    const mockUser = { uid: "synq-root-dev", email: "root@synqai.sports" };
-    const mockProfile: UserProfile = {
-      email: "root@synqai.sports",
-      name: "SynqAi Root",
-      role: "superadmin",
-      clubId: "global-hq",
-      plan: "enterprise_scale",
-      country: "ES",
-      clubCreated: true,
-    };
-    
-    setUser(mockUser);
-    setProfile(mockProfile);
+    // Simulamos carga inicial
     setLoading(false);
   }, []);
 

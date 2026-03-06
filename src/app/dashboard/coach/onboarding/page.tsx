@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Lock, 
   ShieldCheck, 
@@ -47,6 +47,12 @@ export default function OnboardingTunnel() {
 
   const isFromPromo = !!profile?.claimedToken;
 
+  useEffect(() => {
+    if (profile?.country) {
+      setSelectedCountry(profile.country);
+    }
+  }, [profile]);
+
   const handleFinish = () => {
     if (!clubName) {
       toast({
@@ -83,11 +89,11 @@ export default function OnboardingTunnel() {
               <Cpu className="h-3 w-3 text-primary animate-pulse" />
               <span className="text-[9px] font-black uppercase tracking-[0.3em] text-primary">Túnel de Vinculación de Nodo</span>
             </div>
-            <h1 className="text-6xl font-headline font-black text-white italic tracking-tighter cyan-text-glow">
+            <h1 className="text-6xl font-headline font-black text-white italic tracking-tighter cyan-text-glow leading-tight">
               GENERAR PERFIL DE CLUB
             </h1>
             <p className="text-white/40 font-bold uppercase text-[10px] tracking-[0.5em]">
-              Sincronizando Identidad: {profile?.name.toUpperCase()}
+              Sincronizando Identidad: {profile?.name.toUpperCase() || 'USUARIO_PENDIENTE'}
             </p>
           </div>
 
