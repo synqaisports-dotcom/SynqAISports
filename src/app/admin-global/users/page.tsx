@@ -11,7 +11,11 @@ import {
   Globe2, 
   Mail, 
   Shield,
-  Activity
+  Activity,
+  Fingerprint,
+  MapPin,
+  Loader2,
+  ShieldAlert
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -31,7 +35,26 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetDescription, 
+  SheetFooter, 
+  SheetClose,
+  SheetTrigger
+} from "@/components/ui/sheet";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 const MOCK_REQUESTS = [
   { id: "u1", name: "Marc", surname: "García", email: "m.garcia@elite.com", country: "España", status: "Pending", lastSeen: "2m ago" },
@@ -40,8 +63,43 @@ const MOCK_REQUESTS = [
   { id: "u4", name: "Lucas", surname: "Silva", email: "l.silva@brasil-academy.br", country: "Brasil", status: "Pending", lastSeen: "Just now" },
 ];
 
+const AVAILABLE_ROLES = [
+  { value: "superadmin", label: "Superadmin" },
+  { value: "club_admin", label: "Administrador de Club" },
+  { value: "academy_director", label: "Director de Cantera" },
+  { value: "coach", label: "Entrenador" },
+  { value: "tutor", label: "Tutor / Familia" },
+];
+
 export default function GlobalUsersPage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+
+  const [formData, setFormData] = useState({
+    name: "",
+    surname: "",
+    email: "",
+    country: "España",
+    role: "club_admin"
+  });
+
+  const handleCreateCredential = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    // Simulación de creación de credencial en el nodo central
+    setTimeout(() => {
+      toast({
+        title: "CREDENCIAL_EMITIDA",
+        description: `Se ha generado el protocolo de acceso para ${formData.name} ${formData.surname}.`,
+      });
+      setLoading(false);
+      setIsSheetOpen(false);
+      setFormData({ name: "", surname: "", email: "", country: "España", role: "club_admin" });
+    }, 1500);
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
@@ -56,9 +114,130 @@ export default function GlobalUsersPage() {
             Gestión de Usuarios
           </h1>
         </div>
-        <Button className="rounded-none bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 transition-all border-none">
-          <UserPlus className="h-4 w-4 mr-2" /> Nueva Credencial
-        </Button>
+        
+        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+          <SheetTrigger asChild>
+            <Button className="rounded-none bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 transition-all border-none">
+              <UserPlus className="h-4 w-4 mr-2" /> Nueva Credencial
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-emerald-500/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+            <div className="p-10 border-b border-white/5 bg-black/40">
+              <SheetHeader className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400">Credential_Factory_v1.0</span>
+                </div>
+                <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left">
+                  EMITIR_ACCESO
+                </SheetTitle>
+                <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left">
+                  Genere una nueva identidad autorizada en el núcleo central de SynQAI.
+                </SheetDescription>
+              </SheetHeader>
+            </div>
+
+            <form onSubmit={handleCreateCredential} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-8">
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Nombre</Label>
+                    <Input 
+                      required
+                      value={formData.name}
+                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      placeholder="EJ: MARC" 
+                      className="h-12 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-emerald-500/50 transition-all placeholder:text-white/10" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Apellidos</Label>
+                    <Input 
+                      required
+                      value={formData.surname}
+                      onChange={(e) => setFormData({...formData, surname: e.target.value})}
+                      placeholder="EJ: GARCÍA" 
+                      className="h-12 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-emerald-500/50 transition-all placeholder:text-white/10" 
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Mail de Acceso</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3.5 h-4 w-4 text-emerald-500/30" />
+                    <Input 
+                      required
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      placeholder="USER@CLUB.COM" 
+                      className="pl-10 h-12 bg-white/5 border-white/10 rounded-none font-bold focus:border-emerald-500/50 transition-all placeholder:text-white/10" 
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Nodo_País</Label>
+                  <div className="relative">
+                    <Globe2 className="absolute left-3 top-3.5 h-4 w-4 text-emerald-500/30" />
+                    <Input 
+                      required
+                      value={formData.country}
+                      onChange={(e) => setFormData({...formData, country: e.target.value})}
+                      placeholder="ESPAÑA" 
+                      className="pl-10 h-12 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-emerald-500/50 transition-all placeholder:text-white/10" 
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Protocolo de Rol</Label>
+                  <Select 
+                    value={formData.role} 
+                    onValueChange={(v) => setFormData({...formData, role: v})}
+                  >
+                    <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-emerald-500/50 transition-all">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#04070c] border-emerald-500/20 rounded-none">
+                      {AVAILABLE_ROLES.map((role) => (
+                        <SelectItem key={role.value} value={role.value} className="text-[10px] font-black uppercase tracking-widest focus:bg-emerald-500 focus:text-black">
+                          {role.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="p-6 bg-emerald-500/5 border border-emerald-500/20 space-y-3">
+                <div className="flex items-center gap-2">
+                  <ShieldAlert className="h-3 w-3 text-emerald-400" />
+                  <span className="text-[9px] font-black uppercase text-emerald-400 tracking-widest">Aviso de Seguridad</span>
+                </div>
+                <p className="text-[9px] text-white/40 leading-relaxed font-bold uppercase italic">
+                  La emisión de una credencial genera un token de sincronización único. El usuario deberá validar su identidad en el primer acceso.
+                </p>
+              </div>
+            </form>
+
+            <div className="p-10 bg-black/40 border-t border-white/5 flex gap-4">
+              <SheetClose asChild>
+                <Button variant="ghost" className="flex-1 h-16 border border-white/10 text-white/40 font-black uppercase text-[10px] tracking-widest hover:bg-white/5">
+                  CANCELAR
+                </Button>
+              </SheetClose>
+              <Button 
+                onClick={handleCreateCredential}
+                disabled={loading}
+                className="flex-[2] h-16 bg-emerald-500 text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-none shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:scale-[1.02] transition-all border-none"
+              >
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "EMITIR_CREDENCIAL"}
+              </Button>
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
 
       {/* METRICS ROW */}
@@ -69,7 +248,7 @@ export default function GlobalUsersPage() {
       </div>
 
       {/* MAIN DATA TERMINAL */}
-      <Card className="glass-panel shadow-2xl overflow-hidden relative">
+      <Card className="glass-panel shadow-2xl overflow-hidden relative border-none bg-black/40">
         <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
         
         <CardHeader className="bg-black/40 border-b border-white/5 p-6 space-y-4 md:space-y-0 md:flex md:flex-row md:items-center md:justify-between">
@@ -172,7 +351,7 @@ export default function GlobalUsersPage() {
 
 function MetricMiniCard({ label, value, color }: any) {
   return (
-    <Card className="glass-panel p-4 relative group overflow-hidden">
+    <Card className="glass-panel p-4 relative group overflow-hidden border-none bg-black/20">
       <div className="absolute top-0 right-0 p-2 opacity-5">
         <Activity className="h-8 w-8 text-emerald-500" />
       </div>
