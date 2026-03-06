@@ -59,6 +59,7 @@ export default function FacilitiesManagementPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -68,28 +69,65 @@ export default function FacilitiesManagementPage() {
     capacity: ""
   });
 
-  const handleCreateFacility = (e: React.FormEvent) => {
+  const handleOpenCreate = () => {
+    setEditingId(null);
+    setFormData({ name: "", type: "Campo Exterior", status: "Active", capacity: "" });
+    setIsSheetOpen(true);
+  };
+
+  const handleEdit = (facility: any) => {
+    setEditingId(facility.id);
+    setFormData({
+      name: facility.name,
+      type: facility.type,
+      status: facility.status,
+      capacity: facility.capacity
+    });
+    setIsSheetOpen(true);
+  };
+
+  const handleDelete = (id: string, name: string) => {
+    setFacilities(prev => prev.filter(f => f.id !== id));
+    toast({
+      variant: "destructive",
+      title: "ACTIVO_ELIMINADO",
+      description: `La instalación ${name} ha sido desconectada de la matriz.`,
+    });
+  };
+
+  const handleSaveFacility = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     
     setTimeout(() => {
-      const newFacility = {
-        id: `f${Date.now()}`,
-        name: formData.name,
-        type: formData.type,
-        status: formData.status,
-        capacity: formData.capacity,
-        nextMaintenance: "Próximamente"
-      };
+      if (editingId) {
+        setFacilities(prev => prev.map(f => 
+          f.id === editingId 
+            ? { ...f, ...formData } 
+            : f
+        ));
+        toast({
+          title: "ACTIVO_ACTUALIZADO",
+          description: `Los protocolos de ${formData.name} han sido sincronizados.`,
+        });
+      } else {
+        const newFacility = {
+          id: `f${Date.now()}`,
+          name: formData.name,
+          type: formData.type,
+          status: formData.status,
+          capacity: formData.capacity,
+          nextMaintenance: "Próximamente"
+        };
+        setFacilities([newFacility, ...facilities]);
+        toast({
+          title: "INSTALACIÓN_REGISTRADA",
+          description: `El nodo ${formData.name} ha sido añadido a la matriz del club.`,
+        });
+      }
       
-      setFacilities([newFacility, ...facilities]);
-      toast({
-        title: "INSTALACIÓN_REGISTRADA",
-        description: `El nodo ${formData.name} ha sido añadido a la matriz del club.`,
-      });
       setLoading(false);
       setIsSheetOpen(false);
-      setFormData({ name: "", type: "Campo Exterior", status: "Active", capacity: "" });
     }, 1000);
   };
 
@@ -100,7 +138,6 @@ export default function FacilitiesManagementPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
-      {/* HEADER SECTOR */}
       <div className="flex justify-between items-end border-b border-white/5 pb-6">
         <div className="space-y-1">
           <div className="flex items-center gap-3 mb-2">
@@ -112,119 +149,14 @@ export default function FacilitiesManagementPage() {
           </h1>
         </div>
         
-        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-          <SheetTrigger asChild>
-            <Button className="rounded-none bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none">
-              <Plus className="h-4 w-4 mr-2" /> Nuevo Activo
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
-            <div className="p-10 border-b border-white/5 bg-black/40">
-              <SheetHeader className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Facility_Deploy_v1.0</span>
-                </div>
-                <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left">
-                  AÑADIR_ACTIVO
-                </SheetTitle>
-                <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left">
-                  Sincronice un nuevo espacio físico con la red operativa del club.
-                </SheetDescription>
-              </SheetHeader>
-            </div>
-
-            <form onSubmit={handleCreateFacility} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-8">
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Nombre de la Instalación</Label>
-                  <Input 
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})}
-                    placeholder="EJ: PABELLÓN NORTE" 
-                    className="h-12 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-primary/50 transition-all placeholder:text-white/10" 
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Tipo de Espacio</Label>
-                  <Select 
-                    value={formData.type} 
-                    onValueChange={(v) => setFormData({...formData, type: v})}
-                  >
-                    <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary/50 transition-all">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
-                      <SelectItem value="Campo Exterior" className="text-[10px] font-black uppercase">CAMPO EXTERIOR</SelectItem>
-                      <SelectItem value="Pabellón" className="text-[10px] font-black uppercase">PABELLÓN CUBIERTO</SelectItem>
-                      <SelectItem value="Fitness" className="text-[10px] font-black uppercase">GIMNASIO / SALA</SelectItem>
-                      <SelectItem value="Acuática" className="text-[10px] font-black uppercase">ZONA ACUÁTICA</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Capacidad Máx.</Label>
-                    <Input 
-                      required
-                      value={formData.capacity}
-                      onChange={(e) => setFormData({...formData, capacity: e.target.value})}
-                      placeholder="EJ: 25 ATLETAS" 
-                      className="h-12 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-primary/50 transition-all placeholder:text-white/10" 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Estatus_Red</Label>
-                    <Select 
-                      value={formData.status} 
-                      onValueChange={(v) => setFormData({...formData, status: v})}
-                    >
-                      <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary/50 transition-all">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
-                        <SelectItem value="Active" className="text-[10px] font-black uppercase">OPERATIVO</SelectItem>
-                        <SelectItem value="Maintenance" className="text-[10px] font-black uppercase">MANTENIMIENTO</SelectItem>
-                        <SelectItem value="Inactive" className="text-[10px] font-black uppercase">CERRADO</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-6 bg-primary/5 border border-primary/20 space-y-3">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="h-3 w-3 text-primary" />
-                  <span className="text-[9px] font-black uppercase text-primary tracking-widest">Protocolo de Seguridad</span>
-                </div>
-                <p className="text-[9px] text-white/40 leading-relaxed font-bold uppercase italic">
-                  La activación de un nuevo espacio permite su reserva inmediata en el cronograma de sesiones tácticas del club.
-                </p>
-              </div>
-            </form>
-
-            <div className="p-10 bg-black/40 border-t border-white/5 flex gap-4">
-              <SheetClose asChild>
-                <Button variant="ghost" className="flex-1 h-16 border border-white/10 text-white/40 font-black uppercase text-[10px] tracking-widest hover:bg-white/5">
-                  CANCELAR
-                </Button>
-              </SheetClose>
-              <Button 
-                onClick={handleCreateFacility}
-                disabled={loading}
-                className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-none shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] transition-all border-none"
-              >
-                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "VINCULAR_ACTIVO"}
-              </Button>
-            </div>
-          </SheetContent>
-        </Sheet>
+        <Button 
+          onClick={handleOpenCreate}
+          className="rounded-none bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none"
+        >
+          <Plus className="h-4 w-4 mr-2" /> Nuevo Activo
+        </Button>
       </div>
 
-      {/* METRICS ROW */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <FacilityStat label="Total Espacios" value={facilities.length.toString()} icon={Warehouse} />
         <FacilityStat label="Ocupación Hoy" value="82%" icon={Activity} highlight />
@@ -232,7 +164,20 @@ export default function FacilitiesManagementPage() {
         <FacilityStat label="Sectores Sincro" value="04" icon={LayoutDashboard} />
       </div>
 
-      {/* MAIN DATA GRID */}
+      <Card className="glass-panel border-none bg-black/40 overflow-hidden mb-8">
+        <CardHeader className="p-6 border-b border-white/5">
+          <div className="relative w-full max-w-md">
+            <Search className="absolute left-3 top-3.5 h-4 w-4 text-primary opacity-50" />
+            <Input 
+              placeholder="BUSCAR INSTALACIÓN..." 
+              className="pl-10 h-12 bg-white/5 border-white/10 rounded-none text-white placeholder:text-white/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-primary/50"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </CardHeader>
+      </Card>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {filteredFacilities.map((f) => (
           <Card key={f.id} className="glass-panel overflow-hidden relative group border-none bg-black/40">
@@ -283,10 +228,20 @@ export default function FacilitiesManagementPage() {
                 <CheckCircle2 className="h-3 w-3 text-primary/40" /> Sincronización Estable
               </span>
               <div className="flex gap-2">
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-white/20 hover:text-primary border border-white/5">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 text-white/20 hover:text-primary border border-white/5"
+                  onClick={() => handleEdit(f)}
+                >
                   <Pencil className="h-3.5 w-3.5" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-white/20 hover:text-rose-400 border border-white/5">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 text-white/20 hover:text-rose-400 border border-white/5"
+                  onClick={() => handleDelete(f.id, f.name)}
+                >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -294,6 +249,112 @@ export default function FacilitiesManagementPage() {
           </Card>
         ))}
       </div>
+
+      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+          <div className="p-10 border-b border-white/5 bg-black/40">
+            <SheetHeader className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Facility_Deploy_v1.0</span>
+              </div>
+              <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left">
+                {editingId ? "MODIFICAR_ACTIVO" : "AÑADIR_ACTIVO"}
+              </SheetTitle>
+              <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left">
+                Sincronice un nuevo espacio físico con la red operativa del club.
+              </SheetDescription>
+            </SheetHeader>
+          </div>
+
+          <form onSubmit={handleSaveFacility} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-8">
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Nombre de la Instalación</Label>
+                <Input 
+                  required
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})}
+                  placeholder="EJ: PABELLÓN NORTE" 
+                  className="h-12 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-primary/50 transition-all placeholder:text-white/10" 
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Tipo de Espacio</Label>
+                <Select 
+                  value={formData.type} 
+                  onValueChange={(v) => setFormData({...formData, type: v})}
+                >
+                  <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary/50 transition-all">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
+                    <SelectItem value="Campo Exterior" className="text-[10px] font-black uppercase">CAMPO EXTERIOR</SelectItem>
+                    <SelectItem value="Pabellón" className="text-[10px] font-black uppercase">PABELLÓN CUBIERTO</SelectItem>
+                    <SelectItem value="Fitness" className="text-[10px] font-black uppercase">GIMNASIO / SALA</SelectItem>
+                    <SelectItem value="Acuática" className="text-[10px] font-black uppercase">ZONA ACUÁTICA</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Capacidad Máx.</Label>
+                  <Input 
+                    required
+                    value={formData.capacity}
+                    onChange={(e) => setFormData({...formData, capacity: e.target.value})}
+                    placeholder="EJ: 25 ATLETAS" 
+                    className="h-12 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-primary/50 transition-all placeholder:text-white/10" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Estatus_Red</Label>
+                  <Select 
+                    value={formData.status} 
+                    onValueChange={(v) => setFormData({...formData, status: v})}
+                  >
+                    <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary/50 transition-all">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
+                      <SelectItem value="Active" className="text-[10px] font-black uppercase">OPERATIVO</SelectItem>
+                      <SelectItem value="Maintenance" className="text-[10px] font-black uppercase">MANTENIMIENTO</SelectItem>
+                      <SelectItem value="Inactive" className="text-[10px] font-black uppercase">CERRADO</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 bg-primary/5 border border-primary/20 space-y-3">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-3 w-3 text-primary" />
+                <span className="text-[9px] font-black uppercase text-primary tracking-widest">Protocolo de Seguridad</span>
+              </div>
+              <p className="text-[9px] text-white/40 leading-relaxed font-bold uppercase italic">
+                La activación de un nuevo espacio permite su reserva inmediata en el cronograma de sesiones tácticas del club.
+              </p>
+            </div>
+          </form>
+
+          <div className="p-10 bg-black/40 border-t border-white/5 flex gap-4">
+            <SheetClose asChild>
+              <Button variant="ghost" className="flex-1 h-16 border border-white/10 text-white/40 font-black uppercase text-[10px] tracking-widest hover:bg-white/5">
+                CANCELAR
+              </Button>
+            </SheetClose>
+            <Button 
+              onClick={handleSaveFacility}
+              disabled={loading}
+              className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-none shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] transition-all border-none"
+            >
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (editingId ? "SINCRONIZAR_CAMBIOS" : "VINCULAR_ACTIVO")}
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
