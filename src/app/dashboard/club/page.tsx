@@ -35,7 +35,8 @@ import {
   SheetTitle, 
   SheetDescription,
   SheetFooter,
-  SheetClose
+  SheetClose,
+  SheetTrigger
 } from "@/components/ui/sheet";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/hooks/use-toast";
@@ -51,7 +52,7 @@ export default function ClubManagementPage() {
     name: profile?.clubName || profile?.clubId || "Nodo de Cantera",
     country: profile?.country || "España",
     foundation: "2024",
-    members: "0",
+    members: "142",
     website: "www.cantera-synqai.com",
     socials: {
       instagram: "@club_academy",
@@ -60,11 +61,11 @@ export default function ClubManagementPage() {
     }
   });
 
-  const handleUpdate = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleUpdate = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     toast({
       title: "NODO_ACTUALIZADO",
-      description: "Los parámetros de identidad del club han sido sincronizados.",
+      description: `La identidad de "${clubData.name}" ha sido sincronizada en la red.`,
     });
     setIsSheetOpen(false);
   };
@@ -82,15 +83,112 @@ export default function ClubManagementPage() {
           </h1>
         </div>
         
-        <Button 
-          onClick={() => setIsSheetOpen(true)}
-          className="rounded-none bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none"
-        >
-          <Settings2 className="h-4 w-4 mr-2" /> Configurar Nodo
-        </Button>
+        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+          <SheetTrigger asChild>
+            <Button className="rounded-none bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none">
+              <Settings2 className="h-4 w-4 mr-2" /> Configurar Nodo
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+            <div className="p-10 border-b border-white/5 bg-black/40">
+              <SheetHeader className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Identity_Deploy_v2.0</span>
+                </div>
+                <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left">
+                  MODIFICAR_NODO
+                </SheetTitle>
+                <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left">
+                  Ajuste la matriz de información del club para la red de canteras.
+                </SheetDescription>
+              </SheetHeader>
+            </div>
+
+            <form onSubmit={handleUpdate} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10">
+              <div className="space-y-8">
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Nombre de la Entidad</Label>
+                  <Input 
+                    value={clubData.name}
+                    onChange={(e) => setClubData({...clubData, name: e.target.value.toUpperCase()})}
+                    className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold uppercase focus:border-primary/50 text-lg" 
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Fundación</Label>
+                    <Input 
+                      value={clubData.foundation}
+                      onChange={(e) => setClubData({...clubData, foundation: e.target.value})}
+                      className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold uppercase" 
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Capacidad (Atletas)</Label>
+                    <Input 
+                      value={clubData.members}
+                      onChange={(e) => setClubData({...clubData, members: e.target.value})}
+                      className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold uppercase" 
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Portal Web</Label>
+                  <Input 
+                    value={clubData.website}
+                    onChange={(e) => setClubData({...clubData, website: e.target.value})}
+                    className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold" 
+                  />
+                </div>
+
+                <div className="space-y-3 pt-6 border-t border-white/5">
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Instagram (@)</Label>
+                  <Input 
+                    value={clubData.socials.instagram}
+                    onChange={(e) => setClubData({...clubData, socials: {...clubData.socials, instagram: e.target.value}})}
+                    className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold" 
+                  />
+                </div>
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">YouTube</Label>
+                  <Input 
+                    value={clubData.socials.youtube}
+                    onChange={(e) => setClubData({...clubData, socials: {...clubData.socials, youtube: e.target.value}})}
+                    className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold" 
+                  />
+                </div>
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Twitter / X</Label>
+                  <Input 
+                    value={clubData.socials.twitter}
+                    onChange={(e) => setClubData({...clubData, socials: {...clubData.socials, twitter: e.target.value}})}
+                    className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold" 
+                  />
+                </div>
+              </div>
+            </form>
+
+            <div className="p-10 bg-black/40 border-t border-white/5 flex gap-6">
+              <SheetClose asChild>
+                <Button variant="ghost" className="flex-1 h-16 border border-white/10 text-white/40 font-black uppercase text-[11px] tracking-widest hover:bg-white/5 rounded-2xl">
+                  CANCELAR
+                </Button>
+              </SheetClose>
+              <Button 
+                onClick={() => handleUpdate()}
+                className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] transition-all border-none"
+              >
+                SINCRONIZAR_CAMBIOS
+              </Button>
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
 
-      {/* SECTOR CABECERA CON ESPACIADO MEJORADO */}
+      {/* SECTOR CABECERA */}
       <div className="relative mb-48">
         <div className="relative h-80 rounded-[3rem] overflow-hidden group border border-white/5 shadow-2xl">
           <Image 
@@ -109,7 +207,7 @@ export default function ClubManagementPage() {
           </div>
         </div>
 
-        {/* IDENTIDAD FLOTANTE - ARQUITECTURA REFORZADA */}
+        {/* IDENTIDAD FLOTANTE */}
         <div className="absolute -bottom-20 left-12 flex items-end gap-10 z-20">
           <div className="relative group/logo">
              <div className="absolute inset-0 bg-primary/30 blur-3xl rounded-full opacity-0 group-hover/logo:opacity-100 transition-opacity" />
@@ -230,88 +328,6 @@ export default function ClubManagementPage() {
            </div>
         </div>
       </div>
-
-      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
-          <div className="p-10 border-b border-white/5 bg-black/40">
-            <SheetHeader className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Identity_Deploy_v2.0</span>
-              </div>
-              <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left">
-                MODIFICAR_NODO
-              </SheetTitle>
-              <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left">
-                Ajuste la matriz de información del club para la red de canteras.
-              </SheetDescription>
-            </SheetHeader>
-          </div>
-
-          <form onSubmit={handleUpdate} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10">
-            <div className="space-y-8">
-              <div className="space-y-3">
-                <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Nombre de la Entidad</Label>
-                <Input 
-                  value={clubData.name}
-                  onChange={(e) => setClubData({...clubData, name: e.target.value})}
-                  className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold uppercase focus:border-primary/50 text-lg" 
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-3">
-                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Fundación</Label>
-                  <Input 
-                    value={clubData.foundation}
-                    onChange={(e) => setClubData({...clubData, foundation: e.target.value})}
-                    className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold uppercase" 
-                  />
-                </div>
-                <div className="space-y-3">
-                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">País</Label>
-                  <Input 
-                    value={clubData.country}
-                    readOnly
-                    className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold uppercase opacity-50" 
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-3 pt-6 border-t border-white/5">
-                <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Instagram (@)</Label>
-                <Input 
-                  value={clubData.socials.instagram}
-                  onChange={(e) => setClubData({...clubData, socials: {...clubData.socials, instagram: e.target.value}})}
-                  className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold" 
-                />
-              </div>
-              <div className="space-y-3">
-                <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">YouTube</Label>
-                <Input 
-                  value={clubData.socials.youtube}
-                  onChange={(e) => setClubData({...clubData, socials: {...clubData.socials, youtube: e.target.value}})}
-                  className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold" 
-                />
-              </div>
-            </div>
-          </form>
-
-          <div className="p-10 bg-black/40 border-t border-white/5 flex gap-6">
-            <SheetClose asChild>
-              <Button variant="ghost" className="flex-1 h-16 border border-white/10 text-white/40 font-black uppercase text-[11px] tracking-widest hover:bg-white/5 rounded-2xl">
-                CANCELAR
-              </Button>
-            </SheetClose>
-            <Button 
-              onClick={handleUpdate}
-              className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] transition-all border-none"
-            >
-              SINCRONIZAR_CAMBIOS
-            </Button>
-          </div>
-        </SheetContent>
-      </Sheet>
     </div>
   );
 }
