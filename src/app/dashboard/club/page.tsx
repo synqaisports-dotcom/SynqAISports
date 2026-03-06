@@ -70,7 +70,7 @@ export default function ClubManagementPage() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-1000 pb-12">
+    <div className="space-y-8 animate-in fade-in duration-1000 pb-24">
       <div className="flex justify-between items-end border-b border-white/5 pb-6">
         <div className="space-y-1">
           <div className="flex items-center gap-3 mb-2">
@@ -90,25 +90,35 @@ export default function ClubManagementPage() {
         </Button>
       </div>
 
-      <div className="relative h-80 rounded-[2rem] overflow-hidden group border border-white/5">
-        <Image 
-          src="https://picsum.photos/seed/stadium/1200/400" 
-          alt="Club Banner" 
-          fill 
-          className="object-cover opacity-40 group-hover:scale-105 transition-all duration-1000 grayscale group-hover:grayscale-0"
-          data-ai-hint="stadium tech"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#04070c] via-transparent to-transparent" />
-        
-        <div className="absolute -bottom-1 left-12 translate-y-1/2 flex items-end gap-8">
+      {/* SECTOR CABECERA SIN RECORTE */}
+      <div className="relative mb-32">
+        <div className="relative h-80 rounded-[2rem] overflow-hidden group border border-white/5">
+          <Image 
+            src="https://picsum.photos/seed/stadium/1200/400" 
+            alt="Club Banner" 
+            fill 
+            className="object-cover opacity-40 group-hover:scale-105 transition-all duration-1000 grayscale group-hover:grayscale-0"
+            data-ai-hint="stadium tech"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#04070c] via-transparent to-transparent" />
+          
+          <div className="absolute top-8 right-8">
+             <Button variant="ghost" className="h-10 bg-black/40 backdrop-blur-md border border-white/10 rounded-xl text-white/40 hover:text-primary transition-all">
+                <Camera className="h-4 w-4 mr-2" /> Editar Portada
+             </Button>
+          </div>
+        </div>
+
+        {/* IDENTIDAD FLOTANTE (FUERA DEL OVERFLOW DEL BANNER) */}
+        <div className="absolute -bottom-16 left-12 flex items-end gap-8 z-20">
           <div className="relative group/logo">
              <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full opacity-0 group-hover/logo:opacity-100 transition-opacity" />
-             <div className="h-40 w-40 bg-black border-2 border-primary/40 rounded-[2.5rem] flex items-center justify-center relative z-10 overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.8)]">
+             <div className="h-44 w-44 bg-black border-2 border-primary/40 rounded-[2.5rem] flex items-center justify-center relative z-10 overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.8)]">
                 <Image 
                   src="https://picsum.photos/seed/clublogo/200/200" 
                   alt="Club Logo" 
-                  width={120} 
-                  height={120} 
+                  width={140} 
+                  height={140} 
                   className="opacity-80 group-hover/logo:scale-110 transition-transform duration-500"
                   data-ai-hint="sports logo"
                 />
@@ -118,8 +128,8 @@ export default function ClubManagementPage() {
                 </button>
              </div>
           </div>
-          <div className="pb-4 space-y-1 mb-8">
-             <h2 className="text-5xl font-headline font-black text-white uppercase italic tracking-tighter leading-none cyan-text-glow">
+          <div className="pb-6 space-y-2">
+             <h2 className="text-6xl font-headline font-black text-white uppercase italic tracking-tighter leading-[0.9] cyan-text-glow">
                {clubData.name}
              </h2>
              <div className="flex items-center gap-3">
@@ -128,15 +138,9 @@ export default function ClubManagementPage() {
              </div>
           </div>
         </div>
-
-        <div className="absolute top-8 right-8">
-           <Button variant="ghost" className="h-10 bg-black/40 backdrop-blur-md border border-white/10 rounded-xl text-white/40 hover:text-primary transition-all">
-              <Camera className="h-4 w-4 mr-2" /> Editar Portada
-           </Button>
-        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-24">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-12">
         <div className="lg:col-span-2 space-y-8">
            <Card className="glass-panel border-none bg-black/40 overflow-hidden">
              <CardHeader className="border-b border-white/5 p-8">
