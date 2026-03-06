@@ -21,14 +21,30 @@ import {
   Rocket,
   Shield,
   BarChart3,
-  ChevronDown
+  ChevronDown,
+  Mail,
+  Building2,
+  Send
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { useToast } from "@/hooks/use-toast";
 
 export default function SynqAiLandingPage() {
+  const { toast } = useToast();
+
+  const handleContactSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    toast({
+      title: "SOLICITUD_ENVIADA",
+      description: "Su solicitud de alianza ha sido encriptada y enviada al Centro de Mando.",
+    });
+  };
+
   const categories = [
     {
       title: "Núcleo de Control",
@@ -81,7 +97,7 @@ export default function SynqAiLandingPage() {
           </div>
           
           <div className="hidden md:flex items-center gap-10">
-            {['Ecosistema', 'Visión', 'Escalado', 'Tecnología'].map((item) => (
+            {['Ecosistema', 'Visión', 'Escalado', 'Contacto'].map((item) => (
               <button key={item} className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 hover:text-primary transition-colors">
                 {item}
               </button>
@@ -216,11 +232,74 @@ export default function SynqAiLandingPage() {
           </div>
         </section>
 
-        {/* ACCESO AL SISTEMA (REPLICADO DEL PORTAL ORIGINAL) */}
+        {/* CONTACTO / CAPTACIÓN DE LEADS */}
+        <section className="py-32 px-6 max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
+            <div className="space-y-8">
+              <div className="space-y-4">
+                <h3 className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">Alianza Estratégica</h3>
+                <h2 className="text-5xl font-headline font-black italic tracking-tighter uppercase">VINCULA TU CLUB A LA RED</h2>
+                <p className="text-white/40 font-bold uppercase text-[10px] tracking-[0.4em] leading-relaxed">
+                  Solicite una auditoría táctica y descubra el ahorro proyectado según su volumen de nodos.
+                </p>
+              </div>
+
+              <div className="space-y-6">
+                <div className="flex gap-4 items-center p-6 glass-panel border-white/5 rounded-2xl">
+                  <Mail className="h-6 w-6 text-primary/40" />
+                  <div className="flex flex-col">
+                    <span className="text-[8px] font-black uppercase text-white/20 tracking-widest">Protocolo Directo</span>
+                    <span className="text-xs font-black uppercase text-white">HQ@SYNQAI.SPORTS</span>
+                  </div>
+                </div>
+                <div className="flex gap-4 items-center p-6 glass-panel border-white/5 rounded-2xl">
+                  <Building2 className="h-6 w-6 text-primary/40" />
+                  <div className="flex flex-col">
+                    <span className="text-[8px] font-black uppercase text-white/20 tracking-widest">Sede Central</span>
+                    <span className="text-xs font-black uppercase text-white">NEURAL DISTRICT 01, ES</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <form onSubmit={handleContactSubmit} className="glass-panel p-10 space-y-6 relative overflow-hidden border-primary/20">
+              <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                 <Send className="h-20 w-20 text-primary" />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[8px] font-black uppercase tracking-widest text-primary/60 ml-1">NOMBRE_OFICIAL_CLUB</label>
+                  <Input placeholder="EJ: ACADEMIA PRO" className="h-12 bg-black/40 border-white/10 rounded-none font-bold uppercase text-[10px] tracking-widest" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[8px] font-black uppercase tracking-widest text-primary/60 ml-1">VOLUMEN_NIÑOS</label>
+                  <Input placeholder="+400" className="h-12 bg-black/40 border-white/10 rounded-none font-bold uppercase text-[10px] tracking-widest" />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[8px] font-black uppercase tracking-widest text-primary/60 ml-1">EMAIL_PROFESIONAL</label>
+                <Input type="email" placeholder="ADMIN@CLUB.COM" className="h-12 bg-black/40 border-white/10 rounded-none font-bold uppercase text-[10px] tracking-widest" />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[8px] font-black uppercase tracking-widest text-primary/60 ml-1">MENSAJE_TÁCTICO</label>
+                <Textarea placeholder="INDIQUE SUS OBJETIVOS OPERATIVOS..." className="min-h-[120px] bg-black/40 border-white/10 rounded-none font-bold uppercase text-[10px] tracking-widest" />
+              </div>
+
+              <Button type="submit" className="w-full h-16 bg-primary text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-none cyan-glow hover:scale-[1.02] transition-all">
+                ENVIAR_SOLICITUD_VINCULACIÓN <Send className="h-4 w-4 ml-2" />
+              </Button>
+            </form>
+          </div>
+        </section>
+
+        {/* ACCESO AL SISTEMA (PORTAL DE LANZAMIENTO) */}
         <section className="py-32 px-6 max-w-7xl mx-auto space-y-24">
           <div className="text-center space-y-4">
              <h3 className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">Acceso Directo</h3>
-             <h2 className="text-5xl font-headline font-black italic tracking-tighter uppercase">PORTAL DE LANZAMIENTO</h2>
+             <h2 className="text-5xl font-headline font-black italic tracking-tighter uppercase leading-tight">PORTAL DE LANZAMIENTO</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
