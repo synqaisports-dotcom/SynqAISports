@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -60,7 +59,7 @@ const navItems: NavItem[] = [
   // OPERATIVA_ELITE - CYAN THEME
   { title: "Coach Hub", href: "/dashboard", icon: Cpu, category: "operational" },
   { title: "Club", href: "/dashboard/club", icon: Building, category: "operational" },
-  { title: "Instalaciones", href: "/dashboard/facilities", icon: MapPin, category: "operational" },
+  { title: "Instalaciones", href: "/dashboard/instalaciones", icon: MapPin, category: "operational" },
   { title: "Staff", href: "/dashboard/staff", icon: UserCog, category: "operational" },
   { title: "Cantera", href: "/dashboard/academy", icon: Sprout, category: "operational" },
   { title: "Jugadores", href: "/dashboard/players", icon: Users, category: "operational" },

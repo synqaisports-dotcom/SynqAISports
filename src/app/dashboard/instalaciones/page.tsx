@@ -1,0 +1,323 @@
+"use client";
+
+import { useState } from "react";
+import { 
+  MapPin, 
+  Plus, 
+  Search, 
+  Warehouse, 
+  Activity, 
+  Settings2, 
+  Calendar, 
+  Users, 
+  Clock, 
+  AlertCircle,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+  ParkingCircle,
+  Dumbbell,
+  LayoutDashboard,
+  ShieldCheck,
+  CheckCircle2,
+  Loader2
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetDescription, 
+  SheetFooter, 
+  SheetClose,
+  SheetTrigger
+} from "@/components/ui/sheet";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+
+const INITIAL_FACILITIES = [
+  { id: "f1", name: "Campo de Fútbol Principal", type: "Campo Exterior", status: "Active", capacity: "22 Jugadores", nextMaintenance: "12 Oct" },
+  { id: "f2", name: "Pabellón Cubierto A", type: "Pabellón", status: "Active", capacity: "40 Atletas", nextMaintenance: "05 Nov" },
+  { id: "f3", name: "Gimnasio de Alto Rendimiento", type: "Fitness", status: "Maintenance", capacity: "15 Atletas", nextMaintenance: "Hoy" },
+  { id: "f4", name: "Piscina Olímpica", type: "Acuática", status: "Active", capacity: "30 Nadadores", nextMaintenance: "20 Oct" },
+];
+
+export default function FacilitiesManagementPage() {
+  const [facilities, setFacilities] = useState(INITIAL_FACILITIES);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+
+  const [formData, setFormData] = useState({
+    name: "",
+    type: "Campo Exterior",
+    status: "Active",
+    capacity: ""
+  });
+
+  const handleCreateFacility = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    setTimeout(() => {
+      const newFacility = {
+        id: `f${Date.now()}`,
+        name: formData.name,
+        type: formData.type,
+        status: formData.status,
+        capacity: formData.capacity,
+        nextMaintenance: "Próximamente"
+      };
+      
+      setFacilities([newFacility, ...facilities]);
+      toast({
+        title: "INSTALACIÓN_REGISTRADA",
+        description: `El nodo ${formData.name} ha sido añadido a la matriz del club.`,
+      });
+      setLoading(false);
+      setIsSheetOpen(false);
+      setFormData({ name: "", type: "Campo Exterior", status: "Active", capacity: "" });
+    }, 1000);
+  };
+
+  const filteredFacilities = facilities.filter(f => 
+    f.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    f.type.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <div className="space-y-8 animate-in fade-in duration-1000">
+      {/* HEADER SECTOR */}
+      <div className="flex justify-between items-end border-b border-white/5 pb-6">
+        <div className="space-y-1">
+          <div className="flex items-center gap-3 mb-2">
+            <MapPin className="h-5 w-5 text-primary animate-pulse" />
+            <span className="text-[10px] font-black text-primary tracking-[0.5em] uppercase">Facility_Network_Active</span>
+          </div>
+          <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic cyan-text-glow">
+            Instalaciones
+          </h1>
+        </div>
+        
+        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+          <SheetTrigger asChild>
+            <Button className="rounded-none bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none">
+              <Plus className="h-4 w-4 mr-2" /> Nuevo Activo
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+            <div className="p-10 border-b border-white/5 bg-black/40">
+              <SheetHeader className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Facility_Deploy_v1.0</span>
+                </div>
+                <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left">
+                  AÑADIR_ACTIVO
+                </SheetTitle>
+                <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left">
+                  Sincronice un nuevo espacio físico con la red operativa del club.
+                </SheetDescription>
+              </SheetHeader>
+            </div>
+
+            <form onSubmit={handleCreateFacility} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-8">
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Nombre de la Instalación</Label>
+                  <Input 
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})}
+                    placeholder="EJ: PABELLÓN NORTE" 
+                    className="h-12 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-primary/50 transition-all placeholder:text-white/10" 
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Tipo de Espacio</Label>
+                  <Select 
+                    value={formData.type} 
+                    onValueChange={(v) => setFormData({...formData, type: v})}
+                  >
+                    <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary/50 transition-all">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
+                      <SelectItem value="Campo Exterior" className="text-[10px] font-black uppercase">CAMPO EXTERIOR</SelectItem>
+                      <SelectItem value="Pabellón" className="text-[10px] font-black uppercase">PABELLÓN CUBIERTO</SelectItem>
+                      <SelectItem value="Fitness" className="text-[10px] font-black uppercase">GIMNASIO / SALA</SelectItem>
+                      <SelectItem value="Acuática" className="text-[10px] font-black uppercase">ZONA ACUÁTICA</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Capacidad Máx.</Label>
+                    <Input 
+                      required
+                      value={formData.capacity}
+                      onChange={(e) => setFormData({...formData, capacity: e.target.value})}
+                      placeholder="EJ: 25 ATLETAS" 
+                      className="h-12 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-primary/50 transition-all placeholder:text-white/10" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Estatus_Red</Label>
+                    <Select 
+                      value={formData.status} 
+                      onValueChange={(v) => setFormData({...formData, status: v})}
+                    >
+                      <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary/50 transition-all">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
+                        <SelectItem value="Active" className="text-[10px] font-black uppercase">OPERATIVO</SelectItem>
+                        <SelectItem value="Maintenance" className="text-[10px] font-black uppercase">MANTENIMIENTO</SelectItem>
+                        <SelectItem value="Inactive" className="text-[10px] font-black uppercase">CERRADO</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 bg-primary/5 border border-primary/20 space-y-3">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="h-3 w-3 text-primary" />
+                  <span className="text-[9px] font-black uppercase text-primary tracking-widest">Protocolo de Seguridad</span>
+                </div>
+                <p className="text-[9px] text-white/40 leading-relaxed font-bold uppercase italic">
+                  La activación de un nuevo espacio permite su reserva inmediata en el cronograma de sesiones tácticas del club.
+                </p>
+              </div>
+            </form>
+
+            <div className="p-10 bg-black/40 border-t border-white/5 flex gap-4">
+              <SheetClose asChild>
+                <Button variant="ghost" className="flex-1 h-16 border border-white/10 text-white/40 font-black uppercase text-[10px] tracking-widest hover:bg-white/5">
+                  CANCELAR
+                </Button>
+              </SheetClose>
+              <Button 
+                onClick={handleCreateFacility}
+                disabled={loading}
+                className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-none shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] transition-all border-none"
+              >
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "VINCULAR_ACTIVO"}
+              </Button>
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
+
+      {/* METRICS ROW */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <FacilityStat label="Total Espacios" value={facilities.length.toString()} icon={Warehouse} />
+        <FacilityStat label="Ocupación Hoy" value="82%" icon={Activity} highlight />
+        <FacilityStat label="En Mantenimiento" value="01" icon={AlertCircle} warning />
+        <FacilityStat label="Sectores Sincro" value="04" icon={LayoutDashboard} />
+      </div>
+
+      {/* MAIN DATA GRID */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {filteredFacilities.map((f) => (
+          <Card key={f.id} className="glass-panel overflow-hidden relative group border-none bg-black/40">
+            <div className={cn(
+              "absolute top-0 left-0 w-full h-[2px]",
+              f.status === 'Active' ? 'bg-primary/40' : 'bg-amber-500/40'
+            )} />
+            <CardHeader className="p-6">
+              <div className="flex justify-between items-start mb-4">
+                <div className="h-12 w-12 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center group-hover:border-primary/40 transition-all rotate-3 group-hover:rotate-0 duration-500">
+                  <Warehouse className={cn("h-6 w-6", f.status === 'Active' ? 'text-primary' : 'text-amber-400')} />
+                </div>
+                <div className="flex flex-col items-end">
+                  <Badge variant="outline" className={cn(
+                    "rounded-none font-black text-[8px] uppercase tracking-widest px-3 py-1",
+                    f.status === 'Active' ? 'border-primary/20 text-primary bg-primary/5' : 'border-amber-500/20 text-amber-400 bg-amber-500/5'
+                  )}>
+                    {f.status}
+                  </Badge>
+                  <span className="text-[8px] text-white/20 font-bold uppercase tracking-widest mt-2">ID: {f.id.toUpperCase()}</span>
+                </div>
+              </div>
+              <CardTitle className="text-xl font-black text-white italic tracking-tighter uppercase mb-1 group-hover:cyan-text-glow transition-all">
+                {f.name}
+              </CardTitle>
+              <CardDescription className="text-[9px] font-black uppercase tracking-widest text-white/30 italic">
+                {f.type}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-6 pb-6 space-y-4">
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
+                <div className="flex items-center gap-2">
+                  <Users className="h-3 w-3 text-white/20" />
+                  <span className="text-[9px] font-black text-white/40 uppercase">Aforo Máximo</span>
+                </div>
+                <span className="text-xs font-black text-white">{f.capacity}</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-3 w-3 text-white/20" />
+                  <span className="text-[9px] font-black text-white/40 uppercase">Mantenimiento</span>
+                </div>
+                <span className="text-xs font-black text-primary">{f.nextMaintenance}</span>
+              </div>
+            </CardContent>
+            <CardFooter className="px-6 py-4 bg-black/40 border-t border-white/5 flex justify-between items-center">
+              <span className="flex items-center gap-2 text-[8px] font-black text-white/20 uppercase tracking-widest">
+                <CheckCircle2 className="h-3 w-3 text-primary/40" /> Sincronización Estable
+              </span>
+              <div className="flex gap-2">
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-white/20 hover:text-primary border border-white/5">
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-white/20 hover:text-rose-400 border border-white/5">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function FacilityStat({ label, value, icon: Icon, highlight, warning }: any) {
+  return (
+    <Card className="glass-panel p-5 flex items-center gap-5 relative overflow-hidden group border-none bg-black/20">
+       <div className={cn(
+         "h-12 w-12 flex items-center justify-center border transition-all rotate-3 group-hover:rotate-0 duration-500 rounded-2xl",
+         highlight ? "bg-primary/10 border-primary/20" : 
+         warning ? "bg-amber-500/10 border-amber-500/20" : "bg-white/5 border-white/10"
+       )}>
+          <Icon className={cn("h-6 w-6", highlight ? "text-primary" : warning ? "text-amber-400" : "text-white/40")} />
+       </div>
+       <div className="relative z-10">
+          <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">{label}</p>
+          <div className="flex items-baseline gap-2">
+             <p className={cn(
+               "text-2xl font-black italic tracking-tighter",
+               highlight ? "text-primary" : warning ? "text-amber-400" : "text-white"
+             )}>{value}</p>
+          </div>
+       </div>
+       <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 scan-line" />
+    </Card>
+  );
+}
