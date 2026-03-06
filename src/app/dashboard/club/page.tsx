@@ -206,8 +206,8 @@ export default function ClubManagementPage() {
         </div>
       </div>
 
-      {/* IDENTIDAD DEL CLUB (BLOQUE DE FLUJO CON MARGEN NEGATIVO) */}
-      <div className="px-12 -mt-32 relative z-20 space-y-6 mb-16">
+      {/* IDENTIDAD DEL CLUB (BLOQUE DE FLUJO CON MARGEN NEGATIVO ELEVADO) */}
+      <div className="px-12 -mt-44 relative z-20 space-y-6 mb-24">
         <div className="flex flex-col md:flex-row items-end gap-10">
           <div className="relative group/logo">
              <div className="absolute inset-0 bg-primary/30 blur-3xl rounded-full opacity-0 group-hover/logo:opacity-100 transition-opacity" />
@@ -247,7 +247,7 @@ export default function ClubManagementPage() {
       </div>
 
       {/* MATRIZ DE DATOS Y TERMINALES */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 pt-8">
         <div className="lg:col-span-2 space-y-10">
            <Card className="glass-panel border-none bg-black/40 overflow-hidden shadow-2xl">
              <CardHeader className="border-b border-white/5 p-10">
