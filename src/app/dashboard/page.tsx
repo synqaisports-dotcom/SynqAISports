@@ -39,13 +39,13 @@ export default function DashboardPage() {
           <div className="flex items-center gap-3">
             <Heart className="h-4 w-4 text-primary animate-pulse" />
             <span className="text-[10px] font-black text-primary tracking-[0.5em] uppercase italic">
-              Gestión de Cantera: {profile.clubId?.toUpperCase() || "SIN_NODO"}
+              Control de Cantera: {profile.clubId?.toUpperCase() || "SIN_NODO"}
             </span>
           </div>
-          <h1 className="text-5xl font-headline font-black text-white italic tracking-tighter uppercase italic cyan-text-glow">
+          <h1 className="text-5xl font-headline font-black text-white italic tracking-tighter uppercase cyan-text-glow">
             ACADEMY_CONTROL
           </h1>
-          <p className="text-[10px] font-black text-white/30 tracking-[0.2em] uppercase">Optimización del Fútbol Base y Formación</p>
+          <p className="text-[10px] font-black text-white/30 tracking-[0.2em] uppercase">Optimización Multideporte y Formación Base</p>
         </div>
         
         <div className="flex flex-wrap gap-4">
@@ -60,30 +60,30 @@ export default function DashboardPage() {
       {/* MÉTRICAS OPERATIVAS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <OperationalMetricCard 
-          title="Total Niños/as" 
+          title="Atletas Totales" 
           value="142" 
           icon={Users} 
-          desc="Alumnos en Sistema"
+          desc="Niños/as en Formación"
           trend="+12 este mes"
         />
         <OperationalMetricCard 
-          title="Monitores" 
+          title="Staff Técnico" 
           value="12" 
           icon={UserCog} 
-          desc="Staff de Cantera Activo"
+          desc="Monitores y Coordinadores"
         />
         <OperationalMetricCard 
           title="Sesiones Mes" 
           value="48" 
           icon={Calendar} 
-          desc="Entrenamientos Cursados"
+          desc="Entrenamientos Realizados"
           trend="85% asistencia media"
         />
         <OperationalMetricCard 
-          title="Impacto Formativo" 
+          title="Índice Formativo" 
           value="+24%" 
           icon={TrendingUp} 
-          desc="Mejora en Metodología"
+          desc="Progreso Metodológico"
           highlight
         />
       </div>
@@ -94,9 +94,9 @@ export default function DashboardPage() {
           <CardHeader className="p-8 border-b border-white/5 flex flex-row items-center justify-between">
             <div className="space-y-1">
               <CardTitle className="text-lg font-black uppercase tracking-widest flex items-center gap-3">
-                <Dumbbell className="h-5 w-5 text-primary" /> Horarios de Entrenamiento
+                <Dumbbell className="h-5 w-5 text-primary" /> Cronograma de Sesiones
               </CardTitle>
-              <CardDescription className="text-[10px] text-white/30 uppercase font-bold tracking-widest">Cronograma de categorías inferiores</CardDescription>
+              <CardDescription className="text-[10px] text-white/30 uppercase font-bold tracking-widest">Actividad de las categorías base</CardDescription>
             </div>
             <Button variant="link" className="text-primary font-black text-[10px] uppercase tracking-widest p-0" asChild>
               <Link href="/dashboard/coach/planner">Ver Todo <ChevronRight className="h-3 w-3 ml-1" /></Link>
@@ -106,30 +106,30 @@ export default function DashboardPage() {
             <div className="divide-y divide-white/5">
               <TrainingItem 
                 time="17:00" 
-                category="Alevín A" 
-                focus="Técnica de Pase" 
-                location="Campo B"
+                category="Infantil A" 
+                focus="Fundamentos Técnicos" 
+                location="Pista Central"
                 status="ready"
               />
               <TrainingItem 
                 time="17:00" 
-                category="Benjamín B" 
+                category="Alevín B" 
                 focus="Psicomotricidad" 
-                location="Pabellón"
+                location="Zona Norte"
                 status="ready"
               />
               <TrainingItem 
                 time="18:30" 
-                category="Infantil C" 
-                focus="Posicionamiento" 
-                location="Campo A"
+                category="Cadete C" 
+                focus="Lectura Táctica" 
+                location="Sala Táctica"
                 status="pending"
               />
               <TrainingItem 
                 time="Mañana" 
-                category="Pre-Benjamín" 
-                focus="Juegos Recreativos" 
-                location="Campo B"
+                category="Iniciación" 
+                focus="Juegos Formativos" 
+                location="Pista Anexa"
                 status="pending"
               />
             </div>
@@ -139,24 +139,24 @@ export default function DashboardPage() {
         {/* ÚLTIMOS REPORTES / ALERTAS */}
         <Card className="glass-panel rounded-3xl border-none bg-black/40 overflow-hidden">
           <CardHeader className="p-8 border-b border-white/5">
-            <CardTitle className="text-sm font-black uppercase tracking-widest">Actividad de la Cantera</CardTitle>
+            <CardTitle className="text-sm font-black uppercase tracking-widest">Actividad de la Red</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <div className="p-8 space-y-6">
               <ActivityLog 
                 type="info" 
                 title="Nueva_Inscripción" 
-                desc="Un nuevo alumno se ha unido al Pre-Benjamín." 
+                desc="Un nuevo atleta se ha unido a la categoría Iniciación." 
               />
               <ActivityLog 
                 type="success" 
-                title="Plan_Metodológico" 
-                desc="Se han actualizado los ejercicios de la etapa Infantil." 
+                title="Plan_Sincronizado" 
+                desc="Se han actualizado los ejercicios del bloque táctico." 
               />
               <ActivityLog 
                 type="warning" 
-                title="Comunicado_Padres" 
-                desc="Aviso de lluvia enviado a los tutores del grupo A." 
+                title="Alerta_Asistencia" 
+                desc="Baja asistencia detectada en el grupo Cadete B." 
               />
             </div>
             <div className="p-8 pt-0">

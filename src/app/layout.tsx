@@ -4,8 +4,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/lib/auth-context";
 
 export const metadata: Metadata = {
-  title: 'SynqSports Pro | Tecnología Pro para el Fútbol Base',
-  description: 'Democratizando las herramientas de élite para canteras y clubes locales. Gestión avanzada al alcance de todos.',
+  title: 'SynqSports Pro | Tecnología Pro para todo el Deporte Base',
+  description: 'Democratizando las herramientas de élite para canteras y clubes locales de cualquier disciplina. Gestión avanzada al alcance de todos.',
 };
 
 export default function RootLayout({
