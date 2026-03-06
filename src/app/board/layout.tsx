@@ -14,18 +14,18 @@ function BoardTabTrigger() {
 
   return (
     <div 
-      className={`fixed top-1/2 -translate-y-1/2 z-[100] transition-all duration-300 ease-in-out ${
+      className={`fixed top-1/2 -translate-y-1/2 z-[100] transition-all duration-500 ease-in-out ${
         isExpanded ? 'left-[16rem]' : 'left-0'
       }`}
     >
-      <SidebarTrigger className="h-24 w-6 rounded-r-xl bg-primary text-black hover:w-8 transition-all shadow-[0_0_30px_rgba(0,242,255,0.5)] flex items-center justify-center border-none p-0 group">
+      <SidebarTrigger className="h-14 w-6 rounded-r-2xl border-y border-r border-primary/30 bg-black/60 backdrop-blur-xl text-primary hover:w-8 hover:bg-primary hover:text-black transition-all shadow-[0_0_20px_rgba(0,242,255,0.2)] flex items-center justify-center border-l-0 p-0 group overflow-hidden">
          {isExpanded ? (
-           <ChevronLeft className="h-5 w-5 transition-transform group-hover:-translate-x-0.5" />
+           <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
          ) : (
-           <ChevronsRight className="h-5 w-5 animate-pulse text-black" />
+           <ChevronsRight className="h-4 w-4 animate-pulse" />
          )}
+         <div className="absolute inset-0 bg-primary/5 scan-line opacity-20" />
       </SidebarTrigger>
-      <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-r-xl -z-10 animate-pulse" />
     </div>
   );
 }
