@@ -8,6 +8,18 @@
       "imageHint": "athlete training"
     },
     {
+      "id": "neural-network",
+      "description": "Abstract neural network representation",
+      "imageUrl": "https://picsum.photos/seed/tech/1200/800",
+      "imageHint": "artificial intelligence"
+    },
+    {
+      "id": "stadium-blueprint",
+      "description": "Technological stadium blueprint",
+      "imageUrl": "https://picsum.photos/seed/stadium/1200/800",
+      "imageHint": "stadium tech"
+    },
+    {
       "id": "club-logo-placeholder",
       "description": "Minimalist sports club logo",
       "imageUrl": "https://picsum.photos/seed/club/200/200",
