@@ -13,6 +13,7 @@ interface UserProfile {
   plan: string | null;
   country: string | null;
   clubCreated: boolean;
+  clubName?: string;
   claimedToken?: string;
 }
 
@@ -22,7 +23,7 @@ interface AuthContextType {
   loading: boolean;
   loginAsGuest: () => void;
   loginWithToken: (token: string, plan: string, country: string) => void;
-  completeOnboarding: (clubData: any) => void;
+  completeOnboarding: (clubData: { name: string; id: string; country: string }) => void;
   logout: () => void;
 }
 
@@ -42,7 +43,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Intentar recuperar sesión del almacenamiento local para prototipo
     const savedProfile = localStorage.getItem("synq_profile");
     const savedUser = localStorage.getItem("synq_user");
     
@@ -76,7 +76,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const newUser = { uid: `user-${Math.random().toString(36).substr(2, 9)}`, email: "pending@club.com" };
     const newProfile: UserProfile = {
       email: "pending@club.com",
-      name: "New Admin",
+      name: "Nuevo Administrador",
       role: "club_admin",
       clubId: null,
       plan: plan,
@@ -92,16 +92,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.setItem("synq_profile", JSON.stringify(newProfile));
   };
 
-  const completeOnboarding = (clubData: any) => {
+  const completeOnboarding = (clubData: { name: string; id: string; country: string }) => {
     if (profile) {
-      const updatedProfile = {
+      const updatedProfile: UserProfile = {
         ...profile,
         clubCreated: true,
-        clubId: clubData.id || "new-club-id",
-        country: clubData.country || profile.country
+        clubId: clubData.id,
+        clubName: clubData.name,
+        country: clubData.country
       };
       setProfile(updatedProfile);
       localStorage.setItem("synq_profile", JSON.stringify(updatedProfile));
+      
+      // Simulación de guardado en "base de datos global" de localStorage para el prototipo
+      const existingClubs = JSON.parse(localStorage.getItem("synq_global_clubs") || "[]");
+      const newClubEntry = {
+        id: clubData.id,
+        name: clubData.name,
+        plan: profile.plan || "Standard",
+        users: 0,
+        status: "Active",
+        country: clubData.country
+      };
+      localStorage.setItem("synq_global_clubs", JSON.stringify([...existingClubs, newClubEntry]));
     }
   };
 

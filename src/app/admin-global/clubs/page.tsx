@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   Card, 
@@ -35,6 +35,21 @@ export default function ManageClubsPage() {
   const [clubs, setClubs] = useState(INITIAL_CLUBS);
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Sincronización con el "almacenamiento global simulado" del prototipo
+    const savedClubs = JSON.parse(localStorage.getItem("synq_global_clubs") || "[]");
+    if (savedClubs.length > 0) {
+      // Evitar duplicados si ya existen en INITIAL_CLUBS (solo para el prototipo)
+      const merged = [...INITIAL_CLUBS];
+      savedClubs.forEach((sc: any) => {
+        if (!merged.find(m => m.id === sc.id)) {
+          merged.push(sc);
+        }
+      });
+      setClubs(merged);
+    }
+  }, []);
 
   const handleToggleStatus = (id: string) => {
     const club = clubs.find(c => c.id === id);
@@ -121,7 +136,7 @@ export default function ManageClubsPage() {
                     <div className="flex items-center gap-4 py-3">
                       <div className="h-12 w-12 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl flex items-center justify-center relative overflow-hidden group-hover:bg-emerald-500/10 transition-all rotate-12 group-hover:rotate-0 duration-500">
                         <Building2 className="h-5 w-5 text-emerald-500" />
-                        <div className="absolute inset-0 bg-emerald-500/5 scan-line" />
+                        <div className="absolute inset-0 bg-emerald-500/5 scan-line opacity-20" />
                       </div>
                       <div>
                         <p className="font-black text-white uppercase text-xs italic group-hover:emerald-text-glow transition-all tracking-tighter">
@@ -166,7 +181,6 @@ export default function ManageClubsPage() {
                         size="icon" 
                         className="h-10 w-10 rounded-xl border border-white/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 text-white/20 hover:text-emerald-400 transition-all" 
                         title="Modificar Protocolo"
-                        aria-label="Modificar Protocolo"
                         onClick={() => handleEdit(club.name)}
                       >
                         <Pencil className="h-4 w-4" />
@@ -181,7 +195,6 @@ export default function ManageClubsPage() {
                             : "hover:border-emerald-500/50 hover:bg-emerald-500/10 text-white/20 hover:text-emerald-400"
                         )}
                         title={club.status === "Active" ? "Pausar Nodo" : "Activar Nodo"}
-                        aria-label={club.status === "Active" ? "Pausar Nodo" : "Activar Nodo"}
                         onClick={() => handleToggleStatus(club.id)}
                       >
                         {club.status === "Active" ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}

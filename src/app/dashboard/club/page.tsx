@@ -20,12 +20,14 @@ import {
   Share2,
   Mail,
   Smartphone,
-  Trophy
+  Trophy,
+  ArrowRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { 
   Sheet, 
   SheetContent, 
@@ -46,15 +48,15 @@ export default function ClubManagementPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const [clubData, setClubData] = useState({
-    name: profile?.clubId ? "Real Madrid Academy" : "Nombre del Club",
+    name: profile?.clubName || profile?.clubId || "Nodo de Cantera",
     country: profile?.country || "España",
-    foundation: "2014",
-    members: "142",
-    website: "www.cantera-elite.com",
+    foundation: "2024",
+    members: "0",
+    website: "www.cantera-synqai.com",
     socials: {
-      instagram: "@elite_academy",
-      youtube: "EliteSportsTV",
-      twitter: "@EliteAcademy_ES"
+      instagram: "@club_academy",
+      youtube: "AcademyTV",
+      twitter: "@Academy_ES"
     }
   });
 
@@ -69,7 +71,6 @@ export default function ClubManagementPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000 pb-12">
-      {/* HEADER TÁCTICO */}
       <div className="flex justify-between items-end border-b border-white/5 pb-6">
         <div className="space-y-1">
           <div className="flex items-center gap-3 mb-2">
@@ -89,7 +90,6 @@ export default function ClubManagementPage() {
         </Button>
       </div>
 
-      {/* BANNER Y LOGO */}
       <div className="relative h-80 rounded-[2rem] overflow-hidden group border border-white/5">
         <Image 
           src="https://picsum.photos/seed/stadium/1200/400" 
@@ -136,10 +136,7 @@ export default function ClubManagementPage() {
         </div>
       </div>
 
-      {/* GRID DE DATOS Y REDES */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-24">
-        
-        {/* COLUMNA_INFO_ESTRUCTURAL */}
         <div className="lg:col-span-2 space-y-8">
            <Card className="glass-panel border-none bg-black/40 overflow-hidden">
              <CardHeader className="border-b border-white/5 p-8">
@@ -151,16 +148,18 @@ export default function ClubManagementPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
                    <DataNode label="Año de Fundación" value={clubData.foundation} icon={Calendar} />
                    <DataNode label="Capacidad Cantera" value={`${clubData.members} Atletas`} icon={Users} />
-                   <DataNode label="Status de Red" value="Verificado" icon={Trophy} highlight />
+                   <DataNode label="Status de Red" value="Sincronizado" icon={Trophy} highlight />
                 </div>
 
                 <div className="mt-12 p-8 border border-primary/20 bg-primary/5 rounded-[2rem] space-y-4">
                    <div className="flex items-center justify-between">
                       <span className="text-[10px] font-black uppercase text-primary tracking-widest">Protocolo de Plan Activo</span>
-                      <Badge className="bg-primary text-black font-black uppercase text-[8px] px-3">Enterprise_Scale</Badge>
+                      <Badge className="bg-primary text-black font-black uppercase text-[8px] px-3">
+                        {profile?.plan?.replace('_', ' ') || 'Enterprise Scale'}
+                      </Badge>
                    </div>
                    <p className="text-[10px] text-white/40 leading-relaxed uppercase font-bold tracking-wide italic">
-                     Su cantera opera bajo un protocolo de escalado de 0.70€ por niño. El nodo central de IA está sincronizado con sus {clubData.members} fichas activas.
+                     Nodo centralizado vinculado a la red SynQAI. El escalado de costes se aplicará automáticamente según el volumen de atletas registrados.
                    </p>
                 </div>
              </CardContent>
@@ -173,8 +172,8 @@ export default function ClubManagementPage() {
                 </CardHeader>
                 <CardContent className="px-8 pb-8 space-y-4">
                    <ContactLink icon={Globe} label="Portal Web" value={clubData.website} />
-                   <ContactLink icon={Mail} label="Mail Administrativo" value="hq@cantera.com" />
-                   <ContactLink icon={Smartphone} label="Línea Directa" value="+34 900 123 456" />
+                   <ContactLink icon={Mail} label="Mail Administrativo" value={profile?.email || "admin@club.com"} />
+                   <ContactLink icon={Smartphone} label="Línea Directa" value="+34 900 000 000" />
                 </CardContent>
               </Card>
 
@@ -191,7 +190,6 @@ export default function ClubManagementPage() {
            </div>
         </div>
 
-        {/* COLUMNA_ACCIONES_RÁPIDAS */}
         <div className="space-y-8">
            <Card className="glass-panel border-primary/20 bg-primary/5 p-10 relative group overflow-hidden">
               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-all">
@@ -212,13 +210,12 @@ export default function ClubManagementPage() {
                  <span className="text-[10px] font-black uppercase tracking-widest text-white/60">Operativa_Activa</span>
               </div>
               <p className="text-[10px] text-white/20 uppercase font-bold tracking-widest leading-relaxed italic">
-                La identidad visual de su club es la que verán los padres y atletas en sus terminales portátiles (Tutor Portal). Mantenga sus datos actualizados.
+                La identidad visual de su club es la que verán los padres y atletas en sus terminales portátiles. Mantenga sus datos actualizados.
               </p>
            </div>
         </div>
       </div>
 
-      {/* PANEL LATERAL DE CONFIGURACIÓN */}
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
           <div className="p-8 border-b border-white/5 bg-black/40">
@@ -333,21 +330,5 @@ function ContactLink({ icon: Icon, label, value }: any) {
        </div>
        <ArrowUpRight className="h-3 w-3 text-white/5 group-hover:text-primary transition-all" />
     </div>
-  );
-}
-
-function Badge({ children, className }: any) {
-  return (
-    <span className={cn("px-2 py-0.5 rounded-full text-[10px]", className)}>
-      {children}
-    </span>
-  );
-}
-
-function ArrowRight({ className }: any) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M5 12h14M12 5l7 7-7 7" />
-    </svg>
   );
 }
