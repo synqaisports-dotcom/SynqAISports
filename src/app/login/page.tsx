@@ -27,9 +27,9 @@ import { useAuth } from "@/lib/auth-context";
 import { Badge } from "@/components/ui/badge";
 
 function LoginContent() {
-  const [loading, setLoading] = useState(false);
+  const [localLoading, setLocalLoading] = useState(false);
   const [forceStandard, setForceStandard] = useState(false);
-  const { loginAsGuest, loginWithToken } = useAuth();
+  const { profile, loginAsGuest, loginWithToken } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -38,10 +38,20 @@ function LoginContent() {
   const [campaignData, setCampaignData] = useState<any>(null);
 
   useEffect(() => {
+    // Si ya hay un perfil cargado (por persistencia), redirigir según el rol
+    if (profile) {
+      if (profile.role === "superadmin") {
+        router.push("/admin-global");
+      } else {
+        router.push("/dashboard");
+      }
+    }
+  }, [profile, router]);
+
+  useEffect(() => {
     const t = searchParams.get("token") || searchParams.get("t");
     if (t && !forceStandard) {
       setToken(t);
-      // Simulación de búsqueda de datos del token
       setCampaignData({
         plan: "Enterprise Scale",
         price: "0.70€ / niño",
@@ -57,21 +67,19 @@ function LoginContent() {
   }, [searchParams, toast, forceStandard]);
 
   const handleBypass = () => {
-    setLoading(true);
+    setLocalLoading(true);
     loginAsGuest();
     toast({
       title: "ACCESO_AUTORIZADO",
       description: "Sincronizando con el nodo central de administración...",
     });
-    // Forzamos la redirección tras un pequeño delay para asegurar el estado
-    setTimeout(() => {
-      window.location.href = "/admin-global";
-    }, 500);
+    // Usamos router.push para no perder el estado de React/Auth
+    router.push("/admin-global");
   };
 
   const handleClaimToken = (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setLocalLoading(true);
     
     loginWithToken(token!, campaignData.plan, campaignData.countryCode);
     
@@ -80,12 +88,9 @@ function LoginContent() {
       description: "Accediendo al túnel de onboarding del club.",
     });
     
-    setTimeout(() => {
-      router.push("/dashboard/coach/onboarding");
-    }, 1000);
+    router.push("/dashboard/coach/onboarding");
   };
 
-  // VISTA DE RECLAMAR TOKEN (QR / MAGIC LINK)
   if (token && campaignData && !forceStandard) {
     return (
       <Card className="w-full max-w-xl glass-panel shadow-2xl relative z-10 overflow-hidden border-t-2 border-primary animate-in fade-in zoom-in-95 duration-500">
@@ -136,10 +141,10 @@ function LoginContent() {
 
             <Button 
               type="submit"
-              disabled={loading}
+              disabled={localLoading}
               className="w-full h-16 bg-primary text-black font-black uppercase tracking-[0.3em] text-xs rounded-none cyan-glow hover:scale-[1.01] transition-all"
             >
-              {loading ? "CONFIGURANDO_NODO..." : "ACTIVAR_MI_NODO_DE_CLUB"} <ArrowRight className="h-4 w-4 ml-2" />
+              {localLoading ? "CONFIGURANDO_NODO..." : "ACTIVAR_MI_NODO_DE_CLUB"} <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </form>
 
@@ -156,7 +161,6 @@ function LoginContent() {
     );
   }
 
-  // VISTA ESTÁNDAR / BYPASS ADMIN
   return (
     <Card className="w-full max-w-xl glass-panel shadow-2xl relative z-10 overflow-hidden border-t-2 border-t-primary">
       <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">

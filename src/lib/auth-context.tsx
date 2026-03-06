@@ -42,7 +42,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulamos carga inicial
+    // Intentar recuperar sesión del almacenamiento local para prototipo
+    const savedProfile = localStorage.getItem("synq_profile");
+    const savedUser = localStorage.getItem("synq_user");
+    
+    if (savedProfile && savedUser) {
+      setProfile(JSON.parse(savedProfile));
+      setUser(JSON.parse(savedUser));
+    }
     setLoading(false);
   }, []);
 
@@ -57,12 +64,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       country: "ES",
       clubCreated: true,
     };
+    
     setUser(guestUser);
     setProfile(guestProfile);
+    
+    localStorage.setItem("synq_user", JSON.stringify(guestUser));
+    localStorage.setItem("synq_profile", JSON.stringify(guestProfile));
   };
 
   const loginWithToken = (token: string, plan: string, country: string) => {
-    // Simulamos el login de un nuevo administrador de club vía Token
     const newUser = { uid: `user-${Math.random().toString(36).substr(2, 9)}`, email: "pending@club.com" };
     const newProfile: UserProfile = {
       email: "pending@club.com",
@@ -74,24 +84,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       clubCreated: false,
       claimedToken: token
     };
+    
     setUser(newUser);
     setProfile(newProfile);
+    
+    localStorage.setItem("synq_user", JSON.stringify(newUser));
+    localStorage.setItem("synq_profile", JSON.stringify(newProfile));
   };
 
   const completeOnboarding = (clubData: any) => {
     if (profile) {
-      setProfile({
+      const updatedProfile = {
         ...profile,
         clubCreated: true,
         clubId: clubData.id || "new-club-id",
         country: clubData.country || profile.country
-      });
+      };
+      setProfile(updatedProfile);
+      localStorage.setItem("synq_profile", JSON.stringify(updatedProfile));
     }
   };
 
   const logout = () => {
     setUser(null);
     setProfile(null);
+    localStorage.removeItem("synq_user");
+    localStorage.removeItem("synq_profile");
   };
 
   return (
