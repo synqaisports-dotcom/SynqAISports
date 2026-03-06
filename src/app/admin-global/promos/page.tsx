@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -97,9 +96,9 @@ const MOCK_CAMPAIGNS = [
   },
 ];
 
-// Componente de QR Profesional con Branding Central
+// Componente de QR Profesional con Branding Central Reforzado
 const BrandedQR = ({ value, size = 200 }: { value: string; size?: number }) => (
-  <div className="relative flex items-center justify-center p-2 bg-black rounded-xl overflow-hidden shadow-[0_0_30px_rgba(16,185,129,0.2)]">
+  <div className="relative flex items-center justify-center p-3 bg-black rounded-2xl overflow-hidden shadow-[0_0_40px_rgba(16,185,129,0.25)] border border-emerald-500/10">
     <QRCodeCanvas
       value={value}
       size={size}
@@ -108,11 +107,11 @@ const BrandedQR = ({ value, size = 200 }: { value: string; size?: number }) => (
       bgColor="#000000"
       includeMargin={false}
     />
-    {/* Overlay de Marca Central */}
-    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black px-2 py-1 border border-emerald-500/40 rounded-sm">
-      <span className="text-[10px] font-black text-emerald-400 uppercase tracking-tighter">SynQAI</span>
+    {/* Overlay de Marca Central - Aumentado */}
+    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black px-4 py-2 border border-emerald-500/50 rounded-md shadow-[0_0_15px_rgba(16,185,129,0.4)]">
+      <span className="text-[14px] font-black text-emerald-400 uppercase tracking-tight italic">SynQAI</span>
     </div>
-    <div className="absolute inset-0 scan-line opacity-10 pointer-events-none" />
+    <div className="absolute inset-0 scan-line opacity-20 pointer-events-none" />
   </div>
 );
 
@@ -332,7 +331,7 @@ export default function GlobalPromosPage() {
                 <div className="p-10 bg-black/60 border border-emerald-500/20 flex flex-col items-center justify-center space-y-4 rounded-3xl group cursor-pointer relative overflow-hidden">
                   <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                   
-                  {/* QR INTEGRADO CON LIBRERÍA */}
+                  {/* QR INTEGRADO CON LIBRERÍA - Aumentado un poco en el preview */}
                   <div className="group-hover:scale-[1.05] transition-all duration-500">
                     <BrandedQR value={currentUrl || "https://synqai.sports"} size={220} />
                   </div>
