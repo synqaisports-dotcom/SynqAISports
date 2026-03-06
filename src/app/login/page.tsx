@@ -63,9 +63,10 @@ function LoginContent() {
       title: "ACCESO_AUTORIZADO",
       description: "Sincronizando con el nodo central de administración...",
     });
+    // Forzamos la redirección tras un pequeño delay para asegurar el estado
     setTimeout(() => {
       window.location.href = "/admin-global";
-    }, 800);
+    }, 500);
   };
 
   const handleClaimToken = (e: React.FormEvent) => {

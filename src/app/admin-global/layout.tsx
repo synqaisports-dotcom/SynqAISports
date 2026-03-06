@@ -36,9 +36,8 @@ export default function AdminGlobalLayout({ children }: { children: React.ReactN
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && profile && profile.role !== "superadmin") {
-      // Si no es superadmin, mostramos la pantalla de denegado en lugar de redirigir a ciegas
-      // para que el usuario pueda ver qué pasa.
+    if (!loading && !profile) {
+      router.push("/login");
     }
   }, [profile, loading, router]);
 
@@ -54,7 +53,10 @@ export default function AdminGlobalLayout({ children }: { children: React.ReactN
     );
   }
 
-  if (profile?.role !== "superadmin") {
+  // Si no hay perfil, el useEffect redirigirá, pero mientras tanto no mostramos nada
+  if (!profile) return null;
+
+  if (profile.role !== "superadmin") {
     return (
       <div className="h-screen w-full flex flex-col items-center justify-center bg-[#04070c] p-8 text-center">
         <ShieldAlert className="h-16 w-16 text-rose-500 mb-6" />
