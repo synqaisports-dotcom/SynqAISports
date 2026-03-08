@@ -91,6 +91,7 @@ export default function StaffManagementPage() {
     lastName: "",
     email: "",
     role: "coach" as UserRole,
+    countryPrefix: "+34",
     phone: "",
     status: "Active"
   });
@@ -110,6 +111,7 @@ export default function StaffManagementPage() {
       lastName: "", 
       email: "", 
       role: (availableRoles[0] as UserRole) || "coach", 
+      countryPrefix: "+34",
       phone: "", 
       status: "Active" 
     });
@@ -132,13 +134,20 @@ export default function StaffManagementPage() {
     const firstName = nameParts[0] || "";
     const lastName = nameParts.slice(1).join(" ") || "";
 
+    // Dividir teléfono en prefijo y número
+    const phoneFull = member.phone || "";
+    const prefixMatch = phoneFull.match(/^(\+\d+)\s*(.*)$/);
+    const countryPrefix = prefixMatch ? prefixMatch[1] : "+34";
+    const phone = prefixMatch ? prefixMatch[2] : phoneFull;
+
     setEditingId(member.id);
     setFormData({
       firstName,
       lastName,
       email: member.email,
       role: member.role as UserRole,
-      phone: member.phone,
+      countryPrefix,
+      phone,
       status: member.status
     });
     setIsSheetOpen(true);
@@ -167,11 +176,13 @@ export default function StaffManagementPage() {
     setLoading(true);
     
     const fullName = `${formData.firstName} ${formData.lastName}`.trim();
+    const fullPhone = `${formData.countryPrefix} ${formData.phone}`.trim();
+    
     const savePayload = {
       name: fullName,
       email: formData.email,
       role: formData.role,
-      phone: formData.phone,
+      phone: fullPhone,
       status: formData.status
     };
 
@@ -386,7 +397,7 @@ export default function StaffManagementPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Nivel Jerárquico</Label>
                   <Select 
@@ -405,16 +416,27 @@ export default function StaffManagementPage() {
                     </SelectContent>
                   </Select>
                 </div>
+                
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Teléfono</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-3 h-4 w-4 text-primary/40" />
-                    <Input 
-                      value={formData.phone}
-                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                      placeholder="+34..." 
-                      className="pl-10 h-12 bg-white/5 border-white/10 rounded-none font-bold" 
-                    />
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Teléfono de Contacto</Label>
+                  <div className="flex gap-2">
+                    <div className="w-24 shrink-0">
+                      <Input 
+                        value={formData.countryPrefix}
+                        onChange={(e) => setFormData({...formData, countryPrefix: e.target.value})}
+                        placeholder="+34" 
+                        className="h-12 bg-white/5 border-white/10 rounded-none font-bold text-center focus:border-primary/50" 
+                      />
+                    </div>
+                    <div className="relative flex-1">
+                      <Phone className="absolute left-3 top-3.5 h-4 w-4 text-primary/40" />
+                      <Input 
+                        value={formData.phone}
+                        onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                        placeholder="600 000 000" 
+                        className="pl-10 h-12 bg-white/5 border-white/10 rounded-none font-bold focus:border-primary/50" 
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
