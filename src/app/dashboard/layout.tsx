@@ -14,7 +14,7 @@ function OperationalTabTrigger() {
 
   return (
     <div 
-      className={`fixed top-1/2 -translate-y-1/2 z-[100] transition-all duration-500 ease-in-out ${
+      className={`fixed top-1/2 -translate-y-1/2 z-[100] transition-all duration-700 ease-in-out ${
         isExpanded ? 'left-[16rem]' : 'left-[3rem]'
       }`}
     >
