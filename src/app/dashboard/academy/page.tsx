@@ -152,7 +152,6 @@ export default function AcademyManagementPage() {
   };
 
   const handleEditCategory = (cat: any) => {
-    // Blindaje de categorías maestras
     if (cat.id.startsWith('cat_')) {
       toast({
         variant: "destructive",
@@ -301,7 +300,6 @@ export default function AcademyManagementPage() {
             <div className="space-y-4">
               {categories.filter(c => c.stageId === stage.id).map((cat) => (
                 <Card key={cat.id} className="glass-panel border-none bg-black/40 overflow-hidden group hover:bg-black/60 transition-all cursor-default">
-                  {/* LINEA DE COLOR DE ETAPA REFORZADA */}
                   <div className={cn("h-1 w-full", stage.color.replace('text', 'bg'))} />
                   
                   <CardHeader className="p-6 pb-2">
@@ -397,7 +395,7 @@ export default function AcademyManagementPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="p-6 bg-white/5 border border-white/10 rounded-2xl space-y-2">
                       <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Instalación / Nodo</span>
-                      <p className="text-sm font-black text-white uppercase italic">{selectedViewTeam.facility || "Sede Principal"}</p>
+                      <p className="text-sm font-black text-primary uppercase italic cyan-text-glow">{selectedViewTeam.facility || "Sede Principal"}</p>
                     </div>
                     <div className="p-6 bg-white/5 border border-white/10 rounded-2xl space-y-2">
                       <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Zona Operativa</span>
