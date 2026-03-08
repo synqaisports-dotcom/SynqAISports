@@ -29,7 +29,10 @@ import {
   UserCog,
   Dumbbell,
   IdCard,
-  ClipboardCheck
+  ClipboardCheck,
+  Eye,
+  Info,
+  Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -65,15 +68,10 @@ const STAGES = [
 ];
 
 const INITIAL_CATEGORIES = [
-  { id: "c1", name: "Debutantes", stageId: "s1", teams: [{ name: "Escuela", suffix: "A" }, { name: "Escuela", suffix: "B" }], players: 20 },
-  { id: "c2", name: "Prebenjamín", stageId: "s1", teams: [{ name: "Prebenjamín", suffix: "A" }], players: 12 },
-  { id: "c3", name: "Benjamín", stageId: "s2", teams: [{ name: "Benjamín", suffix: "A" }, { name: "Benjamín", suffix: "B" }], players: 24 },
-  { id: "c4", name: "Alevín", stageId: "s2", teams: [{ name: "Alevín", suffix: "A" }, { name: "Alevín", suffix: "B" }, { name: "Alevín", suffix: "C" }], players: 36 },
-  { id: "c5", name: "Infantil", stageId: "s2", teams: [{ name: "Infantil", suffix: "A" }, { name: "Infantil", suffix: "B" }], players: 30 },
-  { id: "c6", name: "Cadete", stageId: "s3", teams: [{ name: "Cadete", suffix: "A" }, { name: "Cadete", suffix: "B" }], players: 40 },
-  { id: "c7", name: "Juvenil", stageId: "s3", teams: [{ name: "Juvenil", suffix: "A" }, { name: "Juvenil", suffix: "B" }], players: 44 },
-  { id: "c8", name: "Senior", stageId: "s4", teams: [{ name: "Senior", suffix: "B" }, { name: "Senior", suffix: "C" }], players: 38 },
-  { id: "c9", name: "Primer Equipo", stageId: "s4", teams: [{ name: "Primer Equipo", suffix: "A" }], players: 25 },
+  { id: "c1", name: "Debutantes", stageId: "s1", teams: [{ name: "Escuela", suffix: "A", facility: "Campo Principal", zone: "Zona A", days: ["L", "X"], staff: { head: "Carlos Ruiz", coord: "Ismael Muñoz" } }, { name: "Escuela", suffix: "B", facility: "Campo Principal", zone: "Zona B", days: ["M", "J"], staff: { head: "Laura Sánchez", coord: "Ismael Muñoz" } }], players: 20 },
+  { id: "c2", name: "Prebenjamín", stageId: "s1", teams: [{ name: "Prebenjamín", suffix: "A", facility: "Anexo", zone: "Completo", days: ["L", "X", "V"], staff: { head: "Sara Torres", coord: "Ismael Muñoz" } }], players: 12 },
+  { id: "c3", name: "Benjamín", stageId: "s2", teams: [{ name: "Benjamín", suffix: "A", facility: "Pabellón", zone: "Zona A", days: ["M", "J"], staff: { head: "Miguel Ángel", coord: "Elena Gómez" } }], players: 24 },
+  { id: "c4", name: "Alevín", stageId: "s2", teams: [{ name: "Alevín", suffix: "A", facility: "Campo Principal", zone: "Zona A", days: ["L", "X", "V"], staff: { head: "Roberto S.", coord: "Elena Gómez" } }], players: 36 },
 ];
 
 const MOCK_FACILITIES = [
@@ -99,6 +97,8 @@ export default function AcademyManagementPage() {
   const { toast } = useToast();
   const [categories, setCategories] = useState(INITIAL_CATEGORIES);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isViewSheetOpen, setIsViewSheetOpen] = useState(false);
+  const [selectedViewTeam, setSelectedViewTeam] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [sheetMode, setSheetMode] = useState<'category' | 'team'>('category');
 
@@ -141,6 +141,11 @@ export default function AcademyManagementPage() {
       delegateId: ""
     });
     setIsSheetOpen(true);
+  };
+
+  const handleViewTeam = (team: any, catName: string) => {
+    setSelectedViewTeam({ ...team, categoryName: catName });
+    setIsViewSheetOpen(true);
   };
 
   const toggleDay = (dayId: string) => {
@@ -234,7 +239,11 @@ export default function AcademyManagementPage() {
                   <CardContent className="p-6 pt-4">
                     <div className="grid grid-cols-1 gap-2">
                       {cat.teams.map((team, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-2.5 bg-white/5 rounded-xl border border-white/5 hover:border-primary/30 transition-all group/team">
+                        <div 
+                          key={idx} 
+                          className="flex items-center justify-between p-2.5 bg-white/5 rounded-xl border border-white/5 hover:border-primary/30 transition-all group/team cursor-pointer"
+                          onClick={() => handleViewTeam(team, cat.name)}
+                        >
                           <div className="flex items-center gap-3">
                             <div className="h-1 w-1 rounded-full bg-primary/40 group-hover/team:bg-primary transition-colors" />
                             <span className="text-[9px] font-black text-white/60 uppercase tracking-tight group-hover/team:text-white">
@@ -268,6 +277,126 @@ export default function AcademyManagementPage() {
           </div>
         ))}
       </div>
+
+      {/* TERMINAL DE VISTA DETALLADA DEL EQUIPO */}
+      <Sheet open={isViewSheetOpen} onOpenChange={setIsViewSheetOpen}>
+        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-xl shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+          {selectedViewTeam && (
+            <>
+              <div className="p-10 border-b border-white/5 bg-black/40">
+                <SheetHeader className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Node_Audit_v2.0</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black text-white/30 uppercase tracking-[0.5em] mb-1">Ficha Técnica de Equipo</span>
+                    <SheetTitle className="text-5xl font-black italic tracking-tighter text-white uppercase text-left leading-none">
+                      {selectedViewTeam.name} <span className="text-primary">[{selectedViewTeam.suffix}]</span>
+                    </SheetTitle>
+                  </div>
+                  <div className="flex items-center gap-2 pt-2">
+                    <Badge variant="outline" className="border-primary/20 text-primary font-black uppercase text-[10px] rounded-none px-4">{selectedViewTeam.categoryName}</Badge>
+                    <Badge variant="outline" className="border-white/5 text-white/20 font-black uppercase text-[10px] rounded-none px-4">Protocolo Activo</Badge>
+                  </div>
+                </SheetHeader>
+              </div>
+
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-12">
+                {/* BLOQUE LOGÍSTICA */}
+                <section className="space-y-6">
+                  <div className="flex items-center gap-3 border-b border-white/5 pb-4">
+                    <MapPin className="h-4 w-4 text-primary" />
+                    <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-white/60">Configuración Logística</h3>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="p-6 bg-white/5 border border-white/10 rounded-2xl space-y-2">
+                      <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Instalación / Nodo</span>
+                      <p className="text-sm font-black text-white uppercase italic">{selectedViewTeam.facility || "Sede Principal"}</p>
+                    </div>
+                    <div className="p-6 bg-white/5 border border-white/10 rounded-2xl space-y-2">
+                      <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Zona Operativa</span>
+                      <p className="text-sm font-black text-primary uppercase italic">{selectedViewTeam.zone || "Sector Central"}</p>
+                    </div>
+                  </div>
+
+                  <div className="p-6 border border-primary/20 bg-primary/5 rounded-2xl space-y-4">
+                    <div className="flex items-center gap-3">
+                      <Clock className="h-4 w-4 text-primary" />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-primary">Cronograma de Sesiones</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {WEEK_DAYS.map(day => (
+                        <div 
+                          key={day.id} 
+                          className={cn(
+                            "h-9 w-9 flex items-center justify-center font-black text-[10px] border",
+                            selectedViewTeam.days?.includes(day.id) 
+                              ? "bg-primary text-black border-primary shadow-[0_0_10px_rgba(0,242,255,0.3)]" 
+                              : "border-white/5 text-white/10"
+                          )}
+                        >
+                          {day.id}
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">
+                      Franja: 17:00 - 18:30 <span className="text-primary/40 italic ml-2">(90 Min. de Alta Intensidad)</span>
+                    </p>
+                  </div>
+                </section>
+
+                {/* BLOQUE STAFF */}
+                <section className="space-y-6">
+                  <div className="flex items-center gap-3 border-b border-white/5 pb-4">
+                    <UserCog className="h-4 w-4 text-emerald-400" />
+                    <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-white/60">Staff Técnico Sincronizado</h3>
+                  </div>
+
+                  <div className="space-y-4">
+                    <StaffDetailItem label="Coordinador Etapa" value={selectedViewTeam.staff?.coord || "Ismael Muñoz"} icon={Shield} />
+                    <StaffDetailItem label="Primer Entrenador" value={selectedViewTeam.staff?.head || "Carlos Ruiz"} icon={Trophy} highlight />
+                    <StaffDetailItem label="Segundo Entrenador" value="Elena Gómez" icon={Users} />
+                    <StaffDetailItem label="Preparador Físico" value="Roberto S." icon={Dumbbell} />
+                    <StaffDetailItem label="Delegado Equipo" value="Juan García" icon={ClipboardCheck} />
+                  </div>
+                </section>
+
+                <div className="p-8 border border-white/5 bg-black/40 rounded-[2rem] space-y-4">
+                  <div className="flex items-center gap-3">
+                    <Info className="h-4 w-4 text-white/20" />
+                    <span className="text-[10px] font-black uppercase text-white/20 tracking-widest">Metodología de Red</span>
+                  </div>
+                  <p className="text-[10px] text-white/30 leading-relaxed font-bold uppercase italic">
+                    Este nodo operativo está sincronizado con la matriz del club. Los entrenadores vinculados tienen acceso automático a la telemetría de los atletas asignados a este equipo.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-10 bg-black/40 border-t border-white/5 flex gap-4">
+                <Button 
+                  className="flex-1 h-16 bg-white/5 border border-white/10 text-white/40 font-black uppercase text-[10px] tracking-widest hover:bg-white/10 rounded-none"
+                  onClick={() => setIsViewSheetOpen(false)}
+                >
+                  CERRAR_FICHA
+                </Button>
+                <Button 
+                  className="flex-1 h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.2em] rounded-none cyan-glow"
+                  onClick={() => {
+                    setIsViewSheetOpen(false);
+                    setFormData({ ...formData, parentCategory: INITIAL_CATEGORIES.find(c => c.name === selectedViewTeam.categoryName)?.id || "c1", suffix: selectedViewTeam.suffix });
+                    setSheetMode('team');
+                    setIsSheetOpen(true);
+                  }}
+                >
+                  EDITAR_NODO <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-xl shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
@@ -534,7 +663,7 @@ export default function AcademyManagementPage() {
                             value={formData.secondCoachId} 
                             onValueChange={(v) => setFormData({...formData, secondCoachId: v})}
                           >
-                            <SelectTrigger className="h-11 bg-black/40 border-white/10 rounded-none text-white/60 font-bold uppercase text-[9px] tracking-widest">
+                            <SelectTrigger className="h-11 bg-black/40 border-white/10 rounded-none text-white font-bold uppercase text-[9px] tracking-widest">
                               <div className="flex items-center gap-3">
                                 <Users className="h-3.5 w-3.5 text-emerald-500/40" />
                                 <SelectValue placeholder="2º ENTRENADOR..." />
@@ -555,7 +684,7 @@ export default function AcademyManagementPage() {
                             value={formData.physicalTrainerId} 
                             onValueChange={(v) => setFormData({...formData, physicalTrainerId: v})}
                           >
-                            <SelectTrigger className="h-11 bg-black/40 border-white/10 rounded-none text-white/60 font-bold uppercase text-[9px] tracking-widest">
+                            <SelectTrigger className="h-11 bg-black/40 border-white/10 rounded-none text-white font-bold uppercase text-[9px] tracking-widest">
                               <div className="flex items-center gap-3">
                                 <Dumbbell className="h-3.5 w-3.5 text-emerald-500/40" />
                                 <SelectValue placeholder="P. FÍSICO..." />
@@ -573,7 +702,7 @@ export default function AcademyManagementPage() {
                             value={formData.delegateId} 
                             onValueChange={(v) => setFormData({...formData, delegateId: v})}
                           >
-                            <SelectTrigger className="h-11 bg-black/40 border-white/10 rounded-none text-white/60 font-bold uppercase text-[9px] tracking-widest">
+                            <SelectTrigger className="h-11 bg-black/40 border-white/10 rounded-none text-white font-bold uppercase text-[9px] tracking-widest">
                               <div className="flex items-center gap-3">
                                 <ClipboardCheck className="h-3.5 w-3.5 text-emerald-500/40" />
                                 <SelectValue placeholder="DELEGADO..." />
@@ -643,5 +772,25 @@ function AcademyStat({ label, value, icon: Icon, highlight }: any) {
        </div>
        <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-10 scan-line" />
     </Card>
+  );
+}
+
+function StaffDetailItem({ label, value, icon: Icon, highlight }: any) {
+  return (
+    <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-white/10 transition-all group/item">
+      <div className="flex items-center gap-4">
+        <div className={cn(
+          "h-10 w-10 flex items-center justify-center border rounded-xl",
+          highlight ? "bg-primary/10 border-primary/30 text-primary" : "bg-black border-white/5 text-white/20"
+        )}>
+          <Icon className="h-5 w-5" />
+        </div>
+        <div className="flex flex-col">
+          <span className="text-[9px] font-black uppercase text-white/20 tracking-widest">{label}</span>
+          <span className={cn("text-xs font-black uppercase", highlight ? "text-white cyan-text-glow" : "text-white/70")}>{value}</span>
+        </div>
+      </div>
+      <Badge variant="outline" className="border-white/5 text-white/10 text-[8px] group-hover/item:border-primary/20 group-hover/item:text-primary transition-all">SINC_OK</Badge>
+    </div>
   );
 }
