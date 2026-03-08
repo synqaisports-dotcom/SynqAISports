@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -70,7 +71,7 @@ const navItems: NavItem[] = [
   // TERMINALES_ACCESO
   { title: "Tutor Portal", href: "/tutor", icon: UserCircle, category: "user" },
   { title: "Smartwatch Link", href: "/smartwatch", icon: Watch, category: "user" },
-  { title: "Admin Club", href: "/admin", icon: ShieldCheck, category: "user" },
+  { title: "Admin Club", href: "/dashboard/club", icon: ShieldCheck, category: "user" },
 ];
 
 export function DashboardSidebar() {
