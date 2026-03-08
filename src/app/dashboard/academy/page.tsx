@@ -102,6 +102,7 @@ export default function AcademyManagementPage() {
   const [selectedViewTeam, setSelectedViewTeam] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [sheetMode, setSheetMode] = useState<'category' | 'team'>('category');
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -125,11 +126,12 @@ export default function AcademyManagementPage() {
 
   const handleOpenSheet = (mode: 'category' | 'team') => {
     setSheetMode(mode);
+    setEditingId(null);
     setFormData({ 
       name: "", 
       suffix: "A", 
       stageId: "s2", 
-      parentCategory: "c1",
+      parentCategory: categories[0]?.id || "c1",
       facilityId: "",
       zone: "",
       days: [],
@@ -142,6 +144,26 @@ export default function AcademyManagementPage() {
       delegateId: ""
     });
     setIsSheetOpen(true);
+  };
+
+  const handleEditCategory = (cat: any) => {
+    setSheetMode('category');
+    setEditingId(cat.id);
+    setFormData(prev => ({
+      ...prev,
+      name: cat.name,
+      stageId: cat.stageId
+    }));
+    setIsSheetOpen(true);
+  };
+
+  const handleDeleteCategory = (id: string, name: string) => {
+    setCategories(prev => prev.filter(c => c.id !== id));
+    toast({
+      variant: "destructive",
+      title: "CATEGORÍA_DESVINCULADA",
+      description: `La categoría ${name} ha sido eliminada de la red.`,
+    });
   };
 
   const handleViewTeam = (team: any, catName: string) => {
@@ -163,10 +185,42 @@ export default function AcademyManagementPage() {
     setLoading(true);
     
     setTimeout(() => {
-      toast({
-        title: sheetMode === 'category' ? "ETAPA_SINCRO" : "EQUIPO_VINCULADO",
-        description: `Se ha actualizado la estructura de cantera del club.`,
-      });
+      if (sheetMode === 'category') {
+        if (editingId) {
+          setCategories(prev => prev.map(c => c.id === editingId ? { ...c, name: formData.name, stageId: formData.stageId } : c));
+          toast({ title: "CATEGORÍA_ACTUALIZADA", description: `Se han guardado los cambios para ${formData.name}.` });
+        } else {
+          const newCat = {
+            id: `c${Date.now()}`,
+            name: formData.name,
+            stageId: formData.stageId,
+            teams: [],
+            players: 0
+          };
+          setCategories([...categories, newCat]);
+          toast({ title: "ETAPA_SINCRO", description: "Nueva categoría añadida a la estructura." });
+        }
+      } else {
+        // Lógica para añadir equipo (simplificada para el prototipo)
+        setCategories(prev => prev.map(c => {
+          if (c.id === formData.parentCategory) {
+            return {
+              ...c,
+              teams: [...c.teams, { 
+                name: c.name, 
+                suffix: formData.suffix, 
+                facility: selectedFacility?.name || "", 
+                zone: formData.zone, 
+                days: formData.days,
+                staff: { head: "Nuevo Entrenador", coord: "Ismael Muñoz" }
+              }]
+            };
+          }
+          return c;
+        }));
+        toast({ title: "EQUIPO_VINCULADO", description: `Equipo ${formData.suffix} añadido correctamente.` });
+      }
+      
       setLoading(false);
       setIsSheetOpen(false);
     }, 1500);
@@ -203,8 +257,8 @@ export default function AcademyManagementPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <AcademyStat label="Total Equipos" value={categories.reduce((acc, cat) => acc + cat.teams.length, 0).toString()} icon={Trophy} />
-        <AcademyStat label="Atletas en Formación" value={categories.reduce((acc, cat) => acc + cat.players, 0).toString()} icon={Users} highlight />
+        <AcademyStat label="Total Equipos" value={categories.reduce((acc, cat) => acc + (cat.teams?.length || 0), 0).toString()} icon={Trophy} />
+        <AcademyStat label="Atletas en Formación" value={categories.reduce((acc, cat) => acc + (cat.players || 0), 0).toString()} icon={Users} highlight />
         <AcademyStat label="Etapas Metodológicas" value={STAGES.length.toString()} icon={Layers} />
         <AcademyStat label="Sincronización Red" value="100%" icon={Activity} />
       </div>
@@ -257,10 +311,16 @@ export default function AcademyManagementPage() {
                     </div>
                   </CardContent>
                   <CardFooter className="px-6 py-3 bg-black/40 border-t border-white/5 flex justify-between">
-                    <button className="text-[8px] font-black text-primary hover:cyan-text-glow transition-all flex items-center gap-2 uppercase tracking-widest">
+                    <button 
+                      onClick={() => handleEditCategory(cat)}
+                      className="text-[8px] font-black text-primary hover:cyan-text-glow transition-all flex items-center gap-2 uppercase tracking-widest"
+                    >
                       <Pencil className="h-2.5 w-2.5" /> Editar
                     </button>
-                    <button className="text-[8px] font-black text-rose-500 hover:text-rose-400 transition-all flex items-center gap-2 uppercase tracking-widest">
+                    <button 
+                      onClick={() => handleDeleteCategory(cat.id, cat.name)}
+                      className="text-[8px] font-black text-rose-500 hover:text-rose-400 transition-all flex items-center gap-2 uppercase tracking-widest"
+                    >
                       <Trash2 className="h-2.5 w-2.5" /> Eliminar
                     </button>
                   </CardFooter>
@@ -408,7 +468,7 @@ export default function AcademyManagementPage() {
                 <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Academy_Deploy_v1.5</span>
               </div>
               <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left">
-                {sheetMode === 'category' ? "CONFIG_CATEGORÍA" : "VINCULAR_EQUIPO"}
+                {sheetMode === 'category' ? (editingId ? "MODIFICAR_CATEGORÍA" : "CONFIG_CATEGORÍA") : "VINCULAR_EQUIPO"}
               </SheetTitle>
               <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left">
                 Defina los nodos de formación para la red del club.
@@ -789,7 +849,7 @@ export default function AcademyManagementPage() {
               disabled={loading}
               className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-none shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] transition-all border-none"
             >
-              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "SINCRONIZAR_NODO"}
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (editingId ? "ACTUALIZAR_NODO" : "SINCRONIZAR_NODO")}
             </Button>
           </div>
         </SheetContent>
