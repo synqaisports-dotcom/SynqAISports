@@ -22,7 +22,8 @@ import {
   ShieldCheck,
   Stethoscope,
   IdCard,
-  LayoutGrid
+  LayoutGrid,
+  ShieldAlert
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -62,6 +63,8 @@ const CATEGORIES = [
   { value: "Primer Equipo", label: "Primer Equipo" },
 ];
 
+const TEAM_SUFFIXES = ["A", "B", "C", "D"];
+
 const POSITIONS = [
   { value: "Portero", label: "Portero / Guardameta" },
   { value: "Defensa", label: "Defensa / Zaguero" },
@@ -70,10 +73,10 @@ const POSITIONS = [
 ];
 
 const INITIAL_PLAYERS = [
-  { id: "p1", name: "Lucas", surname: "García", email: "l.garcia@tutor.com", category: "Infantil A", position: "Medio", status: "Active", attendance: "98%" },
-  { id: "p2", name: "Elena", surname: "Rossi", email: "e.rossi@tutor.it", category: "Alevín B", position: "Delantero", status: "Active", attendance: "92%" },
-  { id: "p3", name: "Marc", surname: "Soler", email: "m.soler@tutor.es", category: "Cadete C", position: "Portero", status: "Injured", attendance: "45%" },
-  { id: "p4", name: "Sofía", surname: "Mendes", email: "s.mendes@tutor.br", category: "Benjamín A", position: "Defensa", status: "Active", attendance: "100%" },
+  { id: "p1", name: "Lucas", surname: "García", email: "l.garcia@tutor.com", category: "Infantil", teamSuffix: "A", position: "Medio", status: "Active", attendance: "98%" },
+  { id: "p2", name: "Elena", surname: "Rossi", email: "e.rossi@tutor.it", category: "Alevín", teamSuffix: "B", position: "Delantero", status: "Active", attendance: "92%" },
+  { id: "p3", name: "Marc", surname: "Soler", email: "m.soler@tutor.es", category: "Cadete", teamSuffix: "C", position: "Portero", status: "Injured", attendance: "45%" },
+  { id: "p4", name: "Sofía", surname: "Mendes", email: "s.mendes@tutor.br", category: "Benjamín", teamSuffix: "A", position: "Defensa", status: "Active", attendance: "100%" },
 ];
 
 export default function PlayersManagementPage() {
@@ -90,6 +93,7 @@ export default function PlayersManagementPage() {
     surname: "",
     email: "",
     category: "Alevín",
+    teamSuffix: "A",
     position: "Medio",
     status: "Active"
   });
@@ -101,6 +105,7 @@ export default function PlayersManagementPage() {
       surname: "", 
       email: "", 
       category: "Alevín", 
+      teamSuffix: "A",
       position: "Medio", 
       status: "Active" 
     });
@@ -114,6 +119,7 @@ export default function PlayersManagementPage() {
       surname: player.surname,
       email: player.email,
       category: player.category,
+      teamSuffix: player.teamSuffix,
       position: player.position,
       status: player.status
     });
@@ -210,7 +216,7 @@ export default function PlayersManagementPage() {
               <thead className="bg-white/[0.02] border-b border-white/5">
                 <tr>
                   <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-white/40">Atleta / Identidad</th>
-                  <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white/40">Categoría</th>
+                  <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white/40">Categoría - Equipo</th>
                   <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white/40">Posición</th>
                   <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white/40">Asistencia</th>
                   <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white/40">Estatus</th>
@@ -235,9 +241,12 @@ export default function PlayersManagementPage() {
                       </div>
                     </td>
                     <td className="px-6 py-5">
-                      <Badge variant="outline" className="rounded-none border-white/10 text-white/60 font-black text-[9px] uppercase tracking-widest bg-white/5 px-3">
-                        {player.category}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="rounded-none border-white/10 text-white/60 font-black text-[9px] uppercase tracking-widest bg-white/5 px-3">
+                          {player.category}
+                        </Badge>
+                        <span className="text-[10px] font-black text-primary italic">[{player.teamSuffix}]</span>
+                      </div>
                     </td>
                     <td className="px-6 py-5">
                       <span className="text-[10px] font-black text-white/70 uppercase tracking-tighter">{player.position}</span>
@@ -373,6 +382,27 @@ export default function PlayersManagementPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Equipo (Letra)</Label>
+                  <Select 
+                    value={formData.teamSuffix} 
+                    onValueChange={(v) => setFormData({...formData, teamSuffix: v})}
+                  >
+                    <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary/50 transition-all">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
+                      {TEAM_SUFFIXES.map(suffix => (
+                        <SelectItem key={suffix} value={suffix} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary">
+                          EQUIPO {suffix}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Posición Táctica</Label>
                   <Select 
                     value={formData.position} 
@@ -390,23 +420,22 @@ export default function PlayersManagementPage() {
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Estatus del Atleta</Label>
-                <Select 
-                  value={formData.status} 
-                  onValueChange={(v) => setFormData({...formData, status: v})}
-                >
-                  <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary/50 transition-all">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
-                    <SelectItem value="Active" className="text-[10px] font-black uppercase">ACTIVO / DISPONIBLE</SelectItem>
-                    <SelectItem value="Injured" className="text-[10px] font-black uppercase text-rose-400">LESIONADO / BAJA</SelectItem>
-                    <SelectItem value="Away" className="text-[10px] font-black uppercase">AUSENCIA_TEMPORAL</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Estatus del Atleta</Label>
+                  <Select 
+                    value={formData.status} 
+                    onValueChange={(v) => setFormData({...formData, status: v})}
+                  >
+                    <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary/50 transition-all">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
+                      <SelectItem value="Active" className="text-[10px] font-black uppercase">ACTIVO / DISPONIBLE</SelectItem>
+                      <SelectItem value="Injured" className="text-[10px] font-black uppercase text-rose-400">LESIONADO / BAJA</SelectItem>
+                      <SelectItem value="Away" className="text-[10px] font-black uppercase">AUSENCIA_TEMPORAL</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 
@@ -460,7 +489,7 @@ function PlayerStat({ label, value, icon: Icon, highlight, warning }: any) {
              )}>{value}</p>
           </div>
        </div>
-       <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 scan-line" />
+       <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-10 scan-line" />
     </Card>
   );
 }

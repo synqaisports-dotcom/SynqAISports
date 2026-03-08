@@ -20,7 +20,8 @@ import {
   ArrowUpRight,
   Loader2,
   FolderPlus,
-  Layers
+  Layers,
+  Tag
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -56,15 +57,15 @@ const STAGES = [
 ];
 
 const INITIAL_CATEGORIES = [
-  { id: "c1", name: "Debutantes", stageId: "s1", teams: ["Escuela A", "Escuela B"], players: 20 },
-  { id: "c2", name: "Prebenjamín", stageId: "s1", teams: ["Prebenjamín A"], players: 12 },
-  { id: "c3", name: "Benjamín", stageId: "s2", teams: ["Benjamín A", "Benjamín B"], players: 24 },
-  { id: "c4", name: "Alevín", stageId: "s2", teams: ["Alevín A", "Alevín B", "Alevín C"], players: 36 },
-  { id: "c5", name: "Infantil", stageId: "s2", teams: ["Infantil A", "Infantil B"], players: 30 },
-  { id: "c6", name: "Cadete", stageId: "s3", teams: ["Cadete A", "Cadete B"], players: 40 },
-  { id: "c7", name: "Juvenil", stageId: "s3", teams: ["Juvenil A", "Juvenil B"], players: 44 },
-  { id: "c8", name: "Senior", stageId: "s4", teams: ["Senior B", "Senior C"], players: 38 },
-  { id: "c9", name: "Primer Equipo", stageId: "s4", teams: ["Primer Equipo"], players: 25 },
+  { id: "c1", name: "Debutantes", stageId: "s1", teams: [{ name: "Escuela", suffix: "A" }, { name: "Escuela", suffix: "B" }], players: 20 },
+  { id: "c2", name: "Prebenjamín", stageId: "s1", teams: [{ name: "Prebenjamín", suffix: "A" }], players: 12 },
+  { id: "c3", name: "Benjamín", stageId: "s2", teams: [{ name: "Benjamín", suffix: "A" }, { name: "Benjamín", suffix: "B" }], players: 24 },
+  { id: "c4", name: "Alevín", stageId: "s2", teams: [{ name: "Alevín", suffix: "A" }, { name: "Alevín", suffix: "B" }, { name: "Alevín", suffix: "C" }], players: 36 },
+  { id: "c5", name: "Infantil", stageId: "s2", teams: [{ name: "Infantil", suffix: "A" }, { name: "Infantil", suffix: "B" }], players: 30 },
+  { id: "c6", name: "Cadete", stageId: "s3", teams: [{ name: "Cadete", suffix: "A" }, { name: "Cadete", suffix: "B" }], players: 40 },
+  { id: "c7", name: "Juvenil", stageId: "s3", teams: [{ name: "Juvenil", suffix: "A" }, { name: "Juvenil", suffix: "B" }], players: 44 },
+  { id: "c8", name: "Senior", stageId: "s4", teams: [{ name: "Senior", suffix: "B" }, { name: "Senior", suffix: "C" }], players: 38 },
+  { id: "c9", name: "Primer Equipo", stageId: "s4", teams: [{ name: "Primer Equipo", suffix: "A" }], players: 25 },
 ];
 
 export default function AcademyManagementPage() {
@@ -77,14 +78,14 @@ export default function AcademyManagementPage() {
 
   const [formData, setFormData] = useState({
     name: "",
+    suffix: "A",
     stageId: "s2",
     parentCategory: "c1",
-    teamCount: "1"
   });
 
   const handleOpenSheet = (mode: 'category' | 'team') => {
     setSheetMode(mode);
-    setFormData({ name: "", stageId: "s2", parentCategory: "c1", teamCount: "1" });
+    setFormData({ name: "", suffix: "A", stageId: "s2", parentCategory: "c1" });
     setIsSheetOpen(true);
   };
 
@@ -173,7 +174,9 @@ export default function AcademyManagementPage() {
                         <div key={idx} className="flex items-center justify-between p-2.5 bg-white/5 rounded-xl border border-white/5 hover:border-primary/30 transition-all group/team">
                           <div className="flex items-center gap-3">
                             <div className="h-1 w-1 rounded-full bg-primary/40 group-hover/team:bg-primary transition-colors" />
-                            <span className="text-[9px] font-black text-white/60 uppercase tracking-tight group-hover/team:text-white">{team}</span>
+                            <span className="text-[9px] font-black text-white/60 uppercase tracking-tight group-hover/team:text-white">
+                              {team.name} <span className="text-primary/60 group-hover/team:text-primary font-black ml-1">[{team.suffix}]</span>
+                            </span>
                           </div>
                           <ArrowUpRight className="h-3 w-3 text-white/0 group-hover/team:text-primary group-hover/team:opacity-100 transition-all" />
                         </div>
@@ -222,57 +225,73 @@ export default function AcademyManagementPage() {
 
           <form onSubmit={handleSave} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10">
             <div className="space-y-8">
-              <div className="space-y-3">
-                <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">
-                  {sheetMode === 'category' ? "Nombre de la Categoría" : "Nombre del Equipo"}
-                </Label>
-                <Input 
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})}
-                  placeholder={sheetMode === 'category' ? "EJ: ALEVÍN" : "EJ: ALEVÍN A"} 
-                  className="h-14 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-primary/50 transition-all placeholder:text-white/10 text-lg" 
-                />
-              </div>
-
               {sheetMode === 'category' ? (
-                <div className="space-y-3">
-                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Etapa Metodológica</Label>
-                  <Select 
-                    value={formData.stageId} 
-                    onValueChange={(v) => setFormData({...formData, stageId: v})}
-                  >
-                    <SelectTrigger className="h-14 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest px-6">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-none">
-                      {STAGES.map(s => (
-                        <SelectItem key={s.id} value={s.id} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary">
-                          {s.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <>
+                  <div className="space-y-3">
+                    <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Nombre de la Categoría</Label>
+                    <Input 
+                      required
+                      value={formData.name}
+                      onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})}
+                      placeholder="EJ: ALEVÍN" 
+                      className="h-14 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-primary/50 transition-all placeholder:text-white/10 text-lg" 
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Etapa Metodológica</Label>
+                    <Select 
+                      value={formData.stageId} 
+                      onValueChange={(v) => setFormData({...formData, stageId: v})}
+                    >
+                      <SelectTrigger className="h-14 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest px-6">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-none">
+                        {STAGES.map(s => (
+                          <SelectItem key={s.id} value={s.id} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary">
+                            {s.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
               ) : (
-                <div className="space-y-3">
-                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Categoría Padre</Label>
-                  <Select 
-                    value={formData.parentCategory} 
-                    onValueChange={(v) => setFormData({...formData, parentCategory: v})}
-                  >
-                    <SelectTrigger className="h-14 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest px-6">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-none">
-                      {categories.map(c => (
-                        <SelectItem key={c.id} value={c.id} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary">
-                          {c.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <>
+                  <div className="space-y-3">
+                    <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Categoría Federativa</Label>
+                    <Select 
+                      value={formData.parentCategory} 
+                      onValueChange={(v) => setFormData({...formData, parentCategory: v})}
+                    >
+                      <SelectTrigger className="h-14 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest px-6">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-none">
+                        {categories.map(c => (
+                          <SelectItem key={c.id} value={c.id} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary">
+                            {c.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-3">
+                    <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Identificador del Equipo (Letra)</Label>
+                    <div className="relative">
+                      <Tag className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary/40" />
+                      <Input 
+                        required
+                        value={formData.suffix}
+                        onChange={(e) => setFormData({...formData, suffix: e.target.value.toUpperCase()})}
+                        placeholder="EJ: A" 
+                        maxLength={1}
+                        className="h-16 bg-white/5 border-white/10 rounded-none font-black text-center text-2xl text-primary focus:border-primary/50 transition-all" 
+                      />
+                    </div>
+                    <p className="text-[8px] text-white/20 uppercase font-bold text-center mt-2">Este carácter se usará para distinguir los nodos dentro de la misma categoría.</p>
+                  </div>
+                </>
               )}
 
               <div className="p-6 bg-primary/5 border border-primary/20 space-y-3">
@@ -281,7 +300,7 @@ export default function AcademyManagementPage() {
                   <span className="text-[9px] font-black uppercase text-primary tracking-widest">Protocolo de Organización</span>
                 </div>
                 <p className="text-[9px] text-white/40 leading-relaxed font-bold uppercase italic">
-                  La estructura de cantera define cómo se segmentan los datos tácticos y de asistencia. Cada equipo heredará los parámetros metodológicos de su etapa.
+                  La estructura de cantera define cómo se segmentan los datos tácticos y de asistencia. La separación de identificadores permite un filtrado más preciso por nodos operativos.
                 </p>
               </div>
             </div>
