@@ -26,7 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const ROLES_TO_MANAGE = [
@@ -242,13 +242,13 @@ function PermissionToggle({ label, icon: Icon, defaultChecked, critical }: any) 
         "text-[9px] font-black uppercase tracking-widest",
         checked ? "text-white" : "text-white/20"
       )}>{label}</span>
-      <Checkbox 
+      <Switch 
         checked={checked} 
-        onCheckedChange={() => setChecked(!checked)}
+        onCheckedChange={setChecked}
         className={cn(
-          "rounded-none border-white/10",
-          checked && !critical ? "data-[state=checked]:bg-primary data-[state=checked]:text-black" : "",
-          checked && critical ? "data-[state=checked]:bg-rose-500 data-[state=checked]:text-white" : ""
+          "scale-75",
+          checked && !critical ? "data-[state=checked]:bg-primary" : "",
+          checked && critical ? "data-[state=checked]:bg-rose-500" : ""
         )}
       />
     </div>
