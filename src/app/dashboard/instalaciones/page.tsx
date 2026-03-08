@@ -298,16 +298,18 @@ export default function FacilitiesManagementPage() {
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="h-8 w-8 text-white/20 hover:text-primary border border-white/5"
+                  className="h-9 w-9 text-primary hover:bg-primary/10 border border-primary/10 transition-all"
                   onClick={() => handleEdit(f)}
+                  title="Modificar Activo"
                 >
                   <Pencil className="h-3.5 w-3.5" />
                 </Button>
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="h-8 w-8 text-white/20 hover:text-rose-400 border border-white/5"
+                  className="h-9 w-9 text-rose-500 hover:bg-rose-500/10 border border-rose-500/10 transition-all"
                   onClick={() => handleDelete(f.id, f.name)}
+                  title="Eliminar Activo"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>

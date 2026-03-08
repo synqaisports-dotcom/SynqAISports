@@ -283,16 +283,18 @@ export default function StaffManagementPage() {
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="h-9 w-9 text-white/20 hover:text-primary border border-white/5"
+                          className="h-9 w-9 text-primary hover:bg-primary/10 border border-primary/10 transition-all"
                           onClick={() => handleEdit(member)}
+                          title="Modificar Identidad"
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="h-9 w-9 text-white/20 hover:text-rose-400 border border-white/5"
+                          className="h-9 w-9 text-rose-500 hover:bg-rose-500/10 border border-rose-500/10 transition-all"
                           onClick={() => handleDelete(member.id, member.name, member.role)}
+                          title="Vincular Baja"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

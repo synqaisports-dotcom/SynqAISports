@@ -278,16 +278,18 @@ export default function PlayersManagementPage() {
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="h-9 w-9 text-white/20 hover:text-primary border border-white/5"
+                          className="h-9 w-9 text-primary hover:bg-primary/10 border border-primary/10 transition-all"
                           onClick={() => handleEdit(player)}
+                          title="Modificar Atleta"
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="h-9 w-9 text-white/20 hover:text-rose-400 border border-white/5"
+                          className="h-9 w-9 text-rose-500 hover:bg-rose-500/10 border border-rose-500/10 transition-all"
                           onClick={() => handleDelete(player.id, player.name)}
+                          title="Desvincular Atleta"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -485,7 +487,7 @@ function PlayerStat({ label, value, icon: Icon, highlight, warning }: any) {
           <div className="flex items-baseline gap-2">
              <p className={cn(
                "text-2xl font-black italic tracking-tighter",
-               highlight ? "text-primary" : warning ? "text-rose-400" : "text-white"
+               highlight ? "text-primary cyan-text-glow" : "text-rose-400" : "text-white"
              )}>{value}</p>
           </div>
        </div>

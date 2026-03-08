@@ -234,10 +234,10 @@ export default function AcademyManagementPage() {
                     </div>
                   </CardContent>
                   <CardFooter className="px-6 py-3 bg-black/40 border-t border-white/5 flex justify-between">
-                    <button className="text-[8px] font-black text-white/20 hover:text-primary transition-all flex items-center gap-2 uppercase tracking-widest">
+                    <button className="text-[8px] font-black text-primary hover:cyan-text-glow transition-all flex items-center gap-2 uppercase tracking-widest">
                       <Pencil className="h-2.5 w-2.5" /> Editar
                     </button>
-                    <button className="text-[8px] font-black text-white/20 hover:text-rose-400 transition-all flex items-center gap-2 uppercase tracking-widest">
+                    <button className="text-[8px] font-black text-rose-500 hover:text-rose-400 transition-all flex items-center gap-2 uppercase tracking-widest">
                       <Trash2 className="h-2.5 w-2.5" /> Eliminar
                     </button>
                   </CardFooter>
@@ -467,7 +467,7 @@ export default function AcademyManagementPage() {
               )}
 
               <div className="p-6 bg-primary/5 border border-primary/20 space-y-3">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <ShieldCheck className="h-3 w-3 text-primary" />
                   <span className="text-[9px] font-black uppercase text-primary tracking-widest">Protocolo de Organización</span>
                 </div>
