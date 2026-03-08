@@ -189,7 +189,7 @@ export function DashboardSidebar() {
 function SidebarGroupWrapper({ children, title, color }: any) {
   return (
     <SidebarGroup className="p-0">
-      <p className={cn("px-4 mb-4 text-[8px] font-black uppercase tracking-[0.5em] opacity-50", color)}>
+      <p className={cn("px-4 mb-4 text-[8px] font-black uppercase tracking-[0.5em] animate-pulse", color)}>
         {title}
       </p>
       {children}
