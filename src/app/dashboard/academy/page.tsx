@@ -522,6 +522,7 @@ export default function AcademyManagementPage() {
               </div>
             ) : (
               <div className="space-y-10">
+                {/* CLASIFICACIÓN METODOLÓGICA */}
                 <div className="space-y-6 p-8 border border-primary/30 bg-primary/5 rounded-3xl relative overflow-hidden">
                   <div className="absolute top-0 right-0 p-4 opacity-5">
                     <Layers className="h-24 w-24 text-primary" />
@@ -545,6 +546,7 @@ export default function AcademyManagementPage() {
                   </div>
                 </div>
 
+                {/* IDENTIDAD FEDERATIVA */}
                 <div className="space-y-6">
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-3">
@@ -576,6 +578,7 @@ export default function AcademyManagementPage() {
                   </div>
                 </div>
 
+                {/* ASIGNACIÓN DE ACTIVO Y HORARIO */}
                 <div className="space-y-6 p-8 border border-primary/30 bg-primary/5 rounded-3xl relative overflow-hidden">
                   <div className="flex items-center gap-3 border-b border-primary/20 pb-4 mb-6">
                     <Zap className="h-4 w-4 text-primary animate-pulse" />
@@ -617,8 +620,36 @@ export default function AcademyManagementPage() {
                       ))}
                     </div>
                   </div>
+
+                  <div className="grid grid-cols-2 gap-6 pt-4">
+                    <div className="space-y-2">
+                      <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Hora Inicio</Label>
+                      <div className="relative">
+                        <Clock className="absolute left-3 top-3 h-4 w-4 text-primary/40" />
+                        <Input 
+                          type="time" 
+                          value={formData.startTime}
+                          onChange={(e) => setFormData({...formData, startTime: e.target.value})}
+                          className="pl-10 h-11 bg-white/5 border-white/10 rounded-none font-bold text-xs focus:border-primary/50" 
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Hora Fin</Label>
+                      <div className="relative">
+                        <Clock className="absolute left-3 top-3 h-4 w-4 text-primary/40" />
+                        <Input 
+                          type="time" 
+                          value={formData.endTime}
+                          onChange={(e) => setFormData({...formData, endTime: e.target.value})}
+                          className="pl-10 h-11 bg-white/5 border-white/10 rounded-none font-bold text-xs focus:border-primary/50" 
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
+                {/* STAFF TÉCNICO */}
                 <div className="space-y-6 p-8 border border-emerald-500/30 bg-emerald-500/5 rounded-3xl relative overflow-hidden">
                   <div className="flex items-center gap-3 border-b border-emerald-500/20 pb-4 mb-6">
                     <Users className="h-4 w-4 text-emerald-500" />
@@ -655,6 +686,28 @@ export default function AcademyManagementPage() {
                           <SelectContent className="bg-[#04070c] border-emerald-500/20">
                             <SelectItem value="c3" className="text-[9px] font-black uppercase">Miguel Ángel</SelectItem>
                             <SelectItem value="c4" className="text-[9px] font-black uppercase">Sara Torres</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Preparador Físico</Label>
+                        <Select value={formData.physicalTrainerId} onValueChange={(v) => setFormData({...formData, physicalTrainerId: v})}>
+                          <SelectTrigger className="h-11 bg-black/40 border-white/10 rounded-none text-white/60 font-bold uppercase text-[9px] tracking-widest"><SelectValue placeholder="P. FÍSICO..." /></SelectTrigger>
+                          <SelectContent className="bg-[#04070c] border-emerald-500/20">
+                            <SelectItem value="pf1" className="text-[9px] font-black uppercase">Roberto S.</SelectItem>
+                            <SelectItem value="pf2" className="text-[9px] font-black uppercase">Ana Belén</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Delegado de Equipo</Label>
+                        <Select value={formData.delegateId} onValueChange={(v) => setFormData({...formData, delegateId: v})}>
+                          <SelectTrigger className="h-11 bg-black/40 border-white/10 rounded-none text-white/60 font-bold uppercase text-[9px] tracking-widest"><SelectValue placeholder="DELEGADO..." /></SelectTrigger>
+                          <SelectContent className="bg-[#04070c] border-emerald-500/20">
+                            <SelectItem value="d1" className="text-[9px] font-black uppercase">Juan García</SelectItem>
+                            <SelectItem value="d2" className="text-[9px] font-black uppercase">Marta López</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
