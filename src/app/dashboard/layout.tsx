@@ -15,7 +15,7 @@ function OperationalTabTrigger() {
   return (
     <div 
       className={`fixed top-1/2 -translate-y-1/2 z-[100] transition-all duration-500 ease-in-out ${
-        isExpanded ? 'left-[16rem]' : 'left-0'
+        isExpanded ? 'left-[16rem]' : 'left-[3rem]'
       }`}
     >
       <SidebarTrigger className="h-14 w-6 rounded-r-2xl border-y border-r border-primary/30 bg-black/60 backdrop-blur-xl text-primary hover:w-8 hover:bg-primary hover:text-black transition-all duration-300 opacity-0 hover:opacity-100 shadow-[0_0_20px_rgba(0,242,255,0.2)] flex items-center justify-center border-l-0 p-0 group overflow-hidden">

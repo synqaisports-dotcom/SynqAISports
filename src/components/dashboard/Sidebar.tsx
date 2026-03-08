@@ -80,12 +80,13 @@ const navItems: NavItem[] = [
 export function DashboardSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { toggleSidebar } = useSidebar();
+  const { toggleSidebar, state } = useSidebar();
   const { profile, logout } = useAuth();
   
   if (pathname === "/dashboard/coach/onboarding") return null;
 
   const isSuperAdmin = profile?.role === "superadmin";
+  const isCollapsed = state === "collapsed";
 
   const handleLogout = () => {
     logout();
@@ -100,34 +101,48 @@ export function DashboardSidebar() {
   });
 
   return (
-    <Sidebar collapsible="offcanvas" className="border-r border-white/5 bg-[#04070c] shadow-[4px_0_24px_rgba(0,0,0,0.5)]">
-      <SidebarHeader className="p-8 border-b border-white/5 bg-black/60 backdrop-blur-md">
+    <Sidebar 
+      collapsible="icon" 
+      className={cn(
+        "border-r border-white/5 transition-all duration-500",
+        isCollapsed ? "bg-transparent border-primary/30" : "bg-[#04070c] shadow-[4px_0_24px_rgba(0,0,0,0.5)]"
+      )}
+    >
+      <SidebarHeader className={cn(
+        "p-8 border-b border-white/5 transition-all duration-500",
+        isCollapsed ? "bg-transparent border-primary/20 p-2" : "bg-black/60 backdrop-blur-md"
+      )}>
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className={cn(
-                "p-2.5 rounded-xl shrink-0 shadow-[0_0_25px_rgba(0,242,255,0.4)]",
-                isSuperAdmin ? "bg-emerald-500 emerald-text-glow" : "bg-primary cyan-glow"
+                "p-2.5 rounded-xl shrink-0 transition-all duration-500",
+                isSuperAdmin ? "bg-emerald-500 emerald-text-glow" : "bg-primary cyan-glow",
+                isCollapsed && "p-1.5 shadow-[0_0_15px_rgba(0,242,255,0.3)]"
               )}>
-                <Zap className="h-6 w-6 text-black" />
+                <Zap className={cn("text-black", isCollapsed ? "h-4 w-4" : "h-6 w-6")} />
               </div>
-              <div className="flex flex-col overflow-hidden">
-                <span className="font-headline font-black text-2xl tracking-tighter text-white uppercase italic">
-                  Synq<span className={cn(isSuperAdmin ? "text-emerald-400" : "text-primary")}>AI</span>
-                </span>
-                <span className="text-[9px] font-black text-white/30 tracking-[0.4em] uppercase">SPORTS_PRO</span>
-              </div>
+              {!isCollapsed && (
+                <div className="flex flex-col overflow-hidden animate-in fade-in duration-500">
+                  <span className="font-headline font-black text-2xl tracking-tighter text-white uppercase italic">
+                    Synq<span className={cn(isSuperAdmin ? "text-emerald-400" : "text-primary")}>AI</span>
+                  </span>
+                  <span className="text-[9px] font-black text-white/30 tracking-[0.4em] uppercase">SPORTS_PRO</span>
+                </div>
+              )}
             </div>
-            <button 
-              onClick={toggleSidebar}
-              className="h-8 w-8 rounded-xl bg-white/5 flex items-center justify-center text-white/40 hover:text-primary transition-all border border-white/5 lg:hidden"
-              title="Ocultar Terminal"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
+            {!isCollapsed && (
+              <button 
+                onClick={toggleSidebar}
+                className="h-8 w-8 rounded-xl bg-white/5 flex items-center justify-center text-white/40 hover:text-primary transition-all border border-white/5 lg:hidden"
+                title="Ocultar Terminal"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+            )}
           </div>
 
-          {isSuperAdmin && (
+          {!isCollapsed && isSuperAdmin && (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg animate-in fade-in zoom-in-95">
               <ShieldCheck className="h-3 w-3 text-emerald-400" />
               <span className="text-[8px] font-black text-emerald-400 uppercase tracking-[0.2em]">SUPERADMIN_ACTIVE</span>
@@ -136,10 +151,13 @@ export function DashboardSidebar() {
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-3 py-8 space-y-10 custom-scrollbar overflow-x-hidden">
+      <SidebarContent className={cn(
+        "px-3 py-8 space-y-10 custom-scrollbar overflow-x-hidden transition-all duration-500",
+        isCollapsed && "py-4 space-y-6"
+      )}>
         {/* GLOBAL CONTROL - ONLY FOR SUPERADMIN */}
         {isSuperAdmin && (
-          <SidebarGroupWrapper title="Control_Global" color="text-emerald-400">
+          <SidebarGroupWrapper title="Control_Global" color="text-emerald-400" isCollapsed={isCollapsed}>
             <SidebarMenu>
               {filteredItems.filter(i => i.category === "global").map((item) => (
                 <SidebarMenuItem key={item.href}>
@@ -151,18 +169,17 @@ export function DashboardSidebar() {
         )}
 
         {/* OPERATIONAL ELITE */}
-        <SidebarGroupWrapper title="Operativa_Elite" color={isSuperAdmin ? "text-emerald-400/40" : "text-primary"}>
+        <SidebarGroupWrapper title="Operativa_Elite" color={isSuperAdmin ? "text-emerald-400/40" : "text-primary"} isCollapsed={isCollapsed}>
           <SidebarMenu>
             {filteredItems.filter(i => i.category === "operational").map((item) => (
               <SidebarMenuItem key={item.href}>
                 <SidebarLink item={item} isActive={pathname === item.href} />
               </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarGroupWrapper>
+            </SidebarMenu>
+          </SidebarGroupWrapper>
 
         {/* USER TERMINALS */}
-        <SidebarGroupWrapper title="Terminales_Acceso" color="text-white/20">
+        <SidebarGroupWrapper title="Terminales_Acceso" color="text-white/20" isCollapsed={isCollapsed}>
           <SidebarMenu>
             {filteredItems.filter(i => i.category === "user").map((item) => (
               <SidebarMenuItem key={item.href}>
@@ -173,31 +190,39 @@ export function DashboardSidebar() {
         </SidebarGroupWrapper>
       </SidebarContent>
 
-      <SidebarFooter className="p-6 border-t border-white/5 bg-black/60 backdrop-blur-md">
+      <SidebarFooter className={cn(
+        "p-6 border-t border-white/5 transition-all duration-500",
+        isCollapsed ? "bg-transparent p-2" : "bg-black/60 backdrop-blur-md"
+      )}>
         <button 
           onClick={handleLogout}
           className="flex items-center gap-4 px-4 py-4 text-white/30 hover:text-white transition-all font-black text-[10px] uppercase tracking-widest hover:bg-white/5 rounded-2xl group overflow-hidden w-full text-left"
         >
           <LogOut className="h-5 w-5 shrink-0 group-hover:translate-x-1 transition-transform" />
-          <span className="whitespace-nowrap font-bold">CERRAR_SESIÓN</span>
+          {!isCollapsed && <span className="whitespace-nowrap font-bold animate-in fade-in duration-500">CERRAR_SESIÓN</span>}
         </button>
       </SidebarFooter>
     </Sidebar>
   );
 }
 
-function SidebarGroupWrapper({ children, title, color }: any) {
+function SidebarGroupWrapper({ children, title, color, isCollapsed }: any) {
   return (
     <SidebarGroup className="p-0">
-      <p className={cn("px-4 mb-4 text-[8px] font-black uppercase tracking-[0.5em] animate-pulse", color)}>
-        {title}
-      </p>
+      {!isCollapsed && (
+        <p className={cn("px-4 mb-4 text-[8px] font-black uppercase tracking-[0.5em] animate-pulse transition-all duration-500", color)}>
+          {title}
+        </p>
+      )}
       {children}
     </SidebarGroup>
   );
 }
 
 function SidebarLink({ item, isActive, isGlobal }: { item: NavItem; isActive: boolean; isGlobal?: boolean }) {
+  const { state } = useSidebar();
+  const isCollapsed = state === "collapsed";
+
   const activeClass = isGlobal 
     ? "bg-emerald-500/10 text-emerald-400 shadow-[0_4px_15px_rgba(16,185,129,0.15)] emerald-text-glow"
     : "bg-primary/10 text-primary shadow-[0_4px_15px_rgba(0,242,255,0.15)] cyan-text-glow";
@@ -217,7 +242,7 @@ function SidebarLink({ item, isActive, isGlobal }: { item: NavItem; isActive: bo
     >
       <Link href={item.href}>
         <item.icon className={cn("h-5 w-5 shrink-0 transition-all duration-500", iconClass)} />
-        <span className="font-bold text-[10px] uppercase tracking-[0.25em] whitespace-nowrap">{item.title}</span>
+        <span className={cn("font-bold text-[10px] uppercase tracking-[0.25em] whitespace-nowrap", isCollapsed && "hidden")}>{item.title}</span>
         {isActive && (
           <div className={cn(
             "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-3/5 rounded-full",
