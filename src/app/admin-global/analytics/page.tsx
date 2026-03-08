@@ -27,12 +27,12 @@ export default function GlobalAnalyticsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card className="glass-panel h-80 flex flex-col items-center justify-center p-12 relative overflow-hidden">
+        <Card className="glass-panel h-80 flex flex-col items-center justify-center p-12 relative overflow-hidden border border-emerald-500/20">
            <div className="absolute top-0 right-0 p-4 opacity-5"><TrendingUp className="h-40 w-40 text-emerald-500" /></div>
            <BarChart3 className="h-12 w-12 text-emerald-500/20 mb-4" />
            <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.5em]">Generando_Gráficas_de_Rendimiento...</span>
         </Card>
-        <Card className="glass-panel h-80 flex flex-col items-center justify-center p-12 relative overflow-hidden">
+        <Card className="glass-panel h-80 flex flex-col items-center justify-center p-12 relative overflow-hidden border border-emerald-500/20">
            <div className="absolute top-0 right-0 p-4 opacity-5"><Users className="h-40 w-40 text-emerald-500" /></div>
            <Activity className="h-12 w-12 text-emerald-500/20 mb-4" />
            <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.5em]">Sincronizando_Datos_de_Atletas...</span>
@@ -44,7 +44,7 @@ export default function GlobalAnalyticsPage() {
 
 function AnalyticsMiniCard({ label, value, trend, icon: Icon }: any) {
   return (
-    <Card className="glass-panel p-6 relative group">
+    <Card className="glass-panel p-6 relative group border border-emerald-500/20">
       <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-20 transition-all">
         <Icon className="h-8 w-8 text-emerald-500" />
       </div>

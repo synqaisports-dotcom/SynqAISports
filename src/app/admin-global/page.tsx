@@ -31,7 +31,7 @@ export default function AdminGlobalDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* TRAFFIC MONITOR */}
-        <Card className="glass-panel lg:col-span-2 overflow-hidden relative group">
+        <Card className="glass-panel lg:col-span-2 overflow-hidden relative group border border-emerald-500/20">
           <div className="absolute top-0 right-0 p-1 bg-emerald-500/20 text-[8px] font-black px-2 uppercase tracking-widest text-emerald-400">Live_Network_Traffic</div>
           <CardHeader>
             <CardTitle className="text-sm uppercase tracking-widest font-black flex items-center gap-2">
@@ -54,7 +54,7 @@ export default function AdminGlobalDashboard() {
         </Card>
         
         {/* ACCESS LOGS */}
-        <Card className="glass-panel">
+        <Card className="glass-panel border border-emerald-500/20">
           <CardHeader className="border-b border-white/5 bg-white/[0.01]">
             <CardTitle className="text-sm uppercase tracking-widest font-black">Registros de Seguridad</CardTitle>
           </CardHeader>
@@ -79,7 +79,7 @@ export default function AdminGlobalDashboard() {
 
 function MetricCard({ title, value, icon: Icon, trend }: any) {
   return (
-    <Card className="glass-panel relative overflow-hidden group hover:scale-[1.02] transition-all">
+    <Card className="glass-panel relative overflow-hidden group hover:scale-[1.02] transition-all border border-emerald-500/20">
       <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-20 transition-opacity">
         <Icon className="h-12 w-12 text-emerald-500" />
       </div>

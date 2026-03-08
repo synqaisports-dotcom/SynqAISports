@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
@@ -172,8 +173,8 @@ export default function DashboardPage() {
 function OperationalMetricCard({ title, value, icon: Icon, desc, trend, highlight }: any) {
   return (
     <Card className={cn(
-      "glass-panel relative overflow-hidden group hover:scale-[1.02] transition-all rounded-3xl border-none bg-black/20",
-      highlight && "border-t-2 border-primary/30 bg-primary/5"
+      "glass-panel relative overflow-hidden group hover:scale-[1.02] transition-all rounded-3xl border border-primary/20 bg-black/20",
+      highlight && "border-primary/50 bg-primary/5"
     )}>
       <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-15 transition-opacity">
         <Icon className="h-12 w-12 text-primary" />

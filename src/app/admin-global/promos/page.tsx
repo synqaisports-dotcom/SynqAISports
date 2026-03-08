@@ -232,7 +232,7 @@ export default function GlobalPromosPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <Card className="glass-panel lg:col-span-2 overflow-hidden bg-black/40 border-none">
+        <Card className="glass-panel lg:col-span-2 overflow-hidden bg-black/40 border border-emerald-500/20">
           <CardHeader className="border-b border-white/5 p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="relative w-full max-w-sm">
               <Search className="absolute left-3 top-3.5 h-4 w-4 text-emerald-400 opacity-50" />
@@ -484,7 +484,7 @@ export default function GlobalPromosPage() {
 
 function PromoMiniStat({ icon: Icon, label, value, trend }: any) {
   return (
-    <Card className="glass-panel p-5 flex items-center gap-5 relative overflow-hidden group border-none bg-black/20">
+    <Card className="glass-panel p-5 flex items-center gap-5 relative overflow-hidden group border border-emerald-500/20 bg-black/20">
        <div className="h-12 w-12 bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 group-hover:bg-emerald-500/20 transition-all rotate-3 group-hover:rotate-0 duration-500 rounded-2xl">
           <Icon className="h-6 w-6 text-emerald-400" />
        </div>

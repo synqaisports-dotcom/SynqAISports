@@ -481,7 +481,7 @@ export default function StaffManagementPage() {
 
 function StaffStat({ label, value, icon: Icon, highlight }: any) {
   return (
-    <Card className="glass-panel p-5 flex items-center gap-5 relative overflow-hidden group border-none bg-black/20">
+    <Card className="glass-panel p-5 flex items-center gap-5 relative overflow-hidden group bg-black/20 border border-primary/20">
        <div className={cn(
          "h-12 w-12 flex items-center justify-center border transition-all rotate-3 group-hover:rotate-0 duration-500 rounded-2xl",
          highlight ? "bg-primary/10 border-primary/20" : "bg-white/5 border-white/10"
