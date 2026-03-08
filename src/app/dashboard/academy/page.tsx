@@ -68,6 +68,9 @@ const INITIAL_CATEGORIES = [
   { id: "c9", name: "Primer Equipo", stageId: "s4", teams: [{ name: "Primer Equipo", suffix: "A" }], players: 25 },
 ];
 
+// Generar letras de la A a la Z
+const ALPHABET = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
+
 export default function AcademyManagementPage() {
   const { profile } = useAuth();
   const { toast } = useToast();
@@ -278,18 +281,25 @@ export default function AcademyManagementPage() {
                   </div>
                   <div className="space-y-3">
                     <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Identificador del Equipo (Letra)</Label>
-                    <div className="relative">
-                      <Tag className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary/40" />
-                      <Input 
-                        required
-                        value={formData.suffix}
-                        onChange={(e) => setFormData({...formData, suffix: e.target.value.toUpperCase()})}
-                        placeholder="EJ: A" 
-                        maxLength={1}
-                        className="h-16 bg-white/5 border-white/10 rounded-none font-black text-center text-2xl text-primary focus:border-primary/50 transition-all" 
-                      />
-                    </div>
-                    <p className="text-[8px] text-white/20 uppercase font-bold text-center mt-2">Este carácter se usará para distinguir los nodos dentro de la misma categoría.</p>
+                    <Select 
+                      value={formData.suffix} 
+                      onValueChange={(v) => setFormData({...formData, suffix: v})}
+                    >
+                      <SelectTrigger className="h-16 bg-white/5 border-white/10 rounded-none text-primary font-black text-2xl focus:border-primary/50 transition-all">
+                        <div className="flex items-center justify-center w-full gap-3">
+                          <Tag className="h-5 w-5 text-primary/40" />
+                          <SelectValue placeholder="-" />
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-none max-h-[300px]">
+                        {ALPHABET.map(letter => (
+                          <SelectItem key={letter} value={letter} className="text-xl font-black text-white focus:bg-primary">
+                            {letter}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[8px] text-white/20 uppercase font-bold text-center mt-2">Seleccione una letra para distinguir los nodos operativos.</p>
                   </div>
                 </>
               )}
