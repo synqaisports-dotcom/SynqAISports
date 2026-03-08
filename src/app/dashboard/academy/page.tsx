@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Sprout, 
   Plus, 
@@ -21,7 +21,11 @@ import {
   Loader2,
   FolderPlus,
   Layers,
-  Tag
+  Tag,
+  MapPin,
+  Clock,
+  Calendar,
+  Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -68,7 +72,23 @@ const INITIAL_CATEGORIES = [
   { id: "c9", name: "Primer Equipo", stageId: "s4", teams: [{ name: "Primer Equipo", suffix: "A" }], players: 25 },
 ];
 
-// Generar letras de la A a la Z
+// Datos simulados de instalaciones del club
+const MOCK_FACILITIES = [
+  { id: "f1", name: "Campo de Fútbol Principal", subdivisions: "2", zones: ["Zona A (Mitad 1)", "Zona B (Mitad 2)"] },
+  { id: "f2", name: "Pabellón Cubierto A", subdivisions: "1", zones: [] },
+  { id: "f3", name: "Anexo Formación", subdivisions: "4", zones: ["Zona A", "Zona B", "Zona C", "Zona D"] },
+];
+
+const WEEK_DAYS = [
+  { id: "L", label: "Lunes" },
+  { id: "M", label: "Martes" },
+  { id: "X", label: "Miércoles" },
+  { id: "J", label: "Jueves" },
+  { id: "V", label: "Viernes" },
+  { id: "S", label: "Sábado" },
+  { id: "D", label: "Domingo" },
+];
+
 const ALPHABET = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
 
 export default function AcademyManagementPage() {
@@ -84,12 +104,39 @@ export default function AcademyManagementPage() {
     suffix: "A",
     stageId: "s2",
     parentCategory: "c1",
+    facilityId: "",
+    zone: "",
+    days: [] as string[],
+    startTime: "17:00",
+    endTime: "18:30"
   });
+
+  const selectedFacility = MOCK_FACILITIES.find(f => f.id === formData.facilityId);
+  const hasZones = selectedFacility && parseInt(selectedFacility.subdivisions) > 1;
 
   const handleOpenSheet = (mode: 'category' | 'team') => {
     setSheetMode(mode);
-    setFormData({ name: "", suffix: "A", stageId: "s2", parentCategory: "c1" });
+    setFormData({ 
+      name: "", 
+      suffix: "A", 
+      stageId: "s2", 
+      parentCategory: "c1",
+      facilityId: "",
+      zone: "",
+      days: [],
+      startTime: "17:00",
+      endTime: "18:30"
+    });
     setIsSheetOpen(true);
+  };
+
+  const toggleDay = (dayId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      days: prev.days.includes(dayId) 
+        ? prev.days.filter(d => d !== dayId) 
+        : [...prev.days, dayId]
+    }));
   };
 
   const handleSave = (e: React.FormEvent) => {
@@ -210,7 +257,7 @@ export default function AcademyManagementPage() {
       </div>
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-xl shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
           <div className="p-10 border-b border-white/5 bg-black/40">
             <SheetHeader className="space-y-4">
               <div className="flex items-center gap-3">
@@ -260,48 +307,163 @@ export default function AcademyManagementPage() {
                   </div>
                 </>
               ) : (
-                <>
-                  <div className="space-y-3">
-                    <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Categoría Federativa</Label>
-                    <Select 
-                      value={formData.parentCategory} 
-                      onValueChange={(v) => setFormData({...formData, parentCategory: v})}
-                    >
-                      <SelectTrigger className="h-14 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest px-6">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-none">
-                        {categories.map(c => (
-                          <SelectItem key={c.id} value={c.id} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary">
-                            {c.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                <div className="space-y-8">
+                  {/* BLOQUE 1: IDENTIDAD */}
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="space-y-3">
+                        <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Categoría Federativa</Label>
+                        <Select 
+                          value={formData.parentCategory} 
+                          onValueChange={(v) => setFormData({...formData, parentCategory: v})}
+                        >
+                          <SelectTrigger className="h-14 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-none">
+                            {categories.map(c => (
+                              <SelectItem key={c.id} value={c.id} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary">
+                                {c.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-3">
+                        <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Equipo (Letra)</Label>
+                        <Select 
+                          value={formData.suffix} 
+                          onValueChange={(v) => setFormData({...formData, suffix: v})}
+                        >
+                          <SelectTrigger className="h-14 bg-white/5 border-white/10 rounded-none text-primary font-black text-xl focus:border-primary/50 transition-all">
+                            <div className="flex items-center justify-center w-full gap-3">
+                              <Tag className="h-4 w-4 text-primary/40" />
+                              <SelectValue />
+                            </div>
+                          </SelectTrigger>
+                          <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-none max-h-[200px]">
+                            {ALPHABET.map(letter => (
+                              <SelectItem key={letter} value={letter} className="text-lg font-black text-white focus:bg-primary">
+                                {letter}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-3">
-                    <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Identificador del Equipo (Letra)</Label>
-                    <Select 
-                      value={formData.suffix} 
-                      onValueChange={(v) => setFormData({...formData, suffix: v})}
-                    >
-                      <SelectTrigger className="h-16 bg-white/5 border-white/10 rounded-none text-primary font-black text-2xl focus:border-primary/50 transition-all">
-                        <div className="flex items-center justify-center w-full gap-3">
-                          <Tag className="h-5 w-5 text-primary/40" />
-                          <SelectValue placeholder="-" />
+
+                  {/* BLOQUE 2: INSTALACIÓN Y LOGICA DE ZONAS */}
+                  <div className="space-y-6 p-8 border border-primary/30 bg-primary/5 rounded-3xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-5">
+                      <MapPin className="h-20 w-20 text-primary" />
+                    </div>
+                    
+                    <div className="flex items-center gap-3 border-b border-primary/20 pb-4 mb-6">
+                      <Zap className="h-4 w-4 text-primary animate-pulse" />
+                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">
+                        Asignación de Activo y Horario
+                      </span>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="space-y-3">
+                        <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Instalación Asignada</Label>
+                        <Select 
+                          value={formData.facilityId} 
+                          onValueChange={(v) => setFormData({...formData, facilityId: v, zone: ""})}
+                        >
+                          <SelectTrigger className="h-12 bg-black/40 border-white/10 rounded-none text-white font-bold uppercase text-[10px] tracking-widest">
+                            <div className="flex items-center gap-3">
+                              <MapPin className="h-4 w-4 text-primary/40" />
+                              <SelectValue placeholder="SELECCIONAR CAMPO/SALA..." />
+                            </div>
+                          </SelectTrigger>
+                          <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
+                            {MOCK_FACILITIES.map(f => (
+                              <SelectItem key={f.id} value={f.id} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary">
+                                {f.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* DETECCIÓN INTELIGENTE DE ZONAS */}
+                      {hasZones && (
+                        <div className="space-y-3 animate-in slide-in-from-top-2 duration-500">
+                          <Label className="text-[9px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Zona Específica (Instalación Subdividida)</Label>
+                          <Select 
+                            value={formData.zone} 
+                            onValueChange={(v) => setFormData({...formData, zone: v})}
+                          >
+                            <SelectTrigger className="h-12 bg-emerald-500/5 border-emerald-500/30 rounded-none text-emerald-400 font-bold uppercase text-[10px] tracking-widest">
+                              <div className="flex items-center gap-3">
+                                <LayoutGrid className="h-4 w-4 text-emerald-400/40" />
+                                <SelectValue placeholder="ASIGNAR ZONA..." />
+                              </div>
+                            </SelectTrigger>
+                            <SelectContent className="bg-[#04070c] border-emerald-500/20 rounded-none">
+                              {selectedFacility.zones.map(z => (
+                                <SelectItem key={z} value={z} className="text-[10px] font-black uppercase tracking-widest focus:bg-emerald-500 focus:text-black">
+                                  {z}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
-                      </SelectTrigger>
-                      <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-none max-h-[300px]">
-                        {ALPHABET.map(letter => (
-                          <SelectItem key={letter} value={letter} className="text-xl font-black text-white focus:bg-primary">
-                            {letter}
-                          </SelectItem>
+                      )}
+                    </div>
+
+                    <div className="space-y-4 pt-4">
+                      <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Días de Entrenamiento</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {WEEK_DAYS.map(day => (
+                          <button
+                            key={day.id}
+                            type="button"
+                            onClick={() => toggleDay(day.id)}
+                            className={cn(
+                              "h-10 w-10 flex items-center justify-center font-black text-[10px] border transition-all",
+                              formData.days.includes(day.id)
+                                ? "bg-primary text-black border-primary shadow-[0_0_15px_rgba(0,242,255,0.3)]"
+                                : "bg-black/40 border-white/10 text-white/30 hover:border-primary/40"
+                            )}
+                          >
+                            {day.id}
+                          </button>
                         ))}
-                      </SelectContent>
-                    </Select>
-                    <p className="text-[8px] text-white/20 uppercase font-bold text-center mt-2">Seleccione una letra para distinguir los nodos operativos.</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6 mt-6">
+                      <div className="space-y-2">
+                        <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Hora Inicio</Label>
+                        <div className="relative">
+                          <Clock className="absolute left-3 top-3 h-4 w-4 text-primary/40" />
+                          <Input 
+                            type="time" 
+                            value={formData.startTime}
+                            onChange={(e) => setFormData({...formData, startTime: e.target.value})}
+                            className="pl-10 h-11 bg-black/40 border-white/10 rounded-none font-bold text-xs focus:border-primary/50" 
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Hora Fin</Label>
+                        <div className="relative">
+                          <Clock className="absolute left-3 top-3 h-4 w-4 text-primary/40" />
+                          <Input 
+                            type="time" 
+                            value={formData.endTime}
+                            onChange={(e) => setFormData({...formData, endTime: e.target.value})}
+                            className="pl-10 h-11 bg-black/40 border-white/10 rounded-none font-bold text-xs focus:border-primary/50" 
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </>
+                </div>
               )}
 
               <div className="p-6 bg-primary/5 border border-primary/20 space-y-3">
@@ -310,7 +472,7 @@ export default function AcademyManagementPage() {
                   <span className="text-[9px] font-black uppercase text-primary tracking-widest">Protocolo de Organización</span>
                 </div>
                 <p className="text-[9px] text-white/40 leading-relaxed font-bold uppercase italic">
-                  La estructura de cantera define cómo se segmentan los datos tácticos y de asistencia. La separación de identificadores permite un filtrado más preciso por nodos operativos.
+                  La estructura de cantera define cómo se segmentan los datos tácticos y de asistencia. La vinculación de instalaciones permite detectar conflictos de horario automáticamente.
                 </p>
               </div>
             </div>
