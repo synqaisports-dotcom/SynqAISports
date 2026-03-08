@@ -20,7 +20,9 @@ import {
   TrendingUp,
   Award,
   IdCard,
-  ShieldAlert
+  ShieldAlert,
+  Camera,
+  X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -47,6 +49,7 @@ import {
 import { useAuth, UserRole } from "@/lib/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 // Matriz de Jerarquía (Rango mayor = más autoridad)
 const ROLE_HIERARCHY: Record<string, number> = {
@@ -71,10 +74,10 @@ const ROLES_INFO: Record<string, { label: string; color: string }> = {
 };
 
 const INITIAL_STAFF = [
-  { id: "s1", name: "Ismael Muñoz", email: "i.munoz@club.com", role: "academy_director", phone: "+34 600 000 001", status: "Active" },
-  { id: "s2", name: "Laura Sánchez", email: "l.sanchez@club.com", role: "methodology_director", phone: "+34 600 000 002", status: "Active" },
-  { id: "s3", name: "Carlos Ruiz", email: "c.ruiz@club.com", role: "coach", phone: "+34 600 000 003", status: "Active" },
-  { id: "s4", name: "Elena Gómez", email: "e.gomez@club.com", role: "stage_coordinator", phone: "+34 600 000 004", status: "Active" },
+  { id: "s1", name: "Ismael Muñoz", email: "i.munoz@club.com", role: "academy_director", phone: "+34 600 000 001", status: "Active", photoUrl: "" },
+  { id: "s2", name: "Laura Sánchez", email: "l.sanchez@club.com", role: "methodology_director", phone: "+34 600 000 002", status: "Active", photoUrl: "" },
+  { id: "s3", name: "Carlos Ruiz", email: "c.ruiz@club.com", role: "coach", phone: "+34 600 000 003", status: "Active", photoUrl: "" },
+  { id: "s4", name: "Elena Gómez", email: "e.gomez@club.com", role: "stage_coordinator", phone: "+34 600 000 004", status: "Active", photoUrl: "" },
 ];
 
 export default function StaffManagementPage() {
@@ -90,6 +93,7 @@ export default function StaffManagementPage() {
     firstName: "",
     lastName: "",
     email: "",
+    photoUrl: "",
     role: "coach" as UserRole,
     countryPrefix: "+34",
     phone: "",
@@ -110,6 +114,7 @@ export default function StaffManagementPage() {
       firstName: "", 
       lastName: "", 
       email: "", 
+      photoUrl: "",
       role: (availableRoles[0] as UserRole) || "coach", 
       countryPrefix: "+34",
       phone: "", 
@@ -119,7 +124,6 @@ export default function StaffManagementPage() {
   };
 
   const handleEdit = (member: any) => {
-    // Verificar si el usuario tiene permiso para editar a esta persona
     if (ROLE_HIERARCHY[member.role] >= currentUserRank && !isSuperAdmin) {
       toast({
         variant: "destructive",
@@ -129,12 +133,10 @@ export default function StaffManagementPage() {
       return;
     }
 
-    // Dividir el nombre completo en nombre y apellidos
     const nameParts = member.name.split(" ");
     const firstName = nameParts[0] || "";
     const lastName = nameParts.slice(1).join(" ") || "";
 
-    // Dividir teléfono en prefijo y número
     const phoneFull = member.phone || "";
     const prefixMatch = phoneFull.match(/^(\+\d+)\s*(.*)$/);
     const countryPrefix = prefixMatch ? prefixMatch[1] : "+34";
@@ -145,12 +147,24 @@ export default function StaffManagementPage() {
       firstName,
       lastName,
       email: member.email,
+      photoUrl: member.photoUrl || "",
       role: member.role as UserRole,
       countryPrefix,
       phone,
       status: member.status
     });
     setIsSheetOpen(true);
+  };
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData({ ...formData, photoUrl: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleDelete = (id: string, name: string, role: string) => {
@@ -181,6 +195,7 @@ export default function StaffManagementPage() {
     const savePayload = {
       name: fullName,
       email: formData.email,
+      photoUrl: formData.photoUrl,
       role: formData.role,
       phone: fullPhone,
       status: formData.status
@@ -225,7 +240,7 @@ export default function StaffManagementPage() {
           onClick={handleOpenCreate}
           disabled={availableRoles.length === 0}
           className={cn(
-            "rounded-none text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none disabled:opacity-30",
+            "rounded-none text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 transition-all border-none disabled:opacity-30",
             isSuperAdmin ? "bg-emerald-500" : "bg-primary"
           )}
         >
@@ -249,13 +264,16 @@ export default function StaffManagementPage() {
         <StaffStat label="Actividad Red" value="94%" icon={Activity} />
       </div>
 
-      <Card className="glass-panel border-none bg-black/40 overflow-hidden mb-8">
+      <Card className="glass-panel border-none bg-black/40 overflow-hidden mb-8 shadow-2xl">
         <CardHeader className="p-6 border-b border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="relative w-full max-w-md">
             <Search className={cn("absolute left-3 top-3.5 h-4 w-4 opacity-50", isSuperAdmin ? "text-emerald-400" : "text-primary")} />
             <Input 
               placeholder="BUSCAR POR NOMBRE, MAIL O ROL..." 
-              className="pl-10 h-12 bg-white/5 border-primary/20 rounded-none text-white placeholder:text-white/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-primary/50"
+              className={cn(
+                "pl-10 h-12 bg-white/5 border rounded-none text-white placeholder:text-white/20 font-bold uppercase text-[10px] tracking-widest transition-all",
+                isSuperAdmin ? "border-emerald-500/20 focus-visible:ring-emerald-500/50" : "border-primary/20 focus-visible:ring-primary/50"
+              )}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -283,8 +301,12 @@ export default function StaffManagementPage() {
                   <tr key={member.id} className="group hover:bg-white/[0.02] transition-colors">
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center relative overflow-hidden group-hover:border-primary/40 transition-all">
-                           <IdCard className="h-5 w-5 text-white/20 group-hover:text-primary transition-all" />
+                        <div className="h-12 w-12 bg-white/5 border border-white/10 rounded-full flex items-center justify-center relative overflow-hidden group-hover:border-primary/40 transition-all">
+                           {member.photoUrl ? (
+                             <Image src={member.photoUrl} alt={member.name} fill className="object-cover rounded-full" />
+                           ) : (
+                             <IdCard className="h-5 w-5 text-white/20 group-hover:text-primary transition-all" />
+                           )}
                            <div className="absolute inset-0 bg-primary/5 scan-line opacity-0 group-hover:opacity-100" />
                         </div>
                         <div className="space-y-1">
@@ -341,7 +363,7 @@ export default function StaffManagementPage() {
       </Card>
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+        <SheetContent side="right" className={cn("bg-[#04070c]/98 backdrop-blur-3xl border-l text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col", isSuperAdmin ? "border-emerald-500/20" : "border-primary/20")}>
           <div className="p-10 border-b border-white/5 bg-black/40">
             <SheetHeader className="space-y-4">
               <div className="flex items-center gap-3">
@@ -358,53 +380,99 @@ export default function StaffManagementPage() {
           </div>
 
           <form onSubmit={handleSaveStaff} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10">
+            {/* SECCIÓN DE IDENTIDAD VISUAL CIRCULAR */}
+            <div className="space-y-4">
+              <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>Identidad Visual Staff</Label>
+              <div className={cn("flex flex-col items-center justify-center p-8 rounded-3xl relative overflow-hidden", isSuperAdmin ? "bg-emerald-500/5" : "bg-primary/5")}>
+                <div className={cn("relative h-40 w-40 rounded-full border-2 border-dashed group cursor-pointer transition-all flex items-center justify-center bg-black/40 shadow-[0_0_30px_rgba(0,0,0,0.5)]", isSuperAdmin ? "border-emerald-500/30 hover:border-emerald-500/60" : "border-primary/30 hover:border-primary/60")}>
+                  {formData.photoUrl ? (
+                    <div className={cn("relative h-full w-full rounded-full overflow-hidden border", isSuperAdmin ? "border-emerald-500/40" : "border-primary/40")}>
+                      <Image src={formData.photoUrl} alt="Preview" fill className="object-cover rounded-full" />
+                      <button 
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setFormData({...formData, photoUrl: ""}); }}
+                        className="absolute inset-0 bg-black/60 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                      >
+                        <X className="h-6 w-6" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-3">
+                      <div className={cn("h-16 w-16 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform", isSuperAdmin ? "bg-emerald-500/10 border border-emerald-500/20" : "bg-primary/10 border border-primary/20")}>
+                        <Camera className={cn("h-8 w-8", isSuperAdmin ? "text-emerald-400/40" : "text-primary/40")} />
+                      </div>
+                      <span className={cn("text-[8px] font-black uppercase tracking-widest text-center", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>SINCRO_FOTO</span>
+                    </div>
+                  )}
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    className="absolute inset-0 opacity-0 cursor-pointer z-10" 
+                    onChange={handlePhotoUpload}
+                  />
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Nombre</Label>
+                  <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>Nombre</Label>
                   <Input 
                     required
                     value={formData.firstName}
                     onChange={(e) => setFormData({...formData, firstName: e.target.value.toUpperCase()})}
                     placeholder="EJ: JUAN" 
-                    className="h-14 bg-white/5 border-primary/20 rounded-none font-bold uppercase focus:border-primary transition-all placeholder:text-white/10 text-lg" 
+                    className={cn(
+                      "h-14 bg-white/5 border rounded-none font-bold uppercase transition-all placeholder:text-white/10 text-lg",
+                      isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500" : "border-primary/20 focus:border-primary"
+                    )}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Apellidos</Label>
+                  <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>Apellidos</Label>
                   <Input 
                     required
                     value={formData.lastName}
                     onChange={(e) => setFormData({...formData, lastName: e.target.value.toUpperCase()})}
                     placeholder="EJ: PÉREZ" 
-                    className="h-14 bg-white/5 border-primary/20 rounded-none font-bold uppercase focus:border-primary transition-all placeholder:text-white/10 text-lg" 
+                    className={cn(
+                      "h-14 bg-white/5 border rounded-none font-bold uppercase transition-all placeholder:text-white/10 text-lg",
+                      isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500" : "border-primary/20 focus:border-primary"
+                    )}
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Email Profesional</Label>
+                <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>Email Profesional</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-4 h-4 w-4 text-primary/40" />
+                  <Mail className={cn("absolute left-3 top-4 h-4 w-4", isSuperAdmin ? "text-emerald-400/40" : "text-primary/40")} />
                   <Input 
                     required
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                     placeholder="USER@CLUB.COM" 
-                    className="pl-10 h-14 bg-white/5 border-primary/20 rounded-none font-bold focus:border-primary transition-all" 
+                    className={cn(
+                      "pl-10 h-14 bg-white/5 border rounded-none font-bold transition-all",
+                      isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500" : "border-primary/20 focus:border-primary"
+                    )}
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Nivel Jerárquico</Label>
+                  <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>Nivel Jerárquico</Label>
                   <Select 
                     value={formData.role} 
                     onValueChange={(v) => setFormData({...formData, role: v as UserRole})}
                   >
-                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary transition-all">
+                    <SelectTrigger className={cn(
+                      "h-12 bg-white/5 border rounded-none text-white/60 font-bold uppercase tracking-widest transition-all",
+                      isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500" : "border-primary/20 focus:border-primary"
+                    )}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
@@ -418,23 +486,29 @@ export default function StaffManagementPage() {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Teléfono de Contacto</Label>
+                  <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>Teléfono de Contacto</Label>
                   <div className="flex gap-2">
                     <div className="w-24 shrink-0">
                       <Input 
                         value={formData.countryPrefix}
                         onChange={(e) => setFormData({...formData, countryPrefix: e.target.value})}
                         placeholder="+34" 
-                        className="h-12 bg-white/5 border-primary/20 rounded-none font-bold text-center focus:border-primary transition-all" 
+                        className={cn(
+                          "h-12 bg-white/5 border rounded-none font-bold text-center transition-all",
+                          isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500" : "border-primary/20 focus:border-primary"
+                        )}
                       />
                     </div>
                     <div className="relative flex-1">
-                      <Phone className="absolute left-3 top-3.5 h-4 w-4 text-primary/40" />
+                      <Phone className={cn("absolute left-3 top-3.5 h-4 w-4", isSuperAdmin ? "text-emerald-400/40" : "text-primary/40")} />
                       <Input 
                         value={formData.phone}
                         onChange={(e) => setFormData({...formData, phone: e.target.value})}
                         placeholder="600 000 000" 
-                        className="pl-10 h-12 bg-white/5 border-primary/20 rounded-none font-bold focus:border-primary transition-all" 
+                        className={cn(
+                          "pl-10 h-12 bg-white/5 border rounded-none font-bold transition-all",
+                          isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500" : "border-primary/20 focus:border-primary"
+                        )}
                       />
                     </div>
                   </div>
@@ -467,7 +541,7 @@ export default function StaffManagementPage() {
               disabled={loading}
               className={cn(
                 "flex-[2] h-16 text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-none shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] transition-all border-none",
-                isSuperAdmin ? "bg-emerald-500" : "bg-primary"
+                isSuperAdmin ? "bg-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.3)]" : "bg-primary"
               )}
             >
               {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (editingId ? "SINCRONIZAR_PERFIL" : "VINCULAR_TRABAJADOR")}
