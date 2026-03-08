@@ -135,7 +135,7 @@ export default function ClubManagementPage() {
                   <Input 
                     value={clubData.name}
                     onChange={(e) => setClubData({...clubData, name: e.target.value.toUpperCase()})}
-                    className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold uppercase focus:border-primary/50 text-lg" 
+                    className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary text-lg" 
                   />
                 </div>
 
@@ -145,7 +145,7 @@ export default function ClubManagementPage() {
                     value={clubData.sport} 
                     onValueChange={(v) => setClubData({...clubData, sport: v})}
                   >
-                    <SelectTrigger className="h-14 bg-white/5 border-white/10 rounded-2xl text-white font-bold uppercase tracking-widest px-6">
+                    <SelectTrigger className="h-14 bg-white/5 border-primary/20 rounded-2xl text-white font-bold uppercase tracking-widest px-6 focus:border-primary">
                       <SelectValue placeholder="DEPORTE..." />
                     </SelectTrigger>
                     <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-2xl">
@@ -164,7 +164,7 @@ export default function ClubManagementPage() {
                     <Input 
                       value={clubData.foundation}
                       onChange={(e) => setClubData({...clubData, foundation: e.target.value})}
-                      className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold uppercase" 
+                      className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary" 
                     />
                   </div>
                   <div className="space-y-3">
@@ -172,7 +172,7 @@ export default function ClubManagementPage() {
                     <Input 
                       value={clubData.members}
                       onChange={(e) => setClubData({...clubData, members: e.target.value})}
-                      className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold uppercase" 
+                      className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary" 
                     />
                   </div>
                 </div>
@@ -182,7 +182,7 @@ export default function ClubManagementPage() {
                   <Input 
                     value={clubData.website}
                     onChange={(e) => setClubData({...clubData, website: e.target.value})}
-                    className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold" 
+                    className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary" 
                   />
                 </div>
 
@@ -191,7 +191,7 @@ export default function ClubManagementPage() {
                   <Input 
                     value={clubData.socials.instagram}
                     onChange={(e) => setClubData({...clubData, socials: {...clubData.socials, instagram: e.target.value}})}
-                    className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold" 
+                    className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary" 
                   />
                 </div>
                 <div className="space-y-3">
@@ -199,7 +199,7 @@ export default function ClubManagementPage() {
                   <Input 
                     value={clubData.socials.youtube}
                     onChange={(e) => setClubData({...clubData, socials: {...clubData.socials, youtube: e.target.value}})}
-                    className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold" 
+                    className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary" 
                   />
                 </div>
                 <div className="space-y-3">
@@ -207,7 +207,7 @@ export default function ClubManagementPage() {
                   <Input 
                     value={clubData.socials.twitter}
                     onChange={(e) => setClubData({...clubData, socials: {...clubData.socials, twitter: e.target.value}})}
-                    className="h-14 bg-white/5 border-white/10 rounded-2xl font-bold" 
+                    className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary" 
                   />
                 </div>
               </div>
@@ -355,7 +355,7 @@ export default function ClubManagementPage() {
                    <ContactLink icon={Youtube} label="YouTube" value={clubData.socials.youtube} />
                    <ContactLink icon={Twitter} label="Twitter / X" value={clubData.socials.twitter} />
                 </CardContent>
-              </Card>
+              </div>
            </div>
         </div>
 

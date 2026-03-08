@@ -401,12 +401,11 @@ export default function AcademyManagementPage() {
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="p-6 bg-white/5 border border-white/10 rounded-2xl space-y-2">
+                    <div className="p-6 bg-white/5 border border-primary/20 rounded-2xl space-y-2">
                       <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Instalación / Nodo</span>
-                      {/* PINTA EL NOMBRE DEL CAMPO */}
                       <p className="text-sm font-black text-primary uppercase italic cyan-text-glow">{selectedViewTeam.facility || "Sede Principal"}</p>
                     </div>
-                    <div className="p-6 bg-white/5 border border-white/10 rounded-2xl space-y-2">
+                    <div className="p-6 bg-white/5 border border-primary/20 rounded-2xl space-y-2">
                       <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Zona Operativa</span>
                       <p className="text-sm font-black text-primary uppercase italic">{selectedViewTeam.zone || "Sector Central"}</p>
                     </div>
@@ -517,7 +516,7 @@ export default function AcademyManagementPage() {
                       value={formData.name}
                       onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})}
                       placeholder="EJ: ALEVÍN" 
-                      className="h-14 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-primary/50 text-lg" 
+                      className="h-14 bg-white/5 border-primary/20 rounded-none font-bold uppercase focus:border-primary text-lg" 
                     />
                   </div>
                   <div className="space-y-3">
@@ -526,7 +525,7 @@ export default function AcademyManagementPage() {
                       value={formData.stageId} 
                       onValueChange={(v) => setFormData({...formData, stageId: v})}
                     >
-                      <SelectTrigger className="h-14 bg-black/40 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest px-6">
+                      <SelectTrigger className="h-14 bg-black/40 border-primary/20 rounded-none text-white/60 font-bold uppercase tracking-widest px-6 focus:border-primary">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-none">
@@ -554,7 +553,7 @@ export default function AcademyManagementPage() {
                   <div className="space-y-3">
                     <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Etapa de Desarrollo</Label>
                     <Select value={formData.stageId} onValueChange={(v) => setFormData({...formData, stageId: v})}>
-                      <SelectTrigger className="h-12 bg-black/40 border-white/10 rounded-none text-white font-bold uppercase text-[10px] tracking-widest">
+                      <SelectTrigger className="h-12 bg-black/40 border-primary/20 rounded-none text-white font-bold uppercase text-[10px] tracking-widest focus:border-primary">
                         <SelectValue placeholder="SELECCIONAR ETAPA..." />
                       </SelectTrigger>
                       <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
@@ -572,7 +571,7 @@ export default function AcademyManagementPage() {
                     <div className="space-y-3">
                       <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Categoría Federativa</Label>
                       <Select value={formData.parentCategory} onValueChange={(v) => setFormData({...formData, parentCategory: v})}>
-                        <SelectTrigger className="h-14 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest">
+                        <SelectTrigger className="h-14 bg-white/5 border-primary/20 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-none">
@@ -585,7 +584,7 @@ export default function AcademyManagementPage() {
                     <div className="space-y-3">
                       <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Equipo (Letra)</Label>
                       <Select value={formData.suffix} onValueChange={(v) => setFormData({...formData, suffix: v})}>
-                        <SelectTrigger className="h-14 bg-white/5 border-white/10 rounded-none text-primary font-black text-xl">
+                        <SelectTrigger className="h-14 bg-white/5 border-primary/20 rounded-none text-primary font-black text-xl focus:border-primary">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-none max-h-[200px]">
@@ -607,7 +606,7 @@ export default function AcademyManagementPage() {
                   <div className="space-y-4">
                     <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Instalación Asignada</Label>
                     <Select value={formData.facilityId} onValueChange={(v) => setFormData({...formData, facilityId: v, zone: ""})}>
-                      <SelectTrigger className="h-12 bg-black/40 border-white/10 rounded-none text-white font-bold uppercase text-[10px] tracking-widest">
+                      <SelectTrigger className="h-12 bg-black/40 border-primary/20 rounded-none text-white font-bold uppercase text-[10px] tracking-widest focus:border-primary">
                         <SelectValue placeholder="SELECCIONAR CAMPO/SALA..." />
                       </SelectTrigger>
                       <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
@@ -621,7 +620,7 @@ export default function AcademyManagementPage() {
                     <div className="space-y-3">
                       <Label className="text-[9px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Zona Específica</Label>
                       <Select value={formData.zone} onValueChange={(v) => setFormData({...formData, zone: v})}>
-                        <SelectTrigger className="h-12 bg-emerald-500/5 border-emerald-500/30 rounded-none text-emerald-400 font-bold uppercase text-[10px] tracking-widest">
+                        <SelectTrigger className="h-12 bg-emerald-500/5 border-emerald-500/30 rounded-none text-emerald-400 font-bold uppercase text-[10px] tracking-widest focus:border-emerald-500">
                           <SelectValue placeholder="ASIGNAR ZONA..." />
                         </SelectTrigger>
                         <SelectContent className="bg-[#04070c] border-emerald-500/20 rounded-none">
@@ -636,7 +635,7 @@ export default function AcademyManagementPage() {
                     <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Días de Entrenamiento</Label>
                     <div className="flex flex-wrap gap-2">
                       {WEEK_DAYS.map(day => (
-                        <button key={day.id} type="button" onClick={() => toggleDay(day.id)} className={cn("h-10 w-10 flex items-center justify-center font-black text-[10px] border transition-all", formData.days.includes(day.id) ? "bg-primary text-black border-primary shadow-[0_0:15px_rgba(0,242,255,0.3)]" : "bg-black/40 border-white/10 text-white/30")}>{day.id}</button>
+                        <button key={day.id} type="button" onClick={() => toggleDay(day.id)} className={cn("h-10 w-10 flex items-center justify-center font-black text-[10px] border transition-all", formData.days.includes(day.id) ? "bg-primary text-black border-primary shadow-[0_0:15px_rgba(0,242,255,0.3)]" : "bg-black/40 border-primary/20 text-white/30")}>{day.id}</button>
                       ))}
                     </div>
                   </div>
@@ -651,7 +650,7 @@ export default function AcademyManagementPage() {
                           type="time" 
                           value={formData.startTime}
                           onChange={(e) => setFormData({...formData, startTime: e.target.value})}
-                          className="pl-10 h-11 bg-white/5 border-white/10 rounded-none font-bold text-xs focus:border-primary/50" 
+                          className="pl-10 h-11 bg-white/5 border-primary/20 rounded-none font-bold text-xs focus:border-primary" 
                         />
                       </div>
                     </div>
@@ -663,7 +662,7 @@ export default function AcademyManagementPage() {
                           type="time" 
                           value={formData.endTime}
                           onChange={(e) => setFormData({...formData, endTime: e.target.value})}
-                          className="pl-10 h-11 bg-white/5 border-white/10 rounded-none font-bold text-xs focus:border-primary/50" 
+                          className="pl-10 h-11 bg-white/5 border-primary/20 rounded-none font-bold text-xs focus:border-primary" 
                         />
                       </div>
                     </div>
@@ -680,7 +679,7 @@ export default function AcademyManagementPage() {
                     <div className="space-y-2">
                       <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Coordinador de Etapa</Label>
                       <Select value={formData.coordinatorId} onValueChange={(v) => setFormData({...formData, coordinatorId: v})}>
-                        <SelectTrigger className="h-11 bg-black/40 border-white/10 rounded-none text-white/60 font-bold uppercase text-[9px] tracking-widest">
+                        <SelectTrigger className="h-11 bg-black/40 border-emerald-500/30 rounded-none text-white/60 font-bold uppercase text-[9px] tracking-widest focus:border-emerald-500">
                           <SelectValue placeholder="ASIGNAR COORDINADOR..." />
                         </SelectTrigger>
                         <SelectContent className="bg-[#04070c] border-emerald-500/20">
@@ -693,7 +692,7 @@ export default function AcademyManagementPage() {
                       <div className="space-y-2">
                         <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Primer Entrenador</Label>
                         <Select value={formData.firstCoachId} onValueChange={(v) => setFormData({...formData, firstCoachId: v})}>
-                          <SelectTrigger className="h-11 bg-black/40 border-white/10 rounded-none text-white/60 font-bold uppercase text-[9px] tracking-widest"><SelectValue placeholder="1er ENTRENADOR..." /></SelectTrigger>
+                          <SelectTrigger className="h-11 bg-black/40 border-emerald-500/30 rounded-none text-white/60 font-bold uppercase text-[9px] tracking-widest focus:border-emerald-500"><SelectValue placeholder="1er ENTRENADOR..." /></SelectTrigger>
                           <SelectContent className="bg-[#04070c] border-emerald-500/20">
                             <SelectItem value="c1" className="text-[9px] font-black uppercase">Carlos Ruiz</SelectItem>
                             <SelectItem value="c2" className="text-[9px] font-black uppercase">Laura Sánchez</SelectItem>
@@ -703,7 +702,7 @@ export default function AcademyManagementPage() {
                       <div className="space-y-2">
                         <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Segundo Entrenador</Label>
                         <Select value={formData.secondCoachId} onValueChange={(v) => setFormData({...formData, secondCoachId: v})}>
-                          <SelectTrigger className="h-11 bg-black/40 border-white/10 rounded-none text-white/60 font-bold uppercase text-[9px] tracking-widest"><SelectValue placeholder="2º ENTRENADOR..." /></SelectTrigger>
+                          <SelectTrigger className="h-11 bg-black/40 border-emerald-500/30 rounded-none text-white/60 font-bold uppercase text-[9px] tracking-widest focus:border-emerald-500"><SelectValue placeholder="2º ENTRENADOR..." /></SelectTrigger>
                           <SelectContent className="bg-[#04070c] border-emerald-500/20">
                             <SelectItem value="c3" className="text-[9px] font-black uppercase">Miguel Ángel</SelectItem>
                             <SelectItem value="c4" className="text-[9px] font-black uppercase">Sara Torres</SelectItem>
@@ -715,7 +714,7 @@ export default function AcademyManagementPage() {
                       <div className="space-y-2">
                         <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Preparador Físico</Label>
                         <Select value={formData.physicalTrainerId} onValueChange={(v) => setFormData({...formData, physicalTrainerId: v})}>
-                          <SelectTrigger className="h-11 bg-black/40 border-white/10 rounded-none text-white/60 font-bold uppercase text-[9px] tracking-widest"><SelectValue placeholder="P. FÍSICO..." /></SelectTrigger>
+                          <SelectTrigger className="h-11 bg-black/40 border-emerald-500/30 rounded-none text-white/60 font-bold uppercase text-[9px] tracking-widest focus:border-emerald-500"><SelectValue placeholder="P. FÍSICO..." /></SelectTrigger>
                           <SelectContent className="bg-[#04070c] border-emerald-500/20">
                             <SelectItem value="pf1" className="text-[9px] font-black uppercase">Roberto S.</SelectItem>
                             <SelectItem value="pf2" className="text-[9px] font-black uppercase">Ana Belén</SelectItem>
@@ -725,7 +724,7 @@ export default function AcademyManagementPage() {
                       <div className="space-y-2">
                         <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Delegado de Equipo</Label>
                         <Select value={formData.delegateId} onValueChange={(v) => setFormData({...formData, delegateId: v})}>
-                          <SelectTrigger className="h-11 bg-black/40 border-white/10 rounded-none text-white/60 font-bold uppercase text-[9px] tracking-widest"><SelectValue placeholder="DELEGADO..." /></SelectTrigger>
+                          <SelectTrigger className="h-11 bg-black/40 border-emerald-500/30 rounded-none text-white/60 font-bold uppercase text-[9px] tracking-widest focus:border-emerald-500"><SelectValue placeholder="DELEGADO..." /></SelectTrigger>
                           <SelectContent className="bg-[#04070c] border-emerald-500/20">
                             <SelectItem value="d1" className="text-[9px] font-black uppercase">Juan García</SelectItem>
                             <SelectItem value="d2" className="text-[9px] font-black uppercase">Marta López</SelectItem>

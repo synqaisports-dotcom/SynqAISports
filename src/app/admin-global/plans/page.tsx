@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -34,8 +35,8 @@ import {
   SheetContent, 
   SheetHeader, 
   SheetTitle, 
-  SheetDescription,
-  SheetFooter,
+  SheetDescription, 
+  SheetFooter, 
   SheetClose
 } from "@/components/ui/sheet";
 import {
@@ -212,7 +213,7 @@ export default function GlobalPlansPage() {
                     value={newPlan.title}
                     onChange={(e) => setNewPlan({...newPlan, title: e.target.value.toUpperCase()})}
                     placeholder="EJ: VOLUMEN_ESCALADO_800" 
-                    className="pl-10 h-12 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-emerald-500/50 transition-all placeholder:text-white/10" 
+                    className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-none font-bold uppercase focus:border-emerald-500 transition-all placeholder:text-white/10" 
                   />
                 </div>
               </div>
@@ -226,7 +227,7 @@ export default function GlobalPlansPage() {
                       value={newPlan.pricePerNode}
                       onChange={(e) => setNewPlan({...newPlan, pricePerNode: e.target.value})}
                       placeholder="0.70" 
-                      className="pl-10 h-12 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-emerald-500/50" 
+                      className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-none font-bold uppercase focus:border-emerald-500 transition-all" 
                     />
                   </div>
                 </div>
@@ -238,7 +239,7 @@ export default function GlobalPlansPage() {
                       value={newPlan.minNodes}
                       onChange={(e) => setNewPlan({...newPlan, minNodes: e.target.value})}
                       placeholder="800" 
-                      className="pl-10 h-12 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-emerald-500/50" 
+                      className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-none font-bold uppercase focus:border-emerald-500 transition-all" 
                     />
                   </div>
                 </div>
@@ -251,7 +252,7 @@ export default function GlobalPlansPage() {
                     value={newPlan.defaultRole} 
                     onValueChange={(v) => setNewPlan({...newPlan, defaultRole: v})}
                   >
-                    <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-[0.2em] focus:border-emerald-500/50 transition-all">
+                    <SelectTrigger className="h-12 bg-white/5 border-emerald-500/20 rounded-none text-white/60 font-bold uppercase tracking-[0.2em] focus:border-emerald-500 transition-all">
                       <div className="flex items-center gap-3">
                         <UserCog className="h-4 w-4 text-emerald-500/40" />
                         <SelectValue placeholder="SELECCIONAR ROL..." />
@@ -298,14 +299,14 @@ export default function GlobalPlansPage() {
                           key={module.id} 
                           className={cn(
                             "p-4 border transition-all cursor-pointer group flex items-center justify-between",
-                            newPlan.access.includes(module.id) ? "bg-emerald-500/10 border-emerald-500/40" : "bg-white/5 border-white/10 hover:border-emerald-500/20"
+                            newPlan.access.includes(module.id) ? "bg-emerald-500/10 border-emerald-500/40" : "bg-white/5 border-emerald-500/10 hover:border-emerald-500/20"
                           )}
                           onClick={() => handleToggleAccess(module.id)}
                         >
                           <div className="flex items-center gap-4">
                             <div className={cn(
                               "h-10 w-10 flex items-center justify-center border",
-                              newPlan.access.includes(module.id) ? "bg-emerald-500/20 border-emerald-500/40" : "bg-black border-white/5"
+                              newPlan.access.includes(module.id) ? "bg-emerald-500/20 border-emerald-500/40" : "bg-black border-emerald-500/10"
                             )}>
                               <module.icon className={cn("h-5 w-5", newPlan.access.includes(module.id) ? "text-emerald-400" : "text-white/20")} />
                             </div>
@@ -344,7 +345,7 @@ export default function GlobalPlansPage() {
                       setNewPlan({...newPlan, features: updated});
                     }}
                     placeholder={`ATRIBUTO_0${idx + 1}`} 
-                    className="h-10 bg-white/5 border-white/10 rounded-none font-bold uppercase text-xs" 
+                    className="h-10 bg-white/5 border-emerald-500/20 rounded-none font-bold uppercase text-xs focus:border-emerald-500 transition-all" 
                   />
                 ))}
               </div>

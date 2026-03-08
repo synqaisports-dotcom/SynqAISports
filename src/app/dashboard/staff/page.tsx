@@ -255,7 +255,7 @@ export default function StaffManagementPage() {
             <Search className={cn("absolute left-3 top-3.5 h-4 w-4 opacity-50", isSuperAdmin ? "text-emerald-400" : "text-primary")} />
             <Input 
               placeholder="BUSCAR POR NOMBRE, MAIL O ROL..." 
-              className="pl-10 h-12 bg-white/5 border-white/10 rounded-none text-white placeholder:text-white/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-primary/50"
+              className="pl-10 h-12 bg-white/5 border-primary/20 rounded-none text-white placeholder:text-white/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-primary/50"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -367,7 +367,7 @@ export default function StaffManagementPage() {
                     value={formData.firstName}
                     onChange={(e) => setFormData({...formData, firstName: e.target.value.toUpperCase()})}
                     placeholder="EJ: JUAN" 
-                    className="h-14 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-primary/50 text-lg" 
+                    className="h-14 bg-white/5 border-primary/20 rounded-none font-bold uppercase focus:border-primary transition-all placeholder:text-white/10 text-lg" 
                   />
                 </div>
                 <div className="space-y-2">
@@ -377,7 +377,7 @@ export default function StaffManagementPage() {
                     value={formData.lastName}
                     onChange={(e) => setFormData({...formData, lastName: e.target.value.toUpperCase()})}
                     placeholder="EJ: PÉREZ" 
-                    className="h-14 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-primary/50 text-lg" 
+                    className="h-14 bg-white/5 border-primary/20 rounded-none font-bold uppercase focus:border-primary transition-all placeholder:text-white/10 text-lg" 
                   />
                 </div>
               </div>
@@ -392,7 +392,7 @@ export default function StaffManagementPage() {
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                     placeholder="USER@CLUB.COM" 
-                    className="pl-10 h-14 bg-white/5 border-white/10 rounded-none font-bold" 
+                    className="pl-10 h-14 bg-white/5 border-primary/20 rounded-none font-bold focus:border-primary transition-all" 
                   />
                 </div>
               </div>
@@ -404,7 +404,7 @@ export default function StaffManagementPage() {
                     value={formData.role} 
                     onValueChange={(v) => setFormData({...formData, role: v as UserRole})}
                   >
-                    <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary/50 transition-all">
+                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary transition-all">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
@@ -425,7 +425,7 @@ export default function StaffManagementPage() {
                         value={formData.countryPrefix}
                         onChange={(e) => setFormData({...formData, countryPrefix: e.target.value})}
                         placeholder="+34" 
-                        className="h-12 bg-white/5 border-white/10 rounded-none font-bold text-center focus:border-primary/50" 
+                        className="h-12 bg-white/5 border-primary/20 rounded-none font-bold text-center focus:border-primary transition-all" 
                       />
                     </div>
                     <div className="relative flex-1">
@@ -434,7 +434,7 @@ export default function StaffManagementPage() {
                         value={formData.phone}
                         onChange={(e) => setFormData({...formData, phone: e.target.value})}
                         placeholder="600 000 000" 
-                        className="pl-10 h-12 bg-white/5 border-white/10 rounded-none font-bold focus:border-primary/50" 
+                        className="pl-10 h-12 bg-white/5 border-primary/20 rounded-none font-bold focus:border-primary transition-all" 
                       />
                     </div>
                   </div>

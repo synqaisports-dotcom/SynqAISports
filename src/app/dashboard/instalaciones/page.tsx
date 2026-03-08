@@ -233,7 +233,7 @@ export default function FacilitiesManagementPage() {
             <Search className="absolute left-3 top-3.5 h-4 w-4 text-primary opacity-50" />
             <Input 
               placeholder="BUSCAR POR NOMBRE O DEPORTE..." 
-              className="pl-10 h-12 bg-white/5 border-white/10 rounded-none text-white placeholder:text-white/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-primary/50"
+              className="pl-10 h-12 bg-white/5 border-primary/20 rounded-none text-white placeholder:text-white/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-primary/50"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -345,7 +345,7 @@ export default function FacilitiesManagementPage() {
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})}
                   placeholder="EJ: PABELLÓN MUNICIPAL" 
-                  className="h-14 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-primary/50 transition-all placeholder:text-white/10 text-lg" 
+                  className="h-14 bg-white/5 border-primary/20 rounded-none font-bold uppercase focus:border-primary transition-all placeholder:text-white/10 text-lg" 
                 />
               </div>
 
@@ -356,7 +356,7 @@ export default function FacilitiesManagementPage() {
                     value={formData.type} 
                     onValueChange={(v) => setFormData({...formData, type: v})}
                   >
-                    <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary/50 transition-all">
+                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary transition-all">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
@@ -374,7 +374,7 @@ export default function FacilitiesManagementPage() {
                     value={formData.sport} 
                     onValueChange={(v) => setFormData({...formData, sport: v})}
                   >
-                    <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary/50 transition-all">
+                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary transition-all">
                       <div className="flex items-center gap-3">
                         <Dumbbell className="h-4 w-4 text-primary/40" />
                         <SelectValue placeholder="DEPORTE..." />
@@ -421,7 +421,7 @@ export default function FacilitiesManagementPage() {
                               "h-10 w-10 flex items-center justify-center font-black text-[10px] border transition-all",
                               formData.days.includes(day.id)
                                 ? "bg-primary text-black border-primary shadow-[0_0_15px_rgba(0,242,255,0.3)]"
-                                : "bg-white/5 border-white/10 text-white/30 hover:border-primary/40"
+                                : "bg-white/5 border-primary/20 text-white/30 hover:border-primary/40"
                             )}
                           >
                             {day.label}
@@ -439,7 +439,7 @@ export default function FacilitiesManagementPage() {
                             type="time" 
                             value={formData.startTime}
                             onChange={(e) => setFormData({...formData, startTime: e.target.value})}
-                            className="pl-10 h-11 bg-white/5 border-white/10 rounded-none font-bold text-xs focus:border-primary/50" 
+                            className="pl-10 h-11 bg-white/5 border-primary/20 rounded-none font-bold text-xs focus:border-primary" 
                           />
                         </div>
                       </div>
@@ -451,7 +451,7 @@ export default function FacilitiesManagementPage() {
                             type="time" 
                             value={formData.endTime}
                             onChange={(e) => setFormData({...formData, endTime: e.target.value})}
-                            className="pl-10 h-11 bg-white/5 border-white/10 rounded-none font-bold text-xs focus:border-primary/50" 
+                            className="pl-10 h-11 bg-white/5 border-primary/20 rounded-none font-bold text-xs focus:border-primary" 
                           />
                         </div>
                       </div>
@@ -467,10 +467,10 @@ export default function FacilitiesManagementPage() {
                           value={formData.footballType} 
                           onValueChange={(v) => setFormData({...formData, footballType: v})}
                         >
-                          <SelectTrigger className="h-11 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase text-[10px] tracking-widest">
+                          <SelectTrigger className="h-11 bg-white/5 border-primary/20 rounded-none text-white/60 font-bold uppercase text-[10px] tracking-widest focus:border-primary">
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent className="bg-[#04070c] border-white/10 rounded-none">
+                          <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
                             <SelectItem value="F11" className="text-[10px] font-black uppercase">FÚTBOL 11</SelectItem>
                             <SelectItem value="F7" className="text-[10px] font-black uppercase">FÚTBOL 7</SelectItem>
                             <SelectItem value="FSala" className="text-[10px] font-black uppercase">FÚTBOL SALA</SelectItem>
@@ -484,12 +484,12 @@ export default function FacilitiesManagementPage() {
                           onValueChange={(v) => setFormData({...formData, subdivisions: v})}
                         >
                           <SelectTrigger className={cn(
-                            "h-11 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase text-[10px] tracking-widest",
+                            "h-11 bg-white/5 border-primary/20 rounded-none text-white/60 font-bold uppercase text-[10px] tracking-widest focus:border-primary",
                             isSubdivided ? "border-emerald-500/50 text-emerald-400" : ""
                           )}>
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent className="bg-[#04070c] border-white/10 rounded-none">
+                          <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
                             <SelectItem value="1" className="text-[10px] font-black uppercase">CAMPO ENTERO</SelectItem>
                             <SelectItem value="2" className="text-[10px] font-black uppercase text-emerald-400">2 MITADES (ZONAS)</SelectItem>
                             <SelectItem value="4" className="text-[10px] font-black uppercase text-emerald-400">4 CUARTOS (ZONAS)</SelectItem>
@@ -523,7 +523,7 @@ export default function FacilitiesManagementPage() {
                                   "h-10 w-10 flex items-center justify-center font-black text-[10px] border transition-all",
                                   formData.subDays.includes(day.id)
                                     ? "bg-emerald-500 text-black border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]"
-                                    : "bg-white/5 border-white/10 text-white/30 hover:border-emerald-500/40"
+                                    : "bg-white/5 border-emerald-500/30 text-white/30 hover:border-emerald-500/40"
                                 )}
                               >
                                 {day.label}
@@ -541,7 +541,7 @@ export default function FacilitiesManagementPage() {
                                 type="time" 
                                 value={formData.subStartTime}
                                 onChange={(e) => setFormData({...formData, subStartTime: e.target.value})}
-                                className="pl-10 h-11 bg-white/5 border-white/10 rounded-none font-bold text-xs focus:border-emerald-500/50" 
+                                className="pl-10 h-11 bg-white/5 border-emerald-500/30 rounded-none font-bold text-xs focus:border-emerald-500" 
                               />
                             </div>
                           </div>
@@ -553,7 +553,7 @@ export default function FacilitiesManagementPage() {
                                 type="time" 
                                 value={formData.subEndTime}
                                 onChange={(e) => setFormData({...formData, subEndTime: e.target.value})}
-                                className="pl-10 h-11 bg-white/5 border-white/10 rounded-none font-bold text-xs focus:border-emerald-500/50" 
+                                className="pl-10 h-11 bg-white/5 border-emerald-500/30 rounded-none font-bold text-xs focus:border-emerald-500" 
                               />
                             </div>
                           </div>
@@ -576,7 +576,7 @@ export default function FacilitiesManagementPage() {
                     value={formData.capacity}
                     onChange={(e) => setFormData({...formData, capacity: e.target.value})}
                     placeholder="EJ: 25 ATLETAS" 
-                    className="h-12 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-primary/50 transition-all placeholder:text-white/10" 
+                    className="h-12 bg-white/5 border-primary/20 rounded-none font-bold uppercase focus:border-primary transition-all placeholder:text-white/10" 
                   />
                 </div>
                 <div className="space-y-2">
@@ -585,7 +585,7 @@ export default function FacilitiesManagementPage() {
                     value={formData.status} 
                     onValueChange={(v) => setFormData({...formData, status: v})}
                   >
-                    <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary/50 transition-all">
+                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary transition-all">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">

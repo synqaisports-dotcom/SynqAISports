@@ -217,7 +217,7 @@ export default function PlayersManagementPage() {
             <Search className="absolute left-3 top-3.5 h-4 w-4 text-primary opacity-50" />
             <Input 
               placeholder="BUSCAR POR NOMBRE O CATEGORÍA..." 
-              className="pl-10 h-12 bg-white/5 border-white/10 rounded-none text-white placeholder:text-white/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-primary/50"
+              className="pl-10 h-12 bg-white/5 border-primary/20 rounded-none text-white placeholder:text-white/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-primary/50"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -354,7 +354,7 @@ export default function PlayersManagementPage() {
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})}
                     placeholder="EJ: LUCAS" 
-                    className="h-12 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-primary/50 transition-all placeholder:text-white/10" 
+                    className="h-12 bg-white/5 border-primary/20 rounded-none font-bold uppercase focus:border-primary transition-all placeholder:text-white/10" 
                   />
                 </div>
                 <div className="space-y-2">
@@ -364,7 +364,7 @@ export default function PlayersManagementPage() {
                     value={formData.surname}
                     onChange={(e) => setFormData({...formData, surname: e.target.value.toUpperCase()})}
                     placeholder="EJ: GARCÍA" 
-                    className="h-12 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-primary/50 transition-all placeholder:text-white/10" 
+                    className="h-12 bg-white/5 border-primary/20 rounded-none font-bold uppercase focus:border-primary transition-all placeholder:text-white/10" 
                   />
                 </div>
               </div>
@@ -379,7 +379,7 @@ export default function PlayersManagementPage() {
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                     placeholder="TUTOR@MAIL.COM" 
-                    className="pl-10 h-12 bg-white/5 border-white/10 rounded-none font-bold" 
+                    className="pl-10 h-12 bg-white/5 border-primary/20 rounded-none font-bold focus:border-primary transition-all" 
                   />
                 </div>
               </div>
@@ -391,7 +391,7 @@ export default function PlayersManagementPage() {
                     value={formData.category} 
                     onValueChange={(v) => setFormData({...formData, category: v})}
                   >
-                    <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary/50 transition-all">
+                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary transition-all">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
@@ -409,7 +409,7 @@ export default function PlayersManagementPage() {
                     value={formData.teamSuffix} 
                     onValueChange={(v) => setFormData({...formData, teamSuffix: v})}
                   >
-                    <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary/50 transition-all">
+                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary transition-all">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
@@ -435,7 +435,7 @@ export default function PlayersManagementPage() {
                         "h-10 border font-black text-[10px] transition-all flex items-center justify-center rounded-sm",
                         formData.position.includes(pos.id)
                           ? "bg-primary border-primary text-black shadow-[0_0_15px_rgba(0,242,255,0.3)]"
-                          : "bg-white/5 border-white/10 text-white/40 hover:border-primary/40 hover:text-white"
+                          : "bg-white/5 border-primary/20 text-white/40 hover:border-primary/40 hover:text-white"
                       )}
                     >
                       {pos.label}
@@ -450,7 +450,7 @@ export default function PlayersManagementPage() {
                   value={formData.status} 
                   onValueChange={(v) => setFormData({...formData, status: v})}
                 >
-                  <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary/50 transition-all">
+                  <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary transition-all">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">

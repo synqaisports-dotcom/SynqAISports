@@ -131,11 +131,11 @@ function LoginContent() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1">NOMBRE_DEL_ADMINISTRADOR</label>
-                <Input required placeholder="SU NOMBRE" className="h-14 bg-white/5 border-white/10 rounded-none text-white font-bold uppercase" />
+                <Input required placeholder="SU NOMBRE" className="h-14 bg-white/5 border-primary/20 rounded-none text-white font-bold uppercase focus:border-primary transition-all" />
               </div>
               <div className="space-y-2">
                 <label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1">MAIL_DE_ACCESO_PROFESIONAL</label>
-                <Input required type="email" placeholder="MAIL@CLUB.COM" className="h-14 bg-white/5 border-white/10 rounded-none text-white font-bold uppercase" />
+                <Input required type="email" placeholder="MAIL@CLUB.COM" className="h-14 bg-white/5 border-primary/20 rounded-none text-white font-bold uppercase focus:border-primary transition-all" />
               </div>
             </div>
 
@@ -206,16 +206,16 @@ function LoginContent() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1">NOMBRE_USUARIO</label>
-                  <Input placeholder="EJ. MARC" className="h-12 bg-white/5 border-white/10 rounded-none text-white font-bold uppercase placeholder:text-white/10" />
+                  <Input placeholder="EJ. MARC" className="h-12 bg-white/5 border-primary/20 rounded-none text-white font-bold uppercase placeholder:text-white/10 focus:border-primary transition-all" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1">MAIL_ACCESO</label>
-                  <Input type="email" placeholder="USER@SYNQ.PRO" className="h-12 bg-white/5 border-white/10 rounded-none text-white font-bold uppercase placeholder:text-white/10" />
+                  <Input type="email" placeholder="USER@SYNQ.PRO" className="h-12 bg-white/5 border-primary/20 rounded-none text-white font-bold uppercase placeholder:text-white/10 focus:border-primary transition-all" />
                 </div>
               </div>
               <div className="space-y-2">
                 <label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1">CÓDIGO_DE_ACTIVACIÓN</label>
-                <Input placeholder="XXXX-XXXX-XXXX" className="h-12 bg-primary/5 border-primary/30 rounded-none text-xl font-headline font-black text-center tracking-[0.3em] text-primary cyan-text-glow placeholder:text-primary/10" />
+                <Input placeholder="XXXX-XXXX-XXXX" className="h-12 bg-primary/5 border-primary/30 rounded-none text-xl font-headline font-black text-center tracking-[0.3em] text-primary cyan-text-glow placeholder:text-primary/10 focus:border-primary transition-all" />
               </div>
             </div>
 
@@ -241,7 +241,7 @@ function LoginContent() {
 
             <div className="space-y-2">
               <label className="text-[9px] font-black uppercase tracking-widest text-white/40 ml-1 text-center block w-full">O INTRODUCE CÓDIGO_PROMOCIONAL</label>
-              <Input placeholder="PROMO_CODE_2024" className="h-12 bg-white/5 border-white/10 rounded-none text-white font-bold text-center uppercase tracking-widest" />
+              <Input placeholder="PROMO_CODE_2024" className="h-12 bg-white/5 border-primary/20 rounded-none text-white font-bold text-center uppercase tracking-widest focus:border-primary transition-all" />
             </div>
 
             <Button 
