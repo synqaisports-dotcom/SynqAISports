@@ -19,10 +19,11 @@ import {
   Loader2,
   ChevronRight,
   TrendingUp,
-  ShieldCheck,
-  Stethoscope,
+  Award,
   IdCard,
   LayoutGrid,
+  ShieldCheck,
+  Stethoscope,
   ShieldAlert
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -400,74 +401,6 @@ export default function PlayersManagementPage() {
                 </div>
               </div>
 
-              {/* TOGGLE MENOR DE EDAD */}
-              <div className="flex items-center justify-between p-4 bg-primary/5 border border-primary/20 rounded-xl">
-                <div className="space-y-0.5">
-                  <Label className="text-[10px] font-black uppercase text-primary tracking-widest">¿Es Menor de Edad?</Label>
-                  <p className="text-[8px] text-white/40 uppercase font-bold tracking-tighter">Requiere tutor legal para sincronización</p>
-                </div>
-                <Switch 
-                  checked={formData.isMinor} 
-                  onCheckedChange={(checked) => setFormData({...formData, isMinor: checked})}
-                  className="data-[state=checked]:bg-primary"
-                />
-              </div>
-
-              {/* SECCIÓN TUTOR CONDICIONAL */}
-              {formData.isMinor && (
-                <div className="space-y-6 p-6 border border-primary/30 bg-primary/5 rounded-3xl animate-in zoom-in-95 duration-500 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-4 opacity-5">
-                    <ShieldCheck className="h-20 w-20 text-primary" />
-                  </div>
-                  
-                  <div className="flex items-center gap-3 border-b border-primary/20 pb-4 mb-4">
-                    <ShieldCheck className="h-4 w-4 text-primary" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Datos del Tutor Legal</span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Nombre</Label>
-                      <Input 
-                        value={formData.tutorName}
-                        onChange={(e) => setFormData({...formData, tutorName: e.target.value.toUpperCase()})}
-                        placeholder="EJ: MARÍA" 
-                        className="h-11 bg-white/5 border-primary/20 rounded-none font-bold uppercase focus:border-primary transition-all" 
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Apellidos</Label>
-                      <Input 
-                        value={formData.tutorSurname}
-                        onChange={(e) => setFormData({...formData, tutorSurname: e.target.value.toUpperCase()})}
-                        placeholder="EJ: LÓPEZ" 
-                        className="h-11 bg-white/5 border-primary/20 rounded-none font-bold uppercase focus:border-primary transition-all" 
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Mail Tutor</Label>
-                    <Input 
-                      type="email"
-                      value={formData.tutorEmail}
-                      onChange={(e) => setFormData({...formData, tutorEmail: e.target.value})}
-                      placeholder="TUTOR@MAIL.COM" 
-                      className="h-11 bg-white/5 border-primary/20 rounded-none font-bold focus:border-primary transition-all" 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Teléfono Tutor</Label>
-                    <Input 
-                      value={formData.tutorPhone}
-                      onChange={(e) => setFormData({...formData, tutorPhone: e.target.value})}
-                      placeholder="600 000 000" 
-                      className="h-11 bg-white/5 border-primary/20 rounded-none font-bold focus:border-primary transition-all" 
-                    />
-                  </div>
-                </div>
-              )}
-
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Categoría</Label>
@@ -544,6 +477,74 @@ export default function PlayersManagementPage() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* TOGGLE MENOR DE EDAD */}
+              <div className="flex items-center justify-between p-4 bg-primary/5 border border-primary/20 rounded-xl">
+                <div className="space-y-0.5">
+                  <Label className="text-[10px] font-black uppercase text-primary tracking-widest">¿Es Menor de Edad?</Label>
+                  <p className="text-[8px] text-white/40 uppercase font-bold tracking-tighter">Requiere tutor legal para sincronización</p>
+                </div>
+                <Switch 
+                  checked={formData.isMinor} 
+                  onCheckedChange={(checked) => setFormData({...formData, isMinor: checked})}
+                  className="data-[state=checked]:bg-primary"
+                />
+              </div>
+
+              {/* SECCIÓN TUTOR CONDICIONAL */}
+              {formData.isMinor && (
+                <div className="space-y-6 p-6 border border-primary/30 bg-primary/5 rounded-3xl animate-in zoom-in-95 duration-500 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-4 opacity-5">
+                    <ShieldCheck className="h-20 w-20 text-primary" />
+                  </div>
+                  
+                  <div className="flex items-center gap-3 border-b border-primary/20 pb-4 mb-4">
+                    <ShieldCheck className="h-4 w-4 text-primary" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Datos del Tutor Legal</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Nombre</Label>
+                      <Input 
+                        value={formData.tutorName}
+                        onChange={(e) => setFormData({...formData, tutorName: e.target.value.toUpperCase()})}
+                        placeholder="EJ: MARÍA" 
+                        className="h-11 bg-white/5 border-primary/20 rounded-none font-bold uppercase focus:border-primary transition-all" 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Apellidos</Label>
+                      <Input 
+                        value={formData.tutorSurname}
+                        onChange={(e) => setFormData({...formData, tutorSurname: e.target.value.toUpperCase()})}
+                        placeholder="EJ: LÓPEZ" 
+                        className="h-11 bg-white/5 border-primary/20 rounded-none font-bold uppercase focus:border-primary transition-all" 
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Mail Tutor</Label>
+                    <Input 
+                      type="email"
+                      value={formData.tutorEmail}
+                      onChange={(e) => setFormData({...formData, tutorEmail: e.target.value})}
+                      placeholder="TUTOR@MAIL.COM" 
+                      className="h-11 bg-white/5 border-primary/20 rounded-none font-bold focus:border-primary transition-all" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Teléfono Tutor</Label>
+                    <Input 
+                      value={formData.tutorPhone}
+                      onChange={(e) => setFormData({...formData, tutorPhone: e.target.value})}
+                      placeholder="600 000 000" 
+                      className="h-11 bg-white/5 border-primary/20 rounded-none font-bold focus:border-primary transition-all" 
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="p-6 bg-primary/5 border border-primary/20 space-y-3">
