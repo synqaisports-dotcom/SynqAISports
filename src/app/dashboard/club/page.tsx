@@ -22,7 +22,8 @@ import {
   Smartphone,
   Trophy,
   ArrowRight,
-  Dumbbell
+  Dumbbell,
+  ShieldAlert
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -64,6 +65,8 @@ export default function ClubManagementPage() {
   const { toast } = useToast();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
+  const isSuperAdmin = profile?.role === "superadmin";
+
   const [clubData, setClubData] = useState({
     name: profile?.clubName || profile?.clubId || "Nodo de Cantera",
     country: profile?.country || "España",
@@ -94,10 +97,12 @@ export default function ClubManagementPage() {
         <div className="space-y-1">
           <div className="flex items-center gap-3 mb-2">
             <Building2 className="h-5 w-5 text-primary animate-pulse" />
-            <span className="text-[10px] font-black text-primary tracking-[0.5em] uppercase">Club_Identity_Matrix</span>
+            <span className="text-[10px] font-black text-primary tracking-[0.5em] uppercase">
+              {isSuperAdmin ? "Global_Audit_Mode" : "Club_Identity_Matrix"}
+            </span>
           </div>
           <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic cyan-text-glow">
-            Gestión del Club
+            {isSuperAdmin ? "Auditoría de Club" : "Gestión del Club"}
           </h1>
         </div>
         
@@ -225,6 +230,15 @@ export default function ClubManagementPage() {
         </Sheet>
       </div>
 
+      {isSuperAdmin && (
+        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center gap-4 animate-in slide-in-from-top-2 mb-6">
+          <ShieldAlert className="h-5 w-5 text-emerald-400" />
+          <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">
+            MODO_AUDITORÍA_GLOBAL: Acceso total a los parámetros del nodo central.
+          </p>
+        </div>
+      )}
+
       {/* BANNER VISUAL */}
       <div className="relative h-80 rounded-[3rem] overflow-hidden border border-white/5 shadow-2xl">
         <Image 
@@ -247,7 +261,7 @@ export default function ClubManagementPage() {
         <div className="flex flex-col md:flex-row items-end gap-10">
           <div className="relative group/logo">
              <div className="absolute inset-0 bg-primary/30 blur-3xl rounded-full opacity-0 group-hover/logo:opacity-100 transition-opacity" />
-             <div className="h-56 w-52 bg-black border-2 border-primary/40 rounded-[3.5rem] flex items-center justify-center relative z-10 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.9)] group-hover/logo:border-primary transition-all duration-500">
+             <div className="h-56 w-52 bg-black border-2 border-primary/40 rounded-[2rem] flex items-center justify-center relative z-10 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.9)] group-hover/logo:border-primary transition-all duration-500">
                 <Image 
                   src="https://picsum.photos/seed/clublogo/300/300" 
                   alt="Club Logo" 
