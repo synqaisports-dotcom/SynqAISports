@@ -152,6 +152,15 @@ export default function AcademyManagementPage() {
   };
 
   const handleEditCategory = (cat: any) => {
+    // Blindaje de categorías maestras
+    if (cat.id.startsWith('cat_')) {
+      toast({
+        variant: "destructive",
+        title: "ACCESO_DENEGADO",
+        description: "Las categorías federativas base son inmutables por protocolo de club.",
+      });
+      return;
+    }
     setSheetMode('category');
     setEditingId(cat.id);
     setFormData(prev => ({
@@ -163,6 +172,14 @@ export default function AcademyManagementPage() {
   };
 
   const handleDeleteCategory = (id: string, name: string) => {
+    if (id.startsWith('cat_')) {
+      toast({
+        variant: "destructive",
+        title: "BORRADO_BLOQUEADO",
+        description: "No se puede eliminar un nodo troncal de la estructura federativa.",
+      });
+      return;
+    }
     setCategories(prev => prev.filter(c => c.id !== id));
     toast({
       variant: "destructive",
@@ -284,6 +301,9 @@ export default function AcademyManagementPage() {
             <div className="space-y-4">
               {categories.filter(c => c.stageId === stage.id).map((cat) => (
                 <Card key={cat.id} className="glass-panel border-none bg-black/40 overflow-hidden group hover:bg-black/60 transition-all cursor-default">
+                  {/* LINEA DE COLOR DE ETAPA REFORZADA */}
+                  <div className={cn("h-1 w-full", stage.color.replace('text', 'bg'))} />
+                  
                   <CardHeader className="p-6 pb-2">
                     <div className="flex justify-between items-start mb-2">
                       <CardTitle className="text-lg font-black text-white italic tracking-tighter uppercase group-hover:cyan-text-glow transition-all">
@@ -318,18 +338,24 @@ export default function AcademyManagementPage() {
                     </div>
                   </CardContent>
                   <CardFooter className="px-6 py-3 bg-black/40 border-t border-white/5 flex justify-between">
-                    <button 
-                      onClick={() => handleEditCategory(cat)}
-                      className="text-[8px] font-black text-primary hover:cyan-text-glow transition-all flex items-center gap-2 uppercase tracking-widest"
-                    >
-                      <Pencil className="h-2.5 w-2.5" /> Editar
-                    </button>
-                    <button 
-                      onClick={() => handleDeleteCategory(cat.id, cat.name)}
-                      className="text-[8px] font-black text-rose-500 hover:text-rose-400 transition-all flex items-center gap-2 uppercase tracking-widest"
-                    >
-                      <Trash2 className="h-2.5 w-2.5" /> Eliminar
-                    </button>
+                    {!cat.id.startsWith('cat_') ? (
+                      <>
+                        <button 
+                          onClick={() => handleEditCategory(cat)}
+                          className="text-[8px] font-black text-primary hover:cyan-text-glow transition-all flex items-center gap-2 uppercase tracking-widest"
+                        >
+                          <Pencil className="h-2.5 w-2.5" /> Editar
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteCategory(cat.id, cat.name)}
+                          className="text-[8px] font-black text-rose-500 hover:text-rose-400 transition-all flex items-center gap-2 uppercase tracking-widest"
+                        >
+                          <Trash2 className="h-2.5 w-2.5" /> Eliminar
+                        </button>
+                      </>
+                    ) : (
+                      <span className="text-[7px] font-black text-white/10 uppercase tracking-[0.2em] italic">Protocolo_Maestro_Inmutable</span>
+                    )}
                   </CardFooter>
                 </Card>
               ))}
