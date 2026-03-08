@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -22,7 +23,8 @@ import {
   CheckCircle2,
   Loader2,
   Trophy,
-  LayoutGrid
+  LayoutGrid,
+  Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -87,11 +89,14 @@ export default function FacilitiesManagementPage() {
     sport: "Fútbol",
     status: "Active",
     capacity: "",
-    startTime: "16:00",
-    endTime: "22:00",
-    days: ["L", "M", "X", "J", "V"] as string[],
+    startTime: "08:00",
+    endTime: "23:00",
+    days: ["L", "M", "X", "J", "V", "S", "D"] as string[],
     footballType: "F11",
-    subdivisions: "1"
+    subdivisions: "1",
+    subStartTime: "16:00",
+    subEndTime: "21:30",
+    subDays: ["L", "M", "X", "J", "V"] as string[]
   });
 
   const isSubdivided = formData.subdivisions !== "1";
@@ -104,11 +109,14 @@ export default function FacilitiesManagementPage() {
       sport: "Fútbol", 
       status: "Active", 
       capacity: "",
-      startTime: "16:00",
-      endTime: "22:00",
-      days: ["L", "M", "X", "J", "V"],
+      startTime: "08:00",
+      endTime: "23:00",
+      days: ["L", "M", "X", "J", "V", "S", "D"],
       footballType: "F11",
-      subdivisions: "1"
+      subdivisions: "1",
+      subStartTime: "16:00",
+      subEndTime: "21:30",
+      subDays: ["L", "M", "X", "J", "V"]
     });
     setIsSheetOpen(true);
   };
@@ -121,21 +129,25 @@ export default function FacilitiesManagementPage() {
       sport: facility.sport || "Fútbol",
       status: facility.status,
       capacity: facility.capacity,
-      startTime: facility.startTime || "16:00",
-      endTime: facility.endTime || "22:00",
-      days: facility.days || ["L", "M", "X", "J", "V"],
+      startTime: facility.startTime || "08:00",
+      endTime: facility.endTime || "23:00",
+      days: facility.days || ["L", "M", "X", "J", "V", "S", "D"],
       footballType: facility.footballType || "F11",
-      subdivisions: facility.subdivisions || "1"
+      subdivisions: facility.subdivisions || "1",
+      subStartTime: facility.subStartTime || "16:00",
+      subEndTime: facility.subEndTime || "21:30",
+      subDays: facility.subDays || ["L", "M", "X", "J", "V"]
     });
     setIsSheetOpen(true);
   };
 
-  const toggleDay = (dayId: string) => {
+  const toggleDay = (dayId: string, type: 'global' | 'sub') => {
+    const field = type === 'global' ? 'days' : 'subDays';
     setFormData(prev => ({
       ...prev,
-      days: prev.days.includes(dayId) 
-        ? prev.days.filter(d => d !== dayId) 
-        : [...prev.days, dayId]
+      [field]: prev[field].includes(dayId) 
+        ? prev[field].filter(d => d !== dayId) 
+        : [...prev[field], dayId]
     }));
   };
 
@@ -330,7 +342,7 @@ export default function FacilitiesManagementPage() {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})}
-                  placeholder="EJ: CAMPO FEDERATIVO A" 
+                  placeholder="EJ: PABELLÓN MUNICIPAL" 
                   className="h-14 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-primary/50 transition-all placeholder:text-white/10 text-lg" 
                 />
               </div>
@@ -378,123 +390,178 @@ export default function FacilitiesManagementPage() {
                 </div>
               </div>
 
+              {/* BLOQUE TÉCNICO FÚTBOL */}
               {formData.sport === "Fútbol" && (
-                <div className={cn(
-                  "space-y-8 p-8 border rounded-3xl animate-in fade-in slide-in-from-top-4 duration-500 relative overflow-hidden transition-all",
-                  isSubdivided ? "border-emerald-500/30 bg-emerald-500/5" : "border-primary/30 bg-primary/5"
-                )}>
-                  <div className="absolute top-0 right-0 p-4 opacity-5">
-                    <Trophy className={cn("h-24 w-24", isSubdivided ? "text-emerald-500" : "text-primary")} />
-                  </div>
+                <div className="space-y-8 animate-in fade-in slide-in-from-top-4 duration-500">
                   
-                  <div className={cn(
-                    "flex items-center gap-3 border-b pb-4 mb-6",
-                    isSubdivided ? "border-emerald-500/20" : "border-primary/20"
-                  )}>
-                    <LayoutGrid className={cn("h-4 w-4", isSubdivided ? "text-emerald-500" : "text-primary")} />
-                    <span className={cn(
-                      "text-[10px] font-black uppercase tracking-[0.3em]",
-                      isSubdivided ? "text-emerald-500" : "text-primary"
-                    )}>
-                      Parámetros Técnicos de Fútbol {isSubdivided && "(Modo Subdivisión)"}
-                    </span>
+                  {/* SECCIÓN 1: HORARIO GENERAL DE LA INSTALACIÓN (CIAN) */}
+                  <div className="space-y-6 p-8 border border-primary/30 bg-primary/5 rounded-3xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-5">
+                      <Warehouse className="h-24 w-24 text-primary" />
+                    </div>
+                    
+                    <div className="flex items-center gap-3 border-b border-primary/20 pb-4 mb-6">
+                      <Zap className="h-4 w-4 text-primary" />
+                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">
+                        Horario General de la Instalación
+                      </span>
+                    </div>
+
+                    <div className="space-y-4">
+                      <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Días Operativos</Label>
+                      <div className="flex gap-2">
+                        {WEEK_DAYS.map(day => (
+                          <button
+                            key={day.id}
+                            type="button"
+                            onClick={() => toggleDay(day.id, 'global')}
+                            className={cn(
+                              "h-10 w-10 flex items-center justify-center font-black text-[10px] border transition-all",
+                              formData.days.includes(day.id)
+                                ? "bg-primary text-black border-primary shadow-[0_0_15px_rgba(0,242,255,0.3)]"
+                                : "bg-white/5 border-white/10 text-white/30 hover:border-primary/40"
+                            )}
+                          >
+                            {day.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Apertura</Label>
+                        <div className="relative">
+                          <Clock className="absolute left-3 top-3 h-4 w-4 text-primary/40" />
+                          <Input 
+                            type="time" 
+                            value={formData.startTime}
+                            onChange={(e) => setFormData({...formData, startTime: e.target.value})}
+                            className="pl-10 h-11 bg-white/5 border-white/10 rounded-none font-bold text-xs focus:border-primary/50" 
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Cierre</Label>
+                        <div className="relative">
+                          <Clock className="absolute left-3 top-3 h-4 w-4 text-primary/40" />
+                          <Input 
+                            type="time" 
+                            value={formData.endTime}
+                            onChange={(e) => setFormData({...formData, endTime: e.target.value})}
+                            className="pl-10 h-11 bg-white/5 border-white/10 rounded-none font-bold text-xs focus:border-primary/50" 
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="space-y-4">
-                    <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Días de Operatividad</Label>
-                    <div className="flex gap-2">
-                      {WEEK_DAYS.map(day => (
-                        <button
-                          key={day.id}
-                          type="button"
-                          onClick={() => toggleDay(day.id)}
-                          className={cn(
-                            "h-10 w-10 flex items-center justify-center font-black text-[10px] border transition-all",
-                            formData.days.includes(day.id)
-                              ? (isSubdivided 
-                                  ? "bg-emerald-500 text-black border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]" 
-                                  : "bg-primary text-black border-primary shadow-[0_0_15px_rgba(0,242,255,0.3)]")
-                              : "bg-white/5 border-white/10 text-white/30 hover:border-primary/40"
-                          )}
+                  {/* SECCIÓN 2: CONFIGURACIÓN DE ZONAS Y DISPONIBILIDAD (ESMERALDA) */}
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Tipo de Disciplina</Label>
+                        <Select 
+                          value={formData.footballType} 
+                          onValueChange={(v) => setFormData({...formData, footballType: v})}
                         >
-                          {day.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Horario Apertura</Label>
-                      <div className="relative">
-                        <Clock className={cn("absolute left-3 top-3 h-4 w-4", isSubdivided ? "text-emerald-500/40" : "text-primary/40")} />
-                        <Input 
-                          type="time" 
-                          value={formData.startTime}
-                          onChange={(e) => setFormData({...formData, startTime: e.target.value})}
-                          className={cn(
-                            "pl-10 h-11 bg-white/5 border-white/10 rounded-none font-bold text-xs",
-                            isSubdivided ? "focus:border-emerald-500/50" : "focus:border-primary/50"
-                          )} 
-                        />
+                          <SelectTrigger className="h-11 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase text-[10px] tracking-widest">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-[#04070c] border-white/10 rounded-none">
+                            <SelectItem value="F11" className="text-[10px] font-black uppercase">FÚTBOL 11</SelectItem>
+                            <SelectItem value="F7" className="text-[10px] font-black uppercase">FÚTBOL 7</SelectItem>
+                            <SelectItem value="FSala" className="text-[10px] font-black uppercase">FÚTBOL SALA</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Subdivisión de Campo</Label>
+                        <Select 
+                          value={formData.subdivisions} 
+                          onValueChange={(v) => setFormData({...formData, subdivisions: v})}
+                        >
+                          <SelectTrigger className={cn(
+                            "h-11 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase text-[10px] tracking-widest",
+                            isSubdivided ? "border-emerald-500/50 text-emerald-400" : ""
+                          )}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-[#04070c] border-white/10 rounded-none">
+                            <SelectItem value="1" className="text-[10px] font-black uppercase">CAMPO ENTERO</SelectItem>
+                            <SelectItem value="2" className="text-[10px] font-black uppercase text-emerald-400">2 MITADES (ZONAS)</SelectItem>
+                            <SelectItem value="4" className="text-[10px] font-black uppercase text-emerald-400">4 CUARTOS (ZONAS)</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Horario Cierre</Label>
-                      <div className="relative">
-                        <Clock className={cn("absolute left-3 top-3 h-4 w-4", isSubdivided ? "text-emerald-500/40" : "text-primary/40")} />
-                        <Input 
-                          type="time" 
-                          value={formData.endTime}
-                          onChange={(e) => setFormData({...formData, endTime: e.target.value})}
-                          className={cn(
-                            "pl-10 h-11 bg-white/5 border-white/10 rounded-none font-bold text-xs",
-                            isSubdivided ? "focus:border-emerald-500/50" : "focus:border-primary/50"
-                          )} 
-                        />
-                      </div>
-                    </div>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Tipo de Disciplina</Label>
-                      <Select 
-                        value={formData.footballType} 
-                        onValueChange={(v) => setFormData({...formData, footballType: v})}
-                      >
-                        <SelectTrigger className={cn(
-                          "h-11 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase text-[10px] tracking-widest",
-                          isSubdivided ? "focus:ring-emerald-500/30" : "focus:ring-primary/30"
-                        )}>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-[#04070c] border-white/10 rounded-none">
-                          <SelectItem value="F11" className="text-[10px] font-black uppercase">FÚTBOL 11</SelectItem>
-                          <SelectItem value="F7" className="text-[10px] font-black uppercase">FÚTBOL 7</SelectItem>
-                          <SelectItem value="FSala" className="text-[10px] font-black uppercase">FÚTBOL SALA</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Subdivisión de Campo</Label>
-                      <Select 
-                        value={formData.subdivisions} 
-                        onValueChange={(v) => setFormData({...formData, subdivisions: v})}
-                      >
-                        <SelectTrigger className={cn(
-                          "h-11 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase text-[10px] tracking-widest",
-                          isSubdivided ? "border-emerald-500/50 text-emerald-400" : ""
-                        )}>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-[#04070c] border-white/10 rounded-none">
-                          <SelectItem value="1" className="text-[10px] font-black uppercase">CAMPO ENTERO</SelectItem>
-                          <SelectItem value="2" className="text-[10px] font-black uppercase text-emerald-400">2 MITADES (VERDE)</SelectItem>
-                          <SelectItem value="4" className="text-[10px] font-black uppercase text-emerald-400">4 CUARTOS (VERDE)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    {isSubdivided && (
+                      <div className="p-8 border border-emerald-500/30 bg-emerald-500/5 rounded-3xl animate-in zoom-in-95 duration-500 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-4 opacity-5">
+                          <LayoutGrid className="h-24 w-24 text-emerald-500" />
+                        </div>
+                        
+                        <div className="flex items-center gap-3 border-b border-emerald-500/20 pb-4 mb-6">
+                          <LayoutGrid className="h-4 w-4 text-emerald-500" />
+                          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-500">
+                            Protocolo de Disponibilidad por Zona
+                          </span>
+                        </div>
+
+                        <div className="space-y-4">
+                          <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Días Disponibles para Entrenos</Label>
+                          <div className="flex gap-2">
+                            {WEEK_DAYS.map(day => (
+                              <button
+                                key={day.id}
+                                type="button"
+                                onClick={() => toggleDay(day.id, 'sub')}
+                                className={cn(
+                                  "h-10 w-10 flex items-center justify-center font-black text-[10px] border transition-all",
+                                  formData.subDays.includes(day.id)
+                                    ? "bg-emerald-500 text-black border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]"
+                                    : "bg-white/5 border-white/10 text-white/30 hover:border-emerald-500/40"
+                                )}
+                              >
+                                {day.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-6 mt-6">
+                          <div className="space-y-2">
+                            <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Inicio Disponibilidad</Label>
+                            <div className="relative">
+                              <Clock className="absolute left-3 top-3 h-4 w-4 text-emerald-500/40" />
+                              <Input 
+                                type="time" 
+                                value={formData.subStartTime}
+                                onChange={(e) => setFormData({...formData, subStartTime: e.target.value})}
+                                className="pl-10 h-11 bg-white/5 border-white/10 rounded-none font-bold text-xs focus:border-emerald-500/50" 
+                              />
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Fin Disponibilidad</Label>
+                            <div className="relative">
+                              <Clock className="absolute left-3 top-3 h-4 w-4 text-emerald-500/40" />
+                              <Input 
+                                type="time" 
+                                value={formData.subEndTime}
+                                onChange={(e) => setFormData({...formData, subEndTime: e.target.value})}
+                                className="pl-10 h-11 bg-white/5 border-white/10 rounded-none font-bold text-xs focus:border-emerald-500/50" 
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <p className="text-[8px] text-emerald-400/60 leading-relaxed uppercase font-bold italic mt-6">
+                          * Este horario define los slots disponibles para distribuir a los equipos en cada una de las {formData.subdivisions} zonas.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -535,7 +602,7 @@ export default function FacilitiesManagementPage() {
                 <span className="text-[9px] font-black uppercase text-primary tracking-widest">Protocolo de Seguridad</span>
               </div>
               <p className="text-[9px] text-white/40 leading-relaxed font-bold uppercase italic">
-                La configuración detallada permite al algoritmo de la red SynQAI optimizar las cargas de entrenamiento y evitar solapamientos en las sesiones de formación técnica.
+                La configuración de horarios dual permite al motor de planificación de SynQAI distinguir entre la apertura del club y las franjas de alta intensidad formativa.
               </p>
             </div>
           </form>
