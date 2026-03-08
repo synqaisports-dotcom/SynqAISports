@@ -87,7 +87,8 @@ export default function StaffManagementPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
     role: "coach" as UserRole,
     phone: "",
@@ -105,7 +106,8 @@ export default function StaffManagementPage() {
   const handleOpenCreate = () => {
     setEditingId(null);
     setFormData({ 
-      name: "", 
+      firstName: "", 
+      lastName: "", 
       email: "", 
       role: (availableRoles[0] as UserRole) || "coach", 
       phone: "", 
@@ -125,9 +127,15 @@ export default function StaffManagementPage() {
       return;
     }
 
+    // Dividir el nombre completo en nombre y apellidos
+    const nameParts = member.name.split(" ");
+    const firstName = nameParts[0] || "";
+    const lastName = nameParts.slice(1).join(" ") || "";
+
     setEditingId(member.id);
     setFormData({
-      name: member.name,
+      firstName,
+      lastName,
       email: member.email,
       role: member.role as UserRole,
       phone: member.phone,
@@ -158,14 +166,23 @@ export default function StaffManagementPage() {
     e.preventDefault();
     setLoading(true);
     
+    const fullName = `${formData.firstName} ${formData.lastName}`.trim();
+    const savePayload = {
+      name: fullName,
+      email: formData.email,
+      role: formData.role,
+      phone: formData.phone,
+      status: formData.status
+    };
+
     setTimeout(() => {
       if (editingId) {
-        setStaff(prev => prev.map(s => s.id === editingId ? { ...s, ...formData } : s));
+        setStaff(prev => prev.map(s => s.id === editingId ? { ...s, ...savePayload } : s));
         toast({ title: "PERFIL_ACTUALIZADO", description: "La identidad ha sido resincronizada." });
       } else {
-        const newMember = { id: `s${Date.now()}`, ...formData };
+        const newMember = { id: `s${Date.now()}`, ...savePayload };
         setStaff([newMember, ...staff]);
-        toast({ title: "CREDENCIAL_EMITIDA", description: `${formData.name} ya es parte de la red.` });
+        toast({ title: "CREDENCIAL_EMITIDA", description: `${fullName} ya es parte de la red.` });
       }
       setLoading(false);
       setIsSheetOpen(false);
@@ -331,15 +348,27 @@ export default function StaffManagementPage() {
 
           <form onSubmit={handleSaveStaff} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10">
             <div className="space-y-6">
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Nombre Completo</Label>
-                <Input 
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})}
-                  placeholder="EJ: JUAN PÉREZ" 
-                  className="h-14 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-primary/50 text-lg" 
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Nombre</Label>
+                  <Input 
+                    required
+                    value={formData.firstName}
+                    onChange={(e) => setFormData({...formData, firstName: e.target.value.toUpperCase()})}
+                    placeholder="EJ: JUAN" 
+                    className="h-14 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-primary/50 text-lg" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Apellidos</Label>
+                  <Input 
+                    required
+                    value={formData.lastName}
+                    onChange={(e) => setFormData({...formData, lastName: e.target.value.toUpperCase()})}
+                    placeholder="EJ: PÉREZ" 
+                    className="h-14 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-primary/50 text-lg" 
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -415,7 +444,7 @@ export default function StaffManagementPage() {
               onClick={handleSaveStaff}
               disabled={loading}
               className={cn(
-                "flex-[2] h-16 text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-none shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:scale-[1.02] transition-all border-none",
+                "flex-[2] h-16 text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-none shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] transition-all border-none",
                 isSuperAdmin ? "bg-emerald-500" : "bg-primary"
               )}
             >
