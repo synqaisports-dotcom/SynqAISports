@@ -104,13 +104,17 @@ export function DashboardSidebar() {
     <Sidebar 
       collapsible="icon" 
       className={cn(
-        "border-r border-white/5 transition-all duration-500",
-        isCollapsed ? "bg-transparent border-primary/30" : "bg-[#04070c] shadow-[4px_0_24px_rgba(0,0,0,0.5)]"
+        "transition-all duration-500",
+        isCollapsed 
+          ? "bg-transparent border-r border-primary/30" 
+          : "bg-[#04070c] border-r border-white/5 shadow-[4px_0_24px_rgba(0,0,0,0.5)]"
       )}
     >
       <SidebarHeader className={cn(
-        "p-8 border-b border-white/5 transition-all duration-500",
-        isCollapsed ? "bg-transparent border-primary/20 p-2" : "bg-black/60 backdrop-blur-md"
+        "p-8 border-b transition-all duration-500",
+        isCollapsed 
+          ? "bg-transparent border-primary/20 p-2" 
+          : "bg-black/60 backdrop-blur-md border-white/5"
       )}>
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
@@ -175,8 +179,9 @@ export function DashboardSidebar() {
               <SidebarMenuItem key={item.href}>
                 <SidebarLink item={item} isActive={pathname === item.href} />
               </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupWrapper>
+            ))}
+          </SidebarMenu>
+        </SidebarGroupWrapper>
 
         {/* USER TERMINALS */}
         <SidebarGroupWrapper title="Terminales_Acceso" color="text-white/20" isCollapsed={isCollapsed}>
@@ -191,8 +196,10 @@ export function DashboardSidebar() {
       </SidebarContent>
 
       <SidebarFooter className={cn(
-        "p-6 border-t border-white/5 transition-all duration-500",
-        isCollapsed ? "bg-transparent p-2" : "bg-black/60 backdrop-blur-md"
+        "p-6 border-t transition-all duration-500",
+        isCollapsed 
+          ? "bg-transparent border-primary/20 p-2" 
+          : "bg-black/60 backdrop-blur-md border-white/5"
       )}>
         <button 
           onClick={handleLogout}
@@ -242,7 +249,11 @@ function SidebarLink({ item, isActive, isGlobal }: { item: NavItem; isActive: bo
     >
       <Link href={item.href}>
         <item.icon className={cn("h-5 w-5 shrink-0 transition-all duration-500", iconClass)} />
-        <span className={cn("font-bold text-[10px] uppercase tracking-[0.25em] whitespace-nowrap", isCollapsed && "hidden")}>{item.title}</span>
+        {!isCollapsed && (
+          <span className="font-bold text-[10px] uppercase tracking-[0.25em] whitespace-nowrap animate-in fade-in duration-500">
+            {item.title}
+          </span>
+        )}
         {isActive && (
           <div className={cn(
             "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-3/5 rounded-full",
