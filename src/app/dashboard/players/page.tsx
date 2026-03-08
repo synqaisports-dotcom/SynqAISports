@@ -244,20 +244,20 @@ export default function PlayersManagementPage() {
         <PlayerStat label="Progreso Red" value="+12%" icon={TrendingUp} />
       </div>
 
-      <Card className="glass-panel border-none bg-black/40 overflow-hidden mb-8 shadow-2xl">
+      <Card className="glass-panel border border-primary/20 bg-black/40 overflow-hidden mb-8 shadow-2xl">
         <CardHeader className="p-6 border-b border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="relative w-full max-w-md">
             <Search className="absolute left-3 top-3.5 h-4 w-4 text-primary opacity-50" />
             <Input 
               placeholder="BUSCAR POR NOMBRE O CATEGORÍA..." 
-              className="pl-10 h-12 bg-white/5 border-primary/20 rounded-none text-white placeholder:text-white/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-primary/50"
+              className="pl-10 h-12 bg-white/5 border-primary/20 rounded-none text-primary placeholder:text-primary/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-primary/50 transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           <div className="flex items-center gap-4">
              <div className="flex flex-col items-end">
-                <span className="text-[9px] font-black text-white/30 uppercase tracking-widest">Filtro de Categoría</span>
+                <span className="text-[9px] font-black text-primary/40 uppercase tracking-widest">Filtro de Categoría</span>
                 <span className="text-[10px] font-black text-primary uppercase tracking-widest">TODOS_LOS_NODOS</span>
              </div>
              <LayoutGrid className="h-5 w-5 text-primary/40 hover:text-primary cursor-pointer transition-colors" />
@@ -268,30 +268,30 @@ export default function PlayersManagementPage() {
             <table className="w-full text-left">
               <thead className="bg-white/[0.02] border-b border-white/5">
                 <tr>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-white/40">Atleta / Identidad</th>
-                  <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white/40 text-center">Categoría - Equipo</th>
-                  <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white/40 text-center">Posición</th>
-                  <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white/40 text-center">Asistencia</th>
-                  <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white/40 text-center">Estatus</th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-white/40 text-right">Acciones</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-primary/40">Atleta / Identidad</th>
+                  <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-primary/40 text-center">Categoría - Equipo</th>
+                  <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-primary/40 text-center">Posición</th>
+                  <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-primary/40 text-center">Asistencia</th>
+                  <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-primary/40 text-center">Estatus</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-primary/40 text-right">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
                 {filteredPlayers.map((player) => (
-                  <tr key={player.id} className="group hover:bg-white/[0.02] transition-colors cursor-default">
+                  <tr key={player.id} className="group hover:bg-primary/[0.02] transition-colors cursor-default">
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 bg-white/5 border border-white/10 rounded-full flex items-center justify-center relative overflow-hidden group-hover:border-primary/40 transition-all">
+                        <div className="h-12 w-12 bg-primary/5 border border-primary/20 rounded-full flex items-center justify-center relative overflow-hidden group-hover:border-primary/40 transition-all">
                            {player.photoUrl ? (
                              <Image src={player.photoUrl} alt={player.name} fill className="object-cover rounded-full" />
                            ) : (
-                             <IdCard className="h-5 w-5 text-white/20 group-hover:text-primary transition-all" />
+                             <IdCard className="h-5 w-5 text-primary/20 group-hover:text-primary transition-all" />
                            )}
                            <div className="absolute inset-0 bg-primary/5 scan-line opacity-0 group-hover:opacity-100" />
                         </div>
                         <div className="space-y-1">
                           <p className="font-black text-white uppercase text-xs italic group-hover:cyan-text-glow transition-all">{player.name} {player.surname}</p>
-                          <p className="text-[9px] text-white/30 font-bold uppercase tracking-widest flex items-center gap-2">
+                          <p className="text-[9px] text-primary/40 font-bold uppercase tracking-widest flex items-center gap-2">
                             <Mail className="h-2 w-2 text-primary/40" /> {player.email}
                           </p>
                         </div>
@@ -299,19 +299,19 @@ export default function PlayersManagementPage() {
                     </td>
                     <td className="px-6 py-5">
                       <div className="flex justify-center">
-                        <div className="inline-flex items-center border border-white/10 bg-white/5 rounded-none divide-x divide-white/10 overflow-hidden group-hover:border-primary/30 transition-all">
-                          <span className="px-3 py-1 text-[9px] font-black text-white/60 uppercase tracking-widest whitespace-nowrap">{player.category}</span>
-                          <span className="px-2.5 py-1 text-[10px] font-black text-primary italic bg-primary/5 min-w-[32px] text-center">{player.teamSuffix}</span>
+                        <div className="inline-flex items-center border border-primary/20 bg-primary/5 rounded-none divide-x divide-primary/20 overflow-hidden group-hover:border-primary/40 transition-all shadow-[0_0_10px_rgba(0,242,255,0.05)]">
+                          <span className="px-3 py-1 text-[9px] font-black text-primary/80 uppercase tracking-widest whitespace-nowrap">{player.category}</span>
+                          <span className="px-2.5 py-1 text-[10px] font-black text-primary italic bg-primary/10 min-w-[32px] text-center">{player.teamSuffix}</span>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-5 text-center">
-                      <span className="text-[10px] font-black text-white/70 uppercase tracking-tighter">{player.position}</span>
+                      <span className="text-[10px] font-black text-primary/70 uppercase tracking-tighter">{player.position}</span>
                     </td>
                     <td className="px-6 py-5">
                       <div className="flex items-center justify-center gap-3">
                          <div className="h-1.5 w-16 bg-white/5 rounded-full overflow-hidden hidden md:block">
-                            <div className="h-full bg-primary" style={{ width: player.attendance }} />
+                            <div className="h-full bg-primary shadow-[0_0_8px_var(--primary)]" style={{ width: player.attendance }} />
                          </div>
                          <span className="text-[10px] font-mono font-bold text-primary/80">{player.attendance}</span>
                       </div>
@@ -358,7 +358,7 @@ export default function PlayersManagementPage() {
             </table>
           </div>
         </CardContent>
-        <div className="p-6 bg-black/40 border-t border-white/5 flex justify-between items-center text-[9px] font-black text-white/20 uppercase tracking-[0.5em]">
+        <div className="p-6 bg-black/40 border-t border-white/5 flex justify-between items-center text-[9px] font-black text-primary/30 uppercase tracking-[0.5em]">
           <span>Mostrando {filteredPlayers.length} de {players.length} atletas vinculados</span>
           <span className="flex items-center gap-2"><CheckCircle2 className="h-3 w-3 text-primary animate-pulse" /> Sincronización de Nodo: ÓPTIMA</span>
         </div>
@@ -375,7 +375,7 @@ export default function PlayersManagementPage() {
               <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left">
                 {editingId ? "MODIFICAR_ATLETA" : "ALTA_DE_ATLETA"}
               </SheetTitle>
-              <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left">
+              <SheetDescription className="text-[10px] uppercase font-bold text-primary/40 tracking-widest text-left">
                 Genere la ficha técnica y asigne categoría federativa.
               </SheetDescription>
             </SheetHeader>
@@ -425,7 +425,7 @@ export default function PlayersManagementPage() {
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})}
                     placeholder="EJ: LUCAS" 
-                    className="h-12 bg-white/5 border-primary/20 rounded-none font-bold uppercase focus:border-primary transition-all placeholder:text-white/10" 
+                    className="h-12 bg-white/5 border-primary/20 rounded-none font-bold uppercase focus:border-primary transition-all placeholder:text-primary/20 text-primary" 
                   />
                 </div>
                 <div className="space-y-2">
@@ -435,7 +435,7 @@ export default function PlayersManagementPage() {
                     value={formData.surname}
                     onChange={(e) => setFormData({...formData, surname: e.target.value.toUpperCase()})}
                     placeholder="EJ: GARCÍA" 
-                    className="h-12 bg-white/5 border-primary/20 rounded-none font-bold uppercase focus:border-primary transition-all placeholder:text-white/10" 
+                    className="h-12 bg-white/5 border-primary/20 rounded-none font-bold uppercase focus:border-primary transition-all placeholder:text-primary/20 text-primary" 
                   />
                 </div>
               </div>
@@ -450,7 +450,7 @@ export default function PlayersManagementPage() {
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                     placeholder="ATLETA@MAIL.COM" 
-                    className="pl-10 h-12 bg-white/5 border-primary/20 rounded-none font-bold focus:border-primary transition-all" 
+                    className="pl-10 h-12 bg-white/5 border-primary/20 rounded-none font-bold focus:border-primary transition-all text-primary placeholder:text-primary/20" 
                   />
                 </div>
               </div>
@@ -462,12 +462,12 @@ export default function PlayersManagementPage() {
                     value={formData.category} 
                     onValueChange={(v) => setFormData({...formData, category: v})}
                   >
-                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary transition-all">
+                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-none text-primary/80 font-bold uppercase tracking-widest focus:border-primary transition-all">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
                       {CATEGORIES.map(cat => (
-                        <SelectItem key={cat.value} value={cat.value} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary">
+                        <SelectItem key={cat.value} value={cat.value} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary focus:text-black text-primary/80">
                           {cat.label}
                         </SelectItem>
                       ))}
@@ -480,12 +480,12 @@ export default function PlayersManagementPage() {
                     value={formData.teamSuffix} 
                     onValueChange={(v) => setFormData({...formData, teamSuffix: v})}
                   >
-                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary transition-all">
+                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-none text-primary/80 font-bold uppercase tracking-widest focus:border-primary transition-all">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
                       {TEAM_SUFFIXES.map(suffix => (
-                        <SelectItem key={suffix} value={suffix} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary">
+                        <SelectItem key={suffix} value={suffix} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary focus:text-black text-primary/80">
                           EQUIPO {suffix}
                         </SelectItem>
                       ))}
@@ -506,7 +506,7 @@ export default function PlayersManagementPage() {
                         "h-10 border font-black text-[10px] transition-all flex items-center justify-center rounded-sm",
                         formData.position.includes(pos.id)
                           ? "bg-primary border-primary text-black shadow-[0_0_15px_rgba(0,242,255,0.3)]"
-                          : "bg-white/5 border-primary/20 text-white/40 hover:border-primary/40 hover:text-white"
+                          : "bg-white/5 border-primary/20 text-primary/40 hover:border-primary/40 hover:text-primary"
                       )}
                     >
                       {pos.label}
@@ -521,13 +521,13 @@ export default function PlayersManagementPage() {
                   value={formData.status} 
                   onValueChange={(v) => setFormData({...formData, status: v})}
                 >
-                  <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary transition-all">
+                  <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-none text-primary/80 font-bold uppercase tracking-widest focus:border-primary transition-all">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
-                    <SelectItem value="Active" className="text-[10px] font-black uppercase">ACTIVO / DISPONIBLE</SelectItem>
-                    <SelectItem value="Injured" className="text-[10px] font-black uppercase text-rose-400">LESIONADO / BAJA</SelectItem>
-                    <SelectItem value="Away" className="text-[10px] font-black uppercase">AUSENCIA_TEMPORAL</SelectItem>
+                    <SelectItem value="Active" className="text-[10px] font-black uppercase text-primary/80 focus:bg-primary focus:text-black">ACTIVO / DISPONIBLE</SelectItem>
+                    <SelectItem value="Injured" className="text-[10px] font-black uppercase text-rose-400 focus:bg-rose-500 focus:text-white">LESIONADO / BAJA</SelectItem>
+                    <SelectItem value="Away" className="text-[10px] font-black uppercase text-amber-400 focus:bg-amber-500">AUSENCIA_TEMPORAL</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -535,7 +535,7 @@ export default function PlayersManagementPage() {
               <div className="flex items-center justify-between p-4 bg-primary/5 border border-primary/20 rounded-xl">
                 <div className="space-y-0.5">
                   <Label className="text-[10px] font-black uppercase text-primary tracking-widest">¿Es Menor de Edad?</Label>
-                  <p className="text-[8px] text-white/40 uppercase font-bold tracking-tighter">Requiere tutor legal para sincronización</p>
+                  <p className="text-[8px] text-primary/40 uppercase font-bold tracking-tighter">Requiere tutor legal para sincronización</p>
                 </div>
                 <Switch 
                   checked={formData.isMinor} 
@@ -546,7 +546,7 @@ export default function PlayersManagementPage() {
 
               {formData.isMinor && (
                 <div className="space-y-6 p-6 border border-primary/30 bg-primary/5 rounded-3xl animate-in zoom-in-95 duration-700 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-4 opacity-5">
+                  <div className="absolute top-0 right-0 p-4 opacity-10">
                     <ShieldCheck className="h-20 w-20 text-primary" />
                   </div>
                   
@@ -557,42 +557,42 @@ export default function PlayersManagementPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Nombre</Label>
+                      <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1">Nombre</Label>
                       <Input 
                         value={formData.tutorName}
                         onChange={(e) => setFormData({...formData, tutorName: e.target.value.toUpperCase()})}
                         placeholder="EJ: MARÍA" 
-                        className="h-11 bg-white/5 border-primary/20 rounded-none font-bold uppercase focus:border-primary transition-all" 
+                        className="h-11 bg-white/5 border-primary/20 rounded-none font-bold uppercase focus:border-primary transition-all text-primary placeholder:text-primary/20" 
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Apellidos</Label>
+                      <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1">Apellidos</Label>
                       <Input 
                         value={formData.tutorSurname}
                         onChange={(e) => setFormData({...formData, tutorSurname: e.target.value.toUpperCase()})}
                         placeholder="EJ: LÓPEZ" 
-                        className="h-11 bg-white/5 border-primary/20 rounded-none font-bold uppercase focus:border-primary transition-all" 
+                        className="h-11 bg-white/5 border-primary/20 rounded-none font-bold uppercase focus:border-primary transition-all text-primary placeholder:text-primary/20" 
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Mail Tutor</Label>
+                    <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1">Mail Tutor</Label>
                     <Input 
                       type="email"
                       value={formData.tutorEmail}
                       onChange={(e) => setFormData({...formData, tutorEmail: e.target.value})}
                       placeholder="TUTOR@MAIL.COM" 
-                      className="h-11 bg-white/5 border-primary/20 rounded-none font-bold focus:border-primary transition-all" 
+                      className="h-11 bg-white/5 border-primary/20 rounded-none font-bold focus:border-primary transition-all text-primary placeholder:text-primary/20" 
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Teléfono Tutor</Label>
+                    <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1">Teléfono Tutor</Label>
                     <Input 
                       value={formData.tutorPhone}
                       onChange={(e) => setFormData({...formData, tutorPhone: e.target.value})}
                       placeholder="600 000 000" 
-                      className="h-11 bg-white/5 border-primary/20 rounded-none font-bold focus:border-primary transition-all" 
+                      className="h-11 bg-white/5 border-primary/20 rounded-none font-bold focus:border-primary transition-all text-primary placeholder:text-primary/20" 
                     />
                   </div>
                 </div>
@@ -604,7 +604,7 @@ export default function PlayersManagementPage() {
                 <ShieldCheck className="h-3 w-3 text-primary" />
                 <span className="text-[9px] font-black uppercase text-primary tracking-widest">Protocolo de Privacidad</span>
               </div>
-              <p className="text-[9px] text-white/40 leading-relaxed font-bold uppercase italic">
+              <p className="text-[9px] text-primary/40 leading-relaxed font-bold uppercase italic">
                 La creación de una ficha activa automáticamente el Portal de Tutor. La familia recibirá un código de sincronización para acceder a la telemetría del atleta.
               </p>
             </div>
@@ -612,7 +612,7 @@ export default function PlayersManagementPage() {
 
           <div className="p-10 bg-black/40 border-t border-white/5 flex gap-4">
             <SheetClose asChild>
-              <Button variant="ghost" className="flex-1 h-16 border border-white/10 text-white/40 font-black uppercase text-[10px] tracking-widest hover:bg-white/5">
+              <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary/60 font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 transition-all">
                 CANCELAR
               </Button>
             </SheetClose>
@@ -634,18 +634,17 @@ function PlayerStat({ label, value, icon: Icon, highlight, warning }: any) {
   return (
     <Card className="glass-panel p-5 flex items-center gap-5 relative overflow-hidden group border border-primary/20 bg-black/20">
        <div className={cn(
-         "h-12 w-12 flex items-center justify-center border transition-all rotate-3 group-hover:rotate-0 duration-500 rounded-2xl",
-         highlight ? "bg-primary/10 border-primary/20" : 
-         warning ? "bg-rose-500/10 border-rose-500/20" : "bg-white/5 border-white/10"
+         "h-12 w-12 flex items-center justify-center border transition-all rotate-3 group-hover:rotate-0 duration-500 rounded-2xl bg-primary/10 border-primary/20",
+         warning ? "bg-rose-500/10 border-rose-500/20" : ""
        )}>
-          <Icon className={cn("h-6 w-6", highlight ? "text-primary" : warning ? "text-rose-400" : "text-white/40")} />
+          <Icon className={cn("h-6 w-6", warning ? "text-rose-400" : "text-primary")} />
        </div>
        <div className="relative z-10">
-          <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">{label}</p>
+          <p className="text-[9px] font-black text-primary/60 uppercase tracking-widest">{label}</p>
           <div className="flex items-baseline gap-2">
              <p className={cn(
                "text-2xl font-black italic tracking-tighter",
-               highlight ? "text-primary cyan-text-glow" : warning ? "text-rose-400" : "text-white"
+               warning ? "text-rose-400" : "text-primary cyan-text-glow"
              )}>{value}</p>
           </div>
        </div>

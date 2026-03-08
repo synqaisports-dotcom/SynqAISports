@@ -258,28 +258,28 @@ export default function StaffManagementPage() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <StaffStat label="Equipo Total" value={staff.length.toString()} icon={Users} />
-        <StaffStat label="Entrenadores" value={staff.filter(s => s.role === 'coach').length.toString()} icon={Award} highlight />
-        <StaffStat label="Nivel de Mando" value={isSuperAdmin ? 'Autoridad Raíz' : (ROLES_INFO[profile?.role || 'coach']?.label || 'Invitado')} icon={ShieldCheck} />
-        <StaffStat label="Actividad Red" value="94%" icon={Activity} />
+        <StaffStat label="Equipo Total" value={staff.length.toString()} icon={Users} isSuperAdmin={isSuperAdmin} />
+        <StaffStat label="Entrenadores" value={staff.filter(s => s.role === 'coach').length.toString()} icon={Award} highlight isSuperAdmin={isSuperAdmin} />
+        <StaffStat label="Nivel de Mando" value={isSuperAdmin ? 'Autoridad Raíz' : (ROLES_INFO[profile?.role || 'coach']?.label || 'Invitado')} icon={ShieldCheck} isSuperAdmin={isSuperAdmin} />
+        <StaffStat label="Actividad Red" value="94%" icon={Activity} isSuperAdmin={isSuperAdmin} />
       </div>
 
-      <Card className="glass-panel border-none bg-black/40 overflow-hidden mb-8 shadow-2xl">
+      <Card className={cn("glass-panel border bg-black/40 overflow-hidden mb-8 shadow-2xl", isSuperAdmin ? "border-emerald-500/20" : "border-primary/20")}>
         <CardHeader className="p-6 border-b border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="relative w-full max-w-md">
             <Search className={cn("absolute left-3 top-3.5 h-4 w-4 opacity-50", isSuperAdmin ? "text-emerald-400" : "text-primary")} />
             <Input 
               placeholder="BUSCAR POR NOMBRE, MAIL O ROL..." 
               className={cn(
-                "pl-10 h-12 bg-white/5 border rounded-none text-white placeholder:text-white/20 font-bold uppercase text-[10px] tracking-widest transition-all",
-                isSuperAdmin ? "border-emerald-500/20 focus-visible:ring-emerald-500/50" : "border-primary/20 focus-visible:ring-primary/50"
+                "pl-10 h-12 bg-white/5 border rounded-none font-bold uppercase text-[10px] tracking-widest transition-all",
+                isSuperAdmin ? "border-emerald-500/20 focus-visible:ring-emerald-500/50 text-emerald-400 placeholder:text-emerald-400/20" : "border-primary/20 focus-visible:ring-primary/50 text-primary placeholder:text-primary/20"
               )}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           <div className="flex items-center gap-2">
-             <span className="text-[9px] font-black text-white/30 uppercase tracking-widest">Jerarquía Activa:</span>
+             <span className={cn("text-[9px] font-black uppercase tracking-widest", isSuperAdmin ? "text-emerald-400/40" : "text-primary/40")}>Jerarquía Activa:</span>
              <Badge variant="outline" className={cn("rounded-none font-black text-[9px] uppercase tracking-widest px-3", isSuperAdmin ? "border-emerald-500/20 text-emerald-400" : "border-primary/20 text-primary")}>
                {profile?.role?.toUpperCase()}
              </Badge>
@@ -290,29 +290,29 @@ export default function StaffManagementPage() {
             <table className="w-full text-left">
               <thead className="bg-white/[0.02] border-b border-white/5">
                 <tr>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-white/40">Identidad / Contacto</th>
-                  <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white/40">Protocolo de Rol</th>
-                  <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white/40">Estado Red</th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-white/40 text-right">Terminal Acciones</th>
+                  <th className={cn("px-8 py-5 text-[10px] font-black uppercase tracking-widest", isSuperAdmin ? "text-emerald-400/40" : "text-primary/40")}>Identidad / Contacto</th>
+                  <th className={cn("px-6 py-5 text-[10px] font-black uppercase tracking-widest", isSuperAdmin ? "text-emerald-400/40" : "text-primary/40")}>Protocolo de Rol</th>
+                  <th className={cn("px-6 py-5 text-[10px] font-black uppercase tracking-widest", isSuperAdmin ? "text-emerald-400/40" : "text-primary/40")}>Estado Red</th>
+                  <th className={cn("px-8 py-5 text-[10px] font-black uppercase tracking-widest text-right", isSuperAdmin ? "text-emerald-400/40" : "text-primary/40")}>Terminal Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
                 {filteredStaff.map((member) => (
-                  <tr key={member.id} className="group hover:bg-white/[0.02] transition-colors">
+                  <tr key={member.id} className={cn("group transition-colors", isSuperAdmin ? "hover:bg-emerald-500/[0.02]" : "hover:bg-primary/[0.02]")}>
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 bg-white/5 border border-white/10 rounded-full flex items-center justify-center relative overflow-hidden group-hover:border-primary/40 transition-all">
+                        <div className={cn("h-12 w-12 bg-white/5 border border-white/10 rounded-full flex items-center justify-center relative overflow-hidden transition-all", isSuperAdmin ? "group-hover:border-emerald-500/40" : "group-hover:border-primary/40")}>
                            {member.photoUrl ? (
                              <Image src={member.photoUrl} alt={member.name} fill className="object-cover rounded-full" />
                            ) : (
-                             <IdCard className="h-5 w-5 text-white/20 group-hover:text-primary transition-all" />
+                             <IdCard className={cn("h-5 w-5 transition-all", isSuperAdmin ? "text-emerald-400/20 group-hover:text-emerald-400" : "text-primary/20 group-hover:text-primary")} />
                            )}
-                           <div className="absolute inset-0 bg-primary/5 scan-line opacity-0 group-hover:opacity-100" />
+                           <div className={cn("absolute inset-0 scan-line opacity-0 group-hover:opacity-100", isSuperAdmin ? "bg-emerald-500/5" : "bg-primary/5")} />
                         </div>
                         <div className="space-y-1">
-                          <p className="font-black text-white uppercase text-xs italic group-hover:cyan-text-glow transition-all">{member.name}</p>
-                          <p className="text-[9px] text-white/30 font-bold uppercase tracking-widest flex items-center gap-2">
-                            <Mail className="h-2 w-2 text-primary/40" /> {member.email}
+                          <p className="font-black text-white uppercase text-xs italic transition-all group-hover:cyan-text-glow">{member.name}</p>
+                          <p className={cn("text-[9px] font-bold uppercase tracking-widest flex items-center gap-2", isSuperAdmin ? "text-emerald-400/40" : "text-primary/40")}>
+                            <Mail className="h-2 w-2" /> {member.email}
                           </p>
                         </div>
                       </div>
@@ -324,8 +324,8 @@ export default function StaffManagementPage() {
                     </td>
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-2">
-                        <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse shadow-[0_0_8px_var(--primary)]" />
-                        <span className="text-[9px] font-black uppercase tracking-widest text-primary/80">Sincronizado</span>
+                        <div className={cn("h-1.5 w-1.5 rounded-full animate-pulse", isSuperAdmin ? "bg-emerald-500 shadow-[0_0_8px_var(--emerald-500)]" : "bg-primary shadow-[0_0_8px_var(--primary)]")} />
+                        <span className={cn("text-[9px] font-black uppercase tracking-widest", isSuperAdmin ? "text-emerald-400/80" : "text-primary/80")}>Sincronizado</span>
                       </div>
                     </td>
                     <td className="px-8 py-5 text-right">
@@ -333,7 +333,7 @@ export default function StaffManagementPage() {
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="h-9 w-9 text-primary hover:bg-primary/10 border border-primary/10 transition-all"
+                          className={cn("h-9 w-9 border border-white/10 transition-all", isSuperAdmin ? "text-emerald-400 hover:bg-emerald-500/10" : "text-primary hover:bg-primary/10")}
                           onClick={() => handleEdit(member)}
                           title="Modificar Identidad"
                         >
@@ -356,9 +356,9 @@ export default function StaffManagementPage() {
             </table>
           </div>
         </CardContent>
-        <div className="p-6 bg-black/40 border-t border-white/5 flex justify-between items-center text-[9px] font-black text-white/20 uppercase tracking-[0.5em]">
-          <span>Mostrando {filteredStaff.length} de {staff.length} miembros del staff</span>
-          <span className="flex items-center gap-2"><CheckCircle2 className="h-3 w-3 text-primary animate-pulse" /> Jerarquía de Mando: ESTABLE</span>
+        <div className="p-6 bg-black/40 border-t border-white/5 flex justify-between items-center text-[9px] font-black uppercase tracking-[0.5em]">
+          <span className={isSuperAdmin ? "text-emerald-400/30" : "text-primary/30"}>Mostrando {filteredStaff.length} de {staff.length} miembros del staff</span>
+          <span className="flex items-center gap-2 text-primary"><CheckCircle2 className={cn("h-3 w-3 animate-pulse", isSuperAdmin ? "text-emerald-400" : "text-primary")} /> Jerarquía de Mando: ESTABLE</span>
         </div>
       </Card>
 
@@ -373,7 +373,7 @@ export default function StaffManagementPage() {
               <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left">
                 {editingId ? "MODIFICAR_IDENTIDAD" : "EMITIR_CREDENCIAL"}
               </SheetTitle>
-              <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left">
+              <SheetDescription className={cn("text-[10px] uppercase font-bold tracking-widest text-left", isSuperAdmin ? "text-emerald-400/40" : "text-primary/40")}>
                 Defina el nivel jerárquico y los parámetros de acceso del trabajador.
               </SheetDescription>
             </SheetHeader>
@@ -424,8 +424,8 @@ export default function StaffManagementPage() {
                     onChange={(e) => setFormData({...formData, firstName: e.target.value.toUpperCase()})}
                     placeholder="EJ: JUAN" 
                     className={cn(
-                      "h-14 bg-white/5 border rounded-none font-bold uppercase transition-all placeholder:text-white/10 text-lg",
-                      isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500" : "border-primary/20 focus:border-primary"
+                      "h-14 bg-white/5 border rounded-none font-bold uppercase transition-all text-lg",
+                      isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500 text-emerald-400 placeholder:text-emerald-400/20" : "border-primary/20 focus:border-primary text-primary placeholder:text-primary/20"
                     )}
                   />
                 </div>
@@ -437,8 +437,8 @@ export default function StaffManagementPage() {
                     onChange={(e) => setFormData({...formData, lastName: e.target.value.toUpperCase()})}
                     placeholder="EJ: PÉREZ" 
                     className={cn(
-                      "h-14 bg-white/5 border rounded-none font-bold uppercase transition-all placeholder:text-white/10 text-lg",
-                      isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500" : "border-primary/20 focus:border-primary"
+                      "h-14 bg-white/5 border rounded-none font-bold uppercase transition-all text-lg",
+                      isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500 text-emerald-400 placeholder:text-emerald-400/20" : "border-primary/20 focus:border-primary text-primary placeholder:text-primary/20"
                     )}
                   />
                 </div>
@@ -456,7 +456,7 @@ export default function StaffManagementPage() {
                     placeholder="USER@CLUB.COM" 
                     className={cn(
                       "pl-10 h-14 bg-white/5 border rounded-none font-bold transition-all",
-                      isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500" : "border-primary/20 focus:border-primary"
+                      isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500 text-emerald-400 placeholder:text-emerald-400/20" : "border-primary/20 focus:border-primary text-primary placeholder:text-primary/20"
                     )}
                   />
                 </div>
@@ -470,8 +470,8 @@ export default function StaffManagementPage() {
                     onValueChange={(v) => setFormData({...formData, role: v as UserRole})}
                   >
                     <SelectTrigger className={cn(
-                      "h-12 bg-white/5 border rounded-none text-white/60 font-bold uppercase tracking-widest transition-all",
-                      isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500" : "border-primary/20 focus:border-primary"
+                      "h-12 bg-white/5 border rounded-none font-bold uppercase tracking-widest transition-all",
+                      isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500 text-emerald-400" : "border-primary/20 focus:border-primary text-primary"
                     )}>
                       <SelectValue />
                     </SelectTrigger>
@@ -495,7 +495,7 @@ export default function StaffManagementPage() {
                         placeholder="+34" 
                         className={cn(
                           "h-12 bg-white/5 border rounded-none font-bold text-center transition-all",
-                          isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500" : "border-primary/20 focus:border-primary"
+                          isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500 text-emerald-400" : "border-primary/20 focus:border-primary text-primary"
                         )}
                       />
                     </div>
@@ -507,7 +507,7 @@ export default function StaffManagementPage() {
                         placeholder="600 000 000" 
                         className={cn(
                           "pl-10 h-12 bg-white/5 border rounded-none font-bold transition-all",
-                          isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500" : "border-primary/20 focus:border-primary"
+                          isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500 text-emerald-400 placeholder:text-emerald-400/20" : "border-primary/20 focus:border-primary text-primary placeholder:text-primary/20"
                         )}
                       />
                     </div>
@@ -521,7 +521,7 @@ export default function StaffManagementPage() {
                 <ShieldCheck className={cn("h-3 w-3", isSuperAdmin ? "text-emerald-400" : "text-primary")} />
                 <span className={cn("text-[9px] font-black uppercase tracking-widest", isSuperAdmin ? "text-emerald-400" : "text-primary")}>Protocolo de Jerarquía</span>
               </div>
-              <p className="text-[9px] text-white/40 leading-relaxed font-bold uppercase italic">
+              <p className={cn("text-[9px] leading-relaxed font-bold uppercase italic", isSuperAdmin ? "text-emerald-400/40" : "text-primary/40")}>
                 {isSuperAdmin 
                   ? "SISTEMA_ROOT: Como Superadmin, puedes emitir credenciales para cualquier nivel de la red, incluyendo Administradores de Club."
                   : "El sistema de SynQAI solo permite la creación de perfiles con un rango inferior al del administrador actual."
@@ -532,7 +532,7 @@ export default function StaffManagementPage() {
 
           <div className="p-10 bg-black/40 border-t border-white/5 flex gap-4">
             <SheetClose asChild>
-              <Button variant="ghost" className="flex-1 h-16 border border-white/10 text-white/40 font-black uppercase text-[10px] tracking-widest hover:bg-white/5">
+              <Button variant="ghost" className={cn("flex-1 h-16 border font-black uppercase text-[10px] tracking-widest transition-all", isSuperAdmin ? "border-emerald-500/20 text-emerald-400/60 hover:bg-emerald-500/10" : "border-primary/20 text-primary/60 hover:bg-primary/10")}>
                 CANCELAR
               </Button>
             </SheetClose>
@@ -553,25 +553,25 @@ export default function StaffManagementPage() {
   );
 }
 
-function StaffStat({ label, value, icon: Icon, highlight }: any) {
+function StaffStat({ label, value, icon: Icon, highlight, isSuperAdmin }: any) {
   return (
-    <Card className="glass-panel p-5 flex items-center gap-5 relative overflow-hidden group bg-black/20 border border-primary/20">
+    <Card className={cn("glass-panel p-5 flex items-center gap-5 relative overflow-hidden group bg-black/20 border transition-all", isSuperAdmin ? "border-emerald-500/20 hover:border-emerald-500/40" : "border-primary/20 hover:border-primary/40")}>
        <div className={cn(
-         "h-12 w-12 flex items-center justify-center border transition-all rotate-3 group-hover:rotate-0 duration-500 rounded-2xl",
-         highlight ? "bg-primary/10 border-primary/20" : "bg-white/5 border-white/10"
+         "h-12 w-12 flex items-center justify-center border transition-all rotate-3 group-hover:rotate-0 duration-500 rounded-2xl bg-white/5",
+         isSuperAdmin ? "border-emerald-500/20" : "border-primary/20"
        )}>
-          <Icon className={cn("h-6 w-6", highlight ? "text-primary" : "text-white/40")} />
+          <Icon className={cn("h-6 w-6", isSuperAdmin ? "text-emerald-400" : "text-primary")} />
        </div>
        <div className="relative z-10">
-          <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">{label}</p>
+          <p className={cn("text-[9px] font-black uppercase tracking-widest", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>{label}</p>
           <div className="flex items-baseline gap-2">
              <p className={cn(
                "text-2xl font-black italic tracking-tighter",
-               highlight ? "text-primary cyan-text-glow" : "text-white"
+               isSuperAdmin ? "text-emerald-400 emerald-text-glow" : "text-primary cyan-text-glow"
              )}>{value}</p>
           </div>
        </div>
-       <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-10 scan-line" />
+       <div className={cn("absolute inset-0 scan-line opacity-0 group-hover:opacity-10", isSuperAdmin ? "bg-emerald-500/5" : "bg-primary/5")} />
     </Card>
   );
 }

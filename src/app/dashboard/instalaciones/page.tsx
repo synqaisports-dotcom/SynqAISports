@@ -227,13 +227,13 @@ export default function FacilitiesManagementPage() {
         <FacilityStat label="Sectores Sincro" value="04" icon={LayoutDashboard} />
       </div>
 
-      <Card className="glass-panel border-none bg-black/40 overflow-hidden mb-8">
+      <Card className="glass-panel border border-primary/20 bg-black/40 overflow-hidden mb-8 shadow-2xl">
         <CardHeader className="p-6 border-b border-white/5">
           <div className="relative w-full max-w-md">
             <Search className="absolute left-3 top-3.5 h-4 w-4 text-primary opacity-50" />
             <Input 
               placeholder="BUSCAR POR NOMBRE O DEPORTE..." 
-              className="pl-10 h-12 bg-white/5 border-primary/20 rounded-none text-white placeholder:text-white/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-primary/50"
+              className="pl-10 h-12 bg-white/5 border-primary/20 rounded-none text-primary placeholder:text-primary/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-primary/50 transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -243,15 +243,15 @@ export default function FacilitiesManagementPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {filteredFacilities.map((f) => (
-          <Card key={f.id} className="glass-panel overflow-hidden relative group border-none bg-black/40">
+          <Card key={f.id} className="glass-panel overflow-hidden relative group border border-primary/10 bg-black/40 hover:border-primary/30 transition-all">
             <div className={cn(
               "absolute top-0 left-0 w-full h-[2px]",
               f.status === 'Active' ? 'bg-primary/40' : 'bg-amber-500/40'
             )} />
             <CardHeader className="p-6">
               <div className="flex justify-between items-start mb-4">
-                <div className="h-12 w-12 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center group-hover:border-primary/40 transition-all rotate-3 group-hover:rotate-0 duration-500">
-                  <Warehouse className={cn("h-6 w-6", f.status === 'Active' ? 'text-primary' : 'text-amber-400')} />
+                <div className="h-12 w-12 bg-primary/5 border border-primary/20 rounded-2xl flex items-center justify-center transition-all rotate-3 group-hover:rotate-0 duration-500">
+                  <Warehouse className={cn("h-6 w-6", f.status === 'Active' ? "text-primary" : "text-amber-400")} />
                 </div>
                 <div className="flex flex-col items-end">
                   <Badge variant="outline" className={cn(
@@ -260,7 +260,7 @@ export default function FacilitiesManagementPage() {
                   )}>
                     {f.status}
                   </Badge>
-                  <span className="text-[8px] text-white/20 font-bold uppercase tracking-widest mt-2">ID: {f.id.toUpperCase()}</span>
+                  <span className="text-[8px] text-primary/30 font-bold uppercase tracking-widest mt-2">ID: {f.id.toUpperCase()}</span>
                 </div>
               </div>
               <CardTitle className="text-xl font-black text-white italic tracking-tighter uppercase mb-1 group-hover:cyan-text-glow transition-all">
@@ -270,28 +270,28 @@ export default function FacilitiesManagementPage() {
                 <Dumbbell className="h-3 w-3 text-primary/60" />
                 <span className="text-[9px] font-black uppercase tracking-widest text-primary/80 italic">{f.sport}</span>
               </div>
-              <CardDescription className="text-[9px] font-black uppercase tracking-widest text-white/30 italic">
+              <CardDescription className="text-[9px] font-black uppercase tracking-widest text-primary/30 italic">
                 {f.type}
               </CardDescription>
             </CardHeader>
             <CardContent className="px-6 pb-6 space-y-4">
-              <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
+              <div className="flex items-center justify-between p-3 bg-primary/5 rounded-xl border border-primary/10">
                 <div className="flex items-center gap-2">
-                  <Users className="h-3 w-3 text-white/20" />
-                  <span className="text-[9px] font-black text-white/40 uppercase">Aforo Máximo</span>
+                  <Users className="h-3 w-3 text-primary/40" />
+                  <span className="text-[9px] font-black text-primary/60 uppercase">Aforo Máximo</span>
                 </div>
-                <span className="text-xs font-black text-white">{f.capacity}</span>
+                <span className="text-xs font-black text-primary">{f.capacity}</span>
               </div>
-              <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
+              <div className="flex items-center justify-between p-3 bg-primary/5 rounded-xl border border-primary/10">
                 <div className="flex items-center gap-2">
-                  <Calendar className="h-3 w-3 text-white/20" />
-                  <span className="text-[9px] font-black text-white/40 uppercase">Mantenimiento</span>
+                  <Calendar className="h-3 w-3 text-primary/40" />
+                  <span className="text-[9px] font-black text-primary/60 uppercase">Mantenimiento</span>
                 </div>
-                <span className="text-xs font-black text-primary">{f.nextMaintenance}</span>
+                <span className="text-xs font-black text-primary cyan-text-glow">{f.nextMaintenance}</span>
               </div>
             </CardContent>
             <CardFooter className="px-6 py-4 bg-black/40 border-t border-white/5 flex justify-between items-center">
-              <span className="flex items-center gap-2 text-[8px] font-black text-white/20 uppercase tracking-widest">
+              <span className="flex items-center gap-2 text-[8px] font-black text-primary/30 uppercase tracking-widest">
                 <CheckCircle2 className="h-3 w-3 text-primary/40" /> Sincronización Estable
               </span>
               <div className="flex gap-2">
@@ -330,7 +330,7 @@ export default function FacilitiesManagementPage() {
               <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left">
                 {editingId ? "MODIFICAR_ACTIVO" : "AÑADIR_ACTIVO"}
               </SheetTitle>
-              <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left">
+              <SheetDescription className="text-[10px] uppercase font-bold text-primary/40 tracking-widest text-left">
                 Sincronice un nuevo espacio físico con la red operativa del club.
               </SheetDescription>
             </SheetHeader>
@@ -345,7 +345,7 @@ export default function FacilitiesManagementPage() {
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})}
                   placeholder="EJ: PABELLÓN MUNICIPAL" 
-                  className="h-14 bg-white/5 border-primary/20 rounded-none font-bold uppercase focus:border-primary transition-all placeholder:text-white/10 text-lg" 
+                  className="h-14 bg-white/5 border-primary/20 rounded-none font-bold uppercase focus:border-primary transition-all text-primary placeholder:text-primary/20 text-lg" 
                 />
               </div>
 
@@ -356,14 +356,14 @@ export default function FacilitiesManagementPage() {
                     value={formData.type} 
                     onValueChange={(v) => setFormData({...formData, type: v})}
                   >
-                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary transition-all">
+                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-none text-primary font-bold uppercase tracking-widest focus:border-primary transition-all">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
-                      <SelectItem value="Campo Exterior" className="text-[10px] font-black uppercase">CAMPO EXTERIOR</SelectItem>
-                      <SelectItem value="Pabellón" className="text-[10px] font-black uppercase">PABELLÓN CUBIERTO</SelectItem>
-                      <SelectItem value="Fitness" className="text-[10px] font-black uppercase">GIMNASIO / SALA</SelectItem>
-                      <SelectItem value="Acuática" className="text-[10px] font-black uppercase">ZONA ACUÁTICA</SelectItem>
+                      <SelectItem value="Campo Exterior" className="text-[10px] font-black uppercase focus:bg-primary">CAMPO EXTERIOR</SelectItem>
+                      <SelectItem value="Pabellón" className="text-[10px] font-black uppercase focus:bg-primary">PABELLÓN CUBIERTO</SelectItem>
+                      <SelectItem value="Fitness" className="text-[10px] font-black uppercase focus:bg-primary">GIMNASIO / SALA</SelectItem>
+                      <SelectItem value="Acuática" className="text-[10px] font-black uppercase focus:bg-primary">ZONA ACUÁTICA</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -374,7 +374,7 @@ export default function FacilitiesManagementPage() {
                     value={formData.sport} 
                     onValueChange={(v) => setFormData({...formData, sport: v})}
                   >
-                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary transition-all">
+                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-none text-primary font-bold uppercase tracking-widest focus:border-primary transition-all">
                       <div className="flex items-center gap-3">
                         <Dumbbell className="h-4 w-4 text-primary/40" />
                         <SelectValue placeholder="DEPORTE..." />
@@ -386,7 +386,7 @@ export default function FacilitiesManagementPage() {
                           {s.label}
                         </SelectItem>
                       ))}
-                      <SelectItem value="Multideporte" className="text-[10px] font-black uppercase">MULTIDEPORTE</SelectItem>
+                      <SelectItem value="Multideporte" className="text-[10px] font-black uppercase focus:bg-primary">MULTIDEPORTE</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -395,10 +395,8 @@ export default function FacilitiesManagementPage() {
               {/* BLOQUE TÉCNICO FÚTBOL */}
               {formData.sport === "Fútbol" && (
                 <div className="space-y-8 animate-in fade-in slide-in-from-top-4 duration-500">
-                  
-                  {/* SECCIÓN 1: HORARIO GENERAL DE LA INSTALACIÓN (CIAN) */}
                   <div className="space-y-6 p-8 border border-primary/30 bg-primary/5 rounded-3xl relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-4 opacity-5">
+                    <div className="absolute top-0 right-0 p-4 opacity-10">
                       <Warehouse className="h-24 w-24 text-primary" />
                     </div>
                     
@@ -410,7 +408,7 @@ export default function FacilitiesManagementPage() {
                     </div>
 
                     <div className="space-y-4">
-                      <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Días Operativos</Label>
+                      <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1">Días Operativos</Label>
                       <div className="flex gap-2">
                         {WEEK_DAYS.map(day => (
                           <button
@@ -421,7 +419,7 @@ export default function FacilitiesManagementPage() {
                               "h-10 w-10 flex items-center justify-center font-black text-[10px] border transition-all",
                               formData.days.includes(day.id)
                                 ? "bg-primary text-black border-primary shadow-[0_0_15px_rgba(0,242,255,0.3)]"
-                                : "bg-white/5 border-primary/20 text-white/30 hover:border-primary/40"
+                                : "bg-white/5 border-primary/20 text-primary/30 hover:border-primary/40"
                             )}
                           >
                             {day.label}
@@ -432,138 +430,30 @@ export default function FacilitiesManagementPage() {
 
                     <div className="grid grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Apertura</Label>
+                        <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1">Apertura</Label>
                         <div className="relative">
                           <Clock className="absolute left-3 top-3 h-4 w-4 text-primary/40" />
                           <Input 
                             type="time" 
                             value={formData.startTime}
                             onChange={(e) => setFormData({...formData, startTime: e.target.value})}
-                            className="pl-10 h-11 bg-white/5 border-primary/20 rounded-none font-bold text-xs focus:border-primary" 
+                            className="pl-10 h-11 bg-white/5 border-primary/20 rounded-none font-bold text-xs focus:border-primary text-primary" 
                           />
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Cierre</Label>
+                        <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1">Cierre</Label>
                         <div className="relative">
                           <Clock className="absolute left-3 top-3 h-4 w-4 text-primary/40" />
                           <Input 
                             type="time" 
                             value={formData.endTime}
                             onChange={(e) => setFormData({...formData, endTime: e.target.value})}
-                            className="pl-10 h-11 bg-white/5 border-primary/20 rounded-none font-bold text-xs focus:border-primary" 
+                            className="pl-10 h-11 bg-white/5 border-primary/20 rounded-none font-bold text-xs focus:border-primary text-primary" 
                           />
                         </div>
                       </div>
                     </div>
-                  </div>
-
-                  {/* SECCIÓN 2: CONFIGURACIÓN DE ZONAS Y DISPONIBILIDAD (ESMERALDA) */}
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Tipo de Disciplina</Label>
-                        <Select 
-                          value={formData.footballType} 
-                          onValueChange={(v) => setFormData({...formData, footballType: v})}
-                        >
-                          <SelectTrigger className="h-11 bg-white/5 border-primary/20 rounded-none text-white/60 font-bold uppercase text-[10px] tracking-widest focus:border-primary">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
-                            <SelectItem value="F11" className="text-[10px] font-black uppercase">FÚTBOL 11</SelectItem>
-                            <SelectItem value="F7" className="text-[10px] font-black uppercase">FÚTBOL 7</SelectItem>
-                            <SelectItem value="FSala" className="text-[10px] font-black uppercase">FÚTBOL SALA</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Subdivisión de Campo</Label>
-                        <Select 
-                          value={formData.subdivisions} 
-                          onValueChange={(v) => setFormData({...formData, subdivisions: v})}
-                        >
-                          <SelectTrigger className={cn(
-                            "h-11 bg-white/5 border-primary/20 rounded-none text-white/60 font-bold uppercase text-[10px] tracking-widest focus:border-primary",
-                            isSubdivided ? "border-emerald-500/50 text-emerald-400" : ""
-                          )}>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
-                            <SelectItem value="1" className="text-[10px] font-black uppercase">CAMPO ENTERO</SelectItem>
-                            <SelectItem value="2" className="text-[10px] font-black uppercase text-emerald-400">2 MITADES (ZONAS)</SelectItem>
-                            <SelectItem value="4" className="text-[10px] font-black uppercase text-emerald-400">4 CUARTOS (ZONAS)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    {isSubdivided && (
-                      <div className="p-8 border border-emerald-500/30 bg-emerald-500/5 rounded-3xl animate-in zoom-in-95 duration-500 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-4 opacity-5">
-                          <LayoutGrid className="h-24 w-24 text-emerald-500" />
-                        </div>
-                        
-                        <div className="flex items-center gap-3 border-b border-emerald-500/20 pb-4 mb-6">
-                          <LayoutGrid className="h-4 w-4 text-emerald-500" />
-                          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-500">
-                            Protocolo de Disponibilidad por Zona
-                          </span>
-                        </div>
-
-                        <div className="space-y-4">
-                          <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Días Disponibles para Entrenos</Label>
-                          <div className="flex gap-2">
-                            {WEEK_DAYS.map(day => (
-                              <button
-                                key={day.id}
-                                type="button"
-                                onClick={() => toggleDay(day.id, 'sub')}
-                                className={cn(
-                                  "h-10 w-10 flex items-center justify-center font-black text-[10px] border transition-all",
-                                  formData.subDays.includes(day.id)
-                                    ? "bg-emerald-500 text-black border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]"
-                                    : "bg-white/5 border-emerald-500/30 text-white/30 hover:border-emerald-500/40"
-                                )}
-                              >
-                                {day.label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-6 mt-6">
-                          <div className="space-y-2">
-                            <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Inicio Disponibilidad</Label>
-                            <div className="relative">
-                              <Clock className="absolute left-3 top-3 h-4 w-4 text-emerald-500/40" />
-                              <Input 
-                                type="time" 
-                                value={formData.subStartTime}
-                                onChange={(e) => setFormData({...formData, subStartTime: e.target.value})}
-                                className="pl-10 h-11 bg-white/5 border-emerald-500/30 rounded-none font-bold text-xs focus:border-emerald-500" 
-                              />
-                            </div>
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Fin Disponibilidad</Label>
-                            <div className="relative">
-                              <Clock className="absolute left-3 top-3 h-4 w-4 text-emerald-500/40" />
-                              <Input 
-                                type="time" 
-                                value={formData.subEndTime}
-                                onChange={(e) => setFormData({...formData, subEndTime: e.target.value})}
-                                className="pl-10 h-11 bg-white/5 border-emerald-500/30 rounded-none font-bold text-xs focus:border-emerald-500" 
-                              />
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <p className="text-[8px] text-emerald-400/60 leading-relaxed uppercase font-bold italic mt-6">
-                          * Este horario define los slots disponibles para distribuir a los equipos en cada una de las {formData.subdivisions} zonas.
-                        </p>
-                      </div>
-                    )}
                   </div>
                 </div>
               )}
@@ -576,7 +466,7 @@ export default function FacilitiesManagementPage() {
                     value={formData.capacity}
                     onChange={(e) => setFormData({...formData, capacity: e.target.value})}
                     placeholder="EJ: 25 ATLETAS" 
-                    className="h-12 bg-white/5 border-primary/20 rounded-none font-bold uppercase focus:border-primary transition-all placeholder:text-white/10" 
+                    className="h-12 bg-white/5 border-primary/20 rounded-none font-bold uppercase focus:border-primary transition-all text-primary placeholder:text-primary/20" 
                   />
                 </div>
                 <div className="space-y-2">
@@ -585,13 +475,13 @@ export default function FacilitiesManagementPage() {
                     value={formData.status} 
                     onValueChange={(v) => setFormData({...formData, status: v})}
                   >
-                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary transition-all">
+                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-none text-primary font-bold uppercase tracking-widest focus:border-primary transition-all">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
-                      <SelectItem value="Active" className="text-[10px] font-black uppercase">OPERATIVO</SelectItem>
-                      <SelectItem value="Maintenance" className="text-[10px] font-black uppercase">MANTENIMIENTO</SelectItem>
-                      <SelectItem value="Inactive" className="text-[10px] font-black uppercase">CERRADO</SelectItem>
+                      <SelectItem value="Active" className="text-[10px] font-black uppercase text-primary focus:bg-primary focus:text-black">OPERATIVO</SelectItem>
+                      <SelectItem value="Maintenance" className="text-[10px] font-black uppercase text-amber-400 focus:bg-amber-500">MANTENIMIENTO</SelectItem>
+                      <SelectItem value="Inactive" className="text-[10px] font-black uppercase text-rose-400 focus:bg-rose-500">CERRADO</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -603,7 +493,7 @@ export default function FacilitiesManagementPage() {
                 <ShieldCheck className="h-3 w-3 text-primary" />
                 <span className="text-[9px] font-black uppercase text-primary tracking-widest">Protocolo de Seguridad</span>
               </div>
-              <p className="text-[9px] text-white/40 leading-relaxed font-bold uppercase italic">
+              <p className="text-[9px] text-primary/40 leading-relaxed font-bold uppercase italic">
                 La configuración de horarios dual permite al motor de planificación de SynQAI distinguir entre la apertura del club y las franjas de alta intensidad formativa.
               </p>
             </div>
@@ -611,17 +501,14 @@ export default function FacilitiesManagementPage() {
 
           <div className="p-10 bg-black/40 border-t border-white/5 flex gap-4">
             <SheetClose asChild>
-              <Button variant="ghost" className="flex-1 h-16 border border-white/10 text-white/40 font-black uppercase text-[10px] tracking-widest hover:bg-white/5">
+              <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary/60 font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 transition-all">
                 CANCELAR
               </Button>
             </SheetClose>
             <Button 
               onClick={handleSaveFacility}
               disabled={loading}
-              className={cn(
-                "flex-[2] h-16 text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-none transition-all border-none shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02]",
-                isSubdivided ? "bg-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.3)]" : "bg-primary"
-              )}
+              className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-none shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] border-none"
             >
               {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (editingId ? "SINCRONIZAR_CAMBIOS" : "VINCULAR_ACTIVO")}
             </Button>
@@ -636,22 +523,21 @@ function FacilityStat({ label, value, icon: Icon, highlight, warning }: any) {
   return (
     <Card className="glass-panel p-5 flex items-center gap-5 relative overflow-hidden group border border-primary/20 bg-black/20">
        <div className={cn(
-         "h-12 w-12 flex items-center justify-center border transition-all rotate-3 group-hover:rotate-0 duration-500 rounded-2xl",
-         highlight ? "bg-primary/10 border-primary/20" : 
-         warning ? "bg-amber-500/10 border-amber-500/20" : "bg-white/5 border-white/10"
+         "h-12 w-12 flex items-center justify-center border transition-all rotate-3 group-hover:rotate-0 duration-500 rounded-2xl bg-primary/10 border-primary/20",
+         warning ? "border-rose-500/20 bg-rose-500/10" : ""
        )}>
-          <Icon className={cn("h-6 w-6", highlight ? "text-primary" : warning ? "text-amber-400" : "text-white/40")} />
+          <Icon className={cn("h-6 w-6", warning ? "text-rose-400" : "text-primary")} />
        </div>
        <div className="relative z-10">
-          <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">{label}</p>
+          <p className="text-[9px] font-black text-primary/60 uppercase tracking-widest">{label}</p>
           <div className="flex items-baseline gap-2">
              <p className={cn(
                "text-2xl font-black italic tracking-tighter",
-               highlight ? "text-primary" : warning ? "text-amber-400" : "text-white"
+               warning ? "text-rose-400" : "text-primary cyan-text-glow"
              )}>{value}</p>
           </div>
        </div>
-       <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 scan-line" />
+       <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-10 scan-line" />
     </Card>
   );
 }

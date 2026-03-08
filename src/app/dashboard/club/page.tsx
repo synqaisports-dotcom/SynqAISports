@@ -122,7 +122,7 @@ export default function ClubManagementPage() {
                 <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left">
                   MODIFICAR_NODO
                 </SheetTitle>
-                <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left">
+                <SheetDescription className="text-[10px] uppercase font-bold text-primary/40 tracking-widest text-left">
                   Ajuste la matriz de información del club para la red de canteras.
                 </SheetDescription>
               </SheetHeader>
@@ -131,21 +131,21 @@ export default function ClubManagementPage() {
             <form onSubmit={handleUpdate} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10">
               <div className="space-y-8">
                 <div className="space-y-3">
-                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Nombre de la Entidad</Label>
+                  <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1">Nombre de la Entidad</Label>
                   <Input 
                     value={clubData.name}
                     onChange={(e) => setClubData({...clubData, name: e.target.value.toUpperCase()})}
-                    className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary text-lg" 
+                    className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary text-lg text-primary placeholder:text-primary/20" 
                   />
                 </div>
 
                 <div className="space-y-3">
-                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Disciplina Deportiva</Label>
+                  <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1">Disciplina Deportiva</Label>
                   <Select 
                     value={clubData.sport} 
                     onValueChange={(v) => setClubData({...clubData, sport: v})}
                   >
-                    <SelectTrigger className="h-14 bg-white/5 border-primary/20 rounded-2xl text-white font-bold uppercase tracking-widest px-6 focus:border-primary">
+                    <SelectTrigger className="h-14 bg-white/5 border-primary/20 rounded-2xl text-primary font-bold uppercase tracking-widest px-6 focus:border-primary">
                       <SelectValue placeholder="DEPORTE..." />
                     </SelectTrigger>
                     <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-2xl">
@@ -160,54 +160,54 @@ export default function ClubManagementPage() {
 
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-3">
-                    <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Fundación</Label>
+                    <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1">Fundación</Label>
                     <Input 
                       value={clubData.foundation}
                       onChange={(e) => setClubData({...clubData, foundation: e.target.value})}
-                      className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary" 
+                      className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary text-primary placeholder:text-primary/20" 
                     />
                   </div>
                   <div className="space-y-3">
-                    <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Capacidad (Atletas)</Label>
+                    <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1">Capacidad (Atletas)</Label>
                     <Input 
                       value={clubData.members}
                       onChange={(e) => setClubData({...clubData, members: e.target.value})}
-                      className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary" 
+                      className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary text-primary placeholder:text-primary/20" 
                     />
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Portal Web</Label>
+                  <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1">Portal Web</Label>
                   <Input 
                     value={clubData.website}
                     onChange={(e) => setClubData({...clubData, website: e.target.value})}
-                    className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary" 
+                    className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary text-primary placeholder:text-primary/20" 
                   />
                 </div>
 
                 <div className="space-y-3 pt-6 border-t border-white/5">
-                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Instagram (@)</Label>
+                  <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1">Instagram (@)</Label>
                   <Input 
                     value={clubData.socials.instagram}
                     onChange={(e) => setClubData({...clubData, socials: {...clubData.socials, instagram: e.target.value}})}
-                    className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary" 
+                    className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary text-primary placeholder:text-primary/20" 
                   />
                 </div>
                 <div className="space-y-3">
-                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">YouTube</Label>
+                  <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1">YouTube</Label>
                   <Input 
                     value={clubData.socials.youtube}
                     onChange={(e) => setClubData({...clubData, socials: {...clubData.socials, youtube: e.target.value}})}
-                    className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary" 
+                    className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary text-primary placeholder:text-primary/20" 
                   />
                 </div>
                 <div className="space-y-3">
-                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Twitter / X</Label>
+                  <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1">Twitter / X</Label>
                   <Input 
                     value={clubData.socials.twitter}
                     onChange={(e) => setClubData({...clubData, socials: {...clubData.socials, twitter: e.target.value}})}
-                    className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary" 
+                    className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary text-primary placeholder:text-primary/20" 
                   />
                 </div>
               </div>
@@ -215,7 +215,7 @@ export default function ClubManagementPage() {
 
             <div className="p-10 bg-black/40 border-t border-white/5 flex gap-6">
               <SheetClose asChild>
-                <Button variant="ghost" className="flex-1 h-16 border border-white/10 text-white/40 font-black uppercase text-[11px] tracking-widest hover:bg-white/5 rounded-2xl">
+                <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary/60 font-black uppercase text-[11px] tracking-widest hover:bg-primary/10 rounded-2xl transition-all">
                   CANCELAR
                 </Button>
               </SheetClose>
@@ -240,7 +240,7 @@ export default function ClubManagementPage() {
       )}
 
       {/* BANNER VISUAL */}
-      <div className="relative h-80 rounded-[3rem] overflow-hidden border border-white/5 shadow-2xl">
+      <div className="relative h-80 rounded-[3rem] overflow-hidden border border-primary/10 shadow-2xl">
         <Image 
           src="https://picsum.photos/seed/stadium/1200/400" 
           alt="Club Banner" 
@@ -250,7 +250,7 @@ export default function ClubManagementPage() {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#04070c] via-transparent to-transparent" />
         <div className="absolute top-8 right-8">
-           <Button variant="ghost" className="h-10 bg-black/40 backdrop-blur-md border border-white/10 rounded-xl text-white/40 hover:text-primary transition-all">
+           <Button variant="ghost" className="h-10 bg-black/40 backdrop-blur-md border border-primary/20 rounded-xl text-primary/60 hover:text-primary transition-all">
               <Camera className="h-4 w-4 mr-2" /> Editar Portada
            </Button>
         </div>
@@ -272,7 +272,7 @@ export default function ClubManagementPage() {
                 />
                 <button className="absolute inset-0 bg-black/60 opacity-0 group-hover/logo:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
                    <Camera className="h-6 w-6 text-primary" />
-                   <span className="text-[10px] font-black uppercase tracking-[0.2em]">Sincronizar Escudo</span>
+                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Sincronizar Escudo</span>
                 </button>
              </div>
           </div>
@@ -289,13 +289,13 @@ export default function ClubManagementPage() {
                  <Dumbbell className="h-3.5 w-3.5 text-primary" />
                  <span className="text-[11px] font-black text-primary uppercase tracking-widest">{clubData.sport}</span>
                </div>
-               <div className="h-1 w-1 rounded-full bg-white/10" />
+               <div className="h-1 w-1 rounded-full bg-primary/20" />
                <div className="flex items-center gap-2">
-                 <MapPin className="h-3.5 w-3.5 text-white/40" />
-                 <span className="text-[11px] font-black text-white/40 uppercase tracking-widest">{clubData.country}</span>
+                 <MapPin className="h-3.5 w-3.5 text-primary/40" />
+                 <span className="text-[11px] font-black text-primary/40 uppercase tracking-widest">{clubData.country}</span>
                </div>
-               <div className="h-1 w-1 rounded-full bg-white/10" />
-               <span className="text-[11px] font-black text-white/20 uppercase tracking-[0.3em]">Protocolo Activo</span>
+               <div className="h-1 w-1 rounded-full bg-primary/20" />
+               <span className="text-[11px] font-black text-primary/20 uppercase tracking-[0.3em]">Protocolo Activo</span>
              </div>
           </div>
         </div>
@@ -306,7 +306,7 @@ export default function ClubManagementPage() {
         <div className="lg:col-span-2 space-y-10">
            <Card className="glass-panel border-none bg-black/40 overflow-hidden shadow-2xl">
              <CardHeader className="border-b border-white/5 p-10">
-                <CardTitle className="text-xs font-black uppercase tracking-[0.4em] flex items-center gap-4 text-white/60">
+                <CardTitle className="text-xs font-black uppercase tracking-[0.4em] flex items-center gap-4 text-primary/60">
                   <ShieldCheck className="h-5 w-5 text-primary" /> Atributos de la Entidad
                 </CardTitle>
              </CardHeader>
@@ -318,7 +318,7 @@ export default function ClubManagementPage() {
                 </div>
 
                 <div className="mt-16 p-10 border border-primary/20 bg-primary/5 rounded-[2.5rem] space-y-5 relative overflow-hidden group">
-                   <div className="absolute top-0 right-0 p-4 opacity-5">
+                   <div className="absolute top-0 right-0 p-4 opacity-10">
                       <Trophy className="h-32 w-32 text-primary" />
                    </div>
                    <div className="flex items-center justify-between relative z-10">
@@ -327,7 +327,7 @@ export default function ClubManagementPage() {
                         {profile?.plan?.replace('_', ' ') || 'Enterprise Scale'}
                       </Badge>
                    </div>
-                   <p className="text-[11px] text-white/40 leading-relaxed uppercase font-bold tracking-widest italic relative z-10 max-w-2xl">
+                   <p className="text-[11px] text-primary/40 leading-relaxed uppercase font-bold tracking-widest italic relative z-10 max-w-2xl">
                      Nodo centralizado vinculado a la red SynQAI. El sistema optimiza automáticamente los recursos según el volumen de atletas en formación detectado en este nodo.
                    </p>
                 </div>
@@ -335,9 +335,9 @@ export default function ClubManagementPage() {
            </Card>
 
            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-              <Card className="glass-panel border-none bg-black/40 shadow-xl">
+              <Card className="glass-panel border border-primary/10 bg-black/40 shadow-xl">
                 <CardHeader className="p-10 pb-4">
-                   <CardTitle className="text-[11px] font-black uppercase tracking-[0.4em] text-white/20">Terminales de Contacto</CardTitle>
+                   <CardTitle className="text-[11px] font-black uppercase tracking-[0.4em] text-primary/20">Terminales de Contacto</CardTitle>
                 </CardHeader>
                 <CardContent className="px-10 pb-10 space-y-5">
                    <ContactLink icon={Globe} label="Portal Web" value={clubData.website} />
@@ -346,9 +346,9 @@ export default function ClubManagementPage() {
                 </CardContent>
               </Card>
 
-              <Card className="glass-panel border-none bg-black/40 shadow-xl">
+              <Card className="glass-panel border border-primary/10 bg-black/40 shadow-xl">
                 <CardHeader className="p-10 pb-4">
-                   <CardTitle className="text-[11px] font-black uppercase tracking-[0.4em] text-white/20">Nodos Sociales</CardTitle>
+                   <CardTitle className="text-[11px] font-black uppercase tracking-[0.4em] text-primary/20">Nodos Sociales</CardTitle>
                 </CardHeader>
                 <CardContent className="px-10 pb-10 space-y-5">
                    <ContactLink icon={Instagram} label="Instagram" value={clubData.socials.instagram} />
@@ -361,11 +361,11 @@ export default function ClubManagementPage() {
 
         <div className="space-y-10">
            <Card className="glass-panel border-primary/20 bg-primary/5 p-12 relative group overflow-hidden shadow-[0_0_50px_rgba(0,242,255,0.05)]">
-              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-all">
+              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-all">
                 <Share2 className="h-32 w-32 text-primary" />
               </div>
-              <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white mb-6">Exportar Perfil</h3>
-              <p className="text-[11px] font-bold text-white/40 uppercase tracking-widest mb-10 leading-loose">
+              <h3 className="text-2xl font-black italic uppercase tracking-tighter text-primary mb-6 cyan-text-glow">Exportar Perfil</h3>
+              <p className="text-[11px] font-bold text-primary/40 uppercase tracking-widest mb-10 leading-loose">
                 Genere un informe PDF técnico de la estructura del club para patrocinadores, federaciones o redes de formación.
               </p>
               <Button className="w-full h-16 bg-black/60 border border-primary/30 text-primary font-black uppercase text-[11px] tracking-[0.2em] rounded-2xl hover:bg-primary hover:text-black transition-all shadow-xl">
@@ -373,13 +373,13 @@ export default function ClubManagementPage() {
               </Button>
            </Card>
 
-           <div className="p-10 rounded-[3rem] border border-white/5 bg-white/[0.02] space-y-5 relative overflow-hidden">
+           <div className="p-10 rounded-[3rem] border border-primary/10 bg-primary/[0.02] space-y-5 relative overflow-hidden">
               <div className="absolute inset-0 bg-grid-pattern opacity-5" />
               <div className="flex items-center gap-3 relative z-10">
                  <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                 <span className="text-[11px] font-black uppercase tracking-[0.4em] text-white/60">Operativa_Activa</span>
+                 <span className="text-[11px] font-black uppercase tracking-[0.4em] text-primary/60">Operativa_Activa</span>
               </div>
-              <p className="text-[11px] text-white/20 uppercase font-bold tracking-widest leading-relaxed italic relative z-10">
+              <p className="text-[11px] text-primary/20 uppercase font-bold tracking-widest leading-relaxed italic relative z-10">
                 La identidad visual de su nodo es el núcleo de confianza para las familias. Mantenga el escudo y los datos actualizados para garantizar la integridad de la red.
               </p>
            </div>
@@ -393,12 +393,12 @@ function DataNode({ label, value, icon: Icon, highlight }: any) {
   return (
     <div className="space-y-4">
        <div className="flex items-center gap-3">
-          <Icon className={cn("h-4 w-4", highlight ? "text-primary" : "text-white/20")} />
-          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30">{label}</span>
+          <Icon className={cn("h-4 w-4", highlight ? "text-primary" : "text-primary/20")} />
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/40">{label}</span>
        </div>
        <p className={cn(
          "text-3xl font-black italic tracking-tighter uppercase",
-         highlight ? "text-primary cyan-text-glow" : "text-white"
+         highlight ? "text-primary cyan-text-glow" : "text-primary/80"
        )}>{value}</p>
     </div>
   );
@@ -406,17 +406,17 @@ function DataNode({ label, value, icon: Icon, highlight }: any) {
 
 function ContactLink({ icon: Icon, label, value }: any) {
   return (
-    <div className="flex items-center justify-between group cursor-pointer p-3 hover:bg-white/5 rounded-2xl transition-all border border-transparent hover:border-white/5">
+    <div className="flex items-center justify-between group cursor-pointer p-3 hover:bg-primary/5 rounded-2xl transition-all border border-transparent hover:border-primary/10">
        <div className="flex items-center gap-5">
-          <div className="h-11 w-11 bg-white/5 rounded-xl flex items-center justify-center border border-white/5 group-hover:border-primary/40 transition-all">
-             <Icon className="h-5 w-5 text-white/40 group-hover:text-primary transition-all" />
+          <div className="h-11 w-11 bg-primary/5 rounded-xl flex items-center justify-center border border-primary/10 group-hover:border-primary/40 transition-all">
+             <Icon className="h-5 w-5 text-primary/40 group-hover:text-primary transition-all" />
           </div>
           <div className="flex flex-col">
-             <span className="text-[9px] font-black uppercase text-white/20 tracking-widest">{label}</span>
-             <span className="text-[11px] font-bold text-white/80 group-hover:text-white transition-colors uppercase tracking-tight">{value}</span>
+             <span className="text-[9px] font-black uppercase text-primary/40 tracking-widest">{label}</span>
+             <span className="text-[11px] font-bold text-primary/80 group-hover:text-primary transition-colors uppercase tracking-tight">{value}</span>
           </div>
        </div>
-       <ArrowUpRight className="h-4 w-4 text-white/5 group-hover:text-primary transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+       <ArrowUpRight className="h-4 w-4 text-primary/10 group-hover:text-primary transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
     </div>
   );
 }
