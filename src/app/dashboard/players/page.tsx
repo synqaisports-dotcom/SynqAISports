@@ -24,7 +24,9 @@ import {
   LayoutGrid,
   ShieldCheck,
   Stethoscope,
-  ShieldAlert
+  ShieldAlert,
+  Camera,
+  X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -40,7 +42,6 @@ import {
   SheetDescription, 
   SheetFooter, 
   SheetClose,
-  SheetTrigger
 } from "@/components/ui/sheet";
 import {
   Select,
@@ -52,6 +53,7 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 const CATEGORIES = [
   { value: "Debutantes", label: "Debutantes" },
@@ -81,10 +83,10 @@ const TACTICAL_POSITIONS = [
 ];
 
 const INITIAL_PLAYERS = [
-  { id: "p1", name: "Lucas", surname: "García", email: "l.garcia@tutor.com", category: "Infantil", teamSuffix: "A", position: "MC, MCO", status: "Active", attendance: "98%", isMinor: true, tutorName: "MARÍA", tutorSurname: "GARCÍA", tutorPhone: "600 000 001", tutorEmail: "m.garcia@tutor.com" },
-  { id: "p2", name: "Elena", surname: "Rossi", email: "e.rossi@tutor.it", category: "Alevín", teamSuffix: "B", position: "DC", status: "Active", attendance: "92%", isMinor: true, tutorName: "PAOLO", tutorSurname: "ROSSI", tutorPhone: "+39 300 000 000", tutorEmail: "p.rossi@tutor.it" },
-  { id: "p3", name: "Marc", surname: "Soler", email: "m.soler@tutor.es", category: "Cadete", teamSuffix: "C", position: "POR", status: "Injured", attendance: "45%", isMinor: false },
-  { id: "p4", name: "Sofía", surname: "Mendes", email: "s.mendes@tutor.br", category: "Benjamín", teamSuffix: "A", position: "DFC, LD", status: "Active", attendance: "100%", isMinor: true, tutorName: "LUIS", tutorSurname: "MENDES", tutorPhone: "+55 11 0000 0000", tutorEmail: "l.mendes@tutor.br" },
+  { id: "p1", name: "Lucas", surname: "García", email: "l.garcia@tutor.com", category: "Infantil", teamSuffix: "A", position: "MC, MCO", status: "Active", attendance: "98%", isMinor: true, tutorName: "MARÍA", tutorSurname: "GARCÍA", tutorPhone: "600 000 001", tutorEmail: "m.garcia@tutor.com", photoUrl: "" },
+  { id: "p2", name: "Elena", surname: "Rossi", email: "e.rossi@tutor.it", category: "Alevín", teamSuffix: "B", position: "DC", status: "Active", attendance: "92%", isMinor: true, tutorName: "PAOLO", tutorSurname: "ROSSI", tutorPhone: "+39 300 000 000", tutorEmail: "p.rossi@tutor.it", photoUrl: "" },
+  { id: "p3", name: "Marc", surname: "Soler", email: "m.soler@tutor.es", category: "Cadete", teamSuffix: "C", position: "POR", status: "Injured", attendance: "45%", isMinor: false, photoUrl: "" },
+  { id: "p4", name: "Sofía", surname: "Mendes", email: "s.mendes@tutor.br", category: "Benjamín", teamSuffix: "A", position: "DFC, LD", status: "Active", attendance: "100%", isMinor: true, tutorName: "LUIS", tutorSurname: "MENDES", tutorPhone: "+55 11 0000 0000", tutorEmail: "l.mendes@tutor.br", photoUrl: "" },
 ];
 
 export default function PlayersManagementPage() {
@@ -100,6 +102,7 @@ export default function PlayersManagementPage() {
     name: "",
     surname: "",
     email: "",
+    photoUrl: "",
     category: "Alevín",
     teamSuffix: "A",
     position: [] as string[],
@@ -117,6 +120,7 @@ export default function PlayersManagementPage() {
       name: "", 
       surname: "", 
       email: "", 
+      photoUrl: "",
       category: "Alevín", 
       teamSuffix: "A",
       position: [], 
@@ -136,6 +140,7 @@ export default function PlayersManagementPage() {
       name: player.name,
       surname: player.surname,
       email: player.email,
+      photoUrl: player.photoUrl || "",
       category: player.category,
       teamSuffix: player.teamSuffix,
       position: player.position ? player.position.split(", ") : [],
@@ -192,6 +197,17 @@ export default function PlayersManagementPage() {
       setLoading(false);
       setIsSheetOpen(false);
     }, 1000);
+  };
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData({ ...formData, photoUrl: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const filteredPlayers = players.filter(p => 
@@ -266,7 +282,11 @@ export default function PlayersManagementPage() {
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-4">
                         <div className="h-12 w-12 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center relative overflow-hidden group-hover:border-primary/40 transition-all">
-                           <IdCard className="h-5 w-5 text-white/20 group-hover:text-primary transition-all" />
+                           {player.photoUrl ? (
+                             <Image src={player.photoUrl} alt={player.name} fill className="object-cover" />
+                           ) : (
+                             <IdCard className="h-5 w-5 text-white/20 group-hover:text-primary transition-all" />
+                           )}
                            <div className="absolute inset-0 bg-primary/5 scan-line opacity-0 group-hover:opacity-100" />
                         </div>
                         <div className="space-y-1">
@@ -362,6 +382,38 @@ export default function PlayersManagementPage() {
           </div>
 
           <form onSubmit={handleSavePlayer} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10">
+            {/* SECCIÓN DE FOTOGRAFÍA */}
+            <div className="space-y-4">
+              <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Identidad Visual</Label>
+              <div className="flex flex-col items-center justify-center space-y-4 p-8 border-2 border-dashed border-primary/20 bg-primary/5 rounded-3xl group cursor-pointer hover:border-primary/40 transition-all relative overflow-hidden">
+                {formData.photoUrl ? (
+                  <div className="relative h-32 w-32 rounded-2xl overflow-hidden border border-primary/40 shadow-[0_0_20px_rgba(0,242,255,0.2)]">
+                    <Image src={formData.photoUrl} alt="Preview" fill className="object-cover" />
+                    <button 
+                      type="button"
+                      onClick={() => setFormData({...formData, photoUrl: ""})}
+                      className="absolute top-1 right-1 bg-rose-500 p-1.5 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity z-20 shadow-xl"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="h-16 w-16 rounded-2xl bg-black border border-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Camera className="h-8 w-8 text-primary/40" />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-primary/60">Sincronizar Foto Atleta</span>
+                  </div>
+                )}
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  className="absolute inset-0 opacity-0 cursor-pointer" 
+                  onChange={handlePhotoUpload}
+                />
+              </div>
+            </div>
+
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
