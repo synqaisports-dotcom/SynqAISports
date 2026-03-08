@@ -25,7 +25,8 @@ import {
   UserCog,
   Sprout,
   Users,
-  ShieldAlert
+  ShieldAlert,
+  Settings2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
@@ -46,6 +47,7 @@ interface NavItem {
   href: string;
   icon: any;
   category: "global" | "operational" | "user";
+  roles?: string[];
 }
 
 const navItems: NavItem[] = [
@@ -60,6 +62,7 @@ const navItems: NavItem[] = [
   
   // OPERATIVA_ELITE - CYAN THEME
   { title: "Coach Hub", href: "/dashboard", icon: Cpu, category: "operational" },
+  { title: "Admin & Permisos", href: "/dashboard/admin", icon: Settings2, category: "operational", roles: ["superadmin", "club_admin", "academy_director"] },
   { title: "Club", href: "/dashboard/club", icon: Building, category: "operational" },
   { title: "Instalaciones", href: "/dashboard/instalaciones", icon: MapPin, category: "operational" },
   { title: "Staff", href: "/dashboard/staff", icon: UserCog, category: "operational" },
@@ -72,7 +75,6 @@ const navItems: NavItem[] = [
   // TERMINALES_ACCESO
   { title: "Tutor Portal", href: "/tutor", icon: UserCircle, category: "user" },
   { title: "Smartwatch Link", href: "/smartwatch", icon: Watch, category: "user" },
-  { title: "Admin Club", href: "/dashboard/club", icon: ShieldCheck, category: "user" },
 ];
 
 export function DashboardSidebar() {
@@ -89,6 +91,13 @@ export function DashboardSidebar() {
     logout();
     router.push("/");
   };
+
+  const filteredItems = navItems.filter(item => {
+    if (item.roles && profile) {
+      return item.roles.includes(profile.role);
+    }
+    return true;
+  });
 
   return (
     <Sidebar collapsible="offcanvas" className="border-r border-white/5 bg-[#04070c] shadow-[4px_0_24px_rgba(0,0,0,0.5)]">
@@ -132,7 +141,7 @@ export function DashboardSidebar() {
         {isSuperAdmin && (
           <SidebarGroupWrapper title="Control_Global" color="text-emerald-400">
             <SidebarMenu>
-              {navItems.filter(i => i.category === "global").map((item) => (
+              {filteredItems.filter(i => i.category === "global").map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarLink item={item} isActive={pathname === item.href} isGlobal />
                 </SidebarMenuItem>
@@ -144,7 +153,7 @@ export function DashboardSidebar() {
         {/* OPERATIONAL ELITE */}
         <SidebarGroupWrapper title="Operativa_Elite" color={isSuperAdmin ? "text-emerald-400/40" : "text-primary"}>
           <SidebarMenu>
-            {navItems.filter(i => i.category === "operational").map((item) => (
+            {filteredItems.filter(i => i.category === "operational").map((item) => (
               <SidebarMenuItem key={item.href}>
                 <SidebarLink item={item} isActive={pathname === item.href} />
               </SidebarMenuItem>
@@ -155,7 +164,7 @@ export function DashboardSidebar() {
         {/* USER TERMINALS */}
         <SidebarGroupWrapper title="Terminales_Acceso" color="text-white/20">
           <SidebarMenu>
-            {navItems.filter(i => i.category === "user").map((item) => (
+            {filteredItems.filter(i => i.category === "user").map((item) => (
               <SidebarMenuItem key={item.href}>
                 <SidebarLink item={item} isActive={pathname === item.href} />
               </SidebarMenuItem>
