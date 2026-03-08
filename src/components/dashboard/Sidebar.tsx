@@ -104,14 +104,14 @@ export function DashboardSidebar() {
     <Sidebar 
       collapsible="icon" 
       className={cn(
-        "transition-all duration-500",
+        "transition-all duration-300",
         isCollapsed 
           ? "bg-transparent border-r border-primary/30" 
           : "bg-[#04070c] border-r border-white/5 shadow-[4px_0_24px_rgba(0,0,0,0.5)]"
       )}
     >
       <SidebarHeader className={cn(
-        "p-8 border-b transition-all duration-500",
+        "p-8 border-b transition-all duration-300",
         isCollapsed 
           ? "bg-transparent border-primary/20 p-2" 
           : "bg-black/60 backdrop-blur-md border-white/5"
@@ -120,14 +120,14 @@ export function DashboardSidebar() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className={cn(
-                "p-2.5 rounded-xl shrink-0 transition-all duration-500",
+                "p-2.5 rounded-xl shrink-0 transition-all duration-300",
                 isSuperAdmin ? "bg-emerald-500 emerald-text-glow" : "bg-primary cyan-glow",
                 isCollapsed && "p-1.5 shadow-[0_0_15px_rgba(0,242,255,0.3)]"
               )}>
                 <Zap className={cn("text-black", isCollapsed ? "h-4 w-4" : "h-6 w-6")} />
               </div>
               {!isCollapsed && (
-                <div className="flex flex-col overflow-hidden animate-in fade-in duration-500">
+                <div className="flex flex-col overflow-hidden animate-in fade-in duration-300">
                   <span className="font-headline font-black text-2xl tracking-tighter text-white uppercase italic">
                     Synq<span className={cn(isSuperAdmin ? "text-emerald-400" : "text-primary")}>AI</span>
                   </span>
@@ -156,7 +156,7 @@ export function DashboardSidebar() {
       </SidebarHeader>
 
       <SidebarContent className={cn(
-        "px-3 py-8 space-y-10 custom-scrollbar overflow-x-hidden transition-all duration-500",
+        "px-3 py-8 space-y-10 custom-scrollbar overflow-x-hidden transition-all duration-300",
         isCollapsed && "py-4 space-y-6"
       )}>
         {/* GLOBAL CONTROL - ONLY FOR SUPERADMIN */}
@@ -173,7 +173,7 @@ export function DashboardSidebar() {
         )}
 
         {/* OPERATIONAL ELITE */}
-        <SidebarGroupWrapper title="Operativa_Elite" color={isSuperAdmin ? "text-emerald-400/40" : "text-primary"} isCollapsed={isCollapsed}>
+        <SidebarGroupWrapper title="Operativa_Elite" color="text-primary" isCollapsed={isCollapsed}>
           <SidebarMenu>
             {filteredItems.filter(i => i.category === "operational").map((item) => (
               <SidebarMenuItem key={item.href}>
@@ -196,7 +196,7 @@ export function DashboardSidebar() {
       </SidebarContent>
 
       <SidebarFooter className={cn(
-        "p-6 border-t transition-all duration-500",
+        "p-6 border-t transition-all duration-300",
         isCollapsed 
           ? "bg-transparent border-primary/20 p-2" 
           : "bg-black/60 backdrop-blur-md border-white/5"
@@ -206,7 +206,7 @@ export function DashboardSidebar() {
           className="flex items-center gap-4 px-4 py-4 text-white/30 hover:text-white transition-all font-black text-[10px] uppercase tracking-widest hover:bg-white/5 rounded-2xl group overflow-hidden w-full text-left"
         >
           <LogOut className="h-5 w-5 shrink-0 group-hover:translate-x-1 transition-transform" />
-          {!isCollapsed && <span className="whitespace-nowrap font-bold animate-in fade-in duration-500">CERRAR_SESIÓN</span>}
+          {!isCollapsed && <span className="whitespace-nowrap font-bold animate-in fade-in duration-300">CERRAR_SESIÓN</span>}
         </button>
       </SidebarFooter>
     </Sidebar>
@@ -217,7 +217,7 @@ function SidebarGroupWrapper({ children, title, color, isCollapsed }: any) {
   return (
     <SidebarGroup className="p-0">
       {!isCollapsed && (
-        <p className={cn("px-4 mb-4 text-[8px] font-black uppercase tracking-[0.5em] animate-pulse transition-all duration-500", color)}>
+        <p className={cn("px-4 mb-4 text-[8px] font-black uppercase tracking-[0.5em] transition-all duration-300", color)}>
           {title}
         </p>
       )}
@@ -248,9 +248,9 @@ function SidebarLink({ item, isActive, isGlobal }: { item: NavItem; isActive: bo
       )}
     >
       <Link href={item.href}>
-        <item.icon className={cn("h-5 w-5 shrink-0 transition-all duration-500", iconClass)} />
+        <item.icon className={cn("h-5 w-5 shrink-0 transition-all duration-300", iconClass)} />
         {!isCollapsed && (
-          <span className="font-bold text-[10px] uppercase tracking-[0.25em] whitespace-nowrap animate-in fade-in duration-500">
+          <span className="font-bold text-[10px] uppercase tracking-[0.25em] whitespace-nowrap animate-in fade-in duration-300">
             {item.title}
           </span>
         )}
