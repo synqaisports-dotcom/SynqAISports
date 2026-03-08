@@ -19,7 +19,8 @@ import {
   ChevronRight,
   TrendingUp,
   Award,
-  IdCard
+  IdCard,
+  ShieldAlert
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -93,6 +94,7 @@ export default function StaffManagementPage() {
     status: "Active"
   });
 
+  const isSuperAdmin = profile?.role === "superadmin";
   const currentUserRank = ROLE_HIERARCHY[profile?.role || "coach"] || 0;
 
   // Filtrar roles que el usuario actual PUEDE crear (solo rangos menores)
@@ -114,7 +116,7 @@ export default function StaffManagementPage() {
 
   const handleEdit = (member: any) => {
     // Verificar si el usuario tiene permiso para editar a esta persona
-    if (ROLE_HIERARCHY[member.role] >= currentUserRank) {
+    if (ROLE_HIERARCHY[member.role] >= currentUserRank && !isSuperAdmin) {
       toast({
         variant: "destructive",
         title: "ACCESO_DENEGADO",
@@ -135,7 +137,7 @@ export default function StaffManagementPage() {
   };
 
   const handleDelete = (id: string, name: string, role: string) => {
-    if (ROLE_HIERARCHY[role] >= currentUserRank) {
+    if (ROLE_HIERARCHY[role] >= currentUserRank && !isSuperAdmin) {
       toast({
         variant: "destructive",
         title: "PROTOCOLO_BLOQUEADO",
@@ -181,8 +183,10 @@ export default function StaffManagementPage() {
       <div className="flex justify-between items-end border-b border-white/5 pb-6">
         <div className="space-y-1">
           <div className="flex items-center gap-3 mb-2">
-            <UserCog className="h-5 w-5 text-primary animate-pulse" />
-            <span className="text-[10px] font-black text-primary tracking-[0.5em] uppercase">Staff_Hierarchy_Control</span>
+            <UserCog className={cn("h-5 w-5 animate-pulse", isSuperAdmin ? "text-emerald-400" : "text-primary")} />
+            <span className={cn("text-[10px] font-black tracking-[0.5em] uppercase", isSuperAdmin ? "text-emerald-400" : "text-primary")}>
+              {isSuperAdmin ? "Global_Hierarchy_Audit" : "Staff_Hierarchy_Control"}
+            </span>
           </div>
           <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic cyan-text-glow">
             Staff Técnico
@@ -192,23 +196,35 @@ export default function StaffManagementPage() {
         <Button 
           onClick={handleOpenCreate}
           disabled={availableRoles.length === 0}
-          className="rounded-none bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none disabled:opacity-30"
+          className={cn(
+            "rounded-none text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none disabled:opacity-30",
+            isSuperAdmin ? "bg-emerald-500" : "bg-primary"
+          )}
         >
           <Plus className="h-4 w-4 mr-2" /> Alta de Trabajador
         </Button>
       </div>
 
+      {isSuperAdmin && (
+        <div className="p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl flex items-center gap-4 animate-in slide-in-from-top-2">
+          <ShieldAlert className="h-5 w-5 text-emerald-400" />
+          <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">
+            MODO_AUDITORÍA_ACTIVO: Tienes autoridad total para gestionar Administradores de Club y Directivos.
+          </p>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <StaffStat label="Equipo Total" value={staff.length.toString()} icon={Users} />
         <StaffStat label="Entrenadores" value={staff.filter(s => s.role === 'coach').length.toString()} icon={Award} highlight />
-        <StaffStat label="Nivel de Mando" value={ROLES_INFO[profile?.role || 'coach']?.label || 'Invitado'} icon={ShieldCheck} />
+        <StaffStat label="Nivel de Mando" value={isSuperAdmin ? 'Autoridad Raíz' : (ROLES_INFO[profile?.role || 'coach']?.label || 'Invitado')} icon={ShieldCheck} />
         <StaffStat label="Actividad Red" value="94%" icon={Activity} />
       </div>
 
       <Card className="glass-panel border-none bg-black/40 overflow-hidden mb-8">
         <CardHeader className="p-6 border-b border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="relative w-full max-w-md">
-            <Search className="absolute left-3 top-3.5 h-4 w-4 text-primary opacity-50" />
+            <Search className={cn("absolute left-3 top-3.5 h-4 w-4 opacity-50", isSuperAdmin ? "text-emerald-400" : "text-primary")} />
             <Input 
               placeholder="BUSCAR POR NOMBRE, MAIL O ROL..." 
               className="pl-10 h-12 bg-white/5 border-white/10 rounded-none text-white placeholder:text-white/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-primary/50"
@@ -218,7 +234,7 @@ export default function StaffManagementPage() {
           </div>
           <div className="flex items-center gap-2">
              <span className="text-[9px] font-black text-white/30 uppercase tracking-widest">Jerarquía Activa:</span>
-             <Badge variant="outline" className="rounded-none border-primary/20 text-primary font-black text-[9px] uppercase tracking-widest px-3">
+             <Badge variant="outline" className={cn("rounded-none font-black text-[9px] uppercase tracking-widest px-3", isSuperAdmin ? "border-emerald-500/20 text-emerald-400" : "border-primary/20 text-primary")}>
                {profile?.role?.toUpperCase()}
              </Badge>
           </div>
@@ -299,8 +315,8 @@ export default function StaffManagementPage() {
           <div className="p-10 border-b border-white/5 bg-black/40">
             <SheetHeader className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Credential_Deploy_v1.5</span>
+                <div className={cn("h-2 w-2 rounded-full animate-pulse", isSuperAdmin ? "bg-emerald-500" : "bg-primary")} />
+                <span className={cn("text-[10px] font-black uppercase tracking-[0.4em]", isSuperAdmin ? "text-emerald-400" : "text-primary")}>Credential_Deploy_v1.5</span>
               </div>
               <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left">
                 {editingId ? "MODIFICAR_IDENTIDAD" : "EMITIR_CREDENCIAL"}
@@ -373,13 +389,16 @@ export default function StaffManagementPage() {
               </div>
             </div>
 
-            <div className="p-6 bg-primary/5 border border-primary/20 space-y-3">
+            <div className={cn("p-6 border space-y-3", isSuperAdmin ? "bg-emerald-500/5 border-emerald-500/20" : "bg-primary/5 border-primary/20")}>
               <div className="flex items-center gap-2">
-                <ShieldCheck className="h-3 w-3 text-primary" />
-                <span className="text-[9px] font-black uppercase text-primary tracking-widest">Protocolo de Jerarquía</span>
+                <ShieldCheck className={cn("h-3 w-3", isSuperAdmin ? "text-emerald-400" : "text-primary")} />
+                <span className={cn("text-[9px] font-black uppercase tracking-widest", isSuperAdmin ? "text-emerald-400" : "text-primary")}>Protocolo de Jerarquía</span>
               </div>
               <p className="text-[9px] text-white/40 leading-relaxed font-bold uppercase italic">
-                El sistema de SynQAI solo permite la creación de perfiles con un rango inferior al del administrador actual. Las credenciales generadas son únicas e intransferibles.
+                {isSuperAdmin 
+                  ? "SISTEMA_ROOT: Como Superadmin, puedes emitir credenciales para cualquier nivel de la red, incluyendo Administradores de Club."
+                  : "El sistema de SynQAI solo permite la creación de perfiles con un rango inferior al del administrador actual."
+                }
               </p>
             </div>
           </form>
@@ -393,7 +412,10 @@ export default function StaffManagementPage() {
             <Button 
               onClick={handleSaveStaff}
               disabled={loading}
-              className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-none shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] transition-all border-none"
+              className={cn(
+                "flex-[2] h-16 text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-none shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:scale-[1.02] transition-all border-none",
+                isSuperAdmin ? "bg-emerald-500" : "bg-primary"
+              )}
             >
               {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (editingId ? "SINCRONIZAR_PERFIL" : "VINCULAR_TRABAJADOR")}
             </Button>
@@ -422,7 +444,7 @@ function StaffStat({ label, value, icon: Icon, highlight }: any) {
              )}>{value}</p>
           </div>
        </div>
-       <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 scan-line" />
+       <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-10 scan-line" />
     </Card>
   );
 }

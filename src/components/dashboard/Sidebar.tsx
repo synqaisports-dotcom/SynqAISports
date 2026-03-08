@@ -24,7 +24,8 @@ import {
   MapPin,
   UserCog,
   Sprout,
-  Users
+  Users,
+  ShieldAlert
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
@@ -92,25 +93,37 @@ export function DashboardSidebar() {
   return (
     <Sidebar collapsible="offcanvas" className="border-r border-white/5 bg-[#04070c] shadow-[4px_0_24px_rgba(0,0,0,0.5)]">
       <SidebarHeader className="p-8 border-b border-white/5 bg-black/60 backdrop-blur-md">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="bg-primary p-2.5 rounded-xl shrink-0 cyan-glow shadow-[0_0_25px_rgba(0,242,255,0.4)]">
-              <Zap className="h-6 w-6 text-black" />
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className={cn(
+                "p-2.5 rounded-xl shrink-0 shadow-[0_0_25px_rgba(0,242,255,0.4)]",
+                isSuperAdmin ? "bg-emerald-500 emerald-text-glow" : "bg-primary cyan-glow"
+              )}>
+                <Zap className="h-6 w-6 text-black" />
+              </div>
+              <div className="flex flex-col overflow-hidden">
+                <span className="font-headline font-black text-2xl tracking-tighter text-white uppercase italic">
+                  Synq<span className={cn(isSuperAdmin ? "text-emerald-400" : "text-primary")}>AI</span>
+                </span>
+                <span className="text-[9px] font-black text-white/30 tracking-[0.4em] uppercase">SPORTS_PRO</span>
+              </div>
             </div>
-            <div className="flex flex-col overflow-hidden">
-              <span className="font-headline font-black text-2xl tracking-tighter text-white uppercase italic">
-                Synq<span className="text-primary cyan-text-glow">AI</span>
-              </span>
-              <span className="text-[9px] font-black text-white/30 tracking-[0.4em] uppercase">SPORTS_PRO</span>
-            </div>
+            <button 
+              onClick={toggleSidebar}
+              className="h-8 w-8 rounded-xl bg-white/5 flex items-center justify-center text-white/40 hover:text-primary transition-all border border-white/5 lg:hidden"
+              title="Ocultar Terminal"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
           </div>
-          <button 
-            onClick={toggleSidebar}
-            className="h-8 w-8 rounded-xl bg-white/5 flex items-center justify-center text-white/40 hover:text-primary transition-all border border-white/5 lg:hidden"
-            title="Ocultar Terminal"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
+
+          {isSuperAdmin && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg animate-in fade-in zoom-in-95">
+              <ShieldCheck className="h-3 w-3 text-emerald-400" />
+              <span className="text-[8px] font-black text-emerald-400 uppercase tracking-[0.2em]">SUPERADMIN_ACTIVE</span>
+            </div>
+          )}
         </div>
       </SidebarHeader>
 
@@ -129,7 +142,7 @@ export function DashboardSidebar() {
         )}
 
         {/* OPERATIONAL ELITE */}
-        <SidebarGroupWrapper title="Operativa_Elite" color="text-primary">
+        <SidebarGroupWrapper title="Operativa_Elite" color={isSuperAdmin ? "text-emerald-400/40" : "text-primary"}>
           <SidebarMenu>
             {navItems.filter(i => i.category === "operational").map((item) => (
               <SidebarMenuItem key={item.href}>
