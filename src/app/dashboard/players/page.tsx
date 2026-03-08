@@ -281,9 +281,9 @@ export default function PlayersManagementPage() {
                   <tr key={player.id} className="group hover:bg-white/[0.02] transition-colors cursor-default">
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center relative overflow-hidden group-hover:border-primary/40 transition-all">
+                        <div className="h-12 w-12 bg-white/5 border border-white/10 rounded-full flex items-center justify-center relative overflow-hidden group-hover:border-primary/40 transition-all">
                            {player.photoUrl ? (
-                             <Image src={player.photoUrl} alt={player.name} fill className="object-cover" />
+                             <Image src={player.photoUrl} alt={player.name} fill className="object-cover rounded-full" />
                            ) : (
                              <IdCard className="h-5 w-5 text-white/20 group-hover:text-primary transition-all" />
                            )}
@@ -382,35 +382,37 @@ export default function PlayersManagementPage() {
           </div>
 
           <form onSubmit={handleSavePlayer} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10">
-            {/* SECCIÓN DE FOTOGRAFÍA */}
+            {/* SECCIÓN DE FOTOGRAFÍA CIRCULAR */}
             <div className="space-y-4">
               <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Identidad Visual</Label>
-              <div className="flex flex-col items-center justify-center space-y-4 p-8 border-2 border-dashed border-primary/20 bg-primary/5 rounded-3xl group cursor-pointer hover:border-primary/40 transition-all relative overflow-hidden">
-                {formData.photoUrl ? (
-                  <div className="relative h-32 w-32 rounded-2xl overflow-hidden border border-primary/40 shadow-[0_0_20px_rgba(0,242,255,0.2)]">
-                    <Image src={formData.photoUrl} alt="Preview" fill className="object-cover" />
-                    <button 
-                      type="button"
-                      onClick={() => setFormData({...formData, photoUrl: ""})}
-                      className="absolute top-1 right-1 bg-rose-500 p-1.5 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity z-20 shadow-xl"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="h-16 w-16 rounded-2xl bg-black border border-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <Camera className="h-8 w-8 text-primary/40" />
+              <div className="flex flex-col items-center justify-center p-8 bg-primary/5 rounded-3xl relative overflow-hidden">
+                <div className="relative h-40 w-40 rounded-full border-2 border-dashed border-primary/30 group cursor-pointer hover:border-primary/60 transition-all flex items-center justify-center bg-black/40 shadow-[0_0_30px_rgba(0,242,255,0.1)]">
+                  {formData.photoUrl ? (
+                    <div className="relative h-full w-full rounded-full overflow-hidden border border-primary/40">
+                      <Image src={formData.photoUrl} alt="Preview" fill className="object-cover rounded-full" />
+                      <button 
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setFormData({...formData, photoUrl: ""}); }}
+                        className="absolute inset-0 bg-black/60 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                      >
+                        <X className="h-6 w-6" />
+                      </button>
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-primary/60">Sincronizar Foto Atleta</span>
-                  </div>
-                )}
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  className="absolute inset-0 opacity-0 cursor-pointer" 
-                  onChange={handlePhotoUpload}
-                />
+                  ) : (
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="h-16 w-16 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Camera className="h-8 w-8 text-primary/40" />
+                      </div>
+                      <span className="text-[8px] font-black uppercase tracking-widest text-primary/60 text-center">SINCRO_FOTO</span>
+                    </div>
+                  )}
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    className="absolute inset-0 opacity-0 cursor-pointer z-10" 
+                    onChange={handlePhotoUpload}
+                  />
+                </div>
               </div>
             </div>
 
@@ -530,7 +532,6 @@ export default function PlayersManagementPage() {
                 </Select>
               </div>
 
-              {/* TOGGLE MENOR DE EDAD */}
               <div className="flex items-center justify-between p-4 bg-primary/5 border border-primary/20 rounded-xl">
                 <div className="space-y-0.5">
                   <Label className="text-[10px] font-black uppercase text-primary tracking-widest">¿Es Menor de Edad?</Label>
@@ -543,7 +544,6 @@ export default function PlayersManagementPage() {
                 />
               </div>
 
-              {/* SECCIÓN TUTOR CONDICIONAL */}
               {formData.isMinor && (
                 <div className="space-y-6 p-6 border border-primary/30 bg-primary/5 rounded-3xl animate-in zoom-in-95 duration-700 relative overflow-hidden">
                   <div className="absolute top-0 right-0 p-4 opacity-5">
