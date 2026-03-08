@@ -487,7 +487,7 @@ function PlayerStat({ label, value, icon: Icon, highlight, warning }: any) {
           <div className="flex items-baseline gap-2">
              <p className={cn(
                "text-2xl font-black italic tracking-tighter",
-               highlight ? "text-primary cyan-text-glow" : "text-rose-400" : "text-white"
+               highlight ? "text-primary cyan-text-glow" : warning ? "text-rose-400" : "text-white"
              )}>{value}</p>
           </div>
        </div>
