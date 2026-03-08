@@ -51,12 +51,15 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 const CATEGORIES = [
-  { value: "Iniciación", label: "Iniciación" },
+  { value: "Debutantes", label: "Debutantes" },
+  { value: "Prebenjamín", label: "Prebenjamín" },
   { value: "Benjamín", label: "Benjamín" },
   { value: "Alevín", label: "Alevín" },
   { value: "Infantil", label: "Infantil" },
   { value: "Cadete", label: "Cadete" },
   { value: "Juvenil", label: "Juvenil" },
+  { value: "Senior", label: "Senior" },
+  { value: "Primer Equipo", label: "Primer Equipo" },
 ];
 
 const POSITIONS = [
@@ -86,7 +89,7 @@ export default function PlayersManagementPage() {
     name: "",
     surname: "",
     email: "",
-    category: "Infantil A",
+    category: "Alevín",
     position: "Medio",
     status: "Active"
   });
@@ -97,7 +100,7 @@ export default function PlayersManagementPage() {
       name: "", 
       surname: "", 
       email: "", 
-      category: "Infantil A", 
+      category: "Alevín", 
       position: "Medio", 
       status: "Active" 
     });

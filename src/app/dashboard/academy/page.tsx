@@ -49,16 +49,22 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 const STAGES = [
-  { id: "s1", name: "Iniciación", description: "Fase de descubrimiento y psicomotricidad básica.", color: "text-blue-400" },
+  { id: "s1", name: "Iniciación", description: "Descubrimiento y psicomotricidad básica.", color: "text-blue-400" },
   { id: "s2", name: "Formación", description: "Desarrollo de fundamentos técnicos y tácticos.", color: "text-emerald-400" },
-  { id: "s3", name: "Competición", description: "Alto rendimiento y especialización posicional.", color: "text-primary" },
+  { id: "s3", name: "Competición", description: "Alto rendimiento y especialización.", color: "text-primary" },
+  { id: "s4", name: "Rendimiento", description: "Máxima exigencia y resultados de red.", color: "text-rose-400" },
 ];
 
 const INITIAL_CATEGORIES = [
-  { id: "c1", name: "Alevín", stageId: "s2", teams: ["Alevín A", "Alevín B"], players: 24 },
-  { id: "c2", name: "Infantil", stageId: "s2", teams: ["Infantil A", "Infantil B", "Infantil C"], players: 36 },
-  { id: "c3", name: "Cadete", stageId: "s3", teams: ["Cadete A", "Cadete B"], players: 42 },
-  { id: "c4", name: "Debutantes", stageId: "s1", teams: ["Escuela"], players: 15 },
+  { id: "c1", name: "Debutantes", stageId: "s1", teams: ["Escuela A", "Escuela B"], players: 20 },
+  { id: "c2", name: "Prebenjamín", stageId: "s1", teams: ["Prebenjamín A"], players: 12 },
+  { id: "c3", name: "Benjamín", stageId: "s2", teams: ["Benjamín A", "Benjamín B"], players: 24 },
+  { id: "c4", name: "Alevín", stageId: "s2", teams: ["Alevín A", "Alevín B", "Alevín C"], players: 36 },
+  { id: "c5", name: "Infantil", stageId: "s2", teams: ["Infantil A", "Infantil B"], players: 30 },
+  { id: "c6", name: "Cadete", stageId: "s3", teams: ["Cadete A", "Cadete B"], players: 40 },
+  { id: "c7", name: "Juvenil", stageId: "s3", teams: ["Juvenil A", "Juvenil B"], players: 44 },
+  { id: "c8", name: "Senior", stageId: "s4", teams: ["Senior B", "Senior C"], players: 38 },
+  { id: "c9", name: "Primer Equipo", stageId: "s4", teams: ["Primer Equipo"], players: 25 },
 ];
 
 export default function AcademyManagementPage() {
@@ -127,13 +133,13 @@ export default function AcademyManagementPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <AcademyStat label="Total Equipos" value="08" icon={Trophy} />
-        <AcademyStat label="Atletas en Formación" value="142" icon={Users} highlight />
-        <AcademyStat label="Etapas Metodológicas" value="03" icon={Layers} />
+        <AcademyStat label="Total Equipos" value={categories.reduce((acc, cat) => acc + cat.teams.length, 0).toString()} icon={Trophy} />
+        <AcademyStat label="Atletas en Formación" value={categories.reduce((acc, cat) => acc + cat.players, 0).toString()} icon={Users} highlight />
+        <AcademyStat label="Etapas Metodológicas" value={STAGES.length.toString()} icon={Layers} />
         <AcademyStat label="Sincronización Red" value="100%" icon={Activity} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 pt-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8 pt-4">
         {STAGES.map((stage) => (
           <div key={stage.id} className="space-y-6">
             <div className="flex items-center justify-between px-2">
@@ -149,7 +155,7 @@ export default function AcademyManagementPage() {
                 <Card key={cat.id} className="glass-panel border-none bg-black/40 overflow-hidden group hover:bg-black/60 transition-all cursor-default">
                   <CardHeader className="p-6 pb-2">
                     <div className="flex justify-between items-start mb-2">
-                      <CardTitle className="text-xl font-black text-white italic tracking-tighter uppercase group-hover:cyan-text-glow transition-all">
+                      <CardTitle className="text-lg font-black text-white italic tracking-tighter uppercase group-hover:cyan-text-glow transition-all">
                         {cat.name}
                       </CardTitle>
                       <div className="flex items-center gap-2">
@@ -157,29 +163,29 @@ export default function AcademyManagementPage() {
                         <span className="text-[10px] font-black text-white/40">{cat.players}</span>
                       </div>
                     </div>
-                    <CardDescription className="text-[9px] font-bold text-white/20 uppercase tracking-widest leading-relaxed">
-                      {cat.teams.length} Equipos Vinculados • Fase Formativa {stage.id === 's3' ? 'Alta' : 'Base'}
+                    <CardDescription className="text-[8px] font-bold text-white/20 uppercase tracking-widest leading-relaxed">
+                      {cat.teams.length} Equipos • Fase {stage.name}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-6 pt-4">
                     <div className="grid grid-cols-1 gap-2">
                       {cat.teams.map((team, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5 hover:border-primary/30 transition-all group/team">
+                        <div key={idx} className="flex items-center justify-between p-2.5 bg-white/5 rounded-xl border border-white/5 hover:border-primary/30 transition-all group/team">
                           <div className="flex items-center gap-3">
                             <div className="h-1 w-1 rounded-full bg-primary/40 group-hover/team:bg-primary transition-colors" />
-                            <span className="text-[10px] font-black text-white/60 uppercase tracking-tight group-hover/team:text-white">{team}</span>
+                            <span className="text-[9px] font-black text-white/60 uppercase tracking-tight group-hover/team:text-white">{team}</span>
                           </div>
                           <ArrowUpRight className="h-3 w-3 text-white/0 group-hover/team:text-primary group-hover/team:opacity-100 transition-all" />
                         </div>
                       ))}
                     </div>
                   </CardContent>
-                  <CardFooter className="px-6 py-4 bg-black/40 border-t border-white/5 flex justify-between">
-                    <button className="text-[9px] font-black text-white/20 hover:text-primary transition-all flex items-center gap-2 uppercase tracking-widest">
-                      <Pencil className="h-3 w-3" /> Editar
+                  <CardFooter className="px-6 py-3 bg-black/40 border-t border-white/5 flex justify-between">
+                    <button className="text-[8px] font-black text-white/20 hover:text-primary transition-all flex items-center gap-2 uppercase tracking-widest">
+                      <Pencil className="h-2.5 w-2.5" /> Editar
                     </button>
-                    <button className="text-[9px] font-black text-white/20 hover:text-rose-400 transition-all flex items-center gap-2 uppercase tracking-widest">
-                      <Trash2 className="h-3 w-3" /> Eliminar
+                    <button className="text-[8px] font-black text-white/20 hover:text-rose-400 transition-all flex items-center gap-2 uppercase tracking-widest">
+                      <Trash2 className="h-2.5 w-2.5" /> Eliminar
                     </button>
                   </CardFooter>
                 </Card>
@@ -188,9 +194,9 @@ export default function AcademyManagementPage() {
               <Button 
                 variant="ghost" 
                 onClick={() => handleOpenSheet('category')}
-                className="w-full h-14 border border-dashed border-white/5 hover:border-primary/20 bg-transparent text-[9px] font-black text-white/10 hover:text-primary uppercase tracking-[0.3em] transition-all"
+                className="w-full h-12 border border-dashed border-white/5 hover:border-primary/20 bg-transparent text-[8px] font-black text-white/10 hover:text-primary uppercase tracking-[0.3em] transition-all"
               >
-                <Plus className="h-3 w-3 mr-2" /> Añadir Categoría a {stage.name}
+                <Plus className="h-3 w-3 mr-2" /> Nueva Categoría
               </Button>
             </div>
           </div>
