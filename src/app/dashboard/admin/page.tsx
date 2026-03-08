@@ -12,9 +12,12 @@ import {
   Save, 
   ShieldAlert,
   Users,
-  Building2,
   MapPin,
-  ClipboardCheck,
+  Monitor,
+  Dumbbell,
+  Sprout,
+  Activity,
+  Building,
   Eye,
   Pencil,
   Trash2,
@@ -27,7 +30,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 
 const ROLES_TO_MANAGE = [
   { id: "academy_director", label: "Director de Cantera", rank: 80 },
@@ -40,10 +43,14 @@ const ROLES_TO_MANAGE = [
 ];
 
 const MODULES = [
-  { id: "staff", label: "Gestión de Personal", icon: UserCog },
+  { id: "club", label: "Identidad de Club", icon: Building },
+  { id: "staff", label: "Gestión de Staff", icon: UserCog },
+  { id: "academy", label: "Gestión de Cantera", icon: Sprout },
   { id: "players", label: "Gestión de Jugadores", icon: Users },
   { id: "facilities", label: "Instalaciones", icon: MapPin },
-  { id: "tactics", label: "Pizarra y Ejercicios", icon: ClipboardCheck },
+  { id: "board", label: "Pizarra Táctica", icon: Monitor },
+  { id: "exercises", label: "Biblioteca de Ejercicios", icon: Dumbbell },
+  { id: "planner", label: "Neural Planner", icon: Activity },
 ];
 
 export default function AdminPermissionsPage() {
@@ -167,7 +174,7 @@ export default function AdminPermissionsPage() {
             </CardHeader>
             <CardContent className="p-0">
               <div className="divide-y divide-white/5">
-                {MODULES.map((module) => (
+                {MODULES.map((module, idx) => (
                   <div key={module.id} className="p-8 flex flex-col md:flex-row md:items-center justify-between gap-8 group hover:bg-white/[0.01] transition-colors">
                     <div className="flex items-center gap-6 min-w-[240px]">
                       <div className="h-14 w-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center group-hover:border-primary/40 transition-all">
@@ -175,7 +182,7 @@ export default function AdminPermissionsPage() {
                       </div>
                       <div className="space-y-1">
                         <h4 className="text-sm font-black text-white uppercase italic tracking-widest group-hover:cyan-text-glow">{module.label}</h4>
-                        <p className="text-[9px] text-white/30 font-bold uppercase tracking-widest">Módulo de Sistema 0{MODULES.indexOf(module) + 1}</p>
+                        <p className="text-[9px] text-white/30 font-bold uppercase tracking-widest">Módulo de Sistema 0{idx + 1}</p>
                       </div>
                     </div>
 
@@ -251,14 +258,6 @@ function PermissionToggle({ label, icon: Icon, defaultChecked, critical }: any) 
           checked && critical ? "data-[state=checked]:bg-rose-500" : ""
         )}
       />
-    </div>
-  );
-}
-
-function Badge({ className, children }: any) {
-  return (
-    <div className={cn("px-3 py-1 rounded-full border text-[10px] font-bold", className)}>
-      {children}
     </div>
   );
 }
