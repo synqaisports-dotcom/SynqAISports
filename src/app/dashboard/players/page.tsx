@@ -65,18 +65,24 @@ const CATEGORIES = [
 
 const TEAM_SUFFIXES = ["A", "B", "C", "D"];
 
-const POSITIONS = [
-  { value: "Portero", label: "Portero / Guardameta" },
-  { value: "Defensa", label: "Defensa / Zaguero" },
-  { value: "Medio", label: "Mediocentro / Volante" },
-  { value: "Delantero", label: "Delantero / Punta" },
+const TACTICAL_POSITIONS = [
+  { id: "POR", label: "POR" },
+  { id: "LD", label: "LD" },
+  { id: "LI", label: "LI" },
+  { id: "DFC", label: "DFC" },
+  { id: "MCD", label: "MCD" },
+  { id: "MC", label: "MC" },
+  { id: "MCO", label: "MCO" },
+  { id: "ED", label: "ED" },
+  { id: "EI", label: "EI" },
+  { id: "DC", label: "DC" },
 ];
 
 const INITIAL_PLAYERS = [
-  { id: "p1", name: "Lucas", surname: "García", email: "l.garcia@tutor.com", category: "Infantil", teamSuffix: "A", position: "Medio", status: "Active", attendance: "98%" },
-  { id: "p2", name: "Elena", surname: "Rossi", email: "e.rossi@tutor.it", category: "Alevín", teamSuffix: "B", position: "Delantero", status: "Active", attendance: "92%" },
-  { id: "p3", name: "Marc", surname: "Soler", email: "m.soler@tutor.es", category: "Cadete", teamSuffix: "C", position: "Portero", status: "Injured", attendance: "45%" },
-  { id: "p4", name: "Sofía", surname: "Mendes", email: "s.mendes@tutor.br", category: "Benjamín", teamSuffix: "A", position: "Defensa", status: "Active", attendance: "100%" },
+  { id: "p1", name: "Lucas", surname: "García", email: "l.garcia@tutor.com", category: "Infantil", teamSuffix: "A", position: "MC, MCO", status: "Active", attendance: "98%" },
+  { id: "p2", name: "Elena", surname: "Rossi", email: "e.rossi@tutor.it", category: "Alevín", teamSuffix: "B", position: "DC", status: "Active", attendance: "92%" },
+  { id: "p3", name: "Marc", surname: "Soler", email: "m.soler@tutor.es", category: "Cadete", teamSuffix: "C", position: "POR", status: "Injured", attendance: "45%" },
+  { id: "p4", name: "Sofía", surname: "Mendes", email: "s.mendes@tutor.br", category: "Benjamín", teamSuffix: "A", position: "DFC, LD", status: "Active", attendance: "100%" },
 ];
 
 export default function PlayersManagementPage() {
@@ -94,7 +100,7 @@ export default function PlayersManagementPage() {
     email: "",
     category: "Alevín",
     teamSuffix: "A",
-    position: "Medio",
+    position: [] as string[],
     status: "Active"
   });
 
@@ -106,7 +112,7 @@ export default function PlayersManagementPage() {
       email: "", 
       category: "Alevín", 
       teamSuffix: "A",
-      position: "Medio", 
+      position: [], 
       status: "Active" 
     });
     setIsSheetOpen(true);
@@ -120,10 +126,19 @@ export default function PlayersManagementPage() {
       email: player.email,
       category: player.category,
       teamSuffix: player.teamSuffix,
-      position: player.position,
+      position: player.position ? player.position.split(", ") : [],
       status: player.status
     });
     setIsSheetOpen(true);
+  };
+
+  const togglePosition = (posId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      position: prev.position.includes(posId)
+        ? prev.position.filter(p => p !== posId)
+        : [...prev.position, posId]
+    }));
   };
 
   const handleDelete = (id: string, name: string) => {
@@ -139,14 +154,19 @@ export default function PlayersManagementPage() {
     e.preventDefault();
     setLoading(true);
     
+    const playerToSave = {
+      ...formData,
+      position: formData.position.join(", ")
+    };
+
     setTimeout(() => {
       if (editingId) {
-        setPlayers(prev => prev.map(p => p.id === editingId ? { ...p, ...formData } : p));
+        setPlayers(prev => prev.map(p => p.id === editingId ? { ...p, ...playerToSave } : p));
         toast({ title: "FICHA_ACTUALIZADA", description: "Protocolo de atleta sincronizado." });
       } else {
         const newPlayer = { 
           id: `p${Date.now()}`, 
-          ...formData, 
+          ...playerToSave, 
           attendance: "100%" 
         };
         setPlayers([newPlayer, ...players]);
@@ -403,41 +423,42 @@ export default function PlayersManagementPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Posición Táctica</Label>
-                  <Select 
-                    value={formData.position} 
-                    onValueChange={(v) => setFormData({...formData, position: v})}
-                  >
-                    <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary/50 transition-all">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
-                      {POSITIONS.map(pos => (
-                        <SelectItem key={pos.value} value={pos.value} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary">
-                          {pos.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              <div className="space-y-4">
+                <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Posiciones Tácticas (Multiselección)</Label>
+                <div className="grid grid-cols-5 gap-2">
+                  {TACTICAL_POSITIONS.map(pos => (
+                    <button
+                      key={pos.id}
+                      type="button"
+                      onClick={() => togglePosition(pos.id)}
+                      className={cn(
+                        "h-10 border font-black text-[10px] transition-all flex items-center justify-center rounded-sm",
+                        formData.position.includes(pos.id)
+                          ? "bg-primary border-primary text-black shadow-[0_0_15px_rgba(0,242,255,0.3)]"
+                          : "bg-white/5 border-white/10 text-white/40 hover:border-primary/40 hover:text-white"
+                      )}
+                    >
+                      {pos.label}
+                    </button>
+                  ))}
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Estatus del Atleta</Label>
-                  <Select 
-                    value={formData.status} 
-                    onValueChange={(v) => setFormData({...formData, status: v})}
-                  >
-                    <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary/50 transition-all">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
-                      <SelectItem value="Active" className="text-[10px] font-black uppercase">ACTIVO / DISPONIBLE</SelectItem>
-                      <SelectItem value="Injured" className="text-[10px] font-black uppercase text-rose-400">LESIONADO / BAJA</SelectItem>
-                      <SelectItem value="Away" className="text-[10px] font-black uppercase">AUSENCIA_TEMPORAL</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Estatus del Atleta</Label>
+                <Select 
+                  value={formData.status} 
+                  onValueChange={(v) => setFormData({...formData, status: v})}
+                >
+                  <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-primary/50 transition-all">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
+                    <SelectItem value="Active" className="text-[10px] font-black uppercase">ACTIVO / DISPONIBLE</SelectItem>
+                    <SelectItem value="Injured" className="text-[10px] font-black uppercase text-rose-400">LESIONADO / BAJA</SelectItem>
+                    <SelectItem value="Away" className="text-[10px] font-black uppercase">AUSENCIA_TEMPORAL</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
