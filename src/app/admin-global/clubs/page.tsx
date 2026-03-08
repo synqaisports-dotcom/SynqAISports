@@ -103,7 +103,7 @@ export default function ManageClubsPage() {
             <Search className="absolute left-4 top-4 h-4 w-4 text-emerald-500 opacity-50" />
             <Input 
               placeholder="BUSCAR IDENTIDAD DE CLUB..." 
-              className="pl-12 h-12 bg-white/5 border-white/10 rounded-xl text-white placeholder:text-white/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-emerald-500/50 transition-all"
+              className="pl-12 h-12 bg-white/5 border-emerald-500/20 rounded-xl text-white placeholder:text-white/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-emerald-500/50 transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />

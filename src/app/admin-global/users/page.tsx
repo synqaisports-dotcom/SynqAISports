@@ -147,7 +147,7 @@ export default function GlobalUsersPage() {
                       value={formData.name}
                       onChange={(e) => setFormData({...formData, name: e.target.value})}
                       placeholder="EJ: MARC" 
-                      className="h-12 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-emerald-500/50 transition-all placeholder:text-white/10" 
+                      className="h-12 bg-white/5 border-emerald-500/20 rounded-none font-bold uppercase focus:border-emerald-500 transition-all placeholder:text-white/10" 
                     />
                   </div>
                   <div className="space-y-2">
@@ -157,7 +157,7 @@ export default function GlobalUsersPage() {
                       value={formData.surname}
                       onChange={(e) => setFormData({...formData, surname: e.target.value})}
                       placeholder="EJ: GARCÍA" 
-                      className="h-12 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-emerald-500/50 transition-all placeholder:text-white/10" 
+                      className="h-12 bg-white/5 border-emerald-500/20 rounded-none font-bold uppercase focus:border-emerald-500 transition-all placeholder:text-white/10" 
                     />
                   </div>
                 </div>
@@ -172,7 +172,7 @@ export default function GlobalUsersPage() {
                       value={formData.email}
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
                       placeholder="USER@CLUB.COM" 
-                      className="pl-10 h-12 bg-white/5 border-white/10 rounded-none font-bold focus:border-emerald-500/50 transition-all placeholder:text-white/10" 
+                      className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-none font-bold focus:border-emerald-500 transition-all placeholder:text-white/10" 
                     />
                   </div>
                 </div>
@@ -186,7 +186,7 @@ export default function GlobalUsersPage() {
                       value={formData.country}
                       onChange={(e) => setFormData({...formData, country: e.target.value})}
                       placeholder="ESPAÑA" 
-                      className="pl-10 h-12 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-emerald-500/50 transition-all placeholder:text-white/10" 
+                      className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-none font-bold uppercase focus:border-emerald-500 transition-all placeholder:text-white/10" 
                     />
                   </div>
                 </div>
@@ -197,7 +197,7 @@ export default function GlobalUsersPage() {
                     value={formData.role} 
                     onValueChange={(v) => setFormData({...formData, role: v})}
                   >
-                    <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-emerald-500/50 transition-all">
+                    <SelectTrigger className="h-12 bg-white/5 border-emerald-500/20 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-emerald-500 transition-all">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#04070c] border-emerald-500/20 rounded-none">
@@ -256,7 +256,7 @@ export default function GlobalUsersPage() {
             <Search className="absolute left-3 top-3.5 h-4 w-4 text-emerald-500 opacity-50" />
             <Input 
               placeholder="BUSCAR IDENTIDAD O PAÍS..." 
-              className="pl-10 h-12 bg-white/5 border-white/10 rounded-none text-white placeholder:text-white/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-emerald-500/50 transition-all"
+              className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-none text-white placeholder:text-white/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-emerald-500/50 transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />

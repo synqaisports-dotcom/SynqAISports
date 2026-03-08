@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -237,7 +238,7 @@ export default function GlobalPromosPage() {
               <Search className="absolute left-3 top-3.5 h-4 w-4 text-emerald-400 opacity-50" />
               <Input 
                 placeholder="BUSCAR CAMPAÑA O TOKEN..." 
-                className="pl-10 h-12 bg-white/5 border-white/10 rounded-none text-white placeholder:text-white/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-emerald-500/50"
+                className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-none text-white placeholder:text-white/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-emerald-500/50"
               />
             </div>
             <div className="flex items-center gap-2">
@@ -329,12 +330,12 @@ export default function GlobalPromosPage() {
                       <Input 
                         readOnly 
                         value={currentUrl || "Sincronizando..."} 
-                        className="h-12 bg-white/5 border-white/10 rounded-none text-[10px] font-mono text-emerald-400/80" 
+                        className="h-12 bg-white/5 border-emerald-500/20 rounded-none text-[10px] font-mono text-emerald-400/80" 
                       />
                       <Button 
                         size="icon" 
                         variant="ghost" 
-                        className="h-12 w-12 border border-white/10 rounded-none hover:text-emerald-400 bg-white/5" 
+                        className="h-12 w-12 border border-emerald-500/20 rounded-none hover:text-emerald-400 bg-white/5" 
                         onClick={() => copyToClipboard(currentUrl)}
                       >
                         <Copy className="h-4 w-4" />
@@ -383,7 +384,7 @@ export default function GlobalPromosPage() {
                     value={formData.objective}
                     onChange={(e) => setFormData({...formData, objective: e.target.value})}
                     placeholder="EJ: TOP 10 CLUBES EN BUENOS AIRES..." 
-                    className="pl-12 h-16 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-emerald-500/50 text-lg" 
+                    className="pl-12 h-16 bg-white/5 border-emerald-500/20 rounded-none font-bold uppercase focus:border-emerald-500/50 text-lg" 
                   />
                 </div>
               </div>
@@ -395,7 +396,7 @@ export default function GlobalPromosPage() {
                     value={formData.planId} 
                     onValueChange={(v) => setFormData({...formData, planId: v})}
                   >
-                    <SelectTrigger className="h-16 bg-white/5 border-white/10 rounded-none font-bold uppercase tracking-widest text-xs">
+                    <SelectTrigger className="h-16 bg-white/5 border-emerald-500/20 rounded-none font-bold uppercase tracking-widest text-xs focus:border-emerald-500">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#04070c] border-emerald-500/20 rounded-none">
@@ -414,7 +415,7 @@ export default function GlobalPromosPage() {
                     value={formData.platform} 
                     onValueChange={(v) => setFormData({...formData, platform: v})}
                   >
-                    <SelectTrigger className="h-16 bg-white/5 border-white/10 rounded-none font-bold uppercase tracking-widest text-xs">
+                    <SelectTrigger className="h-16 bg-white/5 border-emerald-500/20 rounded-none font-bold uppercase tracking-widest text-xs focus:border-emerald-500">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#04070c] border-emerald-500/20 rounded-none">
@@ -484,7 +485,7 @@ export default function GlobalPromosPage() {
 function PromoMiniStat({ icon: Icon, label, value, trend }: any) {
   return (
     <Card className="glass-panel p-5 flex items-center gap-5 relative overflow-hidden group border-none bg-black/20">
-       <div className="h-12 w-12 bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 group-hover:bg-emerald-500/20 transition-all rotate-3 group-hover:rotate-0 duration-500">
+       <div className="h-12 w-12 bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 group-hover:bg-emerald-500/20 transition-all rotate-3 group-hover:rotate-0 duration-500 rounded-2xl">
           <Icon className="h-6 w-6 text-emerald-400" />
        </div>
        <div className="relative z-10">
@@ -494,7 +495,7 @@ function PromoMiniStat({ icon: Icon, label, value, trend }: any) {
              <span className="text-[9px] font-black text-emerald-400 italic">{trend}</span>
           </div>
        </div>
-       <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 scan-line" />
+       <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-10 scan-line" />
     </Card>
   );
 }

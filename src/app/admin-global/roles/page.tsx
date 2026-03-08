@@ -215,7 +215,7 @@ export default function GlobalRolesPage() {
                 <Input 
                   defaultValue={editingRole?.name || ""}
                   placeholder="EJ: ANALISTA_TACTICO_PRO" 
-                  className="h-16 bg-white/5 border-white/10 rounded-2xl font-bold uppercase focus:border-emerald-500/50 transition-all text-lg placeholder:text-white/10" 
+                  className="h-16 bg-white/5 border-emerald-500/20 rounded-2xl font-bold uppercase focus:border-emerald-500 transition-all text-lg placeholder:text-white/10" 
                 />
               </div>
               
@@ -265,7 +265,7 @@ export default function GlobalRolesPage() {
                             <div className="grid grid-cols-2 gap-3">
                               {module.features.map(feature => (
                                 <div key={feature} className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/5 hover:border-emerald-500/20 transition-all cursor-pointer">
-                                   <Checkbox className="h-3.5 w-3.5 rounded-sm border-white/20 data-[state=checked]:bg-emerald-500 data-[state=checked]:text-black" />
+                                   <Checkbox className="h-3.5 w-3.5 rounded-sm border-emerald-500/20 data-[state=checked]:bg-emerald-500 data-[state=checked]:text-black" />
                                    <span className="text-[9px] font-bold text-white/40 uppercase tracking-tighter group-hover/module:text-white/60">{feature}</span>
                                 </div>
                               ))}
@@ -301,7 +301,7 @@ export default function GlobalRolesPage() {
               <Search className="absolute left-4 top-4 h-5 w-5 text-emerald-500 opacity-50" />
               <Input 
                 placeholder="BUSCAR IDENTIDAD DE ROL..." 
-                className="pl-12 h-14 bg-white/[0.03] border-white/10 rounded-2xl text-white font-bold uppercase text-[11px] tracking-widest focus:ring-emerald-500/30 transition-all"
+                className="pl-12 h-14 bg-white/[0.03] border-emerald-500/20 rounded-2xl text-white font-bold uppercase text-[11px] tracking-widest focus:ring-emerald-500/30 transition-all"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />

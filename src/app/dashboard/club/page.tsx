@@ -355,7 +355,7 @@ export default function ClubManagementPage() {
                    <ContactLink icon={Youtube} label="YouTube" value={clubData.socials.youtube} />
                    <ContactLink icon={Twitter} label="Twitter / X" value={clubData.socials.twitter} />
                 </CardContent>
-              </div>
+              </Card>
            </div>
         </div>
 
