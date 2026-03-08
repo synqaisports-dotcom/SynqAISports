@@ -253,10 +253,10 @@ export default function PlayersManagementPage() {
               <thead className="bg-white/[0.02] border-b border-white/5">
                 <tr>
                   <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-white/40">Atleta / Identidad</th>
-                  <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white/40">Categoría - Equipo</th>
-                  <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white/40">Posición</th>
-                  <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white/40">Asistencia</th>
-                  <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white/40">Estatus</th>
+                  <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white/40 text-center">Categoría - Equipo</th>
+                  <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white/40 text-center">Posición</th>
+                  <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white/40 text-center">Asistencia</th>
+                  <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white/40 text-center">Estatus</th>
                   <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-white/40 text-right">Acciones</th>
                 </tr>
               </thead>
@@ -278,26 +278,26 @@ export default function PlayersManagementPage() {
                       </div>
                     </td>
                     <td className="px-6 py-5">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="rounded-none border-white/10 text-white/60 font-black text-[9px] uppercase tracking-widest bg-white/5 px-3">
-                          {player.category}
-                        </Badge>
-                        <span className="text-[10px] font-black text-primary italic">[{player.teamSuffix}]</span>
+                      <div className="flex justify-center">
+                        <div className="inline-flex items-center border border-white/10 bg-white/5 rounded-none divide-x divide-white/10 overflow-hidden group-hover:border-primary/30 transition-all">
+                          <span className="px-3 py-1 text-[9px] font-black text-white/60 uppercase tracking-widest whitespace-nowrap">{player.category}</span>
+                          <span className="px-2.5 py-1 text-[10px] font-black text-primary italic bg-primary/5 min-w-[32px] text-center">{player.teamSuffix}</span>
+                        </div>
                       </div>
                     </td>
-                    <td className="px-6 py-5">
+                    <td className="px-6 py-5 text-center">
                       <span className="text-[10px] font-black text-white/70 uppercase tracking-tighter">{player.position}</span>
                     </td>
                     <td className="px-6 py-5">
-                      <div className="flex items-center gap-3">
-                         <div className="h-1.5 w-16 bg-white/5 rounded-full overflow-hidden">
+                      <div className="flex items-center justify-center gap-3">
+                         <div className="h-1.5 w-16 bg-white/5 rounded-full overflow-hidden hidden md:block">
                             <div className="h-full bg-primary" style={{ width: player.attendance }} />
                          </div>
                          <span className="text-[10px] font-mono font-bold text-primary/80">{player.attendance}</span>
                       </div>
                     </td>
                     <td className="px-6 py-5">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-center gap-2">
                         <div className={cn(
                           "h-1.5 w-1.5 rounded-full animate-pulse",
                           player.status === 'Active' ? 'bg-primary shadow-[0_0_8px_var(--primary)]' : 
@@ -493,7 +493,7 @@ export default function PlayersManagementPage() {
 
               {/* SECCIÓN TUTOR CONDICIONAL */}
               {formData.isMinor && (
-                <div className="space-y-6 p-6 border border-primary/30 bg-primary/5 rounded-3xl animate-in zoom-in-95 duration-500 relative overflow-hidden">
+                <div className="space-y-6 p-6 border border-primary/30 bg-primary/5 rounded-3xl animate-in zoom-in-95 duration-700 relative overflow-hidden">
                   <div className="absolute top-0 right-0 p-4 opacity-5">
                     <ShieldCheck className="h-20 w-20 text-primary" />
                   </div>
