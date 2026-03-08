@@ -18,6 +18,7 @@ import {
   Activity, 
   Target,
   ArrowUpRight,
+  ArrowRight,
   Loader2,
   FolderPlus,
   Layers,
