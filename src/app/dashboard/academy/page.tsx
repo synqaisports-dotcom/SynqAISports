@@ -419,39 +419,84 @@ export default function AcademyManagementPage() {
           <form onSubmit={handleSave} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10">
             <div className="space-y-8">
               {sheetMode === 'category' ? (
-                <>
-                  <div className="space-y-3">
-                    <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Nombre de la Categoría</Label>
-                    <Input 
-                      required
-                      value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})}
-                      placeholder="EJ: ALEVÍN" 
-                      className="h-14 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-primary/50 transition-all placeholder:text-white/10 text-lg" 
-                    />
+                <div className="space-y-10">
+                  <div className="space-y-6 p-8 border border-primary/30 bg-primary/5 rounded-3xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-5">
+                      <Layers className="h-24 w-24 text-primary" />
+                    </div>
+                    <div className="flex items-center gap-3 border-b border-primary/20 pb-4 mb-6">
+                      <Target className="h-4 w-4 text-primary" />
+                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">
+                        Identidad y Metodología
+                      </span>
+                    </div>
+                    <div className="space-y-3">
+                      <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Nombre de la Categoría</Label>
+                      <Input 
+                        required
+                        value={formData.name}
+                        onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})}
+                        placeholder="EJ: ALEVÍN" 
+                        className="h-14 bg-white/5 border-white/10 rounded-none font-bold uppercase focus:border-primary/50 transition-all placeholder:text-white/10 text-lg" 
+                      />
+                    </div>
+                    <div className="space-y-3">
+                      <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Etapa Metodológica</Label>
+                      <Select 
+                        value={formData.stageId} 
+                        onValueChange={(v) => setFormData({...formData, stageId: v})}
+                      >
+                        <SelectTrigger className="h-14 bg-black/40 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest px-6">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-none">
+                          {STAGES.map(s => (
+                            <SelectItem key={s.id} value={s.id} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary">
+                              {s.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                  <div className="space-y-3">
-                    <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Etapa Metodológica</Label>
-                    <Select 
-                      value={formData.stageId} 
-                      onValueChange={(v) => setFormData({...formData, stageId: v})}
-                    >
-                      <SelectTrigger className="h-14 bg-white/5 border-white/10 rounded-none text-white/60 font-bold uppercase tracking-widest px-6">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-none">
-                        {STAGES.map(s => (
-                          <SelectItem key={s.id} value={s.id} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary">
-                            {s.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </>
+                </div>
               ) : (
                 <div className="space-y-10">
-                  {/* BLOQUE 1: IDENTIDAD */}
+                  {/* BLOQUE 0: CLASIFICACIÓN METODOLÓGICA */}
+                  <div className="space-y-6 p-8 border border-primary/30 bg-primary/5 rounded-3xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-5">
+                      <Layers className="h-24 w-24 text-primary" />
+                    </div>
+                    <div className="flex items-center gap-3 border-b border-primary/20 pb-4 mb-6">
+                      <Target className="h-4 w-4 text-primary" />
+                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">
+                        Clasificación Metodológica
+                      </span>
+                    </div>
+                    <div className="space-y-3">
+                      <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Etapa de Desarrollo</Label>
+                      <Select 
+                        value={formData.stageId} 
+                        onValueChange={(v) => setFormData({...formData, stageId: v})}
+                      >
+                        <SelectTrigger className="h-12 bg-black/40 border-white/10 rounded-none text-white font-bold uppercase text-[10px] tracking-widest">
+                          <div className="flex items-center gap-3">
+                            <Layers className="h-4 w-4 text-primary/40" />
+                            <SelectValue placeholder="SELECCIONAR ETAPA..." />
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
+                          {STAGES.map(s => (
+                            <SelectItem key={s.id} value={s.id} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary">
+                              {s.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* BLOQUE 1: IDENTIDAD FEDERATIVA */}
                   <div className="space-y-6">
                     <div className="grid grid-cols-2 gap-6">
                       <div className="space-y-3">
@@ -727,7 +772,7 @@ export default function AcademyManagementPage() {
                   <span className="text-[9px] font-black uppercase text-primary tracking-widest">Protocolo de Organización</span>
                 </div>
                 <p className="text-[9px] text-white/40 leading-relaxed font-bold uppercase italic">
-                  La asignación de staff técnico vincula los perfiles de usuario con el nodo de equipo, permitiendo que el entrenador acceda directamente a la telemetría de sus atletas asignados.
+                  La clasificación por etapa y staff vincula los perfiles de usuario con el nodo de equipo, permitiendo una gestión segmentada de la metodología del club.
                 </p>
               </div>
             </div>
