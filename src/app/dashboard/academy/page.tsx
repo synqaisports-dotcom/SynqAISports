@@ -25,7 +25,11 @@ import {
   MapPin,
   Clock,
   Calendar,
-  Zap
+  Zap,
+  UserCog,
+  Dumbbell,
+  IdCard,
+  ClipboardCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -72,7 +76,6 @@ const INITIAL_CATEGORIES = [
   { id: "c9", name: "Primer Equipo", stageId: "s4", teams: [{ name: "Primer Equipo", suffix: "A" }], players: 25 },
 ];
 
-// Datos simulados de instalaciones del club
 const MOCK_FACILITIES = [
   { id: "f1", name: "Campo de Fútbol Principal", subdivisions: "2", zones: ["Zona A (Mitad 1)", "Zona B (Mitad 2)"] },
   { id: "f2", name: "Pabellón Cubierto A", subdivisions: "1", zones: [] },
@@ -108,7 +111,12 @@ export default function AcademyManagementPage() {
     zone: "",
     days: [] as string[],
     startTime: "17:00",
-    endTime: "18:30"
+    endTime: "18:30",
+    coordinatorId: "",
+    firstCoachId: "",
+    secondCoachId: "",
+    physicalTrainerId: "",
+    delegateId: ""
   });
 
   const selectedFacility = MOCK_FACILITIES.find(f => f.id === formData.facilityId);
@@ -125,7 +133,12 @@ export default function AcademyManagementPage() {
       zone: "",
       days: [],
       startTime: "17:00",
-      endTime: "18:30"
+      endTime: "18:30",
+      coordinatorId: "",
+      firstCoachId: "",
+      secondCoachId: "",
+      physicalTrainerId: "",
+      delegateId: ""
     });
     setIsSheetOpen(true);
   };
@@ -307,7 +320,7 @@ export default function AcademyManagementPage() {
                   </div>
                 </>
               ) : (
-                <div className="space-y-8">
+                <div className="space-y-10">
                   {/* BLOQUE 1: IDENTIDAD */}
                   <div className="space-y-6">
                     <div className="grid grid-cols-2 gap-6">
@@ -353,7 +366,7 @@ export default function AcademyManagementPage() {
                     </div>
                   </div>
 
-                  {/* BLOQUE 2: INSTALACIÓN Y LOGICA DE ZONAS */}
+                  {/* BLOQUE 2: INSTALACIÓN Y HORARIO */}
                   <div className="space-y-6 p-8 border border-primary/30 bg-primary/5 rounded-3xl relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-4 opacity-5">
                       <MapPin className="h-20 w-20 text-primary" />
@@ -389,10 +402,9 @@ export default function AcademyManagementPage() {
                         </Select>
                       </div>
 
-                      {/* DETECCIÓN INTELIGENTE DE ZONAS */}
                       {hasZones && (
                         <div className="space-y-3 animate-in slide-in-from-top-2 duration-500">
-                          <Label className="text-[9px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Zona Específica (Instalación Subdividida)</Label>
+                          <Label className="text-[9px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Zona Específica</Label>
                           <Select 
                             value={formData.zone} 
                             onValueChange={(v) => setFormData({...formData, zone: v})}
@@ -463,6 +475,119 @@ export default function AcademyManagementPage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* BLOQUE 3: STAFF TÉCNICO */}
+                  <div className="space-y-6 p-8 border border-emerald-500/30 bg-emerald-500/5 rounded-3xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-5">
+                      <UserCog className="h-20 w-20 text-emerald-500" />
+                    </div>
+                    
+                    <div className="flex items-center gap-3 border-b border-emerald-500/20 pb-4 mb-6">
+                      <Users className="h-4 w-4 text-emerald-500" />
+                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-500">
+                        Staff Técnico Asignado
+                      </span>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Coordinador de Etapa</Label>
+                        <Select 
+                          value={formData.coordinatorId} 
+                          onValueChange={(v) => setFormData({...formData, coordinatorId: v})}
+                        >
+                          <SelectTrigger className="h-11 bg-black/40 border-white/10 rounded-none text-white/60 font-bold uppercase text-[9px] tracking-widest">
+                            <div className="flex items-center gap-3">
+                              <UserCog className="h-3.5 w-3.5 text-emerald-500/40" />
+                              <SelectValue placeholder="ASIGNAR COORDINADOR..." />
+                            </div>
+                          </SelectTrigger>
+                          <SelectContent className="bg-[#04070c] border-emerald-500/20">
+                            <SelectItem value="s1" className="text-[9px] font-black uppercase">Ismael Muñoz</SelectItem>
+                            <SelectItem value="s2" className="text-[9px] font-black uppercase">Elena Gómez</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Primer Entrenador</Label>
+                          <Select 
+                            value={formData.firstCoachId} 
+                            onValueChange={(v) => setFormData({...formData, firstCoachId: v})}
+                          >
+                            <SelectTrigger className="h-11 bg-black/40 border-white/10 rounded-none text-white font-bold uppercase text-[9px] tracking-widest">
+                              <div className="flex items-center gap-3">
+                                <Trophy className="h-3.5 w-3.5 text-emerald-500/40" />
+                                <SelectValue placeholder="1er ENTRENADOR..." />
+                              </div>
+                            </SelectTrigger>
+                            <SelectContent className="bg-[#04070c] border-emerald-500/20">
+                              <SelectItem value="c1" className="text-[9px] font-black uppercase">Carlos Ruiz</SelectItem>
+                              <SelectItem value="c2" className="text-[9px] font-black uppercase">Laura Sánchez</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Segundo Entrenador</Label>
+                          <Select 
+                            value={formData.secondCoachId} 
+                            onValueChange={(v) => setFormData({...formData, secondCoachId: v})}
+                          >
+                            <SelectTrigger className="h-11 bg-black/40 border-white/10 rounded-none text-white/60 font-bold uppercase text-[9px] tracking-widest">
+                              <div className="flex items-center gap-3">
+                                <Users className="h-3.5 w-3.5 text-emerald-500/40" />
+                                <SelectValue placeholder="2º ENTRENADOR..." />
+                              </div>
+                            </SelectTrigger>
+                            <SelectContent className="bg-[#04070c] border-emerald-500/20">
+                              <SelectItem value="c3" className="text-[9px] font-black uppercase">Miguel Ángel</SelectItem>
+                              <SelectItem value="c4" className="text-[9px] font-black uppercase">Sara Torres</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Preparador Físico</Label>
+                          <Select 
+                            value={formData.physicalTrainerId} 
+                            onValueChange={(v) => setFormData({...formData, physicalTrainerId: v})}
+                          >
+                            <SelectTrigger className="h-11 bg-black/40 border-white/10 rounded-none text-white/60 font-bold uppercase text-[9px] tracking-widest">
+                              <div className="flex items-center gap-3">
+                                <Dumbbell className="h-3.5 w-3.5 text-emerald-500/40" />
+                                <SelectValue placeholder="P. FÍSICO..." />
+                              </div>
+                            </SelectTrigger>
+                            <SelectContent className="bg-[#04070c] border-emerald-500/20">
+                              <SelectItem value="pf1" className="text-[9px] font-black uppercase">Roberto S.</SelectItem>
+                              <SelectItem value="pf2" className="text-[9px] font-black uppercase">Ana Belén</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Delegado de Equipo</Label>
+                          <Select 
+                            value={formData.delegateId} 
+                            onValueChange={(v) => setFormData({...formData, delegateId: v})}
+                          >
+                            <SelectTrigger className="h-11 bg-black/40 border-white/10 rounded-none text-white/60 font-bold uppercase text-[9px] tracking-widest">
+                              <div className="flex items-center gap-3">
+                                <ClipboardCheck className="h-3.5 w-3.5 text-emerald-500/40" />
+                                <SelectValue placeholder="DELEGADO..." />
+                              </div>
+                            </SelectTrigger>
+                            <SelectContent className="bg-[#04070c] border-emerald-500/20">
+                              <SelectItem value="d1" className="text-[9px] font-black uppercase">Juan García</SelectItem>
+                              <SelectItem value="d2" className="text-[9px] font-black uppercase">Marta López</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -472,7 +597,7 @@ export default function AcademyManagementPage() {
                   <span className="text-[9px] font-black uppercase text-primary tracking-widest">Protocolo de Organización</span>
                 </div>
                 <p className="text-[9px] text-white/40 leading-relaxed font-bold uppercase italic">
-                  La estructura de cantera define cómo se segmentan los datos tácticos y de asistencia. La vinculación de instalaciones permite detectar conflictos de horario automáticamente.
+                  La asignación de staff técnico vincula los perfiles de usuario con el nodo de equipo, permitiendo que el entrenador acceda directamente a la telemetría de sus atletas asignados.
                 </p>
               </div>
             </div>
