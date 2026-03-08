@@ -18,7 +18,7 @@ function BoardTabTrigger() {
         isExpanded ? 'left-[16rem]' : 'left-0'
       }`}
     >
-      <SidebarTrigger className="h-14 w-6 rounded-r-2xl border-y border-r border-primary/30 bg-black/60 backdrop-blur-xl text-primary hover:w-8 hover:bg-primary hover:text-black transition-all shadow-[0_0_20px_rgba(0,242,255,0.2)] flex items-center justify-center border-l-0 p-0 group overflow-hidden">
+      <SidebarTrigger className="h-14 w-6 rounded-r-2xl border-y border-r border-primary/30 bg-black/60 backdrop-blur-xl text-primary hover:w-8 hover:bg-primary hover:text-black transition-all duration-300 opacity-0 hover:opacity-100 shadow-[0_0_20px_rgba(0,242,255,0.2)] flex items-center justify-center border-l-0 p-0 group overflow-hidden">
          {isExpanded ? (
            <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
          ) : (
