@@ -61,6 +61,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
+// PROTOCOLO DE ETAPAS MAESTRAS
 const STAGES = [
   { id: "s1", name: "Iniciación", description: "Descubrimiento y psicomotricidad básica.", color: "text-blue-400" },
   { id: "s2", name: "Formación", description: "Desarrollo de fundamentos técnicos y tácticos.", color: "text-emerald-400" },
@@ -68,16 +69,17 @@ const STAGES = [
   { id: "s4", name: "Rendimiento", description: "Máxima exigencia y resultados de red.", color: "text-rose-400" },
 ];
 
+// ARQUITECTURA DE CATEGORÍAS BLINDADAS
 const INITIAL_CATEGORIES = [
-  { id: "cat_debutantes", name: "Debutantes", stageId: "s1", teams: [{ name: "Debutantes", suffix: "A", facility: "Campo Principal", zone: "Zona A", days: ["L", "X"], staff: { head: "Carlos Ruiz", coord: "Ismael Muñoz" } }], players: 12 },
+  { id: "cat_debutantes", name: "Debutantes", stageId: "s1", teams: [{ name: "Debutantes", suffix: "A", facility: "Campo Principal", zone: "Zona A", days: ["L", "X"], startTime: "17:00", endTime: "18:30", staff: { head: "Carlos Ruiz", coord: "Ismael Muñoz", second: "Elena Gómez", physical: "Roberto S.", delegate: "Juan García" } }], players: 12 },
   { id: "cat_prebenjamin", name: "Prebenjamín", stageId: "s1", teams: [], players: 0 },
   { id: "cat_benjamin", name: "Benjamín", stageId: "s2", teams: [], players: 0 },
-  { id: "cat_alevin", name: "Alevín", stageId: "s2", teams: [{ name: "Alevín", suffix: "A", facility: "Anexo", zone: "Zona B", days: ["M", "J"], staff: { head: "Laura Sánchez", coord: "Elena Gómez" } }], players: 15 },
+  { id: "cat_alevin", name: "Alevín", stageId: "s2", teams: [{ name: "Alevín", suffix: "A", facility: "Anexo", zone: "Zona B", days: ["M", "J"], startTime: "17:30", endTime: "19:00", staff: { head: "Laura Sánchez", coord: "Elena Gómez", second: "Miguel Ángel", physical: "Roberto S.", delegate: "Marta López" } }], players: 15 },
   { id: "cat_infantil", name: "Infantil", stageId: "s2", teams: [], players: 0 },
   { id: "cat_cadete", name: "Cadete", stageId: "s3", teams: [], players: 0 },
   { id: "cat_juvenil", name: "Juvenil", stageId: "s3", teams: [], players: 0 },
   { id: "cat_senior", name: "Senior", stageId: "s4", teams: [], players: 0 },
-  { id: "cat_primer_equipo", name: "Primer Equipo", stageId: "s4", teams: [{ name: "Primer Equipo", suffix: "A", facility: "Estadio", zone: "Completo", days: ["L", "M", "X", "J", "V"], staff: { head: "M. Arteta", coord: "Director Deportivo" } }], players: 25 },
+  { id: "cat_primer_equipo", name: "Primer Equipo", stageId: "s4", teams: [{ name: "Primer Equipo", suffix: "A", facility: "Estadio", zone: "Completo", days: ["L", "M", "X", "J", "V"], startTime: "10:00", endTime: "12:00", staff: { head: "M. Arteta", coord: "Director Deportivo", second: "Sara Torres", physical: "Ana Belén", delegate: "Juan García" } }], players: 25 },
 ];
 
 const MOCK_FACILITIES = [
@@ -152,6 +154,7 @@ export default function AcademyManagementPage() {
   };
 
   const handleEditCategory = (cat: any) => {
+    // PROTECCIÓN DE NUCLEO: Las categorías base no se pueden editar manualmente
     if (cat.id.startsWith('cat_')) {
       toast({
         variant: "destructive",
@@ -171,6 +174,7 @@ export default function AcademyManagementPage() {
   };
 
   const handleDeleteCategory = (id: string, name: string) => {
+    // PROTECCIÓN DE NUCLEO
     if (id.startsWith('cat_')) {
       toast({
         variant: "destructive",
@@ -232,6 +236,8 @@ export default function AcademyManagementPage() {
                 facility: selectedFacility?.name || "", 
                 zone: formData.zone, 
                 days: formData.days,
+                startTime: formData.startTime,
+                endTime: formData.endTime,
                 staff: { 
                   head: "Asignado", 
                   coord: formData.coordinatorId || "Ismael Muñoz" 
@@ -300,6 +306,7 @@ export default function AcademyManagementPage() {
             <div className="space-y-4">
               {categories.filter(c => c.stageId === stage.id).map((cat) => (
                 <Card key={cat.id} className="glass-panel border-none bg-black/40 overflow-hidden group hover:bg-black/60 transition-all cursor-default">
+                  {/* LÍNEA DE ETAPA TÉCNICA */}
                   <div className={cn("h-1 w-full", stage.color.replace('text', 'bg'))} />
                   
                   <CardHeader className="p-6 pb-2">
@@ -362,6 +369,7 @@ export default function AcademyManagementPage() {
         ))}
       </div>
 
+      {/* FICHA TÉCNICA DEL EQUIPO (VIEWER) */}
       <Sheet open={isViewSheetOpen} onOpenChange={setIsViewSheetOpen}>
         <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-xl shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
           {selectedViewTeam && (
@@ -395,6 +403,7 @@ export default function AcademyManagementPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="p-6 bg-white/5 border border-white/10 rounded-2xl space-y-2">
                       <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Instalación / Nodo</span>
+                      {/* PINTA EL NOMBRE DEL CAMPO */}
                       <p className="text-sm font-black text-primary uppercase italic cyan-text-glow">{selectedViewTeam.facility || "Sede Principal"}</p>
                     </div>
                     <div className="p-6 bg-white/5 border border-white/10 rounded-2xl space-y-2">
@@ -404,9 +413,12 @@ export default function AcademyManagementPage() {
                   </div>
 
                   <div className="p-6 border border-primary/20 bg-primary/5 rounded-2xl space-y-4">
-                    <div className="flex items-center gap-3">
-                      <Clock className="h-4 w-4 text-primary" />
-                      <span className="text-[10px] font-black uppercase tracking-widest text-primary">Cronograma de Sesiones</span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Clock className="h-4 w-4 text-primary" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-primary">Cronograma de Sesiones</span>
+                      </div>
+                      <span className="text-[10px] font-mono text-primary/60">{selectedViewTeam.startTime} - {selectedViewTeam.endTime}</span>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {WEEK_DAYS.map(day => (
@@ -435,9 +447,9 @@ export default function AcademyManagementPage() {
                   <div className="space-y-4">
                     <StaffDetailItem label="Coordinador Etapa" value={selectedViewTeam.staff?.coord || "Ismael Muñoz"} icon={Shield} />
                     <StaffDetailItem label="Primer Entrenador" value={selectedViewTeam.staff?.head || "Carlos Ruiz"} icon={Trophy} highlight />
-                    <StaffDetailItem label="Segundo Entrenador" value="Elena Gómez" icon={Users} />
-                    <StaffDetailItem label="Preparador Físico" value="Roberto S." icon={Dumbbell} />
-                    <StaffDetailItem label="Delegado Equipo" value="Juan García" icon={ClipboardCheck} />
+                    <StaffDetailItem label="Segundo Entrenador" value={selectedViewTeam.staff?.second || "Elena Gómez"} icon={Users} />
+                    <StaffDetailItem label="Preparador Físico" value={selectedViewTeam.staff?.physical || "Roberto S."} icon={Dumbbell} />
+                    <StaffDetailItem label="Delegado Equipo" value={selectedViewTeam.staff?.delegate || "Juan García"} icon={ClipboardCheck} />
                   </div>
                 </section>
               </div>
@@ -453,7 +465,13 @@ export default function AcademyManagementPage() {
                   className="flex-1 h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.2em] rounded-none cyan-glow"
                   onClick={() => {
                     setIsViewSheetOpen(false);
-                    setFormData({ ...formData, parentCategory: categories.find(c => c.name === selectedViewTeam.categoryName)?.id || "cat_debutantes", suffix: selectedViewTeam.suffix });
+                    const cat = categories.find(c => c.name === selectedViewTeam.categoryName);
+                    setFormData({ 
+                      ...formData, 
+                      parentCategory: cat?.id || "cat_debutantes", 
+                      suffix: selectedViewTeam.suffix,
+                      stageId: cat?.stageId || "s2"
+                    });
                     setSheetMode('team');
                     setIsSheetOpen(true);
                   }}
@@ -466,6 +484,7 @@ export default function AcademyManagementPage() {
         </SheetContent>
       </Sheet>
 
+      {/* TERMINAL DE CONFIGURACIÓN (CATEGORÍA / EQUIPO) */}
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-xl shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
           <div className="p-10 border-b border-white/5 bg-black/40">
@@ -486,6 +505,7 @@ export default function AcademyManagementPage() {
           <form onSubmit={handleSave} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10">
             {sheetMode === 'category' ? (
               <div className="space-y-8">
+                {/* CONFIGURACIÓN BÁSICA CATEGORÍA */}
                 <div className="space-y-6 p-8 border border-primary/30 bg-primary/5 rounded-3xl relative overflow-hidden">
                   <div className="absolute top-0 right-0 p-4 opacity-5">
                     <Layers className="h-24 w-24 text-primary" />
@@ -522,7 +542,7 @@ export default function AcademyManagementPage() {
               </div>
             ) : (
               <div className="space-y-10">
-                {/* CLASIFICACIÓN METODOLÓGICA */}
+                {/* 1. CLASIFICACIÓN METODOLÓGICA */}
                 <div className="space-y-6 p-8 border border-primary/30 bg-primary/5 rounded-3xl relative overflow-hidden">
                   <div className="absolute top-0 right-0 p-4 opacity-5">
                     <Layers className="h-24 w-24 text-primary" />
@@ -546,7 +566,7 @@ export default function AcademyManagementPage() {
                   </div>
                 </div>
 
-                {/* IDENTIDAD FEDERATIVA */}
+                {/* 2. IDENTIDAD FEDERATIVA */}
                 <div className="space-y-6">
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-3">
@@ -578,7 +598,7 @@ export default function AcademyManagementPage() {
                   </div>
                 </div>
 
-                {/* ASIGNACIÓN DE ACTIVO Y HORARIO */}
+                {/* 3. ASIGNACIÓN DE ACTIVO Y HORARIO */}
                 <div className="space-y-6 p-8 border border-primary/30 bg-primary/5 rounded-3xl relative overflow-hidden">
                   <div className="flex items-center gap-3 border-b border-primary/20 pb-4 mb-6">
                     <Zap className="h-4 w-4 text-primary animate-pulse" />
@@ -621,6 +641,7 @@ export default function AcademyManagementPage() {
                     </div>
                   </div>
 
+                  {/* RESTAURACIÓN DE HORARIO */}
                   <div className="grid grid-cols-2 gap-6 pt-4">
                     <div className="space-y-2">
                       <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest ml-1">Hora Inicio</Label>
@@ -649,7 +670,7 @@ export default function AcademyManagementPage() {
                   </div>
                 </div>
 
-                {/* STAFF TÉCNICO */}
+                {/* 4. STAFF TÉCNICO COMPLETO */}
                 <div className="space-y-6 p-8 border border-emerald-500/30 bg-emerald-500/5 rounded-3xl relative overflow-hidden">
                   <div className="flex items-center gap-3 border-b border-emerald-500/20 pb-4 mb-6">
                     <Users className="h-4 w-4 text-emerald-500" />
