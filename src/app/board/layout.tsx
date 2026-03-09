@@ -41,14 +41,24 @@ export default function BoardLayout({ children }: { children: React.ReactNode })
     }
   }, [profile, loading, router]);
 
+  // Sincronización con el estado real del navegador para evitar errores de desincronización
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen();
-      setIsFullscreen(true);
+      document.documentElement.requestFullscreen().catch((err) => {
+        console.error(`Error intentando activar pantalla completa: ${err.message}`);
+      });
     } else {
       if (document.exitFullscreen) {
         document.exitFullscreen();
-        setIsFullscreen(false);
       }
     }
   };
@@ -77,11 +87,11 @@ export default function BoardLayout({ children }: { children: React.ReactNode })
         <main className="flex-1 flex flex-col overflow-hidden relative">
           <div className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none" />
           
-          {/* Botón de Pantalla Completa Flotante */}
+          {/* Botón de Pantalla Completa Flotante - Posicionado para no molestar al dibujo */}
           <button 
             onClick={toggleFullscreen}
-            className="fixed bottom-6 left-6 z-[100] h-12 w-12 bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl flex items-center justify-center text-white/40 hover:text-primary transition-all hover:scale-110 active:scale-95"
-            title="Pantalla Completa"
+            className="fixed bottom-6 left-6 z-[100] h-12 w-12 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl flex items-center justify-center text-white/40 hover:text-primary transition-all hover:scale-110 active:scale-95 shadow-2xl"
+            title={isFullscreen ? "Salir de Pantalla Completa" : "Pantalla Completa"}
           >
             {isFullscreen ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
           </button>

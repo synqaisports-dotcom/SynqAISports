@@ -16,20 +16,20 @@ export default function PromoBoardPage() {
   const isLocked = exercisesCount >= MAX_EXERCISES;
 
   return (
-    <div className="h-screen flex flex-col bg-[#04070c] overflow-hidden">
-      <header className="h-20 border-b border-white/5 bg-black/60 backdrop-blur-3xl flex items-center justify-between px-8 shrink-0 z-50">
-        <div className="flex items-center gap-6">
+    <div className="h-full flex flex-col bg-[#04070c] overflow-hidden">
+      <header className="h-20 border-b border-white/5 bg-black/60 backdrop-blur-3xl flex items-center justify-between px-4 lg:px-8 shrink-0 z-50">
+        <div className="flex items-center gap-4 lg:gap-6">
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <Zap className="h-4 w-4 text-primary animate-pulse" />
-              <span className="text-[10px] font-black text-primary tracking-[0.4em] uppercase">Tactical_Board_PROMO_MODE</span>
+              <span className="text-[10px] font-black text-primary tracking-[0.4em] uppercase">Tactical_Board_PROMO</span>
             </div>
-            <h1 className="text-xl font-headline font-black text-white italic tracking-tighter uppercase">Versión Gratuita</h1>
+            <h1 className="text-sm lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase leading-none">Versión Gratuita</h1>
           </div>
           
-          <div className="px-4 py-1.5 bg-primary/10 border border-primary/20 rounded-full flex items-center gap-3">
+          <div className="hidden sm:flex px-4 py-1.5 bg-primary/10 border border-primary/20 rounded-full items-center gap-3">
              <span className="text-[9px] font-black text-primary uppercase">CAPACIDAD:</span>
-             <div className="h-1.5 w-24 bg-black/40 rounded-full overflow-hidden">
+             <div className="h-1.5 w-16 lg:w-24 bg-black/40 rounded-full overflow-hidden">
                 <div 
                   className={cn("h-full transition-all duration-1000", isLocked ? "bg-rose-500" : "bg-primary")} 
                   style={{ width: `${(exercisesCount / MAX_EXERCISES) * 100}%` }} 
@@ -39,42 +39,42 @@ export default function PromoBoardPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" className="text-[10px] font-black uppercase text-white/40 hover:text-white" asChild>
+        <div className="flex items-center gap-2 lg:gap-4">
+          <Button variant="ghost" className="hidden md:flex text-[10px] font-black uppercase text-white/40 hover:text-white" asChild>
             <Link href="/">Saber Más</Link>
           </Button>
-          <Button className="h-11 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl cyan-glow border-none" asChild>
-            <Link href="/login">Obtener Acceso Pro <ArrowRight className="h-4 w-4 ml-2" /></Link>
+          <Button className="h-11 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-4 lg:px-8 rounded-xl cyan-glow border-none" asChild>
+            <Link href="/login">Acceso Pro <ArrowRight className="h-4 w-4 ml-2" /></Link>
           </Button>
         </div>
       </header>
 
       <div className="flex-1 flex overflow-hidden relative">
-        <BoardToolbar theme="cyan" className="absolute left-6 top-1/2 -translate-y-1/2" />
+        <BoardToolbar theme="cyan" className="absolute left-4 top-1/2 -translate-y-1/2 hidden sm:flex" />
 
-        <main className="flex-1 p-12 flex items-center justify-center relative overflow-hidden">
+        <main className="flex-1 flex items-center justify-center relative overflow-hidden">
           <TacticalField theme="cyan" showWatermark />
 
           {isLocked && (
-            <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-[60] flex flex-col items-center justify-center p-12 text-center space-y-6 animate-in fade-in duration-700">
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-[60] flex flex-col items-center justify-center p-6 lg:p-12 text-center space-y-6 animate-in fade-in duration-700">
               <div className="relative">
                 <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full animate-pulse" />
-                <Lock className="h-20 w-20 text-primary relative z-10" />
+                <Lock className="h-16 w-16 lg:h-20 lg:w-20 text-primary relative z-10" />
               </div>
-              <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter">Protocolo de Capacidad Lleno</h3>
+              <h3 className="text-2xl lg:text-3xl font-black text-white uppercase italic tracking-tighter">Protocolo de Capacidad Lleno</h3>
               <p className="text-white/40 font-bold uppercase text-[10px] tracking-[0.4em] max-w-md mx-auto leading-relaxed">
-                Has alcanzado el límite de {MAX_EXERCISES} sesiones en modo promocional. Sincroniza tu club con el Plan Élite para desbloquear almacenamiento ilimitado y funciones IA avanzadas.
+                Has alcanzado el límite de {MAX_EXERCISES} sesiones. Sincroniza tu club con el Plan Élite para desbloquear almacenamiento ilimitado y funciones IA.
               </p>
-              <Button className="h-16 bg-primary text-black font-black uppercase text-[11px] tracking-[0.3em] px-12 rounded-2xl cyan-glow border-none" asChild>
+              <Button className="h-14 lg:h-16 bg-primary text-black font-black uppercase text-[10px] lg:text-[11px] tracking-[0.3em] px-8 lg:px-12 rounded-2xl cyan-glow border-none" asChild>
                 <Link href="/login">Actualizar a Plan Pro <Sparkles className="h-4 w-4 ml-3" /></Link>
               </Button>
             </div>
           )}
         </main>
 
-        <aside className="w-80 border-l border-white/5 bg-black/40 backdrop-blur-3xl p-8 flex flex-col shrink-0 z-50">
+        <aside className="w-72 lg:w-80 border-l border-white/5 bg-black/40 backdrop-blur-3xl p-8 hidden xl:flex flex-col shrink-0 z-50">
            <div className="mt-auto space-y-6">
-              <div className="p-6 bg-primary/5 border border-primary/20 rounded-[2rem] space-y-4">
+              <div className="p-6 bg-primary/5 border border-primary/20 rounded-[2rem] space-y-4 shadow-xl">
                  <div className="flex items-center gap-3">
                     <Info className="h-4 w-4 text-primary" />
                     <span className="text-[10px] font-black uppercase tracking-widest text-primary">Ventajas Pro</span>
