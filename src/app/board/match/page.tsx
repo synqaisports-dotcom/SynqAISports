@@ -147,9 +147,7 @@ export default function MatchBoardPage() {
   const [fieldType, setFieldType] = useState<FieldType>("f11");
   const [selectedTeamId, setSelectedTeamId] = useState("t1");
   
-  // Estado del Roster Dinámico para permitir sustituciones
   const [teamRoster, setTeamRoster] = useState<any[]>(MOCK_PLAYERS_BY_TEAM["t1"]);
-  const [draggedPlayerNum, setDraggedPlayerNum] = useState<number | null>(null);
   
   const [homePhase, setHomePhase] = useState<TacticalPhase>("defensa");
   const [guestPhase, setGuestPhase] = useState<TacticalPhase>("defensa");
@@ -174,7 +172,6 @@ export default function MatchBoardPage() {
     primaryColor: "#00f2ff"
   });
 
-  // Inicializar roster cuando cambia el equipo
   useEffect(() => {
     if (MOCK_PLAYERS_BY_TEAM[selectedTeamId]) {
       setTeamRoster(MOCK_PLAYERS_BY_TEAM[selectedTeamId]);
@@ -444,14 +441,13 @@ export default function MatchBoardPage() {
                     </div>
                     
                     <div className="flex-1 p-6 space-y-8 overflow-y-auto custom-scrollbar">
-                      {/* SECCIÓN TITULARES */}
                       <section className="space-y-4">
                         <div className="flex items-center gap-3 border-b border-white/5 pb-2">
                           <CheckCircle2 className="h-3 w-3 text-primary" />
                           <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary italic">Titulares ({starters.length})</h3>
                         </div>
                         <div className="space-y-2">
-                          {starters.map((player, idx) => (
+                          {starters.map((player) => (
                             <PlayerListItem 
                               key={player.number} 
                               player={player} 
@@ -461,7 +457,6 @@ export default function MatchBoardPage() {
                         </div>
                       </section>
 
-                      {/* SECCIÓN SUPLENTES */}
                       {substitutes.length > 0 && (
                         <section className="space-y-4">
                           <div className="flex items-center gap-3 border-b border-white/5 pb-2">
@@ -469,12 +464,11 @@ export default function MatchBoardPage() {
                             <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 italic">Suplentes ({substitutes.length})</h3>
                           </div>
                           <div className="space-y-2">
-                            {substitutes.map((player, idx) => (
+                            {substitutes.map((player) => (
                               <PlayerListItem 
                                 key={player.number} 
                                 player={player} 
                                 isSub 
-                                onDragStart={() => setDraggedPlayerNum(player.number)}
                               />
                             ))}
                           </div>
@@ -718,7 +712,7 @@ function PhaseButton({ label, active, onClick, color }: { label: string, active:
   );
 }
 
-function PlayerListItem({ player, isSub, onDrop, onDragStart }: { player: any, isSub?: boolean, onDrop?: (subNum: number) => void, onDragStart?: () => void }) {
+function PlayerListItem({ player, isSub, onDrop }: { player: any, isSub?: boolean, onDrop?: (subNum: number) => void }) {
   const posStyle = POSITION_COLORS[player.pos] || "text-white/40 border-white/10 bg-white/5";
   const [isOver, setIsOver] = useState(false);
   
@@ -730,10 +724,16 @@ function PlayerListItem({ player, isSub, onDrop, onDragStart }: { player: any, i
         isOver && !isSub && "border-primary bg-primary/20 scale-[1.02] shadow-[0_0_20px_rgba(0,242,255,0.2)]"
       )}
       draggable={isSub}
-      onDragStart={onDragStart}
+      onDragStart={(e) => {
+        if (isSub) {
+          e.dataTransfer.setData("text/plain", player.number.toString());
+          e.dataTransfer.effectAllowed = "move";
+        }
+      }}
       onDragOver={(e) => {
         if (!isSub) {
           e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
           setIsOver(true);
         }
       }}
@@ -743,15 +743,9 @@ function PlayerListItem({ player, isSub, onDrop, onDragStart }: { player: any, i
           e.preventDefault();
           setIsOver(false);
           const subNum = parseInt(e.dataTransfer.getData("text/plain") || "0");
-          if (subNum) onDrop(subNum);
-        }
-      }}
-      onDragEnd={(e) => {
-        // Para el que arrastra
-      }}
-      onDrag={(e) => {
-        if (isSub) {
-          e.dataTransfer.setData("text/plain", player.number.toString());
+          if (subNum && subNum !== player.number) {
+            onDrop(subNum);
+          }
         }
       }}
     >
