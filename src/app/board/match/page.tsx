@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Trophy, Clock, Video, Save, UserCog } from "lucide-react";
+import { Trophy, Clock, Video, Save, UserCog, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { TacticalField } from "@/components/board/TacticalField";
@@ -28,72 +28,105 @@ export default function MatchBoardPage() {
   };
 
   return (
-    <div className="h-full flex flex-col bg-black overflow-hidden">
-      <header className="h-20 border-b border-white/5 bg-black/60 backdrop-blur-3xl flex items-center justify-between px-4 lg:px-8 shrink-0 z-50">
-        <div className="flex items-center gap-4 lg:gap-8">
-          <div className="hidden sm:flex flex-col">
+    <div className="h-full flex flex-col bg-black overflow-hidden font-body">
+      {/* Cabecera Técnica de Alta Competición */}
+      <header className="h-20 border-b border-white/5 bg-black/40 backdrop-blur-3xl flex items-center justify-between px-8 shrink-0 z-50">
+        <div className="flex items-center gap-10">
+          <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <Trophy className="h-4 w-4 text-primary animate-pulse" />
-              <span className="text-[10px] font-black text-primary tracking-[0.4em] uppercase">Match_Board_v1.0</span>
+              <span className="text-[10px] font-black text-primary tracking-[0.4em] uppercase">Protocolo_Match_Live</span>
             </div>
-            <h1 className="text-sm lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase">Pizarra de Partido</h1>
+            <h1 className="text-xl font-headline font-black text-white italic tracking-tighter uppercase leading-none">Terminal de Partido</h1>
           </div>
 
-          <div className="flex items-center gap-2 lg:gap-4 px-3 lg:px-6 py-2 bg-primary/5 border border-primary/20 rounded-2xl">
-             <div className="flex items-center gap-2 lg:gap-3">
-                <span className="hidden lg:block text-[10px] font-black text-white/40 uppercase">LOCAL</span>
-                <button onClick={() => setScore(s => ({...s, home: Math.max(0, s.home - 1)}))} className="text-primary/40 hover:text-primary font-bold">-</button>
-                <span className="text-xl lg:text-2xl font-black font-headline text-primary cyan-text-glow">{score.home}</span>
-                <button onClick={() => setScore(s => ({...s, home: s.home + 1}))} className="text-primary/40 hover:text-primary font-bold">+</button>
+          {/* Marcador Digital */}
+          <div className="flex items-center gap-6 px-8 py-2.5 bg-primary/5 border border-primary/20 rounded-2xl shadow-[0_0_20px_rgba(0,242,255,0.05)]">
+             <div className="flex items-center gap-4">
+                <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">LOCAL</span>
+                <div className="flex items-center gap-3">
+                  <button onClick={() => setScore(s => ({...s, home: Math.max(0, s.home - 1)}))} className="h-6 w-6 flex items-center justify-center rounded-lg border border-primary/20 text-primary/40 hover:text-primary hover:border-primary/60 transition-all">-</button>
+                  <span className="text-3xl font-black font-headline text-primary cyan-text-glow tabular-nums">{score.home}</span>
+                  <button onClick={() => setScore(s => ({...s, home: s.home + 1}))} className="h-6 w-6 flex items-center justify-center rounded-lg border border-primary/20 text-primary/40 hover:text-primary hover:border-primary/60 transition-all">+</button>
+                </div>
              </div>
-             <div className="w-[1px] h-6 lg:h-8 bg-white/10 mx-1" />
-             <div className="flex items-center gap-2 lg:gap-3">
-                <button onClick={() => setScore(s => ({...s, guest: Math.max(0, s.guest - 1)}))} className="text-primary/40 hover:text-primary font-bold">-</button>
-                <span className="text-xl lg:text-2xl font-black font-headline text-primary cyan-text-glow">{score.guest}</span>
-                <button onClick={() => setScore(s => ({...s, guest: s.guest + 1}))} className="text-primary/40 hover:text-primary font-bold">+</button>
-                <span className="hidden lg:block text-[10px] font-black text-white/40 uppercase">VISITANTE</span>
+             <div className="w-[1px] h-8 bg-white/10" />
+             <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
+                  <button onClick={() => setScore(s => ({...s, guest: Math.max(0, s.guest - 1)}))} className="h-6 w-6 flex items-center justify-center rounded-lg border border-primary/20 text-primary/40 hover:text-primary hover:border-primary/60 transition-all">-</button>
+                  <span className="text-3xl font-black font-headline text-primary cyan-text-glow tabular-nums">{score.guest}</span>
+                  <button onClick={() => setScore(s => ({...s, guest: s.guest + 1}))} className="h-6 w-6 flex items-center justify-center rounded-lg border border-primary/20 text-primary/40 hover:text-primary hover:border-primary/60 transition-all">+</button>
+                </div>
+                <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">VISITANTE</span>
              </div>
           </div>
 
-          <div className="flex items-center gap-3 lg:gap-4 px-3 lg:px-6 py-2 bg-white/5 border border-white/10 rounded-2xl">
-             <Clock className={cn("h-4 w-4", isRunning ? "text-primary animate-spin" : "text-white/20")} />
-             <span className="text-lg lg:text-2xl font-black font-headline text-white/80 tabular-nums">{formatTime(timer)}</span>
-             <Button variant="ghost" size="sm" className="hidden sm:block text-[10px] font-black uppercase text-primary hover:bg-primary/10" onClick={() => setIsRunning(!isRunning)}>
+          {/* Cronómetro Operativo */}
+          <div className="flex items-center gap-4 px-6 py-2.5 bg-white/5 border border-white/10 rounded-2xl">
+             <Clock className={cn("h-4 w-4 transition-all", isRunning ? "text-primary animate-spin" : "text-white/20")} />
+             <span className="text-2xl font-black font-headline text-white/80 tabular-nums tracking-wider">{formatTime(timer)}</span>
+             <Button 
+              variant="ghost" 
+              size="sm" 
+              className={cn(
+                "h-8 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                isRunning ? "text-rose-400 hover:bg-rose-500/10" : "text-primary hover:bg-primary/10"
+              )} 
+              onClick={() => setIsRunning(!isRunning)}
+             >
                {isRunning ? "PAUSA" : "INICIAR"}
              </Button>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button variant="outline" className="hidden md:flex h-11 border-white/10 text-white/40 font-black uppercase text-[10px] tracking-widest hover:bg-white/5 rounded-xl px-6">
-            <Video className="h-4 w-4 mr-2" /> Clip
+        <div className="flex items-center gap-3">
+          <Button variant="outline" className="h-12 border-white/10 text-white/40 font-black uppercase text-[10px] tracking-[0.2em] hover:bg-white/5 rounded-2xl px-8 transition-all">
+            <History className="h-4 w-4 mr-3" /> Historial
           </Button>
-          <Button className="h-11 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-4 lg:px-8 rounded-xl cyan-glow border-none">
-            <Save className="h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">Guardar Táctica</span>
+          <Button className="h-12 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] px-10 rounded-2xl cyan-glow border-none shadow-xl hover:scale-[1.02] active:scale-95 transition-all">
+            <Save className="h-4 w-4 mr-3" /> Guardar Táctica
           </Button>
         </div>
       </header>
 
+      {/* Entorno de Pizarra */}
       <div className="flex-1 flex overflow-hidden relative">
-        <BoardToolbar theme="cyan" className="absolute left-4 top-1/2 -translate-y-1/2 hidden sm:flex" />
+        {/* Toolbar Flotante Izquierdo */}
+        <BoardToolbar theme="cyan" className="absolute left-8 top-1/2 -translate-y-1/2 z-50 shadow-2xl" />
 
-        <main className="flex-1 flex items-center justify-center relative overflow-hidden">
+        {/* Campo Táctico Proporcional */}
+        <main className="flex-1 relative">
           <TacticalField theme="cyan" />
         </main>
 
-        <aside className="w-64 lg:w-72 border-l border-white/5 bg-black/40 backdrop-blur-3xl p-6 hidden xl:flex flex-col shrink-0 z-50">
-          <h3 className="text-[10px] font-black uppercase text-primary mb-6 tracking-widest flex items-center gap-2">
-            <UserCog className="h-3 w-3" /> Titulares Sincronizados
-          </h3>
-          <div className="space-y-3 overflow-y-auto custom-scrollbar pr-2">
+        {/* Panel de Gestión de Activos (Derecha) */}
+        <aside className="w-80 border-l border-white/5 bg-black/40 backdrop-blur-3xl p-8 flex flex-col shrink-0 z-50 overflow-hidden">
+          <div className="flex flex-col gap-1 mb-8">
+            <h3 className="text-[11px] font-black uppercase text-primary tracking-[0.3em] flex items-center gap-3">
+              <UserCog className="h-4 w-4" /> Nodo Atletas
+            </h3>
+            <p className="text-[9px] font-bold text-white/20 uppercase tracking-widest italic">Sincronización Local Activa</p>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-3">
             {[1,2,3,4,5,6,7,8,9,10,11].map(i => (
-              <div key={i} className="flex items-center gap-4 p-3 bg-white/5 rounded-2xl border border-white/5 hover:border-primary/20 transition-all cursor-move group">
-                <div className="h-8 w-8 bg-primary rounded-full flex items-center justify-center text-black font-black text-xs shadow-[0_0_10px_rgba(0,242,255,0.2)]">
-                  {i}
+              <div key={i} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-primary/20 transition-all cursor-grab active:cursor-grabbing group">
+                <div className="flex items-center gap-4">
+                  <div className="h-10 w-10 bg-primary/10 border border-primary/20 rounded-full flex items-center justify-center text-primary font-black text-xs shadow-[0_0_15px_rgba(0,242,255,0.1)] group-hover:bg-primary group-hover:text-black transition-all">
+                    {i}
+                  </div>
+                  <span className="text-[10px] font-black text-white/40 uppercase group-hover:text-white transition-colors">Jugador_{i.toString().padStart(2, '0')}</span>
                 </div>
-                <span className="text-[10px] font-black text-white/60 uppercase group-hover:text-white transition-colors">JUGADOR_0{i}</span>
+                <div className="h-1.5 w-1.5 rounded-full bg-primary/20 animate-pulse" />
               </div>
             ))}
+          </div>
+
+          <div className="mt-8 pt-8 border-t border-white/5">
+             <div className="p-6 bg-primary/5 border border-primary/20 rounded-3xl space-y-2">
+                <span className="text-[9px] font-black uppercase text-primary tracking-widest">Estado de Red</span>
+                <p className="text-[10px] font-bold text-primary/40 uppercase leading-relaxed">Conexión encriptada con el Nodo de Cantera estable.</p>
+             </div>
           </div>
         </aside>
       </div>

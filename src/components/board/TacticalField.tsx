@@ -2,59 +2,74 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Monitor } from "lucide-react";
+import React, { ReactNode } from "react";
 
 interface TacticalFieldProps {
-  sport?: string;
   theme?: "cyan" | "amber";
   showWatermark?: boolean;
-  children?: React.ReactNode;
+  children?: ReactNode;
 }
 
 /**
- * TacticalField - Componente centralizado y responsivo.
- * Diseñado para escalar desde tablets hasta TV 4K manteniendo el aspect ratio.
+ * TacticalField - Geometría Crítica FIFA (105x68).
+ * Diseñado para ocupar el máximo espacio sin deformación (Efecto Huevo eliminado).
  */
-export function TacticalField({ sport = "football", theme = "cyan", showWatermark, children }: TacticalFieldProps) {
-  const accentColor = theme === "cyan" ? "border-primary/10" : "border-amber-500/10";
-  const lineColor = theme === "cyan" ? "bg-white/10" : "bg-white/5";
-  const borderLine = theme === "cyan" ? "border-white/10" : "border-white/5";
-
+export function TacticalField({ theme = "cyan", showWatermark, children }: TacticalFieldProps) {
+  // Colores dinámicos basados en protocolo
+  const accentColor = theme === "cyan" ? "border-primary/20" : "border-amber-500/20";
+  const fieldBg = theme === "cyan" ? "bg-[#0a0f18]" : "bg-[#050505]";
+  
   return (
-    <div className="w-full h-full flex items-center justify-center p-4 lg:p-8">
-      <div className={cn(
-        "relative w-full max-w-[95vw] max-h-[85vh] aspect-[1.6/1] rounded-[2rem] lg:rounded-[3rem] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.8)] border transition-all duration-500",
-        accentColor,
-        theme === "cyan" ? "bg-[#0a0f18]" : "bg-black"
-      )}>
-        <div className="absolute inset-0 bg-grid-pattern opacity-5" />
+    <div className="w-full h-full flex items-center justify-center p-4 lg:p-12 overflow-hidden bg-transparent select-none">
+      {/* 
+        CONTENEDOR DE ASPECT RATIO INQUEBRANTABLE 
+        Usa aspect-ratio nativo de CSS para mantener proporciones 105/68 
+      */}
+      <div 
+        className={cn(
+          "relative w-full max-w-full max-h-full aspect-[105/68] rounded-[2.5rem] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.9)] border-2 transition-all duration-700",
+          accentColor,
+          fieldBg
+        )}
+      >
+        {/* Capa de Grilla Técnica */}
+        <div className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none" />
         
-        {/* LÍNEAS DEL CAMPO - Escaladas por porcentajes o posiciones relativas */}
-        <div className={cn("absolute inset-[5%] border-2 rounded-sm", borderLine)}>
-          <div className={cn("absolute top-1/2 left-0 w-full h-[1px] -translate-y-1/2", lineColor)} />
-          <div className={cn("absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[25%] aspect-square border-2 rounded-full", borderLine)} />
-          <div className={cn("absolute top-1/2 left-0 -translate-y-1/2 w-[15%] h-[60%] border-2 border-l-0", borderLine)} />
-          <div className={cn("absolute top-1/2 right-0 -translate-y-1/2 w-[15%] h-[60%] border-2 border-r-0", borderLine)} />
+        {/* LÍNEAS REGLAMENTARIAS (Posicionamiento porcentual absoluto) */}
+        <div className="absolute inset-[4%] border border-white/10 rounded-sm pointer-events-none">
+          {/* Línea de Medio Campo */}
+          <div className="absolute top-0 left-1/2 w-[1px] h-full bg-white/10 -translate-x-1/2" />
+          
+          {/* Círculo Central */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[20%] aspect-square border border-white/10 rounded-full" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-white/20 rounded-full" />
+          
+          {/* Área Local */}
+          <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[14%] h-[55%] border border-white/10 border-l-0" />
+          <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[5%] h-[20%] border border-white/10 border-l-0" />
+          
+          {/* Área Visitante */}
+          <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[14%] h-[55%] border border-white/10 border-r-0" />
+          <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[5%] h-[20%] border border-white/10 border-r-0" />
         </div>
 
+        {/* MARCA DE AGUA PROTOCOLO PROMO */}
         {showWatermark && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 pointer-events-none select-none">
-            <span className="text-4xl lg:text-6xl font-headline font-black text-white/[0.03] uppercase tracking-[0.5em]">SynqAI</span>
-            <span className="text-[8px] lg:text-[10px] font-black text-white/[0.05] uppercase tracking-[1em]">MODO_PROMOCIÓN_RESTRINGIDO</span>
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 pointer-events-none opacity-5 select-none rotate-[-15deg]">
+            <span className="text-6xl md:text-9xl font-headline font-black text-white uppercase tracking-[0.5em]">SynqAI</span>
+            <span className="text-xs md:text-sm font-black text-white uppercase tracking-[1em]">PROTOCOLO_RESTRINGIDO</span>
           </div>
         )}
 
-        {/* ÁREA DE DIBUJO / CONTENIDO ESPECÍFICO */}
-        <div className="absolute inset-0 z-10">
-          {children}
+        {/* OVERLAY DE ESTADO SISTEMA */}
+        <div className="absolute top-6 left-6 flex items-center gap-3 bg-black/60 backdrop-blur-xl border border-white/10 px-4 py-2 rounded-2xl z-50">
+          <div className={cn("h-2 w-2 rounded-full animate-pulse", theme === "cyan" ? "bg-primary" : "bg-amber-500")} />
+          <span className="text-[9px] font-black text-white/60 uppercase tracking-widest italic">Neural_Sync_Ready</span>
         </div>
 
-        {/* OVERLAY DE ESTADO */}
-        <div className="absolute top-6 left-6 lg:top-12 lg:left-12 flex flex-col gap-2 z-20">
-          <div className="flex items-center gap-2 bg-black/60 backdrop-blur-md border border-white/10 px-3 py-1.5 lg:px-4 lg:py-2 rounded-full">
-            <div className={cn("h-1.5 w-1.5 rounded-full animate-pulse", theme === "cyan" ? "bg-primary" : "bg-amber-500")} />
-            <span className="text-[8px] lg:text-[9px] font-black text-white/60 uppercase tracking-widest">Sincronización_IA_Activa</span>
-          </div>
+        {/* ÁREA DE CONTENIDO (Aquí irán los jugadores con x,y decimales) */}
+        <div className="absolute inset-0 z-10 overflow-hidden">
+          {children}
         </div>
       </div>
     </div>
