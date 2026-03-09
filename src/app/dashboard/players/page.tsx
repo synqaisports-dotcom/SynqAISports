@@ -67,6 +67,18 @@ const CATEGORIES = [
   { value: "Primer Equipo", label: "Primer Equipo" },
 ];
 
+const CATEGORY_STYLES: Record<string, { border: string; bg: string; text: string; accent: string }> = {
+  "Debutantes": { border: "border-blue-500/20", bg: "bg-blue-500/5", text: "text-blue-400", accent: "bg-blue-500/10" },
+  "Prebenjamín": { border: "border-indigo-500/20", bg: "bg-indigo-500/5", text: "text-indigo-400", accent: "bg-indigo-500/10" },
+  "Benjamín": { border: "border-emerald-500/20", bg: "bg-emerald-500/5", text: "text-emerald-400", accent: "bg-emerald-500/10" },
+  "Alevín": { border: "border-primary/20", bg: "bg-primary/5", text: "text-primary", accent: "bg-primary/10" },
+  "Infantil": { border: "border-amber-500/20", bg: "bg-amber-500/5", text: "text-amber-400", accent: "bg-amber-500/10" },
+  "Cadete": { border: "border-orange-500/20", bg: "bg-orange-500/5", text: "text-orange-400", accent: "bg-orange-500/10" },
+  "Juvenil": { border: "border-rose-500/20", bg: "bg-rose-500/5", text: "text-rose-400", accent: "bg-rose-500/10" },
+  "Senior": { border: "border-slate-400/20", bg: "bg-slate-400/5", text: "text-slate-300", accent: "bg-slate-400/10" },
+  "Primer Equipo": { border: "border-red-500/20", bg: "bg-red-500/5", text: "text-red-400", accent: "bg-red-500/10" },
+};
+
 const TEAM_SUFFIXES = ["A", "B", "C", "D"];
 
 const TACTICAL_POSITIONS = [
@@ -277,83 +289,94 @@ export default function PlayersManagementPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {filteredPlayers.map((player) => (
-                  <tr key={player.id} className="group hover:bg-primary/[0.02] transition-colors cursor-default">
-                    <td className="px-8 py-5">
-                      <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 bg-primary/5 border border-primary/20 rounded-full flex items-center justify-center relative overflow-hidden group-hover:border-primary/40 transition-all">
-                           {player.photoUrl ? (
-                             <Image src={player.photoUrl} alt={player.name} fill className="object-cover rounded-full" />
-                           ) : (
-                             <IdCard className="h-5 w-5 text-primary/20 group-hover:text-primary transition-all" />
-                           )}
-                           <div className="absolute inset-0 bg-primary/5 scan-line opacity-0 group-hover:opacity-100" />
+                {filteredPlayers.map((player) => {
+                  const style = CATEGORY_STYLES[player.category] || CATEGORY_STYLES["Alevín"];
+                  return (
+                    <tr key={player.id} className="group hover:bg-primary/[0.02] transition-colors cursor-default">
+                      <td className="px-8 py-5">
+                        <div className="flex items-center gap-4">
+                          <div className="h-12 w-12 bg-primary/5 border border-primary/20 rounded-full flex items-center justify-center relative overflow-hidden group-hover:border-primary/40 transition-all">
+                             {player.photoUrl ? (
+                               <Image src={player.photoUrl} alt={player.name} fill className="object-cover rounded-full" />
+                             ) : (
+                               <IdCard className="h-5 w-5 text-primary/20 group-hover:text-primary transition-all" />
+                             )}
+                             <div className="absolute inset-0 bg-primary/5 scan-line opacity-0 group-hover:opacity-100" />
+                          </div>
+                          <div className="space-y-1">
+                            <p className="font-black text-white uppercase text-xs italic group-hover:cyan-text-glow transition-all">{player.name} {player.surname}</p>
+                            <p className="text-[9px] text-primary/40 font-bold uppercase tracking-widest flex items-center gap-2">
+                              <Mail className="h-2 w-2 text-primary/40" /> {player.email}
+                            </p>
+                          </div>
                         </div>
-                        <div className="space-y-1">
-                          <p className="font-black text-white uppercase text-xs italic group-hover:cyan-text-glow transition-all">{player.name} {player.surname}</p>
-                          <p className="text-[9px] text-primary/40 font-bold uppercase tracking-widest flex items-center gap-2">
-                            <Mail className="h-2 w-2 text-primary/40" /> {player.email}
-                          </p>
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="flex justify-center">
+                          <div className={cn(
+                            "inline-flex items-center border rounded-none divide-x overflow-hidden group-hover:border-opacity-40 transition-all shadow-[0_0_10px_rgba(0,0,0,0.2)]",
+                            style.border,
+                            style.bg
+                          )}>
+                            <span className={cn("px-3 py-1 text-[9px] font-black uppercase tracking-widest whitespace-nowrap", style.text)}>
+                              {player.category}
+                            </span>
+                            <span className={cn("px-2.5 py-1 text-[10px] font-black italic min-w-[32px] text-center", style.accent, style.text)}>
+                              {player.teamSuffix}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="flex justify-center">
-                        <div className="inline-flex items-center border border-primary/20 bg-primary/5 rounded-none divide-x divide-primary/20 overflow-hidden group-hover:border-primary/40 transition-all shadow-[0_0_10px_rgba(0,242,255,0.05)]">
-                          <span className="px-3 py-1 text-[9px] font-black text-primary/80 uppercase tracking-widest whitespace-nowrap">{player.category}</span>
-                          <span className="px-2.5 py-1 text-[10px] font-black text-primary italic bg-primary/10 min-w-[32px] text-center">{player.teamSuffix}</span>
+                      </td>
+                      <td className="px-6 py-5 text-center">
+                        <span className="text-[10px] font-black text-primary/70 uppercase tracking-tighter">{player.position}</span>
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="flex items-center justify-center gap-3">
+                           <div className="h-1.5 w-16 bg-white/5 rounded-full overflow-hidden hidden md:block">
+                              <div className="h-full bg-primary shadow-[0_0_8px_var(--primary)]" style={{ width: player.attendance }} />
+                           </div>
+                           <span className="text-[10px] font-mono font-bold text-primary/80">{player.attendance}</span>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5 text-center">
-                      <span className="text-[10px] font-black text-primary/70 uppercase tracking-tighter">{player.position}</span>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="flex items-center justify-center gap-3">
-                         <div className="h-1.5 w-16 bg-white/5 rounded-full overflow-hidden hidden md:block">
-                            <div className="h-full bg-primary shadow-[0_0_8px_var(--primary)]" style={{ width: player.attendance }} />
-                         </div>
-                         <span className="text-[10px] font-mono font-bold text-primary/80">{player.attendance}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="flex items-center justify-center gap-2">
-                        <div className={cn(
-                          "h-1.5 w-1.5 rounded-full animate-pulse",
-                          player.status === 'Active' ? 'bg-primary shadow-[0_0_8px_var(--primary)]' : 
-                          player.status === 'Injured' ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]' : 'bg-amber-400'
-                        )} />
-                        <span className={cn(
-                          "text-[9px] font-black uppercase tracking-widest",
-                          player.status === 'Active' ? 'text-primary' : 
-                          player.status === 'Injured' ? 'text-rose-400' : 'text-amber-400'
-                        )}>{player.status}</span>
-                      </div>
-                    </td>
-                    <td className="px-8 py-5 text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-9 w-9 text-primary hover:bg-primary/10 border border-primary/10 transition-all"
-                          onClick={() => handleEdit(player)}
-                          title="Modificar Atleta"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-9 w-9 text-rose-500 hover:bg-rose-500/10 border border-rose-500/10 transition-all"
-                          onClick={() => handleDelete(player.id, player.name)}
-                          title="Desvincular Atleta"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="flex items-center justify-center gap-2">
+                          <div className={cn(
+                            "h-1.5 w-1.5 rounded-full animate-pulse",
+                            player.status === 'Active' ? 'bg-primary shadow-[0_0_8px_var(--primary)]' : 
+                            player.status === 'Injured' ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]' : 'bg-amber-400'
+                          )} />
+                          <span className={cn(
+                            "text-[9px] font-black uppercase tracking-widest",
+                            player.status === 'Active' ? 'text-primary' : 
+                            player.status === 'Injured' ? 'text-rose-400' : 'text-amber-400'
+                          )}>{player.status}</span>
+                        </div>
+                      </td>
+                      <td className="px-8 py-5 text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-9 w-9 text-primary hover:bg-primary/10 border border-primary/10 transition-all"
+                            onClick={() => handleEdit(player)}
+                            title="Modificar Atleta"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-9 w-9 text-rose-500 hover:bg-rose-500/10 border border-rose-500/10 transition-all"
+                            onClick={() => handleDelete(player.id, player.name)}
+                            title="Desvincular Atleta"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -382,7 +405,6 @@ export default function PlayersManagementPage() {
           </div>
 
           <form onSubmit={handleSavePlayer} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10">
-            {/* SECCIÓN DE FOTOGRAFÍA CIRCULAR */}
             <div className="space-y-4">
               <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Identidad Visual</Label>
               <div className="flex flex-col items-center justify-center p-8 bg-primary/5 rounded-3xl relative overflow-hidden">
