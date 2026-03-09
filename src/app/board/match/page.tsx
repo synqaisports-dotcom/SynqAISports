@@ -2,13 +2,14 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef, memo } from "react";
-import { Trophy, Clock, Save, LayoutGrid, Play, Pause, RotateCcw, ChevronLeft, ChevronRight, Minimize2 } from "lucide-react";
+import { Trophy, Clock, Save, LayoutGrid, Play, Pause, RotateCcw, ChevronLeft, ChevronRight, Minimize2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { TacticalField, FieldType } from "@/components/board/TacticalField";
 import { BoardToolbar } from "@/components/board/BoardToolbar";
 import { PlayerChip } from "@/components/board/PlayerChip";
 import { FORMATIONS_DATA } from "@/lib/formations";
+import { useAuth } from "@/lib/auth-context";
 import { 
   Select, 
   SelectContent, 
@@ -41,6 +42,7 @@ interface PlayerPos {
 const MemoizedPlayerChip = memo(PlayerChip);
 
 export default function MatchBoardPage() {
+  const { profile } = useAuth();
   const [timeLeft, setTimeLeft] = useState(45 * 60);
   const [isRunning, setIsRunning] = useState(false);
   const [score, setScore] = useState({ home: 0, guest: 0 });
@@ -58,6 +60,11 @@ export default function MatchBoardPage() {
   const [players, setPlayers] = useState<PlayerPos[]>([]);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const fieldRef = useRef<HTMLDivElement>(null);
+
+  // Lógica de visibilidad para equipos del entrenador
+  const hasClub = !!profile?.clubId;
+  const isCoach = profile?.role === "coach" || profile?.role === "club_admin" || profile?.role === "superadmin";
+  const showTeamSelector = hasClub && isCoach;
 
   useEffect(() => {
     const defaultFormations: Record<FieldType, string> = {
@@ -95,8 +102,8 @@ export default function MatchBoardPage() {
   const calculatePositions = (team: "local" | "visitor", formation: string, phase: TacticalPhase, lateral: LateralShift) => {
     const baseCoords = FORMATIONS_DATA[fieldType][formation] || FORMATIONS_DATA[fieldType][Object.keys(FORMATIONS_DATA[fieldType])[0]];
     
-    const innerAreaLimit = 0.195; 
-    const outerAreaLimit = 0.805;
+    const innerAreaLimit = 19.5; 
+    const outerAreaLimit = 80.5;
 
     return baseCoords.map((pos, idx) => {
       let finalX, finalY;
@@ -114,10 +121,9 @@ export default function MatchBoardPage() {
         else if (lateral === "right") yShift = 0.15;
 
         if (phase === "defensa") {
-          // Bloque defensivo EXTREMADAMENTE compacto. Delanteros bajan más allá del centro.
           if (isDEF) phaseShift = -0.12;
-          else if (isMID) phaseShift = -0.25;
-          else if (isATK) phaseShift = -0.38;
+          else if (isMID) phaseShift = -0.22;
+          else if (isATK) phaseShift = -0.35;
         } else if (phase === "tda") {
           if (isDEF) phaseShift = 0.05;
           else if (isMID) phaseShift = 0.08;
@@ -139,48 +145,48 @@ export default function MatchBoardPage() {
       }
 
       if (team === "local") {
-        finalX = 0.05 + (pos.x * 0.9) + (isGK ? 0 : phaseShift);
-        finalY = pos.y + (isGK ? 0 : yShift);
+        finalX = (0.05 + (pos.x * 0.9) + (isGK ? 0 : phaseShift)) * 100;
+        finalY = (pos.y + (isGK ? 0 : yShift)) * 100;
 
         if (!isGK) {
           finalX = Math.max(finalX, innerAreaLimit);
           finalX = Math.min(finalX, outerAreaLimit);
           
           if (phase === "ataque") {
-            if (isMID) finalX = Math.min(finalX, 0.72);
-            if (isDEF) finalX = Math.min(finalX, 0.55);
+            if (isMID) finalX = Math.min(finalX, 72);
+            if (isDEF) finalX = Math.min(finalX, 55);
           }
         } else {
-          finalX = Math.max(0.02, Math.min(0.12, finalX));
-          finalY = 0.5;
+          finalX = Math.max(2, Math.min(12, finalX));
+          finalY = 50;
         }
       } else {
-        finalX = 0.95 - (pos.x * 0.9) - (isGK ? 0 : phaseShift);
-        finalY = (1 - pos.y) - (isGK ? 0 : yShift);
+        finalX = (0.95 - (pos.x * 0.9) - (isGK ? 0 : phaseShift)) * 100;
+        finalY = ((1 - pos.y) - (isGK ? 0 : yShift)) * 100;
 
         if (!isGK) {
           finalX = Math.min(finalX, outerAreaLimit);
           finalX = Math.max(finalX, innerAreaLimit);
           
           if (phase === "ataque") {
-            if (isMID) finalX = Math.max(finalX, 0.28);
-            if (isDEF) finalX = Math.max(finalX, 0.45);
+            if (isMID) finalX = Math.max(finalX, 28);
+            if (isDEF) finalX = Math.max(finalX, 45);
           }
         } else {
-          finalX = Math.min(0.98, Math.max(0.88, finalX));
-          finalY = 0.5;
+          finalX = Math.min(98, Math.max(88, finalX));
+          finalY = 50;
         }
       }
 
-      finalX = Math.max(0.02, Math.min(0.98, finalX));
-      finalY = Math.max(0.05, Math.min(0.95, finalY));
+      finalX = Math.max(2, Math.min(98, finalX));
+      finalY = Math.max(5, Math.min(95, finalY));
       
       return {
         id: `${team}-${idx}`,
         number: idx + 1,
         team,
-        x: finalX * 100,
-        y: finalY * 100
+        x: finalX,
+        y: finalY
       };
     });
   };
@@ -198,13 +204,17 @@ export default function MatchBoardPage() {
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
 
-    // Actualizamos solo el jugador arrastrado para mantener la fluidez
     setPlayers(prev => prev.map(p => 
       p.id === draggingId ? { ...p, x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) } : p
     ));
   };
 
-  const handlePointerUp = () => setDraggingId(null);
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (draggingId) {
+      (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+      setDraggingId(null);
+    }
+  };
 
   const currentFormations = useMemo(() => Object.keys(FORMATIONS_DATA[fieldType]), [fieldType]);
 
@@ -224,6 +234,25 @@ export default function MatchBoardPage() {
             </div>
             <h1 className="text-lg font-headline font-black text-white italic tracking-tighter uppercase leading-none truncate">Partido</h1>
           </div>
+
+          {/* Selector de Equipo del Entrenador (Solo si tiene club) */}
+          {showTeamSelector && (
+            <div className="hidden md:block">
+              <Select defaultValue="t1">
+                <SelectTrigger className="w-[180px] h-10 bg-primary/5 border-primary/30 rounded-xl text-[9px] font-black uppercase tracking-widest text-primary hover:bg-primary/10 transition-all">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-3.5 w-3.5" />
+                    <SelectValue placeholder="Mis Equipos" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="bg-[#0a0f18] border-primary/20">
+                  <SelectItem value="t1" className="text-[9px] font-black uppercase">Infantil A (Cantera)</SelectItem>
+                  <SelectItem value="t2" className="text-[9px] font-black uppercase">Alevín B (Cantera)</SelectItem>
+                  <SelectItem value="t3" className="text-[9px] font-black uppercase">Cadete C (Cantera)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="hidden lg:block">
             <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}>
