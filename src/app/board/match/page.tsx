@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Trophy, Clock, Save, LayoutGrid, Play, Pause, RotateCcw, ChevronLeft, ChevronRight, Minimize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -29,6 +29,14 @@ const TIME_PRESETS = [
 type TacticalPhase = "defensa" | "tda" | "ataque" | "tad" | "salida";
 type LateralShift = "left" | "center" | "right";
 
+interface PlayerPos {
+  id: string;
+  number: number;
+  team: "local" | "visitor";
+  x: number;
+  y: number;
+}
+
 export default function MatchBoardPage() {
   const [timeLeft, setTimeLeft] = useState(45 * 60);
   const [isRunning, setIsRunning] = useState(false);
@@ -43,6 +51,11 @@ export default function MatchBoardPage() {
   
   const [homeFormation, setHomeFormation] = useState("4-3-3");
   const [guestFormation, setGuestFormation] = useState("4-3-3");
+
+  // ESTADO DE POSICIONES INTERACTIVAS
+  const [players, setPlayers] = useState<PlayerPos[]>([]);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const fieldRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const defaultFormations: Record<FieldType, string> = {
@@ -77,7 +90,7 @@ export default function MatchBoardPage() {
     setTimeLeft(parseInt(minutes) * 60);
   };
 
-  const getPlayerPositions = (team: "local" | "visitor", formation: string, phase: TacticalPhase, lateral: LateralShift) => {
+  const calculatePositions = (team: "local" | "visitor", formation: string, phase: TacticalPhase, lateral: LateralShift) => {
     const baseCoords = FORMATIONS_DATA[fieldType][formation] || FORMATIONS_DATA[fieldType][Object.keys(FORMATIONS_DATA[fieldType])[0]];
     
     const innerAreaLimit = 0.195; 
@@ -94,9 +107,7 @@ export default function MatchBoardPage() {
       let phaseShift = 0;
       let yShift = 0;
 
-      // LOS PORTEROS NO BASCULAN NI SE MUEVEN POR FASE SEGÚN PROTOCOLO ACTUAL
       if (!isGK) {
-        // LÓGICA DE BASCULACIÓN (Solo jugadores de campo)
         if (lateral === "left") yShift = -0.15;
         else if (lateral === "right") yShift = 0.15;
 
@@ -119,7 +130,7 @@ export default function MatchBoardPage() {
         } else if (phase === "salida") {
           if (isDEF) {
             phaseShift = -0.10; 
-            yShift = idx % 2 === 0 ? -0.2 : 0.2; // Apertura de centrales
+            yShift = idx % 2 === 0 ? -0.2 : 0.2; 
           }
         }
       }
@@ -136,12 +147,10 @@ export default function MatchBoardPage() {
             if (isDEF) finalX = Math.min(finalX, 0.55);
           }
         } else {
-          // Portero local fijo en su sitio
           finalX = Math.max(0.02, Math.min(0.12, finalX));
-          finalY = pos.y; // Centrado según formación
+          finalY = 0.5; // Portero centrado e inmutable
         }
       } else {
-        // Visitante (Espejo)
         finalX = 0.95 - (pos.x * 0.9) - (isGK ? 0 : phaseShift);
         finalY = (1 - pos.y) - (isGK ? 0 : yShift);
 
@@ -153,32 +162,55 @@ export default function MatchBoardPage() {
             if (isDEF) finalX = Math.max(finalX, 0.45);
           }
         } else {
-          // Portero visitante fijo en su sitio
           finalX = Math.min(0.98, Math.max(0.88, finalX));
-          finalY = 1 - pos.y; // Centrado según formación
+          finalY = 0.5; // Portero centrado e inmutable
         }
       }
 
-      // Clamping final para seguridad
       finalX = Math.max(0.02, Math.min(0.98, finalX));
       finalY = Math.max(0.05, Math.min(0.95, finalY));
       
       return {
         id: `${team}-${idx}`,
         number: idx + 1,
+        team,
         x: finalX * 100,
         y: finalY * 100
       };
     });
   };
 
-  const homePlayers = useMemo(() => getPlayerPositions("local", homeFormation, homePhase, homeLateral), [homeFormation, homePhase, homeLateral, fieldType]);
-  const guestPlayers = useMemo(() => getPlayerPositions("visitor", guestFormation, guestPhase, guestLateral), [guestFormation, guestPhase, guestLateral, fieldType]);
+  // SINCRONIZAR ESTADO AL CAMBIAR FASES/FORMACIONES
+  useEffect(() => {
+    const hp = calculatePositions("local", homeFormation, homePhase, homeLateral);
+    const gp = calculatePositions("visitor", guestFormation, guestPhase, guestLateral);
+    setPlayers([...hp, ...gp]);
+  }, [homeFormation, homePhase, homeLateral, guestFormation, guestPhase, guestLateral, fieldType]);
+
+  // LÓGICA DE ARRASTRE
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!draggingId || !fieldRef.current) return;
+
+    const rect = fieldRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    setPlayers(prev => prev.map(p => 
+      p.id === draggingId ? { ...p, x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) } : p
+    ));
+  };
+
+  const handlePointerUp = () => setDraggingId(null);
 
   const currentFormations = useMemo(() => Object.keys(FORMATIONS_DATA[fieldType]), [fieldType]);
 
   return (
-    <div className="flex-1 flex flex-col bg-black overflow-hidden font-body relative">
+    <div 
+      className="flex-1 flex flex-col bg-black overflow-hidden font-body relative"
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerLeave={handlePointerUp}
+    >
       <header className="h-20 border-b border-primary/20 bg-black/40 backdrop-blur-3xl flex items-center justify-between px-8 shrink-0 z-50">
         <div className="flex items-center gap-6 overflow-hidden">
           <div className="flex flex-col shrink-0">
@@ -279,13 +311,21 @@ export default function MatchBoardPage() {
       <div className="flex-1 relative flex overflow-hidden">
         <BoardToolbar theme="cyan" className="absolute left-6 top-1/2 -translate-y-1/2 z-50 hidden sm:flex" />
         
-        <main className="flex-1 relative overflow-hidden">
+        <main className="flex-1 relative overflow-hidden" ref={fieldRef}>
           <TacticalField theme="cyan" fieldType={fieldType}>
-            {homePlayers.map(p => (
-              <PlayerChip key={p.id} team="local" number={p.number} x={p.x} y={p.y} />
-            ))}
-            {guestPlayers.map(p => (
-              <PlayerChip key={p.id} team="visitor" number={p.number} x={p.x} y={p.y} />
+            {players.map(p => (
+              <PlayerChip 
+                key={p.id} 
+                team={p.team} 
+                number={p.number} 
+                x={p.x} 
+                y={p.y} 
+                isDragging={draggingId === p.id}
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                  setDraggingId(p.id);
+                }}
+              />
             ))}
           </TacticalField>
 
