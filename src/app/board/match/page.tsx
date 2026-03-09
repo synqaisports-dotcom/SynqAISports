@@ -55,7 +55,7 @@ export default function MatchBoardPage() {
 
   return (
     <div className="flex-1 flex flex-col bg-black overflow-hidden font-body relative">
-      <header className="h-20 border-b border-white/5 bg-black/40 backdrop-blur-3xl flex items-center justify-between px-8 shrink-0 z-50">
+      <header className="h-20 border-b border-primary/20 bg-black/40 backdrop-blur-3xl flex items-center justify-between px-8 shrink-0 z-50">
         {/* IDENTIDAD Y SELECTOR DE CAMPO */}
         <div className="flex items-center gap-6 overflow-hidden">
           <div className="flex flex-col shrink-0">

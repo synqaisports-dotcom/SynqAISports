@@ -25,7 +25,7 @@ export default function PromoBoardPage() {
 
   return (
     <div className="h-full flex flex-col bg-[#04070c] overflow-hidden">
-      <header className="h-20 border-b border-white/5 bg-black/60 backdrop-blur-3xl flex items-center justify-between px-4 lg:px-8 shrink-0 z-50">
+      <header className="h-20 border-b border-primary/20 bg-black/60 backdrop-blur-3xl flex items-center justify-between px-4 lg:px-8 shrink-0 z-50">
         <div className="flex items-center gap-4 lg:gap-6">
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
