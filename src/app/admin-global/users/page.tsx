@@ -17,7 +17,8 @@ import {
   Loader2,
   ShieldAlert,
   Pencil,
-  CheckCircle2
+  CheckCircle2,
+  RefreshCw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -98,6 +99,25 @@ export default function GlobalUsersPage() {
       timestamp: new Date().toISOString()
     };
     localStorage.setItem("synq_audit_logs", JSON.stringify([newLog, ...existingLogs].slice(0, 15)));
+  };
+
+  const handleStatusChange = (id: string, newStatus: string) => {
+    const user = users.find(u => u.id === id);
+    if (!user) return;
+
+    setUsers(prev => prev.map(u => u.id === id ? { ...u, status: newStatus } : u));
+    
+    const title = newStatus === 'Approved' ? "ACCESO_AUTORIZADO" : 
+                  newStatus === 'Denied' ? "ACCESO_BLOQUEADO" : "PROTOCOLO_RESETEADO";
+    const type = newStatus === 'Approved' ? 'Success' : 
+                 newStatus === 'Denied' ? 'Warning' : 'Info';
+    
+    addAuditLog(title, `Sincronización de estado para ${user.name} ${user.surname}: ${newStatus.toUpperCase()}.`, type);
+    
+    toast({
+      title: title,
+      description: `El nodo de usuario ha cambiado su protocolo a ${newStatus.toUpperCase()}.`,
+    });
   };
 
   const handleOpenCreate = () => {
@@ -297,7 +317,7 @@ export default function GlobalUsersPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <MetricMiniCard label="Solicitudes Pendientes" value="14" color="text-emerald-400" />
+        <MetricMiniCard label="Solicitudes Pendientes" value={users.filter(u => u.status === 'Pending').length.toString()} color="text-emerald-400" />
         <MetricMiniCard label="Nodos Activos Hoy" value="1.2k" color="text-white" />
         <MetricMiniCard label="Alertas de Acceso" value="0" color="text-emerald-400" />
       </div>
@@ -318,7 +338,7 @@ export default function GlobalUsersPage() {
           <div className="flex items-center gap-4">
             <span className="text-[9px] font-black text-emerald-400/40 uppercase tracking-widest">Filtrar por Status:</span>
             <div className="flex gap-1">
-              {['Todos', 'Pendiente', 'Activo'].map(f => (
+              {['Todos', 'Pending', 'Approved', 'Denied'].map(f => (
                 <button key={f} className="text-[9px] font-black uppercase px-3 py-1 border border-white/5 hover:border-emerald-500/40 text-emerald-400/40 hover:text-emerald-400 transition-all">
                   {f}
                 </button>
@@ -378,6 +398,38 @@ export default function GlobalUsersPage() {
                   </TableCell>
                   <TableCell className="text-right pr-8">
                     <div className="flex justify-end gap-2">
+                      {user.status === 'Pending' ? (
+                        <>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 rounded-none border border-emerald-500 text-emerald-400 hover:bg-emerald-500/20 active:scale-90 transition-all"
+                            onClick={() => handleStatusChange(user.id, 'Approved')}
+                            title="Aprobar Protocolo"
+                          >
+                            <UserCheck className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 rounded-none border border-rose-500 text-rose-400 hover:bg-rose-500/20 active:scale-90 transition-all"
+                            onClick={() => handleStatusChange(user.id, 'Denied')}
+                            title="Denegar Protocolo"
+                          >
+                            <UserX className="h-4 w-4" />
+                          </Button>
+                        </>
+                      ) : (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 rounded-none border border-white/10 text-white/20 hover:text-emerald-400 hover:bg-emerald-500/10 active:scale-90 transition-all"
+                          onClick={() => handleStatusChange(user.id, 'Pending')}
+                          title="Reiniciar Protocolo"
+                        >
+                          <RefreshCw className="h-4 w-4" />
+                        </Button>
+                      )}
                       <Button 
                         variant="ghost" 
                         size="icon" 
@@ -386,14 +438,6 @@ export default function GlobalUsersPage() {
                         title="Modificar Credencial"
                       >
                         <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 rounded-none border border-rose-500/20 text-rose-400 hover:bg-rose-500/10 active:scale-90 transition-all"
-                        title="Revocar Acceso"
-                      >
-                        <UserX className="h-4 w-4" />
                       </Button>
                       <Button 
                         variant="ghost" 
