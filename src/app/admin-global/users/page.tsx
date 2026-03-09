@@ -353,6 +353,7 @@ export default function GlobalUsersPage() {
               <TableRow className="hover:bg-transparent border-white/5">
                 <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-emerald-400/40 h-14 pl-8">Identidad_Usuario</TableHead>
                 <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-emerald-400/40">Mail_Acceso</TableHead>
+                <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-emerald-400/40">Protocolo_Rol</TableHead>
                 <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-emerald-400/40">Nodo_Pais</TableHead>
                 <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-emerald-400/40 text-center">Protocolo_Status</TableHead>
                 <TableHead className="text-right font-black text-[10px] uppercase tracking-[0.3em] text-emerald-400/40 pr-8">Terminal_Acciones</TableHead>
@@ -384,6 +385,11 @@ export default function GlobalUsersPage() {
                         {user.email}
                       </span>
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="rounded-none border-emerald-500/20 text-emerald-400/70 font-black text-[9px] uppercase tracking-widest bg-emerald-500/5 px-3">
+                      {AVAILABLE_ROLES.find(r => r.value === user.role)?.label || user.role}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
