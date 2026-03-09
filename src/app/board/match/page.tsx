@@ -22,7 +22,8 @@ import {
   Camera,
   User,
   Search,
-  Dna
+  Dna,
+  ArrowUpRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -59,6 +60,25 @@ const TIME_PRESETS = [
   { label: "45 min", value: 45 },
 ];
 
+const POSITION_COLORS: Record<string, string> = {
+  "POR": "text-blue-400 border-blue-500/20 bg-blue-500/10",
+  "DFC": "text-emerald-400 border-emerald-500/20 bg-emerald-500/10",
+  "LD": "text-emerald-400 border-emerald-500/20 bg-emerald-500/10",
+  "LI": "text-emerald-400 border-emerald-500/20 bg-emerald-500/10",
+  "DEF": "text-emerald-400 border-emerald-500/20 bg-emerald-500/10",
+  "MC": "text-primary border-primary/20 bg-primary/10",
+  "MCD": "text-primary border-primary/20 bg-primary/10",
+  "MCO": "text-primary border-primary/20 bg-primary/10",
+  "MID": "text-primary border-primary/20 bg-primary/10",
+  "DC": "text-rose-400 border-rose-500/20 bg-rose-500/10",
+  "ED": "text-rose-400 border-rose-500/20 bg-rose-500/10",
+  "EI": "text-rose-400 border-rose-500/20 bg-rose-500/10",
+  "ATK": "text-rose-400 border-rose-500/20 bg-rose-500/10",
+  "FIXO": "text-emerald-400 border-emerald-500/20 bg-emerald-500/10",
+  "ALA": "text-primary border-primary/20 bg-primary/10",
+  "PIVOT": "text-rose-400 border-rose-500/20 bg-rose-500/10",
+};
+
 const MOCK_TEAMS = [
   { id: "t1", name: "Infantil A (Cantera)", field: "f11" as FieldType },
   { id: "t2", name: "Alevín B (Cantera)", field: "f7" as FieldType },
@@ -69,33 +89,41 @@ const MOCK_TEAMS = [
 
 const MOCK_PLAYERS_BY_TEAM: Record<string, any[]> = {
   t1: [
-    { number: 1, name: "MARC S.", pos: "POR" },
-    { number: 2, name: "JUAN P.", pos: "LD" },
-    { number: 3, name: "ÁLEX M.", pos: "LI" },
-    { number: 4, name: "SERGIO R.", pos: "DFC" },
-    { number: 5, name: "HUGO G.", pos: "DFC" },
-    { number: 6, name: "MARIO V.", pos: "MCD" },
-    { number: 8, name: "LUCAS F.", pos: "MC" },
-    { number: 10, name: "ADRIÁN L.", pos: "MCO" },
-    { number: 7, name: "DANI C.", pos: "ED" },
-    { number: 11, name: "IVÁN B.", pos: "EI" },
-    { number: 9, name: "IKER J.", pos: "DC" },
+    { number: 1, name: "MARC S.", pos: "POR", isStarter: true },
+    { number: 2, name: "JUAN P.", pos: "LD", isStarter: true },
+    { number: 3, name: "ÁLEX M.", pos: "LI", isStarter: true },
+    { number: 4, name: "SERGIO R.", pos: "DFC", isStarter: true },
+    { number: 5, name: "HUGO G.", pos: "DFC", isStarter: true },
+    { number: 6, name: "MARIO V.", pos: "MCD", isStarter: true },
+    { number: 8, name: "LUCAS F.", pos: "MC", isStarter: true },
+    { number: 10, name: "ADRIÁN L.", pos: "MCO", isStarter: true },
+    { number: 7, name: "DANI C.", pos: "ED", isStarter: true },
+    { number: 11, name: "IVÁN B.", pos: "EI", isStarter: true },
+    { number: 9, name: "IKER J.", pos: "DC", isStarter: true },
+    { number: 12, name: "PABLO V.", pos: "POR", isStarter: false },
+    { number: 14, name: "RAÚL G.", pos: "DFC", isStarter: false },
+    { number: 15, name: "KOKE M.", pos: "MC", isStarter: false },
+    { number: 19, name: "FERRAN T.", pos: "DC", isStarter: false },
   ],
   t2: [
-    { number: 1, name: "PAU R.", pos: "POR" },
-    { number: 2, name: "ERIC T.", pos: "DEF" },
-    { number: 3, name: "POL S.", pos: "DEF" },
-    { number: 4, name: "BIEL M.", pos: "DEF" },
-    { number: 6, name: "NIL G.", pos: "MID" },
-    { number: 8, name: "ARNAU F.", pos: "MID" },
-    { number: 9, name: "JAN L.", pos: "ATK" },
+    { number: 1, name: "PAU R.", pos: "POR", isStarter: true },
+    { number: 2, name: "ERIC T.", pos: "DEF", isStarter: true },
+    { number: 3, name: "POL S.", pos: "DEF", isStarter: true },
+    { number: 4, name: "BIEL M.", pos: "DEF", isStarter: true },
+    { number: 6, name: "NIL G.", pos: "MID", isStarter: true },
+    { number: 8, name: "ARNAU F.", pos: "MID", isStarter: true },
+    { number: 9, name: "JAN L.", pos: "ATK", isStarter: true },
+    { number: 10, name: "MARC Q.", pos: "ATK", isStarter: false },
+    { number: 12, name: "TEO B.", pos: "MID", isStarter: false },
   ],
   t5: [
-    { number: 1, name: "ALBERTO", pos: "POR" },
-    { number: 5, name: "CARLOS", pos: "FIXO" },
-    { number: 7, name: "JAVI", pos: "ALA" },
-    { number: 8, name: "MANU", pos: "ALA" },
-    { number: 10, name: "RAÚL", pos: "PIVOT" },
+    { number: 1, name: "ALBERTO", pos: "POR", isStarter: true },
+    { number: 5, name: "CARLOS", pos: "FIXO", isStarter: true },
+    { number: 7, name: "JAVI", pos: "ALA", isStarter: true },
+    { number: 8, name: "MANU", pos: "ALA", isStarter: true },
+    { number: 10, name: "RAÚL", pos: "PIVOT", isStarter: true },
+    { number: 12, name: "BORJA", pos: "ALA", isStarter: false },
+    { number: 14, name: "DANI", pos: "FIXO", isStarter: false },
   ]
 };
 
@@ -303,6 +331,8 @@ export default function MatchBoardPage() {
 
   const currentFormations = useMemo(() => Object.keys(FORMATIONS_DATA[fieldType]), [fieldType]);
   const currentRoster = MOCK_PLAYERS_BY_TEAM[selectedTeamId] || [];
+  const starters = currentRoster.filter(p => p.isStarter);
+  const substitutes = currentRoster.filter(p => !p.isStarter);
 
   return (
     <div 
@@ -377,33 +407,46 @@ export default function MatchBoardPage() {
                           ROSTER <span className="text-primary">ACTIVO</span>
                         </SheetTitle>
                         <SheetDescription className="text-[10px] uppercase font-bold text-primary/40 tracking-widest text-left italic">
-                          Listado de atletas sincronizados para el {MOCK_TEAMS.find(t => t.id === selectedTeamId)?.name}.
+                          Gestión de activos del {MOCK_TEAMS.find(t => t.id === selectedTeamId)?.name}.
                         </SheetDescription>
                       </SheetHeader>
                     </div>
-                    <div className="flex-1 p-6 space-y-6 overflow-y-auto custom-scrollbar">
+                    
+                    <div className="flex-1 p-6 space-y-8 overflow-y-auto custom-scrollbar">
                       <div className="relative">
                         <Search className="absolute left-3 top-3.5 h-4 w-4 text-primary/40" />
                         <Input placeholder="FILTRAR JUGADOR..." className="pl-10 h-12 bg-white/5 border-primary/20 rounded-2xl text-[10px] font-black uppercase tracking-widest focus:border-primary" />
                       </div>
                       
-                      <div className="space-y-2">
-                        {currentRoster.map((player, idx) => (
-                          <div key={idx} className="p-4 bg-primary/5 border border-primary/10 rounded-2xl flex items-center justify-between group hover:border-primary/40 transition-all cursor-default">
-                            <div className="flex items-center gap-4">
-                              <div className="h-10 w-10 rounded-xl bg-black border border-primary/20 flex items-center justify-center text-primary font-black italic shadow-lg group-hover:scale-110 transition-transform">
-                                {player.number}
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-xs font-black text-white uppercase italic group-hover:cyan-text-glow transition-all">{player.name}</span>
-                                <span className="text-[8px] font-bold text-primary/40 uppercase tracking-widest">{player.pos} • TITULAR_NODE</span>
-                              </div>
-                            </div>
-                            <Badge variant="outline" className="border-primary/20 text-primary font-black text-[8px] rounded-full">SINC_OK</Badge>
+                      {/* SECCIÓN TITULARES */}
+                      <section className="space-y-4">
+                        <div className="flex items-center gap-3 border-b border-white/5 pb-2">
+                          <CheckCircle2 className="h-3 w-3 text-primary" />
+                          <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary italic">Titulares ({starters.length})</h3>
+                        </div>
+                        <div className="space-y-2">
+                          {starters.map((player, idx) => (
+                            <PlayerListItem key={idx} player={player} />
+                          ))}
+                        </div>
+                      </section>
+
+                      {/* SECCIÓN SUPLENTES */}
+                      {substitutes.length > 0 && (
+                        <section className="space-y-4">
+                          <div className="flex items-center gap-3 border-b border-white/5 pb-2">
+                            <Users className="h-3 w-3 text-white/20" />
+                            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 italic">Suplentes ({substitutes.length})</h3>
                           </div>
-                        ))}
-                      </div>
+                          <div className="space-y-2">
+                            {substitutes.map((player, idx) => (
+                              <PlayerListItem key={idx} player={player} isSub />
+                            ))}
+                          </div>
+                        </section>
+                      )}
                     </div>
+                    
                     <div className="p-10 bg-black/40 border-t border-white/5">
                        <Button className="w-full h-14 bg-primary/5 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-primary hover:text-black transition-all">GESTIONAR ALTAS</Button>
                     </div>
@@ -617,9 +660,9 @@ export default function MatchBoardPage() {
                 </div>
               </div>
               <div className="flex flex-row-reverse gap-1.5 lg:gap-2 justify-center bg-black/40 backdrop-blur-md p-1 lg:p-1.5 rounded-2xl border border-white/5 self-end mr-1">
-                <button onClick={() => setGuestLateral("left")} className={cn("p-1 lg:p-1.5 rounded-lg transition-all", guestLateral === "left" ? "bg-rose-500 text-white" : "text-white/20 hover:text-white")}><ChevronRight className="h-3 w-3 lg:h-3.5 lg:w-3.5" /></button>
+                <button onClick={() => guestLateral === "left" ? setGuestLateral("center") : setGuestLateral("left")} className={cn("p-1 lg:p-1.5 rounded-lg transition-all", guestLateral === "left" ? "bg-rose-500 text-white" : "text-white/20 hover:text-white")}><ChevronRight className="h-3 w-3 lg:h-3.5 lg:w-3.5" /></button>
                 <button onClick={() => setGuestLateral("center")} className={cn("p-1 lg:p-1.5 rounded-lg transition-all", guestLateral === "center" ? "bg-rose-500 text-white" : "text-white/20 hover:text-white")}><Minimize2 className="h-3 w-3 lg:h-3.5 lg:w-3.5 rotate-90" /></button>
-                <button onClick={() => setGuestLateral("right")} className={cn("p-1 lg:p-1.5 rounded-lg transition-all", guestLateral === "right" ? "bg-rose-500 text-white" : "text-white/20 hover:text-white")}><ChevronLeft className="h-3 w-3 lg:h-3.5 lg:w-3.5" /></button>
+                <button onClick={() => guestLateral === "right" ? setGuestLateral("center") : setGuestLateral("right")} className={cn("p-1 lg:p-1.5 rounded-lg transition-all", guestLateral === "right" ? "bg-rose-500 text-white" : "text-white/20 hover:text-white")}><ChevronLeft className="h-3 w-3 lg:h-3.5 lg:w-3.5" /></button>
                 <span className="text-[7px] lg:text-[8px] font-black text-rose-500/40 uppercase tracking-widest px-1.5 lg:px-2 flex items-center">Basculación</span>
               </div>
             </div>
@@ -645,5 +688,45 @@ function PhaseButton({ label, active, onClick, color }: { label: string, active:
     >
       {label}
     </button>
+  );
+}
+
+function PlayerListItem({ player, isSub }: { player: any, isSub?: boolean }) {
+  const posStyle = POSITION_COLORS[player.pos] || "text-white/40 border-white/10 bg-white/5";
+  
+  return (
+    <div className={cn(
+      "p-4 bg-primary/5 border rounded-2xl flex items-center justify-between group hover:bg-primary/10 transition-all cursor-default",
+      isSub ? "border-white/5 opacity-60 hover:opacity-100" : "border-primary/10 hover:border-primary/40"
+    )}>
+      <div className="flex items-center gap-4">
+        <div className={cn(
+          "h-10 w-10 rounded-xl bg-black border flex items-center justify-center text-[10px] font-black italic shadow-lg group-hover:scale-110 transition-transform",
+          isSub ? "border-white/10 text-white/40" : "border-primary/20 text-primary"
+        )}>
+          {player.number}
+        </div>
+        <div className="flex flex-col">
+          <span className={cn(
+            "text-xs font-black uppercase italic group-hover:cyan-text-glow transition-all",
+            isSub ? "text-white/40" : "text-white"
+          )}>
+            {player.name}
+          </span>
+          <div className="flex items-center gap-2 mt-0.5">
+            <Badge variant="outline" className={cn("text-[7px] font-black uppercase rounded-lg px-2 py-0", posStyle)}>
+              {player.pos}
+            </Badge>
+            {!isSub && <span className="text-[7px] font-bold text-primary/40 uppercase tracking-widest">TITULAR_NODE</span>}
+          </div>
+        </div>
+      </div>
+      <Badge variant="outline" className={cn(
+        "font-black text-[8px] rounded-full",
+        isSub ? "border-white/5 text-white/10" : "border-primary/20 text-primary"
+      )}>
+        SINC_OK
+      </Badge>
+    </div>
   );
 }
