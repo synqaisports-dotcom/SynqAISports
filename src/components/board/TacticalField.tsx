@@ -90,8 +90,8 @@ export function TacticalField({
               {/* LÍNEAS DE FUERA DE JUEGO (SÓLO F7) */}
               {isF7 && (
                 <>
-                  <div className="absolute top-0 left-[15.5%] bottom-0 w-[1px] border-l border-dashed border-white/20" />
-                  <div className="absolute top-0 right-[15.5%] bottom-0 w-[1px] border-r border-dashed border-white/20" />
+                  <div className="absolute top-0 left-[10.4%] bottom-0 w-[1px] border-l border-dashed border-white/30" />
+                  <div className="absolute top-0 right-[10.4%] bottom-0 w-[1px] border-r border-dashed border-white/30" />
                 </>
               )}
             </>
