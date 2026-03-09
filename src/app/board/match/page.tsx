@@ -19,7 +19,10 @@ import {
   Plus,
   Info,
   CheckCircle2,
-  Camera
+  Camera,
+  User,
+  Search,
+  Dna
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -45,6 +48,7 @@ import {
 } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 
 const TIME_PRESETS = [
   { label: "15 min", value: 15 },
@@ -62,6 +66,38 @@ const MOCK_TEAMS = [
   { id: "t4", name: "Benjamín D (Cantera)", field: "f7" as FieldType },
   { id: "t5", name: "Equipo Futsal", field: "futsal" as FieldType },
 ];
+
+const MOCK_PLAYERS_BY_TEAM: Record<string, any[]> = {
+  t1: [
+    { number: 1, name: "MARC S.", pos: "POR" },
+    { number: 2, name: "JUAN P.", pos: "LD" },
+    { number: 3, name: "ÁLEX M.", pos: "LI" },
+    { number: 4, name: "SERGIO R.", pos: "DFC" },
+    { number: 5, name: "HUGO G.", pos: "DFC" },
+    { number: 6, name: "MARIO V.", pos: "MCD" },
+    { number: 8, name: "LUCAS F.", pos: "MC" },
+    { number: 10, name: "ADRIÁN L.", pos: "MCO" },
+    { number: 7, name: "DANI C.", pos: "ED" },
+    { number: 11, name: "IVÁN B.", pos: "EI" },
+    { number: 9, name: "IKER J.", pos: "DC" },
+  ],
+  t2: [
+    { number: 1, name: "PAU R.", pos: "POR" },
+    { number: 2, name: "ERIC T.", pos: "DEF" },
+    { number: 3, name: "POL S.", pos: "DEF" },
+    { number: 4, name: "BIEL M.", pos: "DEF" },
+    { number: 6, name: "NIL G.", pos: "MID" },
+    { number: 8, name: "ARNAU F.", pos: "MID" },
+    { number: 9, name: "JAN L.", pos: "ATK" },
+  ],
+  t5: [
+    { number: 1, name: "ALBERTO", pos: "POR" },
+    { number: 5, name: "CARLOS", pos: "FIXO" },
+    { number: 7, name: "JAVI", pos: "ALA" },
+    { number: 8, name: "MANU", pos: "ALA" },
+    { number: 10, name: "RAÚL", pos: "PIVOT" },
+  ]
+};
 
 type TacticalPhase = "defensa" | "tda" | "ataque" | "tad" | "salida";
 type LateralShift = "left" | "center" | "right";
@@ -101,7 +137,6 @@ export default function MatchBoardPage() {
   const isCoach = profile?.role === "coach" || profile?.role === "club_admin" || profile?.role === "superadmin";
   const showTeamSelector = hasClub && isCoach;
 
-  // Estado para creación de equipo local (sin club)
   const [localTeamData, setLocalTeamData] = useState({
     name: "",
     shortName: "",
@@ -267,6 +302,7 @@ export default function MatchBoardPage() {
   };
 
   const currentFormations = useMemo(() => Object.keys(FORMATIONS_DATA[fieldType]), [fieldType]);
+  const currentRoster = MOCK_PLAYERS_BY_TEAM[selectedTeamId] || [];
 
   return (
     <div 
@@ -322,7 +358,6 @@ export default function MatchBoardPage() {
               </Select>
             </div>
 
-            {/* ACTIVADOR DE VENTANA LATERAL DE EQUIPO */}
             <Sheet>
               <SheetTrigger asChild>
                 <button className="h-9 lg:h-10 w-9 lg:w-10 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all active:scale-95 shadow-[0_0_15px_rgba(0,242,255,0.1)]">
@@ -331,43 +366,49 @@ export default function MatchBoardPage() {
               </SheetTrigger>
               <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
                 {hasClub ? (
-                  /* VISTA: EQUIPO POR DEFECTO (USUARIO CON CLUB) */
                   <>
                     <div className="p-10 border-b border-white/5 bg-black/40">
                       <SheetHeader className="space-y-4">
                         <div className="flex items-center gap-3">
-                          <Shield className="h-4 w-4 text-primary animate-pulse" />
-                          <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary italic">Federated_Node_v2.0</span>
+                          <Dna className="h-4 w-4 text-primary animate-pulse" />
+                          <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary italic">Plantilla_Scanned_v2.5</span>
                         </div>
                         <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left leading-none">
-                          MI EQUIPO <span className="text-primary">RED</span>
+                          ROSTER <span className="text-primary">ACTIVO</span>
                         </SheetTitle>
                         <SheetDescription className="text-[10px] uppercase font-bold text-primary/40 tracking-widest text-left italic">
-                          Configuración sincronizada con el servidor del club.
+                          Listado de atletas sincronizados para el {MOCK_TEAMS.find(t => t.id === selectedTeamId)?.name}.
                         </SheetDescription>
                       </SheetHeader>
                     </div>
-                    <div className="flex-1 p-10 space-y-8 overflow-y-auto custom-scrollbar">
-                      <div className="p-8 bg-primary/5 border border-primary/20 rounded-3xl flex flex-col items-center text-center space-y-4">
-                         <div className="h-24 w-24 rounded-full bg-black border-2 border-primary flex items-center justify-center cyan-glow">
-                            <Trophy className="h-10 w-10 text-primary" />
-                         </div>
-                         <div>
-                            <h3 className="text-2xl font-black text-white italic tracking-tighter uppercase">{profile?.clubName || "Nodo Cantera"}</h3>
-                            <p className="text-[10px] font-black text-primary/60 uppercase tracking-widest">{profile?.sport || "Disciplina Base"}</p>
-                         </div>
+                    <div className="flex-1 p-6 space-y-6 overflow-y-auto custom-scrollbar">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-3.5 h-4 w-4 text-primary/40" />
+                        <Input placeholder="FILTRAR JUGADOR..." className="pl-10 h-12 bg-white/5 border-primary/20 rounded-2xl text-[10px] font-black uppercase tracking-widest focus:border-primary" />
                       </div>
-                      <div className="space-y-4">
-                         <div className="flex items-center gap-3 px-6 py-4 bg-white/5 border border-white/5 rounded-2xl">
-                            <Info className="h-4 w-4 text-primary/40" />
-                            <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Sincronización de Red: Activa</span>
-                         </div>
-                         <Button className="w-full h-14 bg-primary text-black font-black uppercase tracking-widest rounded-2xl">SOLICITAR CAMBIO_NODO</Button>
+                      
+                      <div className="space-y-2">
+                        {currentRoster.map((player, idx) => (
+                          <div key={idx} className="p-4 bg-primary/5 border border-primary/10 rounded-2xl flex items-center justify-between group hover:border-primary/40 transition-all cursor-default">
+                            <div className="flex items-center gap-4">
+                              <div className="h-10 w-10 rounded-xl bg-black border border-primary/20 flex items-center justify-center text-primary font-black italic shadow-lg group-hover:scale-110 transition-transform">
+                                {player.number}
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-xs font-black text-white uppercase italic group-hover:cyan-text-glow transition-all">{player.name}</span>
+                                <span className="text-[8px] font-bold text-primary/40 uppercase tracking-widest">{player.pos} • TITULAR_NODE</span>
+                              </div>
+                            </div>
+                            <Badge variant="outline" className="border-primary/20 text-primary font-black text-[8px] rounded-full">SINC_OK</Badge>
+                          </div>
+                        ))}
                       </div>
+                    </div>
+                    <div className="p-10 bg-black/40 border-t border-white/5">
+                       <Button className="w-full h-14 bg-primary/5 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-primary hover:text-black transition-all">GESTIONAR ALTAS</Button>
                     </div>
                   </>
                 ) : (
-                  /* VISTA: CREAR EQUIPO LOCAL (USUARIO SIN CLUB) */
                   <>
                     <div className="p-10 border-b border-white/5 bg-black/40">
                       <SheetHeader className="space-y-4">
@@ -524,7 +565,6 @@ export default function MatchBoardPage() {
             ))}
           </TacticalField>
 
-          {/* PANELES TÁCTICOS ADAPTADOS A TABLET */}
           <div className="absolute top-4 lg:top-6 left-4 lg:left-6 right-4 lg:right-6 flex justify-between pointer-events-none z-40">
             <div className="pointer-events-auto flex flex-col gap-2 lg:gap-3">
               <div className="glass-panel p-1 border-primary/30 flex items-center gap-1 lg:gap-2 rounded-2xl">
