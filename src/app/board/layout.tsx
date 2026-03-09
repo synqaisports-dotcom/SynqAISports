@@ -34,27 +34,16 @@ export default function BoardLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // PROTOCOLO_FULLSCREEN_MILITAR: Sincronización nativa y limpieza
   useEffect(() => {
-    // 1. Escuchar cambio de estado nativo del navegador
     const syncFullscreenState = () => {
       setIsFullscreen(!!document.fullscreenElement);
     };
-
     document.addEventListener("fullscreenchange", syncFullscreenState);
-    
-    // Sync inicial seguro
     syncFullscreenState();
-
-    // 2. CLEANUP CRÍTICO: Evita el error de la app anterior al navegar fuera
     return () => {
       document.removeEventListener("fullscreenchange", syncFullscreenState);
-      // Si el usuario sale de la sección /board, forzamos la salida de pantalla completa
-      // para evitar que el estado del DOM se quede 'zombi'.
       if (document.fullscreenElement) {
-        document.exitFullscreen().catch(() => {
-          // Silent catch para evitar errores en navegaciones ultra-rápidas
-        });
+        document.exitFullscreen().catch(() => {});
       }
     };
   }, []);
@@ -71,7 +60,6 @@ export default function BoardLayout({ children }: { children: React.ReactNode })
     }
   }, []);
 
-  // Redirección de identidad
   useEffect(() => {
     if (!loading && !profile) {
       router.push("/login");
@@ -94,11 +82,11 @@ export default function BoardLayout({ children }: { children: React.ReactNode })
 
   return (
     <SidebarProvider defaultOpen={false}>
-      <div className="h-screen w-full bg-[#020408] flex overflow-hidden relative">
+      <div className="h-[100dvh] w-full bg-[#020408] flex overflow-hidden relative">
         <DashboardSidebar />
         <BoardTabTrigger />
 
-        <main className="flex-1 flex flex-col overflow-hidden relative">
+        <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,242,255,0.03),transparent_70%)] pointer-events-none" />
           
           <button 
@@ -110,7 +98,7 @@ export default function BoardLayout({ children }: { children: React.ReactNode })
             <div className="absolute inset-0 bg-primary/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
           </button>
 
-          <div className="flex-1 relative z-10 animate-in fade-in duration-1000">
+          <div className="flex-1 relative z-10 flex flex-col overflow-hidden animate-in fade-in duration-1000">
             {children}
           </div>
         </main>
