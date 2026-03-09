@@ -29,20 +29,20 @@ export function PlayerChip({
   return (
     <div 
       className={cn(
-        "absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-1 transition-all duration-700 ease-in-out z-20 select-none",
-        isDragging ? "scale-125 z-50 duration-0 cursor-grabbing" : "cursor-grab",
+        "absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-1 transition-all z-20 select-none touch-none",
+        isDragging ? "scale-125 z-50 duration-0 cursor-grabbing" : "cursor-grab duration-300 ease-out",
         className
       )}
       style={{ 
         left: `${x}%`, 
         top: `${y}%`,
-        transitionProperty: isDragging ? 'none' : 'all'
+        transitionProperty: isDragging ? 'none' : 'left, top'
       }}
       onPointerDown={onPointerDown}
     >
       <div 
         className={cn(
-          "h-8 w-8 md:h-10 md:w-10 rounded-full border-2 flex items-center justify-center text-[10px] md:text-xs font-black shadow-lg transition-all",
+          "h-8 w-8 md:h-10 md:w-10 rounded-full border-2 flex items-center justify-center text-[10px] md:text-xs font-black shadow-lg transition-transform",
           isLocal 
             ? "bg-primary/20 border-primary text-primary shadow-[0_0_15px_rgba(0,242,255,0.3)]" 
             : "bg-rose-500/20 border-rose-500 text-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.3)]",

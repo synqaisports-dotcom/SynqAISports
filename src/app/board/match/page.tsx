@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, memo } from "react";
 import { Trophy, Clock, Save, LayoutGrid, Play, Pause, RotateCcw, ChevronLeft, ChevronRight, Minimize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -37,6 +37,9 @@ interface PlayerPos {
   y: number;
 }
 
+// Memoizamos el componente PlayerChip para máxima fluidez
+const MemoizedPlayerChip = memo(PlayerChip);
+
 export default function MatchBoardPage() {
   const [timeLeft, setTimeLeft] = useState(45 * 60);
   const [isRunning, setIsRunning] = useState(false);
@@ -52,7 +55,6 @@ export default function MatchBoardPage() {
   const [homeFormation, setHomeFormation] = useState("4-3-3");
   const [guestFormation, setGuestFormation] = useState("4-3-3");
 
-  // ESTADO DE POSICIONES INTERACTIVAS
   const [players, setPlayers] = useState<PlayerPos[]>([]);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const fieldRef = useRef<HTMLDivElement>(null);
@@ -112,10 +114,10 @@ export default function MatchBoardPage() {
         else if (lateral === "right") yShift = 0.15;
 
         if (phase === "defensa") {
-          // Bloque defensivo mucho más compacto y retrasado
-          if (isDEF) phaseShift = -0.15;
-          else if (isMID) phaseShift = -0.22;
-          else if (isATK) phaseShift = -0.30;
+          // Bloque defensivo EXTREMADAMENTE compacto. Delanteros bajan más allá del centro.
+          if (isDEF) phaseShift = -0.12;
+          else if (isMID) phaseShift = -0.25;
+          else if (isATK) phaseShift = -0.38;
         } else if (phase === "tda") {
           if (isDEF) phaseShift = 0.05;
           else if (isMID) phaseShift = 0.08;
@@ -141,17 +143,14 @@ export default function MatchBoardPage() {
         finalY = pos.y + (isGK ? 0 : yShift);
 
         if (!isGK) {
-          // Aplicar blindaje de áreas grandes (19.5% a 80.5%)
           finalX = Math.max(finalX, innerAreaLimit);
           finalX = Math.min(finalX, outerAreaLimit);
           
-          // Escalonamiento extra por líneas en ataque para no solaparse
           if (phase === "ataque") {
             if (isMID) finalX = Math.min(finalX, 0.72);
             if (isDEF) finalX = Math.min(finalX, 0.55);
           }
         } else {
-          // Portero inmune a desplazamientos tácticos de bloque
           finalX = Math.max(0.02, Math.min(0.12, finalX));
           finalY = 0.5;
         }
@@ -160,7 +159,6 @@ export default function MatchBoardPage() {
         finalY = (1 - pos.y) - (isGK ? 0 : yShift);
 
         if (!isGK) {
-          // Aplicar blindaje de áreas grandes (sentido inverso para visitante)
           finalX = Math.min(finalX, outerAreaLimit);
           finalX = Math.max(finalX, innerAreaLimit);
           
@@ -169,7 +167,6 @@ export default function MatchBoardPage() {
             if (isDEF) finalX = Math.max(finalX, 0.45);
           }
         } else {
-          // Portero inmune a desplazamientos tácticos de bloque
           finalX = Math.min(0.98, Math.max(0.88, finalX));
           finalY = 0.5;
         }
@@ -188,14 +185,12 @@ export default function MatchBoardPage() {
     });
   };
 
-  // SINCRONIZAR ESTADO AL CAMBIAR FASES/FORMACIONES
   useEffect(() => {
     const hp = calculatePositions("local", homeFormation, homePhase, homeLateral);
     const gp = calculatePositions("visitor", guestFormation, guestPhase, guestLateral);
     setPlayers([...hp, ...gp]);
   }, [homeFormation, homePhase, homeLateral, guestFormation, guestPhase, guestLateral, fieldType]);
 
-  // LÓGICA DE ARRASTRE
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!draggingId || !fieldRef.current) return;
 
@@ -203,6 +198,7 @@ export default function MatchBoardPage() {
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
 
+    // Actualizamos solo el jugador arrastrado para mantener la fluidez
     setPlayers(prev => prev.map(p => 
       p.id === draggingId ? { ...p, x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) } : p
     ));
@@ -214,7 +210,7 @@ export default function MatchBoardPage() {
 
   return (
     <div 
-      className="flex-1 flex flex-col bg-black overflow-hidden font-body relative"
+      className="flex-1 flex flex-col bg-black overflow-hidden font-body relative touch-none"
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerUp}
@@ -322,7 +318,7 @@ export default function MatchBoardPage() {
         <main className="flex-1 relative overflow-hidden" ref={fieldRef}>
           <TacticalField theme="cyan" fieldType={fieldType}>
             {players.map(p => (
-              <PlayerChip 
+              <MemoizedPlayerChip 
                 key={p.id} 
                 team={p.team} 
                 number={p.number} 
@@ -331,6 +327,7 @@ export default function MatchBoardPage() {
                 isDragging={draggingId === p.id}
                 onPointerDown={(e) => {
                   e.stopPropagation();
+                  (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
                   setDraggingId(p.id);
                 }}
               />
