@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -205,7 +204,7 @@ export default function FacilitiesManagementPage() {
         <div className="space-y-1">
           <div className="flex items-center gap-3 mb-2">
             <MapPin className="h-5 w-5 text-primary animate-pulse" />
-            <span className="text-[10px] font-black text-primary tracking-[0.5em] uppercase">Facility_Network_Active</span>
+            <span className="text-[10px] font-black text-primary tracking-[0.5em] uppercase italic">Facility_Network_Active</span>
           </div>
           <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic cyan-text-glow">
             Instalaciones
@@ -214,7 +213,7 @@ export default function FacilitiesManagementPage() {
         
         <Button 
           onClick={handleOpenCreate}
-          className="rounded-none bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none"
+          className="rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none"
         >
           <Plus className="h-4 w-4 mr-2" /> Nuevo Activo
         </Button>
@@ -227,13 +226,13 @@ export default function FacilitiesManagementPage() {
         <FacilityStat label="Sectores Sincro" value="04" icon={LayoutDashboard} />
       </div>
 
-      <Card className="glass-panel border border-primary/20 bg-black/40 overflow-hidden mb-8 shadow-2xl">
+      <Card className="glass-panel border border-primary/20 bg-black/40 overflow-hidden mb-8 shadow-2xl rounded-3xl">
         <CardHeader className="p-6 border-b border-white/5">
           <div className="relative w-full max-w-md">
             <Search className="absolute left-3 top-3.5 h-4 w-4 text-primary opacity-50" />
             <Input 
               placeholder="BUSCAR POR NOMBRE O DEPORTE..." 
-              className="pl-10 h-12 bg-white/5 border-primary/20 rounded-none text-primary placeholder:text-primary/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-primary/50 transition-all"
+              className="pl-10 h-12 bg-white/5 border-primary/20 rounded-2xl text-primary placeholder:text-primary/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-primary/50 transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -243,7 +242,7 @@ export default function FacilitiesManagementPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {filteredFacilities.map((f) => (
-          <Card key={f.id} className="glass-panel overflow-hidden relative group border border-primary/10 bg-black/40 hover:border-primary/30 transition-all">
+          <Card key={f.id} className="glass-panel overflow-hidden relative group border border-primary/10 bg-black/40 hover:border-primary/30 transition-all rounded-3xl">
             <div className={cn(
               "absolute top-0 left-0 w-full h-[2px]",
               f.status === 'Active' ? 'bg-primary/40' : 'bg-amber-500/40'
@@ -255,7 +254,7 @@ export default function FacilitiesManagementPage() {
                 </div>
                 <div className="flex flex-col items-end">
                   <Badge variant="outline" className={cn(
-                    "rounded-none font-black text-[8px] uppercase tracking-widest px-3 py-1",
+                    "rounded-2xl font-black text-[8px] uppercase tracking-widest px-3 py-1",
                     f.status === 'Active' ? 'border-primary/20 text-primary bg-primary/5' : 'border-amber-500/20 text-amber-400 bg-amber-500/5'
                   )}>
                     {f.status}
@@ -267,30 +266,30 @@ export default function FacilitiesManagementPage() {
                 {f.name}
               </CardTitle>
               <div className="flex items-center gap-2 mb-1">
-                <Dumbbell className="h-3 w-3 text-primary/60" />
-                <span className="text-[9px] font-black uppercase tracking-widest text-primary/80 italic">{f.sport}</span>
+                <Dumbbell className="h-3 w-3 text-primary" />
+                <span className="text-[9px] font-black uppercase tracking-widest text-primary italic">{f.sport}</span>
               </div>
               <CardDescription className="text-[9px] font-black uppercase tracking-widest text-primary/30 italic">
                 {f.type}
               </CardDescription>
             </CardHeader>
             <CardContent className="px-6 pb-6 space-y-4">
-              <div className="flex items-center justify-between p-3 bg-primary/5 rounded-xl border border-primary/10">
+              <div className="flex items-center justify-between p-3 bg-primary/5 rounded-2xl border border-primary/10">
                 <div className="flex items-center gap-2">
-                  <Users className="h-3 w-3 text-primary/40" />
-                  <span className="text-[9px] font-black text-primary/60 uppercase">Aforo Máximo</span>
+                  <Users className="h-3 w-3 text-primary" />
+                  <span className="text-[9px] font-black text-primary uppercase italic">Aforo Máximo</span>
                 </div>
                 <span className="text-xs font-black text-primary">{f.capacity}</span>
               </div>
-              <div className="flex items-center justify-between p-3 bg-primary/5 rounded-xl border border-primary/10">
+              <div className="flex items-center justify-between p-3 bg-primary/5 rounded-2xl border border-primary/10">
                 <div className="flex items-center gap-2">
-                  <Calendar className="h-3 w-3 text-primary/40" />
-                  <span className="text-[9px] font-black text-primary/60 uppercase">Mantenimiento</span>
+                  <Calendar className="h-3 w-3 text-primary" />
+                  <span className="text-[9px] font-black text-primary uppercase italic">Mantenimiento</span>
                 </div>
                 <span className="text-xs font-black text-primary cyan-text-glow">{f.nextMaintenance}</span>
               </div>
             </CardContent>
-            <CardFooter className="px-6 py-4 bg-black/40 border-t border-white/5 flex justify-between items-center">
+            <CardFooter className="px-6 py-4 bg-black/40 border-t border-white/5 flex justify-between items-center rounded-b-3xl">
               <span className="flex items-center gap-2 text-[8px] font-black text-primary/30 uppercase tracking-widest">
                 <CheckCircle2 className="h-3 w-3 text-primary/40" /> Sincronización Estable
               </span>
@@ -298,7 +297,7 @@ export default function FacilitiesManagementPage() {
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="h-9 w-9 text-primary hover:bg-primary/10 border border-primary/10 transition-all"
+                  className="h-9 w-9 text-primary hover:bg-primary/10 border border-primary/10 transition-all rounded-xl active:scale-95"
                   onClick={() => handleEdit(f)}
                   title="Modificar Activo"
                 >
@@ -307,7 +306,7 @@ export default function FacilitiesManagementPage() {
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="h-9 w-9 text-rose-500 hover:bg-rose-500/10 border border-rose-500/10 transition-all"
+                  className="h-9 w-9 text-rose-500 hover:bg-rose-500/10 border border-rose-500/10 transition-all rounded-xl active:scale-95"
                   onClick={() => handleDelete(f.id, f.name)}
                   title="Eliminar Activo"
                 >
@@ -325,12 +324,12 @@ export default function FacilitiesManagementPage() {
             <SheetHeader className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Facility_Deploy_v2.0</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary italic">Facility_Deploy_v2.0</span>
               </div>
               <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left">
                 {editingId ? "MODIFICAR_ACTIVO" : "AÑADIR_ACTIVO"}
               </SheetTitle>
-              <SheetDescription className="text-[10px] uppercase font-bold text-primary/40 tracking-widest text-left">
+              <SheetDescription className="text-[10px] uppercase font-bold text-primary/40 tracking-widest text-left italic">
                 Sincronice un nuevo espacio físico con la red operativa del club.
               </SheetDescription>
             </SheetHeader>
@@ -339,27 +338,27 @@ export default function FacilitiesManagementPage() {
           <form onSubmit={handleSaveFacility} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10">
             <div className="space-y-6">
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Nombre de la Instalación</Label>
+                <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Nombre de la Instalación</Label>
                 <Input 
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})}
                   placeholder="EJ: PABELLÓN MUNICIPAL" 
-                  className="h-14 bg-white/5 border-primary/20 rounded-none font-bold uppercase focus:border-primary transition-all text-primary placeholder:text-primary/20 text-lg" 
+                  className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-all text-primary placeholder:text-primary/20 text-lg" 
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Tipo de Espacio</Label>
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Tipo de Espacio</Label>
                   <Select 
                     value={formData.type} 
                     onValueChange={(v) => setFormData({...formData, type: v})}
                   >
-                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-none text-primary font-bold uppercase tracking-widest focus:border-primary transition-all">
+                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-2xl text-primary font-bold uppercase tracking-widest focus:border-primary transition-all">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
+                    <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
                       <SelectItem value="Campo Exterior" className="text-[10px] font-black uppercase focus:bg-primary">CAMPO EXTERIOR</SelectItem>
                       <SelectItem value="Pabellón" className="text-[10px] font-black uppercase focus:bg-primary">PABELLÓN CUBIERTO</SelectItem>
                       <SelectItem value="Fitness" className="text-[10px] font-black uppercase focus:bg-primary">GIMNASIO / SALA</SelectItem>
@@ -369,18 +368,18 @@ export default function FacilitiesManagementPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Disciplina Deportiva</Label>
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Disciplina Deportiva</Label>
                   <Select 
                     value={formData.sport} 
                     onValueChange={(v) => setFormData({...formData, sport: v})}
                   >
-                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-none text-primary font-bold uppercase tracking-widest focus:border-primary transition-all">
+                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-2xl text-primary font-bold uppercase tracking-widest focus:border-primary transition-all">
                       <div className="flex items-center gap-3">
                         <Dumbbell className="h-4 w-4 text-primary/40" />
                         <SelectValue placeholder="DEPORTE..." />
                       </div>
                     </SelectTrigger>
-                    <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
+                    <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
                       {SPORTS.map(s => (
                         <SelectItem key={s.value} value={s.value} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary">
                           {s.label}
@@ -402,13 +401,13 @@ export default function FacilitiesManagementPage() {
                     
                     <div className="flex items-center gap-3 border-b border-primary/20 pb-4 mb-6">
                       <Zap className="h-4 w-4 text-primary" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">
+                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary italic">
                         Horario General de la Instalación
                       </span>
                     </div>
 
                     <div className="space-y-4">
-                      <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1">Días Operativos</Label>
+                      <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Días Operativos</Label>
                       <div className="flex gap-2">
                         {WEEK_DAYS.map(day => (
                           <button
@@ -416,7 +415,7 @@ export default function FacilitiesManagementPage() {
                             type="button"
                             onClick={() => toggleDay(day.id, 'global')}
                             className={cn(
-                              "h-10 w-10 flex items-center justify-center font-black text-[10px] border transition-all",
+                              "h-10 w-10 flex items-center justify-center font-black text-[10px] border transition-all rounded-xl active:scale-95",
                               formData.days.includes(day.id)
                                 ? "bg-primary text-black border-primary shadow-[0_0_15px_rgba(0,242,255,0.3)]"
                                 : "bg-white/5 border-primary/20 text-primary/30 hover:border-primary/40"
@@ -430,26 +429,26 @@ export default function FacilitiesManagementPage() {
 
                     <div className="grid grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1">Apertura</Label>
+                        <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Apertura</Label>
                         <div className="relative">
                           <Clock className="absolute left-3 top-3 h-4 w-4 text-primary/40" />
                           <Input 
                             type="time" 
                             value={formData.startTime}
                             onChange={(e) => setFormData({...formData, startTime: e.target.value})}
-                            className="pl-10 h-11 bg-white/5 border-primary/20 rounded-none font-bold text-xs focus:border-primary text-primary" 
+                            className="pl-10 h-11 bg-white/5 border-primary/20 rounded-2xl font-bold text-xs focus:border-primary text-primary" 
                           />
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1">Cierre</Label>
+                        <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Cierre</Label>
                         <div className="relative">
                           <Clock className="absolute left-3 top-3 h-4 w-4 text-primary/40" />
                           <Input 
                             type="time" 
                             value={formData.endTime}
                             onChange={(e) => setFormData({...formData, endTime: e.target.value})}
-                            className="pl-10 h-11 bg-white/5 border-primary/20 rounded-none font-bold text-xs focus:border-primary text-primary" 
+                            className="pl-10 h-11 bg-white/5 border-primary/20 rounded-2xl font-bold text-xs focus:border-primary text-primary" 
                           />
                         </div>
                       </div>
@@ -460,25 +459,25 @@ export default function FacilitiesManagementPage() {
 
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Capacidad Máx. Atletas</Label>
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Capacidad Máx. Atletas</Label>
                   <Input 
                     required
                     value={formData.capacity}
                     onChange={(e) => setFormData({...formData, capacity: e.target.value})}
                     placeholder="EJ: 25 ATLETAS" 
-                    className="h-12 bg-white/5 border-primary/20 rounded-none font-bold uppercase focus:border-primary transition-all text-primary placeholder:text-primary/20" 
+                    className="h-12 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-all text-primary placeholder:text-primary/20" 
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Estatus_Red</Label>
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Estatus_Red</Label>
                   <Select 
                     value={formData.status} 
                     onValueChange={(v) => setFormData({...formData, status: v})}
                   >
-                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-none text-primary font-bold uppercase tracking-widest focus:border-primary transition-all">
+                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-2xl text-primary font-bold uppercase tracking-widest focus:border-primary transition-all">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
+                    <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
                       <SelectItem value="Active" className="text-[10px] font-black uppercase text-primary focus:bg-primary focus:text-black">OPERATIVO</SelectItem>
                       <SelectItem value="Maintenance" className="text-[10px] font-black uppercase text-amber-400 focus:bg-amber-500">MANTENIMIENTO</SelectItem>
                       <SelectItem value="Inactive" className="text-[10px] font-black uppercase text-rose-400 focus:bg-rose-500">CERRADO</SelectItem>
@@ -488,10 +487,10 @@ export default function FacilitiesManagementPage() {
               </div>
             </div>
 
-            <div className="p-6 bg-primary/5 border border-primary/20 space-y-3">
+            <div className="p-6 bg-primary/5 border border-primary/20 space-y-3 rounded-3xl">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="h-3 w-3 text-primary" />
-                <span className="text-[9px] font-black uppercase text-primary tracking-widest">Protocolo de Seguridad</span>
+                <span className="text-[9px] font-black uppercase text-primary tracking-widest italic">Protocolo de Seguridad</span>
               </div>
               <p className="text-[9px] text-primary/40 leading-relaxed font-bold uppercase italic">
                 La configuración de horarios dual permite al motor de planificación de SynQAI distinguir entre la apertura del club y las franjas de alta intensidad formativa.
@@ -501,14 +500,14 @@ export default function FacilitiesManagementPage() {
 
           <div className="p-10 bg-black/40 border-t border-white/5 flex gap-4">
             <SheetClose asChild>
-              <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary/60 font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 transition-all">
+              <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 transition-all rounded-2xl active:scale-95">
                 CANCELAR
               </Button>
             </SheetClose>
             <Button 
               onClick={handleSaveFacility}
               disabled={loading}
-              className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-none shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] border-none"
+              className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] border-none active:scale-95"
             >
               {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (editingId ? "SINCRONIZAR_CAMBIOS" : "VINCULAR_ACTIVO")}
             </Button>
@@ -521,7 +520,7 @@ export default function FacilitiesManagementPage() {
 
 function FacilityStat({ label, value, icon: Icon, highlight, warning }: any) {
   return (
-    <Card className="glass-panel p-5 flex items-center gap-5 relative overflow-hidden group border border-primary/20 bg-black/20">
+    <Card className="glass-panel p-5 flex items-center gap-5 relative overflow-hidden group border border-primary/20 bg-black/20 rounded-3xl">
        <div className={cn(
          "h-12 w-12 flex items-center justify-center border transition-all rotate-3 group-hover:rotate-0 duration-500 rounded-2xl bg-primary/10 border-primary/20",
          warning ? "border-rose-500/20 bg-rose-500/10" : ""
@@ -529,7 +528,7 @@ function FacilityStat({ label, value, icon: Icon, highlight, warning }: any) {
           <Icon className={cn("h-6 w-6", warning ? "text-rose-400" : "text-primary")} />
        </div>
        <div className="relative z-10">
-          <p className="text-[9px] font-black text-primary/60 uppercase tracking-widest">{label}</p>
+          <p className="text-[9px] font-black text-primary uppercase tracking-widest italic">{label}</p>
           <div className="flex items-baseline gap-2">
              <p className={cn(
                "text-2xl font-black italic tracking-tighter",

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -182,7 +181,7 @@ export default function GlobalUsersPage() {
         <div className="space-y-1">
           <div className="flex items-center gap-3 mb-2">
             <Shield className="h-5 w-5 text-emerald-400 animate-pulse" />
-            <span className="text-[10px] font-black text-emerald-400 tracking-[0.5em] uppercase">Security_Protocol_Active</span>
+            <span className="text-[10px] font-black text-emerald-400 tracking-[0.5em] uppercase italic">Security_Protocol_Active</span>
           </div>
           <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic emerald-text-glow">
             Gestión de Usuarios
@@ -191,7 +190,7 @@ export default function GlobalUsersPage() {
         
         <Button 
           onClick={handleOpenCreate}
-          className="rounded-none bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all border-none"
+          className="rounded-2xl bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all border-none"
         >
           <UserPlus className="h-4 w-4 mr-2" /> Nueva Credencial
         </Button>
@@ -202,12 +201,12 @@ export default function GlobalUsersPage() {
               <SheetHeader className="space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400">Credential_Factory_v1.0</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400 italic">Credential_Factory_v1.0</span>
                 </div>
                 <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left">
                   {editingId ? "MODIFICAR_USUARIO" : "EMITIR_ACCESO"}
                 </SheetTitle>
-                <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left">
+                <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left italic">
                   {editingId ? "Actualice los parámetros de acceso del nodo de usuario." : "Genere una nueva identidad autorizada en el núcleo central de SynQAI."}
                 </SheetDescription>
               </SheetHeader>
@@ -217,29 +216,29 @@ export default function GlobalUsersPage() {
               <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase text-emerald-400 tracking-widest ml-1">Nombre</Label>
+                    <Label className="text-[10px] font-black uppercase text-emerald-400 tracking-widest ml-1 italic">Nombre</Label>
                     <Input 
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})}
                       placeholder="EJ: MARC" 
-                      className="h-12 bg-white/5 border-emerald-500/20 rounded-none font-bold uppercase focus:border-emerald-500 transition-all placeholder:text-emerald-400/20 text-emerald-400" 
+                      className="h-12 bg-white/5 border-emerald-500/20 rounded-2xl font-bold uppercase focus:border-emerald-500 transition-all placeholder:text-emerald-400/20 text-emerald-400" 
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase text-emerald-400 tracking-widest ml-1">Apellidos</Label>
+                    <Label className="text-[10px] font-black uppercase text-emerald-400 tracking-widest ml-1 italic">Apellidos</Label>
                     <Input 
                       required
                       value={formData.surname}
                       onChange={(e) => setFormData({...formData, surname: e.target.value.toUpperCase()})}
                       placeholder="EJ: GARCÍA" 
-                      className="h-12 bg-white/5 border-emerald-500/20 rounded-none font-bold uppercase focus:border-emerald-500 transition-all placeholder:text-emerald-400/20 text-emerald-400" 
+                      className="h-12 bg-white/5 border-emerald-500/20 rounded-2xl font-bold uppercase focus:border-emerald-500 transition-all placeholder:text-emerald-400/20 text-emerald-400" 
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-emerald-400 tracking-widest ml-1">Mail de Acceso</Label>
+                  <Label className="text-[10px] font-black uppercase text-emerald-400 tracking-widest ml-1 italic">Mail de Acceso</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-3.5 h-4 w-4 text-emerald-500/40" />
                     <Input 
@@ -248,13 +247,13 @@ export default function GlobalUsersPage() {
                       value={formData.email}
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
                       placeholder="USER@CLUB.COM" 
-                      className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-none font-bold focus:border-emerald-500 transition-all placeholder:text-emerald-400/20 text-emerald-400" 
+                      className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-2xl font-bold focus:border-emerald-500 transition-all placeholder:text-emerald-400/20 text-emerald-400" 
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-emerald-400 tracking-widest ml-1">Nodo_País</Label>
+                  <Label className="text-[10px] font-black uppercase text-emerald-400 tracking-widest ml-1 italic">Nodo_País</Label>
                   <div className="relative">
                     <Globe2 className="absolute left-3 top-3.5 h-4 w-4 text-emerald-500/40" />
                     <Input 
@@ -262,21 +261,21 @@ export default function GlobalUsersPage() {
                       value={formData.country}
                       onChange={(e) => setFormData({...formData, country: e.target.value})}
                       placeholder="ESPAÑA" 
-                      className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-none font-bold uppercase focus:border-emerald-500 transition-all placeholder:text-emerald-400/20 text-emerald-400" 
+                      className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-2xl font-bold uppercase focus:border-emerald-500 transition-all placeholder:text-emerald-400/20 text-emerald-400" 
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-emerald-400 tracking-widest ml-1">Protocolo de Rol</Label>
+                  <Label className="text-[10px] font-black uppercase text-emerald-400 tracking-widest ml-1 italic">Protocolo de Rol</Label>
                   <Select 
                     value={formData.role} 
                     onValueChange={(v) => setFormData({...formData, role: v})}
                   >
-                    <SelectTrigger className="h-12 bg-white/5 border-emerald-500/20 rounded-none text-emerald-400 font-bold uppercase tracking-widest focus:border-emerald-500 transition-all">
+                    <SelectTrigger className="h-12 bg-white/5 border-emerald-500/20 rounded-2xl text-emerald-400 font-bold uppercase tracking-widest focus:border-emerald-500 transition-all">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#04070c] border-emerald-500/20 rounded-none">
+                    <SelectContent className="bg-[#04070c] border-emerald-500/20 rounded-2xl">
                       {AVAILABLE_ROLES.map((role) => (
                         <SelectItem key={role.value} value={role.value} className="text-[10px] font-black uppercase tracking-widest focus:bg-emerald-500 focus:text-black">
                           {role.label}
@@ -287,10 +286,10 @@ export default function GlobalUsersPage() {
                 </div>
               </div>
 
-              <div className="p-6 bg-emerald-500/5 border border-emerald-500/20 space-y-3">
+              <div className="p-6 bg-emerald-500/5 border border-emerald-500/20 space-y-3 rounded-3xl">
                 <div className="flex items-center gap-2">
                   <ShieldAlert className="h-3 w-3 text-emerald-400" />
-                  <span className="text-[9px] font-black uppercase text-emerald-400 tracking-widest">Aviso de Seguridad</span>
+                  <span className="text-[9px] font-black uppercase text-emerald-400 tracking-widest italic">Aviso de Seguridad</span>
                 </div>
                 <p className="text-[9px] text-emerald-400/40 leading-relaxed font-bold uppercase italic">
                   La emisión o modificación de una credencial afecta directamente al token de sincronización del usuario en la red SynQAI.
@@ -300,14 +299,14 @@ export default function GlobalUsersPage() {
 
             <div className="p-10 bg-black/40 border-t border-white/5 flex gap-4">
               <SheetClose asChild>
-                <Button variant="ghost" className="flex-1 h-16 border border-emerald-500/20 text-emerald-400/40 font-black uppercase text-[10px] tracking-widest hover:bg-emerald-500/5 active:scale-95 transition-all">
+                <Button variant="ghost" className="flex-1 h-16 border border-emerald-500/20 text-emerald-400/40 font-black uppercase text-[10px] tracking-widest hover:bg-emerald-500/5 active:scale-95 transition-all rounded-2xl">
                   CANCELAR
                 </Button>
               </SheetClose>
               <Button 
                 onClick={handleCreateCredential}
                 disabled={loading}
-                className="flex-[2] h-16 bg-emerald-500 text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-none shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:scale-[1.02] active:scale-95 transition-all border-none"
+                className="flex-[2] h-16 bg-emerald-500 text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:scale-[1.02] active:scale-95 transition-all border-none"
               >
                 {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (editingId ? "ACTUALIZAR_USUARIO" : "EMITIR_CREDENCIAL")}
               </Button>
@@ -322,7 +321,7 @@ export default function GlobalUsersPage() {
         <MetricMiniCard label="Alertas de Acceso" value="0" color="text-emerald-400" />
       </div>
 
-      <Card className="glass-panel shadow-2xl overflow-hidden relative border border-emerald-500/20 bg-black/40">
+      <Card className="glass-panel shadow-2xl overflow-hidden relative border border-emerald-500/20 bg-black/40 rounded-3xl">
         <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
         
         <CardHeader className="bg-black/40 border-b border-white/5 p-6 space-y-4 md:space-y-0 md:flex md:flex-row md:items-center md:justify-between">
@@ -330,16 +329,16 @@ export default function GlobalUsersPage() {
             <Search className="absolute left-3 top-3.5 h-4 w-4 text-emerald-500 opacity-50" />
             <Input 
               placeholder="BUSCAR IDENTIDAD O PAÍS..." 
-              className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-none text-emerald-400 placeholder:text-emerald-400/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-emerald-500/50 transition-all"
+              className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-2xl text-emerald-400 placeholder:text-emerald-400/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-emerald-500/50 transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-[9px] font-black text-emerald-400/40 uppercase tracking-widest">Filtrar por Status:</span>
+            <span className="text-[9px] font-black text-emerald-400/40 uppercase tracking-widest italic">Filtrar por Status:</span>
             <div className="flex gap-1">
               {['Todos', 'Pending', 'Approved', 'Denied'].map(f => (
-                <button key={f} className="text-[9px] font-black uppercase px-3 py-1 border border-white/5 hover:border-emerald-500/40 text-emerald-400/40 hover:text-emerald-400 transition-all">
+                <button key={f} className="text-[9px] font-black uppercase px-3 py-1 border border-white/5 hover:border-emerald-500/40 text-emerald-400/40 hover:text-emerald-400 transition-all rounded-xl">
                   {f}
                 </button>
               ))}
@@ -351,12 +350,12 @@ export default function GlobalUsersPage() {
           <Table>
             <TableHeader className="bg-white/[0.02] border-b border-white/5">
               <TableRow className="hover:bg-transparent border-white/5">
-                <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-emerald-400/40 h-14 pl-8">Identidad_Usuario</TableHead>
-                <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-emerald-400/40">Mail_Acceso</TableHead>
-                <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-emerald-400/40">Protocolo_Rol</TableHead>
-                <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-emerald-400/40">Nodo_Pais</TableHead>
-                <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-emerald-400/40 text-center">Protocolo_Status</TableHead>
-                <TableHead className="text-right font-black text-[10px] uppercase tracking-[0.3em] text-emerald-400/40 pr-8">Terminal_Acciones</TableHead>
+                <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-emerald-400/40 h-14 pl-8 italic">Identidad_Usuario</TableHead>
+                <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-emerald-400/40 italic">Mail_Acceso</TableHead>
+                <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-emerald-400/40 italic">Protocolo_Rol</TableHead>
+                <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-emerald-400/40 italic">Nodo_Pais</TableHead>
+                <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-emerald-400/40 text-center italic">Protocolo_Status</TableHead>
+                <TableHead className="text-right font-black text-[10px] uppercase tracking-[0.3em] text-emerald-400/40 pr-8 italic">Terminal_Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -364,7 +363,7 @@ export default function GlobalUsersPage() {
                 <TableRow key={user.id} className="border-white/5 hover:bg-emerald-500/[0.02] transition-colors group">
                   <TableCell className="pl-8">
                     <div className="flex items-center gap-4 py-2">
-                      <div className="h-10 w-10 bg-emerald-500/5 border border-emerald-500/20 flex items-center justify-center relative overflow-hidden group-hover:bg-emerald-500/10 transition-all">
+                      <div className="h-10 w-10 bg-emerald-500/5 border border-emerald-500/20 flex items-center justify-center relative overflow-hidden group-hover:bg-emerald-500/10 transition-all rounded-full">
                         <Activity className="h-4 w-4 text-emerald-400 opacity-40 group-hover:opacity-100 transition-opacity" />
                         <div className="absolute inset-0 bg-emerald-500/5 scan-line" />
                       </div>
@@ -372,7 +371,7 @@ export default function GlobalUsersPage() {
                         <p className="font-black text-white uppercase text-xs italic group-hover:emerald-text-glow transition-all">
                           {user.name} {user.surname}
                         </p>
-                        <p className="text-[8px] text-emerald-400/30 font-bold uppercase tracking-widest mt-1">
+                        <p className="text-[8px] text-emerald-400 font-bold uppercase tracking-widest mt-1">
                           ID: {user.id.toUpperCase()} • {user.lastSeen}
                         </p>
                       </div>
@@ -380,21 +379,21 @@ export default function GlobalUsersPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-emerald-500/60" />
+                      <Mail className="h-4 w-4 text-emerald-500" />
                       <span className="text-xs font-headline font-bold text-emerald-400 tracking-wide uppercase">
                         {user.email}
                       </span>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="rounded-none border-emerald-500/20 text-emerald-400/70 font-black text-[9px] uppercase tracking-widest bg-emerald-500/5 px-3">
+                    <Badge variant="outline" className="rounded-2xl border-emerald-500/20 text-emerald-400 font-black text-[9px] uppercase tracking-widest bg-emerald-500/5 px-3">
                       {AVAILABLE_ROLES.find(r => r.value === user.role)?.label || user.role}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Globe2 className="h-3 w-3 text-emerald-500/40" />
-                      <span className="text-[10px] font-black uppercase text-emerald-400/70">{user.country}</span>
+                      <Globe2 className="h-3 w-3 text-emerald-500" />
+                      <span className="text-[10px] font-black uppercase text-emerald-400">{user.country}</span>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -409,7 +408,7 @@ export default function GlobalUsersPage() {
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-8 w-8 rounded-none border border-emerald-500 text-emerald-400 hover:bg-emerald-500/20 active:scale-90 transition-all"
+                            className="h-8 w-8 rounded-xl border border-emerald-500 text-emerald-400 hover:bg-emerald-500/20 active:scale-90 transition-all"
                             onClick={() => handleStatusChange(user.id, 'Approved')}
                             title="Aprobar Protocolo"
                           >
@@ -418,7 +417,7 @@ export default function GlobalUsersPage() {
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-8 w-8 rounded-none border border-rose-500 text-rose-400 hover:bg-rose-500/20 active:scale-90 transition-all"
+                            className="h-8 w-8 rounded-xl border border-rose-500 text-rose-400 hover:bg-rose-500/20 active:scale-90 transition-all"
                             onClick={() => handleStatusChange(user.id, 'Denied')}
                             title="Denegar Protocolo"
                           >
@@ -429,7 +428,7 @@ export default function GlobalUsersPage() {
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="h-8 w-8 rounded-none border border-white/10 text-white/20 hover:text-emerald-400 hover:bg-emerald-500/10 active:scale-90 transition-all"
+                          className="h-8 w-8 rounded-xl border border-white/10 text-white/20 hover:text-emerald-400 hover:bg-emerald-500/10 active:scale-90 transition-all"
                           onClick={() => handleStatusChange(user.id, 'Pending')}
                           title="Reiniciar Protocolo"
                         >
@@ -439,7 +438,7 @@ export default function GlobalUsersPage() {
                       <Button 
                         variant="ghost" 
                         size="icon" 
-                        className="h-8 w-8 rounded-none border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10 active:scale-90 transition-all"
+                        className="h-8 w-8 rounded-xl border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10 active:scale-90 transition-all"
                         onClick={() => handleEdit(user)}
                         title="Modificar Credencial"
                       >
@@ -452,7 +451,7 @@ export default function GlobalUsersPage() {
             </TableBody>
           </Table>
         </CardContent>
-        <div className="p-4 bg-black/20 border-t border-white/5 flex justify-between items-center text-[8px] font-black text-emerald-400/30 uppercase tracking-[0.5em]">
+        <div className="p-4 bg-black/20 border-t border-white/5 flex justify-between items-center text-[8px] font-black text-emerald-400 uppercase tracking-[0.5em] rounded-b-3xl">
           <span>Mostrando {filteredUsers.length} de {users.length} registros</span>
           <span className="flex items-center gap-2 text-emerald-400"><CheckCircle2 className="h-3 w-3 text-emerald-400 animate-pulse" /> Sincronización de Base de Datos: Estable</span>
         </div>
@@ -463,11 +462,11 @@ export default function GlobalUsersPage() {
 
 function MetricMiniCard({ label, value, color }: any) {
   return (
-    <Card className="glass-panel p-4 relative group overflow-hidden border border-emerald-500/20 bg-black/20">
+    <Card className="glass-panel p-4 relative group overflow-hidden border border-emerald-500/20 bg-black/20 rounded-3xl">
       <div className="absolute top-0 right-0 p-2 opacity-5">
         <Activity className="h-8 w-8 text-emerald-500" />
       </div>
-      <p className="text-[8px] font-black uppercase tracking-[0.3em] text-emerald-400/40 mb-1">{label}</p>
+      <p className="text-[8px] font-black uppercase tracking-[0.3em] text-emerald-400 mb-1 italic">{label}</p>
       <p className={cn("text-2xl font-black italic", color)}>{value}</p>
     </Card>
   );
@@ -480,7 +479,7 @@ function StatusBadge({ status }: { status: string }) {
     Denied: "bg-rose-500/10 text-rose-400 border-rose-500/20",
   };
   return (
-    <Badge variant="outline" className={cn("rounded-none font-black text-[8px] uppercase tracking-widest px-3 py-1", styles[status])}>
+    <Badge variant="outline" className={cn("rounded-2xl font-black text-[8px] uppercase tracking-widest px-3 py-1 italic", styles[status])}>
       {status}
     </Badge>
   );

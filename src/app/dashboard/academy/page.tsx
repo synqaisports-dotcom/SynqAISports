@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -261,7 +260,7 @@ export default function AcademyManagementPage() {
         <div className="space-y-1">
           <div className="flex items-center gap-3 mb-2">
             <Sprout className="h-5 w-5 text-primary animate-pulse" />
-            <span className="text-[10px] font-black text-primary tracking-[0.5em] uppercase">Academy_Architect_v1.0</span>
+            <span className="text-[10px] font-black text-primary tracking-[0.5em] uppercase italic">Academy_Architect_v1.0</span>
           </div>
           <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic cyan-text-glow">
             Gestión de Cantera
@@ -272,13 +271,13 @@ export default function AcademyManagementPage() {
           <Button 
             variant="outline"
             onClick={() => handleOpenSheet('category')}
-            className="rounded-none border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest h-12 px-6 hover:bg-primary/10 transition-all"
+            className="rounded-2xl border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest h-12 px-6 hover:bg-primary/10 transition-all"
           >
             <FolderPlus className="h-4 w-4 mr-2" /> Nueva Categoría
           </Button>
           <Button 
             onClick={() => handleOpenSheet('team')}
-            className="rounded-none bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none"
+            className="rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none"
           >
             <Plus className="h-4 w-4 mr-2" /> Vincular Equipo
           </Button>
@@ -300,12 +299,12 @@ export default function AcademyManagementPage() {
                 <div className={cn("h-1.5 w-1.5 rounded-full animate-pulse", stage.color.replace('text', 'bg'))} />
                 <h3 className={cn("text-[11px] font-black uppercase tracking-[0.4em]", stage.color)}>{stage.name}</h3>
               </div>
-              <Badge variant="outline" className="text-[8px] font-black border-primary/10 text-primary/40 uppercase">Stage_{stage.id.toUpperCase()}</Badge>
+              <Badge variant="outline" className="text-[8px] font-black border-primary/10 text-primary/40 uppercase rounded-2xl px-3">Stage_{stage.id.toUpperCase()}</Badge>
             </div>
 
             <div className="space-y-4">
               {categories.filter(c => c.stageId === stage.id).map((cat) => (
-                <Card key={cat.id} className="glass-panel border-none bg-black/40 overflow-hidden group hover:bg-black/60 transition-all cursor-default">
+                <Card key={cat.id} className="glass-panel border-none bg-black/40 overflow-hidden group hover:bg-black/60 transition-all cursor-default rounded-3xl">
                   {/* LÍNEA DE ETAPA TÉCNICA */}
                   <div className={cn("h-1 w-full", stage.color.replace('text', 'bg'))} />
                   
@@ -315,11 +314,11 @@ export default function AcademyManagementPage() {
                         {cat.name}
                       </CardTitle>
                       <div className="flex items-center gap-2">
-                        <Users className="h-3 w-3 text-primary/40" />
-                        <span className="text-[10px] font-black text-primary/60">{cat.players}</span>
+                        <Users className="h-3 w-3 text-primary" />
+                        <span className="text-[10px] font-black text-primary">{cat.players}</span>
                       </div>
                     </div>
-                    <CardDescription className="text-[8px] font-bold text-primary/30 uppercase tracking-widest leading-relaxed">
+                    <CardDescription className="text-[8px] font-bold text-primary uppercase tracking-widest leading-relaxed italic">
                       {cat.teams.length} Equipos • Fase {stage.name}
                     </CardDescription>
                   </CardHeader>
@@ -328,32 +327,32 @@ export default function AcademyManagementPage() {
                       {cat.teams.map((team, idx) => (
                         <div 
                           key={idx} 
-                          className="flex items-center justify-between p-2.5 bg-primary/5 rounded-xl border border-primary/10 hover:border-primary/30 transition-all group/team cursor-pointer"
+                          className="flex items-center justify-between p-2.5 bg-primary/5 rounded-2xl border border-primary/10 hover:border-primary/30 transition-all group/team cursor-pointer"
                           onClick={() => handleViewTeam(team, cat.name)}
                         >
                           <div className="flex items-center gap-3">
                             <div className="h-1 w-1 rounded-full bg-primary/40 group-hover/team:bg-primary transition-colors" />
-                            <span className="text-[9px] font-black text-primary/60 uppercase tracking-tight group-hover/team:text-primary">
-                              {team.name} <span className="text-primary/60 group-hover/team:text-primary font-black ml-1">[{team.suffix}]</span>
+                            <span className="text-[9px] font-black text-primary uppercase tracking-tight group-hover/team:cyan-text-glow">
+                              {team.name} <span className="text-primary group-hover/team:primary font-black ml-1">[{team.suffix}]</span>
                             </span>
                           </div>
-                          <ArrowUpRight className="h-3 w-3 text-primary/40 group-hover/team:text-primary group-hover/team:opacity-100 transition-all" />
+                          <ArrowUpRight className="h-3 w-3 text-primary group-hover/team:opacity-100 transition-all" />
                         </div>
                       ))}
                     </div>
                   </CardContent>
-                  <CardFooter className="px-6 py-3 bg-black/40 border-t border-white/5 flex justify-between">
+                  <CardFooter className="px-6 py-3 bg-black/40 border-t border-white/5 flex justify-between rounded-b-3xl">
                     {!cat.id.startsWith('cat_') ? (
                       <>
                         <button 
                           onClick={() => handleEditCategory(cat)}
-                          className="text-[8px] font-black text-primary hover:cyan-text-glow transition-all flex items-center gap-2 uppercase tracking-widest"
+                          className="text-[8px] font-black text-primary hover:cyan-text-glow transition-all flex items-center gap-2 uppercase tracking-widest italic"
                         >
                           <Pencil className="h-2.5 w-2.5" /> Editar
                         </button>
                         <button 
                           onClick={() => handleDeleteCategory(cat.id, cat.name)}
-                          className="text-[8px] font-black text-rose-500 hover:text-rose-400 transition-all flex items-center gap-2 uppercase tracking-widest"
+                          className="text-[8px] font-black text-rose-500 hover:text-rose-400 transition-all flex items-center gap-2 uppercase tracking-widest italic"
                         >
                           <Trash2 className="h-2.5 w-2.5" /> Eliminar
                         </button>
@@ -378,17 +377,17 @@ export default function AcademyManagementPage() {
                 <SheetHeader className="space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Node_Audit_v2.0</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary italic">Node_Audit_v2.0</span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-black text-primary/40 uppercase tracking-[0.5em] mb-1">Ficha Técnica de Equipo</span>
+                    <span className="text-[10px] font-black text-primary/40 uppercase tracking-[0.5em] mb-1 italic">Ficha Técnica de Equipo</span>
                     <SheetTitle className="text-5xl font-black italic tracking-tighter text-white uppercase text-left leading-none">
                       {selectedViewTeam.name} <span className="text-primary">[{selectedViewTeam.suffix}]</span>
                     </SheetTitle>
                   </div>
                   <div className="flex items-center gap-2 pt-2">
-                    <Badge variant="outline" className="border-primary/20 text-primary font-black uppercase text-[10px] rounded-none px-4">{selectedViewTeam.categoryName}</Badge>
-                    <Badge variant="outline" className="border-primary/10 text-primary/40 font-black uppercase text-[10px] rounded-none px-4">Protocolo Activo</Badge>
+                    <Badge variant="outline" className="border-primary/20 text-primary font-black uppercase text-[10px] rounded-2xl px-4 italic">{selectedViewTeam.categoryName}</Badge>
+                    <Badge variant="outline" className="border-primary/10 text-primary/40 font-black uppercase text-[10px] rounded-2xl px-4 italic">Protocolo Activo</Badge>
                   </div>
                 </SheetHeader>
               </div>
@@ -397,34 +396,34 @@ export default function AcademyManagementPage() {
                 <section className="space-y-6">
                   <div className="flex items-center gap-3 border-b border-white/5 pb-4">
                     <MapPin className="h-4 w-4 text-primary" />
-                    <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-primary/60">Configuración Logística</h3>
+                    <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-primary italic">Configuración Logística</h3>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="p-6 bg-primary/5 border border-primary/20 rounded-2xl space-y-2">
-                      <span className="text-[9px] font-black text-primary/30 uppercase tracking-widest">Instalación / Nodo</span>
+                    <div className="p-6 bg-primary/5 border border-primary/20 rounded-3xl space-y-2">
+                      <span className="text-[9px] font-black text-primary uppercase tracking-widest italic">Instalación / Nodo</span>
                       <p className="text-sm font-black text-primary uppercase italic cyan-text-glow">{selectedViewTeam.facility || "Sede Principal"}</p>
                     </div>
-                    <div className="p-6 bg-primary/5 border border-primary/20 rounded-2xl space-y-2">
-                      <span className="text-[9px] font-black text-primary/30 uppercase tracking-widest">Zona Operativa</span>
+                    <div className="p-6 bg-primary/5 border border-primary/20 rounded-3xl space-y-2">
+                      <span className="text-[9px] font-black text-primary uppercase tracking-widest italic">Zona Operativa</span>
                       <p className="text-sm font-black text-primary uppercase italic">{selectedViewTeam.zone || "Sector Central"}</p>
                     </div>
                   </div>
 
-                  <div className="p-6 border border-primary/20 bg-primary/5 rounded-2xl space-y-4">
+                  <div className="p-6 border border-primary/20 bg-primary/5 rounded-3xl space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <Clock className="h-4 w-4 text-primary" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-primary">Cronograma de Sesiones</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-primary italic">Cronograma de Sesiones</span>
                       </div>
-                      <span className="text-[10px] font-mono text-primary/60">{selectedViewTeam.startTime} - {selectedViewTeam.endTime}</span>
+                      <span className="text-[10px] font-mono text-primary font-bold">{selectedViewTeam.startTime} - {selectedViewTeam.endTime}</span>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {WEEK_DAYS.map(day => (
                         <div 
                           key={day.id} 
                           className={cn(
-                            "h-9 w-9 flex items-center justify-center font-black text-[10px] border",
+                            "h-9 w-9 flex items-center justify-center font-black text-[10px] border rounded-xl",
                             selectedViewTeam.days?.includes(day.id) 
                               ? "bg-primary text-black border-primary shadow-[0_0_10px_rgba(0,242,255,0.3)]" 
                               : "border-primary/10 text-primary/20"
@@ -440,7 +439,7 @@ export default function AcademyManagementPage() {
                 <section className="space-y-6">
                   <div className="flex items-center gap-3 border-b border-white/5 pb-4">
                     <UserCog className="h-4 w-4 text-primary" />
-                    <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-primary/60">Staff Técnico Sincronizado</h3>
+                    <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-primary italic">Staff Técnico Sincronizado</h3>
                   </div>
 
                   <div className="space-y-4">
@@ -455,13 +454,13 @@ export default function AcademyManagementPage() {
 
               <div className="p-10 bg-black/40 border-t border-white/5 flex gap-4">
                 <Button 
-                  className="flex-1 h-16 bg-primary/5 border border-primary/20 text-primary/60 font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 rounded-none transition-all"
+                  className="flex-1 h-16 bg-primary/5 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 rounded-2xl transition-all"
                   onClick={() => setIsViewSheetOpen(false)}
                 >
                   CERRAR_FICHA
                 </Button>
                 <Button 
-                  className="flex-1 h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.2em] rounded-none cyan-glow"
+                  className="flex-1 h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.2em] rounded-2xl cyan-glow"
                   onClick={() => {
                     setIsViewSheetOpen(false);
                     const cat = categories.find(c => c.name === selectedViewTeam.categoryName);
@@ -490,12 +489,12 @@ export default function AcademyManagementPage() {
             <SheetHeader className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Academy_Deploy_v1.5</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary italic">Academy_Deploy_v1.5</span>
               </div>
               <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left">
                 {sheetMode === 'category' ? (editingId ? "MODIFICAR_CATEGORÍA" : "CONFIG_CATEGORÍA") : "VINCULAR_EQUIPO"}
               </SheetTitle>
-              <SheetDescription className="text-[10px] uppercase font-bold text-primary/40 tracking-widest text-left">
+              <SheetDescription className="text-[10px] uppercase font-bold text-primary/40 tracking-widest text-left italic">
                 Defina los nodos de formación para la red del club.
               </SheetDescription>
             </SheetHeader>
@@ -510,25 +509,25 @@ export default function AcademyManagementPage() {
                     <Layers className="h-24 w-24 text-primary" />
                   </div>
                   <div className="space-y-3">
-                    <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1">Nombre de la Categoría</Label>
+                    <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1 italic">Nombre de la Categoría</Label>
                     <Input 
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})}
                       placeholder="EJ: ALEVÍN" 
-                      className="h-14 bg-white/5 border-primary/20 rounded-none font-bold uppercase focus:border-primary text-lg text-primary" 
+                      className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary text-lg text-primary" 
                     />
                   </div>
                   <div className="space-y-3">
-                    <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1">Etapa Metodológica</Label>
+                    <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1 italic">Etapa Metodológica</Label>
                     <Select 
                       value={formData.stageId} 
                       onValueChange={(v) => setFormData({...formData, stageId: v})}
                     >
-                      <SelectTrigger className="h-14 bg-black/40 border-primary/20 rounded-none text-primary font-bold uppercase tracking-widest px-6 focus:border-primary">
+                      <SelectTrigger className="h-14 bg-black/40 border-primary/20 rounded-2xl text-primary font-bold uppercase tracking-widest px-6 focus:border-primary">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-none">
+                      <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-2xl">
                         {STAGES.map(s => (
                           <SelectItem key={s.id} value={s.id} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary text-primary/80">
                             {s.name}
@@ -548,15 +547,15 @@ export default function AcademyManagementPage() {
                   </div>
                   <div className="flex items-center gap-3 border-b border-primary/20 pb-4 mb-6">
                     <Target className="h-4 w-4 text-primary" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Clasificación Metodológica</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary italic">Clasificación Metodológica</span>
                   </div>
                   <div className="space-y-3">
-                    <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1">Etapa de Desarrollo</Label>
+                    <Label className="text-[9px] font-black uppercase text-primary tracking-widest ml-1 italic">Etapa de Desarrollo</Label>
                     <Select value={formData.stageId} onValueChange={(v) => setFormData({...formData, stageId: v})}>
-                      <SelectTrigger className="h-12 bg-black/40 border-primary/20 rounded-none text-primary font-bold uppercase text-[10px] tracking-widest focus:border-primary">
+                      <SelectTrigger className="h-12 bg-black/40 border-primary/20 rounded-2xl text-primary font-bold uppercase text-[10px] tracking-widest focus:border-primary">
                         <SelectValue placeholder="SELECCIONAR ETAPA..." />
                       </SelectTrigger>
-                      <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
+                      <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
                         {STAGES.map(s => (
                           <SelectItem key={s.id} value={s.id} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary text-primary/80">{s.name}</SelectItem>
                         ))}
@@ -569,12 +568,12 @@ export default function AcademyManagementPage() {
                 <div className="space-y-6">
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-3">
-                      <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1">Categoría Federativa</Label>
+                      <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1 italic">Categoría Federativa</Label>
                       <Select value={formData.parentCategory} onValueChange={(v) => setFormData({...formData, parentCategory: v})}>
-                        <SelectTrigger className="h-14 bg-white/5 border-primary/20 rounded-none text-primary/80 font-bold uppercase tracking-widest focus:border-primary">
+                        <SelectTrigger className="h-14 bg-white/5 border-primary/20 rounded-2xl text-primary font-bold uppercase tracking-widest focus:border-primary">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-none">
+                        <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-2xl">
                           {categories.map(c => (
                             <SelectItem key={c.id} value={c.id} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary text-primary/80">{c.name}</SelectItem>
                           ))}
@@ -582,12 +581,12 @@ export default function AcademyManagementPage() {
                       </Select>
                     </div>
                     <div className="space-y-3">
-                      <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1">Equipo (Letra)</Label>
+                      <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1 italic">Equipo (Letra)</Label>
                       <Select value={formData.suffix} onValueChange={(v) => setFormData({...formData, suffix: v})}>
-                        <SelectTrigger className="h-14 bg-white/5 border-primary/20 rounded-none text-primary font-black text-xl focus:border-primary">
+                        <SelectTrigger className="h-14 bg-white/5 border-primary/20 rounded-2xl text-primary font-black text-xl focus:border-primary">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-none max-h-[200px]">
+                        <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-2xl max-h-[200px]">
                           {ALPHABET.map(letter => (
                             <SelectItem key={letter} value={letter} className="text-lg font-black text-primary focus:bg-primary focus:text-black">{letter}</SelectItem>
                           ))}
@@ -601,15 +600,15 @@ export default function AcademyManagementPage() {
                 <div className="space-y-6 p-8 border border-primary/30 bg-primary/5 rounded-3xl relative overflow-hidden">
                   <div className="flex items-center gap-3 border-b border-primary/20 pb-4 mb-6">
                     <Zap className="h-4 w-4 text-primary animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Instalación y Horario</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary italic">Instalación y Horario</span>
                   </div>
                   <div className="space-y-4">
-                    <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1">Instalación Asignada</Label>
+                    <Label className="text-[9px] font-black uppercase text-primary tracking-widest ml-1 italic">Instalación Asignada</Label>
                     <Select value={formData.facilityId} onValueChange={(v) => setFormData({...formData, facilityId: v, zone: ""})}>
-                      <SelectTrigger className="h-12 bg-black/40 border-primary/20 rounded-none text-primary font-bold uppercase text-[10px] tracking-widest focus:border-primary">
+                      <SelectTrigger className="h-12 bg-black/40 border-primary/20 rounded-2xl text-primary font-bold uppercase text-[10px] tracking-widest focus:border-primary">
                         <SelectValue placeholder="SELECCIONAR CAMPO/SALA..." />
                       </SelectTrigger>
-                      <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
+                      <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
                         {MOCK_FACILITIES.map(f => (
                           <SelectItem key={f.id} value={f.id} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary text-primary/80">{f.name}</SelectItem>
                         ))}
@@ -618,12 +617,12 @@ export default function AcademyManagementPage() {
                   </div>
                   {hasZones && (
                     <div className="space-y-3">
-                      <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1">Zona Específica</Label>
+                      <Label className="text-[9px] font-black uppercase text-primary tracking-widest ml-1 italic">Zona Específica</Label>
                       <Select value={formData.zone} onValueChange={(v) => setFormData({...formData, zone: v})}>
-                        <SelectTrigger className="h-12 bg-primary/5 border-primary/30 rounded-none text-primary font-bold uppercase text-[10px] tracking-widest focus:border-primary">
+                        <SelectTrigger className="h-12 bg-primary/5 border-primary/30 rounded-2xl text-primary font-bold uppercase text-[10px] tracking-widest focus:border-primary">
                           <SelectValue placeholder="ASIGNAR ZONA..." />
                         </SelectTrigger>
-                        <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
+                        <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
                           {selectedFacility.zones.map(z => (
                             <SelectItem key={z} value={z} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary focus:text-black">{z}</SelectItem>
                           ))}
@@ -632,36 +631,36 @@ export default function AcademyManagementPage() {
                     </div>
                   )}
                   <div className="space-y-4 pt-4">
-                    <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1">Días de Entrenamiento</Label>
+                    <Label className="text-[9px] font-black uppercase text-primary tracking-widest ml-1 italic">Días de Entrenamiento</Label>
                     <div className="flex flex-wrap gap-2">
                       {WEEK_DAYS.map(day => (
-                        <button key={day.id} type="button" onClick={() => toggleDay(day.id)} className={cn("h-10 w-10 flex items-center justify-center font-black text-[10px] border transition-all", formData.days.includes(day.id) ? "bg-primary text-black border-primary shadow-[0_0:15px_rgba(0,242,255,0.3)]" : "bg-black/40 border-primary/20 text-primary/30")}>{day.id}</button>
+                        <button key={day.id} type="button" onClick={() => toggleDay(day.id)} className={cn("h-10 w-10 flex items-center justify-center font-black text-[10px] border transition-all rounded-xl", formData.days.includes(day.id) ? "bg-primary text-black border-primary shadow-[0_0:15px_rgba(0,242,255,0.3)]" : "bg-black/40 border-primary/20 text-primary/30")}>{day.id}</button>
                       ))}
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-6 pt-4">
                     <div className="space-y-2">
-                      <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1">Hora Inicio</Label>
+                      <Label className="text-[9px] font-black uppercase text-primary tracking-widest ml-1 italic">Hora Inicio</Label>
                       <div className="relative">
                         <Clock className="absolute left-3 top-3 h-4 w-4 text-primary/40" />
                         <Input 
                           type="time" 
                           value={formData.startTime}
                           onChange={(e) => setFormData({...formData, startTime: e.target.value})}
-                          className="pl-10 h-11 bg-white/5 border-primary/20 rounded-none font-bold text-xs focus:border-primary text-primary" 
+                          className="pl-10 h-11 bg-white/5 border-primary/20 rounded-2xl font-bold text-xs focus:border-primary text-primary" 
                         />
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1">Hora Fin</Label>
+                      <Label className="text-[9px] font-black uppercase text-primary tracking-widest ml-1 italic">Hora Fin</Label>
                       <div className="relative">
                         <Clock className="absolute left-3 top-3 h-4 w-4 text-primary/40" />
                         <Input 
                           type="time" 
                           value={formData.endTime}
                           onChange={(e) => setFormData({...formData, endTime: e.target.value})}
-                          className="pl-10 h-11 bg-white/5 border-primary/20 rounded-none font-bold text-xs focus:border-primary text-primary" 
+                          className="pl-10 h-11 bg-white/5 border-primary/20 rounded-2xl font-bold text-xs focus:border-primary text-primary" 
                         />
                       </div>
                     </div>
@@ -672,16 +671,16 @@ export default function AcademyManagementPage() {
                 <div className="space-y-6 p-8 border border-primary/30 bg-primary/5 rounded-3xl relative overflow-hidden">
                   <div className="flex items-center gap-3 border-b border-primary/20 pb-4 mb-6">
                     <Users className="h-4 w-4 text-primary" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Staff Técnico Asignado</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary italic">Staff Técnico Asignado</span>
                   </div>
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1">Coordinador de Etapa</Label>
+                      <Label className="text-[9px] font-black uppercase text-primary tracking-widest ml-1 italic">Coordinador de Etapa</Label>
                       <Select value={formData.coordinatorId} onValueChange={(v) => setFormData({...formData, coordinatorId: v})}>
-                        <SelectTrigger className="h-11 bg-black/40 border-primary/30 rounded-none text-primary/80 font-bold uppercase text-[9px] tracking-widest focus:border-primary">
+                        <SelectTrigger className="h-11 bg-black/40 border-primary/30 rounded-2xl text-primary font-bold uppercase text-[9px] tracking-widest focus:border-primary">
                           <SelectValue placeholder="ASIGNAR COORDINADOR..." />
                         </SelectTrigger>
-                        <SelectContent className="bg-[#04070c] border-primary/20">
+                        <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
                           <SelectItem value="s1" className="text-[9px] font-black uppercase focus:bg-primary">Ismael Muñoz</SelectItem>
                           <SelectItem value="s2" className="text-[9px] font-black uppercase focus:bg-primary">Elena Gómez</SelectItem>
                         </SelectContent>
@@ -689,20 +688,20 @@ export default function AcademyManagementPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1">Primer Entrenador</Label>
+                        <Label className="text-[9px] font-black uppercase text-primary tracking-widest ml-1 italic">Primer Entrenador</Label>
                         <Select value={formData.firstCoachId} onValueChange={(v) => setFormData({...formData, firstCoachId: v})}>
-                          <SelectTrigger className="h-11 bg-black/40 border-primary/30 rounded-none text-primary/80 font-bold uppercase text-[9px] tracking-widest focus:border-primary"><SelectValue placeholder="1er ENTRENADOR..." /></SelectTrigger>
-                          <SelectContent className="bg-[#04070c] border-primary/20">
+                          <SelectTrigger className="h-11 bg-black/40 border-primary/30 rounded-2xl text-primary font-bold uppercase text-[9px] tracking-widest focus:border-primary"><SelectValue placeholder="1er ENTRENADOR..." /></SelectTrigger>
+                          <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
                             <SelectItem value="c1" className="text-[9px] font-black uppercase focus:bg-primary">Carlos Ruiz</SelectItem>
                             <SelectItem value="c2" className="text-[9px] font-black uppercase focus:bg-primary">Laura Sánchez</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1">Segundo Entrenador</Label>
+                        <Label className="text-[9px] font-black uppercase text-primary tracking-widest ml-1 italic">Segundo Entrenador</Label>
                         <Select value={formData.secondCoachId} onValueChange={(v) => setFormData({...formData, secondCoachId: v})}>
-                          <SelectTrigger className="h-11 bg-black/40 border-primary/30 rounded-none text-primary/80 font-bold uppercase text-[9px] tracking-widest focus:border-primary"><SelectValue placeholder="2º ENTRENADOR..." /></SelectTrigger>
-                          <SelectContent className="bg-[#04070c] border-primary/20">
+                          <SelectTrigger className="h-11 bg-black/40 border-primary/30 rounded-2xl text-primary font-bold uppercase text-[9px] tracking-widest focus:border-primary"><SelectValue placeholder="2º ENTRENADOR..." /></SelectTrigger>
+                          <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
                             <SelectItem value="c3" className="text-[9px] font-black uppercase focus:bg-primary">Miguel Ángel</SelectItem>
                             <SelectItem value="c4" className="text-[9px] font-black uppercase focus:bg-primary">Sara Torres</SelectItem>
                           </SelectContent>
@@ -711,20 +710,20 @@ export default function AcademyManagementPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1">Preparador Físico</Label>
+                        <Label className="text-[9px] font-black uppercase text-primary tracking-widest ml-1 italic">Preparador Físico</Label>
                         <Select value={formData.physicalTrainerId} onValueChange={(v) => setFormData({...formData, physicalTrainerId: v})}>
-                          <SelectTrigger className="h-11 bg-black/40 border-primary/30 rounded-none text-primary/80 font-bold uppercase text-[9px] tracking-widest focus:border-primary"><SelectValue placeholder="P. FÍSICO..." /></SelectTrigger>
-                          <SelectContent className="bg-[#04070c] border-primary/20">
+                          <SelectTrigger className="h-11 bg-black/40 border-primary/30 rounded-2xl text-primary font-bold uppercase text-[9px] tracking-widest focus:border-primary"><SelectValue placeholder="P. FÍSICO..." /></SelectTrigger>
+                          <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
                             <SelectItem value="pf1" className="text-[9px] font-black uppercase focus:bg-primary">Roberto S.</SelectItem>
                             <SelectItem value="pf2" className="text-[9px] font-black uppercase focus:bg-primary">Ana Belén</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1">Delegado de Equipo</Label>
+                        <Label className="text-[9px] font-black uppercase text-primary tracking-widest ml-1 italic">Delegado de Equipo</Label>
                         <Select value={formData.delegateId} onValueChange={(v) => setFormData({...formData, delegateId: v})}>
-                          <SelectTrigger className="h-11 bg-black/40 border-primary/30 rounded-none text-primary/80 font-bold uppercase text-[9px] tracking-widest focus:border-primary"><SelectValue placeholder="DELEGADO..." /></SelectTrigger>
-                          <SelectContent className="bg-[#04070c] border-primary/20">
+                          <SelectTrigger className="h-11 bg-black/40 border-primary/30 rounded-2xl text-primary font-bold uppercase text-[9px] tracking-widest focus:border-primary"><SelectValue placeholder="DELEGADO..." /></SelectTrigger>
+                          <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
                             <SelectItem value="d1" className="text-[9px] font-black uppercase focus:bg-primary">Juan García</SelectItem>
                             <SelectItem value="d2" className="text-[9px] font-black uppercase focus:bg-primary">Marta López</SelectItem>
                           </SelectContent>
@@ -739,9 +738,9 @@ export default function AcademyManagementPage() {
 
           <div className="p-10 bg-black/40 border-t border-white/5 flex gap-4">
             <SheetClose asChild>
-              <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary/60 font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 transition-all">CANCELAR</Button>
+              <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 transition-all rounded-2xl">CANCELAR</Button>
             </SheetClose>
-            <Button onClick={handleSave} disabled={loading} className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-none shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] border-none">
+            <Button onClick={handleSave} disabled={loading} className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] border-none active:scale-95">
               {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (editingId ? "ACTUALIZAR_NODO" : "SINCRONIZAR_NODO")}
             </Button>
           </div>
@@ -753,12 +752,12 @@ export default function AcademyManagementPage() {
 
 function AcademyStat({ label, value, icon: Icon, highlight }: any) {
   return (
-    <Card className="glass-panel p-5 flex items-center gap-5 relative overflow-hidden group bg-black/20 border border-primary/20">
+    <Card className="glass-panel p-5 flex items-center gap-5 relative overflow-hidden group bg-black/20 border border-primary/20 rounded-3xl">
        <div className={cn("h-12 w-12 flex items-center justify-center border transition-all rotate-3 group-hover:rotate-0 duration-500 rounded-2xl bg-primary/10 border-primary/20")}>
           <Icon className="h-6 w-6 text-primary" />
        </div>
        <div className="relative z-10">
-          <p className="text-[9px] font-black text-primary/60 uppercase tracking-widest">{label}</p>
+          <p className="text-[9px] font-black text-primary uppercase tracking-widest italic">{label}</p>
           <div className="flex items-baseline gap-2">
              <p className="text-2xl font-black italic tracking-tighter text-primary cyan-text-glow">{value}</p>
           </div>
@@ -770,17 +769,17 @@ function AcademyStat({ label, value, icon: Icon, highlight }: any) {
 
 function StaffDetailItem({ label, value, icon: Icon, highlight }: any) {
   return (
-    <div className="flex items-center justify-between p-4 bg-primary/5 rounded-2xl border border-primary/10 hover:border-primary/30 transition-all group/item">
+    <div className="flex items-center justify-between p-4 bg-primary/5 rounded-3xl border border-primary/10 hover:border-primary/30 transition-all group/item">
       <div className="flex items-center gap-4">
-        <div className={cn("h-10 w-10 flex items-center justify-center border rounded-xl bg-primary/10 border-primary/30 text-primary")}>
+        <div className={cn("h-10 w-10 flex items-center justify-center border rounded-2xl bg-primary/10 border-primary/30 text-primary")}>
           <Icon className="h-5 w-5" />
         </div>
         <div className="flex flex-col">
-          <span className="text-[9px] font-black uppercase text-primary/40 tracking-widest">{label}</span>
+          <span className="text-[9px] font-black uppercase text-primary tracking-widest italic">{label}</span>
           <span className="text-xs font-black uppercase text-primary cyan-text-glow">{value}</span>
         </div>
       </div>
-      <Badge variant="outline" className="border-primary/20 text-primary font-black text-[8px] uppercase tracking-widest">SINC_OK</Badge>
+      <Badge variant="outline" className="border-primary/20 text-primary font-black text-[8px] uppercase tracking-widest rounded-2xl px-3 italic">SINC_OK</Badge>
     </div>
   );
 }

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -227,7 +226,7 @@ export default function StaffManagementPage() {
         <div className="space-y-1">
           <div className="flex items-center gap-3 mb-2">
             <UserCog className={cn("h-5 w-5 animate-pulse", isSuperAdmin ? "text-emerald-400" : "text-primary")} />
-            <span className={cn("text-[10px] font-black tracking-[0.5em] uppercase", isSuperAdmin ? "text-emerald-400" : "text-primary")}>
+            <span className={cn("text-[10px] font-black tracking-[0.5em] uppercase italic", isSuperAdmin ? "text-emerald-400" : "text-primary")}>
               {isSuperAdmin ? "Global_Hierarchy_Audit" : "Staff_Hierarchy_Control"}
             </span>
           </div>
@@ -240,7 +239,7 @@ export default function StaffManagementPage() {
           onClick={handleOpenCreate}
           disabled={availableRoles.length === 0}
           className={cn(
-            "rounded-none text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 transition-all border-none disabled:opacity-30",
+            "rounded-2xl text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 transition-all border-none disabled:opacity-30",
             isSuperAdmin ? "bg-emerald-500" : "bg-primary"
           )}
         >
@@ -251,7 +250,7 @@ export default function StaffManagementPage() {
       {isSuperAdmin && (
         <div className="p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl flex items-center gap-4 animate-in slide-in-from-top-2">
           <ShieldAlert className="h-5 w-5 text-emerald-400" />
-          <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">
+          <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest italic">
             MODO_AUDITORÍA_ACTIVO: Tienes autoridad total para gestionar Administradores de Club y Directivos.
           </p>
         </div>
@@ -264,14 +263,14 @@ export default function StaffManagementPage() {
         <StaffStat label="Actividad Red" value="94%" icon={Activity} isSuperAdmin={isSuperAdmin} />
       </div>
 
-      <Card className={cn("glass-panel border bg-black/40 overflow-hidden mb-8 shadow-2xl", isSuperAdmin ? "border-emerald-500/20" : "border-primary/20")}>
+      <Card className={cn("glass-panel border bg-black/40 overflow-hidden mb-8 shadow-2xl rounded-3xl", isSuperAdmin ? "border-emerald-500/20" : "border-primary/20")}>
         <CardHeader className="p-6 border-b border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="relative w-full max-w-md">
             <Search className={cn("absolute left-3 top-3.5 h-4 w-4 opacity-50", isSuperAdmin ? "text-emerald-400" : "text-primary")} />
             <Input 
               placeholder="BUSCAR POR NOMBRE, MAIL O ROL..." 
               className={cn(
-                "pl-10 h-12 bg-white/5 border rounded-none font-bold uppercase text-[10px] tracking-widest transition-all",
+                "pl-10 h-12 bg-white/5 border rounded-2xl font-bold uppercase text-[10px] tracking-widest transition-all",
                 isSuperAdmin ? "border-emerald-500/20 focus-visible:ring-emerald-500/50 text-emerald-400 placeholder:text-emerald-400/20" : "border-primary/20 focus-visible:ring-primary/50 text-primary placeholder:text-primary/20"
               )}
               value={searchTerm}
@@ -279,8 +278,8 @@ export default function StaffManagementPage() {
             />
           </div>
           <div className="flex items-center gap-2">
-             <span className={cn("text-[9px] font-black uppercase tracking-widest", isSuperAdmin ? "text-emerald-400/40" : "text-primary/40")}>Jerarquía Activa:</span>
-             <Badge variant="outline" className={cn("rounded-none font-black text-[9px] uppercase tracking-widest px-3", isSuperAdmin ? "border-emerald-500/20 text-emerald-400" : "border-primary/20 text-primary")}>
+             <span className={cn("text-[9px] font-black uppercase tracking-widest italic", isSuperAdmin ? "text-emerald-400/40" : "text-primary/40")}>Jerarquía Activa:</span>
+             <Badge variant="outline" className={cn("rounded-2xl font-black text-[9px] uppercase tracking-widest px-3", isSuperAdmin ? "border-emerald-500/20 text-emerald-400" : "border-primary/20 text-primary")}>
                {profile?.role?.toUpperCase()}
              </Badge>
           </div>
@@ -311,14 +310,14 @@ export default function StaffManagementPage() {
                         </div>
                         <div className="space-y-1">
                           <p className="font-black text-white uppercase text-xs italic transition-all group-hover:cyan-text-glow">{member.name}</p>
-                          <p className={cn("text-[9px] font-bold uppercase tracking-widest flex items-center gap-2", isSuperAdmin ? "text-emerald-400/40" : "text-primary/40")}>
+                          <p className={cn("text-[9px] font-bold uppercase tracking-widest flex items-center gap-2", isSuperAdmin ? "text-emerald-400" : "text-primary")}>
                             <Mail className="h-2 w-2" /> {member.email}
                           </p>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-5">
-                      <Badge variant="outline" className={cn("rounded-none font-black text-[9px] uppercase tracking-widest px-3 py-1", ROLES_INFO[member.role]?.color)}>
+                      <Badge variant="outline" className={cn("rounded-2xl font-black text-[9px] uppercase tracking-widest px-3 py-1", ROLES_INFO[member.role]?.color)}>
                         {ROLES_INFO[member.role]?.label}
                       </Badge>
                     </td>
@@ -333,7 +332,7 @@ export default function StaffManagementPage() {
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className={cn("h-9 w-9 border border-white/10 transition-all", isSuperAdmin ? "text-emerald-400 hover:bg-emerald-500/10" : "text-primary hover:bg-primary/10")}
+                          className={cn("h-9 w-9 border border-white/10 transition-all rounded-xl", isSuperAdmin ? "text-emerald-400 hover:bg-emerald-500/10" : "text-primary hover:bg-primary/10")}
                           onClick={() => handleEdit(member)}
                           title="Modificar Identidad"
                         >
@@ -342,7 +341,7 @@ export default function StaffManagementPage() {
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="h-9 w-9 text-rose-500 hover:bg-rose-500/10 border border-rose-500/10 transition-all"
+                          className="h-9 w-9 text-rose-500 hover:bg-rose-500/10 border border-rose-500/10 transition-all rounded-xl"
                           onClick={() => handleDelete(member.id, member.name, member.role)}
                           title="Vincular Baja"
                         >
@@ -356,7 +355,7 @@ export default function StaffManagementPage() {
             </table>
           </div>
         </CardContent>
-        <div className="p-6 bg-black/40 border-t border-white/5 flex justify-between items-center text-[9px] font-black uppercase tracking-[0.5em]">
+        <div className="p-6 bg-black/40 border-t border-white/5 flex justify-between items-center text-[9px] font-black uppercase tracking-[0.5em] rounded-b-3xl">
           <span className={isSuperAdmin ? "text-emerald-400/30" : "text-primary/30"}>Mostrando {filteredStaff.length} de {staff.length} miembros del staff</span>
           <span className="flex items-center gap-2 text-primary"><CheckCircle2 className={cn("h-3 w-3 animate-pulse", isSuperAdmin ? "text-emerald-400" : "text-primary")} /> Jerarquía de Mando: ESTABLE</span>
         </div>
@@ -368,12 +367,12 @@ export default function StaffManagementPage() {
             <SheetHeader className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className={cn("h-2 w-2 rounded-full animate-pulse", isSuperAdmin ? "bg-emerald-500" : "bg-primary")} />
-                <span className={cn("text-[10px] font-black uppercase tracking-[0.4em]", isSuperAdmin ? "text-emerald-400" : "text-primary")}>Credential_Deploy_v1.5</span>
+                <span className={cn("text-[10px] font-black uppercase tracking-[0.4em] italic", isSuperAdmin ? "text-emerald-400" : "text-primary")}>Credential_Deploy_v1.5</span>
               </div>
               <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left">
                 {editingId ? "MODIFICAR_IDENTIDAD" : "EMITIR_CREDENCIAL"}
               </SheetTitle>
-              <SheetDescription className={cn("text-[10px] uppercase font-bold tracking-widest text-left", isSuperAdmin ? "text-emerald-400/40" : "text-primary/40")}>
+              <SheetDescription className={cn("text-[10px] uppercase font-bold tracking-widest text-left italic", isSuperAdmin ? "text-emerald-400/40" : "text-primary/40")}>
                 Defina el nivel jerárquico y los parámetros de acceso del trabajador.
               </SheetDescription>
             </SheetHeader>
@@ -382,7 +381,7 @@ export default function StaffManagementPage() {
           <form onSubmit={handleSaveStaff} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10">
             {/* SECCIÓN DE IDENTIDAD VISUAL CIRCULAR */}
             <div className="space-y-4">
-              <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>Identidad Visual Staff</Label>
+              <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1 italic", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>Identidad Visual Staff</Label>
               <div className={cn("flex flex-col items-center justify-center p-8 rounded-3xl relative overflow-hidden", isSuperAdmin ? "bg-emerald-500/5" : "bg-primary/5")}>
                 <div className={cn("relative h-40 w-40 rounded-full border-2 border-dashed group cursor-pointer transition-all flex items-center justify-center bg-black/40 shadow-[0_0_30px_rgba(0,0,0,0.5)]", isSuperAdmin ? "border-emerald-500/30 hover:border-emerald-500/60" : "border-primary/30 hover:border-primary/60")}>
                   {formData.photoUrl ? (
@@ -401,7 +400,7 @@ export default function StaffManagementPage() {
                       <div className={cn("h-16 w-16 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform", isSuperAdmin ? "bg-emerald-500/10 border border-emerald-500/20" : "bg-primary/10 border border-primary/20")}>
                         <Camera className={cn("h-8 w-8", isSuperAdmin ? "text-emerald-400/40" : "text-primary/40")} />
                       </div>
-                      <span className={cn("text-[8px] font-black uppercase tracking-widest text-center", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>SINCRO_FOTO</span>
+                      <span className={cn("text-[8px] font-black uppercase tracking-widest text-center italic", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>SINCRO_FOTO</span>
                     </div>
                   )}
                   <input 
@@ -417,27 +416,27 @@ export default function StaffManagementPage() {
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>Nombre</Label>
+                  <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1 italic", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>Nombre</Label>
                   <Input 
                     required
                     value={formData.firstName}
                     onChange={(e) => setFormData({...formData, firstName: e.target.value.toUpperCase()})}
                     placeholder="EJ: JUAN" 
                     className={cn(
-                      "h-14 bg-white/5 border rounded-none font-bold uppercase transition-all text-lg",
+                      "h-14 bg-white/5 border rounded-2xl font-bold uppercase transition-all text-lg",
                       isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500 text-emerald-400 placeholder:text-emerald-400/20" : "border-primary/20 focus:border-primary text-primary placeholder:text-primary/20"
                     )}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>Apellidos</Label>
+                  <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1 italic", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>Apellidos</Label>
                   <Input 
                     required
                     value={formData.lastName}
                     onChange={(e) => setFormData({...formData, lastName: e.target.value.toUpperCase()})}
                     placeholder="EJ: PÉREZ" 
                     className={cn(
-                      "h-14 bg-white/5 border rounded-none font-bold uppercase transition-all text-lg",
+                      "h-14 bg-white/5 border rounded-2xl font-bold uppercase transition-all text-lg",
                       isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500 text-emerald-400 placeholder:text-emerald-400/20" : "border-primary/20 focus:border-primary text-primary placeholder:text-primary/20"
                     )}
                   />
@@ -445,7 +444,7 @@ export default function StaffManagementPage() {
               </div>
 
               <div className="space-y-2">
-                <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>Email Profesional</Label>
+                <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1 italic", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>Email Profesional</Label>
                 <div className="relative">
                   <Mail className={cn("absolute left-3 top-4 h-4 w-4", isSuperAdmin ? "text-emerald-400/40" : "text-primary/40")} />
                   <Input 
@@ -455,7 +454,7 @@ export default function StaffManagementPage() {
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                     placeholder="USER@CLUB.COM" 
                     className={cn(
-                      "pl-10 h-14 bg-white/5 border rounded-none font-bold transition-all",
+                      "pl-10 h-14 bg-white/5 border rounded-2xl font-bold transition-all",
                       isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500 text-emerald-400 placeholder:text-emerald-400/20" : "border-primary/20 focus:border-primary text-primary placeholder:text-primary/20"
                     )}
                   />
@@ -464,18 +463,18 @@ export default function StaffManagementPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>Nivel Jerárquico</Label>
+                  <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1 italic", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>Nivel Jerárquico</Label>
                   <Select 
                     value={formData.role} 
                     onValueChange={(v) => setFormData({...formData, role: v as UserRole})}
                   >
                     <SelectTrigger className={cn(
-                      "h-12 bg-white/5 border rounded-none font-bold uppercase tracking-widest transition-all",
+                      "h-12 bg-white/5 border rounded-2xl font-bold uppercase tracking-widest transition-all",
                       isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500 text-emerald-400" : "border-primary/20 focus:border-primary text-primary"
                     )}>
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#04070c] border-primary/20 rounded-none">
+                    <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
                       {availableRoles.map(role => (
                         <SelectItem key={role} value={role} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary">
                           {ROLES_INFO[role]?.label}
@@ -486,7 +485,7 @@ export default function StaffManagementPage() {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>Teléfono de Contacto</Label>
+                  <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1 italic", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>Teléfono de Contacto</Label>
                   <div className="flex gap-2">
                     <div className="w-24 shrink-0">
                       <Input 
@@ -494,7 +493,7 @@ export default function StaffManagementPage() {
                         onChange={(e) => setFormData({...formData, countryPrefix: e.target.value})}
                         placeholder="+34" 
                         className={cn(
-                          "h-12 bg-white/5 border rounded-none font-bold text-center transition-all",
+                          "h-12 bg-white/5 border rounded-2xl font-bold text-center transition-all",
                           isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500 text-emerald-400" : "border-primary/20 focus:border-primary text-primary"
                         )}
                       />
@@ -506,7 +505,7 @@ export default function StaffManagementPage() {
                         onChange={(e) => setFormData({...formData, phone: e.target.value})}
                         placeholder="600 000 000" 
                         className={cn(
-                          "pl-10 h-12 bg-white/5 border rounded-none font-bold transition-all",
+                          "pl-10 h-12 bg-white/5 border rounded-2xl font-bold transition-all",
                           isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500 text-emerald-400 placeholder:text-emerald-400/20" : "border-primary/20 focus:border-primary text-primary placeholder:text-primary/20"
                         )}
                       />
@@ -516,10 +515,10 @@ export default function StaffManagementPage() {
               </div>
             </div>
 
-            <div className={cn("p-6 border space-y-3", isSuperAdmin ? "bg-emerald-500/5 border-emerald-500/20" : "bg-primary/5 border-primary/20")}>
+            <div className={cn("p-6 border space-y-3 rounded-3xl", isSuperAdmin ? "bg-emerald-500/5 border-emerald-500/20" : "bg-primary/5 border-primary/20")}>
               <div className="flex items-center gap-2">
                 <ShieldCheck className={cn("h-3 w-3", isSuperAdmin ? "text-emerald-400" : "text-primary")} />
-                <span className={cn("text-[9px] font-black uppercase tracking-widest", isSuperAdmin ? "text-emerald-400" : "text-primary")}>Protocolo de Jerarquía</span>
+                <span className={cn("text-[9px] font-black uppercase tracking-widest italic", isSuperAdmin ? "text-emerald-400" : "text-primary")}>Protocolo de Jerarquía</span>
               </div>
               <p className={cn("text-[9px] leading-relaxed font-bold uppercase italic", isSuperAdmin ? "text-emerald-400/40" : "text-primary/40")}>
                 {isSuperAdmin 
@@ -532,7 +531,7 @@ export default function StaffManagementPage() {
 
           <div className="p-10 bg-black/40 border-t border-white/5 flex gap-4">
             <SheetClose asChild>
-              <Button variant="ghost" className={cn("flex-1 h-16 border font-black uppercase text-[10px] tracking-widest transition-all", isSuperAdmin ? "border-emerald-500/20 text-emerald-400/60 hover:bg-emerald-500/10" : "border-primary/20 text-primary/60 hover:bg-primary/10")}>
+              <Button variant="ghost" className={cn("flex-1 h-16 border font-black uppercase text-[10px] tracking-widest transition-all rounded-2xl active:scale-95", isSuperAdmin ? "border-emerald-500/20 text-emerald-400/60 hover:bg-emerald-500/10" : "border-primary/20 text-primary/60 hover:bg-primary/10")}>
                 CANCELAR
               </Button>
             </SheetClose>
@@ -540,7 +539,7 @@ export default function StaffManagementPage() {
               onClick={handleSaveStaff}
               disabled={loading}
               className={cn(
-                "flex-[2] h-16 text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-none shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] transition-all border-none",
+                "flex-[2] h-16 text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] transition-all border-none active:scale-95",
                 isSuperAdmin ? "bg-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.3)]" : "bg-primary"
               )}
             >
@@ -555,7 +554,7 @@ export default function StaffManagementPage() {
 
 function StaffStat({ label, value, icon: Icon, highlight, isSuperAdmin }: any) {
   return (
-    <Card className={cn("glass-panel p-5 flex items-center gap-5 relative overflow-hidden group bg-black/20 border transition-all", isSuperAdmin ? "border-emerald-500/20 hover:border-emerald-500/40" : "border-primary/20 hover:border-primary/40")}>
+    <Card className={cn("glass-panel p-5 flex items-center gap-5 relative overflow-hidden group bg-black/20 border transition-all rounded-3xl", isSuperAdmin ? "border-emerald-500/20 hover:border-emerald-500/40" : "border-primary/20 hover:border-primary/40")}>
        <div className={cn(
          "h-12 w-12 flex items-center justify-center border transition-all rotate-3 group-hover:rotate-0 duration-500 rounded-2xl bg-white/5",
          isSuperAdmin ? "border-emerald-500/20" : "border-primary/20"
@@ -563,7 +562,7 @@ function StaffStat({ label, value, icon: Icon, highlight, isSuperAdmin }: any) {
           <Icon className={cn("h-6 w-6", isSuperAdmin ? "text-emerald-400" : "text-primary")} />
        </div>
        <div className="relative z-10">
-          <p className={cn("text-[9px] font-black uppercase tracking-widest", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>{label}</p>
+          <p className={cn("text-[9px] font-black uppercase tracking-widest italic", isSuperAdmin ? "text-emerald-400" : "text-primary")}>{label}</p>
           <div className="flex items-baseline gap-2">
              <p className={cn(
                "text-2xl font-black italic tracking-tighter",
