@@ -2,7 +2,25 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef, memo } from "react";
-import { Trophy, Clock, Save, LayoutGrid, Play, Pause, RotateCcw, ChevronLeft, ChevronRight, Minimize2, Users } from "lucide-react";
+import { 
+  Trophy, 
+  Clock, 
+  Save, 
+  LayoutGrid, 
+  Play, 
+  Pause, 
+  RotateCcw, 
+  ChevronLeft, 
+  ChevronRight, 
+  Minimize2, 
+  Users,
+  Settings,
+  Shield,
+  Plus,
+  Info,
+  CheckCircle2,
+  Camera
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { TacticalField, FieldType } from "@/components/board/TacticalField";
@@ -17,6 +35,16 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetDescription,
+  SheetTrigger
+} from "@/components/ui/sheet";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const TIME_PRESETS = [
   { label: "15 min", value: 15 },
@@ -72,6 +100,13 @@ export default function MatchBoardPage() {
   const hasClub = !!profile?.clubId;
   const isCoach = profile?.role === "coach" || profile?.role === "club_admin" || profile?.role === "superadmin";
   const showTeamSelector = hasClub && isCoach;
+
+  // Estado para creación de equipo local (sin club)
+  const [localTeamData, setLocalTeamData] = useState({
+    name: "",
+    shortName: "",
+    primaryColor: "#00f2ff"
+  });
 
   useEffect(() => {
     const defaultFormations: Record<FieldType, string> = {
@@ -270,20 +305,130 @@ export default function MatchBoardPage() {
             </div>
           )}
 
-          <div className="hidden md:block">
-            <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}>
-              <SelectTrigger className="w-[110px] lg:w-[140px] h-9 lg:h-10 bg-white/5 border-primary/20 rounded-xl text-[8px] lg:text-[9px] font-black uppercase tracking-widest text-primary hover:bg-primary/5 transition-all">
-                <div className="flex items-center gap-2">
-                  <LayoutGrid className="h-3 w-3 lg:h-3.5 lg:w-3.5" />
-                  <SelectValue placeholder="Campo" />
-                </div>
-              </SelectTrigger>
-              <SelectContent className="bg-[#0a0f18] border-primary/20">
-                <SelectItem value="f11" className="text-[9px] font-black uppercase">Fútbol 11</SelectItem>
-                <SelectItem value="f7" className="text-[9px] font-black uppercase">Fútbol 7</SelectItem>
-                <SelectItem value="futsal" className="text-[9px] font-black uppercase">Fútbol Sala</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="flex items-center gap-2">
+            <div className="hidden md:block">
+              <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}>
+                <SelectTrigger className="w-[110px] lg:w-[140px] h-9 lg:h-10 bg-white/5 border-primary/20 rounded-xl text-[8px] lg:text-[9px] font-black uppercase tracking-widest text-primary hover:bg-primary/5 transition-all">
+                  <div className="flex items-center gap-2">
+                    <LayoutGrid className="h-3 w-3 lg:h-3.5 lg:w-3.5" />
+                    <SelectValue placeholder="Campo" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="bg-[#0a0f18] border-primary/20">
+                  <SelectItem value="f11" className="text-[9px] font-black uppercase">Fútbol 11</SelectItem>
+                  <SelectItem value="f7" className="text-[9px] font-black uppercase">Fútbol 7</SelectItem>
+                  <SelectItem value="futsal" className="text-[9px] font-black uppercase">Fútbol Sala</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* ACTIVADOR DE VENTANA LATERAL DE EQUIPO */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <button className="h-9 lg:h-10 w-9 lg:w-10 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all active:scale-95 shadow-[0_0_15px_rgba(0,242,255,0.1)]">
+                  <Settings className="h-4 w-4" />
+                </button>
+              </SheetTrigger>
+              <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+                {hasClub ? (
+                  /* VISTA: EQUIPO POR DEFECTO (USUARIO CON CLUB) */
+                  <>
+                    <div className="p-10 border-b border-white/5 bg-black/40">
+                      <SheetHeader className="space-y-4">
+                        <div className="flex items-center gap-3">
+                          <Shield className="h-4 w-4 text-primary animate-pulse" />
+                          <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary italic">Federated_Node_v2.0</span>
+                        </div>
+                        <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left leading-none">
+                          MI EQUIPO <span className="text-primary">RED</span>
+                        </SheetTitle>
+                        <SheetDescription className="text-[10px] uppercase font-bold text-primary/40 tracking-widest text-left italic">
+                          Configuración sincronizada con el servidor del club.
+                        </SheetDescription>
+                      </SheetHeader>
+                    </div>
+                    <div className="flex-1 p-10 space-y-8 overflow-y-auto custom-scrollbar">
+                      <div className="p-8 bg-primary/5 border border-primary/20 rounded-3xl flex flex-col items-center text-center space-y-4">
+                         <div className="h-24 w-24 rounded-full bg-black border-2 border-primary flex items-center justify-center cyan-glow">
+                            <Trophy className="h-10 w-10 text-primary" />
+                         </div>
+                         <div>
+                            <h3 className="text-2xl font-black text-white italic tracking-tighter uppercase">{profile?.clubName || "Nodo Cantera"}</h3>
+                            <p className="text-[10px] font-black text-primary/60 uppercase tracking-widest">{profile?.sport || "Disciplina Base"}</p>
+                         </div>
+                      </div>
+                      <div className="space-y-4">
+                         <div className="flex items-center gap-3 px-6 py-4 bg-white/5 border border-white/5 rounded-2xl">
+                            <Info className="h-4 w-4 text-primary/40" />
+                            <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Sincronización de Red: Activa</span>
+                         </div>
+                         <Button className="w-full h-14 bg-primary text-black font-black uppercase tracking-widest rounded-2xl">SOLICITAR CAMBIO_NODO</Button>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  /* VISTA: CREAR EQUIPO LOCAL (USUARIO SIN CLUB) */
+                  <>
+                    <div className="p-10 border-b border-white/5 bg-black/40">
+                      <SheetHeader className="space-y-4">
+                        <div className="flex items-center gap-3">
+                          <Plus className="h-4 w-4 text-primary animate-pulse" />
+                          <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary italic">Local_Asset_Factory</span>
+                        </div>
+                        <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left leading-none">
+                          CREAR <span className="text-primary">EQUIPO</span>
+                        </SheetTitle>
+                        <SheetDescription className="text-[10px] uppercase font-bold text-primary/40 tracking-widest text-left italic">
+                          Defina su identidad local. Los datos se persistirán en este navegador.
+                        </SheetDescription>
+                      </SheetHeader>
+                    </div>
+                    <div className="flex-1 p-10 space-y-10 overflow-y-auto custom-scrollbar">
+                      <div className="space-y-6">
+                        <div className="space-y-3">
+                          <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1 italic">Nombre del Equipo</Label>
+                          <Input 
+                            placeholder="EJ: RAYO VALLECANO" 
+                            className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary text-primary" 
+                            value={localTeamData.name}
+                            onChange={(e) => setLocalTeamData({...localTeamData, name: e.target.value.toUpperCase()})}
+                          />
+                        </div>
+                        <div className="space-y-3">
+                          <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1 italic">Siglas / Corto</Label>
+                          <Input 
+                            placeholder="EJ: RAY" 
+                            maxLength={3}
+                            className="h-14 bg-white/5 border-primary/20 rounded-2xl font-black text-center text-xl focus:border-primary text-primary"
+                            value={localTeamData.shortName}
+                            onChange={(e) => setLocalTeamData({...localTeamData, shortName: e.target.value.toUpperCase()})}
+                          />
+                        </div>
+                        <div className="space-y-4">
+                          <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1 italic">Escudo_Identidad</Label>
+                          <div className="h-32 border-2 border-dashed border-primary/20 rounded-3xl flex flex-col items-center justify-center gap-2 group hover:border-primary/40 cursor-pointer transition-all bg-primary/5">
+                             <Camera className="h-6 w-6 text-primary/40 group-hover:text-primary transition-all" />
+                             <span className="text-[8px] font-black uppercase tracking-widest text-primary/40">Subir Digital Asset</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-6 bg-primary/5 border border-primary/20 rounded-3xl space-y-3">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="h-3 w-3 text-primary" />
+                          <span className="text-[9px] font-black uppercase text-primary tracking-widest italic">Aviso de Persistencia</span>
+                        </div>
+                        <p className="text-[9px] text-primary/40 leading-relaxed font-bold uppercase italic">
+                          Al no estar vinculado a una red federada, su equipo se guardará localmente. Sincronice con un club para acceso en la nube.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="p-10 bg-black/40 border-t border-white/5">
+                      <Button className="w-full h-16 bg-primary text-black font-black uppercase tracking-[0.2em] rounded-2xl cyan-glow">GUARDAR_EQUIPO_LOCAL</Button>
+                    </div>
+                  </>
+                )}
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
 
