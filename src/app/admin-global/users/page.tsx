@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   UserPlus, 
   Search, 
@@ -16,7 +16,8 @@ import {
   MapPin,
   Loader2,
   ShieldAlert,
-  Pencil
+  Pencil,
+  CheckCircle2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -45,7 +46,6 @@ import {
   SheetDescription, 
   SheetFooter, 
   SheetClose,
-  SheetTrigger
 } from "@/components/ui/sheet";
 import {
   Select,
@@ -88,6 +88,18 @@ export default function GlobalUsersPage() {
     role: "club_admin"
   });
 
+  const addAuditLog = (title: string, desc: string, type: 'Success' | 'Info' | 'Warning' = 'Success') => {
+    const existingLogs = JSON.parse(localStorage.getItem("synq_audit_logs") || "[]");
+    const newLog = {
+      id: Date.now().toString(),
+      title,
+      desc,
+      type,
+      timestamp: new Date().toISOString()
+    };
+    localStorage.setItem("synq_audit_logs", JSON.stringify([newLog, ...existingLogs].slice(0, 15)));
+  };
+
   const handleOpenCreate = () => {
     setEditingId(null);
     setFormData({ name: "", surname: "", email: "", country: "España", role: "club_admin" });
@@ -113,6 +125,7 @@ export default function GlobalUsersPage() {
     setTimeout(() => {
       if (editingId) {
         setUsers(prev => prev.map(u => u.id === editingId ? { ...u, ...formData } : u));
+        addAuditLog("MODIFICACIÓN_USUARIO", `Perfil de ${formData.name} ${formData.surname} actualizado en la red.`, "Info");
         toast({
           title: "CREDENCIAL_ACTUALIZADA",
           description: `Se ha sincronizado el perfil de ${formData.name} ${formData.surname}.`,
@@ -125,6 +138,7 @@ export default function GlobalUsersPage() {
           lastSeen: "Just now"
         };
         setUsers([newUser, ...users]);
+        addAuditLog("NUEVA_CREDENCIAL", `Identidad autorizada emitida para ${formData.name} ${formData.surname}.`, "Success");
         toast({
           title: "CREDENCIAL_EMITIDA",
           description: `Se ha generado el protocolo de acceso para ${formData.name} ${formData.surname}.`,
@@ -144,7 +158,6 @@ export default function GlobalUsersPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
-      {/* HEADER SECTOR */}
       <div className="flex justify-between items-end border-b border-white/5 pb-6">
         <div className="space-y-1">
           <div className="flex items-center gap-3 mb-2">
@@ -184,58 +197,58 @@ export default function GlobalUsersPage() {
               <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Nombre</Label>
+                    <Label className="text-[10px] font-black uppercase text-emerald-400 tracking-widest ml-1">Nombre</Label>
                     <Input 
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})}
                       placeholder="EJ: MARC" 
-                      className="h-12 bg-white/5 border-emerald-500/20 rounded-none font-bold uppercase focus:border-emerald-500 transition-all placeholder:text-white/10 text-emerald-400" 
+                      className="h-12 bg-white/5 border-emerald-500/20 rounded-none font-bold uppercase focus:border-emerald-500 transition-all placeholder:text-emerald-400/20 text-emerald-400" 
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Apellidos</Label>
+                    <Label className="text-[10px] font-black uppercase text-emerald-400 tracking-widest ml-1">Apellidos</Label>
                     <Input 
                       required
                       value={formData.surname}
                       onChange={(e) => setFormData({...formData, surname: e.target.value.toUpperCase()})}
                       placeholder="EJ: GARCÍA" 
-                      className="h-12 bg-white/5 border-emerald-500/20 rounded-none font-bold uppercase focus:border-emerald-500 transition-all placeholder:text-white/10 text-emerald-400" 
+                      className="h-12 bg-white/5 border-emerald-500/20 rounded-none font-bold uppercase focus:border-emerald-500 transition-all placeholder:text-emerald-400/20 text-emerald-400" 
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Mail de Acceso</Label>
+                  <Label className="text-[10px] font-black uppercase text-emerald-400 tracking-widest ml-1">Mail de Acceso</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3.5 h-4 w-4 text-emerald-500/30" />
+                    <Mail className="absolute left-3 top-3.5 h-4 w-4 text-emerald-500/40" />
                     <Input 
                       required
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
                       placeholder="USER@CLUB.COM" 
-                      className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-none font-bold focus:border-emerald-500 transition-all placeholder:text-white/10 text-emerald-400" 
+                      className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-none font-bold focus:border-emerald-500 transition-all placeholder:text-emerald-400/20 text-emerald-400" 
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Nodo_País</Label>
+                  <Label className="text-[10px] font-black uppercase text-emerald-400 tracking-widest ml-1">Nodo_País</Label>
                   <div className="relative">
-                    <Globe2 className="absolute left-3 top-3.5 h-4 w-4 text-emerald-500/30" />
+                    <Globe2 className="absolute left-3 top-3.5 h-4 w-4 text-emerald-500/40" />
                     <Input 
                       required
                       value={formData.country}
                       onChange={(e) => setFormData({...formData, country: e.target.value})}
                       placeholder="ESPAÑA" 
-                      className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-none font-bold uppercase focus:border-emerald-500 transition-all placeholder:text-white/10 text-emerald-400" 
+                      className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-none font-bold uppercase focus:border-emerald-500 transition-all placeholder:text-emerald-400/20 text-emerald-400" 
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Protocolo de Rol</Label>
+                  <Label className="text-[10px] font-black uppercase text-emerald-400 tracking-widest ml-1">Protocolo de Rol</Label>
                   <Select 
                     value={formData.role} 
                     onValueChange={(v) => setFormData({...formData, role: v})}
@@ -259,7 +272,7 @@ export default function GlobalUsersPage() {
                   <ShieldAlert className="h-3 w-3 text-emerald-400" />
                   <span className="text-[9px] font-black uppercase text-emerald-400 tracking-widest">Aviso de Seguridad</span>
                 </div>
-                <p className="text-[9px] text-white/40 leading-relaxed font-bold uppercase italic">
+                <p className="text-[9px] text-emerald-400/40 leading-relaxed font-bold uppercase italic">
                   La emisión o modificación de una credencial afecta directamente al token de sincronización del usuario en la red SynQAI.
                 </p>
               </div>
@@ -267,7 +280,7 @@ export default function GlobalUsersPage() {
 
             <div className="p-10 bg-black/40 border-t border-white/5 flex gap-4">
               <SheetClose asChild>
-                <Button variant="ghost" className="flex-1 h-16 border border-white/10 text-white/40 font-black uppercase text-[10px] tracking-widest hover:bg-white/5 active:scale-95">
+                <Button variant="ghost" className="flex-1 h-16 border border-emerald-500/20 text-emerald-400/40 font-black uppercase text-[10px] tracking-widest hover:bg-emerald-500/5 active:scale-95 transition-all">
                   CANCELAR
                 </Button>
               </SheetClose>
@@ -283,14 +296,12 @@ export default function GlobalUsersPage() {
         </Sheet>
       </div>
 
-      {/* METRICS ROW */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <MetricMiniCard label="Solicitudes Pendientes" value="14" color="text-emerald-400" />
         <MetricMiniCard label="Nodos Activos Hoy" value="1.2k" color="text-white" />
         <MetricMiniCard label="Alertas de Acceso" value="0" color="text-emerald-400" />
       </div>
 
-      {/* MAIN DATA TERMINAL */}
       <Card className="glass-panel shadow-2xl overflow-hidden relative border border-emerald-500/20 bg-black/40">
         <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
         
@@ -305,10 +316,10 @@ export default function GlobalUsersPage() {
             />
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-[9px] font-black text-white/30 uppercase tracking-widest">Filtrar por Status:</span>
+            <span className="text-[9px] font-black text-emerald-400/40 uppercase tracking-widest">Filtrar por Status:</span>
             <div className="flex gap-1">
               {['Todos', 'Pendiente', 'Activo'].map(f => (
-                <button key={f} className="text-[9px] font-black uppercase px-3 py-1 border border-white/5 hover:border-emerald-500/40 text-white/40 hover:text-emerald-400 transition-all">
+                <button key={f} className="text-[9px] font-black uppercase px-3 py-1 border border-white/5 hover:border-emerald-500/40 text-emerald-400/40 hover:text-emerald-400 transition-all">
                   {f}
                 </button>
               ))}
@@ -333,14 +344,14 @@ export default function GlobalUsersPage() {
                   <TableCell className="pl-8">
                     <div className="flex items-center gap-4 py-2">
                       <div className="h-10 w-10 bg-emerald-500/5 border border-emerald-500/20 flex items-center justify-center relative overflow-hidden group-hover:bg-emerald-500/10 transition-all">
-                        <Activity className="h-4 w-4 text-emerald-500 opacity-40 group-hover:opacity-100 transition-opacity" />
+                        <Activity className="h-4 w-4 text-emerald-400 opacity-40 group-hover:opacity-100 transition-opacity" />
                         <div className="absolute inset-0 bg-emerald-500/5 scan-line" />
                       </div>
                       <div>
                         <p className="font-black text-white uppercase text-xs italic group-hover:emerald-text-glow transition-all">
                           {user.name} {user.surname}
                         </p>
-                        <p className="text-[8px] text-white/30 font-bold uppercase tracking-widest mt-1">
+                        <p className="text-[8px] text-emerald-400/30 font-bold uppercase tracking-widest mt-1">
                           ID: {user.id.toUpperCase()} • {user.lastSeen}
                         </p>
                       </div>
@@ -357,7 +368,7 @@ export default function GlobalUsersPage() {
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Globe2 className="h-3 w-3 text-emerald-500/40" />
-                      <span className="text-[10px] font-black uppercase text-white/70">{user.country}</span>
+                      <span className="text-[10px] font-black uppercase text-emerald-400/70">{user.country}</span>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -429,22 +440,5 @@ function StatusBadge({ status }: { status: string }) {
     <Badge variant="outline" className={cn("rounded-none font-black text-[8px] uppercase tracking-widest px-3 py-1", styles[status])}>
       {status}
     </Badge>
-  );
-}
-
-function CheckCircle2({ className }: { className?: string }) {
-  return (
-    <svg 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="3" 
-      strokeLinecap="round" 
-      strokeLinejoin="round" 
-      className={className}
-    >
-      <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
-      <path d="m9 12 2 2 4-4" />
-    </svg>
   );
 }

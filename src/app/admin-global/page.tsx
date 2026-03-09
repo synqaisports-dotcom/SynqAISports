@@ -1,12 +1,20 @@
 
 "use client";
 
-import { Shield, TrendingUp, Users, Building2, Zap, Activity, BarChart3, ArrowUpRight } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Shield, TrendingUp, Users, Building2, Zap, Activity, ArrowUpRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 export default function AdminGlobalDashboard() {
+  const [logs, setLogs] = useState<any[]>([]);
+
+  useEffect(() => {
+    const existingLogs = JSON.parse(localStorage.getItem("synq_audit_logs") || "[]");
+    setLogs(existingLogs);
+  }, []);
+
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
       {/* HEADER SECTOR */}
@@ -18,7 +26,7 @@ export default function AdminGlobalDashboard() {
         <h1 className="text-4xl font-headline font-black text-white uppercase italic tracking-tighter emerald-text-glow">
           SYSTEM_OVERVIEW
         </h1>
-        <p className="text-[10px] font-black text-white/30 tracking-[0.2em] uppercase">Sincronización de Red: Nodos 100% Operativos</p>
+        <p className="text-[10px] font-black text-emerald-400/30 tracking-[0.2em] uppercase">Sincronización de Red: Nodos 100% Operativos</p>
       </div>
 
       {/* METRICS GRID */}
@@ -34,7 +42,7 @@ export default function AdminGlobalDashboard() {
         <Card className="glass-panel lg:col-span-2 overflow-hidden relative group border border-emerald-500/20">
           <div className="absolute top-0 right-0 p-1 bg-emerald-500/20 text-[8px] font-black px-2 uppercase tracking-widest text-emerald-400">Live_Network_Traffic</div>
           <CardHeader>
-            <CardTitle className="text-sm uppercase tracking-widest font-black flex items-center gap-2">
+            <CardTitle className="text-sm uppercase tracking-widest font-black flex items-center gap-2 text-emerald-400">
               <Activity className="h-4 w-4 text-emerald-400" /> Monitoreo de Flujos Globales
             </CardTitle>
           </CardHeader>
@@ -53,22 +61,29 @@ export default function AdminGlobalDashboard() {
           </CardContent>
         </Card>
         
-        {/* ACCESS LOGS */}
-        <Card className="glass-panel border border-emerald-500/20">
+        {/* ACCESS LOGS - AUDIT REGISTRY */}
+        <Card className="glass-panel border border-emerald-500/20 bg-black/40">
           <CardHeader className="border-b border-white/5 bg-white/[0.01]">
-            <CardTitle className="text-sm uppercase tracking-widest font-black">Registros de Seguridad</CardTitle>
+            <CardTitle className="text-sm uppercase tracking-widest font-black text-emerald-400">Registros de Seguridad</CardTitle>
           </CardHeader>
-          <CardContent className="p-0">
+          <CardContent className="p-0 max-h-[400px] overflow-y-auto custom-scrollbar">
             <div className="divide-y divide-white/5">
-              <LogItem type="Success" title="Nuevo_Club_Sincronizado" desc="Real Madrid Academy vinculada al sector 01." />
+              {logs.length > 0 ? logs.map((log) => (
+                <LogItem key={log.id} type={log.type} title={log.title} desc={log.desc} />
+              )) : (
+                <div className="p-10 text-center space-y-4">
+                   <Activity className="h-8 w-8 text-emerald-500/20 mx-auto animate-pulse" />
+                   <p className="text-[10px] font-black text-emerald-400/20 uppercase tracking-widest">Esperando flujo de datos...</p>
+                </div>
+              )}
+              {/* Logs estáticos de sistema */}
               <LogItem type="Info" title="Update_IA_Complete" desc="Despliegue de Neural Planner finalizado." />
               <LogItem type="Warning" title="Intento_Acceso_Denegado" desc="IP no autorizada bloqueada en nodo Tutor." />
-              <LogItem type="Success" title="Pago_Procesado" desc="Club Velocity Basketball renovó plan Pro." />
             </div>
           </CardContent>
-          <div className="p-4">
-             <Button variant="ghost" className="w-full h-10 rounded-none border border-white/5 text-[9px] font-black uppercase tracking-widest hover:text-emerald-400 transition-all" asChild>
-                <Link href="/admin-global/users">Ver todos los usuarios <ArrowUpRight className="h-3 w-3 ml-2" /></Link>
+          <div className="p-4 border-t border-white/5">
+             <Button variant="ghost" className="w-full h-10 rounded-none border border-emerald-500/10 text-[9px] font-black uppercase tracking-widest text-emerald-400 hover:bg-emerald-500/5 transition-all active:scale-95" asChild>
+                <Link href="/admin-global/users">Ver todos los usuarios <ArrowRight className="h-3 w-3 ml-2" /></Link>
              </Button>
           </div>
         </Card>
@@ -79,12 +94,12 @@ export default function AdminGlobalDashboard() {
 
 function MetricCard({ title, value, icon: Icon, trend }: any) {
   return (
-    <Card className="glass-panel relative overflow-hidden group hover:scale-[1.02] transition-all border border-emerald-500/20">
-      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-20 transition-opacity">
+    <Card className="glass-panel relative overflow-hidden group hover:scale-[1.02] transition-all border border-emerald-500/20 bg-black/20">
+      <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
         <Icon className="h-12 w-12 text-emerald-500" />
       </div>
       <CardHeader className="pb-2">
-        <CardDescription className="text-[9px] font-black uppercase tracking-widest text-white/30">{title}</CardDescription>
+        <CardDescription className="text-[9px] font-black uppercase tracking-widest text-emerald-400/40">{title}</CardDescription>
         <CardTitle className="text-3xl font-black text-white group-hover:emerald-text-glow transition-all italic tracking-tighter">{value}</CardTitle>
       </CardHeader>
       <CardContent>
@@ -102,10 +117,18 @@ function LogItem({ type, title, desc }: any) {
   return (
     <div className="p-5 hover:bg-white/[0.02] transition-colors group cursor-default">
       <div className="flex items-center gap-3 mb-1">
-         <div className={`h-1.5 w-1.5 rounded-full animate-pulse ${type === 'Success' ? 'bg-emerald-400' : type === 'Warning' ? 'bg-rose-400' : 'bg-emerald-500'}`} />
+         <div className={`h-1.5 w-1.5 rounded-full animate-pulse ${type === 'Success' ? 'bg-emerald-400 shadow-[0_0_8px_var(--emerald-400)]' : type === 'Warning' ? 'bg-rose-400' : 'bg-emerald-500'}`} />
          <p className={`text-[10px] font-black uppercase tracking-widest ${color}`}>{title}</p>
       </div>
-      <p className="text-[10px] text-white/50 leading-tight uppercase font-bold pl-[18px]">{desc}</p>
+      <p className="text-[10px] text-emerald-400/40 leading-tight uppercase font-bold pl-[18px]">{desc}</p>
     </div>
+  );
+}
+
+function ArrowRight({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M5 12h14M12 5l7 7-7 7" />
+    </svg>
   );
 }
