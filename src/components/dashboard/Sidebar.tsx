@@ -124,7 +124,7 @@ export function DashboardSidebar() {
                 isSuperAdmin ? "bg-emerald-500 emerald-text-glow" : "bg-primary cyan-glow",
                 isCollapsed && "p-1.5 shadow-[0_0_15px_rgba(0,242,255,0.3)]"
               )}>
-                <Zap className={cn("text-black", isCollapsed ? "h-4 w-4" : "h-6 w-6")} />
+                <Zap className={cn("text-black animate-pulse", isCollapsed ? "h-4 w-4" : "h-6 w-6")} />
               </div>
               {!isCollapsed && (
                 <div className="flex flex-col overflow-hidden animate-in fade-in duration-700">
@@ -148,7 +148,7 @@ export function DashboardSidebar() {
 
           {!isCollapsed && isSuperAdmin && (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg animate-in fade-in zoom-in-95">
-              <ShieldCheck className="h-3 w-3 text-emerald-400" />
+              <ShieldCheck className="h-3 w-3 text-emerald-400 animate-pulse" />
               <span className="text-[8px] font-black text-emerald-400 uppercase tracking-[0.2em]">SUPERADMIN_ACTIVE</span>
             </div>
           )}
@@ -217,7 +217,7 @@ function SidebarGroupWrapper({ children, title, color, isCollapsed }: any) {
   return (
     <SidebarGroup className="p-0">
       {!isCollapsed && (
-        <p className={cn("px-4 mb-4 text-[8px] font-black uppercase tracking-[0.5em] transition-all duration-700", color)}>
+        <p className={cn("px-4 mb-4 text-[8px] font-black uppercase tracking-[0.5em] transition-all duration-700 animate-pulse", color)}>
           {title}
         </p>
       )}
