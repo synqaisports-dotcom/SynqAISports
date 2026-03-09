@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
@@ -33,21 +32,31 @@ function BoardTabTrigger() {
 export default function BoardLayout({ children }: { children: React.ReactNode }) {
   const { profile, loading } = useAuth();
   const router = useRouter();
-  
-  // ESTADO DE PANTALLA COMPLETA (Unidireccional: Browser -> React)
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // EFECTO DE ESCUCHA NATIVA (Garantiza estabilidad en producción)
+  // PROTOCOLO_FULLSCREEN_MILITAR: Sincronización nativa y limpieza
   useEffect(() => {
+    // 1. Escuchar cambio de estado nativo del navegador
     const syncFullscreenState = () => {
       setIsFullscreen(!!document.fullscreenElement);
     };
 
     document.addEventListener("fullscreenchange", syncFullscreenState);
-    // Sync inicial seguro para SSR
+    
+    // Sync inicial seguro
     syncFullscreenState();
 
-    return () => document.removeEventListener("fullscreenchange", syncFullscreenState);
+    // 2. CLEANUP CRÍTICO: Evita el error de la app anterior al navegar fuera
+    return () => {
+      document.removeEventListener("fullscreenchange", syncFullscreenState);
+      // Si el usuario sale de la sección /board, forzamos la salida de pantalla completa
+      // para evitar que el estado del DOM se quede 'zombi'.
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {
+          // Silent catch para evitar errores en navegaciones ultra-rápidas
+        });
+      }
+    };
   }, []);
 
   const toggleFullscreen = useCallback(() => {
@@ -57,7 +66,7 @@ export default function BoardLayout({ children }: { children: React.ReactNode })
       });
     } else {
       if (document.exitFullscreen) {
-        document.exitFullscreen();
+        document.exitFullscreen().catch(() => {});
       }
     }
   }, []);
@@ -76,7 +85,7 @@ export default function BoardLayout({ children }: { children: React.ReactNode })
           <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
           <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse" />
         </div>
-        <p className="text-[10px] font-black text-primary tracking-[0.5em] uppercase">Iniciando_Motor_Táctico...</p>
+        <p className="text-[10px] font-black text-primary tracking-[0.5em] uppercase">Sincronizando_Entorno_Táctico...</p>
       </div>
     );
   }
@@ -86,21 +95,16 @@ export default function BoardLayout({ children }: { children: React.ReactNode })
   return (
     <SidebarProvider defaultOpen={false}>
       <div className="h-screen w-full bg-[#020408] flex overflow-hidden relative">
-        {/* Sidebar técnica (Inyectada pero oculta por defecto) */}
         <DashboardSidebar />
-
-        {/* Disparador de acceso rápido a menús */}
         <BoardTabTrigger />
 
         <main className="flex-1 flex flex-col overflow-hidden relative">
-          {/* Fondo Técnico */}
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,242,255,0.03),transparent_70%)] pointer-events-none" />
           
-          {/* BOTÓN FULLSCREEN FLOTANTE (ESTÁNDAR MILITAR) */}
           <button 
             onClick={toggleFullscreen}
             className="fixed bottom-8 left-8 z-[100] h-14 w-14 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-2xl flex items-center justify-center text-white/40 hover:text-primary transition-all hover:scale-110 active:scale-95 shadow-2xl group"
-            title={isFullscreen ? "Restaurar Ventana" : "Inmersión Total"}
+            title={isFullscreen ? "Salir del Modo Élite" : "Inmersión Total 4K"}
           >
             {isFullscreen ? <Minimize2 className="h-6 w-6" /> : <Maximize2 className="h-6 w-6 group-hover:animate-pulse" />}
             <div className="absolute inset-0 bg-primary/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
