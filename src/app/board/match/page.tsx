@@ -15,15 +15,13 @@ import {
   Minimize2, 
   Users,
   Settings,
-  Shield,
   Plus,
-  Info,
   CheckCircle2,
   Camera,
-  User,
   Search,
   Dna,
-  ArrowUpRight
+  ArrowUpRight,
+  ArrowRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -133,6 +131,7 @@ type LateralShift = "left" | "center" | "right";
 interface PlayerPos {
   id: string;
   number: number;
+  name: string;
   team: "local" | "visitor";
   x: number;
   y: number;
@@ -147,6 +146,10 @@ export default function MatchBoardPage() {
   const [score, setScore] = useState({ home: 0, guest: 0 });
   const [fieldType, setFieldType] = useState<FieldType>("f11");
   const [selectedTeamId, setSelectedTeamId] = useState("t1");
+  
+  // Estado del Roster Dinámico para permitir sustituciones
+  const [teamRoster, setTeamRoster] = useState<any[]>(MOCK_PLAYERS_BY_TEAM["t1"]);
+  const [draggedPlayerNum, setDraggedPlayerNum] = useState<number | null>(null);
   
   const [homePhase, setHomePhase] = useState<TacticalPhase>("defensa");
   const [guestPhase, setGuestPhase] = useState<TacticalPhase>("defensa");
@@ -170,6 +173,13 @@ export default function MatchBoardPage() {
     shortName: "",
     primaryColor: "#00f2ff"
   });
+
+  // Inicializar roster cuando cambia el equipo
+  useEffect(() => {
+    if (MOCK_PLAYERS_BY_TEAM[selectedTeamId]) {
+      setTeamRoster(MOCK_PLAYERS_BY_TEAM[selectedTeamId]);
+    }
+  }, [selectedTeamId]);
 
   useEffect(() => {
     const defaultFormations: Record<FieldType, string> = {
@@ -212,11 +222,12 @@ export default function MatchBoardPage() {
     }
   };
 
-  const calculatePositions = (team: "local" | "visitor", formation: string, phase: TacticalPhase, lateral: LateralShift) => {
+  const calculatePositions = (team: "local" | "visitor", formation: string, phase: TacticalPhase, lateral: LateralShift, currentRoster: any[]) => {
     const baseCoords = FORMATIONS_DATA[fieldType][formation] || FORMATIONS_DATA[fieldType][Object.keys(FORMATIONS_DATA[fieldType])[0]];
-    
     const innerAreaLimit = 19.5; 
     const outerAreaLimit = 80.5;
+
+    const starters = currentRoster.filter(p => p.isStarter);
 
     return baseCoords.map((pos, idx) => {
       let finalX, finalY;
@@ -270,7 +281,7 @@ export default function MatchBoardPage() {
             if (isDEF) finalX = Math.min(finalX, 55);
           }
         } else {
-          finalX = Math.max(2, Math.min(12, finalX));
+          finalX = 5;
           finalY = 50;
         }
       } else {
@@ -286,7 +297,7 @@ export default function MatchBoardPage() {
             if (isDEF) finalX = Math.max(finalX, 45);
           }
         } else {
-          finalX = Math.min(98, Math.max(88, finalX));
+          finalX = 95;
           finalY = 50;
         }
       }
@@ -294,9 +305,12 @@ export default function MatchBoardPage() {
       finalX = Math.max(2, Math.min(98, finalX));
       finalY = Math.max(5, Math.min(95, finalY));
       
+      const playerInfo = team === "local" ? starters[idx] : null;
+
       return {
         id: `${team}-${idx}`,
-        number: idx + 1,
+        number: playerInfo?.number || (idx + 1),
+        name: playerInfo?.name || "",
         team,
         x: finalX,
         y: finalY
@@ -305,10 +319,10 @@ export default function MatchBoardPage() {
   };
 
   useEffect(() => {
-    const hp = calculatePositions("local", homeFormation, homePhase, homeLateral);
-    const gp = calculatePositions("visitor", guestFormation, guestPhase, guestLateral);
+    const hp = calculatePositions("local", homeFormation, homePhase, homeLateral, teamRoster);
+    const gp = calculatePositions("visitor", guestFormation, guestPhase, guestLateral, teamRoster);
     setPlayers([...hp, ...gp]);
-  }, [homeFormation, homePhase, homeLateral, guestFormation, guestPhase, guestLateral, fieldType]);
+  }, [homeFormation, homePhase, homeLateral, guestFormation, guestPhase, guestLateral, fieldType, teamRoster]);
 
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!draggingId || !fieldRef.current) return;
@@ -329,10 +343,27 @@ export default function MatchBoardPage() {
     }
   };
 
+  const handleSubstitution = (subNum: number, starterNum: number) => {
+    setTeamRoster(prev => {
+      const subIdx = prev.findIndex(p => p.number === subNum);
+      const starterIdx = prev.findIndex(p => p.number === starterNum);
+      
+      if (subIdx === -1 || starterIdx === -1) return prev;
+      
+      const newRoster = [...prev];
+      const sub = { ...newRoster[subIdx], isStarter: true };
+      const starter = { ...newRoster[starterIdx], isStarter: false };
+      
+      newRoster[subIdx] = starter;
+      newRoster[starterIdx] = sub;
+      
+      return newRoster;
+    });
+  };
+
   const currentFormations = useMemo(() => Object.keys(FORMATIONS_DATA[fieldType]), [fieldType]);
-  const currentRoster = MOCK_PLAYERS_BY_TEAM[selectedTeamId] || [];
-  const starters = currentRoster.filter(p => p.isStarter);
-  const substitutes = currentRoster.filter(p => !p.isStarter);
+  const starters = teamRoster.filter(p => p.isStarter);
+  const substitutes = teamRoster.filter(p => !p.isStarter);
 
   return (
     <div 
@@ -407,17 +438,12 @@ export default function MatchBoardPage() {
                           ROSTER <span className="text-primary">ACTIVO</span>
                         </SheetTitle>
                         <SheetDescription className="text-[10px] uppercase font-bold text-primary/40 tracking-widest text-left italic">
-                          Gestión de activos del {MOCK_TEAMS.find(t => t.id === selectedTeamId)?.name}.
+                          Arrastra un suplente sobre un titular para sustituir.
                         </SheetDescription>
                       </SheetHeader>
                     </div>
                     
                     <div className="flex-1 p-6 space-y-8 overflow-y-auto custom-scrollbar">
-                      <div className="relative">
-                        <Search className="absolute left-3 top-3.5 h-4 w-4 text-primary/40" />
-                        <Input placeholder="FILTRAR JUGADOR..." className="pl-10 h-12 bg-white/5 border-primary/20 rounded-2xl text-[10px] font-black uppercase tracking-widest focus:border-primary" />
-                      </div>
-                      
                       {/* SECCIÓN TITULARES */}
                       <section className="space-y-4">
                         <div className="flex items-center gap-3 border-b border-white/5 pb-2">
@@ -426,7 +452,11 @@ export default function MatchBoardPage() {
                         </div>
                         <div className="space-y-2">
                           {starters.map((player, idx) => (
-                            <PlayerListItem key={idx} player={player} />
+                            <PlayerListItem 
+                              key={player.number} 
+                              player={player} 
+                              onDrop={(subNum) => handleSubstitution(subNum, player.number)}
+                            />
                           ))}
                         </div>
                       </section>
@@ -440,7 +470,12 @@ export default function MatchBoardPage() {
                           </div>
                           <div className="space-y-2">
                             {substitutes.map((player, idx) => (
-                              <PlayerListItem key={idx} player={player} isSub />
+                              <PlayerListItem 
+                                key={player.number} 
+                                player={player} 
+                                isSub 
+                                onDragStart={() => setDraggedPlayerNum(player.number)}
+                              />
                             ))}
                           </div>
                         </section>
@@ -463,7 +498,7 @@ export default function MatchBoardPage() {
                           CREAR <span className="text-primary">EQUIPO</span>
                         </SheetTitle>
                         <SheetDescription className="text-[10px] uppercase font-bold text-primary/40 tracking-widest text-left italic">
-                          Defina su identidad local. Los datos se persistirán en este navegador.
+                          Defina su identidad local.
                         </SheetDescription>
                       </SheetHeader>
                     </div>
@@ -495,15 +530,6 @@ export default function MatchBoardPage() {
                              <span className="text-[8px] font-black uppercase tracking-widest text-primary/40">Subir Digital Asset</span>
                           </div>
                         </div>
-                      </div>
-                      <div className="p-6 bg-primary/5 border border-primary/20 rounded-3xl space-y-3">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle2 className="h-3 w-3 text-primary" />
-                          <span className="text-[9px] font-black uppercase text-primary tracking-widest italic">Aviso de Persistencia</span>
-                        </div>
-                        <p className="text-[9px] text-primary/40 leading-relaxed font-bold uppercase italic">
-                          Al no estar vinculado a una red federada, su equipo se guardará localmente. Sincronice con un club para acceso en la nube.
-                        </p>
                       </div>
                     </div>
                     <div className="p-10 bg-black/40 border-t border-white/5">
@@ -596,6 +622,7 @@ export default function MatchBoardPage() {
                 key={p.id} 
                 team={p.team} 
                 number={p.number} 
+                label={p.name}
                 x={p.x} 
                 y={p.y} 
                 isDragging={draggingId === p.id}
@@ -691,14 +718,43 @@ function PhaseButton({ label, active, onClick, color }: { label: string, active:
   );
 }
 
-function PlayerListItem({ player, isSub }: { player: any, isSub?: boolean }) {
+function PlayerListItem({ player, isSub, onDrop, onDragStart }: { player: any, isSub?: boolean, onDrop?: (subNum: number) => void, onDragStart?: () => void }) {
   const posStyle = POSITION_COLORS[player.pos] || "text-white/40 border-white/10 bg-white/5";
+  const [isOver, setIsOver] = useState(false);
   
   return (
-    <div className={cn(
-      "p-4 bg-primary/5 border rounded-2xl flex items-center justify-between group hover:bg-primary/10 transition-all cursor-default",
-      isSub ? "border-white/5 opacity-60 hover:opacity-100" : "border-primary/10 hover:border-primary/40"
-    )}>
+    <div 
+      className={cn(
+        "p-4 bg-primary/5 border rounded-2xl flex items-center justify-between group transition-all cursor-default",
+        isSub ? "border-white/5 opacity-60 hover:opacity-100 cursor-grab active:cursor-grabbing" : "border-primary/10 hover:border-primary/40",
+        isOver && !isSub && "border-primary bg-primary/20 scale-[1.02] shadow-[0_0_20px_rgba(0,242,255,0.2)]"
+      )}
+      draggable={isSub}
+      onDragStart={onDragStart}
+      onDragOver={(e) => {
+        if (!isSub) {
+          e.preventDefault();
+          setIsOver(true);
+        }
+      }}
+      onDragLeave={() => setIsOver(false)}
+      onDrop={(e) => {
+        if (!isSub && onDrop) {
+          e.preventDefault();
+          setIsOver(false);
+          const subNum = parseInt(e.dataTransfer.getData("text/plain") || "0");
+          if (subNum) onDrop(subNum);
+        }
+      }}
+      onDragEnd={(e) => {
+        // Para el que arrastra
+      }}
+      onDrag={(e) => {
+        if (isSub) {
+          e.dataTransfer.setData("text/plain", player.number.toString());
+        }
+      }}
+    >
       <div className="flex items-center gap-4">
         <div className={cn(
           "h-10 w-10 rounded-xl bg-black border flex items-center justify-center text-[10px] font-black italic shadow-lg group-hover:scale-110 transition-transform",
@@ -725,7 +781,7 @@ function PlayerListItem({ player, isSub }: { player: any, isSub?: boolean }) {
         "font-black text-[8px] rounded-full",
         isSub ? "border-white/5 text-white/10" : "border-primary/20 text-primary"
       )}>
-        SINC_OK
+        {isSub ? 'SUB' : 'SINC_OK'}
       </Badge>
     </div>
   );
