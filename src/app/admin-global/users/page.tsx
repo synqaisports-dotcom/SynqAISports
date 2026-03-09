@@ -15,7 +15,8 @@ import {
   Fingerprint,
   MapPin,
   Loader2,
-  ShieldAlert
+  ShieldAlert,
+  Pencil
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -57,10 +58,10 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
 const MOCK_REQUESTS = [
-  { id: "u1", name: "Marc", surname: "García", email: "m.garcia@elite.com", country: "España", status: "Pending", lastSeen: "2m ago" },
-  { id: "u2", name: "Elena", surname: "Rossi", email: "e.rossi@milan-training.it", country: "Italia", status: "Approved", lastSeen: "5h ago" },
-  { id: "u3", name: "John", surname: "Smith", email: "j.smith@us-soccer.org", country: "USA", status: "Denied", lastSeen: "1d ago" },
-  { id: "u4", name: "Lucas", surname: "Silva", email: "l.silva@brasil-academy.br", country: "Brasil", status: "Pending", lastSeen: "Just now" },
+  { id: "u1", name: "Marc", surname: "García", email: "m.garcia@elite.com", country: "España", status: "Pending", lastSeen: "2m ago", role: "club_admin" },
+  { id: "u2", name: "Elena", surname: "Rossi", email: "e.rossi@milan-training.it", country: "Italia", status: "Approved", lastSeen: "5h ago", role: "academy_director" },
+  { id: "u3", name: "John", surname: "Smith", email: "j.smith@us-soccer.org", country: "USA", status: "Denied", lastSeen: "1d ago", role: "coach" },
+  { id: "u4", name: "Lucas", surname: "Silva", email: "l.silva@brasil-academy.br", country: "Brasil", status: "Pending", lastSeen: "Just now", role: "club_admin" },
 ];
 
 const AVAILABLE_ROLES = [
@@ -72,9 +73,11 @@ const AVAILABLE_ROLES = [
 ];
 
 export default function GlobalUsersPage() {
+  const [users, setUsers] = useState(MOCK_REQUESTS);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -85,21 +88,59 @@ export default function GlobalUsersPage() {
     role: "club_admin"
   });
 
+  const handleOpenCreate = () => {
+    setEditingId(null);
+    setFormData({ name: "", surname: "", email: "", country: "España", role: "club_admin" });
+    setIsSheetOpen(true);
+  };
+
+  const handleEdit = (user: any) => {
+    setEditingId(user.id);
+    setFormData({
+      name: user.name,
+      surname: user.surname,
+      email: user.email,
+      country: user.country,
+      role: user.role
+    });
+    setIsSheetOpen(true);
+  };
+
   const handleCreateCredential = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     
-    // Simulación de creación de credencial en el nodo central
     setTimeout(() => {
-      toast({
-        title: "CREDENCIAL_EMITIDA",
-        description: `Se ha generado el protocolo de acceso para ${formData.name} ${formData.surname}.`,
-      });
+      if (editingId) {
+        setUsers(prev => prev.map(u => u.id === editingId ? { ...u, ...formData } : u));
+        toast({
+          title: "CREDENCIAL_ACTUALIZADA",
+          description: `Se ha sincronizado el perfil de ${formData.name} ${formData.surname}.`,
+        });
+      } else {
+        const newUser = {
+          id: `u${Date.now()}`,
+          ...formData,
+          status: "Pending",
+          lastSeen: "Just now"
+        };
+        setUsers([newUser, ...users]);
+        toast({
+          title: "CREDENCIAL_EMITIDA",
+          description: `Se ha generado el protocolo de acceso para ${formData.name} ${formData.surname}.`,
+        });
+      }
       setLoading(false);
       setIsSheetOpen(false);
-      setFormData({ name: "", surname: "", email: "", country: "España", role: "club_admin" });
     }, 1500);
   };
+
+  const filteredUsers = users.filter(u => 
+    u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.surname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.country.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
@@ -115,12 +156,14 @@ export default function GlobalUsersPage() {
           </h1>
         </div>
         
+        <Button 
+          onClick={handleOpenCreate}
+          className="rounded-none bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all border-none"
+        >
+          <UserPlus className="h-4 w-4 mr-2" /> Nueva Credencial
+        </Button>
+        
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-          <SheetTrigger asChild>
-            <Button className="rounded-none bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 transition-all border-none">
-              <UserPlus className="h-4 w-4 mr-2" /> Nueva Credencial
-            </Button>
-          </SheetTrigger>
           <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-emerald-500/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
             <div className="p-10 border-b border-white/5 bg-black/40">
               <SheetHeader className="space-y-4">
@@ -129,10 +172,10 @@ export default function GlobalUsersPage() {
                   <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400">Credential_Factory_v1.0</span>
                 </div>
                 <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left">
-                  EMITIR_ACCESO
+                  {editingId ? "MODIFICAR_USUARIO" : "EMITIR_ACCESO"}
                 </SheetTitle>
                 <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left">
-                  Genere una nueva identidad autorizada en el núcleo central de SynQAI.
+                  {editingId ? "Actualice los parámetros de acceso del nodo de usuario." : "Genere una nueva identidad autorizada en el núcleo central de SynQAI."}
                 </SheetDescription>
               </SheetHeader>
             </div>
@@ -145,9 +188,9 @@ export default function GlobalUsersPage() {
                     <Input 
                       required
                       value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})}
                       placeholder="EJ: MARC" 
-                      className="h-12 bg-white/5 border-emerald-500/20 rounded-none font-bold uppercase focus:border-emerald-500 transition-all placeholder:text-white/10" 
+                      className="h-12 bg-white/5 border-emerald-500/20 rounded-none font-bold uppercase focus:border-emerald-500 transition-all placeholder:text-white/10 text-emerald-400" 
                     />
                   </div>
                   <div className="space-y-2">
@@ -155,9 +198,9 @@ export default function GlobalUsersPage() {
                     <Input 
                       required
                       value={formData.surname}
-                      onChange={(e) => setFormData({...formData, surname: e.target.value})}
+                      onChange={(e) => setFormData({...formData, surname: e.target.value.toUpperCase()})}
                       placeholder="EJ: GARCÍA" 
-                      className="h-12 bg-white/5 border-emerald-500/20 rounded-none font-bold uppercase focus:border-emerald-500 transition-all placeholder:text-white/10" 
+                      className="h-12 bg-white/5 border-emerald-500/20 rounded-none font-bold uppercase focus:border-emerald-500 transition-all placeholder:text-white/10 text-emerald-400" 
                     />
                   </div>
                 </div>
@@ -172,7 +215,7 @@ export default function GlobalUsersPage() {
                       value={formData.email}
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
                       placeholder="USER@CLUB.COM" 
-                      className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-none font-bold focus:border-emerald-500 transition-all placeholder:text-white/10" 
+                      className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-none font-bold focus:border-emerald-500 transition-all placeholder:text-white/10 text-emerald-400" 
                     />
                   </div>
                 </div>
@@ -186,7 +229,7 @@ export default function GlobalUsersPage() {
                       value={formData.country}
                       onChange={(e) => setFormData({...formData, country: e.target.value})}
                       placeholder="ESPAÑA" 
-                      className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-none font-bold uppercase focus:border-emerald-500 transition-all placeholder:text-white/10" 
+                      className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-none font-bold uppercase focus:border-emerald-500 transition-all placeholder:text-white/10 text-emerald-400" 
                     />
                   </div>
                 </div>
@@ -197,7 +240,7 @@ export default function GlobalUsersPage() {
                     value={formData.role} 
                     onValueChange={(v) => setFormData({...formData, role: v})}
                   >
-                    <SelectTrigger className="h-12 bg-white/5 border-emerald-500/20 rounded-none text-white/60 font-bold uppercase tracking-widest focus:border-emerald-500 transition-all">
+                    <SelectTrigger className="h-12 bg-white/5 border-emerald-500/20 rounded-none text-emerald-400 font-bold uppercase tracking-widest focus:border-emerald-500 transition-all">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#04070c] border-emerald-500/20 rounded-none">
@@ -217,23 +260,23 @@ export default function GlobalUsersPage() {
                   <span className="text-[9px] font-black uppercase text-emerald-400 tracking-widest">Aviso de Seguridad</span>
                 </div>
                 <p className="text-[9px] text-white/40 leading-relaxed font-bold uppercase italic">
-                  La emisión de una credencial genera un token de sincronización único. El usuario deberá validar su identidad en el primer acceso.
+                  La emisión o modificación de una credencial afecta directamente al token de sincronización del usuario en la red SynQAI.
                 </p>
               </div>
             </form>
 
             <div className="p-10 bg-black/40 border-t border-white/5 flex gap-4">
               <SheetClose asChild>
-                <Button variant="ghost" className="flex-1 h-16 border border-white/10 text-white/40 font-black uppercase text-[10px] tracking-widest hover:bg-white/5">
+                <Button variant="ghost" className="flex-1 h-16 border border-white/10 text-white/40 font-black uppercase text-[10px] tracking-widest hover:bg-white/5 active:scale-95">
                   CANCELAR
                 </Button>
               </SheetClose>
               <Button 
                 onClick={handleCreateCredential}
                 disabled={loading}
-                className="flex-[2] h-16 bg-emerald-500 text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-none shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:scale-[1.02] transition-all border-none"
+                className="flex-[2] h-16 bg-emerald-500 text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-none shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:scale-[1.02] active:scale-95 transition-all border-none"
               >
-                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "EMITIR_CREDENCIAL"}
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (editingId ? "ACTUALIZAR_USUARIO" : "EMITIR_CREDENCIAL")}
               </Button>
             </div>
           </SheetContent>
@@ -248,7 +291,7 @@ export default function GlobalUsersPage() {
       </div>
 
       {/* MAIN DATA TERMINAL */}
-      <Card className="glass-panel shadow-2xl overflow-hidden relative border-none bg-black/40">
+      <Card className="glass-panel shadow-2xl overflow-hidden relative border border-emerald-500/20 bg-black/40">
         <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
         
         <CardHeader className="bg-black/40 border-b border-white/5 p-6 space-y-4 md:space-y-0 md:flex md:flex-row md:items-center md:justify-between">
@@ -256,7 +299,7 @@ export default function GlobalUsersPage() {
             <Search className="absolute left-3 top-3.5 h-4 w-4 text-emerald-500 opacity-50" />
             <Input 
               placeholder="BUSCAR IDENTIDAD O PAÍS..." 
-              className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-none text-white placeholder:text-white/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-emerald-500/50 transition-all"
+              className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-none text-emerald-400 placeholder:text-emerald-400/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-emerald-500/50 transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -277,16 +320,16 @@ export default function GlobalUsersPage() {
           <Table>
             <TableHeader className="bg-white/[0.02] border-b border-white/5">
               <TableRow className="hover:bg-transparent border-white/5">
-                <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-white/40 h-14 pl-8">Identidad_Usuario</TableHead>
-                <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-white/40">Mail_Acceso</TableHead>
-                <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-white/40">Nodo_Pais</TableHead>
-                <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-white/40 text-center">Protocolo_Status</TableHead>
-                <TableHead className="text-right font-black text-[10px] uppercase tracking-[0.3em] text-white/40 pr-8">Terminal_Acciones</TableHead>
+                <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-emerald-400/40 h-14 pl-8">Identidad_Usuario</TableHead>
+                <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-emerald-400/40">Mail_Acceso</TableHead>
+                <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-emerald-400/40">Nodo_Pais</TableHead>
+                <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-emerald-400/40 text-center">Protocolo_Status</TableHead>
+                <TableHead className="text-right font-black text-[10px] uppercase tracking-[0.3em] text-emerald-400/40 pr-8">Terminal_Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {MOCK_REQUESTS.map((user) => (
-                <TableRow key={user.id} className="border-white/5 hover:bg-white/[0.03] transition-colors group">
+              {filteredUsers.map((user) => (
+                <TableRow key={user.id} className="border-white/5 hover:bg-emerald-500/[0.02] transition-colors group">
                   <TableCell className="pl-8">
                     <div className="flex items-center gap-4 py-2">
                       <div className="h-10 w-10 bg-emerald-500/5 border border-emerald-500/20 flex items-center justify-center relative overflow-hidden group-hover:bg-emerald-500/10 transition-all">
@@ -324,13 +367,28 @@ export default function GlobalUsersPage() {
                   </TableCell>
                   <TableCell className="text-right pr-8">
                     <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-none border border-white/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 text-white/20 hover:text-emerald-400 transition-all">
-                        <UserCheck className="h-4 w-4" />
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 rounded-none border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10 active:scale-90 transition-all"
+                        onClick={() => handleEdit(user)}
+                        title="Modificar Credencial"
+                      >
+                        <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-none border border-white/5 hover:border-rose-500/50 hover:bg-rose-500/10 text-white/20 hover:text-rose-400 transition-all">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 rounded-none border border-rose-500/20 text-rose-400 hover:bg-rose-500/10 active:scale-90 transition-all"
+                        title="Revocar Acceso"
+                      >
                         <UserX className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-none border border-white/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 text-white/20 hover:text-emerald-400 transition-all">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 rounded-none border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10 active:scale-90 transition-all"
+                      >
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </div>
@@ -340,9 +398,9 @@ export default function GlobalUsersPage() {
             </TableBody>
           </Table>
         </CardContent>
-        <div className="p-4 bg-black/20 border-t border-white/5 flex justify-between items-center text-[8px] font-black text-white/20 uppercase tracking-[0.5em]">
-          <span>Mostrando 4 de 1.2k registros</span>
-          <span>Sincronización de Base de Datos: Estable</span>
+        <div className="p-4 bg-black/20 border-t border-white/5 flex justify-between items-center text-[8px] font-black text-emerald-400/30 uppercase tracking-[0.5em]">
+          <span>Mostrando {filteredUsers.length} de {users.length} registros</span>
+          <span className="flex items-center gap-2 text-emerald-400"><CheckCircle2 className="h-3 w-3 text-emerald-400 animate-pulse" /> Sincronización de Base de Datos: Estable</span>
         </div>
       </Card>
     </div>
@@ -351,11 +409,11 @@ export default function GlobalUsersPage() {
 
 function MetricMiniCard({ label, value, color }: any) {
   return (
-    <Card className="glass-panel p-4 relative group overflow-hidden border-none bg-black/20">
+    <Card className="glass-panel p-4 relative group overflow-hidden border border-emerald-500/20 bg-black/20">
       <div className="absolute top-0 right-0 p-2 opacity-5">
         <Activity className="h-8 w-8 text-emerald-500" />
       </div>
-      <p className="text-[8px] font-black uppercase tracking-[0.3em] text-white/30 mb-1">{label}</p>
+      <p className="text-[8px] font-black uppercase tracking-[0.3em] text-emerald-400/40 mb-1">{label}</p>
       <p className={cn("text-2xl font-black italic", color)}>{value}</p>
     </Card>
   );
@@ -371,5 +429,22 @@ function StatusBadge({ status }: { status: string }) {
     <Badge variant="outline" className={cn("rounded-none font-black text-[8px] uppercase tracking-widest px-3 py-1", styles[status])}>
       {status}
     </Badge>
+  );
+}
+
+function CheckCircle2({ className }: { className?: string }) {
+  return (
+    <svg 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="3" 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      className={className}
+    >
+      <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
+      <path d="m9 12 2 2 4-4" />
+    </svg>
   );
 }
