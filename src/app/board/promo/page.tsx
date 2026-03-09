@@ -2,16 +2,24 @@
 "use client";
 
 import { useState } from "react";
-import { Zap, Lock, ArrowRight, Sparkles } from "lucide-react";
+import { Zap, Lock, ArrowRight, Sparkles, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { TacticalField } from "@/components/board/TacticalField";
+import { TacticalField, FieldType } from "@/components/board/TacticalField";
 import { BoardToolbar } from "@/components/board/BoardToolbar";
 import { AssetPanel } from "@/components/board/AssetPanel";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 
 export default function PromoBoardPage() {
   const [exercisesCount, setExercisesCount] = useState(2);
+  const [fieldType, setFieldType] = useState<FieldType>("f11");
   const MAX_EXERCISES = 4;
 
   const isLocked = exercisesCount >= MAX_EXERCISES;
@@ -25,7 +33,24 @@ export default function PromoBoardPage() {
               <Zap className="h-4 w-4 text-primary animate-pulse" />
               <span className="text-[10px] font-black text-primary tracking-[0.4em] uppercase">Tactical_Board_PROMO</span>
             </div>
-            <h1 className="text-sm lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase leading-none">Versión Gratuita</h1>
+            <h1 className="text-sm lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase leading-none">Free</h1>
+          </div>
+
+          {/* Selector de Campo */}
+          <div className="hidden md:block">
+            <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}>
+              <SelectTrigger className="w-[150px] h-10 bg-white/5 border-primary/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/5 transition-all">
+                <div className="flex items-center gap-2">
+                  <LayoutGrid className="h-3 w-3" />
+                  <SelectValue placeholder="Superficie" />
+                </div>
+              </SelectTrigger>
+              <SelectContent className="bg-[#0a0f18] border-primary/20">
+                <SelectItem value="f11" className="text-[10px] font-black uppercase">Fútbol 11</SelectItem>
+                <SelectItem value="f7" className="text-[10px] font-black uppercase">Fútbol 7</SelectItem>
+                <SelectItem value="futsal" className="text-[10px] font-black uppercase">Fútbol Sala</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
           <div className="hidden sm:flex px-4 py-1.5 bg-primary/10 border border-primary/20 rounded-full items-center gap-3">
@@ -54,7 +79,7 @@ export default function PromoBoardPage() {
         <BoardToolbar theme="cyan" className="absolute left-4 top-1/2 -translate-y-1/2 hidden sm:flex" />
 
         <main className="flex-1 flex items-center justify-center relative overflow-hidden">
-          <TacticalField theme="cyan" showWatermark />
+          <TacticalField theme="cyan" fieldType={fieldType} showWatermark />
 
           {isLocked && (
             <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-[60] flex flex-col items-center justify-center p-6 lg:p-12 text-center space-y-6 animate-in fade-in duration-700">

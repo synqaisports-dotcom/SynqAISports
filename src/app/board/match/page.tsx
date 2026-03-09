@@ -1,16 +1,25 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
-import { Trophy, Clock, Save, UserCog, History } from "lucide-react";
+import { Trophy, Clock, Save, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { TacticalField } from "@/components/board/TacticalField";
+import { TacticalField, FieldType } from "@/components/board/TacticalField";
 import { BoardToolbar } from "@/components/board/BoardToolbar";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 
 export default function MatchBoardPage() {
   const [timer, setTimer] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [score, setScore] = useState({ home: 0, guest: 0 });
+  const [fieldType, setFieldType] = useState<FieldType>("f11");
 
   useEffect(() => {
     let interval: any;
@@ -36,6 +45,23 @@ export default function MatchBoardPage() {
               <span className="text-[10px] font-black text-primary tracking-[0.4em] uppercase">Match_Live</span>
             </div>
             <h1 className="text-lg font-headline font-black text-white italic tracking-tighter uppercase leading-none truncate">Terminal</h1>
+          </div>
+
+          {/* Selector de Campo */}
+          <div className="hidden md:block">
+            <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}>
+              <SelectTrigger className="w-[160px] h-11 bg-white/5 border-primary/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/5 transition-all">
+                <div className="flex items-center gap-2">
+                  <LayoutGrid className="h-3.5 w-3.5" />
+                  <SelectValue placeholder="Superficie" />
+                </div>
+              </SelectTrigger>
+              <SelectContent className="bg-[#0a0f18] border-primary/20">
+                <SelectItem value="f11" className="text-[10px] font-black uppercase">Fútbol 11</SelectItem>
+                <SelectItem value="f7" className="text-[10px] font-black uppercase">Fútbol 7</SelectItem>
+                <SelectItem value="futsal" className="text-[10px] font-black uppercase">Fútbol Sala</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex items-center gap-4 lg:gap-6 px-4 md:px-8 py-2.5 bg-primary/5 border border-primary/20 rounded-2xl shrink-0">
@@ -74,7 +100,7 @@ export default function MatchBoardPage() {
       <div className="flex-1 relative flex overflow-hidden">
         <BoardToolbar theme="cyan" className="absolute left-6 top-1/2 -translate-y-1/2 z-50 hidden sm:flex" />
         <main className="flex-1 relative overflow-hidden">
-          <TacticalField theme="cyan" />
+          <TacticalField theme="cyan" fieldType={fieldType} />
         </main>
       </div>
     </div>
