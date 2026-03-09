@@ -2,12 +2,13 @@
 "use client";
 
 import { useState } from "react";
-import { Zap, Lock, ArrowRight, Sparkles, Info } from "lucide-react";
+import { Zap, Lock, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { TacticalField } from "@/components/board/TacticalField";
 import { BoardToolbar } from "@/components/board/BoardToolbar";
+import { AssetPanel } from "@/components/board/AssetPanel";
 
 export default function PromoBoardPage() {
   const [exercisesCount, setExercisesCount] = useState(2);
@@ -72,27 +73,11 @@ export default function PromoBoardPage() {
           )}
         </main>
 
-        <aside className="w-72 lg:w-80 border-l border-white/5 bg-black/40 backdrop-blur-3xl p-8 hidden xl:flex flex-col shrink-0 z-50">
-           <div className="mt-auto space-y-6">
-              <div className="p-6 bg-primary/5 border border-primary/20 rounded-[2rem] space-y-4 shadow-xl">
-                 <div className="flex items-center gap-3">
-                    <Info className="h-4 w-4 text-primary" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-primary">Ventajas Pro</span>
-                 </div>
-                 <ul className="space-y-3">
-                    <li className="text-[9px] font-bold text-white/40 uppercase tracking-widest flex items-center gap-2">
-                       <Zap className="h-3 w-3 text-primary" /> Guardado Ilimitado
-                    </li>
-                    <li className="text-[9px] font-bold text-white/40 uppercase tracking-widest flex items-center gap-2">
-                       <Zap className="h-3 w-3 text-primary" /> Analítica IA Gemini
-                    </li>
-                    <li className="text-[9px] font-bold text-white/40 uppercase tracking-widest flex items-center gap-2">
-                       <Zap className="h-3 w-3 text-primary" /> Exportación Video HD
-                    </li>
-                 </ul>
-              </div>
-           </div>
-        </aside>
+        <AssetPanel 
+          theme="cyan" 
+          type="promo" 
+          className="absolute right-4 top-1/2 -translate-y-1/2 hidden xl:flex" 
+        />
       </div>
     </div>
   );

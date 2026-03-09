@@ -2,26 +2,12 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, Save, Library, Circle, Flag, Dumbbell, Loader2 } from "lucide-react";
+import { Sparkles, Save, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { TacticalField } from "@/components/board/TacticalField";
 import { BoardToolbar } from "@/components/board/BoardToolbar";
-
-const ASSETS = [
-  { id: 'ball', icon: Circle, label: 'Balón' },
-  { id: 'cone', icon: Triangle, label: 'Cono' },
-  { id: 'pica', icon: Minus, label: 'Pica' },
-  { id: 'flag', icon: Flag, label: 'Banderín' },
-];
-
-function Triangle(props: any) {
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" {...props}><path d="M12 3L2 20h20L12 3z" /></svg>
-}
-
-function Minus(props: any) {
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" {...props}><line x1="12" y1="5" x2="12" y2="19" /></svg>
-}
+import { AssetPanel } from "@/components/board/AssetPanel";
 
 export default function TrainingBoardPage() {
   const [isAiProcessing, setIsAiProcessing] = useState(false);
@@ -73,30 +59,11 @@ export default function TrainingBoardPage() {
           <TacticalField theme="amber" />
         </main>
 
-        <aside className="w-72 lg:w-80 border-l border-white/5 bg-black/40 backdrop-blur-3xl p-6 hidden xl:flex flex-col shrink-0 z-50">
-          <div className="space-y-8 h-full flex flex-col">
-            <section>
-              <h3 className="text-[10px] font-black uppercase text-amber-500 mb-4 tracking-widest flex items-center gap-2">
-                <Library className="h-3 w-3" /> Material Técnico
-              </h3>
-              <div className="grid grid-cols-2 gap-3">
-                {ASSETS.map(asset => (
-                  <div key={asset.id} className="h-16 bg-white/5 border border-white/5 rounded-2xl flex flex-col items-center justify-center gap-1 hover:border-amber-500/40 cursor-move transition-all group">
-                    <asset.icon className="h-5 w-5 text-white/20 group-hover:text-amber-500" />
-                    <span className="text-[8px] font-black uppercase text-white/20">{asset.label}</span>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <section className="mt-auto p-6 bg-amber-500/5 border border-amber-500/20 rounded-[2rem] space-y-3">
-               <p className="text-[9px] font-black uppercase text-amber-500 tracking-widest italic">Protocolo Metodológico</p>
-               <p className="text-[9px] text-white/40 leading-relaxed font-bold uppercase">
-                 Dibuje la mecánica del ejercicio. Al finalizar, la IA completará los metadatos tácticos automáticamente.
-               </p>
-            </section>
-          </div>
-        </aside>
+        <AssetPanel 
+          theme="amber" 
+          type="training" 
+          className="absolute right-4 top-1/2 -translate-y-1/2 hidden xl:flex" 
+        />
       </div>
     </div>
   );
