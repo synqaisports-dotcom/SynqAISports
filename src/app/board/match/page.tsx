@@ -76,9 +76,9 @@ export default function MatchBoardPage() {
   const getPlayerPositions = (team: "local" | "visitor", formation: string, phase: TacticalPhase) => {
     const baseCoords = FORMATIONS_DATA[fieldType][formation] || FORMATIONS_DATA[fieldType][Object.keys(FORMATIONS_DATA[fieldType])[0]];
     
-    // Coordenadas críticas (Margen 4% + Área 15.5%)
-    const ownAreaLimit = 0.195;
-    const oppAreaLimit = 0.805;
+    // Coordenadas Críticas de Áreas (Margen 4% + Área 15.5%)
+    const innerAreaLimit = 0.195; // Borde interior del área propia (Izq)
+    const outerAreaLimit = 0.805; // Borde interior del área rival (Der)
 
     return baseCoords.map((pos, idx) => {
       let finalX, finalY;
@@ -89,7 +89,7 @@ export default function MatchBoardPage() {
       const isMID = pos.x >= 0.4 && pos.x < 0.7;
       const isATK = pos.x >= 0.7;
 
-      // Factor de desplazamiento escalado por línea y fase para evitar solapamientos
+      // Factor de desplazamiento escalado por línea y fase
       let phaseShift = 0;
       if (phase === "defensa") {
         if (isDEF) phaseShift = -0.15;
@@ -114,38 +114,42 @@ export default function MatchBoardPage() {
         finalX = 0.05 + (pos.x * 0.9) + phaseShift;
         finalY = pos.y;
 
-        // RESTRICCIONES POR LÍNEAS (LOCAL)
-        if (phase === "ataque") {
-          if (isATK) finalX = Math.min(finalX, oppAreaLimit); // Delanteros al borde del área
-          if (isMID) finalX = Math.min(finalX, 0.72); // Medios no entran al área automáticamente
-          if (isDEF) finalX = Math.min(finalX, 0.55); // Defensas no pasan mucho del medio
-        }
-        if (phase === "defensa") {
-          if (isDEF) {
-            finalX = Math.max(finalX, 0.05); 
-            finalX = Math.min(finalX, ownAreaLimit); // Defensas protegen su área
+        if (!isGK) {
+          // RESTRICCIONES UNIVERSALES DE ÁREA (LOCAL)
+          finalX = Math.max(finalX, innerAreaLimit); // No entran en área propia
+          finalX = Math.min(finalX, outerAreaLimit); // No entran en área rival
+
+          // RESTRICCIONES POR LÍNEAS EN ATAQUE
+          if (phase === "ataque") {
+            if (isMID) finalX = Math.min(finalX, 0.72); // Medios al balcón
+            if (isDEF) finalX = Math.min(finalX, 0.55); // Defensas no pasan mucho del medio
           }
+        } else {
+          // Portero confinado a su zona
+          finalX = Math.max(0.02, Math.min(0.12, finalX));
         }
       } else {
         // Mapeo Visitante (Derecha a Izquierda - Espejo)
         finalX = 0.95 - (pos.x * 0.9) - phaseShift;
         finalY = 1 - pos.y;
 
-        // RESTRICCIONES POR LÍNEAS (VISITANTE)
-        if (phase === "ataque") {
-          if (isATK) finalX = Math.max(finalX, ownAreaLimit); // Atacan hacia la izquierda
-          if (isMID) finalX = Math.max(finalX, 0.28); 
-          if (isDEF) finalX = Math.max(finalX, 0.45);
-        }
-        if (phase === "defensa") {
-          if (isDEF) {
-            finalX = Math.min(finalX, 0.95);
-            finalX = Math.max(finalX, oppAreaLimit); // Defienden su derecha
+        if (!isGK) {
+          // RESTRICCIONES UNIVERSALES DE ÁREA (VISITANTE)
+          finalX = Math.min(finalX, outerAreaLimit); // No entran en su propia área (Derecha)
+          finalX = Math.max(finalX, innerAreaLimit); // No entran en área rival (Izquierda)
+
+          // RESTRICCIONES POR LÍNEAS EN ATAQUE
+          if (phase === "ataque") {
+            if (isMID) finalX = Math.max(finalX, 0.28); // Medios al balcón del rival
+            if (isDEF) finalX = Math.max(finalX, 0.45); // Defensas no pasan mucho del medio
           }
+        } else {
+          // Portero confinado a su zona (Derecha)
+          finalX = Math.min(0.98, Math.max(0.88, finalX));
         }
       }
 
-      // Clamp final de seguridad absoluta
+      // Clamp final de seguridad absoluta para evitar salirse del campo
       finalX = Math.max(0.02, Math.min(0.98, finalX));
       
       return {
