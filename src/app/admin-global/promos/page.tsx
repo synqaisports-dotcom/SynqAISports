@@ -122,8 +122,17 @@ export default function GlobalPromosPage() {
     platform: "Facebook" as any,
     planId: "PROMO_LINK",
     maxUses: "10",
-    expiryDate: "",
+    expiryPeriod: "3_months",
   });
+
+  const calculateExpiryDate = (period: string) => {
+    const date = new Date();
+    if (period === "1_month") date.setMonth(date.getMonth() + 1);
+    else if (period === "3_months") date.setMonth(date.getMonth() + 3);
+    else if (period === "6_months") date.setMonth(date.getMonth() + 6);
+    else if (period === "1_year") date.setFullYear(date.getFullYear() + 1);
+    return date.toISOString().split('T')[0];
+  };
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,10 +142,15 @@ export default function GlobalPromosPage() {
     }
     
     setLoading(true);
+    const calculatedExpiry = calculateExpiryDate(formData.expiryPeriod);
+    
     try {
       const data = await generatePromoCampaign({
-        ...formData,
-        maxUses: formData.maxUses ? parseInt(formData.maxUses) : undefined
+        objective: formData.objective,
+        platform: formData.platform,
+        planId: formData.planId,
+        maxUses: formData.maxUses ? parseInt(formData.maxUses) : undefined,
+        expiryDate: calculatedExpiry
       });
       setResult(data);
       setSelectedCampaign({
@@ -147,7 +161,7 @@ export default function GlobalPromosPage() {
         hook: data.mainHook,
         copy: data.socialMediaCopy,
         createdAt: new Date().toISOString().split('T')[0],
-        expiresAt: formData.expiryDate || "Sin límite",
+        expiresAt: calculatedExpiry,
         used: 0,
         total: formData.maxUses ? parseInt(formData.maxUses) : 0
       });
@@ -157,12 +171,6 @@ export default function GlobalPromosPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const copyToClipboard = (text: string) => {
-    if (!text) return;
-    navigator.clipboard.writeText(text);
-    toast({ description: "URL de red copiada." });
   };
 
   const downloadQR = () => {
@@ -365,10 +373,20 @@ export default function GlobalPromosPage() {
                   </div>
                 </div>
                 <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Fecha Expiración</label>
+                  <label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Periodo de Validez</label>
                   <div className="relative">
                     <Calendar className="absolute left-4 top-4 h-4 w-4 text-emerald-400/30" />
-                    <Input type="date" value={formData.expiryDate} onChange={(e) => setFormData({...formData, expiryDate: e.target.value})} className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-2xl font-bold text-emerald-400" />
+                    <Select value={formData.expiryPeriod} onValueChange={(v) => setFormData({...formData, expiryPeriod: v})}>
+                      <SelectTrigger className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-2xl font-bold text-emerald-400">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#04070c] border-emerald-500/20 rounded-xl">
+                        <SelectItem value="1_month" className="text-[10px] font-black uppercase">1 MES</SelectItem>
+                        <SelectItem value="3_months" className="text-[10px] font-black uppercase">3 MESES</SelectItem>
+                        <SelectItem value="6_months" className="text-[10px] font-black uppercase">MEDIO AÑO</SelectItem>
+                        <SelectItem value="1_year" className="text-[10px] font-black uppercase">1 AÑO</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>
