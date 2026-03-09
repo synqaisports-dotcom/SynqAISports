@@ -240,22 +240,22 @@ export default function MatchBoardPage() {
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerUp}
     >
-      <header className="h-20 border-b border-primary/20 bg-black/40 backdrop-blur-3xl flex items-center justify-between px-8 shrink-0 z-50">
-        <div className="flex items-center gap-6 overflow-hidden">
+      <header className="h-20 border-b border-primary/20 bg-black/40 backdrop-blur-3xl flex items-center justify-between px-4 lg:px-8 shrink-0 z-50">
+        <div className="flex items-center gap-3 lg:gap-6 overflow-hidden">
           <div className="flex flex-col shrink-0">
             <div className="flex items-center gap-2">
-              <Trophy className="h-4 w-4 text-primary animate-pulse" />
-              <span className="text-[10px] font-black text-primary tracking-[0.4em] uppercase">Match_Live</span>
+              <Trophy className="h-3 w-3 lg:h-4 lg:w-4 text-primary animate-pulse" />
+              <span className="text-[8px] lg:text-[10px] font-black text-primary tracking-[0.4em] uppercase">Match_Live</span>
             </div>
-            <h1 className="text-lg font-headline font-black text-white italic tracking-tighter uppercase leading-none truncate">Partido</h1>
+            <h1 className="text-sm lg:text-lg font-headline font-black text-white italic tracking-tighter uppercase leading-none truncate">Partido</h1>
           </div>
 
           {showTeamSelector && (
-            <div className="hidden md:block">
+            <div className="hidden sm:block">
               <Select value={selectedTeamId} onValueChange={handleTeamChange}>
-                <SelectTrigger className="w-[180px] h-10 bg-primary/5 border-primary/30 rounded-xl text-[9px] font-black uppercase tracking-widest text-primary hover:bg-primary/10 transition-all">
+                <SelectTrigger className="w-[140px] lg:w-[180px] h-9 lg:h-10 bg-primary/5 border-primary/30 rounded-xl text-[8px] lg:text-[9px] font-black uppercase tracking-widest text-primary hover:bg-primary/10 transition-all">
                   <div className="flex items-center gap-2">
-                    <Users className="h-3.5 w-3.5" />
+                    <Users className="h-3 w-3 lg:h-3.5 lg:w-3.5" />
                     <SelectValue placeholder="Mis Equipos" />
                   </div>
                 </SelectTrigger>
@@ -270,11 +270,11 @@ export default function MatchBoardPage() {
             </div>
           )}
 
-          <div className="hidden lg:block">
+          <div className="hidden md:block">
             <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}>
-              <SelectTrigger className="w-[140px] h-10 bg-white/5 border-primary/20 rounded-xl text-[9px] font-black uppercase tracking-widest text-primary hover:bg-primary/5 transition-all">
+              <SelectTrigger className="w-[110px] lg:w-[140px] h-9 lg:h-10 bg-white/5 border-primary/20 rounded-xl text-[8px] lg:text-[9px] font-black uppercase tracking-widest text-primary hover:bg-primary/5 transition-all">
                 <div className="flex items-center gap-2">
-                  <LayoutGrid className="h-3.5 w-3.5" />
+                  <LayoutGrid className="h-3 w-3 lg:h-3.5 lg:w-3.5" />
                   <SelectValue placeholder="Campo" />
                 </div>
               </SelectTrigger>
@@ -287,22 +287,22 @@ export default function MatchBoardPage() {
           </div>
         </div>
 
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-4 px-6 py-2 bg-primary/5 border border-primary/20 rounded-[2rem] shadow-[0_0_30px_rgba(0,242,255,0.05)]">
-          <div className="flex items-center gap-3">
-            <span className="text-[9px] font-black text-white/30 uppercase tracking-widest hidden sm:block">L</span>
-            <div className="flex items-center gap-2">
-              <button onClick={() => setScore(s => ({...s, home: Math.max(0, s.home - 1)}))} className="h-6 w-6 flex items-center justify-center rounded-lg border border-primary/10 text-primary/40 hover:text-primary transition-all">-</button>
-              <span className="text-2xl font-black font-headline text-white tabular-nums min-w-[20px] text-center">{score.home}</span>
-              <button onClick={() => setScore(s => ({...s, home: s.home + 1}))} className="h-6 w-6 flex items-center justify-center rounded-lg border border-primary/10 text-primary/40 hover:text-primary transition-all">+</button>
+        <div className="flex items-center gap-2 lg:gap-4 px-3 lg:px-6 py-1.5 lg:py-2 bg-primary/5 border border-primary/20 rounded-[2rem] shadow-[0_0_30px_rgba(0,242,255,0.05)] mx-2">
+          <div className="flex items-center gap-1 lg:gap-3">
+            <span className="text-[8px] font-black text-white/30 uppercase tracking-widest hidden lg:block">L</span>
+            <div className="flex items-center gap-1 lg:gap-2">
+              <button onClick={() => setScore(s => ({...s, home: Math.max(0, s.home - 1)}))} className="h-5 w-5 lg:h-6 lg:w-6 flex items-center justify-center rounded-lg border border-primary/10 text-primary/40 hover:text-primary transition-all">-</button>
+              <span className="text-lg lg:text-2xl font-black font-headline text-white tabular-nums min-w-[15px] lg:min-w-[20px] text-center">{score.home}</span>
+              <button onClick={() => setScore(s => ({...s, home: s.home + 1}))} className="h-5 w-5 lg:h-6 lg:w-6 flex items-center justify-center rounded-lg border border-primary/10 text-primary/40 hover:text-primary transition-all">+</button>
             </div>
           </div>
 
-          <div className="w-[1px] h-10 bg-white/10 mx-2" />
+          <div className="w-[1px] h-8 lg:h-10 bg-white/10 mx-1 lg:mx-2" />
 
-          <div className="flex flex-col items-center justify-center min-w-[120px]">
-            <div className="flex items-center gap-2 mb-0.5">
+          <div className="flex flex-col items-center justify-center min-w-[100px] lg:min-w-[120px]">
+            <div className="flex items-center gap-1 lg:gap-2 mb-0.5">
               <span className={cn(
-                "text-2xl font-black font-headline tabular-nums tracking-tighter transition-all",
+                "text-lg lg:text-2xl font-black font-headline tabular-nums tracking-tighter transition-all",
                 timeLeft === 0 ? "text-rose-500 animate-pulse" : "text-primary cyan-text-glow"
               )}>
                 {formatTime(timeLeft)}
@@ -310,19 +310,19 @@ export default function MatchBoardPage() {
               <button 
                 onClick={() => setIsRunning(!isRunning)}
                 className={cn(
-                  "h-6 w-6 rounded-full flex items-center justify-center transition-all",
+                  "h-5 w-5 lg:h-6 lg:w-6 rounded-full flex items-center justify-center transition-all",
                   isRunning ? "bg-amber-500 text-black" : "bg-primary text-black"
                 )}
               >
-                {isRunning ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3 ml-0.5" />}
+                {isRunning ? <Pause className="h-2.5 w-2.5 lg:h-3 lg:w-3" /> : <Play className="h-2.5 w-2.5 lg:h-3 lg:w-3 ml-0.5" />}
               </button>
             </div>
             
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 lg:gap-3">
               <Select onValueChange={handleSetPreset}>
-                <SelectTrigger className="h-5 bg-transparent border-none p-0 text-[8px] font-black uppercase text-white/20 hover:text-primary transition-colors focus:ring-0">
+                <SelectTrigger className="h-4 lg:h-5 bg-transparent border-none p-0 text-[7px] lg:text-[8px] font-black uppercase text-white/20 hover:text-primary transition-colors focus:ring-0">
                   <div className="flex items-center gap-1">
-                    <Clock className="h-2.5 w-2.5" />
+                    <Clock className="h-2 w-2 lg:h-2.5 lg:w-2.5" />
                     <span>Preset</span>
                   </div>
                 </SelectTrigger>
@@ -332,33 +332,33 @@ export default function MatchBoardPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <button onClick={() => { setIsRunning(false); setTimeLeft(45 * 60); }} className="text-[8px] font-black text-white/20 hover:text-rose-400 uppercase flex items-center gap-1 transition-colors">
-                <RotateCcw className="h-2.5 w-2.5" /> Reset
+              <button onClick={() => { setIsRunning(false); setTimeLeft(45 * 60); }} className="text-[7px] lg:text-[8px] font-black text-white/20 hover:text-rose-400 uppercase flex items-center gap-1 transition-colors">
+                <RotateCcw className="h-2 w-2 lg:h-2.5 lg:w-2.5" /> Reset
               </button>
             </div>
           </div>
 
-          <div className="w-[1px] h-10 bg-white/10 mx-2" />
+          <div className="w-[1px] h-8 lg:h-10 bg-white/10 mx-1 lg:mx-2" />
 
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <button onClick={() => setScore(s => ({...s, guest: Math.max(0, s.guest - 1)}))} className="h-6 w-6 flex items-center justify-center rounded-lg border border-primary/10 text-primary/40 hover:text-primary transition-all">-</button>
-              <span className="text-2xl font-black font-headline text-white tabular-nums min-w-[20px] text-center">{score.guest}</span>
-              <button onClick={() => setScore(s => ({...s, guest: s.guest + 1}))} className="h-6 w-6 flex items-center justify-center rounded-lg border border-primary/10 text-primary/40 hover:text-primary transition-all">+</button>
+          <div className="flex items-center gap-1 lg:gap-3">
+            <div className="flex items-center gap-1 lg:gap-2">
+              <button onClick={() => setScore(s => ({...s, guest: Math.max(0, s.guest - 1)}))} className="h-5 w-5 lg:h-6 lg:w-6 flex items-center justify-center rounded-lg border border-primary/10 text-primary/40 hover:text-primary transition-all">-</button>
+              <span className="text-lg lg:text-2xl font-black font-headline text-white tabular-nums min-w-[15px] lg:min-w-[20px] text-center">{score.guest}</span>
+              <button onClick={() => setScore(s => ({...s, guest: s.guest + 1}))} className="h-5 w-5 lg:h-6 lg:w-6 flex items-center justify-center rounded-lg border border-primary/10 text-primary/40 hover:text-primary transition-all">+</button>
             </div>
-            <span className="text-[9px] font-black text-white/30 uppercase tracking-widest hidden sm:block">V</span>
+            <span className="text-[8px] font-black text-white/30 uppercase tracking-widest hidden lg:block">V</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
-          <Button className="h-11 bg-primary text-black font-black uppercase text-[10px] tracking-[0.2em] px-6 rounded-xl cyan-glow border-none hover:scale-105 transition-all">
-            <Save className="h-4 w-4 mr-2" /> <span className="hidden md:inline">Guardar</span>
+        <div className="flex items-center gap-2 lg:gap-3 shrink-0">
+          <Button className="h-9 lg:h-11 bg-primary text-black font-black uppercase text-[8px] lg:text-[10px] tracking-[0.2em] px-3 lg:px-6 rounded-xl cyan-glow border-none hover:scale-105 transition-all">
+            <Save className="h-3.5 w-3.5 lg:h-4 lg:w-4 lg:mr-2" /> <span className="hidden lg:inline">Guardar</span>
           </Button>
         </div>
       </header>
 
       <div className="flex-1 relative flex overflow-hidden">
-        <BoardToolbar theme="cyan" className="absolute left-6 top-1/2 -translate-y-1/2 z-50 hidden sm:flex" />
+        <BoardToolbar theme="cyan" className="absolute left-4 lg:left-6 top-1/2 -translate-y-1/2 z-50 hidden sm:flex" />
         
         <main className="flex-1 relative overflow-hidden" ref={fieldRef}>
           <TacticalField theme="cyan" fieldType={fieldType}>
@@ -379,21 +379,22 @@ export default function MatchBoardPage() {
             ))}
           </TacticalField>
 
-          <div className="absolute top-6 left-24 right-24 flex justify-between pointer-events-none z-40">
-            <div className="pointer-events-auto flex flex-col gap-3">
-              <div className="glass-panel p-1 border-primary/30 flex items-center gap-2 rounded-2xl">
-                <div className="bg-primary/10 px-3 py-2 rounded-xl border border-primary/20">
-                  <span className="text-[10px] font-black text-primary uppercase italic tracking-tighter">LOCAL</span>
+          {/* PANELES TÁCTICOS ADAPTADOS A TABLET */}
+          <div className="absolute top-4 lg:top-6 left-4 lg:left-6 right-4 lg:right-6 flex justify-between pointer-events-none z-40">
+            <div className="pointer-events-auto flex flex-col gap-2 lg:gap-3">
+              <div className="glass-panel p-1 border-primary/30 flex items-center gap-1 lg:gap-2 rounded-2xl">
+                <div className="bg-primary/10 px-2 lg:px-3 py-1.5 lg:py-2 rounded-xl border border-primary/20">
+                  <span className="text-[8px] lg:text-[10px] font-black text-primary uppercase italic tracking-tighter">LOCAL</span>
                 </div>
                 <Select value={homeFormation} onValueChange={setHomeFormation}>
-                  <SelectTrigger className="h-9 w-24 bg-transparent border-none text-[10px] font-bold text-white/60 focus:ring-0">
+                  <SelectTrigger className="h-8 lg:h-9 w-20 lg:w-24 bg-transparent border-none text-[8px] lg:text-[10px] font-bold text-white/60 focus:ring-0">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-[#0a0f18] border-primary/20">
-                    {currentFormations.map(f => <SelectItem key={f} value={f} className="text-[10px] font-black uppercase">{f}</SelectItem>)}
+                    {currentFormations.map(f => <SelectItem key={f} value={f} className="text-[9px] font-black uppercase">{f}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                <div className="flex gap-1 bg-black/40 p-1 rounded-xl border border-white/5 ml-2">
+                <div className="flex gap-0.5 lg:gap-1 bg-black/40 p-0.5 lg:p-1 rounded-xl border border-white/5 ml-1 lg:ml-2">
                   <PhaseButton label="DEF" active={homePhase === "defensa"} onClick={() => setHomePhase("defensa")} color="cyan" />
                   <PhaseButton label="T.D.A" active={homePhase === "tda"} onClick={() => setHomePhase("tda")} color="cyan" />
                   <PhaseButton label="S.B" active={homePhase === "salida"} onClick={() => setHomePhase("salida")} color="cyan" />
@@ -401,28 +402,28 @@ export default function MatchBoardPage() {
                   <PhaseButton label="T.A.D" active={homePhase === "tad"} onClick={() => setHomePhase("tad")} color="cyan" />
                 </div>
               </div>
-              <div className="flex gap-2 justify-center bg-black/40 backdrop-blur-md p-1.5 rounded-2xl border border-white/5 self-start ml-1">
-                <button onClick={() => setHomeLateral("left")} className={cn("p-1.5 rounded-lg transition-all", homeLateral === "left" ? "bg-primary text-black" : "text-white/20 hover:text-white")}><ChevronLeft className="h-3.5 w-3.5" /></button>
-                <button onClick={() => setHomeLateral("center")} className={cn("p-1.5 rounded-lg transition-all", homeLateral === "center" ? "bg-primary text-black" : "text-white/20 hover:text-white")}><Minimize2 className="h-3.5 w-3.5 rotate-90" /></button>
-                <button onClick={() => setHomeLateral("right")} className={cn("p-1.5 rounded-lg transition-all", homeLateral === "right" ? "bg-primary text-black" : "text-white/20 hover:text-white")}><ChevronRight className="h-3.5 w-3.5" /></button>
-                <span className="text-[8px] font-black text-primary/40 uppercase tracking-widest px-2 flex items-center">Basculación</span>
+              <div className="flex gap-1.5 lg:gap-2 justify-center bg-black/40 backdrop-blur-md p-1 lg:p-1.5 rounded-2xl border border-white/5 self-start ml-1">
+                <button onClick={() => setHomeLateral("left")} className={cn("p-1 lg:p-1.5 rounded-lg transition-all", homeLateral === "left" ? "bg-primary text-black" : "text-white/20 hover:text-white")}><ChevronLeft className="h-3 w-3 lg:h-3.5 lg:w-3.5" /></button>
+                <button onClick={() => setHomeLateral("center")} className={cn("p-1 lg:p-1.5 rounded-lg transition-all", homeLateral === "center" ? "bg-primary text-black" : "text-white/20 hover:text-white")}><Minimize2 className="h-3 w-3 lg:h-3.5 lg:w-3.5 rotate-90" /></button>
+                <button onClick={() => setHomeLateral("right")} className={cn("p-1 lg:p-1.5 rounded-lg transition-all", homeLateral === "right" ? "bg-primary text-black" : "text-white/20 hover:text-white")}><ChevronRight className="h-3 w-3 lg:h-3.5 lg:w-3.5" /></button>
+                <span className="text-[7px] lg:text-[8px] font-black text-primary/40 uppercase tracking-widest px-1.5 lg:px-2 flex items-center">Basculación</span>
               </div>
             </div>
 
-            <div className="pointer-events-auto flex flex-col items-end gap-3">
-              <div className="glass-panel p-1 border-rose-500/30 flex flex-row-reverse items-center gap-2 rounded-2xl">
-                <div className="bg-rose-500/10 px-3 py-2 rounded-xl border border-rose-500/20">
-                  <span className="text-[10px] font-black text-rose-500 uppercase italic tracking-tighter">VISITANTE</span>
+            <div className="pointer-events-auto flex flex-col items-end gap-2 lg:gap-3">
+              <div className="glass-panel p-1 border-rose-500/30 flex flex-row-reverse items-center gap-1 lg:gap-2 rounded-2xl">
+                <div className="bg-rose-500/10 px-2 lg:px-3 py-1.5 lg:py-2 rounded-xl border border-rose-500/20">
+                  <span className="text-[8px] lg:text-[10px] font-black text-rose-500 uppercase italic tracking-tighter">VISITANTE</span>
                 </div>
                 <Select value={guestFormation} onValueChange={setGuestFormation}>
-                  <SelectTrigger className="h-9 w-24 bg-transparent border-none text-[10px] font-bold text-white/60 text-right focus:ring-0">
+                  <SelectTrigger className="h-8 lg:h-9 w-20 lg:w-24 bg-transparent border-none text-[8px] lg:text-[10px] font-bold text-white/60 text-right focus:ring-0">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-[#0a0f18] border-rose-500/20">
-                    {currentFormations.map(f => <SelectItem key={f} value={f} className="text-[10px] font-black uppercase">{f}</SelectItem>)}
+                    {currentFormations.map(f => <SelectItem key={f} value={f} className="text-[9px] font-black uppercase">{f}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                <div className="flex gap-1 bg-black/40 p-1 rounded-xl border border-white/5 mr-2">
+                <div className="flex gap-0.5 lg:gap-1 bg-black/40 p-0.5 lg:p-1 rounded-xl border border-white/5 mr-1 lg:ml-2">
                   <PhaseButton label="T.A.D" active={guestPhase === "tad"} onClick={() => setGuestPhase("tad")} color="red" />
                   <PhaseButton label="ATQ" active={guestPhase === "ataque"} onClick={() => setGuestPhase("ataque")} color="red" />
                   <PhaseButton label="S.B" active={guestPhase === "salida"} onClick={() => setGuestPhase("salida")} color="red" />
@@ -430,11 +431,11 @@ export default function MatchBoardPage() {
                   <PhaseButton label="DEF" active={guestPhase === "defensa"} onClick={() => setGuestPhase("defensa")} color="red" />
                 </div>
               </div>
-              <div className="flex flex-row-reverse gap-2 justify-center bg-black/40 backdrop-blur-md p-1.5 rounded-2xl border border-white/5 self-end mr-1">
-                <button onClick={() => setGuestLateral("left")} className={cn("p-1.5 rounded-lg transition-all", guestLateral === "left" ? "bg-rose-500 text-white" : "text-white/20 hover:text-white")}><ChevronRight className="h-3.5 w-3.5" /></button>
-                <button onClick={() => setGuestLateral("center")} className={cn("p-1.5 rounded-lg transition-all", guestLateral === "center" ? "bg-rose-500 text-white" : "text-white/20 hover:text-white")}><Minimize2 className="h-3.5 w-3.5 rotate-90" /></button>
-                <button onClick={() => setGuestLateral("right")} className={cn("p-1.5 rounded-lg transition-all", guestLateral === "right" ? "bg-rose-500 text-white" : "text-white/20 hover:text-white")}><ChevronLeft className="h-3.5 w-3.5" /></button>
-                <span className="text-[8px] font-black text-rose-500/40 uppercase tracking-widest px-2 flex items-center">Basculación</span>
+              <div className="flex flex-row-reverse gap-1.5 lg:gap-2 justify-center bg-black/40 backdrop-blur-md p-1 lg:p-1.5 rounded-2xl border border-white/5 self-end mr-1">
+                <button onClick={() => setGuestLateral("left")} className={cn("p-1 lg:p-1.5 rounded-lg transition-all", guestLateral === "left" ? "bg-rose-500 text-white" : "text-white/20 hover:text-white")}><ChevronRight className="h-3 w-3 lg:h-3.5 lg:w-3.5" /></button>
+                <button onClick={() => setGuestLateral("center")} className={cn("p-1 lg:p-1.5 rounded-lg transition-all", guestLateral === "center" ? "bg-rose-500 text-white" : "text-white/20 hover:text-white")}><Minimize2 className="h-3 w-3 lg:h-3.5 lg:w-3.5 rotate-90" /></button>
+                <button onClick={() => setGuestLateral("right")} className={cn("p-1 lg:p-1.5 rounded-lg transition-all", guestLateral === "right" ? "bg-rose-500 text-white" : "text-white/20 hover:text-white")}><ChevronLeft className="h-3 w-3 lg:h-3.5 lg:w-3.5" /></button>
+                <span className="text-[7px] lg:text-[8px] font-black text-rose-500/40 uppercase tracking-widest px-1.5 lg:px-2 flex items-center">Basculación</span>
               </div>
             </div>
           </div>
@@ -449,7 +450,7 @@ function PhaseButton({ label, active, onClick, color }: { label: string, active:
     <button
       onClick={onClick}
       className={cn(
-        "px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-tighter transition-all duration-300",
+        "px-1.5 lg:px-2.5 py-1 lg:py-1.5 rounded-lg text-[7px] lg:text-[9px] font-black uppercase tracking-tighter transition-all duration-300",
         active 
           ? (color === "cyan" 
               ? "bg-primary text-black shadow-[0_0_15px_rgba(0,242,255,0.4)]" 
