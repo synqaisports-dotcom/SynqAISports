@@ -1,3 +1,4 @@
+
 "use client";
 
 import { BookOpen, Target, GitBranch, Library, CalendarDays, Monitor, PencilLine, Zap, Sparkles } from "lucide-react";
@@ -11,13 +12,13 @@ export default function MethodologyDashboard() {
     { title: "Planificador de Ciclos", desc: "Gestión temporal del macrociclo.", icon: GitBranch, href: "/dashboard/methodology/cycle-planner" },
     { title: "Pizarra de Partido", desc: "Terminal táctica de alta competición.", icon: Monitor, href: "/dashboard/methodology/board-match" },
     { title: "Pizarra de Ejercicios", desc: "Diseño técnico de módulos de trabajo.", icon: PencilLine, href: "/dashboard/methodology/board-exercises" },
-    { title: "Modo Promo", desc: "Acceso limitado para captación de red.", icon: Zap, href: "/dashboard/methodology/board-promo" },
+    { title: "Pizarra Promo", desc: "Acceso limitado para captación de red.", icon: Zap, href: "/dashboard/methodology/board-promo" },
     { title: "Biblioteca (Sin IA)", desc: "Almacenamiento manual de tareas.", icon: Library, href: "/dashboard/methodology/exercise-library" },
     { title: "Planificador de Sesiones", desc: "Cronograma diario de entrenamientos.", icon: CalendarDays, href: "/dashboard/methodology/session-planner" },
   ];
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-1000">
+    <div className="space-y-8 animate-in fade-in duration-1000 p-8 lg:p-12">
       <div className="flex flex-col gap-2 border-b border-white/5 pb-6">
         <div className="flex items-center gap-3">
           <Sparkles className="h-5 w-5 text-amber-500 animate-pulse" />
@@ -32,7 +33,7 @@ export default function MethodologyDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {sections.map((section, idx) => (
           <Link key={idx} href={section.href}>
-            <Card className="glass-panel h-full relative overflow-hidden group hover:scale-[1.02] transition-all border border-amber-500/20 bg-black/20">
+            <Card className="glass-panel h-full relative overflow-hidden group hover:scale-[1.02] transition-all border border-amber-500/20 bg-black/20 rounded-3xl">
               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                 <section.icon className="h-12 w-12 text-amber-500" />
               </div>
