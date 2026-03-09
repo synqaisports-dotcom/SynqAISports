@@ -439,13 +439,6 @@ export default function GlobalUsersPage() {
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 rounded-none border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10 active:scale-90 transition-all"
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
