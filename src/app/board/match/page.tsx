@@ -27,6 +27,14 @@ const TIME_PRESETS = [
   { label: "45 min", value: 45 },
 ];
 
+const MOCK_TEAMS = [
+  { id: "t1", name: "Infantil A (Cantera)", field: "f11" as FieldType },
+  { id: "t2", name: "Alevín B (Cantera)", field: "f7" as FieldType },
+  { id: "t3", name: "Cadete C (Cantera)", field: "f11" as FieldType },
+  { id: "t4", name: "Benjamín D (Cantera)", field: "f7" as FieldType },
+  { id: "t5", name: "Equipo Futsal", field: "futsal" as FieldType },
+];
+
 type TacticalPhase = "defensa" | "tda" | "ataque" | "tad" | "salida";
 type LateralShift = "left" | "center" | "right";
 
@@ -38,7 +46,6 @@ interface PlayerPos {
   y: number;
 }
 
-// Memoizamos el componente PlayerChip para máxima fluidez
 const MemoizedPlayerChip = memo(PlayerChip);
 
 export default function MatchBoardPage() {
@@ -47,6 +54,7 @@ export default function MatchBoardPage() {
   const [isRunning, setIsRunning] = useState(false);
   const [score, setScore] = useState({ home: 0, guest: 0 });
   const [fieldType, setFieldType] = useState<FieldType>("f11");
+  const [selectedTeamId, setSelectedTeamId] = useState("t1");
   
   const [homePhase, setHomePhase] = useState<TacticalPhase>("defensa");
   const [guestPhase, setGuestPhase] = useState<TacticalPhase>("defensa");
@@ -61,7 +69,6 @@ export default function MatchBoardPage() {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const fieldRef = useRef<HTMLDivElement>(null);
 
-  // Lógica de visibilidad para equipos del entrenador
   const hasClub = !!profile?.clubId;
   const isCoach = profile?.role === "coach" || profile?.role === "club_admin" || profile?.role === "superadmin";
   const showTeamSelector = hasClub && isCoach;
@@ -97,6 +104,14 @@ export default function MatchBoardPage() {
   const handleSetPreset = (minutes: string) => {
     setIsRunning(false);
     setTimeLeft(parseInt(minutes) * 60);
+  };
+
+  const handleTeamChange = (teamId: string) => {
+    setSelectedTeamId(teamId);
+    const team = MOCK_TEAMS.find(t => t.id === teamId);
+    if (team) {
+      setFieldType(team.field);
+    }
   };
 
   const calculatePositions = (team: "local" | "visitor", formation: string, phase: TacticalPhase, lateral: LateralShift) => {
@@ -235,10 +250,9 @@ export default function MatchBoardPage() {
             <h1 className="text-lg font-headline font-black text-white italic tracking-tighter uppercase leading-none truncate">Partido</h1>
           </div>
 
-          {/* Selector de Equipo del Entrenador (Solo si tiene club) */}
           {showTeamSelector && (
             <div className="hidden md:block">
-              <Select defaultValue="t1">
+              <Select value={selectedTeamId} onValueChange={handleTeamChange}>
                 <SelectTrigger className="w-[180px] h-10 bg-primary/5 border-primary/30 rounded-xl text-[9px] font-black uppercase tracking-widest text-primary hover:bg-primary/10 transition-all">
                   <div className="flex items-center gap-2">
                     <Users className="h-3.5 w-3.5" />
@@ -246,9 +260,11 @@ export default function MatchBoardPage() {
                   </div>
                 </SelectTrigger>
                 <SelectContent className="bg-[#0a0f18] border-primary/20">
-                  <SelectItem value="t1" className="text-[9px] font-black uppercase">Infantil A (Cantera)</SelectItem>
-                  <SelectItem value="t2" className="text-[9px] font-black uppercase">Alevín B (Cantera)</SelectItem>
-                  <SelectItem value="t3" className="text-[9px] font-black uppercase">Cadete C (Cantera)</SelectItem>
+                  {MOCK_TEAMS.map(team => (
+                    <SelectItem key={team.id} value={team.id} className="text-[9px] font-black uppercase">
+                      {team.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -364,7 +380,6 @@ export default function MatchBoardPage() {
           </TacticalField>
 
           <div className="absolute top-6 left-24 right-24 flex justify-between pointer-events-none z-40">
-            {/* PANEL LOCAL */}
             <div className="pointer-events-auto flex flex-col gap-3">
               <div className="glass-panel p-1 border-primary/30 flex items-center gap-2 rounded-2xl">
                 <div className="bg-primary/10 px-3 py-2 rounded-xl border border-primary/20">
@@ -394,7 +409,6 @@ export default function MatchBoardPage() {
               </div>
             </div>
 
-            {/* PANEL VISITANTE */}
             <div className="pointer-events-auto flex flex-col items-end gap-3">
               <div className="glass-panel p-1 border-rose-500/30 flex flex-row-reverse items-center gap-2 rounded-2xl">
                 <div className="bg-rose-500/10 px-3 py-2 rounded-xl border border-rose-500/20">
