@@ -44,7 +44,6 @@ export default function TrainingBoardPage() {
             <h1 className="text-lg lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase">Estudio</h1>
           </div>
 
-          {/* Selector de Campo */}
           <div className="hidden md:block">
             <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}>
               <SelectTrigger className="w-[160px] h-11 bg-white/5 border-amber-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-amber-500 hover:bg-amber-500/5 transition-all">

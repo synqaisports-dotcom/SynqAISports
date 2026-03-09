@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Trophy, Clock, Save, LayoutGrid, Play, Pause, RotateCcw, Shield, Zap, Target, Swords, ChevronDown } from "lucide-react";
+import { Trophy, Clock, Save, LayoutGrid, Play, Pause, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { TacticalField, FieldType } from "@/components/board/TacticalField";
@@ -34,7 +34,6 @@ export default function MatchBoardPage() {
   const [score, setScore] = useState({ home: 0, guest: 0 });
   const [fieldType, setFieldType] = useState<FieldType>("f11");
   
-  // Estado de Fases Tácticas
   const [homePhase, setHomePhase] = useState<TacticalPhase>("defensa");
   const [guestPhase, setGuestPhase] = useState<TacticalPhase>("defensa");
   const [homeFormation, setHomeFormation] = useState("4-3-3");
@@ -66,7 +65,6 @@ export default function MatchBoardPage() {
   return (
     <div className="flex-1 flex flex-col bg-black overflow-hidden font-body relative">
       <header className="h-20 border-b border-primary/20 bg-black/40 backdrop-blur-3xl flex items-center justify-between px-8 shrink-0 z-50">
-        {/* IDENTIDAD Y SELECTOR DE CAMPO */}
         <div className="flex items-center gap-6 overflow-hidden">
           <div className="flex flex-col shrink-0">
             <div className="flex items-center gap-2">
@@ -93,20 +91,20 @@ export default function MatchBoardPage() {
           </div>
         </div>
 
-        {/* TERMINAL CENTRAL: MARCADOR Y CRONÓMETRO */}
+        {/* SCOREBOARD CENTRAL MINIMALISTA */}
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-4 px-6 py-2 bg-primary/5 border border-primary/20 rounded-[2rem] shadow-[0_0_30px_rgba(0,242,255,0.05)]">
           <div className="flex items-center gap-3">
             <span className="text-[9px] font-black text-white/30 uppercase tracking-widest hidden sm:block">L</span>
             <div className="flex items-center gap-2">
-              <button onClick={() => setScore(s => ({...s, home: Math.max(0, s.home - 1)}))} className="h-6 w-6 flex items-center justify-center rounded-lg border border-primary/10 text-primary/40 hover:text-primary hover:border-primary/40 transition-all active:scale-90">-</button>
+              <button onClick={() => setScore(s => ({...s, home: Math.max(0, s.home - 1)}))} className="h-6 w-6 flex items-center justify-center rounded-lg border border-primary/10 text-primary/40 hover:text-primary transition-all">-</button>
               <span className="text-2xl font-black font-headline text-white tabular-nums min-w-[20px] text-center">{score.home}</span>
-              <button onClick={() => setScore(s => ({...s, home: s.home + 1}))} className="h-6 w-6 flex items-center justify-center rounded-lg border border-primary/10 text-primary/40 hover:text-primary hover:border-primary/40 transition-all active:scale-90">+</button>
+              <button onClick={() => setScore(s => ({...s, home: s.home + 1}))} className="h-6 w-6 flex items-center justify-center rounded-lg border border-primary/10 text-primary/40 hover:text-primary transition-all">+</button>
             </div>
           </div>
 
           <div className="w-[1px] h-10 bg-white/10 mx-2" />
 
-          <div className="flex flex-col items-center justify-center min-w-[120px] group">
+          <div className="flex flex-col items-center justify-center min-w-[120px]">
             <div className="flex items-center gap-2 mb-0.5">
               <span className={cn(
                 "text-2xl font-black font-headline tabular-nums tracking-tighter transition-all",
@@ -149,9 +147,9 @@ export default function MatchBoardPage() {
 
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
-              <button onClick={() => setScore(s => ({...s, guest: Math.max(0, s.guest - 1)}))} className="h-6 w-6 flex items-center justify-center rounded-lg border border-primary/10 text-primary/40 hover:text-primary hover:border-primary/40 transition-all active:scale-90">-</button>
+              <button onClick={() => setScore(s => ({...s, guest: Math.max(0, s.guest - 1)}))} className="h-6 w-6 flex items-center justify-center rounded-lg border border-primary/10 text-primary/40 hover:text-primary transition-all">-</button>
               <span className="text-2xl font-black font-headline text-white tabular-nums min-w-[20px] text-center">{score.guest}</span>
-              <button onClick={() => setScore(s => ({...s, guest: s.guest + 1}))} className="h-6 w-6 flex items-center justify-center rounded-lg border border-primary/10 text-primary/40 hover:text-primary hover:border-primary/40 transition-all active:scale-90">+</button>
+              <button onClick={() => setScore(s => ({...s, guest: s.guest + 1}))} className="h-6 w-6 flex items-center justify-center rounded-lg border border-primary/10 text-primary/40 hover:text-primary transition-all">+</button>
             </div>
             <span className="text-[9px] font-black text-white/30 uppercase tracking-widest hidden sm:block">V</span>
           </div>
@@ -165,16 +163,14 @@ export default function MatchBoardPage() {
       </header>
 
       <div className="flex-1 relative flex overflow-hidden">
-        {/* BARRA DE HERRAMIENTAS FLOTANTE IZQUIERDA */}
         <BoardToolbar theme="cyan" className="absolute left-6 top-1/2 -translate-y-1/2 z-50 hidden sm:flex" />
         
-        {/* CAMPO TÁCTICO */}
         <main className="flex-1 relative overflow-hidden">
           <TacticalField theme="cyan" fieldType={fieldType} />
 
-          {/* BOTONERAS TÁCTICAS SUPERIORES */}
+          {/* BOTONERAS TÁCTICAS DUALES (ESPEJO) */}
           <div className="absolute top-6 left-24 right-24 flex justify-between pointer-events-none z-40">
-            {/* PANEL LOCAL (AZUL CYAN) */}
+            {/* PANEL LOCAL (CYAN) */}
             <div className="pointer-events-auto flex items-center gap-3">
               <div className="glass-panel p-1 border-primary/30 flex items-center gap-2 rounded-2xl">
                 <div className="bg-primary/10 px-3 py-2 rounded-xl border border-primary/20">

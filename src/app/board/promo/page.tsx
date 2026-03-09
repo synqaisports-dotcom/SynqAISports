@@ -35,7 +35,6 @@ export default function PromoBoardPage() {
             <h1 className="text-sm lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase leading-none">Free</h1>
           </div>
 
-          {/* Selector de Campo */}
           <div className="hidden md:block">
             <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}>
               <SelectTrigger className="w-[150px] h-10 bg-white/5 border-primary/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/5 transition-all">

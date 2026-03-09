@@ -15,7 +15,7 @@ interface TacticalFieldProps {
 
 /**
  * TacticalField - Motor Geométrico de Superficies Deportivas.
- * Soporta Fútbol 11, Fútbol 7 y Fútbol Sala con proporciones reales.
+ * Soporta Fútbol 11, Fútbol 7 y Fútbol Sala con proporciones reales y texturas vibrantes.
  */
 export function TacticalField({ 
   theme = "cyan", 
@@ -25,10 +25,9 @@ export function TacticalField({
 }: TacticalFieldProps) {
   const accentColor = theme === "cyan" ? "border-primary/30" : "border-amber-500/30";
   
-  // Configuración de superficie según el tipo
   const isFutsal = fieldType === "futsal";
   const isF7 = fieldType === "f7";
-  const bgClass = isFutsal ? "bg-[#0a2e5c]" : "bg-[#143d14]"; // Azul técnico para Futsal, Verde para Fútbol
+  const bgClass = isFutsal ? "bg-[#0a2e5c]" : "bg-[#143d14]";
   const aspectRatio = isFutsal ? "aspect-[40/20]" : "aspect-[105/68]";
   
   return (
@@ -47,15 +46,12 @@ export function TacticalField({
       >
         {/* TEXTURAS */}
         {!isFutsal ? (
-          // Efecto Césped para F11 y F7
-          <div className="absolute inset-0 opacity-15 bg-[repeating-linear-gradient(90deg,transparent_0%,transparent_10%,#000_10%,#000_20%)]" />
+          <div className="absolute inset-0 opacity-20 bg-[repeating-linear-gradient(90deg,transparent_0%,transparent_10%,#000_10%,#000_20%)]" />
         ) : (
-          // Efecto Pista para Futsal
-          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.1)_0%,transparent_100%)]" />
+          <div className="absolute inset-0 opacity-15 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.1)_0%,transparent_100%)]" />
         )}
         
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08)_0%,transparent_80%)]" />
-        <div className="absolute inset-0 bg-grid-pattern opacity-[0.02] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.1)_0%,transparent_80%)]" />
         
         {/* LÍNEAS REGLAMENTARIAS */}
         <div className="absolute inset-[4%] border border-white/30 rounded-sm pointer-events-none">
@@ -73,21 +69,19 @@ export function TacticalField({
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-1 bg-white/50 rounded-full shadow-[0_0_5px_rgba(255,255,255,0.5)]" />
 
           {!isFutsal ? (
-            /* GEOMETRÍA FÚTBOL (F11/F7) */
             <>
-              {/* LADO IZQUIERDO */}
+              {/* ÁREAS FÚTBOL */}
               <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[15.5%] h-[60%] border border-white/30 border-l-0" />
               <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[5.5%] h-[26%] border border-white/30 border-l-0" />
               <div className="absolute top-1/2 left-[10.5%] -translate-y-1/2 w-1 h-1 bg-white/50 rounded-full" />
               <div className="absolute top-1/2 left-[15.5%] -translate-y-1/2 w-[8%] h-[20%] border border-white/30 border-l-0 rounded-r-full" />
 
-              {/* LADO DERECHO */}
               <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[15.5%] h-[60%] border border-white/30 border-r-0" />
               <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[5.5%] h-[26%] border border-white/30 border-r-0" />
               <div className="absolute top-1/2 right-[10.5%] -translate-y-1/2 w-1 h-1 bg-white/50 rounded-full" />
               <div className="absolute top-1/2 right-[15.5%] -translate-y-1/2 w-[8%] h-[20%] border border-white/30 border-r-0 rounded-l-full" />
 
-              {/* LÍNEAS DE FUERA DE JUEGO (SÓLO F7) - Situadas fuera del área grande */}
+              {/* LÍNEAS FUERA DE JUEGO F7 (20%) */}
               {isF7 && (
                 <>
                   <div className="absolute top-0 left-[20%] bottom-0 w-[1px] border-l border-dashed border-white/30" />
@@ -96,23 +90,18 @@ export function TacticalField({
               )}
             </>
           ) : (
-            /* GEOMETRÍA FÚTBOL SALA */
             <>
-              {/* Áreas circulares (6m) */}
+              {/* ÁREAS FUTSAL */}
               <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[15%] h-[60%] border border-white/30 border-l-0 rounded-r-full" />
               <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[15%] h-[60%] border border-white/30 border-r-0 rounded-l-full" />
-              
-              {/* Puntos de Penalti (6m) */}
               <div className="absolute top-1/2 left-[15%] -translate-y-1/2 w-1 h-1 bg-white/50 rounded-full" />
               <div className="absolute top-1/2 right-[15%] -translate-y-1/2 w-1 h-1 bg-white/50 rounded-full" />
-              
-              {/* Puntos de Doble Penalti (10m) */}
-              <div className="absolute top-1/2 left-[25%] -translate-y-1/2 w-1 h-1 bg-white/30 rounded-full" />
-              <div className="absolute top-1/2 right-[25%] -translate-y-1/2 w-1 h-1 bg-white/30 rounded-full" />
+              <div className="absolute top-1/2 left-[25%] -translate-y-1/2 w-1 h-1 bg-white/20 rounded-full" />
+              <div className="absolute top-1/2 right-[25%] -translate-y-1/2 w-1 h-1 bg-white/20 rounded-full" />
             </>
           )}
 
-          {/* ARCOS DE CÓRNER */}
+          {/* CÓRNERS */}
           <div className="absolute top-0 left-0 w-[2%] aspect-square border-r border-b border-white/30 rounded-br-full" />
           <div className="absolute bottom-0 left-0 w-[2%] aspect-square border-r border-t border-white/30 rounded-tr-full" />
           <div className="absolute top-0 right-0 w-[2%] aspect-square border-l border-b border-white/30 rounded-bl-full" />
