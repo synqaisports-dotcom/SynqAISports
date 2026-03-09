@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Trophy, Clock, Save, LayoutGrid, Play, Pause, RotateCcw } from "lucide-react";
+import { Trophy, Clock, Save, LayoutGrid, Play, Pause, RotateCcw, ChevronLeft, ChevronRight, Minimize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { TacticalField, FieldType } from "@/components/board/TacticalField";
@@ -26,7 +26,8 @@ const TIME_PRESETS = [
   { label: "45 min", value: 45 },
 ];
 
-type TacticalPhase = "defensa" | "tda" | "ataque" | "tad";
+type TacticalPhase = "defensa" | "tda" | "ataque" | "tad" | "salida";
+type LateralShift = "left" | "center" | "right";
 
 export default function MatchBoardPage() {
   const [timeLeft, setTimeLeft] = useState(45 * 60);
@@ -36,6 +37,9 @@ export default function MatchBoardPage() {
   
   const [homePhase, setHomePhase] = useState<TacticalPhase>("defensa");
   const [guestPhase, setGuestPhase] = useState<TacticalPhase>("defensa");
+  
+  const [homeLateral, setHomeLateral] = useState<LateralShift>("center");
+  const [guestLateral, setGuestLateral] = useState<LateralShift>("center");
   
   const [homeFormation, setHomeFormation] = useState("4-3-3");
   const [guestFormation, setGuestFormation] = useState("4-3-3");
@@ -73,24 +77,27 @@ export default function MatchBoardPage() {
     setTimeLeft(parseInt(minutes) * 60);
   };
 
-  const getPlayerPositions = (team: "local" | "visitor", formation: string, phase: TacticalPhase) => {
+  const getPlayerPositions = (team: "local" | "visitor", formation: string, phase: TacticalPhase, lateral: LateralShift) => {
     const baseCoords = FORMATIONS_DATA[fieldType][formation] || FORMATIONS_DATA[fieldType][Object.keys(FORMATIONS_DATA[fieldType])[0]];
     
-    // Coordenadas Críticas de Áreas (Margen 4% + Área 15.5%)
-    const innerAreaLimit = 0.195; // Borde interior del área propia (Izq)
-    const outerAreaLimit = 0.805; // Borde interior del área rival (Der)
+    const innerAreaLimit = 0.195; 
+    const outerAreaLimit = 0.805;
 
     return baseCoords.map((pos, idx) => {
       let finalX, finalY;
       
-      // Identificación de Línea Táctica
       const isGK = pos.x < 0.1;
       const isDEF = pos.x >= 0.1 && pos.x < 0.4;
       const isMID = pos.x >= 0.4 && pos.x < 0.7;
       const isATK = pos.x >= 0.7;
 
-      // Factor de desplazamiento escalado por línea y fase
       let phaseShift = 0;
+      let yShift = 0;
+
+      // LÓGICA DE BASCULACIÓN
+      if (lateral === "left") yShift = -0.15;
+      else if (lateral === "right") yShift = 0.15;
+
       if (phase === "defensa") {
         if (isDEF) phaseShift = -0.15;
         else if (isMID) phaseShift = -0.12;
@@ -107,50 +114,47 @@ export default function MatchBoardPage() {
         if (isDEF) phaseShift = -0.05;
         else if (isMID) phaseShift = -0.08;
         else if (isATK) phaseShift = -0.12;
+      } else if (phase === "salida") {
+        // En salida, los defensas se pegan al área pero se abren
+        if (isDEF) {
+          phaseShift = -0.10; 
+          yShift = idx % 2 === 0 ? -0.2 : 0.2; // Apertura de centrales
+        }
       }
 
       if (team === "local") {
-        // Mapeo Local (Izquierda a Derecha)
         finalX = 0.05 + (pos.x * 0.9) + phaseShift;
-        finalY = pos.y;
+        finalY = pos.y + yShift;
 
         if (!isGK) {
-          // RESTRICCIONES UNIVERSALES DE ÁREA (LOCAL)
-          finalX = Math.max(finalX, innerAreaLimit); // No entran en área propia
-          finalX = Math.min(finalX, outerAreaLimit); // No entran en área rival
-
-          // RESTRICCIONES POR LÍNEAS EN ATAQUE
+          finalX = Math.max(finalX, innerAreaLimit);
+          finalX = Math.min(finalX, outerAreaLimit);
           if (phase === "ataque") {
-            if (isMID) finalX = Math.min(finalX, 0.72); // Medios al balcón
-            if (isDEF) finalX = Math.min(finalX, 0.55); // Defensas no pasan mucho del medio
+            if (isMID) finalX = Math.min(finalX, 0.72);
+            if (isDEF) finalX = Math.min(finalX, 0.55);
           }
         } else {
-          // Portero confinado a su zona
           finalX = Math.max(0.02, Math.min(0.12, finalX));
         }
       } else {
-        // Mapeo Visitante (Derecha a Izquierda - Espejo)
+        // Visitante (Espejo) - Basculación también invertida en Y para coherencia
         finalX = 0.95 - (pos.x * 0.9) - phaseShift;
-        finalY = 1 - pos.y;
+        finalY = (1 - pos.y) - yShift;
 
         if (!isGK) {
-          // RESTRICCIONES UNIVERSALES DE ÁREA (VISITANTE)
-          finalX = Math.min(finalX, outerAreaLimit); // No entran en su propia área (Derecha)
-          finalX = Math.max(finalX, innerAreaLimit); // No entran en área rival (Izquierda)
-
-          // RESTRICCIONES POR LÍNEAS EN ATAQUE
+          finalX = Math.min(finalX, outerAreaLimit);
+          finalX = Math.max(finalX, innerAreaLimit);
           if (phase === "ataque") {
-            if (isMID) finalX = Math.max(finalX, 0.28); // Medios al balcón del rival
-            if (isDEF) finalX = Math.max(finalX, 0.45); // Defensas no pasan mucho del medio
+            if (isMID) finalX = Math.max(finalX, 0.28);
+            if (isDEF) finalX = Math.max(finalX, 0.45);
           }
         } else {
-          // Portero confinado a su zona (Derecha)
           finalX = Math.min(0.98, Math.max(0.88, finalX));
         }
       }
 
-      // Clamp final de seguridad absoluta para evitar salirse del campo
       finalX = Math.max(0.02, Math.min(0.98, finalX));
+      finalY = Math.max(0.05, Math.min(0.95, finalY));
       
       return {
         id: `${team}-${idx}`,
@@ -161,8 +165,8 @@ export default function MatchBoardPage() {
     });
   };
 
-  const homePlayers = useMemo(() => getPlayerPositions("local", homeFormation, homePhase), [homeFormation, homePhase, fieldType]);
-  const guestPlayers = useMemo(() => getPlayerPositions("visitor", guestFormation, guestPhase), [guestFormation, guestPhase, fieldType]);
+  const homePlayers = useMemo(() => getPlayerPositions("local", homeFormation, homePhase, homeLateral), [homeFormation, homePhase, homeLateral, fieldType]);
+  const guestPlayers = useMemo(() => getPlayerPositions("visitor", guestFormation, guestPhase, guestLateral), [guestFormation, guestPhase, guestLateral, fieldType]);
 
   const currentFormations = useMemo(() => Object.keys(FORMATIONS_DATA[fieldType]), [fieldType]);
 
@@ -279,7 +283,8 @@ export default function MatchBoardPage() {
           </TacticalField>
 
           <div className="absolute top-6 left-24 right-24 flex justify-between pointer-events-none z-40">
-            <div className="pointer-events-auto flex items-center gap-3">
+            {/* PANEL LOCAL */}
+            <div className="pointer-events-auto flex flex-col gap-3">
               <div className="glass-panel p-1 border-primary/30 flex items-center gap-2 rounded-2xl">
                 <div className="bg-primary/10 px-3 py-2 rounded-xl border border-primary/20">
                   <span className="text-[10px] font-black text-primary uppercase italic tracking-tighter">LOCAL</span>
@@ -292,16 +297,24 @@ export default function MatchBoardPage() {
                     {currentFormations.map(f => <SelectItem key={f} value={f} className="text-[10px] font-black uppercase">{f}</SelectItem>)}
                   </SelectContent>
                 </Select>
+                <div className="flex gap-1 bg-black/40 p-1 rounded-xl border border-white/5 ml-2">
+                  <PhaseButton label="DEF" active={homePhase === "defensa"} onClick={() => setHomePhase("defensa")} color="cyan" />
+                  <PhaseButton label="T.D.A" active={homePhase === "tda"} onClick={() => setHomePhase("tda")} color="cyan" />
+                  <PhaseButton label="S.B" active={homePhase === "salida"} onClick={() => setHomePhase("salida")} color="cyan" />
+                  <PhaseButton label="ATQ" active={homePhase === "ataque"} onClick={() => setHomePhase("ataque")} color="cyan" />
+                  <PhaseButton label="T.A.D" active={homePhase === "tad"} onClick={() => setHomePhase("tad")} color="cyan" />
+                </div>
               </div>
-              <div className="flex gap-1 bg-black/40 backdrop-blur-md p-1 rounded-xl border border-white/5 shadow-2xl">
-                <PhaseButton label="DEF" active={homePhase === "defensa"} onClick={() => setHomePhase("defensa")} color="cyan" />
-                <PhaseButton label="T.D.A" active={homePhase === "tda"} onClick={() => setHomePhase("tda")} color="cyan" />
-                <PhaseButton label="ATQ" active={homePhase === "ataque"} onClick={() => setHomePhase("ataque")} color="cyan" />
-                <PhaseButton label="T.A.D" active={homePhase === "tad"} onClick={() => setHomePhase("tad")} color="cyan" />
+              <div className="flex gap-2 justify-center bg-black/40 backdrop-blur-md p-1.5 rounded-2xl border border-white/5 self-start ml-1">
+                <button onClick={() => setHomeLateral("left")} className={cn("p-1.5 rounded-lg transition-all", homeLateral === "left" ? "bg-primary text-black" : "text-white/20 hover:text-white")}><ChevronLeft className="h-3.5 w-3.5" /></button>
+                <button onClick={() => setHomeLateral("center")} className={cn("p-1.5 rounded-lg transition-all", homeLateral === "center" ? "bg-primary text-black" : "text-white/20 hover:text-white")}><Minimize2 className="h-3.5 w-3.5 rotate-90" /></button>
+                <button onClick={() => setHomeLateral("right")} className={cn("p-1.5 rounded-lg transition-all", homeLateral === "right" ? "bg-primary text-black" : "text-white/20 hover:text-white")}><ChevronRight className="h-3.5 w-3.5" /></button>
+                <span className="text-[8px] font-black text-primary/40 uppercase tracking-widest px-2 flex items-center">Basculación</span>
               </div>
             </div>
 
-            <div className="pointer-events-auto flex flex-row-reverse items-center gap-3">
+            {/* PANEL VISITANTE */}
+            <div className="pointer-events-auto flex flex-col items-end gap-3">
               <div className="glass-panel p-1 border-rose-500/30 flex flex-row-reverse items-center gap-2 rounded-2xl">
                 <div className="bg-rose-500/10 px-3 py-2 rounded-xl border border-rose-500/20">
                   <span className="text-[10px] font-black text-rose-500 uppercase italic tracking-tighter">VISITANTE</span>
@@ -314,12 +327,19 @@ export default function MatchBoardPage() {
                     {currentFormations.map(f => <SelectItem key={f} value={f} className="text-[10px] font-black uppercase">{f}</SelectItem>)}
                   </SelectContent>
                 </Select>
+                <div className="flex gap-1 bg-black/40 p-1 rounded-xl border border-white/5 mr-2">
+                  <PhaseButton label="T.A.D" active={guestPhase === "tad"} onClick={() => setGuestPhase("tad")} color="red" />
+                  <PhaseButton label="ATQ" active={guestPhase === "ataque"} onClick={() => setGuestPhase("ataque")} color="red" />
+                  <PhaseButton label="S.B" active={guestPhase === "salida"} onClick={() => setGuestPhase("salida")} color="red" />
+                  <PhaseButton label="T.D.A" active={guestPhase === "tda"} onClick={() => setGuestPhase("tda")} color="red" />
+                  <PhaseButton label="DEF" active={guestPhase === "defensa"} onClick={() => setGuestPhase("defensa")} color="red" />
+                </div>
               </div>
-              <div className="flex gap-1 bg-black/40 backdrop-blur-md p-1 rounded-xl border border-white/5 shadow-2xl">
-                <PhaseButton label="T.A.D" active={guestPhase === "tad"} onClick={() => setGuestPhase("tad")} color="red" />
-                <PhaseButton label="ATQ" active={guestPhase === "ataque"} onClick={() => setGuestPhase("ataque")} color="red" />
-                <PhaseButton label="T.D.A" active={guestPhase === "tda"} onClick={() => setGuestPhase("tda")} color="red" />
-                <PhaseButton label="DEF" active={guestPhase === "defensa"} onClick={() => setGuestPhase("defensa")} color="red" />
+              <div className="flex flex-row-reverse gap-2 justify-center bg-black/40 backdrop-blur-md p-1.5 rounded-2xl border border-white/5 self-end mr-1">
+                <button onClick={() => setGuestLateral("left")} className={cn("p-1.5 rounded-lg transition-all", guestLateral === "left" ? "bg-rose-500 text-white" : "text-white/20 hover:text-white")}><ChevronRight className="h-3.5 w-3.5" /></button>
+                <button onClick={() => setGuestLateral("center")} className={cn("p-1.5 rounded-lg transition-all", guestLateral === "center" ? "bg-rose-500 text-white" : "text-white/20 hover:text-white")}><Minimize2 className="h-3.5 w-3.5 rotate-90" /></button>
+                <button onClick={() => setGuestLateral("right")} className={cn("p-1.5 rounded-lg transition-all", guestLateral === "right" ? "bg-rose-500 text-white" : "text-white/20 hover:text-white")}><ChevronLeft className="h-3.5 w-3.5" /></button>
+                <span className="text-[8px] font-black text-rose-500/40 uppercase tracking-widest px-2 flex items-center">Basculación</span>
               </div>
             </div>
           </div>
@@ -334,7 +354,7 @@ function PhaseButton({ label, active, onClick, color }: { label: string, active:
     <button
       onClick={onClick}
       className={cn(
-        "px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-tighter transition-all duration-300",
+        "px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-tighter transition-all duration-300",
         active 
           ? (color === "cyan" 
               ? "bg-primary text-black shadow-[0_0_15px_rgba(0,242,255,0.4)]" 
