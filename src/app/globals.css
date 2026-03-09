@@ -56,6 +56,16 @@
     --scroll-glow: hsla(142, 70%, 50%, 0.4);
     --sidebar-primary: 142 70% 50%;
     --sidebar-ring: 142 70% 50%;
+    --primary: 142 70% 50%;
+  }
+
+  .methodology-theme {
+    --scroll-color: hsla(32, 100%, 50%, 0.1);
+    --scroll-hover: hsla(32, 100%, 50%, 0.6);
+    --scroll-glow: hsla(32, 100%, 50%, 0.4);
+    --sidebar-primary: 32 100% 50%;
+    --sidebar-ring: 32 100% 50%;
+    --primary: 32 100% 50%;
   }
 }
 
@@ -123,12 +133,20 @@
   box-shadow: 0 0 30px hsla(183, 100%, 50%, 0.4);
 }
 
+.amber-glow {
+  box-shadow: 0 0 30px hsla(32, 100%, 50%, 0.4);
+}
+
 .cyan-text-glow {
   text-shadow: 0 0 15px hsla(183, 100%, 50%, 0.8);
 }
 
 .emerald-text-glow {
   text-shadow: 0 0 15px hsla(142, 70%, 50%, 0.8);
+}
+
+.amber-text-glow {
+  text-shadow: 0 0 15px hsla(32, 100%, 50%, 0.8);
 }
 
 .pulse-glow {

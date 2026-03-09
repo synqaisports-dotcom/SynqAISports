@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -26,7 +25,13 @@ import {
   Sprout,
   Users,
   ShieldAlert,
-  Settings2
+  Settings2,
+  BookOpen,
+  Target,
+  GitBranch,
+  Library,
+  CalendarDays,
+  PencilLine
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
@@ -46,7 +51,7 @@ interface NavItem {
   title: string;
   href: string;
   icon: any;
-  category: "global" | "operational" | "user";
+  category: "global" | "operational" | "methodology" | "user";
   roles?: string[];
 }
 
@@ -60,6 +65,16 @@ const navItems: NavItem[] = [
   { title: "Gen. Usuarios", href: "/admin-global/users", icon: UserPlus, category: "global" },
   { title: "Analytics Global", href: "/admin-global/analytics", icon: BarChart3, category: "global" },
   
+  // ESTRATEGIA_METODOLÓGICA - AMBER THEME
+  { title: "Items Aprendizaje", href: "/dashboard/methodology/learning-items", icon: BookOpen, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director"] },
+  { title: "Objetivos", href: "/dashboard/methodology/objectives", icon: Target, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director"] },
+  { title: "Planificador Ciclos", href: "/dashboard/methodology/cycle-planner", icon: GitBranch, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director"] },
+  { title: "Pizarra Partido", href: "/dashboard/methodology/board-match", icon: Monitor, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
+  { title: "Pizarra Ejercicios", href: "/dashboard/methodology/board-exercises", icon: PencilLine, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
+  { title: "Pizarra Promo", href: "/dashboard/methodology/board-promo", icon: Zap, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
+  { title: "Biblioteca (Sin IA)", href: "/dashboard/methodology/exercise-library", icon: Library, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
+  { title: "Planif. Sesiones", href: "/dashboard/methodology/session-planner", icon: CalendarDays, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
+
   // OPERATIVA_ELITE - CYAN THEME
   { title: "Coach Hub", href: "/dashboard", icon: Cpu, category: "operational" },
   { title: "Admin & Permisos", href: "/dashboard/admin", icon: Settings2, category: "operational", roles: ["superadmin", "club_admin", "academy_director"] },
@@ -172,6 +187,17 @@ export function DashboardSidebar() {
           </SidebarGroupWrapper>
         )}
 
+        {/* STRATEGIC METHODOLOGY - AMBER THEME */}
+        <SidebarGroupWrapper title="Estrategia_Metodológica" color="text-amber-500" isCollapsed={isCollapsed}>
+          <SidebarMenu>
+            {filteredItems.filter(i => i.category === "methodology").map((item) => (
+              <SidebarMenuItem key={item.href}>
+                <SidebarLink item={item} isActive={pathname === item.href} isMethodology />
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarGroupWrapper>
+
         {/* OPERATIONAL ELITE */}
         <SidebarGroupWrapper title="Operativa_Elite" color="text-primary" isCollapsed={isCollapsed}>
           <SidebarMenu>
@@ -226,16 +252,20 @@ function SidebarGroupWrapper({ children, title, color, isCollapsed }: any) {
   );
 }
 
-function SidebarLink({ item, isActive, isGlobal }: { item: NavItem; isActive: boolean; isGlobal?: boolean }) {
+function SidebarLink({ item, isActive, isGlobal, isMethodology }: { item: NavItem; isActive: boolean; isGlobal?: boolean; isMethodology?: boolean }) {
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
 
   const activeClass = isGlobal 
     ? "bg-emerald-500/10 text-emerald-400 shadow-[0_4px_15px_rgba(16,185,129,0.15)] emerald-text-glow"
+    : isMethodology
+    ? "bg-amber-500/10 text-amber-500 shadow-[0_4px_15px_rgba(245,158,11,0.15)] amber-text-glow"
     : "bg-primary/10 text-primary shadow-[0_4px_15px_rgba(0,242,255,0.15)] cyan-text-glow";
 
   const iconClass = isGlobal 
     ? (isActive ? "text-emerald-400 scale-110" : "group-hover:text-emerald-400 group-hover:scale-110")
+    : isMethodology
+    ? (isActive ? "text-amber-500 scale-110" : "group-hover:text-amber-500 group-hover:scale-110")
     : (isActive ? "text-primary scale-110" : "group-hover:text-primary group-hover:scale-110");
 
   return (
@@ -257,7 +287,7 @@ function SidebarLink({ item, isActive, isGlobal }: { item: NavItem; isActive: bo
         {isActive && (
           <div className={cn(
             "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-3/5 rounded-full",
-            isGlobal ? "bg-emerald-500" : "bg-primary"
+            isGlobal ? "bg-emerald-500" : isMethodology ? "bg-amber-500" : "bg-primary"
           )} />
         )}
       </Link>
