@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -31,7 +32,9 @@ import {
   GitBranch,
   Library,
   CalendarDays,
-  PencilLine
+  PencilLine,
+  Trophy,
+  Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
@@ -69,9 +72,9 @@ const navItems: NavItem[] = [
   { title: "Items Aprendizaje", href: "/dashboard/methodology/learning-items", icon: BookOpen, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director"] },
   { title: "Objetivos", href: "/dashboard/methodology/objectives", icon: Target, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director"] },
   { title: "Planificador Ciclos", href: "/dashboard/methodology/cycle-planner", icon: GitBranch, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director"] },
-  { title: "Pizarra Partido", href: "/dashboard/methodology/board-match", icon: Monitor, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
-  { title: "Pizarra Ejercicios", href: "/dashboard/methodology/board-exercises", icon: PencilLine, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
-  { title: "Pizarra Promo", href: "/dashboard/methodology/board-promo", icon: Zap, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
+  { title: "Pizarra Partido", href: "/board/match", icon: Trophy, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
+  { title: "Pizarra Ejercicios", href: "/board/training", icon: Sparkles, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
+  { title: "Pizarra Promo", href: "/board/promo", icon: Zap, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
   { title: "Biblioteca (Sin IA)", href: "/dashboard/methodology/exercise-library", icon: Library, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
   { title: "Planif. Sesiones", href: "/dashboard/methodology/session-planner", icon: CalendarDays, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
 
@@ -83,7 +86,7 @@ const navItems: NavItem[] = [
   { title: "Staff", href: "/dashboard/staff", icon: UserCog, category: "operational" },
   { title: "Cantera", href: "/dashboard/academy", icon: Sprout, category: "operational" },
   { title: "Jugadores", href: "/dashboard/players", icon: Users, category: "operational" },
-  { title: "Tactical Board", href: "/board", icon: Monitor, category: "operational" },
+  { title: "Tactical Board", href: "/board/match", icon: Monitor, category: "operational" },
   { title: "Biblioteca Táctica", href: "/dashboard/coach/exercises", icon: Dumbbell, category: "operational" },
   { title: "Neural Planner", href: "/dashboard/coach/planner", icon: Activity, category: "operational" },
   

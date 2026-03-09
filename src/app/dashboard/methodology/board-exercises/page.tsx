@@ -1,24 +1,55 @@
 
 "use client";
 
-import { PencilLine, Sparkles } from "lucide-react";
+import { Sparkles, ArrowRight, LayoutGrid, Cpu } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
-export default function BoardExercisesPage() {
+export default function BoardExercisesLauncher() {
   return (
     <div className="space-y-8 animate-in fade-in duration-1000 p-8 lg:p-12">
       <div className="flex flex-col gap-2 border-b border-white/5 pb-6">
         <div className="flex items-center gap-3">
-          <PencilLine className="h-5 w-5 text-amber-500 animate-pulse" />
-          <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase">Exercise_Designer_Pro</span>
+          <Sparkles className="h-5 w-5 text-amber-500 animate-pulse" />
+          <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase">Launcher_Exercise_Designer</span>
         </div>
         <h1 className="text-4xl font-headline font-black text-white uppercase italic tracking-tighter amber-text-glow">
           PIZARRA_DE_EJERCICIOS
         </h1>
       </div>
       
-      <div className="p-20 text-center space-y-4 border border-dashed border-amber-500/20 bg-amber-500/5 rounded-[3rem]">
-         <Sparkles className="h-12 w-12 text-amber-500/20 mx-auto animate-pulse" />
-         <p className="text-[10px] font-black text-amber-500/40 uppercase tracking-[1em]">Diseño técnico de módulos de trabajo</p>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center pt-12">
+        <div className="aspect-video bg-black border border-amber-500/20 rounded-[3rem] overflow-hidden relative group order-last lg:order-first">
+           <div className="absolute inset-0 bg-grid-pattern opacity-10" />
+           <div className="absolute inset-0 flex items-center justify-center">
+              <LayoutGrid className="h-32 w-32 text-amber-500/5 group-hover:scale-110 transition-transform duration-1000" />
+           </div>
+           <div className="absolute bottom-8 left-8 right-8 p-6 bg-black/60 backdrop-blur-xl border border-white/5 rounded-2xl">
+              <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-1">Módulo Neural IA</p>
+              <p className="text-xs font-black text-white uppercase italic">Sincronización con Gemini 1.5 Flash activa</p>
+           </div>
+        </div>
+
+        <div className="space-y-8">
+           <div className="space-y-4">
+              <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">Diseño de Tareas de Alto Rendimiento</h2>
+              <p className="text-white/40 font-bold uppercase text-xs leading-loose tracking-widest">
+                Utilice el entorno de dibujo libre para diagramar sus ejercicios. El sistema integra una biblioteca de material técnico y sincronización IA para generar descripciones y variantes automáticamente.
+              </p>
+           </div>
+           
+           <div className="flex flex-col gap-4">
+              <Button className="h-20 bg-amber-500 text-black font-black uppercase text-xs tracking-[0.3em] rounded-3xl amber-glow hover:scale-[1.02] transition-all border-none" asChild>
+                <Link href="/board/training">
+                  <Sparkles className="h-5 w-5 mr-3" /> ABRIR ESTUDIO DE DISEÑO IA
+                </Link>
+              </Button>
+              <div className="flex items-center gap-3 px-6 py-4 bg-white/5 border border-white/5 rounded-2xl">
+                 <Cpu className="h-4 w-4 text-amber-500/40" />
+                 <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">Sincronizado con Biblioteca de Club</span>
+              </div>
+           </div>
+        </div>
       </div>
     </div>
   );
