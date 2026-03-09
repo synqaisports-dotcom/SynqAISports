@@ -1,12 +1,13 @@
-
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Trophy, Clock, Save, LayoutGrid, Play, Pause, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { TacticalField, FieldType } from "@/components/board/TacticalField";
 import { BoardToolbar } from "@/components/board/BoardToolbar";
+import { PlayerChip } from "@/components/board/PlayerChip";
+import { FORMATIONS_DATA } from "@/lib/formations";
 import { 
   Select, 
   SelectContent, 
@@ -24,8 +25,6 @@ const TIME_PRESETS = [
   { label: "45 min", value: 45 },
 ];
 
-const FORMATIONS = ["4-3-3", "4-4-2", "3-5-2", "4-2-3-1", "5-3-2", "3-4-3"];
-
 type TacticalPhase = "defensa" | "tda" | "ataque" | "tad";
 
 export default function MatchBoardPage() {
@@ -36,8 +35,21 @@ export default function MatchBoardPage() {
   
   const [homePhase, setHomePhase] = useState<TacticalPhase>("defensa");
   const [guestPhase, setGuestPhase] = useState<TacticalPhase>("defensa");
+  
+  // Formaciones iniciales segun campo
   const [homeFormation, setHomeFormation] = useState("4-3-3");
-  const [guestFormation, setGuestFormation] = useState("4-4-2");
+  const [guestFormation, setGuestFormation] = useState("4-3-3");
+
+  // Ajustar formacion cuando cambia el campo
+  useEffect(() => {
+    const defaultFormations: Record<FieldType, string> = {
+      f11: "4-3-3",
+      f7: "3-2-1",
+      futsal: "1-2-1"
+    };
+    setHomeFormation(defaultFormations[fieldType]);
+    setGuestFormation(defaultFormations[fieldType]);
+  }, [fieldType]);
 
   useEffect(() => {
     let interval: any;
@@ -61,6 +73,49 @@ export default function MatchBoardPage() {
     setIsRunning(false);
     setTimeLeft(parseInt(minutes) * 60);
   };
+
+  // Cálculo de posiciones de jugadores
+  const getPlayerPositions = (team: "local" | "visitor", formation: string, phase: TacticalPhase) => {
+    const baseCoords = FORMATIONS_DATA[fieldType][formation] || FORMATIONS_DATA[fieldType][Object.keys(FORMATIONS_DATA[fieldType])[0]];
+    
+    // Offset de fase (movimiento de bloque)
+    let phaseOffset = 0;
+    if (phase === "defensa") phaseOffset = -0.1;
+    if (phase === "ataque") phaseOffset = 0.15;
+    if (phase === "tda") phaseOffset = 0.05;
+    if (phase === "tad") phaseOffset = -0.05;
+
+    return baseCoords.map((pos, idx) => {
+      let finalX, finalY;
+      
+      if (team === "local") {
+        // Local juega de izquierda a derecha (0 a 0.5)
+        // Escalamos el 0-1 de la formación a la mitad del campo (0.05 a 0.45)
+        finalX = (pos.x * 0.45) + (phaseOffset * 0.2);
+        finalY = pos.y;
+      } else {
+        // Visitante juega de derecha a izquierda (1.0 a 0.5)
+        // Espejamos la X y la movemos a la derecha (0.55 a 0.95)
+        finalX = 1 - (pos.x * 0.45) - (phaseOffset * 0.2);
+        finalY = 1 - pos.y; // Espejamos Y para que el dibujo no sea idéntico
+      }
+
+      // Clamp para no salirse del campo
+      finalX = Math.max(0.02, Math.min(0.98, finalX));
+      
+      return {
+        id: `${team}-${idx}`,
+        number: idx + 1,
+        x: finalX * 100,
+        y: finalY * 100
+      };
+    });
+  };
+
+  const homePlayers = useMemo(() => getPlayerPositions("local", homeFormation, homePhase), [homeFormation, homePhase, fieldType]);
+  const guestPlayers = useMemo(() => getPlayerPositions("visitor", guestFormation, guestPhase), [guestFormation, guestPhase, fieldType]);
+
+  const currentFormations = useMemo(() => Object.keys(FORMATIONS_DATA[fieldType]), [fieldType]);
 
   return (
     <div className="flex-1 flex flex-col bg-black overflow-hidden font-body relative">
@@ -91,7 +146,6 @@ export default function MatchBoardPage() {
           </div>
         </div>
 
-        {/* SCOREBOARD CENTRAL MINIMALISTA */}
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-4 px-6 py-2 bg-primary/5 border border-primary/20 rounded-[2rem] shadow-[0_0_30px_rgba(0,242,255,0.05)]">
           <div className="flex items-center gap-3">
             <span className="text-[9px] font-black text-white/30 uppercase tracking-widest hidden sm:block">L</span>
@@ -166,11 +220,19 @@ export default function MatchBoardPage() {
         <BoardToolbar theme="cyan" className="absolute left-6 top-1/2 -translate-y-1/2 z-50 hidden sm:flex" />
         
         <main className="flex-1 relative overflow-hidden">
-          <TacticalField theme="cyan" fieldType={fieldType} />
+          <TacticalField theme="cyan" fieldType={fieldType}>
+            {/* RENDERIZADO DE JUGADORES */}
+            {homePlayers.map(p => (
+              <PlayerChip key={p.id} team="local" number={p.number} x={p.x} y={p.y} />
+            ))}
+            {guestPlayers.map(p => (
+              <PlayerChip key={p.id} team="visitor" number={p.number} x={p.x} y={p.y} />
+            ))}
+          </TacticalField>
 
-          {/* BOTONERAS TÁCTICAS DUALES (ESPEJO) */}
+          {/* BOTONERAS TÁCTICAS DUALES */}
           <div className="absolute top-6 left-24 right-24 flex justify-between pointer-events-none z-40">
-            {/* PANEL LOCAL (CYAN) */}
+            {/* PANEL LOCAL */}
             <div className="pointer-events-auto flex items-center gap-3">
               <div className="glass-panel p-1 border-primary/30 flex items-center gap-2 rounded-2xl">
                 <div className="bg-primary/10 px-3 py-2 rounded-xl border border-primary/20">
@@ -181,7 +243,7 @@ export default function MatchBoardPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-[#0a0f18] border-primary/20">
-                    {FORMATIONS.map(f => <SelectItem key={f} value={f} className="text-[10px] font-black uppercase">{f}</SelectItem>)}
+                    {currentFormations.map(f => <SelectItem key={f} value={f} className="text-[10px] font-black uppercase">{f}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -193,7 +255,7 @@ export default function MatchBoardPage() {
               </div>
             </div>
 
-            {/* PANEL VISITANTE (ROJO ELÉCTRICO) */}
+            {/* PANEL VISITANTE */}
             <div className="pointer-events-auto flex flex-row-reverse items-center gap-3">
               <div className="glass-panel p-1 border-rose-500/30 flex flex-row-reverse items-center gap-2 rounded-2xl">
                 <div className="bg-rose-500/10 px-3 py-2 rounded-xl border border-rose-500/20">
@@ -204,7 +266,7 @@ export default function MatchBoardPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-[#0a0f18] border-rose-500/20">
-                    {FORMATIONS.map(f => <SelectItem key={f} value={f} className="text-[10px] font-black uppercase">{f}</SelectItem>)}
+                    {currentFormations.map(f => <SelectItem key={f} value={f} className="text-[10px] font-black uppercase">{f}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
