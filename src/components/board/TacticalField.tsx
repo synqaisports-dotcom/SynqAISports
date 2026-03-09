@@ -27,7 +27,8 @@ export function TacticalField({
   
   // Configuración de superficie según el tipo
   const isFutsal = fieldType === "futsal";
-  const bgClass = isFutsal ? "bg-[#0a2e5c]" : "bg-[#143d14]"; // Azul técnico para Futsal
+  const isF7 = fieldType === "f7";
+  const bgClass = isFutsal ? "bg-[#0a2e5c]" : "bg-[#143d14]"; // Azul técnico para Futsal, Verde para Fútbol
   const aspectRatio = isFutsal ? "aspect-[40/20]" : "aspect-[105/68]";
   
   return (
@@ -85,6 +86,14 @@ export function TacticalField({
               <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[5.5%] h-[26%] border border-white/30 border-r-0" />
               <div className="absolute top-1/2 right-[10.5%] -translate-y-1/2 w-1 h-1 bg-white/50 rounded-full" />
               <div className="absolute top-1/2 right-[15.5%] -translate-y-1/2 w-[8%] h-[20%] border border-white/30 border-r-0 rounded-l-full" />
+
+              {/* LÍNEAS DE FUERA DE JUEGO (SÓLO F7) */}
+              {isF7 && (
+                <>
+                  <div className="absolute top-0 left-[15.5%] bottom-0 w-[1px] border-l border-dashed border-white/20" />
+                  <div className="absolute top-0 right-[15.5%] bottom-0 w-[1px] border-r border-dashed border-white/20" />
+                </>
+              )}
             </>
           ) : (
             /* GEOMETRÍA FÚTBOL SALA */
