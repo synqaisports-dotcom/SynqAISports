@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Trophy, Clock, Save, LayoutGrid, Play, Pause, RotateCcw, Timer, ChevronDown } from "lucide-react";
+import { Trophy, Clock, Save, LayoutGrid, Play, Pause, RotateCcw, Shield, Zap, Target, Swords, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { TacticalField, FieldType } from "@/components/board/TacticalField";
@@ -24,11 +24,21 @@ const TIME_PRESETS = [
   { label: "45 min", value: 45 },
 ];
 
+const FORMATIONS = ["4-3-3", "4-4-2", "3-5-2", "4-2-3-1", "5-3-2", "3-4-3"];
+
+type TacticalPhase = "defensa" | "tda" | "ataque" | "tad";
+
 export default function MatchBoardPage() {
   const [timeLeft, setTimeLeft] = useState(45 * 60);
   const [isRunning, setIsRunning] = useState(false);
   const [score, setScore] = useState({ home: 0, guest: 0 });
   const [fieldType, setFieldType] = useState<FieldType>("f11");
+  
+  // Estado de Fases Tácticas
+  const [homePhase, setHomePhase] = useState<TacticalPhase>("defensa");
+  const [guestPhase, setGuestPhase] = useState<TacticalPhase>("defensa");
+  const [homeFormation, setHomeFormation] = useState("4-3-3");
+  const [guestFormation, setGuestFormation] = useState("4-4-2");
 
   useEffect(() => {
     let interval: any;
@@ -83,9 +93,8 @@ export default function MatchBoardPage() {
           </div>
         </div>
 
-        {/* TERMINAL CENTRAL: MARCADOR Y CRONÓMETRO (MINIMALISTA) */}
+        {/* TERMINAL CENTRAL: MARCADOR Y CRONÓMETRO */}
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-4 px-6 py-2 bg-primary/5 border border-primary/20 rounded-[2rem] shadow-[0_0_30px_rgba(0,242,255,0.05)]">
-          {/* LOCAL */}
           <div className="flex items-center gap-3">
             <span className="text-[9px] font-black text-white/30 uppercase tracking-widest hidden sm:block">L</span>
             <div className="flex items-center gap-2">
@@ -97,7 +106,6 @@ export default function MatchBoardPage() {
 
           <div className="w-[1px] h-10 bg-white/10 mx-2" />
 
-          {/* CRONÓMETRO CENTRAL */}
           <div className="flex flex-col items-center justify-center min-w-[120px] group">
             <div className="flex items-center gap-2 mb-0.5">
               <span className={cn(
@@ -139,7 +147,6 @@ export default function MatchBoardPage() {
 
           <div className="w-[1px] h-10 bg-white/10 mx-2" />
 
-          {/* VISITANTE */}
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <button onClick={() => setScore(s => ({...s, guest: Math.max(0, s.guest - 1)}))} className="h-6 w-6 flex items-center justify-center rounded-lg border border-primary/10 text-primary/40 hover:text-primary hover:border-primary/40 transition-all active:scale-90">-</button>
@@ -150,7 +157,6 @@ export default function MatchBoardPage() {
           </div>
         </div>
 
-        {/* ACCIONES DERECHA */}
         <div className="flex items-center gap-3 shrink-0">
           <Button className="h-11 bg-primary text-black font-black uppercase text-[10px] tracking-[0.2em] px-6 rounded-xl cyan-glow border-none hover:scale-105 transition-all">
             <Save className="h-4 w-4 mr-2" /> <span className="hidden md:inline">Guardar</span>
@@ -162,11 +168,78 @@ export default function MatchBoardPage() {
         {/* BARRA DE HERRAMIENTAS FLOTANTE IZQUIERDA */}
         <BoardToolbar theme="cyan" className="absolute left-6 top-1/2 -translate-y-1/2 z-50 hidden sm:flex" />
         
-        {/* CAMPO TÁCTICO OCUPANDO EL 100% */}
+        {/* CAMPO TÁCTICO */}
         <main className="flex-1 relative overflow-hidden">
           <TacticalField theme="cyan" fieldType={fieldType} />
+
+          {/* BOTONERAS TÁCTICAS SUPERIORES */}
+          <div className="absolute top-6 left-24 right-24 flex justify-between pointer-events-none z-40">
+            {/* PANEL LOCAL */}
+            <div className="pointer-events-auto flex flex-col gap-3">
+              <div className="glass-panel p-1 border-primary/30 flex items-center gap-2 rounded-2xl">
+                <div className="bg-primary/10 px-3 py-2 rounded-xl border border-primary/20">
+                  <span className="text-[10px] font-black text-primary uppercase italic tracking-tighter">LOCAL</span>
+                </div>
+                <Select value={homeFormation} onValueChange={setHomeFormation}>
+                  <SelectTrigger className="h-9 w-24 bg-transparent border-none text-[10px] font-bold text-white/60 focus:ring-0">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#0a0f18] border-primary/20">
+                    {FORMATIONS.map(f => <SelectItem key={f} value={f} className="text-[10px] font-black uppercase">{f}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex gap-1 bg-black/40 backdrop-blur-md p-1 rounded-xl border border-white/5 shadow-2xl">
+                <PhaseButton label="DEF" active={homePhase === "defensa"} onClick={() => setHomePhase("defensa")} color="cyan" />
+                <PhaseButton label="T.D.A" active={homePhase === "tda"} onClick={() => setHomePhase("tda")} color="cyan" />
+                <PhaseButton label="ATQ" active={homePhase === "ataque"} onClick={() => setHomePhase("ataque")} color="cyan" />
+                <PhaseButton label="T.A.D" active={homePhase === "tad"} onClick={() => setHomePhase("tad")} color="cyan" />
+              </div>
+            </div>
+
+            {/* PANEL VISITANTE */}
+            <div className="pointer-events-auto flex flex-col gap-3 items-end">
+              <div className="glass-panel p-1 border-white/10 flex flex-row-reverse items-center gap-2 rounded-2xl">
+                <div className="bg-white/10 px-3 py-2 rounded-xl border border-white/20">
+                  <span className="text-[10px] font-black text-white/60 uppercase italic tracking-tighter">VISITANTE</span>
+                </div>
+                <Select value={guestFormation} onValueChange={setGuestFormation}>
+                  <SelectTrigger className="h-9 w-24 bg-transparent border-none text-[10px] font-bold text-white/60 text-right focus:ring-0">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#0a0f18] border-white/10">
+                    {FORMATIONS.map(f => <SelectItem key={f} value={f} className="text-[10px] font-black uppercase">{f}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex gap-1 bg-black/40 backdrop-blur-md p-1 rounded-xl border border-white/5 shadow-2xl">
+                <PhaseButton label="DEF" active={guestPhase === "defensa"} onClick={() => setGuestPhase("defensa")} color="white" />
+                <PhaseButton label="T.D.A" active={guestPhase === "tda"} onClick={() => setGuestPhase("tda")} color="white" />
+                <PhaseButton label="ATQ" active={guestPhase === "ataque"} onClick={() => setGuestPhase("ataque")} color="white" />
+                <PhaseButton label="T.A.D" active={guestPhase === "tad"} onClick={() => setGuestPhase("tad")} color="white" />
+              </div>
+            </div>
+          </div>
         </main>
       </div>
     </div>
+  );
+}
+
+function PhaseButton({ label, active, onClick, color }: { label: string, active: boolean, onClick: () => void, color: "cyan" | "white" }) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-tighter transition-all duration-300",
+        active 
+          ? (color === "cyan" 
+              ? "bg-primary text-black shadow-[0_0_15px_rgba(0,242,255,0.4)]" 
+              : "bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.4)]")
+          : "text-white/20 hover:text-white/40 hover:bg-white/5"
+      )}
+    >
+      {label}
+    </button>
   );
 }
