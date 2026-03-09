@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -36,11 +37,9 @@ export default function MatchBoardPage() {
   const [homePhase, setHomePhase] = useState<TacticalPhase>("defensa");
   const [guestPhase, setGuestPhase] = useState<TacticalPhase>("defensa");
   
-  // Formaciones iniciales segun campo
   const [homeFormation, setHomeFormation] = useState("4-3-3");
   const [guestFormation, setGuestFormation] = useState("4-3-3");
 
-  // Ajustar formacion cuando cambia el campo
   useEffect(() => {
     const defaultFormations: Record<FieldType, string> = {
       f11: "4-3-3",
@@ -74,33 +73,61 @@ export default function MatchBoardPage() {
     setTimeLeft(parseInt(minutes) * 60);
   };
 
-  // Cálculo de posiciones de jugadores
   const getPlayerPositions = (team: "local" | "visitor", formation: string, phase: TacticalPhase) => {
     const baseCoords = FORMATIONS_DATA[fieldType][formation] || FORMATIONS_DATA[fieldType][Object.keys(FORMATIONS_DATA[fieldType])[0]];
     
-    // Offset de fase (movimiento de bloque)
-    let phaseOffset = 0;
-    if (phase === "defensa") phaseOffset = -0.1;
-    if (phase === "ataque") phaseOffset = 0.15;
-    if (phase === "tda") phaseOffset = 0.05;
-    if (phase === "tad") phaseOffset = -0.05;
+    // Coordenadas críticas (Margen 4% + Área 15.5%)
+    const ownAreaLimit = 0.195;
+    const oppAreaLimit = 0.805;
 
     return baseCoords.map((pos, idx) => {
       let finalX, finalY;
       
+      // Factor de desplazamiento por fase (Bloque)
+      let phaseShift = 0;
+      if (phase === "defensa") phaseShift = -0.15;
+      if (phase === "tda") phaseShift = 0.05;
+      if (phase === "ataque") phaseShift = 0.25;
+      if (phase === "tad") phaseShift = -0.05;
+
       if (team === "local") {
-        // Local juega de izquierda a derecha (0 a 0.5)
-        // Escalamos el 0-1 de la formación a la mitad del campo (0.05 a 0.45)
-        finalX = (pos.x * 0.45) + (phaseOffset * 0.2);
+        // Mapeo Local (Izquierda a Derecha)
+        // Escalamos el 0-1 de la formación a todo el campo útil (0.05 a 0.95)
+        finalX = 0.05 + (pos.x * 0.9) + phaseShift;
         finalY = pos.y;
+
+        // RESTRICCIONES TÁCTICAS SOLICITADAS
+        if (phase === "ataque") {
+          // En ataque, los delanteros no pasan del área grande rival
+          finalX = Math.min(finalX, oppAreaLimit);
+        }
+        if (phase === "defensa") {
+          // En defensa, los defensas no pasan del área grande propia (se quedan al borde)
+          if (pos.x < 0.4) { // Jugadores de perfil defensivo
+            finalX = Math.max(finalX, 0.05); // No salirse por el fondo
+            finalX = Math.min(finalX, ownAreaLimit);
+          }
+        }
       } else {
-        // Visitante juega de derecha a izquierda (1.0 a 0.5)
-        // Espejamos la X y la movemos a la derecha (0.55 a 0.95)
-        finalX = 1 - (pos.x * 0.45) - (phaseOffset * 0.2);
-        finalY = 1 - pos.y; // Espejamos Y para que el dibujo no sea idéntico
+        // Mapeo Visitante (Derecha a Izquierda - Espejo)
+        finalX = 0.95 - (pos.x * 0.9) - phaseShift;
+        finalY = 1 - pos.y;
+
+        // RESTRICCIONES TÁCTICAS SOLICITADAS (Espejo)
+        if (phase === "ataque") {
+          // El ataque visitante va hacia la izquierda (área rival en 0.195)
+          finalX = Math.max(finalX, ownAreaLimit);
+        }
+        if (phase === "defensa") {
+          // La defensa visitante protege su área derecha (área propia en 0.805)
+          if (pos.x < 0.4) {
+            finalX = Math.min(finalX, 0.95);
+            finalX = Math.max(finalX, oppAreaLimit);
+          }
+        }
       }
 
-      // Clamp para no salirse del campo
+      // Clamp final de seguridad para evitar que salgan del canvas
       finalX = Math.max(0.02, Math.min(0.98, finalX));
       
       return {
@@ -221,7 +248,6 @@ export default function MatchBoardPage() {
         
         <main className="flex-1 relative overflow-hidden">
           <TacticalField theme="cyan" fieldType={fieldType}>
-            {/* RENDERIZADO DE JUGADORES */}
             {homePlayers.map(p => (
               <PlayerChip key={p.id} team="local" number={p.number} x={p.x} y={p.y} />
             ))}
@@ -230,9 +256,7 @@ export default function MatchBoardPage() {
             ))}
           </TacticalField>
 
-          {/* BOTONERAS TÁCTICAS DUALES */}
           <div className="absolute top-6 left-24 right-24 flex justify-between pointer-events-none z-40">
-            {/* PANEL LOCAL */}
             <div className="pointer-events-auto flex items-center gap-3">
               <div className="glass-panel p-1 border-primary/30 flex items-center gap-2 rounded-2xl">
                 <div className="bg-primary/10 px-3 py-2 rounded-xl border border-primary/20">
@@ -255,7 +279,6 @@ export default function MatchBoardPage() {
               </div>
             </div>
 
-            {/* PANEL VISITANTE */}
             <div className="pointer-events-auto flex flex-row-reverse items-center gap-3">
               <div className="glass-panel p-1 border-rose-500/30 flex flex-row-reverse items-center gap-2 rounded-2xl">
                 <div className="bg-rose-500/10 px-3 py-2 rounded-xl border border-rose-500/20">
