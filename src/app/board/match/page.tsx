@@ -94,37 +94,39 @@ export default function MatchBoardPage() {
       let phaseShift = 0;
       let yShift = 0;
 
-      // LÓGICA DE BASCULACIÓN
-      if (lateral === "left") yShift = -0.15;
-      else if (lateral === "right") yShift = 0.15;
+      // LOS PORTEROS NO BASCULAN NI SE MUEVEN POR FASE SEGÚN PROTOCOLO ACTUAL
+      if (!isGK) {
+        // LÓGICA DE BASCULACIÓN (Solo jugadores de campo)
+        if (lateral === "left") yShift = -0.15;
+        else if (lateral === "right") yShift = 0.15;
 
-      if (phase === "defensa") {
-        if (isDEF) phaseShift = -0.15;
-        else if (isMID) phaseShift = -0.12;
-        else if (isATK) phaseShift = -0.08;
-      } else if (phase === "tda") {
-        if (isDEF) phaseShift = 0.05;
-        else if (isMID) phaseShift = 0.08;
-        else if (isATK) phaseShift = 0.12;
-      } else if (phase === "ataque") {
-        if (isDEF) phaseShift = 0.15;
-        else if (isMID) phaseShift = 0.20;
-        else if (isATK) phaseShift = 0.28;
-      } else if (phase === "tad") {
-        if (isDEF) phaseShift = -0.05;
-        else if (isMID) phaseShift = -0.08;
-        else if (isATK) phaseShift = -0.12;
-      } else if (phase === "salida") {
-        // En salida, los defensas se pegan al área pero se abren
-        if (isDEF) {
-          phaseShift = -0.10; 
-          yShift = idx % 2 === 0 ? -0.2 : 0.2; // Apertura de centrales
+        if (phase === "defensa") {
+          if (isDEF) phaseShift = -0.15;
+          else if (isMID) phaseShift = -0.12;
+          else if (isATK) phaseShift = -0.08;
+        } else if (phase === "tda") {
+          if (isDEF) phaseShift = 0.05;
+          else if (isMID) phaseShift = 0.08;
+          else if (isATK) phaseShift = 0.12;
+        } else if (phase === "ataque") {
+          if (isDEF) phaseShift = 0.15;
+          else if (isMID) phaseShift = 0.20;
+          else if (isATK) phaseShift = 0.28;
+        } else if (phase === "tad") {
+          if (isDEF) phaseShift = -0.05;
+          else if (isMID) phaseShift = -0.08;
+          else if (isATK) phaseShift = -0.12;
+        } else if (phase === "salida") {
+          if (isDEF) {
+            phaseShift = -0.10; 
+            yShift = idx % 2 === 0 ? -0.2 : 0.2; // Apertura de centrales
+          }
         }
       }
 
       if (team === "local") {
-        finalX = 0.05 + (pos.x * 0.9) + phaseShift;
-        finalY = pos.y + yShift;
+        finalX = 0.05 + (pos.x * 0.9) + (isGK ? 0 : phaseShift);
+        finalY = pos.y + (isGK ? 0 : yShift);
 
         if (!isGK) {
           finalX = Math.max(finalX, innerAreaLimit);
@@ -134,12 +136,14 @@ export default function MatchBoardPage() {
             if (isDEF) finalX = Math.min(finalX, 0.55);
           }
         } else {
+          // Portero local fijo en su sitio
           finalX = Math.max(0.02, Math.min(0.12, finalX));
+          finalY = pos.y; // Centrado según formación
         }
       } else {
-        // Visitante (Espejo) - Basculación también invertida en Y para coherencia
-        finalX = 0.95 - (pos.x * 0.9) - phaseShift;
-        finalY = (1 - pos.y) - yShift;
+        // Visitante (Espejo)
+        finalX = 0.95 - (pos.x * 0.9) - (isGK ? 0 : phaseShift);
+        finalY = (1 - pos.y) - (isGK ? 0 : yShift);
 
         if (!isGK) {
           finalX = Math.min(finalX, outerAreaLimit);
@@ -149,10 +153,13 @@ export default function MatchBoardPage() {
             if (isDEF) finalX = Math.max(finalX, 0.45);
           }
         } else {
+          // Portero visitante fijo en su sitio
           finalX = Math.min(0.98, Math.max(0.88, finalX));
+          finalY = 1 - pos.y; // Centrado según formación
         }
       }
 
+      // Clamping final para seguridad
       finalX = Math.max(0.02, Math.min(0.98, finalX));
       finalY = Math.max(0.05, Math.min(0.95, finalY));
       
