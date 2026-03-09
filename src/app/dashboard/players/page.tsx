@@ -243,7 +243,7 @@ export default function PlayersManagementPage() {
         
         <Button 
           onClick={handleOpenCreate}
-          className="rounded-none bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none"
+          className="rounded-none bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 active:scale-95 transition-all border-none"
         >
           <UserPlus className="h-4 w-4 mr-2" /> Nueva Inscripción
         </Button>
@@ -357,7 +357,7 @@ export default function PlayersManagementPage() {
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-9 w-9 text-primary hover:bg-primary/10 border border-primary/10 transition-all"
+                            className="h-9 w-9 text-primary hover:bg-primary/10 border border-primary/10 transition-all active:scale-90"
                             onClick={() => handleEdit(player)}
                             title="Modificar Atleta"
                           >
@@ -366,7 +366,7 @@ export default function PlayersManagementPage() {
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-9 w-9 text-rose-500 hover:bg-rose-500/10 border border-rose-500/10 transition-all"
+                            className="h-9 w-9 text-rose-500 hover:bg-rose-500/10 border border-rose-500/10 transition-all active:scale-90"
                             onClick={() => handleDelete(player.id, player.name)}
                             title="Desvincular Atleta"
                           >
@@ -525,7 +525,7 @@ export default function PlayersManagementPage() {
                       type="button"
                       onClick={() => togglePosition(pos.id)}
                       className={cn(
-                        "h-10 border font-black text-[10px] transition-all flex items-center justify-center rounded-sm",
+                        "h-10 border font-black text-[10px] transition-all flex items-center justify-center rounded-sm active:scale-95",
                         formData.position.includes(pos.id)
                           ? "bg-primary border-primary text-black shadow-[0_0_15px_rgba(0,242,255,0.3)]"
                           : "bg-white/5 border-primary/20 text-primary/40 hover:border-primary/40 hover:text-primary"
@@ -634,14 +634,14 @@ export default function PlayersManagementPage() {
 
           <div className="p-10 bg-black/40 border-t border-white/5 flex gap-4">
             <SheetClose asChild>
-              <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary/60 font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 transition-all">
+              <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary/60 font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 transition-all active:scale-95">
                 CANCELAR
               </Button>
             </SheetClose>
             <Button 
               onClick={handleSavePlayer}
               disabled={loading}
-              className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-none shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] transition-all border-none"
+              className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-none shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] active:scale-95 transition-all border-none"
             >
               {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (editingId ? "SINCRONIZAR_FICHA" : "VINCULAR_ATLETA")}
             </Button>
