@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -26,7 +25,8 @@ import {
   Stethoscope,
   ShieldAlert,
   Camera,
-  X
+  X,
+  Clock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -95,10 +95,10 @@ const TACTICAL_POSITIONS = [
 ];
 
 const INITIAL_PLAYERS = [
-  { id: "p1", name: "Lucas", surname: "García", email: "l.garcia@tutor.com", category: "Infantil", teamSuffix: "A", position: "MC, MCO", status: "Active", attendance: "98%", isMinor: true, tutorName: "MARÍA", tutorSurname: "GARCÍA", tutorPhone: "600 000 001", tutorEmail: "m.garcia@tutor.com", photoUrl: "" },
-  { id: "p2", name: "Elena", surname: "Rossi", email: "e.rossi@tutor.it", category: "Alevín", teamSuffix: "B", position: "DC", status: "Active", attendance: "92%", isMinor: true, tutorName: "PAOLO", tutorSurname: "ROSSI", tutorPhone: "+39 300 000 000", tutorEmail: "p.rossi@tutor.it", photoUrl: "" },
-  { id: "p3", name: "Marc", surname: "Soler", email: "m.soler@tutor.es", category: "Cadete", teamSuffix: "C", position: "POR", status: "Injured", attendance: "45%", isMinor: false, photoUrl: "" },
-  { id: "p4", name: "Sofía", surname: "Mendes", email: "s.mendes@tutor.br", category: "Benjamín", teamSuffix: "A", position: "DFC, LD", status: "Active", attendance: "100%", isMinor: true, tutorName: "LUIS", tutorSurname: "MENDES", tutorPhone: "+55 11 0000 0000", tutorEmail: "l.mendes@tutor.br", photoUrl: "" },
+  { id: "p1", name: "Lucas", surname: "García", email: "l.garcia@tutor.com", category: "Infantil", teamSuffix: "A", position: "MC, MCO", status: "Active", attendance: "98%", isMinor: true, tutorName: "MARÍA", tutorSurname: "GARCÍA", tutorPhone: "600 000 001", tutorEmail: "m.garcia@tutor.com", photoUrl: "", birthDate: "2011-05-15", joinDate: "2023-09-01" },
+  { id: "p2", name: "Elena", surname: "Rossi", email: "e.rossi@tutor.it", category: "Alevín", teamSuffix: "B", position: "DC", status: "Active", attendance: "92%", isMinor: true, tutorName: "PAOLO", tutorSurname: "ROSSI", tutorPhone: "+39 300 000 000", tutorEmail: "p.rossi@tutor.it", photoUrl: "", birthDate: "2013-02-20", joinDate: "2024-01-10" },
+  { id: "p3", name: "Marc", surname: "Soler", email: "m.soler@tutor.es", category: "Cadete", teamSuffix: "C", position: "POR", status: "Injured", attendance: "45%", isMinor: false, photoUrl: "", birthDate: "2009-11-05", joinDate: "2022-08-15" },
+  { id: "p4", name: "Sofía", surname: "Mendes", email: "s.mendes@tutor.br", category: "Benjamín", teamSuffix: "A", position: "DFC, LD", status: "Active", attendance: "100%", isMinor: true, tutorName: "LUIS", tutorSurname: "MENDES", tutorPhone: "+55 11 0000 0000", tutorEmail: "l.mendes@tutor.br", photoUrl: "", birthDate: "2015-07-30", joinDate: "2024-02-01" },
 ];
 
 export default function PlayersManagementPage() {
@@ -115,6 +115,8 @@ export default function PlayersManagementPage() {
     surname: "",
     email: "",
     photoUrl: "",
+    birthDate: "",
+    joinDate: new Date().toISOString().split('T')[0],
     category: "Alevín",
     teamSuffix: "A",
     position: [] as string[],
@@ -133,6 +135,8 @@ export default function PlayersManagementPage() {
       surname: "", 
       email: "", 
       photoUrl: "",
+      birthDate: "",
+      joinDate: new Date().toISOString().split('T')[0],
       category: "Alevín", 
       teamSuffix: "A",
       position: [], 
@@ -153,6 +157,8 @@ export default function PlayersManagementPage() {
       surname: player.surname,
       email: player.email,
       photoUrl: player.photoUrl || "",
+      birthDate: player.birthDate || "",
+      joinDate: player.joinDate || "",
       category: player.category,
       teamSuffix: player.teamSuffix,
       position: player.position ? player.position.split(", ") : [],
@@ -243,7 +249,7 @@ export default function PlayersManagementPage() {
         
         <Button 
           onClick={handleOpenCreate}
-          className="rounded-none bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 active:scale-95 transition-all border-none"
+          className="rounded-none bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all border-none"
         >
           <UserPlus className="h-4 w-4 mr-2" /> Nueva Inscripción
         </Button>
@@ -474,6 +480,35 @@ export default function PlayersManagementPage() {
                     placeholder="ATLETA@MAIL.COM" 
                     className="pl-10 h-12 bg-white/5 border-primary/20 rounded-none font-bold focus:border-primary transition-all text-primary placeholder:text-primary/20" 
                   />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Fecha Nacimiento</Label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-3.5 h-4 w-4 text-primary/40" />
+                    <Input 
+                      required
+                      type="date"
+                      value={formData.birthDate}
+                      onChange={(e) => setFormData({...formData, birthDate: e.target.value})}
+                      className="pl-10 h-12 bg-white/5 border-primary/20 rounded-none font-bold focus:border-primary transition-all text-primary" 
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Fecha Alta Club</Label>
+                  <div className="relative">
+                    <Clock className="absolute left-3 top-3.5 h-4 w-4 text-primary/40" />
+                    <Input 
+                      required
+                      type="date"
+                      value={formData.joinDate}
+                      onChange={(e) => setFormData({...formData, joinDate: e.target.value})}
+                      className="pl-10 h-12 bg-white/5 border-primary/20 rounded-none font-bold focus:border-primary transition-all text-primary" 
+                    />
+                  </div>
                 </div>
               </div>
 
