@@ -13,6 +13,7 @@ interface TacticalFieldProps {
 /**
  * TacticalField - Ingeniería Geométrica FIFA (105x68).
  * Rediseñado con textura de césped profesional y líneas de alta fidelidad.
+ * Versión con Verde Vibrante / Luminoso.
  */
 export function TacticalField({ theme = "cyan", showWatermark, children }: TacticalFieldProps) {
   const accentColor = theme === "cyan" ? "border-primary/30" : "border-amber-500/30";
@@ -23,7 +24,7 @@ export function TacticalField({ theme = "cyan", showWatermark, children }: Tacti
         className={cn(
           "relative w-full h-full max-w-full max-h-full aspect-[105/68] rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.9)] border-2 transition-all duration-700 pointer-events-auto",
           accentColor,
-          "bg-[#050a05]" // Verde base ultra-oscuro "Night Match"
+          "bg-[#143d14]" // Verde vibrante tipo "Champions League Night"
         )}
         style={{
           width: 'min(100%, calc((100vh - 160px) * 105 / 68))',
@@ -31,48 +32,51 @@ export function TacticalField({ theme = "cyan", showWatermark, children }: Tacti
         }}
       >
         {/* EFECTO CÉSPED: Franjas de segado profesional */}
-        <div className="absolute inset-0 opacity-20 bg-[repeating-linear-gradient(90deg,#000_0%,#000_10%,transparent_10%,transparent_20%)]" />
+        <div className="absolute inset-0 opacity-15 bg-[repeating-linear-gradient(90deg,transparent_0%,transparent_10%,#000_10%,#000_20%)]" />
         
+        {/* Capa de iluminación interna para dar volumen y luminosidad */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08)_0%,transparent_80%)]" />
+
         {/* Grilla Técnica de fondo */}
-        <div className="absolute inset-0 bg-grid-pattern opacity-[0.03] pointer-events-none" />
+        <div className="absolute inset-0 bg-grid-pattern opacity-[0.02] pointer-events-none" />
         
         {/* LÍNEAS REGLAMENTARIAS (Sizing Relativo %) */}
-        <div className="absolute inset-[4%] border border-white/20 rounded-sm pointer-events-none">
+        <div className="absolute inset-[4%] border border-white/30 rounded-sm pointer-events-none">
           
           {/* Línea de Medio Campo */}
-          <div className="absolute top-0 left-1/2 w-[1px] h-full bg-white/20 -translate-x-1/2" />
+          <div className="absolute top-0 left-1/2 w-[1px] h-full bg-white/30 -translate-x-1/2" />
           
           {/* Círculo Central */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[18%] aspect-square border border-white/20 rounded-full" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[18%] aspect-square border border-white/30 rounded-full" />
           
           {/* Punto Central */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-1 bg-white/40 rounded-full shadow-[0_0_5px_rgba(255,255,255,0.5)]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-1 bg-white/50 rounded-full shadow-[0_0_5px_rgba(255,255,255,0.5)]" />
 
           {/* LADO IZQUIERDO */}
           {/* Área Grande */}
-          <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[15.5%] h-[60%] border border-white/20 border-l-0" />
+          <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[15.5%] h-[60%] border border-white/30 border-l-0" />
           {/* Área Pequeña */}
-          <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[5.5%] h-[26%] border border-white/20 border-l-0" />
+          <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[5.5%] h-[26%] border border-white/30 border-l-0" />
           {/* Punto de Penalti */}
-          <div className="absolute top-1/2 left-[10.5%] -translate-y-1/2 w-1 h-1 bg-white/40 rounded-full shadow-[0_0_5px_rgba(255,255,255,0.5)]" />
+          <div className="absolute top-1/2 left-[10.5%] -translate-y-1/2 w-1 h-1 bg-white/50 rounded-full shadow-[0_0_5px_rgba(255,255,255,0.5)]" />
           {/* Arco de Área */}
-          <div className="absolute top-1/2 left-[15.5%] -translate-y-1/2 w-[8%] h-[20%] border border-white/20 border-l-0 rounded-r-full" />
+          <div className="absolute top-1/2 left-[15.5%] -translate-y-1/2 w-[8%] h-[20%] border border-white/30 border-l-0 rounded-r-full" />
 
           {/* LADO DERECHO */}
           {/* Área Grande */}
-          <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[15.5%] h-[60%] border border-white/20 border-r-0" />
+          <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[15.5%] h-[60%] border border-white/30 border-r-0" />
           {/* Área Pequeña */}
-          <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[5.5%] h-[26%] border border-white/20 border-r-0" />
+          <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[5.5%] h-[26%] border border-white/30 border-r-0" />
           {/* Punto de Penalti */}
-          <div className="absolute top-1/2 right-[10.5%] -translate-y-1/2 w-1 h-1 bg-white/40 rounded-full shadow-[0_0_5px_rgba(255,255,255,0.5)]" />
+          <div className="absolute top-1/2 right-[10.5%] -translate-y-1/2 w-1 h-1 bg-white/50 rounded-full shadow-[0_0_5px_rgba(255,255,255,0.5)]" />
           {/* Arco de Área */}
-          <div className="absolute top-1/2 right-[15.5%] -translate-y-1/2 w-[8%] h-[20%] border border-white/20 border-r-0 rounded-l-full" />
+          <div className="absolute top-1/2 right-[15.5%] -translate-y-1/2 w-[8%] h-[20%] border border-white/30 border-r-0 rounded-l-full" />
 
           {/* ARCOS DE CÓRNER */}
-          <div className="absolute top-0 left-0 w-[2%] aspect-square border-r border-b border-white/20 rounded-br-full" />
-          <div className="absolute bottom-0 left-0 w-[2%] aspect-square border-r border-t border-white/20 rounded-tr-full" />
-          <div className="absolute top-0 right-0 w-[2%] aspect-square border-l border-b border-white/20 rounded-bl-full" />
-          <div className="absolute bottom-0 right-0 w-[2%] aspect-square border-l border-t border-white/20 rounded-tl-full" />
+          <div className="absolute top-0 left-0 w-[2%] aspect-square border-r border-b border-white/30 rounded-br-full" />
+          <div className="absolute bottom-0 left-0 w-[2%] aspect-square border-r border-t border-white/30 rounded-tr-full" />
+          <div className="absolute top-0 right-0 w-[2%] aspect-square border-l border-b border-white/30 rounded-bl-full" />
+          <div className="absolute bottom-0 right-0 w-[2%] aspect-square border-l border-t border-white/30 rounded-tl-full" />
         </div>
 
         {showWatermark && (
