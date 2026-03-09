@@ -2,34 +2,11 @@
 "use client";
 
 import { useState } from "react";
-import { 
-  Pencil, 
-  MousePointer2, 
-  Zap, 
-  Save, 
-  Trash2, 
-  Sparkles,
-  Layers,
-  Circle,
-  Square,
-  ArrowUpRight,
-  Dumbbell,
-  Flag,
-  Library,
-  Video,
-  Loader2
-} from "lucide-react";
+import { Sparkles, Save, Library, Circle, Flag, Dumbbell, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-
-const TOOLS = [
-  { id: 'select', icon: MousePointer2, label: 'Selección' },
-  { id: 'draw', icon: Pencil, label: 'Trazo' },
-  { id: 'arrow', icon: ArrowUpRight, label: 'Movimiento' },
-  { id: 'circle', icon: Circle, label: 'Zona Circular' },
-  { id: 'square', icon: Square, label: 'Zona Cuadrada' },
-];
+import { TacticalField } from "@/components/board/TacticalField";
+import { BoardToolbar } from "@/components/board/BoardToolbar";
 
 const ASSETS = [
   { id: 'ball', icon: Circle, label: 'Balón' },
@@ -47,7 +24,6 @@ function Minus(props: any) {
 }
 
 export default function TrainingBoardPage() {
-  const [activeTool, setActiveTool] = useState('select');
   const [isAiProcessing, setIsAiProcessing] = useState(false);
   const { toast } = useToast();
 
@@ -64,7 +40,6 @@ export default function TrainingBoardPage() {
 
   return (
     <div className="h-screen flex flex-col bg-[#04070c] overflow-hidden">
-      {/* HEADER ESTRATÉGICO AMBER */}
       <header className="h-20 border-b border-amber-500/20 bg-black/60 backdrop-blur-3xl flex items-center justify-between px-8 shrink-0 z-50">
         <div className="flex items-center gap-8">
           <div className="flex flex-col">
@@ -85,43 +60,19 @@ export default function TrainingBoardPage() {
             {isAiProcessing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
             Sincronizar con IA
           </Button>
-          <Button className="h-11 bg-amber-500 text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl amber-glow">
+          <Button className="h-11 bg-amber-500 text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl amber-glow border-none">
             <Save className="h-4 w-4 mr-2" /> Guardar Ejercicio
           </Button>
         </div>
       </header>
 
       <div className="flex-1 flex overflow-hidden relative">
-        {/* TOOLS IZQUIERDA */}
-        <aside className="absolute left-6 top-1/2 -translate-y-1/2 w-16 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-3xl flex flex-col items-center py-6 gap-4 z-50">
-          {TOOLS.map((tool) => (
-            <button
-              key={tool.id}
-              onClick={() => setActiveTool(tool.id)}
-              className={cn(
-                "h-10 w-10 rounded-xl flex items-center justify-center transition-all group relative",
-                activeTool === tool.id 
-                  ? "bg-amber-500 text-black shadow-[0_0_20px_rgba(245,158,11,0.3)] scale-110" 
-                  : "text-white/20 hover:text-white"
-              )}
-              title={tool.label}
-            >
-              <tool.icon className="h-5 w-5" />
-            </button>
-          ))}
-        </aside>
+        <BoardToolbar theme="amber" className="absolute left-6 top-1/2 -translate-y-1/2" />
 
-        {/* ÁREA DE DIBUJO */}
         <main className="flex-1 p-12 flex items-center justify-center relative overflow-hidden">
-          <div className="relative w-full max-w-5xl aspect-[1.4/1] bg-black border border-amber-500/10 rounded-[3rem] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.5)]">
-             <div className="absolute inset-0 bg-grid-pattern opacity-5" />
-             <div className="absolute inset-12 border border-white/5 rounded-2xl flex items-center justify-center">
-                <Dumbbell className="h-20 w-20 text-white/5 animate-pulse" />
-             </div>
-          </div>
+          <TacticalField theme="amber" />
         </main>
 
-        {/* ASSETS DERECHA */}
         <aside className="w-80 border-l border-white/5 bg-black/40 backdrop-blur-3xl p-6 flex flex-col shrink-0 z-50">
           <div className="space-y-8">
             <section>
