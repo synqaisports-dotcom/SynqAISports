@@ -112,9 +112,10 @@ export default function MatchBoardPage() {
         else if (lateral === "right") yShift = 0.15;
 
         if (phase === "defensa") {
+          // Bloque defensivo mucho más compacto y retrasado
           if (isDEF) phaseShift = -0.15;
-          else if (isMID) phaseShift = -0.12;
-          else if (isATK) phaseShift = -0.08;
+          else if (isMID) phaseShift = -0.22;
+          else if (isATK) phaseShift = -0.30;
         } else if (phase === "tda") {
           if (isDEF) phaseShift = 0.05;
           else if (isMID) phaseShift = 0.08;
@@ -140,30 +141,37 @@ export default function MatchBoardPage() {
         finalY = pos.y + (isGK ? 0 : yShift);
 
         if (!isGK) {
+          // Aplicar blindaje de áreas grandes (19.5% a 80.5%)
           finalX = Math.max(finalX, innerAreaLimit);
           finalX = Math.min(finalX, outerAreaLimit);
+          
+          // Escalonamiento extra por líneas en ataque para no solaparse
           if (phase === "ataque") {
             if (isMID) finalX = Math.min(finalX, 0.72);
             if (isDEF) finalX = Math.min(finalX, 0.55);
           }
         } else {
+          // Portero inmune a desplazamientos tácticos de bloque
           finalX = Math.max(0.02, Math.min(0.12, finalX));
-          finalY = 0.5; // Portero centrado e inmutable
+          finalY = 0.5;
         }
       } else {
         finalX = 0.95 - (pos.x * 0.9) - (isGK ? 0 : phaseShift);
         finalY = (1 - pos.y) - (isGK ? 0 : yShift);
 
         if (!isGK) {
+          // Aplicar blindaje de áreas grandes (sentido inverso para visitante)
           finalX = Math.min(finalX, outerAreaLimit);
           finalX = Math.max(finalX, innerAreaLimit);
+          
           if (phase === "ataque") {
             if (isMID) finalX = Math.max(finalX, 0.28);
             if (isDEF) finalX = Math.max(finalX, 0.45);
           }
         } else {
+          // Portero inmune a desplazamientos tácticos de bloque
           finalX = Math.min(0.98, Math.max(0.88, finalX));
-          finalY = 0.5; // Portero centrado e inmutable
+          finalY = 0.5;
         }
       }
 
