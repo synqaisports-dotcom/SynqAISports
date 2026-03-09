@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { TacticalField, FieldType } from "@/components/board/TacticalField";
 import { BoardToolbar } from "@/components/board/BoardToolbar";
-import { AssetPanel } from "@/components/board/AssetPanel";
 import { 
   Select, 
   SelectContent, 
@@ -97,12 +96,6 @@ export default function PromoBoardPage() {
             </div>
           )}
         </main>
-
-        <AssetPanel 
-          theme="cyan" 
-          type="promo" 
-          className="absolute right-4 top-1/2 -translate-y-1/2 hidden xl:flex" 
-        />
       </div>
     </div>
   );
