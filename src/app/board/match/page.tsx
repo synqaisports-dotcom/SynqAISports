@@ -174,8 +174,8 @@ export default function MatchBoardPage() {
 
           {/* BOTONERAS TÁCTICAS SUPERIORES */}
           <div className="absolute top-6 left-24 right-24 flex justify-between pointer-events-none z-40">
-            {/* PANEL LOCAL */}
-            <div className="pointer-events-auto flex flex-col gap-3">
+            {/* PANEL LOCAL (AZUL CYAN) */}
+            <div className="pointer-events-auto flex items-center gap-3">
               <div className="glass-panel p-1 border-primary/30 flex items-center gap-2 rounded-2xl">
                 <div className="bg-primary/10 px-3 py-2 rounded-xl border border-primary/20">
                   <span className="text-[10px] font-black text-primary uppercase italic tracking-tighter">LOCAL</span>
@@ -197,26 +197,26 @@ export default function MatchBoardPage() {
               </div>
             </div>
 
-            {/* PANEL VISITANTE */}
-            <div className="pointer-events-auto flex flex-col gap-3 items-end">
-              <div className="glass-panel p-1 border-white/10 flex flex-row-reverse items-center gap-2 rounded-2xl">
-                <div className="bg-white/10 px-3 py-2 rounded-xl border border-white/20">
-                  <span className="text-[10px] font-black text-white/60 uppercase italic tracking-tighter">VISITANTE</span>
+            {/* PANEL VISITANTE (ROJO ELÉCTRICO) */}
+            <div className="pointer-events-auto flex flex-row-reverse items-center gap-3">
+              <div className="glass-panel p-1 border-rose-500/30 flex flex-row-reverse items-center gap-2 rounded-2xl">
+                <div className="bg-rose-500/10 px-3 py-2 rounded-xl border border-rose-500/20">
+                  <span className="text-[10px] font-black text-rose-500 uppercase italic tracking-tighter">VISITANTE</span>
                 </div>
                 <Select value={guestFormation} onValueChange={setGuestFormation}>
                   <SelectTrigger className="h-9 w-24 bg-transparent border-none text-[10px] font-bold text-white/60 text-right focus:ring-0">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#0a0f18] border-white/10">
+                  <SelectContent className="bg-[#0a0f18] border-rose-500/20">
                     {FORMATIONS.map(f => <SelectItem key={f} value={f} className="text-[10px] font-black uppercase">{f}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="flex gap-1 bg-black/40 backdrop-blur-md p-1 rounded-xl border border-white/5 shadow-2xl">
-                <PhaseButton label="DEF" active={guestPhase === "defensa"} onClick={() => setGuestPhase("defensa")} color="white" />
-                <PhaseButton label="T.D.A" active={guestPhase === "tda"} onClick={() => setGuestPhase("tda")} color="white" />
-                <PhaseButton label="ATQ" active={guestPhase === "ataque"} onClick={() => setGuestPhase("ataque")} color="white" />
-                <PhaseButton label="T.A.D" active={guestPhase === "tad"} onClick={() => setGuestPhase("tad")} color="white" />
+                <PhaseButton label="T.A.D" active={guestPhase === "tad"} onClick={() => setGuestPhase("tad")} color="red" />
+                <PhaseButton label="ATQ" active={guestPhase === "ataque"} onClick={() => setGuestPhase("ataque")} color="red" />
+                <PhaseButton label="T.D.A" active={guestPhase === "tda"} onClick={() => setGuestPhase("tda")} color="red" />
+                <PhaseButton label="DEF" active={guestPhase === "defensa"} onClick={() => setGuestPhase("defensa")} color="red" />
               </div>
             </div>
           </div>
@@ -226,7 +226,7 @@ export default function MatchBoardPage() {
   );
 }
 
-function PhaseButton({ label, active, onClick, color }: { label: string, active: boolean, onClick: () => void, color: "cyan" | "white" }) {
+function PhaseButton({ label, active, onClick, color }: { label: string, active: boolean, onClick: () => void, color: "cyan" | "red" }) {
   return (
     <button
       onClick={onClick}
@@ -235,7 +235,7 @@ function PhaseButton({ label, active, onClick, color }: { label: string, active:
         active 
           ? (color === "cyan" 
               ? "bg-primary text-black shadow-[0_0_15px_rgba(0,242,255,0.4)]" 
-              : "bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.4)]")
+              : "bg-rose-500 text-white shadow-[0_0_15px_rgba(244,63,94,0.4)]")
           : "text-white/20 hover:text-white/40 hover:bg-white/5"
       )}
     >
