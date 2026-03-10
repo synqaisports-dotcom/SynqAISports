@@ -82,8 +82,8 @@ const PLANNING_DATA: Record<string, any> = {
       { day: "Día 2", label: "Aplicación", focus: "JUEGOS REALES 2v1 / 2v2", color: "border-amber-500/20 bg-amber-500/5" }
     ],
     sessionStructure: [
-      { part: "Calentamiento", time: "10-15 min", desc: "Juegos dinámicos con balón y activación progresiva.", icon: Zap },
-      { part: "Parte Principal", time: "35-40 min", desc: "Desarrollo del objetivo con progresión de dificultad.", icon: Gamepad2 },
+      { part: "Calentamiento", time: "10-15 min", desc: "Juegos con balón y activación progresiva.", icon: Zap },
+      { part: "Parte Principal", time: "35-40 min", desc: "Desarrollo del objetivo semanal con progresión de dificultad.", icon: Gamepad2 },
       { part: "Vuelta a la Calma", time: "5-10 min", desc: "Juegos tranquilos, estiramientos y feedback.", icon: Wind }
     ],
     focusPoints: [
@@ -119,6 +119,35 @@ const PLANNING_DATA: Record<string, any> = {
       "Fomentar la comunicación activa en el campo.",
       "Uso de la competición para evaluar conceptos."
     ]
+  },
+  alevin: {
+    title: "PLANIFICACIÓN",
+    titleAccent: "POR PRINCIPIOS DE JUEGO",
+    description: "Es la etapa de transición a Fútbol 11. La planificación se vuelve más táctica y se introducen los principios del modelo de juego del club.",
+    blocksLabel: "Mesociclos por Principios",
+    monthlyBlocks: [
+      { id: 1, title: "Fase Ofensiva", focus: "Conservación y Progresión", desc: "Mantenimiento del balón en zona de inicio y progresión a zona de finalización.", period: "MES_01" },
+      { id: 2, title: "Fase Defensiva", focus: "Marcaje y Cobertura", desc: "Principios defensivos colectivos, repliegue y ayudas permanentes.", period: "MES_02" },
+      { id: 3, title: "Transición A-D", focus: "Presión tras Pérdida", desc: "Reacción inmediata tras perder la posesión para evitar el contraataque.", period: "MES_03" },
+      { id: 4, title: "Transición D-A", focus: "Contraataque", desc: "Aprovechamiento de espacios libres tras recuperación en bloque bajo o medio.", period: "MES_04" },
+      { id: 5, title: "Acciones ABP", focus: "Estrategia", desc: "Diseño y ejecución de saques de esquina, faltas y saques de banda.", period: "MES_05" }
+    ],
+    weeklyMicro: [
+      { day: "Día 1", label: "Sub-principios", focus: "ASPECTOS CONCRETOS DEL TEMA", color: "border-primary/20 bg-primary/5" },
+      { day: "Día 2", label: "Principios Completos", focus: "TAREAS COLECTIVAS COMPLEJAS", color: "border-amber-500/20 bg-amber-500/5" },
+      { day: "Día 3", label: "Aplicación Real", focus: "PARTIDO CONDICIONADO / MODELO", color: "border-blue-500/20 bg-blue-500/5" }
+    ],
+    sessionStructure: [
+      { part: "Calentamiento", time: "15-20 min", desc: "Rondos complejos y juegos de posición.", icon: Swords },
+      { part: "Parte Principal", time: "50-60 min", desc: "Tareas tácticas y partidos modificados.", icon: Gamepad2 },
+      { part: "Vuelta a la Calma", time: "10 min", desc: "Estiramientos y análisis táctico grupal.", icon: Users }
+    ],
+    focusPoints: [
+      "Entender el 'porqué' de cada ejercicio.",
+      "Trabajo específico por líneas (DEF/MED/ATQ).",
+      "Uso de vídeo para corrección técnica.",
+      "Adaptación espacial al campo de Fútbol 11."
+    ]
   }
 };
 
@@ -133,7 +162,7 @@ export default function CyclePlannerPage() {
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <GitBranch className="h-5 w-5 text-amber-500 animate-pulse" />
-            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Cyclic_Planner_v3.2</span>
+            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Cyclic_Planner_v3.3</span>
           </div>
           <h1 className="text-5xl font-headline font-black text-white uppercase italic tracking-tighter amber-text-glow leading-none">
             PLANIFICACIÓN_CÍCLICA
