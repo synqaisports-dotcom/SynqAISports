@@ -248,21 +248,27 @@ export default function AcademyManagementPage() {
   };
 
   const handleToggleTeamStatus = (catId: string, teamIdx: number) => {
+    const category = categories.find(c => c.id === catId);
+    if (!category) return;
+    const team = category.teams[teamIdx];
+    if (!team) return;
+
+    const currentStatus = team.status || "Active";
+    const newStatus = currentStatus === "Active" ? "Paused" : "Active";
+
     setCategories(prev => prev.map(c => {
       if (c.id === catId) {
         const newTeams = [...c.teams];
-        const currentStatus = newTeams[teamIdx].status || "Active";
-        newTeams[teamIdx] = { ...newTeams[teamIdx], status: currentStatus === "Active" ? "Paused" : "Active" };
-        
-        toast({
-          title: currentStatus === "Active" ? "NODO_PAUSADO" : "NODO_ACTIVADO",
-          description: `El equipo ha cambiado su estado a ${newTeams[teamIdx].status.toUpperCase()}.`,
-        });
-        
+        newTeams[teamIdx] = { ...newTeams[teamIdx], status: newStatus };
         return { ...c, teams: newTeams };
       }
       return c;
     }));
+
+    toast({
+      title: newStatus === "Paused" ? "NODO_PAUSADO" : "NODO_ACTIVADO",
+      description: `El equipo ha cambiado su estado a ${newStatus.toUpperCase()}.`,
+    });
   };
 
   const handleDeleteTeam = (catId: string, teamIdx: number) => {
@@ -584,7 +590,7 @@ export default function AcademyManagementPage() {
         </SheetContent>
       </Sheet>
 
-      {/* TERMINAL DE CONFIGURACIÓN - ACTUALIZADA CON LÓGICA DE ZONAS */}
+      {/* TERMINAL DE CONFIGURACIÓN */}
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-xl shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
           <div className="p-10 border-b border-white/5 bg-black/40">
