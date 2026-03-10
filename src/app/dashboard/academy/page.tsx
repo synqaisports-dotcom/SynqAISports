@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -153,7 +154,6 @@ export default function AcademyManagementPage() {
   };
 
   const handleEditCategory = (cat: any) => {
-    // PROTECCIÓN DE NUCLEO: Las categorías base no se pueden editar manualmente
     if (cat.id.startsWith('cat_')) {
       toast({
         variant: "destructive",
@@ -173,7 +173,6 @@ export default function AcademyManagementPage() {
   };
 
   const handleDeleteCategory = (id: string, name: string) => {
-    // PROTECCIÓN DE NUCLEO
     if (id.startsWith('cat_')) {
       toast({
         variant: "destructive",
@@ -305,7 +304,6 @@ export default function AcademyManagementPage() {
             <div className="space-y-4">
               {categories.filter(c => c.stageId === stage.id).map((cat) => (
                 <Card key={cat.id} className="glass-panel border-none bg-black/40 overflow-hidden group hover:bg-black/60 transition-all cursor-default rounded-3xl">
-                  {/* LÍNEA DE ETAPA TÉCNICA */}
                   <div className={cn("h-1 w-full", stage.color.replace('text', 'bg'))} />
                   
                   <CardHeader className="p-6 pb-2">
@@ -358,7 +356,7 @@ export default function AcademyManagementPage() {
                         </button>
                       </>
                     ) : (
-                      <span className="text-[7px] font-black text-primary/20 uppercase tracking-[0.2em] italic">Protocolo_Maestro_Inmutable</span>
+                      <span className="text-[7px] font-black text-primary/20 uppercase tracking-[0.2em] italic">Maestro_Inmutable</span>
                     )}
                   </CardFooter>
                 </Card>
@@ -385,10 +383,6 @@ export default function AcademyManagementPage() {
                       {selectedViewTeam.name} <span className="text-primary">[{selectedViewTeam.suffix}]</span>
                     </SheetTitle>
                   </div>
-                  <div className="flex items-center gap-2 pt-2">
-                    <Badge variant="outline" className="border-primary/20 text-primary font-black uppercase text-[10px] rounded-2xl px-4 italic">{selectedViewTeam.categoryName}</Badge>
-                    <Badge variant="outline" className="border-primary/10 text-primary/40 font-black uppercase text-[10px] rounded-2xl px-4 italic">Protocolo Activo</Badge>
-                  </div>
                 </SheetHeader>
               </div>
 
@@ -409,31 +403,6 @@ export default function AcademyManagementPage() {
                       <p className="text-sm font-black text-primary uppercase italic">{selectedViewTeam.zone || "Sector Central"}</p>
                     </div>
                   </div>
-
-                  <div className="p-6 border border-primary/20 bg-primary/5 rounded-3xl space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Clock className="h-4 w-4 text-primary" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-primary italic">Cronograma de Sesiones</span>
-                      </div>
-                      <span className="text-[10px] font-mono text-primary font-bold">{selectedViewTeam.startTime} - {selectedViewTeam.endTime}</span>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {WEEK_DAYS.map(day => (
-                        <div 
-                          key={day.id} 
-                          className={cn(
-                            "h-9 w-9 flex items-center justify-center font-black text-[10px] border rounded-xl",
-                            selectedViewTeam.days?.includes(day.id) 
-                              ? "bg-primary text-black border-primary shadow-[0_0_10px_rgba(0,242,255,0.3)]" 
-                              : "border-primary/10 text-primary/20"
-                          )}
-                        >
-                          {day.id}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
                 </section>
 
                 <section className="space-y-6">
@@ -441,40 +410,31 @@ export default function AcademyManagementPage() {
                     <UserCog className="h-4 w-4 text-primary" />
                     <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-primary italic">Staff Técnico Sincronizado</h3>
                   </div>
-
                   <div className="space-y-4">
                     <StaffDetailItem label="Coordinador Etapa" value={selectedViewTeam.staff?.coord || "Ismael Muñoz"} icon={Shield} />
                     <StaffDetailItem label="Primer Entrenador" value={selectedViewTeam.staff?.head || "Carlos Ruiz"} icon={Trophy} highlight />
-                    <StaffDetailItem label="Segundo Entrenador" value={selectedViewTeam.staff?.second || "Elena Gómez"} icon={Users} />
-                    <StaffDetailItem label="Preparador Físico" value={selectedViewTeam.staff?.physical || "Roberto S."} icon={Dumbbell} />
-                    <StaffDetailItem label="Delegado Equipo" value={selectedViewTeam.staff?.delegate || "Juan García"} icon={ClipboardCheck} />
                   </div>
                 </section>
               </div>
 
               <div className="p-10 bg-black/40 border-t border-white/5 flex gap-4">
                 <Button 
-                  className="flex-1 h-16 bg-primary/5 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 rounded-2xl transition-all"
+                  className="flex-1 h-16 bg-primary/5 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 rounded-2xl"
                   onClick={() => setIsViewSheetOpen(false)}
                 >
-                  CERRAR_FICHA
+                  CERRAR
                 </Button>
                 <Button 
-                  className="flex-1 h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.2em] rounded-2xl cyan-glow"
+                  className="flex-1 h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.2em] rounded-2xl"
                   onClick={() => {
                     setIsViewSheetOpen(false);
                     const cat = categories.find(c => c.name === selectedViewTeam.categoryName);
-                    setFormData({ 
-                      ...formData, 
-                      parentCategory: cat?.id || "cat_debutantes", 
-                      suffix: selectedViewTeam.suffix,
-                      stageId: cat?.stageId || "s2"
-                    });
+                    setFormData({ ...formData, parentCategory: cat?.id || "cat_debutantes", suffix: selectedViewTeam.suffix });
                     setSheetMode('team');
                     setIsSheetOpen(true);
                   }}
                 >
-                  EDITAR_NODO <ArrowRight className="h-4 w-4 ml-2" />
+                  EDITAR_NODO
                 </Button>
               </div>
             </>
@@ -482,7 +442,7 @@ export default function AcademyManagementPage() {
         </SheetContent>
       </Sheet>
 
-      {/* TERMINAL DE CONFIGURACIÓN (CATEGORÍA / EQUIPO) */}
+      {/* TERMINAL DE CONFIGURACIÓN - ACTUALIZADA CON LÓGICA DE ZONAS */}
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-xl shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
           <div className="p-10 border-b border-white/5 bg-black/40">
@@ -494,88 +454,50 @@ export default function AcademyManagementPage() {
               <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left">
                 {sheetMode === 'category' ? (editingId ? "MODIFICAR_CATEGORÍA" : "CONFIG_CATEGORÍA") : "VINCULAR_EQUIPO"}
               </SheetTitle>
-              <SheetDescription className="text-[10px] uppercase font-bold text-primary/40 tracking-widest text-left italic">
-                Defina los nodos de formación para la red del club.
-              </SheetDescription>
             </SheetHeader>
           </div>
 
           <form onSubmit={handleSave} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10">
             {sheetMode === 'category' ? (
-              <div className="space-y-8">
-                {/* CONFIGURACIÓN BÁSICA CATEGORÍA */}
-                <div className="space-y-6 p-8 border border-primary/30 bg-primary/5 rounded-3xl relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-4 opacity-10">
-                    <Layers className="h-24 w-24 text-primary" />
-                  </div>
-                  <div className="space-y-3">
-                    <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1 italic">Nombre de la Categoría</Label>
-                    <Input 
-                      required
-                      value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})}
-                      placeholder="EJ: ALEVÍN" 
-                      className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary text-lg text-primary" 
-                    />
-                  </div>
-                  <div className="space-y-3">
-                    <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1 italic">Etapa Metodológica</Label>
-                    <Select 
-                      value={formData.stageId} 
-                      onValueChange={(v) => setFormData({...formData, stageId: v})}
-                    >
-                      <SelectTrigger className="h-14 bg-black/40 border-primary/20 rounded-2xl text-primary font-bold uppercase tracking-widest px-6 focus:border-primary">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-2xl">
-                        {STAGES.map(s => (
-                          <SelectItem key={s.id} value={s.id} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary text-primary/80">
-                            {s.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1 italic">Nombre de la Categoría</Label>
+                  <Input 
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})}
+                    placeholder="EJ: ALEVÍN" 
+                    className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary text-primary" 
+                  />
+                </div>
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1 italic">Etapa Metodológica</Label>
+                  <Select value={formData.stageId} onValueChange={(v) => setFormData({...formData, stageId: v})}>
+                    <SelectTrigger className="h-14 bg-black/40 border-primary/20 rounded-2xl text-primary font-bold uppercase tracking-widest px-6 focus:border-primary">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-2xl">
+                      {STAGES.map(s => (
+                        <SelectItem key={s.id} value={s.id} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary text-primary/80">{s.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             ) : (
               <div className="space-y-10">
-                {/* 1. CLASIFICACIÓN METODOLÓGICA */}
-                <div className="space-y-6 p-8 border border-primary/30 bg-primary/5 rounded-3xl relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-4 opacity-10">
-                    <Layers className="h-24 w-24 text-primary" />
-                  </div>
-                  <div className="flex items-center gap-3 border-b border-primary/20 pb-4 mb-6">
-                    <Target className="h-4 w-4 text-primary" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary italic">Clasificación Metodológica</span>
-                  </div>
-                  <div className="space-y-3">
-                    <Label className="text-[9px] font-black uppercase text-primary tracking-widest ml-1 italic">Etapa de Desarrollo</Label>
-                    <Select value={formData.stageId} onValueChange={(v) => setFormData({...formData, stageId: v})}>
-                      <SelectTrigger className="h-12 bg-black/40 border-primary/20 rounded-2xl text-primary font-bold uppercase text-[10px] tracking-widest focus:border-primary">
-                        <SelectValue placeholder="SELECCIONAR ETAPA..." />
-                      </SelectTrigger>
-                      <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
-                        {STAGES.map(s => (
-                          <SelectItem key={s.id} value={s.id} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary text-primary/80">{s.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* 2. IDENTIDAD FEDERATIVA */}
+                {/* 1. IDENTIDAD FEDERATIVA */}
                 <div className="space-y-6">
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-3">
-                      <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1 italic">Categoría Federativa</Label>
+                      <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1 italic">Categoría</Label>
                       <Select value={formData.parentCategory} onValueChange={(v) => setFormData({...formData, parentCategory: v})}>
                         <SelectTrigger className="h-14 bg-white/5 border-primary/20 rounded-2xl text-primary font-bold uppercase tracking-widest focus:border-primary">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-2xl">
                           {categories.map(c => (
-                            <SelectItem key={c.id} value={c.id} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary text-primary/80">{c.name}</SelectItem>
+                            <SelectItem key={c.id} value={c.id} className="text-[10px] font-black uppercase focus:bg-primary">{c.name}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -586,9 +508,9 @@ export default function AcademyManagementPage() {
                         <SelectTrigger className="h-14 bg-white/5 border-primary/20 rounded-2xl text-primary font-black text-xl focus:border-primary">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-2xl max-h-[200px]">
+                        <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-2xl">
                           {ALPHABET.map(letter => (
-                            <SelectItem key={letter} value={letter} className="text-lg font-black text-primary focus:bg-primary focus:text-black">{letter}</SelectItem>
+                            <SelectItem key={letter} value={letter} className="text-lg font-black text-primary focus:bg-primary">{letter}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -596,141 +518,41 @@ export default function AcademyManagementPage() {
                   </div>
                 </div>
 
-                {/* 3. ASIGNACIÓN DE ACTIVO Y HORARIO */}
+                {/* 2. ASIGNACIÓN DE ACTIVO Y ZONA - RESTAURADA */}
                 <div className="space-y-6 p-8 border border-primary/30 bg-primary/5 rounded-3xl relative overflow-hidden">
                   <div className="flex items-center gap-3 border-b border-primary/20 pb-4 mb-6">
-                    <Zap className="h-4 w-4 text-primary animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary italic">Instalación y Horario</span>
+                    <MapPin className="h-4 w-4 text-primary animate-pulse" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary italic">Ubicación y Sectorización</span>
                   </div>
                   <div className="space-y-4">
                     <Label className="text-[9px] font-black uppercase text-primary tracking-widest ml-1 italic">Instalación Asignada</Label>
                     <Select value={formData.facilityId} onValueChange={(v) => setFormData({...formData, facilityId: v, zone: ""})}>
                       <SelectTrigger className="h-12 bg-black/40 border-primary/20 rounded-2xl text-primary font-bold uppercase text-[10px] tracking-widest focus:border-primary">
-                        <SelectValue placeholder="SELECCIONAR CAMPO/SALA..." />
+                        <SelectValue placeholder="SELECCIONAR CAMPO..." />
                       </SelectTrigger>
                       <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
                         {MOCK_FACILITIES.map(f => (
-                          <SelectItem key={f.id} value={f.id} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary text-primary/80">{f.name}</SelectItem>
+                          <SelectItem key={f.id} value={f.id} className="text-[10px] font-black uppercase focus:bg-primary">{f.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
+                  
                   {hasZones && (
-                    <div className="space-y-3">
-                      <Label className="text-[9px] font-black uppercase text-primary tracking-widest ml-1 italic">Zona Específica</Label>
+                    <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
+                      <Label className="text-[9px] font-black uppercase text-primary tracking-widest ml-1 italic">Zona Específica (Subdivisión)</Label>
                       <Select value={formData.zone} onValueChange={(v) => setFormData({...formData, zone: v})}>
-                        <SelectTrigger className="h-12 bg-primary/5 border-primary/30 rounded-2xl text-primary font-bold uppercase text-[10px] tracking-widest focus:border-primary">
+                        <SelectTrigger className="h-12 bg-primary/10 border-primary/40 rounded-2xl text-primary font-bold uppercase text-[10px] tracking-widest focus:border-primary shadow-[0_0_15px_rgba(0,242,255,0.1)]">
                           <SelectValue placeholder="ASIGNAR ZONA..." />
                         </SelectTrigger>
                         <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
                           {selectedFacility.zones.map(z => (
-                            <SelectItem key={z} value={z} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary focus:text-black">{z}</SelectItem>
+                            <SelectItem key={z} value={z} className="text-[10px] font-black uppercase focus:bg-primary">{z}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
                   )}
-                  <div className="space-y-4 pt-4">
-                    <Label className="text-[9px] font-black uppercase text-primary tracking-widest ml-1 italic">Días de Entrenamiento</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {WEEK_DAYS.map(day => (
-                        <button key={day.id} type="button" onClick={() => toggleDay(day.id)} className={cn("h-10 w-10 flex items-center justify-center font-black text-[10px] border transition-all rounded-xl", formData.days.includes(day.id) ? "bg-primary text-black border-primary shadow-[0_0:15px_rgba(0,242,255,0.3)]" : "bg-black/40 border-primary/20 text-primary/30")}>{day.id}</button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-6 pt-4">
-                    <div className="space-y-2">
-                      <Label className="text-[9px] font-black uppercase text-primary tracking-widest ml-1 italic">Hora Inicio</Label>
-                      <div className="relative">
-                        <Clock className="absolute left-3 top-3 h-4 w-4 text-primary/40" />
-                        <Input 
-                          type="time" 
-                          value={formData.startTime}
-                          onChange={(e) => setFormData({...formData, startTime: e.target.value})}
-                          className="pl-10 h-11 bg-white/5 border-primary/20 rounded-2xl font-bold text-xs focus:border-primary text-primary" 
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-[9px] font-black uppercase text-primary tracking-widest ml-1 italic">Hora Fin</Label>
-                      <div className="relative">
-                        <Clock className="absolute left-3 top-3 h-4 w-4 text-primary/40" />
-                        <Input 
-                          type="time" 
-                          value={formData.endTime}
-                          onChange={(e) => setFormData({...formData, endTime: e.target.value})}
-                          className="pl-10 h-11 bg-white/5 border-primary/20 rounded-2xl font-bold text-xs focus:border-primary text-primary" 
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 4. STAFF TÉCNICO COMPLETO */}
-                <div className="space-y-6 p-8 border border-primary/30 bg-primary/5 rounded-3xl relative overflow-hidden">
-                  <div className="flex items-center gap-3 border-b border-primary/20 pb-4 mb-6">
-                    <Users className="h-4 w-4 text-primary" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary italic">Staff Técnico Asignado</span>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label className="text-[9px] font-black uppercase text-primary tracking-widest ml-1 italic">Coordinador de Etapa</Label>
-                      <Select value={formData.coordinatorId} onValueChange={(v) => setFormData({...formData, coordinatorId: v})}>
-                        <SelectTrigger className="h-11 bg-black/40 border-primary/30 rounded-2xl text-primary font-bold uppercase text-[9px] tracking-widest focus:border-primary">
-                          <SelectValue placeholder="ASIGNAR COORDINADOR..." />
-                        </SelectTrigger>
-                        <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
-                          <SelectItem value="s1" className="text-[9px] font-black uppercase focus:bg-primary">Ismael Muñoz</SelectItem>
-                          <SelectItem value="s2" className="text-[9px] font-black uppercase focus:bg-primary">Elena Gómez</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-[9px] font-black uppercase text-primary tracking-widest ml-1 italic">Primer Entrenador</Label>
-                        <Select value={formData.firstCoachId} onValueChange={(v) => setFormData({...formData, firstCoachId: v})}>
-                          <SelectTrigger className="h-11 bg-black/40 border-primary/30 rounded-2xl text-primary font-bold uppercase text-[9px] tracking-widest focus:border-primary"><SelectValue placeholder="1er ENTRENADOR..." /></SelectTrigger>
-                          <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
-                            <SelectItem value="c1" className="text-[9px] font-black uppercase focus:bg-primary">Carlos Ruiz</SelectItem>
-                            <SelectItem value="c2" className="text-[9px] font-black uppercase focus:bg-primary">Laura Sánchez</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-[9px] font-black uppercase text-primary tracking-widest ml-1 italic">Segundo Entrenador</Label>
-                        <Select value={formData.secondCoachId} onValueChange={(v) => setFormData({...formData, secondCoachId: v})}>
-                          <SelectTrigger className="h-11 bg-black/40 border-primary/30 rounded-2xl text-primary font-bold uppercase text-[9px] tracking-widest focus:border-primary"><SelectValue placeholder="2º ENTRENADOR..." /></SelectTrigger>
-                          <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
-                            <SelectItem value="c3" className="text-[9px] font-black uppercase focus:bg-primary">Miguel Ángel</SelectItem>
-                            <SelectItem value="c4" className="text-[9px] font-black uppercase focus:bg-primary">Sara Torres</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-[9px] font-black uppercase text-primary tracking-widest ml-1 italic">Preparador Físico</Label>
-                        <Select value={formData.physicalTrainerId} onValueChange={(v) => setFormData({...formData, physicalTrainerId: v})}>
-                          <SelectTrigger className="h-11 bg-black/40 border-primary/30 rounded-2xl text-primary font-bold uppercase text-[9px] tracking-widest focus:border-primary"><SelectValue placeholder="P. FÍSICO..." /></SelectTrigger>
-                          <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
-                            <SelectItem value="pf1" className="text-[9px] font-black uppercase focus:bg-primary">Roberto S.</SelectItem>
-                            <SelectItem value="pf2" className="text-[9px] font-black uppercase focus:bg-primary">Ana Belén</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-[9px] font-black uppercase text-primary tracking-widest ml-1 italic">Delegado de Equipo</Label>
-                        <Select value={formData.delegateId} onValueChange={(v) => setFormData({...formData, delegateId: v})}>
-                          <SelectTrigger className="h-11 bg-black/40 border-primary/30 rounded-2xl text-primary font-bold uppercase text-[9px] tracking-widest focus:border-primary"><SelectValue placeholder="DELEGADO..." /></SelectTrigger>
-                          <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
-                            <SelectItem value="d1" className="text-[9px] font-black uppercase focus:bg-primary">Juan García</SelectItem>
-                            <SelectItem value="d2" className="text-[9px] font-black uppercase focus:bg-primary">Marta López</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
             )}
@@ -738,10 +560,10 @@ export default function AcademyManagementPage() {
 
           <div className="p-10 bg-black/40 border-t border-white/5 flex gap-4">
             <SheetClose asChild>
-              <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 transition-all rounded-2xl">CANCELAR</Button>
+              <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest rounded-2xl">CANCELAR</Button>
             </SheetClose>
-            <Button onClick={handleSave} disabled={loading} className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] border-none active:scale-95">
-              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (editingId ? "ACTUALIZAR_NODO" : "SINCRONIZAR_NODO")}
+            <Button onClick={handleSave} disabled={loading} className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)]">
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "SINCRONIZAR_NODO"}
             </Button>
           </div>
         </SheetContent>
@@ -753,25 +575,22 @@ export default function AcademyManagementPage() {
 function AcademyStat({ label, value, icon: Icon, highlight }: any) {
   return (
     <Card className="glass-panel p-5 flex items-center gap-5 relative overflow-hidden group bg-black/20 border border-primary/20 rounded-3xl">
-       <div className={cn("h-12 w-12 flex items-center justify-center border transition-all rotate-3 group-hover:rotate-0 duration-500 rounded-2xl bg-primary/10 border-primary/20")}>
+       <div className="h-12 w-12 flex items-center justify-center border transition-all rotate-3 group-hover:rotate-0 duration-500 rounded-2xl bg-primary/10 border-primary/20">
           <Icon className="h-6 w-6 text-primary" />
        </div>
        <div className="relative z-10">
           <p className="text-[9px] font-black text-primary uppercase tracking-widest italic">{label}</p>
-          <div className="flex items-baseline gap-2">
-             <p className="text-2xl font-black italic tracking-tighter text-primary cyan-text-glow">{value}</p>
-          </div>
+          <p className="text-2xl font-black italic tracking-tighter text-primary cyan-text-glow">{value}</p>
        </div>
-       <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-10 scan-line" />
     </Card>
   );
 }
 
 function StaffDetailItem({ label, value, icon: Icon, highlight }: any) {
   return (
-    <div className="flex items-center justify-between p-4 bg-primary/5 rounded-3xl border border-primary/10 hover:border-primary/30 transition-all group/item">
+    <div className="flex items-center justify-between p-4 bg-primary/5 rounded-3xl border border-primary/10 hover:border-primary/30 transition-all">
       <div className="flex items-center gap-4">
-        <div className={cn("h-10 w-10 flex items-center justify-center border rounded-2xl bg-primary/10 border-primary/30 text-primary")}>
+        <div className="h-10 w-10 flex items-center justify-center border rounded-2xl bg-primary/10 border-primary/30 text-primary">
           <Icon className="h-5 w-5" />
         </div>
         <div className="flex flex-col">
@@ -779,7 +598,6 @@ function StaffDetailItem({ label, value, icon: Icon, highlight }: any) {
           <span className="text-xs font-black uppercase text-primary cyan-text-glow">{value}</span>
         </div>
       </div>
-      <Badge variant="outline" className="border-primary/20 text-primary font-black text-[8px] uppercase tracking-widest rounded-2xl px-3 italic">SINC_OK</Badge>
     </div>
   );
 }
