@@ -25,7 +25,7 @@ Los roles operan bajo un sistema de ranking numérico (`rank`) que impide la ges
 ## 2. Mapa de Micro-Apps y Rutas
 
 ### 2.1. Núcleo de Control (Admin Global) - `/admin-global`
-- **Analytics**: `/analytics` (Métricas de red).
+- **Analytics**: `/analytics" (Métricas de red).
 - **Red de Clubes**: `/clubs` (Vincular y auditar nodos locales).
 - **Suscripciones**: `/plans` (Configuración de precios y accesos).
 - **Identidad**: `/roles` (Matriz de permisos).
@@ -59,7 +59,7 @@ Los roles operan bajo un sistema de ranking numérico (`rank`) que impide la ges
 - `sport`: Enum (Fútbol, Baloncesto, etc.).
 - `plan`: Enum (PROMO_LINK, VOLUMEN_CORE, ENTERPRISE_SCALE).
 - `status`: Enum (Active, Paused, Overdue).
-- `teams`: Array de objetos con sufijo (A, B, C, D) y staff técnico completo.
+- `teams`: Array de objetos con sufijo (A, B, C, D), tipo (F7, F11, Futsal) y staff técnico completo.
 
 ### 3.2. Entidad: Atleta
 - `number`: String (Dorsal).

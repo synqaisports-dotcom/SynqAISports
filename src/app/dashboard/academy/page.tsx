@@ -82,6 +82,7 @@ const INITIAL_CATEGORIES = [
     teams: [{ 
       name: "Debutantes", 
       suffix: "A", 
+      type: "f7",
       facility: "Campo de Fútbol Principal", 
       zone: "Zona A (Mitad 1)", 
       days: ["L", "X"], 
@@ -101,6 +102,7 @@ const INITIAL_CATEGORIES = [
     teams: [{ 
       name: "Alevín", 
       suffix: "A", 
+      type: "f7",
       facility: "Anexo Formación", 
       zone: "Zona B", 
       days: ["M", "J"], 
@@ -122,6 +124,7 @@ const INITIAL_CATEGORIES = [
     teams: [{ 
       name: "Primer Equipo", 
       suffix: "A", 
+      type: "f11",
       facility: "Estadio", 
       zone: "Completo", 
       days: ["L", "M", "X", "J", "V"], 
@@ -167,6 +170,7 @@ export default function AcademyManagementPage() {
   const [formData, setFormData] = useState({
     name: "",
     suffix: "A",
+    type: "f11",
     stageId: "s2",
     parentCategory: INITIAL_CATEGORIES[0].id,
     facilityId: "",
@@ -192,6 +196,7 @@ export default function AcademyManagementPage() {
     setFormData({ 
       name: "", 
       suffix: "A", 
+      type: "f11",
       stageId: "s2", 
       parentCategory: categories[0]?.id || "cat_debutantes",
       facilityId: "",
@@ -239,6 +244,7 @@ export default function AcademyManagementPage() {
       ...formData,
       parentCategory: catId,
       suffix: team.suffix,
+      type: team.type || "f11",
       facilityId: fac?.id || "",
       zone: team.zone || "",
       days: team.days || [],
@@ -272,6 +278,7 @@ export default function AcademyManagementPage() {
       return c;
     }));
 
+    // El toast debe ir fuera del callback de setState para evitar errores de Toaster
     setTimeout(() => {
       toast({
         title: newStatus === "Paused" ? "NODO_PAUSADO" : "NODO_ACTIVADO",
@@ -346,6 +353,7 @@ export default function AcademyManagementPage() {
               newTeams[editingTeamIdx] = {
                 ...newTeams[editingTeamIdx],
                 suffix: formData.suffix,
+                type: formData.type,
                 facility: selectedFacility?.name || "",
                 zone: formData.zone,
                 days: formData.days,
@@ -373,6 +381,7 @@ export default function AcademyManagementPage() {
                 teams: [...c.teams, { 
                   name: c.name, 
                   suffix: formData.suffix, 
+                  type: formData.type,
                   facility: selectedFacility?.name || "", 
                   zone: formData.zone, 
                   days: formData.days,
@@ -486,9 +495,12 @@ export default function AcademyManagementPage() {
                               "h-1.5 w-1.5 rounded-full animate-pulse shrink-0",
                               team.status === "Paused" ? "bg-amber-500" : "bg-primary"
                             )} />
-                            <span className="text-[9px] font-black text-primary uppercase tracking-tight group-hover/team:cyan-text-glow truncate">
-                              {team.name} <span className="text-primary/60 font-black ml-1">{team.suffix}</span>
-                            </span>
+                            <div className="flex flex-col truncate">
+                              <span className="text-[9px] font-black text-primary uppercase tracking-tight group-hover/team:cyan-text-glow truncate">
+                                {team.name} <span className="text-primary/60 font-black ml-1">{team.suffix}</span>
+                              </span>
+                              <span className="text-[7px] text-primary/30 font-bold uppercase tracking-widest">{team.type?.toUpperCase() || 'F11'}</span>
+                            </div>
                           </div>
                           
                           <div className="flex items-center gap-1 shrink-0">
@@ -558,10 +570,14 @@ export default function AcademyManagementPage() {
                     <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-primary italic">Configuración Logística</h3>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="p-6 bg-primary/5 border border-primary/20 rounded-3xl space-y-2">
+                      <span className="text-[9px] font-black text-primary uppercase tracking-widest italic">Formato</span>
+                      <p className="text-sm font-black text-primary uppercase italic">{selectedViewTeam.type?.toUpperCase() || "F11"}</p>
+                    </div>
                     <div className="p-6 bg-primary/5 border border-primary/20 rounded-3xl space-y-2">
                       <span className="text-[9px] font-black text-primary uppercase tracking-widest italic">Instalación / Nodo</span>
-                      <p className="text-sm font-black text-primary uppercase italic cyan-text-glow">{selectedViewTeam.facility || "Sede Principal"}</p>
+                      <p className="text-sm font-black text-primary uppercase italic cyan-text-glow truncate">{selectedViewTeam.facility || "Sede Principal"}</p>
                     </div>
                     <div className="p-6 bg-primary/5 border border-primary/20 rounded-3xl space-y-2">
                       <span className="text-[9px] font-black text-primary uppercase tracking-widest italic">Zona Operativa</span>
@@ -592,7 +608,6 @@ export default function AcademyManagementPage() {
                     <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-primary italic">Roster de Jugadores Sincronizados</h3>
                   </div>
                   <div className="grid grid-cols-1 gap-3">
-                    {/* Generamos algunos ítems mock para representar a los jugadores en el visor */}
                     {[1, 2, 3, 4, 5].map((i) => (
                       <div key={i} className="flex items-center justify-between p-4 bg-primary/5 rounded-[1.5rem] border border-primary/10 hover:border-primary/30 transition-all group">
                         <div className="flex items-center gap-4">
@@ -682,7 +697,7 @@ export default function AcademyManagementPage() {
             ) : (
               <div className="space-y-10">
                 <div className="space-y-6">
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-3">
                       <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1 italic">Categoría</Label>
                       <Select 
@@ -713,6 +728,20 @@ export default function AcademyManagementPage() {
                         </SelectContent>
                       </Select>
                     </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1 italic">Formato de Juego</Label>
+                    <Select value={formData.type} onValueChange={(v) => setFormData({...formData, type: v})}>
+                      <SelectTrigger className="h-14 bg-white/5 border-primary/20 rounded-2xl text-primary font-bold uppercase tracking-widest focus:border-primary">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-2xl">
+                        <SelectItem value="f11" className="text-[10px] font-black uppercase focus:bg-primary">Fútbol 11</SelectItem>
+                        <SelectItem value="f7" className="text-[10px] font-black uppercase focus:bg-primary">Fútbol 7</SelectItem>
+                        <SelectItem value="futsal" className="text-[10px] font-black uppercase focus:bg-primary">Fútbol Sala</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
@@ -846,7 +875,10 @@ export default function AcademyManagementPage() {
 function AcademyStat({ label, value, icon: Icon, highlight }: any) {
   return (
     <Card className="glass-panel p-5 flex items-center gap-5 relative overflow-hidden group bg-black/20 border border-primary/20 rounded-3xl">
-       <div className="h-12 w-12 flex items-center justify-center border transition-all rotate-3 group-hover:rotate-0 duration-500 rounded-2xl bg-primary/10 border-primary/20">
+       <div className={cn(
+         "h-12 w-12 flex items-center justify-center border transition-all rotate-3 group-hover:rotate-0 duration-500 rounded-2xl bg-primary/10 border-primary/20",
+         highlight ? "border-primary shadow-[0_0_15px_rgba(0,242,255,0.2)]" : ""
+       )}>
           <Icon className="h-6 w-6 text-primary" />
        </div>
        <div className="relative z-10">
