@@ -36,7 +36,8 @@ import {
   Shield,
   Pause,
   Play,
-  UserPlus
+  UserPlus,
+  Hash
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -271,7 +272,6 @@ export default function AcademyManagementPage() {
       return c;
     }));
 
-    // Notificación segura fuera del renderizado
     setTimeout(() => {
       toast({
         title: newStatus === "Paused" ? "NODO_PAUSADO" : "NODO_ACTIVADO",
@@ -551,6 +551,7 @@ export default function AcademyManagementPage() {
               </div>
 
               <div className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-12">
+                {/* CONFIGURACIÓN LOGÍSTICA */}
                 <section className="space-y-6">
                   <div className="flex items-center gap-3 border-b border-white/5 pb-4">
                     <MapPin className="h-4 w-4 text-primary" />
@@ -569,6 +570,7 @@ export default function AcademyManagementPage() {
                   </div>
                 </section>
 
+                {/* STAFF TÉCNICO */}
                 <section className="space-y-6">
                   <div className="flex items-center gap-3 border-b border-white/5 pb-4">
                     <UserCog className="h-4 w-4 text-primary" />
@@ -580,6 +582,34 @@ export default function AcademyManagementPage() {
                     <StaffDetailItem label="Segundo Entrenador" value={selectedViewTeam.staff?.second || "Sin Asignar"} icon={Users} />
                     <StaffDetailItem label="Delegado" value={selectedViewTeam.staff?.delegate || "Sin Asignar"} icon={ClipboardCheck} />
                     <StaffDetailItem label="Preparador Físico" value={selectedViewTeam.staff?.physical || "Sin Asignar"} icon={Activity} />
+                  </div>
+                </section>
+
+                {/* JUGADORES (ROSTER) */}
+                <section className="space-y-6 pb-10">
+                  <div className="flex items-center gap-3 border-b border-white/5 pb-4">
+                    <Users className="h-4 w-4 text-primary" />
+                    <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-primary italic">Roster de Jugadores Sincronizados</h3>
+                  </div>
+                  <div className="grid grid-cols-1 gap-3">
+                    {/* Generamos algunos ítems mock para representar a los jugadores en el visor */}
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <div key={i} className="flex items-center justify-between p-4 bg-primary/5 rounded-[1.5rem] border border-primary/10 hover:border-primary/30 transition-all group">
+                        <div className="flex items-center gap-4">
+                          <div className="h-10 w-10 flex items-center justify-center border border-primary/20 rounded-xl bg-black text-primary font-headline font-black italic shadow-lg group-hover:scale-110 transition-transform">
+                            {i === 1 ? '1' : i * 2}
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-xs font-black uppercase text-white italic group-hover:cyan-text-glow transition-all">JUGADOR_NODE_0{i}</span>
+                            <span className="text-[8px] font-bold text-primary/40 uppercase tracking-widest">{i === 1 ? 'POR' : 'ATK'} • Telemetría Activa</span>
+                          </div>
+                        </div>
+                        <IdCard className="h-4 w-4 text-primary/20 group-hover:text-primary transition-all" />
+                      </div>
+                    ))}
+                    <div className="p-4 border border-dashed border-primary/20 rounded-2xl text-center">
+                       <p className="text-[9px] font-black text-primary/20 uppercase tracking-widest">Sincronizando base de datos completa...</p>
+                    </div>
                   </div>
                 </section>
               </div>

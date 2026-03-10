@@ -1,4 +1,5 @@
-# SynqSports Pro - Architecture Ledger v1.2 (Full System Sync)
+
+# SynqSports Pro - Architecture Ledger v1.3 (Full System Sync)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro. Sirve como punto de verdad para la reconstrucción y auditoría del sistema.
 
@@ -33,9 +34,9 @@ Los roles operan bajo un sistema de ranking numérico (`rank`) que impide la ges
 
 ### 2.2. Terminal Operativa (Club/Coach) - `/dashboard`
 - **Identidad de Club**: `/club` (Datos federativos y logo).
-- **Cantera**: `/academy` (Vinculación de equipos y staff).
+- **Cantera**: `/academy` (Vinculación de equipos y staff). Incluye visor de Roster de Jugadores sincronizado.
 - **Activos**: `/instalaciones` (Gestión geométrica de campos).
-- **Roster**: `/players` (Ficha técnica del atleta).
+- **Roster**: `/players` (Ficha técnica del atleta con dorsal y apodo).
 - **Gestión de Mando**: `/admin` (Matriz de permisos local).
 - **Personal**: `/staff` (Alta de entrenadores y coordinadores).
 
@@ -46,7 +47,7 @@ Los roles operan bajo un sistema de ranking numérico (`rank`) que impide la ges
 - **Lanzadores**: `/board-*` (Accesos rápidos a pizarras).
 
 ### 2.4. Micro-App: Tactical Board (Pizarras) - `/board`
-- **Match Mode**: `/match` (Tiempo real con marcador).
+- **Match Mode**: `/match` (Tiempo real con marcador y basculación).
 - **Training Mode**: `/training` (Estudio de diseño IA).
 - **Promo Mode**: `/promo` (Acceso limitado para leads).
 
@@ -58,6 +59,7 @@ Los roles operan bajo un sistema de ranking numérico (`rank`) que impide la ges
 - `sport`: Enum (Fútbol, Baloncesto, etc.).
 - `plan`: Enum (PROMO_LINK, VOLUMEN_CORE, ENTERPRISE_SCALE).
 - `status`: Enum (Active, Paused, Overdue).
+- `teams`: Array de objetos con sufijo (A, B, C, D) y staff técnico completo.
 
 ### 3.2. Entidad: Atleta
 - `number`: String (Dorsal).
@@ -83,7 +85,7 @@ Los roles operan bajo un sistema de ranking numérico (`rank`) que impide la ges
 - **Tipografía**: Headline (Space Grotesk), Body (Inter). Estilo NASA/Aeroespacial.
 - **Colorimetría**: Emerald (Global), Cyan (Operativa), Amber (Metodológica).
 - **Precisión**: Uso de `[color-scheme:dark]` y `pr-10` en campos de fecha para evitar clipping de iconos.
-- **Interacción**: Drag & Drop nativo para sustituciones en Roster Lateral.
+- **Interacción**: Drag & Drop nativo para sustituciones en Roster Lateral y pizarra táctica.
 
 ---
 *Este Ledger es el único punto de verdad para la integridad del sistema SynqSports Pro.*
