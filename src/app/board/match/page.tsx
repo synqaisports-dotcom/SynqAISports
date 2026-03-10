@@ -332,7 +332,6 @@ export default function MatchBoardPage() {
     const parent = canvas.parentElement;
     if (!parent) return;
     
-    // Sincronización Real de Cobertura
     canvas.width = parent.clientWidth;
     canvas.height = parent.clientHeight;
     
@@ -344,7 +343,6 @@ export default function MatchBoardPage() {
     }
   }, []);
 
-  // PROTOCOLO_RESIZE_V2.0: Observer para garantizar cobertura del 100% durante transiciones
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !canvas.parentElement) return;
@@ -513,11 +511,126 @@ export default function MatchBoardPage() {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+        </div>
 
+        <div className="flex items-center gap-2 lg:gap-4 px-3 lg:px-6 py-1.5 lg:py-2 bg-primary/5 border border-primary/20 rounded-[2rem] shadow-[0_0_30px_rgba(0,242,255,0.05)] mx-2">
+          <div className="flex items-center gap-1 lg:gap-3">
+            <span className="text-[8px] font-black text-white/30 uppercase tracking-widest hidden lg:block">L</span>
+            <div className="flex items-center gap-1 lg:gap-2">
+              <button onClick={() => setScore(s => ({...s, home: Math.max(0, s.home - 1)}))} className="h-5 w-5 lg:h-6 lg:w-6 flex items-center justify-center rounded-lg border border-primary/10 text-primary/40 hover:text-primary transition-all">-</button>
+              <span className="text-base lg:text-xl font-black font-headline text-white tabular-nums min-w-[12px] lg:min-w-[16px] text-center">{score.home}</span>
+              <button onClick={() => setScore(s => ({...s, home: s.home + 1}))} className="h-5 w-5 lg:h-6 lg:w-6 flex items-center justify-center rounded-lg border border-primary/10 text-primary/40 hover:text-primary transition-all">+</button>
+            </div>
+          </div>
+
+          <div className="w-[1px] h-8 lg:h-10 bg-white/10 mx-1 lg:mx-2" />
+
+          <div className="flex flex-col items-center justify-center min-w-[100px] lg:min-w-[120px]">
+            <div className="flex items-center gap-1 lg:gap-2 mb-0.5">
+              <span className={cn(
+                "text-base lg:text-xl font-black font-headline tabular-nums tracking-tighter transition-all",
+                timeLeft === 0 ? "text-rose-500 animate-pulse" : "text-primary cyan-text-glow"
+              )}>
+                {formatTime(timeLeft)}
+              </span>
+              <button 
+                onClick={() => setIsRunning(!isRunning)}
+                className={cn(
+                  "h-5 w-5 lg:h-6 lg:w-6 rounded-full flex items-center justify-center transition-all",
+                  isRunning ? "bg-amber-500 text-black" : "bg-primary text-black"
+                )}
+              >
+                {isRunning ? <Pause className="h-2.5 w-2.5 lg:h-3 lg:w-3" /> : <Play className="h-2.5 w-2.5 lg:h-3 lg:w-3 ml-0.5" />}
+              </button>
+            </div>
+            
+            <div className="flex items-center gap-2 lg:gap-3">
+              <Select onValueChange={handleSetPreset}>
+                <SelectTrigger className="h-4 lg:h-5 bg-transparent border-none p-0 text-[7px] lg:text-[8px] font-black uppercase text-white/20 hover:text-primary transition-colors focus:ring-0">
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-2 w-2 lg:h-2.5 lg:w-2.5" />
+                    <span>Preset</span>
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="bg-[#0a0f18] border-primary/20">
+                  {TIME_PRESETS.map((p) => (
+                    <SelectItem key={p.value} value={p.value.toString()} className="text-[9px] font-black uppercase">{p.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <button onClick={() => { setIsRunning(false); setTimeLeft(45 * 60); }} className="text-[7px] lg:text-[8px] font-black text-white/20 hover:text-rose-400 uppercase flex items-center gap-1 transition-colors">
+                <RotateCcw className="h-2 w-2 lg:h-2.5 lg:w-2.5" /> Reset
+              </button>
+            </div>
+          </div>
+
+          <div className="w-[1px] h-8 lg:h-10 bg-white/10 mx-1 lg:mx-2" />
+
+          <div className="flex items-center gap-1 lg:gap-3">
+            <div className="flex items-center gap-1 lg:gap-2">
+              <button onClick={() => setScore(s => ({...s, guest: Math.max(0, s.guest - 1)}))} className="h-5 w-5 lg:h-6 lg:w-6 flex items-center justify-center rounded-lg border border-primary/10 text-primary/40 hover:text-primary transition-all">-</button>
+              <span className="text-base lg:text-xl font-black font-headline text-white tabular-nums min-w-[12px] lg:min-w-[16px] text-center">{score.guest}</span>
+              <button onClick={() => setScore(s => ({...s, guest: s.guest + 1}))} className="h-5 w-5 lg:h-6 lg:w-6 flex items-center justify-center rounded-lg border border-primary/10 text-primary/40 hover:text-primary transition-all">+</button>
+            </div>
+            <span className="text-[8px] font-black text-white/30 uppercase tracking-widest hidden lg:block">V</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 lg:gap-3 shrink-0">
+          <Button className="h-9 lg:h-11 bg-primary text-black font-black uppercase text-[8px] lg:text-[10px] tracking-[0.2em] px-3 lg:px-6 rounded-xl cyan-glow border-none hover:scale-105 transition-all">
+            <Save className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
+          </Button>
+        </div>
+      </header>
+
+      <div className="flex-1 relative flex overflow-hidden">
+        <BoardToolbar 
+          variant="match"
+          isPaintMode={isPaintMode}
+          onTogglePaintMode={setIsPaintMode}
+          onColorSelect={setCurrentColor}
+          onClear={clearCanvas}
+          activeColor={currentColor}
+          className="absolute left-4 lg:left-6 top-1/2 -translate-y-1/2 z-[60] hidden sm:flex" 
+        />
+        
+        <main className="flex-1 relative overflow-hidden">
+          <TacticalField theme="cyan" fieldType={fieldType} containerRef={fieldRef}>
+            <canvas 
+              ref={canvasRef}
+              className={cn(
+                "absolute inset-0 z-30 pointer-events-none",
+                isPaintMode && "pointer-events-auto"
+              )}
+              onPointerDown={startDrawing}
+              onPointerMove={draw}
+              onPointerUp={stopDrawing}
+              onPointerLeave={stopDrawing}
+            />
+
+            <div className={cn("absolute inset-0 z-20", isPaintMode && "pointer-events-none")}>
+              {players.map(p => (
+                <MemoizedPlayerChip 
+                  key={p.id} 
+                  team={p.team} 
+                  number={p.number} 
+                  label={p.name}
+                  x={p.x} 
+                  y={p.y} 
+                  isDragging={draggingId === p.id}
+                  onPointerDown={(e) => handlePointerDownPlayer(e, p.id)}
+                />
+              ))}
+            </div>
+          </TacticalField>
+
+          {/* PROTOCOLO_ERGONOMIA_V2.1: Botón de Configuración en Esquina Inferior Derecha */}
+          <div className="absolute bottom-6 right-6 z-[60] pointer-events-auto">
             <Sheet>
               <SheetTrigger asChild>
-                <button className="h-9 lg:h-10 w-9 lg:w-10 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all active:scale-95 shadow-[0_0_15px_rgba(0,242,255,0.1)]">
-                  {hasClub ? <Settings className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                <button className="h-14 w-14 rounded-2xl bg-primary text-black flex items-center justify-center transition-all active:scale-95 shadow-[0_0_30px_rgba(0,242,255,0.4)] hover:scale-110 cyan-glow">
+                  {hasClub ? <Settings className="h-6 w-6" /> : <Plus className="h-6 w-6" />}
                 </button>
               </SheetTrigger>
               <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
@@ -632,118 +745,6 @@ export default function MatchBoardPage() {
               </SheetContent>
             </Sheet>
           </div>
-        </div>
-
-        <div className="flex items-center gap-2 lg:gap-4 px-3 lg:px-6 py-1.5 lg:py-2 bg-primary/5 border border-primary/20 rounded-[2rem] shadow-[0_0_30px_rgba(0,242,255,0.05)] mx-2">
-          <div className="flex items-center gap-1 lg:gap-3">
-            <span className="text-[8px] font-black text-white/30 uppercase tracking-widest hidden lg:block">L</span>
-            <div className="flex items-center gap-1 lg:gap-2">
-              <button onClick={() => setScore(s => ({...s, home: Math.max(0, s.home - 1)}))} className="h-5 w-5 lg:h-6 lg:w-6 flex items-center justify-center rounded-lg border border-primary/10 text-primary/40 hover:text-primary transition-all">-</button>
-              <span className="text-base lg:text-xl font-black font-headline text-white tabular-nums min-w-[12px] lg:min-w-[16px] text-center">{score.home}</span>
-              <button onClick={() => setScore(s => ({...s, home: s.home + 1}))} className="h-5 w-5 lg:h-6 lg:w-6 flex items-center justify-center rounded-lg border border-primary/10 text-primary/40 hover:text-primary transition-all">+</button>
-            </div>
-          </div>
-
-          <div className="w-[1px] h-8 lg:h-10 bg-white/10 mx-1 lg:mx-2" />
-
-          <div className="flex flex-col items-center justify-center min-w-[100px] lg:min-w-[120px]">
-            <div className="flex items-center gap-1 lg:gap-2 mb-0.5">
-              <span className={cn(
-                "text-base lg:text-xl font-black font-headline tabular-nums tracking-tighter transition-all",
-                timeLeft === 0 ? "text-rose-500 animate-pulse" : "text-primary cyan-text-glow"
-              )}>
-                {formatTime(timeLeft)}
-              </span>
-              <button 
-                onClick={() => setIsRunning(!isRunning)}
-                className={cn(
-                  "h-5 w-5 lg:h-6 lg:w-6 rounded-full flex items-center justify-center transition-all",
-                  isRunning ? "bg-amber-500 text-black" : "bg-primary text-black"
-                )}
-              >
-                {isRunning ? <Pause className="h-2.5 w-2.5 lg:h-3 lg:w-3" /> : <Play className="h-2.5 w-2.5 lg:h-3 lg:w-3 ml-0.5" />}
-              </button>
-            </div>
-            
-            <div className="flex items-center gap-2 lg:gap-3">
-              <Select onValueChange={handleSetPreset}>
-                <SelectTrigger className="h-4 lg:h-5 bg-transparent border-none p-0 text-[7px] lg:text-[8px] font-black uppercase text-white/20 hover:text-primary transition-colors focus:ring-0">
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-2 w-2 lg:h-2.5 lg:w-2.5" />
-                    <span>Preset</span>
-                  </div>
-                </SelectTrigger>
-                <SelectContent className="bg-[#0a0f18] border-primary/20">
-                  {TIME_PRESETS.map((p) => (
-                    <SelectItem key={p.value} value={p.value.toString()} className="text-[9px] font-black uppercase">{p.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <button onClick={() => { setIsRunning(false); setTimeLeft(45 * 60); }} className="text-[7px] lg:text-[8px] font-black text-white/20 hover:text-rose-400 uppercase flex items-center gap-1 transition-colors">
-                <RotateCcw className="h-2 w-2 lg:h-2.5 lg:w-2.5" /> Reset
-              </button>
-            </div>
-          </div>
-
-          <div className="w-[1px] h-8 lg:h-10 bg-white/10 mx-1 lg:mx-2" />
-
-          <div className="flex items-center gap-1 lg:gap-3">
-            <div className="flex items-center gap-1 lg:gap-2">
-              <button onClick={() => setScore(s => ({...s, guest: Math.max(0, s.guest - 1)}))} className="h-5 w-5 lg:h-6 lg:w-6 flex items-center justify-center rounded-lg border border-primary/10 text-primary/40 hover:text-primary transition-all">-</button>
-              <span className="text-base lg:text-xl font-black font-headline text-white tabular-nums min-w-[12px] lg:min-w-[16px] text-center">{score.guest}</span>
-              <button onClick={() => setScore(s => ({...s, guest: s.guest + 1}))} className="h-5 w-5 lg:h-6 lg:w-6 flex items-center justify-center rounded-lg border border-primary/10 text-primary/40 hover:text-primary transition-all">+</button>
-            </div>
-            <span className="text-[8px] font-black text-white/30 uppercase tracking-widest hidden lg:block">V</span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 lg:gap-3 shrink-0">
-          <Button className="h-9 lg:h-11 bg-primary text-black font-black uppercase text-[8px] lg:text-[10px] tracking-[0.2em] px-3 lg:px-6 rounded-xl cyan-glow border-none hover:scale-105 transition-all">
-            <Save className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
-          </Button>
-        </div>
-      </header>
-
-      <div className="flex-1 relative flex overflow-hidden">
-        <BoardToolbar 
-          variant="match"
-          isPaintMode={isPaintMode}
-          onTogglePaintMode={setIsPaintMode}
-          onColorSelect={setCurrentColor}
-          onClear={clearCanvas}
-          activeColor={currentColor}
-          className="absolute left-4 lg:left-6 top-1/2 -translate-y-1/2 z-[60] hidden sm:flex" 
-        />
-        
-        <main className="flex-1 relative overflow-hidden">
-          <TacticalField theme="cyan" fieldType={fieldType} containerRef={fieldRef}>
-            <canvas 
-              ref={canvasRef}
-              className={cn(
-                "absolute inset-0 z-30 pointer-events-none",
-                isPaintMode && "pointer-events-auto"
-              )}
-              onPointerDown={startDrawing}
-              onPointerMove={draw}
-              onPointerUp={stopDrawing}
-              onPointerLeave={stopDrawing}
-            />
-
-            <div className={cn("absolute inset-0 z-20", isPaintMode && "pointer-events-none")}>
-              {players.map(p => (
-                <MemoizedPlayerChip 
-                  key={p.id} 
-                  team={p.team} 
-                  number={p.number} 
-                  label={p.name}
-                  x={p.x} 
-                  y={p.y} 
-                  isDragging={draggingId === p.id}
-                  onPointerDown={(e) => handlePointerDownPlayer(e, p.id)}
-                />
-              ))}
-            </div>
-          </TacticalField>
 
           <div className="absolute top-4 lg:top-6 left-4 lg:left-6 right-4 lg:right-6 flex justify-between pointer-events-none z-40">
             <div className="pointer-events-auto flex flex-col gap-2 lg:gap-3">
