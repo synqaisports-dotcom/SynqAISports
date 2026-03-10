@@ -20,7 +20,8 @@ import {
   CheckCircle2,
   Wind,
   Gamepad2,
-  Users
+  Users,
+  Swords
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -41,11 +42,12 @@ const PLANNING_DATA: Record<string, any> = {
     title: "PLANIFICACIÓN",
     titleAccent: "POR BLOQUES TEMÁTICOS",
     description: "La planificación en debutantes es extremadamente flexible. No buscamos picos de forma, sino una progresión lúdica que asegure la variedad y el hábito deportivo.",
+    blocksLabel: "Línea de Tiempo Mensual",
     monthlyBlocks: [
-      { id: 1, title: "Familiarización", focus: "Dominio y tacto", desc: "Conducción libre, pisar el balón y juegos de persecución con móvil." },
-      { id: 2, title: "Coordinación", focus: "Motricidad Base", desc: "Correr, saltar, girar y equilibrio dinámico en circuitos divertidos." },
-      { id: 3, title: "Interacción", focus: "Cooperación Inicial", desc: "Juegos de pases sencillos y noción de 'ayudar al amigo'." },
-      { id: 4, title: "Finalización", focus: "Golpeo y Puntería", desc: "Juegos de puntería a porterías gigantes para fomentar el éxito." }
+      { id: 1, title: "Familiarización", focus: "Dominio y tacto", desc: "Conducción libre, pisar el balón y juegos de persecución con móvil.", period: "MES_01" },
+      { id: 2, title: "Coordinación", focus: "Motricidad Base", desc: "Correr, saltar, girar y equilibrio dinámico en circuitos divertidos.", period: "MES_02" },
+      { id: 3, title: "Interacción", focus: "Cooperación Inicial", desc: "Juegos de pases sencillos y noción de 'ayudar al amigo'.", period: "MES_03" },
+      { id: 4, title: "Finalización", focus: "Golpeo y Puntería", desc: "Juegos de puntería a porterías gigantes para fomentar el éxito.", period: "MES_04" }
     ],
     weeklyMicro: [
       { day: "Sesión 1", label: "Habilidad Individual", focus: "CONDUCCIÓN Y REGATE", color: "border-primary/20 bg-primary/5" },
@@ -62,6 +64,34 @@ const PLANNING_DATA: Record<string, any> = {
       "El resultado es irrelevante.",
       "Flexibilidad total ante la fatiga atencional."
     ]
+  },
+  prebenjamin: {
+    title: "PLANIFICACIÓN",
+    titleAccent: "BIMENSUAL TÉCNICA",
+    description: "Se introducen objetivos técnicos definidos organizados en bloques de dos meses para permitir una asimilación profunda antes de progresar.",
+    blocksLabel: "Mesociclos Bimensuales",
+    monthlyBlocks: [
+      { id: 1, title: "Dominio Base", focus: "Conducción", desc: "Familiarización avanzada y transporte del balón con diferentes superficies.", period: "SEPT-OCT" },
+      { id: 2, title: "Cooperación", focus: "Pase y Control", desc: "Introducción al juego asociado y control orientado básico.", period: "NOV-DIC" },
+      { id: 3, title: "Oposición", focus: "1 contra 1", desc: "Regate ofensivo y entrada defensiva. Iniciación al duelo.", period: "ENE-FEB" },
+      { id: 4, title: "Definición", focus: "Tiro a Puerta", desc: "Finalización efectiva y precisión en el remate.", period: "MAR-ABR" },
+      { id: 5, title: "Consolidación", focus: "Repaso General", desc: "Juegos de aplicación global de todos los contenidos del curso.", period: "MAY-JUN" }
+    ],
+    weeklyMicro: [
+      { day: "Día 1", label: "Adquisición", focus: "TÉCNICA ANALÍTICA", color: "border-primary/20 bg-primary/5" },
+      { day: "Día 2", label: "Aplicación", focus: "JUEGOS REALES 2v1 / 2v2", color: "border-amber-500/20 bg-amber-500/5" }
+    ],
+    sessionStructure: [
+      { part: "Calentamiento", time: "10-15 min", desc: "Juegos dinámicos con balón y activación progresiva.", icon: Zap },
+      { part: "Parte Principal", time: "35-40 min", desc: "Desarrollo del objetivo con progresión de dificultad.", icon: Gamepad2 },
+      { part: "Vuelta a la Calma", time: "5-10 min", desc: "Juegos tranquilos, estiramientos y feedback.", icon: Wind }
+    ],
+    focusPoints: [
+      "Introducir la competición sana.",
+      "Fomentar toma de decisiones simple.",
+      "El error es fundamental para aprender.",
+      "Rotación total por todas las posiciones."
+    ]
   }
 };
 
@@ -76,7 +106,7 @@ export default function CyclePlannerPage() {
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <GitBranch className="h-5 w-5 text-amber-500 animate-pulse" />
-            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Cyclic_Planner_v3.0</span>
+            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Cyclic_Planner_v3.1</span>
           </div>
           <h1 className="text-5xl font-headline font-black text-white uppercase italic tracking-tighter amber-text-glow leading-none">
             PLANIFICACIÓN_CÍCLICA
@@ -145,16 +175,16 @@ export default function CyclePlannerPage() {
           {/* COLUMNA DERECHA: MESES Y SEMANAS */}
           <div className="xl:col-span-2 space-y-10">
             
-            {/* BLOQUES MENSUALES */}
+            {/* BLOQUES TEMPORALES */}
             <section className="space-y-6">
               <div className="flex items-center gap-3 px-2">
                 <Layers className="h-4 w-4 text-amber-500" />
-                <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-white">Línea de Tiempo (Mes 1-4)</h3>
+                <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-white">{data.blocksLabel}</h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {data.monthlyBlocks.map((block: any) => (
                   <div key={block.id} className="p-6 bg-black/40 border border-white/5 rounded-3xl group hover:border-amber-500/30 transition-all relative overflow-hidden">
-                    <div className="absolute top-0 right-0 px-4 py-2 bg-amber-500/10 text-[10px] font-black text-amber-500 italic">MES_0{block.id}</div>
+                    <div className="absolute top-0 right-0 px-4 py-2 bg-amber-500/10 text-[10px] font-black text-amber-500 italic">{block.period}</div>
                     <div className="space-y-1 mb-4">
                       <h4 className="text-sm font-black text-white uppercase italic group-hover:amber-text-glow transition-all">{block.title}</h4>
                       <p className="text-[9px] font-black text-amber-500/40 uppercase tracking-widest">{block.focus}</p>
