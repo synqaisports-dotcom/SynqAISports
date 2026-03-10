@@ -476,17 +476,17 @@ export default function AcademyManagementPage() {
                             team.status === "Paused" ? "border-amber-500/20 opacity-60" : "border-primary/10 hover:border-primary/30"
                           )}
                         >
-                          <div className="flex items-center gap-3 flex-1" onClick={() => handleViewTeam(team, cat.name)}>
+                          <div className="flex items-center gap-3 flex-1 min-w-0 mr-2" onClick={() => handleViewTeam(team, cat.name)}>
                             <div className={cn(
-                              "h-1.5 w-1.5 rounded-full animate-pulse",
+                              "h-1.5 w-1.5 rounded-full animate-pulse shrink-0",
                               team.status === "Paused" ? "bg-amber-500" : "bg-primary"
                             )} />
-                            <span className="text-[9px] font-black text-primary uppercase tracking-tight group-hover/team:cyan-text-glow">
+                            <span className="text-[9px] font-black text-primary uppercase tracking-tight group-hover/team:cyan-text-glow truncate">
                               {team.name} <span className="text-primary group-hover/team:primary font-black ml-1">[{team.suffix}]</span>
                             </span>
                           </div>
                           
-                          <div className="flex items-center gap-1 transition-opacity">
+                          <div className="flex items-center gap-1 shrink-0">
                             <button onClick={() => handleViewTeam(team, cat.name)} className="p-1.5 hover:bg-primary/20 rounded-lg text-primary transition-all" title="Ver Ficha"><Eye className="h-3.5 w-3.5" /></button>
                             <button onClick={() => handleEditTeam(cat.id, team, idx)} className="p-1.5 hover:bg-primary/20 rounded-lg text-primary transition-all" title="Editar Nodo"><Pencil className="h-3.5 w-3.5" /></button>
                             <button onClick={() => handleToggleTeamStatus(cat.id, idx)} className="p-1.5 hover:bg-amber-500/20 rounded-lg text-amber-500 transition-all" title={team.status === "Paused" ? "Reactivar" : "Pausar"}>
@@ -725,7 +725,7 @@ export default function AcademyManagementPage() {
                   
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label className="text-[9px] font-black uppercase text-primary tracking-widest ml-1 italic">Coordinador de Etapa</Label>
+                      <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Coordinador de Etapa</Label>
                       <div className="relative">
                         <Shield className="absolute left-3 top-3 h-4 w-4 text-primary/40" />
                         <Input 
@@ -738,7 +738,7 @@ export default function AcademyManagementPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-[9px] font-black uppercase text-primary tracking-widest ml-1 italic">Primer Entrenador</Label>
+                      <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Primer Entrenador</Label>
                       <div className="relative">
                         <Trophy className="absolute left-3 top-3 h-4 w-4 text-primary/40" />
                         <Input 
@@ -751,7 +751,7 @@ export default function AcademyManagementPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-[9px] font-black uppercase text-primary tracking-widest ml-1 italic">Segundo Entrenador</Label>
+                      <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Segundo Entrenador</Label>
                       <div className="relative">
                         <Users className="absolute left-3 top-3 h-4 w-4 text-primary/40" />
                         <Input 
@@ -764,7 +764,7 @@ export default function AcademyManagementPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-[9px] font-black uppercase text-primary tracking-widest ml-1 italic">Delegado de Equipo</Label>
+                      <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Delegado de Equipo</Label>
                       <div className="relative">
                         <ClipboardCheck className="absolute left-3 top-3 h-4 w-4 text-primary/40" />
                         <Input 
@@ -777,7 +777,7 @@ export default function AcademyManagementPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-[9px] font-black uppercase text-primary tracking-widest ml-1 italic">Preparador Físico</Label>
+                      <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Preparador Físico</Label>
                       <div className="relative">
                         <Activity className="absolute left-3 top-3 h-4 w-4 text-primary/40" />
                         <Input 
