@@ -92,6 +92,33 @@ const PLANNING_DATA: Record<string, any> = {
       "El error es fundamental para aprender.",
       "Rotación total por todas las posiciones."
     ]
+  },
+  benjamin: {
+    title: "PLANIFICACIÓN",
+    titleAccent: "TRIMESTRAL COLECTIVA",
+    description: "En la etapa benjamín se introducen los primeros conceptos de cooperación. El objetivo es la transición del 'yo' al 'nosotros', entendiendo el pase como el lenguaje del juego colectivo.",
+    blocksLabel: "Mesociclos Trimestrales",
+    monthlyBlocks: [
+      { id: 1, title: "Fundamentos Técnicos", focus: "Control, Pase y Conducción", desc: "Mejora de la precisión en el envío y fundamentos del 2 contra 1.", period: "1er TRIM" },
+      { id: 2, title: "Principios Tácticos", focus: "Amplitud y Apoyo", desc: "Ocupación racional del espacio e introducción a la presión tras pérdida.", period: "2º TRIM" },
+      { id: 3, title: "Juego Colectivo", focus: "Situaciones 3v2 / 3v3", desc: "Toma de decisiones en superioridad e inferioridad. Finalización.", period: "3er TRIM" }
+    ],
+    weeklyMicro: [
+      { day: "Día 1", label: "Técnico-Coordinativo", focus: "MEJORA INDIVIDUAL", color: "border-primary/20 bg-primary/5" },
+      { day: "Día 2", label: "Táctico-Individual", focus: "SITUACIONES 1v1 / 2v1", color: "border-amber-500/20 bg-amber-500/5" },
+      { day: "Día 3", label: "Táctico-Colectivo", focus: "APLICACIÓN REAL (PARTIDO)", color: "border-blue-500/20 bg-blue-500/5" }
+    ],
+    sessionStructure: [
+      { part: "Calentamiento", time: "15 min", desc: "Juegos de posesión y rondos técnicos.", icon: Swords },
+      { part: "Parte Principal", time: "45-50 min", desc: "Tareas progresivas de analítico a global.", icon: Gamepad2 },
+      { part: "Vuelta a la Calma", time: "10 min", desc: "Estiramientos dirigidos y charla sobre la sesión.", icon: Users }
+    ],
+    focusPoints: [
+      "Corregir la toma de decisiones (¿Cuándo pasar?).",
+      "El pase como herramienta clave de comunicación.",
+      "Fomentar la comunicación activa en el campo.",
+      "Uso de la competición para evaluar conceptos."
+    ]
   }
 };
 
@@ -106,7 +133,7 @@ export default function CyclePlannerPage() {
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <GitBranch className="h-5 w-5 text-amber-500 animate-pulse" />
-            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Cyclic_Planner_v3.1</span>
+            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Cyclic_Planner_v3.2</span>
           </div>
           <h1 className="text-5xl font-headline font-black text-white uppercase italic tracking-tighter amber-text-glow leading-none">
             PLANIFICACIÓN_CÍCLICA
