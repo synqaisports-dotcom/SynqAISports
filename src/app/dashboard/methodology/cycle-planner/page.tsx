@@ -24,7 +24,10 @@ import {
   Swords,
   Activity,
   Trophy,
-  Video
+  Video,
+  LineChart,
+  Microscope,
+  Stethoscope
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -44,7 +47,7 @@ const PLANNING_DATA: Record<string, any> = {
   debutantes: {
     title: "PLANIFICACIÓN",
     titleAccent: "POR BLOQUES TEMÁTICOS",
-    description: "La planificación en la categoría debutante es extremadamente flexible. No buscamos picos de forma, sino una progresión lúdica que asegure la variedad y el hábito deportivo.",
+    description: "La planificación en la categoría debutante es extremadamente flexible y se centra en el juego. No hablamos de ciclos de rendimiento, sino de bloques temáticos que aseguran la variedad y la diversión.",
     blocksLabel: "Línea de Tiempo Mensual",
     monthlyBlocks: [
       { id: 1, title: "Familiarización", focus: "Dominio y tacto", desc: "Conducción libre, pisar el balón y juegos de persecución con móvil.", period: "MES_01" },
@@ -53,45 +56,45 @@ const PLANNING_DATA: Record<string, any> = {
       { id: 4, title: "Finalización", focus: "Golpeo y Puntería", desc: "Juegos de puntería a porterías gigantes para fomentar el éxito.", period: "MES_04" }
     ],
     weeklyMicro: [
-      { day: "Sesión 1", label: "Habilidad Individual", focus: "CONDUCCIÓN Y REGATE", color: "border-primary/20 bg-primary/5" },
-      { day: "Sesión 2", label: "Aplicación al Juego", focus: "MINI-JUEGOS 1v1 / 2v2", color: "border-amber-500/20 bg-amber-500/5" }
+      { day: "Día 1", label: "Habilidad Individual", focus: "CONDUCCIÓN Y REGATE SIMPLE", color: "border-primary/20 bg-primary/5" },
+      { day: "Día 2", label: "Aplicación al Juego", focus: "MINI-JUEGOS 1v1 / 2v2", color: "border-amber-500/20 bg-amber-500/5" }
     ],
     sessionStructure: [
-      { part: "Activación", time: "10 min", desc: "Juegos lúdicos de entrada y movilidad.", icon: Zap },
-      { part: "Bloque Central", time: "30 min", desc: "Desarrollo del tema a través del juego.", icon: Gamepad2 },
-      { part: "Vuelta a la Calma", time: "10 min", desc: "Estiramientos suaves y recogida.", icon: Wind }
+      { part: "Calentamiento", time: "10 min", desc: "Juegos de activación y movilidad articular.", icon: Zap },
+      { part: "Parte Principal", time: "30 min", desc: "Desarrollo del objetivo de la semana mediante el juego.", icon: Gamepad2 },
+      { part: "Vuelta a la Calma", time: "10 min", desc: "Juegos de baja intensidad y recogida de material.", icon: Wind }
     ],
     focusPoints: [
       "La palabra clave es 'JUGAR'.",
-      "Máxima participación (Sin colas de espera).",
-      "El resultado es irrelevante.",
-      "Flexibilidad total ante la fatiga atencional."
+      "Máxima participación y contacto con el balón.",
+      "El resultado es irrelevante, el esfuerzo lo es todo.",
+      "Flexibilidad total ante la pérdida de interés."
     ]
   },
   prebenjamin: {
     title: "PLANIFICACIÓN",
     titleAccent: "BIMENSUAL TÉCNICA",
-    description: "Se introducen objetivos técnicos definidos organizados en bloques de dos meses para permitir una asimilación profunda antes de progresar.",
+    description: "En Prebenjamín, la planificación sigue siendo lúdica, pero se introducen objetivos técnicos más definidos. Los ciclos se organizan en bloques bimensuales para permitir la asimilación.",
     blocksLabel: "Mesociclos Bimensuales",
     monthlyBlocks: [
-      { id: 1, title: "Dominio Base", focus: "Conducción", desc: "Familiarización avanzada y transporte del balón con diferentes superficies.", period: "SEPT-OCT" },
-      { id: 2, title: "Cooperación", focus: "Pase y Control", desc: "Introducción al juego asociado y control orientado básico.", period: "NOV-DIC" },
-      { id: 3, title: "Oposición", focus: "1 contra 1", desc: "Regate ofensivo y entrada defensiva. Iniciación al duelo.", period: "ENE-FEB" },
-      { id: 4, title: "Definición", focus: "Tiro a Puerta", desc: "Finalización efectiva y precisión en el remate.", period: "MAR-ABR" },
-      { id: 5, title: "Consolidación", focus: "Repaso General", desc: "Juegos de aplicación global de todos los contenidos del curso.", period: "MAY-JUN" }
+      { id: 1, title: "Bloque 1", focus: "Conducción", desc: "Familiarización avanzada y transporte del balón con diferentes superficies.", period: "SEPT-OCT" },
+      { id: 2, title: "Bloque 2", focus: "Pase y Control", desc: "Introducción al juego asociado y control orientado básico.", period: "NOV-DIC" },
+      { id: 3, title: "Bloque 3", focus: "El 1 contra 1", desc: "Regate ofensivo y entrada defensiva. Iniciación al duelo.", period: "ENE-FEB" },
+      { id: 4, title: "Bloque 4", focus: "Finalización", desc: "Efectividad y precisión en el remate a puerta.", period: "MAR-ABR" },
+      { id: 5, title: "Bloque 5", focus: "Consolidación", desc: "Repaso general y juegos de aplicación global del curso.", period: "MAY-JUN" }
     ],
     weeklyMicro: [
-      { day: "Día 1", label: "Adquisición", focus: "TÉCNICA ANALÍTICA", color: "border-primary/20 bg-primary/5" },
-      { day: "Día 2", label: "Aplicación", focus: "JUEGOS REALES 2v1 / 2v2", color: "border-amber-500/20 bg-amber-500/5" }
+      { day: "Día 1", label: "Adquisición", focus: "TÉCNICA INDIVIDUAL Y ANALÍTICA", color: "border-primary/20 bg-primary/5" },
+      { day: "Día 2", label: "Aplicación", focus: "JUEGOS 2v1 / 2v2 Y PARTIDOS", color: "border-amber-500/20 bg-amber-500/5" }
     ],
     sessionStructure: [
-      { part: "Calentamiento", time: "10-15 min", desc: "Juegos con balón y activación progresiva.", icon: Zap },
-      { part: "Parte Principal", time: "35-40 min", desc: "Desarrollo del objetivo semanal con progresión de dificultad.", icon: Gamepad2 },
-      { part: "Vuelta a la Calma", time: "5-10 min", desc: "Juegos tranquilos, estiramientos y feedback.", icon: Wind }
+      { part: "Calentamiento", time: "15 min", desc: "Juegos con balón y activación progresiva.", icon: Zap },
+      { part: "Parte Principal", time: "35 min", desc: "Desarrollo del objetivo con progresión de dificultad.", icon: Gamepad2 },
+      { part: "Vuelta a la Calma", time: "10 min", desc: "Juegos tranquilos y estiramientos suaves.", icon: Wind }
     ],
     focusPoints: [
       "Introducir la competición sana.",
-      "Fomentar toma de decisiones simple.",
+      "Fomentar la toma de decisiones simples.",
       "El error es parte fundamental del aprendizaje.",
       "Rotación total por todas las posiciones."
     ]
@@ -99,25 +102,25 @@ const PLANNING_DATA: Record<string, any> = {
   benjamin: {
     title: "PLANIFICACIÓN",
     titleAccent: "TRIMESTRAL COLECTIVA",
-    description: "En la etapa benjamín se introducen los primeros conceptos de cooperación. El objetivo es la transición del 'yo' al 'nosotros', entendiendo el pase como el lenguaje del juego colectivo.",
+    description: "Se introducen los primeros conceptos de cooperación y se estructura la semana de forma más definida. El objetivo es que los jugadores empiecen a entender el juego colectivo.",
     blocksLabel: "Mesociclos Trimestrales",
     monthlyBlocks: [
-      { id: 1, title: "Fundamentos Técnicos", focus: "Control, Pase y Conducción", desc: "Mejora de la precisión en el envío y fundamentos del 2 contra 1.", period: "1er TRIM" },
-      { id: 2, title: "Principios Tácticos", focus: "Amplitud y Apoyo", desc: "Ocupación racional del espacio e introducción a la presión tras pérdida.", period: "2º TRIM" },
-      { id: 3, title: "Juego Colectivo", focus: "Situaciones 3v2 / 3v3", desc: "Toma de decisiones en superioridad e inferioridad. Finalización.", period: "3er TRIM" }
+      { id: 1, title: "Trimestre 1", focus: "Fundamentos 2v1", desc: "Mejora del pase y control bajo nociones de superioridad numérica.", period: "1er TRIM" },
+      { id: 2, title: "Trimestre 2", focus: "Principios Tácticos", desc: "Ocupación de espacios (amplitud) e inicio de la presión tras pérdida.", period: "2º TRIM" },
+      { id: 3, title: "Trimestre 3", focus: "Situaciones 3v2 / 3v3", desc: "Toma de decisiones compleja y finalización colectiva.", period: "3er TRIM" }
     ],
     weeklyMicro: [
-      { day: "Día 1", label: "Técnico-Coordinativo", focus: "MEJORA INDIVIDUAL", color: "border-primary/20 bg-primary/5" },
-      { day: "Día 2", label: "Táctico-Individual", focus: "SITUACIONES 1v1 / 2v1", color: "border-amber-500/20 bg-amber-500/5" },
+      { day: "Día 1", label: "Técnico-Coordinativo", focus: "MEJORA INDIVIDUAL ESPECÍFICA", color: "border-primary/20 bg-primary/5" },
+      { day: "Día 2", label: "Táctico-Individual", focus: "SITUACIONES REDUCIDAS (1v1, 2v1)", color: "border-amber-500/20 bg-amber-500/5" },
       { day: "Día 3", label: "Táctico-Colectivo", focus: "APLICACIÓN REAL (PARTIDO)", color: "border-blue-500/20 bg-blue-500/5" }
     ],
     sessionStructure: [
       { part: "Calentamiento", time: "15 min", desc: "Juegos de posesión y rondos técnicos.", icon: Swords },
-      { part: "Parte Principal", time: "45-50 min", desc: "Tareas progresivas de analítico a global.", icon: Gamepad2 },
-      { part: "Vuelta a la Calma", time: "10 min", desc: "Estiramientos dirigidos y charla sobre la sesión.", icon: Users }
+      { part: "Parte Principal", time: "50 min", desc: "Tareas progresivas de analítico a global.", icon: Gamepad2 },
+      { part: "Vuelta a la Calma", time: "10 min", desc: "Estiramientos dirigidos y feedback táctico.", icon: Users }
     ],
     focusPoints: [
-      "Corregir la toma de decisiones (¿Cuándo pasar?).",
+      "Corregir la toma de decisiones: ¿Cuándo pasar?",
       "El pase como herramienta clave de comunicación.",
       "Fomentar la comunicación activa en el campo.",
       "Uso de la competición para evaluar conceptos."
@@ -129,26 +132,26 @@ const PLANNING_DATA: Record<string, any> = {
     description: "Es la etapa de transición a Fútbol 11. La planificación se vuelve más táctica y se introducen los principios del modelo de juego del club.",
     blocksLabel: "Mesociclos por Principios",
     monthlyBlocks: [
-      { id: 1, title: "Fase Ofensiva", focus: "Conservación y Progresión", desc: "Mantenimiento del balón en zona de inicio y progresión a zona de finalización.", period: "MES_01" },
-      { id: 2, title: "Fase Defensiva", focus: "Marcaje y Cobertura", desc: "Principios defensivos colectivos, repliegue y ayudas permanentes.", period: "MES_02" },
-      { id: 3, title: "Transición A-D", focus: "Presión tras Pérdida", desc: "Reacción inmediata tras perder la posesión para evitar el contraataque.", period: "MES_03" },
-      { id: 4, title: "Transición D-A", focus: "Contraataque", desc: "Aprovechamiento de espacios libres tras recuperación en bloque bajo o medio.", period: "MES_04" },
-      { id: 5, title: "Acciones ABP", focus: "Estrategia", desc: "Diseño y ejecución de saques de esquina, faltas y saques de banda.", period: "MES_05" }
+      { id: 1, title: "Fase Ofensiva", focus: "Conservación", desc: "Mantenimiento del balón y progresión en campo contrario.", period: "MES_01" },
+      { id: 2, title: "Fase Defensiva", focus: "Marcaje y Cobertura", desc: "Principios defensivos colectivos y repliegue sincronizado.", period: "MES_02" },
+      { id: 3, title: "Transición A-D", focus: "Presión tras Pérdida", desc: "Reacción inmediata para evitar el contraataque rival.", period: "MES_03" },
+      { id: 4, title: "Transición D-A", focus: "Contraataque", desc: "Aprovechamiento de espacios libres tras recuperación.", period: "MES_04" },
+      { id: 5, title: "Acciones ABP", focus: "Estrategia", desc: "Diseño y ejecución de balón parado ofensivo y defensivo.", period: "MES_05" }
     ],
     weeklyMicro: [
-      { day: "Día 1", label: "Sub-principios", focus: "ASPECTOS CONCRETOS DEL TEMA", color: "border-primary/20 bg-primary/5" },
+      { day: "Día 1", label: "Sub-principios", focus: "TAREAS DE ASPECTOS CONCRETOS", color: "border-primary/20 bg-primary/5" },
       { day: "Día 2", label: "Principios Completos", focus: "TAREAS COLECTIVAS COMPLEJAS", color: "border-amber-500/20 bg-amber-500/5" },
-      { day: "Día 3", label: "Aplicación Real", focus: "PARTIDO CONDICIONADO / MODELO", color: "border-blue-500/20 bg-blue-500/5" }
+      { day: "Día 3", label: "Aplicación al Modelo", focus: "PARTIDO CONDICIONADO / REAL", color: "border-blue-500/20 bg-blue-500/5" }
     ],
     sessionStructure: [
-      { part: "Calentamiento", time: "15-20 min", desc: "Rondos complejos y juegos de posición.", icon: Swords },
-      { part: "Parte Principal", time: "50-60 min", desc: "Tareas tácticas y partidos modificados.", icon: Gamepad2 },
+      { part: "Calentamiento", time: "20 min", desc: "Rondos complejos y juegos de posición.", icon: Swords },
+      { part: "Parte Principal", time: "60 min", desc: "Tareas tácticas y partidos modificados.", icon: Gamepad2 },
       { part: "Vuelta a la Calma", time: "10 min", desc: "Estiramientos y análisis táctico grupal.", icon: Users }
     ],
     focusPoints: [
       "Entender el 'porqué' de cada ejercicio.",
-      "Trabajo específico por líneas (DEF/MED/ATQ).",
-      "Uso de vídeo para corrección técnica.",
+      "Trabajo por líneas: Defensa, Medio y Ataque.",
+      "Uso de vídeo para la corrección táctica.",
       "Adaptación espacial al campo de Fútbol 11."
     ]
   },
@@ -156,58 +159,87 @@ const PLANNING_DATA: Record<string, any> = {
     title: "PLANIFICACIÓN",
     titleAccent: "POR MODELO DE JUEGO",
     description: "En la 'edad de oro del aprendizaje', la planificación busca perfeccionar la técnica en un contexto táctico real y competitivo.",
-    blocksLabel: "Mesociclos por Modelo de Juego",
+    blocksLabel: "Mesociclos del Modelo",
     monthlyBlocks: [
-      { id: 1, title: "Construcción", focus: "Salida de Balón", desc: "Inicio del juego desde portería y progresión limpia a campo contrario.", period: "MES_01" },
-      { id: 2, title: "Finalización", focus: "Zona de Ataque", desc: "Creación de ocasiones y efectividad en el último tercio del campo.", period: "MES_02" },
-      { id: 3, title: "Organización", focus: "Bloque Defensivo", desc: "Presión organizada y repliegue colectivo sincronizado.", period: "MES_03" },
-      { id: 4, title: "Estrategia", focus: "ABP Avanzada", desc: "Estrategia operativa compleja en faltas, corners y saques.", period: "MES_04" }
+      { id: 1, title: "Construcción", focus: "Salida de Balón", desc: "Inicio del juego y progresión limpia desde portería.", period: "BLOQUE_1" },
+      { id: 2, title: "Finalización", focus: "Zona de Ataque", desc: "Creación de ocasiones y efectividad en el último tercio.", period: "BLOQUE_2" },
+      { id: 3, title: "Organización", focus: "Bloque Defensivo", desc: "Presión organizada y repliegue colectivo sincronizado.", period: "BLOQUE_3" },
+      { id: 4, title: "Estrategia", focus: "ABP Avanzada", desc: "Estrategia operativa compleja en balón parado.", period: "BLOQUE_4" }
     ],
     weeklyMicro: [
-      { day: "MD-4", label: "Condicional", focus: "FUERZA Y RESISTENCIA", color: "border-blue-500/20 bg-blue-500/5" },
-      { day: "MD-3", label: "Táctico", focus: "PRINCIPIOS DEL MODELO", color: "border-primary/20 bg-primary/5" },
+      { day: "MD-4", label: "Condicional", focus: "FUERZA Y RESISTENCIA ESPECÍFICA", color: "border-blue-500/20 bg-blue-500/5" },
+      { day: "MD-3", label: "Táctico", focus: "PRINCIPIOS DEL MODELO DE JUEGO", color: "border-primary/20 bg-primary/5" },
       { day: "MD-2", label: "Velocidad", focus: "VELOCIDAD Y FINALIZACIÓN", color: "border-amber-500/20 bg-amber-500/5" },
-      { day: "MD-1", label: "Activación", focus: "ACTIVACIÓN Y ABP", color: "border-rose-500/20 bg-rose-500/5" }
+      { day: "MD-1", label: "Activación", focus: "AJUSTES TÁCTICOS Y ABP", color: "border-rose-500/20 bg-rose-500/5" }
     ],
     sessionStructure: [
       { part: "Activación", time: "20 min", desc: "Tareas técnico-tácticas introductorias.", icon: Zap },
-      { part: "Parte Principal", time: "60 min", desc: "Desarrollo de alta intensidad y carga cognitiva.", icon: Gamepad2 },
+      { part: "Parte Principal", time: "60 min", desc: "Tareas de alta intensidad y carga cognitiva.", icon: Gamepad2 },
       { part: "Vuelta a la Calma", time: "10 min", desc: "Regenerativo y feedback de sesión.", icon: Wind }
     ],
     focusPoints: [
       "Automatizar movimientos tácticos colectivos.",
       "Carga física controlada y específica.",
-      "Fomentar auto-evaluación y liderazgo.",
+      "Fomentar el liderazgo dentro del grupo.",
       "La competitividad formativa es la prioridad."
     ]
   },
   cadete: {
     title: "PLANIFICACIÓN",
     titleAccent: "DE RENDIMIENTO",
-    description: "Etapa de rendimiento. La planificación se orienta a la competición y a la optimización del rendimiento individual y colectivo mediante la Periodización Táctica.",
-    blocksLabel: "Mesociclos Competitivos",
+    description: "Etapa de rendimiento. La planificación se orienta a la competición y a la optimización del rendimiento individual y colectivo.",
+    blocksLabel: "Periodización Táctica",
     monthlyBlocks: [
-      { id: 1, title: "Pretemporada", focus: "Adquisición", desc: "Adquisición de la forma física y del modelo de juego base del club.", period: "AGO-SEPT" },
-      { id: 2, title: "Competitivo", focus: "Mantenimiento", desc: "Mantenimiento de la forma y ajustes tácticos semanales basados en el rival.", period: "OCT-MAY" },
-      { id: 3, title: "Transitorio", focus: "Recuperación", desc: "Descanso activo, recuperación y análisis de rendimiento individual.", period: "JUN-JUL" }
+      { id: 1, title: "Pretemporada", focus: "Adquisición", desc: "Adquisición de la forma física y del modelo de juego base.", period: "AGO-SEPT" },
+      { id: 2, title: "Competitivo", focus: "Mantenimiento", desc: "Ajustes tácticos semanales basados en el análisis del rival.", period: "OCT-MAY" },
+      { id: 3, title: "Transitorio", focus: "Recuperación", desc: "Descanso activo y análisis de rendimiento individual.", period: "JUN-JUL" }
     ],
     weeklyMicro: [
       { day: "Lunes", label: "Recuperación", focus: "COMPENSATORIO / REGENERATIVO", color: "border-blue-500/20 bg-blue-500/5" },
-      { day: "Martes", label: "Fuerza", focus: "TÁCTICA GENERAL", color: "border-primary/20 bg-primary/5" },
-      { day: "Miércoles", label: "Resistencia", focus: "TÁCTICA ESPECÍFICA", color: "border-amber-500/20 bg-amber-500/5" },
+      { day: "Martes", label: "Fuerza", focus: "TÁCTICA GENERAL DEL MODELO", color: "border-primary/20 bg-primary/5" },
+      { day: "Miércoles", label: "Resistencia", focus: "TÁCTICA ESPECÍFICA POR LÍNEAS", color: "border-amber-500/20 bg-amber-500/5" },
       { day: "Jueves", label: "Velocidad", focus: "ABP Y VELOCIDAD DE REACCIÓN", color: "border-rose-500/20 bg-rose-500/5" },
-      { day: "Viernes", label: "Activación", focus: "AJUSTES PRE-PARTIDO", color: "border-emerald-500/20 bg-emerald-500/5" }
+      { day: "Viernes", label: "Activación", focus: "AJUSTES PRE-PARTIDO RIVAL", color: "border-emerald-500/20 bg-emerald-500/5" }
     ],
     sessionStructure: [
-      { part: "Activación", time: "20 min", desc: "Preparación específica de máxima concentración.", icon: Zap },
-      { part: "Bloque Táctico", time: "60-70 min", desc: "Simulación de situaciones reales bajo presión.", icon: Swords },
-      { part: "Feedback / Video", time: "10 min", desc: "Análisis táctico y recuperación activa.", icon: Video }
+      { part: "Activación", time: "20 min", desc: "Preparación específica de alta concentración.", icon: Zap },
+      { part: "Bloque Táctico", time: "70 min", desc: "Simulación de situaciones reales de partido.", icon: Swords },
+      { part: "Feedback / Vídeo", time: "10 min", desc: "Análisis táctico y recuperación activa.", icon: Video }
     ],
     focusPoints: [
-      "La especialización por puesto es total.",
+      "Especialización por puesto es total.",
       "Gestión del 'entrenamiento invisible'.",
-      "Trabajo de resiliencia y presión competitiva.",
-      "Simulación constante de escenarios de partido."
+      "Resiliencia y presión competitiva.",
+      "Análisis de vídeo propio y del rival."
+    ]
+  },
+  juvenil: {
+    title: "PLANIFICACIÓN",
+    titleAccent: "DE ALTA COMPETICIÓN",
+    description: "Antesala del fútbol senior. La planificación es casi profesional, buscando maximizar el rendimiento y la proyección de los jugadores hacia el primer equipo.",
+    blocksLabel: "Macrociclo Anual (ATR)",
+    monthlyBlocks: [
+      { id: 1, title: "Acumulación", focus: "Volumen / Fuerza", desc: "Base física y técnica. Trabajo de fuerza general y conceptos tácticos amplios.", period: "ACUM" },
+      { id: 2, title: "Transformación", focus: "Especificidad", desc: "Conversión de la base en potencia y velocidad. Táctica específica por líneas.", period: "TRANS" },
+      { id: 3, title: "Realización", focus: "Pico de Forma", desc: "Máxima velocidad y precisión. Ajustes estratégicos para momentos clave.", period: "REAL" },
+      { id: 4, title: "Análisis", focus: "Optimización", desc: "Ajuste constante de la planificación basado en el análisis de rendimiento real.", period: "CONT" }
+    ],
+    weeklyMicro: [
+      { day: "Proyecto Semanal", label: "Análisis Rival", focus: "ESTRATEGIA ESPECÍFICA SEMANAL", color: "border-primary/20 bg-primary/5" },
+      { day: "Entrenamientos", label: "Carga GPS", focus: "CONTROL TECNOLÓGICO DE ESFUERZO", color: "border-amber-500/20 bg-amber-500/5" },
+      { day: "Específico", label: "Líneas / Jugador", focus: "ESPECIALIZACIÓN TÁCTICA PROFESIONAL", color: "border-blue-500/20 bg-blue-500/5" },
+      { day: "Psicológico", label: "Mentalidad Élite", focus: "COACHING Y DINÁMICAS DE GRUPO", color: "border-rose-500/20 bg-rose-500/5" }
+    ],
+    sessionStructure: [
+      { part: "Preparación", time: "25 min", desc: "Activación profesional y protocolos de prevención.", icon: Zap },
+      { part: "Bloque de Élite", time: "70 min", desc: "Tareas de máxima exigencia y rigor táctico real.", icon: Swords },
+      { part: "Recuperación", time: "15 min", desc: "Descarga, crioterapia y feedback analítico.", icon: Wind }
+    ],
+    focusPoints: [
+      "Maximizar el rendimiento individual y colectivo.",
+      "Análisis exhaustivo del rival para el microciclo.",
+      "Control de cargas con tecnología (GPS).",
+      "Preparación mental para el salto al nivel Senior."
     ]
   }
 };
@@ -223,7 +255,7 @@ export default function CyclePlannerPage() {
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <GitBranch className="h-5 w-5 text-amber-500 animate-pulse" />
-            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Cyclic_Planner_v3.5</span>
+            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Cyclic_Planner_v3.6</span>
           </div>
           <h1 className="text-5xl font-headline font-black text-white uppercase italic tracking-tighter amber-text-glow leading-none">
             PLANIFICACIÓN_CÍCLICA

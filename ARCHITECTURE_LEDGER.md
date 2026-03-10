@@ -1,5 +1,5 @@
 
-# SynqSports Pro - Architecture Ledger v3.4 (Full Sync Protocol)
+# SynqSports Pro - Architecture Ledger v3.6 (Full Sync Protocol)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -101,7 +101,7 @@ Los roles operan bajo un sistema de ranking numérico (`rank`):
 - **Ajuste**: El botón de Pantalla Completa se desplaza de la cabecera a la **esquina inferior izquierda** del campo.
 - **Racional**: Optimización para el uso con pulgares en tablets y liberación de carga visual en el marcador superior. Simetría funcional.
 
-## 10. Protocolo de Objetivos y Planificación (v3.4)
+## 10. Protocolo de Objetivos y Planificación (v3.6)
 
 ### 10.1. Estructura de Desarrollo por Etapas
 - **Debutantes (5-7 años)**: Bloques temáticos mensuales lúdicos.
@@ -109,6 +109,8 @@ Los roles operan bajo un sistema de ranking numérico (`rank`):
 - **Benjamín (8-10 años)**: Mesociclos trimestrales. Cooperación y 2v1.
 - **Alevín (10-12 años)**: Planificación por Principios de Juego. Transición a Fútbol 11.
 - **Infantil (11-13 años)**: Planificación por Modelo de Juego. Microciclo estructurado (MD).
+- **Cadete (14-15 años)**: Periodización Táctica. Rendimiento competitivo.
+- **Juvenil (16-18 años)**: Macrociclo Anual (ATR). Microciclo de Élite. Antesala profesional.
 
 ### 10.2. Dimensiones de Objetivos
 1. **Filosofía**: ADN de la etapa.
