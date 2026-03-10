@@ -89,9 +89,10 @@ export default function BoardLayout({ children }: { children: React.ReactNode })
         <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,242,255,0.03),transparent_70%)] pointer-events-none" />
           
+          {/* PROTOCOLO_ERGONOMIA_V2.1: Reubicación de Pantalla Completa a Esquina Inferior Izquierda */}
           <button 
             onClick={toggleFullscreen}
-            className="fixed bottom-8 left-8 z-[100] h-14 w-14 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-2xl flex items-center justify-center text-white/40 hover:text-primary transition-all hover:scale-110 active:scale-95 shadow-2xl group"
+            className="absolute bottom-6 left-6 z-[100] h-14 w-14 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-2xl flex items-center justify-center text-white/40 hover:text-primary transition-all hover:scale-110 active:scale-95 shadow-2xl group"
             title={isFullscreen ? "Salir del Modo Élite" : "Inmersión Total 4K"}
           >
             {isFullscreen ? <Minimize2 className="h-6 w-6" /> : <Maximize2 className="h-6 w-6 group-hover:animate-pulse" />}

@@ -98,4 +98,5 @@ Los roles operan bajo un sistema de ranking numérico (`rank`):
 
 ### 9.2. Protocolo de Ergonomía Táctica (v2.1)
 - **Ajuste**: El botón de acceso al Roster/Configuración se desplaza de la cabecera a la **esquina inferior derecha** del campo.
-- **Racional**: Optimización para el uso con pulgares en tablets y liberación de carga visual en el marcador superior.
+- **Ajuste**: El botón de Pantalla Completa se desplaza a la **esquina inferior izquierda** del campo.
+- **Racional**: Optimización para el uso con pulgares en tablets y liberación de carga visual en el marcador superior. Simetría funcional.
