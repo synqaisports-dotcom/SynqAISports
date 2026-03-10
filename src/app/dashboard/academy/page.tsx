@@ -35,7 +35,8 @@ import {
   Info,
   Shield,
   Pause,
-  Play
+  Play,
+  UserPlus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -86,7 +87,7 @@ const INITIAL_CATEGORIES = [
       startTime: "17:00", 
       endTime: "18:30", 
       status: "Active",
-      staff: { head: "Carlos Ruiz", coord: "Ismael Muñoz", second: "Elena Gómez", physical: "Roberto S.", delegate: "Juan García" } 
+      staff: { coord: "Ismael Muñoz", head: "Carlos Ruiz", second: "Elena Gómez", delegate: "Juan García", physical: "Roberto S." } 
     }], 
     players: 12 
   },
@@ -105,7 +106,7 @@ const INITIAL_CATEGORIES = [
       startTime: "17:30", 
       endTime: "19:00", 
       status: "Active",
-      staff: { head: "Laura Sánchez", coord: "Elena Gómez", second: "Miguel Ángel", physical: "Roberto S.", delegate: "Marta López" } 
+      staff: { coord: "Elena Gómez", head: "Laura Sánchez", second: "Miguel Ángel", delegate: "Marta López", physical: "Roberto S." } 
     }], 
     players: 15 
   },
@@ -126,7 +127,7 @@ const INITIAL_CATEGORIES = [
       startTime: "10:00", 
       endTime: "12:00", 
       status: "Active",
-      staff: { head: "M. Arteta", coord: "Director Deportivo", second: "Sara Torres", physical: "Ana Belén", delegate: "Juan García" } 
+      staff: { coord: "Director Deportivo", head: "M. Arteta", second: "Sara Torres", delegate: "Juan García", physical: "Ana Belén" } 
     }], 
     players: 25 
   },
@@ -173,11 +174,11 @@ export default function AcademyManagementPage() {
     startTime: "17:00",
     endTime: "18:30",
     status: "Active" as "Active" | "Paused",
-    coordinatorId: "",
-    firstCoachId: "",
-    secondCoachId: "",
-    physicalTrainerId: "",
-    delegateId: ""
+    staffCoord: "",
+    staffHead: "",
+    staffSecond: "",
+    staffDelegate: "",
+    staffPhysical: ""
   });
 
   const selectedFacility = MOCK_FACILITIES.find(f => f.id === formData.facilityId);
@@ -198,11 +199,11 @@ export default function AcademyManagementPage() {
       startTime: "17:00",
       endTime: "18:30",
       status: "Active",
-      coordinatorId: "",
-      firstCoachId: "",
-      secondCoachId: "",
-      physicalTrainerId: "",
-      delegateId: ""
+      staffCoord: "",
+      staffHead: "",
+      staffSecond: "",
+      staffDelegate: "",
+      staffPhysical: ""
     });
     setIsSheetOpen(true);
   };
@@ -242,7 +243,12 @@ export default function AcademyManagementPage() {
       days: team.days || [],
       startTime: team.startTime || "17:00",
       endTime: team.endTime || "18:30",
-      status: team.status || "Active"
+      status: team.status || "Active",
+      staffCoord: team.staff?.coord || "",
+      staffHead: team.staff?.head || "",
+      staffSecond: team.staff?.second || "",
+      staffDelegate: team.staff?.delegate || "",
+      staffPhysical: team.staff?.physical || ""
     });
     setIsSheetOpen(true);
   };
@@ -265,10 +271,12 @@ export default function AcademyManagementPage() {
       return c;
     }));
 
-    toast({
-      title: newStatus === "Paused" ? "NODO_PAUSADO" : "NODO_ACTIVADO",
-      description: `El equipo ha cambiado su estado a ${newStatus.toUpperCase()}.`,
-    });
+    setTimeout(() => {
+      toast({
+        title: newStatus === "Paused" ? "NODO_PAUSADO" : "NODO_ACTIVADO",
+        description: `El equipo ha cambiado su estado a ${newStatus.toUpperCase()}.`,
+      });
+    }, 100);
   };
 
   const handleDeleteTeam = (catId: string, teamIdx: number) => {
@@ -309,15 +317,6 @@ export default function AcademyManagementPage() {
     setIsViewSheetOpen(true);
   };
 
-  const toggleDay = (dayId: string) => {
-    setFormData(prev => ({
-      ...prev,
-      days: prev.days.includes(dayId) 
-        ? prev.days.filter(d => d !== dayId) 
-        : [...prev.days, dayId]
-    }));
-  };
-
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -351,7 +350,14 @@ export default function AcademyManagementPage() {
                 days: formData.days,
                 startTime: formData.startTime,
                 endTime: formData.endTime,
-                status: formData.status
+                status: formData.status,
+                staff: {
+                  coord: formData.staffCoord,
+                  head: formData.staffHead,
+                  second: formData.staffSecond,
+                  delegate: formData.staffDelegate,
+                  physical: formData.staffPhysical
+                }
               };
               return { ...c, teams: newTeams };
             }
@@ -373,8 +379,11 @@ export default function AcademyManagementPage() {
                   endTime: formData.endTime,
                   status: "Active",
                   staff: { 
-                    head: "Sin Asignar", 
-                    coord: "Ismael Muñoz" 
+                    coord: formData.staffCoord,
+                    head: formData.staffHead,
+                    second: formData.staffSecond,
+                    delegate: formData.staffDelegate,
+                    physical: formData.staffPhysical
                   }
                 }]
               };
@@ -561,8 +570,11 @@ export default function AcademyManagementPage() {
                     <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-primary italic">Staff Técnico Sincronizado</h3>
                   </div>
                   <div className="space-y-4">
-                    <StaffDetailItem label="Coordinador Etapa" value={selectedViewTeam.staff?.coord || "Ismael Muñoz"} icon={Shield} />
+                    <StaffDetailItem label="Coordinador Etapa" value={selectedViewTeam.staff?.coord || "Sin Asignar"} icon={Shield} />
                     <StaffDetailItem label="Primer Entrenador" value={selectedViewTeam.staff?.head || "Sin Asignar"} icon={Trophy} highlight />
+                    <StaffDetailItem label="Segundo Entrenador" value={selectedViewTeam.staff?.second || "Sin Asignar"} icon={Users} />
+                    <StaffDetailItem label="Delegado" value={selectedViewTeam.staff?.delegate || "Sin Asignar"} icon={ClipboardCheck} />
+                    <StaffDetailItem label="Preparador Físico" value={selectedViewTeam.staff?.physical || "Sin Asignar"} icon={Activity} />
                   </div>
                 </section>
               </div>
@@ -701,13 +713,82 @@ export default function AcademyManagementPage() {
                           ))}
                         </SelectContent>
                       </Select>
-                      {selectedFacility.divisionStartTime && (
-                        <p className="text-[8px] text-amber-400/60 uppercase font-bold italic mt-1">
-                          Nota: Esta instalación solo se divide de {selectedFacility.divisionStartTime} a {selectedFacility.divisionEndTime}.
-                        </p>
-                      )}
                     </div>
                   )}
+                </div>
+
+                <div className="space-y-6 p-8 border border-primary/30 bg-primary/5 rounded-3xl relative overflow-hidden">
+                  <div className="flex items-center gap-3 border-b border-primary/20 pb-4 mb-6">
+                    <UserCog className="h-4 w-4 text-primary animate-pulse" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary italic">Asignación de Staff Técnico</span>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label className="text-[9px] font-black uppercase text-primary tracking-widest ml-1 italic">Coordinador de Etapa</Label>
+                      <div className="relative">
+                        <Shield className="absolute left-3 top-3 h-4 w-4 text-primary/40" />
+                        <Input 
+                          value={formData.staffCoord}
+                          onChange={(e) => setFormData({...formData, staffCoord: e.target.value})}
+                          placeholder="NOMBRE DEL COORDINADOR" 
+                          className="pl-10 h-11 bg-black/40 border-primary/20 rounded-xl text-primary text-xs focus:border-primary uppercase" 
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-[9px] font-black uppercase text-primary tracking-widest ml-1 italic">Primer Entrenador</Label>
+                      <div className="relative">
+                        <Trophy className="absolute left-3 top-3 h-4 w-4 text-primary/40" />
+                        <Input 
+                          value={formData.staffHead}
+                          onChange={(e) => setFormData({...formData, staffHead: e.target.value})}
+                          placeholder="NOMBRE DEL ENTRENADOR" 
+                          className="pl-10 h-11 bg-black/40 border-primary/20 rounded-xl text-primary text-xs focus:border-primary uppercase" 
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-[9px] font-black uppercase text-primary tracking-widest ml-1 italic">Segundo Entrenador</Label>
+                      <div className="relative">
+                        <Users className="absolute left-3 top-3 h-4 w-4 text-primary/40" />
+                        <Input 
+                          value={formData.staffSecond}
+                          onChange={(e) => setFormData({...formData, staffSecond: e.target.value})}
+                          placeholder="NOMBRE DEL 2º ENTRENADOR" 
+                          className="pl-10 h-11 bg-black/40 border-primary/20 rounded-xl text-primary text-xs focus:border-primary uppercase" 
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-[9px] font-black uppercase text-primary tracking-widest ml-1 italic">Delegado de Equipo</Label>
+                      <div className="relative">
+                        <ClipboardCheck className="absolute left-3 top-3 h-4 w-4 text-primary/40" />
+                        <Input 
+                          value={formData.staffDelegate}
+                          onChange={(e) => setFormData({...formData, staffDelegate: e.target.value})}
+                          placeholder="NOMBRE DEL DELEGADO" 
+                          className="pl-10 h-11 bg-black/40 border-primary/20 rounded-xl text-primary text-xs focus:border-primary uppercase" 
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-[9px] font-black uppercase text-primary tracking-widest ml-1 italic">Preparador Físico</Label>
+                      <div className="relative">
+                        <Activity className="absolute left-3 top-3 h-4 w-4 text-primary/40" />
+                        <Input 
+                          value={formData.staffPhysical}
+                          onChange={(e) => setFormData({...formData, staffPhysical: e.target.value})}
+                          placeholder="NOMBRE DEL PREPARADOR" 
+                          className="pl-10 h-11 bg-black/40 border-primary/20 rounded-xl text-primary text-xs focus:border-primary uppercase" 
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
