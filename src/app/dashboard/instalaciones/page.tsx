@@ -377,7 +377,6 @@ export default function FacilitiesManagementPage() {
                 </div>
               </div>
 
-              {/* SECCIÓN DE SUBDIVISIONES - RESTAURADA */}
               <div className="space-y-6 p-8 border border-primary/30 bg-primary/5 rounded-3xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4 opacity-10">
                   <Layers className="h-24 w-24 text-primary" />

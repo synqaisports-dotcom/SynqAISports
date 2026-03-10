@@ -33,7 +33,9 @@ import {
   ClipboardCheck,
   Eye,
   Info,
-  Shield
+  Shield,
+  Pause,
+  Play
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -110,6 +112,7 @@ export default function AcademyManagementPage() {
   const [loading, setLoading] = useState(false);
   const [sheetMode, setSheetMode] = useState<'category' | 'team'>('category');
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingTeamIdx, setEditingTeamIdx] = useState<number | null>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -134,6 +137,7 @@ export default function AcademyManagementPage() {
   const handleOpenSheet = (mode: 'category' | 'team') => {
     setSheetMode(mode);
     setEditingId(null);
+    setEditingTeamIdx(null);
     setFormData({ 
       name: "", 
       suffix: "A", 
@@ -170,6 +174,42 @@ export default function AcademyManagementPage() {
       stageId: cat.stageId
     }));
     setIsSheetOpen(true);
+  };
+
+  const handleEditTeam = (catId: string, team: any, idx: number) => {
+    setSheetMode('team');
+    setEditingId(catId);
+    setEditingTeamIdx(idx);
+    
+    const fac = MOCK_FACILITIES.find(f => f.name === team.facility);
+    
+    setFormData({
+      ...formData,
+      parentCategory: catId,
+      suffix: team.suffix,
+      facilityId: fac?.id || "",
+      zone: team.zone || "",
+      days: team.days || [],
+      startTime: team.startTime || "17:00",
+      endTime: team.endTime || "18:30",
+    });
+    setIsSheetOpen(true);
+  };
+
+  const handleDeleteTeam = (catId: string, teamIdx: number) => {
+    setCategories(prev => prev.map(c => {
+      if (c.id === catId) {
+        const newTeams = [...c.teams];
+        newTeams.splice(teamIdx, 1);
+        return { ...c, teams: newTeams };
+      }
+      return c;
+    }));
+    toast({
+      variant: "destructive",
+      title: "EQUIPO_DESVINCULADO",
+      description: "El equipo ha sido eliminado de la estructura.",
+    });
   };
 
   const handleDeleteCategory = (id: string, name: string) => {
@@ -224,28 +264,48 @@ export default function AcademyManagementPage() {
           toast({ title: "ETAPA_SINCRO", description: "Nueva categoría añadida a la estructura." });
         }
       } else {
-        setCategories(prev => prev.map(c => {
-          if (c.id === formData.parentCategory) {
-            return {
-              ...c,
-              teams: [...c.teams, { 
-                name: c.name, 
-                suffix: formData.suffix, 
-                facility: selectedFacility?.name || "", 
-                zone: formData.zone, 
+        if (editingTeamIdx !== null && editingId) {
+          setCategories(prev => prev.map(c => {
+            if (c.id === editingId) {
+              const newTeams = [...c.teams];
+              newTeams[editingTeamIdx] = {
+                ...newTeams[editingTeamIdx],
+                suffix: formData.suffix,
+                facility: selectedFacility?.name || "",
+                zone: formData.zone,
                 days: formData.days,
                 startTime: formData.startTime,
-                endTime: formData.endTime,
-                staff: { 
-                  head: "Asignado", 
-                  coord: formData.coordinatorId || "Ismael Muñoz" 
-                }
-              }]
-            };
-          }
-          return c;
-        }));
-        toast({ title: "EQUIPO_VINCULADO", description: `Equipo ${formData.suffix} añadido correctamente.` });
+                endTime: formData.endTime
+              };
+              return { ...c, teams: newTeams };
+            }
+            return c;
+          }));
+          toast({ title: "EQUIPO_ACTUALIZADO", description: `Cambios guardados para el equipo ${formData.suffix}.` });
+        } else {
+          setCategories(prev => prev.map(c => {
+            if (c.id === formData.parentCategory) {
+              return {
+                ...c,
+                teams: [...c.teams, { 
+                  name: c.name, 
+                  suffix: formData.suffix, 
+                  facility: selectedFacility?.name || "", 
+                  zone: formData.zone, 
+                  days: formData.days,
+                  startTime: formData.startTime,
+                  endTime: formData.endTime,
+                  staff: { 
+                    head: "Sin Asignar", 
+                    coord: "Ismael Muñoz" 
+                  }
+                }]
+              };
+            }
+            return c;
+          }));
+          toast({ title: "EQUIPO_VINCULADO", description: `Equipo ${formData.suffix} añadido correctamente.` });
+        }
       }
       
       setLoading(false);
@@ -326,15 +386,19 @@ export default function AcademyManagementPage() {
                         <div 
                           key={idx} 
                           className="flex items-center justify-between p-2.5 bg-primary/5 rounded-2xl border border-primary/10 hover:border-primary/30 transition-all group/team cursor-pointer"
-                          onClick={() => handleViewTeam(team, cat.name)}
                         >
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-3 flex-1" onClick={() => handleViewTeam(team, cat.name)}>
                             <div className="h-1 w-1 rounded-full bg-primary/40 group-hover/team:bg-primary transition-colors" />
                             <span className="text-[9px] font-black text-primary uppercase tracking-tight group-hover/team:cyan-text-glow">
                               {team.name} <span className="text-primary group-hover/team:primary font-black ml-1">[{team.suffix}]</span>
                             </span>
                           </div>
-                          <ArrowUpRight className="h-3 w-3 text-primary group-hover/team:opacity-100 transition-all" />
+                          
+                          <div className="flex items-center gap-1 opacity-0 group-hover/team:opacity-100 transition-opacity">
+                            <button onClick={() => handleViewTeam(team, cat.name)} className="p-1.5 hover:bg-primary/20 rounded-lg text-primary transition-all"><Eye className="h-3 w-3" /></button>
+                            <button onClick={() => handleEditTeam(cat.id, team, idx)} className="p-1.5 hover:bg-primary/20 rounded-lg text-primary transition-all"><Pencil className="h-3 w-3" /></button>
+                            <button onClick={() => handleDeleteTeam(cat.id, idx)} className="p-1.5 hover:bg-rose-500/20 rounded-lg text-rose-500 transition-all"><Trash2 className="h-3 w-3" /></button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -412,7 +476,7 @@ export default function AcademyManagementPage() {
                   </div>
                   <div className="space-y-4">
                     <StaffDetailItem label="Coordinador Etapa" value={selectedViewTeam.staff?.coord || "Ismael Muñoz"} icon={Shield} />
-                    <StaffDetailItem label="Primer Entrenador" value={selectedViewTeam.staff?.head || "Carlos Ruiz"} icon={Trophy} highlight />
+                    <StaffDetailItem label="Primer Entrenador" value={selectedViewTeam.staff?.head || "Sin Asignar"} icon={Trophy} highlight />
                   </div>
                 </section>
               </div>
@@ -429,9 +493,7 @@ export default function AcademyManagementPage() {
                   onClick={() => {
                     setIsViewSheetOpen(false);
                     const cat = categories.find(c => c.name === selectedViewTeam.categoryName);
-                    setFormData({ ...formData, parentCategory: cat?.id || "cat_debutantes", suffix: selectedViewTeam.suffix });
-                    setSheetMode('team');
-                    setIsSheetOpen(true);
+                    handleEditTeam(cat?.id || "", selectedViewTeam, cat?.teams.findIndex(t => t.suffix === selectedViewTeam.suffix) ?? 0);
                   }}
                 >
                   EDITAR_NODO
@@ -452,7 +514,7 @@ export default function AcademyManagementPage() {
                 <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary italic">Academy_Deploy_v1.5</span>
               </div>
               <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left">
-                {sheetMode === 'category' ? (editingId ? "MODIFICAR_CATEGORÍA" : "CONFIG_CATEGORÍA") : "VINCULAR_EQUIPO"}
+                {sheetMode === 'category' ? (editingId ? "MODIFICAR_CATEGORÍA" : "CONFIG_CATEGORÍA") : (editingTeamIdx !== null ? "MODIFICAR_EQUIPO" : "VINCULAR_EQUIPO")}
               </SheetTitle>
             </SheetHeader>
           </div>
@@ -486,12 +548,15 @@ export default function AcademyManagementPage() {
               </div>
             ) : (
               <div className="space-y-10">
-                {/* 1. IDENTIDAD FEDERATIVA */}
                 <div className="space-y-6">
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-3">
                       <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1 italic">Categoría</Label>
-                      <Select value={formData.parentCategory} onValueChange={(v) => setFormData({...formData, parentCategory: v})}>
+                      <Select 
+                        value={formData.parentCategory} 
+                        onValueChange={(v) => setFormData({...formData, parentCategory: v})}
+                        disabled={editingTeamIdx !== null}
+                      >
                         <SelectTrigger className="h-14 bg-white/5 border-primary/20 rounded-2xl text-primary font-bold uppercase tracking-widest focus:border-primary">
                           <SelectValue />
                         </SelectTrigger>
@@ -518,7 +583,6 @@ export default function AcademyManagementPage() {
                   </div>
                 </div>
 
-                {/* 2. ASIGNACIÓN DE ACTIVO Y ZONA - RESTAURADA */}
                 <div className="space-y-6 p-8 border border-primary/30 bg-primary/5 rounded-3xl relative overflow-hidden">
                   <div className="flex items-center gap-3 border-b border-primary/20 pb-4 mb-6">
                     <MapPin className="h-4 w-4 text-primary animate-pulse" />
@@ -563,7 +627,7 @@ export default function AcademyManagementPage() {
               <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest rounded-2xl">CANCELAR</Button>
             </SheetClose>
             <Button onClick={handleSave} disabled={loading} className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)]">
-              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "SINCRONIZAR_NODO"}
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (editingTeamIdx !== null ? "ACTUALIZAR_NODO" : "SINCRONIZAR_NODO")}
             </Button>
           </div>
         </SheetContent>
