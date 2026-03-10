@@ -1,70 +1,88 @@
-# SynqSports Pro - Architecture Ledger v1.1 (Full Sync)
+# SynqSports Pro - Architecture Ledger v1.2 (Full System Sync)
 
-Este documento es el registro maestro de las estructuras de datos, flujos de trabajo y protocolos de interfaz validados. Sirve como backup estructural inmutable para evitar regresiones.
+Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro. Sirve como punto de verdad para la reconstrucción y auditoría del sistema.
 
-## 1. Módulo de Academia (Cantera)
+## 1. Seguridad y Protocolos de Acceso
 
-### 1.1. Formulario de Vinculación de Equipo
-**Ubicación**: `src/app/dashboard/academy/page.tsx`
-**Esquema de Datos**:
-- **Identidad**: Categoría Federativa (Nodo Troncal), Sufijo (Letra A-Z).
-- **Staff Técnico (Orden Jerárquico Estricto)**: 
-  1. Coordinador de Etapa
-  2. Primer Entrenador
-  3. Segundo Entrenador
-  4. Delegado
-  5. Preparador Físico
-- **Logística**: Instalación Asignada, Zona Específica (Detección reactiva de subdivisiones).
+### 1.1. Protocolo_Elite (Superadmin Bypass)
+- **Emails Autorizados**: `munozmartinez.ismael@gmail.com`, `synqaisports@gmail.com`, `admin@synqai.sports`.
+- **Lógica de Bypass**: Implementada en `firestore.rules` y `auth-context.tsx`. Permite visibilidad total sobre todos los clubes y usuarios de la red para tareas de soporte y mantenimiento global.
+- **Acceso Directo**: Los correos autorizados pueden saltar el túnel de onboarding y acceder directamente al Núcleo Global (`/admin-global`).
 
-### 1.2. Protocolos de UI en Roster
-- **Segmentación de Nodo**: El nombre del equipo y las acciones están separados en contenedores independientes (`flex-1` vs `shrink-0`).
-- **Truncado Inteligente**: Uso de `truncate` en el nombre para evitar desbordamiento en la cuadrícula de 4 columnas.
-- **Estado de Nodo**: Soporta estados `Active` y `Paused` con notificación `toast` segura fuera del ciclo de renderizado.
+### 1.2. Matriz Jerárquica de Mandos
+Los roles operan bajo un sistema de ranking numérico (`rank`) que impide la gestión de perfiles de rango superior o igual:
+1. **superadmin** (100): Autoridad raíz.
+2. **club_admin** (90): Responsable máximo del nodo local.
+3. **academy_director** (80): Dirección deportiva.
+4. **methodology_director** (70): Estrategia formativa.
+5. **stage_coordinator** (60): Coordinación de tramos.
+6. **coach** (50): Entrenador de equipo.
+7. **delegate** (40): Gestión administrativa de equipo.
+8. **tutor** (30): Familia/Responsable legal.
+9. **athlete** (20): Jugador/Atleta.
 
-## 2. Módulo de Instalaciones (Activos Físicos)
+## 2. Mapa de Micro-Apps y Rutas
 
-### 2.1. Configuración Geométrica y Temporal
-**Ubicación**: `src/app/dashboard/instalaciones/page.tsx`
-**Campos Críticos**:
-- **Subdivisiones**: Espacio Único, 2 Mitades, 4 Cuadrantes.
-- **Protocolo de División Temporal**: Horario de División Activa (`divisionStartTime`, `divisionEndTime`) para definir cuándo el campo es divisible por el motor de planificación.
-- **Operativa**: Nombre, Tipo, Deporte, Capacidad de Atletas, Días Operativos (L-D), Estatus Red (Activo, Mantenimiento, Inactivo).
+### 2.1. Núcleo de Control (Admin Global) - `/admin-global`
+- **Analytics**: `/analytics` (Métricas de red).
+- **Red de Clubes**: `/clubs` (Vincular y auditar nodos locales).
+- **Suscripciones**: `/plans` (Configuración de precios y accesos).
+- **Identidad**: `/roles` (Matriz de permisos).
+- **Marketing**: `/promos` (Generación de Magic Links y QR).
+- **Usuarios**: `/users` (Gestión de credenciales globales).
 
-## 3. Módulo de Jugadores (Inscripciones)
+### 2.2. Terminal Operativa (Club/Coach) - `/dashboard`
+- **Identidad de Club**: `/club` (Datos federativos y logo).
+- **Cantera**: `/academy` (Vinculación de equipos y staff).
+- **Activos**: `/instalaciones` (Gestión geométrica de campos).
+- **Roster**: `/players` (Ficha técnica del atleta).
+- **Gestión de Mando**: `/admin` (Matriz de permisos local).
+- **Personal**: `/staff` (Alta de entrenadores y coordinadores).
 
-### 3.1. Ficha Técnica del Atleta
-**Ubicación**: `src/app/dashboard/players/page.tsx`
-**Esquema de Identidad**:
-- **Campos Primarios**: Nombre, Apellidos, Nº Camiseta (Dorsal), Apodo Deportivo (Nombre de Guerra).
-- **Sincronización**: Email Atleta, Fecha Nacimiento, Fecha Alta.
-- **Táctico**: Categoría, Equipo, Posiciones (Multiselección neón), Estatus (Activo, Lesionado, Ausencia).
-- **Protección de Menores**: Check de Menor de Edad + Matriz de Tutor Legal (Nombre, Apellidos, Teléfono, Mail).
+### 2.3. Estrategia Metodológica - `/dashboard/methodology`
+- **Hoja de Ruta**: `/learning-items` (Items de aprendizaje).
+- **Metas**: `/objectives` (Objetivos por etapa).
+- **Planificación**: `/cycle-planner` (Macrociclo anual).
+- **Lanzadores**: `/board-*` (Accesos rápidos a pizarras).
 
-### 3.2. Ajustes de Precisión UI (Fixes)
-- **Visibilidad Temporal**: Uso de `[color-scheme:dark]` en inputs de fecha para visualizar el icono del calendario en temas oscuros.
-- **Corrección de Clipping**: Padding derecho `pr-10` en selectores de fecha para evitar que el radio de borde `rounded-2xl` recorte el icono del calendario.
+### 2.4. Micro-App: Tactical Board (Pizarras) - `/board`
+- **Match Mode**: `/match` (Tiempo real con marcador).
+- **Training Mode**: `/training` (Estudio de diseño IA).
+- **Promo Mode**: `/promo` (Acceso limitado para leads).
 
-## 4. Micro-App: Pizarra Táctica (Tactical Board)
+## 3. Esquemas de Datos Maestros (Entities)
 
-### 4.1. Motor de Partido (Match Board)
-**Ubicación**: `src/app/board/match/page.tsx`
-**Protocolos**:
-- **Sustitución por Arrastre (Drag & Drop)**: Captura de identidad en `onDragStart` y ejecución de `swap` en `onDrop` para sincronizar roster lateral y fichas en campo.
-- **Marcador Compacto**: Tipografía reducida (`text-base` / `text-xl`) optimizada para tablets.
-- **Basculación Táctica**: Controles de desplazamiento lateral (Izq, Centro, Der) con corrección de cierre de funciones de estado.
+### 3.1. Entidad: Club
+- `id`: String (NODE-XXXX).
+- `name`: String (Mayúsculas).
+- `sport`: Enum (Fútbol, Baloncesto, etc.).
+- `plan`: Enum (PROMO_LINK, VOLUMEN_CORE, ENTERPRISE_SCALE).
+- `status`: Enum (Active, Paused, Overdue).
 
-## 5. Motores de IA (Genkit)
+### 3.2. Entidad: Atleta
+- `number`: String (Dorsal).
+- `nickname`: String (Nombre deportivo).
+- `position`: Array (Multi-selección táctica).
+- `isMinor`: Boolean (Activa campos de Tutor Legal).
+- `attendance`: String (Cálculo porcentual).
 
-### 5.1. Flujos de Generación
-- **Neural Planner**: Generación de planes de entrenamiento basados en deporte, nivel y objetivos.
-- **Exercise Architect**: Creación de módulos tácticos individuales con variaciones de progresión.
-- **Promo Factory**: Generación de Magic Links y campañas regionales con parámetros de uso limitado.
+## 4. Lógica de Negocio y Suscripciones
 
-## 6. Seguridad y Acceso Global
+### 4.1. Protocolo de Democratización (Precios)
+- **Standard**: 1.00€ / niño al mes.
+- **Volumen (Alianza)**: 0.85€ / niño (+400 atletas).
+- **Enterprise (Federativa)**: 0.70€ / niño (+800 atletas).
 
-### 6.1. Protocolo_Elite (Bypass)
-- **Superadmin Access**: Bypass en `firestore.rules` y `auth-context.tsx` para correos autorizados (`munozmartinez.ismael@gmail.com`, `synqaisports@gmail.com`).
-- **Jerarquía de Mando**: Matriz de roles con rangos numéricos que impiden a un usuario gestionar a uno de rango superior o igual.
+### 4.2. Gestión de Espacios (Instalaciones)
+- **Subdivisiones**: 1 (Único), 2 (Mitades), 4 (Cuadrantes).
+- **Horario de División**: Propiedades `divisionStartTime` y `divisionEndTime`. Define cuándo el campo se fragmenta en zonas en el selector de la Academia.
+
+## 5. Protocolos de UI y Experiencia
+
+- **Tipografía**: Headline (Space Grotesk), Body (Inter). Estilo NASA/Aeroespacial.
+- **Colorimetría**: Emerald (Global), Cyan (Operativa), Amber (Metodológica).
+- **Precisión**: Uso de `[color-scheme:dark]` y `pr-10` en campos de fecha para evitar clipping de iconos.
+- **Interacción**: Drag & Drop nativo para sustituciones en Roster Lateral.
 
 ---
-*Este Ledger es el único punto de verdad para la reconstrucción de funcionalidades en caso de simplificación del código fuente.*
+*Este Ledger es el único punto de verdad para la integridad del sistema SynqSports Pro.*
