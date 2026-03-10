@@ -28,6 +28,7 @@ const CATEGORIES = [
   { id: "prebenjamin", label: "Prebenjamín", age: "6-8 años", icon: Zap },
   { id: "benjamin", label: "Benjamín", age: "8-10 años", icon: Target },
   { id: "alevin", label: "Alevín", age: "10-12 años", icon: Triangle },
+  { id: "infantil", label: "Infantil", age: "11-13 años", icon: Brain },
 ];
 
 const CONTENT: Record<string, any> = {
@@ -108,7 +109,7 @@ const CONTENT: Record<string, any> = {
         subtitle: "Dominio y Golpeo",
         icon: Zap,
         items: [
-          "Dominio del balón: Familiarización y conducción con distintas superficies.",
+          "Dominio del balón: Familiarización y conducción con distintas superficies del pie.",
           "Iniciación al regate: Fomentar el 1 contra 1 para superar rivales.",
           "Finalización: Aprender a tirar a portería y marcar.",
           "Pase y recepción: Iniciar toques básicos y control orientado.",
@@ -217,7 +218,7 @@ const CONTENT: Record<string, any> = {
   alevin: {
     title: "CONSOLIDACIÓN Y",
     titleAccent: "TRANSICIÓN TÁCTICA",
-    philosophy: "La categoría alevín (10-12 años) es una etapa crítica de transición. Se pasa de un juego individualista a uno donde se consolida la técnica y se inicia la comprensión táctica colectiva, especialmente en el paso de Fútbol 7 a Fútbol 11.",
+    philosophy: "La categoría alevín (10-12 años) es una etapa crítica y de transición. Se pasa de un juego más individualista a una etapa donde se consolida la técnica y se inicia la comprensión táctica colectiva, especialmente en el paso de Fútbol 7 a Fútbol 11.",
     tips: [
       "Formar jugadores inteligentes y cooperativos.",
       "No especialización: Experimentar todas las posiciones.",
@@ -274,6 +275,67 @@ const CONTENT: Record<string, any> = {
         ]
       }
     ]
+  },
+  infantil: {
+    title: "COMPETICIÓN Y",
+    titleAccent: "EDAD DE ORO",
+    philosophy: "En la categoría infantil (11-13 años), conocida como la 'edad de oro' del aprendizaje motor, el enfoque se centra en la formación integral del jugador. Se busca perfeccionar la técnica individual, introducir la toma de decisiones tácticas y consolidar los valores del deporte.",
+    tips: [
+      "Fomentar la inteligencia de juego por encima de la mecánica.",
+      "Consolidar la cultura de equipo y el respeto mutuo.",
+      "Introducir hábitos saludables como parte del entrenamiento.",
+      "La diversión y la autonomía son pilares de la motivación."
+    ],
+    dimensions: [
+      {
+        title: "Técnicos",
+        subtitle: "Perfeccionamiento",
+        icon: Zap,
+        items: [
+          "Dominio de fundamentos: Control, pase y tiro avanzado.",
+          "Técnica en velocidad: Ejecución correcta bajo presión rival.",
+          "Especialización técnica: Gestos propios de la posición.",
+          "Ambidiestrismo: Mejora del pie menos hábil.",
+          "Golpeo de larga distancia y centros precisos."
+        ]
+      },
+      {
+        title: "Tácticos",
+        subtitle: "Inteligencia de Juego",
+        icon: Compass,
+        items: [
+          "Toma de decisiones: Resolver situaciones reales de campo.",
+          "Juego colectivo: Conceptos elementales en ataque y defensa.",
+          "Basculaciones y coberturas: Movimiento coordinado de línea.",
+          "Estrategia básica: Iniciación al balón parado.",
+          "Ocupación de espacios en Fútbol 11."
+        ]
+      },
+      {
+        title: "Físicos y Motrices",
+        subtitle: "Coordinación y Hábitos",
+        icon: Dumbbell,
+        items: [
+          "Coordinación específica: Agilidad y equilibrio óculo-pédica.",
+          "Hábitos saludables: Calentamiento, enfriamiento e higiene.",
+          "Desarrollo motor: Condición física adaptada al crecimiento.",
+          "Velocidad gestual y de desplazamiento.",
+          "Prevención: Ejercicios de fortalecimiento básico."
+        ]
+      },
+      {
+        title: "Psicosociales",
+        subtitle: "Cultura y Resiliencia",
+        icon: Heart,
+        items: [
+          "Cultura de equipo: Priorizar el grupo sobre el individuo.",
+          "Resiliencia: Gestionar victoria, derrota y error.",
+          "Respeto absoluto: Compañeros, rivales y árbitros.",
+          "Autonomía: Responsabilidad sobre material y mochila.",
+          "Diversión constante: El deporte como hábito de vida."
+        ]
+      }
+    ]
   }
 };
 
@@ -287,7 +349,7 @@ export default function ObjectivesPage() {
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <Target className="h-5 w-5 text-amber-500 animate-pulse" />
-            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Strategic_Objectives_v2.5</span>
+            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Strategic_Objectives_v2.6</span>
           </div>
           <h1 className="text-4xl font-headline font-black text-white uppercase italic tracking-tighter amber-text-glow">
             OBJETIVOS_TÁCTICOS
