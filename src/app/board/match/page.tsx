@@ -163,7 +163,7 @@ export default function MatchBoardPage() {
   const [players, setPlayers] = useState<PlayerPos[]>([]);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   
-  // Estados para el motor de dibujo
+  // Estados para el motor de dibujo fluido
   const [isPaintMode, setIsPaintMode] = useState(false);
   const [currentColor, setCurrentColor] = useState("#00f2ff");
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -331,7 +331,7 @@ export default function MatchBoardPage() {
     setPlayers([...hp, ...gp]);
   }, [homeFormation, homePhase, homeLateral, guestFormation, guestPhase, guestLateral, fieldType, teamRoster]);
 
-  // LÓGICA DE DIBUJO FLUIDO
+  // LÓGICA DE DIBUJO FLUIDO (MARKER EFFECT)
   const initCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -705,7 +705,7 @@ export default function MatchBoardPage() {
         
         <main className="flex-1 relative overflow-hidden" ref={fieldRef}>
           <TacticalField theme="cyan" fieldType={fieldType}>
-            {/* CAPA DE DIBUJO FLUIDO */}
+            {/* CAPA DE DIBUJO FLUIDO (MARKER) */}
             <canvas 
               ref={canvasRef}
               className={cn(

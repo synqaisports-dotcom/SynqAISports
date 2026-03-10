@@ -43,22 +43,23 @@ export function BoardToolbar({
   isPaintMode = false,
   onTogglePaintMode,
   className,
-  variant = "match"
+  variant = "full"
 }: BoardToolbarProps) {
 
   const activeClass = theme === "cyan" 
     ? "bg-primary text-black shadow-[0_0_20px_rgba(0,242,255,0.3)] scale-110" 
     : "bg-amber-500 text-black shadow-[0_0_20px_rgba(245,158,11,0.3)] scale-110";
 
+  // VARIANTE PARTIDO: Simplificada para rotulador fluido
   if (variant === "match") {
     return (
       <aside className={cn(
         "w-16 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-3xl flex flex-col items-center py-6 gap-4 z-50",
         className
       )}>
-        {/* Toggle Modo Pintura / Selección */}
+        {/* Toggle Modo Selección (Mover Fichas) */}
         <button
-          onClick={() => onTogglePaintMode?.(!isPaintMode)}
+          onClick={() => onTogglePaintMode?.(false)}
           className={cn(
             "h-10 w-10 rounded-xl flex items-center justify-center transition-all group relative",
             !isPaintMode ? activeClass : "text-white/20 hover:text-white"
@@ -68,6 +69,7 @@ export function BoardToolbar({
           <MousePointer2 className="h-5 w-5" />
         </button>
 
+        {/* Toggle Modo Pizarra (Dibujo Rotulador) */}
         <button
           onClick={() => onTogglePaintMode?.(true)}
           className={cn(
@@ -81,7 +83,7 @@ export function BoardToolbar({
 
         <div className="w-8 h-[1px] bg-white/10 my-2" />
 
-        {/* Colores (Solo visibles en modo pintura) */}
+        {/* Paleta de Colores (Solo activa en modo pintura) */}
         <div className={cn("flex flex-col gap-3 transition-all duration-500", isPaintMode ? "opacity-100 scale-100" : "opacity-20 scale-90 pointer-events-none")}>
           {COLORS.map(color => (
             <button
@@ -110,7 +112,7 @@ export function BoardToolbar({
     );
   }
 
-  // Fallback para otras pizarras (mantenemos la anterior por ahora)
+  // VARIANTE FULL: Con todas las herramientas tácticas
   return (
     <aside className={cn(
       "w-16 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-3xl flex flex-col items-center py-6 gap-4 z-50",

@@ -1,5 +1,5 @@
 
-# SynqSports Pro - Architecture Ledger v1.6 (Full System Sync)
+# SynqSports Pro - Architecture Ledger v1.7 (Full System Sync)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -75,7 +75,9 @@ Los roles operan bajo un sistema de ranking numérico (`rank`):
 
 ## 7. Protocolo de Pizarra y Dibujo
 
-### 7.1. Motor de Dibujo Fluido
-- **Tecnología**: Canvas 2D con suavizado de trazo (Marker Effect).
-- **Modo Pintura (Lock Down)**: Al activar el dibujo, se bloquea el `pointer-events` de los jugadores para evitar desplazamientos accidentales durante la explicación táctica.
+### 7.1. Motor de Dibujo Fluido (Especialización)
+- **Terminal de Partido (Exclusiva)**: Protocolo de **Rotulador Fluido**. Herramientas simplificadas (Pincel, Color, Limpiar).
+- **Modo Pintura (Lock Down)**: Al activar el dibujo en partido, se bloquea el `pointer-events` de los jugadores para evitar desplazamientos accidentales durante la explicación táctica.
+- **Terminales de Diseño (Entrenamiento/Promo)**: Protocolo de **Diseño Geométrico**. Incluye flechas, formas y material técnico adicional.
+- **Tecnología**: Canvas 2D con suavizado de trazo (Marker Effect) en capa superior.
 - **Paleta Crítica**: Colores limitados a la identidad de marca (Cian, Rosa, Amarillo, Blanco) para máxima visibilidad sobre el césped.
