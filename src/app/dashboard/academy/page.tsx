@@ -278,7 +278,6 @@ export default function AcademyManagementPage() {
       return c;
     }));
 
-    // El toast debe ir fuera del callback de setState para evitar errores de Toaster
     setTimeout(() => {
       toast({
         title: newStatus === "Paused" ? "NODO_PAUSADO" : "NODO_ACTIVADO",
@@ -490,6 +489,7 @@ export default function AcademyManagementPage() {
                             team.status === "Paused" ? "border-amber-500/20 opacity-60" : "border-primary/10 hover:border-primary/30"
                           )}
                         >
+                          {/* BLOQUE IDENTIDAD: NOMBRE + LETRA + FORMATO */}
                           <div className="flex items-center gap-3 flex-1 min-w-0 mr-2" onClick={() => handleViewTeam(team, cat.name)}>
                             <div className={cn(
                               "h-1.5 w-1.5 rounded-full animate-pulse shrink-0",
@@ -503,6 +503,7 @@ export default function AcademyManagementPage() {
                             </div>
                           </div>
                           
+                          {/* BLOQUE ACCIONES TÁCTICAS */}
                           <div className="flex items-center gap-1 shrink-0">
                             <button onClick={() => handleViewTeam(team, cat.name)} className="p-1.5 hover:bg-primary/20 rounded-lg text-primary transition-all" title="Ver Ficha"><Eye className="h-3.5 w-3.5" /></button>
                             <button onClick={() => handleEditTeam(cat.id, team, idx)} className="p-1.5 hover:bg-primary/20 rounded-lg text-primary transition-all" title="Editar Nodo"><Pencil className="h-3.5 w-3.5" /></button>
