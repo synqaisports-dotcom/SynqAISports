@@ -32,6 +32,7 @@ const CATEGORIES = [
   { id: "alevin", label: "Alevín", age: "10-12 años", icon: Triangle },
   { id: "infantil", label: "Infantil", age: "11-13 años", icon: Brain },
   { id: "cadete", label: "Cadete", age: "14-15 años", icon: ShieldCheck },
+  { id: "juvenil", label: "Juvenil", age: "16-18 años", icon: Award },
 ];
 
 const CONTENT: Record<string, any> = {
@@ -188,7 +189,7 @@ const CONTENT: Record<string, any> = {
           "Situaciones reducidas: Dominio de 1x1, 2x1 y 2x2.",
           "Posicionamiento: Abrir el campo en ataque y cerrar en defensa.",
           "Desmarques: Iniciación al apoyo y a la ruptura.",
-          "Transiciones: Reacción rápida al perder/recuperar el balón.",
+          "Transiciones: Empezar a entender la rápida transición de ataque a defensa (perder el balón y reaccionar).",
           "Orientación: Uso efectivo de todo el ancho del campo."
         ]
       },
@@ -369,7 +370,7 @@ const CONTENT: Record<string, any> = {
         items: [
           "Mejorar la toma de decisiones en situaciones reales de partido.",
           "Aplicación de conceptos de táctica colectiva compleja.",
-          "Profundizar en el reglamento para aprovechar situaciones.",
+          "Profundizar en el reglamento para aprovechar situaciones de juego.",
           "Análisis táctico del rival y adaptaciones en vivo."
         ]
       },
@@ -397,6 +398,67 @@ const CONTENT: Record<string, any> = {
         ]
       }
     ]
+  },
+  juvenil: {
+    title: "OPTIMIZACIÓN Y",
+    titleAccent: "ALTA COMPETICIÓN",
+    philosophy: "En la categoría juvenil (16 a 18 años), estamos en la antesala del mundo adulto. Aquí el chip cambia: pasamos de la formación pura a la optimización del rendimiento y la preparación para la alta competición.",
+    tips: [
+      "Optimización del rendimiento y preparación para la alta competición.",
+      "Dominio táctico y estratégico, con análisis del rival.",
+      "Fomentar la mentalidad competitiva, el liderazgo y la ética de trabajo.",
+      "Preparar al jugador para el salto a la categoría Senior."
+    ],
+    dimensions: [
+      {
+        title: "Técnicos",
+        subtitle: "Efectividad Máxima",
+        icon: Zap,
+        items: [
+          "Perfeccionamiento técnico en velocidad y bajo presión.",
+          "Dominio de gestos técnicos complejos específicos de la posición.",
+          "Efectividad en finalización con ambas piernas.",
+          "Mantenimiento técnico bajo fatiga acumulada.",
+          "Especialización en golpeos de balón parado."
+        ]
+      },
+      {
+        title: "Tácticos y Estratégicos",
+        subtitle: "Dominio del Juego",
+        icon: Compass,
+        items: [
+          "Flexibilidad táctica: Alternar dibujos durante el partido.",
+          "Análisis del rival: Identificar y explotar debilidades.",
+          "Especialización por puesto: Consolidar el rol específico.",
+          "Gestión de tiempos de partido y marcadores.",
+          "Dominio de la estrategia defensiva y ofensiva."
+        ]
+      },
+      {
+        title: "Físicos de Alto Nivel",
+        subtitle: "Rendimiento y Prevención",
+        icon: Dumbbell,
+        items: [
+          "Pico de forma: Fuerza, potencia y resistencia específica.",
+          "Prevención de lesiones: Cultura de autocuidado constante.",
+          "Gestión de cargas: Evitar el sobreentrenamiento.",
+          "Nutrición y suplementación deportiva profesional.",
+          "Recuperación post-esfuerzo: Crioterapia y protocolos."
+        ]
+      },
+      {
+        title: "Psicológicos",
+        subtitle: "Mentalidad y Proyección",
+        icon: Heart,
+        items: [
+          "Gestión de la presión en situaciones críticas (finales).",
+          "Liderazgo: Fomentar líderes positivos en el vestuario.",
+          "Ambición y ética de trabajo: El talento no es suficiente.",
+          "Salto a Senior: Preparación para la dureza física adulta.",
+          "Compromiso con el club y representación de valores."
+        ]
+      }
+    ]
   }
 };
 
@@ -410,7 +472,7 @@ export default function ObjectivesPage() {
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <Target className="h-5 w-5 text-amber-500 animate-pulse" />
-            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Strategic_Objectives_v2.7</span>
+            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Strategic_Objectives_v2.8</span>
           </div>
           <h1 className="text-4xl font-headline font-black text-white uppercase italic tracking-tighter amber-text-glow">
             OBJETIVOS_TÁCTICOS
