@@ -1,5 +1,5 @@
 
-# SynqSports Pro - Architecture Ledger v3.0 (Full Sync Protocol)
+# SynqSports Pro - Architecture Ledger v3.4 (Full Sync Protocol)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -101,15 +101,18 @@ Los roles operan bajo un sistema de ranking numérico (`rank`):
 - **Ajuste**: El botón de Pantalla Completa se desplaza de la cabecera a la **esquina inferior izquierda** del campo.
 - **Racional**: Optimización para el uso con pulgares en tablets y liberación de carga visual en el marcador superior. Simetría funcional.
 
-## 10. Protocolo de Objetivos y Planificación (v3.0)
+## 10. Protocolo de Objetivos y Planificación (v3.4)
 
 ### 10.1. Estructura de Desarrollo por Etapas
-- **Nodo Piloto**: Debutantes (5-7 años). Iniciación integral y lúdica.
-- **Planificación Cíclica**: Basada en **Bloques Temáticos Mensuales** para etapas base. Evita la periodización táctica compleja en favor de la variedad motriz.
-- **Dimensiones de Objetivos**: 
-  1. **Filosofía**: ADN de la etapa.
-  2. **Técnicos**: Perfeccionamiento gestual y por puesto.
-  3. **Tácticos**: Inteligencia de juego, estrategia y reglamento.
-  4. **Motores/Físicos**: Rendimiento condicional y hábitos saludables (Entrenamiento Invisible).
-  5. **Psicopedagógicos**: Las "4 C" (Confianza, Control, Compromiso, Concentración).
-- **Visualización**: Uso de tarjetas modulares en el `methodology-theme` (ámbar) para diferenciar el contenido académico del operativo.
+- **Debutantes (5-7 años)**: Bloques temáticos mensuales lúdicos.
+- **Prebenjamín (6-8 años)**: Mesociclos bimensuales. Dualidad Adquisición/Aplicación.
+- **Benjamín (8-10 años)**: Mesociclos trimestrales. Cooperación y 2v1.
+- **Alevín (10-12 años)**: Planificación por Principios de Juego. Transición a Fútbol 11.
+- **Infantil (11-13 años)**: Planificación por Modelo de Juego. Microciclo estructurado (MD).
+
+### 10.2. Dimensiones de Objetivos
+1. **Filosofía**: ADN de la etapa.
+2. **Técnicos**: Perfeccionamiento gestual y por puesto.
+3. **Tácticos**: Inteligencia de juego, estrategia y reglamento.
+4. **Motores/Físicos**: Rendimiento condicional y hábitos saludables.
+5. **Psicopedagógicos**: Las "4 C" (Confianza, Control, Compromiso, Concentración).

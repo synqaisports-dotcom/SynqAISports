@@ -21,7 +21,9 @@ import {
   Wind,
   Gamepad2,
   Users,
-  Swords
+  Swords,
+  Activity,
+  Trophy
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -89,7 +91,7 @@ const PLANNING_DATA: Record<string, any> = {
     focusPoints: [
       "Introducir la competición sana.",
       "Fomentar toma de decisiones simple.",
-      "El error es fundamental para aprender.",
+      "El error es parte fundamental del aprendizaje.",
       "Rotación total por todas las posiciones."
     ]
   },
@@ -148,6 +150,35 @@ const PLANNING_DATA: Record<string, any> = {
       "Uso de vídeo para corrección técnica.",
       "Adaptación espacial al campo de Fútbol 11."
     ]
+  },
+  infantil: {
+    title: "PLANIFICACIÓN",
+    titleAccent: "POR MODELO DE JUEGO",
+    description: "En la 'edad de oro del aprendizaje', la planificación busca perfeccionar la técnica en un contexto táctico real y competitivo.",
+    blocksLabel: "Mesociclos por Modelo de Juego",
+    monthlyBlocks: [
+      { id: 1, title: "Construcción", focus: "Salida de Balón", desc: "Inicio del juego desde portería y progresión limpia a campo contrario.", period: "MES_01" },
+      { id: 2, title: "Finalización", focus: "Zona de Ataque", desc: "Creación de ocasiones y efectividad en el último tercio del campo.", period: "MES_02" },
+      { id: 3, title: "Organización", focus: "Bloque Defensivo", desc: "Presión organizada y repliegue colectivo sincronizado.", period: "MES_03" },
+      { id: 4, title: "Estrategia", focus: "ABP Avanzada", desc: "Estrategia operativa compleja en faltas, corners y saques.", period: "MES_04" }
+    ],
+    weeklyMicro: [
+      { day: "MD-4", label: "Condicional", focus: "FUERZA Y RESISTENCIA", color: "border-blue-500/20 bg-blue-500/5" },
+      { day: "MD-3", label: "Táctico", focus: "PRINCIPIOS DEL MODELO", color: "border-primary/20 bg-primary/5" },
+      { day: "MD-2", label: "Velocidad", focus: "VELOCIDAD Y FINALIZACIÓN", color: "border-amber-500/20 bg-amber-500/5" },
+      { day: "MD-1", label: "Activación", focus: "ACTIVACIÓN Y ABP", color: "border-rose-500/20 bg-rose-500/5" }
+    ],
+    sessionStructure: [
+      { part: "Activación", time: "20 min", desc: "Tareas técnico-tácticas introductorias.", icon: Zap },
+      { part: "Parte Principal", time: "60 min", desc: "Desarrollo de alta intensidad y carga cognitiva.", icon: Gamepad2 },
+      { part: "Vuelta a la Calma", time: "10 min", desc: "Regenerativo y feedback de sesión.", icon: Wind }
+    ],
+    focusPoints: [
+      "Automatizar movimientos tácticos colectivos.",
+      "Carga física controlada y específica.",
+      "Fomentar auto-evaluación y liderazgo.",
+      "La competitividad formativa es la prioridad."
+    ]
   }
 };
 
@@ -162,7 +193,7 @@ export default function CyclePlannerPage() {
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <GitBranch className="h-5 w-5 text-amber-500 animate-pulse" />
-            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Cyclic_Planner_v3.3</span>
+            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Cyclic_Planner_v3.4</span>
           </div>
           <h1 className="text-5xl font-headline font-black text-white uppercase italic tracking-tighter amber-text-glow leading-none">
             PLANIFICACIÓN_CÍCLICA
