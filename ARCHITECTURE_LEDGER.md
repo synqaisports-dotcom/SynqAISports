@@ -1,5 +1,5 @@
 
-# SynqSports Pro - Architecture Ledger v2.1 (Full Sync Protocol)
+# SynqSports Pro - Architecture Ledger v2.2 (Full Sync Protocol)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -100,3 +100,15 @@ Los roles operan bajo un sistema de ranking numérico (`rank`):
 - **Ajuste**: El botón de acceso al Roster/Configuración se desplaza de la cabecera a la **esquina inferior derecha** del campo.
 - **Ajuste**: El botón de Pantalla Completa se desplaza a la **esquina inferior izquierda** del campo.
 - **Racional**: Optimización para el uso con pulgares en tablets y liberación de carga visual en el marcador superior. Simetría funcional.
+
+## 10. Protocolo de Objetivos Metodológicos (v2.2)
+
+### 10.1. Estructura de Desarrollo por Etapas
+- **Nodo Piloto**: Debutantes (5-7 años).
+- **Dimensiones de Objetivos**: 
+  1. **Filosofía**: ADN de la etapa.
+  2. **Técnicos**: Relación individual con el activo (balón).
+  3. **Tácticos**: Entendimiento espacial y direccional.
+  4. **Motores**: Desarrollo físico coordinativo.
+  5. **Psicológicos**: Valores y socialización.
+- **Visualización**: Uso de tarjetas modulares en el `methodology-theme` (ámbar) para diferenciar el contenido académico del operativo.
