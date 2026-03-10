@@ -420,7 +420,7 @@ export default function MatchBoardPage() {
             <Sheet>
               <SheetTrigger asChild>
                 <button className="h-9 lg:h-10 w-9 lg:w-10 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all active:scale-95 shadow-[0_0_15px_rgba(0,242,255,0.1)]">
-                  <Settings className="h-4 w-4" />
+                  {hasClub ? <Settings className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                 </button>
               </SheetTrigger>
               <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">

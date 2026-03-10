@@ -1,5 +1,5 @@
 
-# SynqSports Pro - Architecture Ledger v1.4 (Full System Sync)
+# SynqSports Pro - Architecture Ledger v1.5 (Full System Sync)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -64,3 +64,11 @@ Los roles operan bajo un sistema de ranking numérico (`rank`):
 ## 5. Protocolos de UI y Estabilidad
 - **Notificaciones**: Las llamadas a `toast()` deben ejecutarse fuera de los actualizadores de estado para evitar colisiones de renderizado.
 - **Precisión**: Uso de `pr-10` en inputs de fecha para evitar clipping de iconos nativos en bordes redondeados.
+
+## 6. Estrategia de Captación (Promo Hook)
+
+### 6.1. Protocolo de Usuario sin Nodo
+- **Casuística**: Entrenadores que acceden vía Promo Board o sin Club asignado.
+- **Micro-App de Partido**: En ausencia de `clubId`, la terminal oculta el selector de red y el visor de Roster centralizado.
+- **Factoría Local**: Habilita un nodo de "Creación de Equipo Local" que permite definir Nombre, Siglas y Formato (F11, F7, Futsal).
+- **Persistencia**: Los datos se guardan en el `localStorage` del dispositivo, actuando como un activo local persistente para el entrenador invitado.
