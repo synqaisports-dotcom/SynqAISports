@@ -18,11 +18,8 @@ import {
   Plus,
   CheckCircle2,
   Camera,
-  Search,
   Dna,
-  ArrowUpRight,
-  ArrowRight,
-  Sparkles
+  Eye
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -44,8 +41,7 @@ import {
   SheetHeader, 
   SheetTitle, 
   SheetDescription,
-  SheetTrigger,
-  SheetClose
+  SheetTrigger
 } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -335,6 +331,8 @@ export default function MatchBoardPage() {
     if (!canvas) return;
     const parent = canvas.parentElement;
     if (!parent) return;
+    
+    // Sincronización Real de Cobertura
     canvas.width = parent.clientWidth;
     canvas.height = parent.clientHeight;
     
@@ -346,10 +344,19 @@ export default function MatchBoardPage() {
     }
   }, []);
 
+  // PROTOCOLO_RESIZE_V2.0: Observer para garantizar cobertura del 100% durante transiciones
   useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !canvas.parentElement) return;
+
+    const observer = new ResizeObserver(() => {
+      initCanvas();
+    });
+
+    observer.observe(canvas.parentElement);
     initCanvas();
-    window.addEventListener('resize', initCanvas);
-    return () => window.removeEventListener('resize', initCanvas);
+
+    return () => observer.disconnect();
   }, [initCanvas]);
 
   const startDrawing = (e: React.PointerEvent) => {
@@ -394,7 +401,6 @@ export default function MatchBoardPage() {
     }
     if (!draggingId || !fieldRef.current) return;
 
-    // COORDINATE_SYNC_V1.9: Cálculo sobre el contenedor real del campo para eliminar desfase
     const rect = fieldRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
@@ -418,7 +424,6 @@ export default function MatchBoardPage() {
   const handlePointerDownPlayer = (e: React.PointerEvent, id: string) => {
     if (isPaintMode) return;
     e.stopPropagation();
-    // CRÍTICO: Captura de puntero para evitar pérdida de foco en tablet
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     setDraggingId(id);
   };

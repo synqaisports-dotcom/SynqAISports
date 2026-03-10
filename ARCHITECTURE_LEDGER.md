@@ -1,5 +1,5 @@
 
-# SynqSports Pro - Architecture Ledger v1.9 (Coordinate Sync Protocol)
+# SynqSports Pro - Architecture Ledger v2.0 (Full Sync Protocol)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -90,3 +90,10 @@ Los roles operan bajo un sistema de ranking numérico (`rank`):
 ### 8.2. Protocolo de Sincronización de Contenedores (v1.9)
 - **Precisión de Arrastre**: La referencia de captura de coordenadas (`fieldRef`) debe asignarse estrictamente al contenedor geométrico interno que define el área de juego (el que tiene la relación de aspecto y el `relative`).
 - **Eliminación de Offset**: Al sincronizar el cálculo de `clientX/Y` con el `getBoundingClientRect` del contenedor interno, se garantiza una relación 1:1, eliminando la distancia entre el puntero y el centro de la ficha.
+
+## 9. Registro de Ajustes y Correcciones (Hotfixes)
+
+### 9.1. Protocolo de Cobertura de Lienzo (Drawing Layer v2.0)
+- **Problema**: Trazo del rotulador cortado en zonas periféricas (especialmente en el área visitante).
+- **Causa**: El lienzo (`canvas`) se inicializaba con dimensiones estáticas que no contemplaban las transiciones de tamaño del contenedor táctico (`transition-all`).
+- **Resolución**: Implementación de un `ResizeObserver` vinculado al contenedor del campo para sincronizar en tiempo real el `width` y `height` interno del canvas con el tamaño renderizado del componente, asegurando una cobertura del 100% en cualquier resolución y durante cualquier animación de cambio de formato.
