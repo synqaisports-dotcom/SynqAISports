@@ -25,14 +25,14 @@ import { cn } from "@/lib/utils";
 const CATEGORIES = [
   { id: "debutantes", label: "Debutantes", age: "5-7 años", icon: Sprout },
   { id: "prebenjamin", label: "Prebenjamín", age: "6-8 años", icon: Zap },
-  { id: "benjamin", label: "Benjamín", age: "9-10 años", icon: Target },
+  { id: "benjamin", label: "Benjamín", age: "8-10 años", icon: Target },
 ];
 
 const CONTENT: Record<string, any> = {
   debutantes: {
     title: "INICIACIÓN Y",
     titleAccent: "FORMACIÓN INTEGRAL",
-    philosophy: "La categoría debutante se enfoca en la iniciación deportiva, donde el objetivo principal no es ganar partidos, sino el disfrute a través del aprendizaje técnico y motor. El fútbol es nuestra herramienta educativa para desarrollar habilidades físicas, sociales y técnicas básicas.",
+    philosophy: "La categoría debutante se enfoca en la iniciación deportiva, donde el objetivo principal no es ganar partidos, sino el disfrute a través del aprendizaje técnico y motor. El fútbol es nuestra herramienta educativa para desarrollar habilidades sociales y técnicas básicas.",
     tips: [
       "El juego es la metodología: Componente lúdico siempre.",
       "No especializar: Todos juegan en todas las posiciones.",
@@ -150,6 +150,67 @@ const CONTENT: Record<string, any> = {
         ]
       }
     ]
+  },
+  benjamin: {
+    title: "INICIACIÓN",
+    titleAccent: "ESPECÍFICA TÁCTICA",
+    philosophy: "Etapa de transición donde la técnica individual y los conceptos básicos de cooperación cobran importancia. El foco está en la formación técnica y la comprensión del juego, educando en valores por encima de los resultados competitivos.",
+    tips: [
+      "Introducir el pase y el juego en parejas/tríos.",
+      "Ejercicios basados en el juego (rondos, 2x2, 3x3).",
+      "Aprender a ganar con respeto y perder sin frustración.",
+      "Fomentar la toma de decisiones propia del atleta."
+    ],
+    dimensions: [
+      {
+        title: "Técnicos Individuales",
+        subtitle: "Precisión y Visión",
+        icon: Zap,
+        items: [
+          "Conducción: Uso de ambos pies con visión periférica.",
+          "Control orientado: Preparar la siguiente acción con el primer toque.",
+          "Pase: Iniciación a la precisión y tensión del envío.",
+          "Finalización: Golpeo con empeine e interior en 1x1.",
+          "Regate: Uso intencionado para superar líneas rivales."
+        ]
+      },
+      {
+        title: "Tácticos Básicos",
+        subtitle: "Fases del Juego",
+        icon: Compass,
+        items: [
+          "Situaciones reducidas: Dominio de 1x1, 2x1 y 2x2.",
+          "Posicionamiento: Abrir el campo en ataque y cerrar en defensa.",
+          "Desmarques: Iniciación al apoyo y a la ruptura.",
+          "Transiciones: Reacción rápida al perder/recuperar el balón.",
+          "Orientación: Uso efectivo de todo el ancho del campo."
+        ]
+      },
+      {
+        title: "Coordinativos",
+        subtitle: "Agilidad Motriz",
+        icon: Dumbbell,
+        items: [
+          "Coordinación dinámica y agilidad en espacios cortos.",
+          "Cambios de dirección y velocidad de reacción estímulo.",
+          "Habilidades motoras: Desplazamientos, saltos y giros.",
+          "Equilibrio estático y dinámico bajo presión.",
+          "Familiarización con la carga física aeróbica básica."
+        ]
+      },
+      {
+        title: "Psico-Educativos",
+        subtitle: "Autonomía y Valores",
+        icon: Heart,
+        items: [
+          "Compañerismo: Respeto total al ecosistema del club.",
+          "Respeto al reglamento: Aceptar decisiones arbitrales.",
+          "Autonomía: Fomentar que decidan qué hacer con el balón.",
+          "Motivación: Mantener la pasión por la práctica deportiva.",
+          "Resiliencia: Gestión positiva del error en el aprendizaje."
+        ]
+      }
+    ]
   }
 };
 
@@ -163,7 +224,7 @@ export default function ObjectivesPage() {
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <Target className="h-5 w-5 text-amber-500 animate-pulse" />
-            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Strategic_Objectives_v2.3</span>
+            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Strategic_Objectives_v2.4</span>
           </div>
           <h1 className="text-4xl font-headline font-black text-white uppercase italic tracking-tighter amber-text-glow">
             OBJETIVOS_TÁCTICOS
@@ -196,7 +257,6 @@ export default function ObjectivesPage() {
       {currentContent ? (
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-10">
           
-          {/* COLUMNA FILOSOFÍA Y RECOMENDACIONES */}
           <div className="xl:col-span-1 space-y-10">
             <Card className="glass-panel border-amber-500/20 bg-amber-500/5 p-10 relative group overflow-hidden shadow-[0_0_50px_rgba(245,158,11,0.05)]">
               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-all">
@@ -227,7 +287,6 @@ export default function ObjectivesPage() {
             </div>
           </div>
 
-          {/* MATRIZ DE OBJETIVOS ESPECÍFICOS */}
           <div className="xl:col-span-2 space-y-10">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {currentContent.dimensions.map((dim: any, i: number) => (
