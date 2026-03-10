@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -211,7 +212,7 @@ const CONTENT: Record<string, any> = {
         icon: Heart,
         items: [
           "Compañerismo: Respeto total al ecosistema del club.",
-          "Respeto al reglamento: Aceptar decisiones arbitrales.",
+          "Respeto al reglamento: Aceptar las decisiones del árbitro.",
           "Autonomía: Fomentar que decidan qué hacer con el balón.",
           "Motivación: Mantener la pasión por la práctica deportiva.",
           "Resiliencia: Gestión positiva del error en el aprendizaje."
@@ -467,36 +468,42 @@ export default function ObjectivesPage() {
   const currentContent = CONTENT[selectedCat];
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-1000 p-8 lg:p-12">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-white/5 pb-8">
+    <div className="space-y-10 animate-in fade-in duration-1000 p-8 lg:p-12">
+      {/* HEADER TÁCTICO REESTRUCTURADO (DOS FILAS) */}
+      <div className="flex flex-col gap-8 border-b border-white/5 pb-10">
+        {/* FILA 1: TÍTULO E IDENTIDAD */}
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <Target className="h-5 w-5 text-amber-500 animate-pulse" />
-            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Strategic_Objectives_v2.8</span>
+            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Strategic_Objectives_v2.9</span>
           </div>
-          <h1 className="text-4xl font-headline font-black text-white uppercase italic tracking-tighter amber-text-glow">
+          <h1 className="text-5xl font-headline font-black text-white uppercase italic tracking-tighter amber-text-glow leading-none">
             OBJETIVOS_TÁCTICOS
           </h1>
-          <p className="text-[10px] font-black text-amber-500/30 tracking-[0.2em] uppercase">Hoja de Ruta Formativa del Club</p>
+          <p className="text-[11px] font-black text-amber-500/30 tracking-[0.3em] uppercase">Hoja de Ruta Formativa del Club</p>
         </div>
 
-        <div className="flex gap-2 bg-black/40 p-1 rounded-2xl border border-white/5 overflow-x-auto max-w-full custom-scrollbar">
+        {/* FILA 2: SELECTOR DE CATEGORÍAS (OCUPANDO TODO EL ANCHO) */}
+        <div className="flex gap-2 bg-black/40 p-1 rounded-2xl border border-white/5 overflow-x-auto max-w-full custom-scrollbar shadow-inner">
           {CATEGORIES.map((cat) => (
             <button
               key={cat.id}
               onClick={() => setSelectedCat(cat.id)}
               className={cn(
-                "flex items-center gap-3 px-6 py-3 rounded-xl transition-all whitespace-nowrap group relative overflow-hidden",
+                "flex items-center gap-4 px-8 py-4 rounded-xl transition-all whitespace-nowrap group relative overflow-hidden flex-1 min-w-[180px]",
                 selectedCat === cat.id 
-                  ? "bg-amber-500 text-black shadow-[0_0_20px_rgba(245,158,11,0.3)]" 
+                  ? "bg-amber-500 text-black shadow-[0_0_30px_rgba(245,158,11,0.4)] z-10" 
                   : "text-white/40 hover:text-white hover:bg-white/5"
               )}
             >
-              <cat.icon className={cn("h-4 w-4", selectedCat === cat.id ? "text-black" : "text-amber-500/40 group-hover:text-amber-500")} />
-              <div className="flex flex-col items-start leading-none">
-                <span className="text-[10px] font-black uppercase tracking-widest">{cat.label}</span>
-                <span className={cn("text-[8px] font-bold uppercase", selectedCat === cat.id ? "text-black/60" : "text-white/20")}>{cat.age}</span>
+              <cat.icon className={cn("h-5 w-5", selectedCat === cat.id ? "text-black" : "text-amber-500/40 group-hover:text-amber-500")} />
+              <div className="flex flex-col items-start leading-none gap-1">
+                <span className="text-[11px] font-black uppercase tracking-widest">{cat.label}</span>
+                <span className={cn("text-[9px] font-bold uppercase", selectedCat === cat.id ? "text-black/60" : "text-white/20")}>{cat.age}</span>
               </div>
+              {selectedCat === cat.id && (
+                <div className="absolute inset-0 bg-white/10 scan-line" />
+              )}
             </button>
           ))}
         </div>
