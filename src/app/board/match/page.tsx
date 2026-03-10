@@ -394,7 +394,7 @@ export default function MatchBoardPage() {
     }
     if (!draggingId || !fieldRef.current) return;
 
-    // OPTIMIZACIÓN: Cálculo directo sin lag de transición
+    // COORDINATE_SYNC_V1.9: Cálculo sobre el contenedor real del campo para eliminar desfase
     const rect = fieldRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
@@ -710,8 +710,8 @@ export default function MatchBoardPage() {
           className="absolute left-4 lg:left-6 top-1/2 -translate-y-1/2 z-[60] hidden sm:flex" 
         />
         
-        <main className="flex-1 relative overflow-hidden" ref={fieldRef}>
-          <TacticalField theme="cyan" fieldType={fieldType}>
+        <main className="flex-1 relative overflow-hidden">
+          <TacticalField theme="cyan" fieldType={fieldType} containerRef={fieldRef}>
             <canvas 
               ref={canvasRef}
               className={cn(

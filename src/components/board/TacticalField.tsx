@@ -2,7 +2,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import React, { ReactNode } from "react";
+import React, { ReactNode, RefObject } from "react";
 
 export type FieldType = "f11" | "f7" | "futsal";
 
@@ -11,17 +11,20 @@ interface TacticalFieldProps {
   showWatermark?: boolean;
   fieldType?: FieldType;
   children?: ReactNode;
+  containerRef?: RefObject<HTMLDivElement | null>;
 }
 
 /**
  * TacticalField - Motor Geométrico de Superficies Deportivas.
  * Soporta Fútbol 11, Fútbol 7 y Fútbol Sala con proporciones reales y texturas vibrantes.
+ * v1.9: Implementación de containerRef para sincronización de coordenadas 1:1.
  */
 export function TacticalField({ 
   theme = "cyan", 
   showWatermark, 
   fieldType = "f11",
-  children 
+  children,
+  containerRef
 }: TacticalFieldProps) {
   const accentColor = theme === "cyan" ? "border-primary/30" : "border-amber-500/30";
   
@@ -33,6 +36,7 @@ export function TacticalField({
   return (
     <div className="absolute inset-0 flex items-center justify-center p-4 md:p-8 lg:p-12 overflow-hidden select-none pointer-events-none">
       <div 
+        ref={containerRef}
         className={cn(
           "relative w-full h-full max-w-full max-h-full rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.9)] border-2 transition-all duration-700 pointer-events-auto",
           accentColor,
