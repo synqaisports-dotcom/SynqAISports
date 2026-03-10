@@ -278,12 +278,10 @@ export default function AcademyManagementPage() {
       return c;
     }));
 
-    setTimeout(() => {
-      toast({
-        title: newStatus === "Paused" ? "NODO_PAUSADO" : "NODO_ACTIVADO",
-        description: `El equipo ha cambiado su estado a ${newStatus.toUpperCase()}.`,
-      });
-    }, 100);
+    toast({
+      title: newStatus === "Paused" ? "NODO_PAUSADO" : "NODO_ACTIVADO",
+      description: `El equipo ha cambiado su estado a ${newStatus.toUpperCase()}.`,
+    });
   };
 
   const handleDeleteTeam = (catId: string, teamIdx: number) => {
@@ -414,7 +412,7 @@ export default function AcademyManagementPage() {
         <div className="space-y-1">
           <div className="flex items-center gap-3 mb-2">
             <Sprout className="h-5 w-5 text-primary animate-pulse" />
-            <span className="text-[10px] font-black text-primary tracking-[0.5em] uppercase italic">Academy_Architect_v1.0</span>
+            <span className="text-[10px] font-black text-primary tracking-[0.5em] uppercase italic">Academy_Architect_v1.4</span>
           </div>
           <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic cyan-text-glow">
             Gestión de Cantera
@@ -489,7 +487,6 @@ export default function AcademyManagementPage() {
                             team.status === "Paused" ? "border-amber-500/20 opacity-60" : "border-primary/10 hover:border-primary/30"
                           )}
                         >
-                          {/* BLOQUE IDENTIDAD: NOMBRE + LETRA + FORMATO */}
                           <div className="flex items-center gap-3 flex-1 min-w-0 mr-2" onClick={() => handleViewTeam(team, cat.name)}>
                             <div className={cn(
                               "h-1.5 w-1.5 rounded-full animate-pulse shrink-0",
@@ -503,7 +500,6 @@ export default function AcademyManagementPage() {
                             </div>
                           </div>
                           
-                          {/* BLOQUE ACCIONES TÁCTICAS */}
                           <div className="flex items-center gap-1 shrink-0">
                             <button onClick={() => handleViewTeam(team, cat.name)} className="p-1.5 hover:bg-primary/20 rounded-lg text-primary transition-all" title="Ver Ficha"><Eye className="h-3.5 w-3.5" /></button>
                             <button onClick={() => handleEditTeam(cat.id, team, idx)} className="p-1.5 hover:bg-primary/20 rounded-lg text-primary transition-all" title="Editar Nodo"><Pencil className="h-3.5 w-3.5" /></button>
@@ -543,7 +539,6 @@ export default function AcademyManagementPage() {
         ))}
       </div>
 
-      {/* FICHA TÉCNICA DEL EQUIPO (VIEWER) */}
       <Sheet open={isViewSheetOpen} onOpenChange={setIsViewSheetOpen}>
         <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-xl shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
           {selectedViewTeam && (
@@ -552,7 +547,7 @@ export default function AcademyManagementPage() {
                 <SheetHeader className="space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary italic">Node_Audit_v2.0</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary italic">Node_Audit_v2.5</span>
                   </div>
                   <div className="flex flex-col">
                     <span className="text-[10px] font-black text-primary/40 uppercase tracking-[0.5em] mb-1 italic">Ficha Técnica de Equipo</span>
@@ -564,7 +559,6 @@ export default function AcademyManagementPage() {
               </div>
 
               <div className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-12">
-                {/* CONFIGURACIÓN LOGÍSTICA */}
                 <section className="space-y-6">
                   <div className="flex items-center gap-3 border-b border-white/5 pb-4">
                     <MapPin className="h-4 w-4 text-primary" />
@@ -587,7 +581,6 @@ export default function AcademyManagementPage() {
                   </div>
                 </section>
 
-                {/* STAFF TÉCNICO */}
                 <section className="space-y-6">
                   <div className="flex items-center gap-3 border-b border-white/5 pb-4">
                     <UserCog className="h-4 w-4 text-primary" />
@@ -602,7 +595,6 @@ export default function AcademyManagementPage() {
                   </div>
                 </section>
 
-                {/* JUGADORES (ROSTER) */}
                 <section className="space-y-6 pb-10">
                   <div className="flex items-center gap-3 border-b border-white/5 pb-4">
                     <Users className="h-4 w-4 text-primary" />
@@ -653,7 +645,6 @@ export default function AcademyManagementPage() {
         </SheetContent>
       </Sheet>
 
-      {/* TERMINAL DE CONFIGURACIÓN */}
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-xl shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
           <div className="p-10 border-b border-white/5 bg-black/40">
