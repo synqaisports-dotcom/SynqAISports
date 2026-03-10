@@ -17,7 +17,9 @@ import {
   Users,
   Compass,
   Activity,
-  Triangle
+  Triangle,
+  Award,
+  ShieldCheck
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +31,7 @@ const CATEGORIES = [
   { id: "benjamin", label: "Benjamín", age: "8-10 años", icon: Target },
   { id: "alevin", label: "Alevín", age: "10-12 años", icon: Triangle },
   { id: "infantil", label: "Infantil", age: "11-13 años", icon: Brain },
+  { id: "cadete", label: "Cadete", age: "14-15 años", icon: ShieldCheck },
 ];
 
 const CONTENT: Record<string, any> = {
@@ -255,7 +258,7 @@ const CONTENT: Record<string, any> = {
         subtitle: "Capacidades Motoras",
         icon: Dumbbell,
         items: [
-          "Coordinación y Agilidad: Control total del cuerpo en carrera.",
+          "Coordinación y Agilidad: Control del propio cuerpo en carrera.",
           "Velocidad de Reacción: Ante estímulos técnicos y tácticos.",
           "Resistencia Aeróbica: Capacidad de trabajo (50-60 min).",
           "Fuerza explosiva: Iniciación en saltos y arrancadas.",
@@ -279,7 +282,7 @@ const CONTENT: Record<string, any> = {
   infantil: {
     title: "COMPETICIÓN Y",
     titleAccent: "EDAD DE ORO",
-    philosophy: "En la categoría infantil (11-13 años), conocida como la 'edad de oro' del aprendizaje motor, el enfoque se centra en la formación integral del jugador. Se busca perfeccionar la técnica individual, introducir la toma de decisiones tácticas y consolidar los valores del deporte.",
+    philosophy: "En la categoría infantil (11-13 años), conocida como la 'edad de oro' del aprendizaje motor, el enfoque se centra en la formación integral del jugador. Se busca perfeccionar la técnica individual, introducir la toma de decisiones tácticas y consolidar los valores del deporte por encima del resultado competitivo.",
     tips: [
       "Fomentar la inteligencia de juego por encima de la mecánica.",
       "Consolidar la cultura de equipo y el respeto mutuo.",
@@ -336,6 +339,64 @@ const CONTENT: Record<string, any> = {
         ]
       }
     ]
+  },
+  cadete: {
+    title: "ESPECIALIZACIÓN Y",
+    titleAccent: "RENDIMIENTO",
+    philosophy: "Para un equipo de categoría cadete (aproximadamente 14 a 15 años), el enfoque evoluciona desde la formación básica hacia la especialización y el rendimiento. En esta etapa, los jugadores ya poseen una base técnica y comienzan a entender el deporte de forma más profesionalizada.",
+    tips: [
+      "Fomentar la mentalidad competitiva: Confianza, Control, Compromiso y Concentración.",
+      "Orientar la preparación física al rendimiento armónico.",
+      "Potenciar la comunicación y empatía en el grupo.",
+      "Responsabilizar al jugador de su propio progreso (autocrítica)."
+    ],
+    dimensions: [
+      {
+        title: "Técnicos",
+        subtitle: "Perfeccionamiento por Puesto",
+        icon: Zap,
+        items: [
+          "Dominar habilidades propias de la demarcación específica.",
+          "Perfeccionamiento de la técnica aplicada a la posición.",
+          "Eficacia en gestos técnicos a alta intensidad.",
+          "Optimización del tiempo de ejecución técnica."
+        ]
+      },
+      {
+        title: "Tácticos",
+        subtitle: "Lectura de Juego y Estrategia",
+        icon: Compass,
+        items: [
+          "Mejorar la toma de decisiones en situaciones reales de partido.",
+          "Aplicación de conceptos de táctica colectiva compleja.",
+          "Profundizar en el reglamento para aprovechar situaciones.",
+          "Análisis táctico del rival y adaptaciones en vivo."
+        ]
+      },
+      {
+        title: "Físicos y Condicionales",
+        subtitle: "Rendimiento y Hábitos",
+        icon: Dumbbell,
+        items: [
+          "Preparación física orientada al rendimiento (fuerza, velocidad).",
+          "Entrenamiento invisible: Nutrición, descanso y recuperación.",
+          "Prevención de lesiones mediante fortalecimiento específico.",
+          "Adaptación armónica al desarrollo biológico final."
+        ]
+      },
+      {
+        title: "Psicopedagógicos",
+        subtitle: "Mentalidad y Madurez",
+        icon: Heart,
+        items: [
+          "Fomentar las '4 C': Confianza, Control, Compromiso y Concentración.",
+          "Cohesión de grupo: Éxito colectivo sobre individualismo.",
+          "Valores de club: Respeto, responsabilidad y esfuerzo.",
+          "Autonomía y madurez: Autocrítica constante del rendimiento.",
+          "Filosofía de mejora continua y aprendizaje profesional."
+        ]
+      }
+    ]
   }
 };
 
@@ -349,7 +410,7 @@ export default function ObjectivesPage() {
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <Target className="h-5 w-5 text-amber-500 animate-pulse" />
-            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Strategic_Objectives_v2.6</span>
+            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Strategic_Objectives_v2.7</span>
           </div>
           <h1 className="text-4xl font-headline font-black text-white uppercase italic tracking-tighter amber-text-glow">
             OBJETIVOS_TÁCTICOS
