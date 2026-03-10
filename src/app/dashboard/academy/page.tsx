@@ -271,6 +271,7 @@ export default function AcademyManagementPage() {
       return c;
     }));
 
+    // Notificación segura fuera del renderizado
     setTimeout(() => {
       toast({
         title: newStatus === "Paused" ? "NODO_PAUSADO" : "NODO_ACTIVADO",
@@ -455,7 +456,11 @@ export default function AcademyManagementPage() {
                   <CardHeader className="p-6 pb-2">
                     <div className="flex justify-between items-start mb-2">
                       <CardTitle className="text-lg font-black text-white italic tracking-tighter uppercase group-hover:cyan-text-glow transition-all">
-                        {cat.name}
+                        {cat.name} {cat.teams.length > 0 && (
+                          <span className="text-primary/20 text-[10px] ml-2 font-black tracking-widest italic">
+                            [{cat.teams.map(t => t.suffix).sort().join('')}]
+                          </span>
+                        )}
                       </CardTitle>
                       <div className="flex items-center gap-2">
                         <Users className="h-3 w-3 text-primary" />
@@ -482,7 +487,7 @@ export default function AcademyManagementPage() {
                               team.status === "Paused" ? "bg-amber-500" : "bg-primary"
                             )} />
                             <span className="text-[9px] font-black text-primary uppercase tracking-tight group-hover/team:cyan-text-glow truncate">
-                              {team.name} <span className="text-primary group-hover/team:primary font-black ml-1">[{team.suffix}]</span>
+                              {team.name} <span className="text-primary/60 font-black ml-1">{team.suffix}</span>
                             </span>
                           </div>
                           
