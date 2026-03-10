@@ -1,5 +1,5 @@
 
-# SynqSports Pro - Architecture Ledger v2.2 (Full Sync Protocol)
+# SynqSports Pro - Architecture Ledger v2.3 (Full Sync Protocol)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -71,7 +71,7 @@ Los roles operan bajo un sistema de ranking numérico (`rank`):
 - **Casuística**: Entrenadores que acceden vía Promo Board o sin Club asignado.
 - **Micro-App de Partido**: En ausencia de `clubId`, la terminal oculta el selector de red y el visor de Roster centralizado.
 - **Factoría Local**: Habilita un nodo de "Creación de Equipo Local" que permite definir Nombre, Siglas y Formato (F11, F7, Futsal).
-- **Persistencia**: Los datos se guardan en el `localStorage` del dispositivo, actuando como un activo local persistente para el entrenador invitado.
+- **Persistencia**: Los datos se guardan en el `localStorage` del dispositivo, actuando como un activo local persistentente para el entrenador invitado.
 
 ## 7. Protocolo de Pizarra y Dibujo
 
@@ -105,6 +105,7 @@ Los roles operan bajo un sistema de ranking numérico (`rank`):
 
 ### 10.1. Estructura de Desarrollo por Etapas
 - **Nodo Piloto**: Debutantes (5-7 años).
+- **Nodo Expansión (v2.3)**: Prebenjamín (6-8 años).
 - **Dimensiones de Objetivos**: 
   1. **Filosofía**: ADN de la etapa.
   2. **Técnicos**: Relación individual con el activo (balón).

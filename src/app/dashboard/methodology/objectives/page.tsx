@@ -24,12 +24,138 @@ import { cn } from "@/lib/utils";
 
 const CATEGORIES = [
   { id: "debutantes", label: "Debutantes", age: "5-7 años", icon: Sprout },
-  { id: "prebenjamin", label: "Prebenjamín", age: "7-8 años", icon: Zap },
+  { id: "prebenjamin", label: "Prebenjamín", age: "6-8 años", icon: Zap },
   { id: "benjamin", label: "Benjamín", age: "9-10 años", icon: Target },
 ];
 
+const CONTENT: Record<string, any> = {
+  debutantes: {
+    title: "INICIACIÓN Y",
+    titleAccent: "FORMACIÓN INTEGRAL",
+    philosophy: "La categoría debutante se enfoca en la iniciación deportiva, donde el objetivo principal no es ganar partidos, sino el disfrute a través del aprendizaje técnico y motor. El fútbol es nuestra herramienta educativa para desarrollar habilidades físicas, sociales y técnicas básicas.",
+    tips: [
+      "El juego es la metodología: Componente lúdico siempre.",
+      "No especializar: Todos juegan en todas las posiciones.",
+      "Paciencia infinita: Atención y motricidad en desarrollo.",
+      "Refuerzo positivo: Celebra el esfuerzo, no el gol."
+    ],
+    dimensions: [
+      {
+        title: "Técnicos",
+        subtitle: "Relación con el Balón",
+        icon: Zap,
+        items: [
+          "Familiarización: Un balón por niño para maximizar toques.",
+          "Conducción básica: Balón cerca del pie.",
+          "Iniciación al regate: Perder el miedo al cambio de dirección.",
+          "Golpeo/Remate: Contacto inicial para pase o tiro.",
+          "Control básico: Intentar parar el balón con el cuerpo."
+        ]
+      },
+      {
+        title: "Tácticos",
+        subtitle: "Entendimiento del Juego",
+        icon: Compass,
+        items: [
+          "Concepto de dirección: Saber qué portería atacar/defender.",
+          "Evitar 'Efecto Colmena': Empezar a dispersarse.",
+          "Nociones espaciales: Dónde estoy en el campo.",
+          "Noción compañero/rival: Reconocer con quién juego.",
+          "Reglas básicas: El balón no se toca con la mano."
+        ]
+      },
+      {
+        title: "Motores y Físicos",
+        subtitle: "Desarrollo General",
+        icon: Dumbbell,
+        items: [
+          "Motricidad general: Correr, saltar, girar y frenar.",
+          "Coordinación ojo-pie y equilibrio dinámico.",
+          "Orientación espacial y temporal.",
+          "Conocimiento del propio cuerpo.",
+          "Familiarización con el césped y material técnico."
+        ]
+      },
+      {
+        title: "Psicopedagógicos",
+        subtitle: "Valores y Socialización",
+        icon: Heart,
+        items: [
+          "Diversión absoluta: Ganas de volver mañana.",
+          "Hábitos de higiene y vestuario (autonomía).",
+          "Respeto: Compañeros, rivales y normas.",
+          "Integración en el grupo y compartir.",
+          "Cuidado del material y la mochila propia."
+        ]
+      }
+    ]
+  },
+  prebenjamin: {
+    title: "FORMACIÓN Y",
+    titleAccent: "COOPERACIÓN INICIAL",
+    philosophy: "Se centra en la formación integral y el desarrollo motor a través del juego, priorizando el aprendizaje técnico individual sobre el resultado. Se busca fomentar el compañerismo y la familiarización con el balón en un entorno lúdico.",
+    tips: [
+      "Utilizar ejercicios lúdicos (transporte, lucha, persecución).",
+      "Evitar la especialización prematura por puestos.",
+      "Priorizar la participación de todos los jugadores.",
+      "Fomentar el levantado de cabeza en conducción."
+    ],
+    dimensions: [
+      {
+        title: "Técnicos Individuales",
+        subtitle: "Dominio y Golpeo",
+        icon: Zap,
+        items: [
+          "Dominio del balón: Conducción con distintas superficies.",
+          "Iniciación al regate: Fomentar el 1x1 para superar rivales.",
+          "Finalización: Aprender a tirar a portería y marcar.",
+          "Pase y recepción: Iniciación al control orientado.",
+          "Capacidad de levantar la cabeza al conducir."
+        ]
+      },
+      {
+        title: "Tácticos Colectivos",
+        subtitle: "Ocupación de Espacios",
+        icon: Compass,
+        items: [
+          "Evitar aglomeraciones: Separarse para recibir.",
+          "Noción de equipo: Cooperación y oposición (3x3, 2x1).",
+          "Zonas de riesgo: No complicarse cerca de portería propia.",
+          "Inicio de la noción de 'pasar y moverse'.",
+          "Entendimiento del fuera de juego básico."
+        ]
+      },
+      {
+        title: "Físicos y Motores",
+        subtitle: "Agilidad y Reacción",
+        icon: Dumbbell,
+        items: [
+          "Mejora de la agilidad y el equilibrio dinámico.",
+          "Velocidad de reacción mediante juegos específicos.",
+          "Mantener y mejorar la movilidad articular.",
+          "Circuitos de coordinación ojo-pie con balón.",
+          "Desarrollo de la fuerza básica a través de saltos."
+        ]
+      },
+      {
+        title: "Educativos",
+        subtitle: "Gestión Emocional",
+        icon: Heart,
+        items: [
+          "Gestión emocional: Convivir con éxito y frustración.",
+          "Fair Play: Respeto absoluto a rivales y árbitros.",
+          "Compañerismo: El equipo por encima del individuo.",
+          "Disciplina formativa: Puntualidad y cuidado material.",
+          "Fomentar la toma de decisiones sin miedo al error."
+        ]
+      }
+    ]
+  }
+};
+
 export default function ObjectivesPage() {
   const [selectedCat, setSelectedCat] = useState("debutantes");
+  const currentContent = CONTENT[selectedCat];
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000 p-8 lg:p-12">
@@ -37,7 +163,7 @@ export default function ObjectivesPage() {
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <Target className="h-5 w-5 text-amber-500 animate-pulse" />
-            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Strategic_Objectives_v2.2</span>
+            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Strategic_Objectives_v2.3</span>
           </div>
           <h1 className="text-4xl font-headline font-black text-white uppercase italic tracking-tighter amber-text-glow">
             OBJETIVOS_TÁCTICOS
@@ -67,7 +193,7 @@ export default function ObjectivesPage() {
         </div>
       </div>
 
-      {selectedCat === "debutantes" ? (
+      {currentContent ? (
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-10">
           
           {/* COLUMNA FILOSOFÍA Y RECOMENDACIONES */}
@@ -81,10 +207,10 @@ export default function ObjectivesPage() {
                 <span className="text-[11px] font-black uppercase tracking-[0.4em] text-amber-500">Filosofía de Etapa</span>
               </div>
               <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white mb-6 leading-tight">
-                INICIACIÓN Y <br /><span className="text-amber-500">FORMACIÓN INTEGRAL</span>
+                {currentContent.title} <br /><span className="text-amber-500">{currentContent.titleAccent}</span>
               </h3>
               <p className="text-[11px] font-bold text-white/60 uppercase tracking-widest leading-loose italic relative z-10">
-                La categoría debutante se enfoca en la iniciación deportiva, donde el objetivo principal no es ganar partidos, sino el disfrute a través del aprendizaje técnico y motor. El fútbol es nuestra herramienta educativa para desarrollar habilidades físicas, sociales y técnicas básicas.
+                {currentContent.philosophy}
               </p>
             </Card>
 
@@ -94,10 +220,9 @@ export default function ObjectivesPage() {
                 <span className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500/60">Guía para el Entrenador</span>
               </div>
               <div className="space-y-4">
-                <CoachTip text="El juego es la metodología: Componente lúdico siempre." />
-                <CoachTip text="No especializar: Todos juegan en todas las posiciones." />
-                <CoachTip text="Paciencia infinita: Atención y motricidad en desarrollo." />
-                <CoachTip text="Refuerzo positivo: Celebra el esfuerzo, no el gol." />
+                {currentContent.tips.map((tip: string, i: number) => (
+                  <CoachTip key={i} text={tip} />
+                ))}
               </div>
             </div>
           </div>
@@ -105,68 +230,20 @@ export default function ObjectivesPage() {
           {/* MATRIZ DE OBJETIVOS ESPECÍFICOS */}
           <div className="xl:col-span-2 space-y-10">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              
-              {/* TÉCNICOS */}
-              <ObjectiveCard 
-                title="Técnicos" 
-                subtitle="Relación con el Balón"
-                icon={Zap}
-                items={[
-                  "Familiarización: Un balón por niño para maximizar toques.",
-                  "Conducción básica: Balón cerca del pie.",
-                  "Iniciación al regate: Perder el miedo al cambio de dirección.",
-                  "Golpeo/Remate: Contacto inicial para pase o tiro.",
-                  "Control básico: Intentar parar el balón con el cuerpo."
-                ]}
-              />
-
-              {/* TÁCTICOS */}
-              <ObjectiveCard 
-                title="Tácticos" 
-                subtitle="Entendimiento del Juego"
-                icon={Compass}
-                items={[
-                  "Concepto de dirección: Saber qué portería atacar/defender.",
-                  "Evitar 'Efecto Colmena': Empezar a dispersarse.",
-                  "Nociones espaciales: Dónde estoy en el campo.",
-                  "Noción compañero/rival: Reconocer con quién juego.",
-                  "Reglas básicas: El balón no se toca con la mano."
-                ]}
-              />
-
-              {/* MOTORES */}
-              <ObjectiveCard 
-                title="Motores y Físicos" 
-                subtitle="Desarrollo General"
-                icon={Dumbbell}
-                items={[
-                  "Motricidad general: Correr, saltar, girar y frenar.",
-                  "Coordinación ojo-pie y equilibrio dinámico.",
-                  "Orientación espacial y temporal.",
-                  "Conocimiento del propio cuerpo.",
-                  "Familiarización con el césped y material técnico."
-                ]}
-              />
-
-              {/* PSICOLÓGICOS */}
-              <ObjectiveCard 
-                title="Psicopedagógicos" 
-                subtitle="Valores y Socialización"
-                icon={Heart}
-                items={[
-                  "Diversión absoluta: Ganas de volver mañana.",
-                  "Hábitos de higiene y vestuario (autonomía).",
-                  "Respeto: Compañeros, rivales y normas.",
-                  "Integración en el grupo y compartir.",
-                  "Cuidado del material y la mochila propia."
-                ]}
-              />
-
+              {currentContent.dimensions.map((dim: any, i: number) => (
+                <ObjectiveCard 
+                  key={i}
+                  title={dim.title} 
+                  subtitle={dim.subtitle}
+                  icon={dim.icon}
+                  items={dim.items}
+                />
+              ))}
             </div>
 
-            <div className="p-10 bg-amber-500/5 border border-amber-500/20 rounded-[3rem] flex items-center justify-between">
+            <div className="p-10 bg-amber-500/5 border border-amber-500/20 rounded-[3rem] flex items-center justify-between group hover:border-amber-500/40 transition-all cursor-pointer">
                <div className="flex items-center gap-6">
-                  <div className="h-14 w-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
+                  <div className="h-14 w-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <Sparkles className="h-7 w-7 text-amber-500" />
                   </div>
                   <div>
@@ -174,7 +251,7 @@ export default function ObjectivesPage() {
                     <p className="text-[10px] font-bold text-amber-500/40 uppercase tracking-widest">Los ejercicios generados por IA respetarán estos objetivos automáticamente.</p>
                   </div>
                </div>
-               <ArrowRight className="h-6 w-6 text-amber-500/20" />
+               <ArrowRight className="h-6 w-6 text-amber-500/20 group-hover:text-amber-500 transition-colors" />
             </div>
           </div>
 
