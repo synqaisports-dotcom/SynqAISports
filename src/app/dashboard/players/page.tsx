@@ -481,7 +481,6 @@ export default function PlayersManagementPage() {
                 </div>
               </div>
 
-              {/* CAMPOS DE Nº CAMISETA Y APODO */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Nº Camiseta</Label>
@@ -532,7 +531,7 @@ export default function PlayersManagementPage() {
                       type="date"
                       value={formData.birthDate}
                       onChange={(e) => setFormData({...formData, birthDate: e.target.value})}
-                      className="pl-10 h-12 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-all text-primary" 
+                      className="pl-10 h-12 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-all text-primary [color-scheme:dark]" 
                     />
                   </div>
                 </div>
@@ -545,7 +544,7 @@ export default function PlayersManagementPage() {
                       type="date"
                       value={formData.joinDate}
                       onChange={(e) => setFormData({...formData, joinDate: e.target.value})}
-                      className="pl-10 h-12 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-all text-primary" 
+                      className="pl-10 h-12 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-all text-primary [color-scheme:dark]" 
                     />
                   </div>
                 </div>
