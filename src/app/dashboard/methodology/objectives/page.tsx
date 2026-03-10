@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -16,7 +15,9 @@ import {
   ArrowRight,
   BookOpen,
   Users,
-  Compass
+  Compass,
+  Activity,
+  Triangle
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +27,7 @@ const CATEGORIES = [
   { id: "debutantes", label: "Debutantes", age: "5-7 años", icon: Sprout },
   { id: "prebenjamin", label: "Prebenjamín", age: "6-8 años", icon: Zap },
   { id: "benjamin", label: "Benjamín", age: "8-10 años", icon: Target },
+  { id: "alevin", label: "Alevín", age: "10-12 años", icon: Triangle },
 ];
 
 const CONTENT: Record<string, any> = {
@@ -93,7 +95,7 @@ const CONTENT: Record<string, any> = {
   prebenjamin: {
     title: "FORMACIÓN Y",
     titleAccent: "COOPERACIÓN INICIAL",
-    philosophy: "Se centra en la formación integral y el desarrollo motor a través del juego, priorizando el aprendizaje técnico individual sobre el resultado. Se busca fomentar el compañerismo y la familiarización con el balón en un entorno lúdico.",
+    philosophy: "Los objetivos principales para un equipo prebenjamín (6-8 años) se centran en la formación integral, la diversión y el desarrollo motor a través del juego, priorizando el aprendizaje técnico individual sobre el resultado. Se busca fomentar el compañerismo, el respeto y la familiarización con el balón en un entorno lúdico.",
     tips: [
       "Utilizar ejercicios lúdicos (transporte, lucha, persecución).",
       "Evitar la especialización prematura por puestos.",
@@ -106,32 +108,32 @@ const CONTENT: Record<string, any> = {
         subtitle: "Dominio y Golpeo",
         icon: Zap,
         items: [
-          "Dominio del balón: Conducción con distintas superficies.",
-          "Iniciación al regate: Fomentar el 1x1 para superar rivales.",
+          "Dominio del balón: Familiarización y conducción con distintas superficies.",
+          "Iniciación al regate: Fomentar el 1 contra 1 para superar rivales.",
           "Finalización: Aprender a tirar a portería y marcar.",
-          "Pase y recepción: Iniciación al control orientado.",
+          "Pase y recepción: Iniciar toques básicos y control orientado.",
           "Capacidad de levantar la cabeza al conducir."
         ]
       },
       {
-        title: "Tácticos Colectivos",
-        subtitle: "Ocupación de Espacios",
+        title: "Tácticos",
+        subtitle: "Colectivos e Individuales",
         icon: Compass,
         items: [
-          "Evitar aglomeraciones: Separarse para recibir.",
-          "Noción de equipo: Cooperación y oposición (3x3, 2x1).",
-          "Zonas de riesgo: No complicarse cerca de portería propia.",
+          "Evitar aglomeraciones: Separarse y ocupar espacios para recibir.",
+          "Noción de equipo: Entender la cooperación y oposición (3x3, 2x1).",
+          "Zonas de riesgo: Salir jugando sin complicarse cerca de portería propia.",
           "Inicio de la noción de 'pasar y moverse'.",
           "Entendimiento del fuera de juego básico."
         ]
       },
       {
         title: "Físicos y Motores",
-        subtitle: "Agilidad y Reacción",
+        subtitle: "Coordinación y Motricidad",
         icon: Dumbbell,
         items: [
-          "Mejora de la agilidad y el equilibrio dinámico.",
-          "Velocidad de reacción mediante juegos específicos.",
+          "Mejora de la agilidad, equilibrio y velocidad de reacción.",
+          "Velocidad de reacción mediante juegos y circuitos.",
           "Mantener y mejorar la movilidad articular.",
           "Circuitos de coordinación ojo-pie con balón.",
           "Desarrollo de la fuerza básica a través de saltos."
@@ -142,9 +144,9 @@ const CONTENT: Record<string, any> = {
         subtitle: "Gestión Emocional",
         icon: Heart,
         items: [
+          "Diversión: Que el niño disfrute practicando deporte.",
+          "Valores: Fomentar compañerismo, juego limpio y respeto.",
           "Gestión emocional: Convivir con éxito y frustración.",
-          "Fair Play: Respeto absoluto a rivales y árbitros.",
-          "Compañerismo: El equipo por encima del individuo.",
           "Disciplina formativa: Puntualidad y cuidado material.",
           "Fomentar la toma de decisiones sin miedo al error."
         ]
@@ -154,7 +156,7 @@ const CONTENT: Record<string, any> = {
   benjamin: {
     title: "INICIACIÓN",
     titleAccent: "ESPECÍFICA TÁCTICA",
-    philosophy: "Etapa de transición donde la técnica individual y los conceptos básicos de cooperación cobran importancia. El foco está en la formación técnica y la comprensión del juego, educando en valores por encima de los resultados competitivos.",
+    philosophy: "La categoría Benjamín (8-10 años) es una etapa de 'iniciación específica', donde se pasa de un enfoque puramente lúdico a uno donde la técnica individual y los conceptos básicos de cooperación cobran importancia. El foco está en la formación técnica y la comprensión del juego.",
     tips: [
       "Introducir el pase y el juego en parejas/tríos.",
       "Ejercicios basados en el juego (rondos, 2x2, 3x3).",
@@ -211,6 +213,67 @@ const CONTENT: Record<string, any> = {
         ]
       }
     ]
+  },
+  alevin: {
+    title: "CONSOLIDACIÓN Y",
+    titleAccent: "TRANSICIÓN TÁCTICA",
+    philosophy: "La categoría alevín (10-12 años) es una etapa crítica de transición. Se pasa de un juego individualista a uno donde se consolida la técnica y se inicia la comprensión táctica colectiva, especialmente en el paso de Fútbol 7 a Fútbol 11.",
+    tips: [
+      "Formar jugadores inteligentes y cooperativos.",
+      "No especialización: Experimentar todas las posiciones.",
+      "Prioridad formativa sobre el resultado competitivo.",
+      "Trabajar la técnica colectiva mediante estructuras en triángulo."
+    ],
+    dimensions: [
+      {
+        title: "Técnicos",
+        subtitle: "Automatización bajo Presión",
+        icon: Zap,
+        items: [
+          "Control orientado: Ganar tiempo y espacio (pies, pecho, cabeza).",
+          "Pase: Aumentar precisión y fuerza; iniciación al pase largo.",
+          "Conducción y Regate: Con visión periférica para superar 1x1.",
+          "Finalización: Efectividad con ambas piernas y superficies.",
+          "Protección de balón: Uso del cuerpo para mantener posesión."
+        ]
+      },
+      {
+        title: "Tácticos",
+        subtitle: "Entendimiento del Juego",
+        icon: Compass,
+        items: [
+          "Amplitud y profundidad: Ocupación racional del campo.",
+          "Desmarques y apoyos: Movimiento constante sin balón.",
+          "Paredes y combinaciones: Automatización de pases rápidos.",
+          "Marcaje y cobertura: Temporización y ayudas defensivas.",
+          "Estructura táctica: Recuperación de posición tras pérdida."
+        ]
+      },
+      {
+        title: "Físicos",
+        subtitle: "Capacidades Motoras",
+        icon: Dumbbell,
+        items: [
+          "Coordinación y Agilidad: Control total del cuerpo en carrera.",
+          "Velocidad de Reacción: Ante estímulos técnicos y tácticos.",
+          "Resistencia Aeróbica: Capacidad de trabajo (50-60 min).",
+          "Fuerza explosiva: Iniciación en saltos y arrancadas.",
+          "Flexibilidad: Prevención de lesiones en etapa de crecimiento."
+        ]
+      },
+      {
+        title: "Psicopedagógicos",
+        subtitle: "Toma de Decisiones",
+        icon: Heart,
+        items: [
+          "Cooperación: El fútbol como deporte de equipo.",
+          "Autonomía: Decidir sin esperar indicaciones constantes.",
+          "Gestión del error: El fallo como parte del aprendizaje.",
+          "Aceptación de normas y respeto absoluto al árbitro.",
+          "Liderazgo positivo dentro del grupo."
+        ]
+      }
+    ]
   }
 };
 
@@ -224,7 +287,7 @@ export default function ObjectivesPage() {
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <Target className="h-5 w-5 text-amber-500 animate-pulse" />
-            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Strategic_Objectives_v2.4</span>
+            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Strategic_Objectives_v2.5</span>
           </div>
           <h1 className="text-4xl font-headline font-black text-white uppercase italic tracking-tighter amber-text-glow">
             OBJETIVOS_TÁCTICOS
@@ -232,7 +295,7 @@ export default function ObjectivesPage() {
           <p className="text-[10px] font-black text-amber-500/30 tracking-[0.2em] uppercase">Hoja de Ruta Formativa del Club</p>
         </div>
 
-        <div className="flex gap-2 bg-black/40 p-1 rounded-2xl border border-white/5 overflow-x-auto max-w-full">
+        <div className="flex gap-2 bg-black/40 p-1 rounded-2xl border border-white/5 overflow-x-auto max-w-full custom-scrollbar">
           {CATEGORIES.map((cat) => (
             <button
               key={cat.id}
