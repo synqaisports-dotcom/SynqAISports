@@ -428,7 +428,7 @@ const CONTENT: Record<string, any> = {
         subtitle: "Dominio del Juego",
         icon: Compass,
         items: [
-          "Flexibilidad táctica: Alternar dibujos durante el partido.",
+          "Flexibilidad táctica: Alternar dibujos durante un partido.",
           "Análisis del rival: Identificar y explotar debilidades.",
           "Especialización por puesto: Consolidar el rol específico.",
           "Gestión de tiempos de partido y marcadores.",
@@ -493,7 +493,7 @@ export default function ObjectivesPage() {
                 "flex items-center gap-4 px-8 py-4 rounded-xl transition-all whitespace-nowrap group relative overflow-hidden flex-1 min-w-[180px]",
                 selectedCat === cat.id 
                   ? "bg-amber-500 text-black shadow-[0_0_30px_rgba(245,158,11,0.4)] z-10" 
-                  : "text-white/40 hover:text-white hover:bg-white/5"
+                  : "text-white/40 hover:text-white hover:bg-white/5 border border-white/10 hover:border-amber-500/30"
               )}
             >
               <cat.icon className={cn("h-5 w-5", selectedCat === cat.id ? "text-black" : "text-amber-500/40 group-hover:text-amber-500")} />
