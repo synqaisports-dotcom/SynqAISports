@@ -26,7 +26,8 @@ import {
   ShieldAlert,
   Camera,
   X,
-  Clock
+  Clock,
+  Hash
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -95,10 +96,10 @@ const TACTICAL_POSITIONS = [
 ];
 
 const INITIAL_PLAYERS = [
-  { id: "p1", name: "Lucas", surname: "García", email: "l.garcia@tutor.com", category: "Infantil", teamSuffix: "A", position: "MC, MCO", status: "Active", attendance: "98%", isMinor: true, tutorName: "MARÍA", tutorSurname: "GARCÍA", tutorPhone: "600 000 001", tutorEmail: "m.garcia@tutor.com", photoUrl: "", birthDate: "2011-05-15", joinDate: "2023-09-01" },
-  { id: "p2", name: "Elena", surname: "Rossi", email: "e.rossi@tutor.it", category: "Alevín", teamSuffix: "B", position: "DC", status: "Active", attendance: "92%", isMinor: true, tutorName: "PAOLO", tutorSurname: "ROSSI", tutorPhone: "+39 300 000 000", tutorEmail: "p.rossi@tutor.it", photoUrl: "", birthDate: "2013-02-20", joinDate: "2024-01-10" },
-  { id: "p3", name: "Marc", surname: "Soler", email: "m.soler@tutor.es", category: "Cadete", teamSuffix: "C", position: "POR", status: "Injured", attendance: "45%", isMinor: false, photoUrl: "", birthDate: "2009-11-05", joinDate: "2022-08-15" },
-  { id: "p4", name: "Sofía", surname: "Mendes", email: "s.mendes@tutor.br", category: "Benjamín", teamSuffix: "A", position: "DFC, LD", status: "Active", attendance: "100%", isMinor: true, tutorName: "LUIS", tutorSurname: "MENDES", tutorPhone: "+55 11 0000 0000", tutorEmail: "l.mendes@tutor.br", photoUrl: "", birthDate: "2015-07-30", joinDate: "2024-02-01" },
+  { id: "p1", name: "Lucas", surname: "García", number: "10", nickname: "LUKY", email: "l.garcia@tutor.com", category: "Infantil", teamSuffix: "A", position: "MC, MCO", status: "Active", attendance: "98%", isMinor: true, tutorName: "MARÍA", tutorSurname: "GARCÍA", tutorPhone: "600 000 001", tutorEmail: "m.garcia@tutor.com", photoUrl: "", birthDate: "2011-05-15", joinDate: "2023-09-01" },
+  { id: "p2", name: "Elena", surname: "Rossi", number: "9", nickname: "ROSSI", email: "e.rossi@tutor.it", category: "Alevín", teamSuffix: "B", position: "DC", status: "Active", attendance: "92%", isMinor: true, tutorName: "PAOLO", tutorSurname: "ROSSI", tutorPhone: "+39 300 000 000", tutorEmail: "p.rossi@tutor.it", photoUrl: "", birthDate: "2013-02-20", joinDate: "2024-01-10" },
+  { id: "p3", name: "Marc", surname: "Soler", number: "1", nickname: "MARCUS", email: "m.soler@tutor.es", category: "Cadete", teamSuffix: "C", position: "POR", status: "Injured", attendance: "45%", isMinor: false, photoUrl: "", birthDate: "2009-11-05", joinDate: "2022-08-15" },
+  { id: "p4", name: "Sofía", surname: "Mendes", number: "4", nickname: "SOFI", email: "s.mendes@tutor.br", category: "Benjamín", teamSuffix: "A", position: "DFC, LD", status: "Active", attendance: "100%", isMinor: true, tutorName: "LUIS", tutorSurname: "MENDES", tutorPhone: "+55 11 0000 0000", tutorEmail: "l.mendes@tutor.br", photoUrl: "", birthDate: "2015-07-30", joinDate: "2024-02-01" },
 ];
 
 export default function PlayersManagementPage() {
@@ -113,6 +114,8 @@ export default function PlayersManagementPage() {
   const [formData, setFormData] = useState({
     name: "",
     surname: "",
+    number: "",
+    nickname: "",
     email: "",
     photoUrl: "",
     birthDate: "",
@@ -133,6 +136,8 @@ export default function PlayersManagementPage() {
     setFormData({ 
       name: "", 
       surname: "", 
+      number: "",
+      nickname: "",
       email: "", 
       photoUrl: "",
       birthDate: "",
@@ -155,6 +160,8 @@ export default function PlayersManagementPage() {
     setFormData({
       name: player.name,
       surname: player.surname,
+      number: player.number || "",
+      nickname: player.nickname || "",
       email: player.email,
       photoUrl: player.photoUrl || "",
       birthDate: player.birthDate || "",
@@ -310,7 +317,13 @@ export default function PlayersManagementPage() {
                              <div className="absolute inset-0 bg-primary/5 scan-line opacity-0 group-hover:opacity-100" />
                           </div>
                           <div className="space-y-1">
-                            <p className="font-black text-white uppercase text-xs italic group-hover:cyan-text-glow transition-all">{player.name} {player.surname}</p>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-black text-primary px-1.5 py-0.5 bg-primary/10 border border-primary/20 rounded-md">#{player.number}</span>
+                              <p className="font-black text-white uppercase text-xs italic transition-all group-hover:cyan-text-glow">
+                                {player.name} {player.surname}
+                                {player.nickname && <span className="text-[10px] text-primary/40 ml-2">"{player.nickname}"</span>}
+                              </p>
+                            </div>
                             <p className="text-[9px] text-primary font-bold uppercase tracking-widest flex items-center gap-2">
                               <Mail className="h-2 w-2 text-primary" /> {player.email}
                             </p>
@@ -463,6 +476,32 @@ export default function PlayersManagementPage() {
                     value={formData.surname}
                     onChange={(e) => setFormData({...formData, surname: e.target.value.toUpperCase()})}
                     placeholder="EJ: GARCÍA" 
+                    className="h-12 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-all placeholder:text-primary/20 text-primary" 
+                  />
+                </div>
+              </div>
+
+              {/* CAMPOS DE Nº CAMISETA Y APODO */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Nº Camiseta</Label>
+                  <div className="relative">
+                    <Hash className="absolute left-3 top-3.5 h-4 w-4 text-primary/40" />
+                    <Input 
+                      required
+                      value={formData.number}
+                      onChange={(e) => setFormData({...formData, number: e.target.value})}
+                      placeholder="EJ: 10" 
+                      className="pl-10 h-12 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-all placeholder:text-primary/20 text-primary" 
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Apodo Deportivo</Label>
+                  <Input 
+                    value={formData.nickname}
+                    onChange={(e) => setFormData({...formData, nickname: e.target.value.toUpperCase()})}
+                    placeholder="EJ: LUKY" 
                     className="h-12 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-all placeholder:text-primary/20 text-primary" 
                   />
                 </div>
