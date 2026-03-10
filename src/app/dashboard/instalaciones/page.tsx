@@ -70,7 +70,7 @@ const WEEK_DAYS = [
 ];
 
 const INITIAL_FACILITIES = [
-  { id: "f1", name: "Campo de Fútbol Principal", type: "Campo Exterior", sport: "Fútbol", status: "Active", capacity: "22 Jugadores", nextMaintenance: "12 Oct", subdivisions: "2" },
+  { id: "f1", name: "Campo de Fútbol Principal", type: "Campo Exterior", sport: "Fútbol", status: "Active", capacity: "22 Jugadores", nextMaintenance: "12 Oct", subdivisions: "2", divisionStartTime: "17:00", divisionEndTime: "21:00" },
   { id: "f2", name: "Pabellón Cubierto A", type: "Pabellón", sport: "Baloncesto", status: "Active", capacity: "40 Atletas", nextMaintenance: "05 Nov", subdivisions: "1" },
   { id: "f3", name: "Gimnasio de Alto Rendimiento", type: "Fitness", sport: "Multideporte", status: "Maintenance", capacity: "15 Atletas", nextMaintenance: "Hoy", subdivisions: "1" },
 ];
@@ -92,7 +92,9 @@ export default function FacilitiesManagementPage() {
     startTime: "08:00",
     endTime: "23:00",
     days: ["L", "M", "X", "J", "V", "S", "D"] as string[],
-    subdivisions: "1"
+    subdivisions: "1",
+    divisionStartTime: "17:00",
+    divisionEndTime: "21:00"
   });
 
   const handleOpenCreate = () => {
@@ -106,7 +108,9 @@ export default function FacilitiesManagementPage() {
       startTime: "08:00",
       endTime: "23:00",
       days: ["L", "M", "X", "J", "V", "S", "D"],
-      subdivisions: "1"
+      subdivisions: "1",
+      divisionStartTime: "17:00",
+      divisionEndTime: "21:00"
     });
     setIsSheetOpen(true);
   };
@@ -122,7 +126,9 @@ export default function FacilitiesManagementPage() {
       startTime: facility.startTime || "08:00",
       endTime: facility.endTime || "23:00",
       days: facility.days || ["L", "M", "X", "J", "V", "S", "D"],
-      subdivisions: facility.subdivisions || "1"
+      subdivisions: facility.subdivisions || "1",
+      divisionStartTime: facility.divisionStartTime || "17:00",
+      divisionEndTime: facility.divisionEndTime || "21:00"
     });
     setIsSheetOpen(true);
   };
@@ -404,6 +410,35 @@ export default function FacilitiesManagementPage() {
                     Permite asignar múltiples equipos a la misma instalación de forma simultánea.
                   </p>
                 </div>
+
+                {parseInt(formData.subdivisions) > 1 && (
+                  <div className="space-y-4 pt-4 border-t border-primary/10 mt-4 animate-in fade-in slide-in-from-top-2">
+                    <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Franja Horaria de División Activa</Label>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <span className="text-[8px] font-bold text-primary/40 uppercase">Inicio División</span>
+                        <Input 
+                          type="time" 
+                          value={formData.divisionStartTime}
+                          onChange={(e) => setFormData({...formData, divisionStartTime: e.target.value})}
+                          className="h-10 bg-black/40 border-primary/20 rounded-xl text-primary text-xs focus:border-primary [color-scheme:dark]" 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <span className="text-[8px] font-bold text-primary/40 uppercase">Fin División</span>
+                        <Input 
+                          type="time" 
+                          value={formData.divisionEndTime}
+                          onChange={(e) => setFormData({...formData, divisionEndTime: e.target.value})}
+                          className="h-10 bg-black/40 border-primary/20 rounded-xl text-primary text-xs focus:border-primary [color-scheme:dark]" 
+                        />
+                      </div>
+                    </div>
+                    <p className="text-[7px] text-primary/30 uppercase font-bold italic leading-relaxed">
+                      Fuera de este horario, el sistema tratará la instalación como un Nodo de Espacio Único.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-8 animate-in fade-in slide-in-from-top-4 duration-500">
@@ -449,7 +484,7 @@ export default function FacilitiesManagementPage() {
                           type="time" 
                           value={formData.startTime}
                           onChange={(e) => setFormData({...formData, startTime: e.target.value})}
-                          className="pl-10 h-11 bg-white/5 border-primary/20 rounded-2xl font-bold text-xs focus:border-primary text-primary" 
+                          className="pl-10 h-11 bg-white/5 border-primary/20 rounded-2xl font-bold text-xs focus:border-primary text-primary [color-scheme:dark]" 
                         />
                       </div>
                     </div>
@@ -461,7 +496,7 @@ export default function FacilitiesManagementPage() {
                           type="time" 
                           value={formData.endTime}
                           onChange={(e) => setFormData({...formData, endTime: e.target.value})}
-                          className="pl-10 h-11 bg-white/5 border-primary/20 rounded-2xl font-bold text-xs focus:border-primary text-primary" 
+                          className="pl-10 h-11 bg-white/5 border-primary/20 rounded-2xl font-bold text-xs focus:border-primary text-primary [color-scheme:dark]" 
                         />
                       </div>
                     </div>

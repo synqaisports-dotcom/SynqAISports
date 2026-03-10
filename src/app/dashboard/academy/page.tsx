@@ -73,21 +73,69 @@ const STAGES = [
 
 // ARQUITECTURA DE CATEGORÍAS BLINDADAS
 const INITIAL_CATEGORIES = [
-  { id: "cat_debutantes", name: "Debutantes", stageId: "s1", teams: [{ name: "Debutantes", suffix: "A", facility: "Campo Principal", zone: "Zona A", days: ["L", "X"], startTime: "17:00", endTime: "18:30", staff: { head: "Carlos Ruiz", coord: "Ismael Muñoz", second: "Elena Gómez", physical: "Roberto S.", delegate: "Juan García" } }], players: 12 },
+  { 
+    id: "cat_debutantes", 
+    name: "Debutantes", 
+    stageId: "s1", 
+    teams: [{ 
+      name: "Debutantes", 
+      suffix: "A", 
+      facility: "Campo de Fútbol Principal", 
+      zone: "Zona A (Mitad 1)", 
+      days: ["L", "X"], 
+      startTime: "17:00", 
+      endTime: "18:30", 
+      status: "Active",
+      staff: { head: "Carlos Ruiz", coord: "Ismael Muñoz", second: "Elena Gómez", physical: "Roberto S.", delegate: "Juan García" } 
+    }], 
+    players: 12 
+  },
   { id: "cat_prebenjamin", name: "Prebenjamín", stageId: "s1", teams: [], players: 0 },
   { id: "cat_benjamin", name: "Benjamín", stageId: "s2", teams: [], players: 0 },
-  { id: "cat_alevin", name: "Alevín", stageId: "s2", teams: [{ name: "Alevín", suffix: "A", facility: "Anexo", zone: "Zona B", days: ["M", "J"], startTime: "17:30", endTime: "19:00", staff: { head: "Laura Sánchez", coord: "Elena Gómez", second: "Miguel Ángel", physical: "Roberto S.", delegate: "Marta López" } }], players: 15 },
+  { 
+    id: "cat_alevin", 
+    name: "Alevín", 
+    stageId: "s2", 
+    teams: [{ 
+      name: "Alevín", 
+      suffix: "A", 
+      facility: "Anexo Formación", 
+      zone: "Zona B", 
+      days: ["M", "J"], 
+      startTime: "17:30", 
+      endTime: "19:00", 
+      status: "Active",
+      staff: { head: "Laura Sánchez", coord: "Elena Gómez", second: "Miguel Ángel", physical: "Roberto S.", delegate: "Marta López" } 
+    }], 
+    players: 15 
+  },
   { id: "cat_infantil", name: "Infantil", stageId: "s2", teams: [], players: 0 },
   { id: "cat_cadete", name: "Cadete", stageId: "s3", teams: [], players: 0 },
   { id: "cat_juvenil", name: "Juvenil", stageId: "s3", teams: [], players: 0 },
   { id: "cat_senior", name: "Senior", stageId: "s4", teams: [], players: 0 },
-  { id: "cat_primer_equipo", name: "Primer Equipo", stageId: "s4", teams: [{ name: "Primer Equipo", suffix: "A", facility: "Estadio", zone: "Completo", days: ["L", "M", "X", "J", "V"], startTime: "10:00", endTime: "12:00", staff: { head: "M. Arteta", coord: "Director Deportivo", second: "Sara Torres", physical: "Ana Belén", delegate: "Juan García" } }], players: 25 },
+  { 
+    id: "cat_primer_equipo", 
+    name: "Primer Equipo", 
+    stageId: "s4", 
+    teams: [{ 
+      name: "Primer Equipo", 
+      suffix: "A", 
+      facility: "Estadio", 
+      zone: "Completo", 
+      days: ["L", "M", "X", "J", "V"], 
+      startTime: "10:00", 
+      endTime: "12:00", 
+      status: "Active",
+      staff: { head: "M. Arteta", coord: "Director Deportivo", second: "Sara Torres", physical: "Ana Belén", delegate: "Juan García" } 
+    }], 
+    players: 25 
+  },
 ];
 
 const MOCK_FACILITIES = [
-  { id: "f1", name: "Campo de Fútbol Principal", subdivisions: "2", zones: ["Zona A (Mitad 1)", "Zona B (Mitad 2)"] },
+  { id: "f1", name: "Campo de Fútbol Principal", subdivisions: "2", zones: ["Zona A (Mitad 1)", "Zona B (Mitad 2)"], divisionStartTime: "17:00", divisionEndTime: "21:00" },
   { id: "f2", name: "Pabellón Cubierto A", subdivisions: "1", zones: [] },
-  { id: "f3", name: "Anexo Formación", subdivisions: "4", zones: ["Zona A", "Zona B", "Zona C", "Zona D"] },
+  { id: "f3", name: "Anexo Formación", subdivisions: "4", zones: ["Zona A", "Zona B", "Zona C", "Zona D"], divisionStartTime: "16:00", divisionEndTime: "20:00" },
 ];
 
 const WEEK_DAYS = [
@@ -124,6 +172,7 @@ export default function AcademyManagementPage() {
     days: [] as string[],
     startTime: "17:00",
     endTime: "18:30",
+    status: "Active" as "Active" | "Paused",
     coordinatorId: "",
     firstCoachId: "",
     secondCoachId: "",
@@ -148,6 +197,7 @@ export default function AcademyManagementPage() {
       days: [],
       startTime: "17:00",
       endTime: "18:30",
+      status: "Active",
       coordinatorId: "",
       firstCoachId: "",
       secondCoachId: "",
@@ -192,8 +242,27 @@ export default function AcademyManagementPage() {
       days: team.days || [],
       startTime: team.startTime || "17:00",
       endTime: team.endTime || "18:30",
+      status: team.status || "Active"
     });
     setIsSheetOpen(true);
+  };
+
+  const handleToggleTeamStatus = (catId: string, teamIdx: number) => {
+    setCategories(prev => prev.map(c => {
+      if (c.id === catId) {
+        const newTeams = [...c.teams];
+        const currentStatus = newTeams[teamIdx].status || "Active";
+        newTeams[teamIdx] = { ...newTeams[teamIdx], status: currentStatus === "Active" ? "Paused" : "Active" };
+        
+        toast({
+          title: currentStatus === "Active" ? "NODO_PAUSADO" : "NODO_ACTIVADO",
+          description: `El equipo ha cambiado su estado a ${newTeams[teamIdx].status.toUpperCase()}.`,
+        });
+        
+        return { ...c, teams: newTeams };
+      }
+      return c;
+    }));
   };
 
   const handleDeleteTeam = (catId: string, teamIdx: number) => {
@@ -275,7 +344,8 @@ export default function AcademyManagementPage() {
                 zone: formData.zone,
                 days: formData.days,
                 startTime: formData.startTime,
-                endTime: formData.endTime
+                endTime: formData.endTime,
+                status: formData.status
               };
               return { ...c, teams: newTeams };
             }
@@ -295,6 +365,7 @@ export default function AcademyManagementPage() {
                   days: formData.days,
                   startTime: formData.startTime,
                   endTime: formData.endTime,
+                  status: "Active",
                   staff: { 
                     head: "Sin Asignar", 
                     coord: "Ismael Muñoz" 
@@ -385,19 +456,28 @@ export default function AcademyManagementPage() {
                       {cat.teams.map((team, idx) => (
                         <div 
                           key={idx} 
-                          className="flex items-center justify-between p-2.5 bg-primary/5 rounded-2xl border border-primary/10 hover:border-primary/30 transition-all group/team cursor-pointer"
+                          className={cn(
+                            "flex items-center justify-between p-2.5 bg-primary/5 rounded-2xl border transition-all group/team cursor-default",
+                            team.status === "Paused" ? "border-amber-500/20 opacity-60" : "border-primary/10 hover:border-primary/30"
+                          )}
                         >
                           <div className="flex items-center gap-3 flex-1" onClick={() => handleViewTeam(team, cat.name)}>
-                            <div className="h-1 w-1 rounded-full bg-primary/40 group-hover/team:bg-primary transition-colors" />
+                            <div className={cn(
+                              "h-1.5 w-1.5 rounded-full animate-pulse",
+                              team.status === "Paused" ? "bg-amber-500" : "bg-primary"
+                            )} />
                             <span className="text-[9px] font-black text-primary uppercase tracking-tight group-hover/team:cyan-text-glow">
                               {team.name} <span className="text-primary group-hover/team:primary font-black ml-1">[{team.suffix}]</span>
                             </span>
                           </div>
                           
-                          <div className="flex items-center gap-1 opacity-0 group-hover/team:opacity-100 transition-opacity">
-                            <button onClick={() => handleViewTeam(team, cat.name)} className="p-1.5 hover:bg-primary/20 rounded-lg text-primary transition-all"><Eye className="h-3 w-3" /></button>
-                            <button onClick={() => handleEditTeam(cat.id, team, idx)} className="p-1.5 hover:bg-primary/20 rounded-lg text-primary transition-all"><Pencil className="h-3 w-3" /></button>
-                            <button onClick={() => handleDeleteTeam(cat.id, idx)} className="p-1.5 hover:bg-rose-500/20 rounded-lg text-rose-500 transition-all"><Trash2 className="h-3 w-3" /></button>
+                          <div className="flex items-center gap-1 transition-opacity">
+                            <button onClick={() => handleViewTeam(team, cat.name)} className="p-1.5 hover:bg-primary/20 rounded-lg text-primary transition-all" title="Ver Ficha"><Eye className="h-3.5 w-3.5" /></button>
+                            <button onClick={() => handleEditTeam(cat.id, team, idx)} className="p-1.5 hover:bg-primary/20 rounded-lg text-primary transition-all" title="Editar Nodo"><Pencil className="h-3.5 w-3.5" /></button>
+                            <button onClick={() => handleToggleTeamStatus(cat.id, idx)} className="p-1.5 hover:bg-amber-500/20 rounded-lg text-amber-500 transition-all" title={team.status === "Paused" ? "Reactivar" : "Pausar"}>
+                              {team.status === "Paused" ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
+                            </button>
+                            <button onClick={() => handleDeleteTeam(cat.id, idx)} className="p-1.5 hover:bg-rose-500/20 rounded-lg text-rose-500 transition-all" title="Borrar"><Trash2 className="h-3.5 w-3.5" /></button>
                           </div>
                         </div>
                       ))}
@@ -482,14 +562,14 @@ export default function AcademyManagementPage() {
               </div>
 
               <div className="p-10 bg-black/40 border-t border-white/5 flex gap-4">
-                <Button 
-                  className="flex-1 h-16 bg-primary/5 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 rounded-2xl"
+                <button 
+                  className="flex-1 h-16 bg-primary/5 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 rounded-2xl transition-all"
                   onClick={() => setIsViewSheetOpen(false)}
                 >
                   CERRAR
-                </Button>
-                <Button 
-                  className="flex-1 h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.2em] rounded-2xl"
+                </button>
+                <button 
+                  className="flex-1 h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.2em] rounded-2xl transition-all shadow-[0_0_20px_rgba(0,242,255,0.2)]"
                   onClick={() => {
                     setIsViewSheetOpen(false);
                     const cat = categories.find(c => c.name === selectedViewTeam.categoryName);
@@ -497,7 +577,7 @@ export default function AcademyManagementPage() {
                   }}
                 >
                   EDITAR_NODO
-                </Button>
+                </button>
               </div>
             </>
           )}
@@ -615,6 +695,11 @@ export default function AcademyManagementPage() {
                           ))}
                         </SelectContent>
                       </Select>
+                      {selectedFacility.divisionStartTime && (
+                        <p className="text-[8px] text-amber-400/60 uppercase font-bold italic mt-1">
+                          Nota: Esta instalación solo se divide de {selectedFacility.divisionStartTime} a {selectedFacility.divisionEndTime}.
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -626,7 +711,7 @@ export default function AcademyManagementPage() {
             <SheetClose asChild>
               <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest rounded-2xl">CANCELAR</Button>
             </SheetClose>
-            <Button onClick={handleSave} disabled={loading} className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)]">
+            <Button onClick={handleSave} disabled={loading} className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] transition-all active:scale-95">
               {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (editingTeamIdx !== null ? "ACTUALIZAR_NODO" : "SINCRONIZAR_NODO")}
             </Button>
           </div>
