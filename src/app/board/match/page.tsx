@@ -149,7 +149,7 @@ export default function MatchBoardPage() {
   const [fieldType, setFieldType] = useState<FieldType>("f11");
   const [selectedTeamId, setSelectedTeamId] = useState("t1");
   
-  const [teamRoster, setTeamRoster] = useState<any[]>(MOCK_PLAYERS_BY_TEAM["t1"]);
+  const [teamRoster, setTeamRoster] = useState<any[]>(MOCK_PLAYERS_BY_TEAM[selectedTeamId] || MOCK_PLAYERS_BY_TEAM["t1"]);
   
   const [homePhase, setHomePhase] = useState<TacticalPhase>("defensa");
   const [guestPhase, setGuestPhase] = useState<TacticalPhase>("defensa");
@@ -163,7 +163,6 @@ export default function MatchBoardPage() {
   const [players, setPlayers] = useState<PlayerPos[]>([]);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   
-  // Estados para el motor de dibujo fluido
   const [isPaintMode, setIsPaintMode] = useState(false);
   const [currentColor, setCurrentColor] = useState("#00f2ff");
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -331,7 +330,6 @@ export default function MatchBoardPage() {
     setPlayers([...hp, ...gp]);
   }, [homeFormation, homePhase, homeLateral, guestFormation, guestPhase, guestLateral, fieldType, teamRoster]);
 
-  // LÓGICA DE DIBUJO FLUIDO (MARKER EFFECT)
   const initCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -389,13 +387,6 @@ export default function MatchBoardPage() {
     lastPoint.current = null;
   };
 
-  const clearCanvas = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
-  };
-
   const handlePointerMove = (e: React.PointerEvent) => {
     if (isPaintMode) {
       draw(e);
@@ -403,6 +394,7 @@ export default function MatchBoardPage() {
     }
     if (!draggingId || !fieldRef.current) return;
 
+    // OPTIMIZACIÓN: Cálculo directo sin lag de transición
     const rect = fieldRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
@@ -421,6 +413,21 @@ export default function MatchBoardPage() {
       (e.target as HTMLElement).releasePointerCapture(e.pointerId);
       setDraggingId(null);
     }
+  };
+
+  const handlePointerDownPlayer = (e: React.PointerEvent, id: string) => {
+    if (isPaintMode) return;
+    e.stopPropagation();
+    // CRÍTICO: Captura de puntero para evitar pérdida de foco en tablet
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    setDraggingId(id);
+  };
+
+  const clearCanvas = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
   };
 
   const handleSubstitution = (subNum: number, starterNum: number) => {
@@ -705,7 +712,6 @@ export default function MatchBoardPage() {
         
         <main className="flex-1 relative overflow-hidden" ref={fieldRef}>
           <TacticalField theme="cyan" fieldType={fieldType}>
-            {/* CAPA DE DIBUJO FLUIDO (MARKER) */}
             <canvas 
               ref={canvasRef}
               className={cn(
@@ -718,7 +724,6 @@ export default function MatchBoardPage() {
               onPointerLeave={stopDrawing}
             />
 
-            {/* JUGADORES (BLOQUEADOS EN MODO PINTURA) */}
             <div className={cn("absolute inset-0 z-20", isPaintMode && "pointer-events-none")}>
               {players.map(p => (
                 <MemoizedPlayerChip 
@@ -729,12 +734,7 @@ export default function MatchBoardPage() {
                   x={p.x} 
                   y={p.y} 
                   isDragging={draggingId === p.id}
-                  onPointerDown={(e) => {
-                    if (isPaintMode) return;
-                    e.stopPropagation();
-                    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-                    setDraggingId(p.id);
-                  }}
+                  onPointerDown={(e) => handlePointerDownPlayer(e, p.id)}
                 />
               ))}
             </div>
@@ -831,7 +831,7 @@ function PlayerListItem({ player, isSub, onDrop }: { player: any, isSub?: boolea
     <div 
       className={cn(
         "p-4 bg-primary/5 border rounded-2xl flex items-center justify-between group transition-all cursor-default",
-        isSub ? "border-white/5 opacity-60 hover:opacity-100 cursor-grab active:cursor-grabbing" : "border-primary/10 hover:border-primary/40",
+        isSub ? "border-white/5 opacity-60 hover:opacity-100 cursor-grab active:cursor-grabbing" : "border-primary/10 hover:border-primary/30",
         isOver && !isSub && "border-primary bg-primary/20 scale-[1.02] shadow-[0_0_20px_rgba(0,242,255,0.2)]"
       )}
       draggable={isSub}

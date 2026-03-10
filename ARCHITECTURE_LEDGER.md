@@ -1,5 +1,5 @@
 
-# SynqSports Pro - Architecture Ledger v1.7 (Full System Sync)
+# SynqSports Pro - Architecture Ledger v1.8 (Touch Performance Sync)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -79,5 +79,10 @@ Los roles operan bajo un sistema de ranking numérico (`rank`):
 - **Terminal de Partido (Exclusiva)**: Protocolo de **Rotulador Fluido**. Herramientas simplificadas (Pincel, Color, Limpiar).
 - **Modo Pintura (Lock Down)**: Al activar el dibujo en partido, se bloquea el `pointer-events` de los jugadores para evitar desplazamientos accidentales durante la explicación táctica.
 - **Terminales de Diseño (Entrenamiento/Promo)**: Protocolo de **Diseño Geométrico**. Incluye flechas, formas y material técnico adicional.
-- **Tecnología**: Canvas 2D con suavizado de trazo (Marker Effect) en capa superior.
-- **Paleta Crítica**: Colores limitados a la identidad de marca (Cian, Rosa, Amarillo, Blanco) para máxima visibilidad sobre el césped.
+
+## 8. Rendimiento y Experiencia de Usuario (UX)
+
+### 8.1. Zero-Latency Touch System
+- **Arraste de Fichas**: Se desactivan las transiciones CSS (`transition: none`) durante el estado de arrastre (`isDragging`) para eliminar el desfase entre el dedo y el objeto.
+- **Captura de Puntero**: Uso obligatorio de `setPointerCapture` en eventos de inicio de arrastre para garantizar la continuidad del movimiento en tablets aunque el dedo salga de los límites del componente.
+- **Touch-Action Lockdown**: Propiedad `touch-action: none` aplicada en contenedores tácticos para evitar interferencias del scroll nativo del navegador.
