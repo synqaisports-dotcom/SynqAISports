@@ -28,7 +28,7 @@ Los roles operan bajo un sistema de ranking numérico (`rank`) que impide la ges
 - **Red de Clubes**: `/clubs` (Vincular y auditar nodos locales).
 - **Suscripciones**: `/plans` (Configuración de precios y accesos).
 - **Identidad**: `/roles` (Matriz de permisos).
-- **Marketing**: `/promos` (Generación de Magic Links y QR).
+- **Marketing**: `/promos" (Generación de Magic Links y QR).
 - **Usuarios**: `/users` (Gestión de credenciales globales).
 
 ### 2.2. Terminal Operativa (Club/Coach) - `/dashboard`
@@ -75,6 +75,7 @@ Los roles operan bajo un sistema de ranking numérico (`rank`) que impide la ges
 
 ### 4.2. Gestión de Espacios (Instalaciones)
 - **Subdivisiones**: 1 (Único), 2 (Mitades), 4 (Cuadrantes).
+- **Motor Geométrico (4K Ready)**: Todas las coordenadas de subdivisiones, zonas y puntos de dibujo se calculan y almacenan en **porcentajes (%)**. Esto garantiza una visualización perfecta y simétrica en cualquier soporte, desde dispositivos móviles hasta pantallas 4K, independientemente de la resolución nativa.
 - **Horario de División**: Propiedades `divisionStartTime` y `divisionEndTime`. Define cuándo el campo se fragmenta en zonas en el selector de la Academia.
 
 ## 5. Protocolos de UI y Experiencia
