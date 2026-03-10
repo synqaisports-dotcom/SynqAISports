@@ -1,5 +1,5 @@
 
-# SynqSports Pro - Architecture Ledger v2.8 (Full Sync Protocol)
+# SynqSports Pro - Architecture Ledger v3.0 (Full Sync Protocol)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -101,16 +101,11 @@ Los roles operan bajo un sistema de ranking numérico (`rank`):
 - **Ajuste**: El botón de Pantalla Completa se desplaza de la cabecera a la **esquina inferior izquierda** del campo.
 - **Racional**: Optimización para el uso con pulgares en tablets y liberación de carga visual en el marcador superior. Simetría funcional.
 
-## 10. Protocolo de Objetivos Metodológicos (v2.8)
+## 10. Protocolo de Objetivos y Planificación (v3.0)
 
 ### 10.1. Estructura de Desarrollo por Etapas
 - **Nodo Piloto**: Debutantes (5-7 años). Iniciación integral y lúdica.
-- **Nodo Expansión**: Prebenjamín (6-8 años). Cooperación inicial y dominio del balón.
-- **Nodo Especialización Inicial**: Benjamín (8-10 años). Iniciación específica técnica y táctica.
-- **Nodo Transición Táctica**: Alevín (10-12 años). Consolidación técnica y paso a F11.
-- **Nodo Competición Inicial**: Infantil (11-13 años). Edad de oro del aprendizaje motor.
-- **Nodo Rendimiento**: Cadete (14-15 años). Especialización por puesto y mentalidad competitiva.
-- **Nodo Pre-Profesional**: Juvenil (16-18 años). Optimización del rendimiento y salto a Senior.
+- **Planificación Cíclica**: Basada en **Bloques Temáticos Mensuales** para etapas base. Evita la periodización táctica compleja en favor de la variedad motriz.
 - **Dimensiones de Objetivos**: 
   1. **Filosofía**: ADN de la etapa.
   2. **Técnicos**: Perfeccionamiento gestual y por puesto.
