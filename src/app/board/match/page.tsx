@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo, useRef, memo } from "react";
+import { useState, useEffect, useMemo, useRef, memo, useCallback } from "react";
 import { 
   Trophy, 
   Clock, 
@@ -21,7 +21,8 @@ import {
   Search,
   Dna,
   ArrowUpRight,
-  ArrowRight
+  ArrowRight,
+  Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -161,6 +162,14 @@ export default function MatchBoardPage() {
 
   const [players, setPlayers] = useState<PlayerPos[]>([]);
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  
+  // Estados para el motor de dibujo
+  const [isPaintMode, setIsPaintMode] = useState(false);
+  const [currentColor, setCurrentColor] = useState("#00f2ff");
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const isDrawing = useRef(false);
+  const lastPoint = useRef<{ x: number; y: number } | null>(null);
+
   const fieldRef = useRef<HTMLDivElement>(null);
 
   const hasClub = !!profile?.clubId;
@@ -322,7 +331,76 @@ export default function MatchBoardPage() {
     setPlayers([...hp, ...gp]);
   }, [homeFormation, homePhase, homeLateral, guestFormation, guestPhase, guestLateral, fieldType, teamRoster]);
 
+  // LÓGICA DE DIBUJO FLUIDO
+  const initCanvas = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const parent = canvas.parentElement;
+    if (!parent) return;
+    canvas.width = parent.clientWidth;
+    canvas.height = parent.clientHeight;
+    
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.lineWidth = 4;
+    }
+  }, []);
+
+  useEffect(() => {
+    initCanvas();
+    window.addEventListener('resize', initCanvas);
+    return () => window.removeEventListener('resize', initCanvas);
+  }, [initCanvas]);
+
+  const startDrawing = (e: React.PointerEvent) => {
+    if (!isPaintMode) return;
+    isDrawing.current = true;
+    const rect = canvasRef.current!.getBoundingClientRect();
+    lastPoint.current = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    };
+  };
+
+  const draw = (e: React.PointerEvent) => {
+    if (!isDrawing.current || !isPaintMode || !canvasRef.current) return;
+    const ctx = canvasRef.current.getContext('2d');
+    if (!ctx) return;
+
+    const rect = canvasRef.current.getBoundingClientRect();
+    const currentPoint = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    };
+
+    ctx.beginPath();
+    ctx.strokeStyle = currentColor;
+    ctx.moveTo(lastPoint.current!.x, lastPoint.current!.y);
+    ctx.lineTo(currentPoint.x, currentPoint.y);
+    ctx.stroke();
+
+    lastPoint.current = currentPoint;
+  };
+
+  const stopDrawing = () => {
+    isDrawing.current = false;
+    lastPoint.current = null;
+  };
+
+  const clearCanvas = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+  };
+
   const handlePointerMove = (e: React.PointerEvent) => {
+    if (isPaintMode) {
+      draw(e);
+      return;
+    }
     if (!draggingId || !fieldRef.current) return;
 
     const rect = fieldRef.current.getBoundingClientRect();
@@ -335,6 +413,10 @@ export default function MatchBoardPage() {
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
+    if (isPaintMode) {
+      stopDrawing();
+      return;
+    }
     if (draggingId) {
       (e.target as HTMLElement).releasePointerCapture(e.pointerId);
       setDraggingId(null);
@@ -365,7 +447,10 @@ export default function MatchBoardPage() {
 
   return (
     <div 
-      className="flex-1 flex flex-col bg-black overflow-hidden font-body relative touch-none"
+      className={cn(
+        "flex-1 flex flex-col bg-black overflow-hidden font-body relative touch-none",
+        isPaintMode ? "cursor-crosshair" : ""
+      )}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerUp}
@@ -608,26 +693,51 @@ export default function MatchBoardPage() {
       </header>
 
       <div className="flex-1 relative flex overflow-hidden">
-        <BoardToolbar theme="cyan" className="absolute left-4 lg:left-6 top-1/2 -translate-y-1/2 z-50 hidden sm:flex" />
+        <BoardToolbar 
+          variant="match"
+          isPaintMode={isPaintMode}
+          onTogglePaintMode={setIsPaintMode}
+          onColorSelect={setCurrentColor}
+          onClear={clearCanvas}
+          activeColor={currentColor}
+          className="absolute left-4 lg:left-6 top-1/2 -translate-y-1/2 z-[60] hidden sm:flex" 
+        />
         
         <main className="flex-1 relative overflow-hidden" ref={fieldRef}>
           <TacticalField theme="cyan" fieldType={fieldType}>
-            {players.map(p => (
-              <MemoizedPlayerChip 
-                key={p.id} 
-                team={p.team} 
-                number={p.number} 
-                label={p.name}
-                x={p.x} 
-                y={p.y} 
-                isDragging={draggingId === p.id}
-                onPointerDown={(e) => {
-                  e.stopPropagation();
-                  (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-                  setDraggingId(p.id);
-                }}
-              />
-            ))}
+            {/* CAPA DE DIBUJO FLUIDO */}
+            <canvas 
+              ref={canvasRef}
+              className={cn(
+                "absolute inset-0 z-30 pointer-events-none",
+                isPaintMode && "pointer-events-auto"
+              )}
+              onPointerDown={startDrawing}
+              onPointerMove={draw}
+              onPointerUp={stopDrawing}
+              onPointerLeave={stopDrawing}
+            />
+
+            {/* JUGADORES (BLOQUEADOS EN MODO PINTURA) */}
+            <div className={cn("absolute inset-0 z-20", isPaintMode && "pointer-events-none")}>
+              {players.map(p => (
+                <MemoizedPlayerChip 
+                  key={p.id} 
+                  team={p.team} 
+                  number={p.number} 
+                  label={p.name}
+                  x={p.x} 
+                  y={p.y} 
+                  isDragging={draggingId === p.id}
+                  onPointerDown={(e) => {
+                    if (isPaintMode) return;
+                    e.stopPropagation();
+                    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+                    setDraggingId(p.id);
+                  }}
+                />
+              ))}
+            </div>
           </TacticalField>
 
           <div className="absolute top-4 lg:top-6 left-4 lg:left-6 right-4 lg:right-6 flex justify-between pointer-events-none z-40">
