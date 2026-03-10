@@ -531,7 +531,7 @@ export default function PlayersManagementPage() {
                       type="date"
                       value={formData.birthDate}
                       onChange={(e) => setFormData({...formData, birthDate: e.target.value})}
-                      className="pl-10 h-12 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-all text-primary [color-scheme:dark]" 
+                      className="pl-10 pr-10 h-12 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-all text-primary [color-scheme:dark]" 
                     />
                   </div>
                 </div>
@@ -544,7 +544,7 @@ export default function PlayersManagementPage() {
                       type="date"
                       value={formData.joinDate}
                       onChange={(e) => setFormData({...formData, joinDate: e.target.value})}
-                      className="pl-10 h-12 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-all text-primary [color-scheme:dark]" 
+                      className="pl-10 pr-10 h-12 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-all text-primary [color-scheme:dark]" 
                     />
                   </div>
                 </div>
