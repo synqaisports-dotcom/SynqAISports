@@ -23,7 +23,8 @@ import {
   Users,
   Swords,
   Activity,
-  Trophy
+  Trophy,
+  Video
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -43,7 +44,7 @@ const PLANNING_DATA: Record<string, any> = {
   debutantes: {
     title: "PLANIFICACIÓN",
     titleAccent: "POR BLOQUES TEMÁTICOS",
-    description: "La planificación en debutantes es extremadamente flexible. No buscamos picos de forma, sino una progresión lúdica que asegure la variedad y el hábito deportivo.",
+    description: "La planificación en la categoría debutante es extremadamente flexible. No buscamos picos de forma, sino una progresión lúdica que asegure la variedad y el hábito deportivo.",
     blocksLabel: "Línea de Tiempo Mensual",
     monthlyBlocks: [
       { id: 1, title: "Familiarización", focus: "Dominio y tacto", desc: "Conducción libre, pisar el balón y juegos de persecución con móvil.", period: "MES_01" },
@@ -179,6 +180,35 @@ const PLANNING_DATA: Record<string, any> = {
       "Fomentar auto-evaluación y liderazgo.",
       "La competitividad formativa es la prioridad."
     ]
+  },
+  cadete: {
+    title: "PLANIFICACIÓN",
+    titleAccent: "DE RENDIMIENTO",
+    description: "Etapa de rendimiento. La planificación se orienta a la competición y a la optimización del rendimiento individual y colectivo mediante la Periodización Táctica.",
+    blocksLabel: "Mesociclos Competitivos",
+    monthlyBlocks: [
+      { id: 1, title: "Pretemporada", focus: "Adquisición", desc: "Adquisición de la forma física y del modelo de juego base del club.", period: "AGO-SEPT" },
+      { id: 2, title: "Competitivo", focus: "Mantenimiento", desc: "Mantenimiento de la forma y ajustes tácticos semanales basados en el rival.", period: "OCT-MAY" },
+      { id: 3, title: "Transitorio", focus: "Recuperación", desc: "Descanso activo, recuperación y análisis de rendimiento individual.", period: "JUN-JUL" }
+    ],
+    weeklyMicro: [
+      { day: "Lunes", label: "Recuperación", focus: "COMPENSATORIO / REGENERATIVO", color: "border-blue-500/20 bg-blue-500/5" },
+      { day: "Martes", label: "Fuerza", focus: "TÁCTICA GENERAL", color: "border-primary/20 bg-primary/5" },
+      { day: "Miércoles", label: "Resistencia", focus: "TÁCTICA ESPECÍFICA", color: "border-amber-500/20 bg-amber-500/5" },
+      { day: "Jueves", label: "Velocidad", focus: "ABP Y VELOCIDAD DE REACCIÓN", color: "border-rose-500/20 bg-rose-500/5" },
+      { day: "Viernes", label: "Activación", focus: "AJUSTES PRE-PARTIDO", color: "border-emerald-500/20 bg-emerald-500/5" }
+    ],
+    sessionStructure: [
+      { part: "Activación", time: "20 min", desc: "Preparación específica de máxima concentración.", icon: Zap },
+      { part: "Bloque Táctico", time: "60-70 min", desc: "Simulación de situaciones reales bajo presión.", icon: Swords },
+      { part: "Feedback / Video", time: "10 min", desc: "Análisis táctico y recuperación activa.", icon: Video }
+    ],
+    focusPoints: [
+      "La especialización por puesto es total.",
+      "Gestión del 'entrenamiento invisible'.",
+      "Trabajo de resiliencia y presión competitiva.",
+      "Simulación constante de escenarios de partido."
+    ]
   }
 };
 
@@ -193,7 +223,7 @@ export default function CyclePlannerPage() {
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <GitBranch className="h-5 w-5 text-amber-500 animate-pulse" />
-            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Cyclic_Planner_v3.4</span>
+            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Cyclic_Planner_v3.5</span>
           </div>
           <h1 className="text-5xl font-headline font-black text-white uppercase italic tracking-tighter amber-text-glow leading-none">
             PLANIFICACIÓN_CÍCLICA
