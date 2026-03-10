@@ -541,7 +541,7 @@ export default function MatchBoardPage() {
             <span className="text-[8px] font-black text-white/30 uppercase tracking-widest hidden lg:block">L</span>
             <div className="flex items-center gap-1 lg:gap-2">
               <button onClick={() => setScore(s => ({...s, home: Math.max(0, s.home - 1)}))} className="h-5 w-5 lg:h-6 lg:w-6 flex items-center justify-center rounded-lg border border-primary/10 text-primary/40 hover:text-primary transition-all">-</button>
-              <span className="text-lg lg:text-2xl font-black font-headline text-white tabular-nums min-w-[15px] lg:min-w-[20px] text-center">{score.home}</span>
+              <span className="text-base lg:text-xl font-black font-headline text-white tabular-nums min-w-[12px] lg:min-w-[16px] text-center">{score.home}</span>
               <button onClick={() => setScore(s => ({...s, home: s.home + 1}))} className="h-5 w-5 lg:h-6 lg:w-6 flex items-center justify-center rounded-lg border border-primary/10 text-primary/40 hover:text-primary transition-all">+</button>
             </div>
           </div>
@@ -551,7 +551,7 @@ export default function MatchBoardPage() {
           <div className="flex flex-col items-center justify-center min-w-[100px] lg:min-w-[120px]">
             <div className="flex items-center gap-1 lg:gap-2 mb-0.5">
               <span className={cn(
-                "text-lg lg:text-2xl font-black font-headline tabular-nums tracking-tighter transition-all",
+                "text-base lg:text-xl font-black font-headline tabular-nums tracking-tighter transition-all",
                 timeLeft === 0 ? "text-rose-500 animate-pulse" : "text-primary cyan-text-glow"
               )}>
                 {formatTime(timeLeft)}
@@ -592,7 +592,7 @@ export default function MatchBoardPage() {
           <div className="flex items-center gap-1 lg:gap-3">
             <div className="flex items-center gap-1 lg:gap-2">
               <button onClick={() => setScore(s => ({...s, guest: Math.max(0, s.guest - 1)}))} className="h-5 w-5 lg:h-6 lg:w-6 flex items-center justify-center rounded-lg border border-primary/10 text-primary/40 hover:text-primary transition-all">-</button>
-              <span className="text-lg lg:text-2xl font-black font-headline text-white tabular-nums min-w-[15px] lg:min-w-[20px] text-center">{score.guest}</span>
+              <span className="text-base lg:text-xl font-black font-headline text-white tabular-nums min-w-[12px] lg:min-w-[16px] text-center">{score.guest}</span>
               <button onClick={() => setScore(s => ({...s, guest: s.guest + 1}))} className="h-5 w-5 lg:h-6 lg:w-6 flex items-center justify-center rounded-lg border border-primary/10 text-primary/40 hover:text-primary transition-all">+</button>
             </div>
             <span className="text-[8px] font-black text-white/30 uppercase tracking-widest hidden lg:block">V</span>
@@ -682,7 +682,7 @@ export default function MatchBoardPage() {
               </div>
               <div className="flex flex-row-reverse gap-1.5 lg:gap-2 justify-center bg-black/40 backdrop-blur-md p-1 lg:p-1.5 rounded-2xl border border-white/5 self-end mr-1">
                 <button onClick={() => guestLateral === "left" ? setGuestLateral("center") : setGuestLateral("left")} className={cn("p-1 lg:p-1.5 rounded-lg transition-all", guestLateral === "left" ? "bg-rose-500 text-white" : "text-white/20 hover:text-white")}><ChevronRight className="h-3 w-3 lg:h-3.5 lg:w-3.5" /></button>
-                <button onClick={() => setGuestLateral("center")} className={cn("p-1 lg:p-1.5 rounded-lg transition-all", guestLateral === "center" ? "bg-rose-500 text-white" : "text-white/20 hover:text-white")}><Minimize2 className="h-3 w-3 lg:h-3.5 lg:w-3.5 rotate-90" /></button>
+                <button onClick={() => guestLateral === "center")} className={cn("p-1 lg:p-1.5 rounded-lg transition-all", guestLateral === "center" ? "bg-rose-500 text-white" : "text-white/20 hover:text-white")}><Minimize2 className="h-3 w-3 lg:h-3.5 lg:w-3.5 rotate-90" /></button>
                 <button onClick={() => guestLateral === "right" ? setGuestLateral("center") : setGuestLateral("right")} className={cn("p-1 lg:p-1.5 rounded-lg transition-all", guestLateral === "right" ? "bg-rose-500 text-white" : "text-white/20 hover:text-white")}><ChevronLeft className="h-3 w-3 lg:h-3.5 lg:w-3.5" /></button>
                 <span className="text-[7px] lg:text-[8px] font-black text-rose-500/40 uppercase tracking-widest px-1.5 lg:px-2 flex items-center">Basculación</span>
               </div>
