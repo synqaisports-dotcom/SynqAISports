@@ -21,7 +21,11 @@ import {
   Pencil,
   Spline,
   Minus,
-  Columns3
+  Columns3,
+  Settings2,
+  X,
+  Palette,
+  Layers
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -37,6 +41,7 @@ import {
 } from "@/components/ui/select";
 import { useSearchParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 interface Point {
   x: number;
@@ -464,19 +469,6 @@ function TrainingBoardContent() {
   };
 
   const selectedElement = elements.find(e => e.id === selectedId);
-  
-  const getMenuPos = () => {
-    if (!selectedElement) return null;
-    const p = selectedElement.points;
-    const centerX = (p[0].x + (p[1]?.x || p[0].x)) / 2;
-    const centerY = (p[0].y + (p[1]?.y || p[0].y)) / 2;
-    return {
-      x: centerX,
-      y: Math.min(p[0].y, (p[1]?.y || p[0].y)) - 80
-    };
-  };
-
-  const actionMenuPos = getMenuPos();
 
   return (
     <div className="h-full flex flex-col bg-[#04070c] overflow-hidden">
@@ -561,63 +553,108 @@ function TrainingBoardContent() {
               onPointerUp={handlePointerUp}
               onPointerLeave={handlePointerUp}
             />
-
-            {selectedElement && actionMenuPos && (
-              <div 
-                className="absolute z-[100] flex items-center gap-2 bg-black/80 backdrop-blur-xl border border-white/10 p-2 rounded-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-300"
-                style={{ 
-                  left: `${actionMenuPos.x}px`, 
-                  top: `${actionMenuPos.y}px`,
-                  transform: 'translateX(-50%)'
-                }}
-              >
-                <div className="flex items-center gap-1 border-r border-white/10 pr-2 mr-1">
-                  {COLORS.map(c => (
-                    <button 
-                      key={c.id} 
-                      onClick={() => changeElementColor(selectedId!, c.value)}
-                      className={cn(
-                        "h-5 w-5 rounded-full border border-white/10 transition-all",
-                        selectedElement.color === c.value ? "scale-125 border-white ring-2 ring-white/20" : "opacity-40 hover:opacity-100"
-                      )}
-                      style={{ backgroundColor: c.value }}
-                    />
-                  ))}
-                </div>
-
-                <Button 
-                  variant="ghost" size="icon" className="h-8 w-8 text-white/40 hover:text-white"
-                  onClick={() => toggleLineStyle(selectedId!)}
-                  title="Tipo de Línea"
-                >
-                  {selectedElement.lineStyle === 'solid' ? <Minus className="h-4 w-4" /> : <Spline className="h-4 w-4" />}
-                </Button>
-
-                <Button 
-                  variant="ghost" size="icon" className="h-8 w-8 text-white/40 hover:text-white"
-                  onClick={() => duplicateElement(selectedId!)}
-                  title="Duplicar"
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
-
-                <Button 
-                  variant="ghost" size="icon" className="h-8 w-8 text-rose-500/40 hover:text-rose-500 hover:bg-rose-500/10"
-                  onClick={() => deleteElement(selectedId!)}
-                  title="Eliminar"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
           </TacticalField>
         </main>
 
-        <AssetPanel 
-          theme="amber" 
-          type="training" 
-          className="absolute right-4 top-1/2 -translate-y-1/2 hidden xl:flex" 
-        />
+        {/* PROPIEDADES Y ACTIVOS (SIDE PANEL) */}
+        <aside className="w-80 bg-black/60 backdrop-blur-3xl border-l border-white/10 flex flex-col z-[60] shadow-[-10px_0_40px_rgba(0,0,0,0.5)]">
+          {selectedElement ? (
+            <div className="flex-1 flex flex-col animate-in slide-in-from-right duration-300">
+              <div className="p-6 border-b border-white/5 flex items-center justify-between bg-amber-500/5">
+                <div className="flex items-center gap-3">
+                  <Settings2 className="h-4 w-4 text-amber-500" />
+                  <h3 className="text-[11px] font-black uppercase tracking-widest text-white">Propiedades</h3>
+                </div>
+                <button onClick={() => setSelectedId(null)} className="p-1.5 hover:bg-white/5 rounded-lg text-white/40"><X className="h-4 w-4" /></button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-6 space-y-8">
+                <section className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Palette className="h-3 w-3 text-amber-500/40" />
+                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40">Paleta de Identidad</span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-2">
+                    {COLORS.map(c => (
+                      <button 
+                        key={c.id} 
+                        onClick={() => changeElementColor(selectedId!, c.value)}
+                        className={cn(
+                          "h-12 rounded-xl border-2 transition-all flex items-center justify-center group",
+                          selectedElement.color === c.value ? "border-white scale-105 shadow-lg" : "border-white/5 opacity-40 hover:opacity-100"
+                        )}
+                        style={{ backgroundColor: c.value }}
+                      >
+                        {selectedElement.color === c.value && <div className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />}
+                      </button>
+                    ))}
+                  </div>
+                </section>
+
+                <section className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Spline className="h-3 w-3 text-amber-500/40" />
+                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40">Configuración de Trazo</span>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    className={cn(
+                      "w-full h-14 border-white/10 rounded-2xl flex justify-between px-6 transition-all",
+                      selectedElement.lineStyle === 'dashed' ? "bg-amber-500/10 border-amber-500/40 text-white" : "bg-white/5 text-white/40"
+                    )}
+                    onClick={() => toggleLineStyle(selectedId!)}
+                  >
+                    <span className="text-[10px] font-black uppercase tracking-widest">Línea Discontinua</span>
+                    {selectedElement.lineStyle === 'dashed' ? <Spline className="h-4 w-4 text-amber-500" /> : <Minus className="h-4 w-4" />}
+                  </Button>
+                </section>
+
+                <section className="space-y-4 pt-4 border-t border-white/5">
+                  <div className="flex items-center gap-2">
+                    <Layers className="h-3 w-3 text-amber-500/40" />
+                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40">Acciones de Objeto</span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-3">
+                    <Button 
+                      variant="outline"
+                      className="h-14 bg-white/5 border-white/10 rounded-2xl text-white/60 font-black uppercase text-[10px] tracking-widest hover:bg-white/10 hover:text-white transition-all flex justify-between px-6"
+                      onClick={() => duplicateElement(selectedId!)}
+                    >
+                      <span>Duplicar Elemento</span>
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      className="h-14 bg-rose-500/5 border-rose-500/20 rounded-2xl text-rose-500/60 font-black uppercase text-[10px] tracking-widest hover:bg-rose-500/10 hover:text-rose-500 transition-all flex justify-between px-6"
+                      onClick={() => deleteElement(selectedId!)}
+                    >
+                      <span>Eliminar del Campo</span>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </section>
+              </div>
+
+              <div className="p-6 bg-black/40 border-t border-white/5">
+                <div className="flex items-center gap-3">
+                  <div className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  <span className="text-[8px] font-black text-white/20 uppercase tracking-[0.3em]">ID_OBJECT: {selectedElement.id.split('-')[1]}</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col">
+              <div className="p-6 border-b border-white/5">
+                <h3 className="text-[11px] font-black uppercase tracking-widest text-amber-500/60">Biblioteca de Activos</h3>
+              </div>
+              <AssetPanel 
+                theme="amber" 
+                type="training" 
+                className="flex-1 bg-transparent border-none rounded-none w-full" 
+              />
+            </div>
+          )}
+        </aside>
       </div>
     </div>
   );
