@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v7.4 (Interfaz Ergonómica)
+# SynqSports Pro - ARCHITECTURE_LEDGER v7.5 (Interfaz Progresiva)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -78,7 +78,7 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 - **Sugerencias**: El Entrenador puede proponer cambios ("Sugerir Cambio").
 - **Bloqueo de Seguridad**: Las solicitudes de cambio se bloquean automáticamente si faltan menos de **7 días** para la sesión.
 
-## 5. Protocolo de Pizarra y Dibujo (v7.4)
+## 5. Protocolo de Pizarra y Dibujo (v7.5)
 
 ### 5.1. Motor de Dibujo Suavizado
 - Uso de lógica de interpolación para trazos fluidos en el Canvas e independencia de resolución.
@@ -86,15 +86,15 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 ### 5.2. Esquema JSON Maestro (Independencia de Dispositivo)
 - **Coordenadas Decimales**: Todas las posiciones de fichas y trazos se guardan como valores de `0.000` a `1.000`. Garantiza fidelidad visual en cualquier dispositivo.
 
-### 5.3. Herramientas de Dibujo Avanzadas (v7.4)
+### 5.3. Herramientas de Dibujo Avanzadas (v7.5)
 - **Modos de Trazo**: Dibujo Libre, Rectángulos, Círculos, Flechas simples y dobles.
 - **Manipulación Táctica Total**: 
     - **Arrastre (Dragging)**: Capacidad de mover cualquier elemento por el campo manteniendo su escala.
     - **Puntos de Modificación**: Implementación de 4 handles en rectángulos y puntos extremos en flechas/círculos para redimensionado dinámico.
     - **Smart Selection (v7.1)**: El sistema detecta clics sobre formas existentes incluso si hay otra herramienta activa.
     - **Geometría Local (v7.1)**: Implementación de detección de colisiones basada en coordenadas locales rotadas.
-- **Edición Ergonómica (v7.4)**:
-    - **Panel de Propiedades Lateral**: Sustitución del menú flotante por una barra lateral derecha que aparece automáticamente al seleccionar un elemento.
+- **Edición Progresiva (v7.5)**:
+    - **Migración a Sheets**: Sustitución de paneles laterales fijos por componentes `Sheet` (overlay) para maximizar el área del campo y unificar la experiencia con el resto de la plataforma.
     - **Sincronización Total**: El panel permite cambiar color, estilo de línea, duplicar y borrar con targets táctiles optimizados para tablets.
 - **Lógica de Controles Específica**:
     - **Círculos**: Se omite el nodo de rotación.

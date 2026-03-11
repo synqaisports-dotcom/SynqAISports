@@ -40,6 +40,13 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetDescription,
+} from "@/components/ui/sheet";
 import { useSearchParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -345,7 +352,7 @@ function TrainingBoardContent() {
 
     if (clickedEl) {
       setSelectedId(clickedEl.id);
-      setIsLibraryOpen(false); // Priorizar propiedades
+      setIsLibraryOpen(false); 
       setActiveTool('select');
       interactionMode.current = 'dragging';
     } else {
@@ -472,7 +479,7 @@ function TrainingBoardContent() {
   };
 
   const selectedElement = elements.find(e => e.id === selectedId);
-  const isPanelOpen = !!selectedId || isLibraryOpen;
+  const isSheetOpen = !!selectedId || isLibraryOpen;
 
   return (
     <div className="h-full flex flex-col bg-[#04070c] overflow-hidden">
@@ -547,8 +554,7 @@ function TrainingBoardContent() {
           className="absolute left-4 top-1/2 -translate-y-1/2 hidden sm:flex" 
         />
 
-        {/* Botón flotante para biblioteca cuando el panel está cerrado */}
-        {!isPanelOpen && (
+        {!isSheetOpen && (
           <button 
             onClick={() => setIsLibraryOpen(true)}
             className="absolute left-4 bottom-24 h-12 w-12 bg-black/60 border border-amber-500/30 text-amber-500 rounded-2xl flex items-center justify-center hover:bg-amber-500 hover:text-black transition-all animate-in fade-in duration-500"
@@ -574,109 +580,126 @@ function TrainingBoardContent() {
           </TacticalField>
         </main>
 
-        {/* PANEL DERECHO DINÁMICO (CONTEXTUAL) */}
-        <aside className={cn(
-          "w-80 bg-black/60 backdrop-blur-3xl border-l border-white/10 flex flex-col z-[60] shadow-[-10px_0_40px_rgba(0,0,0,0.5)] transition-transform duration-500 ease-in-out",
-          isPanelOpen ? "translate-x-0" : "translate-x-full"
-        )}>
-          {selectedElement ? (
-            <div className="flex-1 flex flex-col animate-in slide-in-from-right duration-300">
-              <div className="p-6 border-b border-white/5 flex items-center justify-between bg-amber-500/5">
-                <div className="flex items-center gap-3">
-                  <Settings2 className="h-4 w-4 text-amber-500" />
-                  <h3 className="text-[11px] font-black uppercase tracking-widest text-white">Propiedades</h3>
+        <Sheet open={isSheetOpen} onOpenChange={(open) => { if(!open) { setSelectedId(null); setIsLibraryOpen(false); } }}>
+          <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-amber-500/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+            {selectedElement ? (
+              <div className="flex flex-col h-full">
+                <div className="p-8 border-b border-white/5 bg-amber-500/5">
+                  <SheetHeader className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <Settings2 className="h-4 w-4 text-amber-500" />
+                      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500">Node_Properties_v2.0</span>
+                    </div>
+                    <SheetTitle className="text-3xl font-black italic tracking-tighter text-white uppercase text-left">
+                      PROPIEDADES
+                    </SheetTitle>
+                    <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left">
+                      Ajuste el estilo y comportamiento del objeto táctico.
+                    </SheetDescription>
+                  </SheetHeader>
                 </div>
-                <button onClick={() => setSelectedId(null)} className="p-1.5 hover:bg-white/5 rounded-lg text-white/40 transition-all"><X className="h-4 w-4" /></button>
-              </div>
 
-              <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
-                <section className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Palette className="h-3 w-3 text-amber-500/40" />
-                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40">Paleta de Identidad</span>
-                  </div>
-                  <div className="grid grid-cols-4 gap-2">
-                    {COLORS.map(c => (
-                      <button 
-                        key={c.id} 
-                        onClick={() => changeElementColor(selectedId!, c.value)}
-                        className={cn(
-                          "h-12 rounded-xl border-2 transition-all flex items-center justify-center group",
-                          selectedElement.color === c.value ? "border-white scale-105 shadow-lg" : "border-white/5 opacity-40 hover:opacity-100"
-                        )}
-                        style={{ backgroundColor: c.value }}
+                <div className="flex-1 overflow-y-auto p-10 space-y-12 custom-scrollbar">
+                  <section className="space-y-6">
+                    <div className="flex items-center gap-3 border-b border-white/5 pb-4">
+                      <Palette className="h-4 w-4 text-amber-500/40" />
+                      <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-white/40">Paleta de Identidad</h3>
+                    </div>
+                    <div className="grid grid-cols-4 gap-3">
+                      {COLORS.map(c => (
+                        <button 
+                          key={c.id} 
+                          onClick={() => changeElementColor(selectedId!, c.value)}
+                          className={cn(
+                            "h-14 rounded-2xl border-2 transition-all flex items-center justify-center group",
+                            selectedElement.color === c.value ? "border-white scale-105 shadow-lg" : "border-white/5 opacity-40 hover:opacity-100"
+                          )}
+                          style={{ backgroundColor: c.value }}
+                        >
+                          {selectedElement.color === c.value && <div className="h-2 w-2 rounded-full bg-white animate-pulse" />}
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+
+                  <section className="space-y-6">
+                    <div className="flex items-center gap-3 border-b border-white/5 pb-4">
+                      <Spline className="h-4 w-4 text-amber-500/40" />
+                      <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-white/40">Configuración de Trazo</h3>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      className={cn(
+                        "w-full h-16 border-white/10 rounded-2xl flex justify-between px-8 transition-all",
+                        selectedElement.lineStyle === 'dashed' ? "bg-amber-500/10 border-amber-500/40 text-white" : "bg-white/5 text-white/40"
+                      )}
+                      onClick={() => toggleLineStyle(selectedId!)}
+                    >
+                      <span className="text-[11px] font-black uppercase tracking-widest">Línea Discontinua</span>
+                      {selectedElement.lineStyle === 'dashed' ? <Spline className="h-5 w-5 text-amber-500" /> : <Minus className="h-5 w-5" />}
+                    </Button>
+                  </section>
+
+                  <section className="space-y-6">
+                    <div className="flex items-center gap-3 border-b border-white/5 pb-4">
+                      <Layers className="h-4 w-4 text-amber-500/40" />
+                      <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-white/40">Acciones de Objeto</h3>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4">
+                      <Button 
+                        variant="outline"
+                        className="h-16 bg-white/5 border-white/10 rounded-2xl text-white/60 font-black uppercase text-[11px] tracking-widest hover:bg-white/10 hover:text-white transition-all flex justify-between px-8"
+                        onClick={() => duplicateElement(selectedId!)}
                       >
-                        {selectedElement.color === c.value && <div className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />}
-                      </button>
-                    ))}
-                  </div>
-                </section>
+                        <span>Duplicar Elemento</span>
+                        <Copy className="h-5 w-5" />
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        className="h-16 bg-rose-500/5 border-rose-500/20 rounded-2xl text-rose-500/60 font-black uppercase text-[11px] tracking-widest hover:bg-rose-500/10 hover:text-rose-500 transition-all flex justify-between px-8"
+                        onClick={() => deleteElement(selectedId!)}
+                      >
+                        <span>Eliminar del Campo</span>
+                        <Trash2 className="h-5 w-5" />
+                      </Button>
+                    </div>
+                  </section>
+                </div>
 
-                <section className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Spline className="h-3 w-3 text-amber-500/40" />
-                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40">Configuración de Trazo</span>
+                <div className="p-10 bg-black/40 border-t border-white/5">
+                  <div className="flex items-center gap-3">
+                    <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                    <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em]">SINCRO_ID: {selectedElement.id.split('-')[1]}</span>
                   </div>
-                  <Button 
-                    variant="outline" 
-                    className={cn(
-                      "w-full h-14 border-white/10 rounded-2xl flex justify-between px-6 transition-all",
-                      selectedElement.lineStyle === 'dashed' ? "bg-amber-500/10 border-amber-500/40 text-white" : "bg-white/5 text-white/40"
-                    )}
-                    onClick={() => toggleLineStyle(selectedId!)}
-                  >
-                    <span className="text-[10px] font-black uppercase tracking-widest">Línea Discontinua</span>
-                    {selectedElement.lineStyle === 'dashed' ? <Spline className="h-4 w-4 text-amber-500" /> : <Minus className="h-4 w-4" />}
-                  </Button>
-                </section>
-
-                <section className="space-y-4 pt-4 border-t border-white/5">
-                  <div className="flex items-center gap-2">
-                    <Layers className="h-3 w-3 text-amber-500/40" />
-                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40">Acciones de Objeto</span>
-                  </div>
-                  <div className="grid grid-cols-1 gap-3">
-                    <Button 
-                      variant="outline"
-                      className="h-14 bg-white/5 border-white/10 rounded-2xl text-white/60 font-black uppercase text-[10px] tracking-widest hover:bg-white/10 hover:text-white transition-all flex justify-between px-6"
-                      onClick={() => duplicateElement(selectedId!)}
-                    >
-                      <span>Duplicar Elemento</span>
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      className="h-14 bg-rose-500/5 border-rose-500/20 rounded-2xl text-rose-500/60 font-black uppercase text-[10px] tracking-widest hover:bg-rose-500/10 hover:text-rose-500 transition-all flex justify-between px-6"
-                      onClick={() => deleteElement(selectedId!)}
-                    >
-                      <span>Eliminar del Campo</span>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </section>
-              </div>
-
-              <div className="p-6 bg-black/40 border-t border-white/5">
-                <div className="flex items-center gap-3">
-                  <div className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                  <span className="text-[8px] font-black text-white/20 uppercase tracking-[0.3em]">ID_OBJECT: {selectedElement.id.split('-')[1]}</span>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="flex-1 flex flex-col animate-in slide-in-from-right duration-300">
-              <div className="p-6 border-b border-white/5 flex items-center justify-between">
-                <h3 className="text-[11px] font-black uppercase tracking-widest text-amber-500/60">Biblioteca de Activos</h3>
-                <button onClick={() => setIsLibraryOpen(false)} className="p-1.5 hover:bg-white/5 rounded-lg text-white/40 transition-all"><X className="h-4 w-4" /></button>
+            ) : (
+              <div className="flex flex-col h-full">
+                <div className="p-8 border-b border-white/5 bg-black/40">
+                  <SheetHeader className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <Library className="h-4 w-4 text-amber-500" />
+                      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500">Asset_Library_v2.0</span>
+                    </div>
+                    <SheetTitle className="text-3xl font-black italic tracking-tighter text-white uppercase text-left">
+                      BIBLIOTECA
+                    </SheetTitle>
+                    <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left">
+                      Material técnico sincronizado con el nodo local.
+                    </SheetDescription>
+                  </SheetHeader>
+                </div>
+                <div className="flex-1 overflow-y-auto">
+                  <AssetPanel 
+                    theme="amber" 
+                    type="training" 
+                    className="w-full h-full bg-transparent border-none rounded-none shadow-none" 
+                  />
+                </div>
               </div>
-              <AssetPanel 
-                theme="amber" 
-                type="training" 
-                className="flex-1 bg-transparent border-none rounded-none w-full shadow-none" 
-              />
-            </div>
-          )}
-        </aside>
+            )}
+          </SheetContent>
+        </Sheet>
       </div>
     </div>
   );
