@@ -1,5 +1,5 @@
 
-# SynqSports Pro - Architecture Ledger v4.4 (Operational UI Glow Protocol)
+# SynqSports Pro - Architecture Ledger v5.0 (Methodological Validation Protocol)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -127,3 +127,17 @@ Los roles operan bajo un sistema de ranking numérico (`rank`):
 ### 11.4. Ergonomía de Navegación (Scroll Glow)
 - **Protocolo de Visibilidad**: Implementación de scrollbars de alta visibilidad (6px) con el color temático del módulo.
 - **Efecto Glow**: Sincronización de un efecto de resplandor neón durante la interacción (`active`) con la barra de scroll para mejorar la respuesta visual en entornos de alta densidad de datos.
+
+## 12. Protocolo de Validación Metodológica (v5.0)
+
+### 12.1. Jerarquía de Edición
+- **Director de Metodología**: Posee autoridad raíz de diseño. Puede crear y modificar cualquier sesión en cualquier momento.
+- **Entrenador**: Posee autoridad operativa de ejecución. Su vista es de "Solo Lectura" por defecto para los planes diseñados por el Director.
+
+### 12.2. Flujo de Solicitud de Cambio (Workflow)
+- **Sugerencia**: El entrenador puede proponer la sustitución de un ejercicio si considera que se adapta mejor a la realidad de su grupo esa semana.
+- **Lead-Time Crítico**: Las solicitudes deben realizarse con un mínimo de **7 días de antelación**. El sistema bloquea el botón de sugerencia automáticamente si se supera este umbral temporal.
+- **Estado de Validación**: Los cambios propuestos entran en estado `Pendiente` (Ámbar) hasta que el Director los valide (`Aprobado` - Verde) o los rechace (`Denegado` - Rojo).
+
+### 12.3. Blindaje de Etapa (Filtrado de Biblioteca)
+- El sistema detecta automáticamente la etapa del equipo seleccionado (ej. Debutantes) y restringe el buscador de la Biblioteca Sin IA a ejercicios clasificados para esa etapa específica, evitando desajustes metodológicos.

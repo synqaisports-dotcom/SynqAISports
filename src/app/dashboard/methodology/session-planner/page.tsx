@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { 
   CalendarDays, 
   Settings2, 
@@ -24,7 +24,14 @@ import {
   Dumbbell,
   Wind,
   Info,
-  Calendar
+  Calendar,
+  ShieldCheck,
+  ShieldAlert,
+  UserCog,
+  Check,
+  X,
+  History,
+  MessageSquareQuote
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -51,6 +58,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/auth-context";
 
 // DATA MAESTRA DE LA TEMPORADA (SEPT - JUN)
 const MONTHS = [
@@ -66,20 +74,32 @@ const MONTHS = [
   { id: "jun", label: "JUNIO", weeks: 4 },
 ];
 
-// MOCK DE EQUIPOS DEL CLUB
+// MOCK DE EQUIPOS DEL CLUB CON ASIGNACIÓN DE ETAPA
 const CLUB_TEAMS = [
-  { id: "t1", name: "Infantil A", type: "F11" },
-  { id: "t2", name: "Alevín B", type: "F7" },
-  { id: "t3", name: "Cadete C", type: "F11" },
-  { id: "t4", name: "Primer Equipo", type: "F11" },
+  { id: "t1", name: "Infantil A", type: "F11", stage: "Infantil" },
+  { id: "t2", name: "Alevín B", type: "F7", stage: "Alevín" },
+  { id: "t3", name: "Cadete C", type: "F11", stage: "Cadete" },
+  { id: "t4", name: "Primer Equipo", type: "F11", stage: "Rendimiento" },
+  { id: "t5", name: "Debutantes A", type: "F7", stage: "Debutantes" },
+];
+
+// MOCK DE SOLICITUDES DE CAMBIO
+const INITIAL_REQUESTS = [
+  { id: "req1", teamId: "t1", mcc: "OCT_W2", session: "1", type: "Substitution", original: "Rondo 4x4", proposed: "Posesión 5x5 + 2", reason: "Falta de intensidad detectada", status: "Pending", coach: "Carlos Ruiz" },
 ];
 
 export default function SessionPlannerPage() {
+  const { profile } = useAuth();
   const { toast } = useToast();
+  
+  // MODO PROTOTIPO: Switch de Rol para testing
+  const [viewRole, setViewRole] = useState<"director" | "coach">("director");
+  
   const [selectedTeam, setSelectedTeam] = useState(CLUB_TEAMS[0].id);
   const [sessionsPerWeek, setSessionsPerWeek] = useState(3);
   const [selectedMCC, setSelectedMCC] = useState<string | null>(null);
   const [activeSessionInWeek, setActiveSessionInWeek] = useState("1");
+  const [changeRequests, setRequests] = useState(INITIAL_REQUESTS);
 
   // CONFIGURACIÓN DE TIEMPOS DE SESIÓN
   const [sessionTimes, setSessionTimes] = useState({
@@ -96,9 +116,17 @@ export default function SessionPlannerPage() {
     CLUB_TEAMS.find(t => t.id === selectedTeam), 
   [selectedTeam]);
 
+  // LÓGICA DE PLAZO DE 7 DÍAS (SIMULADA PARA PROTOTIPO)
+  const canRequestChange = (mcc: string) => {
+    // En una app real, compararíamos la fecha actual con la fecha del entrenamiento
+    // Para el prototipo, bloqueamos aleatoriamente o por convención de "Septiembre"
+    if (mcc.startsWith("SEPT")) return false; // Bloqueado por cercanía (menos de 7 días)
+    return true; // Disponible para sugerir
+  };
+
   const handleMCCClic = (month: string, week: number) => {
     setSelectedMCC(`${month.toUpperCase()}_W${week}`);
-    setActiveSessionInWeek("1"); // Reset a la primera sesión al abrir MCC
+    setActiveSessionInWeek("1");
   };
 
   const handleSaveConfig = () => {
@@ -109,132 +137,202 @@ export default function SessionPlannerPage() {
     setSelectedMCC(null);
   };
 
+  const handleProcessRequest = (id: string, approve: boolean) => {
+    setRequests(prev => prev.map(r => r.id === id ? { ...r, status: approve ? 'Approved' : 'Denied' } : r));
+    toast({
+      title: approve ? "CAMBIO_AUTORIZADO" : "CAMBIO_DENEGADO",
+      description: `Se ha sincronizado la respuesta con el terminal del entrenador.`,
+    });
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-1000 p-8 lg:p-12">
+      
+      {/* MODO_SWITCH_PROTOTIPO */}
+      <div className="flex justify-end gap-2 mb-4">
+         <Badge variant="outline" className="border-white/5 text-white/20 uppercase text-[8px] font-black mr-4">Preview_Role:</Badge>
+         <button onClick={() => setViewRole("director")} className={cn("px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all", viewRole === 'director' ? 'bg-amber-500 text-black border-amber-500' : 'bg-white/5 text-white/40 border-white/5')}>DIRECTOR_MODO</button>
+         <button onClick={() => setViewRole("coach")} className={cn("px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all", viewRole === 'coach' ? 'bg-primary text-black border-primary' : 'bg-white/5 text-white/40 border-white/5')}>COACH_MODO</button>
+      </div>
+
       {/* HEADER DE MANDO */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 border-b border-white/5 pb-8">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <CalendarDays className="h-5 w-5 text-amber-500 animate-pulse" />
-            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Operational_Planning_v4.3</span>
+            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Operational_Planning_v5.0</span>
           </div>
           <h1 className="text-5xl font-headline font-black text-white uppercase italic tracking-tighter amber-text-glow leading-none">
             PLANIFICADOR_MAESTRO
           </h1>
-          <p className="text-[11px] font-black text-amber-500/30 tracking-[0.3em] uppercase">Control Operativo por Equipo Septiembre - Junio</p>
+          <p className="text-[11px] font-black text-amber-500/30 tracking-[0.3em] uppercase">
+            {viewRole === 'director' ? 'Terminal de Diseño Metodológico Central' : `Terminal Operativa: ${currentTeam?.name}`}
+          </p>
         </div>
 
         <div className="flex flex-wrap gap-4 items-center">
-          <div className="flex flex-col gap-1.5">
-            <span className="text-[8px] font-black text-white/30 uppercase tracking-widest ml-1">Seleccionar Equipo</span>
-            <Select value={selectedTeam} onValueChange={setSelectedTeam}>
-              <SelectTrigger className="w-[220px] h-12 bg-black border-amber-500/20 rounded-xl text-amber-500 font-black uppercase text-[10px] tracking-widest focus:ring-amber-500/30">
-                <div className="flex items-center gap-3">
-                  <Users className="h-4 w-4" />
-                  <SelectValue />
-                </div>
-              </SelectTrigger>
-              <SelectContent className="bg-[#0a0f18] border-amber-500/20">
-                {CLUB_TEAMS.map(team => (
-                  <SelectItem key={team.id} value={team.id} className="text-[10px] font-black uppercase text-amber-500/80 focus:bg-amber-500 focus:text-black">
-                    {team.name} [{team.type}]
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" className="h-12 rounded-xl border-amber-500/20 text-amber-500 hover:bg-amber-500/10 font-black uppercase text-[10px] tracking-widest px-6">
-                <Settings2 className="h-4 w-4 mr-2" /> Estructura Sesión
-              </Button>
-            </SheetTrigger>
-            <SheetContent className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-amber-500/20 text-white sm:max-w-md">
-              <SheetHeader className="space-y-4 mb-10">
-                <div className="flex items-center gap-3">
-                  <Clock className="h-4 w-4 text-amber-500" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500">Ajustes_de_Arquitectura</span>
-                </div>
-                <SheetTitle className="text-3xl font-black italic tracking-tighter uppercase leading-none">CONFIG_ESTRUCTURA</SheetTitle>
-                <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest">Defina la duración de cada fase para {currentTeam?.name}.</SheetDescription>
-              </SheetHeader>
-              
-              <div className="space-y-8">
-                <div className="p-6 bg-black/40 border border-white/5 rounded-3xl space-y-2 text-center">
-                   <p className="text-[9px] font-black uppercase text-white/20 tracking-widest">Duración Total Sesión</p>
-                   <p className="text-5xl font-black text-amber-500 italic tracking-tighter amber-text-glow">
-                    {totalTime} <span className="text-sm text-white/20">MIN</span>
-                   </p>
-                </div>
-
-                <div className="space-y-6">
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest">1. Calentamiento / Activación</Label>
-                      <Badge variant="outline" className="text-[10px] border-amber-500/20 text-amber-500">{sessionTimes.warmup} min</Badge>
-                    </div>
-                    <Input 
-                      type="range" min="5" max="30" step="5"
-                      value={sessionTimes.warmup} 
-                      onChange={(e) => setSessionTimes({...sessionTimes, warmup: parseInt(e.target.value)})}
-                      className="accent-amber-500" 
-                    />
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest">2. Zona Central (Ejercicios)</Label>
-                      <Badge variant="outline" className="text-[10px] border-amber-500/20 text-amber-500">{sessionTimes.central} min</Badge>
-                    </div>
-                    <Input 
-                      type="range" min="20" max="90" step="5"
-                      value={sessionTimes.central} 
-                      onChange={(e) => setSessionTimes({...sessionTimes, central: parseInt(e.target.value)})}
-                      className="accent-amber-500" 
-                    />
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest">3. Vuelta a la Calma</Label>
-                      <Badge variant="outline" className="text-[10px] border-amber-500/20 text-amber-500">{sessionTimes.cooldown} min</Badge>
-                    </div>
-                    <Input 
-                      type="range" min="5" max="20" step="5"
-                      value={sessionTimes.cooldown} 
-                      onChange={(e) => setSessionTimes({...sessionTimes, cooldown: parseInt(e.target.value)})}
-                      className="accent-amber-500" 
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-3 pt-4 border-t border-white/5">
-                  <Label className="text-[10px] font-black uppercase text-white/40 tracking-widest">Frecuencia Semanal (Días Entrenamiento)</Label>
-                  <Select value={sessionsPerWeek.toString()} onValueChange={(v) => setSessionsPerWeek(parseInt(v))}>
-                    <SelectTrigger className="h-12 bg-white/5 border-white/10 text-white font-bold uppercase text-[10px]">
+          {viewRole === 'director' ? (
+            <>
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[8px] font-black text-white/30 uppercase tracking-widest ml-1">Configuración de Nodo</span>
+                <Select value={selectedTeam} onValueChange={setSelectedTeam}>
+                  <SelectTrigger className="w-[220px] h-12 bg-black border-amber-500/20 rounded-xl text-amber-500 font-black uppercase text-[10px] tracking-widest focus:ring-amber-500/30">
+                    <div className="flex items-center gap-3">
+                      <Users className="h-4 w-4" />
                       <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#0a0f18] border-amber-500/20">
-                      {[1,2,3,4,5,6,7].map(n => (
-                        <SelectItem key={n} value={n.toString()} className="text-[10px] font-black uppercase">{n} Días / Semana</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#0a0f18] border-amber-500/20">
+                    {CLUB_TEAMS.map(team => (
+                      <SelectItem key={team.id} value={team.id} className="text-[10px] font-black uppercase text-amber-500/80 focus:bg-amber-500 focus:text-black">
+                        {team.name} [{team.type}]
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div className="mt-12">
-                <Button onClick={handleSaveConfig} className="w-full h-16 bg-amber-500 text-black font-black uppercase tracking-[0.2em] rounded-2xl amber-glow">SINCRONIZAR_MATRIZ</Button>
-              </div>
-            </SheetContent>
-          </Sheet>
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" className="h-12 rounded-xl border-amber-500/20 text-amber-500 hover:bg-amber-500/10 font-black uppercase text-[10px] tracking-widest px-6">
+                    <Settings2 className="h-4 w-4 mr-2" /> Estructura Sesión
+                  </Button>
+                </SheetTrigger>
+                <SheetContent className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-amber-500/20 text-white sm:max-w-md">
+                  <SheetHeader className="space-y-4 mb-10">
+                    <div className="flex items-center gap-3">
+                      <Clock className="h-4 w-4 text-amber-500" />
+                      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500">Arquitectura_Maestra</span>
+                    </div>
+                    <SheetTitle className="text-3xl font-black italic tracking-tighter uppercase leading-none">CONFIG_ESTRUCTURA</SheetTitle>
+                  </SheetHeader>
+                  
+                  <div className="space-y-8">
+                    <div className="p-6 bg-black/40 border border-white/5 rounded-3xl space-y-2 text-center">
+                       <p className="text-[9px] font-black uppercase text-white/20 tracking-widest">Duración Total Sesión</p>
+                       <p className="text-5xl font-black text-amber-500 italic tracking-tighter amber-text-glow">
+                        {totalTime} <span className="text-sm text-white/20">MIN</span>
+                       </p>
+                    </div>
+
+                    <div className="space-y-6">
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest">1. Calentamiento / Activación</Label>
+                          <Badge variant="outline" className="text-[10px] border-amber-500/20 text-amber-500">{sessionTimes.warmup} min</Badge>
+                        </div>
+                        <Input 
+                          type="range" min="5" max="30" step="5"
+                          value={sessionTimes.warmup} 
+                          onChange={(e) => setSessionTimes({...sessionTimes, warmup: parseInt(e.target.value)})}
+                          className="accent-amber-500" 
+                        />
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest">2. Zona Central (Ejercicios)</Label>
+                          <Badge variant="outline" className="text-[10px] border-amber-500/20 text-amber-500">{sessionTimes.central} min</Badge>
+                        </div>
+                        <Input 
+                          type="range" min="20" max="90" step="5"
+                          value={sessionTimes.central} 
+                          onChange={(e) => setSessionTimes({...sessionTimes, central: parseInt(e.target.value)})}
+                          className="accent-amber-500" 
+                        />
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest">3. Vuelta a la Calma</Label>
+                          <Badge variant="outline" className="text-[10px] border-amber-500/20 text-amber-500">{sessionTimes.cooldown} min</Badge>
+                        </div>
+                        <Input 
+                          type="range" min="5" max="20" step="5"
+                          value={sessionTimes.cooldown} 
+                          onChange={(e) => setSessionTimes({...sessionTimes, cooldown: parseInt(e.target.value)})}
+                          className="accent-amber-500" 
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 pt-4 border-t border-white/5">
+                      <Label className="text-[10px] font-black uppercase text-white/40 tracking-widest">Frecuencia Semanal</Label>
+                      <Select value={sessionsPerWeek.toString()} onValueChange={(v) => setSessionsPerWeek(parseInt(v))}>
+                        <SelectTrigger className="h-12 bg-white/5 border-white/10 text-white font-bold uppercase text-[10px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#0a0f18] border-amber-500/20">
+                          {[1,2,3,4,5,6,7].map(n => (
+                            <SelectItem key={n} value={n.toString()} className="text-[10px] font-black uppercase">{n} Días / Semana</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="mt-12">
+                    <Button onClick={handleSaveConfig} className="w-full h-16 bg-amber-500 text-black font-black uppercase tracking-[0.2em] rounded-2xl amber-glow">GUARDAR_PROTOCOLO</Button>
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </>
+          ) : (
+            <div className="p-4 bg-primary/5 border border-primary/20 rounded-2xl flex items-center gap-4">
+               <ShieldCheck className="h-5 w-5 text-primary" />
+               <div>
+                  <p className="text-[9px] font-black text-primary uppercase tracking-widest">MODO_LECTURA_OPERATIVA</p>
+                  <p className="text-[8px] font-bold text-white/40 uppercase italic">Diseño bloqueado por Metodología</p>
+               </div>
+            </div>
+          )}
 
           <Button className="h-12 bg-amber-500 text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl amber-glow hover:scale-105 transition-all border-none">
-            <Download className="h-4 w-4 mr-2" /> Exportar PDF
+            <Download className="h-4 w-4 mr-2" /> PDF Temporada
           </Button>
         </div>
       </div>
+
+      {/* DASHBOARD DE VALIDACIONES PARA EL DIRECTOR */}
+      {viewRole === 'director' && changeRequests.filter(r => r.status === 'Pending').length > 0 && (
+        <div className="animate-in slide-in-from-top-4 duration-700">
+          <Card className="glass-panel border-amber-500/20 bg-amber-500/5 p-6 rounded-3xl relative overflow-hidden">
+             <div className="absolute top-0 right-0 p-4 opacity-5"><History className="h-20 w-20 text-amber-500" /></div>
+             <div className="flex items-center gap-3 mb-6">
+                <ShieldAlert className="h-4 w-4 text-amber-500 animate-pulse" />
+                <span className="text-[10px] font-black uppercase text-amber-500 tracking-widest">SOLICITUDES_DE_CAMBIO_PENDIENTES</span>
+             </div>
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {changeRequests.filter(r => r.status === 'Pending').map(req => (
+                  <div key={req.id} className="p-5 bg-black/60 border border-white/5 rounded-2xl space-y-4">
+                     <div className="flex justify-between items-start">
+                        <div>
+                           <p className="text-[10px] font-black text-white uppercase italic">{req.coach}</p>
+                           <p className="text-[8px] font-bold text-white/30 uppercase tracking-widest">{req.teamId} • {req.mcc}</p>
+                        </div>
+                        <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[8px] font-black">PENDIENTE</Badge>
+                     </div>
+                     <div className="p-3 bg-white/5 rounded-xl space-y-2 border border-white/5">
+                        <div className="flex items-center gap-2">
+                           <X className="h-3 w-3 text-rose-500" />
+                           <span className="text-[9px] font-bold text-white/40 uppercase line-through">{req.original}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                           <Check className="h-3 w-3 text-emerald-500" />
+                           <span className="text-[9px] font-bold text-emerald-400 uppercase italic">{req.proposed}</span>
+                        </div>
+                     </div>
+                     <p className="text-[8px] text-white/20 italic">"{req.reason}"</p>
+                     <div className="flex gap-2 pt-2">
+                        <Button onClick={() => handleProcessRequest(req.id, true)} className="flex-1 h-8 bg-emerald-500 text-black text-[8px] font-black uppercase rounded-lg">APROBAR</Button>
+                        <Button onClick={() => handleProcessRequest(req.id, false)} variant="ghost" className="flex-1 h-8 border border-white/5 text-white/40 text-[8px] font-black uppercase rounded-lg">RECHAZAR</Button>
+                     </div>
+                  </div>
+                ))}
+             </div>
+          </Card>
+        </div>
+      )}
 
       {/* MATRIZ DE PLANIFICACIÓN */}
       <div className="relative group">
@@ -249,14 +347,14 @@ export default function SessionPlannerPage() {
               <div className="flex flex-col">
                 <span className="text-[10px] font-black text-white/60 uppercase tracking-[0.4em]">Temporada 2024 / 2025</span>
                 <h2 className="text-2xl font-black text-white italic tracking-tighter uppercase leading-none">
-                  Plan Metodológico: <span className="text-white/80">{currentTeam?.name}</span>
+                  {viewRole === 'director' ? 'Protocolo Metodológico' : 'Mi Agenda Táctica'}: <span className="text-white/80">{currentTeam?.name}</span>
                 </h2>
               </div>
             </div>
             <div className="flex items-center gap-8">
                <div className="text-right">
-                  <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">Carga por Sesión</p>
-                  <p className="text-xl font-black text-white italic tracking-tighter">{totalTime} MIN</p>
+                  <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">Estado Plan</p>
+                  <p className="text-xl font-black text-emerald-400 italic tracking-tighter uppercase">SINCRO_OK</p>
                </div>
                <div className="h-8 w-[1px] bg-white/10" />
                <div className="text-right">
@@ -271,7 +369,10 @@ export default function SessionPlannerPage() {
                 <Layers className="h-4 w-4" />
                 <span className="text-xs font-black uppercase tracking-[0.5em]">MACROCICLO_OPERATIVO_ANUAL</span>
              </div>
-             <span className="text-[10px] font-black uppercase tracking-widest italic">Septiembre - Junio • Protocolo Centralizado</span>
+             <div className="flex items-center gap-4">
+                <span className="text-[10px] font-black uppercase tracking-widest italic">Septiembre - Junio</span>
+                <Badge variant="outline" className="bg-black/10 border-black/20 text-black text-[8px] font-black">ETAPA: {currentTeam?.stage.toUpperCase()}</Badge>
+             </div>
           </div>
 
           <div className="overflow-x-auto custom-scrollbar">
@@ -282,30 +383,41 @@ export default function SessionPlannerPage() {
                     <span className="text-[11px] font-black text-amber-500 tracking-[0.3em] uppercase">{month.label}</span>
                   </div>
                   <div className="p-4 flex flex-col gap-2">
-                    {Array.from({ length: month.weeks }).map((_, i) => (
-                      <div 
-                        key={i} 
-                        onClick={() => handleMCCClic(month.id, i + 1)}
-                        className={cn(
-                          "p-4 rounded-xl border transition-all cursor-pointer group/mcc relative overflow-hidden",
-                          selectedMCC === `${month.id.toUpperCase()}_W${i+1}` 
-                            ? "bg-amber-500/20 border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.2)]" 
-                            : "bg-white/5 border-white/5 hover:border-amber-500/40 hover:bg-amber-500/5"
-                        )}
-                      >
-                        <div className="flex justify-between items-center mb-1">
-                          <span className={cn(
-                            "text-[9px] font-black uppercase tracking-widest",
-                            selectedMCC === `${month.id.toUpperCase()}_W${i+1}` ? "text-amber-500" : "text-white/20"
-                          )}>MCC_{i + 1}</span>
-                          <LayoutGrid className={cn("h-3 w-3", selectedMCC === `${month.id.toUpperCase()}_W${i+1}` ? "text-amber-500" : "text-white/10")} />
+                    {Array.from({ length: month.weeks }).map((_, i) => {
+                      const mccId = `${month.id.toUpperCase()}_W${i+1}`;
+                      const hasPending = changeRequests.some(r => r.mcc === mccId && r.status === 'Pending');
+                      
+                      return (
+                        <div 
+                          key={i} 
+                          onClick={() => handleMCCClic(month.id, i + 1)}
+                          className={cn(
+                            "p-4 rounded-xl border transition-all cursor-pointer group/mcc relative overflow-hidden",
+                            selectedMCC === mccId 
+                              ? "bg-amber-500/20 border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.2)]" 
+                              : hasPending 
+                              ? "border-amber-500/40 bg-amber-500/5"
+                              : "bg-white/5 border-white/5 hover:border-amber-500/40 hover:bg-amber-500/5"
+                          )}
+                        >
+                          <div className="flex justify-between items-center mb-1">
+                            <span className={cn(
+                              "text-[9px] font-black uppercase tracking-widest",
+                              selectedMCC === mccId ? "text-amber-500" : "text-white/20"
+                            )}>MCC_{i + 1}</span>
+                            {hasPending ? (
+                              <ShieldAlert className="h-3 w-3 text-amber-500 animate-pulse" />
+                            ) : (
+                              <LayoutGrid className={cn("h-3 w-3", selectedMCC === mccId ? "text-amber-500" : "text-white/10")} />
+                            )}
+                          </div>
+                          <p className={cn(
+                            "text-[8px] font-bold uppercase",
+                            selectedMCC === mccId ? "text-white" : "text-white/10"
+                          )}>{sessionsPerWeek} Sesiones</p>
                         </div>
-                        <p className={cn(
-                          "text-[8px] font-bold uppercase",
-                          selectedMCC === `${month.id.toUpperCase()}_W${i+1}` ? "text-white" : "text-white/10"
-                        )}>{sessionsPerWeek} Sesiones Distintas</p>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               ))}
@@ -314,14 +426,14 @@ export default function SessionPlannerPage() {
 
           <div className="p-6 bg-black/40 border-t border-white/5 flex justify-between items-center text-[9px] font-black text-amber-500/20 uppercase tracking-[0.5em]">
             <span className="flex items-center gap-2">
-              <Activity className="h-3 w-3 text-amber-500 animate-pulse" /> Sincronización Metodológica Activa
+              <Activity className="h-3 w-3 text-amber-500 animate-pulse" /> Sincronización de Red: Óptima
             </span>
-            <span>SynqSports Operational Planner v4.3 • Protocolo de Sesiones Diferenciadas</span>
+            <span>Protocolo de Validación v5.0 • Blindaje Metodológico Activo</span>
           </div>
         </Card>
       </div>
 
-      {/* PANEL LATERAL DE ESTRUCTURA DE SESIÓN DETALLADA (Sheet) */}
+      {/* PANEL LATERAL DE DETALLE Y SOLICITUDES */}
       <Sheet open={!!selectedMCC} onOpenChange={(open) => !open && setSelectedMCC(null)}>
         <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-amber-500/20 text-white w-full sm:max-w-2xl lg:max-w-3xl p-0 overflow-hidden flex flex-col">
           {selectedMCC && (
@@ -329,18 +441,17 @@ export default function SessionPlannerPage() {
               <div className="p-8 border-b border-white/5 bg-black/40">
                 <SheetHeader className="space-y-4">
                   <div className="flex items-center gap-3">
-                    <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500">Microciclo_Planning_v4.3</span>
+                    <div className={cn("h-2 w-2 rounded-full animate-pulse", viewRole === 'director' ? 'bg-amber-500' : 'bg-primary')} />
+                    <span className={cn("text-[10px] font-black uppercase tracking-[0.4em]", viewRole === 'director' ? 'text-amber-500' : 'text-primary')}>
+                      {viewRole === 'director' ? 'MCC_Design_Studio' : 'MCC_Operational_View'}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <SheetTitle className="text-4xl font-black italic tracking-tighter uppercase leading-none text-white">Semana {selectedMCC}</SheetTitle>
                     <Badge variant="outline" className="border-amber-500/20 text-amber-500 font-black uppercase tracking-widest px-4 py-1.5 h-auto">
-                      {sessionsPerWeek} DÍAS OPERATIVOS
+                      ETAPA: {currentTeam?.stage.toUpperCase()}
                     </Badge>
                   </div>
-                  <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest">
-                    Arquitectura de Entrenamiento Semanal para {currentTeam?.name}.
-                  </SheetDescription>
                 </SheetHeader>
               </div>
 
@@ -363,128 +474,160 @@ export default function SessionPlannerPage() {
 
               <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-12">
                 
-                {/* 1. ESTRUCTURA DE LA SESIÓN SELECCIONADA */}
+                {/* 1. ESTRUCTURA DE LA SESIÓN */}
                 <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500" key={activeSessionInWeek}>
-                  <div className="flex items-center gap-3">
-                    <div className="h-1 w-8 bg-amber-500" />
-                    <h3 className="text-lg font-black text-white uppercase italic tracking-tighter">Sesión {activeSessionInWeek} del Microciclo</h3>
-                  </div>
-
-                  {/* BLOQUE 1: CALENTAMIENTO */}
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between px-2">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
-                          <Flame className="h-5 w-5 text-orange-500" />
-                        </div>
-                        <div>
-                          <h4 className="text-xs font-black text-white uppercase tracking-widest">1. Calentamiento y Activación</h4>
-                          <p className="text-[9px] font-bold text-orange-500/60 uppercase italic">Duración Configurada: {sessionTimes.warmup} Minutos</p>
-                        </div>
-                      </div>
-                      <Badge className="bg-orange-500/10 text-orange-500 border-orange-500/20 uppercase text-[8px] font-black">Slot_Libre</Badge>
-                    </div>
-                    <div className="p-8 border-2 border-dashed border-orange-500/10 bg-orange-500/[0.02] rounded-3xl flex flex-col items-center justify-center gap-3 group hover:border-orange-500/30 transition-all cursor-pointer">
-                       <Plus className="h-5 w-5 text-orange-500/20 group-hover:text-orange-500 transition-colors" />
-                       <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">Asignar Tarea de Activación</span>
-                    </div>
-                  </div>
-
-                  {/* BLOQUE 2: ZONA CENTRAL */}
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between px-2">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-                          <Dumbbell className="h-5 w-5 text-amber-500" />
-                        </div>
-                        <div>
-                          <h4 className="text-xs font-black text-white uppercase tracking-widest">2. Zona Central (Contenidos)</h4>
-                          <p className="text-[9px] font-bold text-amber-500/60 uppercase italic">Duración Configurada: {sessionTimes.central} Minutos</p>
-                        </div>
-                      </div>
-                      <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 uppercase text-[8px] font-black">Multitarea_ON</Badge>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="p-10 border-2 border-dashed border-amber-500/10 bg-amber-500/[0.02] rounded-3xl flex flex-col items-center justify-center gap-3 group hover:border-amber-500/30 transition-all cursor-pointer">
-                        <Plus className="h-5 w-5 text-amber-500/20 group-hover:text-amber-500 transition-colors" />
-                        <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">Añadir Tarea Táctica</span>
-                      </div>
-                      <div className="p-10 border-2 border-dashed border-white/5 bg-white/[0.01] rounded-3xl flex flex-col items-center justify-center gap-2">
-                        <span className="text-[9px] font-black text-white/10 uppercase tracking-widest">Espacio para Tarea 02</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* BLOQUE 3: VUELTA A LA CALMA */}
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between px-2">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
-                          <Wind className="h-5 w-5 text-blue-500" />
-                        </div>
-                        <div>
-                          <h4 className="text-xs font-black text-white uppercase tracking-widest">3. Vuelta a la Calma</h4>
-                          <p className="text-[9px] font-bold text-blue-500/60 uppercase italic">Duración Configurada: {sessionTimes.cooldown} Minutos</p>
-                        </div>
-                      </div>
-                      <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20 uppercase text-[8px] font-black">Feedback_Final</Badge>
-                    </div>
-                    <div className="p-8 border-2 border-dashed border-blue-500/10 bg-blue-500/[0.02] rounded-3xl flex flex-col items-center justify-center gap-3 group hover:border-blue-500/30 transition-all cursor-pointer">
-                       <Plus className="h-5 w-5 text-blue-500/20 group-hover:text-blue-500 transition-colors" />
-                       <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">Asignar Tarea de Cierre</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 2. BUSCADOR DE BIBLIOTECA INTEGRADO */}
-                <div className="pt-12 border-t border-white/5 space-y-8">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Library className="h-5 w-5 text-amber-500" />
-                      <span className="text-[11px] font-black uppercase tracking-[0.3em] text-amber-500 italic">Buscador de Biblioteca</span>
-                    </div>
-                    <span className="text-[9px] font-black text-white/30 uppercase tracking-widest">Filtrado por: {currentTeam?.type}</span>
-                  </div>
                   
-                  <div className="relative">
-                    <Search className="absolute left-4 top-4 h-5 w-5 text-white/20" />
-                    <Input placeholder="BUSCAR TAREA MANUAL POR NOMBRE O ID..." className="pl-12 h-14 bg-white/5 border-white/10 rounded-2xl text-[11px] font-black uppercase focus:border-amber-500 transition-all" />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-5 bg-amber-500/5 border border-amber-500/10 rounded-2xl hover:border-amber-500/40 cursor-grab active:cursor-grabbing transition-all group">
-                       <p className="text-[11px] font-black text-white uppercase italic group-hover:text-amber-500 transition-colors">Rondo 4x4 + 3 Comodines</p>
-                       <p className="text-[9px] font-bold text-white/20 uppercase mt-1.5 flex items-center gap-2">
-                         <LayoutGrid className="h-3 w-3" /> Bloque: Zona Central • ID: 042
-                       </p>
+                  {/* ALERTA DE LEAD-TIME PARA EL ENTRENADOR */}
+                  {viewRole === 'coach' && !canRequestChange(selectedMCC) && (
+                    <div className="p-4 bg-rose-500/10 border border-rose-500/30 rounded-2xl flex items-center gap-4">
+                       <ShieldAlert className="h-5 w-5 text-rose-500" />
+                       <p className="text-[10px] text-rose-400 font-black uppercase tracking-widest">Protocolo Inmutable: Sugerencia de cambio bloqueada (Lead-Time &lt; 7 días)</p>
                     </div>
-                    <div className="p-5 bg-amber-500/5 border border-amber-500/10 rounded-2xl hover:border-amber-500/40 cursor-grab active:cursor-grabbing transition-all group">
-                       <p className="text-[11px] font-black text-white uppercase italic group-hover:text-amber-500 transition-colors">Activación Coordinativa</p>
-                       <p className="text-[9px] font-bold text-white/20 uppercase mt-1.5 flex items-center gap-2">
-                         <Flame className="h-3 w-3" /> Bloque: Calentamiento • ID: 012
-                       </p>
-                    </div>
-                  </div>
+                  )}
 
-                  <div className="p-6 bg-amber-500/5 border border-amber-500/10 rounded-3xl flex items-start gap-4">
-                     <Info className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-                     <p className="text-[10px] text-white/40 leading-relaxed font-bold uppercase italic">
-                       Seleccione una sesión (SES_1, SES_2...) para configurar su estructura específica. Cada día de entrenamiento es un nodo táctico independiente.
-                     </p>
+                  {/* BLOQUES DE SESIÓN */}
+                  <div className="space-y-8">
+                    <SessionBlock 
+                      title="1. Calentamiento / Activación" 
+                      time={sessionTimes.warmup} 
+                      icon={Flame} 
+                      color="orange" 
+                      role={viewRole}
+                      canRequest={canRequestChange(selectedMCC)}
+                      assignedExercise="Activación Preventiva"
+                    />
+                    
+                    <SessionBlock 
+                      title="2. Zona Central (Ejercicios)" 
+                      time={sessionTimes.central} 
+                      icon={Dumbbell} 
+                      color="amber" 
+                      role={viewRole}
+                      canRequest={canRequestChange(selectedMCC)}
+                      assignedExercise="Rondo 4x4 + 3"
+                    />
+
+                    <SessionBlock 
+                      title="3. Vuelta a la Calma" 
+                      time={sessionTimes.cooldown} 
+                      icon={Wind} 
+                      color="blue" 
+                      role={viewRole}
+                      canRequest={canRequestChange(selectedMCC)}
+                      assignedExercise="Feedback y Estiramientos"
+                    />
                   </div>
                 </div>
+
+                {/* 2. BUSCADOR DE BIBLIOTECA (SOLO PARA EL DIRECTOR O SI HAY SOLICITUD ACTIVA) */}
+                {(viewRole === 'director' || (viewRole === 'coach' && canRequestChange(selectedMCC))) && (
+                  <div className="pt-12 border-t border-white/5 space-y-8">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Library className="h-5 w-5 text-amber-500" />
+                        <span className="text-[11px] font-black uppercase tracking-[0.3em] text-amber-500 italic">Buscador Filtrado por Etapa</span>
+                      </div>
+                      <Badge variant="outline" className="border-white/10 text-white/40 uppercase text-[8px] font-black tracking-widest">
+                        FILTRO: {currentTeam?.stage.toUpperCase()}
+                      </Badge>
+                    </div>
+                    
+                    <div className="relative">
+                      <Search className="absolute left-4 top-4 h-5 w-5 text-white/20" />
+                      <Input placeholder="BUSCAR EN BIBLIOTECA MANUAL..." className="pl-12 h-14 bg-white/5 border-white/10 rounded-2xl text-[11px] font-black uppercase focus:border-amber-500 transition-all" />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="p-5 bg-amber-500/5 border border-amber-500/10 rounded-2xl hover:border-amber-500/40 cursor-grab active:cursor-grabbing transition-all group">
+                         <p className="text-[11px] font-black text-white uppercase italic group-hover:text-amber-500 transition-colors">Ejercicio Aptitud {currentTeam?.stage}</p>
+                         <p className="text-[9px] font-bold text-white/20 uppercase mt-1.5 flex items-center gap-2">
+                           <ShieldCheck className="h-3 w-3 text-emerald-500" /> Sincronizado con Etapa
+                         </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="p-8 bg-black/60 border-t border-white/5 flex gap-4">
                 <SheetClose asChild>
-                  <Button variant="ghost" className="flex-1 h-16 border border-white/10 text-white/40 font-black uppercase text-[11px] tracking-widest rounded-2xl hover:bg-white/5 transition-all">CANCELAR</Button>
+                  <Button variant="ghost" className="flex-1 h-16 border border-white/10 text-white/40 font-black uppercase text-[11px] tracking-widest rounded-2xl hover:bg-white/5 transition-all">CERRAR</Button>
                 </SheetClose>
-                <Button onClick={handleSaveConfig} className="flex-[2] h-16 bg-amber-500 text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-2xl amber-glow hover:scale-[1.02] transition-all">GUARDAR_MICROCICLO</Button>
+                {viewRole === 'director' && (
+                  <Button onClick={handleSaveConfig} className="flex-[2] h-16 bg-amber-500 text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-2xl amber-glow hover:scale-[1.02] transition-all">SINC_CAMBIOS_MAESTROS</Button>
+                )}
               </div>
             </>
           )}
         </SheetContent>
       </Sheet>
+    </div>
+  );
+}
+
+function SessionBlock({ title, time, icon: Icon, color, role, canRequest, assignedExercise }: any) {
+  const [showSuggest, setShowSuggest] = useState(false);
+  const colorClass = color === 'orange' ? 'text-orange-500 border-orange-500/20 bg-orange-500/10' : 
+                     color === 'amber' ? 'text-amber-500 border-amber-500/20 bg-amber-500/10' : 
+                     'text-blue-500 border-blue-500/20 bg-blue-500/10';
+
+  return (
+    <div className="space-y-4 group">
+      <div className="flex items-center justify-between px-2">
+        <div className="flex items-center gap-3">
+          <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center border", colorClass)}>
+            <Icon className="h-5 w-5" />
+          </div>
+          <div>
+            <h4 className="text-xs font-black text-white uppercase tracking-widest">{title}</h4>
+            <p className={cn("text-[9px] font-bold uppercase italic opacity-60")}>Duración: {time} Minutos</p>
+          </div>
+        </div>
+        {role === 'coach' && canRequest && (
+          <Button onClick={() => setShowSuggest(true)} variant="ghost" className="h-8 text-[8px] font-black uppercase text-primary border border-primary/20 hover:bg-primary/10 rounded-lg">SUGERIR_CAMBIO</Button>
+        )}
+      </div>
+
+      <div className={cn(
+        "p-6 border-2 rounded-3xl transition-all relative overflow-hidden",
+        assignedExercise ? "bg-white/[0.02] border-white/5" : "border-dashed border-white/5 text-center"
+      )}>
+        {assignedExercise ? (
+          <div className="flex items-center justify-between">
+             <div className="flex items-center gap-4">
+                <div className="h-12 w-12 bg-black/40 border border-white/10 rounded-xl flex items-center justify-center">
+                   <LayoutGrid className="h-5 w-5 text-white/20" />
+                </div>
+                <div>
+                   <p className="text-xs font-black text-white uppercase italic">{assignedExercise}</p>
+                   <p className="text-[8px] font-bold text-white/20 uppercase tracking-widest">Biblioteca Manual • ID: 0XX</p>
+                </div>
+             </div>
+             {role === 'director' && (
+               <button className="p-2 hover:bg-rose-500/20 rounded-lg text-rose-500 transition-all"><Trash2 className="h-4 w-4" /></button>
+             )}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center gap-3">
+             <Plus className="h-5 w-5 text-white/10 group-hover:text-amber-500 transition-colors" />
+             <span className="text-[10px] font-black text-white/10 uppercase tracking-widest">Asignar Tarea Metodológica</span>
+          </div>
+        )}
+      </div>
+
+      {showSuggest && (
+        <div className="p-4 bg-primary/5 border border-primary/20 rounded-2xl animate-in zoom-in-95 space-y-4">
+           <div className="flex items-center gap-2">
+              <MessageSquareQuote className="h-3 w-3 text-primary" />
+              <span className="text-[9px] font-black text-primary uppercase">Motivo del Cambio</span>
+           </div>
+           <Input placeholder="EJ: EL GRUPO NECESITA MÁS RITMO..." className="h-10 bg-black/40 border-primary/20 text-[10px] uppercase font-bold text-primary" />
+           <div className="flex gap-2">
+              <Button onClick={() => setShowSuggest(false)} className="flex-1 h-8 bg-primary text-black text-[8px] font-black uppercase rounded-lg">ENVIAR_SOLICITUD</Button>
+              <Button onClick={() => setShowSuggest(false)} variant="ghost" className="h-8 text-[8px] font-black uppercase text-white/20 border border-white/5 rounded-lg">CANCELAR</Button>
+           </div>
+        </div>
+      )}
     </div>
   );
 }
