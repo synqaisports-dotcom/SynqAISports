@@ -1,12 +1,12 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Sparkles, Save, Loader2, LayoutGrid, ChevronLeft, Link as LinkIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { TacticalField, FieldType } from "@/components/board/TacticalField";
-import { BoardToolbar } from "@/components/board/BoardToolbar";
+import { BoardToolbar, DrawingTool } from "@/components/board/BoardToolbar";
 import { AssetPanel } from "@/components/board/AssetPanel";
 import { 
   Select, 
@@ -16,16 +16,55 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { useSearchParams, useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 export default function TrainingBoardPage() {
   const [isAiProcessing, setIsAiProcessing] = useState(false);
   const [fieldType, setFieldType] = useState<FieldType>("f11");
+  const [activeTool, setActiveTool] = useState<DrawingTool>("freehand");
+  const [currentColor, setCurrentColor] = useState("#facc15"); // Ámbar por defecto para estudio
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const router = useRouter();
 
+  // Canvas refs
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const isDrawing = useRef(false);
+  const lastPoint = useRef<{ x: number; y: number } | null>(null);
+
   // PROTOCOLO_CONTEXTO_v6.4: Detectar si el origen es el formulario de biblioteca
   const isFromForm = searchParams.get("source") === "form";
+
+  const initCanvas = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const parent = canvas.parentElement;
+    if (!parent) return;
+    
+    canvas.width = parent.clientWidth;
+    canvas.height = parent.clientHeight;
+    
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.lineWidth = 3;
+    }
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !canvas.parentElement) return;
+
+    const observer = new ResizeObserver(() => {
+      initCanvas();
+    });
+
+    observer.observe(canvas.parentElement);
+    initCanvas();
+
+    return () => observer.disconnect();
+  }, [initCanvas]);
 
   const handleAiSync = () => {
     setIsAiProcessing(true);
@@ -44,7 +83,6 @@ export default function TrainingBoardPage() {
         title: "DIAGRAMA_VINCULADO",
         description: "El dibujo se ha adjuntado a la ficha de tarea maestra. Volviendo al formulario...",
       });
-      // Simular retorno al formulario
       setTimeout(() => router.back(), 1500);
     } else {
       toast({
@@ -52,6 +90,50 @@ export default function TrainingBoardPage() {
         description: "El ejercicio se ha guardado en tu biblioteca personal.",
       });
     }
+  };
+
+  const clearCanvas = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+  };
+
+  const startDrawing = (e: React.PointerEvent) => {
+    if (activeTool === 'select' || !canvasRef.current) return;
+    isDrawing.current = true;
+    const rect = canvasRef.current.getBoundingClientRect();
+    lastPoint.current = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    };
+  };
+
+  const draw = (e: React.PointerEvent) => {
+    if (!isDrawing.current || activeTool === 'select' || !canvasRef.current) return;
+    const ctx = canvasRef.current.getContext('2d');
+    if (!ctx) return;
+
+    const rect = canvasRef.current.getBoundingClientRect();
+    const currentPoint = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    };
+
+    if (activeTool === 'freehand') {
+      ctx.beginPath();
+      ctx.strokeStyle = currentColor;
+      ctx.moveTo(lastPoint.current!.x, lastPoint.current!.y);
+      ctx.lineTo(currentPoint.x, currentPoint.y);
+      ctx.stroke();
+      lastPoint.current = currentPoint;
+    }
+    // Implementación de formas geométricas y flechas se manejará con una capa de "ghosting" en el futuro
+  };
+
+  const stopDrawing = () => {
+    isDrawing.current = false;
+    lastPoint.current = null;
   };
 
   return (
@@ -104,16 +186,36 @@ export default function TrainingBoardPage() {
             className="h-11 bg-amber-500 text-black font-black uppercase text-[10px] tracking-widest px-6 lg:px-8 rounded-xl amber-glow border-none"
           >
             <Save className="h-4 w-4 sm:mr-2" /> 
-            <span className="hidden sm:inline">{isFromForm ? "Vincular a Tarea" : "Guardar"}</span>
+            <span className="hidden sm:inline">{isFromForm ? "Vincular a Tarea" : "Guardar Táctica"}</span>
           </Button>
         </div>
       </header>
 
       <div className="flex-1 flex overflow-hidden relative">
-        <BoardToolbar theme="amber" className="absolute left-4 top-1/2 -translate-y-1/2 hidden sm:flex" />
+        <BoardToolbar 
+          theme="amber" 
+          activeTool={activeTool}
+          onToolSelect={setActiveTool}
+          activeColor={currentColor}
+          onColorSelect={setCurrentColor}
+          onClear={clearCanvas}
+          className="absolute left-4 top-1/2 -translate-y-1/2 hidden sm:flex" 
+        />
 
-        <main className="flex-1 flex items-center justify-center relative overflow-hidden">
-          <TacticalField theme="amber" fieldType={fieldType} />
+        <main className="flex-1 flex items-center justify-center relative overflow-hidden touch-none">
+          <TacticalField theme="amber" fieldType={fieldType}>
+            <canvas 
+              ref={canvasRef}
+              className={cn(
+                "absolute inset-0 z-30",
+                activeTool === 'select' ? "pointer-events-none" : "pointer-events-auto cursor-crosshair"
+              )}
+              onPointerDown={startDrawing}
+              onPointerMove={draw}
+              onPointerUp={stopDrawing}
+              onPointerLeave={stopDrawing}
+            />
+          </TacticalField>
         </main>
 
         <AssetPanel 

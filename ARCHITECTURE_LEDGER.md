@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v6.4 (Consolidated Master Protocol)
+# SynqSports Pro - ARCHITECTURE_LEDGER v6.5 (Consolidated Master Protocol)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -41,7 +41,7 @@ Los roles operan bajo un sistema de ranking numérico (`rank`) que determina la 
 - **Planificador Maestro**: `/methodology/session-planner` (Diseño de macrociclo y validación de cambios).
 - **Objetivos Tácticos**: `/methodology/objectives` (Hoja de ruta por categorías).
 
-## 3. Protocolos de Bibliotecas (v6.4)
+## 3. Protocolos de Bibliotecas (v6.5)
 
 ### 3.1. Ecosistema de Datos en Tres Niveles
 1. **Nivel 1 (Global)**: Recolección de datos técnicos anonimizados para entrenamiento IA en el Almacén Neural.
@@ -78,13 +78,16 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 - **Sugerencias**: El Entrenador puede proponer cambios ("Sugerir Cambio").
 - **Bloqueo de Seguridad**: Las solicitudes de cambio se bloquean automáticamente si faltan menos de **7 días** para la sesión.
 
-## 5. Protocolo de Pizarra y Dibujo (v2.0)
+## 5. Protocolo de Pizarra y Dibujo (v2.1)
 
 ### 5.1. Motor de Dibujo Suavizado
 - Uso de lógica de interpolación para trazos fluidos en el Canvas e independencia de resolución.
 
 ### 5.2. Esquema JSON Maestro (Independencia de Dispositivo)
 - **Coordenadas Decimales**: Todas las posiciones de fichas y trazos se guardan como valores de `0.000` a `1.000`. Garantiza fidelidad visual en cualquier dispositivo.
+
+### 5.3. Herramientas de Dibujo Avanzadas (v6.5)
+- **Modos de Trazo**: Implementación de Dibujo Libre, Rectángulos, Círculos, Flechas de Dirección y Flechas de Doble Dirección para diagramación técnica de alta precisión.
 
 ## 6. Gestión de Espacios e Instalaciones
 - **Motor Geométrico**: Subdivisiones de campos (1, 2 o 4 zonas) calculadas en porcentajes.
