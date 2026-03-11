@@ -25,7 +25,8 @@ import {
   Settings2,
   X,
   Palette,
-  Layers
+  Layers,
+  Library
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -71,6 +72,7 @@ function TrainingBoardContent() {
   const [activeTool, setActiveTool] = useState<DrawingTool>("select");
   const [currentColor, setCurrentColor] = useState("#facc15");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -343,6 +345,7 @@ function TrainingBoardContent() {
 
     if (clickedEl) {
       setSelectedId(clickedEl.id);
+      setIsLibraryOpen(false); // Priorizar propiedades
       setActiveTool('select');
       interactionMode.current = 'dragging';
     } else {
@@ -469,6 +472,7 @@ function TrainingBoardContent() {
   };
 
   const selectedElement = elements.find(e => e.id === selectedId);
+  const isPanelOpen = !!selectedId || isLibraryOpen;
 
   return (
     <div className="h-full flex flex-col bg-[#04070c] overflow-hidden">
@@ -533,12 +537,26 @@ function TrainingBoardContent() {
         <BoardToolbar 
           theme="amber" 
           activeTool={activeTool}
-          onToolSelect={setActiveTool}
+          onToolSelect={(tool) => {
+            setActiveTool(tool);
+            if (tool !== 'select') setSelectedId(null);
+          }}
           activeColor={currentColor}
           onColorSelect={setCurrentColor}
           onClear={() => { setElements([]); setSelectedId(null); }}
           className="absolute left-4 top-1/2 -translate-y-1/2 hidden sm:flex" 
         />
+
+        {/* Botón flotante para biblioteca cuando el panel está cerrado */}
+        {!isPanelOpen && (
+          <button 
+            onClick={() => setIsLibraryOpen(true)}
+            className="absolute left-4 bottom-24 h-12 w-12 bg-black/60 border border-amber-500/30 text-amber-500 rounded-2xl flex items-center justify-center hover:bg-amber-500 hover:text-black transition-all animate-in fade-in duration-500"
+            title="Abrir Biblioteca de Activos"
+          >
+            <Library className="h-5 w-5" />
+          </button>
+        )}
 
         <main className="flex-1 flex items-center justify-center relative overflow-hidden touch-none">
           <TacticalField theme="amber" fieldType={fieldType} showLanes={showLanes}>
@@ -556,8 +574,11 @@ function TrainingBoardContent() {
           </TacticalField>
         </main>
 
-        {/* PROPIEDADES Y ACTIVOS (SIDE PANEL) */}
-        <aside className="w-80 bg-black/60 backdrop-blur-3xl border-l border-white/10 flex flex-col z-[60] shadow-[-10px_0_40px_rgba(0,0,0,0.5)]">
+        {/* PANEL DERECHO DINÁMICO (CONTEXTUAL) */}
+        <aside className={cn(
+          "w-80 bg-black/60 backdrop-blur-3xl border-l border-white/10 flex flex-col z-[60] shadow-[-10px_0_40px_rgba(0,0,0,0.5)] transition-transform duration-500 ease-in-out",
+          isPanelOpen ? "translate-x-0" : "translate-x-full"
+        )}>
           {selectedElement ? (
             <div className="flex-1 flex flex-col animate-in slide-in-from-right duration-300">
               <div className="p-6 border-b border-white/5 flex items-center justify-between bg-amber-500/5">
@@ -565,10 +586,10 @@ function TrainingBoardContent() {
                   <Settings2 className="h-4 w-4 text-amber-500" />
                   <h3 className="text-[11px] font-black uppercase tracking-widest text-white">Propiedades</h3>
                 </div>
-                <button onClick={() => setSelectedId(null)} className="p-1.5 hover:bg-white/5 rounded-lg text-white/40"><X className="h-4 w-4" /></button>
+                <button onClick={() => setSelectedId(null)} className="p-1.5 hover:bg-white/5 rounded-lg text-white/40 transition-all"><X className="h-4 w-4" /></button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-6 space-y-8">
+              <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
                 <section className="space-y-4">
                   <div className="flex items-center gap-2">
                     <Palette className="h-3 w-3 text-amber-500/40" />
@@ -643,14 +664,15 @@ function TrainingBoardContent() {
               </div>
             </div>
           ) : (
-            <div className="flex-1 flex flex-col">
-              <div className="p-6 border-b border-white/5">
+            <div className="flex-1 flex flex-col animate-in slide-in-from-right duration-300">
+              <div className="p-6 border-b border-white/5 flex items-center justify-between">
                 <h3 className="text-[11px] font-black uppercase tracking-widest text-amber-500/60">Biblioteca de Activos</h3>
+                <button onClick={() => setIsLibraryOpen(false)} className="p-1.5 hover:bg-white/5 rounded-lg text-white/40 transition-all"><X className="h-4 w-4" /></button>
               </div>
               <AssetPanel 
                 theme="amber" 
                 type="training" 
-                className="flex-1 bg-transparent border-none rounded-none w-full" 
+                className="flex-1 bg-transparent border-none rounded-none w-full shadow-none" 
               />
             </div>
           )}

@@ -1,6 +1,4 @@
 
-
-
 # SynqSports Pro - ARCHITECTURE_LEDGER v7.4 (Interfaz Ergonómica)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
@@ -103,7 +101,7 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
     - **Dibujo Libre**: Se omiten handles de redimensionado.
 - **Análisis Espacial (v7.3.1)**:
     - **Carriles Tácticos**: Implementación de líneas de guía horizontales para dividir el campo en Carril Superior, Central e Inferior, activables mediante toggle.
-    - **Geometría de Áreas**: Carriles ajustados al **20%** y **80%** de la altura para alineación con el área grande y visibilidad incrementada (`white/30`).
+    - **Geometría de Áreas**: Carriles adjusted al **20%** y **80%** de la altura para alineación con el área grande y visibilidad incrementada (`white/30`).
 
 ## 6. Gestión de Espacios e Instalaciones
 - **Motor Geométrico**: Subdivisiones de campos (1, 2 o 4 zonas) calculadas en porcentajes.
@@ -116,5 +114,3 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 ## 8. UX y Calidad Visual
 - **Glow Reactivo**: Efectos de resplandor neón en elementos activos.
 - **Scroll Táctico**: Barras de desplazamiento siempre visibles con el color de identidad del club.
-
-```
