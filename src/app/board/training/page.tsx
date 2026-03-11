@@ -27,7 +27,9 @@ import {
   Palette,
   Undo2,
   Redo2,
-  Video
+  Video,
+  ArrowUpRight,
+  MousePointerClick
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,6 +57,7 @@ interface DrawingElement {
   id: string;
   type: DrawingTool;
   points: Point[];
+  controlPoint?: Point; // Para curvatura de flechas/zigzag
   color: string;
   rotation: number;
   lineStyle: 'solid' | 'dashed';
@@ -84,12 +87,11 @@ function TrainingBoardContent() {
   const router = useRouter();
 
   const [elements, setElements] = useState<DrawingElement[]>([]);
-  const currentElement = useRef<DrawingElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawing = useRef(false);
   const startPoint = useRef<Point | null>(null);
   const lastPoint = useRef<Point | null>(null);
-  const interactionMode = useRef<'drawing' | 'resizing' | 'rotating' | 'dragging' | 'none'>('none');
+  const interactionMode = useRef<'drawing' | 'resizing' | 'rotating' | 'dragging' | 'curving' | 'none'>('none');
   const activeHandleIndex = useRef<number | null>(null);
 
   const isFromForm = searchParams.get("source") === "form";
@@ -100,8 +102,6 @@ function TrainingBoardContent() {
     const b = parseInt(hex.slice(5, 7), 16);
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
-
-  const getDistance = (p1: Point, p2: Point) => Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
 
   const rotatePoint = (point: Point, center: Point, angle: number): Point => {
     const cos = Math.cos(angle);
@@ -116,17 +116,10 @@ function TrainingBoardContent() {
 
   const getElementBounds = (element: DrawingElement, widthPx: number, heightPx: number) => {
     const p = element.points.map(pt => ({ x: pt.x * widthPx, y: pt.y * heightPx }));
-    if (element.type === 'freehand') {
-      const minX = Math.min(...p.map(pt => pt.x));
-      const minY = Math.min(...p.map(pt => pt.y));
-      const maxX = Math.max(...p.map(pt => pt.x));
-      const maxY = Math.max(...p.map(pt => pt.y));
-      return { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY, centerX: (minX + maxX) / 2, centerY: (minY + maxY) / 2 };
-    }
-    const minX = Math.min(p[0].x, p[1].x);
-    const minY = Math.min(p[0].y, p[1].y);
-    const maxX = Math.max(p[0].x, p[1].x);
-    const maxY = Math.max(p[0].y, p[1].y);
+    const minX = Math.min(...p.map(pt => pt.x));
+    const minY = Math.min(...p.map(pt => pt.y));
+    const maxX = Math.max(...p.map(pt => pt.x));
+    const maxY = Math.max(...p.map(pt => pt.y));
     return { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY, centerX: (minX + maxX) / 2, centerY: (minY + maxY) / 2 };
   };
 
@@ -190,30 +183,36 @@ function TrainingBoardContent() {
         ctx.fill();
         ctx.stroke();
         break;
-      case 'zigzag':
-        ctx.beginPath();
-        const dist = Math.sqrt(Math.pow(p[1].x - p[0].x, 2) + Math.pow(p[1].y - p[0].y, 2));
-        const angle = Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x);
-        const amp = 10;
-        const wlen = 40; 
-        ctx.moveTo(p[0].x, p[0].y);
-        for (let d = 0; d <= dist; d += 2) {
-          const x = p[0].x + Math.cos(angle) * d;
-          const y = p[0].y + Math.sin(angle) * d;
-          const perp = angle + Math.PI / 2;
-          const offset = Math.sin(d * (Math.PI * 2 / wlen)) * amp;
-          ctx.lineTo(x + Math.cos(perp) * offset, y + Math.sin(perp) * offset);
-        }
-        ctx.stroke();
-        break;
       case 'arrow':
       case 'double-arrow':
+      case 'zigzag':
         ctx.beginPath();
-        ctx.moveTo(p[0].x, p[0].y);
-        ctx.lineTo(p[1].x, p[1].y);
+        if (element.controlPoint) {
+          const cp = { x: element.controlPoint.x * widthPx, y: element.controlPoint.y * heightPx };
+          if (element.type === 'zigzag') {
+            // Zigzag curvo simplificado
+            ctx.moveTo(p[0].x, p[0].y);
+            ctx.quadraticCurveTo(cp.x, cp.y, p[1].x, p[1].y);
+          } else {
+            ctx.moveTo(p[0].x, p[0].y);
+            ctx.quadraticCurveTo(cp.x, cp.y, p[1].x, p[1].y);
+          }
+        } else {
+          ctx.moveTo(p[0].x, p[0].y);
+          ctx.lineTo(p[1].x, p[1].y);
+        }
         ctx.stroke();
+
+        // Cabeza de flecha (orientada según la curva al final)
         const head = 15;
-        const a = Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x);
+        let angle;
+        if (element.controlPoint) {
+          const cp = { x: element.controlPoint.x * widthPx, y: element.controlPoint.y * heightPx };
+          angle = Math.atan2(p[1].y - cp.y, p[1].x - cp.x);
+        } else {
+          angle = Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x);
+        }
+        
         ctx.setLineDash([]);
         const drawH = (tx: number, ty: number, ang: number) => {
           ctx.beginPath();
@@ -223,8 +222,13 @@ function TrainingBoardContent() {
           ctx.lineTo(tx - head * Math.cos(ang + Math.PI / 6), ty - head * Math.sin(ang + Math.PI / 6));
           ctx.stroke();
         };
-        drawH(p[1].x, p[1].y, a);
-        if (element.type === 'double-arrow') drawH(p[0].x, p[0].y, a + Math.PI);
+        drawH(p[1].x, p[1].y, angle);
+        if (element.type === 'double-arrow') {
+          const startAngle = element.controlPoint 
+            ? Math.atan2(p[0].y - (element.controlPoint.x * widthPx), p[0].x - (element.controlPoint.y * heightPx))
+            : angle + Math.PI;
+          drawH(p[0].x, p[0].y, startAngle);
+        }
         break;
       case 'cross-arrow':
         ctx.save();
@@ -352,7 +356,7 @@ function TrainingBoardContent() {
         break;
     }
 
-    if (isSelected && element.type !== 'freehand') {
+    if (isSelected) {
       ctx.restore(); ctx.save();
       ctx.translate(centerX, centerY); ctx.rotate(element.rotation); ctx.translate(-centerX, -centerY);
       ctx.strokeStyle = '#ffffffaa'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]);
@@ -365,10 +369,22 @@ function TrainingBoardContent() {
         { x: minX - pad, y: maxY + pad }, { x: centerX, y: maxY + pad }, { x: maxX + pad, y: maxY + pad },
       ];
       handles.forEach(h => { ctx.beginPath(); ctx.arc(h.x, h.y, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
+      
+      // Nodo de rotación
       const rotY = minY - pad - 40;
       ctx.beginPath(); ctx.moveTo(centerX, minY - pad); ctx.lineTo(centerX, rotY); ctx.stroke();
       ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(centerX, rotY, 8, 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.stroke();
+
+      // Nodo de Curvatura (Para flechas y zigzags)
+      if (element.controlPoint && ['arrow', 'double-arrow', 'zigzag'].includes(element.type)) {
+        const cp = { x: element.controlPoint.x * widthPx, y: element.controlPoint.y * heightPx };
+        ctx.restore(); ctx.save(); // Salir de rotación para handle de curva global
+        ctx.setLineDash([4, 4]); ctx.strokeStyle = '#3b82f6aa';
+        ctx.beginPath(); ctx.moveTo(centerX, centerY); ctx.lineTo(cp.x, cp.y); ctx.stroke();
+        ctx.fillStyle = '#3b82f6'; ctx.beginPath(); ctx.arc(cp.x, cp.y, 8, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+      }
     }
     ctx.restore();
   }, [hexToRgba]);
@@ -379,7 +395,6 @@ function TrainingBoardContent() {
     if (!ctx || !canvas) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Jerarquía de capas: Dibujos primero, Materiales después
     const sortedElements = [...elements].sort((a, b) => {
       const aMat = isMaterial(a.type);
       const bMat = isMaterial(b.type);
@@ -389,7 +404,6 @@ function TrainingBoardContent() {
     });
 
     sortedElements.forEach(el => drawElement(ctx, el, selectedIds.includes(el.id)));
-    if (currentElement.current) drawElement(ctx, currentElement.current, false);
   }, [elements, selectedIds, drawElement]);
 
   useEffect(() => {
@@ -413,14 +427,15 @@ function TrainingBoardContent() {
   const addElementAtCenter = (tool: DrawingTool) => {
     const pNum = tool === 'player' ? elements.filter(e => e.type === 'player').length + 1 : undefined;
     
-    // Proporciones relativas (decimales)
-    const defW = tool === 'ladder' ? 0.15 : (tool === 'minigoal' ? 0.1 : tool === 'barrier' ? 0.12 : 0.05);
-    const defH = tool === 'ladder' ? 0.05 : (tool === 'minigoal' ? 0.08 : tool === 'barrier' ? 0.12 : 0.05);
+    const isMat = isMaterial(tool);
+    const defW = tool === 'ladder' ? 0.15 : (tool === 'minigoal' || tool === 'cross-arrow' ? 0.1 : tool === 'barrier' ? 0.12 : 0.05);
+    const defH = tool === 'ladder' ? 0.05 : (tool === 'minigoal' || tool === 'cross-arrow' ? 0.08 : tool === 'barrier' ? 0.12 : 0.05);
     
     const newElement: DrawingElement = { 
       id: `el-${Date.now()}`, 
       type: tool, 
       points: [{ x: 0.5 - defW/2, y: 0.5 - defH/2 }, { x: 0.5 + defW/2, y: 0.5 + defH/2 }],
+      controlPoint: ['arrow', 'double-arrow', 'zigzag'].includes(tool) ? { x: 0.5, y: 0.45 } : undefined,
       color: currentColor, 
       rotation: 0, 
       lineStyle: 'solid', 
@@ -432,6 +447,15 @@ function TrainingBoardContent() {
     setElements(prev => [...prev, newElement]);
     setSelectedIds([newElement.id]);
     setActiveTool('select');
+
+    if (tool === 'text') {
+      setTimeout(() => {
+        const val = window.prompt("INTRODUZCA TEXTO TÁCTICO:", "TEXTO TÁCTICO");
+        if (val) {
+          setElements(prev => prev.map(el => el.id === newElement.id ? { ...el, text: val.toUpperCase() } : el));
+        }
+      }, 100);
+    }
   };
 
   const handlePointerDown = (e: React.PointerEvent) => {
@@ -446,13 +470,23 @@ function TrainingBoardContent() {
     const widthPx = rect.width;
     const heightPx = rect.height;
 
+    // Detectar interacción con handles si solo hay uno seleccionado
     if (selectedIds.length === 1) {
       const el = elements.find(e => e.id === selectedIds[0]);
-      if (el && el.type !== 'freehand') {
+      if (el) {
         const bounds = getElementBounds(el, widthPx, heightPx);
         const { centerX, centerY, minX, minY } = bounds;
         const pad = 10;
         
+        // Handle Curvatura (Fuera de rotación)
+        if (el.controlPoint) {
+          const cpPx = { x: el.controlPoint.x * widthPx, y: el.controlPoint.y * heightPx };
+          const distToCP = Math.sqrt(Math.pow(point.x * widthPx - cpPx.x, 2) + Math.pow(point.y * heightPx - cpPx.y, 2));
+          if (distToCP < 20) {
+            interactionMode.current = 'curving'; return;
+          }
+        }
+
         const localPoint = rotatePoint(
           { x: point.x * widthPx, y: point.y * heightPx }, 
           { x: centerX, y: centerY }, 
@@ -480,10 +514,10 @@ function TrainingBoardContent() {
       }
     }
 
+    // Selección de objetos
     const clicked = [...elements].reverse().find(el => {
       const bounds = getElementBounds(el, widthPx, heightPx);
       const local = rotatePoint({ x: point.x * widthPx, y: point.y * heightPx }, { x: bounds.centerX, y: bounds.centerY }, -el.rotation);
-      if (el.type === 'freehand') return el.points.some(p => Math.sqrt(Math.pow(point.x - p.x, 2) + Math.pow(point.y - p.y, 2)) < 0.02);
       return local.x >= bounds.minX - 10 && local.x <= bounds.maxX + 10 && local.y >= bounds.minY - 10 && local.y <= bounds.maxY + 10;
     });
 
@@ -495,16 +529,7 @@ function TrainingBoardContent() {
       }
       setActiveTool('select'); interactionMode.current = 'dragging';
     } else {
-      if (activeTool !== 'select') {
-        setSelectedIds([]); interactionMode.current = 'drawing';
-        currentElement.current = { 
-          id: `el-${Date.now()}`, type: activeTool, points: [point, point],
-          color: currentColor, rotation: 0, lineStyle: 'solid', opacity: 1.0,
-          text: activeTool === 'text' ? "TEXTO TÁCTICO" : undefined
-        };
-      } else {
-        setSelectedIds([]);
-      }
+      setSelectedIds([]);
     }
     redrawAll();
   };
@@ -519,19 +544,16 @@ function TrainingBoardContent() {
     const widthPx = rect.width;
     const heightPx = rect.height;
 
-    if (interactionMode.current === 'drawing' && currentElement.current) {
-      if (activeTool === 'freehand') currentElement.current.points.push(point);
-      else currentElement.current.points[1] = point;
-    } else if (interactionMode.current === 'resizing' && selectedIds.length === 1 && activeHandleIndex.current !== null) {
+    if (interactionMode.current === 'resizing' && selectedIds.length === 1 && activeHandleIndex.current !== null) {
       setElements(prev => prev.map(el => {
         if (el.id !== selectedIds[0]) return el;
         const bounds = getElementBounds(el, widthPx, heightPx);
         const localPoint = rotatePoint({ x: point.x * widthPx, y: point.y * heightPx }, { x: bounds.centerX, y: bounds.centerY }, -el.rotation);
         const next = [...el.points];
         const h = activeHandleIndex.current!;
-        const material = isMaterial(el.type);
-
-        if (material) {
+        
+        // Mantener escala proporcional para materiales
+        if (isMaterial(el.type)) {
           const ratio = bounds.width / bounds.height;
           const dx = Math.abs(localPoint.x - bounds.centerX) * 2;
           const dy = dx / ratio;
@@ -549,6 +571,8 @@ function TrainingBoardContent() {
         }
         return { ...el, points: next };
       }));
+    } else if (interactionMode.current === 'curving' && selectedIds.length === 1) {
+      setElements(prev => prev.map(el => el.id === selectedIds[0] ? { ...el, controlPoint: point } : el));
     } else if (interactionMode.current === 'rotating' && selectedIds.length === 1) {
       const el = elements.find(e => e.id === selectedIds[0]);
       if (el) {
@@ -558,26 +582,34 @@ function TrainingBoardContent() {
       }
     } else if (interactionMode.current === 'dragging' && selectedIds.length > 0 && lastPoint.current) {
       const dx = point.x - lastPoint.current.x; const dy = point.y - lastPoint.current.y;
-      setElements(prev => prev.map(el => selectedIds.includes(el.id) ? { ...el, points: el.points.map(p => ({ x: p.x + dx, y: p.y + dy })) } : el));
+      setElements(prev => prev.map(el => {
+        if (!selectedIds.includes(el.id)) return el;
+        const next = { ...el, points: el.points.map(p => ({ x: p.x + dx, y: p.y + dy })) };
+        if (el.controlPoint) next.controlPoint = { x: el.controlPoint.x + dx, y: el.controlPoint.y + dy };
+        return next;
+      }));
       lastPoint.current = point;
     }
     redrawAll();
   };
 
   const handlePointerUp = () => {
-    if (!isDrawing.current) return;
-    isDrawing.current = false;
-    if (interactionMode.current === 'drawing' && currentElement.current) {
-      setElements(prev => [...prev, currentElement.current!]);
-      setSelectedIds([currentElement.current.id]);
-      setActiveTool('select');
-    }
-    currentElement.current = null; interactionMode.current = 'none'; activeHandleIndex.current = null;
+    isDrawing.current = false; interactionMode.current = 'none'; activeHandleIndex.current = null;
   };
 
   const handleSave = () => {
     toast({ title: isFromForm ? "DIAGRAMA_VINCULADO" : "DIAGRAMA_GUARDADO", description: "Ejercicio sincronizado correctamente." });
     if (isFromForm) setTimeout(() => router.back(), 1500);
+  };
+
+  const handleEditText = () => {
+    const el = elements.find(e => e.id === selectedIds[0]);
+    if (el && el.type === 'text') {
+      const val = window.prompt("EDITAR TEXTO TÁCTICO:", el.text);
+      if (val !== null) {
+        setElements(prev => prev.map(e => e.id === el.id ? { ...e, text: val.toUpperCase() } : e));
+      }
+    }
   };
 
   const selectedElements = elements.filter(e => selectedIds.includes(e.id));
@@ -590,7 +622,7 @@ function TrainingBoardContent() {
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-amber-500 animate-pulse" />
-              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Precision_v9.4</span>
+              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Precision_v9.5</span>
             </div>
             <h1 className="text-lg lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase leading-none">Estudio Élite</h1>
           </div>
@@ -636,7 +668,7 @@ function TrainingBoardContent() {
 
                 {selectedElements.length === 1 && (
                   <>
-                    {selectedElements[0].type !== 'freehand' && (
+                    {!isMaterial(selectedElements[0].type) && (
                       <Button 
                         variant="outline" size="sm" 
                         className={cn("h-9 border-white/10 text-[9px] font-black uppercase", selectedElements[0].lineStyle === 'dashed' ? 'bg-amber-500 text-black' : 'text-white/40')}
@@ -646,11 +678,9 @@ function TrainingBoardContent() {
                       </Button>
                     )}
                     {selectedElements[0].type === 'text' && (
-                      <Input 
-                        value={selectedElements[0].text || ""} 
-                        onChange={(e) => setElements(prev => prev.map(el => el.id === selectedIds[0] ? {...el, text: e.target.value.toUpperCase()} : el))} 
-                        className="h-9 w-32 bg-black/40 border-amber-500/20 text-amber-500 font-black text-[10px] rounded-lg" 
-                      />
+                      <Button variant="outline" size="sm" onClick={handleEditText} className="h-9 border-amber-500/20 bg-amber-500/5 text-amber-500 font-black uppercase text-[9px]">
+                        <Pencil className="h-3 w-3 mr-2" /> Editar Texto
+                      </Button>
                     )}
                     {selectedElements[0].type === 'player' && (
                       <Input 
@@ -687,10 +717,10 @@ function TrainingBoardContent() {
 
         <div className="absolute bottom-6 left-0 right-0 flex justify-center items-end gap-12 px-12 z-50 pointer-events-none">
           <div className="pointer-events-auto">
-            <BoardToolbar theme="amber" variant="materials" orientation="horizontal" activeTool={activeTool} onToolSelect={(tool) => { if (tool !== 'select') addElementAtCenter(tool); setSelectedIds([]); }} className="border-2 shadow-2xl" />
+            <BoardToolbar theme="amber" variant="materials" orientation="horizontal" activeTool={activeTool} onToolSelect={(tool) => { addElementAtCenter(tool); setSelectedIds([]); }} className="border-2 shadow-2xl" />
           </div>
           <div className="pointer-events-auto">
-            <BoardToolbar theme="amber" variant="training" orientation="horizontal" activeTool={activeTool} onToolSelect={(tool) => { setActiveTool(tool); setSelectedIds([]); }} onClear={() => { setElements([]); setSelectedIds([]); }} className="border-2 shadow-2xl" />
+            <BoardToolbar theme="amber" variant="training" orientation="horizontal" activeTool={activeTool} onToolSelect={(tool) => { if (tool === 'select') { setActiveTool('select'); setSelectedIds([]); } else { addElementAtCenter(tool); } }} onClear={() => { setElements([]); setSelectedIds([]); }} className="border-2 shadow-2xl" />
           </div>
         </div>
       </div>
