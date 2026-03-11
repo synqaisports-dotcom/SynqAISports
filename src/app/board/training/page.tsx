@@ -26,7 +26,8 @@ import {
   X,
   Palette,
   Layers,
-  Library
+  Library,
+  Settings
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -80,6 +81,7 @@ function TrainingBoardContent() {
   const [currentColor, setCurrentColor] = useState("#facc15");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+  const [isPropertiesOpen, setIsPropertiesOpen] = useState(false);
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -352,12 +354,12 @@ function TrainingBoardContent() {
 
     if (clickedEl) {
       setSelectedId(clickedEl.id);
-      setIsLibraryOpen(false); 
       setActiveTool('select');
       interactionMode.current = 'dragging';
     } else {
       if (activeTool !== 'select') {
         setSelectedId(null);
+        setIsPropertiesOpen(false);
         interactionMode.current = 'drawing';
         currentElement.current = { 
           id: `el-${Date.now()}`, 
@@ -369,6 +371,7 @@ function TrainingBoardContent() {
         };
       } else {
         setSelectedId(null);
+        setIsPropertiesOpen(false);
         interactionMode.current = 'none';
       }
     }
@@ -442,7 +445,10 @@ function TrainingBoardContent() {
 
   const deleteElement = (id: string) => {
     setElements(prev => prev.filter(el => el.id !== id));
-    if (selectedId === id) setSelectedId(null);
+    if (selectedId === id) {
+      setSelectedId(null);
+      setIsPropertiesOpen(false);
+    }
   };
 
   const duplicateElement = (id: string) => {
@@ -479,7 +485,18 @@ function TrainingBoardContent() {
   };
 
   const selectedElement = elements.find(e => e.id === selectedId);
-  const isSheetOpen = !!selectedId || isLibraryOpen;
+  const isSheetOpen = isPropertiesOpen || isLibraryOpen;
+
+  // Cálculo de posición del botón flotante de acciones
+  const getActionTriggerPosition = () => {
+    if (!selectedElement) return null;
+    const p = selectedElement.points;
+    const centerX = (p[0].x + (p[1]?.x || p[0].x)) / 2;
+    const minY = Math.min(...p.map(pt => pt.y));
+    return { x: centerX, y: minY - 40 };
+  };
+
+  const triggerPos = getActionTriggerPosition();
 
   return (
     <div className="h-full flex flex-col bg-[#04070c] overflow-hidden">
@@ -546,11 +563,14 @@ function TrainingBoardContent() {
           activeTool={activeTool}
           onToolSelect={(tool) => {
             setActiveTool(tool);
-            if (tool !== 'select') setSelectedId(null);
+            if (tool !== 'select') {
+              setSelectedId(null);
+              setIsPropertiesOpen(false);
+            }
           }}
           activeColor={currentColor}
           onColorSelect={setCurrentColor}
-          onClear={() => { setElements([]); setSelectedId(null); }}
+          onClear={() => { setElements([]); setSelectedId(null); setIsPropertiesOpen(false); }}
           className="absolute left-4 top-1/2 -translate-y-1/2 hidden sm:flex" 
         />
 
@@ -577,12 +597,33 @@ function TrainingBoardContent() {
               onPointerUp={handlePointerUp}
               onPointerLeave={handlePointerUp}
             />
+
+            {/* Gatillo de Acciones Flotante (PROXIMIDAD) */}
+            {selectedId && triggerPos && !isPropertiesOpen && (
+              <div 
+                className="absolute z-[100] transition-all duration-300 animate-in fade-in zoom-in-95 pointer-events-auto"
+                style={{ left: triggerPos.x, top: triggerPos.y, transform: 'translateX(-50%)' }}
+              >
+                <button
+                  onClick={() => setIsPropertiesOpen(true)}
+                  className="h-10 w-10 bg-amber-500 text-black rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(245,158,11,0.5)] hover:scale-110 active:scale-95 transition-all amber-glow"
+                  title="Abrir Propiedades"
+                >
+                  <Settings className="h-5 w-5 animate-spin-slow" />
+                </button>
+              </div>
+            )}
           </TacticalField>
         </main>
 
-        <Sheet open={isSheetOpen} onOpenChange={(open) => { if(!open) { setSelectedId(null); setIsLibraryOpen(false); } }}>
+        <Sheet open={isSheetOpen} onOpenChange={(open) => { 
+          if(!open) { 
+            setIsPropertiesOpen(false); 
+            setIsLibraryOpen(false); 
+          } 
+        }}>
           <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-amber-500/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
-            {selectedElement ? (
+            {isPropertiesOpen && selectedElement ? (
               <div className="flex flex-col h-full">
                 <div className="p-8 border-b border-white/5 bg-amber-500/5">
                   <SheetHeader className="space-y-4">
