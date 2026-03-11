@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Sparkles, Save, Loader2, LayoutGrid, ChevronLeft, Link as LinkIcon, RotateCw, Trash2 } from "lucide-react";
+import { Sparkles, Save, Loader2, LayoutGrid, ChevronLeft, Link as LinkIcon, RotateCw, Trash2, MousePointer2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { TacticalField, FieldType } from "@/components/board/TacticalField";
@@ -46,7 +46,8 @@ export default function TrainingBoardPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawing = useRef(false);
   const startPoint = useRef<Point | null>(null);
-  const interactionMode = useRef<'drawing' | 'resizing' | 'rotating' | 'none'>('drawing');
+  const lastPoint = useRef<Point | null>(null);
+  const interactionMode = useRef<'drawing' | 'resizing' | 'rotating' | 'dragging' | 'none'>('none');
   const activeHandleIndex = useRef<number | null>(null);
 
   const isFromForm = searchParams.get("source") === "form";
@@ -132,21 +133,34 @@ export default function TrainingBoardPage() {
       ctx.strokeStyle = '#fff';
       ctx.lineWidth = 1;
       ctx.setLineDash([5, 5]);
-      if (element.type === 'rect') {
-        ctx.strokeRect(p[0].x - 5, p[0].y - 5, (p[1].x - p[0].x) + 10, (p[1].y - p[0].y) + 10);
-      }
-      ctx.setLineDash([]);
       
-      // Draw handles
+      // Mostrar handles según el tipo
+      ctx.setLineDash([]);
       ctx.fillStyle = '#fff';
-      p.forEach((point) => {
-        ctx.beginPath();
-        ctx.arc(point.x, point.y, 6, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-      });
+      
+      if (element.type === 'rect') {
+        const corners = [
+          { x: p[0].x, y: p[0].y },
+          { x: p[1].x, y: p[0].y },
+          { x: p[1].x, y: p[1].y },
+          { x: p[0].x, y: p[1].y }
+        ];
+        corners.forEach(cp => {
+          ctx.beginPath();
+          ctx.arc(cp.x, cp.y, 6, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        });
+      } else {
+        p.forEach((point) => {
+          ctx.beginPath();
+          ctx.arc(point.x, point.y, 6, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        });
+      }
 
-      // Rotation handle for shapes
+      // Nodo de rotación
       if (element.type !== 'freehand') {
         const rotX = (p[0].x + p[1].x) / 2;
         const rotY = Math.min(p[0].y, p[1].y) - 30;
@@ -204,22 +218,36 @@ export default function TrainingBoardPage() {
     const rect = canvasRef.current.getBoundingClientRect();
     const point = { x: e.clientX - rect.left, y: e.clientY - rect.top };
     startPoint.current = point;
+    lastPoint.current = point;
     isDrawing.current = true;
 
     if (activeTool === 'select') {
-      // Check handles of selected element
+      // 1. Verificar si clicó en un handle del elemento seleccionado
       if (selectedId) {
         const el = elements.find(e => e.id === selectedId);
         if (el) {
-          // Check rotation handle
+          // Nodo rotación
           const rotX = (el.points[0].x + el.points[1].x) / 2;
           const rotY = Math.min(el.points[0].y, el.points[1].y) - 30;
           if (getDistance(point, {x: rotX, y: rotY}) < 15) {
             interactionMode.current = 'rotating';
             return;
           }
-          // Check resize handles
-          const handleIdx = el.points.findIndex(p => getDistance(point, p) < 15);
+
+          // Handles redimensionado
+          let handles: Point[] = [];
+          if (el.type === 'rect') {
+            handles = [
+              { x: el.points[0].x, y: el.points[0].y },
+              { x: el.points[1].x, y: el.points[0].y },
+              { x: el.points[1].x, y: el.points[1].y },
+              { x: el.points[0].x, y: el.points[1].y }
+            ];
+          } else {
+            handles = el.points;
+          }
+
+          const handleIdx = handles.findIndex(p => getDistance(point, p) < 15);
           if (handleIdx !== -1) {
             interactionMode.current = 'resizing';
             activeHandleIndex.current = handleIdx;
@@ -228,7 +256,7 @@ export default function TrainingBoardPage() {
         }
       }
 
-      // Hit detection for elements
+      // 2. Verificar si clicó en el "cuerpo" de un elemento para arrastrarlo
       const clickedEl = [...elements].reverse().find(el => {
         const p = el.points;
         if (el.type === 'rect') {
@@ -238,11 +266,17 @@ export default function TrainingBoardPage() {
         if (el.type === 'circle') {
           return getDistance(point, p[0]) <= getDistance(p[0], p[1]);
         }
+        // Para flechas, un margen de error cerca de la línea
         return getDistance(point, p[0]) < 20 || getDistance(point, p[p.length-1]) < 20;
       });
 
-      setSelectedId(clickedEl?.id || null);
-      interactionMode.current = 'none';
+      if (clickedEl) {
+        setSelectedId(clickedEl.id);
+        interactionMode.current = 'dragging';
+      } else {
+        setSelectedId(null);
+        interactionMode.current = 'none';
+      }
     } else {
       interactionMode.current = 'drawing';
       currentElement.current = { 
@@ -270,7 +304,15 @@ export default function TrainingBoardPage() {
       setElements(prev => prev.map(el => {
         if (el.id !== selectedId) return el;
         const newPoints = [...el.points];
-        newPoints[activeHandleIndex.current!] = point;
+        if (el.type === 'rect') {
+          // Lógica especial para 4 handles en rect
+          if (activeHandleIndex.current === 0) { newPoints[0].x = point.x; newPoints[0].y = point.y; }
+          if (activeHandleIndex.current === 1) { newPoints[1].x = point.x; newPoints[0].y = point.y; }
+          if (activeHandleIndex.current === 2) { newPoints[1].x = point.x; newPoints[1].y = point.y; }
+          if (activeHandleIndex.current === 3) { newPoints[0].x = point.x; newPoints[1].y = point.y; }
+        } else {
+          newPoints[activeHandleIndex.current!] = point;
+        }
         return { ...el, points: newPoints };
       }));
     } else if (interactionMode.current === 'rotating' && selectedId) {
@@ -281,6 +323,17 @@ export default function TrainingBoardPage() {
         const angle = Math.atan2(point.y - centerY, point.x - centerX) + Math.PI / 2;
         setElements(prev => prev.map(e => e.id === selectedId ? { ...e, rotation: angle } : e));
       }
+    } else if (interactionMode.current === 'dragging' && selectedId && lastPoint.current) {
+      const dx = point.x - lastPoint.current.x;
+      const dy = point.y - lastPoint.current.y;
+      setElements(prev => prev.map(el => {
+        if (el.id !== selectedId) return el;
+        return {
+          ...el,
+          points: el.points.map(p => ({ x: p.x + dx, y: p.y + dy }))
+        };
+      }));
+      lastPoint.current = point;
     }
     redrawAll();
   };
@@ -296,6 +349,7 @@ export default function TrainingBoardPage() {
     currentElement.current = null;
     interactionMode.current = 'none';
     activeHandleIndex.current = null;
+    lastPoint.current = null;
   };
 
   const deleteSelected = () => {
