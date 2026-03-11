@@ -19,7 +19,7 @@ interface TacticalFieldProps {
  * TacticalField - Motor Geométrico de Superficies Deportivas.
  * Soporta Fútbol 11, Fútbol 7 y Fútbol Sala con proporciones reales y texturas vibrantes.
  * v1.9: Implementación de containerRef para sincronización de coordenadas 1:1.
- * v2.0: Implementación de carriles tácticos verticales (Izquierda, Centro, Derecha).
+ * v2.1: Implementación de carriles tácticos horizontales (Superior, Central, Inferior).
  */
 export function TacticalField({ 
   theme = "cyan", 
@@ -63,11 +63,11 @@ export function TacticalField({
         {/* LÍNEAS REGLAMENTARIAS */}
         <div className="absolute inset-[4%] border border-white/30 rounded-sm pointer-events-none">
           
-          {/* LANES (CARRILES TÁCTICOS) */}
+          {/* LANES (CARRILES TÁCTICOS HORIZONTALES) */}
           {showLanes && (
             <>
-              <div className="absolute top-0 bottom-0 left-[33.33%] w-[1px] border-l border-dashed border-white/10" />
-              <div className="absolute top-0 bottom-0 left-[66.66%] w-[1px] border-l border-dashed border-white/10" />
+              <div className="absolute left-0 right-0 top-[33.33%] h-[1px] border-t border-dashed border-white/15" />
+              <div className="absolute left-0 right-0 top-[66.66%] h-[1px] border-t border-dashed border-white/15" />
             </>
           )}
 

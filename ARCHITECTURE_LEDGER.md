@@ -100,7 +100,7 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
     - **Círculos**: Se omite el nodo de rotación.
     - **Dibujo Libre**: Se omiten handles de redimensionado.
 - **Análisis Espacial (v7.3)**:
-    - **Carriles Tácticos**: Implementación de líneas de guía verticales para dividir el campo en Carril Izquierdo, Central y Derecho, activables mediante toggle.
+    - **Carriles Tácticos**: Implementación de líneas de guía horizontales para dividir el campo en Carril Superior, Central e Inferior, activables mediante toggle.
 
 ## 6. Gestión de Espacios e Instalaciones
 - **Motor Geométrico**: Subdivisiones de campos (1, 2 o 4 zonas) calculadas en porcentajes.
