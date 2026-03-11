@@ -242,7 +242,7 @@ export default function ExerciseLibraryPage() {
                   asChild
                   className="h-16 bg-amber-500 text-black font-black uppercase text-[10px] tracking-widest rounded-2xl amber-glow hover:scale-[1.02] transition-all border-none flex items-center justify-center gap-3"
                 >
-                  <Link href="/board/training">
+                  <Link href="/board/training?source=form">
                     <PencilLine className="h-4 w-4" /> Diseñar en Pizarra
                   </Link>
                 </Button>

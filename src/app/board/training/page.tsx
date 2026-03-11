@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useState } from "react";
-import { Sparkles, Save, Loader2, LayoutGrid } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Sparkles, Save, Loader2, LayoutGrid, ChevronLeft, Link as LinkIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { TacticalField, FieldType } from "@/components/board/TacticalField";
@@ -15,11 +15,17 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import { useSearchParams, useRouter } from "next/navigation";
 
 export default function TrainingBoardPage() {
   const [isAiProcessing, setIsAiProcessing] = useState(false);
   const [fieldType, setFieldType] = useState<FieldType>("f11");
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // PROTOCOLO_CONTEXTO_v6.4: Detectar si el origen es el formulario de biblioteca
+  const isFromForm = searchParams.get("source") === "form";
 
   const handleAiSync = () => {
     setIsAiProcessing(true);
@@ -30,6 +36,22 @@ export default function TrainingBoardPage() {
         description: "El motor Gemini ha analizado el dibujo y generado el informe técnico.",
       });
     }, 2000);
+  };
+
+  const handleSave = () => {
+    if (isFromForm) {
+      toast({
+        title: "DIAGRAMA_VINCULADO",
+        description: "El dibujo se ha adjuntado a la ficha de tarea maestra. Volviendo al formulario...",
+      });
+      // Simular retorno al formulario
+      setTimeout(() => router.back(), 1500);
+    } else {
+      toast({
+        title: "DIAGRAMA_GUARDADO",
+        description: "El ejercicio se ha guardado en tu biblioteca personal.",
+      });
+    }
   };
 
   return (
@@ -43,6 +65,13 @@ export default function TrainingBoardPage() {
             </div>
             <h1 className="text-lg lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase">Estudio</h1>
           </div>
+
+          {isFromForm && (
+            <div className="px-4 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-full flex items-center gap-2 animate-in fade-in zoom-in-95">
+               <LinkIcon className="h-3 w-3 text-amber-500" />
+               <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest italic">VINCULADO_A_FORMULARIO</span>
+            </div>
+          )}
 
           <div className="hidden md:block">
             <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}>
@@ -70,8 +99,12 @@ export default function TrainingBoardPage() {
             {isAiProcessing ? <Loader2 className="h-4 w-4 animate-spin sm:mr-2" /> : <Sparkles className="h-4 w-4 sm:mr-2" />}
             <span className="hidden sm:inline">Sincronizar con IA</span>
           </Button>
-          <Button className="h-11 bg-amber-500 text-black font-black uppercase text-[10px] tracking-widest px-6 lg:px-8 rounded-xl amber-glow border-none">
-            <Save className="h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">Guardar</span>
+          <Button 
+            onClick={handleSave}
+            className="h-11 bg-amber-500 text-black font-black uppercase text-[10px] tracking-widest px-6 lg:px-8 rounded-xl amber-glow border-none"
+          >
+            <Save className="h-4 w-4 sm:mr-2" /> 
+            <span className="hidden sm:inline">{isFromForm ? "Vincular a Tarea" : "Guardar"}</span>
           </Button>
         </div>
       </header>

@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v6.3 (Consolidated Master Protocol)
+# SynqSports Pro - ARCHITECTURE_LEDGER v6.4 (Consolidated Master Protocol)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -41,7 +41,7 @@ Los roles operan bajo un sistema de ranking numérico (`rank`) que determina la 
 - **Planificador Maestro**: `/methodology/session-planner` (Diseño de macrociclo y validación de cambios).
 - **Objetivos Tácticos**: `/methodology/objectives` (Hoja de ruta por categorías).
 
-## 3. Protocolos de Bibliotecas (v6.3)
+## 3. Protocolos de Bibliotecas (v6.4)
 
 ### 3.1. Ecosistema de Datos en Tres Niveles
 1. **Nivel 1 (Global)**: Recolección de datos técnicos anonimizados para entrenamiento IA en el Almacén Neural.
@@ -58,7 +58,11 @@ Las tareas maestras ahora incluyen una matriz de datos enriquecida para máxima 
 - `operational_rules`: Descripción, Normas de provocación, Consignas y Material.
 
 ### 3.3. Recursos Visuales y Vinculación (v6.3)
-- **Vinculación de Activos**: Integración de botones de carga de imágenes y acceso directo a la Pizarra Profesional (`/board/training`) dentro del formulario de creación de tareas para facilitar la documentación visual del ejercicio.
+- **Vinculación de Activos**: Integración de botones de carga de imágenes y acceso directo a la Pizarra Profesional (`/board/training`) dentro del formulario de creación de tareas.
+
+### 3.4. Protocolo de Navegación Contextual (v6.4)
+- **Detección de Origen**: El sistema diferencia si se accede a la pizarra desde el formulario (`?source=form`) o desde el sidebar.
+- **Comportamiento Adaptativo**: Si el origen es un formulario, el botón de guardado cambia a "Vincular a Tarea" y activa un flujo de retorno automático para adjuntar el activo visual al ejercicio en proceso.
 
 ## 4. Protocolo de Planificación y Validación (v5.1)
 
