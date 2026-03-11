@@ -1,16 +1,16 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v6.0 (Master Protocol)
+# SynqSports Pro - ARCHITECTURE_LEDGER v6.1 (Consolidated Master Protocol)
 
-Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro. Se actualiza de forma incremental para reflejar la evolución del sistema.
+Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
 ## 1. Seguridad y Protocolos de Acceso
 
 ### 1.1. Protocolo_Elite (Superadmin Bypass)
 - **Emails Autorizados**: `munozmartinez.ismael@gmail.com`, `synqaisports@gmail.com`, `admin@synqai.sports`.
-- **Lógica de Bypass**: Implementada en `firestore.rules` y `auth-context.tsx`. Permite visibilidad total sobre todos los clubes y usuarios de la red para auditoría global y soporte técnico de nivel 1.
+- **Lógica de Bypass**: Implementada en `firestore.rules` y `auth-context.tsx`. Permite visibilidad total sobre todos los clubes y usuarios de la red para auditoría global y soporte técnico.
 
 ### 1.2. Matriz Jerárquica de Mandos (Ranking System)
-Los roles operan bajo un sistema de ranking numérico (`rank`) que determina la autoridad para emitir credenciales y validar cambios:
+Los roles operan bajo un sistema de ranking numérico (`rank`) que determina la autoridad:
 1. **superadmin** (100) - Autoridad raíz.
 2. **club_admin** (90) - Gestión total del nodo local.
 3. **academy_director** (80) - Dirección de cantera.
@@ -44,15 +44,11 @@ Los roles operan bajo un sistema de ranking numérico (`rank`) que determina la 
 ## 3. Protocolos de Bibliotecas (v6.0)
 
 ### 3.1. Ecosistema de Datos en Tres Niveles
-1. **Nivel 1 (Global)**: Recolección de datos técnicos anonimizados de todos los clubes para el entrenamiento del modelo Gemini.
-2. **Nivel 2 (Club)**: El "Libro de Estilo". El Director de Metodología valida tareas y las asigna a etapas blindadas.
-3. **Nivel 3 (Coach)**: "Cuaderno de Campo". Espacio privado de creación y consulta del manual oficial.
+1. **Nivel 1 (Global)**: Recolección de datos técnicos anonimizados de todos los clubes para el entrenamiento del modelo Gemini en el Almacén Neural.
+2. **Nivel 2 (Club)**: El "Libro de Estilo". El Director de Metodología valida tareas y las asigna a etapas blindadas. Formato Tabla (Opción B).
+3. **Nivel 3 (Coach)**: "Cuaderno de Campo". Espacio privado de creación y consulta del manual oficial. Formato Grid (Opción A).
 
-### 3.2. Formatos de Visualización Específicos
-- **Opción A (Grid)**: Tarjetas tácticas con previsualización, optimizadas para el Entrenador.
-- **Opción B (Table)**: Lista compacta de alta densidad para gestión masiva, optimizada para el Director de Metodología.
-
-### 3.3. ADN del Ejercicio (Metadatos Críticos)
+### 3.2. ADN del Ejercicio (Metadatos Críticos)
 - `stage`: Crítico para el filtrado automático por categorías (Debutantes, Alevín, etc.).
 - `dimension`: Clasificación técnica/táctica/física/psicológica.
 - `status`: Diferenciación entre "Official" (Club) y "Coach_Draft" (Sugerencia).
@@ -69,19 +65,30 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 - **Soberanía**: El Director de Metodología diseña el macrociclo (septiembre-junio).
 - **Espejo**: El Entrenador visualiza su plan pero no puede editarlo directamente.
 - **Sugerencias**: El Entrenador puede proponer cambios ("Sugerir Cambio").
-- **Bloqueo de Seguridad**: Las solicitudes de cambio se bloquean automáticamente si faltan menos de **7 días** para la sesión para garantizar la preparación del staff.
+- **Bloqueo de Seguridad**: Las solicitudes de cambio se bloquean automáticamente si faltan menos de **7 días** para la sesión.
 
-## 5. Blindaje de Etapa (Filtrado Inteligente)
-- El sistema implementa un filtrado de biblioteca basado en la etapa del equipo seleccionado.
-- El buscador de sesiones solo devuelve ejercicios etiquetados para la etapa correspondiente (ej. un entrenador de Alevín no puede asignar por error tareas de Senior).
+### 4.3. Multi-sesión MCC
+- Un Microciclo (MCC) en el calendario es un contenedor de sesiones (Sesión 1, Sesión 2, etc.) según la frecuencia semanal del equipo. Cada una es independiente estructuralmente.
 
-## 6. Gestión de Espacios (Instalaciones)
-- **Motor Geométrico**: Subdivisiones de campos (1, 2 o 4 zonas) calculadas en porcentajes para asegurar simetría en cualquier dispositivo.
-- **Horarios de División**: Las subdivisiones pueden activarse solo en franjas horarias específicas, optimizando el uso del suelo del club.
+## 5. Protocolo de Pizarra y Dibujo (v2.0)
 
-## 7. Stack Tecnológico y Calidad
-- **Frontend**: Next.js 15 (App Router) + TypeScript.
-- **UI/UX**: Tailwind CSS + ShadCN UI + Lucide Icons.
-- **Motores IA**: Genkit + Google Gemini 1.5 Flash.
-- **Persistencia**: Firebase Auth + Firestore.
-- **Scroll Táctico**: Barras de desplazamiento siempre visibles en áreas críticas con efecto Glow reactivo.
+### 5.1. Motor de Dibujo Suavizado
+- Uso de lógica de interpolación para trazos fluidos en el Canvas.
+- Independencia de resolución: Los dibujos se renderizan sobre un sistema de coordenadas relativas.
+
+### 5.2. Esquema JSON Maestro (Independencia de Dispositivo)
+- **Coordenadas Decimales**: Todas las posiciones de fichas y trazos se guardan como valores de `0.000` a `1.000`.
+- **Garantía Visual**: Asegura que un ejercicio diseñado en una tablet se vea idéntico en una pantalla 4K o un móvil.
+
+## 6. Gestión de Espacios e Instalaciones
+- **Motor Geométrico**: Subdivisiones de campos (1, 2 o 4 zonas) calculadas en porcentajes.
+- **Horarios de División**: Las subdivisiones pueden activarse solo en franjas horarias específicas (ej. 17:00 a 21:00).
+
+## 7. Persistencia y Promo Hook
+- **Magic Links**: Detección de tokens en URL (`?token=...`).
+- **Persistence Layer**: Uso de `localStorage` para el estado de sesión y la configuración del Onboarding en el prototipo.
+- **Sync Status**: Verificación visual constante del estado de sincronización con el nodo central.
+
+## 8. UX y Calidad Visual
+- **Glow Reactivo**: Efectos de resplandor neón en elementos activos.
+- **Scroll Táctico**: Barras de desplazamiento siempre visibles con el color de la identidad del club (Cyan para Coach, Ámbar para Metodología, Esmeralda para Global).
