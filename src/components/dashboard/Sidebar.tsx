@@ -34,7 +34,8 @@ import {
   CalendarDays,
   PencilLine,
   Trophy,
-  Sparkles
+  Sparkles,
+  Database
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
@@ -67,6 +68,7 @@ const navItems: NavItem[] = [
   { title: "Promos AI", href: "/admin-global/promos", icon: Zap, category: "global" },
   { title: "Gen. Usuarios", href: "/admin-global/users", icon: UserPlus, category: "global" },
   { title: "Analytics Global", href: "/admin-global/analytics", icon: BarChart3, category: "global" },
+  { title: "Almacén Neural", href: "/admin-global/exercises", icon: Database, category: "global" },
   
   // ESTRATEGIA_METODOLÓGICA - AMBER THEME
   { title: "Items Aprendizaje", href: "/dashboard/methodology/learning-items", icon: BookOpen, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director"] },
@@ -88,7 +90,7 @@ const navItems: NavItem[] = [
   { title: "Cantera", href: "/dashboard/academy", icon: Sprout, category: "operational" },
   { title: "Jugadores", href: "/dashboard/players", icon: Users, category: "operational" },
   { title: "Tactical Board", href: "/board/match", icon: Monitor, category: "operational" },
-  { title: "Biblioteca Táctica", href: "/dashboard/coach/exercises", icon: Dumbbell, category: "operational" },
+  { title: "Biblioteca Táctica", href: "/dashboard/coach/library", icon: Dumbbell, category: "operational" },
   { title: "Neural Planner", href: "/dashboard/coach/planner", icon: Activity, category: "operational" },
   
   // TERMINALES_ACCESO
