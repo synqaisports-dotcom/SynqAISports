@@ -10,6 +10,7 @@ interface TacticalFieldProps {
   theme?: "cyan" | "amber";
   showWatermark?: boolean;
   fieldType?: FieldType;
+  showLanes?: boolean;
   children?: ReactNode;
   containerRef?: RefObject<HTMLDivElement | null>;
 }
@@ -18,11 +19,13 @@ interface TacticalFieldProps {
  * TacticalField - Motor Geométrico de Superficies Deportivas.
  * Soporta Fútbol 11, Fútbol 7 y Fútbol Sala con proporciones reales y texturas vibrantes.
  * v1.9: Implementación de containerRef para sincronización de coordenadas 1:1.
+ * v2.0: Implementación de carriles tácticos verticales (Izquierda, Centro, Derecha).
  */
 export function TacticalField({ 
   theme = "cyan", 
   showWatermark, 
   fieldType = "f11",
+  showLanes = false,
   children,
   containerRef
 }: TacticalFieldProps) {
@@ -60,6 +63,14 @@ export function TacticalField({
         {/* LÍNEAS REGLAMENTARIAS */}
         <div className="absolute inset-[4%] border border-white/30 rounded-sm pointer-events-none">
           
+          {/* LANES (CARRILES TÁCTICOS) */}
+          {showLanes && (
+            <>
+              <div className="absolute top-0 bottom-0 left-[33.33%] w-[1px] border-l border-dashed border-white/10" />
+              <div className="absolute top-0 bottom-0 left-[66.66%] w-[1px] border-l border-dashed border-white/10" />
+            </>
+          )}
+
           {/* Línea de Medio Campo */}
           <div className="absolute top-0 left-1/2 w-[1px] h-full bg-white/30 -translate-x-1/2" />
           

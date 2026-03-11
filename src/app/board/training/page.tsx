@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { 
   Sparkles, 
   Save, 
@@ -20,7 +20,8 @@ import {
   ArrowLeftRight,
   Pencil,
   Spline,
-  Minus
+  Minus,
+  Columns3
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -58,9 +59,10 @@ const COLORS = [
   { id: 'white', value: '#ffffff', label: 'Neutro' },
 ];
 
-export default function TrainingBoardPage() {
+function TrainingBoardContent() {
   const [isAiProcessing, setIsAiProcessing] = useState(false);
   const [fieldType, setFieldType] = useState<FieldType>("f11");
+  const [showLanes, setShowLanes] = useState(false);
   const [activeTool, setActiveTool] = useState<DrawingTool>("select");
   const [currentColor, setCurrentColor] = useState("#facc15");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -495,7 +497,7 @@ export default function TrainingBoardPage() {
             </div>
           )}
 
-          <div className="hidden md:block">
+          <div className="hidden md:flex items-center gap-3">
             <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}>
               <SelectTrigger className="w-[160px] h-11 bg-white/5 border-amber-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-amber-500 hover:bg-amber-500/5 transition-all">
                 <div className="flex items-center gap-2">
@@ -509,6 +511,18 @@ export default function TrainingBoardPage() {
                 <SelectItem value="futsal" className="text-[10px] font-black uppercase">Fútbol Sala</SelectItem>
               </SelectContent>
             </Select>
+
+            <Button 
+              variant="outline"
+              onClick={() => setShowLanes(!showLanes)}
+              className={cn(
+                "h-11 px-4 border-amber-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                showLanes ? "bg-amber-500 text-black amber-glow" : "bg-white/5 text-amber-500/40 hover:text-amber-500"
+              )}
+            >
+              <Columns3 className="h-4 w-4 mr-2" />
+              Carriles
+            </Button>
           </div>
         </div>
 
@@ -535,7 +549,7 @@ export default function TrainingBoardPage() {
         />
 
         <main className="flex-1 flex items-center justify-center relative overflow-hidden touch-none">
-          <TacticalField theme="amber" fieldType={fieldType}>
+          <TacticalField theme="amber" fieldType={fieldType} showLanes={showLanes}>
             <canvas 
               ref={canvasRef}
               className={cn(
@@ -606,5 +620,13 @@ export default function TrainingBoardPage() {
         />
       </div>
     </div>
+  );
+}
+
+export default function TrainingBoardPage() {
+  return (
+    <Suspense fallback={<div className="h-screen w-full flex items-center justify-center bg-black text-amber-500 font-black uppercase tracking-[0.5em] animate-pulse">Sincronizando_Estudio...</div>}>
+      <TrainingBoardContent />
+    </Suspense>
   );
 }

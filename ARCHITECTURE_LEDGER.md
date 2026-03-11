@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v7.2 (Consolidated Master Protocol)
+# SynqSports Pro - ARCHITECTURE_LEDGER v7.3 (Consolidated Master Protocol)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -78,7 +78,7 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 - **Sugerencias**: El Entrenador puede proponer cambios ("Sugerir Cambio").
 - **Bloqueo de Seguridad**: Las solicitudes de cambio se bloquean automáticamente si faltan menos de **7 días** para la sesión.
 
-## 5. Protocolo de Pizarra y Dibujo (v7.2)
+## 5. Protocolo de Pizarra y Dibujo (v7.3)
 
 ### 5.1. Motor de Dibujo Suavizado
 - Uso de lógica de interpolación para trazos fluidos en el Canvas e independencia de resolución.
@@ -86,20 +86,21 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 ### 5.2. Esquema JSON Maestro (Independencia de Dispositivo)
 - **Coordenadas Decimales**: Todas las posiciones de fichas y trazos se guardan como valores de `0.000` a `1.000`. Garantiza fidelidad visual en cualquier dispositivo.
 
-### 5.3. Herramientas de Dibujo Avanzadas (v7.2)
+### 5.3. Herramientas de Dibujo Avanzadas (v7.3)
 - **Modos de Trazo**: Dibujo Libre, Rectángulos, Círculos, Flechas simples y dobles.
 - **Manipulación Táctica Total**: 
     - **Arrastre (Dragging)**: Capacidad de mover cualquier elemento por el campo manteniendo su escala.
     - **Puntos de Modificación**: Implementación de 4 handles en rectángulos y puntos extremos en flechas/círculos para redimensionado dinámico.
-    - **Smart Selection (v7.1)**: El sistema detecta clics sobre formas existentes incluso si hay otra herramienta activa, eliminando la necesidad de alternar manualmente al puntero.
-    - **Geometría Local (v7.1)**: Implementación de detección de colisiones (Hit-Testing) basada en coordenadas locales rotadas. Soluciona el error de "puntos de modificación perdidos" tras rotar o mover formas a los extremos del campo.
+    - **Smart Selection (v7.1)**: El sistema detecta clics sobre formas existentes incluso si hay otra herramienta activa.
+    - **Geometría Local (v7.1)**: Implementación de detección de colisiones basada en coordenadas locales rotadas.
 - **Edición Contextual (v7.2)**:
     - **Menú de Acciones**: Barra flotante que permite borrar, duplicar y cambiar el color de elementos individuales.
-    - **Sincronización Automática (v7.2)**: El menú de acciones aparece instantáneamente al seleccionar o crear un elemento y se mantiene visible durante la interacción, eliminando pasos innecesarios.
-    - **Estilos de Vector**: Soporte para líneas discontinuas (dashed) para diferenciar tipos de movimientos.
+    - **Sincronización Automática (v7.2)**: El menú de acciones aparece instantáneamente al seleccionar o crear un elemento.
 - **Lógica de Controles Específica**:
-    - **Círculos**: Se omite el nodo de rotación por redundancia visual.
-    - **Dibujo Libre**: Se omiten handles de redimensionado y rotación para preservar la integridad del trazo manual.
+    - **Círculos**: Se omite el nodo de rotación.
+    - **Dibujo Libre**: Se omiten handles de redimensionado.
+- **Análisis Espacial (v7.3)**:
+    - **Carriles Tácticos**: Implementación de líneas de guía verticales para dividir el campo en Carril Izquierdo, Central y Derecho, activables mediante toggle.
 
 ## 6. Gestión de Espacios e Instalaciones
 - **Motor Geométrico**: Subdivisiones de campos (1, 2 o 4 zonas) calculadas en porcentajes.
@@ -111,4 +112,4 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 
 ## 8. UX y Calidad Visual
 - **Glow Reactivo**: Efectos de resplandor neón en elementos activos.
-- **Scroll Táctico**: Barras de desplazamiento siempre visibles con el color de identidad del club (6px, con efecto glow al mover).
+- **Scroll Táctico**: Barras de desplazamiento siempre visibles con el color de identidad del club.
