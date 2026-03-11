@@ -1,5 +1,5 @@
 
-# SynqSports Pro - Architecture Ledger v4.3 (Microcycle Multi-Session Protocol)
+# SynqSports Pro - Architecture Ledger v4.4 (Operational UI Glow Protocol)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -108,7 +108,7 @@ Los roles operan bajo un sistema de ranking numérico (`rank`):
 - **Cadete (14-15 años)**: Periodización Táctica. Rendimiento competitivo.
 - **Juvenil (16-18 años)**: Macrociclo Anual (ATR). Microciclo de Élite. Antesala profesional.
 
-## 11. Protocolo de Planificación Operativa (v4.3)
+## 11. Protocolo de Planificación Operativa (v4.4)
 
 ### 11.1. Macrociclo Septiembre - Junio
 - **Arquitectura de Matriz**: Visualización de alta densidad basada en scroll horizontal que cubre 10 meses de temporada.
@@ -123,3 +123,7 @@ Los roles operan bajo un sistema de ranking numérico (`rank`):
 ### 11.3. Microciclo Multi-Sesión (Diferenciación)
 - **Protocolo de Sesiones**: Cada semana (MCC) actúa como un contenedor de N sesiones independientes (según frecuencia semanal).
 - **Diferenciación Táctica**: El sistema permite configurar contenidos diferentes para la Sesión 1, Sesión 2, etc., dentro del mismo microciclo, permitiendo progresiones semanales complejas.
+
+### 11.4. Ergonomía de Navegación (Scroll Glow)
+- **Protocolo de Visibilidad**: Implementación de scrollbars de alta visibilidad (6px) con el color temático del módulo.
+- **Efecto Glow**: Sincronización de un efecto de resplandor neón durante la interacción (`active`) con la barra de scroll para mejorar la respuesta visual en entornos de alta densidad de datos.

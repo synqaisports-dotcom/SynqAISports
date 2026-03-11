@@ -34,10 +34,10 @@
     
     --radius: 1rem;
 
-    /* TECH_SCROLL_VARS */
-    --scroll-color: hsla(183, 100%, 50%, 0.1);
-    --scroll-hover: hsla(183, 100%, 50%, 0.6);
-    --scroll-glow: hsla(183, 100%, 50%, 0.4);
+    /* TECH_SCROLL_VARS - Root Visibility */
+    --scroll-color: hsla(183, 100%, 50%, 0.3);
+    --scroll-hover: hsla(183, 100%, 50%, 0.8);
+    --scroll-glow: hsla(183, 100%, 50%, 0.6);
 
     /* SIDEBAR_VARS */
     --sidebar-background: 222 47% 2%;
@@ -51,18 +51,18 @@
   }
 
   .admin-global-theme {
-    --scroll-color: hsla(142, 70%, 50%, 0.1);
-    --scroll-hover: hsla(142, 70%, 50%, 0.6);
-    --scroll-glow: hsla(142, 70%, 50%, 0.4);
+    --scroll-color: hsla(142, 70%, 50%, 0.4);
+    --scroll-hover: hsla(142, 70%, 50%, 0.9);
+    --scroll-glow: hsla(142, 70%, 50%, 0.7);
     --sidebar-primary: 142 70% 50%;
     --sidebar-ring: 142 70% 50%;
     --primary: 142 70% 50%;
   }
 
   .methodology-theme {
-    --scroll-color: hsla(32, 100%, 50%, 0.1);
-    --scroll-hover: hsla(32, 100%, 50%, 0.6);
-    --scroll-glow: hsla(32, 100%, 50%, 0.4);
+    --scroll-color: hsla(32, 100%, 50%, 0.5); /* Always visible color */
+    --scroll-hover: hsla(32, 100%, 50%, 0.9);
+    --scroll-glow: hsla(32, 100%, 50%, 0.8);
     --sidebar-primary: 32 100% 50%;
     --sidebar-ring: 32 100% 50%;
     --primary: 32 100% 50%;
@@ -85,31 +85,39 @@
   }
 }
 
-/* GLOBAL_TECH_SCROLLBAR_SYSTEM */
+/* GLOBAL_TECH_SCROLLBAR_SYSTEM v4.4 */
 ::-webkit-scrollbar {
-  width: 2px;
-  height: 2px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
   background: var(--scroll-color);
   border-radius: 10px;
+  border: 1px solid transparent;
+  background-clip: padding-box;
   transition: all 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--scroll-hover);
-  box-shadow: 0 0 10px var(--scroll-glow);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: var(--scroll-hover);
+  /* Glow effect when moving */
+  box-shadow: 0 0 15px var(--scroll-glow), inset 0 0 5px var(--scroll-glow);
 }
 
 /* Firefox Support */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--scroll-color) transparent;
+  scrollbar-color: var(--scroll-color) rgba(0, 0, 0, 0.1);
 }
 
 .bg-grid-pattern {
