@@ -25,11 +25,21 @@ import {
   UserCircle,
   Hash,
   X,
-  Type
+  Type,
+  Maximize2,
+  Cloudy
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator
+} from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { TacticalField, FieldType } from "@/components/board/TacticalField";
 import { BoardToolbar, DrawingTool } from "@/components/board/BoardToolbar";
@@ -51,11 +61,12 @@ interface Point {
 interface DrawingElement {
   id: string;
   type: DrawingTool;
-  points: Point[]; // p[0] is top-left, p[1] is bottom-right for bounds
+  points: Point[];
   color: string;
   rotation: number;
   lineStyle: 'solid' | 'dashed';
   number?: number;
+  opacity: number;
 }
 
 const COLORS = [
@@ -65,12 +76,20 @@ const COLORS = [
   { id: 'white', value: '#ffffff', label: 'Neutro' },
 ];
 
+const OPACITY_OPTIONS = [
+  { label: '100%', value: 1.0 },
+  { label: '80%', value: 0.8 },
+  { label: '60%', value: 0.6 },
+  { label: '40%', value: 0.4 },
+  { label: '20%', value: 0.2 },
+];
+
 function TrainingBoardContent() {
   const [fieldType, setFieldType] = useState<FieldType>("f11");
   const [showLanes, setShowLanes] = useState(false);
   const [activeTool, setActiveTool] = useState<DrawingTool>("select");
   const [currentColor, setCurrentColor] = useState("#facc15");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -130,6 +149,7 @@ function TrainingBoardContent() {
     const { centerX, centerY, width, height, minX, minY, maxX, maxY } = bounds;
 
     ctx.save();
+    ctx.globalAlpha = element.opacity;
     ctx.translate(centerX, centerY);
     ctx.rotate(element.rotation);
     ctx.translate(-centerX, -centerY);
@@ -211,10 +231,25 @@ function TrainingBoardContent() {
         pGrad.addColorStop(0, '#ffffff44'); pGrad.addColorStop(0.5, hexToRgba(element.color, 0.3)); pGrad.addColorStop(1, hexToRgba(element.color, 0.1));
         ctx.fillStyle = pGrad; ctx.fill(); ctx.strokeStyle = element.color; ctx.stroke();
         ctx.fillStyle = '#fff'; 
-        ctx.font = `bold ${Math.floor(height * 0.42)}px Space Grotesk`; 
+        ctx.font = `bold ${Math.floor(height * 0.32)}px Space Grotesk`; 
         ctx.textAlign = 'center'; 
         ctx.textBaseline = 'middle';
-        ctx.fillText((element.number || 1).toString(), centerX, centerY + (height * 0.04));
+        ctx.fillText((element.number || 1).toString(), centerX, centerY + (height * 0.02));
+        ctx.restore();
+        break;
+      case 'barrier':
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        const bw = width / 3;
+        for (let i = -1; i <= 1; i++) {
+          ctx.save();
+          ctx.translate(i * bw * 0.8, 0);
+          ctx.beginPath(); ctx.ellipse(0, 0, bw/2, height/2, 0, 0, Math.PI * 2);
+          const bGrad = ctx.createLinearGradient(-bw/2, 0, bw/2, 0);
+          bGrad.addColorStop(0, hexToRgba(element.color, 0.8)); bGrad.addColorStop(0.5, element.color); bGrad.addColorStop(1, hexToRgba(element.color, 0.6));
+          ctx.fillStyle = bGrad; ctx.fill(); ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.stroke();
+          ctx.restore();
+        }
         ctx.restore();
         break;
       case 'ball':
@@ -308,9 +343,9 @@ function TrainingBoardContent() {
     const ctx = canvas?.getContext('2d');
     if (!ctx || !canvas) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    elements.forEach(el => drawElement(ctx, el, el.id === selectedId));
+    elements.forEach(el => drawElement(ctx, el, selectedIds.includes(el.id)));
     if (currentElement.current) drawElement(ctx, currentElement.current, false);
-  }, [elements, selectedId, drawElement]);
+  }, [elements, selectedIds, drawElement]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -337,7 +372,7 @@ function TrainingBoardContent() {
     let pNum; 
     if(tool === 'player') pNum = elements.filter(e => e.type === 'player').length + 1;
     
-    const defW = tool === 'ladder' ? 120 : (tool === 'minigoal' ? 80 : 40);
+    const defW = tool === 'ladder' ? 120 : (tool === 'minigoal' ? 80 : tool === 'barrier' ? 100 : 40);
     const defH = tool === 'ladder' ? 40 : (tool === 'minigoal' ? 50 : 40);
     
     const newElement: DrawingElement = { 
@@ -347,11 +382,12 @@ function TrainingBoardContent() {
       color: currentColor, 
       rotation: 0, 
       lineStyle: 'solid', 
-      number: pNum
+      number: pNum,
+      opacity: 1.0
     };
     
     setElements(prev => [...prev, newElement]);
-    setSelectedId(newElement.id);
+    setSelectedIds([newElement.id]);
     setActiveTool('select');
     setTimeout(redrawAll, 0);
   };
@@ -362,8 +398,9 @@ function TrainingBoardContent() {
     const point = { x: e.clientX - rect.left, y: e.clientY - rect.top };
     startPoint.current = point; lastPoint.current = point; isDrawing.current = true;
 
-    if (selectedId) {
-      const el = elements.find(e => e.id === selectedId);
+    // Check resize/rotate on selected elements first (only if one is selected for simplicity or top one)
+    if (selectedIds.length === 1) {
+      const el = elements.find(e => e.id === selectedIds[0]);
       if (el && el.type !== 'freehand') {
         const { centerX, centerY, minX, minY, maxX, maxY } = getElementBounds(el);
         const pad = 10;
@@ -393,16 +430,24 @@ function TrainingBoardContent() {
     });
 
     if (clicked) {
-      setSelectedId(clicked.id); setActiveTool('select'); interactionMode.current = 'dragging';
+      if (e.shiftKey) {
+        setSelectedIds(prev => prev.includes(clicked.id) ? prev.filter(id => id !== clicked.id) : [...prev, clicked.id]);
+      } else {
+        if (!selectedIds.includes(clicked.id)) {
+          setSelectedIds([clicked.id]);
+        }
+      }
+      setActiveTool('select'); 
+      interactionMode.current = 'dragging';
     } else {
       if (activeTool !== 'select') {
-        setSelectedId(null); interactionMode.current = 'drawing';
+        setSelectedIds([]); interactionMode.current = 'drawing';
         currentElement.current = { 
           id: `el-${Date.now()}`, type: activeTool, points: [point, point],
-          color: currentColor, rotation: 0, lineStyle: 'solid'
+          color: currentColor, rotation: 0, lineStyle: 'solid', opacity: 1.0
         };
       } else {
-        setSelectedId(null);
+        setSelectedIds([]);
       }
     }
     redrawAll();
@@ -416,14 +461,14 @@ function TrainingBoardContent() {
     if (interactionMode.current === 'drawing' && currentElement.current) {
       if (activeTool === 'freehand') currentElement.current.points.push(point);
       else currentElement.current.points[1] = point;
-    } else if (interactionMode.current === 'resizing' && selectedId && activeHandleIndex.current !== null) {
+    } else if (interactionMode.current === 'resizing' && selectedIds.length === 1 && activeHandleIndex.current !== null) {
       setElements(prev => prev.map(el => {
-        if (el.id !== selectedId) return el;
+        if (el.id !== selectedIds[0]) return el;
         const { centerX, centerY, width: oldW, height: oldH } = getElementBounds(el);
         const local = rotatePoint(point, {x: centerX, y: centerY}, -el.rotation);
         const next = [...el.points];
         const h = activeHandleIndex.current!;
-        const isMaterial = ['player', 'ball', 'cone', 'seta', 'pica', 'ladder', 'hurdle', 'minigoal'].includes(el.type);
+        const isMaterial = ['player', 'ball', 'cone', 'seta', 'pica', 'ladder', 'hurdle', 'minigoal', 'barrier'].includes(el.type);
 
         if (isMaterial) {
           const ratio = oldW / oldH;
@@ -439,16 +484,16 @@ function TrainingBoardContent() {
         }
         return { ...el, points: next };
       }));
-    } else if (interactionMode.current === 'rotating' && selectedId) {
-      const el = elements.find(e => e.id === selectedId);
+    } else if (interactionMode.current === 'rotating' && selectedIds.length === 1) {
+      const el = elements.find(e => e.id === selectedIds[0]);
       if (el) {
         const { centerX, centerY } = getElementBounds(el);
         const angle = Math.atan2(point.y - centerY, point.x - centerX) + Math.PI / 2;
-        setElements(prev => prev.map(e => e.id === selectedId ? { ...e, rotation: angle } : e));
+        setElements(prev => prev.map(e => e.id === selectedIds[0] ? { ...e, rotation: angle } : e));
       }
-    } else if (interactionMode.current === 'dragging' && selectedId && lastPoint.current) {
+    } else if (interactionMode.current === 'dragging' && selectedIds.length > 0 && lastPoint.current) {
       const dx = point.x - lastPoint.current.x; const dy = point.y - lastPoint.current.y;
-      setElements(prev => prev.map(el => el.id === selectedId ? { ...el, points: el.points.map(p => ({ x: p.x + dx, y: p.y + dy })) } : el));
+      setElements(prev => prev.map(el => selectedIds.includes(el.id) ? { ...el, points: el.points.map(p => ({ x: p.x + dx, y: p.y + dy })) } : el));
       lastPoint.current = point;
     }
     redrawAll();
@@ -459,7 +504,7 @@ function TrainingBoardContent() {
     isDrawing.current = false;
     if (interactionMode.current === 'drawing' && currentElement.current) {
       setElements(prev => [...prev, currentElement.current!]);
-      setSelectedId(currentElement.current.id);
+      setSelectedIds([currentElement.current.id]);
       setActiveTool('select');
     }
     currentElement.current = null; interactionMode.current = 'none'; activeHandleIndex.current = null;
@@ -470,7 +515,9 @@ function TrainingBoardContent() {
     if (isFromForm) setTimeout(() => router.back(), 1500);
   };
 
-  const selectedElement = elements.find(e => e.id === selectedId);
+  const selectedElements = elements.filter(e => selectedIds.includes(e.id));
+  const hasMultipleSelected = selectedIds.length > 1;
+  const commonOpacity = selectedElements.length > 0 ? selectedElements[0].opacity : 1.0;
 
   return (
     <div className="h-full flex flex-col bg-[#04070c] overflow-hidden">
@@ -479,7 +526,7 @@ function TrainingBoardContent() {
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-amber-500 animate-pulse" />
-              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Precision_v9.0</span>
+              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Precision_v9.1</span>
             </div>
             <h1 className="text-lg lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase leading-none">Estudio Élite</h1>
           </div>
@@ -499,37 +546,58 @@ function TrainingBoardContent() {
             </Button>
 
             {/* ACCIONES ESTRATÉGICAS EN CABECERA */}
-            {selectedId && selectedElement && (
+            {selectedIds.length > 0 && (
               <div className="flex items-center gap-2 pl-4 border-l border-white/10 animate-in slide-in-from-left-4 fade-in duration-300">
                 <div className="flex gap-1.5 p-1 bg-black/40 border border-white/5 rounded-xl mr-2">
                   {COLORS.map(c => (
                     <button 
                       key={c.id} 
-                      onClick={() => setElements(prev => prev.map(el => el.id === selectedId ? {...el, color: c.value} : el))} 
-                      className={cn("h-6 w-6 rounded-full border-2 transition-all", selectedElement.color === c.value ? "border-white scale-110" : "border-transparent opacity-40 hover:opacity-100")} 
+                      onClick={() => setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, color: c.value} : el))} 
+                      className={cn("h-6 w-6 rounded-full border-2 transition-all", selectedElements.every(el => el.color === c.value) ? "border-white scale-110" : "border-transparent opacity-40 hover:opacity-100")} 
                       style={{ backgroundColor: c.value }} 
                     />
                   ))}
                 </div>
 
-                {selectedElement.type !== 'freehand' && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-9 border-white/10 text-[9px] font-black uppercase text-white/40 hover:text-white flex items-center gap-2">
+                      <Cloudy className="h-3.5 w-3.5" /> Opacidad: {Math.round(commonOpacity * 100)}%
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-black border-amber-500/20 rounded-xl">
+                    <DropdownMenuLabel className="text-[8px] font-black uppercase text-white/20">Transparencia</DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-white/5" />
+                    {OPACITY_OPTIONS.map(opt => (
+                      <DropdownMenuItem 
+                        key={opt.value} 
+                        onClick={() => setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, opacity: opt.value} : el))}
+                        className="text-[9px] font-black uppercase text-white/60 focus:bg-amber-500 focus:text-black cursor-pointer"
+                      >
+                        {opt.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {!hasMultipleSelected && selectedElements[0].type !== 'freehand' && (
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className={cn("h-9 border-white/10 text-[9px] font-black uppercase", selectedElement.lineStyle === 'dashed' ? 'bg-amber-500 text-black' : 'text-white/40')}
-                    onClick={() => setElements(prev => prev.map(el => el.id === selectedId ? {...el, lineStyle: el.lineStyle === 'solid' ? 'dashed' : 'solid'} : el))}
+                    className={cn("h-9 border-white/10 text-[9px] font-black uppercase", selectedElements[0].lineStyle === 'dashed' ? 'bg-amber-500 text-black' : 'text-white/40')}
+                    onClick={() => setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, lineStyle: el.lineStyle === 'solid' ? 'dashed' : 'solid'} : el))}
                   >
-                    {selectedElement.lineStyle === 'dashed' ? 'Línea Discontinua' : 'Línea Sólida'}
+                    {selectedElements[0].lineStyle === 'dashed' ? 'Línea Discontinua' : 'Línea Sólida'}
                   </Button>
                 )}
 
-                {selectedElement.type === 'player' && (
+                {!hasMultipleSelected && selectedElements[0].type === 'player' && (
                   <div className="flex items-center gap-2 bg-white/5 px-2 py-1 rounded-xl border border-white/10">
                     <span className="text-[8px] font-black text-white/40 uppercase tracking-widest">Dorsal</span>
                     <Input 
                       type="number" 
-                      value={selectedElement.number || 1} 
-                      onChange={(e) => setElements(prev => prev.map(el => el.id === selectedId ? {...el, number: parseInt(e.target.value)} : el))} 
+                      value={selectedElements[0].number || 1} 
+                      onChange={(e) => setElements(prev => prev.map(el => el.id === selectedIds[0] ? {...el, number: parseInt(e.target.value)} : el))} 
                       className="h-7 w-12 bg-black/40 border-amber-500/20 text-amber-500 font-black text-xs text-center p-0 rounded-lg" 
                     />
                   </div>
@@ -539,15 +607,16 @@ function TrainingBoardContent() {
                   <Button 
                     variant="outline" size="icon" className="h-9 w-9 border-white/10 text-white/40 hover:text-white"
                     onClick={() => {
-                      const newEl = { ...selectedElement, id: `el-${Date.now()}`, points: selectedElement.points.map(p => ({ x: p.x + 30, y: p.y + 30 })) };
-                      setElements(prev => [...prev, newEl]); setSelectedId(newEl.id);
+                      const newElements = selectedElements.map(el => ({ ...el, id: `el-${Date.now()}-${Math.random()}`, points: el.points.map(p => ({ x: p.x + 30, y: p.y + 30 })) }));
+                      setElements(prev => [...prev, ...newElements]); 
+                      setSelectedIds(newElements.map(e => e.id));
                     }}
                   >
                     <Copy className="h-4 w-4" />
                   </Button>
                   <Button 
                     variant="outline" size="icon" className="h-9 w-9 border-rose-500/20 text-rose-500/40 hover:text-rose-500 hover:bg-rose-500/10"
-                    onClick={() => { setElements(prev => prev.filter(el => el.id !== selectedId)); setSelectedId(null); }}
+                    onClick={() => { setElements(prev => prev.filter(el => !selectedIds.includes(el.id))); setSelectedIds([]); }}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -577,7 +646,7 @@ function TrainingBoardContent() {
               activeTool={activeTool} 
               onToolSelect={(tool) => { 
                 if (tool !== 'select') addElementAtCenter(tool);
-                setSelectedId(null); 
+                setSelectedIds([]); 
               }} 
               className="border-2 shadow-2xl" 
             />
@@ -590,9 +659,9 @@ function TrainingBoardContent() {
               activeTool={activeTool} 
               onToolSelect={(tool) => { 
                 setActiveTool(tool);
-                setSelectedId(null);
+                setSelectedIds([]);
               }} 
-              onClear={() => { setElements([]); setSelectedId(null); }} 
+              onClear={() => { setElements([]); setSelectedIds([]); }} 
               className="border-2 shadow-2xl" 
             />
           </div>

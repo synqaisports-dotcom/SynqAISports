@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v9.0.0 (Interfaz Estratégica)
+# SynqSports Pro - ARCHITECTURE_LEDGER v9.1.0 (Alta Competición)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -7,56 +7,12 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 
 ### 1.1. Protocolo_Elite (Superadmin Bypass)
 - **Emails Autorizados**: `munozmartinez.ismael@gmail.com`, `synqaisports@gmail.com`, `admin@synqai.sports`.
-- **Lógica de Bypass**: Implementada en `firestore.rules` y `auth-context.tsx`. Permite visibilidad total sobre todos los clubes y usuarios de la red para auditoría global y soporte técnico.
+- **Lógica de Bypass**: Implementada en `firestore.rules` y `auth-context.tsx`. Permite visibilidad total sobre todos los clubes y usuarios de la red.
 
 ### 1.2. Matriz Jerárquica de Mandos (Ranking System)
-Los roles operan bajo un sistema de ranking numérico (`rank`) que determina la autoridad:
-1. **superadmin** (100) - Autoridad raíz.
-2. **club_admin** (90) - Gestión total del nodo local.
-3. **academy_director** (80) - Dirección de cantera.
-4. **methodology_director** (70) - Soberanía técnica y de sesiones.
-5. **stage_coordinator** (60) - Gestión de categorías específicas.
-6. **coach** (50) - Operativa de campo y sugerencias.
-7. **delegate** (40) - Auxiliar de campo.
-8. **tutor** (30) - Consultoría de atletas.
-9. **athlete** (20) - Telemetría y visor personal.
+Los roles operan bajo un sistema de ranking numérico (`rank`) que determina la autoridad.
 
-## 2. Mapa de Micro-Apps y Rutas
-
-### 2.1. Núcleo de Control (Admin Global) - `/admin-global`
-- **Analytics**: Métricas de red, ingresos y carga de procesos IA.
-- **Almacén Neural**: `/admin-global/exercises` (Data warehouse anonimizado para entrenamiento IA).
-- **Red de Clubes**: Gestión de nodos locales, planes de suscripción y estatus de red.
-- **Factoría de Usuarios**: Emisión de credenciales globales y gestión de Magic Links.
-
-### 2.2. Terminal Operativa (Club/Coach) - `/dashboard`
-- **Identidad de Club**: `/club` (Datos federativos, sociales y escudo).
-- **Espejo Operativo**: `/sessions` (Vista bloqueada para entrenadores sincronizada con metodología).
-- **Cuaderno de Campo**: `/dashboard/coach/library` (Biblioteca visual Opción A para entrenadores).
-- **Cantera**: `/academy` (Gestión de equipos, staff y visor de Roster).
-- **Activos**: `/instalaciones` (Gestión de campos con subdivisiones horarias).
-
-### 2.3. Estrategia Metodológica - `/dashboard/methodology`
-- **Libro de Estilo**: `/methodology/exercise-library` (Biblioteca de rendimiento Opción B para directores).
-- **Planificador Maestro**: `/methodology/session-planner` (Diseño de macrociclo y validación de cambios).
-- **Objetivos Tácticos**: `/methodology/objectives` (Hoja de ruta por categorías).
-
-## 3. Protocolos de Bibliotecas (v6.5)
-
-### 3.1. Ecosistema de Datos en Tres Niveles
-1. **Nivel 1 (Global)**: Recolección de datos técnicos anonimizados para entrenamiento IA en el Almacén Neural.
-2. **Nivel 2 (Club)**: El "Libro de Estilo". Tareas Maestras validadas asignadas a etapas blindadas. Formato Tabla (Opción B).
-3. **Nivel 3 (Coach)**: "Cuaderno de Campo". Espacio privado de creación. Formato Grid (Opción A).
-
-## 4. Protocolo de Planificación y Validación (v5.1)
-
-### 4.1. Estructura Tripartita de Sesión
-Cada entrenamiento se divide en tres bloques con gestión de tiempos configurables:
-1. **Calentamiento / Activación**
-2. **Zona Central (Contenidos)** - Soporta múltiples ejercicios.
-3. **Vuelta a la Calma**
-
-## 5. Protocolo de Pizarra y Dibujo (v9.0.0)
+## 5. Protocolo de Pizarra y Dibujo (v9.1.0)
 
 ### 5.1. Motor de Dibujo Suavizado
 - Uso de lógica de interpolación para trazos fluidos en el Canvas e independencia de resolución.
@@ -65,12 +21,11 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 - **Coordenadas Decimales**: Todas las posiciones de fichas y trazos se guardan como valores de `0.000` a `1.000`. Garantiza fidelidad visual en cualquier dispositivo.
 
 ### 5.3. Estándar de Integridad Visual (v8.8.0)
-- **Escala Proporcional Obligatoria**: Los materiales técnicos (balones, conos, jugadores) utilizan un algoritmo de redimensionado simétrico para evitar deformaciones.
+- **Escala Proporcional Obligatoria**: Los materiales técnicos utilizan un algoritmo de redimensionado simétrico para evitar deformaciones.
 - **Balón Hyper-Realistic**: Renderizado 3D con gradientes radiales, sombra proyectada y patrón técnico de costura.
-- **Manipulación de 8 Puntos**: Caja de control profesional para ajuste milimétrico de tamaño y rotación centrada absoluta.
 
-### 5.4. Interfaz Estratégica (v9.0.0)
-- **Acciones en Cabecera**: El menú de propiedades (color, estilo, duplicar, borrar) se ubica ahora en el header superior junto al botón de Carriles, apareciendo solo al seleccionar un elemento con animación.
-- **Dualidad de Herramientas**: Las herramientas de dibujo mantienen su comportamiento manual (trazado en campo), mientras que los materiales utilizan el despliegue instantáneo al centro.
-- **Recuperación de Trazos**: Restauración de la funcionalidad de líneas discontinuas para formas y flechas.
-- **Refinamiento de Nodos**: Dorsales de jugadores optimizados en tamaño y centrado vertical para una estética profesional.
+### 5.4. Interfaz Estratégica y Control Avanzado (v9.1.0)
+- **Acciones en Cabecera**: El menú de propiedades aparece dinámicamente en el header superior al seleccionar elementos.
+- **Multiselección Pro**: Soporte para selección de múltiples objetos (Shift+Click) y edición masiva de propiedades.
+- **Control de Opacidad**: Selector dinámico para ajustar la transparencia de cualquier elemento (0.2 a 1.0).
+- **Biblioteca de Élite**: Incorporación del activo "Barrera de Jugadores" con renderizado volumétrico profesional.

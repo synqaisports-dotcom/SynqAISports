@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type DrawingTool = 'select' | 'freehand' | 'rect' | 'circle' | 'arrow' | 'double-arrow' | 'zigzag' | 'player' | 'ball' | 'cone' | 'seta' | 'ladder' | 'hurdle' | 'minigoal' | 'pica';
+export type DrawingTool = 'select' | 'freehand' | 'rect' | 'circle' | 'arrow' | 'double-arrow' | 'zigzag' | 'player' | 'ball' | 'cone' | 'seta' | 'ladder' | 'hurdle' | 'minigoal' | 'pica' | 'barrier';
 
 interface BoardToolbarProps {
   theme?: "cyan" | "amber";
@@ -58,7 +58,15 @@ const TRAINING_TOOLS = [
   { id: 'double-arrow', icon: ArrowLeftRight, label: 'Flecha Doble' },
 ] as const;
 
-// ICONOS PERSONALIZADOS PROFESIONALES
+function BarrierIcon(props: any) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
+      <rect x="2" y="6" width="20" height="12" rx="2" />
+      <path d="M7 6v12M12 6v12M17 6v12" />
+    </svg>
+  );
+}
+
 function ConeIcon(props: any) {
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}><path d="M12 2L3 20h18L12 2z" /><path d="M6 16h12" /></svg>
 }
@@ -72,10 +80,11 @@ function BallIcon(props: any) {
 }
 
 const MATERIAL_TOOLS = [
-  { id: 'player', icon: UserCircle, label: 'Añadir Jugador' },
+  { id: 'player', icon: UserCircle, label: 'Jugador' },
   { id: 'ball', icon: BallIcon, label: 'Balón' },
   { id: 'cone', icon: ConeIcon, label: 'Cono' },
-  { id: 'seta', icon: Disc, label: 'Seta / Chino' },
+  { id: 'seta', icon: Disc, label: 'Seta' },
+  { id: 'barrier', icon: BarrierIcon, label: 'Barrera' },
   { id: 'ladder', icon: Grid3X3, label: 'Escalera' },
   { id: 'hurdle', icon: Table2, label: 'Valla' },
   { id: 'minigoal', icon: MinigoalIcon, label: 'Portería' },
@@ -116,7 +125,7 @@ export function BoardToolbar({
             "h-10 w-10 rounded-xl flex items-center justify-center transition-all group relative",
             !isPaintMode ? activeClass : "text-white/20 hover:text-white"
           )}
-          title="Modo Selección (Mover Jugadores)"
+          title="Modo Selección"
         >
           <MousePointer2 className="h-5 w-5" />
         </button>
@@ -127,7 +136,7 @@ export function BoardToolbar({
             "h-10 w-10 rounded-xl flex items-center justify-center transition-all group relative",
             isPaintMode ? activeClass : "text-white/20 hover:text-white"
           )}
-          title="Modo Pizarra (Dibujo Libre)"
+          title="Modo Pizarra"
         >
           <Paintbrush className="h-5 w-5" />
         </button>
