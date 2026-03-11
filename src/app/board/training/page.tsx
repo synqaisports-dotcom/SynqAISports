@@ -238,19 +238,43 @@ function TrainingBoardContent() {
         const br = p[1] ? getDistance(p[0], p[1]) : 12;
         ctx.save();
         ctx.translate(p[0].x, p[0].y);
+        
+        // Sombra proyectada
+        ctx.beginPath();
+        ctx.arc(0, br * 0.1, br, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0,0,0,0.2)';
+        ctx.fill();
+
+        // Gradiente radial profesional
+        const ballGrad = ctx.createRadialGradient(-br*0.3, -br*0.3, 0, 0, 0, br);
+        ballGrad.addColorStop(0, '#ffffff');
+        ballGrad.addColorStop(1, '#E2E8F0');
+        
         ctx.beginPath();
         ctx.arc(0, 0, br, 0, Math.PI * 2);
-        ctx.fillStyle = '#fff';
+        ctx.fillStyle = ballGrad;
         ctx.fill();
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 1;
+        ctx.strokeStyle = '#0F172A';
+        ctx.lineWidth = 2;
         ctx.stroke();
-        for(let i=0; i<5; i++){
-          ctx.beginPath();
-          ctx.moveTo(0, 0);
-          ctx.lineTo(Math.cos(i*Math.PI*2/5)*br, Math.sin(i*Math.PI*2/5)*br);
-          ctx.stroke();
-        }
+
+        // Patrón técnico del balón
+        const s = br / 40; 
+        ctx.strokeStyle = '#0F172A';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(0, -40*s); ctx.lineTo(-15*s, -25*s);
+        ctx.moveTo(0, -40*s); ctx.lineTo(15*s, -25*s);
+        ctx.moveTo(0, 40*s); ctx.lineTo(-15*s, 25*s);
+        ctx.moveTo(0, 40*s); ctx.lineTo(15*s, 25*s);
+        ctx.moveTo(-40*s, 0); ctx.lineTo(-25*s, -15*s);
+        ctx.moveTo(-40*s, 0); ctx.lineTo(-25*s, 15*s);
+        ctx.moveTo(40*s, 0); ctx.lineTo(25*s, -15*s);
+        ctx.moveTo(40*s, 0); ctx.lineTo(25*s, 15*s);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(0, 0, 15*s, 0, Math.PI * 2);
+        ctx.stroke();
         ctx.restore();
         break;
       case 'cone':
@@ -259,9 +283,8 @@ function TrainingBoardContent() {
         ctx.translate(p[0].x, p[0].y);
         ctx.beginPath();
         ctx.ellipse(0, cr/2, cr, cr/3, 0, 0, Math.PI * 2);
-        ctx.fillStyle = hexToRgba(element.color, 0.8);
+        ctx.fillStyle = 'rgba(0,0,0,0.2)';
         ctx.fill();
-        ctx.stroke();
         ctx.beginPath();
         ctx.moveTo(-cr*0.7, cr/2);
         ctx.lineTo(0, -cr);
@@ -269,10 +292,12 @@ function TrainingBoardContent() {
         ctx.closePath();
         const coneGrad = ctx.createLinearGradient(-cr, 0, cr, 0);
         coneGrad.addColorStop(0, element.color);
-        coneGrad.addColorStop(0.5, '#fff');
+        coneGrad.addColorStop(0.5, '#ffffff');
         coneGrad.addColorStop(1, element.color);
         ctx.fillStyle = coneGrad;
         ctx.fill();
+        ctx.strokeStyle = hexToRgba(element.color, 0.8);
+        ctx.lineWidth = 1;
         ctx.stroke();
         ctx.restore();
         break;
@@ -283,11 +308,12 @@ function TrainingBoardContent() {
         ctx.beginPath();
         ctx.ellipse(0, 0, sr, sr/2.5, 0, 0, Math.PI * 2);
         const setaGrad = ctx.createRadialGradient(0, -2, 0, 0, 0, sr);
-        setaGrad.addColorStop(0, '#fff');
+        setaGrad.addColorStop(0, '#ffffff');
         setaGrad.addColorStop(0.3, element.color);
         setaGrad.addColorStop(1, hexToRgba(element.color, 0.8));
         ctx.fillStyle = setaGrad;
         ctx.fill();
+        ctx.strokeStyle = '#00000033';
         ctx.stroke();
         ctx.restore();
         break;
@@ -299,8 +325,6 @@ function TrainingBoardContent() {
         ctx.save();
         ctx.translate(p[0].x, p[0].y);
         const lAng = Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x);
-        // Reset rotation internal because we handle it globally now
-        // But for ladder we need the vector points
         ctx.rotate(lAng - element.rotation); 
         ctx.strokeStyle = '#333';
         ctx.lineWidth = 4;
@@ -366,11 +390,11 @@ function TrainingBoardContent() {
         ctx.translate(p[0].x, p[0].y);
         ctx.beginPath();
         ctx.arc(0, pr, pr*0.5, 0, Math.PI * 2);
-        ctx.fillStyle = '#333';
+        ctx.fillStyle = '#333333';
         ctx.fill();
         const poleGrad = ctx.createLinearGradient(-3, 0, 3, 0);
         poleGrad.addColorStop(0, element.color);
-        poleGrad.addColorStop(0.5, '#fff');
+        poleGrad.addColorStop(0.5, '#ffffff');
         poleGrad.addColorStop(1, element.color);
         ctx.fillStyle = poleGrad;
         ctx.fillRect(-3, -pr*2, 6, pr*3);
@@ -386,7 +410,7 @@ function TrainingBoardContent() {
       ctx.rotate(element.rotation);
       ctx.translate(-centerX, -centerY);
 
-      ctx.strokeStyle = '#fff';
+      ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 1;
       ctx.setLineDash([5, 5]);
       
@@ -400,7 +424,6 @@ function TrainingBoardContent() {
       } else if (isSinglePoint) {
         ctx.strokeRect(p[0].x - 30, p[0].y - 30, 60, 60);
       } else if (p[1]) {
-        // Find bounding box for generic shapes
         const minX = Math.min(...p.map(pt => pt.x));
         const minY = Math.min(...p.map(pt => pt.y));
         const maxX = Math.max(...p.map(pt => pt.x));
@@ -409,7 +432,7 @@ function TrainingBoardContent() {
       }
 
       ctx.setLineDash([]);
-      ctx.fillStyle = '#fff';
+      ctx.fillStyle = '#ffffff';
       
       let handles: Point[] = [];
       if (element.type === 'rect' && p[1]) {
@@ -425,7 +448,6 @@ function TrainingBoardContent() {
         ctx.stroke();
       });
 
-      // Handle Rotación
       const rotX = p[1] ? (p[0].x + p[1].x) / 2 : p[0].x;
       const rotY = p[1] ? Math.min(...p.map(pt => pt.y)) - 40 : p[0].y - 40;
       ctx.beginPath();
@@ -490,8 +512,6 @@ function TrainingBoardContent() {
         const centerY = p[1] ? (p[0].y + p[1].y) / 2 : p[0].y;
         const localPoint = rotatePoint(point, {x: centerX, y: centerY}, -el.rotation);
 
-        const isSinglePoint = ['ball', 'cone', 'seta', 'pica', 'player'].includes(el.type);
-
         const rotX = p[1] ? (el.points[0].x + el.points[1].x) / 2 : el.points[0].x;
         const rotY = p[1] ? Math.min(...p.map(pt => pt.y)) - 40 : p[0].y - 40;
         if (getDistance(point, rotatePoint({x: rotX, y: rotY}, {x: centerX, y: centerY}, el.rotation)) < 20) {
@@ -501,7 +521,7 @@ function TrainingBoardContent() {
 
         let handles: Point[] = [];
         if (el.type === 'rect' && p[1]) {
-          handles = [{ x: p[0].x, y: p[0].y }, { x: p[1].x, y: p[0].y }, { x: p[1].x, y: p[1].y }, { x: p[0].x, y: p[1].y }];
+          handles = [{ x: p[0].x, y: p[0].y }, { x: p[1].x, y: p[0].y }, { x: p[1].x, y: p[1].y }, { x: p[0].y, y: p[1].y }];
         } else if (p[1]) {
           handles = [p[0], p[p.length - 1]];
         }
