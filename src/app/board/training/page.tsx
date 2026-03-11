@@ -127,22 +127,23 @@ function TrainingBoardContent() {
     ctx.lineTo(to.x - headLength * Math.cos(angle + Math.PI / 6), to.y - headLength * Math.sin(angle + Math.PI / 6));
   };
 
-  const drawZigzagLine = (ctx: CanvasRenderingContext2D, from: Point, to: Point) => {
+  const drawWaveLine = (ctx: CanvasRenderingContext2D, from: Point, to: Point) => {
     const dist = getDistance(from, to);
     const angle = Math.atan2(to.y - from.y, to.x - from.x);
-    const steps = Math.max(2, Math.floor(dist / 15));
-    const stepDist = dist / steps;
-    const amplitude = 8;
-
+    const amplitude = 10;
+    const wavelength = 40; // longitud de cada onda
+    
     ctx.moveTo(from.x, from.y);
-    for (let i = 1; i <= steps; i++) {
-      const x = from.x + Math.cos(angle) * (i * stepDist);
-      const y = from.y + Math.sin(angle) * (i * stepDist);
+    
+    // Dibujamos la onda por pequeños segmentos para suavizarla
+    for (let d = 0; d <= dist; d += 2) {
+      const x = from.x + Math.cos(angle) * d;
+      const y = from.y + Math.sin(angle) * d;
       const perpAngle = angle + Math.PI / 2;
-      const offset = i % 2 === 0 ? -amplitude : amplitude;
+      const waveOffset = Math.sin(d * (Math.PI * 2 / wavelength)) * amplitude;
       
-      const finalX = x + Math.cos(perpAngle) * offset;
-      const finalY = y + Math.sin(perpAngle) * offset;
+      const finalX = x + Math.cos(perpAngle) * waveOffset;
+      const finalY = y + Math.sin(perpAngle) * waveOffset;
       
       ctx.lineTo(finalX, finalY);
     }
@@ -199,7 +200,7 @@ function TrainingBoardContent() {
         ctx.stroke();
         break;
       case 'zigzag':
-        drawZigzagLine(ctx, p[0], p[1]);
+        drawWaveLine(ctx, p[0], p[1]);
         ctx.stroke();
         break;
       case 'arrow':

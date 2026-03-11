@@ -1,6 +1,7 @@
 
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v7.7 (Herramientas de Agilidad)
+
+# SynqSports Pro - ARCHITECTURE_LEDGER v7.7.1 (Motor de Ondas)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -79,7 +80,7 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 - **Sugerencias**: El Entrenador puede proponer cambios ("Sugerir Cambio").
 - **Bloqueo de Seguridad**: Las solicitudes de cambio se bloquean automáticamente si faltan menos de **7 días** para la sesión.
 
-## 5. Protocolo de Pizarra y Dibujo (v7.7)
+## 5. Protocolo de Pizarra y Dibujo (v7.7.1)
 
 ### 5.1. Motor de Dibujo Suavizado
 - Uso de lógica de interpolación para trazos fluidos en el Canvas e independencia de resolución.
@@ -87,9 +88,9 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 ### 5.2. Esquema JSON Maestro (Independencia de Dispositivo)
 - **Coordenadas Decimales**: Todas las posiciones de fichas y trazos se guardan como valores de `0.000` a `1.000`. Garantiza fidelidad visual en cualquier dispositivo.
 
-### 5.3. Herramientas de Dibujo Avanzadas (v7.7)
-- **Modos de Trazo**: Dibujo Libre, Rectángulos, Círculos, Zig-Zag (Onda), Flechas simples y dobles.
-- **Motor de Ondas (v7.7)**: Implementación de algoritmo de "dientes de sierra" para representar movimientos de agilidad y fintas entre dos puntos.
+### 5.3. Herramientas de Dibujo Avanzadas (v7.7.1)
+- **Modos de Trazo**: Dibujo Libre, Rectángulos, Círculos, Ondas Sinusoidales, Flechas simples y dobles.
+- **Motor de Ondas (v7.7.1)**: Implementación de algoritmo sinusoidal para representar movimientos de agilidad y fintas fluidas entre dos puntos.
 - **Manipulación Táctica Total**: 
     - **Arrastre (Dragging)**: Capacidad de mover cualquier elemento por el campo manteniendo su escala.
     - **Puntos de Modificación**: Implementación de 4 handles en rectángulos y puntos extremos en flechas/círculos/ondas para redimensionado dinámico.
@@ -114,4 +115,3 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 ## 8. UX y Calidad Visual
 - **Glow Reactivo**: Efectos de resplandor neón en elementos activos.
 - **Scroll Táctico**: Barras de desplazamiento siempre visibles con el color de identidad del club.
-
