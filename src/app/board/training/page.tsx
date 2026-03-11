@@ -21,7 +21,8 @@ import {
   Settings,
   Activity,
   Circle,
-  Flag
+  Flag,
+  UserCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -57,6 +58,7 @@ interface DrawingElement {
   color: string;
   rotation: number;
   lineStyle: 'solid' | 'dashed';
+  number?: number;
 }
 
 const COLORS = [
@@ -161,7 +163,7 @@ function TrainingBoardContent() {
 
     const centerX = p[1] ? (p[0].x + p[1].x) / 2 : p[0].x;
     const centerY = p[1] ? (p[0].y + p[1].y) / 2 : p[0].y;
-    const canRotate = !['freehand', 'circle', 'ball', 'cone', 'pica', 'flag'].includes(element.type);
+    const canRotate = !['freehand', 'circle', 'ball', 'cone', 'seta', 'ladder', 'hurdle', 'minigoal', 'pica', 'player'].includes(element.type);
     
     if (canRotate) {
       ctx.translate(centerX, centerY);
@@ -217,6 +219,17 @@ function TrainingBoardContent() {
         drawArrowhead(ctx, p[1], p[0]);
         ctx.stroke();
         break;
+      case 'player':
+        ctx.arc(p[0].x, p[0].y, 18, 0, Math.PI * 2);
+        ctx.fillStyle = hexToRgba(element.color, 0.2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 12px Space Grotesk';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText((element.number || 1).toString(), p[0].x, p[0].y);
+        break;
       case 'ball':
         ctx.arc(p[0].x, p[0].y, 8, 0, Math.PI * 2);
         ctx.fillStyle = '#fff';
@@ -224,29 +237,88 @@ function TrainingBoardContent() {
         ctx.strokeStyle = '#000';
         ctx.lineWidth = 1;
         ctx.stroke();
+        // Detalle profesional de pentágonos
+        for(let i=0; i<5; i++){
+          ctx.beginPath();
+          ctx.moveTo(p[0].x, p[0].y);
+          ctx.lineTo(p[0].x + Math.cos(i*Math.PI*2/5)*8, p[0].y + Math.sin(i*Math.PI*2/5)*8);
+          ctx.stroke();
+        }
         break;
       case 'cone':
-        ctx.moveTo(p[0].x, p[0].y - 10);
+        ctx.moveTo(p[0].x, p[0].y - 12);
         ctx.lineTo(p[0].x - 10, p[0].y + 10);
         ctx.lineTo(p[0].x + 10, p[0].y + 10);
         ctx.closePath();
         ctx.fillStyle = element.color;
         ctx.fill();
         ctx.stroke();
-        break;
-      case 'pica':
-        ctx.moveTo(p[0].x, p[0].y - 15);
-        ctx.lineTo(p[0].x, p[0].y + 15);
+        // Base del cono
+        ctx.beginPath();
+        ctx.ellipse(p[0].x, p[0].y + 10, 12, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
         ctx.stroke();
         break;
-      case 'flag':
-        ctx.moveTo(p[0].x, p[0].y + 15);
-        ctx.lineTo(p[0].x, p[0].y - 15);
-        ctx.lineTo(p[0].x + 15, p[0].y - 7.5);
-        ctx.lineTo(p[0].x, p[0].y);
+      case 'seta':
+        ctx.beginPath();
+        ctx.ellipse(p[0].x, p[0].y, 14, 6, 0, 0, Math.PI * 2);
         ctx.fillStyle = element.color;
         ctx.fill();
         ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(p[0].x, p[0].y - 2, 3, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.fill();
+        break;
+      case 'ladder':
+        const steps = 8;
+        const stepH = 25;
+        const stepW = 40;
+        ctx.translate(p[0].x, p[0].y);
+        ctx.rotate(element.rotation);
+        for(let i=0; i<steps; i++){
+          ctx.strokeRect(-stepW/2, i*stepH, stepW, stepH);
+        }
+        break;
+      case 'hurdle':
+        ctx.moveTo(p[0].x - 15, p[0].y + 10);
+        ctx.lineTo(p[0].x - 15, p[0].y - 10);
+        ctx.lineTo(p[0].x + 15, p[0].y - 10);
+        ctx.lineTo(p[0].x + 15, p[0].y + 10);
+        ctx.stroke();
+        // Pies de la valla
+        ctx.moveTo(p[0].x - 20, p[0].y + 10);
+        ctx.lineTo(p[0].x - 10, p[0].y + 10);
+        ctx.moveTo(p[0].x + 10, p[0].y + 10);
+        ctx.lineTo(p[0].x + 20, p[0].y + 10);
+        ctx.stroke();
+        break;
+      case 'minigoal':
+        ctx.strokeRect(p[0].x - 20, p[0].y - 15, 40, 30);
+        ctx.beginPath();
+        ctx.moveTo(p[0].x - 20, p[0].y - 15);
+        ctx.lineTo(p[0].x - 10, p[0].y - 25);
+        ctx.lineTo(p[0].x + 10, p[0].y - 25);
+        ctx.lineTo(p[0].x + 20, p[0].y - 15);
+        ctx.stroke();
+        // Red (mesh)
+        ctx.setLineDash([2, 2]);
+        ctx.lineWidth = 1;
+        for(let i=-15; i<20; i+=5) {
+          ctx.moveTo(p[0].x + i, p[0].y - 15);
+          ctx.lineTo(p[0].x + i, p[0].y + 15);
+        }
+        ctx.stroke();
+        break;
+      case 'pica':
+        ctx.lineWidth = 4;
+        ctx.moveTo(p[0].x, p[0].y + 15);
+        ctx.lineTo(p[0].x, p[0].y - 25);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(p[0].x, p[0].y + 15, 6, 0, Math.PI * 2);
+        ctx.fillStyle = '#333';
+        ctx.fill();
         break;
     }
 
@@ -264,12 +336,12 @@ function TrainingBoardContent() {
       ctx.lineWidth = 1;
       ctx.setLineDash([5, 5]);
       
-      const isAsset = ['ball', 'cone', 'pica', 'flag'].includes(element.type);
+      const isAsset = ['ball', 'cone', 'seta', 'ladder', 'hurdle', 'minigoal', 'pica', 'player'].includes(element.type);
 
       if (element.type === 'rect' && p[1]) {
         ctx.strokeRect(p[0].x, p[0].y, p[1].x - p[0].x, p[1].y - p[0].y);
       } else if (isAsset) {
-        ctx.strokeRect(p[0].x - 20, p[0].y - 20, 40, 40);
+        ctx.strokeRect(p[0].x - 25, p[0].y - 25, 50, 50);
       }
 
       ctx.setLineDash([]);
@@ -294,11 +366,11 @@ function TrainingBoardContent() {
         ctx.stroke();
       });
 
-      if (canRotate && p[1]) {
-        const rotX = (p[0].x + p[1].x) / 2;
-        const rotY = Math.min(p[0].y, p[1].y) - 30;
+      if (canRotate && (p[1] || isAsset)) {
+        const rotX = p[1] ? (p[0].x + p[1].x) / 2 : p[0].x;
+        const rotY = p[1] ? Math.min(p[0].y, p[1].y) - 35 : p[0].y - 35;
         ctx.beginPath();
-        ctx.moveTo(rotX, Math.min(p[0].y, p[1].y));
+        ctx.moveTo(rotX, p[1] ? Math.min(p[0].y, p[1].y) : p[0].y);
         ctx.lineTo(rotX, rotY);
         ctx.stroke();
         ctx.fillStyle = '#facc15';
@@ -360,11 +432,11 @@ function TrainingBoardContent() {
         const centerY = p[1] ? (p[0].y + p[1].y) / 2 : p[0].y;
         const localPoint = rotatePoint(point, {x: centerX, y: centerY}, -el.rotation);
 
-        const isAsset = ['ball', 'cone', 'pica', 'flag'].includes(el.type);
+        const isAsset = ['ball', 'cone', 'seta', 'ladder', 'hurdle', 'minigoal', 'pica', 'player'].includes(el.type);
 
-        if (!isAsset && el.type !== 'circle' && p[1]) {
-          const rotX = (el.points[0].x + el.points[1].x) / 2;
-          const rotY = Math.min(el.points[0].y, el.points[1].y) - 30;
+        if (el.type !== 'circle' && (p[1] || isAsset)) {
+          const rotX = p[1] ? (el.points[0].x + el.points[1].x) / 2 : el.points[0].x;
+          const rotY = p[1] ? Math.min(el.points[0].y, el.points[1].y) - 35 : el.points[0].y - 35;
           if (getDistance(point, rotatePoint({x: rotX, y: rotY}, {x: centerX, y: centerY}, el.rotation)) < 15) {
             interactionMode.current = 'rotating';
             return;
@@ -409,13 +481,13 @@ function TrainingBoardContent() {
       if (el.type === 'freehand') {
         return p.some(fp => getDistance(point, fp) < 15);
       }
-      if (['ball', 'cone', 'pica', 'flag'].includes(el.type)) {
-        return getDistance(point, p[0]) < 25;
+      if (['ball', 'cone', 'seta', 'ladder', 'hurdle', 'minigoal', 'pica', 'player'].includes(el.type)) {
+        return getDistance(point, p[0]) < 30;
       }
       if (p[1]) {
-        return getDistance(localPoint, p[0]) < 25 || getDistance(localPoint, p[p.length-1]) < 25;
+        return getDistance(localPoint, p[0]) < 30 || getDistance(localPoint, p[p.length-1]) < 30;
       }
-      return getDistance(localPoint, p[0]) < 25;
+      return getDistance(localPoint, p[0]) < 30;
     });
 
     if (clickedEl) {
@@ -427,17 +499,25 @@ function TrainingBoardContent() {
       }
     } else {
       if (activeTool !== 'select') {
-        const isAsset = ['ball', 'cone', 'pica', 'flag'].includes(activeTool);
+        const isAsset = ['ball', 'cone', 'seta', 'ladder', 'hurdle', 'minigoal', 'pica', 'player'].includes(activeTool);
         setSelectedId(null);
         setIsPropertiesOpen(false);
         interactionMode.current = 'drawing';
+        
+        let playerNum;
+        if(activeTool === 'player') {
+          const playersCount = elements.filter(e => e.type === 'player').length;
+          playerNum = playersCount + 1;
+        }
+
         currentElement.current = { 
           id: `el-${Date.now()}`, 
           type: activeTool, 
           points: isAsset ? [point] : [point, point], 
           color: currentColor,
           rotation: 0,
-          lineStyle: 'solid'
+          lineStyle: 'solid',
+          number: playerNum
         };
       } else {
         setSelectedId(null);
@@ -453,7 +533,7 @@ function TrainingBoardContent() {
     const point = { x: e.clientX - rect.left, y: e.clientY - rect.top };
 
     if (interactionMode.current === 'drawing' && currentElement.current) {
-      const isAsset = ['ball', 'cone', 'pica', 'flag'].includes(currentElement.current.type);
+      const isAsset = ['ball', 'cone', 'seta', 'ladder', 'hurdle', 'minigoal', 'pica', 'player'].includes(currentElement.current.type);
       if (!isAsset) {
         if (activeTool === 'freehand') {
           currentElement.current.points.push(point);
@@ -481,9 +561,10 @@ function TrainingBoardContent() {
       }));
     } else if (interactionMode.current === 'rotating' && selectedId) {
       const el = elements.find(e => e.id === selectedId);
-      if (el && el.points[1]) {
-        const centerX = (el.points[0].x + el.points[1].x) / 2;
-        const centerY = (el.points[0].y + el.points[1].y) / 2;
+      if (el) {
+        const isAsset = ['ball', 'cone', 'seta', 'ladder', 'hurdle', 'minigoal', 'pica', 'player'].includes(el.type);
+        const centerX = el.points[1] ? (el.points[0].x + el.points[1].x) / 2 : el.points[0].x;
+        const centerY = el.points[1] ? (el.points[0].y + el.points[1].y) / 2 : el.points[0].y;
         const angle = Math.atan2(point.y - centerY, point.x - centerX) + Math.PI / 2;
         setElements(prev => prev.map(e => e.id === selectedId ? { ...e, rotation: angle } : e));
       }
@@ -568,7 +649,7 @@ function TrainingBoardContent() {
     if (selectedElement.type === 'freehand') {
       maxX = Math.max(...p.map(pt => pt.x));
       minY = Math.min(...p.map(pt => pt.y));
-    } else if (['ball', 'cone', 'pica', 'flag'].includes(selectedElement.type)) {
+    } else if (['ball', 'cone', 'seta', 'ladder', 'hurdle', 'minigoal', 'pica', 'player'].includes(selectedElement.type)) {
       maxX = p[0].x;
       minY = p[0].y;
     } else if (p[1]) {
@@ -591,7 +672,7 @@ function TrainingBoardContent() {
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-amber-500 animate-pulse" />
-              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Exercise_Designer_IA_v8.1</span>
+              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Exercise_Designer_IA_v8.2</span>
             </div>
             <h1 className="text-lg lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase">Estudio Profesional</h1>
           </div>
@@ -761,6 +842,24 @@ function TrainingBoardContent() {
                     </div>
                   </section>
 
+                  {selectedElement.type === 'player' && (
+                    <section className="space-y-6">
+                      <div className="flex items-center gap-3 border-b border-white/5 pb-4">
+                        <UserCircle className="h-4 w-4 text-amber-500/40" />
+                        <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-white/40">Identidad Jugador</h3>
+                      </div>
+                      <div className="space-y-3">
+                        <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1">Dorsal / ID</Label>
+                        <Input 
+                          type="number"
+                          value={selectedElement.number || 1}
+                          onChange={(e) => setElements(prev => prev.map(el => el.id === selectedId ? {...el, number: parseInt(e.target.value)} : el))}
+                          className="h-12 bg-white/5 border-amber-500/20 rounded-xl text-amber-500 font-bold"
+                        />
+                      </div>
+                    </section>
+                  )}
+
                   <section className="space-y-6">
                     <div className="flex items-center gap-3 border-b border-white/5 pb-4">
                       <Spline className="h-4 w-4 text-amber-500/40" />
@@ -769,8 +868,8 @@ function TrainingBoardContent() {
                     <Button 
                       variant="outline" 
                       className={cn(
-                        "w-full h-16 border-white/10 rounded-2xl flex justify-between px-8 transition-all",
-                        selectedElement.lineStyle === 'dashed' ? "bg-amber-500/10 border-amber-500/40 text-white" : "bg-white/5 text-white/40"
+                        "w-full h-16 bg-white/5 border-white/10 rounded-2xl flex justify-between px-8 transition-all",
+                        selectedElement.lineStyle === 'dashed' ? "bg-amber-500/10 border-amber-500/40 text-white" : "text-white/40"
                       )}
                       onClick={() => toggleLineStyle(selectedId!)}
                     >

@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v8.1.0 (Estación de Trabajo Ergonómica)
+# SynqSports Pro - ARCHITECTURE_LEDGER v8.2.0 (Equipamiento de Élite)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -71,7 +71,7 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 - **Sugerencias**: El Entrenador puede proponer cambios ("Sugerir Cambio").
 - **Bloqueo de Seguridad**: Las solicitudes de cambio se bloquean automáticamente si faltan menos de **7 días** para la sesión.
 
-## 5. Protocolo de Pizarra y Dibujo (v8.1.0)
+## 5. Protocolo de Pizarra y Dibujo (v8.2.0)
 
 ### 5.1. Motor de Dibujo Suavizado
 - Uso de lógica de interpolación para trazos fluidos en el Canvas e independencia de resolución.
@@ -89,12 +89,9 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 - **Estación de Trabajo Ergonómica (v8.1.0)**:
     - **Doble Barra Horizontal**: Distribución simétrica en la parte inferior del campo. Lado izquierdo para Biblioteca de Materiales y lado derecho para Herramientas de Dibujo.
     - **Modo Colapsable Independiente**: Ambas barras pueden minimizarse para maximizar el área de visión táctica.
-    - **Blindaje Visual**: Bordes reforzados y efecto de resplandor (glow) en ambas estaciones de control.
-- **Lógica de Controles Específica (v7.8.0)**:
-    - **Círculos**: Se omite el nodo de rotación.
-    - **Dibujo Libre Blindado**: Se eliminan las acciones (menú de propiedades) para los trazos manuales. Una vez finalizados, actúan como bloques tácticos puros que solo permiten selección y arrastre.
-- **Análisis Espacial (v7.3.1)**:
-    - **Carriles Tácticos**: Líneas horizontales al **20%** y **80%** de la altura para alineación con el área grande.
+- **Equipamiento de Élite (v8.2.0)**:
+    - **Material Técnico Vectorial**: Integración de activos profesionales (conos, setas, escaleras, vallas, miniporterías y picas) renderizados mediante trazado de alta precisión en canvas.
+    - **Nodos de Atleta**: Capacidad de añadir jugadores numerados directamente como material técnico en el estudio de entrenamiento.
 
 ## 6. Gestión de Espacios e Instalaciones
 - **Motor Geométrico**: Subdivisiones de campos (1, 2 o 4 zonas) calculadas en porcentajes.

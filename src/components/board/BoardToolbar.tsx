@@ -15,11 +15,15 @@ import {
   ChevronLeft,
   ChevronDown,
   Flag,
-  Library
+  Library,
+  UserCircle,
+  Disc,
+  Grid3X3,
+  Table2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type DrawingTool = 'select' | 'freehand' | 'rect' | 'circle' | 'arrow' | 'double-arrow' | 'zigzag' | 'ball' | 'cone' | 'pica' | 'flag';
+export type DrawingTool = 'select' | 'freehand' | 'rect' | 'circle' | 'arrow' | 'double-arrow' | 'zigzag' | 'player' | 'ball' | 'cone' | 'seta' | 'ladder' | 'hurdle' | 'minigoal' | 'pica';
 
 interface BoardToolbarProps {
   theme?: "cyan" | "amber";
@@ -46,24 +50,33 @@ const TRAINING_TOOLS = [
   { id: 'freehand', icon: Pencil, label: 'Dibujo Libre' },
   { id: 'rect', icon: Square, label: 'Rectángulo' },
   { id: 'circle', icon: Circle, label: 'Círculo' },
-  { id: 'zigzag', icon: Activity, label: 'Zig-Zag / Onda' },
+  { id: 'zigzag', icon: Activity, label: 'Onda de Agilidad' },
   { id: 'arrow', icon: ArrowUpRight, label: 'Flecha' },
   { id: 'double-arrow', icon: ArrowLeftRight, label: 'Flecha Doble' },
 ] as const;
 
-function TriangleIcon(props: any) {
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" {...props}><path d="M12 3L2 20h20L12 3z" /></svg>
+// ICONOS PERSONALIZADOS PROFESIONALES
+function ConeIcon(props: any) {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}><path d="M12 2L3 20h18L12 2z" /><path d="M6 16h12" /></svg>
 }
 
-function MinusIcon(props: any) {
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" {...props}><line x1="12" y1="5" x2="12" y2="19" /></svg>
+function MinigoalIcon(props: any) {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}><path d="M3 20V8h18v12" /><path d="M3 8l3-4h12l3 4" /><path d="M6 4v4" /><path d="M18 4v4" /></svg>
+}
+
+function BallIcon(props: any) {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}><circle cx="12" cy="12" r="10" /><path d="M12 2v20" /><path d="M2 12h20" /><path d="M12 12l7-7" /><path d="M12 12l-7 7" /><path d="M12 12l7 7" /><path d="M12 12l-7-7" /></svg>
 }
 
 const MATERIAL_TOOLS = [
-  { id: 'ball', icon: Circle, label: 'Balón' },
-  { id: 'cone', icon: TriangleIcon, label: 'Cono' },
-  { id: 'pica', icon: MinusIcon, label: 'Pica' },
-  { id: 'flag', icon: Flag, label: 'Banderín' },
+  { id: 'player', icon: UserCircle, label: 'Añadir Jugador' },
+  { id: 'ball', icon: BallIcon, label: 'Balón' },
+  { id: 'cone', icon: ConeIcon, label: 'Cono' },
+  { id: 'seta', icon: Disc, label: 'Seta / Chino' },
+  { id: 'ladder', icon: Grid3X3, label: 'Escalera' },
+  { id: 'hurdle', icon: Table2, label: 'Valla' },
+  { id: 'minigoal', icon: MinigoalIcon, label: 'Portería' },
+  { id: 'pica', icon: Flag, label: 'Pica' },
 ] as const;
 
 export function BoardToolbar({ 
