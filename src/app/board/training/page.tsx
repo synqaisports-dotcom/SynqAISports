@@ -55,7 +55,7 @@ interface Point {
 interface DrawingElement {
   id: string;
   type: DrawingTool;
-  points: Point[]; // p[0] is top-left (or center for some), p[1] is bottom-right for bounds
+  points: Point[]; // p[0] is top-left, p[1] is bottom-right for bounds
   color: string;
   rotation: number;
   lineStyle: 'solid' | 'dashed';
@@ -151,6 +151,8 @@ function TrainingBoardContent() {
       ctx.setLineDash([]);
     }
 
+    const isMaterial = ['player', 'ball', 'cone', 'seta', 'ladder', 'hurdle', 'minigoal', 'pica'].includes(element.type);
+
     switch (element.type) {
       case 'freehand':
         ctx.beginPath();
@@ -223,35 +225,33 @@ function TrainingBoardContent() {
         ctx.save();
         ctx.translate(centerX, centerY);
         ctx.scale(width/80, height/80);
-        ctx.beginPath(); ctx.arc(0, 5, 40, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fill();
+        // Sombra realista
+        ctx.beginPath(); ctx.arc(0, 5, 40, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fill();
+        // Gradiente de volumen Pro
         const bG = ctx.createRadialGradient(-15, -15, 0, 0, 0, 40);
-        bG.addColorStop(0, 'white'); bG.addColorStop(1, '#E2E8F0');
+        bG.addColorStop(0, '#ffffff'); bG.addColorStop(0.8, '#cbd5e1'); bG.addColorStop(1, '#94a3b8');
         ctx.beginPath(); ctx.arc(0, 0, 40, 0, Math.PI * 2); ctx.fillStyle = bG; ctx.fill();
-        ctx.strokeStyle = '#0F172A'; ctx.lineWidth = 2; ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(0, -40); ctx.lineTo(-15, -25); ctx.moveTo(0, -40); ctx.lineTo(15, -25); ctx.moveTo(0, 40); ctx.lineTo(-15, 25); ctx.moveTo(0, 40); ctx.lineTo(15, 25);
-        ctx.moveTo(-40, 0); ctx.lineTo(-25, -15); ctx.moveTo(-40, 0); ctx.lineTo(-25, 15); ctx.moveTo(40, 0); ctx.lineTo(25, -15); ctx.moveTo(40, 0); ctx.lineTo(25, 15);
-        ctx.stroke(); ctx.beginPath(); ctx.arc(0, 0, 15, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 2; ctx.stroke();
+        // Patrones pentagonales técnicos
+        ctx.beginPath();
+        for(let i=0; i<5; i++){
+          const ang = (i * 72) * Math.PI / 180;
+          ctx.moveTo(Math.cos(ang)*15, Math.sin(ang)*15);
+          ctx.lineTo(Math.cos(ang)*40, Math.sin(ang)*40);
+        }
+        ctx.stroke();
+        ctx.beginPath(); ctx.arc(0, 0, 15, 0, Math.PI * 2); ctx.stroke();
         ctx.restore();
         break;
       case 'cone':
-        ctx.save();
-        ctx.translate(centerX, centerY);
-        ctx.scale(width/50, height/50);
-        // Sombra
-        ctx.beginPath(); ctx.ellipse(0, 15, 25, 10, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fill();
-        // Base
-        ctx.beginPath(); ctx.ellipse(0, 12, 20, 8, 0, 0, Math.PI * 2);
-        const cBG = ctx.createRadialGradient(0, 10, 0, 0, 12, 20);
-        cBG.addColorStop(0, '#ff9800'); cBG.addColorStop(1, '#e65100');
-        ctx.fillStyle = cBG; ctx.fill();
-        // Cuerpo
-        const drawS = (yT: number, yB: number, wT: number, wB: number, col: string) => {
-          ctx.beginPath(); ctx.moveTo(-wT, yT); ctx.lineTo(wT, yT); ctx.quadraticCurveTo(wT, yT + 2, wB, yB); ctx.lineTo(-wB, yB); ctx.quadraticCurveTo(-wT, yT + 2, -wT, yT);
-          ctx.fillStyle = col; ctx.fill();
-        };
+        ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/50, height/50);
+        ctx.beginPath(); ctx.ellipse(0, 15, 25, 10, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fill();
+        ctx.beginPath(); ctx.ellipse(0, 12, 20, 8, 0, 0, Math.PI * 2); ctx.fillStyle = '#ea580c'; ctx.fill();
         const bodyG = ctx.createLinearGradient(-20, 0, 20, 0);
-        bodyG.addColorStop(0, '#e65100'); bodyG.addColorStop(0.4, '#ffb74d'); bodyG.addColorStop(1, '#bf360c');
-        drawS(-10, 12, 12, 18, bodyG); drawS(-18, -10, 8, 12, '#ffffff'); drawS(-25, -18, 4, 8, bodyG); drawS(-30, -25, 2, 4, '#ffffff');
+        bodyG.addColorStop(0, '#ea580c'); bodyG.addColorStop(0.5, '#fb923c'); bodyG.addColorStop(1, '#9a3412');
+        ctx.beginPath(); ctx.moveTo(-15, 12); ctx.lineTo(15, 12); ctx.lineTo(2, -30); ctx.lineTo(-2, -30); ctx.closePath();
+        ctx.fillStyle = bodyG; ctx.fill();
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(-8, -5, 16, 6); ctx.fillRect(-4, -20, 8, 4);
         ctx.restore();
         break;
       case 'seta':
@@ -273,7 +273,6 @@ function TrainingBoardContent() {
         ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/60, height/30);
         ctx.strokeStyle = element.color; ctx.lineWidth = 6;
         ctx.beginPath(); ctx.moveTo(-30, 15); ctx.lineTo(-30, -15); ctx.lineTo(30, -15); ctx.lineTo(30, 15); ctx.stroke();
-        ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 3; ctx.strokeRect(-36, 12, 12, 6); ctx.strokeRect(24, 12, 12, 6);
         ctx.restore();
         break;
       case 'minigoal':
@@ -282,48 +281,30 @@ function TrainingBoardContent() {
         ctx.setLineDash([3, 3]); ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1;
         for(let i=-50; i<50; i+=10) { ctx.beginPath(); ctx.moveTo(i, -30); ctx.lineTo(i, 30); ctx.stroke(); }
         for(let j=-30; j<30; j+=10) { ctx.beginPath(); ctx.moveTo(-50, j); ctx.lineTo(50, j); ctx.stroke(); }
-        ctx.setLineDash([]); ctx.strokeStyle = '#F8FAFC'; ctx.lineWidth = 5; ctx.strokeRect(-50, -30, 100, 60);
+        ctx.setLineDash([]); ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 5; ctx.strokeRect(-50, -30, 100, 60);
         ctx.restore();
         break;
       case 'pica':
         ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/36, height/80);
         ctx.beginPath(); ctx.arc(0, 30, 18, 0, Math.PI * 2); ctx.fillStyle = '#334155'; ctx.fill();
-        const piG = ctx.createLinearGradient(-4, 0, 4, 0);
-        piG.addColorStop(0, element.color); piG.addColorStop(0.5, '#ffffff'); piG.addColorStop(1, element.color);
-        ctx.fillStyle = piG; ctx.fillRect(-4, -40, 8, 70);
+        ctx.fillStyle = element.color; ctx.fillRect(-4, -40, 8, 70);
         ctx.restore();
         break;
     }
 
     if (isSelected && element.type !== 'freehand') {
-      ctx.restore();
-      ctx.save();
-      ctx.translate(centerX, centerY);
-      ctx.rotate(element.rotation);
-      ctx.translate(-centerX, -centerY);
-
-      ctx.strokeStyle = '#ffffffaa';
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([6, 4]);
+      ctx.restore(); ctx.save();
+      ctx.translate(centerX, centerY); ctx.rotate(element.rotation); ctx.translate(-centerX, -centerY);
+      ctx.strokeStyle = '#ffffffaa'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]);
       const pad = 10;
       ctx.strokeRect(minX - pad, minY - pad, width + pad * 2, height + pad * 2);
-
-      ctx.setLineDash([]);
-      ctx.fillStyle = '#ffffff';
+      ctx.setLineDash([]); ctx.fillStyle = '#ffffff';
       const handles = [
-        { x: minX - pad, y: minY - pad }, // TL
-        { x: centerX, y: minY - pad },    // TM
-        { x: maxX + pad, y: minY - pad }, // TR
-        { x: minX - pad, y: centerY },    // ML
-        { x: maxX + pad, y: centerY },    // MR
-        { x: minX - pad, y: maxY + pad }, // BL
-        { x: centerX, y: maxY + pad },    // BM
-        { x: maxX + pad, y: maxY + pad }, // BR
+        { x: minX - pad, y: minY - pad }, { x: centerX, y: minY - pad }, { x: maxX + pad, y: minY - pad },
+        { x: minX - pad, y: centerY }, { x: maxX + pad, y: centerY },
+        { x: minX - pad, y: maxY + pad }, { x: centerX, y: maxY + pad }, { x: maxX + pad, y: maxY + pad },
       ];
-      handles.forEach(h => {
-        ctx.beginPath(); ctx.arc(h.x, h.y, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-      });
-
+      handles.forEach(h => { ctx.beginPath(); ctx.arc(h.x, h.y, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
       const rotY = minY - pad - 40;
       ctx.beginPath(); ctx.moveTo(centerX, minY - pad); ctx.lineTo(centerX, rotY); ctx.stroke();
       ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(centerX, rotY, 8, 0, Math.PI * 2); ctx.fill();
@@ -393,6 +374,7 @@ function TrainingBoardContent() {
 
     if (clicked) {
       setSelectedId(clicked.id); setActiveTool('select'); interactionMode.current = 'dragging';
+      if (clicked.type === 'freehand') setIsPropertiesOpen(false);
     } else {
       if (activeTool !== 'select') {
         setSelectedId(null); interactionMode.current = 'drawing';
@@ -429,15 +411,25 @@ function TrainingBoardContent() {
     } else if (interactionMode.current === 'resizing' && selectedId && activeHandleIndex.current !== null) {
       setElements(prev => prev.map(el => {
         if (el.id !== selectedId) return el;
-        const { centerX, centerY } = getElementBounds(el);
+        const { centerX, centerY, width: oldW, height: oldH } = getElementBounds(el);
         const local = rotatePoint(point, {x: centerX, y: centerY}, -el.rotation);
         const next = [...el.points];
-        // tl, tm, tr, ml, mr, bl, bm, br
-        const h = activeHandleIndex.current;
-        if ([0, 3, 5].includes(h!)) next[0].x = local.x;
-        if ([2, 4, 7].includes(h!)) next[1].x = local.x;
-        if ([0, 1, 2].includes(h!)) next[0].y = local.y;
-        if ([5, 6, 7].includes(h!)) next[1].y = local.y;
+        const h = activeHandleIndex.current!;
+        const isMaterial = ['player', 'ball', 'cone', 'seta', 'pica'].includes(el.type);
+
+        if (isMaterial) {
+          // ESCALA PROPORCIONAL PARA MATERIALES
+          const ratio = oldW / oldH;
+          const dx = Math.abs(local.x - centerX) * 2;
+          const dy = dx / ratio;
+          next[0] = { x: centerX - dx/2, y: centerY - dy/2 };
+          next[1] = { x: centerX + dx/2, y: centerY + dy/2 };
+        } else {
+          if ([0, 3, 5].includes(h)) next[0].x = local.x;
+          if ([2, 4, 7].includes(h)) next[1].x = local.x;
+          if ([0, 1, 2].includes(h)) next[0].y = local.y;
+          if ([5, 6, 7].includes(h)) next[1].y = local.y;
+        }
         return { ...el, points: next };
       }));
     } else if (interactionMode.current === 'rotating' && selectedId) {
@@ -480,7 +472,7 @@ function TrainingBoardContent() {
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-amber-500 animate-pulse" />
-              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Precision_v8.7</span>
+              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Precision_v8.8</span>
             </div>
             <h1 className="text-lg lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase leading-none">Estudio Élite</h1>
           </div>
@@ -517,7 +509,7 @@ function TrainingBoardContent() {
             <BoardToolbar theme="amber" variant="materials" orientation="horizontal" activeTool={activeTool} onToolSelect={(tool) => { setActiveTool(tool); setSelectedId(null); setIsPropertiesOpen(false); }} className="border-2 shadow-2xl" />
           </div>
           <div className="pointer-events-auto">
-            <BoardToolbar theme="amber" variant="training" orientation="horizontal" activeTool={activeTool} hasSelection={!!selectedId} onOpenProperties={() => setIsPropertiesOpen(true)} onToolSelect={(tool) => { setActiveTool(tool); if (tool !== 'select') { setSelectedId(null); setIsPropertiesOpen(false); } }} onClear={() => { setElements([]); setSelectedId(null); setIsPropertiesOpen(false); }} className="border-2 shadow-2xl" />
+            <BoardToolbar theme="amber" variant="training" orientation="horizontal" activeTool={activeTool} hasSelection={!!selectedId && selectedElement?.type !== 'freehand'} onOpenProperties={() => setIsPropertiesOpen(true)} onToolSelect={(tool) => { setActiveTool(tool); if (tool !== 'select') { setSelectedId(null); setIsPropertiesOpen(false); } }} onClear={() => { setElements([]); setSelectedId(null); setIsPropertiesOpen(false); }} className="border-2 shadow-2xl" />
           </div>
         </div>
 
@@ -529,7 +521,7 @@ function TrainingBoardContent() {
                   <SheetHeader className="space-y-4">
                     <div className="flex items-center gap-3">
                       <Settings2 className="h-4 w-4 text-amber-500" />
-                      <span className="text-[10px] font-black uppercase text-amber-500">Node_Properties_v8.7</span>
+                      <span className="text-[10px] font-black uppercase text-amber-500">Node_Properties_v8.8</span>
                     </div>
                     <SheetTitle className="text-3xl font-black italic uppercase">Propiedades</SheetTitle>
                   </SheetHeader>
