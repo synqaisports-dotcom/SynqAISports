@@ -5,25 +5,16 @@ import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { 
   Sparkles, 
   Save, 
-  Loader2, 
   LayoutGrid, 
-  ChevronLeft, 
   Link as LinkIcon, 
-  RotateCw, 
   Trash2, 
   MousePointer2, 
   Copy, 
-  Type,
-  Square,
-  Circle as CircleIcon,
-  ArrowUpRight,
-  ArrowLeftRight,
   Pencil,
   Spline,
   Minus,
   Columns3,
   Settings2,
-  X,
   Palette,
   Layers,
   Library,
@@ -51,7 +42,6 @@ import {
 } from "@/components/ui/sheet";
 import { useSearchParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 
 interface Point {
   x: number;
@@ -75,7 +65,6 @@ const COLORS = [
 ];
 
 function TrainingBoardContent() {
-  const [isAiProcessing, setIsAiProcessing] = useState(false);
   const [fieldType, setFieldType] = useState<FieldType>("f11");
   const [showLanes, setShowLanes] = useState(false);
   const [activeTool, setActiveTool] = useState<DrawingTool>("select");
@@ -594,25 +583,10 @@ function TrainingBoardContent() {
       </header>
 
       <div className="flex-1 flex overflow-hidden relative">
-        <BoardToolbar 
-          theme="amber" 
-          variant="training"
-          activeTool={activeTool}
-          onToolSelect={(tool) => {
-            setActiveTool(tool);
-            if (tool !== 'select') {
-              setSelectedId(null);
-              setIsPropertiesOpen(false);
-            }
-          }}
-          onClear={() => { setElements([]); setSelectedId(null); setIsPropertiesOpen(false); }}
-          className="absolute left-4 top-1/2 -translate-y-1/2 hidden sm:flex" 
-        />
-
         {!isSheetOpen && (
           <button 
             onClick={() => setIsLibraryOpen(true)}
-            className="absolute left-4 bottom-24 h-12 w-12 bg-black/60 border border-amber-500/30 text-amber-500 rounded-2xl flex items-center justify-center hover:bg-amber-500 hover:text-black transition-all animate-in fade-in duration-500"
+            className="absolute left-4 bottom-24 h-12 w-12 bg-black/60 border border-amber-500/30 text-amber-500 rounded-2xl flex items-center justify-center hover:bg-amber-500 hover:text-black transition-all animate-in fade-in duration-500 z-50"
             title="Abrir Biblioteca de Activos"
           >
             <Library className="h-5 w-5" />
@@ -643,12 +617,28 @@ function TrainingBoardContent() {
                   className="h-10 w-10 bg-amber-500 text-black rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(245,158,11,0.5)] hover:scale-110 active:scale-95 transition-all amber-glow"
                   title="Abrir Propiedades"
                 >
-                  <Settings className="h-5 w-5 animate-spin-slow" />
+                  <Settings className="h-5 w-5" />
                 </button>
               </div>
             )}
           </TacticalField>
         </main>
+
+        <BoardToolbar 
+          theme="amber" 
+          variant="training"
+          orientation="horizontal"
+          activeTool={activeTool}
+          onToolSelect={(tool) => {
+            setActiveTool(tool);
+            if (tool !== 'select') {
+              setSelectedId(null);
+              setIsPropertiesOpen(false);
+            }
+          }}
+          onClear={() => { setElements([]); setSelectedId(null); setIsPropertiesOpen(false); }}
+          className="absolute bottom-6 left-1/2 -translate-x-1/2 hidden sm:flex" 
+        />
 
         <Sheet open={isSheetOpen} onOpenChange={(open) => { 
           if(!open) { 

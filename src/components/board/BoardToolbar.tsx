@@ -4,17 +4,16 @@
 import { useState } from "react";
 import { 
   Pencil, 
-  Eraser,
-  Trash2,
-  Undo2,
-  Redo2,
-  MousePointer2,
-  Paintbrush,
-  Square,
-  Circle,
-  ArrowUpRight,
-  ArrowLeftRight,
-  Activity
+  Trash2, 
+  MousePointer2, 
+  Paintbrush, 
+  Square, 
+  Circle, 
+  ArrowUpRight, 
+  ArrowLeftRight, 
+  Activity,
+  ChevronLeft,
+  ChevronDown
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +30,7 @@ interface BoardToolbarProps {
   onTogglePaintMode?: (active: boolean) => void;
   className?: string;
   variant?: "full" | "match" | "training";
+  orientation?: "vertical" | "horizontal";
 }
 
 const COLORS = [
@@ -59,14 +59,16 @@ export function BoardToolbar({
   isPaintMode = false,
   onTogglePaintMode,
   className,
-  variant = "full"
+  variant = "full",
+  orientation = "vertical"
 }: BoardToolbarProps) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const accentColor = theme === "cyan" ? "bg-primary" : "bg-amber-500";
   const glowShadow = theme === "cyan" ? "shadow-[0_0_20px_rgba(0,242,255,0.3)]" : "shadow-[0_0_20px_rgba(245,158,11,0.3)]";
   const activeClass = `${accentColor} text-black ${glowShadow} scale-110`;
+  const isHorizontal = orientation === "horizontal";
 
-  // VARIANTE PARTIDO: Simplificada para rotulador fluido
   if (variant === "match") {
     return (
       <aside className={cn(
@@ -125,51 +127,80 @@ export function BoardToolbar({
     );
   }
 
-  // VARIANTE ENTRENAMIENTO / FULL: Incluye formas y flechas
-  // v7.9: Eliminado el selector de colores por redundancia con el menú de acciones
   return (
     <aside className={cn(
-      "w-16 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-3xl flex flex-col items-center py-6 gap-4 z-50",
+      "bg-black/60 backdrop-blur-2xl border-2 transition-all duration-500 flex items-center z-50 overflow-hidden",
+      theme === "amber" ? "border-amber-500/30 shadow-[0_0_30px_rgba(245,158,11,0.1)]" : "border-primary/30 shadow-[0_0_30px_rgba(0,242,255,0.1)]",
+      isHorizontal 
+        ? "flex-row px-2 rounded-full h-14" 
+        : "flex-col py-6 rounded-3xl w-16",
+      isCollapsed 
+        ? (isHorizontal ? "w-14 px-0" : "h-14 py-0") 
+        : (isHorizontal ? "max-w-[1000px] gap-2 px-4" : "max-h-[1000px] gap-4 py-6"),
       className
     )}>
-      {/* Botón de selección para mover activos */}
-      <button
-        onClick={() => onToolSelect?.('select')}
-        className={cn(
-          "h-10 w-10 rounded-xl flex items-center justify-center transition-all group relative",
-          activeTool === 'select' ? activeClass : "text-white/20 hover:text-white"
-        )}
-        title="Seleccionar / Mover"
-      >
-        <MousePointer2 className="h-5 w-5" />
-      </button>
-
-      <div className="w-8 h-[1px] bg-white/10 my-2" />
-
-      {/* Herramientas de Dibujo */}
-      {TRAINING_TOOLS.map((tool) => (
-        <button
-          key={tool.id}
-          onClick={() => onToolSelect?.(tool.id)}
+      {isCollapsed ? (
+        <button 
+          onClick={() => setIsCollapsed(false)}
           className={cn(
-            "h-10 w-10 rounded-xl flex items-center justify-center transition-all group relative",
-            activeTool === tool.id ? activeClass : "text-white/20 hover:text-white"
+            "h-10 w-10 flex items-center justify-center text-white/40 hover:text-white transition-all rounded-xl",
+            theme === "amber" ? "hover:bg-amber-500/10 hover:text-amber-500" : "hover:bg-primary/10 hover:text-primary",
+            isHorizontal ? "mx-auto" : "my-auto"
           )}
-          title={tool.label}
+          title="Expandir Herramientas"
         >
-          <tool.icon className="h-5 w-5" />
+          <Pencil className="h-5 w-5" />
         </button>
-      ))}
+      ) : (
+        <>
+          <button
+            onClick={() => onToolSelect?.('select')}
+            className={cn(
+              "h-10 w-10 rounded-xl flex items-center justify-center transition-all group relative",
+              activeTool === 'select' ? activeClass : "text-white/20 hover:text-white"
+            )}
+            title="Seleccionar / Mover"
+          >
+            <MousePointer2 className="h-5 w-5" />
+          </button>
 
-      <div className="w-8 h-[1px] bg-white/10 my-2" />
+          <div className={cn(isHorizontal ? "h-6 w-[1px]" : "w-8 h-[1px]", "bg-white/10")} />
 
-      <button 
-        onClick={onClear} 
-        className="text-rose-500/40 hover:text-rose-500 transition-colors h-10 w-10 flex items-center justify-center"
-        title="Borrar Todo"
-      >
-        <Trash2 className="h-5 w-5" />
-      </button>
+          {TRAINING_TOOLS.map((tool) => (
+            <button
+              key={tool.id}
+              onClick={() => onToolSelect?.(tool.id)}
+              className={cn(
+                "h-10 w-10 rounded-xl flex items-center justify-center transition-all group relative",
+                activeTool === tool.id ? activeClass : "text-white/20 hover:text-white"
+              )}
+              title={tool.label}
+            >
+              <tool.icon className="h-5 w-5" />
+            </button>
+          ))}
+
+          <div className={cn(isHorizontal ? "h-6 w-[1px]" : "w-8 h-[1px]", "bg-white/10")} />
+
+          <button 
+            onClick={onClear} 
+            className="text-rose-500/40 hover:text-rose-500 transition-colors h-10 w-10 flex items-center justify-center rounded-xl hover:bg-rose-500/10"
+            title="Borrar Todo"
+          >
+            <Trash2 className="h-5 w-5" />
+          </button>
+
+          <div className={cn(isHorizontal ? "h-6 w-[1px]" : "w-8 h-[1px]", "bg-white/10")} />
+
+          <button 
+            onClick={() => setIsCollapsed(true)}
+            className="text-white/20 hover:text-white h-10 w-10 flex items-center justify-center transition-all rounded-xl hover:bg-white/5"
+            title="Colapsar"
+          >
+            {isHorizontal ? <ChevronDown className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
+          </button>
+        </>
+      )}
     </aside>
   );
 }
