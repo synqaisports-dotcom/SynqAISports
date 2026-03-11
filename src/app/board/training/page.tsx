@@ -82,7 +82,10 @@ export default function TrainingBoardPage() {
       return;
     }
 
-    if (element.type !== 'freehand') {
+    // Aplicar rotación solo si el tipo lo permite (No en círculos ni dibujo libre)
+    const canRotate = element.type !== 'freehand' && element.type !== 'circle';
+    
+    if (canRotate) {
       const centerX = (p[0].x + p[1].x) / 2;
       const centerY = (p[0].y + p[1].y) / 2;
       ctx.translate(centerX, centerY);
@@ -129,39 +132,54 @@ export default function TrainingBoardPage() {
         break;
     }
 
-    if (isSelected) {
+    // DIBUJO DE CONTROLES (HANDLES)
+    if (isSelected && element.type !== 'freehand') {
+      ctx.restore(); // Restaurar para dibujar handles sin la rotación del objeto si es necesario, pero mejor mantener contexto para handles relativos
+      ctx.save();
+      
+      // Si el elemento rota, los handles deben rotar con él
+      if (canRotate) {
+        const centerX = (p[0].x + p[1].x) / 2;
+        const centerY = (p[0].y + p[1].y) / 2;
+        ctx.translate(centerX, centerY);
+        ctx.rotate(element.rotation);
+        ctx.translate(-centerX, -centerY);
+      }
+
       ctx.strokeStyle = '#fff';
       ctx.lineWidth = 1;
       ctx.setLineDash([5, 5]);
       
-      // Mostrar handles según el tipo
+      // Línea de contorno de selección
+      if (element.type === 'rect') {
+        ctx.strokeRect(p[0].x, p[0].y, p[1].x - p[0].x, p[1].y - p[0].y);
+      }
+
       ctx.setLineDash([]);
       ctx.fillStyle = '#fff';
       
+      // Handles de redimensionado
+      let handles: Point[] = [];
       if (element.type === 'rect') {
-        const corners = [
+        handles = [
           { x: p[0].x, y: p[0].y },
           { x: p[1].x, y: p[0].y },
           { x: p[1].x, y: p[1].y },
           { x: p[0].x, y: p[1].y }
         ];
-        corners.forEach(cp => {
-          ctx.beginPath();
-          ctx.arc(cp.x, cp.y, 6, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.stroke();
-        });
       } else {
-        p.forEach((point) => {
-          ctx.beginPath();
-          ctx.arc(point.x, point.y, 6, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.stroke();
-        });
+        handles = p;
       }
 
-      // Nodo de rotación
-      if (element.type !== 'freehand') {
+      handles.forEach(cp => {
+        ctx.beginPath();
+        ctx.arc(cp.x, cp.y, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      });
+
+      // Nodo de rotación (Solo para rectángulos y flechas)
+      if (canRotate) {
         const rotX = (p[0].x + p[1].x) / 2;
         const rotY = Math.min(p[0].y, p[1].y) - 30;
         ctx.beginPath();
@@ -222,19 +240,20 @@ export default function TrainingBoardPage() {
     isDrawing.current = true;
 
     if (activeTool === 'select') {
-      // 1. Verificar si clicó en un handle del elemento seleccionado
       if (selectedId) {
         const el = elements.find(e => e.id === selectedId);
-        if (el) {
-          // Nodo rotación
-          const rotX = (el.points[0].x + el.points[1].x) / 2;
-          const rotY = Math.min(el.points[0].y, el.points[1].y) - 30;
-          if (getDistance(point, {x: rotX, y: rotY}) < 15) {
-            interactionMode.current = 'rotating';
-            return;
+        if (el && el.type !== 'freehand') {
+          // 1. Verificar nodo rotación (Solo si permite rotar)
+          if (el.type !== 'circle') {
+            const rotX = (el.points[0].x + el.points[1].x) / 2;
+            const rotY = Math.min(el.points[0].y, el.points[1].y) - 30;
+            if (getDistance(point, {x: rotX, y: rotY}) < 15) {
+              interactionMode.current = 'rotating';
+              return;
+            }
           }
 
-          // Handles redimensionado
+          // 2. Verificar handles redimensionado
           let handles: Point[] = [];
           if (el.type === 'rect') {
             handles = [
@@ -256,7 +275,7 @@ export default function TrainingBoardPage() {
         }
       }
 
-      // 2. Verificar si clicó en el "cuerpo" de un elemento para arrastrarlo
+      // 3. Verificar si clicó en el "cuerpo" de un elemento para arrastrarlo
       const clickedEl = [...elements].reverse().find(el => {
         const p = el.points;
         if (el.type === 'rect') {
@@ -266,7 +285,10 @@ export default function TrainingBoardPage() {
         if (el.type === 'circle') {
           return getDistance(point, p[0]) <= getDistance(p[0], p[1]);
         }
-        // Para flechas, un margen de error cerca de la línea
+        if (el.type === 'freehand') {
+          // Chequeo simple por proximidad a cualquier punto del trazo
+          return p.some(fp => getDistance(point, cp) < 10);
+        }
         return getDistance(point, p[0]) < 20 || getDistance(point, p[p.length-1]) < 20;
       });
 
@@ -305,7 +327,6 @@ export default function TrainingBoardPage() {
         if (el.id !== selectedId) return el;
         const newPoints = [...el.points];
         if (el.type === 'rect') {
-          // Lógica especial para 4 handles en rect
           if (activeHandleIndex.current === 0) { newPoints[0].x = point.x; newPoints[0].y = point.y; }
           if (activeHandleIndex.current === 1) { newPoints[1].x = point.x; newPoints[0].y = point.y; }
           if (activeHandleIndex.current === 2) { newPoints[1].x = point.x; newPoints[1].y = point.y; }
@@ -317,7 +338,7 @@ export default function TrainingBoardPage() {
       }));
     } else if (interactionMode.current === 'rotating' && selectedId) {
       const el = elements.find(e => e.id === selectedId);
-      if (el) {
+      if (el && el.type !== 'circle') { // Doble chequeo de seguridad
         const centerX = (el.points[0].x + el.points[1].x) / 2;
         const centerY = (el.points[0].y + el.points[1].y) / 2;
         const angle = Math.atan2(point.y - centerY, point.x - centerX) + Math.PI / 2;
