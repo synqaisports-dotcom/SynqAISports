@@ -18,21 +18,33 @@ import {
 import { useSearchParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
+interface Point {
+  x: number;
+  y: number;
+}
+
+interface DrawingElement {
+  type: DrawingTool;
+  points: Point[];
+  color: string;
+}
+
 export default function TrainingBoardPage() {
   const [isAiProcessing, setIsAiProcessing] = useState(false);
   const [fieldType, setFieldType] = useState<FieldType>("f11");
   const [activeTool, setActiveTool] = useState<DrawingTool>("freehand");
-  const [currentColor, setCurrentColor] = useState("#facc15"); // Ámbar por defecto para estudio
+  const [currentColor, setCurrentColor] = useState("#facc15");
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Canvas refs
+  // Estado de dibujo
+  const [elements, setElements] = useState<DrawingElement[]>([]);
+  const currentElement = useRef<DrawingElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawing = useRef(false);
-  const lastPoint = useRef<{ x: number; y: number } | null>(null);
+  const startPoint = useRef<Point | null>(null);
 
-  // PROTOCOLO_CONTEXTO_v6.4: Detectar si el origen es el formulario de biblioteca
   const isFromForm = searchParams.get("source") === "form";
 
   const initCanvas = useCallback(() => {
@@ -43,26 +55,84 @@ export default function TrainingBoardPage() {
     
     canvas.width = parent.clientWidth;
     canvas.height = parent.clientHeight;
-    
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.lineJoin = 'round';
-      ctx.lineCap = 'round';
-      ctx.lineWidth = 3;
+    redrawAll();
+  }, [elements]);
+
+  const drawArrowhead = (ctx: CanvasRenderingContext2D, from: Point, to: Point) => {
+    const headLength = 15;
+    const angle = Math.atan2(to.y - from.y, to.x - from.x);
+    ctx.beginPath();
+    ctx.moveTo(to.x, to.y);
+    ctx.lineTo(to.x - headLength * Math.cos(angle - Math.PI / 6), to.y - headLength * Math.sin(angle - Math.PI / 6));
+    ctx.moveTo(to.x, to.y);
+    ctx.lineTo(to.x - headLength * Math.cos(angle + Math.PI / 6), to.y - headLength * Math.sin(angle + Math.PI / 6));
+    ctx.stroke();
+  };
+
+  const drawElement = (ctx: CanvasRenderingContext2D, element: DrawingElement) => {
+    ctx.strokeStyle = element.color;
+    ctx.lineWidth = 3;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+
+    const p = element.points;
+    if (p.length < 2) return;
+
+    switch (element.type) {
+      case 'freehand':
+        ctx.beginPath();
+        ctx.moveTo(p[0].x, p[0].y);
+        for (let i = 1; i < p.length; i++) {
+          ctx.lineTo(p[i].x, p[i].y);
+        }
+        ctx.stroke();
+        break;
+      case 'rect':
+        ctx.strokeRect(p[0].x, p[0].y, p[p.length - 1].x - p[0].x, p[p.length - 1].y - p[0].y);
+        break;
+      case 'circle':
+        const radius = Math.sqrt(Math.pow(p[p.length - 1].x - p[0].x, 2) + Math.pow(p[p.length - 1].y - p[0].y, 2));
+        ctx.beginPath();
+        ctx.arc(p[0].x, p[0].y, radius, 0, 2 * Math.PI);
+        ctx.stroke();
+        break;
+      case 'arrow':
+        ctx.beginPath();
+        ctx.moveTo(p[0].x, p[0].y);
+        ctx.lineTo(p[p.length - 1].x, p[p.length - 1].y);
+        ctx.stroke();
+        drawArrowhead(ctx, p[0], p[p.length - 1]);
+        break;
+      case 'double-arrow':
+        ctx.beginPath();
+        ctx.moveTo(p[0].x, p[0].y);
+        ctx.lineTo(p[p.length - 1].x, p[p.length - 1].y);
+        ctx.stroke();
+        drawArrowhead(ctx, p[0], p[p.length - 1]);
+        drawArrowhead(ctx, p[p.length - 1], p[0]);
+        break;
     }
-  }, []);
+  };
+
+  const redrawAll = () => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!ctx || !canvas) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    elements.forEach(el => drawElement(ctx, el));
+    if (currentElement.current) {
+      drawElement(ctx, currentElement.current);
+    }
+  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !canvas.parentElement) return;
 
-    const observer = new ResizeObserver(() => {
-      initCanvas();
-    });
-
+    const observer = new ResizeObserver(() => initCanvas());
     observer.observe(canvas.parentElement);
     initCanvas();
-
     return () => observer.disconnect();
   }, [initCanvas]);
 
@@ -70,70 +140,58 @@ export default function TrainingBoardPage() {
     setIsAiProcessing(true);
     setTimeout(() => {
       setIsAiProcessing(false);
-      toast({
-        title: "SINCRONIZACIÓN_IA_COMPLETA",
-        description: "El motor Gemini ha analizado el dibujo y generado el informe técnico.",
-      });
+      toast({ title: "SINCRONIZACIÓN_IA_COMPLETA", description: "Análisis técnico Gemini finalizado." });
     }, 2000);
   };
 
   const handleSave = () => {
     if (isFromForm) {
-      toast({
-        title: "DIAGRAMA_VINCULADO",
-        description: "El dibujo se ha adjuntado a la ficha de tarea maestra. Volviendo al formulario...",
-      });
+      toast({ title: "DIAGRAMA_VINCULADO", description: "Volviendo al formulario..." });
       setTimeout(() => router.back(), 1500);
     } else {
-      toast({
-        title: "DIAGRAMA_GUARDADO",
-        description: "El ejercicio se ha guardado en tu biblioteca personal.",
-      });
+      toast({ title: "DIAGRAMA_GUARDADO", description: "Ejercicio guardado en biblioteca." });
     }
   };
 
   const clearCanvas = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setElements([]);
+    currentElement.current = null;
+    const ctx = canvasRef.current?.getContext('2d');
+    if (ctx && canvasRef.current) ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
   };
 
   const startDrawing = (e: React.PointerEvent) => {
     if (activeTool === 'select' || !canvasRef.current) return;
     isDrawing.current = true;
     const rect = canvasRef.current.getBoundingClientRect();
-    lastPoint.current = {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
-    };
+    const point = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    startPoint.current = point;
+    currentElement.current = { type: activeTool, points: [point], color: currentColor };
   };
 
   const draw = (e: React.PointerEvent) => {
     if (!isDrawing.current || activeTool === 'select' || !canvasRef.current) return;
-    const ctx = canvasRef.current.getContext('2d');
-    if (!ctx) return;
-
     const rect = canvasRef.current.getBoundingClientRect();
-    const currentPoint = {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
-    };
+    const currentPoint = { x: e.clientX - rect.left, y: e.clientY - rect.top };
 
     if (activeTool === 'freehand') {
-      ctx.beginPath();
-      ctx.strokeStyle = currentColor;
-      ctx.moveTo(lastPoint.current!.x, lastPoint.current!.y);
-      ctx.lineTo(currentPoint.x, currentPoint.y);
-      ctx.stroke();
-      lastPoint.current = currentPoint;
+      currentElement.current?.points.push(currentPoint);
+    } else {
+      if (currentElement.current) {
+        currentElement.current.points = [startPoint.current!, currentPoint];
+      }
     }
-    // Implementación de formas geométricas y flechas se manejará con una capa de "ghosting" en el futuro
+    redrawAll();
   };
 
   const stopDrawing = () => {
+    if (!isDrawing.current) return;
     isDrawing.current = false;
-    lastPoint.current = null;
+    if (currentElement.current && currentElement.current.points.length >= 2) {
+      setElements(prev => [...prev, currentElement.current!]);
+    }
+    currentElement.current = null;
+    startPoint.current = null;
   };
 
   return (

@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v6.5 (Consolidated Master Protocol)
+# SynqSports Pro - ARCHITECTURE_LEDGER v6.6 (Consolidated Master Protocol)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -86,8 +86,9 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 ### 5.2. Esquema JSON Maestro (Independencia de Dispositivo)
 - **Coordenadas Decimales**: Todas las posiciones de fichas y trazos se guardan como valores de `0.000` a `1.000`. Garantiza fidelidad visual en cualquier dispositivo.
 
-### 5.3. Herramientas de Dibujo Avanzadas (v6.5)
-- **Modos de Trazo**: Implementación de Dibujo Libre, Rectángulos, Círculos, Flechas de Dirección y Flechas de Doble Dirección para diagramación técnica de alta precisión.
+### 5.3. Herramientas de Dibujo Avanzadas (v6.6)
+- **Modos de Trazo**: Implementación de Dibujo Libre, Rectángulos, Círculos, Flechas de Dirección y Flechas de Doble Dirección.
+- **Motor de Geometría Táctica**: Lógica de renderizado dinámico con soporte de "ghosting" (previsualización en tiempo real) y cálculo de vectores para puntas de flecha automáticas.
 
 ## 6. Gestión de Espacios e Instalaciones
 - **Motor Geométrico**: Subdivisiones de campos (1, 2 o 4 zonas) calculadas en porcentajes.
