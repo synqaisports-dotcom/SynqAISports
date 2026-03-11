@@ -69,6 +69,7 @@ interface DrawingElement {
   lineStyle: 'solid' | 'dashed';
   number?: number;
   opacity: number;
+  text?: string;
 }
 
 const COLORS = [
@@ -164,6 +165,20 @@ function TrainingBoardContent() {
     }
 
     switch (element.type) {
+      case 'text':
+        ctx.save();
+        ctx.setLineDash([]);
+        ctx.fillStyle = element.color;
+        ctx.font = `bold ${Math.floor(height || 24)}px Space Grotesk`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(element.text || "TEXTO TÁCTICO", centerX, centerY);
+        if (isSelected) {
+          ctx.strokeStyle = hexToRgba(element.color, 0.3);
+          ctx.strokeRect(minX, minY, width, height);
+        }
+        ctx.restore();
+        break;
       case 'freehand':
         ctx.beginPath();
         ctx.moveTo(p[0].x, p[0].y);
@@ -443,7 +458,7 @@ function TrainingBoardContent() {
     if(tool === 'player') pNum = elements.filter(e => e.type === 'player').length + 1;
     
     const defW = tool === 'ladder' ? 120 : (tool === 'minigoal' ? 80 : tool === 'barrier' ? 100 : tool === 'cross-arrow' ? 80 : 40);
-    const defH = tool === 'ladder' ? 40 : (tool === 'minigoal' ? 50 : tool === 'cross-arrow' ? 80 : 40);
+    const defH = tool === 'ladder' ? 40 : (tool === 'minigoal' ? 50 : tool === 'barrier' ? 100 : tool === 'cross-arrow' ? 80 : 40);
     
     const newElement: DrawingElement = { 
       id: `el-${Date.now()}`, 
@@ -453,7 +468,8 @@ function TrainingBoardContent() {
       rotation: 0, 
       lineStyle: 'solid', 
       number: pNum,
-      opacity: 1.0
+      opacity: 1.0,
+      text: tool === 'text' ? "TEXTO TÁCTICO" : undefined
     };
     
     setElements(prev => [...prev, newElement]);
@@ -520,7 +536,8 @@ function TrainingBoardContent() {
         setSelectedIds([]); interactionMode.current = 'drawing';
         currentElement.current = { 
           id: `el-${Date.now()}`, type: activeTool, points: [point, point],
-          color: currentColor, rotation: 0, lineStyle: 'solid', opacity: 1.0
+          color: currentColor, rotation: 0, lineStyle: 'solid', opacity: 1.0,
+          text: activeTool === 'text' ? "TEXTO TÁCTICO" : undefined
         };
       } else {
         setSelectedIds([]);
@@ -663,6 +680,17 @@ function TrainingBoardContent() {
                   </Button>
                 )}
 
+                {!hasMultipleSelected && selectedElements[0].type === 'text' && (
+                  <div className="flex items-center gap-2 bg-white/5 px-3 py-1 rounded-xl border border-white/10">
+                    <span className="text-[8px] font-black text-white/40 uppercase tracking-widest">Etiqueta</span>
+                    <Input 
+                      value={selectedElements[0].text || ""} 
+                      onChange={(e) => setElements(prev => prev.map(el => el.id === selectedIds[0] ? {...el, text: e.target.value.toUpperCase()} : el))} 
+                      className="h-7 w-32 bg-black/40 border-amber-500/20 text-amber-500 font-black text-[10px] p-2 rounded-lg" 
+                    />
+                  </div>
+                )}
+
                 {!hasMultipleSelected && selectedElements[0].type === 'player' && (
                   <div className="flex items-center gap-2 bg-white/5 px-2 py-1 rounded-xl border border-white/10">
                     <span className="text-[8px] font-black text-white/40 uppercase tracking-widest">Dorsal</span>
@@ -730,8 +758,7 @@ function TrainingBoardContent() {
               orientation="horizontal" 
               activeTool={activeTool} 
               onToolSelect={(tool) => { 
-                if (tool === 'cross-arrow') addElementAtCenter(tool);
-                else setActiveTool(tool);
+                setActiveTool(tool);
                 setSelectedIds([]);
               }} 
               onClear={() => { setElements([]); setSelectedIds([]); }} 
