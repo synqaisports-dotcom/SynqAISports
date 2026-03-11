@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v7.1 (Consolidated Master Protocol)
+# SynqSports Pro - ARCHITECTURE_LEDGER v7.2 (Consolidated Master Protocol)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -78,7 +78,7 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 - **Sugerencias**: El Entrenador puede proponer cambios ("Sugerir Cambio").
 - **Bloqueo de Seguridad**: Las solicitudes de cambio se bloquean automáticamente si faltan menos de **7 días** para la sesión.
 
-## 5. Protocolo de Pizarra y Dibujo (v7.1)
+## 5. Protocolo de Pizarra y Dibujo (v7.2)
 
 ### 5.1. Motor de Dibujo Suavizado
 - Uso de lógica de interpolación para trazos fluidos en el Canvas e independencia de resolución.
@@ -86,15 +86,16 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 ### 5.2. Esquema JSON Maestro (Independencia de Dispositivo)
 - **Coordenadas Decimales**: Todas las posiciones de fichas y trazos se guardan como valores de `0.000` a `1.000`. Garantiza fidelidad visual en cualquier dispositivo.
 
-### 5.3. Herramientas de Dibujo Avanzadas (v7.1)
+### 5.3. Herramientas de Dibujo Avanzadas (v7.2)
 - **Modos de Trazo**: Dibujo Libre, Rectángulos, Círculos, Flechas simples y dobles.
 - **Manipulación Táctica Total**: 
     - **Arrastre (Dragging)**: Capacidad de mover cualquier elemento por el campo manteniendo su escala.
     - **Puntos de Modificación**: Implementación de 4 handles en rectángulos y puntos extremos en flechas/círculos para redimensionado dinámico.
     - **Smart Selection (v7.1)**: El sistema detecta clics sobre formas existentes incluso si hay otra herramienta activa, eliminando la necesidad de alternar manualmente al puntero.
     - **Geometría Local (v7.1)**: Implementación de detección de colisiones (Hit-Testing) basada en coordenadas locales rotadas. Soluciona el error de "puntos de modificación perdidos" tras rotar o mover formas a los extremos del campo.
-- **Edición Contextual (v7.0)**:
+- **Edición Contextual (v7.2)**:
     - **Menú de Acciones**: Barra flotante que permite borrar, duplicar y cambiar el color de elementos individuales.
+    - **Sincronización Automática (v7.2)**: El menú de acciones aparece instantáneamente al seleccionar o crear un elemento y se mantiene visible durante la interacción, eliminando pasos innecesarios.
     - **Estilos de Vector**: Soporte para líneas discontinuas (dashed) para diferenciar tipos de movimientos.
 - **Lógica de Controles Específica**:
     - **Círculos**: Se omite el nodo de rotación por redundancia visual.

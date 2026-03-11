@@ -88,7 +88,6 @@ export default function TrainingBoardPage() {
 
   const getDistance = (p1: Point, p2: Point) => Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
 
-  // ROTACIÓN DE PUNTOS PARA HIT DETECTION
   const rotatePoint = (point: Point, center: Point, angle: number): Point => {
     const cos = Math.cos(angle);
     const sin = Math.sin(angle);
@@ -278,7 +277,6 @@ export default function TrainingBoardPage() {
     lastPoint.current = point;
     isDrawing.current = true;
 
-    // 1. PRIORIDAD: COMPROBAR HANDLES DEL ELEMENTO SELECCIONADO (Si existe)
     if (selectedId) {
       const el = elements.find(e => e.id === selectedId);
       if (el && el.type !== 'freehand') {
@@ -316,7 +314,6 @@ export default function TrainingBoardPage() {
       }
     }
 
-    // 2. COMPROBAR CUERPO DE CUALQUIER ELEMENTO (Smart Selection)
     const clickedEl = [...elements].reverse().find(el => {
       const p = el.points;
       const centerX = (p[0].x + (p[1]?.x || p[0].x)) / 2;
@@ -334,7 +331,6 @@ export default function TrainingBoardPage() {
       if (el.type === 'freehand') {
         return p.some(fp => getDistance(point, fp) < 15);
       }
-      // Para flechas, hit detection cerca de los extremos en espacio local
       return getDistance(localPoint, p[0]) < 25 || getDistance(localPoint, p[p.length-1]) < 25;
     });
 
@@ -343,7 +339,6 @@ export default function TrainingBoardPage() {
       setActiveTool('select');
       interactionMode.current = 'dragging';
     } else {
-      // 3. SI NO HAY HIT, Y EL TOOL NO ES SELECT, DIBUJAR
       if (activeTool !== 'select') {
         setSelectedId(null);
         interactionMode.current = 'drawing';
@@ -468,13 +463,11 @@ export default function TrainingBoardPage() {
 
   const selectedElement = elements.find(e => e.id === selectedId);
   
-  // Calcular posición del menú de acciones
   const getMenuPos = () => {
     if (!selectedElement) return null;
     const p = selectedElement.points;
     const centerX = (p[0].x + (p[1]?.x || p[0].x)) / 2;
     const centerY = (p[0].y + (p[1]?.y || p[0].y)) / 2;
-    // El menú no rota con la forma para legibilidad
     return {
       x: centerX,
       y: Math.min(p[0].y, (p[1]?.y || p[0].y)) - 80
@@ -555,8 +548,7 @@ export default function TrainingBoardPage() {
               onPointerLeave={handlePointerUp}
             />
 
-            {/* MENÚ DE ACCIONES CONTEXTUAL */}
-            {selectedElement && actionMenuPos && !isDrawing.current && (
+            {selectedElement && actionMenuPos && (
               <div 
                 className="absolute z-[100] flex items-center gap-2 bg-black/80 backdrop-blur-xl border border-white/10 p-2 rounded-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-300"
                 style={{ 
