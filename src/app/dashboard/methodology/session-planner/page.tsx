@@ -102,6 +102,7 @@ export default function SessionPlannerPage() {
       title: "MATRIZ_SINCRO_EXITOSA",
       description: `Protocolo de tiempos (${totalTime} min) aplicado a ${currentTeam?.name}.`,
     });
+    setSelectedMCC(null);
   };
 
   return (
@@ -111,7 +112,7 @@ export default function SessionPlannerPage() {
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <CalendarDays className="h-5 w-5 text-amber-500 animate-pulse" />
-            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Operational_Planning_v4.1</span>
+            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Operational_Planning_v4.2</span>
           </div>
           <h1 className="text-5xl font-headline font-black text-white uppercase italic tracking-tighter amber-text-glow leading-none">
             PLANIFICADOR_MAESTRO
@@ -311,139 +312,153 @@ export default function SessionPlannerPage() {
             <span className="flex items-center gap-2">
               <Activity className="h-3 w-3 text-amber-500 animate-pulse" /> Sincronización Metodológica Activa
             </span>
-            <span>SynqSports Operational Planner v4.1 • Arquitectura Tripartita</span>
+            <span>SynqSports Operational Planner v4.2 • Arquitectura Lateral de Detalle</span>
           </div>
         </Card>
       </div>
 
-      {/* PANEL DE ESTRUCTURA DE SESIÓN DETALLADA */}
-      {selectedMCC && (
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 animate-in slide-in-from-bottom-4 duration-700">
-          <Card className="glass-panel xl:col-span-2 border-amber-500/20 bg-black/40 rounded-[2.5rem] overflow-hidden">
-            <CardHeader className="p-8 border-b border-white/5 bg-amber-500/5 flex flex-row items-center justify-between">
-              <div className="space-y-1">
-                <div className="flex items-center gap-3">
-                  <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-                  <CardTitle className="text-xl font-black italic text-white uppercase tracking-tighter">Sesión {selectedMCC}</CardTitle>
-                </div>
-                <CardDescription className="text-[10px] font-bold text-amber-500/40 uppercase tracking-widest">
-                  Arquitectura de Entrenamiento: {totalTime} Minutos Totales
-                </CardDescription>
-              </div>
-              <Button variant="ghost" size="icon" onClick={() => setSelectedMCC(null)} className="text-white/20 hover:text-rose-500">
-                <Trash2 className="h-5 w-5" />
-              </Button>
-            </CardHeader>
-            <CardContent className="p-8 space-y-8">
-              
-              {/* BLOQUE 1: CALENTAMIENTO */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between px-2">
+      {/* PANEL LATERAL DE ESTRUCTURA DE SESIÓN DETALLADA (Sheet) */}
+      <Sheet open={!!selectedMCC} onOpenChange={(open) => !open && setSelectedMCC(null)}>
+        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-amber-500/20 text-white w-full sm:max-w-2xl lg:max-w-3xl p-0 overflow-hidden flex flex-col">
+          {selectedMCC && (
+            <>
+              <div className="p-8 border-b border-white/5 bg-black/40">
+                <SheetHeader className="space-y-4">
                   <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
-                      <Flame className="h-4 w-4 text-orange-500" />
+                    <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500">Arquitectura_Detallada_v4.2</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <SheetTitle className="text-4xl font-black italic tracking-tighter uppercase leading-none text-white">Sesión {selectedMCC}</SheetTitle>
+                    <Badge variant="outline" className="border-amber-500/20 text-amber-500 font-black uppercase tracking-widest px-4 py-1.5 h-auto">
+                      {totalTime} MINUTOS TOTALES
+                    </Badge>
+                  </div>
+                  <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest">
+                    Arquitectura de Entrenamiento para {currentTeam?.name}.
+                  </SheetDescription>
+                </SheetHeader>
+              </div>
+
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-12">
+                
+                {/* 1. ESTRUCTURA DE SESIÓN */}
+                <div className="space-y-10">
+                  {/* BLOQUE 1: CALENTAMIENTO */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between px-2">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
+                          <Flame className="h-5 w-5 text-orange-500" />
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-black text-white uppercase tracking-widest">1. Calentamiento y Activación</h4>
+                          <p className="text-[9px] font-bold text-orange-500/60 uppercase italic">Duración Configurada: {sessionTimes.warmup} Minutos</p>
+                        </div>
+                      </div>
+                      <Badge className="bg-orange-500/10 text-orange-500 border-orange-500/20 uppercase text-[8px] font-black">Slot_Libre</Badge>
                     </div>
-                    <div>
-                      <h4 className="text-[11px] font-black text-white uppercase tracking-widest">1. Calentamiento y Activación</h4>
-                      <p className="text-[8px] font-bold text-orange-500/60 uppercase">Duración: {sessionTimes.warmup} Minutos</p>
+                    <div className="p-8 border-2 border-dashed border-orange-500/10 bg-orange-500/[0.02] rounded-3xl flex flex-col items-center justify-center gap-3 group hover:border-orange-500/30 transition-all cursor-pointer">
+                       <Plus className="h-5 w-5 text-orange-500/20 group-hover:text-orange-500 transition-colors" />
+                       <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">Asignar Tarea de Activación</span>
                     </div>
                   </div>
-                  <Badge className="bg-orange-500/10 text-orange-500 border-orange-500/20">Slot_Libre</Badge>
+
+                  {/* BLOQUE 2: ZONA CENTRAL */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between px-2">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+                          <Dumbbell className="h-5 w-5 text-amber-500" />
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-black text-white uppercase tracking-widest">2. Zona Central (Contenidos)</h4>
+                          <p className="text-[9px] font-bold text-amber-500/60 uppercase italic">Duración Configurada: {sessionTimes.central} Minutos</p>
+                        </div>
+                      </div>
+                      <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 uppercase text-[8px] font-black">Multitarea_ON</Badge>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="p-10 border-2 border-dashed border-amber-500/10 bg-amber-500/[0.02] rounded-3xl flex flex-col items-center justify-center gap-3 group hover:border-amber-500/30 transition-all cursor-pointer">
+                        <Plus className="h-5 w-5 text-amber-500/20 group-hover:text-amber-500 transition-colors" />
+                        <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">Añadir Tarea Táctica</span>
+                      </div>
+                      <div className="p-10 border-2 border-dashed border-white/5 bg-white/[0.01] rounded-3xl flex flex-col items-center justify-center gap-2">
+                        <span className="text-[9px] font-black text-white/10 uppercase tracking-widest">Espacio para Tarea 02</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* BLOQUE 3: VUELTA A LA CALMA */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between px-2">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
+                          <Wind className="h-5 w-5 text-blue-500" />
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-black text-white uppercase tracking-widest">3. Vuelta a la Calma</h4>
+                          <p className="text-[9px] font-bold text-blue-500/60 uppercase italic">Duración Configurada: {sessionTimes.cooldown} Minutos</p>
+                        </div>
+                      </div>
+                      <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20 uppercase text-[8px] font-black">Feedback_Final</Badge>
+                    </div>
+                    <div className="p-8 border-2 border-dashed border-blue-500/10 bg-blue-500/[0.02] rounded-3xl flex flex-col items-center justify-center gap-3 group hover:border-blue-500/30 transition-all cursor-pointer">
+                       <Plus className="h-5 w-5 text-blue-500/20 group-hover:text-blue-500 transition-colors" />
+                       <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">Asignar Tarea de Cierre</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="p-6 border-2 border-dashed border-orange-500/10 bg-orange-500/[0.02] rounded-2xl flex flex-col items-center justify-center gap-2 group hover:border-orange-500/30 transition-all cursor-pointer">
-                   <Plus className="h-4 w-4 text-orange-500/20 group-hover:text-orange-500 transition-colors" />
-                   <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Asignar Tarea de Activación</span>
+
+                {/* 2. BUSCADOR DE BIBLIOTECA INTEGRADO */}
+                <div className="pt-12 border-t border-white/5 space-y-8">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Library className="h-5 w-5 text-amber-500" />
+                      <span className="text-[11px] font-black uppercase tracking-[0.3em] text-amber-500 italic">Buscador de Biblioteca</span>
+                    </div>
+                    <span className="text-[9px] font-black text-white/30 uppercase tracking-widest">Filtrado por: {currentTeam?.type}</span>
+                  </div>
+                  
+                  <div className="relative">
+                    <Search className="absolute left-4 top-4 h-5 w-5 text-white/20" />
+                    <Input placeholder="BUSCAR TAREA MANUAL POR NOMBRE O ID..." className="pl-12 h-14 bg-white/5 border-white/10 rounded-2xl text-[11px] font-black uppercase focus:border-amber-500 transition-all" />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-5 bg-amber-500/5 border border-amber-500/10 rounded-2xl hover:border-amber-500/40 cursor-grab active:cursor-grabbing transition-all group">
+                       <p className="text-[11px] font-black text-white uppercase italic group-hover:text-amber-500 transition-colors">Rondo 4x4 + 3 Comodines</p>
+                       <p className="text-[9px] font-bold text-white/20 uppercase mt-1.5 flex items-center gap-2">
+                         <LayoutGrid className="h-3 w-3" /> Bloque: Zona Central • ID: 042
+                       </p>
+                    </div>
+                    <div className="p-5 bg-amber-500/5 border border-amber-500/10 rounded-2xl hover:border-amber-500/40 cursor-grab active:cursor-grabbing transition-all group">
+                       <p className="text-[11px] font-black text-white uppercase italic group-hover:text-amber-500 transition-colors">Activación Coordinativa</p>
+                       <p className="text-[9px] font-bold text-white/20 uppercase mt-1.5 flex items-center gap-2">
+                         <Flame className="h-3 w-3" /> Bloque: Calentamiento • ID: 012
+                       </p>
+                    </div>
+                  </div>
+
+                  <div className="p-6 bg-amber-500/5 border border-amber-500/10 rounded-3xl flex items-start gap-4">
+                     <Info className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                     <p className="text-[10px] text-white/40 leading-relaxed font-bold uppercase italic">
+                       Arrastra los ejercicios de la biblioteca directamente a los slots de la sesión. El sistema ajustará la carga de trabajo automáticamente.
+                     </p>
+                  </div>
                 </div>
               </div>
 
-              {/* BLOQUE 2: ZONA CENTRAL */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between px-2">
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-                      <Dumbbell className="h-4 w-4 text-amber-500" />
-                    </div>
-                    <div>
-                      <h4 className="text-[11px] font-black text-white uppercase tracking-widest">2. Zona Central (Contenidos)</h4>
-                      <p className="text-[8px] font-bold text-amber-500/60 uppercase">Duración: {sessionTimes.central} Minutos</p>
-                    </div>
-                  </div>
-                  <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20">Multitarea_ON</Badge>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-10 border-2 border-dashed border-amber-500/10 bg-amber-500/[0.02] rounded-2xl flex flex-col items-center justify-center gap-2 group hover:border-amber-500/30 transition-all cursor-pointer">
-                    <Plus className="h-4 w-4 text-amber-500/20 group-hover:text-amber-500 transition-colors" />
-                    <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Añadir Tarea Táctica</span>
-                  </div>
-                  <div className="p-10 border-2 border-dashed border-white/5 bg-white/[0.01] rounded-2xl flex flex-col items-center justify-center gap-2">
-                    <span className="text-[8px] font-black text-white/10 uppercase tracking-widest">Espacio para Tarea 02</span>
-                  </div>
-                </div>
+              <div className="p-8 bg-black/60 border-t border-white/5 flex gap-4">
+                <SheetClose asChild>
+                  <Button variant="ghost" className="flex-1 h-16 border border-white/10 text-white/40 font-black uppercase text-[11px] tracking-widest rounded-2xl hover:bg-white/5 transition-all">CANCELAR</Button>
+                </SheetClose>
+                <Button onClick={handleSaveConfig} className="flex-[2] h-16 bg-amber-500 text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-2xl amber-glow hover:scale-[1.02] transition-all">GUARDAR_SESIÓN</Button>
               </div>
-
-              {/* BLOQUE 3: VUELTA A LA CALMA */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between px-2">
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
-                      <Wind className="h-4 w-4 text-blue-500" />
-                    </div>
-                    <div>
-                      <h4 className="text-[11px] font-black text-white uppercase tracking-widest">3. Vuelta a la Calma</h4>
-                      <p className="text-[8px] font-bold text-blue-500/60 uppercase">Duración: {sessionTimes.cooldown} Minutos</p>
-                    </div>
-                  </div>
-                  <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20">Feedback_Final</Badge>
-                </div>
-                <div className="p-6 border-2 border-dashed border-blue-500/10 bg-blue-500/[0.02] rounded-2xl flex flex-col items-center justify-center gap-2 group hover:border-blue-500/30 transition-all cursor-pointer">
-                   <Plus className="h-4 w-4 text-blue-500/20 group-hover:text-blue-500 transition-colors" />
-                   <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Asignar Tarea de Cierre</span>
-                </div>
-              </div>
-
-            </CardContent>
-            <div className="p-8 bg-black/40 border-t border-white/5 flex justify-between items-center">
-               <div className="flex items-center gap-4">
-                  <Info className="h-4 w-4 text-amber-500/40" />
-                  <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">Los tiempos se ajustan proporcionalmente según el total de la sesión ({totalTime} min).</p>
-               </div>
-               <Button className="bg-amber-500 text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl amber-glow">GUARDAR_SESIÓN</Button>
-            </div>
-          </Card>
-
-          <Card className="glass-panel border-amber-500/20 bg-black/40 rounded-3xl p-8 space-y-6">
-             <div className="flex items-center gap-3 border-b border-white/5 pb-4">
-                <Library className="h-4 w-4 text-amber-500" />
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500 italic">Buscador de Biblioteca</span>
-             </div>
-             <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-white/20" />
-                <Input placeholder="BUSCAR TAREA MANUAL..." className="pl-10 h-11 bg-white/5 border-white/10 rounded-xl text-[10px] font-black uppercase focus:border-amber-500" />
-             </div>
-             <div className="space-y-3">
-                <span className="text-[8px] font-black text-white/20 uppercase tracking-widest block ml-1">Resultados en {currentTeam?.type}</span>
-                <div className="p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl hover:border-amber-500/40 cursor-grab active:cursor-grabbing transition-all group">
-                   <p className="text-[10px] font-black text-white uppercase italic group-hover:text-amber-500">Rondo 4x4 + 3 Comodines</p>
-                   <p className="text-[8px] font-bold text-white/20 uppercase mt-1">Bloque: Zona Central • ID: 042</p>
-                </div>
-                <div className="p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl hover:border-amber-500/40 cursor-grab active:cursor-grabbing transition-all group">
-                   <p className="text-[10px] font-black text-white uppercase italic group-hover:text-amber-500">Activación Coordinativa</p>
-                   <p className="text-[8px] font-bold text-white/20 uppercase mt-1">Bloque: Calentamiento • ID: 012</p>
-                </div>
-                <div className="p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl hover:border-amber-500/40 cursor-grab active:cursor-grabbing transition-all group">
-                   <p className="text-[10px] font-black text-white uppercase italic group-hover:text-amber-500">Charla Post-Entreno</p>
-                   <p className="text-[8px] font-bold text-white/20 uppercase mt-1">Bloque: Vuelta Calma • ID: 005</p>
-                </div>
-             </div>
-             <div className="p-6 bg-white/[0.02] border border-white/5 rounded-2xl space-y-3">
-                <p className="text-[9px] font-black text-white/40 uppercase tracking-widest italic">Tip Metodológico</p>
-                <p className="text-[9px] text-white/20 leading-relaxed uppercase font-bold italic">
-                  Asegúrese de que el Calentamiento no supere el 20% del tiempo total para maximizar la Zona Central en etapas de formación.
-                </p>
-             </div>
-          </Card>
-        </div>
-      )}
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
