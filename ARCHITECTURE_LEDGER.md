@@ -1,5 +1,5 @@
 
-# SynqSports Pro - Architecture Ledger v4.1 (Operational Planning Protocol)
+# SynqSports Pro - Architecture Ledger v4.3 (Microcycle Multi-Session Protocol)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -108,7 +108,7 @@ Los roles operan bajo un sistema de ranking numérico (`rank`):
 - **Cadete (14-15 años)**: Periodización Táctica. Rendimiento competitivo.
 - **Juvenil (16-18 años)**: Macrociclo Anual (ATR). Microciclo de Élite. Antesala profesional.
 
-## 11. Protocolo de Planificación Operativa (v4.1)
+## 11. Protocolo de Planificación Operativa (v4.3)
 
 ### 11.1. Macrociclo Septiembre - Junio
 - **Arquitectura de Matriz**: Visualización de alta densidad basada en scroll horizontal que cubre 10 meses de temporada.
@@ -119,4 +119,7 @@ Los roles operan bajo un sistema de ranking numérico (`rank`):
 ### 11.2. Estructura Tripartita de Sesión
 - **Anatomía Obligatoria**: Calentamiento/Activación, Zona Central (Ejercicios) y Vuelta a la Calma.
 - **Gestión Temporal**: Sistema de configuración por sliders que garantiza que la suma de bloques coincida con el tiempo total de la sesión (ej. 60 min, 90 min, 45 min).
-- **Asignación de Tareas**: Cada bloque de la sesión actúa como un contenedor independiente para ejercicios de la biblioteca, permitiendo múltiples tareas en el Calentamiento y Zona Central.
+
+### 11.3. Microciclo Multi-Sesión (Diferenciación)
+- **Protocolo de Sesiones**: Cada semana (MCC) actúa como un contenedor de N sesiones independientes (según frecuencia semanal).
+- **Diferenciación Táctica**: El sistema permite configurar contenidos diferentes para la Sesión 1, Sesión 2, etc., dentro del mismo microciclo, permitiendo progresiones semanales complejas.

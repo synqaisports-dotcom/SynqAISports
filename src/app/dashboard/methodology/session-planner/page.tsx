@@ -23,7 +23,8 @@ import {
   Flame,
   Dumbbell,
   Wind,
-  Info
+  Info,
+  Calendar
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,7 @@ import {
   SheetFooter,
   SheetClose
 } from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -77,6 +79,7 @@ export default function SessionPlannerPage() {
   const [selectedTeam, setSelectedTeam] = useState(CLUB_TEAMS[0].id);
   const [sessionsPerWeek, setSessionsPerWeek] = useState(3);
   const [selectedMCC, setSelectedMCC] = useState<string | null>(null);
+  const [activeSessionInWeek, setActiveSessionInWeek] = useState("1");
 
   // CONFIGURACIÓN DE TIEMPOS DE SESIÓN
   const [sessionTimes, setSessionTimes] = useState({
@@ -95,6 +98,7 @@ export default function SessionPlannerPage() {
 
   const handleMCCClic = (month: string, week: number) => {
     setSelectedMCC(`${month.toUpperCase()}_W${week}`);
+    setActiveSessionInWeek("1"); // Reset a la primera sesión al abrir MCC
   };
 
   const handleSaveConfig = () => {
@@ -112,7 +116,7 @@ export default function SessionPlannerPage() {
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <CalendarDays className="h-5 w-5 text-amber-500 animate-pulse" />
-            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Operational_Planning_v4.2</span>
+            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Operational_Planning_v4.3</span>
           </div>
           <h1 className="text-5xl font-headline font-black text-white uppercase italic tracking-tighter amber-text-glow leading-none">
             PLANIFICADOR_MAESTRO
@@ -206,14 +210,14 @@ export default function SessionPlannerPage() {
                 </div>
 
                 <div className="space-y-3 pt-4 border-t border-white/5">
-                  <Label className="text-[10px] font-black uppercase text-white/40 tracking-widest">Frecuencia Semanal</Label>
+                  <Label className="text-[10px] font-black uppercase text-white/40 tracking-widest">Frecuencia Semanal (Días Entrenamiento)</Label>
                   <Select value={sessionsPerWeek.toString()} onValueChange={(v) => setSessionsPerWeek(parseInt(v))}>
                     <SelectTrigger className="h-12 bg-white/5 border-white/10 text-white font-bold uppercase text-[10px]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#0a0f18] border-amber-500/20">
                       {[1,2,3,4,5,6,7].map(n => (
-                        <SelectItem key={n} value={n.toString()} className="text-[10px] font-black uppercase">{n} Sesiones / Semana</SelectItem>
+                        <SelectItem key={n} value={n.toString()} className="text-[10px] font-black uppercase">{n} Días / Semana</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -256,7 +260,7 @@ export default function SessionPlannerPage() {
                </div>
                <div className="h-8 w-[1px] bg-white/10" />
                <div className="text-right">
-                  <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">Frecuencia</p>
+                  <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">Días Entreno</p>
                   <p className="text-xl font-black text-white italic tracking-tighter">{sessionsPerWeek} DÍAS</p>
                </div>
             </div>
@@ -294,12 +298,12 @@ export default function SessionPlannerPage() {
                             "text-[9px] font-black uppercase tracking-widest",
                             selectedMCC === `${month.id.toUpperCase()}_W${i+1}` ? "text-amber-500" : "text-white/20"
                           )}>MCC_{i + 1}</span>
-                          <Clock className={cn("h-3 w-3", selectedMCC === `${month.id.toUpperCase()}_W${i+1}` ? "text-amber-500" : "text-white/10")} />
+                          <LayoutGrid className={cn("h-3 w-3", selectedMCC === `${month.id.toUpperCase()}_W${i+1}` ? "text-amber-500" : "text-white/10")} />
                         </div>
                         <p className={cn(
                           "text-[8px] font-bold uppercase",
                           selectedMCC === `${month.id.toUpperCase()}_W${i+1}` ? "text-white" : "text-white/10"
-                        )}>Sesión de {totalTime} min</p>
+                        )}>{sessionsPerWeek} Sesiones Distintas</p>
                       </div>
                     ))}
                   </div>
@@ -312,7 +316,7 @@ export default function SessionPlannerPage() {
             <span className="flex items-center gap-2">
               <Activity className="h-3 w-3 text-amber-500 animate-pulse" /> Sincronización Metodológica Activa
             </span>
-            <span>SynqSports Operational Planner v4.2 • Arquitectura Lateral de Detalle</span>
+            <span>SynqSports Operational Planner v4.3 • Protocolo de Sesiones Diferenciadas</span>
           </div>
         </Card>
       </div>
@@ -326,24 +330,46 @@ export default function SessionPlannerPage() {
                 <SheetHeader className="space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500">Arquitectura_Detallada_v4.2</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500">Microciclo_Planning_v4.3</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <SheetTitle className="text-4xl font-black italic tracking-tighter uppercase leading-none text-white">Sesión {selectedMCC}</SheetTitle>
+                    <SheetTitle className="text-4xl font-black italic tracking-tighter uppercase leading-none text-white">Semana {selectedMCC}</SheetTitle>
                     <Badge variant="outline" className="border-amber-500/20 text-amber-500 font-black uppercase tracking-widest px-4 py-1.5 h-auto">
-                      {totalTime} MINUTOS TOTALES
+                      {sessionsPerWeek} DÍAS OPERATIVOS
                     </Badge>
                   </div>
                   <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest">
-                    Arquitectura de Entrenamiento para {currentTeam?.name}.
+                    Arquitectura de Entrenamiento Semanal para {currentTeam?.name}.
                   </SheetDescription>
                 </SheetHeader>
               </div>
 
+              {/* SELECTOR DE SESIÓN DENTRO DE LA SEMANA */}
+              <div className="px-8 py-4 bg-white/[0.02] border-b border-white/5">
+                <Tabs value={activeSessionInWeek} onValueChange={setActiveSessionInWeek} className="w-full">
+                  <TabsList className="grid w-full grid-cols-4 lg:grid-cols-7 bg-black/40 border border-white/10 p-1 h-12 rounded-xl">
+                    {Array.from({ length: sessionsPerWeek }).map((_, i) => (
+                      <TabsTrigger 
+                        key={i} 
+                        value={(i + 1).toString()}
+                        className="rounded-lg font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-amber-500 data-[state=active]:text-black"
+                      >
+                        SES_{i + 1}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </Tabs>
+              </div>
+
               <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-12">
                 
-                {/* 1. ESTRUCTURA DE SESIÓN */}
-                <div className="space-y-10">
+                {/* 1. ESTRUCTURA DE LA SESIÓN SELECCIONADA */}
+                <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500" key={activeSessionInWeek}>
+                  <div className="flex items-center gap-3">
+                    <div className="h-1 w-8 bg-amber-500" />
+                    <h3 className="text-lg font-black text-white uppercase italic tracking-tighter">Sesión {activeSessionInWeek} del Microciclo</h3>
+                  </div>
+
                   {/* BLOQUE 1: CALENTAMIENTO */}
                   <div className="space-y-4">
                     <div className="flex items-center justify-between px-2">
@@ -443,7 +469,7 @@ export default function SessionPlannerPage() {
                   <div className="p-6 bg-amber-500/5 border border-amber-500/10 rounded-3xl flex items-start gap-4">
                      <Info className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
                      <p className="text-[10px] text-white/40 leading-relaxed font-bold uppercase italic">
-                       Arrastra los ejercicios de la biblioteca directamente a los slots de la sesión. El sistema ajustará la carga de trabajo automáticamente.
+                       Seleccione una sesión (SES_1, SES_2...) para configurar su estructura específica. Cada día de entrenamiento es un nodo táctico independiente.
                      </p>
                   </div>
                 </div>
@@ -453,7 +479,7 @@ export default function SessionPlannerPage() {
                 <SheetClose asChild>
                   <Button variant="ghost" className="flex-1 h-16 border border-white/10 text-white/40 font-black uppercase text-[11px] tracking-widest rounded-2xl hover:bg-white/5 transition-all">CANCELAR</Button>
                 </SheetClose>
-                <Button onClick={handleSaveConfig} className="flex-[2] h-16 bg-amber-500 text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-2xl amber-glow hover:scale-[1.02] transition-all">GUARDAR_SESIÓN</Button>
+                <Button onClick={handleSaveConfig} className="flex-[2] h-16 bg-amber-500 text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-2xl amber-glow hover:scale-[1.02] transition-all">GUARDAR_MICROCICLO</Button>
               </div>
             </>
           )}
