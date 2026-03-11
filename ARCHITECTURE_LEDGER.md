@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v6.9 (Consolidated Master Protocol)
+# SynqSports Pro - ARCHITECTURE_LEDGER v7.0 (Consolidated Master Protocol)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -78,7 +78,7 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 - **Sugerencias**: El Entrenador puede proponer cambios ("Sugerir Cambio").
 - **Bloqueo de Seguridad**: Las solicitudes de cambio se bloquean automáticamente si faltan menos de **7 días** para la sesión.
 
-## 5. Protocolo de Pizarra y Dibujo (v2.1)
+## 5. Protocolo de Pizarra y Dibujo (v7.0)
 
 ### 5.1. Motor de Dibujo Suavizado
 - Uso de lógica de interpolación para trazos fluidos en el Canvas e independencia de resolución.
@@ -86,16 +86,17 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 ### 5.2. Esquema JSON Maestro (Independencia de Dispositivo)
 - **Coordenadas Decimales**: Todas las posiciones de fichas y trazos se guardan como valores de `0.000` a `1.000`. Garantiza fidelidad visual en cualquier dispositivo.
 
-### 5.3. Herramientas de Dibujo Avanzadas (v6.9)
+### 5.3. Herramientas de Dibujo Avanzadas (v7.0)
 - **Modos de Trazo**: Dibujo Libre, Rectángulos, Círculos, Flechas simples y dobles.
 - **Manipulación Táctica Total**: 
     - **Arrastre (Dragging)**: Capacidad de mover cualquier elemento por el campo manteniendo su escala.
     - **Puntos de Modificación**: Implementación de 4 handles en rectángulos y puntos extremos en flechas/círculos para redimensionado dinámico.
-- **Lógica de Controles Específica (v6.9)**:
+- **Edición Contextual (v7.0)**:
+    - **Menú de Acciones**: Barra flotante que permite borrar, duplicar y cambiar el color de elementos individuales.
+    - **Estilos de Vector**: Soporte para líneas discontinuas (dashed) para diferenciar tipos de movimientos.
+- **Lógica de Controles Específica**:
     - **Círculos**: Se omite el nodo de rotación por redundancia visual.
     - **Dibujo Libre**: Se omiten handles de redimensionado y rotación para preservar la integridad del trazo manual.
-- **Zonas de Trabajo**: Las formas cuentan con rellenos semi-transparentes (alpha 0.15) para delimitar áreas sin ocultar el campo.
-- **Geometría Táctica**: Soporte para rotación de rectángulos y flechas mediante nodo superior de control.
 
 ## 6. Gestión de Espacios e Instalaciones
 - **Motor Geométrico**: Subdivisiones de campos (1, 2 o 4 zonas) calculadas en porcentajes.

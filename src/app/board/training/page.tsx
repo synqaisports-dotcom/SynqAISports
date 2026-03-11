@@ -2,7 +2,26 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Sparkles, Save, Loader2, LayoutGrid, ChevronLeft, Link as LinkIcon, RotateCw, Trash2, MousePointer2 } from "lucide-react";
+import { 
+  Sparkles, 
+  Save, 
+  Loader2, 
+  LayoutGrid, 
+  ChevronLeft, 
+  Link as LinkIcon, 
+  RotateCw, 
+  Trash2, 
+  MousePointer2, 
+  Copy, 
+  Type,
+  Square,
+  Circle as CircleIcon,
+  ArrowUpRight,
+  ArrowLeftRight,
+  Pencil,
+  Spline,
+  Minus
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { TacticalField, FieldType } from "@/components/board/TacticalField";
@@ -29,7 +48,15 @@ interface DrawingElement {
   points: Point[];
   color: string;
   rotation: number;
+  lineStyle: 'solid' | 'dashed';
 }
+
+const COLORS = [
+  { id: 'cyan', value: '#00f2ff', label: 'Local' },
+  { id: 'rose', value: '#f43f5e', label: 'Visitante' },
+  { id: 'yellow', value: '#facc15', label: 'Atención' },
+  { id: 'white', value: '#ffffff', label: 'Neutro' },
+];
 
 export default function TrainingBoardPage() {
   const [isAiProcessing, setIsAiProcessing] = useState(false);
@@ -76,13 +103,18 @@ export default function TrainingBoardPage() {
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
 
+    if (element.lineStyle === 'dashed') {
+      ctx.setLineDash([10, 5]);
+    } else {
+      ctx.setLineDash([]);
+    }
+
     const p = element.points;
     if (p.length < 2) {
       ctx.restore();
       return;
     }
 
-    // Aplicar rotación solo si el tipo lo permite (No en círculos ni dibujo libre)
     const canRotate = element.type !== 'freehand' && element.type !== 'circle';
     
     if (canRotate) {
@@ -118,6 +150,7 @@ export default function TrainingBoardPage() {
         ctx.lineTo(p[1].x, p[1].y);
         ctx.stroke();
         ctx.beginPath();
+        ctx.setLineDash([]); // Las puntas siempre continuas
         drawArrowhead(ctx, p[0], p[1]);
         ctx.stroke();
         break;
@@ -126,18 +159,17 @@ export default function TrainingBoardPage() {
         ctx.lineTo(p[1].x, p[1].y);
         ctx.stroke();
         ctx.beginPath();
+        ctx.setLineDash([]);
         drawArrowhead(ctx, p[0], p[1]);
         drawArrowhead(ctx, p[1], p[0]);
         ctx.stroke();
         break;
     }
 
-    // DIBUJO DE CONTROLES (HANDLES)
     if (isSelected && element.type !== 'freehand') {
-      ctx.restore(); // Restaurar para dibujar handles sin la rotación del objeto si es necesario, pero mejor mantener contexto para handles relativos
+      ctx.restore();
       ctx.save();
       
-      // Si el elemento rota, los handles deben rotar con él
       if (canRotate) {
         const centerX = (p[0].x + p[1].x) / 2;
         const centerY = (p[0].y + p[1].y) / 2;
@@ -150,7 +182,6 @@ export default function TrainingBoardPage() {
       ctx.lineWidth = 1;
       ctx.setLineDash([5, 5]);
       
-      // Línea de contorno de selección
       if (element.type === 'rect') {
         ctx.strokeRect(p[0].x, p[0].y, p[1].x - p[0].x, p[1].y - p[0].y);
       }
@@ -158,7 +189,6 @@ export default function TrainingBoardPage() {
       ctx.setLineDash([]);
       ctx.fillStyle = '#fff';
       
-      // Handles de redimensionado
       let handles: Point[] = [];
       if (element.type === 'rect') {
         handles = [
@@ -178,7 +208,6 @@ export default function TrainingBoardPage() {
         ctx.stroke();
       });
 
-      // Nodo de rotación (Solo para rectángulos y flechas)
       if (canRotate) {
         const rotX = (p[0].x + p[1].x) / 2;
         const rotY = Math.min(p[0].y, p[1].y) - 30;
@@ -243,7 +272,6 @@ export default function TrainingBoardPage() {
       if (selectedId) {
         const el = elements.find(e => e.id === selectedId);
         if (el && el.type !== 'freehand') {
-          // 1. Verificar nodo rotación (Solo si permite rotar)
           if (el.type !== 'circle') {
             const rotX = (el.points[0].x + el.points[1].x) / 2;
             const rotY = Math.min(el.points[0].y, el.points[1].y) - 30;
@@ -253,7 +281,6 @@ export default function TrainingBoardPage() {
             }
           }
 
-          // 2. Verificar handles redimensionado
           let handles: Point[] = [];
           if (el.type === 'rect') {
             handles = [
@@ -275,7 +302,6 @@ export default function TrainingBoardPage() {
         }
       }
 
-      // 3. Verificar si clicó en el "cuerpo" de un elemento para arrastrarlo
       const clickedEl = [...elements].reverse().find(el => {
         const p = el.points;
         if (el.type === 'rect') {
@@ -283,11 +309,11 @@ export default function TrainingBoardPage() {
                  point.y >= Math.min(p[0].y, p[1].y) && point.y <= Math.max(p[0].y, p[1].y);
         }
         if (el.type === 'circle') {
-          return getDistance(point, p[0]) <= getDistance(p[0], p[1]);
+          const radius = getDistance(p[0], p[1]);
+          return getDistance(point, p[0]) <= radius;
         }
         if (el.type === 'freehand') {
-          // Chequeo simple por proximidad a cualquier punto del trazo
-          return p.some(fp => getDistance(point, cp) < 10);
+          return p.some(fp => getDistance(point, fp) < 15);
         }
         return getDistance(point, p[0]) < 20 || getDistance(point, p[p.length-1]) < 20;
       });
@@ -306,7 +332,8 @@ export default function TrainingBoardPage() {
         type: activeTool, 
         points: [point, point], 
         color: currentColor,
-        rotation: 0
+        rotation: 0,
+        lineStyle: 'solid'
       };
     }
   };
@@ -338,7 +365,7 @@ export default function TrainingBoardPage() {
       }));
     } else if (interactionMode.current === 'rotating' && selectedId) {
       const el = elements.find(e => e.id === selectedId);
-      if (el && el.type !== 'circle') { // Doble chequeo de seguridad
+      if (el) {
         const centerX = (el.points[0].x + el.points[1].x) / 2;
         const centerY = (el.points[0].y + el.points[1].y) / 2;
         const angle = Math.atan2(point.y - centerY, point.x - centerX) + Math.PI / 2;
@@ -373,11 +400,33 @@ export default function TrainingBoardPage() {
     lastPoint.current = null;
   };
 
-  const deleteSelected = () => {
-    if (selectedId) {
-      setElements(prev => prev.filter(el => el.id !== selectedId));
-      setSelectedId(null);
-    }
+  const deleteElement = (id: string) => {
+    setElements(prev => prev.filter(el => el.id !== id));
+    if (selectedId === id) setSelectedId(null);
+  };
+
+  const duplicateElement = (id: string) => {
+    const el = elements.find(e => e.id === id);
+    if (!el) return;
+    const newEl: DrawingElement = {
+      ...el,
+      id: `el-${Date.now()}`,
+      points: el.points.map(p => ({ x: p.x + 20, y: p.y + 20 }))
+    };
+    setElements(prev => [...prev, newEl]);
+    setSelectedId(newEl.id);
+  };
+
+  const toggleLineStyle = (id: string) => {
+    setElements(prev => prev.map(el => 
+      el.id === id ? { ...el, lineStyle: el.lineStyle === 'solid' ? 'dashed' : 'solid' } : el
+    ));
+  };
+
+  const changeElementColor = (id: string, color: string) => {
+    setElements(prev => prev.map(el => 
+      el.id === id ? { ...el, color } : el
+    ));
   };
 
   const handleSave = () => {
@@ -388,6 +437,12 @@ export default function TrainingBoardPage() {
       toast({ title: "DIAGRAMA_GUARDADO", description: "Ejercicio guardado en biblioteca." });
     }
   };
+
+  const selectedElement = elements.find(e => e.id === selectedId);
+  const actionMenuPos = selectedElement ? {
+    x: (selectedElement.points[0].x + (selectedElement.points[1]?.x || selectedElement.points[0].x)) / 2,
+    y: Math.min(...selectedElement.points.map(p => p.y)) - 60
+  } : null;
 
   return (
     <div className="h-full flex flex-col bg-[#04070c] overflow-hidden">
@@ -426,15 +481,6 @@ export default function TrainingBoardPage() {
         </div>
 
         <div className="flex items-center gap-2 lg:gap-3">
-          {selectedId && (
-            <Button 
-              onClick={deleteSelected}
-              variant="ghost"
-              className="h-11 border border-rose-500/20 text-rose-500 hover:bg-rose-500/10 rounded-xl px-4"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
           <Button 
             onClick={handleSave}
             className="h-11 bg-amber-500 text-black font-black uppercase text-[10px] tracking-widest px-6 lg:px-8 rounded-xl amber-glow border-none"
@@ -469,6 +515,56 @@ export default function TrainingBoardPage() {
               onPointerUp={handlePointerUp}
               onPointerLeave={handlePointerUp}
             />
+
+            {/* MENÚ DE ACCIONES CONTEXTUAL */}
+            {selectedElement && actionMenuPos && !isDrawing.current && (
+              <div 
+                className="absolute z-[100] flex items-center gap-2 bg-black/80 backdrop-blur-xl border border-white/10 p-2 rounded-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-300"
+                style={{ 
+                  left: `${actionMenuPos.x}px`, 
+                  top: `${actionMenuPos.y}px`,
+                  transform: 'translateX(-50%)'
+                }}
+              >
+                <div className="flex items-center gap-1 border-r border-white/10 pr-2 mr-1">
+                  {COLORS.map(c => (
+                    <button 
+                      key={c.id} 
+                      onClick={() => changeElementColor(selectedId!, c.value)}
+                      className={cn(
+                        "h-5 w-5 rounded-full border border-white/10 transition-all",
+                        selectedElement.color === c.value ? "scale-125 border-white ring-2 ring-white/20" : "opacity-40 hover:opacity-100"
+                      )}
+                      style={{ backgroundColor: c.value }}
+                    />
+                  ))}
+                </div>
+
+                <Button 
+                  variant="ghost" size="icon" className="h-8 w-8 text-white/40 hover:text-white"
+                  onClick={() => toggleLineStyle(selectedId!)}
+                  title="Tipo de Línea"
+                >
+                  {selectedElement.lineStyle === 'solid' ? <Minus className="h-4 w-4" /> : <Spline className="h-4 w-4" />}
+                </Button>
+
+                <Button 
+                  variant="ghost" size="icon" className="h-8 w-8 text-white/40 hover:text-white"
+                  onClick={() => duplicateElement(selectedId!)}
+                  title="Duplicar"
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+
+                <Button 
+                  variant="ghost" size="icon" className="h-8 w-8 text-rose-500/40 hover:text-rose-500 hover:bg-rose-500/10"
+                  onClick={() => deleteElement(selectedId!)}
+                  title="Eliminar"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </TacticalField>
         </main>
 
