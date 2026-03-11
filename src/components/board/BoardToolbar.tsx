@@ -14,7 +14,8 @@ import {
   Activity,
   ChevronLeft,
   ChevronDown,
-  Flag
+  Flag,
+  Library
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
