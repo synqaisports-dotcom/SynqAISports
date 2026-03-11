@@ -26,7 +26,10 @@ import {
   ClipboardList,
   Boxes,
   ScrollText,
-  AlertCircle
+  AlertCircle,
+  Camera,
+  Upload,
+  PencilLine
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -53,6 +56,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import Link from "next/link";
 
 const STAGES = ["Debutantes", "Prebenjamín", "Benjamín", "Alevín", "Infantil", "Cadete", "Juvenil", "Senior"];
 
@@ -196,7 +200,7 @@ export default function ExerciseLibraryPage() {
         </CardContent>
         <div className="p-6 bg-black/40 border-t border-white/5 flex justify-between items-center text-[9px] font-black text-amber-500/20 uppercase tracking-[0.5em] rounded-b-3xl">
           <span className="flex items-center gap-2"><CheckCircle2 className="h-3 w-3 animate-pulse" /> Sincronización de Estilo: Activa</span>
-          <span>Modelo de Blindaje v6.2</span>
+          <span>Modelo de Blindaje v6.3</span>
         </div>
       </Card>
 
@@ -206,7 +210,7 @@ export default function ExerciseLibraryPage() {
             <SheetHeader className="space-y-4">
               <div className="flex items-center gap-3">
                 <ShieldCheck className="h-5 w-5 text-amber-500 animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500 italic">Master_Asset_Factory_v6.2</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500 italic">Master_Asset_Factory_v6.3</span>
               </div>
               <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left leading-none">
                 CREAR <span className="text-amber-500">TAREA MAESTRA</span>
@@ -219,6 +223,35 @@ export default function ExerciseLibraryPage() {
 
           <form onSubmit={handleSaveMasterTask} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-12">
             
+            {/* SECCIÓN 0: RECURSOS VISUALES */}
+            <div className="space-y-6 p-8 border border-amber-500/20 bg-amber-500/5 rounded-3xl relative overflow-hidden">
+              <div className="flex items-center gap-3 border-b border-amber-500/20 pb-4 mb-6">
+                <Camera className="h-4 w-4 text-amber-500" />
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500 italic">Recursos Visuales</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Button 
+                  type="button"
+                  variant="outline" 
+                  className="h-16 border-amber-500/30 bg-black/40 text-amber-500 font-black uppercase text-[10px] tracking-widest hover:bg-amber-500/10 rounded-2xl flex items-center justify-center gap-3"
+                >
+                  <Upload className="h-4 w-4" /> Subir Imagen Técnica
+                </Button>
+                <Button 
+                  type="button"
+                  asChild
+                  className="h-16 bg-amber-500 text-black font-black uppercase text-[10px] tracking-widest rounded-2xl amber-glow hover:scale-[1.02] transition-all border-none flex items-center justify-center gap-3"
+                >
+                  <Link href="/board/training">
+                    <PencilLine className="h-4 w-4" /> Diseñar en Pizarra
+                  </Link>
+                </Button>
+              </div>
+              <p className="text-[8px] text-amber-500/40 uppercase font-bold tracking-tighter mt-2 leading-relaxed text-center italic">
+                Sincronice un diagrama táctico o suba una captura de pantalla del ejercicio.
+              </p>
+            </div>
+
             {/* SECCIÓN 1: IDENTIDAD BÁSICA */}
             <div className="space-y-8">
               <div className="flex items-center gap-3 border-b border-white/5 pb-4">
