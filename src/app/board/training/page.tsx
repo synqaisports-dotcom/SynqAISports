@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useEffect, useCallback, Suspense } from "react";
@@ -25,6 +24,8 @@ import {
   UserCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { TacticalField, FieldType } from "@/components/board/TacticalField";
 import { BoardToolbar, DrawingTool } from "@/components/board/BoardToolbar";
@@ -237,7 +238,6 @@ function TrainingBoardContent() {
         ctx.strokeStyle = '#000';
         ctx.lineWidth = 1;
         ctx.stroke();
-        // Detalle profesional de pentágonos
         for(let i=0; i<5; i++){
           ctx.beginPath();
           ctx.moveTo(p[0].x, p[0].y);
@@ -253,7 +253,6 @@ function TrainingBoardContent() {
         ctx.fillStyle = element.color;
         ctx.fill();
         ctx.stroke();
-        // Base del cono
         ctx.beginPath();
         ctx.ellipse(p[0].x, p[0].y + 10, 12, 4, 0, 0, Math.PI * 2);
         ctx.fill();
@@ -286,7 +285,6 @@ function TrainingBoardContent() {
         ctx.lineTo(p[0].x + 15, p[0].y - 10);
         ctx.lineTo(p[0].x + 15, p[0].y + 10);
         ctx.stroke();
-        // Pies de la valla
         ctx.moveTo(p[0].x - 20, p[0].y + 10);
         ctx.lineTo(p[0].x - 10, p[0].y + 10);
         ctx.moveTo(p[0].x + 10, p[0].y + 10);
@@ -301,7 +299,6 @@ function TrainingBoardContent() {
         ctx.lineTo(p[0].x + 10, p[0].y - 25);
         ctx.lineTo(p[0].x + 20, p[0].y - 15);
         ctx.stroke();
-        // Red (mesh)
         ctx.setLineDash([2, 2]);
         ctx.lineWidth = 1;
         for(let i=-15; i<20; i+=5) {
@@ -562,7 +559,6 @@ function TrainingBoardContent() {
     } else if (interactionMode.current === 'rotating' && selectedId) {
       const el = elements.find(e => e.id === selectedId);
       if (el) {
-        const isAsset = ['ball', 'cone', 'seta', 'ladder', 'hurdle', 'minigoal', 'pica', 'player'].includes(el.type);
         const centerX = el.points[1] ? (el.points[0].x + el.points[1].x) / 2 : el.points[0].x;
         const centerY = el.points[1] ? (el.points[0].y + el.points[1].y) / 2 : el.points[0].y;
         const angle = Math.atan2(point.y - centerY, point.x - centerX) + Math.PI / 2;
@@ -756,10 +752,7 @@ function TrainingBoardContent() {
           </TacticalField>
         </main>
 
-        {/* ÁREA INFERIOR DE HERRAMIENTAS DUALES */}
         <div className="absolute bottom-6 left-0 right-0 flex justify-center items-end gap-12 px-12 z-50 pointer-events-none">
-          
-          {/* BARRA DE MATERIALES (IZQUIERDA) */}
           <div className="pointer-events-auto">
             <BoardToolbar 
               theme="amber" 
@@ -775,7 +768,6 @@ function TrainingBoardContent() {
             />
           </div>
 
-          {/* BARRA DE DIBUJO (DERECHA) */}
           <div className="pointer-events-auto">
             <BoardToolbar 
               theme="amber" 
