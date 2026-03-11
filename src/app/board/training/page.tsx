@@ -86,6 +86,20 @@ export default function TrainingBoardPage() {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
 
+  const getDistance = (p1: Point, p2: Point) => Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+
+  // ROTACIÓN DE PUNTOS PARA HIT DETECTION
+  const rotatePoint = (point: Point, center: Point, angle: number): Point => {
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    const dx = point.x - center.x;
+    const dy = point.y - center.y;
+    return {
+      x: center.x + dx * cos - dy * sin,
+      y: center.y + dx * sin + dy * cos
+    };
+  };
+
   const drawArrowhead = (ctx: CanvasRenderingContext2D, from: Point, to: Point) => {
     const headLength = 15;
     const angle = Math.atan2(to.y - from.y, to.x - from.x);
@@ -115,11 +129,11 @@ export default function TrainingBoardPage() {
       return;
     }
 
+    const centerX = (p[0].x + p[1].x) / 2;
+    const centerY = (p[0].y + p[1].y) / 2;
     const canRotate = element.type !== 'freehand' && element.type !== 'circle';
     
     if (canRotate) {
-      const centerX = (p[0].x + p[1].x) / 2;
-      const centerY = (p[0].y + p[1].y) / 2;
       ctx.translate(centerX, centerY);
       ctx.rotate(element.rotation);
       ctx.translate(-centerX, -centerY);
@@ -140,7 +154,7 @@ export default function TrainingBoardPage() {
         ctx.stroke();
         break;
       case 'circle':
-        const radius = Math.sqrt(Math.pow(p[1].x - p[0].x, 2) + Math.pow(p[1].y - p[0].y, 2));
+        const radius = getDistance(p[0], p[1]);
         ctx.arc(p[0].x, p[0].y, radius, 0, 2 * Math.PI);
         ctx.fill();
         ctx.stroke();
@@ -150,7 +164,7 @@ export default function TrainingBoardPage() {
         ctx.lineTo(p[1].x, p[1].y);
         ctx.stroke();
         ctx.beginPath();
-        ctx.setLineDash([]); // Las puntas siempre continuas
+        ctx.setLineDash([]);
         drawArrowhead(ctx, p[0], p[1]);
         ctx.stroke();
         break;
@@ -171,8 +185,6 @@ export default function TrainingBoardPage() {
       ctx.save();
       
       if (canRotate) {
-        const centerX = (p[0].x + p[1].x) / 2;
-        const centerY = (p[0].y + p[1].y) / 2;
         ctx.translate(centerX, centerY);
         ctx.rotate(element.rotation);
         ctx.translate(-centerX, -centerY);
@@ -258,8 +270,6 @@ export default function TrainingBoardPage() {
     redrawAll();
   }, [elements, selectedId, redrawAll]);
 
-  const getDistance = (p1: Point, p2: Point) => Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
-
   const handlePointerDown = (e: React.PointerEvent) => {
     if (!canvasRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect();
@@ -268,73 +278,87 @@ export default function TrainingBoardPage() {
     lastPoint.current = point;
     isDrawing.current = true;
 
-    if (activeTool === 'select') {
-      if (selectedId) {
-        const el = elements.find(e => e.id === selectedId);
-        if (el && el.type !== 'freehand') {
-          if (el.type !== 'circle') {
-            const rotX = (el.points[0].x + el.points[1].x) / 2;
-            const rotY = Math.min(el.points[0].y, el.points[1].y) - 30;
-            if (getDistance(point, {x: rotX, y: rotY}) < 15) {
-              interactionMode.current = 'rotating';
-              return;
-            }
-          }
+    // 1. PRIORIDAD: COMPROBAR HANDLES DEL ELEMENTO SELECCIONADO (Si existe)
+    if (selectedId) {
+      const el = elements.find(e => e.id === selectedId);
+      if (el && el.type !== 'freehand') {
+        const centerX = (el.points[0].x + el.points[1].x) / 2;
+        const centerY = (el.points[0].y + el.points[1].y) / 2;
+        const localPoint = rotatePoint(point, {x: centerX, y: centerY}, -el.rotation);
 
-          let handles: Point[] = [];
-          if (el.type === 'rect') {
-            handles = [
-              { x: el.points[0].x, y: el.points[0].y },
-              { x: el.points[1].x, y: el.points[0].y },
-              { x: el.points[1].x, y: el.points[1].y },
-              { x: el.points[0].x, y: el.points[1].y }
-            ];
-          } else {
-            handles = el.points;
-          }
-
-          const handleIdx = handles.findIndex(p => getDistance(point, p) < 15);
-          if (handleIdx !== -1) {
-            interactionMode.current = 'resizing';
-            activeHandleIndex.current = handleIdx;
+        if (el.type !== 'circle') {
+          const rotX = (el.points[0].x + el.points[1].x) / 2;
+          const rotY = Math.min(el.points[0].y, el.points[1].y) - 30;
+          if (getDistance(point, rotatePoint({x: rotX, y: rotY}, {x: centerX, y: centerY}, el.rotation)) < 15) {
+            interactionMode.current = 'rotating';
             return;
           }
         }
-      }
 
-      const clickedEl = [...elements].reverse().find(el => {
-        const p = el.points;
+        let handles: Point[] = [];
         if (el.type === 'rect') {
-          return point.x >= Math.min(p[0].x, p[1].x) && point.x <= Math.max(p[0].x, p[1].x) &&
-                 point.y >= Math.min(p[0].y, p[1].y) && point.y <= Math.max(p[0].y, p[1].y);
+          handles = [
+            { x: el.points[0].x, y: el.points[0].y },
+            { x: el.points[1].x, y: el.points[0].y },
+            { x: el.points[1].x, y: el.points[1].y },
+            { x: el.points[0].x, y: el.points[1].y }
+          ];
+        } else {
+          handles = el.points;
         }
-        if (el.type === 'circle') {
-          const radius = getDistance(p[0], p[1]);
-          return getDistance(point, p[0]) <= radius;
-        }
-        if (el.type === 'freehand') {
-          return p.some(fp => getDistance(point, fp) < 15);
-        }
-        return getDistance(point, p[0]) < 20 || getDistance(point, p[p.length-1]) < 20;
-      });
 
-      if (clickedEl) {
-        setSelectedId(clickedEl.id);
-        interactionMode.current = 'dragging';
+        const handleIdx = handles.findIndex(hp => getDistance(localPoint, hp) < 15);
+        if (handleIdx !== -1) {
+          interactionMode.current = 'resizing';
+          activeHandleIndex.current = handleIdx;
+          return;
+        }
+      }
+    }
+
+    // 2. COMPROBAR CUERPO DE CUALQUIER ELEMENTO (Smart Selection)
+    const clickedEl = [...elements].reverse().find(el => {
+      const p = el.points;
+      const centerX = (p[0].x + (p[1]?.x || p[0].x)) / 2;
+      const centerY = (p[0].y + (p[1]?.y || p[0].y)) / 2;
+      const localPoint = rotatePoint(point, {x: centerX, y: centerY}, -el.rotation);
+
+      if (el.type === 'rect') {
+        return localPoint.x >= Math.min(p[0].x, p[1].x) && localPoint.x <= Math.max(p[0].x, p[1].x) &&
+               localPoint.y >= Math.min(p[0].y, p[1].y) && localPoint.y <= Math.max(p[0].y, p[1].y);
+      }
+      if (el.type === 'circle') {
+        const radius = getDistance(p[0], p[1]);
+        return getDistance(localPoint, p[0]) <= radius;
+      }
+      if (el.type === 'freehand') {
+        return p.some(fp => getDistance(point, fp) < 15);
+      }
+      // Para flechas, hit detection cerca de los extremos en espacio local
+      return getDistance(localPoint, p[0]) < 25 || getDistance(localPoint, p[p.length-1]) < 25;
+    });
+
+    if (clickedEl) {
+      setSelectedId(clickedEl.id);
+      setActiveTool('select');
+      interactionMode.current = 'dragging';
+    } else {
+      // 3. SI NO HAY HIT, Y EL TOOL NO ES SELECT, DIBUJAR
+      if (activeTool !== 'select') {
+        setSelectedId(null);
+        interactionMode.current = 'drawing';
+        currentElement.current = { 
+          id: `el-${Date.now()}`, 
+          type: activeTool, 
+          points: [point, point], 
+          color: currentColor,
+          rotation: 0,
+          lineStyle: 'solid'
+        };
       } else {
         setSelectedId(null);
         interactionMode.current = 'none';
       }
-    } else {
-      interactionMode.current = 'drawing';
-      currentElement.current = { 
-        id: `el-${Date.now()}`, 
-        type: activeTool, 
-        points: [point, point], 
-        color: currentColor,
-        rotation: 0,
-        lineStyle: 'solid'
-      };
     }
   };
 
@@ -352,14 +376,18 @@ export default function TrainingBoardPage() {
     } else if (interactionMode.current === 'resizing' && selectedId && activeHandleIndex.current !== null) {
       setElements(prev => prev.map(el => {
         if (el.id !== selectedId) return el;
+        const centerX = (el.points[0].x + el.points[1].x) / 2;
+        const centerY = (el.points[0].y + el.points[1].y) / 2;
+        const localPoint = rotatePoint(point, {x: centerX, y: centerY}, -el.rotation);
+        
         const newPoints = [...el.points];
         if (el.type === 'rect') {
-          if (activeHandleIndex.current === 0) { newPoints[0].x = point.x; newPoints[0].y = point.y; }
-          if (activeHandleIndex.current === 1) { newPoints[1].x = point.x; newPoints[0].y = point.y; }
-          if (activeHandleIndex.current === 2) { newPoints[1].x = point.x; newPoints[1].y = point.y; }
-          if (activeHandleIndex.current === 3) { newPoints[0].x = point.x; newPoints[1].y = point.y; }
+          if (activeHandleIndex.current === 0) { newPoints[0].x = localPoint.x; newPoints[0].y = localPoint.y; }
+          if (activeHandleIndex.current === 1) { newPoints[1].x = localPoint.x; newPoints[0].y = localPoint.y; }
+          if (activeHandleIndex.current === 2) { newPoints[1].x = localPoint.x; newPoints[1].y = localPoint.y; }
+          if (activeHandleIndex.current === 3) { newPoints[0].x = localPoint.x; newPoints[1].y = localPoint.y; }
         } else {
-          newPoints[activeHandleIndex.current!] = point;
+          newPoints[activeHandleIndex.current!] = localPoint;
         }
         return { ...el, points: newPoints };
       }));
@@ -439,10 +467,21 @@ export default function TrainingBoardPage() {
   };
 
   const selectedElement = elements.find(e => e.id === selectedId);
-  const actionMenuPos = selectedElement ? {
-    x: (selectedElement.points[0].x + (selectedElement.points[1]?.x || selectedElement.points[0].x)) / 2,
-    y: Math.min(...selectedElement.points.map(p => p.y)) - 60
-  } : null;
+  
+  // Calcular posición del menú de acciones
+  const getMenuPos = () => {
+    if (!selectedElement) return null;
+    const p = selectedElement.points;
+    const centerX = (p[0].x + (p[1]?.x || p[0].x)) / 2;
+    const centerY = (p[0].y + (p[1]?.y || p[0].y)) / 2;
+    // El menú no rota con la forma para legibilidad
+    return {
+      x: centerX,
+      y: Math.min(p[0].y, (p[1]?.y || p[0].y)) - 80
+    };
+  };
+
+  const actionMenuPos = getMenuPos();
 
   return (
     <div className="h-full flex flex-col bg-[#04070c] overflow-hidden">
