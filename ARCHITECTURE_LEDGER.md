@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v8.4.0 (Manipulación Táctica Total)
+# SynqSports Pro - ARCHITECTURE_LEDGER v8.5.0 (Gráficos de Alta Fidelidad)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -48,15 +48,6 @@ Los roles operan bajo un sistema de ranking numérico (`rank`) que determina la 
 2. **Nivel 2 (Club)**: El "Libro de Estilo". Tareas Maestras validadas asignadas a etapas blindadas. Formato Tabla (Opción B).
 3. **Nivel 3 (Coach)**: "Cuaderno de Campo". Espacio privado de creación. Formato Grid (Opción A).
 
-### 3.2. ADN del Ejercicio (Metadatos Críticos v6.2)
-Las tareas maestras ahora incluyen una matriz de datos enriquecida para máxima precisión metodológica:
-- `didactic_strategy`: Tipo de juego o metodología aplicada.
-- `objectives`: Metas técnicas y tácticas concretas.
-- `conditional_content`: Capacidades físicas implicadas (ej. Coordinación).
-- `metrics`: Tiempo, Espacio y Situación de Juego.
-- `tactical_dna`: Acción técnica, Acción táctica e Intención colectiva.
-- `operational_rules`: Descripción, Normas de provocación, Consignas y Material.
-
 ## 4. Protocolo de Planificación y Validación (v5.1)
 
 ### 4.1. Estructura Tripartita de Sesión
@@ -65,7 +56,7 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 2. **Zona Central (Contenidos)** - Soporta múltiples ejercicios.
 3. **Vuelta a la Calma**
 
-## 5. Protocolo de Pizarra y Dibujo (v8.4.0)
+## 5. Protocolo de Pizarra y Dibujo (v8.5.0)
 
 ### 5.1. Motor de Dibujo Suavizado
 - Uso de lógica de interpolación para trazos fluidos en el Canvas e independencia de resolución.
@@ -73,24 +64,11 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 ### 5.2. Esquema JSON Maestro (Independencia de Dispositivo)
 - **Coordenadas Decimales**: Todas las posiciones de fichas y trazos se guardan como valores de `0.000` a `1.000`. Garantiza fidelidad visual en cualquier dispositivo.
 
-### 5.3. Herramientas de Dibujo Avanzadas (v8.4.0)
+### 5.3. Herramientas de Dibujo Avanzadas (v8.5.0)
 - **Modos de Trazo**: Dibujo Libre, Rectángulos, Círculos, Ondas Sinusoidales, Flechas simples y dobles.
-- **Manipulación Táctica Total (v8.4.0)**: 
-    - **Rotación y Escala Universal**: Todos los elementos (incluyendo materiales y jugadores) ahora permiten ser rotados y redimensionados mediante handles dinámicos.
-    - **Zero-Distraction UI**: Eliminación de iconos de acción flotantes sobre el campo. Las propiedades se gestionan desde la barra de herramientas inferior al seleccionar un elemento.
-    - **Smart Selection**: Detección de clics sobre formas existentes con resaltado de alta fidelidad.
-- **Equipamiento de Élite (v8.4.0)**:
-    - **Activos Hyper-Fidelity**: Material técnico con sombreado volumétrico, profundidad 3D y trazado vectorial profesional.
-    - **Fichas de Cristal (Glassmorphism)**: Jugadores con efecto visual premium y resplandor dinámico según el color de equipo.
-
-## 6. Gestión de Espacios e Instalaciones
-- **Motor Geométrico**: Subdivisiones de campos (1, 2 o 4 zonas) calculadas en porcentajes.
-- **Horarios de División**: Las subdivisiones pueden activarse solo en franjas horarias específicas.
-
-## 7. Persistencia y Promo Hook
-- **Magic Links**: Detección de tokens en URL (`?token=...`).
-- **Persistence Layer**: Uso de `localStorage` para el estado de sesión y onboarding.
-
-## 8. UX y Calidad Visual
-- **Glow Reactivo**: Efectos de resplandor neón en elementos activos.
-- **Scroll Táctico**: Barras de desplazamiento siempre visibles con el color de identidad del club.
+- **Gráficos de Alta Fidelidad (v8.5.0)**: 
+    - **Rotación Centrada Universal**: Todos los elementos rotan desde su centro geométrico para una manipulación profesional.
+    - **Activos Blueprint Pro**: Rediseño de materiales (balón, conos, porterías) con sombreado volumétrico y perspectiva 3D realista.
+    - **Balón Élite**: Integración de diseño técnico con gradientes radiales y patrones de costura.
+    - **Zero-Distraction UI**: Gestión de propiedades centralizada en la barra inferior, eliminando iconos flotantes sobre el campo.
+    - **Smart Selection**: Detección de clics sobre formas existentes con resaltado de alta fidelidad y handles de precisión.

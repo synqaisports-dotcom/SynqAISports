@@ -160,8 +160,13 @@ function TrainingBoardContent() {
       return;
     }
 
-    const centerX = p[1] ? (p[0].x + p[1].x) / 2 : p[0].x;
-    const centerY = p[1] ? (p[0].y + p[1].y) / 2 : p[0].y;
+    // CÁLCULO DEL CENTRO PARA ROTACIÓN ABSOLUTA
+    const minX = Math.min(...p.map(pt => pt.x));
+    const minY = Math.min(...p.map(pt => pt.y));
+    const maxX = Math.max(...p.map(pt => pt.x));
+    const maxY = Math.max(...p.map(pt => pt.y));
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
     
     ctx.translate(centerX, centerY);
     ctx.rotate(element.rotation);
@@ -215,38 +220,52 @@ function TrainingBoardContent() {
         break;
       case 'player':
         const r = p[1] ? getDistance(p[0], p[1]) : 25;
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = hexToRgba(element.color, 0.5);
+        ctx.save();
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = hexToRgba(element.color, 0.4);
+        
+        // Efecto Glassmorphism
         ctx.beginPath();
         ctx.arc(p[0].x, p[0].y, r, 0, Math.PI * 2);
-        const grad = ctx.createRadialGradient(p[0].x, p[0].y, 0, p[0].x, p[0].y, r);
-        grad.addColorStop(0, hexToRgba(element.color, 0.4));
-        grad.addColorStop(1, hexToRgba(element.color, 0.1));
-        ctx.fillStyle = grad;
+        const playerGrad = ctx.createRadialGradient(p[0].x - r/3, p[0].y - r/3, 0, p[0].x, p[0].y, r);
+        playerGrad.addColorStop(0, '#ffffff44');
+        playerGrad.addColorStop(0.5, hexToRgba(element.color, 0.3));
+        playerGrad.addColorStop(1, hexToRgba(element.color, 0.1));
+        ctx.fillStyle = playerGrad;
         ctx.fill();
+        
         ctx.strokeStyle = element.color;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 3;
         ctx.stroke();
+        
+        // Brillo superior
+        ctx.beginPath();
+        ctx.ellipse(p[0].x, p[0].y - r/2, r/1.5, r/3, 0, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,0.1)';
+        ctx.fill();
+        
         ctx.shadowBlur = 0;
         ctx.fillStyle = '#fff';
-        ctx.font = `bold ${Math.floor(r * 0.7)}px Space Grotesk`;
+        ctx.font = `bold ${Math.floor(r * 0.8)}px Space Grotesk`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText((element.number || 1).toString(), p[0].x, p[0].y);
+        ctx.restore();
         break;
       case 'ball':
-        const br = p[1] ? getDistance(p[0], p[1]) : 12;
+        // MOTOR DE BALÓN PRO (SVG IMPLEMENTATION)
+        const br = p[1] ? getDistance(p[0], p[1]) : 15;
         ctx.save();
         ctx.translate(p[0].x, p[0].y);
         
-        // Sombra proyectada
+        // Sombra Proyectada
         ctx.beginPath();
         ctx.arc(0, br * 0.1, br, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(0,0,0,0.2)';
         ctx.fill();
 
-        // Gradiente radial profesional
-        const ballGrad = ctx.createRadialGradient(-br*0.3, -br*0.3, 0, 0, 0, br);
+        // Gradiente Pro
+        const ballGrad = ctx.createRadialGradient(-br * 0.4, -br * 0.4, 0, 0, 0, br);
         ballGrad.addColorStop(0, '#ffffff');
         ballGrad.addColorStop(1, '#E2E8F0');
         
@@ -258,11 +277,9 @@ function TrainingBoardContent() {
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // Patrón técnico del balón
-        const s = br / 40; 
-        ctx.strokeStyle = '#0F172A';
-        ctx.lineWidth = 1.5;
+        // Patrón de Costura (Líneas Tácticas)
         ctx.beginPath();
+        const s = br / 40;
         ctx.moveTo(0, -40*s); ctx.lineTo(-15*s, -25*s);
         ctx.moveTo(0, -40*s); ctx.lineTo(15*s, -25*s);
         ctx.moveTo(0, 40*s); ctx.lineTo(-15*s, 25*s);
@@ -272,132 +289,136 @@ function TrainingBoardContent() {
         ctx.moveTo(40*s, 0); ctx.lineTo(25*s, -15*s);
         ctx.moveTo(40*s, 0); ctx.lineTo(25*s, 15*s);
         ctx.stroke();
+        
         ctx.beginPath();
         ctx.arc(0, 0, 15*s, 0, Math.PI * 2);
         ctx.stroke();
         ctx.restore();
         break;
       case 'cone':
-        const cr = p[1] ? getDistance(p[0], p[1]) : 15;
+        const cr = p[1] ? getDistance(p[0], p[1]) : 20;
         ctx.save();
         ctx.translate(p[0].x, p[0].y);
+        // Base Sombreada
         ctx.beginPath();
         ctx.ellipse(0, cr/2, cr, cr/3, 0, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(0,0,0,0.2)';
+        ctx.fillStyle = 'rgba(0,0,0,0.25)';
         ctx.fill();
+        // Cuerpo del Cono
         ctx.beginPath();
-        ctx.moveTo(-cr*0.7, cr/2);
-        ctx.lineTo(0, -cr);
-        ctx.lineTo(cr*0.7, cr/2);
+        ctx.moveTo(-cr*0.8, cr/2);
+        ctx.lineTo(0, -cr*1.2);
+        ctx.lineTo(cr*0.8, cr/2);
         ctx.closePath();
-        const coneGrad = ctx.createLinearGradient(-cr, 0, cr, 0);
-        coneGrad.addColorStop(0, element.color);
-        coneGrad.addColorStop(0.5, '#ffffff');
-        coneGrad.addColorStop(1, element.color);
-        ctx.fillStyle = coneGrad;
-        ctx.fill();
-        ctx.strokeStyle = hexToRgba(element.color, 0.8);
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        ctx.restore();
-        break;
-      case 'seta':
-        const sr = p[1] ? getDistance(p[0], p[1]) : 18;
-        ctx.save();
-        ctx.translate(p[0].x, p[0].y);
-        ctx.beginPath();
-        ctx.ellipse(0, 0, sr, sr/2.5, 0, 0, Math.PI * 2);
-        const setaGrad = ctx.createRadialGradient(0, -2, 0, 0, 0, sr);
-        setaGrad.addColorStop(0, '#ffffff');
-        setaGrad.addColorStop(0.3, element.color);
-        setaGrad.addColorStop(1, hexToRgba(element.color, 0.8));
-        ctx.fillStyle = setaGrad;
+        const coneG = ctx.createLinearGradient(-cr, 0, cr, 0);
+        coneG.addColorStop(0, element.color);
+        coneG.addColorStop(0.4, '#ffffffcc');
+        coneG.addColorStop(0.6, '#ffffffcc');
+        coneG.addColorStop(1, element.color);
+        ctx.fillStyle = coneG;
         ctx.fill();
         ctx.strokeStyle = '#00000033';
         ctx.stroke();
         ctx.restore();
         break;
-      case 'ladder':
-        if (!p[1]) break;
-        const lDist = getDistance(p[0], p[1]);
-        const stepWidth = 40;
-        const stepGap = 25;
+      case 'seta':
+        const sr = p[1] ? getDistance(p[0], p[1]) : 22;
         ctx.save();
         ctx.translate(p[0].x, p[0].y);
-        const lAng = Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x);
-        ctx.rotate(lAng - element.rotation); 
-        ctx.strokeStyle = '#333';
-        ctx.lineWidth = 4;
-        ctx.strokeRect(0, -stepWidth/2, lDist, stepWidth);
-        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, sr, sr/2.2, 0, 0, Math.PI * 2);
+        const setaG = ctx.createRadialGradient(0, -sr/4, 0, 0, 0, sr);
+        setaG.addColorStop(0, '#ffffff');
+        setaG.addColorStop(0.3, element.color);
+        setaG.addColorStop(1, hexToRgba(element.color, 0.8));
+        ctx.fillStyle = setaG;
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+        ctx.stroke();
+        ctx.restore();
+        break;
+      case 'ladder':
+        if (!p[1]) break;
+        const ld = getDistance(p[0], p[1]);
+        const sw = 45;
+        const sg = 30;
+        ctx.save();
+        ctx.translate(p[0].x, p[0].y);
+        const la = Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x);
+        ctx.rotate(la - element.rotation);
+        // Estructura lateral
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 5;
+        ctx.strokeRect(0, -sw/2, ld, sw);
+        // Peldaños técnicos
+        ctx.lineWidth = 3;
         ctx.strokeStyle = element.color;
-        for(let d=0; d<=lDist; d+=stepGap) {
+        for(let d=0; d<=ld; d+=sg) {
           ctx.beginPath();
-          ctx.moveTo(d, -stepWidth/2);
-          ctx.lineTo(d, stepWidth/2);
+          ctx.moveTo(d, -sw/2); ctx.lineTo(d, sw/2);
           ctx.stroke();
         }
         ctx.restore();
         break;
       case 'hurdle':
         if (!p[1]) break;
-        const hWidth = getDistance(p[0], p[1]);
+        const hw = getDistance(p[0], p[1]);
         ctx.save();
         ctx.translate(p[0].x, p[0].y);
-        const hAng = Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x);
-        ctx.rotate(hAng - element.rotation);
+        const ha = Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x);
+        ctx.rotate(ha - element.rotation);
         ctx.strokeStyle = element.color;
-        ctx.lineWidth = 5;
+        ctx.lineWidth = 6;
         ctx.beginPath();
-        ctx.moveTo(0, 10);
-        ctx.lineTo(0, -10);
-        ctx.lineTo(hWidth, -10);
-        ctx.lineTo(hWidth, 10);
+        ctx.moveTo(0, 15); ctx.lineTo(0, -15);
+        ctx.lineTo(hw, -15); ctx.lineTo(hw, 15);
         ctx.stroke();
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = '#333';
-        ctx.strokeRect(-5, 8, 10, 4);
-        ctx.strokeRect(hWidth-5, 8, 10, 4);
+        // Soportes base
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(-6, 12, 12, 6);
+        ctx.strokeRect(hw-6, 12, 12, 6);
         ctx.restore();
         break;
       case 'minigoal':
         if (!p[1]) break;
-        const gWidth = getDistance(p[0], p[1]);
+        const gw = getDistance(p[0], p[1]);
         ctx.save();
         ctx.translate(p[0].x, p[0].y);
-        const gAng = Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x);
-        ctx.rotate(gAng - element.rotation);
-        ctx.beginPath();
-        ctx.rect(0, -gWidth/4, gWidth, gWidth/2);
-        ctx.fillStyle = 'rgba(255,255,255,0.1)';
-        ctx.fill();
-        ctx.setLineDash([2, 2]);
-        ctx.strokeStyle = '#fff';
+        const ga = Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x);
+        ctx.rotate(ga - element.rotation);
+        // Red
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        ctx.fillRect(0, -gw/3, gw, gw/1.5);
+        ctx.setLineDash([3, 3]);
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
         ctx.lineWidth = 1;
-        for(let i=0; i<gWidth; i+=8) {
-          ctx.moveTo(i, -gWidth/4); ctx.lineTo(i, gWidth/2);
-        }
+        for(let i=0; i<gw; i+=10) { ctx.moveTo(i, -gw/3); ctx.lineTo(i, gw/3); }
+        for(let j=-gw/3; j<gw/3; j+=10) { ctx.moveTo(0, j); ctx.lineTo(gw, j); }
         ctx.stroke();
+        // Marco
         ctx.setLineDash([]);
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 4;
-        ctx.strokeRect(0, -gWidth/4, gWidth, gWidth/2);
+        ctx.strokeStyle = '#F8FAFC';
+        ctx.lineWidth = 5;
+        ctx.strokeRect(0, -gw/3, gw, gw/1.5);
         ctx.restore();
         break;
       case 'pica':
-        const pr = p[1] ? getDistance(p[0], p[1]) : 15;
+        const pr = p[1] ? getDistance(p[0], p[1]) : 18;
         ctx.save();
         ctx.translate(p[0].x, p[0].y);
+        // Base Circular Pro
         ctx.beginPath();
-        ctx.arc(0, pr, pr*0.5, 0, Math.PI * 2);
-        ctx.fillStyle = '#333333';
+        ctx.arc(0, pr*0.8, pr*0.6, 0, Math.PI * 2);
+        ctx.fillStyle = '#334155';
         ctx.fill();
-        const poleGrad = ctx.createLinearGradient(-3, 0, 3, 0);
-        poleGrad.addColorStop(0, element.color);
-        poleGrad.addColorStop(0.5, '#ffffff');
-        poleGrad.addColorStop(1, element.color);
-        ctx.fillStyle = poleGrad;
-        ctx.fillRect(-3, -pr*2, 6, pr*3);
+        // Pica con Brillo
+        const pG = ctx.createLinearGradient(-4, 0, 4, 0);
+        pG.addColorStop(0, element.color);
+        pG.addColorStop(0.5, '#ffffff');
+        pG.addColorStop(1, element.color);
+        ctx.fillStyle = pG;
+        ctx.fillRect(-4, -pr*2.5, 8, pr*3.2);
         ctx.restore();
         break;
     }
@@ -406,62 +427,60 @@ function TrainingBoardContent() {
       ctx.restore();
       ctx.save();
       
+      // CAJA DE SELECCIÓN CENTRADA
       ctx.translate(centerX, centerY);
       ctx.rotate(element.rotation);
       ctx.translate(-centerX, -centerY);
 
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1;
-      ctx.setLineDash([5, 5]);
+      ctx.strokeStyle = '#ffffffaa';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([6, 4]);
       
       const isSinglePoint = ['ball', 'cone', 'seta', 'pica', 'player'].includes(element.type);
+      const selPad = 15;
 
       if (element.type === 'rect' && p[1]) {
         ctx.strokeRect(p[0].x, p[0].y, p[1].x - p[0].x, p[1].y - p[0].y);
-      } else if (isSinglePoint && p[1]) {
-        const radius = getDistance(p[0], p[1]);
-        ctx.strokeRect(p[0].x - radius - 10, p[0].y - radius - 10, (radius + 10) * 2, (radius + 10) * 2);
-      } else if (isSinglePoint) {
-        ctx.strokeRect(p[0].x - 30, p[0].y - 30, 60, 60);
       } else if (p[1]) {
-        const minX = Math.min(...p.map(pt => pt.x));
-        const minY = Math.min(...p.map(pt => pt.y));
-        const maxX = Math.max(...p.map(pt => pt.x));
-        const maxY = Math.max(...p.map(pt => pt.y));
-        ctx.strokeRect(minX - 10, minY - 10, maxX - minX + 20, maxY - minY + 20);
+        const minPt = { x: Math.min(...p.map(pt => pt.x)), y: Math.min(...p.map(pt => pt.y)) };
+        const maxPt = { x: Math.max(...p.map(pt => pt.x)), y: Math.max(...p.map(pt => pt.y)) };
+        ctx.strokeRect(minPt.x - selPad, minPt.y - selPad, (maxPt.x - minPt.x) + selPad * 2, (maxPt.y - minPt.y) + selPad * 2);
       }
 
       ctx.setLineDash([]);
       ctx.fillStyle = '#ffffff';
       
+      // Handles de Esquina
       let handles: Point[] = [];
       if (element.type === 'rect' && p[1]) {
-        handles = [{ x: p[0].x, y: p[0].y }, { x: p[1].x, y: p[0].y }, { x: p[1].x, y: p[1].y }, { x: p[0].y, y: p[1].y }];
+        handles = [{ x: p[0].x, y: p[0].y }, { x: p[1].x, y: p[0].y }, { x: p[1].x, y: p[1].y }, { x: p[0].x, y: p[1].y }];
       } else if (p[1]) {
         handles = [p[0], p[p.length-1]];
       }
 
-      handles.forEach(cp => {
+      handles.forEach(hp => {
         ctx.beginPath();
-        ctx.arc(cp.x, cp.y, 6, 0, Math.PI * 2);
+        ctx.arc(hp.x, hp.y, 7, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
       });
 
-      const rotX = p[1] ? (p[0].x + p[1].x) / 2 : p[0].x;
-      const rotY = p[1] ? Math.min(...p.map(pt => pt.y)) - 40 : p[0].y - 40;
+      // Handle de Rotación (Punto Amarillo Centrado)
+      const rotY = minY - 50;
       ctx.beginPath();
-      ctx.moveTo(rotX, p[1] ? Math.min(...p.map(pt => pt.y)) : p[0].y);
-      ctx.lineTo(rotX, rotY);
+      ctx.moveTo(centerX, minY);
+      ctx.lineTo(centerX, rotY);
       ctx.stroke();
       ctx.fillStyle = '#facc15';
       ctx.beginPath();
-      ctx.arc(rotX, rotY, 8, 0, Math.PI * 2);
+      ctx.arc(centerX, rotY, 10, 0, Math.PI * 2);
       ctx.fill();
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 2;
       ctx.stroke();
     }
     ctx.restore();
-  }, []);
+  }, [hexToRgba, getDistance]);
 
   const redrawAll = useCallback(() => {
     const canvas = canvasRef.current;
@@ -507,23 +526,25 @@ function TrainingBoardContent() {
     if (selectedId) {
       const el = elements.find(e => e.id === selectedId);
       if (el && el.type !== 'freehand') {
-        const p = el.points;
-        const centerX = p[1] ? (p[0].x + p[1].x) / 2 : p[0].x;
-        const centerY = p[1] ? (p[0].y + p[1].y) / 2 : p[0].y;
+        const minX = Math.min(...el.points.map(pt => pt.x));
+        const minY = Math.min(...el.points.map(pt => pt.y));
+        const maxX = Math.max(...el.points.map(pt => pt.x));
+        const maxY = Math.max(...el.points.map(pt => pt.y));
+        const centerX = (minX + maxX) / 2;
+        const centerY = (minY + maxY) / 2;
         const localPoint = rotatePoint(point, {x: centerX, y: centerY}, -el.rotation);
 
-        const rotX = p[1] ? (el.points[0].x + el.points[1].x) / 2 : el.points[0].x;
-        const rotY = p[1] ? Math.min(...p.map(pt => pt.y)) - 40 : p[0].y - 40;
-        if (getDistance(point, rotatePoint({x: rotX, y: rotY}, {x: centerX, y: centerY}, el.rotation)) < 20) {
+        const rotY = minY - 50;
+        if (getDistance(point, rotatePoint({x: centerX, y: rotY}, {x: centerX, y: centerY}, el.rotation)) < 25) {
           interactionMode.current = 'rotating';
           return;
         }
 
         let handles: Point[] = [];
-        if (el.type === 'rect' && p[1]) {
-          handles = [{ x: p[0].x, y: p[0].y }, { x: p[1].x, y: p[0].y }, { x: p[1].x, y: p[1].y }, { x: p[0].y, y: p[1].y }];
-        } else if (p[1]) {
-          handles = [p[0], p[p.length - 1]];
+        if (el.type === 'rect') {
+          handles = [{ x: el.points[0].x, y: el.points[0].y }, { x: el.points[1].x, y: el.points[0].y }, { x: el.points[1].x, y: el.points[1].y }, { x: el.points[0].x, y: el.points[1].y }];
+        } else {
+          handles = [el.points[0], el.points[el.points.length - 1]];
         }
 
         const handleIdx = handles.findIndex(hp => getDistance(localPoint, hp) < 20);
@@ -537,34 +558,29 @@ function TrainingBoardContent() {
 
     const clickedEl = [...elements].reverse().find(el => {
       const p = el.points;
-      const centerX = p[1] ? (p[0].x + p[1].x) / 2 : p[0].x;
-      const centerY = p[1] ? (p[0].y + p[1].y) / 2 : p[0].y;
+      const minX = Math.min(...p.map(pt => pt.x));
+      const minY = Math.min(...p.map(pt => pt.y));
+      const maxX = Math.max(...p.map(pt => pt.x));
+      const maxY = Math.max(...p.map(pt => pt.y));
+      const centerX = (minX + maxX) / 2;
+      const centerY = (minY + maxY) / 2;
       const localPoint = rotatePoint(point, {x: centerX, y: centerY}, -el.rotation);
 
-      if (el.type === 'rect' && p[1]) {
-        return localPoint.x >= Math.min(p[0].x, p[1].x) && localPoint.x <= Math.max(p[0].x, p[1].x) &&
-               localPoint.y >= Math.min(p[0].y, p[1].y) && localPoint.y <= Math.max(p[0].y, p[1].y);
-      }
-      if (el.type === 'circle' && p[1]) {
-        const radius = getDistance(p[0], p[1]);
-        return getDistance(localPoint, p[0]) <= radius;
-      }
-      if (el.type === 'freehand') {
-        return p.some(fp => getDistance(point, fp) < 15);
-      }
-      const isSinglePoint = ['ball', 'cone', 'seta', 'pica', 'player'].includes(el.type);
-      if (isSinglePoint) {
-        const r = p[1] ? getDistance(p[0], p[1]) : 30;
-        return getDistance(localPoint, p[0]) < r;
-      }
-      if (p[1]) {
-        const minX = Math.min(...p.map(pt => pt.x));
-        const minY = Math.min(...p.map(pt => pt.y));
-        const maxX = Math.max(...p.map(pt => pt.x));
-        const maxY = Math.max(...p.map(pt => pt.y));
+      if (el.type === 'rect') {
         return localPoint.x >= minX && localPoint.x <= maxX && localPoint.y >= minY && localPoint.y <= maxY;
       }
-      return getDistance(localPoint, p[0]) < 30;
+      if (el.type === 'circle') {
+        return getDistance(localPoint, p[0]) <= getDistance(p[0], p[1]);
+      }
+      if (el.type === 'freehand') {
+        return p.some(fp => getDistance(point, fp) < 20);
+      }
+      const isSingle = ['ball', 'cone', 'seta', 'pica', 'player'].includes(el.type);
+      if (isSingle) {
+        const rad = p[1] ? getDistance(p[0], p[1]) : 30;
+        return getDistance(localPoint, p[0]) < rad + 10;
+      }
+      return localPoint.x >= minX - 10 && localPoint.x <= maxX + 10 && localPoint.y >= minY - 10 && localPoint.y <= maxY + 10;
     });
 
     if (clickedEl) {
@@ -573,21 +589,17 @@ function TrainingBoardContent() {
       interactionMode.current = 'dragging';
     } else {
       if (activeTool !== 'select') {
-        const isSinglePoint = ['ball', 'cone', 'seta', 'pica', 'player'].includes(activeTool);
         setSelectedId(null);
         setIsPropertiesOpen(false);
         interactionMode.current = 'drawing';
-        
+        const isSingle = ['ball', 'cone', 'seta', 'pica', 'player'].includes(activeTool);
         let playerNum;
-        if(activeTool === 'player') {
-          const playersCount = elements.filter(e => e.type === 'player').length;
-          playerNum = playersCount + 1;
-        }
+        if(activeTool === 'player') playerNum = elements.filter(e => e.type === 'player').length + 1;
 
         currentElement.current = { 
           id: `el-${Date.now()}`, 
           type: activeTool, 
-          points: isSinglePoint ? [point, {x: point.x + 25, y: point.y}] : [point, point], 
+          points: isSingle ? [point, {x: point.x + 30, y: point.y}] : [point, point], 
           color: currentColor,
           rotation: 0,
           lineStyle: 'solid',
@@ -615,10 +627,11 @@ function TrainingBoardContent() {
     } else if (interactionMode.current === 'resizing' && selectedId && activeHandleIndex.current !== null) {
       setElements(prev => prev.map(el => {
         if (el.id !== selectedId) return el;
-        const centerX = (el.points[0].x + el.points[1].x) / 2;
-        const centerY = (el.points[0].y + el.points[1].y) / 2;
-        const localPoint = rotatePoint(point, {x: centerX, y: centerY}, -el.rotation);
-        
+        const minX = Math.min(...el.points.map(pt => pt.x));
+        const minY = Math.min(...el.points.map(pt => pt.y));
+        const maxX = Math.max(...el.points.map(pt => pt.x));
+        const maxY = Math.max(...el.points.map(pt => pt.y));
+        const localPoint = rotatePoint(point, {x: (minX+maxX)/2, y: (minY+maxY)/2}, -el.rotation);
         const newPoints = [...el.points];
         if (el.type === 'rect') {
           if (activeHandleIndex.current === 0) { newPoints[0].x = localPoint.x; newPoints[0].y = localPoint.y; }
@@ -633,9 +646,13 @@ function TrainingBoardContent() {
     } else if (interactionMode.current === 'rotating' && selectedId) {
       const el = elements.find(e => e.id === selectedId);
       if (el) {
-        const centerX = el.points[1] ? (el.points[0].x + el.points[1].x) / 2 : el.points[0].x;
-        const centerY = el.points[1] ? (el.points[0].y + el.points[1].y) / 2 : el.points[0].y;
-        const angle = Math.atan2(point.y - centerY, point.x - centerX) + Math.PI / 2;
+        const minX = Math.min(...el.points.map(pt => pt.x));
+        const minY = Math.min(...el.points.map(pt => pt.y));
+        const maxX = Math.max(...el.points.map(pt => pt.x));
+        const maxY = Math.max(...el.points.map(pt => pt.y));
+        const cx = (minX + maxX) / 2;
+        const cy = (minY + maxY) / 2;
+        const angle = Math.atan2(point.y - cy, point.x - cx) + Math.PI / 2;
         setElements(prev => prev.map(e => e.id === selectedId ? { ...e, rotation: angle } : e));
       }
     } else if (interactionMode.current === 'dragging' && selectedId && lastPoint.current) {
@@ -643,10 +660,7 @@ function TrainingBoardContent() {
       const dy = point.y - lastPoint.current.y;
       setElements(prev => prev.map(el => {
         if (el.id !== selectedId) return el;
-        return {
-          ...el,
-          points: el.points.map(p => ({ x: p.x + dx, y: p.y + dy }))
-        };
+        return { ...el, points: el.points.map(p => ({ x: p.x + dx, y: p.y + dy })) };
       }));
       lastPoint.current = point;
     }
@@ -679,37 +693,22 @@ function TrainingBoardContent() {
     const el = elements.find(e => e.id === id);
     if (!el) return;
     const newEl: DrawingElement = {
-      ...el,
-      id: `el-${Date.now()}`,
-      points: el.points.map(p => ({ x: p.x + 20, y: p.y + 20 }))
+      ...el, id: `el-${Date.now()}`, points: el.points.map(p => ({ x: p.x + 30, y: p.y + 30 }))
     };
     setElements(prev => [...prev, newEl]);
     setSelectedId(newEl.id);
   };
 
-  const toggleLineStyle = (id: string) => {
-    setElements(prev => prev.map(el => 
-      el.id === id ? { ...el, lineStyle: el.lineStyle === 'solid' ? 'dashed' : 'solid' } : el
-    ));
-  };
-
   const changeElementColor = (id: string, color: string) => {
-    setElements(prev => prev.map(el => 
-      el.id === id ? { ...el, color } : el
-    ));
+    setElements(prev => prev.map(el => el.id === id ? { ...el, color } : el));
   };
 
   const handleSave = () => {
-    if (isFromForm) {
-      toast({ title: "DIAGRAMA_VINCULADO", description: "Volviendo al formulario..." });
-      setTimeout(() => router.back(), 1500);
-    } else {
-      toast({ title: "DIAGRAMA_GUARDADO", description: "Ejercicio guardado en biblioteca." });
-    }
+    toast({ title: isFromForm ? "DIAGRAMA_VINCULADO" : "DIAGRAMA_GUARDADO", description: "Ejercicio sincronizado correctamente." });
+    if (isFromForm) setTimeout(() => router.back(), 1500);
   };
 
   const selectedElement = elements.find(e => e.id === selectedId);
-  const isSheetOpen = isPropertiesOpen || isLibraryOpen;
 
   return (
     <div className="h-full flex flex-col bg-[#04070c] overflow-hidden">
@@ -718,25 +717,14 @@ function TrainingBoardContent() {
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-amber-500 animate-pulse" />
-              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Exercise_Designer_IA_v8.4</span>
+              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Precision_v8.5</span>
             </div>
-            <h1 className="text-lg lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase">Estudio Profesional</h1>
+            <h1 className="text-lg lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase leading-none">Estudio Élite</h1>
           </div>
-
-          {isFromForm && (
-            <div className="px-4 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-full flex items-center gap-2 animate-in fade-in zoom-in-95">
-               <LinkIcon className="h-3 w-3 text-amber-500" />
-               <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest italic">VINCULADO_A_FORMULARIO</span>
-            </div>
-          )}
-
           <div className="hidden md:flex items-center gap-3">
             <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}>
-              <SelectTrigger className="w-[160px] h-11 bg-white/5 border-amber-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-amber-500 hover:bg-amber-500/5 transition-all">
-                <div className="flex items-center gap-2">
-                  <LayoutGrid className="h-3.5 w-3.5" />
-                  <SelectValue placeholder="Superficie" />
-                </div>
+              <SelectTrigger className="w-[160px] h-11 bg-white/5 border-amber-500/20 rounded-xl text-[10px] font-black uppercase text-amber-500">
+                <LayoutGrid className="h-3.5 w-3.5 mr-2" /> <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-[#0a0f18] border-amber-500/20">
                 <SelectItem value="f11" className="text-[10px] font-black uppercase">Fútbol 11</SelectItem>
@@ -744,226 +732,71 @@ function TrainingBoardContent() {
                 <SelectItem value="futsal" className="text-[10px] font-black uppercase">Fútbol Sala</SelectItem>
               </SelectContent>
             </Select>
-
-            <Button 
-              variant="outline"
-              onClick={() => setShowLanes(!showLanes)}
-              className={cn(
-                "h-11 px-4 border-amber-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                showLanes ? "bg-amber-500 text-black amber-glow" : "bg-white/5 text-amber-500/40 hover:text-amber-500"
-              )}
-            >
-              <Columns3 className="h-4 w-4 mr-2" />
-              Carriles
+            <Button variant="outline" onClick={() => setShowLanes(!showLanes)} className={cn("h-11 px-4 border-amber-500/20 text-[10px] font-black uppercase", showLanes ? "bg-amber-500 text-black shadow-[0_0_20px_rgba(245,158,11,0.3)]" : "bg-white/5 text-amber-500/40")}>
+              <Columns3 className="h-4 w-4 mr-2" /> Carriles
             </Button>
           </div>
         </div>
-
-        <div className="flex items-center gap-2 lg:gap-3">
-          <Button 
-            onClick={handleSave}
-            className="h-11 bg-amber-500 text-black font-black uppercase text-[10px] tracking-widest px-6 lg:px-8 rounded-xl amber-glow border-none"
-          >
-            <Save className="h-4 w-4 sm:mr-2" /> 
-            <span className="hidden sm:inline">{isFromForm ? "Vincular a Tarea" : "Guardar Táctica"}</span>
-          </Button>
-        </div>
+        <Button onClick={handleSave} className="h-11 bg-amber-500 text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl shadow-[0_0_25px_rgba(245,158,11,0.3)] border-none">
+          <Save className="h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">Guardar Táctica</span>
+        </Button>
       </header>
 
       <div className="flex-1 flex overflow-hidden relative">
         <main className="flex-1 flex items-center justify-center relative overflow-hidden touch-none">
           <TacticalField theme="amber" fieldType={fieldType} showLanes={showLanes}>
-            <canvas 
-              ref={canvasRef}
-              className={cn(
-                "absolute inset-0 z-30",
-                activeTool === 'select' ? "pointer-events-auto" : "pointer-events-auto cursor-crosshair"
-              )}
-              onPointerDown={handlePointerDown}
-              onPointerMove={handlePointerMove}
-              onPointerUp={handlePointerUp}
-              onPointerLeave={handlePointerUp}
-            />
+            <canvas ref={canvasRef} className="absolute inset-0 z-30 pointer-events-auto" onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp} />
           </TacticalField>
         </main>
 
         <div className="absolute bottom-6 left-0 right-0 flex justify-center items-end gap-12 px-12 z-50 pointer-events-none">
           <div className="pointer-events-auto">
-            <BoardToolbar 
-              theme="amber" 
-              variant="materials"
-              orientation="horizontal"
-              activeTool={activeTool}
-              onToolSelect={(tool) => {
-                setActiveTool(tool);
-                setSelectedId(null);
-                setIsPropertiesOpen(false);
-              }}
-              className="amber-glow border-2" 
-            />
+            <BoardToolbar theme="amber" variant="materials" orientation="horizontal" activeTool={activeTool} onToolSelect={(tool) => { setActiveTool(tool); setSelectedId(null); setIsPropertiesOpen(false); }} className="border-2 shadow-2xl" />
           </div>
-
           <div className="pointer-events-auto">
-            <BoardToolbar 
-              theme="amber" 
-              variant="training"
-              orientation="horizontal"
-              activeTool={activeTool}
-              hasSelection={!!selectedId}
-              onOpenProperties={() => setIsPropertiesOpen(true)}
-              onToolSelect={(tool) => {
-                setActiveTool(tool);
-                if (tool !== 'select') {
-                  setSelectedId(null);
-                  setIsPropertiesOpen(false);
-                }
-              }}
-              onClear={() => { setElements([]); setSelectedId(null); setIsPropertiesOpen(false); }}
-              className="amber-glow border-2" 
-            />
+            <BoardToolbar theme="amber" variant="training" orientation="horizontal" activeTool={activeTool} hasSelection={!!selectedId} onOpenProperties={() => setIsPropertiesOpen(true)} onToolSelect={(tool) => { setActiveTool(tool); if (tool !== 'select') { setSelectedId(null); setIsPropertiesOpen(false); } }} onClear={() => { setElements([]); setSelectedId(null); setIsPropertiesOpen(false); }} className="border-2 shadow-2xl" />
           </div>
         </div>
 
-        <Sheet open={isSheetOpen} onOpenChange={(open) => { 
-          if(!open) { 
-            setIsPropertiesOpen(false); 
-            setIsLibraryOpen(false); 
-          } 
-        }}>
-          <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-amber-500/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+        <Sheet open={isPropertiesOpen || isLibraryOpen} onOpenChange={(open) => { if(!open) { setIsPropertiesOpen(false); setIsLibraryOpen(false); } }}>
+          <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-amber-500/20 text-white w-full sm:max-w-md p-0 flex flex-col">
             {isPropertiesOpen && selectedElement ? (
               <div className="flex flex-col h-full">
                 <div className="p-8 border-b border-white/5 bg-amber-500/5">
                   <SheetHeader className="space-y-4">
                     <div className="flex items-center gap-3">
                       <Settings2 className="h-4 w-4 text-amber-500" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500">Node_Properties_v8.4</span>
+                      <span className="text-[10px] font-black uppercase text-amber-500">Node_Properties_v8.5</span>
                     </div>
-                    <SheetTitle className="text-3xl font-black italic tracking-tighter text-white uppercase text-left">
-                      PROPIEDADES
-                    </SheetTitle>
-                    <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left">
-                      Ajuste el estilo y comportamiento del objeto táctico.
-                    </SheetDescription>
+                    <SheetTitle className="text-3xl font-black italic uppercase">Propiedades</SheetTitle>
                   </SheetHeader>
                 </div>
-
-                <div className="flex-1 overflow-y-auto p-10 space-y-12 custom-scrollbar">
+                <div className="flex-1 overflow-y-auto p-10 space-y-12">
                   <section className="space-y-6">
-                    <div className="flex items-center gap-3 border-b border-white/5 pb-4">
-                      <Palette className="h-4 w-4 text-amber-500/40" />
-                      <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-white/40">Paleta de Identidad</h3>
-                    </div>
+                    <Label className="text-[10px] font-black uppercase text-white/40">Paleta Técnica</Label>
                     <div className="grid grid-cols-4 gap-3">
                       {COLORS.map(c => (
-                        <button 
-                          key={c.id} 
-                          onClick={() => changeElementColor(selectedId!, c.value)}
-                          className={cn(
-                            "h-14 rounded-2xl border-2 transition-all flex items-center justify-center group",
-                            selectedElement.color === c.value ? "border-white scale-105 shadow-lg" : "border-white/5 opacity-40 hover:opacity-100"
-                          )}
-                          style={{ backgroundColor: c.value }}
-                        >
-                          {selectedElement.color === c.value && <div className="h-2 w-2 rounded-full bg-white animate-pulse" />}
-                        </button>
+                        <button key={c.id} onClick={() => changeElementColor(selectedId!, c.value)} className={cn("h-14 rounded-2xl border-2 transition-all", selectedElement.color === c.value ? "border-white scale-105" : "border-white/5 opacity-40")} style={{ backgroundColor: c.value }} />
                       ))}
                     </div>
                   </section>
-
                   {selectedElement.type === 'player' && (
-                    <section className="space-y-6">
-                      <div className="flex items-center gap-3 border-b border-white/5 pb-4">
-                        <UserCircle className="h-4 w-4 text-amber-500/40" />
-                        <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-white/40">Identidad Jugador</h3>
-                      </div>
-                      <div className="space-y-3">
-                        <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Dorsal / ID</Label>
-                        <Input 
-                          type="number"
-                          value={selectedElement.number || 1}
-                          onChange={(e) => setElements(prev => prev.map(el => el.id === selectedId ? {...el, number: parseInt(e.target.value)} : el))}
-                          className="h-12 bg-white/5 border-amber-500/20 rounded-xl text-amber-500 font-bold"
-                        />
-                      </div>
+                    <section className="space-y-4">
+                      <Label className="text-[10px] font-black uppercase text-white/40">Dorsal Atleta</Label>
+                      <Input type="number" value={selectedElement.number || 1} onChange={(e) => setElements(prev => prev.map(el => el.id === selectedId ? {...el, number: parseInt(e.target.value)} : el))} className="h-12 bg-white/5 border-amber-500/20 text-amber-500 font-black text-xl text-center" />
                     </section>
                   )}
-
                   <section className="space-y-6">
-                    <div className="flex items-center gap-3 border-b border-white/5 pb-4">
-                      <Spline className="h-4 w-4 text-amber-500/40" />
-                      <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-white/40">Configuración de Trazo</h3>
-                    </div>
-                    <Button 
-                      variant="outline" 
-                      className={cn(
-                        "w-full h-16 bg-white/5 border-white/10 rounded-2xl flex justify-between px-8 transition-all",
-                        selectedElement.lineStyle === 'dashed' ? "bg-amber-500/10 border-amber-500/40 text-white" : "text-white/40"
-                      )}
-                      onClick={() => toggleLineStyle(selectedId!)}
-                    >
-                      <span className="text-[11px] font-black uppercase tracking-widest">Línea Discontinua</span>
-                      {selectedElement.lineStyle === 'dashed' ? <Spline className="h-5 w-5 text-amber-500" /> : <Minus className="h-5 w-5" />}
-                    </Button>
-                  </section>
-
-                  <section className="space-y-6">
-                    <div className="flex items-center gap-3 border-b border-white/5 pb-4">
-                      <Layers className="h-4 w-4 text-amber-500/40" />
-                      <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-white/40">Acciones de Objeto</h3>
-                    </div>
-                    <div className="grid grid-cols-1 gap-4">
-                      <Button 
-                        variant="outline"
-                        className="h-16 bg-white/5 border-white/10 rounded-2xl text-white/60 font-black uppercase text-[11px] tracking-widest hover:bg-white/10 hover:text-white transition-all flex justify-between px-8"
-                        onClick={() => duplicateElement(selectedId!)}
-                      >
-                        <span>Duplicar Elemento</span>
-                        <Copy className="h-5 w-5" />
-                      </Button>
-                      <Button 
-                        variant="outline"
-                        className="h-16 bg-rose-500/5 border-rose-500/20 rounded-2xl text-rose-500/60 font-black uppercase text-[11px] tracking-widest hover:bg-rose-500/10 hover:text-rose-500 transition-all flex justify-between px-8"
-                        onClick={() => deleteElement(selectedId!)}
-                      >
-                        <span>Eliminar del Campo</span>
-                        <Trash2 className="h-5 w-5" />
-                      </Button>
+                    <Label className="text-[10px] font-black uppercase text-white/40">Acciones de Objeto</Label>
+                    <div className="grid gap-4">
+                      <Button variant="outline" className="h-16 bg-white/5 border-white/10 text-white/60 font-black uppercase text-[11px]" onClick={() => duplicateElement(selectedId!)}>Duplicar Nodo <Copy className="ml-auto h-5 w-5" /></Button>
+                      <Button variant="outline" className="h-16 bg-rose-500/5 border-rose-500/20 text-rose-500 font-black uppercase text-[11px]" onClick={() => deleteElement(selectedId!)}>Eliminar <Trash2 className="ml-auto h-5 w-5" /></Button>
                     </div>
                   </section>
-                </div>
-
-                <div className="p-10 bg-black/40 border-t border-white/5">
-                  <div className="flex items-center gap-3">
-                    <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-                    <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em]">SINCRO_ID: {selectedElement.id.split('-')[1]}</span>
-                  </div>
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col h-full">
-                <div className="p-8 border-b border-white/5 bg-black/40">
-                  <SheetHeader className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <Library className="h-4 w-4 text-amber-500" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500">Asset_Library_v2.0</span>
-                    </div>
-                    <SheetTitle className="text-3xl font-black italic tracking-tighter text-white uppercase text-left">
-                      BIBLIOTECA
-                    </SheetTitle>
-                    <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left">
-                      Material técnico sincronizado con el nodo local.
-                    </SheetDescription>
-                  </SheetHeader>
-                </div>
-                <div className="flex-1 overflow-y-auto">
-                  <AssetPanel 
-                    theme="amber" 
-                    type="training" 
-                    className="w-full h-full bg-transparent border-none rounded-none shadow-none" 
-                  />
-                </div>
-              </div>
+              <div className="p-8"><p className="text-[10px] font-black text-white/20 uppercase tracking-[1em] text-center">Sincronizando Biblioteca...</p></div>
             )}
           </SheetContent>
         </Sheet>
