@@ -151,8 +151,6 @@ function TrainingBoardContent() {
       ctx.setLineDash([]);
     }
 
-    const isMaterial = ['player', 'ball', 'cone', 'seta', 'ladder', 'hurdle', 'minigoal', 'pica'].includes(element.type);
-
     switch (element.type) {
       case 'freehand':
         ctx.beginPath();
@@ -217,28 +215,26 @@ function TrainingBoardContent() {
         const pGrad = ctx.createRadialGradient(centerX - width/6, centerY - height/6, 0, centerX, centerY, width/2);
         pGrad.addColorStop(0, '#ffffff44'); pGrad.addColorStop(0.5, hexToRgba(element.color, 0.3)); pGrad.addColorStop(1, hexToRgba(element.color, 0.1));
         ctx.fillStyle = pGrad; ctx.fill(); ctx.strokeStyle = element.color; ctx.stroke();
-        ctx.fillStyle = '#fff'; ctx.font = `bold ${Math.floor(height * 0.6)}px Space Grotesk`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText((element.number || 1).toString(), centerX, centerY);
+        ctx.fillStyle = '#fff'; 
+        // AJUSTE DORSAL: Más pequeño y centrado ópticamente
+        ctx.font = `bold ${Math.floor(height * 0.42)}px Space Grotesk`; 
+        ctx.textAlign = 'center'; 
+        ctx.textBaseline = 'middle';
+        ctx.fillText((element.number || 1).toString(), centerX, centerY + (height * 0.04));
         ctx.restore();
         break;
       case 'ball':
         ctx.save();
         ctx.translate(centerX, centerY);
         ctx.scale(width/80, height/80);
-        // Sombra realista
-        ctx.beginPath(); ctx.arc(0, 5, 40, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fill();
-        // Gradiente de volumen Pro
+        ctx.beginPath(); ctx.arc(0, 5, 40, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fill();
         const bG = ctx.createRadialGradient(-15, -15, 0, 0, 0, 40);
-        bG.addColorStop(0, '#ffffff'); bG.addColorStop(0.8, '#cbd5e1'); bG.addColorStop(1, '#94a3b8');
+        bG.addColorStop(0, '#ffffff'); bG.addColorStop(1, '#E2E8F0');
         ctx.beginPath(); ctx.arc(0, 0, 40, 0, Math.PI * 2); ctx.fillStyle = bG; ctx.fill();
         ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 2; ctx.stroke();
-        // Patrones pentagonales técnicos
         ctx.beginPath();
-        for(let i=0; i<5; i++){
-          const ang = (i * 72) * Math.PI / 180;
-          ctx.moveTo(Math.cos(ang)*15, Math.sin(ang)*15);
-          ctx.lineTo(Math.cos(ang)*40, Math.sin(ang)*40);
-        }
+        const patterns = [[50,10,35,25], [50,10,65,25], [50,90,35,75], [50,90,65,75], [10,50,25,35], [10,50,25,65], [90,50,75,35], [90,50,75,65]];
+        patterns.forEach(p => { ctx.moveTo(p[0]-50, p[1]-50); ctx.lineTo(p[2]-50, p[3]-50); });
         ctx.stroke();
         ctx.beginPath(); ctx.arc(0, 0, 15, 0, Math.PI * 2); ctx.stroke();
         ctx.restore();
@@ -336,6 +332,41 @@ function TrainingBoardContent() {
     return () => observer.disconnect();
   }, [redrawAll]);
 
+  // FUNCIÓN PARA AÑADIR OBJETO INSTANTÁNEAMENTE EN EL CENTRO
+  const addElementAtCenter = (tool: DrawingTool) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const point = { x: centerX, y: centerY };
+    
+    let pNum; 
+    if(tool === 'player') pNum = elements.filter(e => e.type === 'player').length + 1;
+    
+    const isM = ['player', 'ball', 'cone', 'seta', 'ladder', 'hurdle', 'minigoal', 'pica'].includes(tool);
+    const defW = tool === 'ladder' ? 120 : (tool === 'minigoal' ? 80 : 40);
+    const defH = tool === 'ladder' ? 40 : (tool === 'minigoal' ? 50 : 40);
+    
+    const newElement: DrawingElement = { 
+      id: `el-${Date.now()}`, 
+      type: tool, 
+      points: isM 
+        ? [{x: point.x - defW/2, y: point.y - defH/2}, {x: point.x + defW/2, y: point.y + defH/2}] 
+        : [{x: point.x - 50, y: point.y - 50}, {x: point.x + 50, y: point.y + 50}],
+      color: currentColor, 
+      rotation: 0, 
+      lineStyle: 'solid', 
+      number: pNum
+    };
+    
+    setElements(prev => [...prev, newElement]);
+    setSelectedId(newElement.id);
+    setActiveTool('select');
+    // Forzamos el redibujado inmediato
+    setTimeout(redrawAll, 0);
+  };
+
   const handlePointerDown = (e: React.PointerEvent) => {
     if (!canvasRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect();
@@ -386,13 +417,6 @@ function TrainingBoardContent() {
           id: `el-${Date.now()}`, type: activeTool, points: isM ? [{x: point.x - defW/2, y: point.y - defH/2}, {x: point.x + defW/2, y: point.y + defH/2}] : [point, point],
           color: currentColor, rotation: 0, lineStyle: 'solid', number: pNum
         };
-        if (isM) {
-          setElements(prev => [...prev, currentElement.current!]);
-          setSelectedId(currentElement.current.id);
-          setActiveTool('select');
-          currentElement.current = null;
-          isDrawing.current = false;
-        }
       } else {
         setSelectedId(null); setIsPropertiesOpen(false);
       }
@@ -415,10 +439,9 @@ function TrainingBoardContent() {
         const local = rotatePoint(point, {x: centerX, y: centerY}, -el.rotation);
         const next = [...el.points];
         const h = activeHandleIndex.current!;
-        const isMaterial = ['player', 'ball', 'cone', 'seta', 'pica'].includes(el.type);
+        const isMaterial = ['player', 'ball', 'cone', 'seta', 'pica', 'ladder', 'hurdle', 'minigoal'].includes(el.type);
 
         if (isMaterial) {
-          // ESCALA PROPORCIONAL PARA MATERIALES
           const ratio = oldW / oldH;
           const dx = Math.abs(local.x - centerX) * 2;
           const dy = dx / ratio;
@@ -472,7 +495,7 @@ function TrainingBoardContent() {
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-amber-500 animate-pulse" />
-              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Precision_v8.8</span>
+              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Precision_v8.9</span>
             </div>
             <h1 className="text-lg lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase leading-none">Estudio Élite</h1>
           </div>
@@ -506,10 +529,34 @@ function TrainingBoardContent() {
 
         <div className="absolute bottom-6 left-0 right-0 flex justify-center items-end gap-12 px-12 z-50 pointer-events-none">
           <div className="pointer-events-auto">
-            <BoardToolbar theme="amber" variant="materials" orientation="horizontal" activeTool={activeTool} onToolSelect={(tool) => { setActiveTool(tool); setSelectedId(null); setIsPropertiesOpen(false); }} className="border-2 shadow-2xl" />
+            <BoardToolbar 
+              theme="amber" 
+              variant="materials" 
+              orientation="horizontal" 
+              activeTool={activeTool} 
+              onToolSelect={(tool) => { 
+                if (tool !== 'select') addElementAtCenter(tool);
+                setSelectedId(null); 
+                setIsPropertiesOpen(false); 
+              }} 
+              className="border-2 shadow-2xl" 
+            />
           </div>
           <div className="pointer-events-auto">
-            <BoardToolbar theme="amber" variant="training" orientation="horizontal" activeTool={activeTool} hasSelection={!!selectedId && selectedElement?.type !== 'freehand'} onOpenProperties={() => setIsPropertiesOpen(true)} onToolSelect={(tool) => { setActiveTool(tool); if (tool !== 'select') { setSelectedId(null); setIsPropertiesOpen(false); } }} onClear={() => { setElements([]); setSelectedId(null); setIsPropertiesOpen(false); }} className="border-2 shadow-2xl" />
+            <BoardToolbar 
+              theme="amber" 
+              variant="training" 
+              orientation="horizontal" 
+              activeTool={activeTool} 
+              hasSelection={!!selectedId && selectedElement?.type !== 'freehand'} 
+              onOpenProperties={() => setIsPropertiesOpen(true)} 
+              onToolSelect={(tool) => { 
+                if (tool !== 'select') addElementAtCenter(tool);
+                if (tool !== 'select') { setSelectedId(null); setIsPropertiesOpen(false); } 
+              }} 
+              onClear={() => { setElements([]); setSelectedId(null); setIsPropertiesOpen(false); }} 
+              className="border-2 shadow-2xl" 
+            />
           </div>
         </div>
 
@@ -521,7 +568,7 @@ function TrainingBoardContent() {
                   <SheetHeader className="space-y-4">
                     <div className="flex items-center gap-3">
                       <Settings2 className="h-4 w-4 text-amber-500" />
-                      <span className="text-[10px] font-black uppercase text-amber-500">Node_Properties_v8.8</span>
+                      <span className="text-[10px] font-black uppercase text-amber-500">Node_Properties_v8.9</span>
                     </div>
                     <SheetTitle className="text-3xl font-black italic uppercase">Propiedades</SheetTitle>
                   </SheetHeader>

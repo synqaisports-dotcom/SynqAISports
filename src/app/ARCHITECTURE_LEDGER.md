@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v8.7.0 (Manipulación Estándar Pro)
+# SynqSports Pro - ARCHITECTURE_LEDGER v8.9.0 (Flujo de Diseño Instantáneo)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -56,7 +56,7 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 2. **Zona Central (Contenidos)** - Soporta múltiples ejercicios.
 3. **Vuelta a la Calma**
 
-## 5. Protocolo de Pizarra y Dibujo (v8.7.0)
+## 5. Protocolo de Pizarra y Dibujo (v8.9.0)
 
 ### 5.1. Motor de Dibujo Suavizado
 - Uso de lógica de interpolación para trazos fluidos en el Canvas e independencia de resolución.
@@ -70,3 +70,7 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 - **Rotación Centrada Absoluta**: Todos los elementos giran sobre su eje geométrico central, eliminando desplazamientos.
 - **Gráficos Hyper-Fidelity 3D**: Conos con bandas blancas, vallas estructuradas y porterías con malla técnica realista.
 - **Zero-Distraction UI**: Gestión de propiedades centralizada en la barra inferior, campo de visión 100% despejado.
+
+### 5.4. Flujo de Diseño Instantáneo (v8.9.0)
+- **Creación Directa**: Al pulsar un material en el menú inferior se añade automáticamente al centro del campo.
+- **Refinamiento de Dorsales**: Ajuste del centrado y tamaño de los números de los jugadores para una estética profesional.
