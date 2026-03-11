@@ -20,11 +20,12 @@ import {
   Disc,
   Grid3X3,
   Table2,
-  Settings
+  Settings,
+  Move
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type DrawingTool = 'select' | 'freehand' | 'rect' | 'circle' | 'arrow' | 'double-arrow' | 'zigzag' | 'player' | 'ball' | 'cone' | 'seta' | 'ladder' | 'hurdle' | 'minigoal' | 'pica' | 'barrier';
+export type DrawingTool = 'select' | 'freehand' | 'rect' | 'circle' | 'arrow' | 'double-arrow' | 'zigzag' | 'player' | 'ball' | 'cone' | 'seta' | 'ladder' | 'hurdle' | 'minigoal' | 'pica' | 'barrier' | 'cross-arrow';
 
 interface BoardToolbarProps {
   theme?: "cyan" | "amber";
@@ -56,6 +57,7 @@ const TRAINING_TOOLS = [
   { id: 'zigzag', icon: Activity, label: 'Onda de Agilidad' },
   { id: 'arrow', icon: ArrowUpRight, label: 'Flecha' },
   { id: 'double-arrow', icon: ArrowLeftRight, label: 'Flecha Doble' },
+  { id: 'cross-arrow', icon: Move, label: 'Cruz de Movimiento' },
 ] as const;
 
 function BarrierIcon(props: any) {

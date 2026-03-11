@@ -220,6 +220,66 @@ function TrainingBoardContent() {
         drawH(p[1].x, p[1].y, a);
         if (element.type === 'double-arrow') drawH(p[0].x, p[0].y, a + Math.PI);
         break;
+      case 'cross-arrow':
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        const cSize = Math.min(width, height) / 2;
+        const thickness = cSize * 0.35;
+        const arrowHead = cSize * 0.4;
+        
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = 'rgba(0,0,0,0.4)';
+        
+        const drawCrossBar = (isVert: boolean) => {
+          ctx.beginPath();
+          if (isVert) {
+            ctx.moveTo(-thickness/2, -cSize + arrowHead);
+            ctx.lineTo(thickness/2, -cSize + arrowHead);
+            ctx.lineTo(thickness/2, cSize - arrowHead);
+            ctx.lineTo(-thickness/2, cSize - arrowHead);
+          } else {
+            ctx.moveTo(-cSize + arrowHead, -thickness/2);
+            ctx.lineTo(cSize - arrowHead, -thickness/2);
+            ctx.lineTo(cSize - arrowHead, thickness/2);
+            ctx.lineTo(-cSize + arrowHead, thickness/2);
+          }
+          ctx.closePath();
+          const barGrad = ctx.createLinearGradient(isVert ? -thickness/2 : -cSize, isVert ? -cSize : -thickness/2, isVert ? thickness/2 : cSize, isVert ? cSize : thickness/2);
+          barGrad.addColorStop(0, element.color);
+          barGrad.addColorStop(0.5, '#ffffffaa');
+          barGrad.addColorStop(1, hexToRgba(element.color, 0.8));
+          ctx.fillStyle = barGrad;
+          ctx.fill();
+          ctx.stroke();
+        };
+
+        const drawArrowHead = (tx: number, ty: number, rot: number) => {
+          ctx.save();
+          ctx.translate(tx, ty);
+          ctx.rotate(rot);
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(-arrowHead, arrowHead);
+          ctx.lineTo(arrowHead, arrowHead);
+          ctx.closePath();
+          const headGrad = ctx.createLinearGradient(-arrowHead, 0, arrowHead, arrowHead);
+          headGrad.addColorStop(0, element.color);
+          headGrad.addColorStop(0.5, '#ffffffaa');
+          headGrad.addColorStop(1, hexToRgba(element.color, 0.8));
+          ctx.fillStyle = headGrad;
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+        };
+
+        drawCrossBar(false);
+        drawCrossBar(true);
+        drawArrowHead(0, -cSize, 0);
+        drawArrowHead(cSize, 0, Math.PI/2);
+        drawArrowHead(0, cSize, Math.PI);
+        drawArrowHead(-cSize, 0, -Math.PI/2);
+        ctx.restore();
+        break;
       case 'player':
         ctx.save();
         ctx.shadowBlur = 20; ctx.shadowColor = hexToRgba(element.color, 0.4);
@@ -382,8 +442,8 @@ function TrainingBoardContent() {
     let pNum; 
     if(tool === 'player') pNum = elements.filter(e => e.type === 'player').length + 1;
     
-    const defW = tool === 'ladder' ? 120 : (tool === 'minigoal' ? 80 : tool === 'barrier' ? 100 : 40);
-    const defH = tool === 'ladder' ? 40 : (tool === 'minigoal' ? 50 : 40);
+    const defW = tool === 'ladder' ? 120 : (tool === 'minigoal' ? 80 : tool === 'barrier' ? 100 : tool === 'cross-arrow' ? 80 : 40);
+    const defH = tool === 'ladder' ? 40 : (tool === 'minigoal' ? 50 : tool === 'cross-arrow' ? 80 : 40);
     
     const newElement: DrawingElement = { 
       id: `el-${Date.now()}`, 
@@ -542,7 +602,7 @@ function TrainingBoardContent() {
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-amber-500 animate-pulse" />
-              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Precision_v9.2</span>
+              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Precision_v9.3</span>
             </div>
             <h1 className="text-lg lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase leading-none">Estudio Élite</h1>
           </div>
@@ -670,7 +730,8 @@ function TrainingBoardContent() {
               orientation="horizontal" 
               activeTool={activeTool} 
               onToolSelect={(tool) => { 
-                setActiveTool(tool);
+                if (tool === 'cross-arrow') addElementAtCenter(tool);
+                else setActiveTool(tool);
                 setSelectedIds([]);
               }} 
               onClear={() => { setElements([]); setSelectedIds([]); }} 
