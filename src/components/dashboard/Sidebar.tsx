@@ -76,12 +76,13 @@ const navItems: NavItem[] = [
   { title: "Pizarra Ejercicios", href: "/board/training", icon: Sparkles, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
   { title: "Pizarra Promo", href: "/board/promo", icon: Zap, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
   { title: "Biblioteca (Sin IA)", href: "/dashboard/methodology/exercise-library", icon: Library, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
-  { title: "Planif. Sesiones", href: "/dashboard/methodology/session-planner", icon: CalendarDays, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
+  { title: "Planif. Sesiones", href: "/dashboard/methodology/session-planner", icon: CalendarDays, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director"] },
 
   // OPERATIVA_ELITE - CYAN THEME
   { title: "Coach Hub", href: "/dashboard", icon: Cpu, category: "operational" },
   { title: "Admin & Permisos", href: "/dashboard/admin", icon: Settings2, category: "operational", roles: ["superadmin", "club_admin", "academy_director"] },
   { title: "Club", href: "/dashboard/club", icon: Building, category: "operational" },
+  { title: "Planif. y Sesiones", href: "/dashboard/sessions", icon: CalendarDays, category: "operational" },
   { title: "Instalaciones", href: "/dashboard/instalaciones", icon: MapPin, category: "operational" },
   { title: "Staff", href: "/dashboard/staff", icon: UserCog, category: "operational" },
   { title: "Cantera", href: "/dashboard/academy", icon: Sprout, category: "operational" },

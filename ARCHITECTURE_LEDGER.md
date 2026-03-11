@@ -1,5 +1,5 @@
 
-# SynqSports Pro - Architecture Ledger v5.0 (Methodological Validation Protocol)
+# SynqSports Pro - Architecture Ledger v5.1 (Mirror Protocol Validation)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -33,6 +33,7 @@ Los roles operan bajo un sistema de ranking numérico (`rank`):
 
 ### 2.2. Terminal Operativa (Club/Coach) - `/dashboard`
 - **Identidad de Club**: `/club` (Datos federativos y logo).
+- **Espejo Metodológico**: `/sessions` (Visor de planificación para entrenadores con Protocolo de Sugerencia).
 - **Cantera**: `/academy` (Vinculación de equipos, staff y visor de Roster sincronizado).
 - **Activos**: `/instalaciones` (Gestión de campos con subdivisiones horarias).
 - **Roster**: `/players` (Ficha técnica con dorsal, apodo y control de menores).
@@ -128,7 +129,7 @@ Los roles operan bajo un sistema de ranking numérico (`rank`):
 - **Protocolo de Visibilidad**: Implementación de scrollbars de alta visibilidad (6px) con el color temático del módulo.
 - **Efecto Glow**: Sincronización de un efecto de resplandor neón durante la interacción (`active`) con la barra de scroll para mejorar la respuesta visual en entornos de alta densidad de datos.
 
-## 12. Protocolo de Validación Metodológica (v5.0)
+## 12. Protocolo de Validación Metodológica (v5.1)
 
 ### 12.1. Jerarquía de Edición
 - **Director de Metodología**: Posee autoridad raíz de diseño. Puede crear y modificar cualquier sesión en cualquier momento.
@@ -141,3 +142,7 @@ Los roles operan bajo un sistema de ranking numérico (`rank`):
 
 ### 12.3. Blindaje de Etapa (Filtrado de Biblioteca)
 - El sistema detecta automáticamente la etapa del equipo seleccionado (ej. Debutantes) y restringe el buscador de la Biblioteca Sin IA a ejercicios clasificados para esa etapa específica, evitando desajustes metodológicos.
+
+### 12.4. Protocolo de Espejo Operativo (Coach Mirror)
+- **Ruta**: `/dashboard/sessions`.
+- **Funcionalidad**: Ofrece al entrenador una vista sincronizada de su planificación mensual y semanal. Elimina herramientas de configuración metodológica global para centrarse en la ejecución y feedback de la sesión.
