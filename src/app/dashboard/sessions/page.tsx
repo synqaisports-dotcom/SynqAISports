@@ -238,7 +238,7 @@ export default function CoachSessionsPage() {
                   {!canRequestChange(selectedMCC) ? (
                     <div className="p-4 bg-rose-500/10 border border-rose-500/30 rounded-2xl flex items-center gap-4">
                        <ShieldAlert className="h-5 w-5 text-rose-500" />
-                       <p className="text-[10px] text-rose-400 font-black uppercase tracking-widest">Protocolo Inmutable: Sugerencia de cambio bloqueada (Lead-Time < 7 días)</p>
+                       <p className="text-[10px] text-rose-400 font-black uppercase tracking-widest">Protocolo Inmutable: Sugerencia de cambio bloqueada (Lead-Time &lt; 7 días)</p>
                     </div>
                   ) : (
                     <div className="p-4 bg-primary/5 border border-primary/20 rounded-2xl flex items-center gap-4">
@@ -284,7 +284,7 @@ export default function CoachSessionsPage() {
 
               <div className="p-8 bg-black/60 border-t border-white/5">
                 <SheetClose asChild>
-                  <Button variant="ghost" className="w-full h-16 border border-white/10 text-white/40 font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-white/5 transition-all">CERRAR_TERMINAL</Button>
+                  <Button variant="ghost" className="h-16 border border-white/10 text-white/40 font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-white/5 transition-all w-full">CERRAR_TERMINAL</Button>
                 </SheetClose>
               </div>
             </>
