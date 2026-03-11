@@ -27,7 +27,8 @@ import {
   X,
   Type,
   Maximize2,
-  Cloudy
+  Cloudy,
+  ChevronDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +41,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
+import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { TacticalField, FieldType } from "@/components/board/TacticalField";
 import { BoardToolbar, DrawingTool } from "@/components/board/BoardToolbar";
@@ -76,13 +78,8 @@ const COLORS = [
   { id: 'white', value: '#ffffff', label: 'Neutro' },
 ];
 
-const OPACITY_OPTIONS = [
-  { label: '100%', value: 1.0 },
-  { label: '80%', value: 0.8 },
-  { label: '60%', value: 0.6 },
-  { label: '40%', value: 0.4 },
-  { label: '20%', value: 0.2 },
-];
+const isMaterial = (type: DrawingTool) => 
+  ['player', 'ball', 'cone', 'seta', 'ladder', 'hurdle', 'minigoal', 'pica', 'barrier'].includes(type);
 
 function TrainingBoardContent() {
   const [fieldType, setFieldType] = useState<FieldType>("f11");
@@ -343,7 +340,16 @@ function TrainingBoardContent() {
     const ctx = canvas?.getContext('2d');
     if (!ctx || !canvas) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    elements.forEach(el => drawElement(ctx, el, selectedIds.includes(el.id)));
+    
+    const sortedElements = [...elements].sort((a, b) => {
+      const aMat = isMaterial(a.type);
+      const bMat = isMaterial(b.type);
+      if (aMat && !bMat) return 1; 
+      if (!aMat && bMat) return -1;
+      return 0;
+    });
+
+    sortedElements.forEach(el => drawElement(ctx, el, selectedIds.includes(el.id)));
     if (currentElement.current) drawElement(ctx, currentElement.current, false);
   }, [elements, selectedIds, drawElement]);
 
@@ -360,6 +366,10 @@ function TrainingBoardContent() {
     observer.observe(canvas.parentElement!);
     return () => observer.disconnect();
   }, [redrawAll]);
+
+  useEffect(() => {
+    redrawAll();
+  }, [elements, selectedIds, fieldType, showLanes, redrawAll]);
 
   const addElementAtCenter = (tool: DrawingTool) => {
     const canvas = canvasRef.current;
@@ -389,7 +399,6 @@ function TrainingBoardContent() {
     setElements(prev => [...prev, newElement]);
     setSelectedIds([newElement.id]);
     setActiveTool('select');
-    setTimeout(redrawAll, 0);
   };
 
   const handlePointerDown = (e: React.PointerEvent) => {
@@ -398,7 +407,6 @@ function TrainingBoardContent() {
     const point = { x: e.clientX - rect.left, y: e.clientY - rect.top };
     startPoint.current = point; lastPoint.current = point; isDrawing.current = true;
 
-    // Check resize/rotate on selected elements first (only if one is selected for simplicity or top one)
     if (selectedIds.length === 1) {
       const el = elements.find(e => e.id === selectedIds[0]);
       if (el && el.type !== 'freehand') {
@@ -422,7 +430,15 @@ function TrainingBoardContent() {
       }
     }
 
-    const clicked = [...elements].reverse().find(el => {
+    const sortedForPicking = [...elements].sort((a, b) => {
+      const aMat = isMaterial(a.type);
+      const bMat = isMaterial(b.type);
+      if (aMat && !bMat) return 1; 
+      if (!aMat && bMat) return -1;
+      return 0;
+    });
+
+    const clicked = sortedForPicking.reverse().find(el => {
       const { centerX, centerY, minX, minY, maxX, maxY } = getElementBounds(el);
       const local = rotatePoint(point, {x: centerX, y: centerY}, -el.rotation);
       if (el.type === 'freehand') return el.points.some(p => getDistance(point, p) < 20);
@@ -468,9 +484,9 @@ function TrainingBoardContent() {
         const local = rotatePoint(point, {x: centerX, y: centerY}, -el.rotation);
         const next = [...el.points];
         const h = activeHandleIndex.current!;
-        const isMaterial = ['player', 'ball', 'cone', 'seta', 'pica', 'ladder', 'hurdle', 'minigoal', 'barrier'].includes(el.type);
+        const material = isMaterial(el.type);
 
-        if (isMaterial) {
+        if (material) {
           const ratio = oldW / oldH;
           const dx = Math.abs(local.x - centerX) * 2;
           const dy = dx / ratio;
@@ -526,7 +542,7 @@ function TrainingBoardContent() {
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-amber-500 animate-pulse" />
-              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Precision_v9.1</span>
+              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Precision_v9.2</span>
             </div>
             <h1 className="text-lg lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase leading-none">Estudio Élite</h1>
           </div>
@@ -545,7 +561,6 @@ function TrainingBoardContent() {
               <Columns3 className="h-4 w-4 mr-2" /> Carriles
             </Button>
 
-            {/* ACCIONES ESTRATÉGICAS EN CABECERA */}
             {selectedIds.length > 0 && (
               <div className="flex items-center gap-2 pl-4 border-l border-white/10 animate-in slide-in-from-left-4 fade-in duration-300">
                 <div className="flex gap-1.5 p-1 bg-black/40 border border-white/5 rounded-xl mr-2">
@@ -559,26 +574,23 @@ function TrainingBoardContent() {
                   ))}
                 </div>
 
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-9 border-white/10 text-[9px] font-black uppercase text-white/40 hover:text-white flex items-center gap-2">
-                      <Cloudy className="h-3.5 w-3.5" /> Opacidad: {Math.round(commonOpacity * 100)}%
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-black border-amber-500/20 rounded-xl">
-                    <DropdownMenuLabel className="text-[8px] font-black uppercase text-white/20">Transparencia</DropdownMenuLabel>
-                    <DropdownMenuSeparator className="bg-white/5" />
-                    {OPACITY_OPTIONS.map(opt => (
-                      <DropdownMenuItem 
-                        key={opt.value} 
-                        onClick={() => setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, opacity: opt.value} : el))}
-                        className="text-[9px] font-black uppercase text-white/60 focus:bg-amber-500 focus:text-black cursor-pointer"
-                      >
-                        {opt.label}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="flex flex-col gap-2 w-32 px-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[8px] font-black text-white/40 uppercase tracking-widest">Opacidad</span>
+                    <span className="text-[8px] font-black text-amber-500">{Math.round(commonOpacity * 100)}%</span>
+                  </div>
+                  <Slider 
+                    value={[commonOpacity * 100]} 
+                    min={10} 
+                    max={100} 
+                    step={1}
+                    onValueChange={(val) => {
+                      const newOpacity = val[0] / 100;
+                      setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, opacity: newOpacity} : el));
+                    }}
+                    className="w-full"
+                  />
+                </div>
 
                 {!hasMultipleSelected && selectedElements[0].type !== 'freehand' && (
                   <Button 
