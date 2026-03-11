@@ -21,7 +21,8 @@ import {
   Check,
   X,
   MessageSquareQuote,
-  History
+  History,
+  Info
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -162,7 +163,7 @@ export default function CoachSessionsPage() {
                           className={cn(
                             "p-4 rounded-xl border transition-all cursor-pointer group/mcc relative overflow-hidden",
                             selectedMCC === mccId 
-                              ? "bg-primary/20 border-primary shadow-[0_0_15px_rgba(0,242,255,0.2)]" 
+                              ? "bg-primary/20 border-primary shadow-[0_0_15px_rgba(242,255,255,0.2)]" 
                               : "bg-white/5 border-white/5 hover:border-primary/40 hover:bg-primary/5"
                           )}
                         >
