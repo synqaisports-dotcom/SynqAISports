@@ -19,7 +19,8 @@ import {
   UserCircle,
   Disc,
   Grid3X3,
-  Table2
+  Table2,
+  Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +31,7 @@ interface BoardToolbarProps {
   onToolSelect?: (toolId: DrawingTool) => void;
   onColorSelect?: (color: string) => void;
   onClear?: () => void;
+  onOpenProperties?: () => void;
   activeTool?: DrawingTool;
   activeColor?: string;
   isPaintMode?: boolean;
@@ -37,6 +39,7 @@ interface BoardToolbarProps {
   className?: string;
   variant?: "full" | "match" | "training" | "materials";
   orientation?: "vertical" | "horizontal";
+  hasSelection?: boolean;
 }
 
 const COLORS = [
@@ -84,13 +87,15 @@ export function BoardToolbar({
   onToolSelect, 
   onColorSelect,
   onClear,
+  onOpenProperties,
   activeTool = 'freehand',
   activeColor = '#00f2ff',
   isPaintMode = false,
   onTogglePaintMode,
   className,
   variant = "full",
-  orientation = "vertical"
+  orientation = "vertical",
+  hasSelection = false
 }: BoardToolbarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -214,6 +219,20 @@ export function BoardToolbar({
               <tool.icon className="h-5 w-5" />
             </button>
           ))}
+
+          {variant === 'training' && hasSelection && (
+            <>
+              <div className={cn(isHorizontal ? "h-6 w-[1px]" : "w-8 h-[1px]", "bg-white/10")} />
+              <button 
+                onClick={onOpenProperties}
+                className="h-10 px-4 rounded-xl flex items-center gap-2 bg-amber-500 text-black font-black uppercase text-[9px] tracking-widest shadow-lg hover:scale-105 transition-all"
+                title="Editar Propiedades"
+              >
+                <Settings className="h-4 w-4" />
+                <span>Propiedades</span>
+              </button>
+            </>
+          )}
 
           {variant !== 'materials' && (
             <>

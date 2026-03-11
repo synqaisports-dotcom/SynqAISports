@@ -162,13 +162,10 @@ function TrainingBoardContent() {
 
     const centerX = p[1] ? (p[0].x + p[1].x) / 2 : p[0].x;
     const centerY = p[1] ? (p[0].y + p[1].y) / 2 : p[0].y;
-    const canRotate = !['freehand', 'circle', 'ball', 'cone', 'seta', 'ladder', 'hurdle', 'minigoal', 'pica', 'player'].includes(element.type);
     
-    if (canRotate) {
-      ctx.translate(centerX, centerY);
-      ctx.rotate(element.rotation);
-      ctx.translate(-centerX, -centerY);
-    }
+    ctx.translate(centerX, centerY);
+    ctx.rotate(element.rotation);
+    ctx.translate(-centerX, -centerY);
 
     ctx.beginPath();
     switch (element.type) {
@@ -217,12 +214,12 @@ function TrainingBoardContent() {
         ctx.stroke();
         break;
       case 'player':
-        // High Fidelity Athlete Chip
+        const r = p[1] ? getDistance(p[0], p[1]) : 25;
         ctx.shadowBlur = 15;
         ctx.shadowColor = hexToRgba(element.color, 0.5);
         ctx.beginPath();
-        ctx.arc(p[0].x, p[0].y, 20, 0, Math.PI * 2);
-        const grad = ctx.createRadialGradient(p[0].x, p[0].y, 0, p[0].x, p[0].y, 20);
+        ctx.arc(p[0].x, p[0].y, r, 0, Math.PI * 2);
+        const grad = ctx.createRadialGradient(p[0].x, p[0].y, 0, p[0].x, p[0].y, r);
         grad.addColorStop(0, hexToRgba(element.color, 0.4));
         grad.addColorStop(1, hexToRgba(element.color, 0.1));
         ctx.fillStyle = grad;
@@ -231,19 +228,18 @@ function TrainingBoardContent() {
         ctx.lineWidth = 2;
         ctx.stroke();
         ctx.shadowBlur = 0;
-        // Label
         ctx.fillStyle = '#fff';
-        ctx.font = 'bold 14px Space Grotesk';
+        ctx.font = `bold ${Math.floor(r * 0.7)}px Space Grotesk`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText((element.number || 1).toString(), p[0].x, p[0].y);
         break;
       case 'ball':
-        // Professional Ball with Pentagons
+        const br = p[1] ? getDistance(p[0], p[1]) : 12;
         ctx.save();
         ctx.translate(p[0].x, p[0].y);
         ctx.beginPath();
-        ctx.arc(0, 0, 10, 0, Math.PI * 2);
+        ctx.arc(0, 0, br, 0, Math.PI * 2);
         ctx.fillStyle = '#fff';
         ctx.fill();
         ctx.strokeStyle = '#000';
@@ -252,28 +248,26 @@ function TrainingBoardContent() {
         for(let i=0; i<5; i++){
           ctx.beginPath();
           ctx.moveTo(0, 0);
-          ctx.lineTo(Math.cos(i*Math.PI*2/5)*10, Math.sin(i*Math.PI*2/5)*10);
+          ctx.lineTo(Math.cos(i*Math.PI*2/5)*br, Math.sin(i*Math.PI*2/5)*br);
           ctx.stroke();
         }
         ctx.restore();
         break;
       case 'cone':
-        // 3D Volumetric Cone
+        const cr = p[1] ? getDistance(p[0], p[1]) : 15;
         ctx.save();
         ctx.translate(p[0].x, p[0].y);
-        // Base
         ctx.beginPath();
-        ctx.ellipse(0, 8, 14, 5, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, cr/2, cr, cr/3, 0, 0, Math.PI * 2);
         ctx.fillStyle = hexToRgba(element.color, 0.8);
         ctx.fill();
         ctx.stroke();
-        // Body
         ctx.beginPath();
-        ctx.moveTo(-10, 8);
-        ctx.lineTo(0, -15);
-        ctx.lineTo(10, 8);
+        ctx.moveTo(-cr*0.7, cr/2);
+        ctx.lineTo(0, -cr);
+        ctx.lineTo(cr*0.7, cr/2);
         ctx.closePath();
-        const coneGrad = ctx.createLinearGradient(-10, 0, 10, 0);
+        const coneGrad = ctx.createLinearGradient(-cr, 0, cr, 0);
         coneGrad.addColorStop(0, element.color);
         coneGrad.addColorStop(0.5, '#fff');
         coneGrad.addColorStop(1, element.color);
@@ -283,42 +277,37 @@ function TrainingBoardContent() {
         ctx.restore();
         break;
       case 'seta':
-        // Professional Disc Marker
+        const sr = p[1] ? getDistance(p[0], p[1]) : 18;
         ctx.save();
         ctx.translate(p[0].x, p[0].y);
         ctx.beginPath();
-        ctx.ellipse(0, 0, 16, 7, 0, 0, Math.PI * 2);
-        const setaGrad = ctx.createRadialGradient(0, -2, 0, 0, 0, 16);
+        ctx.ellipse(0, 0, sr, sr/2.5, 0, 0, Math.PI * 2);
+        const setaGrad = ctx.createRadialGradient(0, -2, 0, 0, 0, sr);
         setaGrad.addColorStop(0, '#fff');
         setaGrad.addColorStop(0.3, element.color);
         setaGrad.addColorStop(1, hexToRgba(element.color, 0.8));
         ctx.fillStyle = setaGrad;
         ctx.fill();
         ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(0, -2, 4, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(0,0,0,0.2)';
-        ctx.fill();
         ctx.restore();
         break;
       case 'ladder':
-        // Realistic Agility Ladder (2 points)
         if (!p[1]) break;
-        const dist = getDistance(p[0], p[1]);
-        const ang = Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x);
+        const lDist = getDistance(p[0], p[1]);
         const stepWidth = 40;
         const stepGap = 25;
         ctx.save();
         ctx.translate(p[0].x, p[0].y);
-        ctx.rotate(ang);
+        const lAng = Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x);
+        // Reset rotation internal because we handle it globally now
+        // But for ladder we need the vector points
+        ctx.rotate(lAng - element.rotation); 
         ctx.strokeStyle = '#333';
         ctx.lineWidth = 4;
-        // Side rails
-        ctx.strokeRect(0, -stepWidth/2, dist, stepWidth);
-        // Rungs
+        ctx.strokeRect(0, -stepWidth/2, lDist, stepWidth);
         ctx.lineWidth = 2;
         ctx.strokeStyle = element.color;
-        for(let d=0; d<dist; d+=stepGap) {
+        for(let d=0; d<=lDist; d+=stepGap) {
           ctx.beginPath();
           ctx.moveTo(d, -stepWidth/2);
           ctx.lineTo(d, stepWidth/2);
@@ -327,23 +316,20 @@ function TrainingBoardContent() {
         ctx.restore();
         break;
       case 'hurdle':
-        // 3D Training Hurdle (2 points for width)
         if (!p[1]) break;
         const hWidth = getDistance(p[0], p[1]);
-        const hAng = Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x);
         ctx.save();
         ctx.translate(p[0].x, p[0].y);
-        ctx.rotate(hAng);
+        const hAng = Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x);
+        ctx.rotate(hAng - element.rotation);
         ctx.strokeStyle = element.color;
         ctx.lineWidth = 5;
-        // Arch
         ctx.beginPath();
         ctx.moveTo(0, 10);
         ctx.lineTo(0, -10);
         ctx.lineTo(hWidth, -10);
         ctx.lineTo(hWidth, 10);
         ctx.stroke();
-        // Feet
         ctx.lineWidth = 2;
         ctx.strokeStyle = '#333';
         ctx.strokeRect(-5, 8, 10, 4);
@@ -351,14 +337,12 @@ function TrainingBoardContent() {
         ctx.restore();
         break;
       case 'minigoal':
-        // High Fidelity Mini Goal
         if (!p[1]) break;
         const gWidth = getDistance(p[0], p[1]);
-        const gAng = Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x);
         ctx.save();
         ctx.translate(p[0].x, p[0].y);
-        ctx.rotate(gAng);
-        // Net
+        const gAng = Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x);
+        ctx.rotate(gAng - element.rotation);
         ctx.beginPath();
         ctx.rect(0, -gWidth/4, gWidth, gWidth/2);
         ctx.fillStyle = 'rgba(255,255,255,0.1)';
@@ -370,7 +354,6 @@ function TrainingBoardContent() {
           ctx.moveTo(i, -gWidth/4); ctx.lineTo(i, gWidth/2);
         }
         ctx.stroke();
-        // Frame
         ctx.setLineDash([]);
         ctx.strokeStyle = '#fff';
         ctx.lineWidth = 4;
@@ -378,21 +361,19 @@ function TrainingBoardContent() {
         ctx.restore();
         break;
       case 'pica':
-        // Training Pole
+        const pr = p[1] ? getDistance(p[0], p[1]) : 15;
         ctx.save();
         ctx.translate(p[0].x, p[0].y);
-        // Base
         ctx.beginPath();
-        ctx.arc(0, 15, 8, 0, Math.PI * 2);
+        ctx.arc(0, pr, pr*0.5, 0, Math.PI * 2);
         ctx.fillStyle = '#333';
         ctx.fill();
-        // Pole
         const poleGrad = ctx.createLinearGradient(-3, 0, 3, 0);
         poleGrad.addColorStop(0, element.color);
         poleGrad.addColorStop(0.5, '#fff');
         poleGrad.addColorStop(1, element.color);
         ctx.fillStyle = poleGrad;
-        ctx.fillRect(-3, -30, 6, 45);
+        ctx.fillRect(-3, -pr*2, 6, pr*3);
         ctx.restore();
         break;
     }
@@ -401,11 +382,9 @@ function TrainingBoardContent() {
       ctx.restore();
       ctx.save();
       
-      if (canRotate) {
-        ctx.translate(centerX, centerY);
-        ctx.rotate(element.rotation);
-        ctx.translate(-centerX, -centerY);
-      }
+      ctx.translate(centerX, centerY);
+      ctx.rotate(element.rotation);
+      ctx.translate(-centerX, -centerY);
 
       ctx.strokeStyle = '#fff';
       ctx.lineWidth = 1;
@@ -415,8 +394,18 @@ function TrainingBoardContent() {
 
       if (element.type === 'rect' && p[1]) {
         ctx.strokeRect(p[0].x, p[0].y, p[1].x - p[0].x, p[1].y - p[0].y);
+      } else if (isSinglePoint && p[1]) {
+        const radius = getDistance(p[0], p[1]);
+        ctx.strokeRect(p[0].x - radius - 10, p[0].y - radius - 10, (radius + 10) * 2, (radius + 10) * 2);
       } else if (isSinglePoint) {
-        ctx.strokeRect(p[0].x - 25, p[0].y - 25, 50, 50);
+        ctx.strokeRect(p[0].x - 30, p[0].y - 30, 60, 60);
+      } else if (p[1]) {
+        // Find bounding box for generic shapes
+        const minX = Math.min(...p.map(pt => pt.x));
+        const minY = Math.min(...p.map(pt => pt.y));
+        const maxX = Math.max(...p.map(pt => pt.x));
+        const maxY = Math.max(...p.map(pt => pt.y));
+        ctx.strokeRect(minX - 10, minY - 10, maxX - minX + 20, maxY - minY + 20);
       }
 
       ctx.setLineDash([]);
@@ -424,13 +413,8 @@ function TrainingBoardContent() {
       
       let handles: Point[] = [];
       if (element.type === 'rect' && p[1]) {
-        handles = [
-          { x: p[0].x, y: p[0].y },
-          { x: p[1].x, y: p[0].y },
-          { x: p[1].x, y: p[1].y },
-          { x: p[0].x, y: p[1].y }
-        ];
-      } else if (!isSinglePoint && p[1]) {
+        handles = [{ x: p[0].x, y: p[0].y }, { x: p[1].x, y: p[0].y }, { x: p[1].x, y: p[1].y }, { x: p[0].y, y: p[1].y }];
+      } else if (p[1]) {
         handles = [p[0], p[p.length-1]];
       }
 
@@ -441,19 +425,18 @@ function TrainingBoardContent() {
         ctx.stroke();
       });
 
-      if (canRotate && (p[1] || isSinglePoint)) {
-        const rotX = p[1] ? (p[0].x + p[1].x) / 2 : p[0].x;
-        const rotY = p[1] ? Math.min(p[0].y, p[1].y) - 35 : p[0].y - 35;
-        ctx.beginPath();
-        ctx.moveTo(rotX, p[1] ? Math.min(p[0].y, p[1].y) : p[0].y);
-        ctx.lineTo(rotX, rotY);
-        ctx.stroke();
-        ctx.fillStyle = '#facc15';
-        ctx.beginPath();
-        ctx.arc(rotX, rotY, 8, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-      }
+      // Handle Rotación
+      const rotX = p[1] ? (p[0].x + p[1].x) / 2 : p[0].x;
+      const rotY = p[1] ? Math.min(...p.map(pt => pt.y)) - 40 : p[0].y - 40;
+      ctx.beginPath();
+      ctx.moveTo(rotX, p[1] ? Math.min(...p.map(pt => pt.y)) : p[0].y);
+      ctx.lineTo(rotX, rotY);
+      ctx.stroke();
+      ctx.fillStyle = '#facc15';
+      ctx.beginPath();
+      ctx.arc(rotX, rotY, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
     }
     ctx.restore();
   }, []);
@@ -509,28 +492,21 @@ function TrainingBoardContent() {
 
         const isSinglePoint = ['ball', 'cone', 'seta', 'pica', 'player'].includes(el.type);
 
-        if (el.type !== 'circle' && (p[1] || isSinglePoint)) {
-          const rotX = p[1] ? (el.points[0].x + el.points[1].x) / 2 : el.points[0].x;
-          const rotY = p[1] ? Math.min(el.points[0].y, el.points[1].y) - 35 : el.points[0].y - 35;
-          if (getDistance(point, rotatePoint({x: rotX, y: rotY}, {x: centerX, y: centerY}, el.rotation)) < 15) {
-            interactionMode.current = 'rotating';
-            return;
-          }
+        const rotX = p[1] ? (el.points[0].x + el.points[1].x) / 2 : el.points[0].x;
+        const rotY = p[1] ? Math.min(...p.map(pt => pt.y)) - 40 : p[0].y - 40;
+        if (getDistance(point, rotatePoint({x: rotX, y: rotY}, {x: centerX, y: centerY}, el.rotation)) < 20) {
+          interactionMode.current = 'rotating';
+          return;
         }
 
         let handles: Point[] = [];
         if (el.type === 'rect' && p[1]) {
-          handles = [
-            { x: el.points[0].x, y: el.points[0].y },
-            { x: el.points[1].x, y: el.points[0].y },
-            { x: el.points[1].x, y: el.points[1].y },
-            { x: el.points[0].x, y: el.points[1].y }
-          ];
-        } else if (!isSinglePoint && p[1]) {
-          handles = [el.points[0], el.points[el.points.length - 1]];
+          handles = [{ x: p[0].x, y: p[0].y }, { x: p[1].x, y: p[0].y }, { x: p[1].x, y: p[1].y }, { x: p[0].x, y: p[1].y }];
+        } else if (p[1]) {
+          handles = [p[0], p[p.length - 1]];
         }
 
-        const handleIdx = handles.findIndex(hp => getDistance(localPoint, hp) < 15);
+        const handleIdx = handles.findIndex(hp => getDistance(localPoint, hp) < 20);
         if (handleIdx !== -1) {
           interactionMode.current = 'resizing';
           activeHandleIndex.current = handleIdx;
@@ -556,11 +532,17 @@ function TrainingBoardContent() {
       if (el.type === 'freehand') {
         return p.some(fp => getDistance(point, fp) < 15);
       }
-      if (['ball', 'cone', 'seta', 'pica', 'player'].includes(el.type)) {
-        return getDistance(point, p[0]) < 30;
+      const isSinglePoint = ['ball', 'cone', 'seta', 'pica', 'player'].includes(el.type);
+      if (isSinglePoint) {
+        const r = p[1] ? getDistance(p[0], p[1]) : 30;
+        return getDistance(localPoint, p[0]) < r;
       }
       if (p[1]) {
-        return getDistance(localPoint, p[0]) < 30 || getDistance(localPoint, p[p.length-1]) < 30;
+        const minX = Math.min(...p.map(pt => pt.x));
+        const minY = Math.min(...p.map(pt => pt.y));
+        const maxX = Math.max(...p.map(pt => pt.x));
+        const maxY = Math.max(...p.map(pt => pt.y));
+        return localPoint.x >= minX && localPoint.x <= maxX && localPoint.y >= minY && localPoint.y <= maxY;
       }
       return getDistance(localPoint, p[0]) < 30;
     });
@@ -569,9 +551,6 @@ function TrainingBoardContent() {
       setSelectedId(clickedEl.id);
       setActiveTool('select');
       interactionMode.current = 'dragging';
-      if (clickedEl.type === 'freehand') {
-        setIsPropertiesOpen(false);
-      }
     } else {
       if (activeTool !== 'select') {
         const isSinglePoint = ['ball', 'cone', 'seta', 'pica', 'player'].includes(activeTool);
@@ -588,7 +567,7 @@ function TrainingBoardContent() {
         currentElement.current = { 
           id: `el-${Date.now()}`, 
           type: activeTool, 
-          points: isSinglePoint ? [point] : [point, point], 
+          points: isSinglePoint ? [point, {x: point.x + 25, y: point.y}] : [point, point], 
           color: currentColor,
           rotation: 0,
           lineStyle: 'solid',
@@ -608,13 +587,10 @@ function TrainingBoardContent() {
     const point = { x: e.clientX - rect.left, y: e.clientY - rect.top };
 
     if (interactionMode.current === 'drawing' && currentElement.current) {
-      const isSinglePoint = ['ball', 'cone', 'seta', 'pica', 'player'].includes(currentElement.current.type);
-      if (!isSinglePoint) {
-        if (activeTool === 'freehand') {
-          currentElement.current.points.push(point);
-        } else {
-          currentElement.current.points[1] = point;
-        }
+      if (activeTool === 'freehand') {
+        currentElement.current.points.push(point);
+      } else {
+        currentElement.current.points[1] = point;
       }
     } else if (interactionMode.current === 'resizing' && selectedId && activeHandleIndex.current !== null) {
       setElements(prev => prev.map(el => {
@@ -715,30 +691,6 @@ function TrainingBoardContent() {
   const selectedElement = elements.find(e => e.id === selectedId);
   const isSheetOpen = isPropertiesOpen || isLibraryOpen;
 
-  const getActionTriggerPosition = () => {
-    if (!selectedElement) return null;
-    const p = selectedElement.points;
-    let maxX, minY;
-    
-    if (selectedElement.type === 'freehand') {
-      maxX = Math.max(...p.map(pt => pt.x));
-      minY = Math.min(...p.map(pt => pt.y));
-    } else if (['ball', 'cone', 'seta', 'pica', 'player'].includes(selectedElement.type)) {
-      maxX = p[0].x;
-      minY = p[0].y;
-    } else if (p[1]) {
-      maxX = Math.max(p[0].x, p[1].x);
-      minY = Math.min(p[0].y, p[1].y);
-    } else {
-      maxX = p[0].x;
-      minY = p[0].y;
-    }
-    
-    return { x: maxX + 25, y: minY - 25 };
-  };
-
-  const triggerPos = getActionTriggerPosition();
-
   return (
     <div className="h-full flex flex-col bg-[#04070c] overflow-hidden">
       <header className="h-20 border-b border-amber-500/20 bg-black/60 backdrop-blur-3xl flex items-center justify-between px-4 lg:px-8 shrink-0 z-50">
@@ -746,7 +698,7 @@ function TrainingBoardContent() {
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-amber-500 animate-pulse" />
-              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Exercise_Designer_IA_v8.3</span>
+              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Exercise_Designer_IA_v8.4</span>
             </div>
             <h1 className="text-lg lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase">Estudio Profesional</h1>
           </div>
@@ -812,21 +764,6 @@ function TrainingBoardContent() {
               onPointerUp={handlePointerUp}
               onPointerLeave={handlePointerUp}
             />
-
-            {selectedId && triggerPos && !isPropertiesOpen && selectedElement?.type !== 'freehand' && (
-              <div 
-                className="absolute z-[100] transition-all duration-300 animate-in fade-in zoom-in-95 pointer-events-auto"
-                style={{ left: triggerPos.x, top: triggerPos.y, transform: 'translateX(-50%)' }}
-              >
-                <button
-                  onClick={() => setIsPropertiesOpen(true)}
-                  className="h-10 w-10 bg-amber-500 text-black rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(245,158,11,0.5)] hover:scale-110 active:scale-95 transition-all amber-glow"
-                  title="Abrir Propiedades"
-                >
-                  <Settings className="h-5 w-5" />
-                </button>
-              </div>
-            )}
           </TacticalField>
         </main>
 
@@ -852,6 +789,8 @@ function TrainingBoardContent() {
               variant="training"
               orientation="horizontal"
               activeTool={activeTool}
+              hasSelection={!!selectedId}
+              onOpenProperties={() => setIsPropertiesOpen(true)}
               onToolSelect={(tool) => {
                 setActiveTool(tool);
                 if (tool !== 'select') {
@@ -878,7 +817,7 @@ function TrainingBoardContent() {
                   <SheetHeader className="space-y-4">
                     <div className="flex items-center gap-3">
                       <Settings2 className="h-4 w-4 text-amber-500" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500">Node_Properties_v2.0</span>
+                      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500">Node_Properties_v8.4</span>
                     </div>
                     <SheetTitle className="text-3xl font-black italic tracking-tighter text-white uppercase text-left">
                       PROPIEDADES
@@ -919,7 +858,7 @@ function TrainingBoardContent() {
                         <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-white/40">Identidad Jugador</h3>
                       </div>
                       <div className="space-y-3">
-                        <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1">Dorsal / ID</Label>
+                        <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Dorsal / ID</Label>
                         <Input 
                           type="number"
                           value={selectedElement.number || 1}
