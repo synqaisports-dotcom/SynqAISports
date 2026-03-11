@@ -146,8 +146,8 @@ function TrainingBoardContent() {
       return;
     }
 
-    const centerX = (p[0].x + p[1].x) / 2;
-    const centerY = (p[0].y + p[1].y) / 2;
+    const centerX = (p[0].x + (p[1]?.x || p[0].x)) / 2;
+    const centerY = (p[0].y + (p[1]?.y || p[0].y)) / 2;
     const canRotate = element.type !== 'freehand' && element.type !== 'circle';
     
     if (canRotate) {
@@ -487,13 +487,22 @@ function TrainingBoardContent() {
   const selectedElement = elements.find(e => e.id === selectedId);
   const isSheetOpen = isPropertiesOpen || isLibraryOpen;
 
-  // Cálculo de posición del botón flotante de acciones
+  // PROTOCOLO_UBICACIÓN_V7.6.1: Reposicionamiento del gatillo a la esquina superior derecha
   const getActionTriggerPosition = () => {
     if (!selectedElement) return null;
     const p = selectedElement.points;
-    const centerX = (p[0].x + (p[1]?.x || p[0].x)) / 2;
-    const minY = Math.min(...p.map(pt => pt.y));
-    return { x: centerX, y: minY - 40 };
+    let maxX, minY;
+    
+    if (selectedElement.type === 'freehand') {
+      maxX = Math.max(...p.map(pt => pt.x));
+      minY = Math.min(...p.map(pt => pt.y));
+    } else {
+      maxX = Math.max(p[0].x, p[1].x);
+      minY = Math.min(p[0].y, p[1].y);
+    }
+    
+    // Colocar a la derecha superior para evitar conflicto con nodo de rotación central
+    return { x: maxX + 25, y: minY - 25 };
   };
 
   const triggerPos = getActionTriggerPosition();
@@ -598,7 +607,7 @@ function TrainingBoardContent() {
               onPointerLeave={handlePointerUp}
             />
 
-            {/* Gatillo de Acciones Flotante (PROXIMIDAD) */}
+            {/* Gatillo de Acciones Flotante (PROXIMIDAD REFINADA v7.6.1) */}
             {selectedId && triggerPos && !isPropertiesOpen && (
               <div 
                 className="absolute z-[100] transition-all duration-300 animate-in fade-in zoom-in-95 pointer-events-auto"
