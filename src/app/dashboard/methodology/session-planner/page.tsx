@@ -32,7 +32,9 @@ import {
   X,
   History,
   MessageSquareQuote,
-  UserX
+  UserX,
+  UserCheck,
+  ArrowRight
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -82,6 +84,8 @@ const MOCK_ROSTER = [
   { id: "p4", name: "SOFÍA MENDES", number: 4 },
   { id: "p5", name: "JUAN PÉREZ", number: 5 },
   { id: "p6", name: "CARLOS RUIZ", number: 7 },
+  { id: "p7", name: "MIGUEL ÁNGEL", number: 8 },
+  { id: "p8", name: "LAURA SÁNCHEZ", number: 6 },
 ];
 
 // MOCK DE EQUIPOS DEL CLUB CON ASIGNACIÓN DE ETAPA
@@ -108,6 +112,7 @@ export default function SessionPlannerPage() {
   const [selectedTeam, setSelectedTeam] = useState(CLUB_TEAMS[0].id);
   const [sessionsPerWeek, setSessionsPerWeek] = useState(3);
   const [selectedMCC, setSelectedMCC] = useState<string | null>(null);
+  const [isAttendanceOpen, setIsAttendanceOpen] = useState(false);
   const [activeSessionInWeek, setActiveSessionInWeek] = useState("1");
   const [changeRequests, setRequests] = useState(INITIAL_REQUESTS);
   const [attendance, setAttendance] = useState<Record<string, Record<string, string>>>({});
@@ -414,7 +419,7 @@ export default function SessionPlannerPage() {
           <div className="overflow-x-auto custom-scrollbar">
             <div className="min-w-[1800px] flex">
               {MONTHS.map((month) => (
-                <div key={month.id} className="flex-1 border-r border-white/5 flex flex-col group/month hover:bg-white/[0.01] transition-colors">
+                <div key={month.id} className="flex-1 border-r border-white/5 flex-col group/month hover:bg-white/[0.01] transition-colors">
                   <div className="p-4 text-center border-b border-white/5 bg-white/[0.02]">
                     <span className="text-[11px] font-black text-amber-500 tracking-[0.3em] uppercase">{month.label}</span>
                   </div>
@@ -484,9 +489,17 @@ export default function SessionPlannerPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <SheetTitle className="text-4xl font-black italic tracking-tighter uppercase leading-none text-white">Semana {selectedMCC}</SheetTitle>
-                    <Badge variant="outline" className="border-amber-500/20 text-amber-500 font-black uppercase tracking-widest px-4 py-1.5 h-auto">
-                      ETAPA: {currentTeam?.stage.toUpperCase()}
-                    </Badge>
+                    <div className="flex gap-3">
+                      <Button 
+                        onClick={() => setIsAttendanceOpen(true)}
+                        className="h-10 bg-amber-500 text-black font-black uppercase text-[9px] tracking-widest px-6 rounded-xl shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:scale-105 transition-all border-none"
+                      >
+                        <UserCheck className="h-3.5 w-3.5 mr-2" /> Asistencia
+                      </Button>
+                      <Badge variant="outline" className="border-amber-500/20 text-amber-500 font-black uppercase tracking-widest px-4 py-1.5 h-auto hidden sm:flex">
+                        ETAPA: {currentTeam?.stage.toUpperCase()}
+                      </Badge>
+                    </div>
                   </div>
                 </SheetHeader>
               </div>
@@ -549,61 +562,6 @@ export default function SessionPlannerPage() {
                       canRequest={canRequestChange(selectedMCC)}
                       assignedExercise="Feedback y Estiramientos"
                     />
-
-                    {/* SECCIÓN DE ASISTENCIA (SIEMPRE VISIBLE EN DETALLE) */}
-                    <div className="pt-10 border-t border-white/5 space-y-6">
-                       <div className="flex items-center gap-3">
-                          <Users className="h-5 w-5 text-amber-500" />
-                          <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-amber-500 italic">4. Control de Asistencia</h3>
-                       </div>
-                       <p className="text-[9px] text-white/30 font-bold uppercase tracking-widest italic ml-1">
-                         Estado por defecto: SINCRO_OK. Pulse para marcar ausencia o retraso.
-                       </p>
-                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {MOCK_ROSTER.map(player => {
-                            const status = currentSessionAttendance[player.id] || 'present';
-                            return (
-                              <div 
-                                key={player.id}
-                                onClick={() => toggleAttendance(player.id)}
-                                className={cn(
-                                  "p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between group overflow-hidden relative",
-                                  status === 'present' ? "bg-emerald-500/5 border-emerald-500/20" :
-                                  status === 'absent' ? "bg-rose-500/5 border-rose-500/20" :
-                                  "bg-amber-500/5 border-amber-500/20"
-                                )}
-                              >
-                                 <div className="flex items-center gap-4 relative z-10">
-                                    <div className="h-8 w-8 bg-black/40 border border-white/10 rounded-lg flex items-center justify-center text-[10px] font-black italic text-white/40">
-                                      {player.number}
-                                    </div>
-                                    <div className="flex flex-col">
-                                      <span className="text-[10px] font-black text-white uppercase italic group-hover:amber-text-glow transition-all">{player.name}</span>
-                                      <span className={cn(
-                                        "text-[7px] font-bold uppercase tracking-widest",
-                                        status === 'present' ? "text-emerald-400/60" :
-                                        status === 'absent' ? "text-rose-400/60" :
-                                        "text-amber-400/60"
-                                      )}>
-                                        {status === 'present' ? 'SINCRO_OK' : status === 'absent' ? 'AUSENCIA' : 'RETRASO'}
-                                      </span>
-                                    </div>
-                                 </div>
-                                 <div className="relative z-10">
-                                   {status === 'present' ? (
-                                     <CheckCircle2 className="h-4 w-4 text-emerald-500 animate-in zoom-in" />
-                                   ) : status === 'absent' ? (
-                                     <UserX className="h-4 w-4 text-rose-500 animate-in zoom-in" />
-                                   ) : (
-                                     <Clock className="h-4 w-4 text-amber-500 animate-in zoom-in" />
-                                   )}
-                                 </div>
-                                 {status === 'present' && <div className="absolute inset-0 bg-emerald-500/5 scan-line opacity-20" />}
-                              </div>
-                            );
-                          })}
-                       </div>
-                    </div>
                   </div>
                 </div>
 
@@ -646,6 +604,85 @@ export default function SessionPlannerPage() {
               </div>
             </>
           )}
+        </SheetContent>
+      </Sheet>
+
+      {/* PANEL INDEPENDIENTE DE ASISTENCIA */}
+      <Sheet open={isAttendanceOpen} onOpenChange={setIsAttendanceOpen}>
+        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-amber-500/20 text-white w-full sm:max-w-xl shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+          <div className="p-8 border-b border-white/5 bg-black/40">
+            <SheetHeader className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="h-2 w-2 rounded-full animate-pulse bg-amber-500" />
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500">Attendance_Master_Control</span>
+              </div>
+              <SheetTitle className="text-4xl font-black italic tracking-tighter uppercase leading-none text-white">Pasar Lista</SheetTitle>
+              <SheetDescription className="text-[10px] uppercase font-bold text-amber-500/40 tracking-widest text-left italic">
+                {currentTeam?.name} • SESIÓN {activeSessionInWeek} • {selectedMCC}
+              </SheetDescription>
+            </SheetHeader>
+          </div>
+
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {MOCK_ROSTER.map(player => {
+                const status = currentSessionAttendance[player.id] || 'present';
+                return (
+                  <div 
+                    key={player.id}
+                    onClick={() => toggleAttendance(player.id)}
+                    className={cn(
+                      "p-5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between group overflow-hidden relative",
+                      status === 'present' ? "bg-emerald-500/5 border-emerald-500/20" :
+                      status === 'absent' ? "bg-rose-500/5 border-rose-500/20" :
+                      "bg-amber-500/5 border-amber-500/20"
+                    )}
+                  >
+                      <div className="flex items-center gap-4 relative z-10">
+                        <div className={cn(
+                          "h-10 w-10 border rounded-xl flex items-center justify-center text-[11px] font-black italic",
+                          status === 'present' ? "bg-black/40 border-emerald-500/30 text-emerald-400" :
+                          status === 'absent' ? "bg-black/40 border-rose-500/30 text-rose-400" :
+                          "bg-black/40 border-amber-500/30 text-amber-400"
+                        )}>
+                          {player.number}
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[11px] font-black text-white uppercase italic group-hover:amber-text-glow transition-all">{player.name}</span>
+                          <span className={cn(
+                            "text-[8px] font-bold uppercase tracking-widest",
+                            status === 'present' ? "text-emerald-400/60" :
+                            status === 'absent' ? "text-rose-400/60" :
+                            "text-amber-400/60"
+                          )}>
+                            {status === 'present' ? 'SINCRO_OK' : status === 'absent' ? 'AUSENCIA' : 'RETRASO'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="relative z-10">
+                        {status === 'present' ? (
+                          <CheckCircle2 className="h-5 w-5 text-emerald-500 animate-in zoom-in" />
+                        ) : status === 'absent' ? (
+                          <UserX className="h-5 w-5 text-rose-500 animate-in zoom-in" />
+                        ) : (
+                          <Clock className="h-5 w-5 text-amber-500 animate-in zoom-in" />
+                        )}
+                      </div>
+                      {status === 'present' && <div className="absolute inset-0 bg-emerald-500/5 scan-line opacity-20" />}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="p-8 bg-black/60 border-t border-white/5">
+            <Button 
+              onClick={() => setIsAttendanceOpen(false)}
+              className="flex-1 h-16 bg-amber-500 text-black font-black uppercase text-[11px] tracking-[0.2em] rounded-2xl shadow-[0_0_30px_rgba(245,158,11,0.3)] hover:scale-[1.02] transition-all border-none w-full"
+            >
+              FINALIZAR_REGISTRO <ArrowRight className="h-4 w-4 ml-3" />
+            </Button>
+          </div>
         </SheetContent>
       </Sheet>
     </div>
