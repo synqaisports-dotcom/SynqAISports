@@ -20,6 +20,7 @@ interface TacticalFieldProps {
  * Soporta Fútbol 11, Fútbol 7 y Fútbol Sala con proporciones reales y texturas vibrantes.
  * v1.9: Implementación de containerRef para sincronización de coordenadas 1:1.
  * v2.1: Implementación de carriles tácticos horizontales (Superior, Central, Inferior).
+ * v2.2: Refinamiento de visibilidad y alineación de carriles con el área grande (20%/80%).
  */
 export function TacticalField({ 
   theme = "cyan", 
@@ -63,11 +64,13 @@ export function TacticalField({
         {/* LÍNEAS REGLAMENTARIAS */}
         <div className="absolute inset-[4%] border border-white/30 rounded-sm pointer-events-none">
           
-          {/* LANES (CARRILES TÁCTICOS HORIZONTALES) */}
+          {/* LANES (CARRILES TÁCTICOS HORIZONTALES - REFINADOS v2.2) */}
           {showLanes && (
             <>
-              <div className="absolute left-0 right-0 top-[33.33%] h-[1px] border-t border-dashed border-white/15" />
-              <div className="absolute left-0 right-0 top-[66.66%] h-[1px] border-t border-dashed border-white/15" />
+              {/* Carril Superior (Alineado con borde superior área grande - 20%) */}
+              <div className="absolute left-0 right-0 top-[20%] h-[1px] border-t border-dashed border-white/30 z-0" />
+              {/* Carril Inferior (Alineado con borde inferior área grande - 80%) */}
+              <div className="absolute left-0 right-0 top-[80%] h-[1px] border-t border-dashed border-white/30 z-0" />
             </>
           )}
 

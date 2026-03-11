@@ -1,5 +1,6 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v7.3 (Consolidated Master Protocol)
+
+# SynqSports Pro - ARCHITECTURE_LEDGER v7.3.1 (Refinamiento Espacial)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -78,7 +79,7 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 - **Sugerencias**: El Entrenador puede proponer cambios ("Sugerir Cambio").
 - **Bloqueo de Seguridad**: Las solicitudes de cambio se bloquean automáticamente si faltan menos de **7 días** para la sesión.
 
-## 5. Protocolo de Pizarra y Dibujo (v7.3)
+## 5. Protocolo de Pizarra y Dibujo (v7.3.1)
 
 ### 5.1. Motor de Dibujo Suavizado
 - Uso de lógica de interpolación para trazos fluidos en el Canvas e independencia de resolución.
@@ -86,7 +87,7 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 ### 5.2. Esquema JSON Maestro (Independencia de Dispositivo)
 - **Coordenadas Decimales**: Todas las posiciones de fichas y trazos se guardan como valores de `0.000` a `1.000`. Garantiza fidelidad visual en cualquier dispositivo.
 
-### 5.3. Herramientas de Dibujo Avanzadas (v7.3)
+### 5.3. Herramientas de Dibujo Avanzadas (v7.3.1)
 - **Modos de Trazo**: Dibujo Libre, Rectángulos, Círculos, Flechas simples y dobles.
 - **Manipulación Táctica Total**: 
     - **Arrastre (Dragging)**: Capacidad de mover cualquier elemento por el campo manteniendo su escala.
@@ -99,8 +100,9 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 - **Lógica de Controles Específica**:
     - **Círculos**: Se omite el nodo de rotación.
     - **Dibujo Libre**: Se omiten handles de redimensionado.
-- **Análisis Espacial (v7.3)**:
+- **Análisis Espacial (v7.3.1)**:
     - **Carriles Tácticos**: Implementación de líneas de guía horizontales para dividir el campo en Carril Superior, Central e Inferior, activables mediante toggle.
+    - **Geometría de Áreas**: Carriles ajustados al **20%** y **80%** de la altura para alineación con el área grande y visibilidad incrementada (`white/30`).
 
 ## 6. Gestión de Espacios e Instalaciones
 - **Motor Geométrico**: Subdivisiones de campos (1, 2 o 4 zonas) calculadas en porcentajes.

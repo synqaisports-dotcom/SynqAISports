@@ -1,5 +1,6 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v6.1 (Consolidated Master Protocol)
+
+# SynqSports Pro - ARCHITECTURE_LEDGER v7.3.1 (Refinamiento Espacial)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -41,17 +42,28 @@ Los roles operan bajo un sistema de ranking numérico (`rank`) que determina la 
 - **Planificador Maestro**: `/methodology/session-planner` (Diseño de macrociclo y validación de cambios).
 - **Objetivos Tácticos**: `/methodology/objectives` (Hoja de ruta por categorías).
 
-## 3. Protocolos de Bibliotecas (v6.0)
+## 3. Protocolos de Bibliotecas (v6.5)
 
 ### 3.1. Ecosistema de Datos en Tres Niveles
-1. **Nivel 1 (Global)**: Recolección de datos técnicos anonimizados de todos los clubes para el entrenamiento del modelo Gemini en el Almacén Neural.
-2. **Nivel 2 (Club)**: El "Libro de Estilo". El Director de Metodología valida tareas y las asigna a etapas blindadas. Formato Tabla (Opción B).
-3. **Nivel 3 (Coach)**: "Cuaderno de Campo". Espacio privado de creación y consulta del manual oficial. Formato Grid (Opción A).
+1. **Nivel 1 (Global)**: Recolección de datos técnicos anonimizados para entrenamiento IA en el Almacén Neural.
+2. **Nivel 2 (Club)**: El "Libro de Estilo". Tareas Maestras validadas asignadas a etapas blindadas. Formato Tabla (Opción B).
+3. **Nivel 3 (Coach)**: "Cuaderno de Campo". Espacio privado de creación. Formato Grid (Opción A).
 
-### 3.2. ADN del Ejercicio (Metadatos Críticos)
-- `stage`: Crítico para el filtrado automático por categorías (Debutantes, Alevín, etc.).
-- `dimension`: Clasificación técnica/táctica/física/psicológica.
-- `status`: Diferenciación entre "Official" (Club) y "Coach_Draft" (Sugerencia).
+### 3.2. ADN del Ejercicio (Metadatos Críticos v6.2)
+Las tareas maestras ahora incluyen una matriz de datos enriquecida para máxima precisión metodológica:
+- `didactic_strategy`: Tipo de juego o metodología aplicada.
+- `objectives`: Metas técnicas y tácticas concretas.
+- `conditional_content`: Capacidades físicas implicadas (ej. Coordinación).
+- `metrics`: Tiempo, Espacio y Situación de Juego.
+- `tactical_dna`: Acción técnica, Acción táctica e Intención colectiva.
+- `operational_rules`: Descripción, Normas de provocación, Consignas y Material.
+
+### 3.3. Recursos Visuales y Vinculación (v6.3)
+- **Vinculación de Activos**: Integración de botones de carga de imágenes y acceso directo a la Pizarra Profesional (`/board/training`) dentro del formulario de creación de tareas.
+
+### 3.4. Protocolo de Navegación Contextual (v6.4)
+- **Detección de Origen**: El sistema diferencia si se accede a la pizarra desde el formulario (`?source=form`) o desde el sidebar.
+- **Comportamiento Adaptativo**: Si el origen es un formulario, el botón de guardado cambia a "Vincular a Tarea" y activa un flujo de retorno automático para adjuntar el activo visual al ejercicio en proceso.
 
 ## 4. Protocolo de Planificación y Validación (v5.1)
 
@@ -67,28 +79,39 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 - **Sugerencias**: El Entrenador puede proponer cambios ("Sugerir Cambio").
 - **Bloqueo de Seguridad**: Las solicitudes de cambio se bloquean automáticamente si faltan menos de **7 días** para la sesión.
 
-### 4.3. Multi-sesión MCC
-- Un Microciclo (MCC) en el calendario es un contenedor de sesiones (Sesión 1, Sesión 2, etc.) según la frecuencia semanal del equipo. Cada una es independiente estructuralmente.
-
-## 5. Protocolo de Pizarra y Dibujo (v2.0)
+## 5. Protocolo de Pizarra y Dibujo (v7.3.1)
 
 ### 5.1. Motor de Dibujo Suavizado
-- Uso de lógica de interpolación para trazos fluidos en el Canvas.
-- Independencia de resolución: Los dibujos se renderizan sobre un sistema de coordenadas relativas.
+- Uso de lógica de interpolación para trazos fluidos en el Canvas e independencia de resolución.
 
 ### 5.2. Esquema JSON Maestro (Independencia de Dispositivo)
-- **Coordenadas Decimales**: Todas las posiciones de fichas y trazos se guardan como valores de `0.000` a `1.000`.
-- **Garantía Visual**: Asegura que un ejercicio diseñado en una tablet se vea idéntico en una pantalla 4K o un móvil.
+- **Coordenadas Decimales**: Todas las posiciones de fichas y trazos se guardan como valores de `0.000` a `1.000`. Garantiza fidelidad visual en cualquier dispositivo.
+
+### 5.3. Herramientas de Dibujo Avanzadas (v7.3.1)
+- **Modos de Trazo**: Dibujo Libre, Rectángulos, Círculos, Flechas simples y dobles.
+- **Manipulación Táctica Total**: 
+    - **Arrastre (Dragging)**: Capacidad de mover cualquier elemento por el campo manteniendo su escala.
+    - **Puntos de Modificación**: Implementación de 4 handles en rectángulos y puntos extremos en flechas/círculos para redimensionado dinámico.
+    - **Smart Selection (v7.1)**: El sistema detecta clics sobre formas existentes incluso si hay otra herramienta activa.
+    - **Geometría Local (v7.1)**: Implementación de detección de colisiones basada en coordenadas locales rotadas.
+- **Edición Contextual (v7.2)**:
+    - **Menú de Acciones**: Barra flotante que permite borrar, duplicar y cambiar el color de elementos individuales.
+    - **Sincronización Automática (v7.2)**: El menú de acciones aparece instantáneamente al seleccionar o crear un elemento.
+- **Lógica de Controles Específica**:
+    - **Círculos**: Se omite el nodo de rotación.
+    - **Dibujo Libre**: Se omiten handles de redimensionado.
+- **Análisis Espacial (v7.3.1)**:
+    - **Carriles Tácticos**: Implementación de líneas de guía horizontales para dividir el campo en Carril Superior, Central e Inferior.
+    - **Geometría de Áreas**: Carriles ajustados al **20%** y **80%** de la altura para alineación con el área grande y visibilidad incrementada (`white/30`).
 
 ## 6. Gestión de Espacios e Instalaciones
 - **Motor Geométrico**: Subdivisiones de campos (1, 2 o 4 zonas) calculadas en porcentajes.
-- **Horarios de División**: Las subdivisiones pueden activarse solo en franjas horarias específicas (ej. 17:00 a 21:00).
+- **Horarios de División**: Las subdivisiones pueden activarse solo en franjas horarias específicas.
 
 ## 7. Persistencia y Promo Hook
 - **Magic Links**: Detección de tokens en URL (`?token=...`).
-- **Persistence Layer**: Uso de `localStorage` para el estado de sesión y la configuración del Onboarding en el prototipo.
-- **Sync Status**: Verificación visual constante del estado de sincronización con el nodo central.
+- **Persistence Layer**: Uso de `localStorage` para el estado de sesión y onboarding.
 
 ## 8. UX y Calidad Visual
 - **Glow Reactivo**: Efectos de resplandor neón en elementos activos.
-- **Scroll Táctico**: Barras de desplazamiento siempre visibles con el color de la identidad del club (Cyan para Coach, Ámbar para Metodología, Esmeralda para Global).
+- **Scroll Táctico**: Barras de desplazamiento siempre visibles con el color de identidad del club.
