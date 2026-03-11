@@ -31,7 +31,8 @@ import {
   Check,
   X,
   History,
-  MessageSquareQuote
+  MessageSquareQuote,
+  UserX
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -74,6 +75,15 @@ const MONTHS = [
   { id: "jun", label: "JUNIO", weeks: 4 },
 ];
 
+const MOCK_ROSTER = [
+  { id: "p1", name: "LUCAS GARCÍA", number: 10 },
+  { id: "p2", name: "MARC SOLER", number: 1 },
+  { id: "p3", name: "ELENA ROSSI", number: 9 },
+  { id: "p4", name: "SOFÍA MENDES", number: 4 },
+  { id: "p5", name: "JUAN PÉREZ", number: 5 },
+  { id: "p6", name: "CARLOS RUIZ", number: 7 },
+];
+
 // MOCK DE EQUIPOS DEL CLUB CON ASIGNACIÓN DE ETAPA
 const CLUB_TEAMS = [
   { id: "t1", name: "Infantil A", type: "F11", stage: "Infantil" },
@@ -100,6 +110,35 @@ export default function SessionPlannerPage() {
   const [selectedMCC, setSelectedMCC] = useState<string | null>(null);
   const [activeSessionInWeek, setActiveSessionInWeek] = useState("1");
   const [changeRequests, setRequests] = useState(INITIAL_REQUESTS);
+  const [attendance, setAttendance] = useState<Record<string, Record<string, string>>>({});
+
+  // Inicializar asistencia por defecto
+  useEffect(() => {
+    if (selectedMCC) {
+      const sessionKey = `${selectedTeam}_${selectedMCC}_S${activeSessionInWeek}`;
+      if (!attendance[sessionKey]) {
+        const defaultAtt = Object.fromEntries(MOCK_ROSTER.map(p => [p.id, 'present']));
+        setAttendance(prev => ({ ...prev, [sessionKey]: defaultAtt }));
+      }
+    }
+  }, [selectedMCC, activeSessionInWeek, selectedTeam, attendance]);
+
+  const toggleAttendance = (playerId: string) => {
+    const sessionKey = `${selectedTeam}_${selectedMCC}_S${activeSessionInWeek}`;
+    const current = attendance[sessionKey] || {};
+    const status = current[playerId];
+    const nextStatus = status === 'present' ? 'absent' : status === 'absent' ? 'late' : 'present';
+    
+    setAttendance(prev => ({
+      ...prev,
+      [sessionKey]: { ...current, [playerId]: nextStatus }
+    }));
+  };
+
+  const currentSessionAttendance = useMemo(() => {
+    const sessionKey = `${selectedTeam}_${selectedMCC}_S${activeSessionInWeek}`;
+    return attendance[sessionKey] || {};
+  }, [attendance, selectedMCC, activeSessionInWeek, selectedTeam]);
 
   // CONFIGURACIÓN DE TIEMPOS DE SESIÓN
   const [sessionTimes, setSessionTimes] = useState({
@@ -116,12 +155,9 @@ export default function SessionPlannerPage() {
     CLUB_TEAMS.find(t => t.id === selectedTeam), 
   [selectedTeam]);
 
-  // LÓGICA DE PLAZO DE 7 DÍAS (SIMULADA PARA PROTOTIPO)
   const canRequestChange = (mcc: string) => {
-    // En una app real, compararíamos la fecha actual con la fecha del entrenamiento
-    // Para el prototipo, bloqueamos aleatoriamente o por convención de "Septiembre"
-    if (mcc.startsWith("SEPT")) return false; // Bloqueado por cercanía (menos de 7 días)
-    return true; // Disponible para sugerir
+    if (mcc.startsWith("SEPT")) return false; 
+    return true; 
   };
 
   const handleMCCClic = (month: string, week: number) => {
@@ -474,10 +510,8 @@ export default function SessionPlannerPage() {
 
               <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-12">
                 
-                {/* 1. ESTRUCTURA DE LA SESIÓN */}
                 <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500" key={activeSessionInWeek}>
                   
-                  {/* ALERTA DE LEAD-TIME PARA EL ENTRENADOR */}
                   {viewRole === 'coach' && !canRequestChange(selectedMCC) && (
                     <div className="p-4 bg-rose-500/10 border border-rose-500/30 rounded-2xl flex items-center gap-4">
                        <ShieldAlert className="h-5 w-5 text-rose-500" />
@@ -485,7 +519,6 @@ export default function SessionPlannerPage() {
                     </div>
                   )}
 
-                  {/* BLOQUES DE SESIÓN */}
                   <div className="space-y-8">
                     <SessionBlock 
                       title="1. Calentamiento / Activación" 
@@ -516,10 +549,64 @@ export default function SessionPlannerPage() {
                       canRequest={canRequestChange(selectedMCC)}
                       assignedExercise="Feedback y Estiramientos"
                     />
+
+                    {/* SECCIÓN DE ASISTENCIA (SIEMPRE VISIBLE EN DETALLE) */}
+                    <div className="pt-10 border-t border-white/5 space-y-6">
+                       <div className="flex items-center gap-3">
+                          <Users className="h-5 w-5 text-amber-500" />
+                          <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-amber-500 italic">4. Control de Asistencia</h3>
+                       </div>
+                       <p className="text-[9px] text-white/30 font-bold uppercase tracking-widest italic ml-1">
+                         Estado por defecto: SINCRO_OK. Pulse para marcar ausencia o retraso.
+                       </p>
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {MOCK_ROSTER.map(player => {
+                            const status = currentSessionAttendance[player.id] || 'present';
+                            return (
+                              <div 
+                                key={player.id}
+                                onClick={() => toggleAttendance(player.id)}
+                                className={cn(
+                                  "p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between group overflow-hidden relative",
+                                  status === 'present' ? "bg-emerald-500/5 border-emerald-500/20" :
+                                  status === 'absent' ? "bg-rose-500/5 border-rose-500/20" :
+                                  "bg-amber-500/5 border-amber-500/20"
+                                )}
+                              >
+                                 <div className="flex items-center gap-4 relative z-10">
+                                    <div className="h-8 w-8 bg-black/40 border border-white/10 rounded-lg flex items-center justify-center text-[10px] font-black italic text-white/40">
+                                      {player.number}
+                                    </div>
+                                    <div className="flex flex-col">
+                                      <span className="text-[10px] font-black text-white uppercase italic group-hover:amber-text-glow transition-all">{player.name}</span>
+                                      <span className={cn(
+                                        "text-[7px] font-bold uppercase tracking-widest",
+                                        status === 'present' ? "text-emerald-400/60" :
+                                        status === 'absent' ? "text-rose-400/60" :
+                                        "text-amber-400/60"
+                                      )}>
+                                        {status === 'present' ? 'SINCRO_OK' : status === 'absent' ? 'AUSENCIA' : 'RETRASO'}
+                                      </span>
+                                    </div>
+                                 </div>
+                                 <div className="relative z-10">
+                                   {status === 'present' ? (
+                                     <CheckCircle2 className="h-4 w-4 text-emerald-500 animate-in zoom-in" />
+                                   ) : status === 'absent' ? (
+                                     <UserX className="h-4 w-4 text-rose-500 animate-in zoom-in" />
+                                   ) : (
+                                     <Clock className="h-4 w-4 text-amber-500 animate-in zoom-in" />
+                                   )}
+                                 </div>
+                                 {status === 'present' && <div className="absolute inset-0 bg-emerald-500/5 scan-line opacity-20" />}
+                              </div>
+                            );
+                          })}
+                       </div>
+                    </div>
                   </div>
                 </div>
 
-                {/* 2. BUSCADOR DE BIBLIOTECA (SOLO PARA EL DIRECTOR O SI HAY SOLICITUD ACTIVA) */}
                 {(viewRole === 'director' || (viewRole === 'coach' && canRequestChange(selectedMCC))) && (
                   <div className="pt-12 border-t border-white/5 space-y-8">
                     <div className="flex items-center justify-between">
