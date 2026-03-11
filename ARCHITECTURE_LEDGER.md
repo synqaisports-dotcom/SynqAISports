@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v8.9.0 (Flujo de Diseño Instantáneo)
+# SynqSports Pro - ARCHITECTURE_LEDGER v9.0.0 (Interfaz Estratégica)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -56,7 +56,7 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 2. **Zona Central (Contenidos)** - Soporta múltiples ejercicios.
 3. **Vuelta a la Calma**
 
-## 5. Protocolo de Pizarra y Dibujo (v8.9.0)
+## 5. Protocolo de Pizarra y Dibujo (v9.0.0)
 
 ### 5.1. Motor de Dibujo Suavizado
 - Uso de lógica de interpolación para trazos fluidos en el Canvas e independencia de resolución.
@@ -69,7 +69,8 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 - **Balón Hyper-Realistic**: Renderizado 3D con gradientes radiales, sombra proyectada y patrón técnico de costura.
 - **Manipulación de 8 Puntos**: Caja de control profesional para ajuste milimétrico de tamaño y rotación centrada absoluta.
 
-### 5.4. Flujo de Diseño Instantáneo (v8.9.0)
-- **Creación Directa**: Pulsar un material en el menú inferior añade automáticamente el objeto al centro del campo sin clics secundarios.
-- **Refinamiento de Dorsales**: Optimización del centrado óptico y reducción del tamaño del número en la ficha del jugador para una estética profesional.
-- **Auto-Selección**: Al añadir un material, el sistema activa automáticamente la herramienta de selección para permitir su manipulación inmediata.
+### 5.4. Interfaz Estratégica (v9.0.0)
+- **Acciones en Cabecera**: El menú de propiedades (color, estilo, duplicar, borrar) se ubica ahora en el header superior junto al botón de Carriles, apareciendo solo al seleccionar un elemento con animación.
+- **Dualidad de Herramientas**: Las herramientas de dibujo mantienen su comportamiento manual (trazado en campo), mientras que los materiales utilizan el despliegue instantáneo al centro.
+- **Recuperación de Trazos**: Restauración de la funcionalidad de líneas discontinuas para formas y flechas.
+- **Refinamiento de Nodos**: Dorsales de jugadores optimizados en tamaño y centrado vertical para una estética profesional.

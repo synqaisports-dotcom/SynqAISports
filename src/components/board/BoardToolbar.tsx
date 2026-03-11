@@ -220,20 +220,6 @@ export function BoardToolbar({
             </button>
           ))}
 
-          {variant === 'training' && hasSelection && (
-            <>
-              <div className={cn(isHorizontal ? "h-6 w-[1px]" : "w-8 h-[1px]", "bg-white/10")} />
-              <button 
-                onClick={onOpenProperties}
-                className="h-10 px-4 rounded-xl flex items-center gap-2 bg-amber-500 text-black font-black uppercase text-[9px] tracking-widest shadow-lg hover:scale-105 transition-all"
-                title="Editar Propiedades"
-              >
-                <Settings className="h-4 w-4" />
-                <span>Propiedades</span>
-              </button>
-            </>
-          )}
-
           {variant !== 'materials' && (
             <>
               <div className={cn(isHorizontal ? "h-6 w-[1px]" : "w-8 h-[1px]", "bg-white/10")} />

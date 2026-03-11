@@ -22,7 +22,10 @@ import {
   Activity,
   Circle,
   Flag,
-  UserCircle
+  UserCircle,
+  Hash,
+  X,
+  Type
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,13 +40,6 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetHeader, 
-  SheetTitle, 
-  SheetDescription,
-} from "@/components/ui/sheet";
 import { useSearchParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -75,7 +71,6 @@ function TrainingBoardContent() {
   const [activeTool, setActiveTool] = useState<DrawingTool>("select");
   const [currentColor, setCurrentColor] = useState("#facc15");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [isPropertiesOpen, setIsPropertiesOpen] = useState(false);
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -216,7 +211,6 @@ function TrainingBoardContent() {
         pGrad.addColorStop(0, '#ffffff44'); pGrad.addColorStop(0.5, hexToRgba(element.color, 0.3)); pGrad.addColorStop(1, hexToRgba(element.color, 0.1));
         ctx.fillStyle = pGrad; ctx.fill(); ctx.strokeStyle = element.color; ctx.stroke();
         ctx.fillStyle = '#fff'; 
-        // AJUSTE DORSAL: Más pequeño y centrado ópticamente
         ctx.font = `bold ${Math.floor(height * 0.42)}px Space Grotesk`; 
         ctx.textAlign = 'center'; 
         ctx.textBaseline = 'middle';
@@ -332,7 +326,6 @@ function TrainingBoardContent() {
     return () => observer.disconnect();
   }, [redrawAll]);
 
-  // FUNCIÓN PARA AÑADIR OBJETO INSTANTÁNEAMENTE EN EL CENTRO
   const addElementAtCenter = (tool: DrawingTool) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -344,16 +337,13 @@ function TrainingBoardContent() {
     let pNum; 
     if(tool === 'player') pNum = elements.filter(e => e.type === 'player').length + 1;
     
-    const isM = ['player', 'ball', 'cone', 'seta', 'ladder', 'hurdle', 'minigoal', 'pica'].includes(tool);
     const defW = tool === 'ladder' ? 120 : (tool === 'minigoal' ? 80 : 40);
     const defH = tool === 'ladder' ? 40 : (tool === 'minigoal' ? 50 : 40);
     
     const newElement: DrawingElement = { 
       id: `el-${Date.now()}`, 
       type: tool, 
-      points: isM 
-        ? [{x: point.x - defW/2, y: point.y - defH/2}, {x: point.x + defW/2, y: point.y + defH/2}] 
-        : [{x: point.x - 50, y: point.y - 50}, {x: point.x + 50, y: point.y + 50}],
+      points: [{x: point.x - defW/2, y: point.y - defH/2}, {x: point.x + defW/2, y: point.y + defH/2}],
       color: currentColor, 
       rotation: 0, 
       lineStyle: 'solid', 
@@ -363,7 +353,6 @@ function TrainingBoardContent() {
     setElements(prev => [...prev, newElement]);
     setSelectedId(newElement.id);
     setActiveTool('select');
-    // Forzamos el redibujado inmediato
     setTimeout(redrawAll, 0);
   };
 
@@ -405,20 +394,15 @@ function TrainingBoardContent() {
 
     if (clicked) {
       setSelectedId(clicked.id); setActiveTool('select'); interactionMode.current = 'dragging';
-      if (clicked.type === 'freehand') setIsPropertiesOpen(false);
     } else {
       if (activeTool !== 'select') {
         setSelectedId(null); interactionMode.current = 'drawing';
-        let pNum; if(activeTool === 'player') pNum = elements.filter(e => e.type === 'player').length + 1;
-        const isM = ['player', 'ball', 'cone', 'seta', 'ladder', 'hurdle', 'minigoal', 'pica'].includes(activeTool);
-        const defW = activeTool === 'ladder' ? 120 : (activeTool === 'minigoal' ? 80 : 40);
-        const defH = activeTool === 'ladder' ? 40 : (activeTool === 'minigoal' ? 50 : 40);
         currentElement.current = { 
-          id: `el-${Date.now()}`, type: activeTool, points: isM ? [{x: point.x - defW/2, y: point.y - defH/2}, {x: point.x + defW/2, y: point.y + defH/2}] : [point, point],
-          color: currentColor, rotation: 0, lineStyle: 'solid', number: pNum
+          id: `el-${Date.now()}`, type: activeTool, points: [point, point],
+          color: currentColor, rotation: 0, lineStyle: 'solid'
         };
       } else {
-        setSelectedId(null); setIsPropertiesOpen(false);
+        setSelectedId(null);
       }
     }
     redrawAll();
@@ -495,7 +479,7 @@ function TrainingBoardContent() {
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-amber-500 animate-pulse" />
-              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Precision_v8.9</span>
+              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Precision_v9.0</span>
             </div>
             <h1 className="text-lg lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase leading-none">Estudio Élite</h1>
           </div>
@@ -513,6 +497,63 @@ function TrainingBoardContent() {
             <Button variant="outline" onClick={() => setShowLanes(!showLanes)} className={cn("h-11 px-4 border-amber-500/20 text-[10px] font-black uppercase", showLanes ? "bg-amber-500 text-black shadow-[0_0_20px_rgba(245,158,11,0.3)]" : "bg-white/5 text-amber-500/40")}>
               <Columns3 className="h-4 w-4 mr-2" /> Carriles
             </Button>
+
+            {/* ACCIONES ESTRATÉGICAS EN CABECERA */}
+            {selectedId && selectedElement && (
+              <div className="flex items-center gap-2 pl-4 border-l border-white/10 animate-in slide-in-from-left-4 fade-in duration-300">
+                <div className="flex gap-1.5 p-1 bg-black/40 border border-white/5 rounded-xl mr-2">
+                  {COLORS.map(c => (
+                    <button 
+                      key={c.id} 
+                      onClick={() => setElements(prev => prev.map(el => el.id === selectedId ? {...el, color: c.value} : el))} 
+                      className={cn("h-6 w-6 rounded-full border-2 transition-all", selectedElement.color === c.value ? "border-white scale-110" : "border-transparent opacity-40 hover:opacity-100")} 
+                      style={{ backgroundColor: c.value }} 
+                    />
+                  ))}
+                </div>
+
+                {selectedElement.type !== 'freehand' && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className={cn("h-9 border-white/10 text-[9px] font-black uppercase", selectedElement.lineStyle === 'dashed' ? 'bg-amber-500 text-black' : 'text-white/40')}
+                    onClick={() => setElements(prev => prev.map(el => el.id === selectedId ? {...el, lineStyle: el.lineStyle === 'solid' ? 'dashed' : 'solid'} : el))}
+                  >
+                    {selectedElement.lineStyle === 'dashed' ? 'Línea Discontinua' : 'Línea Sólida'}
+                  </Button>
+                )}
+
+                {selectedElement.type === 'player' && (
+                  <div className="flex items-center gap-2 bg-white/5 px-2 py-1 rounded-xl border border-white/10">
+                    <span className="text-[8px] font-black text-white/40 uppercase tracking-widest">Dorsal</span>
+                    <Input 
+                      type="number" 
+                      value={selectedElement.number || 1} 
+                      onChange={(e) => setElements(prev => prev.map(el => el.id === selectedId ? {...el, number: parseInt(e.target.value)} : el))} 
+                      className="h-7 w-12 bg-black/40 border-amber-500/20 text-amber-500 font-black text-xs text-center p-0 rounded-lg" 
+                    />
+                  </div>
+                )}
+
+                <div className="flex gap-1">
+                  <Button 
+                    variant="outline" size="icon" className="h-9 w-9 border-white/10 text-white/40 hover:text-white"
+                    onClick={() => {
+                      const newEl = { ...selectedElement, id: `el-${Date.now()}`, points: selectedElement.points.map(p => ({ x: p.x + 30, y: p.y + 30 })) };
+                      setElements(prev => [...prev, newEl]); setSelectedId(newEl.id);
+                    }}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="outline" size="icon" className="h-9 w-9 border-rose-500/20 text-rose-500/40 hover:text-rose-500 hover:bg-rose-500/10"
+                    onClick={() => { setElements(prev => prev.filter(el => el.id !== selectedId)); setSelectedId(null); }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
         <Button onClick={handleSave} className="h-11 bg-amber-500 text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl shadow-[0_0_25px_rgba(245,158,11,0.3)] border-none">
@@ -537,7 +578,6 @@ function TrainingBoardContent() {
               onToolSelect={(tool) => { 
                 if (tool !== 'select') addElementAtCenter(tool);
                 setSelectedId(null); 
-                setIsPropertiesOpen(false); 
               }} 
               className="border-2 shadow-2xl" 
             />
@@ -548,63 +588,15 @@ function TrainingBoardContent() {
               variant="training" 
               orientation="horizontal" 
               activeTool={activeTool} 
-              hasSelection={!!selectedId && selectedElement?.type !== 'freehand'} 
-              onOpenProperties={() => setIsPropertiesOpen(true)} 
               onToolSelect={(tool) => { 
-                if (tool !== 'select') addElementAtCenter(tool);
-                if (tool !== 'select') { setSelectedId(null); setIsPropertiesOpen(false); } 
+                setActiveTool(tool);
+                setSelectedId(null);
               }} 
-              onClear={() => { setElements([]); setSelectedId(null); setIsPropertiesOpen(false); }} 
+              onClear={() => { setElements([]); setSelectedId(null); }} 
               className="border-2 shadow-2xl" 
             />
           </div>
         </div>
-
-        <Sheet open={isPropertiesOpen} onOpenChange={setIsPropertiesOpen}>
-          <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-amber-500/20 text-white w-full sm:max-w-md p-0 flex flex-col">
-            {selectedElement && (
-              <div className="flex flex-col h-full">
-                <div className="p-8 border-b border-white/5 bg-amber-500/5">
-                  <SheetHeader className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <Settings2 className="h-4 w-4 text-amber-500" />
-                      <span className="text-[10px] font-black uppercase text-amber-500">Node_Properties_v8.9</span>
-                    </div>
-                    <SheetTitle className="text-3xl font-black italic uppercase">Propiedades</SheetTitle>
-                  </SheetHeader>
-                </div>
-                <div className="flex-1 overflow-y-auto p-10 space-y-12">
-                  <section className="space-y-6">
-                    <Label className="text-[10px] font-black uppercase text-white/40">Paleta Técnica</Label>
-                    <div className="grid grid-cols-4 gap-3">
-                      {COLORS.map(c => (
-                        <button key={c.id} onClick={() => setElements(prev => prev.map(el => el.id === selectedId ? {...el, color: c.value} : el))} className={cn("h-14 rounded-2xl border-2 transition-all", selectedElement.color === c.value ? "border-white scale-105" : "border-white/5 opacity-40")} style={{ backgroundColor: c.value }} />
-                      ))}
-                    </div>
-                  </section>
-                  {selectedElement.type === 'player' && (
-                    <section className="space-y-4">
-                      <Label className="text-[10px] font-black uppercase text-white/40">Dorsal Atleta</Label>
-                      <Input type="number" value={selectedElement.number || 1} onChange={(e) => setElements(prev => prev.map(el => el.id === selectedId ? {...el, number: parseInt(e.target.value)} : el))} className="h-12 bg-white/5 border-amber-500/20 text-amber-500 font-black text-xl text-center" />
-                    </section>
-                  )}
-                  <section className="space-y-6">
-                    <Label className="text-[10px] font-black uppercase text-white/40">Acciones de Objeto</Label>
-                    <div className="grid gap-4">
-                      <Button variant="outline" className="h-16 bg-white/5 border-white/10 text-white/60 font-black uppercase text-[11px]" onClick={() => {
-                        const newEl = { ...selectedElement, id: `el-${Date.now()}`, points: selectedElement.points.map(p => ({ x: p.x + 30, y: p.y + 30 })) };
-                        setElements(prev => [...prev, newEl]); setSelectedId(newEl.id);
-                      }}>Duplicar Nodo <Copy className="ml-auto h-5 w-5" /></Button>
-                      <Button variant="outline" className="h-16 bg-rose-500/5 border-rose-500/20 text-rose-500 font-black uppercase text-[11px]" onClick={() => {
-                        setElements(prev => prev.filter(el => el.id !== selectedId)); setSelectedId(null); setIsPropertiesOpen(false);
-                      }}>Eliminar <Trash2 className="ml-auto h-5 w-5" /></Button>
-                    </div>
-                  </section>
-                </div>
-              </div>
-            )}
-          </SheetContent>
-        </Sheet>
       </div>
     </div>
   );
