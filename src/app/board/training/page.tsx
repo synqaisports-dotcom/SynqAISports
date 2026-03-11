@@ -141,7 +141,30 @@ function TrainingBoardContent() {
   };
 
   const drawElement = useCallback((ctx: CanvasRenderingContext2D, element: DrawingElement, isSelected: boolean) => {
+    const p = element.points;
+    if (p.length < 1) return;
+
+    // CÁLCULO DEL CENTRO GEOMÉTRICO (PROTOCOLO v8.6.0)
+    let centerX, centerY;
+    const isSinglePoint = ['ball', 'cone', 'seta', 'pica', 'player'].includes(element.type);
+    
+    if (isSinglePoint) {
+      centerX = p[0].x;
+      centerY = p[0].y;
+    } else {
+      const minX = Math.min(...p.map(pt => pt.x));
+      const minY = Math.min(...p.map(pt => pt.y));
+      const maxX = Math.max(...p.map(pt => pt.x));
+      const maxY = Math.max(...p.map(pt => pt.y));
+      centerX = (minX + maxX) / 2;
+      centerY = (minY + maxY) / 2;
+    }
+
     ctx.save();
+    ctx.translate(centerX, centerY);
+    ctx.rotate(element.rotation);
+    ctx.translate(-centerX, -centerY);
+
     ctx.strokeStyle = element.color;
     ctx.fillStyle = hexToRgba(element.color, 0.15);
     ctx.lineWidth = 3;
@@ -153,24 +176,6 @@ function TrainingBoardContent() {
     } else {
       ctx.setLineDash([]);
     }
-
-    const p = element.points;
-    if (p.length < 1) {
-      ctx.restore();
-      return;
-    }
-
-    // CÁLCULO DEL CENTRO PARA ROTACIÓN ABSOLUTA
-    const minX = Math.min(...p.map(pt => pt.x));
-    const minY = Math.min(...p.map(pt => pt.y));
-    const maxX = Math.max(...p.map(pt => pt.x));
-    const maxY = Math.max(...p.map(pt => pt.y));
-    const centerX = (minX + maxX) / 2;
-    const centerY = (minY + maxY) / 2;
-    
-    ctx.translate(centerX, centerY);
-    ctx.rotate(element.rotation);
-    ctx.translate(-centerX, -centerY);
 
     ctx.beginPath();
     switch (element.type) {
@@ -187,8 +192,8 @@ function TrainingBoardContent() {
         break;
       case 'circle':
         if (!p[1]) break;
-        const radius = getDistance(p[0], p[1]);
-        ctx.arc(p[0].x, p[0].y, radius, 0, 2 * Math.PI);
+        const circRadius = getDistance(p[0], p[1]);
+        ctx.arc(p[0].x, p[0].y, circRadius, 0, 2 * Math.PI);
         ctx.fill();
         ctx.stroke();
         break;
@@ -219,56 +224,40 @@ function TrainingBoardContent() {
         ctx.stroke();
         break;
       case 'player':
-        const r = p[1] ? getDistance(p[0], p[1]) : 25;
+        const pr = p[1] ? getDistance(p[0], p[1]) : 25;
         ctx.save();
         ctx.shadowBlur = 20;
         ctx.shadowColor = hexToRgba(element.color, 0.4);
-        
-        // Efecto Glassmorphism
         ctx.beginPath();
-        ctx.arc(p[0].x, p[0].y, r, 0, Math.PI * 2);
-        const playerGrad = ctx.createRadialGradient(p[0].x - r/3, p[0].y - r/3, 0, p[0].x, p[0].y, r);
+        ctx.arc(p[0].x, p[0].y, pr, 0, Math.PI * 2);
+        const playerGrad = ctx.createRadialGradient(p[0].x - pr/3, p[0].y - pr/3, 0, p[0].x, p[0].y, pr);
         playerGrad.addColorStop(0, '#ffffff44');
         playerGrad.addColorStop(0.5, hexToRgba(element.color, 0.3));
         playerGrad.addColorStop(1, hexToRgba(element.color, 0.1));
         ctx.fillStyle = playerGrad;
         ctx.fill();
-        
         ctx.strokeStyle = element.color;
         ctx.lineWidth = 3;
         ctx.stroke();
-        
-        // Brillo superior
-        ctx.beginPath();
-        ctx.ellipse(p[0].x, p[0].y - r/2, r/1.5, r/3, 0, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255,255,255,0.1)';
-        ctx.fill();
-        
         ctx.shadowBlur = 0;
         ctx.fillStyle = '#fff';
-        ctx.font = `bold ${Math.floor(r * 0.8)}px Space Grotesk`;
+        ctx.font = `bold ${Math.floor(pr * 0.8)}px Space Grotesk`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText((element.number || 1).toString(), p[0].x, p[0].y);
         ctx.restore();
         break;
       case 'ball':
-        // MOTOR DE BALÓN PRO (SVG IMPLEMENTATION)
         const br = p[1] ? getDistance(p[0], p[1]) : 15;
         ctx.save();
         ctx.translate(p[0].x, p[0].y);
-        
-        // Sombra Proyectada
         ctx.beginPath();
         ctx.arc(0, br * 0.1, br, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(0,0,0,0.2)';
         ctx.fill();
-
-        // Gradiente Pro
         const ballGrad = ctx.createRadialGradient(-br * 0.4, -br * 0.4, 0, 0, 0, br);
-        ballGrad.addColorStop(0, '#ffffff');
+        ballGrad.addColorStop(0, 'white');
         ballGrad.addColorStop(1, '#E2E8F0');
-        
         ctx.beginPath();
         ctx.arc(0, 0, br, 0, Math.PI * 2);
         ctx.fillStyle = ballGrad;
@@ -276,8 +265,6 @@ function TrainingBoardContent() {
         ctx.strokeStyle = '#0F172A';
         ctx.lineWidth = 2;
         ctx.stroke();
-
-        // Patrón de Costura (Líneas Tácticas)
         ctx.beginPath();
         const s = br / 40;
         ctx.moveTo(0, -40*s); ctx.lineTo(-15*s, -25*s);
@@ -289,36 +276,51 @@ function TrainingBoardContent() {
         ctx.moveTo(40*s, 0); ctx.lineTo(25*s, -15*s);
         ctx.moveTo(40*s, 0); ctx.lineTo(25*s, 15*s);
         ctx.stroke();
-        
         ctx.beginPath();
         ctx.arc(0, 0, 15*s, 0, Math.PI * 2);
         ctx.stroke();
         ctx.restore();
         break;
       case 'cone':
-        const cr = p[1] ? getDistance(p[0], p[1]) : 20;
+        const cr = p[1] ? getDistance(p[0], p[1]) : 25;
         ctx.save();
         ctx.translate(p[0].x, p[0].y);
-        // Base Sombreada
+        // Sombra
         ctx.beginPath();
-        ctx.ellipse(0, cr/2, cr, cr/3, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, cr * 0.6, cr * 1.2, cr * 0.4, 0, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(0,0,0,0.25)';
         ctx.fill();
-        // Cuerpo del Cono
+        // Base elíptica
         ctx.beginPath();
-        ctx.moveTo(-cr*0.8, cr/2);
-        ctx.lineTo(0, -cr*1.2);
-        ctx.lineTo(cr*0.8, cr/2);
-        ctx.closePath();
-        const coneG = ctx.createLinearGradient(-cr, 0, cr, 0);
-        coneG.addColorStop(0, element.color);
-        coneG.addColorStop(0.4, '#ffffffcc');
-        coneG.addColorStop(0.6, '#ffffffcc');
-        coneG.addColorStop(1, element.color);
-        ctx.fillStyle = coneG;
+        ctx.ellipse(0, cr * 0.5, cr, cr * 0.4, 0, 0, Math.PI * 2);
+        const coneBaseGrad = ctx.createRadialGradient(0, cr * 0.4, 0, 0, cr * 0.5, cr);
+        coneBaseGrad.addColorStop(0, '#ff9800');
+        coneBaseGrad.addColorStop(1, '#e65100');
+        ctx.fillStyle = coneBaseGrad;
         ctx.fill();
-        ctx.strokeStyle = '#00000033';
-        ctx.stroke();
+        // Cuerpo con rayas
+        const ch = cr * 2.2;
+        const bodyGrad = ctx.createLinearGradient(-cr, 0, cr, 0);
+        bodyGrad.addColorStop(0, '#e65100');
+        bodyGrad.addColorStop(0.4, '#ffb74d');
+        bodyGrad.addColorStop(0.6, '#ffb74d');
+        bodyGrad.addColorStop(1, '#bf360c');
+        const drawSegment = (yT: number, yB: number, wT: number, wB: number, col: string) => {
+          ctx.beginPath();
+          ctx.moveTo(-wT, yT); ctx.lineTo(wT, yT);
+          ctx.quadraticCurveTo(wT, yT + 5, wB, yB);
+          ctx.lineTo(-wB, yB);
+          ctx.quadraticCurveTo(-wT, yT + 5, -wT, yT);
+          ctx.fillStyle = col; ctx.fill();
+        };
+        drawSegment(cr*0.5-ch*0.3, cr*0.5, cr*0.6, cr*0.8, bodyGrad); // Base orange
+        drawSegment(cr*0.5-ch*0.5, cr*0.5-ch*0.3, cr*0.45, cr*0.6, '#ffffff'); // Stripe 1
+        drawSegment(cr*0.5-ch*0.7, cr*0.5-ch*0.5, cr*0.3, cr*0.45, bodyGrad); // Mid orange
+        drawSegment(cr*0.5-ch*0.9, cr*0.5-ch*0.7, cr*0.15, cr*0.3, '#ffffff'); // Stripe 2
+        ctx.beginPath(); // Top
+        ctx.moveTo(-cr*0.15, cr*0.5-ch*0.9); ctx.lineTo(cr*0.15, cr*0.5-ch*0.9);
+        ctx.quadraticCurveTo(0, cr*0.5-ch-5, -cr*0.15, cr*0.5-ch*0.9);
+        ctx.fillStyle = bodyGrad; ctx.fill();
         ctx.restore();
         break;
       case 'seta':
@@ -326,37 +328,31 @@ function TrainingBoardContent() {
         ctx.save();
         ctx.translate(p[0].x, p[0].y);
         ctx.beginPath();
+        ctx.ellipse(0, sr/4, sr, sr/2.5, 0, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fill();
+        ctx.beginPath();
         ctx.ellipse(0, 0, sr, sr/2.2, 0, 0, Math.PI * 2);
         const setaG = ctx.createRadialGradient(0, -sr/4, 0, 0, 0, sr);
         setaG.addColorStop(0, '#ffffff');
         setaG.addColorStop(0.3, element.color);
         setaG.addColorStop(1, hexToRgba(element.color, 0.8));
-        ctx.fillStyle = setaG;
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(0,0,0,0.2)';
-        ctx.stroke();
+        ctx.fillStyle = setaG; ctx.fill();
         ctx.restore();
         break;
       case 'ladder':
         if (!p[1]) break;
         const ld = getDistance(p[0], p[1]);
         const sw = 45;
-        const sg = 30;
         ctx.save();
-        ctx.translate(p[0].x, p[0].y);
+        ctx.translate(centerX, centerY);
         const la = Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x);
-        ctx.rotate(la - element.rotation);
-        // Estructura lateral
-        ctx.strokeStyle = '#334155';
-        ctx.lineWidth = 5;
+        ctx.rotate(la);
+        ctx.translate(-ld/2, 0);
+        ctx.strokeStyle = '#334155'; ctx.lineWidth = 5;
         ctx.strokeRect(0, -sw/2, ld, sw);
-        // Peldaños técnicos
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = element.color;
-        for(let d=0; d<=ld; d+=sg) {
-          ctx.beginPath();
-          ctx.moveTo(d, -sw/2); ctx.lineTo(d, sw/2);
-          ctx.stroke();
+        ctx.lineWidth = 3; ctx.strokeStyle = element.color;
+        for(let d=0; d<=ld; d+=30) {
+          ctx.beginPath(); ctx.moveTo(d, -sw/2); ctx.lineTo(d, sw/2); ctx.stroke();
         }
         ctx.restore();
         break;
@@ -364,61 +360,42 @@ function TrainingBoardContent() {
         if (!p[1]) break;
         const hw = getDistance(p[0], p[1]);
         ctx.save();
-        ctx.translate(p[0].x, p[0].y);
+        ctx.translate(centerX, centerY);
         const ha = Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x);
-        ctx.rotate(ha - element.rotation);
-        ctx.strokeStyle = element.color;
-        ctx.lineWidth = 6;
-        ctx.beginPath();
-        ctx.moveTo(0, 15); ctx.lineTo(0, -15);
-        ctx.lineTo(hw, -15); ctx.lineTo(hw, 15);
-        ctx.stroke();
-        // Soportes base
-        ctx.strokeStyle = '#1e293b';
-        ctx.lineWidth = 3;
-        ctx.strokeRect(-6, 12, 12, 6);
-        ctx.strokeRect(hw-6, 12, 12, 6);
+        ctx.rotate(ha);
+        ctx.translate(-hw/2, 0);
+        ctx.strokeStyle = element.color; ctx.lineWidth = 6;
+        ctx.beginPath(); ctx.moveTo(0, 15); ctx.lineTo(0, -15); ctx.lineTo(hw, -15); ctx.lineTo(hw, 15); ctx.stroke();
+        ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 3;
+        ctx.strokeRect(-6, 12, 12, 6); ctx.strokeRect(hw-6, 12, 12, 6);
         ctx.restore();
         break;
       case 'minigoal':
         if (!p[1]) break;
         const gw = getDistance(p[0], p[1]);
         ctx.save();
-        ctx.translate(p[0].x, p[0].y);
+        ctx.translate(centerX, centerY);
         const ga = Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x);
-        ctx.rotate(ga - element.rotation);
-        // Red
-        ctx.fillStyle = 'rgba(255,255,255,0.15)';
-        ctx.fillRect(0, -gw/3, gw, gw/1.5);
-        ctx.setLineDash([3, 3]);
-        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-        ctx.lineWidth = 1;
+        ctx.rotate(ga);
+        ctx.translate(-gw/2, 0);
+        ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(0, -gw/3, gw, gw/1.5);
+        ctx.setLineDash([3, 3]); ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1;
         for(let i=0; i<gw; i+=10) { ctx.moveTo(i, -gw/3); ctx.lineTo(i, gw/3); }
         for(let j=-gw/3; j<gw/3; j+=10) { ctx.moveTo(0, j); ctx.lineTo(gw, j); }
         ctx.stroke();
-        // Marco
-        ctx.setLineDash([]);
-        ctx.strokeStyle = '#F8FAFC';
-        ctx.lineWidth = 5;
+        ctx.setLineDash([]); ctx.strokeStyle = '#F8FAFC'; ctx.lineWidth = 5;
         ctx.strokeRect(0, -gw/3, gw, gw/1.5);
         ctx.restore();
         break;
       case 'pica':
-        const pr = p[1] ? getDistance(p[0], p[1]) : 18;
+        const pir = p[1] ? getDistance(p[0], p[1]) : 18;
         ctx.save();
         ctx.translate(p[0].x, p[0].y);
-        // Base Circular Pro
-        ctx.beginPath();
-        ctx.arc(0, pr*0.8, pr*0.6, 0, Math.PI * 2);
-        ctx.fillStyle = '#334155';
-        ctx.fill();
-        // Pica con Brillo
+        ctx.beginPath(); ctx.arc(0, pir*0.8, pir*0.6, 0, Math.PI * 2);
+        ctx.fillStyle = '#334155'; ctx.fill();
         const pG = ctx.createLinearGradient(-4, 0, 4, 0);
-        pG.addColorStop(0, element.color);
-        pG.addColorStop(0.5, '#ffffff');
-        pG.addColorStop(1, element.color);
-        ctx.fillStyle = pG;
-        ctx.fillRect(-4, -pr*2.5, 8, pr*3.2);
+        pG.addColorStop(0, element.color); pG.addColorStop(0.5, '#ffffff'); pG.addColorStop(1, element.color);
+        ctx.fillStyle = pG; ctx.fillRect(-4, -pir*2.5, 8, pir*3.2);
         ctx.restore();
         break;
     }
@@ -426,8 +403,6 @@ function TrainingBoardContent() {
     if (isSelected && element.type !== 'freehand') {
       ctx.restore();
       ctx.save();
-      
-      // CAJA DE SELECCIÓN CENTRADA
       ctx.translate(centerX, centerY);
       ctx.rotate(element.rotation);
       ctx.translate(-centerX, -centerY);
@@ -436,48 +411,34 @@ function TrainingBoardContent() {
       ctx.lineWidth = 1.5;
       ctx.setLineDash([6, 4]);
       
-      const isSinglePoint = ['ball', 'cone', 'seta', 'pica', 'player'].includes(element.type);
       const selPad = 15;
+      const minX = Math.min(...p.map(pt => pt.x));
+      const minY = Math.min(...p.map(pt => pt.y));
+      const maxX = Math.max(...p.map(pt => pt.x));
+      const maxY = Math.max(...p.map(pt => pt.y));
 
       if (element.type === 'rect' && p[1]) {
         ctx.strokeRect(p[0].x, p[0].y, p[1].x - p[0].x, p[1].y - p[0].y);
-      } else if (p[1]) {
-        const minPt = { x: Math.min(...p.map(pt => pt.x)), y: Math.min(...p.map(pt => pt.y)) };
-        const maxPt = { x: Math.max(...p.map(pt => pt.x)), y: Math.max(...p.map(pt => pt.y)) };
-        ctx.strokeRect(minPt.x - selPad, minPt.y - selPad, (maxPt.x - minPt.x) + selPad * 2, (maxPt.y - minPt.y) + selPad * 2);
+      } else {
+        ctx.strokeRect(minX - selPad, minY - selPad, (maxX - minX) + selPad * 2, (maxY - minY) + selPad * 2);
       }
 
       ctx.setLineDash([]);
       ctx.fillStyle = '#ffffff';
-      
-      // Handles de Esquina
       let handles: Point[] = [];
       if (element.type === 'rect' && p[1]) {
         handles = [{ x: p[0].x, y: p[0].y }, { x: p[1].x, y: p[0].y }, { x: p[1].x, y: p[1].y }, { x: p[0].x, y: p[1].y }];
-      } else if (p[1]) {
+      } else {
         handles = [p[0], p[p.length-1]];
       }
-
       handles.forEach(hp => {
-        ctx.beginPath();
-        ctx.arc(hp.x, hp.y, 7, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
+        ctx.beginPath(); ctx.arc(hp.x, hp.y, 7, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
       });
 
-      // Handle de Rotación (Punto Amarillo Centrado)
       const rotY = minY - 50;
-      ctx.beginPath();
-      ctx.moveTo(centerX, minY);
-      ctx.lineTo(centerX, rotY);
-      ctx.stroke();
-      ctx.fillStyle = '#facc15';
-      ctx.beginPath();
-      ctx.arc(centerX, rotY, 10, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = '#000';
-      ctx.lineWidth = 2;
-      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(centerX, minY); ctx.lineTo(centerX, rotY); ctx.stroke();
+      ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(centerX, rotY, 10, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.stroke();
     }
     ctx.restore();
   }, [hexToRgba, getDistance]);
@@ -526,18 +487,22 @@ function TrainingBoardContent() {
     if (selectedId) {
       const el = elements.find(e => e.id === selectedId);
       if (el && el.type !== 'freehand') {
-        const minX = Math.min(...el.points.map(pt => pt.x));
+        let cx, cy;
+        const isS = ['ball', 'cone', 'seta', 'pica', 'player'].includes(el.type);
+        if (isS) { cx = el.points[0].x; cy = el.points[0].y; }
+        else {
+          const minX = Math.min(...el.points.map(pt => pt.x));
+          const minY = Math.min(...el.points.map(pt => pt.y));
+          const maxX = Math.max(...el.points.map(pt => pt.x));
+          const maxY = Math.max(...el.points.map(pt => pt.y));
+          cx = (minX + maxX) / 2; cy = (minY + maxY) / 2;
+        }
+        
+        const localPoint = rotatePoint(point, {x: cx, y: cy}, -el.rotation);
         const minY = Math.min(...el.points.map(pt => pt.y));
-        const maxX = Math.max(...el.points.map(pt => pt.x));
-        const maxY = Math.max(...el.points.map(pt => pt.y));
-        const centerX = (minX + maxX) / 2;
-        const centerY = (minY + maxY) / 2;
-        const localPoint = rotatePoint(point, {x: centerX, y: centerY}, -el.rotation);
-
         const rotY = minY - 50;
-        if (getDistance(point, rotatePoint({x: centerX, y: rotY}, {x: centerX, y: centerY}, el.rotation)) < 25) {
-          interactionMode.current = 'rotating';
-          return;
+        if (getDistance(point, rotatePoint({x: cx, y: rotY}, {x: cx, y: cy}, el.rotation)) < 25) {
+          interactionMode.current = 'rotating'; return;
         }
 
         let handles: Point[] = [];
@@ -546,69 +511,53 @@ function TrainingBoardContent() {
         } else {
           handles = [el.points[0], el.points[el.points.length - 1]];
         }
-
         const handleIdx = handles.findIndex(hp => getDistance(localPoint, hp) < 20);
         if (handleIdx !== -1) {
-          interactionMode.current = 'resizing';
-          activeHandleIndex.current = handleIdx;
-          return;
+          interactionMode.current = 'resizing'; activeHandleIndex.current = handleIdx; return;
         }
       }
     }
 
     const clickedEl = [...elements].reverse().find(el => {
       const p = el.points;
-      const minX = Math.min(...p.map(pt => pt.x));
-      const minY = Math.min(...p.map(pt => pt.y));
-      const maxX = Math.max(...p.map(pt => pt.x));
-      const maxY = Math.max(...p.map(pt => pt.y));
-      const centerX = (minX + maxX) / 2;
-      const centerY = (minY + maxY) / 2;
-      const localPoint = rotatePoint(point, {x: centerX, y: centerY}, -el.rotation);
-
+      let cx, cy;
+      const isS = ['ball', 'cone', 'seta', 'pica', 'player'].includes(el.type);
+      if (isS) { cx = p[0].x; cy = p[0].y; }
+      else {
+        const minX = Math.min(...p.map(pt => pt.x));
+        const minY = Math.min(...p.map(pt => pt.y));
+        const maxX = Math.max(...p.map(pt => pt.x));
+        const maxY = Math.max(...p.map(pt => pt.y));
+        cx = (minX + maxX) / 2; cy = (minY + maxY) / 2;
+      }
+      
+      const localPoint = rotatePoint(point, {x: cx, y: cy}, -el.rotation);
       if (el.type === 'rect') {
+        const minX = Math.min(...p.map(pt => pt.x));
+        const minY = Math.min(...p.map(pt => pt.y));
+        const maxX = Math.max(...p.map(pt => pt.x));
+        const maxY = Math.max(...p.map(pt => pt.y));
         return localPoint.x >= minX && localPoint.x <= maxX && localPoint.y >= minY && localPoint.y <= maxY;
       }
-      if (el.type === 'circle') {
-        return getDistance(localPoint, p[0]) <= getDistance(p[0], p[1]);
-      }
-      if (el.type === 'freehand') {
-        return p.some(fp => getDistance(point, fp) < 20);
-      }
-      const isSingle = ['ball', 'cone', 'seta', 'pica', 'player'].includes(el.type);
-      if (isSingle) {
-        const rad = p[1] ? getDistance(p[0], p[1]) : 30;
-        return getDistance(localPoint, p[0]) < rad + 10;
-      }
-      return localPoint.x >= minX - 10 && localPoint.x <= maxX + 10 && localPoint.y >= minY - 10 && localPoint.y <= maxY + 10;
+      if (el.type === 'circle') return getDistance(localPoint, p[0]) <= getDistance(p[0], p[1]);
+      if (el.type === 'freehand') return p.some(fp => getDistance(point, fp) < 20);
+      const rad = p[1] ? getDistance(p[0], p[1]) : 30;
+      return getDistance(localPoint, p[0]) < rad + 10;
     });
 
     if (clickedEl) {
-      setSelectedId(clickedEl.id);
-      setActiveTool('select');
-      interactionMode.current = 'dragging';
+      setSelectedId(clickedEl.id); setActiveTool('select'); interactionMode.current = 'dragging';
     } else {
       if (activeTool !== 'select') {
-        setSelectedId(null);
-        setIsPropertiesOpen(false);
-        interactionMode.current = 'drawing';
-        const isSingle = ['ball', 'cone', 'seta', 'pica', 'player'].includes(activeTool);
-        let playerNum;
-        if(activeTool === 'player') playerNum = elements.filter(e => e.type === 'player').length + 1;
-
+        setSelectedId(null); setIsPropertiesOpen(false); interactionMode.current = 'drawing';
+        const isS = ['ball', 'cone', 'seta', 'pica', 'player'].includes(activeTool);
+        let playerNum; if(activeTool === 'player') playerNum = elements.filter(e => e.type === 'player').length + 1;
         currentElement.current = { 
-          id: `el-${Date.now()}`, 
-          type: activeTool, 
-          points: isSingle ? [point, {x: point.x + 30, y: point.y}] : [point, point], 
-          color: currentColor,
-          rotation: 0,
-          lineStyle: 'solid',
-          number: playerNum
+          id: `el-${Date.now()}`, type: activeTool, points: isS ? [point, {x: point.x + 30, y: point.y}] : [point, point], 
+          color: currentColor, rotation: 0, lineStyle: 'solid', number: playerNum
         };
       } else {
-        setSelectedId(null);
-        setIsPropertiesOpen(false);
-        interactionMode.current = 'none';
+        setSelectedId(null); setIsPropertiesOpen(false); interactionMode.current = 'none';
       }
     }
   };
@@ -619,19 +568,22 @@ function TrainingBoardContent() {
     const point = { x: e.clientX - rect.left, y: e.clientY - rect.top };
 
     if (interactionMode.current === 'drawing' && currentElement.current) {
-      if (activeTool === 'freehand') {
-        currentElement.current.points.push(point);
-      } else {
-        currentElement.current.points[1] = point;
-      }
+      if (activeTool === 'freehand') currentElement.current.points.push(point);
+      else currentElement.current.points[1] = point;
     } else if (interactionMode.current === 'resizing' && selectedId && activeHandleIndex.current !== null) {
       setElements(prev => prev.map(el => {
         if (el.id !== selectedId) return el;
-        const minX = Math.min(...el.points.map(pt => pt.x));
-        const minY = Math.min(...el.points.map(pt => pt.y));
-        const maxX = Math.max(...el.points.map(pt => pt.x));
-        const maxY = Math.max(...el.points.map(pt => pt.y));
-        const localPoint = rotatePoint(point, {x: (minX+maxX)/2, y: (minY+maxY)/2}, -el.rotation);
+        let cx, cy;
+        const isS = ['ball', 'cone', 'seta', 'pica', 'player'].includes(el.type);
+        if (isS) { cx = el.points[0].x; cy = el.points[0].y; }
+        else {
+          const minX = Math.min(...el.points.map(pt => pt.x));
+          const minY = Math.min(...el.points.map(pt => pt.y));
+          const maxX = Math.max(...el.points.map(pt => pt.x));
+          const maxY = Math.max(...el.points.map(pt => pt.y));
+          cx = (minX + maxX) / 2; cy = (minY + maxY) / 2;
+        }
+        const localPoint = rotatePoint(point, {x: cx, y: cy}, -el.rotation);
         const newPoints = [...el.points];
         if (el.type === 'rect') {
           if (activeHandleIndex.current === 0) { newPoints[0].x = localPoint.x; newPoints[0].y = localPoint.y; }
@@ -646,12 +598,16 @@ function TrainingBoardContent() {
     } else if (interactionMode.current === 'rotating' && selectedId) {
       const el = elements.find(e => e.id === selectedId);
       if (el) {
-        const minX = Math.min(...el.points.map(pt => pt.x));
-        const minY = Math.min(...el.points.map(pt => pt.y));
-        const maxX = Math.max(...el.points.map(pt => pt.x));
-        const maxY = Math.max(...el.points.map(pt => pt.y));
-        const cx = (minX + maxX) / 2;
-        const cy = (minY + maxY) / 2;
+        let cx, cy;
+        const isS = ['ball', 'cone', 'seta', 'pica', 'player'].includes(el.type);
+        if (isS) { cx = el.points[0].x; cy = el.points[0].y; }
+        else {
+          const minX = Math.min(...el.points.map(pt => pt.x));
+          const minY = Math.min(...el.points.map(pt => pt.y));
+          const maxX = Math.max(...el.points.map(pt => pt.x));
+          const maxY = Math.max(...el.points.map(pt => pt.y));
+          cx = (minX + maxX) / 2; cy = (minY + maxY) / 2;
+        }
         const angle = Math.atan2(point.y - cy, point.x - cx) + Math.PI / 2;
         setElements(prev => prev.map(e => e.id === selectedId ? { ...e, rotation: angle } : e));
       }
@@ -675,28 +631,18 @@ function TrainingBoardContent() {
       setSelectedId(currentElement.current.id);
       setActiveTool('select');
     }
-    currentElement.current = null;
-    interactionMode.current = 'none';
-    activeHandleIndex.current = null;
-    lastPoint.current = null;
+    currentElement.current = null; interactionMode.current = 'none'; activeHandleIndex.current = null; lastPoint.current = null;
   };
 
   const deleteElement = (id: string) => {
     setElements(prev => prev.filter(el => el.id !== id));
-    if (selectedId === id) {
-      setSelectedId(null);
-      setIsPropertiesOpen(false);
-    }
+    if (selectedId === id) { setSelectedId(null); setIsPropertiesOpen(false); }
   };
 
   const duplicateElement = (id: string) => {
-    const el = elements.find(e => e.id === id);
-    if (!el) return;
-    const newEl: DrawingElement = {
-      ...el, id: `el-${Date.now()}`, points: el.points.map(p => ({ x: p.x + 30, y: p.y + 30 }))
-    };
-    setElements(prev => [...prev, newEl]);
-    setSelectedId(newEl.id);
+    const el = elements.find(e => e.id === id); if (!el) return;
+    const newEl: DrawingElement = { ...el, id: `el-${Date.now()}`, points: el.points.map(p => ({ x: p.x + 30, y: p.y + 30 })) };
+    setElements(prev => [...prev, newEl]); setSelectedId(newEl.id);
   };
 
   const changeElementColor = (id: string, color: string) => {
@@ -717,7 +663,7 @@ function TrainingBoardContent() {
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-amber-500 animate-pulse" />
-              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Precision_v8.5</span>
+              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Precision_v8.6</span>
             </div>
             <h1 className="text-lg lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase leading-none">Estudio Élite</h1>
           </div>
@@ -766,7 +712,7 @@ function TrainingBoardContent() {
                   <SheetHeader className="space-y-4">
                     <div className="flex items-center gap-3">
                       <Settings2 className="h-4 w-4 text-amber-500" />
-                      <span className="text-[10px] font-black uppercase text-amber-500">Node_Properties_v8.5</span>
+                      <span className="text-[10px] font-black uppercase text-amber-500">Node_Properties_v8.6</span>
                     </div>
                     <SheetTitle className="text-3xl font-black italic uppercase">Propiedades</SheetTitle>
                   </SheetHeader>

@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v8.5.0 (Gráficos de Alta Fidelidad)
+# SynqSports Pro - ARCHITECTURE_LEDGER v8.6.0 (Gráficos de Élite)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -56,7 +56,7 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 2. **Zona Central (Contenidos)** - Soporta múltiples ejercicios.
 3. **Vuelta a la Calma**
 
-## 5. Protocolo de Pizarra y Dibujo (v8.5.0)
+## 5. Protocolo de Pizarra y Dibujo (v8.6.0)
 
 ### 5.1. Motor de Dibujo Suavizado
 - Uso de lógica de interpolación para trazos fluidos en el Canvas e independencia de resolución.
@@ -64,11 +64,11 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 ### 5.2. Esquema JSON Maestro (Independencia de Dispositivo)
 - **Coordenadas Decimales**: Todas las posiciones de fichas y trazos se guardan como valores de `0.000` a `1.000`. Garantiza fidelidad visual en cualquier dispositivo.
 
-### 5.3. Herramientas de Dibujo Avanzadas (v8.5.0)
+### 5.3. Herramientas de Dibujo Avanzadas (v8.6.0)
 - **Modos de Trazo**: Dibujo Libre, Rectángulos, Círculos, Ondas Sinusoidales, Flechas simples y dobles.
-- **Gráficos de Alta Fidelidad (v8.5.0)**: 
+- **Gráficos de Alta Fidelidad (v8.6.0)**: 
     - **Rotación Centrada Universal**: Todos los elementos rotan desde su centro geométrico para una manipulación profesional.
     - **Activos Blueprint Pro**: Rediseño de materiales (balón, conos, porterías) con sombreado volumétrico y perspectiva 3D realista.
-    - **Balón Élite**: Integración de diseño técnico con gradientes radiales y patrones de costura.
+    - **Conos de Élite**: Implementación 3D con base elíptica y bandas de alta visibilidad.
     - **Zero-Distraction UI**: Gestión de propiedades centralizada en la barra inferior, eliminando iconos flotantes sobre el campo.
     - **Smart Selection**: Detección de clics sobre formas existentes con resaltado de alta fidelidad y handles de precisión.
