@@ -13,11 +13,12 @@ import {
   Square,
   Circle,
   ArrowUpRight,
-  ArrowLeftRight
+  ArrowLeftRight,
+  Activity
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type DrawingTool = 'select' | 'freehand' | 'rect' | 'circle' | 'arrow' | 'double-arrow';
+export type DrawingTool = 'select' | 'freehand' | 'rect' | 'circle' | 'arrow' | 'double-arrow' | 'zigzag';
 
 interface BoardToolbarProps {
   theme?: "cyan" | "amber";
@@ -43,6 +44,7 @@ const TRAINING_TOOLS = [
   { id: 'freehand', icon: Pencil, label: 'Dibujo Libre' },
   { id: 'rect', icon: Square, label: 'Rectángulo' },
   { id: 'circle', icon: Circle, label: 'Círculo' },
+  { id: 'zigzag', icon: Activity, label: 'Zig-Zag / Onda' },
   { id: 'arrow', icon: ArrowUpRight, label: 'Flecha' },
   { id: 'double-arrow', icon: ArrowLeftRight, label: 'Flecha Doble' },
 ] as const;

@@ -27,7 +27,8 @@ import {
   Palette,
   Layers,
   Library,
-  Settings
+  Settings,
+  Activity
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -126,6 +127,27 @@ function TrainingBoardContent() {
     ctx.lineTo(to.x - headLength * Math.cos(angle + Math.PI / 6), to.y - headLength * Math.sin(angle + Math.PI / 6));
   };
 
+  const drawZigzagLine = (ctx: CanvasRenderingContext2D, from: Point, to: Point) => {
+    const dist = getDistance(from, to);
+    const angle = Math.atan2(to.y - from.y, to.x - from.x);
+    const steps = Math.max(2, Math.floor(dist / 15));
+    const stepDist = dist / steps;
+    const amplitude = 8;
+
+    ctx.moveTo(from.x, from.y);
+    for (let i = 1; i <= steps; i++) {
+      const x = from.x + Math.cos(angle) * (i * stepDist);
+      const y = from.y + Math.sin(angle) * (i * stepDist);
+      const perpAngle = angle + Math.PI / 2;
+      const offset = i % 2 === 0 ? -amplitude : amplitude;
+      
+      const finalX = x + Math.cos(perpAngle) * offset;
+      const finalY = y + Math.sin(perpAngle) * offset;
+      
+      ctx.lineTo(finalX, finalY);
+    }
+  };
+
   const drawElement = useCallback((ctx: CanvasRenderingContext2D, element: DrawingElement, isSelected: boolean) => {
     ctx.save();
     ctx.strokeStyle = element.color;
@@ -174,6 +196,10 @@ function TrainingBoardContent() {
         const radius = getDistance(p[0], p[1]);
         ctx.arc(p[0].x, p[0].y, radius, 0, 2 * Math.PI);
         ctx.fill();
+        ctx.stroke();
+        break;
+      case 'zigzag':
+        drawZigzagLine(ctx, p[0], p[1]);
         ctx.stroke();
         break;
       case 'arrow':
@@ -227,7 +253,7 @@ function TrainingBoardContent() {
           { x: p[0].x, y: p[1].y }
         ];
       } else {
-        handles = p;
+        handles = [p[0], p[p.length-1]];
       }
 
       handles.forEach(cp => {
@@ -320,7 +346,7 @@ function TrainingBoardContent() {
             { x: el.points[0].x, y: el.points[1].y }
           ];
         } else {
-          handles = el.points;
+          handles = [el.points[0], el.points[el.points.length - 1]];
         }
 
         const handleIdx = handles.findIndex(hp => getDistance(localPoint, hp) < 15);
@@ -402,7 +428,7 @@ function TrainingBoardContent() {
           if (activeHandleIndex.current === 2) { newPoints[1].x = localPoint.x; newPoints[1].y = localPoint.y; }
           if (activeHandleIndex.current === 3) { newPoints[0].x = localPoint.x; newPoints[1].y = localPoint.y; }
         } else {
-          newPoints[activeHandleIndex.current!] = localPoint;
+          newPoints[activeHandleIndex.current === 0 ? 0 : newPoints.length - 1] = localPoint;
         }
         return { ...el, points: newPoints };
       }));
@@ -487,7 +513,6 @@ function TrainingBoardContent() {
   const selectedElement = elements.find(e => e.id === selectedId);
   const isSheetOpen = isPropertiesOpen || isLibraryOpen;
 
-  // PROTOCOLO_UBICACIÓN_V7.6.1: Reposicionamiento del gatillo a la esquina superior derecha
   const getActionTriggerPosition = () => {
     if (!selectedElement) return null;
     const p = selectedElement.points;
@@ -501,7 +526,6 @@ function TrainingBoardContent() {
       minY = Math.min(p[0].y, p[1].y);
     }
     
-    // Colocar a la derecha superior para evitar conflicto con nodo de rotación central
     return { x: maxX + 25, y: minY - 25 };
   };
 
@@ -607,7 +631,6 @@ function TrainingBoardContent() {
               onPointerLeave={handlePointerUp}
             />
 
-            {/* Gatillo de Acciones Flotante (PROXIMIDAD REFINADA v7.6.1) */}
             {selectedId && triggerPos && !isPropertiesOpen && (
               <div 
                 className="absolute z-[100] transition-all duration-300 animate-in fade-in zoom-in-95 pointer-events-auto"
