@@ -19,7 +19,9 @@ import {
   Layers,
   Library,
   Settings,
-  Activity
+  Activity,
+  Circle,
+  Flag
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -152,14 +154,14 @@ function TrainingBoardContent() {
     }
 
     const p = element.points;
-    if (p.length < 2) {
+    if (p.length < 1) {
       ctx.restore();
       return;
     }
 
-    const centerX = (p[0].x + (p[1]?.x || p[0].x)) / 2;
-    const centerY = (p[0].y + (p[1]?.y || p[0].y)) / 2;
-    const canRotate = element.type !== 'freehand' && element.type !== 'circle';
+    const centerX = p[1] ? (p[0].x + p[1].x) / 2 : p[0].x;
+    const centerY = p[1] ? (p[0].y + p[1].y) / 2 : p[0].y;
+    const canRotate = !['freehand', 'circle', 'ball', 'cone', 'pica', 'flag'].includes(element.type);
     
     if (canRotate) {
       ctx.translate(centerX, centerY);
@@ -175,6 +177,7 @@ function TrainingBoardContent() {
         ctx.stroke();
         break;
       case 'rect':
+        if (!p[1]) break;
         const w = p[1].x - p[0].x;
         const h = p[1].y - p[0].y;
         ctx.rect(p[0].x, p[0].y, w, h);
@@ -182,16 +185,19 @@ function TrainingBoardContent() {
         ctx.stroke();
         break;
       case 'circle':
+        if (!p[1]) break;
         const radius = getDistance(p[0], p[1]);
         ctx.arc(p[0].x, p[0].y, radius, 0, 2 * Math.PI);
         ctx.fill();
         ctx.stroke();
         break;
       case 'zigzag':
+        if (!p[1]) break;
         drawWaveLine(ctx, p[0], p[1]);
         ctx.stroke();
         break;
       case 'arrow':
+        if (!p[1]) break;
         ctx.moveTo(p[0].x, p[0].y);
         ctx.lineTo(p[1].x, p[1].y);
         ctx.stroke();
@@ -201,6 +207,7 @@ function TrainingBoardContent() {
         ctx.stroke();
         break;
       case 'double-arrow':
+        if (!p[1]) break;
         ctx.moveTo(p[0].x, p[0].y);
         ctx.lineTo(p[1].x, p[1].y);
         ctx.stroke();
@@ -208,6 +215,37 @@ function TrainingBoardContent() {
         ctx.setLineDash([]);
         drawArrowhead(ctx, p[0], p[1]);
         drawArrowhead(ctx, p[1], p[0]);
+        ctx.stroke();
+        break;
+      case 'ball':
+        ctx.arc(p[0].x, p[0].y, 8, 0, Math.PI * 2);
+        ctx.fillStyle = '#fff';
+        ctx.fill();
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        break;
+      case 'cone':
+        ctx.moveTo(p[0].x, p[0].y - 10);
+        ctx.lineTo(p[0].x - 10, p[0].y + 10);
+        ctx.lineTo(p[0].x + 10, p[0].y + 10);
+        ctx.closePath();
+        ctx.fillStyle = element.color;
+        ctx.fill();
+        ctx.stroke();
+        break;
+      case 'pica':
+        ctx.moveTo(p[0].x, p[0].y - 15);
+        ctx.lineTo(p[0].x, p[0].y + 15);
+        ctx.stroke();
+        break;
+      case 'flag':
+        ctx.moveTo(p[0].x, p[0].y + 15);
+        ctx.lineTo(p[0].x, p[0].y - 15);
+        ctx.lineTo(p[0].x + 15, p[0].y - 7.5);
+        ctx.lineTo(p[0].x, p[0].y);
+        ctx.fillStyle = element.color;
+        ctx.fill();
         ctx.stroke();
         break;
     }
@@ -226,22 +264,26 @@ function TrainingBoardContent() {
       ctx.lineWidth = 1;
       ctx.setLineDash([5, 5]);
       
-      if (element.type === 'rect') {
+      const isAsset = ['ball', 'cone', 'pica', 'flag'].includes(element.type);
+
+      if (element.type === 'rect' && p[1]) {
         ctx.strokeRect(p[0].x, p[0].y, p[1].x - p[0].x, p[1].y - p[0].y);
+      } else if (isAsset) {
+        ctx.strokeRect(p[0].x - 20, p[0].y - 20, 40, 40);
       }
 
       ctx.setLineDash([]);
       ctx.fillStyle = '#fff';
       
       let handles: Point[] = [];
-      if (element.type === 'rect') {
+      if (element.type === 'rect' && p[1]) {
         handles = [
           { x: p[0].x, y: p[0].y },
           { x: p[1].x, y: p[0].y },
           { x: p[1].x, y: p[1].y },
           { x: p[0].x, y: p[1].y }
         ];
-      } else {
+      } else if (!isAsset && p[1]) {
         handles = [p[0], p[p.length-1]];
       }
 
@@ -252,7 +294,7 @@ function TrainingBoardContent() {
         ctx.stroke();
       });
 
-      if (canRotate) {
+      if (canRotate && p[1]) {
         const rotX = (p[0].x + p[1].x) / 2;
         const rotY = Math.min(p[0].y, p[1].y) - 30;
         ctx.beginPath();
@@ -313,11 +355,14 @@ function TrainingBoardContent() {
     if (selectedId) {
       const el = elements.find(e => e.id === selectedId);
       if (el && el.type !== 'freehand') {
-        const centerX = (el.points[0].x + el.points[1].x) / 2;
-        const centerY = (el.points[0].y + el.points[1].y) / 2;
+        const p = el.points;
+        const centerX = p[1] ? (p[0].x + p[1].x) / 2 : p[0].x;
+        const centerY = p[1] ? (p[0].y + p[1].y) / 2 : p[0].y;
         const localPoint = rotatePoint(point, {x: centerX, y: centerY}, -el.rotation);
 
-        if (el.type !== 'circle') {
+        const isAsset = ['ball', 'cone', 'pica', 'flag'].includes(el.type);
+
+        if (!isAsset && el.type !== 'circle' && p[1]) {
           const rotX = (el.points[0].x + el.points[1].x) / 2;
           const rotY = Math.min(el.points[0].y, el.points[1].y) - 30;
           if (getDistance(point, rotatePoint({x: rotX, y: rotY}, {x: centerX, y: centerY}, el.rotation)) < 15) {
@@ -327,14 +372,14 @@ function TrainingBoardContent() {
         }
 
         let handles: Point[] = [];
-        if (el.type === 'rect') {
+        if (el.type === 'rect' && p[1]) {
           handles = [
             { x: el.points[0].x, y: el.points[0].y },
             { x: el.points[1].x, y: el.points[0].y },
             { x: el.points[1].x, y: el.points[1].y },
             { x: el.points[0].x, y: el.points[1].y }
           ];
-        } else {
+        } else if (!isAsset && p[1]) {
           handles = [el.points[0], el.points[el.points.length - 1]];
         }
 
@@ -349,22 +394,28 @@ function TrainingBoardContent() {
 
     const clickedEl = [...elements].reverse().find(el => {
       const p = el.points;
-      const centerX = (p[0].x + (p[1]?.x || p[0].x)) / 2;
-      const centerY = (p[0].y + (p[1]?.y || p[0].y)) / 2;
+      const centerX = p[1] ? (p[0].x + p[1].x) / 2 : p[0].x;
+      const centerY = p[1] ? (p[0].y + p[1].y) / 2 : p[0].y;
       const localPoint = rotatePoint(point, {x: centerX, y: centerY}, -el.rotation);
 
-      if (el.type === 'rect') {
+      if (el.type === 'rect' && p[1]) {
         return localPoint.x >= Math.min(p[0].x, p[1].x) && localPoint.x <= Math.max(p[0].x, p[1].x) &&
                localPoint.y >= Math.min(p[0].y, p[1].y) && localPoint.y <= Math.max(p[0].y, p[1].y);
       }
-      if (el.type === 'circle') {
+      if (el.type === 'circle' && p[1]) {
         const radius = getDistance(p[0], p[1]);
         return getDistance(localPoint, p[0]) <= radius;
       }
       if (el.type === 'freehand') {
         return p.some(fp => getDistance(point, fp) < 15);
       }
-      return getDistance(localPoint, p[0]) < 25 || getDistance(localPoint, p[p.length-1]) < 25;
+      if (['ball', 'cone', 'pica', 'flag'].includes(el.type)) {
+        return getDistance(point, p[0]) < 25;
+      }
+      if (p[1]) {
+        return getDistance(localPoint, p[0]) < 25 || getDistance(localPoint, p[p.length-1]) < 25;
+      }
+      return getDistance(localPoint, p[0]) < 25;
     });
 
     if (clickedEl) {
@@ -376,13 +427,14 @@ function TrainingBoardContent() {
       }
     } else {
       if (activeTool !== 'select') {
+        const isAsset = ['ball', 'cone', 'pica', 'flag'].includes(activeTool);
         setSelectedId(null);
         setIsPropertiesOpen(false);
         interactionMode.current = 'drawing';
         currentElement.current = { 
           id: `el-${Date.now()}`, 
           type: activeTool, 
-          points: [point, point], 
+          points: isAsset ? [point] : [point, point], 
           color: currentColor,
           rotation: 0,
           lineStyle: 'solid'
@@ -401,10 +453,13 @@ function TrainingBoardContent() {
     const point = { x: e.clientX - rect.left, y: e.clientY - rect.top };
 
     if (interactionMode.current === 'drawing' && currentElement.current) {
-      if (activeTool === 'freehand') {
-        currentElement.current.points.push(point);
-      } else {
-        currentElement.current.points[1] = point;
+      const isAsset = ['ball', 'cone', 'pica', 'flag'].includes(currentElement.current.type);
+      if (!isAsset) {
+        if (activeTool === 'freehand') {
+          currentElement.current.points.push(point);
+        } else {
+          currentElement.current.points[1] = point;
+        }
       }
     } else if (interactionMode.current === 'resizing' && selectedId && activeHandleIndex.current !== null) {
       setElements(prev => prev.map(el => {
@@ -426,7 +481,7 @@ function TrainingBoardContent() {
       }));
     } else if (interactionMode.current === 'rotating' && selectedId) {
       const el = elements.find(e => e.id === selectedId);
-      if (el) {
+      if (el && el.points[1]) {
         const centerX = (el.points[0].x + el.points[1].x) / 2;
         const centerY = (el.points[0].y + el.points[1].y) / 2;
         const angle = Math.atan2(point.y - centerY, point.x - centerX) + Math.PI / 2;
@@ -513,9 +568,15 @@ function TrainingBoardContent() {
     if (selectedElement.type === 'freehand') {
       maxX = Math.max(...p.map(pt => pt.x));
       minY = Math.min(...p.map(pt => pt.y));
-    } else {
+    } else if (['ball', 'cone', 'pica', 'flag'].includes(selectedElement.type)) {
+      maxX = p[0].x;
+      minY = p[0].y;
+    } else if (p[1]) {
       maxX = Math.max(p[0].x, p[1].x);
       minY = Math.min(p[0].y, p[1].y);
+    } else {
+      maxX = p[0].x;
+      minY = p[0].y;
     }
     
     return { x: maxX + 25, y: minY - 25 };
@@ -530,7 +591,7 @@ function TrainingBoardContent() {
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-amber-500 animate-pulse" />
-              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Exercise_Designer_IA_v2.0</span>
+              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Exercise_Designer_IA_v8.1</span>
             </div>
             <h1 className="text-lg lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase">Estudio Profesional</h1>
           </div>
@@ -583,16 +644,6 @@ function TrainingBoardContent() {
       </header>
 
       <div className="flex-1 flex overflow-hidden relative">
-        {!isSheetOpen && (
-          <button 
-            onClick={() => setIsLibraryOpen(true)}
-            className="absolute left-4 bottom-24 h-12 w-12 bg-black/60 border border-amber-500/30 text-amber-500 rounded-2xl flex items-center justify-center hover:bg-amber-500 hover:text-black transition-all animate-in fade-in duration-500 z-50"
-            title="Abrir Biblioteca de Activos"
-          >
-            <Library className="h-5 w-5" />
-          </button>
-        )}
-
         <main className="flex-1 flex items-center justify-center relative overflow-hidden touch-none">
           <TacticalField theme="amber" fieldType={fieldType} showLanes={showLanes}>
             <canvas 
@@ -624,21 +675,44 @@ function TrainingBoardContent() {
           </TacticalField>
         </main>
 
-        <BoardToolbar 
-          theme="amber" 
-          variant="training"
-          orientation="horizontal"
-          activeTool={activeTool}
-          onToolSelect={(tool) => {
-            setActiveTool(tool);
-            if (tool !== 'select') {
-              setSelectedId(null);
-              setIsPropertiesOpen(false);
-            }
-          }}
-          onClear={() => { setElements([]); setSelectedId(null); setIsPropertiesOpen(false); }}
-          className="absolute bottom-6 left-1/2 -translate-x-1/2 hidden sm:flex" 
-        />
+        {/* ÁREA INFERIOR DE HERRAMIENTAS DUALES */}
+        <div className="absolute bottom-6 left-0 right-0 flex justify-center items-end gap-12 px-12 z-50 pointer-events-none">
+          
+          {/* BARRA DE MATERIALES (IZQUIERDA) */}
+          <div className="pointer-events-auto">
+            <BoardToolbar 
+              theme="amber" 
+              variant="materials"
+              orientation="horizontal"
+              activeTool={activeTool}
+              onToolSelect={(tool) => {
+                setActiveTool(tool);
+                setSelectedId(null);
+                setIsPropertiesOpen(false);
+              }}
+              className="amber-glow border-2" 
+            />
+          </div>
+
+          {/* BARRA DE DIBUJO (DERECHA) */}
+          <div className="pointer-events-auto">
+            <BoardToolbar 
+              theme="amber" 
+              variant="training"
+              orientation="horizontal"
+              activeTool={activeTool}
+              onToolSelect={(tool) => {
+                setActiveTool(tool);
+                if (tool !== 'select') {
+                  setSelectedId(null);
+                  setIsPropertiesOpen(false);
+                }
+              }}
+              onClear={() => { setElements([]); setSelectedId(null); setIsPropertiesOpen(false); }}
+              className="amber-glow border-2" 
+            />
+          </div>
+        </div>
 
         <Sheet open={isSheetOpen} onOpenChange={(open) => { 
           if(!open) { 

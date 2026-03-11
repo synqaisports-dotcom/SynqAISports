@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v8.0.0 (Protocolo de Ergonomía Táctica)
+# SynqSports Pro - ARCHITECTURE_LEDGER v8.1.0 (Estación de Trabajo Ergonómica)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -71,7 +71,7 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 - **Sugerencias**: El Entrenador puede proponer cambios ("Sugerir Cambio").
 - **Bloqueo de Seguridad**: Las solicitudes de cambio se bloquean automáticamente si faltan menos de **7 días** para la sesión.
 
-## 5. Protocolo de Pizarra y Dibujo (v8.0.0)
+## 5. Protocolo de Pizarra y Dibujo (v8.1.0)
 
 ### 5.1. Motor de Dibujo Suavizado
 - Uso de lógica de interpolación para trazos fluidos en el Canvas e independencia de resolución.
@@ -79,17 +79,17 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 ### 5.2. Esquema JSON Maestro (Independencia de Dispositivo)
 - **Coordenadas Decimales**: Todas las posiciones de fichas y trazos se guardan como valores de `0.000` a `1.000`. Garantiza fidelidad visual en cualquier dispositivo.
 
-### 5.3. Herramientas de Dibujo Avanzadas (v8.0.0)
+### 5.3. Herramientas de Dibujo Avanzadas (v8.1.0)
 - **Modos de Trazo**: Dibujo Libre, Rectángulos, Círculos, Ondas Sinusoidales, Flechas simples y dobles.
 - **Motor de Ondas (v7.7.1)**: Implementación de algoritmo sinusoidal para representar movimientos de agilidad y fintas fluidas entre dos puntos.
 - **Manipulación Táctica Total**: 
     - **Arrastre (Dragging)**: Capacidad de mover cualquier elemento por el campo manteniendo su escala.
     - **Puntos de Modificación**: Implementación de 4 handles en rectángulos y puntos extremos en flechas/círculos/ondas para redimensionado dinámico.
     - **Smart Selection (v7.1)**: El sistema detecta clics sobre formas existentes incluso si hay otra herramienta activa.
-- **Edición Ergonómica (v8.0.0)**:
-    - **Barra de Herramientas Horizontal**: Reubicación a la parte inferior central del campo para facilitar el uso en tablets.
-    - **Modo Colapsable**: Capacidad de reducir la barra a un solo icono para maximizar el área de visión táctica.
-    - **Blindaje Visual**: Borde reforzado y efecto de resplandor (glow) para destacar sobre la superficie de juego.
+- **Estación de Trabajo Ergonómica (v8.1.0)**:
+    - **Doble Barra Horizontal**: Distribución simétrica en la parte inferior del campo. Lado izquierdo para Biblioteca de Materiales y lado derecho para Herramientas de Dibujo.
+    - **Modo Colapsable Independiente**: Ambas barras pueden minimizarse para maximizar el área de visión táctica.
+    - **Blindaje Visual**: Bordes reforzados y efecto de resplandor (glow) en ambas estaciones de control.
 - **Lógica de Controles Específica (v7.8.0)**:
     - **Círculos**: Se omite el nodo de rotación.
     - **Dibujo Libre Blindado**: Se eliminan las acciones (menú de propiedades) para los trazos manuales. Una vez finalizados, actúan como bloques tácticos puros que solo permiten selección y arrastre.

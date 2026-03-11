@@ -13,11 +13,12 @@ import {
   ArrowLeftRight, 
   Activity,
   ChevronLeft,
-  ChevronDown
+  ChevronDown,
+  Flag
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type DrawingTool = 'select' | 'freehand' | 'rect' | 'circle' | 'arrow' | 'double-arrow' | 'zigzag';
+export type DrawingTool = 'select' | 'freehand' | 'rect' | 'circle' | 'arrow' | 'double-arrow' | 'zigzag' | 'ball' | 'cone' | 'pica' | 'flag';
 
 interface BoardToolbarProps {
   theme?: "cyan" | "amber";
@@ -29,7 +30,7 @@ interface BoardToolbarProps {
   isPaintMode?: boolean;
   onTogglePaintMode?: (active: boolean) => void;
   className?: string;
-  variant?: "full" | "match" | "training";
+  variant?: "full" | "match" | "training" | "materials";
   orientation?: "vertical" | "horizontal";
 }
 
@@ -47,6 +48,21 @@ const TRAINING_TOOLS = [
   { id: 'zigzag', icon: Activity, label: 'Zig-Zag / Onda' },
   { id: 'arrow', icon: ArrowUpRight, label: 'Flecha' },
   { id: 'double-arrow', icon: ArrowLeftRight, label: 'Flecha Doble' },
+] as const;
+
+function TriangleIcon(props: any) {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" {...props}><path d="M12 3L2 20h20L12 3z" /></svg>
+}
+
+function MinusIcon(props: any) {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" {...props}><line x1="12" y1="5" x2="12" y2="19" /></svg>
+}
+
+const MATERIAL_TOOLS = [
+  { id: 'ball', icon: Circle, label: 'Balón' },
+  { id: 'cone', icon: TriangleIcon, label: 'Cono' },
+  { id: 'pica', icon: MinusIcon, label: 'Pica' },
+  { id: 'flag', icon: Flag, label: 'Banderín' },
 ] as const;
 
 export function BoardToolbar({ 
@@ -127,6 +143,8 @@ export function BoardToolbar({
     );
   }
 
+  const currentTools = variant === 'materials' ? MATERIAL_TOOLS : TRAINING_TOOLS;
+
   return (
     <aside className={cn(
       "bg-black/60 backdrop-blur-2xl border-2 transition-all duration-500 flex items-center z-50 overflow-hidden",
@@ -147,29 +165,32 @@ export function BoardToolbar({
             theme === "amber" ? "hover:bg-amber-500/10 hover:text-amber-500" : "hover:bg-primary/10 hover:text-primary",
             isHorizontal ? "mx-auto" : "my-auto"
           )}
-          title="Expandir Herramientas"
+          title={variant === 'materials' ? "Expandir Materiales" : "Expandir Herramientas"}
         >
-          <Pencil className="h-5 w-5" />
+          {variant === 'materials' ? <Library className="h-5 w-5" /> : <Pencil className="h-5 w-5" />}
         </button>
       ) : (
         <>
-          <button
-            onClick={() => onToolSelect?.('select')}
-            className={cn(
-              "h-10 w-10 rounded-xl flex items-center justify-center transition-all group relative",
-              activeTool === 'select' ? activeClass : "text-white/20 hover:text-white"
-            )}
-            title="Seleccionar / Mover"
-          >
-            <MousePointer2 className="h-5 w-5" />
-          </button>
+          {variant !== 'materials' && (
+            <>
+              <button
+                onClick={() => onToolSelect?.('select')}
+                className={cn(
+                  "h-10 w-10 rounded-xl flex items-center justify-center transition-all group relative",
+                  activeTool === 'select' ? activeClass : "text-white/20 hover:text-white"
+                )}
+                title="Seleccionar / Mover"
+              >
+                <MousePointer2 className="h-5 w-5" />
+              </button>
+              <div className={cn(isHorizontal ? "h-6 w-[1px]" : "w-8 h-[1px]", "bg-white/10")} />
+            </>
+          )}
 
-          <div className={cn(isHorizontal ? "h-6 w-[1px]" : "w-8 h-[1px]", "bg-white/10")} />
-
-          {TRAINING_TOOLS.map((tool) => (
+          {currentTools.map((tool) => (
             <button
               key={tool.id}
-              onClick={() => onToolSelect?.(tool.id)}
+              onClick={() => onToolSelect?.(tool.id as DrawingTool)}
               className={cn(
                 "h-10 w-10 rounded-xl flex items-center justify-center transition-all group relative",
                 activeTool === tool.id ? activeClass : "text-white/20 hover:text-white"
@@ -180,15 +201,18 @@ export function BoardToolbar({
             </button>
           ))}
 
-          <div className={cn(isHorizontal ? "h-6 w-[1px]" : "w-8 h-[1px]", "bg-white/10")} />
-
-          <button 
-            onClick={onClear} 
-            className="text-rose-500/40 hover:text-rose-500 transition-colors h-10 w-10 flex items-center justify-center rounded-xl hover:bg-rose-500/10"
-            title="Borrar Todo"
-          >
-            <Trash2 className="h-5 w-5" />
-          </button>
+          {variant !== 'materials' && (
+            <>
+              <div className={cn(isHorizontal ? "h-6 w-[1px]" : "w-8 h-[1px]", "bg-white/10")} />
+              <button 
+                onClick={onClear} 
+                className="text-rose-500/40 hover:text-rose-500 transition-colors h-10 w-10 flex items-center justify-center rounded-xl hover:bg-rose-500/10"
+                title="Borrar Todo"
+              >
+                <Trash2 className="h-5 w-5" />
+              </button>
+            </>
+          )}
 
           <div className={cn(isHorizontal ? "h-6 w-[1px]" : "w-8 h-[1px]", "bg-white/10")} />
 
