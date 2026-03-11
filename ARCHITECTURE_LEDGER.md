@@ -1,5 +1,5 @@
 
-# SynqSports Pro - Architecture Ledger v3.6 (Full Sync Protocol)
+# SynqSports Pro - Architecture Ledger v4.0 (Operational Planning Protocol)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -87,10 +87,6 @@ Los roles operan bajo un sistema de ranking numérico (`rank`):
 - **Captura de Puntero**: Uso obligatorio de `setPointerCapture` en eventos de inicio de arrastre para garantizar la continuidad del movimiento en tablets aunque el dedo salga de los límites del componente.
 - **Touch-Action Lockdown**: Propiedad `touch-action: none` aplicada en contenedores tácticos para evitar interferencias del scroll nativo del navegador.
 
-### 8.2. Protocolo de Sincronización de Contenedores (v1.9)
-- **Precisión de Arrastre**: La referencia de captura de coordenadas (`fieldRef`) debe asignarse estrictamente al contenedor geométrico interno que define el área de juego (el que tiene la relación de aspecto y el `relative`).
-- **Eliminación de Offset**: Al sincronizar el cálculo de `clientX/Y` con el `getBoundingClientRect` del contenedor interno, se garantiza una relación 1:1, eliminando la distancia entre el puntero y el centro de la ficha.
-
 ## 9. Registro de Ajustes y Correcciones (Hotfixes)
 
 ### 9.1. Protocolo de Cobertura de Lienzo (Drawing Layer v2.0)
@@ -112,9 +108,10 @@ Los roles operan bajo un sistema de ranking numérico (`rank`):
 - **Cadete (14-15 años)**: Periodización Táctica. Rendimiento competitivo.
 - **Juvenil (16-18 años)**: Macrociclo Anual (ATR). Microciclo de Élite. Antesala profesional.
 
-### 10.2. Dimensiones de Objetivos
-1. **Filosofía**: ADN de la etapa.
-2. **Técnicos**: Perfeccionamiento gestual y por puesto.
-3. **Tácticos**: Inteligencia de juego, estrategia y reglamento.
-4. **Motores/Físicos**: Rendimiento condicional y hábitos saludables.
-5. **Psicopedagógicos**: Las "4 C" (Confianza, Control, Compromiso, Concentración).
+## 11. Protocolo de Planificación Operativa (v4.0)
+
+### 11.1. Macrociclo Septiembre - Junio
+- **Arquitectura de Matriz**: Visualización de alta densidad basada en scroll horizontal que cubre 10 meses de temporada.
+- **Contexto de Equipo Real**: Los planes se vinculan a identidades de cantera específicas (ej. Infantil A) para personalización metodológica total.
+- **Sincronización Manual**: Eliminación de IA en la generación de microciclos para permitir que el Director de Metodología asigne tareas directamente desde la "Biblioteca Sin IA".
+- **Cálculo de Volúmenes**: Motor de cálculo automático de sesiones y tareas totales basado en el patrón semanal configurado.
