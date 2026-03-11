@@ -126,6 +126,7 @@ export function BoardToolbar({
   }
 
   // VARIANTE ENTRENAMIENTO / FULL: Incluye formas y flechas
+  // v7.9: Eliminado el selector de colores por redundancia con el menú de acciones
   return (
     <aside className={cn(
       "w-16 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-3xl flex flex-col items-center py-6 gap-4 z-50",
@@ -162,26 +163,9 @@ export function BoardToolbar({
 
       <div className="w-8 h-[1px] bg-white/10 my-2" />
 
-      {/* Colores */}
-      <div className="flex flex-col gap-3">
-        {COLORS.map(color => (
-          <button
-            key={color.id}
-            onClick={() => onColorSelect?.(color.value)}
-            className={cn(
-              "h-5 w-5 rounded-full border transition-all",
-              activeColor === color.value ? "border-white scale-110 shadow-lg" : "border-transparent opacity-40 hover:opacity-100"
-            )}
-            style={{ backgroundColor: color.value }}
-          />
-        ))}
-      </div>
-
-      <div className="w-8 h-[1px] bg-white/10 my-2" />
-
       <button 
         onClick={onClear} 
-        className="text-rose-500/40 hover:text-rose-500 transition-colors"
+        className="text-rose-500/40 hover:text-rose-500 transition-colors h-10 w-10 flex items-center justify-center"
         title="Borrar Todo"
       >
         <Trash2 className="h-5 w-5" />

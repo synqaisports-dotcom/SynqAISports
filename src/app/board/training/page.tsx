@@ -382,7 +382,6 @@ function TrainingBoardContent() {
       setSelectedId(clickedEl.id);
       setActiveTool('select');
       interactionMode.current = 'dragging';
-      // Blindaje: cerrar propiedades si es dibujo libre
       if (clickedEl.type === 'freehand') {
         setIsPropertiesOpen(false);
       }
@@ -597,6 +596,7 @@ function TrainingBoardContent() {
       <div className="flex-1 flex overflow-hidden relative">
         <BoardToolbar 
           theme="amber" 
+          variant="training"
           activeTool={activeTool}
           onToolSelect={(tool) => {
             setActiveTool(tool);
@@ -605,8 +605,6 @@ function TrainingBoardContent() {
               setIsPropertiesOpen(false);
             }
           }}
-          activeColor={currentColor}
-          onColorSelect={setCurrentColor}
           onClear={() => { setElements([]); setSelectedId(null); setIsPropertiesOpen(false); }}
           className="absolute left-4 top-1/2 -translate-y-1/2 hidden sm:flex" 
         />
