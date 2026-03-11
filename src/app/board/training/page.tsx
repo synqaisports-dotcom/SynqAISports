@@ -131,11 +131,10 @@ function TrainingBoardContent() {
     const dist = getDistance(from, to);
     const angle = Math.atan2(to.y - from.y, to.x - from.x);
     const amplitude = 10;
-    const wavelength = 40; // longitud de cada onda
+    const wavelength = 40; 
     
     ctx.moveTo(from.x, from.y);
     
-    // Dibujamos la onda por pequeños segmentos para suavizarla
     for (let d = 0; d <= dist; d += 2) {
       const x = from.x + Math.cos(angle) * d;
       const y = from.y + Math.sin(angle) * d;
@@ -383,6 +382,10 @@ function TrainingBoardContent() {
       setSelectedId(clickedEl.id);
       setActiveTool('select');
       interactionMode.current = 'dragging';
+      // Blindaje: cerrar propiedades si es dibujo libre
+      if (clickedEl.type === 'freehand') {
+        setIsPropertiesOpen(false);
+      }
     } else {
       if (activeTool !== 'select') {
         setSelectedId(null);
@@ -632,7 +635,7 @@ function TrainingBoardContent() {
               onPointerLeave={handlePointerUp}
             />
 
-            {selectedId && triggerPos && !isPropertiesOpen && (
+            {selectedId && triggerPos && !isPropertiesOpen && selectedElement?.type !== 'freehand' && (
               <div 
                 className="absolute z-[100] transition-all duration-300 animate-in fade-in zoom-in-95 pointer-events-auto"
                 style={{ left: triggerPos.x, top: triggerPos.y, transform: 'translateX(-50%)' }}

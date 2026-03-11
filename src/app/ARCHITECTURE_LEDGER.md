@@ -1,6 +1,5 @@
 
-
-# SynqSports Pro - ARCHITECTURE_LEDGER v7.3.1 (Refinamiento Espacial)
+# SynqSports Pro - ARCHITECTURE_LEDGER v7.8.0 (Blindaje de Dibujo Libre)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -79,7 +78,7 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 - **Sugerencias**: El Entrenador puede proponer cambios ("Sugerir Cambio").
 - **Bloqueo de Seguridad**: Las solicitudes de cambio se bloquean automáticamente si faltan menos de **7 días** para la sesión.
 
-## 5. Protocolo de Pizarra y Dibujo (v7.3.1)
+## 5. Protocolo de Pizarra y Dibujo (v7.8.0)
 
 ### 5.1. Motor de Dibujo Suavizado
 - Uso de lógica de interpolación para trazos fluidos en el Canvas e independencia de resolución.
@@ -87,22 +86,21 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 ### 5.2. Esquema JSON Maestro (Independencia de Dispositivo)
 - **Coordenadas Decimales**: Todas las posiciones de fichas y trazos se guardan como valores de `0.000` a `1.000`. Garantiza fidelidad visual en cualquier dispositivo.
 
-### 5.3. Herramientas de Dibujo Avanzadas (v7.3.1)
-- **Modos de Trazo**: Dibujo Libre, Rectángulos, Círculos, Flechas simples y dobles.
+### 5.3. Herramientas de Dibujo Avanzadas (v7.8.0)
+- **Modos de Trazo**: Dibujo Libre, Rectángulos, Círculos, Ondas Sinusoidales, Flechas simples y dobles.
+- **Motor de Ondas (v7.7.1)**: Implementación de algoritmo sinusoidal para representar movimientos de agilidad y fintas fluidas entre dos puntos.
 - **Manipulación Táctica Total**: 
     - **Arrastre (Dragging)**: Capacidad de mover cualquier elemento por el campo manteniendo su escala.
-    - **Puntos de Modificación**: Implementación de 4 handles en rectángulos y puntos extremos en flechas/círculos para redimensionado dinámico.
+    - **Puntos de Modificación**: Implementación de 4 handles en rectángulos y puntos extremos en flechas/círculos/ondas para redimensionado dinámico.
     - **Smart Selection (v7.1)**: El sistema detecta clics sobre formas existentes incluso si hay otra herramienta activa.
-    - **Geometría Local (v7.1)**: Implementación de detección de colisiones basada en coordenadas locales rotadas.
-- **Edición Contextual (v7.2)**:
-    - **Menú de Acciones**: Barra flotante que permite borrar, duplicar y cambiar el color de elementos individuales.
-    - **Sincronización Automática (v7.2)**: El menú de acciones aparece instantáneamente al seleccionar o crear un elemento.
-- **Lógica de Controles Específica**:
+- **Edición Contextual (v7.6.1)**:
+    - **Migración a Sheets**: Uso de overlays para maximizar el área del campo.
+    - **Gatillo de Acciones Flotante**: Icono de configuración en esquina superior derecha para evitar colisión con rotación.
+- **Lógica de Controles Específica (v7.8.0)**:
     - **Círculos**: Se omite el nodo de rotación.
-    - **Dibujo Libre**: Se omiten handles de redimensionado.
+    - **Dibujo Libre Blindado**: Se eliminan las acciones (menú de propiedades) para los trazos manuales. Una vez finalizados, actúan como bloques tácticos puros que solo permiten selección y arrastre.
 - **Análisis Espacial (v7.3.1)**:
-    - **Carriles Tácticos**: Implementación de líneas de guía horizontales para dividir el campo en Carril Superior, Central e Inferior.
-    - **Geometría de Áreas**: Carriles ajustados al **20%** y **80%** de la altura para alineación con el área grande y visibilidad incrementada (`white/30`).
+    - **Carriles Tácticos**: Líneas horizontales al **20%** y **80%** de la altura para alineación con el área grande.
 
 ## 6. Gestión de Espacios e Instalaciones
 - **Motor Geométrico**: Subdivisiones de campos (1, 2 o 4 zonas) calculadas en porcentajes.
