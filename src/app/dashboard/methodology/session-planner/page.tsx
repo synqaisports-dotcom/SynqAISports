@@ -19,7 +19,11 @@ import {
   Save,
   Trash2,
   Search,
-  Filter
+  Filter,
+  Flame,
+  Dumbbell,
+  Wind,
+  Info
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -60,7 +64,7 @@ const MONTHS = [
   { id: "jun", label: "JUNIO", weeks: 4 },
 ];
 
-// MOCK DE EQUIPOS DEL CLUB (Sincronizado con Academy)
+// MOCK DE EQUIPOS DEL CLUB
 const CLUB_TEAMS = [
   { id: "t1", name: "Infantil A", type: "F11" },
   { id: "t2", name: "Alevín B", type: "F7" },
@@ -71,9 +75,19 @@ const CLUB_TEAMS = [
 export default function SessionPlannerPage() {
   const { toast } = useToast();
   const [selectedTeam, setSelectedTeam] = useState(CLUB_TEAMS[0].id);
-  const [tasksPerSession, setTasksPerSession] = useState(4);
   const [sessionsPerWeek, setSessionsPerWeek] = useState(3);
   const [selectedMCC, setSelectedMCC] = useState<string | null>(null);
+
+  // CONFIGURACIÓN DE TIEMPOS DE SESIÓN
+  const [sessionTimes, setSessionTimes] = useState({
+    warmup: 10,
+    central: 45,
+    cooldown: 5
+  });
+
+  const totalTime = useMemo(() => 
+    sessionTimes.warmup + sessionTimes.central + sessionTimes.cooldown
+  , [sessionTimes]);
 
   const currentTeam = useMemo(() => 
     CLUB_TEAMS.find(t => t.id === selectedTeam), 
@@ -85,8 +99,8 @@ export default function SessionPlannerPage() {
 
   const handleSaveConfig = () => {
     toast({
-      title: "PLANIFICACIÓN_SINCRO",
-      description: `Estructura de temporada para ${currentTeam?.name} actualizada.`,
+      title: "MATRIZ_SINCRO_EXITOSA",
+      description: `Protocolo de tiempos (${totalTime} min) aplicado a ${currentTeam?.name}.`,
     });
   };
 
@@ -97,7 +111,7 @@ export default function SessionPlannerPage() {
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <CalendarDays className="h-5 w-5 text-amber-500 animate-pulse" />
-            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Operational_Planning_v4.0</span>
+            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Operational_Planning_v4.1</span>
           </div>
           <h1 className="text-5xl font-headline font-black text-white uppercase italic tracking-tighter amber-text-glow leading-none">
             PLANIFICADOR_MAESTRO
@@ -128,48 +142,85 @@ export default function SessionPlannerPage() {
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="outline" className="h-12 rounded-xl border-amber-500/20 text-amber-500 hover:bg-amber-500/10 font-black uppercase text-[10px] tracking-widest px-6">
-                <Settings2 className="h-4 w-4 mr-2" /> Configurar Temporada
+                <Settings2 className="h-4 w-4 mr-2" /> Estructura Sesión
               </Button>
             </SheetTrigger>
             <SheetContent className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-amber-500/20 text-white sm:max-w-md">
               <SheetHeader className="space-y-4 mb-10">
                 <div className="flex items-center gap-3">
-                  <Settings2 className="h-4 w-4 text-amber-500" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500">Ajustes de Matriz</span>
+                  <Clock className="h-4 w-4 text-amber-500" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500">Ajustes_de_Arquitectura</span>
                 </div>
-                <SheetTitle className="text-3xl font-black italic tracking-tighter uppercase">CONFIG_TEMPORADA</SheetTitle>
-                <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest">Defina los parámetros semanales para {currentTeam?.name}.</SheetDescription>
+                <SheetTitle className="text-3xl font-black italic tracking-tighter uppercase leading-none">CONFIG_ESTRUCTURA</SheetTitle>
+                <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest">Defina la duración de cada fase para {currentTeam?.name}.</SheetDescription>
               </SheetHeader>
               
               <div className="space-y-8">
-                <div className="space-y-3">
-                  <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest">Sesiones por Semana</Label>
-                  <Input 
-                    type="number" 
-                    value={sessionsPerWeek} 
-                    onChange={(e) => setSessionsPerWeek(parseInt(e.target.value))}
-                    className="h-14 bg-white/5 border-amber-500/20 rounded-2xl text-amber-500 font-black text-xl text-center" 
-                  />
-                </div>
-                <div className="space-y-3">
-                  <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest">Tareas por Sesión (Promedio)</Label>
-                  <Input 
-                    type="number" 
-                    value={tasksPerSession} 
-                    onChange={(e) => setTasksPerSession(parseInt(e.target.value))}
-                    className="h-14 bg-white/5 border-amber-500/20 rounded-2xl text-amber-500 font-black text-xl text-center" 
-                  />
-                </div>
-                <div className="p-6 bg-amber-500/5 border border-amber-500/20 rounded-3xl space-y-2">
-                   <p className="text-[9px] font-black uppercase text-amber-500 tracking-widest">Total Estimado Temporada</p>
-                   <p className="text-3xl font-black text-white italic tracking-tighter">
-                    {sessionsPerWeek * tasksPerSession * 40} <span className="text-sm text-white/20">TAREAS</span>
+                <div className="p-6 bg-black/40 border border-white/5 rounded-3xl space-y-2 text-center">
+                   <p className="text-[9px] font-black uppercase text-white/20 tracking-widest">Duración Total Sesión</p>
+                   <p className="text-5xl font-black text-amber-500 italic tracking-tighter amber-text-glow">
+                    {totalTime} <span className="text-sm text-white/20">MIN</span>
                    </p>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest">1. Calentamiento / Activación</Label>
+                      <Badge variant="outline" className="text-[10px] border-amber-500/20 text-amber-500">{sessionTimes.warmup} min</Badge>
+                    </div>
+                    <Input 
+                      type="range" min="5" max="30" step="5"
+                      value={sessionTimes.warmup} 
+                      onChange={(e) => setSessionTimes({...sessionTimes, warmup: parseInt(e.target.value)})}
+                      className="accent-amber-500" 
+                    />
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest">2. Zona Central (Ejercicios)</Label>
+                      <Badge variant="outline" className="text-[10px] border-amber-500/20 text-amber-500">{sessionTimes.central} min</Badge>
+                    </div>
+                    <Input 
+                      type="range" min="20" max="90" step="5"
+                      value={sessionTimes.central} 
+                      onChange={(e) => setSessionTimes({...sessionTimes, central: parseInt(e.target.value)})}
+                      className="accent-amber-500" 
+                    />
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest">3. Vuelta a la Calma</Label>
+                      <Badge variant="outline" className="text-[10px] border-amber-500/20 text-amber-500">{sessionTimes.cooldown} min</Badge>
+                    </div>
+                    <Input 
+                      type="range" min="5" max="20" step="5"
+                      value={sessionTimes.cooldown} 
+                      onChange={(e) => setSessionTimes({...sessionTimes, cooldown: parseInt(e.target.value)})}
+                      className="accent-amber-500" 
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-3 pt-4 border-t border-white/5">
+                  <Label className="text-[10px] font-black uppercase text-white/40 tracking-widest">Frecuencia Semanal</Label>
+                  <Select value={sessionsPerWeek.toString()} onValueChange={(v) => setSessionsPerWeek(parseInt(v))}>
+                    <SelectTrigger className="h-12 bg-white/5 border-white/10 text-white font-bold uppercase text-[10px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#0a0f18] border-amber-500/20">
+                      {[1,2,3,4,5,6,7].map(n => (
+                        <SelectItem key={n} value={n.toString()} className="text-[10px] font-black uppercase">{n} Sesiones / Semana</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
               <div className="mt-12">
-                <Button onClick={handleSaveConfig} className="w-full h-16 bg-amber-500 text-black font-black uppercase tracking-[0.2em] rounded-2xl amber-glow">GUARDAR_AJUSTES</Button>
+                <Button onClick={handleSaveConfig} className="w-full h-16 bg-amber-500 text-black font-black uppercase tracking-[0.2em] rounded-2xl amber-glow">SINCRONIZAR_MATRIZ</Button>
               </div>
             </SheetContent>
           </Sheet>
@@ -180,12 +231,11 @@ export default function SessionPlannerPage() {
         </div>
       </div>
 
-      {/* MATRIZ DE PLANIFICACIÓN (OPCIÓN A - SCROLL MAESTRO) */}
+      {/* MATRIZ DE PLANIFICACIÓN */}
       <div className="relative group">
         <div className="absolute -inset-1 bg-gradient-to-r from-amber-500/20 to-transparent blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
         <Card className="glass-panel border-none bg-black/60 overflow-hidden relative rounded-[2rem] shadow-2xl">
           
-          {/* FILA 1: IDENTIDAD TEMPORADA */}
           <div className="bg-rose-600 px-10 py-6 flex items-center justify-between border-b border-white/10">
             <div className="flex items-center gap-6">
               <div className="h-12 w-12 bg-black/20 rounded-xl flex items-center justify-center border border-white/20">
@@ -200,51 +250,32 @@ export default function SessionPlannerPage() {
             </div>
             <div className="flex items-center gap-8">
                <div className="text-right">
-                  <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">Sesiones Totales</p>
-                  <p className="text-xl font-black text-white italic tracking-tighter">{sessionsPerWeek * 40}</p>
+                  <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">Carga por Sesión</p>
+                  <p className="text-xl font-black text-white italic tracking-tighter">{totalTime} MIN</p>
                </div>
                <div className="h-8 w-[1px] bg-white/10" />
                <div className="text-right">
-                  <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">Tareas Biblioteca</p>
-                  <p className="text-xl font-black text-white italic tracking-tighter">{sessionsPerWeek * tasksPerSession * 40}</p>
+                  <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">Frecuencia</p>
+                  <p className="text-xl font-black text-white italic tracking-tighter">{sessionsPerWeek} DÍAS</p>
                </div>
             </div>
           </div>
 
-          {/* FILA 2: MACRO-ESTRUCTURA (ORO) */}
           <div className="bg-amber-500 text-black px-10 py-4 flex items-center justify-between border-b border-black/10">
              <div className="flex items-center gap-3">
                 <Layers className="h-4 w-4" />
-                <span className="text-xs font-black uppercase tracking-[0.5em]">MACROCICLO_ESTRATEGIA_BASE</span>
+                <span className="text-xs font-black uppercase tracking-[0.5em]">MACROCICLO_OPERATIVO_ANUAL</span>
              </div>
-             <span className="text-[10px] font-black uppercase tracking-widest">Protocolo de Carga: {sessionsPerWeek} Sesiones / Semanales</span>
+             <span className="text-[10px] font-black uppercase tracking-widest italic">Septiembre - Junio • Protocolo Centralizado</span>
           </div>
 
-          {/* CUERPO DE LA MATRIZ CON SCROLL */}
           <div className="overflow-x-auto custom-scrollbar">
             <div className="min-w-[1800px] flex">
-              
               {MONTHS.map((month) => (
                 <div key={month.id} className="flex-1 border-r border-white/5 flex flex-col group/month hover:bg-white/[0.01] transition-colors">
-                  
-                  {/* CABECERA MES */}
                   <div className="p-4 text-center border-b border-white/5 bg-white/[0.02]">
                     <span className="text-[11px] font-black text-amber-500 tracking-[0.3em] uppercase">{month.label}</span>
                   </div>
-
-                  {/* TOTALES MES */}
-                  <div className="grid grid-cols-2 text-center border-b border-white/5 bg-black/40">
-                    <div className="p-2 border-r border-white/5">
-                      <p className="text-[7px] font-black text-white/30 uppercase">Sesiones</p>
-                      <p className="text-xs font-black text-white italic">{month.weeks * sessionsPerWeek}</p>
-                    </div>
-                    <div className="p-2">
-                      <p className="text-[7px] font-black text-white/30 uppercase">Tareas</p>
-                      <p className="text-xs font-black text-white italic">{month.weeks * sessionsPerWeek * tasksPerSession}</p>
-                    </div>
-                  </div>
-
-                  {/* MICROCICLOS (MCC) */}
                   <div className="p-4 flex flex-col gap-2">
                     {Array.from({ length: month.weeks }).map((_, i) => (
                       <div 
@@ -262,90 +293,154 @@ export default function SessionPlannerPage() {
                             "text-[9px] font-black uppercase tracking-widest",
                             selectedMCC === `${month.id.toUpperCase()}_W${i+1}` ? "text-amber-500" : "text-white/20"
                           )}>MCC_{i + 1}</span>
-                          <div className="flex items-center gap-1">
-                             <div className="h-1 w-1 rounded-full bg-amber-500/20" />
-                             <div className="h-1 w-1 rounded-full bg-amber-500/20" />
-                             <div className="h-1 w-1 rounded-full bg-amber-500/20" />
-                          </div>
+                          <Clock className={cn("h-3 w-3", selectedMCC === `${month.id.toUpperCase()}_W${i+1}` ? "text-amber-500" : "text-white/10")} />
                         </div>
                         <p className={cn(
-                          "text-[8px] font-bold uppercase truncate",
+                          "text-[8px] font-bold uppercase",
                           selectedMCC === `${month.id.toUpperCase()}_W${i+1}` ? "text-white" : "text-white/10"
-                        )}>Sin Tareas Asignadas</p>
-                        
-                        {selectedMCC === `${month.id.toUpperCase()}_W${i+1}` && (
-                          <div className="absolute right-2 bottom-2">
-                            <Plus className="h-3 w-3 text-amber-500" />
-                          </div>
-                        )}
+                        )}>Sesión de {totalTime} min</p>
                       </div>
                     ))}
                   </div>
-
                 </div>
               ))}
-
             </div>
           </div>
 
-          {/* FOOTER DE LA MATRIZ */}
           <div className="p-6 bg-black/40 border-t border-white/5 flex justify-between items-center text-[9px] font-black text-amber-500/20 uppercase tracking-[0.5em]">
             <span className="flex items-center gap-2">
               <Activity className="h-3 w-3 text-amber-500 animate-pulse" /> Sincronización Metodológica Activa
             </span>
-            <span>SynqSports Operational Planner v4.0</span>
+            <span>SynqSports Operational Planner v4.1 • Arquitectura Tripartita</span>
           </div>
         </Card>
       </div>
 
-      {/* PANEL LATERAL DE DETALLE DE MICROCICLO */}
+      {/* PANEL DE ESTRUCTURA DE SESIÓN DETALLADA */}
       {selectedMCC && (
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 animate-in slide-in-from-bottom-4 duration-700">
-          <Card className="glass-panel xl:col-span-2 border-amber-500/20 bg-black/40 rounded-3xl overflow-hidden">
+          <Card className="glass-panel xl:col-span-2 border-amber-500/20 bg-black/40 rounded-[2.5rem] overflow-hidden">
             <CardHeader className="p-8 border-b border-white/5 bg-amber-500/5 flex flex-row items-center justify-between">
               <div className="space-y-1">
                 <div className="flex items-center gap-3">
                   <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-                  <CardTitle className="text-xl font-black italic text-white uppercase tracking-tighter">Detalle de {selectedMCC}</CardTitle>
+                  <CardTitle className="text-xl font-black italic text-white uppercase tracking-tighter">Sesión {selectedMCC}</CardTitle>
                 </div>
-                <CardDescription className="text-[10px] font-bold text-amber-500/40 uppercase tracking-widest">Asignación Manual de Tareas de Biblioteca</CardDescription>
+                <CardDescription className="text-[10px] font-bold text-amber-500/40 uppercase tracking-widest">
+                  Arquitectura de Entrenamiento: {totalTime} Minutos Totales
+                </CardDescription>
               </div>
               <Button variant="ghost" size="icon" onClick={() => setSelectedMCC(null)} className="text-white/20 hover:text-rose-500">
                 <Trash2 className="h-5 w-5" />
               </Button>
             </CardHeader>
-            <CardContent className="p-8">
-              <div className="flex flex-col items-center justify-center p-20 border border-dashed border-white/10 rounded-[2.5rem] bg-white/[0.01]">
-                 <Library className="h-12 w-12 text-white/10 mb-4" />
-                 <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em]">Arrastra ejercicios aquí para planificar la semana</p>
-                 <Button variant="outline" className="mt-6 border-amber-500/20 text-amber-500 hover:bg-amber-500/10 text-[9px] font-black uppercase tracking-widest rounded-xl h-10 px-6">
-                    Abrir Buscador de Biblioteca
-                 </Button>
+            <CardContent className="p-8 space-y-8">
+              
+              {/* BLOQUE 1: CALENTAMIENTO */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between px-2">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
+                      <Flame className="h-4 w-4 text-orange-500" />
+                    </div>
+                    <div>
+                      <h4 className="text-[11px] font-black text-white uppercase tracking-widest">1. Calentamiento y Activación</h4>
+                      <p className="text-[8px] font-bold text-orange-500/60 uppercase">Duración: {sessionTimes.warmup} Minutos</p>
+                    </div>
+                  </div>
+                  <Badge className="bg-orange-500/10 text-orange-500 border-orange-500/20">Slot_Libre</Badge>
+                </div>
+                <div className="p-6 border-2 border-dashed border-orange-500/10 bg-orange-500/[0.02] rounded-2xl flex flex-col items-center justify-center gap-2 group hover:border-orange-500/30 transition-all cursor-pointer">
+                   <Plus className="h-4 w-4 text-orange-500/20 group-hover:text-orange-500 transition-colors" />
+                   <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Asignar Tarea de Activación</span>
+                </div>
               </div>
+
+              {/* BLOQUE 2: ZONA CENTRAL */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between px-2">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+                      <Dumbbell className="h-4 w-4 text-amber-500" />
+                    </div>
+                    <div>
+                      <h4 className="text-[11px] font-black text-white uppercase tracking-widest">2. Zona Central (Contenidos)</h4>
+                      <p className="text-[8px] font-bold text-amber-500/60 uppercase">Duración: {sessionTimes.central} Minutos</p>
+                    </div>
+                  </div>
+                  <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20">Multitarea_ON</Badge>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-10 border-2 border-dashed border-amber-500/10 bg-amber-500/[0.02] rounded-2xl flex flex-col items-center justify-center gap-2 group hover:border-amber-500/30 transition-all cursor-pointer">
+                    <Plus className="h-4 w-4 text-amber-500/20 group-hover:text-amber-500 transition-colors" />
+                    <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Añadir Tarea Táctica</span>
+                  </div>
+                  <div className="p-10 border-2 border-dashed border-white/5 bg-white/[0.01] rounded-2xl flex flex-col items-center justify-center gap-2">
+                    <span className="text-[8px] font-black text-white/10 uppercase tracking-widest">Espacio para Tarea 02</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* BLOQUE 3: VUELTA A LA CALMA */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between px-2">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
+                      <Wind className="h-4 w-4 text-blue-500" />
+                    </div>
+                    <div>
+                      <h4 className="text-[11px] font-black text-white uppercase tracking-widest">3. Vuelta a la Calma</h4>
+                      <p className="text-[8px] font-bold text-blue-500/60 uppercase">Duración: {sessionTimes.cooldown} Minutos</p>
+                    </div>
+                  </div>
+                  <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20">Feedback_Final</Badge>
+                </div>
+                <div className="p-6 border-2 border-dashed border-blue-500/10 bg-blue-500/[0.02] rounded-2xl flex flex-col items-center justify-center gap-2 group hover:border-blue-500/30 transition-all cursor-pointer">
+                   <Plus className="h-4 w-4 text-blue-500/20 group-hover:text-blue-500 transition-colors" />
+                   <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Asignar Tarea de Cierre</span>
+                </div>
+              </div>
+
             </CardContent>
+            <div className="p-8 bg-black/40 border-t border-white/5 flex justify-between items-center">
+               <div className="flex items-center gap-4">
+                  <Info className="h-4 w-4 text-amber-500/40" />
+                  <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">Los tiempos se ajustan proporcionalmente según el total de la sesión ({totalTime} min).</p>
+               </div>
+               <Button className="bg-amber-500 text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl amber-glow">GUARDAR_SESIÓN</Button>
+            </div>
           </Card>
 
           <Card className="glass-panel border-amber-500/20 bg-black/40 rounded-3xl p-8 space-y-6">
              <div className="flex items-center gap-3 border-b border-white/5 pb-4">
-                <Filter className="h-4 w-4 text-amber-500" />
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500 italic">Filtros de Biblioteca</span>
+                <Library className="h-4 w-4 text-amber-500" />
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500 italic">Buscador de Biblioteca</span>
              </div>
              <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-white/20" />
-                <Input placeholder="BUSCAR TAREA..." className="pl-10 h-11 bg-white/5 border-white/10 rounded-xl text-[10px] font-black uppercase" />
+                <Input placeholder="BUSCAR TAREA MANUAL..." className="pl-10 h-11 bg-white/5 border-white/10 rounded-xl text-[10px] font-black uppercase focus:border-amber-500" />
              </div>
              <div className="space-y-3">
-                <span className="text-[8px] font-black text-white/20 uppercase tracking-widest block ml-1">Tareas Sugeridas para {currentTeam?.type}</span>
+                <span className="text-[8px] font-black text-white/20 uppercase tracking-widest block ml-1">Resultados en {currentTeam?.type}</span>
                 <div className="p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl hover:border-amber-500/40 cursor-grab active:cursor-grabbing transition-all group">
-                   <p className="text-[10px] font-black text-white uppercase italic group-hover:text-amber-500">Rondo 4x4 + 3</p>
-                   <p className="text-[8px] font-bold text-white/20 uppercase mt-1">Biblioteca_Manual • ID: 042</p>
+                   <p className="text-[10px] font-black text-white uppercase italic group-hover:text-amber-500">Rondo 4x4 + 3 Comodines</p>
+                   <p className="text-[8px] font-bold text-white/20 uppercase mt-1">Bloque: Zona Central • ID: 042</p>
                 </div>
                 <div className="p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl hover:border-amber-500/40 cursor-grab active:cursor-grabbing transition-all group">
-                   <p className="text-[10px] font-black text-white uppercase italic group-hover:text-amber-500">Salida 3v2 + POR</p>
-                   <p className="text-[8px] font-bold text-white/20 uppercase mt-1">Biblioteca_Manual • ID: 015</p>
+                   <p className="text-[10px] font-black text-white uppercase italic group-hover:text-amber-500">Activación Coordinativa</p>
+                   <p className="text-[8px] font-bold text-white/20 uppercase mt-1">Bloque: Calentamiento • ID: 012</p>
+                </div>
+                <div className="p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl hover:border-amber-500/40 cursor-grab active:cursor-grabbing transition-all group">
+                   <p className="text-[10px] font-black text-white uppercase italic group-hover:text-amber-500">Charla Post-Entreno</p>
+                   <p className="text-[8px] font-bold text-white/20 uppercase mt-1">Bloque: Vuelta Calma • ID: 005</p>
                 </div>
              </div>
-             <Button className="w-full h-14 bg-amber-500 text-black font-black uppercase text-[10px] tracking-widest rounded-2xl amber-glow">SINCRONIZAR_MCC</Button>
+             <div className="p-6 bg-white/[0.02] border border-white/5 rounded-2xl space-y-3">
+                <p className="text-[9px] font-black text-white/40 uppercase tracking-widest italic">Tip Metodológico</p>
+                <p className="text-[9px] text-white/20 leading-relaxed uppercase font-bold italic">
+                  Asegúrese de que el Calentamiento no supere el 20% del tiempo total para maximizar la Zona Central en etapas de formación.
+                </p>
+             </div>
           </Card>
         </div>
       )}
