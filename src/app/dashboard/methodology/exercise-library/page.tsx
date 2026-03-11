@@ -16,14 +16,41 @@ import {
   Globe,
   MoreHorizontal,
   ChevronRight,
-  Info
+  Info,
+  Clock,
+  Maximize2,
+  Target,
+  Zap,
+  Dumbbell,
+  Layers,
+  ClipboardList,
+  Boxes,
+  ScrollText,
+  AlertCircle
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetDescription,
+  SheetFooter,
+  SheetClose
+} from "@/components/ui/sheet";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
@@ -38,6 +65,40 @@ const MOCK_EXERCISES = [
 export default function ExerciseLibraryPage() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const [formData, setFormData] = useState({
+    title: "",
+    didacticStrategy: "",
+    objectives: "",
+    conditionalContent: "",
+    time: "",
+    space: "",
+    gameSituation: "",
+    technicalAction: "",
+    tacticalAction: "",
+    collectiveContent: "",
+    description: "",
+    provocationRules: "",
+    instructions: "",
+    equipment: "",
+    stage: "Alevín",
+    dimension: "Táctica"
+  });
+
+  const handleSaveMasterTask = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      setIsSheetOpen(false);
+      toast({
+        title: "TAREA_MAESTRA_SINCRO",
+        description: `El ejercicio "${formData.title || 'NUEVA_TAREA'}" ha sido blindado en la biblioteca oficial.`,
+      });
+    }, 1500);
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000 p-8 lg:p-12">
@@ -52,7 +113,10 @@ export default function ExerciseLibraryPage() {
           </h1>
         </div>
         
-        <Button className="rounded-2xl bg-amber-500 text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:scale-105 transition-all border-none">
+        <Button 
+          onClick={() => setIsSheetOpen(true)}
+          className="rounded-2xl bg-amber-500 text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:scale-105 transition-all border-none"
+        >
           <Plus className="h-4 w-4 mr-2" /> Crear Tarea Maestra
         </Button>
       </div>
@@ -69,7 +133,7 @@ export default function ExerciseLibraryPage() {
             <Search className="absolute left-4 top-4 h-4 w-4 text-amber-500 opacity-50" />
             <Input 
               placeholder="BUSCAR EN EL LIBRO DE ESTILO..." 
-              className="pl-12 h-14 bg-white/5 border-amber-500/20 rounded-2xl text-amber-500 font-bold uppercase text-[10px] tracking-widest"
+              className="pl-12 h-14 bg-white/5 border-amber-500/20 rounded-2xl text-amber-500 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-amber-500/50 transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -132,9 +196,235 @@ export default function ExerciseLibraryPage() {
         </CardContent>
         <div className="p-6 bg-black/40 border-t border-white/5 flex justify-between items-center text-[9px] font-black text-amber-500/20 uppercase tracking-[0.5em] rounded-b-3xl">
           <span className="flex items-center gap-2"><CheckCircle2 className="h-3 w-3 animate-pulse" /> Sincronización de Estilo: Activa</span>
-          <span>Modelo de Blindaje v6.0</span>
+          <span>Modelo de Blindaje v6.2</span>
         </div>
       </Card>
+
+      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-amber-500/20 text-white w-full sm:max-w-2xl lg:max-w-3xl p-0 overflow-hidden flex flex-col shadow-[-20px_0_60px_rgba(0,0,0,0.8)]">
+          <div className="p-10 border-b border-white/5 bg-black/40">
+            <SheetHeader className="space-y-4">
+              <div className="flex items-center gap-3">
+                <ShieldCheck className="h-5 w-5 text-amber-500 animate-pulse" />
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500 italic">Master_Asset_Factory_v6.2</span>
+              </div>
+              <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left leading-none">
+                CREAR <span className="text-amber-500">TAREA MAESTRA</span>
+              </SheetTitle>
+              <SheetDescription className="text-[10px] uppercase font-bold text-amber-500/40 tracking-widest text-left italic">
+                Defina el ADN táctico completo para la biblioteca oficial del club.
+              </SheetDescription>
+            </SheetHeader>
+          </div>
+
+          <form onSubmit={handleSaveMasterTask} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-12">
+            
+            {/* SECCIÓN 1: IDENTIDAD BÁSICA */}
+            <div className="space-y-8">
+              <div className="flex items-center gap-3 border-b border-white/5 pb-4">
+                <Target className="h-4 w-4 text-amber-500" />
+                <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-amber-500 italic">Identidad y Estrategia</h3>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Título de la Tarea</Label>
+                  <Input 
+                    required
+                    value={formData.title}
+                    onChange={(e) => setFormData({...formData, title: e.target.value.toUpperCase()})}
+                    placeholder="EJ: JUEGO ADAPTADO CONDUCCIÓN" 
+                    className="h-12 bg-white/5 border-amber-500/20 rounded-xl font-bold uppercase focus:border-amber-500 text-amber-500 placeholder:text-amber-500/20" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Estrategia Didáctica</Label>
+                  <Input 
+                    value={formData.didacticStrategy}
+                    onChange={(e) => setFormData({...formData, didacticStrategy: e.target.value.toUpperCase()})}
+                    placeholder="EJ: JUEGO ADAPTADO AL FÚTBOL" 
+                    className="h-12 bg-white/5 border-amber-500/20 rounded-xl font-bold uppercase focus:border-amber-500 text-amber-500 placeholder:text-amber-500/20" 
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Objetivos Principales</Label>
+                <Textarea 
+                  value={formData.objectives}
+                  onChange={(e) => setFormData({...formData, objectives: e.target.value})}
+                  placeholder="EJ: TRABAJAR LA CONDUCCIÓN DEL BALÓN..." 
+                  className="min-h-[80px] bg-white/5 border-amber-500/20 rounded-xl font-bold uppercase focus:border-amber-500 text-amber-500 placeholder:text-amber-500/20" 
+                />
+              </div>
+            </div>
+
+            {/* SECCIÓN 2: LOGÍSTICA Y CONDICIÓN */}
+            <div className="space-y-8">
+              <div className="flex items-center gap-3 border-b border-white/5 pb-4">
+                <Activity className="h-4 w-4 text-amber-500" />
+                <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-amber-500 italic">Logística y Condición</h3>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Contenido Condicional</Label>
+                  <Input 
+                    value={formData.conditionalContent}
+                    onChange={(e) => setFormData({...formData, conditionalContent: e.target.value})}
+                    placeholder="EJ: COORDINACIÓN" 
+                    className="h-12 bg-white/5 border-amber-500/20 rounded-xl font-bold uppercase focus:border-amber-500 text-amber-500 placeholder:text-amber-500/20" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Tiempo (Min)</Label>
+                  <div className="relative">
+                    <Clock className="absolute left-3 top-3.5 h-4 w-4 text-amber-500/40" />
+                    <Input 
+                      value={formData.time}
+                      onChange={(e) => setFormData({...formData, time: e.target.value})}
+                      placeholder="EJ: 10’" 
+                      className="pl-10 h-12 bg-white/5 border-amber-500/20 rounded-xl font-bold focus:border-amber-500 text-amber-500 placeholder:text-amber-500/20" 
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Espacio / Dimensiones</Label>
+                  <div className="relative">
+                    <Maximize2 className="absolute left-3 top-3.5 h-4 w-4 text-amber-500/40" />
+                    <Input 
+                      value={formData.space}
+                      onChange={(e) => setFormData({...formData, space: e.target.value})}
+                      placeholder="EJ: 20M X 20M" 
+                      className="pl-10 h-12 bg-white/5 border-amber-500/20 rounded-xl font-bold uppercase focus:border-amber-500 text-amber-500 placeholder:text-amber-500/20" 
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Situación de Juego</Label>
+                <Input 
+                  value={formData.gameSituation}
+                  onChange={(e) => setFormData({...formData, gameSituation: e.target.value})}
+                  placeholder="EJ: 4X4 CON COMODINES..." 
+                  className="h-12 bg-white/5 border-amber-500/20 rounded-xl font-bold uppercase focus:border-amber-500 text-amber-500 placeholder:text-amber-500/20" 
+                />
+              </div>
+            </div>
+
+            {/* SECCIÓN 3: CONTENIDOS TÁCTICO-TÉCNICOS */}
+            <div className="space-y-8">
+              <div className="flex items-center gap-3 border-b border-white/5 pb-4">
+                <Boxes className="h-4 w-4 text-amber-500" />
+                <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-amber-500 italic">Contenidos Táctico-Técnicos</h3>
+              </div>
+
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Acción Técnica / Habilidad Coordinativa</Label>
+                  <Input 
+                    value={formData.technicalAction}
+                    onChange={(e) => setFormData({...formData, technicalAction: e.target.value})}
+                    placeholder="EJ: CONDUCCIÓN-ARRANCADAS/FRENADAS" 
+                    className="h-12 bg-white/5 border-amber-500/20 rounded-xl font-bold uppercase focus:border-amber-500 text-amber-500 placeholder:text-amber-500/20" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Acción Táctica / Intención</Label>
+                  <Input 
+                    value={formData.tacticalAction}
+                    onChange={(e) => setFormData({...formData, tacticalAction: e.target.value})}
+                    placeholder="EJ: SUPERAR LÍNEA MEDIANTE CAMBIO DE RITMO" 
+                    className="h-12 bg-white/5 border-amber-500/20 rounded-xl font-bold uppercase focus:border-amber-500 text-amber-500 placeholder:text-amber-500/20" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Contenido de Juego Colectivo</Label>
+                  <Input 
+                    value={formData.collectiveContent}
+                    onChange={(e) => setFormData({...formData, collectiveContent: e.target.value})}
+                    placeholder="EJ: AMPLITUD Y PROFUNDIDAD" 
+                    className="h-12 bg-white/5 border-amber-500/20 rounded-xl font-bold uppercase focus:border-amber-500 text-amber-500 placeholder:text-amber-500/20" 
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* SECCIÓN 4: DESCRIPCIÓN Y NORMAS */}
+            <div className="space-y-8">
+              <div className="flex items-center gap-3 border-b border-white/5 pb-4">
+                <ScrollText className="h-4 w-4 text-amber-500" />
+                <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-amber-500 italic">Mecánica y Normativa</h3>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Descripción Detallada</Label>
+                <Textarea 
+                  value={formData.description}
+                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  placeholder="• EL JUEGO CONSISTE EN ESTAR DENTRO DEL ESPACIO..." 
+                  className="min-h-[120px] bg-white/5 border-amber-500/20 rounded-xl font-bold focus:border-amber-500 text-amber-500 placeholder:text-amber-500/20" 
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Normas de Provocación / Normativa</Label>
+                <Textarea 
+                  value={formData.provocationRules}
+                  onChange={(e) => setFormData({...formData, provocationRules: e.target.value})}
+                  placeholder="EJ: NO SE PUEDE PASAR AL MISMO COMODÍN DOS VECES..." 
+                  className="min-h-[80px] bg-white/5 border-amber-500/20 rounded-xl font-bold focus:border-amber-500 text-amber-500 placeholder:text-amber-500/20" 
+                />
+              </div>
+            </div>
+
+            {/* SECCIÓN 5: CONSIGNAS Y MATERIAL */}
+            <div className="space-y-8 pb-10">
+              <div className="flex items-center gap-3 border-b border-white/5 pb-4">
+                <AlertCircle className="h-4 w-4 text-amber-500" />
+                <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-amber-500 italic">Consignas y Recursos</h3>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Consignas para el Entrenador</Label>
+                <Textarea 
+                  value={formData.instructions}
+                  onChange={(e) => setFormData({...formData, instructions: e.target.value})}
+                  placeholder="• LLEVAR EL CENTRO DE GRAVEDAD BAJO. • CONTACTOS CORTOS..." 
+                  className="min-h-[100px] bg-white/5 border-amber-500/20 rounded-xl font-bold focus:border-amber-500 text-amber-500 placeholder:text-amber-500/20" 
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Material Necesario</Label>
+                <Input 
+                  value={formData.equipment}
+                  onChange={(e) => setFormData({...formData, equipment: e.target.value})}
+                  placeholder="EJ: 10 BALONES, 4 CONOS CHINOS, 2 PETOS..." 
+                  className="h-12 bg-white/5 border-amber-500/20 rounded-xl font-bold uppercase focus:border-amber-500 text-amber-500 placeholder:text-amber-500/20" 
+                />
+              </div>
+            </div>
+
+          </form>
+
+          <div className="p-10 bg-black/60 border-t border-white/5 flex gap-6">
+            <SheetClose asChild>
+              <Button variant="ghost" className="flex-1 h-16 border border-amber-500/20 text-amber-500/60 font-black uppercase text-[11px] tracking-widest hover:bg-amber-500/10 rounded-2xl transition-all">
+                CANCELAR
+              </Button>
+            </SheetClose>
+            <Button 
+              onClick={handleSaveMasterTask}
+              disabled={loading}
+              className="flex-[2] h-16 bg-amber-500 text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-2xl amber-glow hover:scale-[1.02] transition-all border-none"
+            >
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "BLINDAR_TAREA_MAESTRA"}
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
