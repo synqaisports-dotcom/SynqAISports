@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v7.8.0 (Blindaje de Dibujo Libre)
+# SynqSports Pro - ARCHITECTURE_LEDGER v8.3.0 (Alta Fidelidad Táctica)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -57,13 +57,6 @@ Las tareas maestras ahora incluyen una matriz de datos enriquecida para máxima 
 - `tactical_dna`: Acción técnica, Acción táctica e Intención colectiva.
 - `operational_rules`: Descripción, Normas de provocación, Consignas y Material.
 
-### 3.3. Recursos Visuales y Vinculación (v6.3)
-- **Vinculación de Activos**: Integración de botones de carga de imágenes y acceso directo a la Pizarra Profesional (`/board/training`) dentro del formulario de creación de tareas.
-
-### 3.4. Protocolo de Navegación Contextual (v6.4)
-- **Detección de Origen**: El sistema diferencia si se accede a la pizarra desde el formulario (`?source=form`) o desde el sidebar.
-- **Comportamiento Adaptativo**: Si el origen es un formulario, el botón de guardado cambia a "Vincular a Tarea" y activa un flujo de retorno automático para adjuntar el activo visual al ejercicio en proceso.
-
 ## 4. Protocolo de Planificación y Validación (v5.1)
 
 ### 4.1. Estructura Tripartita de Sesión
@@ -72,13 +65,7 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 2. **Zona Central (Contenidos)** - Soporta múltiples ejercicios.
 3. **Vuelta a la Calma**
 
-### 4.2. Protocolo de Validación (Lead-Time Protocol)
-- **Soberanía**: El Director de Metodología diseña el macrociclo (septiembre-junio).
-- **Espejo**: El Entrenador visualiza su plan pero no puede editarlo directamente.
-- **Sugerencias**: El Entrenador puede proponer cambios ("Sugerir Cambio").
-- **Bloqueo de Seguridad**: Las solicitudes de cambio se bloquean automáticamente si faltan menos de **7 días** para la sesión.
-
-## 5. Protocolo de Pizarra y Dibujo (v7.8.0)
+## 5. Protocolo de Pizarra y Dibujo (v8.3.0)
 
 ### 5.1. Motor de Dibujo Suavizado
 - Uso de lógica de interpolación para trazos fluidos en el Canvas e independencia de resolución.
@@ -86,21 +73,20 @@ Cada entrenamiento se divide en tres bloques con gestión de tiempos configurabl
 ### 5.2. Esquema JSON Maestro (Independencia de Dispositivo)
 - **Coordenadas Decimales**: Todas las posiciones de fichas y trazos se guardan como valores de `0.000` a `1.000`. Garantiza fidelidad visual en cualquier dispositivo.
 
-### 5.3. Herramientas de Dibujo Avanzadas (v7.8.0)
+### 5.3. Herramientas de Dibujo Avanzadas (v8.3.0)
 - **Modos de Trazo**: Dibujo Libre, Rectángulos, Círculos, Ondas Sinusoidales, Flechas simples y dobles.
 - **Motor de Ondas (v7.7.1)**: Implementación de algoritmo sinusoidal para representar movimientos de agilidad y fintas fluidas entre dos puntos.
 - **Manipulación Táctica Total**: 
     - **Arrastre (Dragging)**: Capacidad de mover cualquier elemento por el campo manteniendo su escala.
     - **Puntos de Modificación**: Implementación de 4 handles en rectángulos y puntos extremos en flechas/círculos/ondas para redimensionado dinámico.
     - **Smart Selection (v7.1)**: El sistema detecta clics sobre formas existentes incluso si hay otra herramienta activa.
-- **Edición Contextual (v7.6.1)**:
-    - **Migración a Sheets**: Uso de overlays para maximizar el área del campo.
-    - **Gatillo de Acciones Flotante**: Icono de configuración en esquina superior derecha para evitar colisión con rotación.
-- **Lógica de Controles Específica (v7.8.0)**:
-    - **Círculos**: Se omite el nodo de rotación.
-    - **Dibujo Libre Blindado**: Se eliminan las acciones (menú de propiedades) para los trazos manuales. Una vez finalizados, actúan como bloques tácticos puros que solo permiten selección y arrastre.
-- **Análisis Espacial (v7.3.1)**:
-    - **Carriles Tácticos**: Líneas horizontales al **20%** y **80%** de la altura para alineación con el área grande.
+- **Estación de Trabajo Ergonómica (v8.1.0)**:
+    - **Doble Barra Horizontal**: Distribución simétrica en la parte inferior del campo. Lado izquierdo para Biblioteca de Materiales y lado derecho para Herramientas de Dibujo.
+    - **Modo Colapsable Independiente**: Ambas barras pueden minimizarse para maximizar el área de visión táctica.
+- **Equipamiento de Élite (v8.3.0)**:
+    - **Activos Pro 4K**: Integración de material técnico con sombreado volumétrico, profundidad 3D y trazado vectorial de alta fidelidad.
+    - **Soporte Multi-Punto**: Los materiales técnicos (escaleras, vallas, porterías) ahora utilizan múltiples puntos de control para redimensionado y orientación dinámica.
+    - **Nodos de Atleta Premium**: Fichas circulares con efecto glassmorphism y resplandor dinámico.
 
 ## 6. Gestión de Espacios e Instalaciones
 - **Motor Geométrico**: Subdivisiones de campos (1, 2 o 4 zonas) calculadas en porcentajes.

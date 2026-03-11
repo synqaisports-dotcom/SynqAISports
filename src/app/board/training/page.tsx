@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect, useCallback, Suspense } from "react";
@@ -128,16 +129,13 @@ function TrainingBoardContent() {
     const wavelength = 40; 
     
     ctx.moveTo(from.x, from.y);
-    
     for (let d = 0; d <= dist; d += 2) {
       const x = from.x + Math.cos(angle) * d;
       const y = from.y + Math.sin(angle) * d;
       const perpAngle = angle + Math.PI / 2;
       const waveOffset = Math.sin(d * (Math.PI * 2 / wavelength)) * amplitude;
-      
       const finalX = x + Math.cos(perpAngle) * waveOffset;
       const finalY = y + Math.sin(perpAngle) * waveOffset;
-      
       ctx.lineTo(finalX, finalY);
     }
   };
@@ -181,9 +179,7 @@ function TrainingBoardContent() {
         break;
       case 'rect':
         if (!p[1]) break;
-        const w = p[1].x - p[0].x;
-        const h = p[1].y - p[0].y;
-        ctx.rect(p[0].x, p[0].y, w, h);
+        ctx.rect(p[0].x, p[0].y, p[1].x - p[0].x, p[1].y - p[0].y);
         ctx.fill();
         ctx.stroke();
         break;
@@ -221,18 +217,33 @@ function TrainingBoardContent() {
         ctx.stroke();
         break;
       case 'player':
-        ctx.arc(p[0].x, p[0].y, 18, 0, Math.PI * 2);
-        ctx.fillStyle = hexToRgba(element.color, 0.2);
+        // High Fidelity Athlete Chip
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = hexToRgba(element.color, 0.5);
+        ctx.beginPath();
+        ctx.arc(p[0].x, p[0].y, 20, 0, Math.PI * 2);
+        const grad = ctx.createRadialGradient(p[0].x, p[0].y, 0, p[0].x, p[0].y, 20);
+        grad.addColorStop(0, hexToRgba(element.color, 0.4));
+        grad.addColorStop(1, hexToRgba(element.color, 0.1));
+        ctx.fillStyle = grad;
         ctx.fill();
+        ctx.strokeStyle = element.color;
+        ctx.lineWidth = 2;
         ctx.stroke();
+        ctx.shadowBlur = 0;
+        // Label
         ctx.fillStyle = '#fff';
-        ctx.font = 'bold 12px Space Grotesk';
+        ctx.font = 'bold 14px Space Grotesk';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText((element.number || 1).toString(), p[0].x, p[0].y);
         break;
       case 'ball':
-        ctx.arc(p[0].x, p[0].y, 8, 0, Math.PI * 2);
+        // Professional Ball with Pentagons
+        ctx.save();
+        ctx.translate(p[0].x, p[0].y);
+        ctx.beginPath();
+        ctx.arc(0, 0, 10, 0, Math.PI * 2);
         ctx.fillStyle = '#fff';
         ctx.fill();
         ctx.strokeStyle = '#000';
@@ -240,82 +251,149 @@ function TrainingBoardContent() {
         ctx.stroke();
         for(let i=0; i<5; i++){
           ctx.beginPath();
-          ctx.moveTo(p[0].x, p[0].y);
-          ctx.lineTo(p[0].x + Math.cos(i*Math.PI*2/5)*8, p[0].y + Math.sin(i*Math.PI*2/5)*8);
+          ctx.moveTo(0, 0);
+          ctx.lineTo(Math.cos(i*Math.PI*2/5)*10, Math.sin(i*Math.PI*2/5)*10);
           ctx.stroke();
         }
+        ctx.restore();
         break;
       case 'cone':
-        ctx.moveTo(p[0].x, p[0].y - 12);
-        ctx.lineTo(p[0].x - 10, p[0].y + 10);
-        ctx.lineTo(p[0].x + 10, p[0].y + 10);
-        ctx.closePath();
-        ctx.fillStyle = element.color;
-        ctx.fill();
-        ctx.stroke();
+        // 3D Volumetric Cone
+        ctx.save();
+        ctx.translate(p[0].x, p[0].y);
+        // Base
         ctx.beginPath();
-        ctx.ellipse(p[0].x, p[0].y + 10, 12, 4, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, 8, 14, 5, 0, 0, Math.PI * 2);
+        ctx.fillStyle = hexToRgba(element.color, 0.8);
         ctx.fill();
         ctx.stroke();
+        // Body
+        ctx.beginPath();
+        ctx.moveTo(-10, 8);
+        ctx.lineTo(0, -15);
+        ctx.lineTo(10, 8);
+        ctx.closePath();
+        const coneGrad = ctx.createLinearGradient(-10, 0, 10, 0);
+        coneGrad.addColorStop(0, element.color);
+        coneGrad.addColorStop(0.5, '#fff');
+        coneGrad.addColorStop(1, element.color);
+        ctx.fillStyle = coneGrad;
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
         break;
       case 'seta':
+        // Professional Disc Marker
+        ctx.save();
+        ctx.translate(p[0].x, p[0].y);
         ctx.beginPath();
-        ctx.ellipse(p[0].x, p[0].y, 14, 6, 0, 0, Math.PI * 2);
-        ctx.fillStyle = element.color;
+        ctx.ellipse(0, 0, 16, 7, 0, 0, Math.PI * 2);
+        const setaGrad = ctx.createRadialGradient(0, -2, 0, 0, 0, 16);
+        setaGrad.addColorStop(0, '#fff');
+        setaGrad.addColorStop(0.3, element.color);
+        setaGrad.addColorStop(1, hexToRgba(element.color, 0.8));
+        ctx.fillStyle = setaGrad;
         ctx.fill();
         ctx.stroke();
         ctx.beginPath();
-        ctx.arc(p[0].x, p[0].y - 2, 3, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.arc(0, -2, 4, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0,0,0,0.2)';
         ctx.fill();
+        ctx.restore();
         break;
       case 'ladder':
-        const steps = 8;
-        const stepH = 25;
-        const stepW = 40;
+        // Realistic Agility Ladder (2 points)
+        if (!p[1]) break;
+        const dist = getDistance(p[0], p[1]);
+        const ang = Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x);
+        const stepWidth = 40;
+        const stepGap = 25;
+        ctx.save();
         ctx.translate(p[0].x, p[0].y);
-        ctx.rotate(element.rotation);
-        for(let i=0; i<steps; i++){
-          ctx.strokeRect(-stepW/2, i*stepH, stepW, stepH);
+        ctx.rotate(ang);
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 4;
+        // Side rails
+        ctx.strokeRect(0, -stepWidth/2, dist, stepWidth);
+        // Rungs
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = element.color;
+        for(let d=0; d<dist; d+=stepGap) {
+          ctx.beginPath();
+          ctx.moveTo(d, -stepWidth/2);
+          ctx.lineTo(d, stepWidth/2);
+          ctx.stroke();
         }
+        ctx.restore();
         break;
       case 'hurdle':
-        ctx.moveTo(p[0].x - 15, p[0].y + 10);
-        ctx.lineTo(p[0].x - 15, p[0].y - 10);
-        ctx.lineTo(p[0].x + 15, p[0].y - 10);
-        ctx.lineTo(p[0].x + 15, p[0].y + 10);
+        // 3D Training Hurdle (2 points for width)
+        if (!p[1]) break;
+        const hWidth = getDistance(p[0], p[1]);
+        const hAng = Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x);
+        ctx.save();
+        ctx.translate(p[0].x, p[0].y);
+        ctx.rotate(hAng);
+        ctx.strokeStyle = element.color;
+        ctx.lineWidth = 5;
+        // Arch
+        ctx.beginPath();
+        ctx.moveTo(0, 10);
+        ctx.lineTo(0, -10);
+        ctx.lineTo(hWidth, -10);
+        ctx.lineTo(hWidth, 10);
         ctx.stroke();
-        ctx.moveTo(p[0].x - 20, p[0].y + 10);
-        ctx.lineTo(p[0].x - 10, p[0].y + 10);
-        ctx.moveTo(p[0].x + 10, p[0].y + 10);
-        ctx.lineTo(p[0].x + 20, p[0].y + 10);
-        ctx.stroke();
+        // Feet
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#333';
+        ctx.strokeRect(-5, 8, 10, 4);
+        ctx.strokeRect(hWidth-5, 8, 10, 4);
+        ctx.restore();
         break;
       case 'minigoal':
-        ctx.strokeRect(p[0].x - 20, p[0].y - 15, 40, 30);
+        // High Fidelity Mini Goal
+        if (!p[1]) break;
+        const gWidth = getDistance(p[0], p[1]);
+        const gAng = Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x);
+        ctx.save();
+        ctx.translate(p[0].x, p[0].y);
+        ctx.rotate(gAng);
+        // Net
         ctx.beginPath();
-        ctx.moveTo(p[0].x - 20, p[0].y - 15);
-        ctx.lineTo(p[0].x - 10, p[0].y - 25);
-        ctx.lineTo(p[0].x + 10, p[0].y - 25);
-        ctx.lineTo(p[0].x + 20, p[0].y - 15);
-        ctx.stroke();
+        ctx.rect(0, -gWidth/4, gWidth, gWidth/2);
+        ctx.fillStyle = 'rgba(255,255,255,0.1)';
+        ctx.fill();
         ctx.setLineDash([2, 2]);
+        ctx.strokeStyle = '#fff';
         ctx.lineWidth = 1;
-        for(let i=-15; i<20; i+=5) {
-          ctx.moveTo(p[0].x + i, p[0].y - 15);
-          ctx.lineTo(p[0].x + i, p[0].y + 15);
+        for(let i=0; i<gWidth; i+=8) {
+          ctx.moveTo(i, -gWidth/4); ctx.lineTo(i, gWidth/2);
         }
         ctx.stroke();
+        // Frame
+        ctx.setLineDash([]);
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(0, -gWidth/4, gWidth, gWidth/2);
+        ctx.restore();
         break;
       case 'pica':
-        ctx.lineWidth = 4;
-        ctx.moveTo(p[0].x, p[0].y + 15);
-        ctx.lineTo(p[0].x, p[0].y - 25);
-        ctx.stroke();
+        // Training Pole
+        ctx.save();
+        ctx.translate(p[0].x, p[0].y);
+        // Base
         ctx.beginPath();
-        ctx.arc(p[0].x, p[0].y + 15, 6, 0, Math.PI * 2);
+        ctx.arc(0, 15, 8, 0, Math.PI * 2);
         ctx.fillStyle = '#333';
         ctx.fill();
+        // Pole
+        const poleGrad = ctx.createLinearGradient(-3, 0, 3, 0);
+        poleGrad.addColorStop(0, element.color);
+        poleGrad.addColorStop(0.5, '#fff');
+        poleGrad.addColorStop(1, element.color);
+        ctx.fillStyle = poleGrad;
+        ctx.fillRect(-3, -30, 6, 45);
+        ctx.restore();
         break;
     }
 
@@ -333,11 +411,11 @@ function TrainingBoardContent() {
       ctx.lineWidth = 1;
       ctx.setLineDash([5, 5]);
       
-      const isAsset = ['ball', 'cone', 'seta', 'ladder', 'hurdle', 'minigoal', 'pica', 'player'].includes(element.type);
+      const isSinglePoint = ['ball', 'cone', 'seta', 'pica', 'player'].includes(element.type);
 
       if (element.type === 'rect' && p[1]) {
         ctx.strokeRect(p[0].x, p[0].y, p[1].x - p[0].x, p[1].y - p[0].y);
-      } else if (isAsset) {
+      } else if (isSinglePoint) {
         ctx.strokeRect(p[0].x - 25, p[0].y - 25, 50, 50);
       }
 
@@ -352,7 +430,7 @@ function TrainingBoardContent() {
           { x: p[1].x, y: p[1].y },
           { x: p[0].x, y: p[1].y }
         ];
-      } else if (!isAsset && p[1]) {
+      } else if (!isSinglePoint && p[1]) {
         handles = [p[0], p[p.length-1]];
       }
 
@@ -363,7 +441,7 @@ function TrainingBoardContent() {
         ctx.stroke();
       });
 
-      if (canRotate && (p[1] || isAsset)) {
+      if (canRotate && (p[1] || isSinglePoint)) {
         const rotX = p[1] ? (p[0].x + p[1].x) / 2 : p[0].x;
         const rotY = p[1] ? Math.min(p[0].y, p[1].y) - 35 : p[0].y - 35;
         ctx.beginPath();
@@ -429,9 +507,9 @@ function TrainingBoardContent() {
         const centerY = p[1] ? (p[0].y + p[1].y) / 2 : p[0].y;
         const localPoint = rotatePoint(point, {x: centerX, y: centerY}, -el.rotation);
 
-        const isAsset = ['ball', 'cone', 'seta', 'ladder', 'hurdle', 'minigoal', 'pica', 'player'].includes(el.type);
+        const isSinglePoint = ['ball', 'cone', 'seta', 'pica', 'player'].includes(el.type);
 
-        if (el.type !== 'circle' && (p[1] || isAsset)) {
+        if (el.type !== 'circle' && (p[1] || isSinglePoint)) {
           const rotX = p[1] ? (el.points[0].x + el.points[1].x) / 2 : el.points[0].x;
           const rotY = p[1] ? Math.min(el.points[0].y, el.points[1].y) - 35 : el.points[0].y - 35;
           if (getDistance(point, rotatePoint({x: rotX, y: rotY}, {x: centerX, y: centerY}, el.rotation)) < 15) {
@@ -448,7 +526,7 @@ function TrainingBoardContent() {
             { x: el.points[1].x, y: el.points[1].y },
             { x: el.points[0].x, y: el.points[1].y }
           ];
-        } else if (!isAsset && p[1]) {
+        } else if (!isSinglePoint && p[1]) {
           handles = [el.points[0], el.points[el.points.length - 1]];
         }
 
@@ -478,7 +556,7 @@ function TrainingBoardContent() {
       if (el.type === 'freehand') {
         return p.some(fp => getDistance(point, fp) < 15);
       }
-      if (['ball', 'cone', 'seta', 'ladder', 'hurdle', 'minigoal', 'pica', 'player'].includes(el.type)) {
+      if (['ball', 'cone', 'seta', 'pica', 'player'].includes(el.type)) {
         return getDistance(point, p[0]) < 30;
       }
       if (p[1]) {
@@ -496,7 +574,7 @@ function TrainingBoardContent() {
       }
     } else {
       if (activeTool !== 'select') {
-        const isAsset = ['ball', 'cone', 'seta', 'ladder', 'hurdle', 'minigoal', 'pica', 'player'].includes(activeTool);
+        const isSinglePoint = ['ball', 'cone', 'seta', 'pica', 'player'].includes(activeTool);
         setSelectedId(null);
         setIsPropertiesOpen(false);
         interactionMode.current = 'drawing';
@@ -510,7 +588,7 @@ function TrainingBoardContent() {
         currentElement.current = { 
           id: `el-${Date.now()}`, 
           type: activeTool, 
-          points: isAsset ? [point] : [point, point], 
+          points: isSinglePoint ? [point] : [point, point], 
           color: currentColor,
           rotation: 0,
           lineStyle: 'solid',
@@ -530,8 +608,8 @@ function TrainingBoardContent() {
     const point = { x: e.clientX - rect.left, y: e.clientY - rect.top };
 
     if (interactionMode.current === 'drawing' && currentElement.current) {
-      const isAsset = ['ball', 'cone', 'seta', 'ladder', 'hurdle', 'minigoal', 'pica', 'player'].includes(currentElement.current.type);
-      if (!isAsset) {
+      const isSinglePoint = ['ball', 'cone', 'seta', 'pica', 'player'].includes(currentElement.current.type);
+      if (!isSinglePoint) {
         if (activeTool === 'freehand') {
           currentElement.current.points.push(point);
         } else {
@@ -645,7 +723,7 @@ function TrainingBoardContent() {
     if (selectedElement.type === 'freehand') {
       maxX = Math.max(...p.map(pt => pt.x));
       minY = Math.min(...p.map(pt => pt.y));
-    } else if (['ball', 'cone', 'seta', 'ladder', 'hurdle', 'minigoal', 'pica', 'player'].includes(selectedElement.type)) {
+    } else if (['ball', 'cone', 'seta', 'pica', 'player'].includes(selectedElement.type)) {
       maxX = p[0].x;
       minY = p[0].y;
     } else if (p[1]) {
@@ -668,7 +746,7 @@ function TrainingBoardContent() {
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-amber-500 animate-pulse" />
-              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Exercise_Designer_IA_v8.2</span>
+              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Exercise_Designer_IA_v8.3</span>
             </div>
             <h1 className="text-lg lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase">Estudio Profesional</h1>
           </div>
