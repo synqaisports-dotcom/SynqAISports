@@ -19,7 +19,8 @@ import {
   CheckCircle2,
   Camera,
   Dna,
-  Eye
+  Eye,
+  Megaphone
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -169,6 +170,7 @@ export default function MatchBoardPage() {
 
   const hasClub = !!profile?.clubId;
   const isCoach = profile?.role === "coach" || profile?.role === "club_admin" || profile?.role === "superadmin";
+  const isPromo = profile?.plan === "free";
   const showTeamSelector = hasClub && isCoach;
 
   const [localTeamData, setLocalTeamData] = useState({
@@ -495,23 +497,12 @@ export default function MatchBoardPage() {
             </div>
           )}
 
-          <div className="flex items-center gap-2">
-            <div className="hidden md:block">
-              <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}>
-                <SelectTrigger className="w-[110px] lg:w-[140px] h-9 lg:h-10 bg-white/5 border-primary/20 rounded-xl text-[8px] lg:text-[9px] font-black uppercase tracking-widest text-primary hover:bg-primary/5 transition-all">
-                  <div className="flex items-center gap-2">
-                    <LayoutGrid className="h-3 w-3 lg:h-3.5 lg:w-3.5" />
-                    <SelectValue placeholder="Campo" />
-                  </div>
-                </SelectTrigger>
-                <SelectContent className="bg-[#0a0f18] border-primary/20">
-                  <SelectItem value="f11" className="text-[9px] font-black uppercase">Fútbol 11</SelectItem>
-                  <SelectItem value="f7" className="text-[9px] font-black uppercase">Fútbol 7</SelectItem>
-                  <SelectItem value="futsal" className="text-[9px] font-black uppercase">Fútbol Sala</SelectItem>
-                </SelectContent>
-              </Select>
+          {isPromo && (
+            <div className="hidden lg:flex items-center gap-4 bg-primary/5 border border-primary/20 px-6 py-2 rounded-2xl animate-in zoom-in-95">
+               <Megaphone className="h-4 w-4 text-primary/40" />
+               <span className="text-[9px] font-black text-primary/40 uppercase tracking-[0.5em]">Ad_Space_Reserved</span>
             </div>
-          </div>
+          )}
         </div>
 
         <div className="flex items-center gap-2 lg:gap-4 px-3 lg:px-6 py-1.5 lg:py-2 bg-primary/5 border border-primary/20 rounded-[2rem] shadow-[0_0_30px_rgba(0,242,255,0.05)] mx-2">
@@ -625,7 +616,13 @@ export default function MatchBoardPage() {
             </div>
           </TacticalField>
 
-          {/* PROTOCOLO_ERGONOMIA_V2.1: Botón de Configuración en Esquina Inferior Derecha */}
+          {isPromo && (
+            <div className="absolute bottom-24 left-1/2 -translate-x-1/2 w-full max-w-xl h-12 bg-black/60 border border-white/5 rounded-xl flex items-center justify-center gap-4 z-40 hidden md:flex">
+               <Megaphone className="h-3 w-3 text-white/10" />
+               <span className="text-[8px] font-black text-white/20 uppercase tracking-[0.5em]">Google_Ad_Slot_Leaderboard_Match</span>
+            </div>
+          )}
+
           <div className="absolute bottom-6 right-6 z-[60] pointer-events-auto">
             <Sheet>
               <SheetTrigger asChild>

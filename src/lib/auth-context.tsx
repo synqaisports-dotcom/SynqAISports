@@ -10,7 +10,7 @@ interface UserProfile {
   role: UserRole;
   clubId: string | null;
   name: string;
-  plan: string | null;
+  plan: 'free' | 'volumen_core' | 'enterprise_scale' | null;
   country: string | null;
   sport?: string;
   clubCreated: boolean;
@@ -24,6 +24,8 @@ interface AuthContextType {
   loading: boolean;
   loginAsGuest: () => void;
   loginWithToken: (token: string, plan: string, country: string) => void;
+  register: (email: string, pass: string, name: string, clubName: string, plan?: 'free' | 'enterprise_scale') => Promise<void>;
+  login: (email: string, pass: string) => Promise<void>;
   completeOnboarding: (clubData: { name: string; id: string; country: string; sport: string }) => void;
   logout: () => void;
 }
@@ -34,6 +36,8 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   loginAsGuest: () => {},
   loginWithToken: () => {},
+  register: async () => {},
+  login: async () => {},
   completeOnboarding: () => {},
   logout: () => {},
 });
@@ -74,14 +78,53 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.setItem("synq_profile", JSON.stringify(guestProfile));
   };
 
-  const loginWithToken = (token: string, plan: string, country: string) => {
+  const register = async (email: string, pass: string, name: string, clubName: string, plan: 'free' | 'enterprise_scale' = 'free') => {
+    // Simulación de registro en prototipo
+    const newUser = { uid: `u-${Date.now()}`, email };
+    const newProfile: UserProfile = {
+      email,
+      name,
+      role: "club_admin",
+      clubId: null,
+      plan,
+      country: "ES",
+      clubCreated: false,
+      clubName
+    };
+
+    setUser(newUser);
+    setProfile(newProfile);
+    localStorage.setItem("synq_user", JSON.stringify(newUser));
+    localStorage.setItem("synq_profile", JSON.stringify(newProfile));
+  };
+
+  const login = async (email: string, pass: string) => {
+    // Simulación de login en prototipo
+    const guestUser = { uid: "u-simulated", email };
+    const guestProfile: UserProfile = {
+      email,
+      name: "Usuario Sincronizado",
+      role: "coach",
+      clubId: "club-simulated",
+      plan: "free",
+      country: "ES",
+      clubCreated: true,
+    };
+    
+    setUser(guestUser);
+    setProfile(guestProfile);
+    localStorage.setItem("synq_user", JSON.stringify(guestUser));
+    localStorage.setItem("synq_profile", JSON.stringify(guestProfile));
+  };
+
+  const loginWithToken = (token: string, plan: any, country: string) => {
     const newUser = { uid: `user-${Math.random().toString(36).substr(2, 9)}`, email: "pending@club.com" };
     const newProfile: UserProfile = {
       email: "pending@club.com",
       name: "Nuevo Administrador",
       role: "club_admin",
       clubId: null,
-      plan: plan,
+      plan: plan.toLowerCase().replace(' ', '_'),
       country: country,
       clubCreated: false,
       claimedToken: token
@@ -107,13 +150,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setProfile(updatedProfile);
       localStorage.setItem("synq_profile", JSON.stringify(updatedProfile));
       
-      // Simulación de guardado en "base de datos global" de localStorage para el prototipo
       const existingClubs = JSON.parse(localStorage.getItem("synq_global_clubs") || "[]");
       const newClubEntry = {
         id: clubData.id,
         name: clubData.name,
-        plan: profile.plan || "Standard",
-        users: 0,
+        plan: profile.plan || "free",
+        users: 1,
         status: "Active",
         country: clubData.country,
         sport: clubData.sport
@@ -130,7 +172,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, loginAsGuest, loginWithToken, completeOnboarding, logout }}>
+    <AuthContext.Provider value={{ user, profile, loading, loginAsGuest, loginWithToken, register, login, completeOnboarding, logout }}>
       {children}
     </AuthContext.Provider>
   );

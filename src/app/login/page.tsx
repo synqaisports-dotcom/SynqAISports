@@ -21,16 +21,23 @@ import {
   Sparkles,
   Lock,
   Globe,
-  ChevronLeft
-} from "lucide-react";
+  ChevronLeft,
+  UserCircle,
+  Building2,
+  LockKeyhole
+} from "lucide-center";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth-context";
 import { Badge } from "@/components/ui/badge";
 
+const UserCircleIcon = ({ className }: any) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+);
+
 function LoginContent() {
   const [localLoading, setLocalLoading] = useState(false);
   const [forceStandard, setForceStandard] = useState(false);
-  const { profile, loginAsGuest, loginWithToken } = useAuth();
+  const { profile, loginAsGuest, loginWithToken, register, login } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -38,13 +45,18 @@ function LoginContent() {
   const [token, setToken] = useState<string | null>(null);
   const [campaignData, setCampaignData] = useState<any>(null);
 
+  // Form states
+  const [regData, setRegData] = useState({ name: "", email: "", pass: "", club: "" });
+  const [loginData, setLoginData] = useState({ email: "", pass: "" });
+
   useEffect(() => {
-    // Si ya hay un perfil cargado (por persistencia), redirigir según el rol
     if (profile) {
       if (profile.role === "superadmin") {
         router.push("/admin-global");
-      } else {
+      } else if (profile.clubCreated) {
         router.push("/dashboard");
+      } else {
+        router.push("/dashboard/coach/onboarding");
       }
     }
   }, [profile, router]);
@@ -67,96 +79,69 @@ function LoginContent() {
     }
   }, [searchParams, toast, forceStandard]);
 
-  const handleBypass = () => {
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLocalLoading(true);
-    loginAsGuest();
-    toast({
-      title: "ACCESO_AUTORIZADO",
-      description: "Sincronizando con el nodo central de administración...",
-    });
-    // Usamos router.push para no perder el estado de React/Auth
-    router.push("/admin-global");
+    try {
+      await register(regData.email, regData.pass, regData.name, regData.club, 'free');
+      toast({ title: "CUENTA_CREADA", description: "Bienvenido a la red SynqAI. Sincronizando terminal..." });
+    } catch (err) {
+      toast({ variant: "destructive", title: "FALLO_SINCRO", description: "No se pudo crear el nodo de usuario." });
+    } finally {
+      setLocalLoading(false);
+    }
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLocalLoading(true);
+    try {
+      await login(loginData.email, loginData.pass);
+      toast({ title: "IDENTIDAD_VALIDADA", description: "Acceso autorizado al núcleo central." });
+    } catch (err) {
+      toast({ variant: "destructive", title: "ERROR_AUTH", description: "Credenciales no reconocidas en la red." });
+    } finally {
+      setLocalLoading(false);
+    }
   };
 
   const handleClaimToken = (e: React.FormEvent) => {
     e.preventDefault();
     setLocalLoading(true);
-    
     loginWithToken(token!, campaignData.plan, campaignData.countryCode);
-    
-    toast({
-      title: "VINCULACIÓN_INICIADA",
-      description: "Accediendo al túnel de onboarding del club.",
-    });
-    
+    toast({ title: "VINCULACIÓN_INICIADA", description: "Accediendo al túnel de onboarding del club." });
     router.push("/dashboard/coach/onboarding");
+  };
+
+  const handleBypass = () => {
+    setLocalLoading(true);
+    loginAsGuest();
+    toast({ title: "ACCESO_AUTORIZADO", description: "Sincronizando con el nodo central de administración..." });
+    router.push("/admin-global");
   };
 
   if (token && campaignData && !forceStandard) {
     return (
       <Card className="w-full max-w-xl glass-panel shadow-2xl relative z-10 overflow-hidden border-t-2 border-primary animate-in fade-in zoom-in-95 duration-500 rounded-3xl">
-        <div className="absolute top-0 right-0 p-4 opacity-10">
-          <Sparkles className="h-24 w-24 text-primary" />
-        </div>
-        
+        <div className="absolute top-0 right-0 p-4 opacity-10"><Sparkles className="h-24 w-24 text-primary" /></div>
         <CardHeader className="pt-12 pb-8 text-center">
           <Badge className="mx-auto mb-4 bg-primary text-black font-black px-4 py-1 rounded-2xl tracking-[0.3em] italic">INVITACIÓN_ACTIVA</Badge>
-          <CardTitle className="text-4xl font-headline font-black text-white tracking-tighter uppercase italic">
-            CLAIM_YOUR_NODE
-          </CardTitle>
-          <CardDescription className="uppercase text-[9px] tracking-[0.5em] text-white/30 mt-4 font-bold italic">
-            Campaña: {token} • {campaignData.region}
-          </CardDescription>
+          <CardTitle className="text-4xl font-headline font-black text-white tracking-tighter uppercase italic">CLAIM_YOUR_NODE</CardTitle>
+          <CardDescription className="uppercase text-[9px] tracking-[0.5em] text-white/30 mt-4 font-bold italic">Campaña: {token} • {campaignData.region}</CardDescription>
         </CardHeader>
-
         <CardContent className="px-8 pb-12 space-y-8">
           <div className="p-6 bg-primary/5 border border-primary/20 rounded-3xl space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase text-white/40 tracking-widest italic">Protocolo de Plan</span>
-              <span className="text-xs font-black text-primary italic uppercase">{campaignData.plan}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase text-white/40 tracking-widest italic">País Vinculado</span>
-              <span className="text-xs font-black text-white uppercase">{campaignData.region}</span>
-            </div>
-            <div className="flex items-center justify-between pt-2 border-t border-white/5">
-              <div className="flex items-center gap-2">
-                <Lock className="h-3 w-3 text-primary/40" />
-                <span className="text-[8px] font-black uppercase text-white/20 tracking-widest italic">Datos bloqueados por campaña</span>
-              </div>
-              <Badge variant="outline" className="text-[8px] border-primary/20 text-primary font-black uppercase rounded-2xl">Solo {campaignData.limit}</Badge>
-            </div>
+            <div className="flex items-center justify-between"><span className="text-[10px] font-black uppercase text-white/40 tracking-widest italic">Protocolo de Plan</span><span className="text-xs font-black text-primary italic uppercase">{campaignData.plan}</span></div>
+            <div className="flex items-center justify-between"><span className="text-[10px] font-black uppercase text-white/40 tracking-widest italic">País Vinculado</span><span className="text-xs font-black text-white uppercase">{campaignData.region}</span></div>
           </div>
-
           <form onSubmit={handleClaimToken} className="space-y-6">
             <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1 italic">NOMBRE_DEL_ADMINISTRADOR</label>
-                <Input required placeholder="SU NOMBRE" className="h-14 bg-white/5 border-primary/20 rounded-2xl text-white font-bold uppercase focus:border-primary transition-all" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1 italic">MAIL_DE_ACCESO_PROFESIONAL</label>
-                <Input required type="email" placeholder="MAIL@CLUB.COM" className="h-14 bg-white/5 border-primary/20 rounded-2xl text-white font-bold uppercase focus:border-primary transition-all" />
-              </div>
+              <div className="space-y-2"><label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1 italic">NOMBRE_DEL_ADMINISTRADOR</label><Input required placeholder="SU NOMBRE" className="h-14 bg-white/5 border-primary/20 rounded-2xl text-white font-bold uppercase focus:border-primary" /></div>
+              <div className="space-y-2"><label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1 italic">MAIL_ACCESO</label><Input required type="email" placeholder="MAIL@CLUB.COM" className="h-14 bg-white/5 border-primary/20 rounded-2xl text-white font-bold uppercase focus:border-primary" /></div>
             </div>
-
-            <Button 
-              type="submit"
-              disabled={localLoading}
-              className="w-full h-16 bg-primary text-black font-black uppercase tracking-[0.3em] text-xs rounded-2xl cyan-glow hover:scale-[1.01] transition-all border-none"
-            >
-              {localLoading ? "CONFIGURANDO_NODO..." : "ACTIVAR_MI_NODO_DE_CLUB"} <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
+            <Button type="submit" disabled={localLoading} className="w-full h-16 bg-primary text-black font-black uppercase tracking-[0.3em] text-xs rounded-2xl cyan-glow hover:scale-[1.01] transition-all border-none">{localLoading ? "CONFIGURANDO_NODO..." : "ACTIVAR_MI_NODO_DE_CLUB"} <ArrowRight className="h-4 w-4 ml-2" /></Button>
           </form>
-
-          <div className="pt-6 border-t border-white/5 flex flex-col items-center gap-4">
-            <button 
-              onClick={() => setForceStandard(true)}
-              className="text-[9px] text-white/40 hover:text-white transition-all font-black uppercase tracking-[0.3em] flex items-center gap-2 italic"
-            >
-              <ChevronLeft className="h-3 w-3" /> Ignorar invitación e iniciar sesión de sistema
-            </button>
-          </div>
+          <button onClick={() => setForceStandard(true)} className="text-[9px] text-white/40 hover:text-white transition-all font-black uppercase tracking-[0.3em] flex items-center gap-2 italic mx-auto"><ChevronLeft className="h-3 w-3" /> Ignorar invitación</button>
         </CardContent>
       </Card>
     );
@@ -164,10 +149,7 @@ function LoginContent() {
 
   return (
     <Card className="w-full max-w-xl glass-panel shadow-2xl relative z-10 overflow-hidden border-t-2 border-t-primary rounded-3xl">
-      <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-        <Zap className="h-32 w-32 text-primary" />
-      </div>
-
+      <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none"><Zap className="h-32 w-32 text-primary" /></div>
       <CardHeader className="pt-12 pb-8 text-center">
         <div className="flex justify-center mb-8">
           <div className="relative group">
@@ -177,95 +159,60 @@ function LoginContent() {
             </div>
           </div>
         </div>
-        <CardTitle className="text-4xl font-headline font-black text-white tracking-[0.2em] uppercase italic">
-          Synq<span className="text-primary cyan-text-glow">AI</span>_ACCESS
-        </CardTitle>
-        <CardDescription className="uppercase text-[9px] tracking-[0.5em] text-white/30 mt-4 font-bold italic">
-          Protocolo de Identidad y Sincronización
-        </CardDescription>
+        <CardTitle className="text-4xl font-headline font-black text-white tracking-[0.2em] uppercase italic">Synq<span className="text-primary cyan-text-glow">AI</span>_ACCESS</CardTitle>
+        <CardDescription className="uppercase text-[9px] tracking-[0.5em] text-white/30 mt-4 font-bold italic">Sincronización de Identidad de Cantera</CardDescription>
       </CardHeader>
 
       <CardContent className="px-8 pb-12">
-        <Tabs defaultValue="activation" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-black/40 h-14 rounded-2xl border border-white/5 p-1 mb-8">
-            <TabsTrigger 
-              value="activation" 
-              className="rounded-xl font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-black transition-all italic"
-            >
-              <Key className="h-3 w-3 mr-2" /> Código Activación
-            </TabsTrigger>
-            <TabsTrigger 
-              value="qr" 
-              className="rounded-xl font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-black transition-all italic"
-            >
-              <QrCode className="h-3 w-3 mr-2" /> Escaneo de Nodo
-            </TabsTrigger>
+        <Tabs defaultValue="login" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 bg-black/40 h-14 rounded-2xl border border-white/5 p-1 mb-8">
+            <TabsTrigger value="login" className="rounded-xl font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-black italic">LOGIN</TabsTrigger>
+            <TabsTrigger value="register" className="rounded-xl font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-black italic">REGISTRAR</TabsTrigger>
+            <TabsTrigger value="qr" className="rounded-xl font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-black italic">NODO_QR</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="activation" className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-500">
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1 italic">NOMBRE_USUARIO</label>
-                  <Input placeholder="EJ. MARC" className="h-12 bg-white/5 border-primary/20 rounded-2xl text-white font-bold uppercase placeholder:text-white/10 focus:border-primary transition-all" />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1 italic">MAIL_ACCESO</label>
-                  <Input type="email" placeholder="USER@SYNQ.PRO" className="h-12 bg-white/5 border-primary/20 rounded-2xl text-white font-bold uppercase placeholder:text-white/10 focus:border-primary transition-all" />
+          <TabsContent value="login" className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-500">
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1 italic">EMAIL_PROFESIONAL</label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-4 h-4 w-4 text-primary/40" />
+                  <Input required type="email" value={loginData.email} onChange={e => setLoginData({...loginData, email: e.target.value})} placeholder="USER@CLUB.COM" className="h-12 pl-12 bg-white/5 border-primary/20 rounded-2xl text-white font-bold" />
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1 italic">CÓDIGO_DE_ACTIVACIÓN</label>
-                <Input placeholder="XXXX-XXXX-XXXX" className="h-12 bg-primary/5 border-primary/30 rounded-2xl text-xl font-headline font-black text-center tracking-[0.3em] text-primary cyan-text-glow placeholder:text-primary/10 focus:border-primary transition-all" />
+                <label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1 italic">CLAVE_ACCESO</label>
+                <div className="relative">
+                  <LockKeyhole className="absolute left-4 top-4 h-4 w-4 text-primary/40" />
+                  <Input required type="password" value={loginData.pass} onChange={e => setLoginData({...loginData, pass: e.target.value})} placeholder="••••••••" className="h-12 pl-12 bg-white/5 border-primary/20 rounded-2xl text-white font-bold" />
+                </div>
               </div>
-            </div>
+              <Button type="submit" disabled={localLoading} className="w-full h-16 bg-primary text-black font-black uppercase tracking-[0.3em] text-xs rounded-2xl cyan-glow border-none">ACCEDER_A_MI_NODO <ArrowRight className="h-4 w-4 ml-2" /></Button>
+            </form>
+          </TabsContent>
 
-            <Button 
-              onClick={handleBypass}
-              className="w-full h-16 bg-primary text-black font-black uppercase tracking-[0.3em] text-xs rounded-2xl cyan-glow hover:scale-[1.01] transition-all border-none"
-            >
-              VINCULAR_IDENTIDAD <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
+          <TabsContent value="register" className="space-y-6 animate-in fade-in zoom-in-95 duration-500">
+            <form onSubmit={handleRegister} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2"><label className="text-[9px] font-black uppercase text-primary ml-1 italic">NOMBRE</label><Input required value={regData.name} onChange={e => setRegData({...regData, name: e.target.value.toUpperCase()})} placeholder="MARC" className="h-12 bg-white/5 border-primary/20 rounded-2xl font-bold" /></div>
+                <div className="space-y-2"><label className="text-[9px] font-black uppercase text-primary ml-1 italic">CANTERA</label><Input required value={regData.club} onChange={e => setRegData({...regData, club: e.target.value.toUpperCase()})} placeholder="CLUB_CITY" className="h-12 bg-white/5 border-primary/20 rounded-2xl font-bold" /></div>
+              </div>
+              <div className="space-y-2"><label className="text-[9px] font-black uppercase text-primary ml-1 italic">EMAIL_PROFESIONAL</label><Input required type="email" value={regData.email} onChange={e => setRegData({...regData, email: e.target.value})} placeholder="USER@CLUB.COM" className="h-12 bg-white/5 border-primary/20 rounded-2xl font-bold" /></div>
+              <div className="space-y-2"><label className="text-[9px] font-black uppercase text-primary ml-1 italic">NUEVA_CLAVE</label><Input required type="password" value={regData.pass} onChange={e => setRegData({...regData, pass: e.target.value})} placeholder="••••••••" className="h-12 bg-white/5 border-primary/20 rounded-2xl font-bold" /></div>
+              <Button type="submit" disabled={localLoading} className="w-full h-16 bg-primary text-black font-black uppercase tracking-[0.3em] text-xs rounded-2xl cyan-glow border-none">CREAR_IDENTIDAD_FREE <Sparkles className="h-4 w-4 ml-2" /></Button>
+            </form>
           </TabsContent>
 
           <TabsContent value="qr" className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
             <div className="flex flex-col items-center py-6 space-y-6 border border-dashed border-primary/20 bg-primary/5 rounded-3xl">
-              <div className="relative">
-                <div className="absolute inset-0 bg-primary/20 blur-2xl animate-pulse" />
-                <QrCode className="h-24 w-24 text-primary relative" />
-              </div>
-              <div className="text-center space-y-2">
-                <p className="text-[10px] font-black uppercase tracking-widest text-white italic">ESCANEA TU CÓDIGO_NODO</p>
-                <p className="text-[8px] font-bold uppercase tracking-widest text-white/40 italic">Sincronización automática de Plan y Promo</p>
-              </div>
+              <QrCode className="h-24 w-24 text-primary" />
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/40 italic">Escanee su código de nodo para vinculación express</p>
             </div>
-
-            <div className="space-y-2">
-              <label className="text-[9px] font-black uppercase tracking-widest text-white/40 ml-1 text-center block w-full italic">O INTRODUCE CÓDIGO_PROMOCIONAL</label>
-              <Input placeholder="PROMO_CODE_2024" className="h-12 bg-white/5 border-primary/20 rounded-2xl text-white font-bold text-center uppercase tracking-widest focus:border-primary transition-all" />
-            </div>
-
-            <Button 
-              onClick={handleBypass}
-              className="w-full h-16 bg-white/5 border border-white/10 text-white font-black uppercase tracking-[0.3em] text-xs rounded-2xl hover:bg-white/10 transition-all active:scale-95"
-            >
-              SINCRONIZAR_NODO
-            </Button>
           </TabsContent>
         </Tabs>
 
         <div className="mt-12 pt-8 border-t border-white/5 flex flex-col items-center gap-6">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-primary opacity-50" />
-            <span className="text-[8px] font-black text-white/20 uppercase tracking-[0.5em] italic">Seguridad por Encriptación de Nodo Activa</span>
-          </div>
-          
-          <button 
-            onClick={handleBypass}
-            className="text-[9px] text-primary/40 hover:text-primary transition-all font-black uppercase tracking-[0.3em] border border-primary/20 px-8 py-3 hover:bg-primary/5 rounded-2xl"
-          >
-            [ BYPASS_ADMIN_SISTEMA_DEV ]
-          </button>
+          <button onClick={handleBypass} className="text-[9px] text-primary/40 hover:text-primary transition-all font-black uppercase tracking-[0.3em] border border-primary/20 px-8 py-3 hover:bg-primary/5 rounded-2xl">[ BYPASS_ADMIN_SISTEMA ]</button>
         </div>
       </CardContent>
     </Card>
@@ -276,11 +223,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#070a0f] px-6 relative overflow-hidden font-body">
       <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,255,255,0.05),transparent_70%)]" />
-      
-      <Suspense fallback={<div className="text-primary font-black uppercase tracking-[1em] animate-pulse italic">Sincronizando_Nodo...</div>}>
-        <LoginContent />
-      </Suspense>
+      <Suspense fallback={<div className="text-primary font-black uppercase tracking-[1em] animate-pulse italic">Sincronizando_Nodo...</div>}><LoginContent /></Suspense>
     </div>
   );
 }

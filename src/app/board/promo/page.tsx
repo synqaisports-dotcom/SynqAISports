@@ -31,7 +31,10 @@ import {
   Redo2,
   Video,
   ArrowUpRight,
-  MousePointerClick
+  MousePointerClick,
+  Info,
+  Save,
+  Megaphone
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -45,8 +48,19 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetDescription,
+  SheetFooter, 
+  SheetClose
+} from "@/components/ui/sheet";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth-context";
+import { useToast } from "@/hooks/use-toast";
 
 interface Point {
   x: number; // 0.0 to 1.0 (Normalized)
@@ -80,14 +94,28 @@ const isCircular = (type: DrawingTool) =>
   ['player', 'ball', 'circle', 'seta'].includes(type);
 
 export default function PromoBoardPage() {
-  const [exercisesCount, setExercisesCount] = useState(2);
+  const { profile } = useAuth();
+  const { toast } = useToast();
   const [fieldType, setFieldType] = useState<FieldType>("f11");
   const [showLanes, setShowLanes] = useState(false);
   const [activeTool, setActiveTool] = useState<DrawingTool>("select");
   const [currentColor, setCurrentColor] = useState("#00f2ff");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [elements, setElements] = useState<DrawingElement[]>([]);
-  const MAX_EXERCISES = 4;
+  const [isSaveSheetOpen, setIsSaveSheetOpen] = useState(false);
+
+  // LÍMITES_PROMO (Lead Tunel)
+  const [promoStats, setPromoStats] = useState({
+    warmup: 0,
+    main: 0,
+    cooldown: 0,
+    sessions: 0
+  });
+
+  const MAX_WARMUP = 4;
+  const MAX_MAIN = 12;
+  const MAX_COOLDOWN = 4;
+  const MAX_SESSIONS = 4;
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawing = useRef(false);
@@ -96,7 +124,17 @@ export default function PromoBoardPage() {
   const interactionMode = useRef<'drawing' | 'resizing' | 'rotating' | 'dragging' | 'curving' | 'none'>('none');
   const activeHandleIndex = useRef<number | null>(null);
 
-  const isLocked = exercisesCount >= MAX_EXERCISES;
+  useEffect(() => {
+    // Carga de stats locales
+    const vault = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": [], "sessions": []}');
+    const exercises = vault.exercises || [];
+    setPromoStats({
+      warmup: exercises.filter((e: any) => e.block === 'warmup').length,
+      main: exercises.filter((e: any) => e.block === 'main').length,
+      cooldown: exercises.filter((e: any) => e.block === 'cooldown').length,
+      sessions: (vault.sessions || []).length
+    });
+  }, []);
 
   const hexToRgba = (hex: string, alpha: number) => {
     const r = parseInt(hex.slice(1, 3), 16);
@@ -283,7 +321,6 @@ export default function PromoBoardPage() {
   useEffect(() => { redrawAll(); }, [elements, selectedIds, fieldType, showLanes, redrawAll]);
 
   const addElementAtCenter = (tool: DrawingTool) => {
-    if (isLocked) return; 
     const pNum = tool === 'player' ? elements.filter(e => e.type === 'player').length + 1 : undefined;
     const canvasRatio = canvasRef.current ? (canvasRef.current.width / canvasRef.current.height) : 1.5;
     const defW = tool === 'ladder' ? 0.15 : (['minigoal', 'cross-arrow', 'barrier'].includes(tool) ? 0.1 : tool === 'text' ? 0.3 : 0.05);
@@ -293,7 +330,7 @@ export default function PromoBoardPage() {
   };
 
   const handlePointerDown = (e: React.PointerEvent) => {
-    if (!canvasRef.current || isLocked) return; const rect = canvasRef.current.getBoundingClientRect();
+    if (!canvasRef.current) return; const rect = canvasRef.current.getBoundingClientRect();
     const p = { x: (e.clientX - rect.left) / rect.width, y: (e.clientY - rect.top) / rect.height };
     startPoint.current = p; lastPoint.current = p; isDrawing.current = true; const wPx = rect.width; const hPx = rect.height;
 
@@ -366,6 +403,25 @@ export default function PromoBoardPage() {
   };
 
   const handlePointerUp = () => { isDrawing.current = false; interactionMode.current = 'none'; activeHandleIndex.current = null; };
+
+  const handleSaveLocal = (block: 'warmup' | 'main' | 'cooldown') => {
+    const vault = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": [], "sessions": []}');
+    const exercises = vault.exercises || [];
+    
+    // Validar Límites
+    if (block === 'warmup' && promoStats.warmup >= MAX_WARMUP) { toast({ variant: "destructive", title: "LÍMITE_CALENTAMIENTO", description: "Capacidad local agotada (Máx 4)." }); return; }
+    if (block === 'main' && promoStats.main >= MAX_MAIN) { toast({ variant: "destructive", title: "LÍMITE_PARTE_PRINCIPAL", description: "Capacidad local agotada (Máx 12)." }); return; }
+    if (block === 'cooldown' && promoStats.cooldown >= MAX_COOLDOWN) { toast({ variant: "destructive", title: "LÍMITE_VUELTA_CALMA", description: "Capacidad local agotada (Máx 4)." }); return; }
+
+    const newEx = { id: Date.now(), block, elements };
+    vault.exercises.push(newEx);
+    localStorage.setItem("synq_promo_vault", JSON.stringify(vault));
+    
+    setPromoStats({ ...promoStats, [block]: promoStats[block] + 1 });
+    setIsSaveSheetOpen(false);
+    toast({ title: "SINCRO_LOCAL_OK", description: `Ejercicio blindado en tu Sandbox de Cantera.` });
+  };
+
   const selectedElements = elements.filter(e => selectedIds.includes(e.id));
   const commonOpacity = selectedElements.length > 0 ? selectedElements[0].opacity : 1.0;
 
@@ -374,22 +430,25 @@ export default function PromoBoardPage() {
       <header className="h-20 border-b border-primary/20 bg-black/40 backdrop-blur-3xl flex items-center justify-between px-4 lg:px-8 shrink-0 z-50">
         <div className="flex items-center gap-4 lg:gap-6 overflow-hidden">
           <div className="flex flex-col shrink-0">
-            <div className="flex items-center gap-2"><Zap className="h-4 w-4 text-primary animate-pulse" /><span className="text-[10px] font-black text-primary tracking-[0.4em] uppercase">Tactical_Board_v9.8.7</span></div>
-            <h1 className="text-sm lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase leading-none">Free</h1>
+            <div className="flex items-center gap-2"><Zap className="h-4 w-4 text-primary animate-pulse" /><span className="text-[10px] font-black text-primary tracking-[0.4em] uppercase">Tactical_Board_Promo</span></div>
+            <h1 className="text-sm lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase leading-none">Free Sandbox</h1>
           </div>
           
           <div className="hidden md:flex items-center gap-3 shrink-0">
             <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}><SelectTrigger className="w-[150px] h-10 bg-white/5 border-primary/20 rounded-xl text-[10px] font-black uppercase text-primary"><LayoutGrid className="h-3 w-3 mr-2" /> <SelectValue placeholder="Superficie" /></SelectTrigger><SelectContent className="bg-[#0a0f18] border-primary/20"><SelectItem value="f11" className="text-[10px] font-black uppercase">Fútbol 11</SelectItem><SelectItem value="f7" className="text-[10px] font-black uppercase">Fútbol 7</SelectItem><SelectItem value="futsal" className="text-[10px] font-black uppercase">Fútbol Sala</SelectItem></SelectContent></Select>
-            <Button 
-              variant="outline" 
-              onClick={() => setShowLanes(!showLanes)} 
-              className={cn(
-                "h-10 px-4 border-primary/20 text-[10px] font-black uppercase rounded-xl", 
-                showLanes ? "bg-primary text-black shadow-[0_0_20px_rgba(0,242,255,0.3)]" : "bg-white/5 text-primary/40"
-              )}
-            >
-              <Columns3 className="h-4 w-4 mr-2" /> Carriles
-            </Button>
+            <Button variant="outline" onClick={() => setShowLanes(!showLanes)} className={cn("h-10 px-4 border-primary/20 text-[10px] font-black uppercase rounded-xl", showLanes ? "bg-primary text-black shadow-[0_0_20px_rgba(0,242,255,0.3)]" : "bg-white/5 text-primary/40")}><Columns3 className="h-4 w-4 mr-2" /> Carriles</Button>
+          </div>
+
+          <div className="flex items-center gap-2 bg-black/40 border border-white/5 rounded-full px-4 py-1.5">
+             <div className="flex flex-col">
+                <span className="text-[7px] font-black text-white/30 uppercase tracking-widest">Ejercicios Sandbox</span>
+                <span className="text-[9px] font-black text-primary uppercase">{promoStats.warmup+promoStats.main+promoStats.cooldown}/20</span>
+             </div>
+             <div className="w-[1px] h-6 bg-white/10 mx-2" />
+             <div className="flex flex-col">
+                <span className="text-[7px] font-black text-white/30 uppercase tracking-widest">Sesiones</span>
+                <span className="text-[9px] font-black text-primary uppercase">{promoStats.sessions}/4</span>
+             </div>
           </div>
 
           {selectedIds.length > 0 && (
@@ -397,15 +456,7 @@ export default function PromoBoardPage() {
               {selectedElements.length === 1 && selectedElements[0].type === 'text' ? (
                 <div className="flex items-center gap-2 px-3 bg-black/40 border border-primary/30 rounded-2xl">
                   <Type className="h-4 w-4 text-primary" />
-                  <Input 
-                    value={selectedElements[0].text || ""} 
-                    onChange={(e) => {
-                      const val = e.target.value.toUpperCase();
-                      setElements(prev => prev.map(el => el.id === selectedIds[0] ? { ...el, text: val } : el));
-                    }}
-                    placeholder="ESCRIBIR CONSIGN..."
-                    className="h-10 w-48 lg:w-64 bg-transparent border-none text-primary font-black uppercase text-[11px] focus-visible:ring-0 placeholder:text-primary/20"
-                  />
+                  <Input value={selectedElements[0].text || ""} onChange={(e) => setElements(prev => prev.map(el => el.id === selectedIds[0] ? { ...el, text: e.target.value.toUpperCase() } : el))} className="h-10 w-48 lg:w-64 bg-transparent border-none text-primary font-black uppercase text-[11px] focus-visible:ring-0 placeholder:text-primary/20" />
                 </div>
               ) : (
                 <div className="flex gap-1 p-1 bg-black/40 border border-white/5 rounded-xl mr-2">
@@ -414,57 +465,75 @@ export default function PromoBoardPage() {
                   ))}
                 </div>
               )}
-              
-              <div className="flex flex-col gap-2 w-24 lg:w-32 px-2 hidden lg:flex">
-                <div className="flex justify-between items-center"><span className="text-[8px] font-black text-white/40 uppercase">Opacidad</span><span className="text-[8px] font-black text-primary">{Math.round(commonOpacity * 100)}%</span></div>
-                <Slider value={[commonOpacity * 100]} min={10} max={100} onValueChange={(v) => setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, opacity: v[0] / 100} : el))} />
-              </div>
-              
               <div className="flex gap-1">
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  className="h-9 w-9 border-white/10 text-white/40 hover:text-white" 
-                  onClick={() => { 
-                    const next = selectedElements.map(el => {
-                      const newId = `el-${Date.now()}-${Math.random()}`;
-                      const newPoints = el.points.map(p => ({ x: p.x + 0.02, y: p.y + 0.02 }));
-                      let newNumber = el.number;
-                      if (el.type === 'player' && el.number !== undefined) {
-                        newNumber = el.number + 1;
-                      }
-                      return { ...el, id: newId, points: newPoints, number: newNumber };
-                    }); 
-                    setElements(prev => [...prev, ...next]); 
-                    setSelectedIds(next.map(e => e.id)); 
-                  }}
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
+                <Button variant="outline" size="icon" className="h-9 w-9 border-white/10 text-white/40 hover:text-white" onClick={() => { const next = selectedElements.map(el => { const newId = `el-${Date.now()}-${Math.random()}`; const newPoints = el.points.map(p => ({ x: p.x + 0.02, y: p.y + 0.02 })); let newNumber = el.number; if (el.type === 'player' && el.number !== undefined) newNumber = el.number + 1; return { ...el, id: newId, points: newPoints, number: newNumber }; }); setElements(prev => [...prev, ...next]); setSelectedIds(next.map(e => e.id)); }}><Copy className="h-4 w-4" /></Button>
                 <Button variant="outline" size="icon" className="h-9 w-9 border-rose-500/20 text-rose-500/40 hover:text-rose-500" onClick={() => { setElements(prev => prev.filter(el => !selectedIds.includes(el.id))); setSelectedIds([]); }}><Trash2 className="h-4 w-4" /></Button>
               </div>
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2 lg:gap-4 shrink-0"><Button className="h-11 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-4 lg:px-8 rounded-xl cyan-glow border-none" asChild><Link href="/login">Acceso Pro <ArrowRight className="h-4 w-4 ml-2" /></Link></Button></div>
+        <div className="flex items-center gap-4">
+           <Button onClick={() => setIsSaveSheetOpen(true)} className="h-11 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl cyan-glow border-none"><Save className="h-4 w-4 mr-2" /> Guardar Local</Button>
+           <Button className="h-11 bg-white/5 border border-white/10 text-white font-black uppercase text-[10px] tracking-widest px-6 rounded-xl hover:bg-white/10 transition-all" asChild><Link href="/login">Acceso Pro <ArrowRight className="h-4 w-4 ml-2" /></Link></Button>
+        </div>
       </header>
+
       <div className="flex-1 flex overflow-hidden relative">
+        {/* PUBLICIDAD_PLACEHOLDER_LATERAL */}
+        <aside className="w-48 bg-black/40 border-r border-white/5 flex flex-col items-center py-10 hidden lg:flex">
+           <div className="w-40 h-80 bg-white/5 border border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center p-4 text-center">
+              <Megaphone className="h-8 w-8 text-white/10 mb-4" />
+              <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em]">Google_Ad_Slot_Vertical</p>
+           </div>
+        </aside>
+
         <main className="flex-1 flex items-center justify-center relative overflow-hidden touch-none">
           <TacticalField theme="cyan" fieldType={fieldType} showWatermark showLanes={showLanes}><canvas ref={canvasRef} className="absolute inset-0 z-30 pointer-events-auto" onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp} /></TacticalField>
+          
           <div className="absolute bottom-6 left-0 right-0 flex justify-center items-end gap-12 px-12 z-50 pointer-events-none">
             <div className="pointer-events-auto"><BoardToolbar theme="cyan" variant="materials" orientation="horizontal" activeTool={activeTool} onToolSelect={(t) => { addElementAtCenter(t); setSelectedIds([]); }} className="border-2 shadow-2xl" /></div>
             <div className="pointer-events-auto"><BoardToolbar theme="cyan" variant="training" orientation="horizontal" activeTool={activeTool} onToolSelect={(t) => { if(t === 'select') { setActiveTool('select'); setSelectedIds([]); } else addElementAtCenter(t); }} onClear={() => { setElements([]); setSelectedIds([]); }} className="border-2 shadow-2xl" /></div>
           </div>
-          {isLocked && (
-            <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-[60] flex flex-col items-center justify-center p-6 lg:p-12 text-center space-y-6 animate-in fade-in duration-700">
-              <div className="relative"><div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full animate-pulse" /><Lock className="h-16 w-16 lg:h-20 lg:w-20 text-primary relative z-10" /></div>
-              <h3 className="text-2xl lg:text-3xl font-black text-white uppercase italic tracking-tighter">Protocolo de Capacidad Lleno</h3>
-              <p className="text-white/40 font-bold uppercase text-[10px] tracking-[0.4em] max-w-md mx-auto leading-relaxed">Has alcanzado el límite de {MAX_EXERCISES} sesiones. Sincronizada tu club con el Plan Élite para desbloquear almacenamiento ilimitado y funciones IA.</p>
-              <Button className="h-14 lg:h-16 bg-primary text-black font-black uppercase text-[10px] lg:text-[11px] tracking-[0.3em] px-8 lg:px-12 rounded-2xl cyan-glow border-none" asChild><Link href="/login">Actualizar a Plan Pro <Sparkles className="h-4 w-4 ml-3" /></Link></Button>
-            </div>
-          )}
+
+          {/* PUBLICIDAD_HORIZONTAL_BANNER */}
+          <div className="absolute top-24 left-1/2 -translate-x-1/2 w-full max-w-2xl h-16 bg-black/60 backdrop-blur-md border border-white/5 rounded-2xl flex items-center justify-center gap-4 z-40 hidden sm:flex">
+             <Megaphone className="h-4 w-4 text-white/10" />
+             <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.5em]">Google_Ad_Slot_Leaderboard_728x90</span>
+          </div>
         </main>
       </div>
+
+      <Sheet open={isSaveSheetOpen} onOpenChange={setIsSaveSheetOpen}>
+        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white sm:max-w-md">
+          <SheetHeader className="space-y-4 mb-10">
+            <div className="flex items-center gap-3">
+              <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Promo_Vault_Sync</span>
+            </div>
+            <SheetTitle className="text-3xl font-black italic tracking-tighter uppercase text-left">BLINDAR EJERCICIO</SheetTitle>
+            <SheetDescription className="text-[10px] uppercase font-bold text-primary/40 tracking-widest text-left italic">Asigne el ejercicio a un bloque metodológico local.</SheetDescription>
+          </SheetHeader>
+          <div className="space-y-6">
+             <Button onClick={() => handleSaveLocal('warmup')} variant="outline" className="w-full h-20 bg-primary/5 border-primary/20 rounded-2xl flex flex-col items-center justify-center gap-1 group hover:bg-primary hover:text-black">
+                <span className="text-[11px] font-black uppercase tracking-widest italic">CALENTAMIENTO</span>
+                <span className="text-[8px] font-bold opacity-40 group-hover:opacity-100 uppercase">{promoStats.warmup}/{MAX_WARMUP} DISPONIBLES</span>
+             </Button>
+             <Button onClick={() => handleSaveLocal('main')} variant="outline" className="w-full h-20 bg-primary/5 border-primary/20 rounded-2xl flex flex-col items-center justify-center gap-1 group hover:bg-primary hover:text-black">
+                <span className="text-[11px] font-black uppercase tracking-widest italic">PARTE PRINCIPAL</span>
+                <span className="text-[8px] font-bold opacity-40 group-hover:opacity-100 uppercase">{promoStats.main}/{MAX_MAIN} DISPONIBLES</span>
+             </Button>
+             <Button onClick={() => handleSaveLocal('cooldown')} variant="outline" className="w-full h-20 bg-primary/5 border-primary/20 rounded-2xl flex flex-col items-center justify-center gap-1 group hover:bg-primary hover:text-black">
+                <span className="text-[11px] font-black uppercase tracking-widest italic">VUELTA A LA CALMA</span>
+                <span className="text-[8px] font-bold opacity-40 group-hover:opacity-100 uppercase">{promoStats.cooldown}/{MAX_COOLDOWN} DISPONIBLES</span>
+             </Button>
+          </div>
+          <div className="mt-12 p-6 bg-primary/5 border border-primary/30 rounded-3xl space-y-4">
+             <div className="flex items-center gap-3"><Info className="h-4 w-4 text-primary" /><span className="text-[10px] font-black uppercase text-primary">Ventajas de la Red Pro</span></div>
+             <p className="text-[10px] text-white/40 leading-relaxed font-bold uppercase italic">Sincronice sus ejercicios con la nube, elimine la publicidad y desbloquee el Neural Planner para generar variantes automáticamente.</p>
+             <Button className="w-full h-12 bg-primary text-black font-black uppercase text-[10px] tracking-widest rounded-xl" asChild><Link href="/login">ACTUALIZAR_AHORA</Link></Button>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

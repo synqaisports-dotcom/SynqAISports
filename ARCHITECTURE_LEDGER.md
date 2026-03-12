@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v9.9.0 (Edición Maestra de Auditoría)
+# SynqSports Pro - ARCHITECTURE_LEDGER v9.10.0 (Edición Estratégica)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro. Es el ADN del proyecto y debe preservarse íntegramente en cada iteración.
 
@@ -37,8 +37,9 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 - **v9.8.6**: **Sincronización de Materiales**: Portado del motor de alta fidelidad (sombras y patrones) a la Pizarra Promo.
 - **v9.8.7**: **Unificación Funcional**: Activación de Carriles Tácticos en modo Promo y eliminación de restricciones visuales de capacidad.
 
-## 6. Auditoría de Estado Actual (v9.9.0)
-- **Seguridad**: Reglas de Firestore verificadas. Acceso Superadmin blindado para `munozmartinez.ismael@gmail.com` y `synqaisports@gmail.com`.
-- **Formularios**: Mapeo de campos de alta técnica completado en Biblioteca y Academy.
-- **Persistencia**: Sistema híbrido `localStorage` activo para simulación de BD global.
-- **Memoria**: Sincronización total del historial de versiones en todos los nodos de documentación.
+## 6. Auditoría y Estrategia de Captación (v9.9.0 - v9.10.0)
+- **v9.9.0**: Auditoría integral completada. Blindaje de protocolos Superadmin verificado.
+- **v9.10.0**: **PROTOCOLO_CAPTACIÓN**: 
+    - Implementación de Registro Email/Password obligatorio para todos los niveles (Free/Pro).
+    - Sandbox Promo: Límite de 20 ejercicios (4 Calentamientos, 12 Partes Principales, 4 Vueltas a la Calma) y 4 Sesiones.
+    - Ads Integration: Incorporación de placeholders de publicidad no intrusiva en terminales Promo.
