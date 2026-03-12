@@ -230,7 +230,7 @@ function TrainingBoardContent() {
         drawH(p[1].x, p[1].y, angle);
         if (element.type === 'double-arrow') {
           const startAngle = element.controlPoint ? Math.atan2(p[0].y - (element.controlPoint.y * heightPx), p[0].x - (element.controlPoint.x * widthPx)) : angle + Math.PI;
-          drawH(p[0].y, p[0].y, startAngle);
+          drawH(p[0].x, p[0].y, startAngle);
         }
         break;
       case 'cross-arrow':
@@ -418,7 +418,7 @@ function TrainingBoardContent() {
         if (Math.sqrt(Math.pow(point.x * wPx - rotHandlePx.x, 2) + Math.pow(point.y * hPx - rotHandlePx.y, 2)) < 20) { interactionMode.current = 'rotating'; return; }
         const local = rotatePoint({ x: point.x * wPx, y: point.y * hPx }, { x: bounds.centerX, y: bounds.centerY }, -el.rotation);
         const pad = 10;
-        const handles = [{ x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY }, { x: bounds.minX - pad, y: maxY + pad }, { x: bounds.centerX, y: maxY + pad }, { x: bounds.maxX + pad, y: maxY + pad }];
+        const handles = [{ x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY }, { x: bounds.minX - pad, y: bounds.maxY + pad }, { x: bounds.centerX, y: bounds.maxY + pad }, { x: bounds.maxX + pad, y: bounds.maxY + pad }];
         const hIdx = handles.findIndex(h => Math.sqrt(Math.pow(local.x - h.x, 2) + Math.pow(local.y - h.y, 2)) < 15);
         if (hIdx !== -1) { interactionMode.current = 'resizing'; activeHandleIndex.current = hIdx; return; }
       }
@@ -503,7 +503,7 @@ function TrainingBoardContent() {
           <div className="flex flex-col shrink-0">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-amber-500 animate-pulse" />
-              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Precision_v9.8.2</span>
+              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Precision_v9.8.5</span>
             </div>
             <h1 className="text-lg lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase leading-none">Estudio Élite</h1>
           </div>
@@ -629,14 +629,14 @@ function TrainingBoardContent() {
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-3">
                   <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Etapa Federativa</Label>
-                  <Select value={saveFormData.stage} onValueChange={(v) => setSaveFormData({...saveFormData, stage: v})}>
+                  <Select value={saveFormData.stage} onValueChange={(v) => setSaveFormData({...formData, stage: v})}>
                     <SelectTrigger className="h-12 bg-black/40 border-amber-500/20 rounded-xl text-white font-bold uppercase text-[10px]"><SelectValue /></SelectTrigger>
                     <SelectContent className="bg-[#0a0f18] border-amber-500/20">{STAGES.map(s => <SelectItem key={s} value={s} className="text-[10px] font-black uppercase">{s}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-3">
                   <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Dimensión</Label>
-                  <Select value={saveFormData.dimension} onValueChange={(v) => setSaveFormData({...saveFormData, dimension: v})}>
+                  <Select value={saveFormData.dimension} onValueChange={(v) => setSaveFormData({...formData, dimension: v})}>
                     <SelectTrigger className="h-12 bg-black/40 border-amber-500/20 rounded-xl text-white font-bold uppercase text-[10px]"><SelectValue /></SelectTrigger>
                     <SelectContent className="bg-[#0a0f18] border-amber-500/20"><SelectItem value="Táctica" className="text-[10px] font-black uppercase">Táctica</SelectItem><SelectItem value="Técnica" className="text-[10px] font-black uppercase">Técnica</SelectItem><SelectItem value="Física" className="text-[10px] font-black uppercase">Física</SelectItem></SelectContent>
                   </Select>

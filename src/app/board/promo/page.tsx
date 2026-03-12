@@ -344,7 +344,7 @@ export default function PromoBoardPage() {
       <header className="h-20 border-b border-primary/20 bg-black/40 backdrop-blur-3xl flex items-center justify-between px-4 lg:px-8 shrink-0 z-50">
         <div className="flex items-center gap-4 lg:gap-6 overflow-hidden">
           <div className="flex flex-col shrink-0">
-            <div className="flex items-center gap-2"><Zap className="h-4 w-4 text-primary animate-pulse" /><span className="text-[10px] font-black text-primary tracking-[0.4em] uppercase">Tactical_Board_v9.8.4</span></div>
+            <div className="flex items-center gap-2"><Zap className="h-4 w-4 text-primary animate-pulse" /><span className="text-[10px] font-black text-primary tracking-[0.4em] uppercase">Tactical_Board_v9.8.5</span></div>
             <h1 className="text-sm lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase leading-none">Free</h1>
           </div>
           
