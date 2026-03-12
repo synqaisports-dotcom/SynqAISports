@@ -180,21 +180,45 @@ export default function PromoBoardPage() {
         };
         dCB(false); dCB(true); dAH(0, -cS, 0); dAH(cS, 0, Math.PI/2); dAH(0, cS, Math.PI); dAH(-cS, 0, -Math.PI/2); ctx.restore(); break;
       case 'player':
-        ctx.save(); ctx.beginPath();
+        ctx.save(); ctx.shadowBlur = 20; ctx.shadowColor = hexToRgba(element.color, 0.4);
         const pRadius = Math.min(width, height) / 2;
+        ctx.beginPath();
         ctx.arc(centerX, centerY, pRadius, 0, Math.PI * 2);
-        ctx.fillStyle = hexToRgba(element.color, 0.2); ctx.fill(); ctx.strokeStyle = element.color; ctx.stroke();
-        ctx.fillStyle = '#fff'; ctx.font = `bold ${Math.floor(pRadius * 0.7)}px Space Grotesk`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText((element.number || 1).toString(), centerX, centerY); ctx.restore(); break;
+        const pGrad = ctx.createRadialGradient(centerX - pRadius/3, centerY - pRadius/3, 0, centerX, centerY, pRadius);
+        pGrad.addColorStop(0, '#ffffff44'); pGrad.addColorStop(0.5, hexToRgba(element.color, 0.3)); pGrad.addColorStop(1, hexToRgba(element.color, 0.1));
+        ctx.fillStyle = pGrad; ctx.fill(); ctx.strokeStyle = element.color; ctx.stroke();
+        ctx.fillStyle = '#fff'; ctx.font = `bold ${Math.floor(pRadius * 0.64)}px Space Grotesk`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText((element.number || 1).toString(), centerX, centerY + (pRadius * 0.04)); ctx.restore(); break;
       case 'ball':
         ctx.save(); ctx.translate(centerX, centerY); 
         const bRadius = Math.min(width, height) / 2;
-        ctx.beginPath(); ctx.arc(0, 0, bRadius, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#000'; ctx.stroke(); ctx.restore(); break;
+        ctx.scale(bRadius/40, bRadius/40);
+        ctx.beginPath(); ctx.arc(0, 5, 40, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fill();
+        const bG = ctx.createRadialGradient(-15, -15, 0, 0, 0, 40);
+        bG.addColorStop(0, '#ffffff'); bG.addColorStop(1, '#E2E8F0');
+        ctx.beginPath(); ctx.arc(0, 0, 40, 0, Math.PI * 2); ctx.fillStyle = bG; ctx.fill();
+        ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.beginPath();
+        [[50,10,35,25], [50,10,65,25], [50,90,35,75], [50,90,65,75], [10,50,25,35], [10,50,25,65], [90,50,75,35], [90,50,75,65]].forEach(pat => { ctx.moveTo(pat[0]-50, pat[1]-50); ctx.lineTo(pat[2]-50, pat[3]-50); });
+        ctx.stroke(); ctx.beginPath(); ctx.arc(0, 0, 15, 0, Math.PI * 2); ctx.stroke();
+        ctx.restore(); break;
       case 'cone':
-        ctx.save(); ctx.translate(centerX, centerY); ctx.beginPath(); ctx.moveTo(-width/2, height/2); ctx.lineTo(width/2, height/2); ctx.lineTo(0, -height/2); ctx.closePath(); ctx.fillStyle = '#ea580c'; ctx.fill(); ctx.restore(); break;
+        ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/50, height/50);
+        ctx.beginPath(); ctx.ellipse(0, 15, 25, 10, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fill();
+        ctx.beginPath(); ctx.ellipse(0, 12, 20, 8, 0, 0, Math.PI * 2); ctx.fillStyle = '#ea580c'; ctx.fill();
+        const cGrad = ctx.createLinearGradient(-20, 0, 20, 0);
+        cGrad.addColorStop(0, '#ea580c'); cGrad.addColorStop(0.5, '#fb923c'); cGrad.addColorStop(1, '#9a3412');
+        ctx.beginPath(); ctx.moveTo(-15, 12); ctx.lineTo(15, 12); ctx.lineTo(2, -30); ctx.lineTo(-2, -30); ctx.closePath();
+        ctx.fillStyle = cGrad; ctx.fill(); ctx.fillStyle = '#ffffff'; ctx.fillRect(-8, -5, 16, 6); ctx.fillRect(-4, -20, 8, 4);
+        ctx.restore(); break;
       case 'barrier':
-        ctx.save(); ctx.translate(centerX, centerY); for(let i=-1; i<=1; i++) {
-          ctx.save(); ctx.translate(i * (width/3) * 0.8, 0); ctx.beginPath(); ctx.ellipse(0, 0, width/6, height/2, 0, 0, Math.PI * 2); ctx.fillStyle = element.color; ctx.fill(); ctx.restore();
+        ctx.save(); ctx.translate(centerX, centerY);
+        const bw = width / 3;
+        for (let i = -1; i <= 1; i++) {
+          ctx.save(); ctx.translate(i * bw * 0.8, 0); ctx.beginPath(); ctx.ellipse(0, 0, bw/2, height/2, 0, 0, Math.PI * 2);
+          const bGrad = ctx.createLinearGradient(-bw/2, 0, bw/2, 0);
+          bGrad.addColorStop(0, hexToRgba(element.color, 0.8)); bGrad.addColorStop(0.5, element.color); bGrad.addColorStop(1, hexToRgba(element.color, 0.6));
+          ctx.fillStyle = bGrad; ctx.fill(); ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.stroke(); ctx.restore();
         } ctx.restore(); break;
       case 'ladder':
         ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/200, height/50); ctx.strokeStyle = '#334155'; ctx.lineWidth = 5; ctx.strokeRect(-100, -25, 200, 50);
@@ -204,7 +228,10 @@ export default function PromoBoardPage() {
         ctx.beginPath(); ctx.moveTo(-30, 15); ctx.lineTo(-30, -15); ctx.lineTo(30, -15); ctx.lineTo(30, 15); ctx.stroke(); ctx.restore(); break;
       case 'minigoal':
         ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/100, height/60); ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(-50, -30, 100, 60);
-        ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 5; ctx.strokeRect(-50, -30, 100, 60); ctx.restore(); break;
+        ctx.setLineDash([3, 3]); ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1;
+        for(let i=-50; i<50; i+=10) { ctx.beginPath(); ctx.moveTo(i, -30); ctx.lineTo(i, 30); ctx.stroke(); }
+        for(let j=-30; j<30; j+=10) { ctx.beginPath(); ctx.moveTo(-50, j); ctx.lineTo(50, j); ctx.stroke(); }
+        ctx.setLineDash([]); ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 5; ctx.strokeRect(-50, -30, 100, 60); ctx.restore(); break;
       case 'pica':
         ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/36, height/80); ctx.beginPath(); ctx.arc(0, 30, 18, 0, Math.PI * 2); ctx.fillStyle = '#334155'; ctx.fill(); ctx.fillStyle = element.color; ctx.fillRect(-4, -40, 8, 70); ctx.restore(); break;
       case 'seta':
@@ -213,14 +240,16 @@ export default function PromoBoardPage() {
         ctx.scale(sSize/44, sSize/20);
         ctx.beginPath(); ctx.ellipse(0, 5, 22, 10, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fill();
         ctx.beginPath(); ctx.ellipse(0, 0, 22, 12, 0, 0, Math.PI * 2);
-        ctx.fillStyle = element.color; ctx.fill(); ctx.restore();
+        const sG = ctx.createRadialGradient(0, -5, 0, 0, 0, 22);
+        sG.addColorStop(0, '#ffffff'); sG.addColorStop(0.3, element.color); sG.addColorStop(1, hexToRgba(element.color, 0.8));
+        ctx.fillStyle = sG; ctx.fill(); ctx.restore();
         break;
     }
 
     if (isSelected) {
       ctx.restore(); ctx.save(); ctx.translate(centerX, centerY); ctx.rotate(element.rotation); ctx.translate(-centerX, -centerY);
       ctx.strokeStyle = '#00f2ffaa'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]); const pad = 10; ctx.strokeRect(minX - pad, minY - pad, width + pad * 2, height + pad * 2);
-      ctx.setLineDash([]); ctx.fillStyle = '#fff'; const handles = [{ x: minX - pad, y: minY - pad }, { x: centerX, y: minY - pad }, { x: maxX + pad, y: minY - pad }, { x: minX - pad, y: centerY }, { x: maxX + pad, y: centerY }, { x: minX - pad, y: maxY + pad }, { x: centerX, y: maxY + pad }, { x: maxX + pad, y: maxY + pad }];
+      ctx.setLineDash([]); ctx.fillStyle = '#fff'; const handles = [{ x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY }, { x: bounds.minX - pad, y: bounds.maxY + pad }, { x: bounds.centerX, y: bounds.maxY + pad }, { x: bounds.maxX + pad, y: bounds.maxY + pad }];
       handles.forEach(h => { ctx.beginPath(); ctx.arc(h.x, h.y, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
       const rotY = minY - pad - 40; ctx.beginPath(); ctx.moveTo(centerX, minY - pad); ctx.lineTo(centerX, rotY); ctx.stroke();
       ctx.fillStyle = '#00f2ff'; ctx.beginPath(); ctx.arc(centerX, rotY, 8, 0, Math.PI * 2); ctx.fill();
@@ -254,7 +283,8 @@ export default function PromoBoardPage() {
   useEffect(() => { redrawAll(); }, [elements, selectedIds, fieldType, redrawAll]);
 
   const addElementAtCenter = (tool: DrawingTool) => {
-    if (isLocked) return; const pNum = tool === 'player' ? elements.filter(e => e.type === 'player').length + 1 : undefined;
+    if (isLocked) return; 
+    const pNum = tool === 'player' ? elements.filter(e => e.type === 'player').length + 1 : undefined;
     const canvasRatio = canvasRef.current ? (canvasRef.current.width / canvasRef.current.height) : 1.5;
     const defW = tool === 'ladder' ? 0.15 : (['minigoal', 'cross-arrow', 'barrier'].includes(tool) ? 0.1 : tool === 'text' ? 0.3 : 0.05);
     const defH = isCircular(tool) ? (defW * canvasRatio) : (tool === 'ladder' ? 0.05 : (['minigoal', 'cross-arrow', 'barrier'].includes(tool) ? 0.08 : 0.05));
@@ -344,7 +374,7 @@ export default function PromoBoardPage() {
       <header className="h-20 border-b border-primary/20 bg-black/40 backdrop-blur-3xl flex items-center justify-between px-4 lg:px-8 shrink-0 z-50">
         <div className="flex items-center gap-4 lg:gap-6 overflow-hidden">
           <div className="flex flex-col shrink-0">
-            <div className="flex items-center gap-2"><Zap className="h-4 w-4 text-primary animate-pulse" /><span className="text-[10px] font-black text-primary tracking-[0.4em] uppercase">Tactical_Board_v9.8.5</span></div>
+            <div className="flex items-center gap-2"><Zap className="h-4 w-4 text-primary animate-pulse" /><span className="text-[10px] font-black text-primary tracking-[0.4em] uppercase">Tactical_Board_v9.8.6</span></div>
             <h1 className="text-sm lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase leading-none">Free</h1>
           </div>
           
