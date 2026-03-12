@@ -35,7 +35,8 @@ import {
   PencilLine,
   Trophy,
   Sparkles,
-  Database
+  Database,
+  Smartphone
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
@@ -90,6 +91,7 @@ const navItems: NavItem[] = [
   { title: "Cantera", href: "/dashboard/academy", icon: Sprout, category: "operational" },
   { title: "Jugadores", href: "/dashboard/players", icon: Users, category: "operational" },
   { title: "Tactical Board", href: "/board/match", icon: Monitor, category: "operational" },
+  { title: "Config. Watch", href: "/dashboard/watch-config", icon: Smartphone, category: "operational" },
   { title: "Biblioteca Táctica", href: "/dashboard/coach/library", icon: Dumbbell, category: "operational" },
   { title: "Neural Planner", href: "/dashboard/coach/planner", icon: Activity, category: "operational" },
   
