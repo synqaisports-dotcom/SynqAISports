@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v9.18.0 (Edición Estratégica)
+# SynqSports Pro - ARCHITECTURE_LEDGER v9.19.1 (Edición Estratégica)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro. Es el ADN del proyecto y debe preservarse íntegramente en cada iteración.
 
@@ -73,3 +73,12 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 - **v9.18.0**: **INTERFAZ_POCKET_REDUNDANTE**:
     - Implementación de la vista `MatchPocketController`. 
     - El sistema detecta dispositivos móviles en la ruta de partido y despliega una UI de control de alta visibilidad (Tiempo, Marcador, Sustituciones) en lugar del canvas táctico.
+
+## 8. Accesibilidad y Navegación Universal (v9.19.0 - v9.19.1)
+- **v9.19.0**: **PROTOCOL_MOBILE_NAV**:
+    - Implementación de `MobileHeader` en todos los Layouts (Global, Dashboard, Board).
+    - Garantiza la visibilidad del `SidebarTrigger` en dispositivos táctiles, eliminando la dependencia del estado `hover`.
+    - Apertura del ecosistema completo para Superadmins desde Smartphone.
+- **v9.19.1**: **STABILITY_PATCH_POCKET**:
+    - Corrección de `ReferenceError: Card is not defined` en `MatchBoardPage`.
+    - Sincronización de importaciones para componentes de UI en la vista Pocket Master.

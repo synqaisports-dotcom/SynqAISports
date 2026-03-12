@@ -48,8 +48,10 @@ import {
   SheetHeader, 
   SheetTitle, 
   SheetDescription,
-  SheetTrigger
+  SheetTrigger,
+  SheetClose
 } from "@/components/ui/sheet";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -951,7 +953,7 @@ export default function MatchBoardPage() {
               </div>
               <div className="flex flex-row-reverse gap-1.5 lg:gap-2 justify-center bg-black/40 backdrop-blur-md p-1 lg:p-1.5 rounded-2xl border border-white/5 self-end mr-1">
                 <button onClick={() => guestLateral === "left" ? setGuestLateral("center") : setGuestLateral("left")} className={cn("p-1 lg:p-1.5 rounded-lg transition-all", guestLateral === "left" ? "bg-rose-500 text-white" : "text-white/20 hover:text-white")}><ChevronRight className="h-3 w-3 lg:h-3.5 lg:w-3.5" /></button>
-                <button onClick={() => setGuestLateral("center")} className={cn("p-1 lg:p-1.5 rounded-lg transition-all", guestLateral === "center" ? "bg-rose-500 text-white" : "text-white/20 hover:text-white")}><Minimize2 className="h-3 w-3 lg:h-3.5 lg:w-3.5 rotate-90" /></button>
+                <button onClick={() => guestLateral === "center"} className={cn("p-1 lg:p-1.5 rounded-lg transition-all", guestLateral === "center" ? "bg-rose-500 text-white" : "text-white/20 hover:text-white")}><Minimize2 className="h-3 w-3 lg:h-3.5 lg:w-3.5 rotate-90" /></button>
                 <button onClick={() => guestLateral === "right" ? setGuestLateral("center") : setGuestLateral("right")} className={cn("p-1 lg:p-1.5 rounded-lg transition-all", guestLateral === "right" ? "bg-rose-500 text-white" : "text-white/20 hover:text-white")}><ChevronLeft className="h-3 w-3 lg:h-3.5 lg:w-3.5" /></button>
                 <span className="text-[7px] lg:text-[8px] font-black text-rose-500/40 uppercase tracking-widest px-1.5 lg:px-2 flex items-center">Basculación</span>
               </div>
