@@ -277,7 +277,7 @@ export default function PromoBoardPage() {
         const rotHandlePx = rotatePoint({ x: bounds.centerX, y: bounds.minY - 50 }, { x: bounds.centerX, y: bounds.centerY }, el.rotation);
         if (Math.sqrt(Math.pow(p.x * wPx - rotHandlePx.x, 2) + Math.pow(p.y * hPx - rotHandlePx.y, 2)) < 20) { interactionMode.current = 'rotating'; return; }
         const local = rotatePoint({ x: p.x * wPx, y: p.y * hPx }, { x: bounds.centerX, y: bounds.centerY }, -el.rotation);
-        const pad = 10; const handles = [{ x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY }, { x: bounds.minX - pad, y: maxY + pad }, { x: centerX, y: maxY + pad }, { x: maxX + pad, y: maxY + pad }];
+        const pad = 10; const handles = [{ x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY }, { x: bounds.minX - pad, y: bounds.maxY + pad }, { x: bounds.centerX, y: bounds.maxY + pad }, { x: bounds.maxX + pad, y: bounds.maxY + pad }];
         const hIdx = handles.findIndex(h => Math.sqrt(Math.pow(local.x - h.x, 2) + Math.pow(local.y - h.y, 2)) < 15);
         if (hIdx !== -1) { interactionMode.current = 'resizing'; activeHandleIndex.current = hIdx; return; }
       }
@@ -344,7 +344,7 @@ export default function PromoBoardPage() {
       <header className="h-20 border-b border-primary/20 bg-black/40 backdrop-blur-3xl flex items-center justify-between px-4 lg:px-8 shrink-0 z-50">
         <div className="flex items-center gap-4 lg:gap-6 overflow-hidden">
           <div className="flex flex-col shrink-0">
-            <div className="flex items-center gap-2"><Zap className="h-4 w-4 text-primary animate-pulse" /><span className="text-[10px] font-black text-primary tracking-[0.4em] uppercase">Tactical_Board_v9.8.2</span></div>
+            <div className="flex items-center gap-2"><Zap className="h-4 w-4 text-primary animate-pulse" /><span className="text-[10px] font-black text-primary tracking-[0.4em] uppercase">Tactical_Board_v9.8.4</span></div>
             <h1 className="text-sm lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase leading-none">Free</h1>
           </div>
           
@@ -420,7 +420,7 @@ export default function PromoBoardPage() {
             <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-[60] flex flex-col items-center justify-center p-6 lg:p-12 text-center space-y-6 animate-in fade-in duration-700">
               <div className="relative"><div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full animate-pulse" /><Lock className="h-16 w-16 lg:h-20 lg:w-20 text-primary relative z-10" /></div>
               <h3 className="text-2xl lg:text-3xl font-black text-white uppercase italic tracking-tighter">Protocolo de Capacidad Lleno</h3>
-              <p className="text-white/40 font-bold uppercase text-[10px] tracking-[0.4em] max-w-md mx-auto leading-relaxed">Has alcanzado el límite de {MAX_EXERCISES} sesiones. Sincroniza tu club con el Plan Élite para desbloquear almacenamiento ilimitado y funciones IA.</p>
+              <p className="text-white/40 font-bold uppercase text-[10px] tracking-[0.4em] max-w-md mx-auto leading-relaxed">Has alcanzado el límite de {MAX_EXERCISES} sesiones. Sincronizada tu club con el Plan Élite para desbloquear almacenamiento ilimitado y funciones IA.</p>
               <Button className="h-14 lg:h-16 bg-primary text-black font-black uppercase text-[10px] lg:text-[11px] tracking-[0.3em] px-8 lg:px-12 rounded-2xl cyan-glow border-none" asChild><Link href="/login">Actualizar a Plan Pro <Sparkles className="h-4 w-4 ml-3" /></Link></Button>
             </div>
           )}
