@@ -26,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 const MOCK_COACH_TASKS = [
   { id: "ct1", title: "Rondo Dinámico 3v1", stage: "Alevín", dimension: "Técnica", type: "Private", duration: "15 min", color: "border-primary/30" },
@@ -50,8 +51,10 @@ export default function CoachLibraryGrid() {
           <p className="text-[11px] font-black text-primary/30 tracking-[0.3em] uppercase">Gestión de Tareas y Manual de Club</p>
         </div>
         
-        <Button className="rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-14 px-10 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 active:scale-95 transition-all border-none">
-          <Plus className="h-5 w-5 mr-3" /> Diseñar Nueva Tarea
+        <Button className="rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-14 px-10 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 active:scale-95 transition-all border-none" asChild>
+          <Link href="/board/training">
+            <Plus className="h-5 w-5 mr-3" /> Diseñar Nueva Tarea
+          </Link>
         </Button>
       </div>
 
@@ -77,12 +80,12 @@ export default function CoachLibraryGrid() {
             {MOCK_COACH_TASKS.filter(t => t.type === 'Private').map((task) => (
               <TaskCard key={task.id} task={task} theme="cyan" />
             ))}
-            <div className="aspect-video border-2 border-dashed border-primary/10 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 group hover:border-primary/30 transition-all cursor-pointer bg-primary/5">
+            <Link href="/board/training" className="aspect-video border-2 border-dashed border-primary/10 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 group hover:border-primary/30 transition-all cursor-pointer bg-primary/5">
                <div className="h-14 w-14 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <Plus className="h-6 w-6 text-primary" />
                </div>
                <span className="text-[10px] font-black text-primary/40 uppercase tracking-widest">Añadir Nueva Variante</span>
-            </div>
+            </Link>
           </div>
         </TabsContent>
 
