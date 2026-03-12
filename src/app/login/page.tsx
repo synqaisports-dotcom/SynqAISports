@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
@@ -25,7 +24,7 @@ import {
   UserCircle,
   Building2,
   LockKeyhole
-} from "lucide-center";
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth-context";
 import { Badge } from "@/components/ui/badge";
