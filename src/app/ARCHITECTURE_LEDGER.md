@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v8.9.0 (Flujo de Diseño Instantáneo)
+# SynqSports Pro - ARCHITECTURE_LEDGER v9.7.2 (Sincronización Global)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -7,70 +7,23 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 
 ### 1.1. Protocolo_Elite (Superadmin Bypass)
 - **Emails Autorizados**: `munozmartinez.ismael@gmail.com`, `synqaisports@gmail.com`, `admin@synqai.sports`.
-- **Lógica de Bypass**: Implementada en `firestore.rules` y `auth-context.tsx`. Permite visibilidad total sobre todos los clubes y usuarios de la red para auditoría global y soporte técnico.
+- **Lógica de Bypass**: Implementada en `firestore.rules` y `auth-context.tsx`.
 
-### 1.2. Matriz Jerárquica de Mandos (Ranking System)
-Los roles operan bajo un sistema de ranking numérico (`rank`) que determina la autoridad:
-1. **superadmin** (100) - Autoridad raíz.
-2. **club_admin** (90) - Gestión total del nodo local.
-3. **academy_director** (80) - Dirección de cantera.
-4. **methodology_director** (70) - Soberanía técnica y de sesiones.
-5. **stage_coordinator** (60) - Gestión de categorías específicas.
-6. **coach** (50) - Operativa de campo y sugerencias.
-7. **delegate** (40) - Auxiliar de campo.
-8. **tutor** (30) - Consultoría de atletas.
-9. **athlete** (20) - Telemetría y visor personal.
+## 5. Protocolo de Pizarra y Dibujo (v9.7.2)
 
-## 2. Mapa de Micro-Apps y Rutas
+### 5.1. Motor de Independencia de Dispositivo (v9.4.0)
+- Uso de lógica de coordenadas decimales (0.0 a 1.0) para garantizar fidelidad visual en cualquier resolución.
 
-### 2.1. Núcleo de Control (Admin Global) - `/admin-global`
-- **Analytics**: Métricas de red, ingresos y carga de procesos IA.
-- **Almacén Neural**: `/admin-global/exercises` (Data warehouse anonimizado para entrenamiento IA).
-- **Red de Clubes**: Gestión de nodos locales, planes de suscripción y estatus de red.
-- **Factoría de Usuarios**: Emisión de credenciales globales y gestión de Magic Links.
+### 5.2. Herramientas Pro y Curvatura (v9.5.0)
+- **Trayectorias Bezier**: Curvatura dinámica mediante nodos centrales en flechas.
+- **Creación por Pulsación**: Los materiales técnicos se crean con dimensiones predeterminadas en el centro del campo.
 
-### 2.2. Terminal Operativa (Club/Coach) - `/dashboard`
-- **Identidad de Club**: `/club` (Datos federativos, sociales y escudo).
-- **Espejo Operativo**: `/sessions` (Vista bloqueada para entrenadores sincronizada con metodología).
-- **Cuaderno de Campo**: `/dashboard/coach/library` (Biblioteca visual Opción A para entrenadores).
-- **Cantera**: `/academy` (Gestión de equipos, staff y visor de Roster).
-- **Activos**: `/instalaciones` (Gestión de campos con subdivisiones horarias).
+### 5.3. Interfaz Estratégica y Capas (v9.7.1)
+- **Z-Index Blindado**: Los materiales técnicos se dibujan siempre en la capa superior.
+- **Multiselección**: Edición masiva de objetos seleccionados.
+- **Slider de Opacidad**: Ajuste de transparencia del 10% al 100% en el header.
+- **Optimización de Contraste**: Rediseño de inputs con fondo oscuro para evitar saturación de color amarillo.
 
-### 2.3. Estrategia Metodológica - `/dashboard/methodology`
-- **Libro de Estilo**: `/methodology/exercise-library` (Biblioteca de rendimiento Opción B para directores).
-- **Planificador Maestro**: `/methodology/session-planner` (Diseño de macrociclo y validación de cambios).
-- **Objetivos Tácticos**: `/methodology/objectives` (Hoja de ruta por categorías).
-
-## 3. Protocolos de Bibliotecas (v6.5)
-
-### 3.1. Ecosistema de Datos en Tres Niveles
-1. **Nivel 1 (Global)**: Recolección de datos técnicos anonimizados para entrenamiento IA en el Almacén Neural.
-2. **Nivel 2 (Club)**: El "Libro de Estilo". Tareas Maestras validadas asignadas a etapas blindadas. Formato Tabla (Opción B).
-3. **Nivel 3 (Coach)**: "Cuaderno de Campo". Espacio privado de creación. Formato Grid (Opción A).
-
-## 4. Protocolo de Planificación y Validación (v5.1)
-
-### 4.1. Estructura Tripartita de Sesión
-Cada entrenamiento se divide en tres bloques con gestión de tiempos configurables:
-1. **Calentamiento / Activación**
-2. **Zona Central (Contenidos)** - Soporta múltiples ejercicios.
-3. **Vuelta a la Calma**
-
-## 5. Protocolo de Pizarra y Dibujo (v8.9.0)
-
-### 5.1. Motor de Dibujo Suavizado
-- Uso de lógica de interpolación para trazos fluidos en el Canvas e independencia de resolución.
-
-### 5.2. Esquema JSON Maestro (Independencia de Dispositivo)
-- **Coordenadas Decimales**: Todas las posiciones de fichas y trazos se guardan como valores de `0.000` a `1.000`. Garantiza fidelidad visual en cualquier dispositivo.
-
-### 5.3. Manipulación Estándar Pro (v8.7.0)
-- **Creación por Pulsación**: Los materiales técnicos se crean con un solo toque con dimensiones predeterminadas profesionales.
-- **Caja de 8 Puntos**: Implementación de handles en esquinas y centros para un control total de escala.
-- **Rotación Centrada Absoluta**: Todos los elementos giran sobre su eje geométrico central, eliminando desplazamientos.
-- **Gráficos Hyper-Fidelity 3D**: Conos con bandas blancas, vallas estructuradas y porterías con malla técnica realista.
-- **Zero-Distraction UI**: Gestión de propiedades centralizada en la barra inferior, campo de visión 100% despejado.
-
-### 5.4. Flujo de Diseño Instantáneo (v8.9.0)
-- **Creación Directa**: Al pulsar un material en el menú inferior se añade automáticamente al centro del campo.
-- **Refinamiento de Dorsales**: Ajuste del centrado y tamaño de los números de los jugadores para una estética profesional.
+### 5.4. Unificación de Ficha (v9.7.2)
+- **Diseño Dual**: Formulario de biblioteca en dos columnas para optimizar espacio.
+- **Validación de Tiempos**: Campo de duración convertido a tipo numérico para métricas IA.
