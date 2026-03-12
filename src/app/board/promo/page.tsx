@@ -315,6 +315,17 @@ export default function PromoBoardPage() {
 
   useEffect(() => { redrawAll(); }, [elements, selectedIds, fieldType, redrawAll]);
 
+  const handleEditText = useCallback(() => {
+    const elId = selectedIds[0];
+    const el = elements.find(e => e.id === elId);
+    if (el && el.type === 'text') {
+      const val = window.prompt("EDITAR TEXTO TÁCTICO:", el.text);
+      if (val !== null) {
+        setElements(prev => prev.map(e => e.id === elId ? { ...e, text: val.toUpperCase() } : e));
+      }
+    }
+  }, [elements, selectedIds]);
+
   const addElementAtCenter = (tool: DrawingTool) => {
     if (isLocked) return;
     const pNum = tool === 'player' ? elements.filter(e => e.type === 'player').length + 1 : undefined;
@@ -340,15 +351,6 @@ export default function PromoBoardPage() {
       }, 100); 
     }
   };
-
-  const handleEditText = useCallback(() => {
-    const elId = selectedIds[0];
-    const el = elements.find(e => e.id === elId);
-    if (el && el.type === 'text') {
-      const val = window.prompt("EDITAR TEXTO PROMO:", el.text);
-      if (val !== null) setElements(prev => prev.map(e => e.id === elId ? { ...e, text: val.toUpperCase() } : e));
-    }
-  }, [elements, selectedIds]);
 
   const handlePointerDown = (e: React.PointerEvent) => {
     if (!canvasRef.current || isLocked) return;
@@ -386,12 +388,11 @@ export default function PromoBoardPage() {
       if (e.shiftKey) setSelectedIds(prev => prev.includes(clicked.id) ? prev.filter(id => id !== clicked.id) : [...prev, clicked.id]);
       else if (!isAlreadySelected) setSelectedIds([clicked.id]);
       
-      // PROTOCOLO_EDICION_DIRECTA
       if (clicked.type === 'text' && isAlreadySelected && !e.shiftKey) {
-        setTimeout(() => {
-          const v = window.prompt("EDITAR TEXTO PROMO:", clicked.text);
-          if (v) setElements(prev => prev.map(el => el.id === clicked.id ? {...el, text: v.toUpperCase()} : el));
-        }, 100);
+        const val = window.prompt("EDITAR TEXTO PROMO:", clicked.text);
+        if (val !== null) {
+          setElements(prev => prev.map(el => el.id === clicked.id ? { ...el, text: val.toUpperCase() } : el));
+        }
       }
 
       setActiveTool('select'); interactionMode.current = 'dragging';
@@ -490,7 +491,7 @@ export default function PromoBoardPage() {
               </div>
               {selectedElements.length === 1 && selectedElements[0].type === 'text' && (
                 <Button variant="outline" size="sm" onClick={handleEditText} className="h-9 border-primary/20 bg-primary/5 text-primary font-black uppercase text-[9px]">
-                  <Pencil className="h-3 w-3 mr-2" /> Editar
+                  <Pencil className="h-3 w-3 mr-2" /> Editar Texto
                 </Button>
               )}
               <div className="flex gap-1">

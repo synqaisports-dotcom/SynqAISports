@@ -72,7 +72,7 @@ interface DrawingElement {
   id: string;
   type: DrawingTool;
   points: Point[];
-  controlPoint?: Point; // Para curvatura de flechas/zigzag
+  controlPoint?: Point; 
   color: string;
   rotation: number;
   lineStyle: 'solid' | 'dashed';
@@ -442,6 +442,17 @@ function TrainingBoardContent() {
     redrawAll();
   }, [elements, selectedIds, fieldType, showLanes, redrawAll]);
 
+  const handleEditText = useCallback(() => {
+    const elId = selectedIds[0];
+    const el = elements.find(e => e.id === elId);
+    if (el && el.type === 'text') {
+      const val = window.prompt("EDITAR TEXTO TÁCTICO:", el.text);
+      if (val !== null) {
+        setElements(prev => prev.map(e => e.id === elId ? { ...e, text: val.toUpperCase() } : e));
+      }
+    }
+  }, [elements, selectedIds]);
+
   const addElementAtCenter = (tool: DrawingTool) => {
     const pNum = tool === 'player' ? elements.filter(e => e.type === 'player').length + 1 : undefined;
     
@@ -475,17 +486,6 @@ function TrainingBoardContent() {
       }, 100);
     }
   };
-
-  const handleEditText = useCallback(() => {
-    const elId = selectedIds[0];
-    const el = elements.find(e => e.id === elId);
-    if (el && el.type === 'text') {
-      const val = window.prompt("EDITAR TEXTO TÁCTICO:", el.text);
-      if (val !== null) {
-        setElements(prev => prev.map(e => e.id === elId ? { ...e, text: val.toUpperCase() } : e));
-      }
-    }
-  }, [elements, selectedIds]);
 
   const handlePointerDown = (e: React.PointerEvent) => {
     if (!canvasRef.current) return;
@@ -553,14 +553,12 @@ function TrainingBoardContent() {
         setSelectedIds([clicked.id]);
       }
       
-      // PROTOCOLO_EDICION_DIRECTA: Si es texto y ya está seleccionado, permitir edición por pulsación
+      // PROTOCOLO_EDICION_DIRECTA: Al presionar sobre un texto ya seleccionado, editarlo
       if (clicked.type === 'text' && isAlreadySelected && !e.shiftKey) {
-        setTimeout(() => {
-          const val = window.prompt("EDITAR TEXTO TÁCTICO:", clicked.text);
-          if (val !== null) {
-            setElements(prev => prev.map(e => e.id === clicked.id ? { ...e, text: val.toUpperCase() } : e));
-          }
-        }, 100);
+        const val = window.prompt("EDITAR TEXTO TÁCTICO:", clicked.text);
+        if (val !== null) {
+          setElements(prev => prev.map(el => el.id === clicked.id ? { ...el, text: val.toUpperCase() } : el));
+        }
       }
 
       setActiveTool('select'); 
@@ -656,7 +654,7 @@ function TrainingBoardContent() {
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-amber-500 animate-pulse" />
-              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Precision_v9.7.4</span>
+              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Precision_v9.7.5</span>
             </div>
             <h1 className="text-lg lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase leading-none">Estudio Élite</h1>
           </div>
@@ -759,7 +757,6 @@ function TrainingBoardContent() {
         </div>
       </div>
 
-      {/* SHEET DE FICHA TÉCNICA (EVITAR FICHA VACÍA) */}
       <Sheet open={isSaveSheetOpen} onOpenChange={setIsSaveSheetOpen}>
         <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-amber-500/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
           <div className="p-10 border-b border-white/5 bg-black/40">

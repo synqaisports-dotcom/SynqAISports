@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v9.7.3 (Sincronización Global)
+# SynqSports Pro - ARCHITECTURE_LEDGER v9.7.5 (Sincronización Global)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -9,7 +9,7 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 - **Emails Autorizados**: `munozmartinez.ismael@gmail.com`, `synqaisports@gmail.com`, `admin@synqai.sports`.
 - **Lógica de Bypass**: Implementada en `firestore.rules` y `auth-context.tsx`.
 
-## 5. Protocolo de Pizarra y Dibujo (v9.7.3)
+## 5. Protocolo de Pizarra y Dibujo (v9.7.5)
 
 ### 5.1. Motor de Independencia de Dispositivo (v9.4.0)
 - Uso de lógica de coordenadas decimales (0.0 a 1.0) para garantizar fidelidad visual en cualquier resolución.
@@ -30,3 +30,6 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 
 ### 5.5. Blindaje Funcional Promo (v9.7.3)
 - **Sincronización Total**: Migración del motor de dibujo avanzado a la terminal de captación (Promo).
+
+### 5.6. Reparación de Interacción de Texto (v9.7.5)
+- **Hotfix de Edición**: Corrección de la lógica de selección y prompt para asegurar que el texto sea editable tanto por clic directo como por botón de cabecera.
