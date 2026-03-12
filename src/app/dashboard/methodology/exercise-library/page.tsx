@@ -153,7 +153,7 @@ export default function ExerciseLibraryPage() {
             <Search className="absolute left-4 top-4 h-4 w-4 text-amber-500 opacity-50" />
             <Input 
               placeholder="BUSCAR EN EL LIBRO DE ESTILO..." 
-              className="pl-12 h-14 bg-white/5 border-amber-500/20 rounded-2xl text-amber-500 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-amber-500/50 transition-all"
+              className="pl-12 h-14 bg-black/40 border-amber-500/20 rounded-2xl text-amber-500 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-amber-500/50 transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -226,7 +226,7 @@ export default function ExerciseLibraryPage() {
             <SheetHeader className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500 italic">Master_Asset_Factory_v9.7</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500 italic">Master_Asset_Factory_v9.7.1</span>
               </div>
               <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left leading-none">
                 CREAR <span className="text-amber-500">TAREA MAESTRA</span>
@@ -237,7 +237,7 @@ export default function ExerciseLibraryPage() {
           <form onSubmit={handleSaveMasterTask} className="flex-1 overflow-y-auto custom-scrollbar p-10">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
               
-              {/* COLUMNA 1: IDENTIDAD Y ASSET VISUAL (MAX 50%) */}
+              {/* COLUMNA 1: IDENTIDAD Y ASSET VISUAL */}
               <div className="space-y-10">
                 <div className="p-8 bg-amber-500/5 border border-amber-500/20 rounded-[2.5rem] space-y-8 relative overflow-hidden">
                   <div className="space-y-3">
@@ -247,13 +247,13 @@ export default function ExerciseLibraryPage() {
                       value={formData.title}
                       onChange={(e) => setFormData({...formData, title: e.target.value.toUpperCase()})}
                       placeholder="EJ: JUEGO DE POSICIÓN 4X4+3" 
-                      className="h-14 bg-white/5 border-amber-500/20 rounded-2xl font-bold uppercase focus:border-amber-500 text-amber-500 text-lg placeholder:text-amber-500/10" 
+                      className="h-14 bg-black/40 border-amber-500/20 rounded-2xl font-bold uppercase focus:border-amber-500 text-amber-500 text-lg placeholder:text-amber-500/10" 
                     />
                   </div>
 
                   <div className="space-y-4">
                     <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Miniatura / Captura Técnica</Label>
-                    <div className="relative aspect-video rounded-3xl border-2 border-dashed border-amber-500/20 bg-black/40 group cursor-pointer hover:border-amber-500/40 transition-all flex flex-col items-center justify-center overflow-hidden">
+                    <div className="relative aspect-video rounded-3xl border-2 border-dashed border-amber-500/20 bg-black/60 group cursor-pointer hover:border-amber-500/40 transition-all flex flex-col items-center justify-center overflow-hidden">
                       {formData.photoUrl ? (
                         <div className="relative h-full w-full">
                           <Image src={formData.photoUrl} alt="Preview" fill className="object-cover" />
@@ -297,7 +297,7 @@ export default function ExerciseLibraryPage() {
                   <div className="space-y-3">
                     <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Etapa Federativa</Label>
                     <Select value={formData.stage} onValueChange={(v) => setFormData({...formData, stage: v})}>
-                      <SelectTrigger className="h-14 bg-white/5 border-amber-500/20 rounded-2xl text-white font-bold uppercase text-[10px]">
+                      <SelectTrigger className="h-14 bg-black/40 border-amber-500/20 rounded-2xl text-white font-bold uppercase text-[10px] focus:ring-amber-500/30">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-[#0a0f18] border-amber-500/20 rounded-xl">
@@ -310,7 +310,7 @@ export default function ExerciseLibraryPage() {
                   <div className="space-y-3">
                     <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Dimensión</Label>
                     <Select value={formData.dimension} onValueChange={(v) => setFormData({...formData, dimension: v})}>
-                      <SelectTrigger className="h-14 bg-white/5 border-amber-500/20 rounded-2xl text-white font-bold uppercase text-[10px]">
+                      <SelectTrigger className="h-14 bg-black/40 border-amber-500/20 rounded-2xl text-white font-bold uppercase text-[10px] focus:ring-amber-500/30">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-[#0a0f18] border-amber-500/20 rounded-xl">
@@ -328,7 +328,7 @@ export default function ExerciseLibraryPage() {
                     value={formData.didacticStrategy}
                     onChange={(e) => setFormData({...formData, didacticStrategy: e.target.value.toUpperCase()})}
                     placeholder="EJ: JUEGO ADAPTADO" 
-                    className="h-14 bg-white/5 border-amber-500/20 rounded-2xl font-bold uppercase focus:border-amber-500 text-amber-500 placeholder:text-amber-500/10" 
+                    className="h-14 bg-black/40 border-amber-500/20 rounded-2xl font-bold uppercase focus:border-amber-500 text-amber-500 placeholder:text-amber-500/10" 
                   />
                 </div>
 
@@ -338,7 +338,7 @@ export default function ExerciseLibraryPage() {
                     value={formData.objectives}
                     onChange={(e) => setFormData({...formData, objectives: e.target.value})}
                     placeholder="EJ: MEJORAR LA VISIÓN DE JUEGO..." 
-                    className="min-h-[120px] bg-white/5 border-amber-500/20 rounded-2xl font-bold text-amber-500 placeholder:text-amber-500/10" 
+                    className="min-h-[120px] bg-black/40 border-amber-500/20 rounded-2xl font-bold text-amber-500 placeholder:text-amber-500/10" 
                   />
                 </div>
               </div>
@@ -352,7 +352,7 @@ export default function ExerciseLibraryPage() {
                       value={formData.time}
                       onChange={(e) => setFormData({...formData, time: e.target.value})}
                       placeholder="EJ: 15’" 
-                      className="h-14 bg-white/5 border-amber-500/20 rounded-2xl font-bold text-amber-500" 
+                      className="h-14 bg-black/40 border-amber-500/20 rounded-2xl font-bold text-amber-500" 
                     />
                   </div>
                   <div className="space-y-3">
@@ -361,7 +361,7 @@ export default function ExerciseLibraryPage() {
                       value={formData.space}
                       onChange={(e) => setFormData({...formData, space: e.target.value})}
                       placeholder="EJ: 30X20M" 
-                      className="h-14 bg-white/5 border-amber-500/20 rounded-2xl font-bold text-amber-500" 
+                      className="h-14 bg-black/40 border-amber-500/20 rounded-2xl font-bold text-amber-500" 
                     />
                   </div>
                 </div>
@@ -372,7 +372,7 @@ export default function ExerciseLibraryPage() {
                     value={formData.gameSituation}
                     onChange={(e) => setFormData({...formData, gameSituation: e.target.value})}
                     placeholder="EJ: 4X4 CON 2 COMODINES" 
-                    className="h-14 bg-white/5 border-amber-500/20 rounded-2xl font-bold text-amber-500" 
+                    className="h-14 bg-black/40 border-amber-500/20 rounded-2xl font-bold text-amber-500" 
                   />
                 </div>
 
@@ -383,7 +383,7 @@ export default function ExerciseLibraryPage() {
                       value={formData.technicalAction}
                       onChange={(e) => setFormData({...formData, technicalAction: e.target.value})}
                       placeholder="EJ: CONTROL ORIENTADO" 
-                      className="h-14 bg-white/5 border-amber-500/20 rounded-2xl font-bold text-amber-500" 
+                      className="h-14 bg-black/40 border-amber-500/20 rounded-2xl font-bold text-amber-500" 
                     />
                   </div>
                   <div className="space-y-3">
@@ -392,7 +392,7 @@ export default function ExerciseLibraryPage() {
                       value={formData.tacticalAction}
                       onChange={(e) => setFormData({...formData, tacticalAction: e.target.value})}
                       placeholder="EJ: APOYO" 
-                      className="h-14 bg-white/5 border-amber-500/20 rounded-2xl font-bold text-amber-500" 
+                      className="h-14 bg-black/40 border-amber-500/20 rounded-2xl font-bold text-amber-500" 
                     />
                   </div>
                 </div>
@@ -403,7 +403,7 @@ export default function ExerciseLibraryPage() {
                     value={formData.description}
                     onChange={(e) => setFormData({...formData, description: e.target.value})}
                     placeholder="EXPLIQUE LA DINÁMICA DEL EJERCICIO..." 
-                    className="min-h-[120px] bg-white/5 border-amber-500/20 rounded-2xl font-bold text-amber-500" 
+                    className="min-h-[120px] bg-black/40 border-amber-500/20 rounded-2xl font-bold text-amber-500" 
                   />
                 </div>
 
@@ -413,7 +413,7 @@ export default function ExerciseLibraryPage() {
                     value={formData.provocationRules}
                     onChange={(e) => setFormData({...formData, provocationRules: e.target.value})}
                     placeholder="EJ: TOQUES LIMITADOS, PUNTUACIÓN DOBLE..." 
-                    className="min-h-[100px] bg-white/5 border-amber-500/20 rounded-2xl font-bold text-amber-500" 
+                    className="min-h-[100px] bg-black/40 border-amber-500/20 rounded-2xl font-bold text-amber-500" 
                   />
                 </div>
 
@@ -423,7 +423,7 @@ export default function ExerciseLibraryPage() {
                     value={formData.instructions}
                     onChange={(e) => setFormData({...formData, instructions: e.target.value})}
                     placeholder="PUNTOS CLAVE DE CORRECCIÓN..." 
-                    className="min-h-[100px] bg-white/5 border-amber-500/20 rounded-2xl font-bold text-amber-500" 
+                    className="min-h-[100px] bg-black/40 border-amber-500/20 rounded-2xl font-bold text-amber-500" 
                   />
                 </div>
 
@@ -433,7 +433,7 @@ export default function ExerciseLibraryPage() {
                     value={formData.equipment}
                     onChange={(e) => setFormData({...formData, equipment: e.target.value})}
                     placeholder="EJ: 10 BALONES, 4 CONOS, 2 PETOS..." 
-                    className="h-14 bg-white/5 border-amber-500/20 rounded-2xl font-bold text-amber-500" 
+                    className="h-14 bg-black/40 border-amber-500/20 rounded-2xl font-bold text-amber-500" 
                   />
                 </div>
               </div>
