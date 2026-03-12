@@ -76,6 +76,9 @@ const COLORS = [
 const isMaterial = (type: DrawingTool) => 
   ['player', 'ball', 'cone', 'seta', 'ladder', 'hurdle', 'minigoal', 'pica', 'barrier'].includes(type);
 
+const isCircular = (type: DrawingTool) => 
+  ['player', 'ball', 'circle', 'seta'].includes(type);
+
 export default function PromoBoardPage() {
   const [exercisesCount, setExercisesCount] = useState(2);
   const [fieldType, setFieldType] = useState<FieldType>("f11");
@@ -133,7 +136,12 @@ export default function PromoBoardPage() {
       case 'freehand':
         ctx.beginPath(); ctx.moveTo(p[0].x, p[0].y); for (let i = 1; i < p.length; i++) ctx.lineTo(p[i].x, p[i].y); ctx.stroke(); break;
       case 'rect': ctx.beginPath(); ctx.rect(minX, minY, width, height); ctx.fill(); ctx.stroke(); break;
-      case 'circle': ctx.beginPath(); ctx.ellipse(centerX, centerY, width / 2, height / 2, 0, 0, 2 * Math.PI); ctx.fill(); ctx.stroke(); break;
+      case 'circle':
+        ctx.beginPath();
+        // FORCE CIRCULARITY
+        const radius = Math.min(width, height) / 2;
+        ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+        ctx.fill(); ctx.stroke(); break;
       case 'arrow':
       case 'double-arrow':
       case 'zigzag':
@@ -146,8 +154,10 @@ export default function PromoBoardPage() {
         const head = 15;
         let angle = element.controlPoint ? Math.atan2(p[1].y - (element.controlPoint.y * heightPx), p[1].x - (element.controlPoint.x * widthPx)) : Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x);
         ctx.setLineDash([]); const drawH = (tx: number, ty: number, ang: number) => {
-          ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(tx - head * Math.cos(ang - Math.PI / 6), ty - head * Math.sin(ang - Math.PI / 6));
-          ctx.moveTo(tx, ty); ctx.lineTo(tx - head * Math.cos(ang + Math.PI / 6), ty - head * Math.sin(ang + Math.PI / 6)); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(tx, ty);
+          ctx.lineTo(tx - head * Math.cos(ang - Math.PI / 6), ty - head * Math.sin(ang - Math.PI / 6));
+          ctx.moveTo(tx, ty);
+          ctx.lineTo(tx - head * Math.cos(ang + Math.PI / 6), ty - head * Math.sin(ang + Math.PI / 6)); ctx.stroke();
         };
         drawH(p[1].x, p[1].y, angle);
         if (element.type === 'double-arrow') {
@@ -171,12 +181,16 @@ export default function PromoBoardPage() {
         };
         dCB(false); dCB(true); dAH(0, -cS, 0); dAH(cS, 0, Math.PI/2); dAH(0, cS, Math.PI); dAH(-cS, 0, -Math.PI/2); ctx.restore(); break;
       case 'player':
-        ctx.save(); ctx.beginPath(); ctx.ellipse(centerX, centerY, width/2, height/2, 0, 0, Math.PI * 2);
+        ctx.save(); ctx.beginPath();
+        const pRadius = Math.min(width, height) / 2;
+        ctx.arc(centerX, centerY, pRadius, 0, Math.PI * 2);
         ctx.fillStyle = hexToRgba(element.color, 0.2); ctx.fill(); ctx.strokeStyle = element.color; ctx.stroke();
-        ctx.fillStyle = '#fff'; ctx.font = `bold ${Math.floor(height * 0.35)}px Space Grotesk`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#fff'; ctx.font = `bold ${Math.floor(pRadius * 0.7)}px Space Grotesk`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText((element.number || 1).toString(), centerX, centerY); ctx.restore(); break;
       case 'ball':
-        ctx.save(); ctx.translate(centerX, centerY); ctx.beginPath(); ctx.arc(0, 0, width/2, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#000'; ctx.stroke(); ctx.restore(); break;
+        ctx.save(); ctx.translate(centerX, centerY); 
+        const bRadius = Math.min(width, height) / 2;
+        ctx.beginPath(); ctx.arc(0, 0, bRadius, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#000'; ctx.stroke(); ctx.restore(); break;
       case 'cone':
         ctx.save(); ctx.translate(centerX, centerY); ctx.beginPath(); ctx.moveTo(-width/2, height/2); ctx.lineTo(width/2, height/2); ctx.lineTo(0, -height/2); ctx.closePath(); ctx.fillStyle = '#ea580c'; ctx.fill(); ctx.restore(); break;
       case 'barrier':
@@ -194,6 +208,14 @@ export default function PromoBoardPage() {
         ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 5; ctx.strokeRect(-50, -30, 100, 60); ctx.restore(); break;
       case 'pica':
         ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/36, height/80); ctx.beginPath(); ctx.arc(0, 30, 18, 0, Math.PI * 2); ctx.fillStyle = '#334155'; ctx.fill(); ctx.fillStyle = element.color; ctx.fillRect(-4, -40, 8, 70); ctx.restore(); break;
+      case 'seta':
+        ctx.save(); ctx.translate(centerX, centerY); 
+        const sSize = Math.min(width, height);
+        ctx.scale(sSize/44, sSize/20);
+        ctx.beginPath(); ctx.ellipse(0, 5, 22, 10, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fill();
+        ctx.beginPath(); ctx.ellipse(0, 0, 22, 12, 0, 0, Math.PI * 2);
+        ctx.fillStyle = element.color; ctx.fill(); ctx.restore();
+        break;
     }
 
     if (isSelected) {
@@ -234,8 +256,12 @@ export default function PromoBoardPage() {
 
   const addElementAtCenter = (tool: DrawingTool) => {
     if (isLocked) return; const pNum = tool === 'player' ? elements.filter(e => e.type === 'player').length + 1 : undefined;
+    
+    // ADJUST INITIAL SIZE FOR CIRCULARITY
+    const canvasRatio = canvasRef.current ? (canvasRef.current.width / canvasRef.current.height) : 1.5;
     const defW = tool === 'ladder' ? 0.15 : (['minigoal', 'cross-arrow', 'barrier'].includes(tool) ? 0.1 : tool === 'text' ? 0.3 : 0.05);
-    const defH = tool === 'ladder' ? 0.05 : (['minigoal', 'cross-arrow', 'barrier'].includes(tool) ? 0.08 : 0.05);
+    const defH = isCircular(tool) ? (defW * canvasRatio) : (tool === 'ladder' ? 0.05 : (['minigoal', 'cross-arrow', 'barrier'].includes(tool) ? 0.08 : 0.05));
+    
     const newEl: DrawingElement = { id: `el-${Date.now()}`, type: tool, points: [{ x: 0.5 - defW/2, y: 0.5 - defH/2 }, { x: 0.5 + defW/2, y: 0.5 + defH/2 }], controlPoint: ['arrow', 'double-arrow', 'zigzag'].includes(tool) ? { x: 0.5, y: 0.45 } : undefined, color: currentColor, rotation: 0, lineStyle: 'solid', number: pNum, opacity: 1.0, text: tool === 'text' ? "CONSIGNA PROMO" : undefined };
     setElements(prev => [...prev, newEl]); setSelectedIds([newEl.id]); setActiveTool('select');
   };
@@ -280,9 +306,18 @@ export default function PromoBoardPage() {
     const p = { x: (e.clientX - rect.left) / rect.width, y: (e.clientY - rect.top) / rect.height }; const wPx = rect.width; const hPx = rect.height;
     if (interactionMode.current === 'resizing' && selectedIds.length === 1 && activeHandleIndex.current !== null) {
       setElements(prev => prev.map(el => {
-        if (el.id !== selectedIds[0]) return el; const bounds = getElementBounds(el, wPx, hPx); const local = rotatePoint({ x: p.x * wPx, y: p.y * hPx }, { x: bounds.centerX, y: bounds.centerY }, -el.rotation);
+        if (el.id !== selectedIds[0]) return el; 
+        const bounds = getElementBounds(el, wPx, hPx); 
+        const local = rotatePoint({ x: p.x * wPx, y: p.y * hPx }, { x: bounds.centerX, y: bounds.centerY }, -el.rotation);
         const next = [...el.points]; const h = activeHandleIndex.current!;
-        if (isMaterial(el.type)) {
+        
+        if (isCircular(el.type)) {
+          // FORCE 1:1 RATIO IN PIXELS
+          const dxPx = Math.abs(local.x - bounds.centerX) * 2;
+          const dyPx = dxPx;
+          next[0] = { x: (bounds.centerX - dxPx/2) / wPx, y: (bounds.centerY - dyPx/2) / hPx }; 
+          next[1] = { x: (bounds.centerX + dxPx/2) / wPx, y: (bounds.centerY + dyPx/2) / hPx };
+        } else if (isMaterial(el.type)) {
           const ratio = bounds.width / bounds.height; const dx = Math.abs(local.x - bounds.centerX) * 2; const dy = dx / ratio;
           next[0] = { x: (bounds.centerX - dx/2) / wPx, y: (bounds.centerY - dy/2) / hPx }; next[1] = { x: (bounds.centerX + dx/2) / wPx, y: (bounds.centerY + dy/2) / hPx };
         } else {
@@ -315,7 +350,7 @@ export default function PromoBoardPage() {
       <header className="h-20 border-b border-primary/20 bg-black/60 backdrop-blur-3xl flex items-center justify-between px-4 lg:px-8 shrink-0 z-50">
         <div className="flex items-center gap-4 lg:gap-6 overflow-hidden">
           <div className="flex flex-col shrink-0">
-            <div className="flex items-center gap-2"><Zap className="h-4 w-4 text-primary animate-pulse" /><span className="text-[10px] font-black text-primary tracking-[0.4em] uppercase">Tactical_Board_v9.8.0</span></div>
+            <div className="flex items-center gap-2"><Zap className="h-4 w-4 text-primary animate-pulse" /><span className="text-[10px] font-black text-primary tracking-[0.4em] uppercase">Tactical_Board_v9.8.1</span></div>
             <h1 className="text-sm lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase leading-none">Free</h1>
           </div>
           

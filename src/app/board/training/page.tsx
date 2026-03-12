@@ -93,6 +93,9 @@ const STAGES = ["Debutantes", "Prebenjamín", "Benjamín", "Alevín", "Infantil"
 const isMaterial = (type: DrawingTool) => 
   ['player', 'ball', 'cone', 'seta', 'ladder', 'hurdle', 'minigoal', 'pica', 'barrier'].includes(type);
 
+const isCircular = (type: DrawingTool) => 
+  ['player', 'ball', 'circle', 'seta'].includes(type);
+
 function TrainingBoardContent() {
   const [fieldType, setFieldType] = useState<FieldType>("f11");
   const [showLanes, setShowLanes] = useState(false);
@@ -195,7 +198,11 @@ function TrainingBoardContent() {
         ctx.beginPath(); ctx.rect(minX, minY, width, height); ctx.fill(); ctx.stroke();
         break;
       case 'circle':
-        ctx.beginPath(); ctx.ellipse(centerX, centerY, width / 2, height / 2, 0, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
+        ctx.beginPath();
+        // FORCE CIRCULARITY
+        const radius = Math.min(width, height) / 2;
+        ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+        ctx.fill(); ctx.stroke();
         break;
       case 'arrow':
       case 'double-arrow':
@@ -254,12 +261,14 @@ function TrainingBoardContent() {
         break;
       case 'player':
         ctx.save(); ctx.shadowBlur = 20; ctx.shadowColor = hexToRgba(element.color, 0.4);
-        ctx.beginPath(); ctx.ellipse(centerX, centerY, width/2, height/2, 0, 0, Math.PI * 2);
-        const pGrad = ctx.createRadialGradient(centerX - width/6, centerY - height/6, 0, centerX, centerY, width/2);
+        const pRadius = Math.min(width, height) / 2;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, pRadius, 0, Math.PI * 2);
+        const pGrad = ctx.createRadialGradient(centerX - pRadius/3, centerY - pRadius/3, 0, centerX, centerY, pRadius);
         pGrad.addColorStop(0, '#ffffff44'); pGrad.addColorStop(0.5, hexToRgba(element.color, 0.3)); pGrad.addColorStop(1, hexToRgba(element.color, 0.1));
         ctx.fillStyle = pGrad; ctx.fill(); ctx.strokeStyle = element.color; ctx.stroke();
-        ctx.fillStyle = '#fff'; ctx.font = `bold ${Math.floor(height * 0.32)}px Space Grotesk`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText((element.number || 1).toString(), centerX, centerY + (height * 0.02)); ctx.restore();
+        ctx.fillStyle = '#fff'; ctx.font = `bold ${Math.floor(pRadius * 0.64)}px Space Grotesk`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText((element.number || 1).toString(), centerX, centerY + (pRadius * 0.04)); ctx.restore();
         break;
       case 'barrier':
         ctx.save(); ctx.translate(centerX, centerY);
@@ -273,7 +282,9 @@ function TrainingBoardContent() {
         ctx.restore();
         break;
       case 'ball':
-        ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/80, height/80);
+        ctx.save(); ctx.translate(centerX, centerY);
+        const bRadius = Math.min(width, height) / 2;
+        ctx.scale(bRadius/40, bRadius/40);
         ctx.beginPath(); ctx.arc(0, 5, 40, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fill();
         const bG = ctx.createRadialGradient(-15, -15, 0, 0, 0, 40);
         bG.addColorStop(0, '#ffffff'); bG.addColorStop(1, '#E2E8F0');
@@ -295,7 +306,9 @@ function TrainingBoardContent() {
         ctx.restore();
         break;
       case 'seta':
-        ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/44, height/20);
+        ctx.save(); ctx.translate(centerX, centerY); 
+        const sSize = Math.min(width, height);
+        ctx.scale(sSize/44, sSize/20);
         ctx.beginPath(); ctx.ellipse(0, 5, 22, 10, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fill();
         ctx.beginPath(); ctx.ellipse(0, 0, 22, 12, 0, 0, Math.PI * 2);
         const sG = ctx.createRadialGradient(0, -5, 0, 0, 0, 22);
@@ -380,8 +393,14 @@ function TrainingBoardContent() {
 
   const addElementAtCenter = (tool: DrawingTool) => {
     const pNum = tool === 'player' ? elements.filter(e => e.type === 'player').length + 1 : undefined;
+    
+    // ADJUST INITIAL SIZE FOR CIRCULARITY
+    const canvasRatio = canvasRef.current ? (canvasRef.current.width / canvasRef.current.height) : 1.5;
+    
     const defW = tool === 'ladder' ? 0.15 : (tool === 'minigoal' || tool === 'cross-arrow' ? 0.1 : tool === 'barrier' ? 0.12 : tool === 'text' ? 0.3 : 0.05);
-    const defH = tool === 'ladder' ? 0.05 : (tool === 'minigoal' || tool === 'cross-arrow' ? 0.08 : tool === 'barrier' ? 0.12 : 0.05);
+    // If circular, adjust height to match width in pixels
+    const defH = isCircular(tool) ? (defW * canvasRatio) : (tool === 'ladder' ? 0.05 : (tool === 'minigoal' || tool === 'cross-arrow' ? 0.08 : tool === 'barrier' ? 0.12 : 0.05));
+    
     const newElement: DrawingElement = { id: `el-${Date.now()}`, type: tool, points: [{ x: 0.5 - defW/2, y: 0.5 - defH/2 }, { x: 0.5 + defW/2, y: 0.5 + defH/2 }], controlPoint: ['arrow', 'double-arrow', 'zigzag'].includes(tool) ? { x: 0.5, y: 0.45 } : undefined, color: currentColor, rotation: 0, lineStyle: 'solid', number: pNum, opacity: 1.0, text: tool === 'text' ? "CONSIGNA TÁCTICA" : undefined };
     setElements(prev => [...prev, newElement]); setSelectedIds([newElement.id]); setActiveTool('select');
   };
@@ -438,7 +457,14 @@ function TrainingBoardContent() {
         const bounds = getElementBounds(el, wPx, hPx);
         const local = rotatePoint({ x: point.x * wPx, y: point.y * hPx }, { x: bounds.centerX, y: bounds.centerY }, -el.rotation);
         const next = [...el.points]; const h = activeHandleIndex.current!;
-        if (isMaterial(el.type)) {
+        
+        if (isCircular(el.type)) {
+          // FORCE 1:1 RATIO IN PIXELS
+          const dxPx = Math.abs(local.x - bounds.centerX) * 2;
+          const dyPx = dxPx;
+          next[0] = { x: (bounds.centerX - dxPx/2) / wPx, y: (bounds.centerY - dyPx/2) / hPx }; 
+          next[1] = { x: (bounds.centerX + dxPx/2) / wPx, y: (bounds.centerY + dyPx/2) / hPx };
+        } else if (isMaterial(el.type)) {
           const ratio = bounds.width / bounds.height; const dx = Math.abs(local.x - bounds.centerX) * 2; const dy = dx / ratio;
           next[0] = { x: (bounds.centerX - dx/2) / wPx, y: (bounds.centerY - dy/2) / hPx }; next[1] = { x: (bounds.centerX + dx/2) / wPx, y: (bounds.centerY + dy/2) / hPx };
         } else {
@@ -485,7 +511,7 @@ function TrainingBoardContent() {
           <div className="flex flex-col shrink-0">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-amber-500 animate-pulse" />
-              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Precision_v9.8.0</span>
+              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Precision_v9.8.1</span>
             </div>
             <h1 className="text-lg lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase leading-none">Estudio Élite</h1>
           </div>
@@ -592,14 +618,14 @@ function TrainingBoardContent() {
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-3">
                   <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Etapa Federativa</Label>
-                  <Select value={saveFormData.stage} onValueChange={(v) => setSaveFormData({...formData, stage: v})}>
+                  <Select value={saveFormData.stage} onValueChange={(v) => setSaveFormData({...saveFormData, stage: v})}>
                     <SelectTrigger className="h-12 bg-black/40 border-amber-500/20 rounded-xl text-white font-bold uppercase text-[10px]"><SelectValue /></SelectTrigger>
                     <SelectContent className="bg-[#0a0f18] border-amber-500/20">{STAGES.map(s => <SelectItem key={s} value={s} className="text-[10px] font-black uppercase">{s}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-3">
                   <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Dimensión</Label>
-                  <Select value={saveFormData.dimension} onValueChange={(v) => setSaveFormData({...formData, dimension: v})}>
+                  <Select value={saveFormData.dimension} onValueChange={(v) => setSaveFormData({...saveFormData, dimension: v})}>
                     <SelectTrigger className="h-12 bg-black/40 border-amber-500/20 rounded-xl text-white font-bold uppercase text-[10px]"><SelectValue /></SelectTrigger>
                     <SelectContent className="bg-[#0a0f18] border-amber-500/20"><SelectItem value="Táctica" className="text-[10px] font-black uppercase">Táctica</SelectItem><SelectItem value="Técnica" className="text-[10px] font-black uppercase">Técnica</SelectItem><SelectItem value="Física" className="text-[10px] font-black uppercase">Física</SelectItem></SelectContent>
                   </Select>
