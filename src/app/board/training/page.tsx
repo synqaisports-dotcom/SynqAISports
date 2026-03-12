@@ -112,7 +112,6 @@ function TrainingBoardContent() {
   const interactionMode = useRef<'drawing' | 'resizing' | 'rotating' | 'dragging' | 'curving' | 'none'>('none');
   const activeHandleIndex = useRef<number | null>(null);
 
-  // Formulario de Ficha Técnica
   const [saveFormData, setSaveFormData] = useState({
     title: "",
     stage: "Alevín",
@@ -173,11 +172,8 @@ function TrainingBoardContent() {
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
 
-    if (element.lineStyle === 'dashed') {
-      ctx.setLineDash([10, 5]);
-    } else {
-      ctx.setLineDash([]);
-    }
+    if (element.lineStyle === 'dashed') ctx.setLineDash([10, 5]);
+    else ctx.setLineDash([]);
 
     switch (element.type) {
       case 'text':
@@ -191,24 +187,15 @@ function TrainingBoardContent() {
         ctx.restore();
         break;
       case 'freehand':
-        ctx.beginPath();
-        ctx.moveTo(p[0].x, p[0].y);
+        ctx.beginPath(); ctx.moveTo(p[0].x, p[0].y);
         for (let i = 1; i < p.length; i++) ctx.lineTo(p[i].x, p[i].y);
         ctx.stroke();
         break;
       case 'rect':
-        ctx.beginPath();
-        ctx.rect(minX, minY, width, height);
-        ctx.fill();
-        ctx.stroke();
+        ctx.beginPath(); ctx.rect(minX, minY, width, height); ctx.fill(); ctx.stroke();
         break;
       case 'circle':
-        ctx.beginPath();
-        const rx = width / 2;
-        const ry = height / 2;
-        ctx.ellipse(centerX, centerY, rx, ry, 0, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(centerX, centerY, width / 2, height / 2, 0, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
         break;
       case 'arrow':
       case 'double-arrow':
@@ -216,27 +203,18 @@ function TrainingBoardContent() {
         ctx.beginPath();
         if (element.controlPoint) {
           const cp = { x: element.controlPoint.x * widthPx, y: element.controlPoint.y * heightPx };
-          ctx.moveTo(p[0].x, p[0].y);
-          ctx.quadraticCurveTo(cp.x, cp.y, p[1].x, p[1].y);
+          ctx.moveTo(p[0].x, p[0].y); ctx.quadraticCurveTo(cp.x, cp.y, p[1].x, p[1].y);
         } else {
-          ctx.moveTo(p[0].x, p[0].y);
-          ctx.lineTo(p[1].x, p[1].y);
+          ctx.moveTo(p[0].x, p[0].y); ctx.lineTo(p[1].x, p[1].y);
         }
         ctx.stroke();
-
         const head = 15;
-        let angle;
-        if (element.controlPoint) {
-          const cp = { x: element.controlPoint.x * widthPx, y: element.controlPoint.y * heightPx };
-          angle = Math.atan2(p[1].y - cp.y, p[1].x - cp.x);
-        } else {
-          angle = Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x);
-        }
-        
+        let angle = element.controlPoint 
+          ? Math.atan2(p[1].y - (element.controlPoint.y * heightPx), p[1].x - (element.controlPoint.x * widthPx)) 
+          : Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x);
         ctx.setLineDash([]);
         const drawH = (tx: number, ty: number, ang: number) => {
-          ctx.beginPath();
-          ctx.moveTo(tx, ty);
+          ctx.beginPath(); ctx.moveTo(tx, ty);
           ctx.lineTo(tx - head * Math.cos(ang - Math.PI / 6), ty - head * Math.sin(ang - Math.PI / 6));
           ctx.moveTo(tx, ty);
           ctx.lineTo(tx - head * Math.cos(ang + Math.PI / 6), ty - head * Math.sin(ang + Math.PI / 6));
@@ -244,29 +222,19 @@ function TrainingBoardContent() {
         };
         drawH(p[1].x, p[1].y, angle);
         if (element.type === 'double-arrow') {
-          const startAngle = element.controlPoint 
-            ? Math.atan2(p[0].y - (element.controlPoint.y * heightPx), p[0].x - (element.controlPoint.x * widthPx))
-            : angle + Math.PI;
+          const startAngle = element.controlPoint ? Math.atan2(p[0].y - (element.controlPoint.y * heightPx), p[0].x - (element.controlPoint.x * widthPx)) : angle + Math.PI;
           drawH(p[0].x, p[0].y, startAngle);
         }
         break;
       case 'cross-arrow':
-        ctx.save();
-        ctx.translate(centerX, centerY);
+        ctx.save(); ctx.translate(centerX, centerY);
         const cSize = Math.min(width, height) / 2;
         const thickness = cSize * 0.35;
         const arrowHead = cSize * 0.4;
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = 'rgba(0,0,0,0.4)';
         const drawCrossBar = (isVert: boolean) => {
           ctx.beginPath();
-          if (isVert) {
-            ctx.moveTo(-thickness/2, -cSize + arrowHead); ctx.lineTo(thickness/2, -cSize + arrowHead);
-            ctx.lineTo(thickness/2, cSize - arrowHead); ctx.lineTo(-thickness/2, cSize - arrowHead);
-          } else {
-            ctx.moveTo(-cSize + arrowHead, -thickness/2); ctx.lineTo(cSize - arrowHead, -thickness/2);
-            ctx.lineTo(cSize - arrowHead, thickness/2); ctx.lineTo(-cSize + arrowHead, thickness/2);
-          }
+          if (isVert) { ctx.moveTo(-thickness/2, -cSize + arrowHead); ctx.lineTo(thickness/2, -cSize + arrowHead); ctx.lineTo(thickness/2, cSize - arrowHead); ctx.lineTo(-thickness/2, cSize - arrowHead); }
+          else { ctx.moveTo(-cSize + arrowHead, -thickness/2); ctx.lineTo(cSize - arrowHead, -thickness/2); ctx.lineTo(cSize - arrowHead, thickness/2); ctx.lineTo(-cSize + arrowHead, thickness/2); }
           ctx.closePath();
           const barGrad = ctx.createLinearGradient(isVert ? -thickness/2 : -cSize, isVert ? -cSize : -thickness/2, isVert ? thickness/2 : cSize, isVert ? cSize : thickness/2);
           barGrad.addColorStop(0, element.color); barGrad.addColorStop(0.5, '#ffffffaa'); barGrad.addColorStop(1, hexToRgba(element.color, 0.8));
@@ -285,38 +253,27 @@ function TrainingBoardContent() {
         ctx.restore();
         break;
       case 'player':
-        ctx.save();
-        ctx.shadowBlur = 20; ctx.shadowColor = hexToRgba(element.color, 0.4);
+        ctx.save(); ctx.shadowBlur = 20; ctx.shadowColor = hexToRgba(element.color, 0.4);
         ctx.beginPath(); ctx.ellipse(centerX, centerY, width/2, height/2, 0, 0, Math.PI * 2);
         const pGrad = ctx.createRadialGradient(centerX - width/6, centerY - height/6, 0, centerX, centerY, width/2);
         pGrad.addColorStop(0, '#ffffff44'); pGrad.addColorStop(0.5, hexToRgba(element.color, 0.3)); pGrad.addColorStop(1, hexToRgba(element.color, 0.1));
         ctx.fillStyle = pGrad; ctx.fill(); ctx.strokeStyle = element.color; ctx.stroke();
-        ctx.fillStyle = '#fff'; 
-        ctx.font = `bold ${Math.floor(height * 0.32)}px Space Grotesk`; 
-        ctx.textAlign = 'center'; 
-        ctx.textBaseline = 'middle';
-        ctx.fillText((element.number || 1).toString(), centerX, centerY + (height * 0.02));
-        ctx.restore();
+        ctx.fillStyle = '#fff'; ctx.font = `bold ${Math.floor(height * 0.32)}px Space Grotesk`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText((element.number || 1).toString(), centerX, centerY + (height * 0.02)); ctx.restore();
         break;
       case 'barrier':
-        ctx.save();
-        ctx.translate(centerX, centerY);
+        ctx.save(); ctx.translate(centerX, centerY);
         const bw = width / 3;
         for (let i = -1; i <= 1; i++) {
-          ctx.save();
-          ctx.translate(i * bw * 0.8, 0);
-          ctx.beginPath(); ctx.ellipse(0, 0, bw/2, height/2, 0, 0, Math.PI * 2);
+          ctx.save(); ctx.translate(i * bw * 0.8, 0); ctx.beginPath(); ctx.ellipse(0, 0, bw/2, height/2, 0, 0, Math.PI * 2);
           const bGrad = ctx.createLinearGradient(-bw/2, 0, bw/2, 0);
           bGrad.addColorStop(0, hexToRgba(element.color, 0.8)); bGrad.addColorStop(0.5, element.color); bGrad.addColorStop(1, hexToRgba(element.color, 0.6));
-          ctx.fillStyle = bGrad; ctx.fill(); ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.stroke();
-          ctx.restore();
+          ctx.fillStyle = bGrad; ctx.fill(); ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.stroke(); ctx.restore();
         }
         ctx.restore();
         break;
       case 'ball':
-        ctx.save();
-        ctx.translate(centerX, centerY);
-        ctx.scale(width/80, height/80);
+        ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/80, height/80);
         ctx.beginPath(); ctx.arc(0, 5, 40, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fill();
         const bG = ctx.createRadialGradient(-15, -15, 0, 0, 0, 40);
         bG.addColorStop(0, '#ffffff'); bG.addColorStop(1, '#E2E8F0');
@@ -334,8 +291,7 @@ function TrainingBoardContent() {
         const cGrad = ctx.createLinearGradient(-20, 0, 20, 0);
         cGrad.addColorStop(0, '#ea580c'); cGrad.addColorStop(0.5, '#fb923c'); cGrad.addColorStop(1, '#9a3412');
         ctx.beginPath(); ctx.moveTo(-15, 12); ctx.lineTo(15, 12); ctx.lineTo(2, -30); ctx.lineTo(-2, -30); ctx.closePath();
-        ctx.fillStyle = cGrad; ctx.fill();
-        ctx.fillStyle = '#ffffff'; ctx.fillRect(-8, -5, 16, 6); ctx.fillRect(-4, -20, 8, 4);
+        ctx.fillStyle = cGrad; ctx.fill(); ctx.fillStyle = '#ffffff'; ctx.fillRect(-8, -5, 16, 6); ctx.fillRect(-4, -20, 8, 4);
         ctx.restore();
         break;
       case 'seta':
@@ -380,28 +336,17 @@ function TrainingBoardContent() {
       ctx.restore(); ctx.save();
       ctx.translate(centerX, centerY); ctx.rotate(element.rotation); ctx.translate(-centerX, -centerY);
       ctx.strokeStyle = '#ffffffaa'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]);
-      const pad = 10;
-      ctx.strokeRect(minX - pad, minY - pad, width + pad * 2, height + pad * 2);
+      const pad = 10; ctx.strokeRect(minX - pad, minY - pad, width + pad * 2, height + pad * 2);
       ctx.setLineDash([]); ctx.fillStyle = '#ffffff';
-      const handles = [
-        { x: minX - pad, y: minY - pad }, { x: centerX, y: minY - pad }, { x: maxX + pad, y: minY - pad },
-        { x: minX - pad, y: centerY }, { x: maxX + pad, y: centerY },
-        { x: minX - pad, y: maxY + pad }, { x: centerX, y: maxY + pad }, { x: maxX + pad, y: maxY + pad },
-      ];
+      const handles = [{ x: minX - pad, y: minY - pad }, { x: centerX, y: minY - pad }, { x: maxX + pad, y: minY - pad }, { x: minX - pad, y: centerY }, { x: maxX + pad, y: centerY }, { x: minX - pad, y: maxY + pad }, { x: centerX, y: maxY + pad }, { x: maxX + pad, y: maxY + pad }];
       handles.forEach(h => { ctx.beginPath(); ctx.arc(h.x, h.y, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
-      
-      const rotY = minY - pad - 40;
-      ctx.beginPath(); ctx.moveTo(centerX, minY - pad); ctx.lineTo(centerX, rotY); ctx.stroke();
-      ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(centerX, rotY, 8, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.stroke();
-
+      const rotY = minY - pad - 40; ctx.beginPath(); ctx.moveTo(centerX, minY - pad); ctx.lineTo(centerX, rotY); ctx.stroke();
+      ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(centerX, rotY, 8, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.stroke();
       if (element.controlPoint && ['arrow', 'double-arrow', 'zigzag'].includes(element.type)) {
         const cp = { x: element.controlPoint.x * widthPx, y: element.controlPoint.y * heightPx };
-        ctx.restore(); ctx.save();
-        ctx.setLineDash([4, 4]); ctx.strokeStyle = '#3b82f6aa';
+        ctx.restore(); ctx.save(); ctx.setLineDash([4, 4]); ctx.strokeStyle = '#3b82f6aa';
         ctx.beginPath(); ctx.moveTo(centerX, centerY); ctx.lineTo(cp.x, cp.y); ctx.stroke();
-        ctx.fillStyle = '#3b82f6'; ctx.beginPath(); ctx.arc(cp.x, cp.y, 8, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.fillStyle = '#3b82f6'; ctx.beginPath(); ctx.arc(cp.x, cp.y, 8, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
       }
     }
     ctx.restore();
@@ -414,36 +359,27 @@ function TrainingBoardContent() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     const sortedElements = [...elements].sort((a, b) => {
-      const aMat = isMaterial(a.type);
-      const bMat = isMaterial(b.type);
-      if (aMat && !bMat) return 1; 
-      if (!aMat && bMat) return -1;
+      if (a.type === 'text' && b.type !== 'text') return 1;
+      if (a.type !== 'text' && b.type === 'text') return -1;
+      const aMat = isMaterial(a.type); const bMat = isMaterial(b.type);
+      if (aMat && !bMat) return 1; if (!aMat && bMat) return -1;
       return 0;
     });
-
     sortedElements.forEach(el => drawElement(ctx, el, selectedIds.includes(el.id)));
   }, [elements, selectedIds, drawElement]);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const observer = new ResizeObserver(() => {
-      if (canvas.parentElement) {
-        canvas.width = canvas.parentElement.clientWidth;
-        canvas.height = canvas.parentElement.clientHeight;
-        redrawAll();
-      }
+    const canvas = canvasRef.current; if (!canvas) return;
+    const obs = new ResizeObserver(() => {
+      if (canvas.parentElement) { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; redrawAll(); }
     });
-    observer.observe(canvas.parentElement!);
-    return () => observer.disconnect();
+    obs.observe(canvas.parentElement!); return () => obs.disconnect();
   }, [redrawAll]);
 
-  useEffect(() => {
-    redrawAll();
-  }, [elements, selectedIds, fieldType, showLanes, redrawAll]);
+  useEffect(() => { redrawAll(); }, [elements, selectedIds, fieldType, showLanes, redrawAll]);
 
-  const handleEditText = useCallback(() => {
-    const elId = selectedIds[0];
+  const handleEditText = useCallback((id?: string) => {
+    const elId = id || selectedIds[0];
     const el = elements.find(e => e.id === elId);
     if (el && el.type === 'text') {
       const val = window.prompt("EDITAR TEXTO TÁCTICO:", el.text);
@@ -455,163 +391,81 @@ function TrainingBoardContent() {
 
   const addElementAtCenter = (tool: DrawingTool) => {
     const pNum = tool === 'player' ? elements.filter(e => e.type === 'player').length + 1 : undefined;
-    
-    const isMat = isMaterial(tool);
-    const defW = tool === 'ladder' ? 0.15 : (tool === 'minigoal' || tool === 'cross-arrow' ? 0.1 : tool === 'barrier' ? 0.12 : 0.05);
+    const defW = tool === 'ladder' ? 0.15 : (tool === 'minigoal' || tool === 'cross-arrow' ? 0.1 : tool === 'barrier' ? 0.12 : tool === 'text' ? 0.3 : 0.05);
     const defH = tool === 'ladder' ? 0.05 : (tool === 'minigoal' || tool === 'cross-arrow' ? 0.08 : tool === 'barrier' ? 0.12 : 0.05);
-    
-    const newElement: DrawingElement = { 
-      id: `el-${Date.now()}`, 
-      type: tool, 
-      points: [{ x: 0.5 - defW/2, y: 0.5 - defH/2 }, { x: 0.5 + defW/2, y: 0.5 + defH/2 }],
-      controlPoint: ['arrow', 'double-arrow', 'zigzag'].includes(tool) ? { x: 0.5, y: 0.45 } : undefined,
-      color: currentColor, 
-      rotation: 0, 
-      lineStyle: 'solid', 
-      number: pNum,
-      opacity: 1.0,
-      text: tool === 'text' ? "TEXTO TÁCTICO" : undefined
-    };
-    
-    setElements(prev => [...prev, newElement]);
-    setSelectedIds([newElement.id]);
-    setActiveTool('select');
-
-    if (tool === 'text') {
-      setTimeout(() => {
-        const val = window.prompt("INTRODUZCA TEXTO TÁCTICO:", "TEXTO TÁCTICO");
-        if (val) {
-          setElements(prev => prev.map(el => el.id === newElement.id ? { ...el, text: val.toUpperCase() } : el));
-        }
-      }, 100);
-    }
+    const newElement: DrawingElement = { id: `el-${Date.now()}`, type: tool, points: [{ x: 0.5 - defW/2, y: 0.5 - defH/2 }, { x: 0.5 + defW/2, y: 0.5 + defH/2 }], controlPoint: ['arrow', 'double-arrow', 'zigzag'].includes(tool) ? { x: 0.5, y: 0.45 } : undefined, color: currentColor, rotation: 0, lineStyle: 'solid', number: pNum, opacity: 1.0, text: tool === 'text' ? "TEXTO TÁCTICO" : undefined };
+    setElements(prev => [...prev, newElement]); setSelectedIds([newElement.id]); setActiveTool('select');
+    if (tool === 'text') { setTimeout(() => handleEditText(newElement.id), 100); }
   };
 
   const handlePointerDown = (e: React.PointerEvent) => {
     if (!canvasRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect();
-    const point = { 
-      x: (e.clientX - rect.left) / rect.width, 
-      y: (e.clientY - rect.top) / rect.height 
-    };
+    const point = { x: (e.clientX - rect.left) / rect.width, y: (e.clientY - rect.top) / rect.height };
     startPoint.current = point; lastPoint.current = point; isDrawing.current = true;
-
-    const widthPx = rect.width;
-    const heightPx = rect.height;
+    const wPx = rect.width; const hPx = rect.height;
 
     if (selectedIds.length === 1) {
       const el = elements.find(e => e.id === selectedIds[0]);
       if (el) {
-        const bounds = getElementBounds(el, widthPx, heightPx);
-        const { centerX, centerY, minX, minY } = bounds;
-        const pad = 10;
-        
+        const bounds = getElementBounds(el, wPx, hPx);
         if (el.controlPoint) {
-          const cpPx = { x: el.controlPoint.x * widthPx, y: el.controlPoint.y * heightPx };
-          const distToCP = Math.sqrt(Math.pow(point.x * widthPx - cpPx.x, 2) + Math.pow(point.y * heightPx - cpPx.y, 2));
-          if (distToCP < 20) {
-            interactionMode.current = 'curving'; return;
-          }
+          const cpPx = { x: el.controlPoint.x * wPx, y: el.controlPoint.y * hPx };
+          if (Math.sqrt(Math.pow(point.x * wPx - cpPx.x, 2) + Math.pow(point.y * heightPx - cpPx.y, 2)) < 20) { interactionMode.current = 'curving'; return; }
         }
-
-        const localPoint = rotatePoint(
-          { x: point.x * widthPx, y: point.y * heightPx }, 
-          { x: centerX, y: centerY }, 
-          -el.rotation
-        );
-        
-        const rotHandlePx = rotatePoint({ x: centerX, y: minY - pad - 40 }, { x: centerX, y: centerY }, el.rotation);
-        const distToRot = Math.sqrt(Math.pow(point.x * widthPx - rotHandlePx.x, 2) + Math.pow(point.y * heightPx - rotHandlePx.y, 2));
-        
-        if (distToRot < 20) {
-          interactionMode.current = 'rotating'; return;
-        }
-
-        const handles = [
-          { x: minX - pad, y: minY - pad }, { x: centerX, y: minY - pad }, { x: bounds.maxX + pad, y: minY - pad },
-          { x: minX - pad, y: centerY }, { x: bounds.maxX + pad, y: centerY },
-          { x: minX - pad, y: bounds.maxY + pad }, { x: centerX, y: bounds.maxY + pad }, { x: bounds.maxX + pad, y: bounds.maxY + pad },
-        ];
-        const hIdx = handles.findIndex(h => Math.sqrt(Math.pow(localPoint.x - h.x, 2) + Math.pow(localPoint.y - h.y, 2)) < 15);
-        if (hIdx !== -1) {
-          interactionMode.current = 'resizing'; activeHandleIndex.current = hIdx; return;
-        }
+        const rotHandlePx = rotatePoint({ x: bounds.centerX, y: bounds.minY - 50 }, { x: bounds.centerX, y: bounds.centerY }, el.rotation);
+        if (Math.sqrt(Math.pow(point.x * wPx - rotHandlePx.x, 2) + Math.pow(point.y * hPx - rotHandlePx.y, 2)) < 20) { interactionMode.current = 'rotating'; return; }
+        const local = rotatePoint({ x: point.x * wPx, y: point.y * hPx }, { x: bounds.centerX, y: bounds.centerY }, -el.rotation);
+        const pad = 10;
+        const handles = [{ x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY }, { x: bounds.minX - pad, y: bounds.maxY + pad }, { x: bounds.centerX, y: bounds.maxY + pad }, { x: bounds.maxX + pad, y: bounds.maxY + pad }];
+        const hIdx = handles.findIndex(h => Math.sqrt(Math.pow(local.x - h.x, 2) + Math.pow(local.y - h.y, 2)) < 15);
+        if (hIdx !== -1) { interactionMode.current = 'resizing'; activeHandleIndex.current = hIdx; return; }
       }
     }
 
     const clicked = [...elements].reverse().find(el => {
-      const bounds = getElementBounds(el, widthPx, heightPx);
-      const local = rotatePoint({ x: point.x * widthPx, y: point.y * heightPx }, { x: bounds.centerX, y: bounds.centerY }, -el.rotation);
-      return local.x >= bounds.minX - 10 && local.x <= bounds.maxX + 10 && local.y >= bounds.minY - 10 && local.y <= bounds.maxY + 10;
+      const bounds = getElementBounds(el, wPx, hPx);
+      const local = rotatePoint({ x: point.x * wPx, y: point.y * hPx }, { x: bounds.centerX, y: bounds.centerY }, -el.rotation);
+      const hitPadding = el.type === 'text' ? 20 : 10;
+      return local.x >= bounds.minX - hitPadding && local.x <= bounds.maxX + hitPadding && local.y >= bounds.minY - hitPadding && local.y <= bounds.maxY + hitPadding;
     });
 
     if (clicked) {
       const isAlreadySelected = selectedIds.includes(clicked.id);
-      if (e.shiftKey) {
-        setSelectedIds(prev => prev.includes(clicked.id) ? prev.filter(id => id !== clicked.id) : [...prev, clicked.id]);
-      } else if (!isAlreadySelected) {
-        setSelectedIds([clicked.id]);
-      }
-      
-      // PROTOCOLO_EDICION_DIRECTA: Al presionar sobre un texto ya seleccionado, editarlo
-      if (clicked.type === 'text' && isAlreadySelected && !e.shiftKey) {
-        const val = window.prompt("EDITAR TEXTO TÁCTICO:", clicked.text);
-        if (val !== null) {
-          setElements(prev => prev.map(el => el.id === clicked.id ? { ...el, text: val.toUpperCase() } : el));
-        }
-      }
-
-      setActiveTool('select'); 
-      interactionMode.current = 'dragging';
-    } else {
-      setSelectedIds([]);
-    }
+      if (e.shiftKey) setSelectedIds(prev => prev.includes(clicked.id) ? prev.filter(id => id !== clicked.id) : [...prev, clicked.id]);
+      else if (!isAlreadySelected) setSelectedIds([clicked.id]);
+      if (clicked.type === 'text' && isAlreadySelected && !e.shiftKey) { handleEditText(clicked.id); }
+      setActiveTool('select'); interactionMode.current = 'dragging';
+    } else setSelectedIds([]);
     redrawAll();
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!isDrawing.current || !canvasRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect();
-    const point = { 
-      x: (e.clientX - rect.left) / rect.width, 
-      y: (e.clientY - rect.top) / rect.height 
-    };
-    const widthPx = rect.width;
-    const heightPx = rect.height;
+    const point = { x: (e.clientX - rect.left) / rect.width, y: (e.clientY - rect.top) / rect.height };
+    const wPx = rect.width; const hPx = rect.height;
 
     if (interactionMode.current === 'resizing' && selectedIds.length === 1 && activeHandleIndex.current !== null) {
       setElements(prev => prev.map(el => {
         if (el.id !== selectedIds[0]) return el;
-        const bounds = getElementBounds(el, widthPx, heightPx);
-        const localPoint = rotatePoint({ x: point.x * widthPx, y: point.y * heightPx }, { x: bounds.centerX, y: bounds.centerY }, -el.rotation);
-        const next = [...el.points];
-        const h = activeHandleIndex.current!;
-        
+        const bounds = getElementBounds(el, wPx, hPx);
+        const local = rotatePoint({ x: point.x * wPx, y: point.y * hPx }, { x: bounds.centerX, y: bounds.centerY }, -el.rotation);
+        const next = [...el.points]; const h = activeHandleIndex.current!;
         if (isMaterial(el.type)) {
-          const ratio = bounds.width / bounds.height;
-          const dx = Math.abs(localPoint.x - bounds.centerX) * 2;
-          const dy = dx / ratio;
-          next[0] = { x: (bounds.centerX - dx/2) / widthPx, y: (bounds.centerY - dy/2) / heightPx };
-          next[1] = { x: (bounds.centerX + dx/2) / widthPx, y: (bounds.centerY + dy/2) / heightPx };
+          const ratio = bounds.width / bounds.height; const dx = Math.abs(local.x - bounds.centerX) * 2; const dy = dx / ratio;
+          next[0] = { x: (bounds.centerX - dx/2) / wPx, y: (bounds.centerY - dy/2) / hPx }; next[1] = { x: (bounds.centerX + dx/2) / wPx, y: (bounds.centerY + dy/2) / hPx };
         } else {
-          const p0Px = { x: next[0].x * widthPx, y: next[0].y * heightPx };
-          const p1Px = { x: next[1].x * widthPx, y: next[1].y * heightPx };
-          if ([0, 3, 5].includes(h)) p0Px.x = localPoint.x;
-          if ([2, 4, 7].includes(h)) p1Px.x = localPoint.x;
-          if ([0, 1, 2].includes(h)) p0Px.y = localPoint.y;
-          if ([5, 6, 7].includes(h)) p1Px.y = localPoint.y;
-          next[0] = { x: p0Px.x / widthPx, y: p0Px.y / heightPx };
-          next[1] = { x: p1Px.x / widthPx, y: p1Px.y / heightPx };
+          const p0Px = { x: next[0].x * wPx, y: next[0].y * hPx }; const p1Px = { x: next[1].x * wPx, y: next[1].y * hPx };
+          if ([0, 3, 5].includes(h)) p0Px.x = local.x; if ([2, 4, 7].includes(h)) p1Px.x = local.x; if ([0, 1, 2].includes(h)) p0Px.y = local.y; if ([5, 6, 7].includes(h)) p1Px.y = local.y;
+          next[0] = { x: p0Px.x / wPx, y: p0Px.y / hPx }; next[1] = { x: p1Px.x / wPx, y: p1Px.y / hPx };
         }
         return { ...el, points: next };
       }));
-    } else if (interactionMode.current === 'curving' && selectedIds.length === 1) {
-      setElements(prev => prev.map(el => el.id === selectedIds[0] ? { ...el, controlPoint: point } : el));
-    } else if (interactionMode.current === 'rotating' && selectedIds.length === 1) {
-      const el = elements.find(e => e.id === selectedIds[0]);
-      if (el) {
-        const bounds = getElementBounds(el, widthPx, heightPx);
-        const angle = Math.atan2(point.y * heightPx - bounds.centerY, point.x * widthPx - bounds.centerX) + Math.PI / 2;
+    } else if (interactionMode.current === 'curving' && selectedIds.length === 1) setElements(prev => prev.map(el => el.id === selectedIds[0] ? { ...el, controlPoint: point } : el));
+    else if (interactionMode.current === 'rotating' && selectedIds.length === 1) {
+      const el = elements.find(e => e.id === selectedIds[0]); if (el) {
+        const bounds = getElementBounds(el, wPx, hPx); const angle = Math.atan2(point.y * hPx - bounds.centerY, point.x * wPx - bounds.centerX) + Math.PI / 2;
         setElements(prev => prev.map(e => e.id === selectedIds[0] ? { ...e, rotation: angle } : e));
       }
     } else if (interactionMode.current === 'dragging' && selectedIds.length > 0 && lastPoint.current) {
@@ -627,21 +481,12 @@ function TrainingBoardContent() {
     redrawAll();
   };
 
-  const handlePointerUp = () => {
-    isDrawing.current = false; interactionMode.current = 'none'; activeHandleIndex.current = null;
-  };
+  const handlePointerUp = () => { isDrawing.current = false; interactionMode.current = 'none'; activeHandleIndex.current = null; };
 
   const handleConfirmSave = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!saveFormData.title) {
-      toast({ variant: "destructive", title: "ERROR", description: "Debe asignar un título al ejercicio." });
-      return;
-    }
-    
+    e.preventDefault(); if (!saveFormData.title) { toast({ variant: "destructive", title: "ERROR", description: "Debe asignar un título al ejercicio." }); return; }
     toast({ title: "SINCRO_EXITOSA", description: `El ejercicio "${saveFormData.title}" se ha guardado en su cuaderno de campo.` });
-    setIsSaveSheetOpen(false);
-    
-    if (isFromForm) setTimeout(() => router.back(), 1500);
+    setIsSaveSheetOpen(false); if (isFromForm) setTimeout(() => router.back(), 1500);
   };
 
   const selectedElements = elements.filter(e => selectedIds.includes(e.id));
@@ -677,58 +522,32 @@ function TrainingBoardContent() {
               <div className="flex items-center gap-2 pl-4 border-l border-white/10 animate-in slide-in-from-left-4 fade-in duration-300">
                 <div className="flex gap-1.5 p-1 bg-black/40 border border-white/5 rounded-xl mr-2">
                   {COLORS.map(c => (
-                    <button 
-                      key={c.id} 
-                      onClick={() => setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, color: c.value} : el))} 
-                      className={cn("h-6 w-6 rounded-full border-2 transition-all", selectedElements.every(el => el.color === c.value) ? "border-white scale-110" : "border-transparent opacity-40 hover:opacity-100")} 
-                      style={{ backgroundColor: c.value }} 
-                    />
+                    <button key={c.id} onClick={() => setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, color: c.value} : el))} className={cn("h-6 w-6 rounded-full border-2 transition-all", selectedElements.every(el => el.color === c.value) ? "border-white scale-110" : "border-transparent opacity-40 hover:opacity-100")} style={{ backgroundColor: c.value }} />
                   ))}
                 </div>
-
                 <div className="flex flex-col gap-2 w-32 px-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[8px] font-black text-white/40 uppercase tracking-widest">Opacidad</span>
-                    <span className="text-[8px] font-black text-amber-500">{Math.round(commonOpacity * 100)}%</span>
-                  </div>
-                  <Slider 
-                    value={[commonOpacity * 100]} min={10} max={100} step={1}
-                    onValueChange={(val) => setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, opacity: val[0] / 100} : el))}
-                    className="w-full"
-                  />
+                  <div className="flex justify-between items-center"><span className="text-[8px] font-black text-white/40 uppercase tracking-widest">Opacidad</span><span className="text-[8px] font-black text-amber-500">{Math.round(commonOpacity * 100)}%</span></div>
+                  <Slider value={[commonOpacity * 100]} min={10} max={100} step={1} onValueChange={(val) => setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, opacity: val[0] / 100} : el))} className="w-full" />
                 </div>
-
                 {selectedElements.length === 1 && (
                   <>
                     {!isMaterial(selectedElements[0].type) && selectedElements[0].type !== 'text' && (
-                      <Button 
-                        variant="outline" size="sm" 
-                        className={cn("h-9 border-white/10 text-[9px] font-black uppercase", selectedElements[0].lineStyle === 'dashed' ? 'bg-amber-500 text-black' : 'text-white/40')}
-                        onClick={() => setElements(prev => prev.map(el => el.id === selectedIds[0] ? {...el, lineStyle: el.lineStyle === 'solid' ? 'dashed' : 'solid'} : el))}
-                      >
+                      <Button variant="outline" size="sm" className={cn("h-9 border-white/10 text-[9px] font-black uppercase", selectedElements[0].lineStyle === 'dashed' ? 'bg-amber-500 text-black' : 'text-white/40')} onClick={() => setElements(prev => prev.map(el => el.id === selectedIds[0] ? {...el, lineStyle: el.lineStyle === 'solid' ? 'dashed' : 'solid'} : el))}>
                         {selectedElements[0].lineStyle === 'dashed' ? 'Discontinua' : 'Sólida'}
                       </Button>
                     )}
                     {selectedElements[0].type === 'text' && (
-                      <Button variant="outline" size="sm" onClick={handleEditText} className="h-9 border-amber-500/20 bg-amber-500/5 text-amber-500 font-black uppercase text-[9px]">
+                      <Button variant="outline" size="sm" onClick={() => handleEditText()} className="h-9 border-amber-500/20 bg-amber-500/5 text-amber-500 font-black uppercase text-[9px]">
                         <Pencil className="h-3 w-3 mr-2" /> Editar Texto
                       </Button>
                     )}
                     {selectedElements[0].type === 'player' && (
-                      <Input 
-                        type="number" value={selectedElements[0].number || 1} 
-                        onChange={(e) => setElements(prev => prev.map(el => el.id === selectedIds[0] ? {...el, number: parseInt(e.target.value)} : el))} 
-                        className="h-9 w-12 bg-black/40 border-amber-500/20 text-amber-500 font-black text-xs text-center rounded-lg" 
-                      />
+                      <Input type="number" value={selectedElements[0].number || 1} onChange={(e) => setElements(prev => prev.map(el => el.id === selectedIds[0] ? {...el, number: parseInt(e.target.value)} : el))} className="h-9 w-12 bg-black/40 border-amber-500/20 text-amber-500 font-black text-xs text-center rounded-lg" />
                     )}
                   </>
                 )}
-
                 <div className="flex gap-1">
-                  <Button variant="outline" size="icon" className="h-9 w-9 border-white/10 text-white/40 hover:text-white" onClick={() => {
-                    const next = selectedElements.map(el => ({ ...el, id: `el-${Date.now()}-${Math.random()}`, points: el.points.map(p => ({ x: p.x + 0.02, y: p.y + 0.02 })) }));
-                    setElements(prev => [...prev, ...next]); setSelectedIds(next.map(e => e.id));
-                  }}><Copy className="h-4 w-4" /></Button>
+                  <Button variant="outline" size="icon" className="h-9 w-9 border-white/10 text-white/40 hover:text-white" onClick={() => { const next = selectedElements.map(el => ({ ...el, id: `el-${Date.now()}-${Math.random()}`, points: el.points.map(p => ({ x: p.x + 0.02, y: p.y + 0.02 })) })); setElements(prev => [...prev, ...next]); setSelectedIds(next.map(e => e.id)); }}><Copy className="h-4 w-4" /></Button>
                   <Button variant="outline" size="icon" className="h-9 w-9 border-rose-500/20 text-rose-500/40 hover:text-rose-500" onClick={() => { setElements(prev => prev.filter(el => !selectedIds.includes(el.id))); setSelectedIds([]); }}><Trash2 className="h-4 w-4" /></Button>
                 </div>
               </div>
@@ -746,14 +565,9 @@ function TrainingBoardContent() {
             <canvas ref={canvasRef} className="absolute inset-0 z-30 pointer-events-auto" onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp} />
           </TacticalField>
         </main>
-
         <div className="absolute bottom-6 left-0 right-0 flex justify-center items-end gap-12 px-12 z-50 pointer-events-none">
-          <div className="pointer-events-auto">
-            <BoardToolbar theme="amber" variant="materials" orientation="horizontal" activeTool={activeTool} onToolSelect={(tool) => { addElementAtCenter(tool); setSelectedIds([]); }} className="border-2 shadow-2xl" />
-          </div>
-          <div className="pointer-events-auto">
-            <BoardToolbar theme="amber" variant="training" orientation="horizontal" activeTool={activeTool} onToolSelect={(tool) => { if (tool === 'select') { setActiveTool('select'); setSelectedIds([]); } else { addElementAtCenter(tool); } }} onClear={() => { setElements([]); setSelectedIds([]); }} className="border-2 shadow-2xl" />
-          </div>
+          <div className="pointer-events-auto"><BoardToolbar theme="amber" variant="materials" orientation="horizontal" activeTool={activeTool} onToolSelect={(tool) => { addElementAtCenter(tool); setSelectedIds([]); }} className="border-2 shadow-2xl" /></div>
+          <div className="pointer-events-auto"><BoardToolbar theme="amber" variant="training" orientation="horizontal" activeTool={activeTool} onToolSelect={(tool) => { if (tool === 'select') { setActiveTool('select'); setSelectedIds([]); } else { addElementAtCenter(tool); } }} onClear={() => { setElements([]); setSelectedIds([]); }} className="border-2 shadow-2xl" /></div>
         </div>
       </div>
 
@@ -765,97 +579,50 @@ function TrainingBoardContent() {
                 <ClipboardList className="h-5 w-5 text-amber-500 animate-pulse" />
                 <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500 italic">Technical_Sheet_Sync_v1.0</span>
               </div>
-              <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left leading-none">
-                VINCULAR <span className="text-amber-500">DATOS</span>
-              </SheetTitle>
-              <SheetDescription className="text-[10px] uppercase font-bold text-amber-500/40 tracking-widest text-left italic">
-                Complete los parámetros metodológicos para su cuaderno de campo.
-              </SheetDescription>
+              <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left leading-none">VINCULAR <span className="text-amber-500">DATOS</span></SheetTitle>
+              <SheetDescription className="text-[10px] uppercase font-bold text-amber-500/40 tracking-widest text-left italic">Complete los parámetros metodológicos para su cuaderno de campo.</SheetDescription>
             </SheetHeader>
           </div>
-
           <form onSubmit={handleConfirmSave} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-8">
             <div className="space-y-6">
               <div className="space-y-3">
                 <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Título del Ejercicio</Label>
-                <Input 
-                  required
-                  value={saveFormData.title}
-                  onChange={(e) => setSaveFormData({...saveFormData, title: e.target.value.toUpperCase()})}
-                  placeholder="EJ: SALIDA DE BALÓN 4-3-3" 
-                  className="h-14 bg-white/5 border-amber-500/20 rounded-2xl font-bold uppercase focus:border-amber-500 text-amber-500 text-lg" 
-                />
+                <Input required value={saveFormData.title} onChange={(e) => setSaveFormData({...saveFormData, title: e.target.value.toUpperCase()})} placeholder="EJ: SALIDA DE BALÓN 4-3-3" className="h-14 bg-black/40 border-amber-500/20 rounded-2xl font-bold uppercase focus:border-amber-500 text-amber-500 text-lg" />
               </div>
-
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-3">
                   <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Etapa Federativa</Label>
                   <Select value={saveFormData.stage} onValueChange={(v) => setSaveFormData({...saveFormData, stage: v})}>
-                    <SelectTrigger className="h-12 bg-white/5 border-amber-500/20 rounded-xl text-white font-bold uppercase text-[10px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#0a0f18] border-amber-500/20">
-                      {STAGES.map(s => (
-                        <SelectItem key={s} value={s} className="text-[10px] font-black uppercase">{s}</SelectItem>
-                      ))}
-                    </SelectContent>
+                    <SelectTrigger className="h-12 bg-black/40 border-amber-500/20 rounded-xl text-white font-bold uppercase text-[10px]"><SelectValue /></SelectTrigger>
+                    <SelectContent className="bg-[#0a0f18] border-amber-500/20">{STAGES.map(s => <SelectItem key={s} value={s} className="text-[10px] font-black uppercase">{s}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-3">
                   <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Dimensión</Label>
                   <Select value={saveFormData.dimension} onValueChange={(v) => setSaveFormData({...saveFormData, dimension: v})}>
-                    <SelectTrigger className="h-12 bg-white/5 border-amber-500/20 rounded-xl text-white font-bold uppercase text-[10px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#0a0f18] border-amber-500/20">
-                      <SelectItem value="Táctica" className="text-[10px] font-black uppercase">Táctica</SelectItem>
-                      <SelectItem value="Técnica" className="text-[10px] font-black uppercase">Técnica</SelectItem>
-                      <SelectItem value="Física" className="text-[10px] font-black uppercase">Física</SelectItem>
-                    </SelectContent>
+                    <SelectTrigger className="h-12 bg-black/40 border-amber-500/20 rounded-xl text-white font-bold uppercase text-[10px]"><SelectValue /></SelectTrigger>
+                    <SelectContent className="bg-[#0a0f18] border-amber-500/20"><SelectItem value="Táctica" className="text-[10px] font-black uppercase">Táctica</SelectItem><SelectItem value="Técnica" className="text-[10px] font-black uppercase">Técnica</SelectItem><SelectItem value="Física" className="text-[10px] font-black uppercase">Física</SelectItem></SelectContent>
                   </Select>
                 </div>
               </div>
-
               <div className="space-y-3">
                 <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Objetivo Táctico Primario</Label>
                 <div className="relative">
                   <Target className="absolute left-3 top-3.5 h-4 w-4 text-amber-500/40" />
-                  <Input 
-                    value={saveFormData.objective}
-                    onChange={(e) => setSaveFormData({...saveFormData, objective: e.target.value.toUpperCase()})}
-                    placeholder="EJ: GENERAR SUPERIORIDAD POR DENTRO" 
-                    className="pl-10 h-12 bg-white/5 border-amber-500/20 rounded-xl font-bold uppercase text-xs text-amber-500" 
-                  />
+                  <Input value={saveFormData.objective} onChange={(e) => setSaveFormData({...saveFormData, objective: e.target.value.toUpperCase()})} placeholder="EJ: GENERAR SUPERIORIDAD POR DENTRO" className="pl-10 h-12 bg-black/40 border-amber-500/20 rounded-xl font-bold uppercase text-xs text-amber-500" />
                 </div>
               </div>
-
               <div className="space-y-3">
                 <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Descripción / Consignas</Label>
-                <Textarea 
-                  value={saveFormData.description}
-                  onChange={(e) => setSaveFormData({...saveFormData, description: e.target.value})}
-                  placeholder="Explique la dinámica del ejercicio y las reglas de provocación..." 
-                  className="min-h-[120px] bg-white/5 border-amber-500/20 rounded-2xl font-bold text-amber-500 placeholder:text-amber-500/20" 
-                />
+                <Textarea value={saveFormData.description} onChange={(e) => setSaveFormData({...saveFormData, description: e.target.value})} placeholder="Explique la dinámica del ejercicio y las reglas de provocación..." className="min-h-[120px] bg-black/40 border-amber-500/20 rounded-2xl font-bold text-amber-500 placeholder:text-amber-500/20" />
               </div>
             </div>
-
             <div className="p-6 bg-amber-500/5 border border-amber-500/20 rounded-3xl space-y-3">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="h-3 w-3 text-amber-500" />
-                <span className="text-[9px] font-black uppercase text-amber-500 tracking-widest italic">Protocolo de Registro</span>
-              </div>
-              <p className="text-[9px] text-amber-500/40 leading-relaxed font-bold uppercase italic">
-                El diagrama táctico actual se capturará como el activo visual principal para esta ficha técnica.
-              </p>
+              <div className="flex items-center gap-2"><ShieldCheck className="h-3 w-3 text-amber-500" /><span className="text-[9px] font-black uppercase text-amber-500 tracking-widest italic">Protocolo de Registro</span></div>
+              <p className="text-[9px] text-amber-500/40 leading-relaxed font-bold uppercase italic">El diagrama táctico actual se capturará como el activo visual principal para esta ficha técnica.</p>
             </div>
           </form>
-
-          <div className="p-10 bg-black/60 border-t border-white/5">
-            <Button onClick={handleConfirmSave} className="w-full h-16 bg-amber-500 text-black font-black uppercase tracking-[0.2em] rounded-2xl amber-glow shadow-[0_0_30px_rgba(245,158,11,0.3)]">
-              GUARDAR_EN_CUADERNO <ArrowRight className="h-4 w-4 ml-3" />
-            </Button>
-          </div>
+          <div className="p-10 bg-black/40 border-t border-white/5"><Button onClick={handleConfirmSave} className="w-full h-16 bg-amber-500 text-black font-black uppercase tracking-[0.2em] rounded-2xl amber-glow shadow-[0_0_30px_rgba(245,158,11,0.3)]">GUARDAR_EN_CUADERNO <ArrowRight className="h-4 w-4 ml-3" /></Button></div>
         </SheetContent>
       </Sheet>
     </div>
@@ -863,9 +630,5 @@ function TrainingBoardContent() {
 }
 
 export default function TrainingBoardPage() {
-  return (
-    <Suspense fallback={<div className="h-screen w-full flex items-center justify-center bg-black text-amber-500 font-black uppercase tracking-[0.5em] animate-pulse">Sincronizando_Estudio...</div>}>
-      <TrainingBoardContent />
-    </Suspense>
-  );
+  return <Suspense fallback={<div className="h-screen w-full flex items-center justify-center bg-black text-amber-500 font-black uppercase tracking-[0.5em] animate-pulse">Sincronizando_Estudio...</div>}><TrainingBoardContent /></Suspense>;
 }

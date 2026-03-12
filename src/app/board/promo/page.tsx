@@ -103,73 +103,37 @@ export default function PromoBoardPage() {
   };
 
   const rotatePoint = (point: Point, center: Point, angle: number): Point => {
-    const cos = Math.cos(angle);
-    const sin = Math.sin(angle);
-    const dx = point.x - center.x;
-    const dy = point.y - center.y;
-    return {
-      x: center.x + dx * cos - dy * sin,
-      y: center.y + dx * sin + dy * cos
-    };
+    const cos = Math.cos(angle); const sin = Math.sin(angle);
+    const dx = point.x - center.x; const dy = point.y - center.y;
+    return { x: center.x + dx * cos - dy * sin, y: center.y + dx * sin + dy * cos };
   };
 
   const getElementBounds = (element: DrawingElement, widthPx: number, heightPx: number) => {
     const p = element.points.map(pt => ({ x: pt.x * widthPx, y: pt.y * heightPx }));
-    const minX = Math.min(...p.map(pt => pt.x));
-    const minY = Math.min(...p.map(pt => pt.y));
-    const maxX = Math.max(...p.map(pt => pt.x));
-    const maxY = Math.max(...p.map(pt => pt.y));
+    const minX = Math.min(...p.map(pt => pt.x)); const minY = Math.min(...p.map(pt => pt.y));
+    const maxX = Math.max(...p.map(pt => pt.x)); const maxY = Math.max(...p.map(pt => pt.y));
     return { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY, centerX: (minX + maxX) / 2, centerY: (minY + maxY) / 2 };
   };
 
   const drawElement = useCallback((ctx: CanvasRenderingContext2D, element: DrawingElement, isSelected: boolean) => {
-    const pRaw = element.points;
-    if (pRaw.length < 1) return;
-
-    const widthPx = ctx.canvas.width;
-    const heightPx = ctx.canvas.height;
+    const pRaw = element.points; if (pRaw.length < 1) return;
+    const widthPx = ctx.canvas.width; const heightPx = ctx.canvas.height;
     const p = pRaw.map(pt => ({ x: pt.x * widthPx, y: pt.y * heightPx }));
     const bounds = getElementBounds(element, widthPx, heightPx);
     const { centerX, centerY, width, height, minX, minY, maxX, maxY } = bounds;
 
-    ctx.save();
-    ctx.globalAlpha = element.opacity;
-    ctx.translate(centerX, centerY);
-    ctx.rotate(element.rotation);
-    ctx.translate(-centerX, -centerY);
-
-    ctx.strokeStyle = element.color;
-    ctx.fillStyle = hexToRgba(element.color, 0.15);
-    ctx.lineWidth = 3;
-    ctx.lineJoin = 'round';
-    ctx.lineCap = 'round';
-
-    if (element.lineStyle === 'dashed') ctx.setLineDash([10, 5]);
-    else ctx.setLineDash([]);
+    ctx.save(); ctx.globalAlpha = element.opacity; ctx.translate(centerX, centerY); ctx.rotate(element.rotation); ctx.translate(-centerX, -centerY);
+    ctx.strokeStyle = element.color; ctx.fillStyle = hexToRgba(element.color, 0.15); ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    if (element.lineStyle === 'dashed') ctx.setLineDash([10, 5]); else ctx.setLineDash([]);
 
     switch (element.type) {
       case 'text':
-        ctx.save();
-        ctx.setLineDash([]);
-        ctx.fillStyle = element.color;
-        ctx.font = `bold ${Math.floor(height || 24)}px Space Grotesk`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(element.text || "TEXTO TÁCTICO", centerX, centerY);
-        ctx.restore();
-        break;
+        ctx.save(); ctx.setLineDash([]); ctx.fillStyle = element.color; ctx.font = `bold ${Math.floor(height || 24)}px Space Grotesk`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(element.text || "TEXTO TÁCTICO", centerX, centerY); ctx.restore(); break;
       case 'freehand':
-        ctx.beginPath();
-        ctx.moveTo(p[0].x, p[0].y);
-        for (let i = 1; i < p.length; i++) ctx.lineTo(p[i].x, p[i].y);
-        ctx.stroke();
-        break;
-      case 'rect':
-        ctx.beginPath(); ctx.rect(minX, minY, width, height); ctx.fill(); ctx.stroke();
-        break;
-      case 'circle':
-        ctx.beginPath(); ctx.ellipse(centerX, centerY, width / 2, height / 2, 0, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
-        break;
+        ctx.beginPath(); ctx.moveTo(p[0].x, p[0].y); for (let i = 1; i < p.length; i++) ctx.lineTo(p[i].x, p[i].y); ctx.stroke(); break;
+      case 'rect': ctx.beginPath(); ctx.rect(minX, minY, width, height); ctx.fill(); ctx.stroke(); break;
+      case 'circle': ctx.beginPath(); ctx.ellipse(centerX, centerY, width / 2, height / 2, 0, 0, 2 * Math.PI); ctx.fill(); ctx.stroke(); break;
       case 'arrow':
       case 'double-arrow':
       case 'zigzag':
@@ -177,116 +141,71 @@ export default function PromoBoardPage() {
         if (element.controlPoint) {
           const cp = { x: element.controlPoint.x * widthPx, y: element.controlPoint.y * heightPx };
           ctx.moveTo(p[0].x, p[0].y); ctx.quadraticCurveTo(cp.x, cp.y, p[1].x, p[1].y);
-        } else {
-          ctx.moveTo(p[0].x, p[0].y); ctx.lineTo(p[1].x, p[1].y);
-        }
+        } else ctx.moveTo(p[0].x, p[0].y); ctx.lineTo(p[1].x, p[1].y);
         ctx.stroke();
         const head = 15;
-        let angle = element.controlPoint 
-          ? Math.atan2(p[1].y - (element.controlPoint.y * heightPx), p[1].x - (element.controlPoint.x * widthPx)) 
-          : Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x);
-        
-        ctx.setLineDash([]);
-        const drawH = (tx: number, ty: number, ang: number) => {
-          ctx.beginPath(); ctx.moveTo(tx, ty);
-          ctx.lineTo(tx - head * Math.cos(ang - Math.PI / 6), ty - head * Math.sin(ang - Math.PI / 6));
-          ctx.moveTo(tx, ty);
-          ctx.lineTo(tx - head * Math.cos(ang + Math.PI / 6), ty - head * Math.sin(ang + Math.PI / 6));
-          ctx.stroke();
+        let angle = element.controlPoint ? Math.atan2(p[1].y - (element.controlPoint.y * heightPx), p[1].x - (element.controlPoint.x * widthPx)) : Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x);
+        ctx.setLineDash([]); const drawH = (tx: number, ty: number, ang: number) => {
+          ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(tx - head * Math.cos(ang - Math.PI / 6), ty - head * Math.sin(ang - Math.PI / 6));
+          ctx.moveTo(tx, ty); ctx.lineTo(tx - head * Math.cos(ang + Math.PI / 6), ty - head * Math.sin(ang + Math.PI / 6)); ctx.stroke();
         };
         drawH(p[1].x, p[1].y, angle);
         if (element.type === 'double-arrow') {
-          const startAngle = element.controlPoint 
-            ? Math.atan2(p[0].y - (element.controlPoint.y * heightPx), p[0].x - (element.controlPoint.x * widthPx))
-            : angle + Math.PI;
+          const startAngle = element.controlPoint ? Math.atan2(p[0].y - (element.controlPoint.y * heightPx), p[0].x - (element.controlPoint.x * widthPx)) : angle + Math.PI;
           drawH(p[0].x, p[0].y, startAngle);
         }
         break;
       case 'cross-arrow':
-        ctx.save(); ctx.translate(centerX, centerY);
-        const cSize = Math.min(width, height) / 2;
-        const thickness = cSize * 0.35;
-        const arrowHead = cSize * 0.4;
-        const drawCrossBar = (isVert: boolean) => {
-          ctx.beginPath();
-          if (isVert) { ctx.moveTo(-thickness/2, -cSize + arrowHead); ctx.lineTo(thickness/2, -cSize + arrowHead); ctx.lineTo(thickness/2, cSize - arrowHead); ctx.lineTo(-thickness/2, cSize - arrowHead); }
-          else { ctx.moveTo(-cSize + arrowHead, -thickness/2); ctx.lineTo(cSize - arrowHead, -thickness/2); ctx.lineTo(cSize - arrowHead, thickness/2); ctx.lineTo(-cSize + arrowHead, thickness/2); }
-          ctx.closePath();
-          const barGrad = ctx.createLinearGradient(isVert ? -thickness/2 : -cSize, isVert ? -cSize : -thickness/2, isVert ? thickness/2 : cSize, isVert ? cSize : thickness/2);
-          barGrad.addColorStop(0, element.color); barGrad.addColorStop(0.5, '#ffffffaa'); barGrad.addColorStop(1, hexToRgba(element.color, 0.8));
-          ctx.fillStyle = barGrad; ctx.fill(); ctx.stroke();
+        ctx.save(); ctx.translate(centerX, centerY); const cS = Math.min(width, height) / 2; const th = cS * 0.35; const aH = cS * 0.4;
+        const dCB = (isV: boolean) => {
+          ctx.beginPath(); if (isV) { ctx.moveTo(-th/2, -cS + aH); ctx.lineTo(th/2, -cS + aH); ctx.lineTo(th/2, cS - aH); ctx.lineTo(-th/2, cS - aH); }
+          else { ctx.moveTo(-cS + aH, -th/2); ctx.lineTo(cS - aH, -th/2); ctx.lineTo(cS - aH, th/2); ctx.lineTo(-cS + aH, th/2); }
+          ctx.closePath(); const barG = ctx.createLinearGradient(isV ? -th/2 : -cS, isV ? -cS : -th/2, isV ? th/2 : cS, isV ? cS : th/2);
+          barG.addColorStop(0, element.color); barG.addColorStop(0.5, '#ffffffaa'); barG.addColorStop(1, hexToRgba(element.color, 0.8));
+          ctx.fillStyle = barG; ctx.fill(); ctx.stroke();
         };
-        const drawArrowHead = (tx: number, ty: number, rot: number) => {
-          ctx.save(); ctx.translate(tx, ty); ctx.rotate(rot); ctx.beginPath();
-          ctx.moveTo(0, 0); ctx.lineTo(-arrowHead, arrowHead); ctx.lineTo(arrowHead, arrowHead); ctx.closePath();
-          const headGrad = ctx.createLinearGradient(-arrowHead, 0, arrowHead, arrowHead);
-          headGrad.addColorStop(0, element.color); headGrad.addColorStop(0.5, '#ffffffaa'); headGrad.addColorStop(1, hexToRgba(element.color, 0.8));
-          ctx.fillStyle = headGrad; ctx.fill(); ctx.stroke(); ctx.restore();
+        const dAH = (tx: number, ty: number, rot: number) => {
+          ctx.save(); ctx.translate(tx, ty); ctx.rotate(rot); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-aH, aH); ctx.lineTo(aH, aH); ctx.closePath();
+          const headG = ctx.createLinearGradient(-aH, 0, aH, aH); headG.addColorStop(0, element.color); headG.addColorStop(0.5, '#ffffffaa'); headG.addColorStop(1, hexToRgba(element.color, 0.8));
+          ctx.fillStyle = headG; ctx.fill(); ctx.stroke(); ctx.restore();
         };
-        drawCrossBar(false); drawCrossBar(true);
-        drawArrowHead(0, -cSize, 0); drawArrowHead(cSize, 0, Math.PI/2);
-        drawArrowHead(0, cSize, Math.PI); drawArrowHead(-cSize, 0, -Math.PI/2);
-        ctx.restore();
-        break;
+        dCB(false); dCB(true); dAH(0, -cS, 0); dAH(cS, 0, Math.PI/2); dAH(0, cS, Math.PI); dAH(-cS, 0, -Math.PI/2); ctx.restore(); break;
       case 'player':
         ctx.save(); ctx.beginPath(); ctx.ellipse(centerX, centerY, width/2, height/2, 0, 0, Math.PI * 2);
         ctx.fillStyle = hexToRgba(element.color, 0.2); ctx.fill(); ctx.strokeStyle = element.color; ctx.stroke();
         ctx.fillStyle = '#fff'; ctx.font = `bold ${Math.floor(height * 0.35)}px Space Grotesk`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText((element.number || 1).toString(), centerX, centerY); ctx.restore();
-        break;
+        ctx.fillText((element.number || 1).toString(), centerX, centerY); ctx.restore(); break;
       case 'ball':
-        ctx.save(); ctx.translate(centerX, centerY); ctx.beginPath(); ctx.arc(0, 0, width/2, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#000'; ctx.stroke(); ctx.restore();
-        break;
+        ctx.save(); ctx.translate(centerX, centerY); ctx.beginPath(); ctx.arc(0, 0, width/2, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#000'; ctx.stroke(); ctx.restore(); break;
       case 'cone':
-        ctx.save(); ctx.translate(centerX, centerY); ctx.beginPath(); ctx.moveTo(-width/2, height/2); ctx.lineTo(width/2, height/2); ctx.lineTo(0, -height/2); ctx.closePath(); ctx.fillStyle = '#ea580c'; ctx.fill(); ctx.restore();
-        break;
+        ctx.save(); ctx.translate(centerX, centerY); ctx.beginPath(); ctx.moveTo(-width/2, height/2); ctx.lineTo(width/2, height/2); ctx.lineTo(0, -height/2); ctx.closePath(); ctx.fillStyle = '#ea580c'; ctx.fill(); ctx.restore(); break;
       case 'barrier':
-        ctx.save(); ctx.translate(centerX, centerY);
-        for(let i=-1; i<=1; i++) {
+        ctx.save(); ctx.translate(centerX, centerY); for(let i=-1; i<=1; i++) {
           ctx.save(); ctx.translate(i * (width/3) * 0.8, 0); ctx.beginPath(); ctx.ellipse(0, 0, width/6, height/2, 0, 0, Math.PI * 2); ctx.fillStyle = element.color; ctx.fill(); ctx.restore();
-        }
-        ctx.restore();
-        break;
+        } ctx.restore(); break;
       case 'ladder':
-        ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/200, height/50);
-        ctx.strokeStyle = '#334155'; ctx.lineWidth = 5; ctx.strokeRect(-100, -25, 200, 50);
-        ctx.lineWidth = 3; ctx.strokeStyle = element.color;
-        for(let x=-100; x<=100; x+=40) { ctx.beginPath(); ctx.moveTo(x, -25); ctx.lineTo(x, 25); ctx.stroke(); }
-        ctx.restore();
-        break;
+        ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/200, height/50); ctx.strokeStyle = '#334155'; ctx.lineWidth = 5; ctx.strokeRect(-100, -25, 200, 50);
+        ctx.lineWidth = 3; ctx.strokeStyle = element.color; for(let x=-100; x<=100; x+=40) { ctx.beginPath(); ctx.moveTo(x, -25); ctx.lineTo(x, 25); ctx.stroke(); } ctx.restore(); break;
       case 'hurdle':
-        ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/60, height/30);
-        ctx.strokeStyle = element.color; ctx.lineWidth = 6;
-        ctx.beginPath(); ctx.moveTo(-30, 15); ctx.lineTo(-30, -15); ctx.lineTo(30, -15); ctx.lineTo(30, 15); ctx.stroke();
-        ctx.restore();
-        break;
+        ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/60, height/30); ctx.strokeStyle = element.color; ctx.lineWidth = 6;
+        ctx.beginPath(); ctx.moveTo(-30, 15); ctx.lineTo(-30, -15); ctx.lineTo(30, -15); ctx.lineTo(30, 15); ctx.stroke(); ctx.restore(); break;
       case 'minigoal':
-        ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/100, height/60);
-        ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(-50, -30, 100, 60);
-        ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 5; ctx.strokeRect(-50, -30, 100, 60);
-        ctx.restore();
-        break;
+        ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/100, height/60); ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(-50, -30, 100, 60);
+        ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 5; ctx.strokeRect(-50, -30, 100, 60); ctx.restore(); break;
       case 'pica':
-        ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/36, height/80);
-        ctx.beginPath(); ctx.arc(0, 30, 18, 0, Math.PI * 2); ctx.fillStyle = '#334155'; ctx.fill();
-        ctx.fillStyle = element.color; ctx.fillRect(-4, -40, 8, 70);
-        ctx.restore();
-        break;
+        ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/36, height/80); ctx.beginPath(); ctx.arc(0, 30, 18, 0, Math.PI * 2); ctx.fillStyle = '#334155'; ctx.fill(); ctx.fillStyle = element.color; ctx.fillRect(-4, -40, 8, 70); ctx.restore(); break;
     }
 
     if (isSelected) {
       ctx.restore(); ctx.save(); ctx.translate(centerX, centerY); ctx.rotate(element.rotation); ctx.translate(-centerX, -centerY);
-      ctx.strokeStyle = '#00f2ffaa'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]);
-      const pad = 10; ctx.strokeRect(minX - pad, minY - pad, width + pad * 2, height + pad * 2);
-      ctx.setLineDash([]); ctx.fillStyle = '#fff';
-      const handles = [{ x: minX - pad, y: minY - pad }, { x: centerX, y: minY - pad }, { x: maxX + pad, y: minY - pad }, { x: minX - pad, y: centerY }, { x: maxX + pad, y: centerY }, { x: minX - pad, y: maxY + pad }, { x: centerX, y: maxY + pad }, { x: maxX + pad, y: maxY + pad }];
+      ctx.strokeStyle = '#00f2ffaa'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]); const pad = 10; ctx.strokeRect(minX - pad, minY - pad, width + pad * 2, height + pad * 2);
+      ctx.setLineDash([]); ctx.fillStyle = '#fff'; const handles = [{ x: minX - pad, y: minY - pad }, { x: centerX, y: minY - pad }, { x: maxX + pad, y: minY - pad }, { x: minX - pad, y: centerY }, { x: maxX + pad, y: centerY }, { x: minX - pad, y: maxY + pad }, { x: centerX, y: maxY + pad }, { x: maxX + pad, y: maxY + pad }];
       handles.forEach(h => { ctx.beginPath(); ctx.arc(h.x, h.y, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
       const rotY = minY - pad - 40; ctx.beginPath(); ctx.moveTo(centerX, minY - pad); ctx.lineTo(centerX, rotY); ctx.stroke();
       ctx.fillStyle = '#00f2ff'; ctx.beginPath(); ctx.arc(centerX, rotY, 8, 0, Math.PI * 2); ctx.fill();
       if (element.controlPoint && ['arrow', 'double-arrow', 'zigzag'].includes(element.type)) {
         const cp = { x: element.controlPoint.x * widthPx, y: element.controlPoint.y * heightPx };
-        ctx.restore(); ctx.save(); ctx.setLineDash([4, 4]); ctx.strokeStyle = '#00f2ffaa';
-        ctx.beginPath(); ctx.moveTo(centerX, centerY); ctx.lineTo(cp.x, cp.y); ctx.stroke();
+        ctx.restore(); ctx.save(); ctx.setLineDash([4, 4]); ctx.strokeStyle = '#00f2ffaa'; ctx.beginPath(); ctx.moveTo(centerX, centerY); ctx.lineTo(cp.x, cp.y); ctx.stroke();
         ctx.fillStyle = '#3b82f6'; ctx.beginPath(); ctx.arc(cp.x, cp.y, 8, 0, Math.PI * 2); ctx.fill();
       }
     }
@@ -294,13 +213,11 @@ export default function PromoBoardPage() {
   }, [hexToRgba]);
 
   const redrawAll = useCallback(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext('2d');
-    if (!ctx || !canvas) return;
+    const canvas = canvasRef.current; const ctx = canvas?.getContext('2d'); if (!ctx || !canvas) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const sorted = [...elements].sort((a, b) => {
-      const aMat = isMaterial(a.type); const bMat = isMaterial(b.type);
-      if (aMat && !bMat) return 1; if (!aMat && bMat) return -1; return 0;
+      if (a.type === 'text' && b.type !== 'text') return 1; if (a.type !== 'text' && b.type === 'text') return -1;
+      const aMat = isMaterial(a.type); const bMat = isMaterial(b.type); if (aMat && !bMat) return 1; if (!aMat && bMat) return -1; return 0;
     });
     sorted.forEach(el => drawElement(ctx, el, selectedIds.includes(el.id)));
   }, [elements, selectedIds, drawElement]);
@@ -315,102 +232,66 @@ export default function PromoBoardPage() {
 
   useEffect(() => { redrawAll(); }, [elements, selectedIds, fieldType, redrawAll]);
 
-  const handleEditText = useCallback(() => {
-    const elId = selectedIds[0];
-    const el = elements.find(e => e.id === elId);
+  const handleEditText = useCallback((id?: string) => {
+    const elId = id || selectedIds[0]; const el = elements.find(e => e.id === elId);
     if (el && el.type === 'text') {
-      const val = window.prompt("EDITAR TEXTO TÁCTICO:", el.text);
-      if (val !== null) {
-        setElements(prev => prev.map(e => e.id === elId ? { ...e, text: val.toUpperCase() } : e));
-      }
+      const val = window.prompt("EDITAR TEXTO PROMO:", el.text);
+      if (val !== null) setElements(prev => prev.map(e => e.id === elId ? { ...e, text: val.toUpperCase() } : e));
     }
   }, [elements, selectedIds]);
 
   const addElementAtCenter = (tool: DrawingTool) => {
-    if (isLocked) return;
-    const pNum = tool === 'player' ? elements.filter(e => e.type === 'player').length + 1 : undefined;
-    const defW = tool === 'ladder' ? 0.15 : (['minigoal', 'cross-arrow', 'barrier'].includes(tool) ? 0.1 : 0.05);
+    if (isLocked) return; const pNum = tool === 'player' ? elements.filter(e => e.type === 'player').length + 1 : undefined;
+    const defW = tool === 'ladder' ? 0.15 : (['minigoal', 'cross-arrow', 'barrier'].includes(tool) ? 0.1 : tool === 'text' ? 0.3 : 0.05);
     const defH = tool === 'ladder' ? 0.05 : (['minigoal', 'cross-arrow', 'barrier'].includes(tool) ? 0.08 : 0.05);
-    const newEl: DrawingElement = { 
-      id: `el-${Date.now()}`, 
-      type: tool, 
-      points: [{ x: 0.5 - defW/2, y: 0.5 - defH/2 }, { x: 0.5 + defW/2, y: 0.5 + defH/2 }], 
-      controlPoint: ['arrow', 'double-arrow', 'zigzag'].includes(tool) ? { x: 0.5, y: 0.45 } : undefined, 
-      color: currentColor, 
-      rotation: 0, 
-      lineStyle: 'solid', 
-      number: pNum, 
-      opacity: 1.0, 
-      text: tool === 'text' ? "CONSIGNA PROMO" : undefined 
-    };
+    const newEl: DrawingElement = { id: `el-${Date.now()}`, type: tool, points: [{ x: 0.5 - defW/2, y: 0.5 - defH/2 }, { x: 0.5 + defW/2, y: 0.5 + defH/2 }], controlPoint: ['arrow', 'double-arrow', 'zigzag'].includes(tool) ? { x: 0.5, y: 0.45 } : undefined, color: currentColor, rotation: 0, lineStyle: 'solid', number: pNum, opacity: 1.0, text: tool === 'text' ? "CONSIGNA PROMO" : undefined };
     setElements(prev => [...prev, newEl]); setSelectedIds([newEl.id]); setActiveTool('select');
-    if (tool === 'text') { 
-      setTimeout(() => { 
-        const v = window.prompt("TEXTO PROMO:", "CONSIGNA PROMO"); 
-        if(v) setElements(prev => prev.map(el => el.id === newEl.id ? {...el, text: v.toUpperCase()} : el)); 
-      }, 100); 
-    }
+    if (tool === 'text') { setTimeout(() => handleEditText(newEl.id), 100); }
   };
 
   const handlePointerDown = (e: React.PointerEvent) => {
-    if (!canvasRef.current || isLocked) return;
-    const rect = canvasRef.current.getBoundingClientRect();
+    if (!canvasRef.current || isLocked) return; const rect = canvasRef.current.getBoundingClientRect();
     const p = { x: (e.clientX - rect.left) / rect.width, y: (e.clientY - rect.top) / rect.height };
-    startPoint.current = p; lastPoint.current = p; isDrawing.current = true;
-    const wPx = rect.width; const hPx = rect.height;
+    startPoint.current = p; lastPoint.current = p; isDrawing.current = true; const wPx = rect.width; const hPx = rect.height;
 
     if (selectedIds.length === 1) {
       const el = elements.find(e => e.id === selectedIds[0]);
       if (el) {
-        const bounds = getElementBounds(el, wPx, hPx);
-        if (el.controlPoint) {
+        const bounds = getElementBounds(el, wPx, hPx); if (el.controlPoint) {
           const cpPx = { x: el.controlPoint.x * wPx, y: el.controlPoint.y * hPx };
           if (Math.sqrt(Math.pow(p.x * wPx - cpPx.x, 2) + Math.pow(p.y * hPx - cpPx.y, 2)) < 20) { interactionMode.current = 'curving'; return; }
         }
-        const rotHandlePx = rotatePoint({ x: bounds.centerX, y: bounds.minY - 10 - 40 }, { x: bounds.centerX, y: bounds.centerY }, el.rotation);
+        const rotHandlePx = rotatePoint({ x: bounds.centerX, y: bounds.minY - 50 }, { x: bounds.centerX, y: bounds.centerY }, el.rotation);
         if (Math.sqrt(Math.pow(p.x * wPx - rotHandlePx.x, 2) + Math.pow(p.y * hPx - rotHandlePx.y, 2)) < 20) { interactionMode.current = 'rotating'; return; }
         const local = rotatePoint({ x: p.x * wPx, y: p.y * hPx }, { x: bounds.centerX, y: bounds.centerY }, -el.rotation);
-        const pad = 10;
-        const handles = [{ x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY }, { x: bounds.minX - pad, y: bounds.maxY + pad }, { x: bounds.centerX, y: bounds.maxY + pad }, { x: bounds.maxX + pad, y: bounds.maxY + pad }];
+        const pad = 10; const handles = [{ x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY }, { x: bounds.minX - pad, y: bounds.maxY + pad }, { x: bounds.centerX, y: bounds.maxY + pad }, { x: bounds.maxX + pad, y: bounds.maxY + pad }];
         const hIdx = handles.findIndex(h => Math.sqrt(Math.pow(local.x - h.x, 2) + Math.pow(local.y - h.y, 2)) < 15);
         if (hIdx !== -1) { interactionMode.current = 'resizing'; activeHandleIndex.current = hIdx; return; }
       }
     }
 
     const clicked = [...elements].reverse().find(el => {
-      const b = getElementBounds(el, wPx, hPx);
-      const l = rotatePoint({ x: p.x * wPx, y: p.y * hPx }, { x: b.centerX, y: b.centerY }, -el.rotation);
-      return l.x >= b.minX - 10 && l.x <= b.maxX + 10 && l.y >= b.minY - 10 && l.y <= b.maxY + 10;
+      const b = getElementBounds(el, wPx, hPx); const l = rotatePoint({ x: p.x * wPx, y: p.y * hPx }, { x: b.centerX, y: b.centerY }, -el.rotation);
+      const hitPadding = el.type === 'text' ? 20 : 10;
+      return l.x >= b.minX - hitPadding && l.x <= b.maxX + hitPadding && l.y >= b.minY - hitPadding && l.y <= b.maxY + hitPadding;
     });
 
     if (clicked) {
       const isAlreadySelected = selectedIds.includes(clicked.id);
       if (e.shiftKey) setSelectedIds(prev => prev.includes(clicked.id) ? prev.filter(id => id !== clicked.id) : [...prev, clicked.id]);
       else if (!isAlreadySelected) setSelectedIds([clicked.id]);
-      
-      if (clicked.type === 'text' && isAlreadySelected && !e.shiftKey) {
-        const val = window.prompt("EDITAR TEXTO PROMO:", clicked.text);
-        if (val !== null) {
-          setElements(prev => prev.map(el => el.id === clicked.id ? { ...el, text: val.toUpperCase() } : el));
-        }
-      }
-
+      if (clicked.type === 'text' && isAlreadySelected && !e.shiftKey) { handleEditText(clicked.id); }
       setActiveTool('select'); interactionMode.current = 'dragging';
     } else setSelectedIds([]);
     redrawAll();
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
-    if (!isDrawing.current || !canvasRef.current) return;
-    const rect = canvasRef.current.getBoundingClientRect();
-    const p = { x: (e.clientX - rect.left) / rect.width, y: (e.clientY - rect.top) / rect.height };
-    const wPx = rect.width; const hPx = rect.height;
-
+    if (!isDrawing.current || !canvasRef.current) return; const rect = canvasRef.current.getBoundingClientRect();
+    const p = { x: (e.clientX - rect.left) / rect.width, y: (e.clientY - rect.top) / rect.height }; const wPx = rect.width; const hPx = rect.height;
     if (interactionMode.current === 'resizing' && selectedIds.length === 1 && activeHandleIndex.current !== null) {
       setElements(prev => prev.map(el => {
-        if (el.id !== selectedIds[0]) return el;
-        const bounds = getElementBounds(el, wPx, hPx);
-        const local = rotatePoint({ x: p.x * wPx, y: p.y * hPx }, { x: bounds.centerX, y: bounds.centerY }, -el.rotation);
+        if (el.id !== selectedIds[0]) return el; const bounds = getElementBounds(el, wPx, hPx); const local = rotatePoint({ x: p.x * wPx, y: p.y * hPx }, { x: bounds.centerX, y: bounds.centerY }, -el.rotation);
         const next = [...el.points]; const h = activeHandleIndex.current!;
         if (isMaterial(el.type)) {
           const ratio = bounds.width / bounds.height; const dx = Math.abs(local.x - bounds.centerX) * 2; const dy = dx / ratio;
@@ -419,8 +300,7 @@ export default function PromoBoardPage() {
           const p0Px = { x: next[0].x * wPx, y: next[0].y * hPx }; const p1Px = { x: next[1].x * wPx, y: next[1].y * hPx };
           if ([0, 3, 5].includes(h)) p0Px.x = local.x; if ([2, 4, 7].includes(h)) p1Px.x = local.x; if ([0, 1, 2].includes(h)) p0Px.y = local.y; if ([5, 6, 7].includes(h)) p1Px.y = local.y;
           next[0] = { x: p0Px.x / wPx, y: p0Px.y / hPx }; next[1] = { x: p1Px.x / wPx, y: p1Px.y / hPx };
-        }
-        return { ...el, points: next };
+        } return { ...el, points: next };
       }));
     } else if (interactionMode.current === 'curving') setElements(prev => prev.map(el => el.id === selectedIds[0] ? {...el, controlPoint: p} : el));
     else if (interactionMode.current === 'rotating') {
@@ -431,18 +311,13 @@ export default function PromoBoardPage() {
     } else if (interactionMode.current === 'dragging' && lastPoint.current) {
       const dx = p.x - lastPoint.current.x; const dy = p.y - lastPoint.current.y;
       setElements(prev => prev.map(el => {
-        if (!selectedIds.includes(el.id)) return el;
-        const next = { ...el, points: el.points.map(pt => ({ x: pt.x + dx, y: pt.y + dy })) };
-        if (el.controlPoint) next.controlPoint = { x: el.controlPoint.x + dx, y: el.controlPoint.y + dy };
-        return next;
-      }));
-      lastPoint.current = p;
-    }
-    redrawAll();
+        if (!selectedIds.includes(el.id)) return el; const next = { ...el, points: el.points.map(pt => ({ x: pt.x + dx, y: pt.y + dy })) };
+        if (el.controlPoint) next.controlPoint = { x: el.controlPoint.x + dx, y: el.controlPoint.y + dy }; return next;
+      })); lastPoint.current = p;
+    } redrawAll();
   };
 
   const handlePointerUp = () => { isDrawing.current = false; interactionMode.current = 'none'; activeHandleIndex.current = null; };
-
   const selectedElements = elements.filter(e => selectedIds.includes(e.id));
   const commonOpacity = selectedElements.length > 0 ? selectedElements[0].opacity : 1.0;
 
@@ -451,33 +326,13 @@ export default function PromoBoardPage() {
       <header className="h-20 border-b border-primary/20 bg-black/60 backdrop-blur-3xl flex items-center justify-between px-4 lg:px-8 shrink-0 z-50">
         <div className="flex items-center gap-4 lg:gap-6">
           <div className="flex flex-col">
-            <div className="flex items-center gap-2">
-              <Zap className="h-4 w-4 text-primary animate-pulse" />
-              <span className="text-[10px] font-black text-primary tracking-[0.4em] uppercase">Tactical_Board_PROMO</span>
-            </div>
+            <div className="flex items-center gap-2"><Zap className="h-4 w-4 text-primary animate-pulse" /><span className="text-[10px] font-black text-primary tracking-[0.4em] uppercase">Tactical_Board_PROMO</span></div>
             <h1 className="text-sm lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase leading-none">Free</h1>
           </div>
-
           <div className="hidden md:flex items-center gap-3">
-            <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}>
-              <SelectTrigger className="w-[150px] h-10 bg-white/5 border-primary/20 rounded-xl text-[10px] font-black uppercase text-primary">
-                <LayoutGrid className="h-3 w-3 mr-2" /> <SelectValue placeholder="Superficie" />
-              </SelectTrigger>
-              <SelectContent className="bg-[#0a0f18] border-primary/20">
-                <SelectItem value="f11" className="text-[10px] font-black uppercase">Fútbol 11</SelectItem>
-                <SelectItem value="f7" className="text-[10px] font-black uppercase">Fútbol 7</SelectItem>
-                <SelectItem value="futsal" className="text-[10px] font-black uppercase">Fútbol Sala</SelectItem>
-              </SelectContent>
-            </Select>
-            <div className="px-4 py-1.5 bg-primary/10 border border-primary/20 rounded-full flex items-center gap-3">
-               <span className="text-[9px] font-black text-primary uppercase">CAPACIDAD:</span>
-               <div className="h-1.5 w-16 lg:w-24 bg-black/40 rounded-full overflow-hidden">
-                  <div className={cn("h-full transition-all duration-1000", isLocked ? "bg-rose-500" : "bg-primary")} style={{ width: `${(exercisesCount / MAX_EXERCISES) * 100}%` }} />
-               </div>
-               <span className="text-[10px] font-black text-white">{exercisesCount}/{MAX_EXERCISES}</span>
-            </div>
+            <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}><SelectTrigger className="w-[150px] h-10 bg-white/5 border-primary/20 rounded-xl text-[10px] font-black uppercase text-primary"><LayoutGrid className="h-3 w-3 mr-2" /> <SelectValue placeholder="Superficie" /></SelectTrigger><SelectContent className="bg-[#0a0f18] border-primary/20"><SelectItem value="f11" className="text-[10px] font-black uppercase">Fútbol 11</SelectItem><SelectItem value="f7" className="text-[10px] font-black uppercase">Fútbol 7</SelectItem><SelectItem value="futsal" className="text-[10px] font-black uppercase">Fútbol Sala</SelectItem></SelectContent></Select>
+            <div className="px-4 py-1.5 bg-primary/10 border border-primary/20 rounded-full flex items-center gap-3"><span className="text-[9px] font-black text-primary uppercase">CAPACIDAD:</span><div className="h-1.5 w-16 lg:w-24 bg-black/40 rounded-full overflow-hidden"><div className={cn("h-full transition-all duration-1000", isLocked ? "bg-rose-500" : "bg-primary")} style={{ width: `${(exercisesCount / MAX_EXERCISES) * 100}%` }} /></div><span className="text-[10px] font-black text-white">{exercisesCount}/{MAX_EXERCISES}</span></div>
           </div>
-
           {selectedIds.length > 0 && (
             <div className="flex items-center gap-2 pl-4 border-l border-white/10 animate-in fade-in duration-300">
               <div className="flex gap-1 p-1 bg-black/40 border border-white/5 rounded-xl mr-2">
@@ -490,52 +345,32 @@ export default function PromoBoardPage() {
                 <Slider value={[commonOpacity * 100]} min={10} max={100} onValueChange={(v) => setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, opacity: v[0] / 100} : el))} />
               </div>
               {selectedElements.length === 1 && selectedElements[0].type === 'text' && (
-                <Button variant="outline" size="sm" onClick={handleEditText} className="h-9 border-primary/20 bg-primary/5 text-primary font-black uppercase text-[9px]">
+                <Button variant="outline" size="sm" onClick={() => handleEditText()} className="h-9 border-primary/20 bg-primary/5 text-primary font-black uppercase text-[9px]">
                   <Pencil className="h-3 w-3 mr-2" /> Editar Texto
                 </Button>
               )}
               <div className="flex gap-1">
-                <Button variant="outline" size="icon" className="h-9 w-9 border-white/10 text-white/40 hover:text-white" onClick={() => {
-                  const next = selectedElements.map(el => ({ ...el, id: `el-${Date.now()}-${Math.random()}`, points: el.points.map(p => ({ x: p.x + 0.02, y: p.y + 0.02 })) }));
-                  setElements(prev => [...prev, ...next]); setSelectedIds(next.map(e => e.id));
-                }}><Copy className="h-4 w-4" /></Button>
+                <Button variant="outline" size="icon" className="h-9 w-9 border-white/10 text-white/40 hover:text-white" onClick={() => { const next = selectedElements.map(el => ({ ...el, id: `el-${Date.now()}-${Math.random()}`, points: el.points.map(p => ({ x: p.x + 0.02, y: p.y + 0.02 })) })); setElements(prev => [...prev, ...next]); setSelectedIds(next.map(e => e.id)); }}><Copy className="h-4 w-4" /></Button>
                 <Button variant="outline" size="icon" className="h-9 w-9 border-rose-500/20 text-rose-500/40 hover:text-rose-500" onClick={() => { setElements(prev => prev.filter(el => !selectedIds.includes(el.id))); setSelectedIds([]); }}><Trash2 className="h-4 w-4" /></Button>
               </div>
             </div>
           )}
         </div>
-
-        <div className="flex items-center gap-2 lg:gap-4">
-          <Button className="h-11 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-4 lg:px-8 rounded-xl cyan-glow border-none" asChild>
-            <Link href="/login">Acceso Pro <ArrowRight className="h-4 w-4 ml-2" /></Link>
-          </Button>
-        </div>
+        <div className="flex items-center gap-2 lg:gap-4"><Button className="h-11 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-4 lg:px-8 rounded-xl cyan-glow border-none" asChild><Link href="/login">Acceso Pro <ArrowRight className="h-4 w-4 ml-2" /></Link></Button></div>
       </header>
-
       <div className="flex-1 flex overflow-hidden relative">
         <main className="flex-1 flex items-center justify-center relative overflow-hidden touch-none">
-          <TacticalField theme="cyan" fieldType={fieldType} showWatermark>
-            <canvas ref={canvasRef} className="absolute inset-0 z-30 pointer-events-auto" onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp} />
-          </TacticalField>
-
+          <TacticalField theme="cyan" fieldType={fieldType} showWatermark><canvas ref={canvasRef} className="absolute inset-0 z-30 pointer-events-auto" onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp} /></TacticalField>
           <div className="absolute bottom-6 left-0 right-0 flex justify-center items-end gap-12 px-12 z-50 pointer-events-none">
             <div className="pointer-events-auto"><BoardToolbar theme="cyan" variant="materials" orientation="horizontal" activeTool={activeTool} onToolSelect={(t) => { addElementAtCenter(t); setSelectedIds([]); }} className="border-2 shadow-2xl" /></div>
             <div className="pointer-events-auto"><BoardToolbar theme="cyan" variant="training" orientation="horizontal" activeTool={activeTool} onToolSelect={(t) => { if(t === 'select') { setActiveTool('select'); setSelectedIds([]); } else addElementAtCenter(t); }} onClear={() => { setElements([]); setSelectedIds([]); }} className="border-2 shadow-2xl" /></div>
           </div>
-
           {isLocked && (
             <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-[60] flex flex-col items-center justify-center p-6 lg:p-12 text-center space-y-6 animate-in fade-in duration-700">
-              <div className="relative">
-                <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full animate-pulse" />
-                <Lock className="h-16 w-16 lg:h-20 lg:w-20 text-primary relative z-10" />
-              </div>
+              <div className="relative"><div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full animate-pulse" /><Lock className="h-16 w-16 lg:h-20 lg:w-20 text-primary relative z-10" /></div>
               <h3 className="text-2xl lg:text-3xl font-black text-white uppercase italic tracking-tighter">Protocolo de Capacidad Lleno</h3>
-              <p className="text-white/40 font-bold uppercase text-[10px] tracking-[0.4em] max-w-md mx-auto leading-relaxed">
-                Has alcanzado el límite de {MAX_EXERCISES} sesiones. Sincroniza tu club con el Plan Élite para desbloquear almacenamiento ilimitado y funciones IA.
-              </p>
-              <Button className="h-14 lg:h-16 bg-primary text-black font-black uppercase text-[10px] lg:text-[11px] tracking-[0.3em] px-8 lg:px-12 rounded-2xl cyan-glow border-none" asChild>
-                <Link href="/login">Actualizar a Plan Pro <Sparkles className="h-4 w-4 ml-3" /></Link>
-              </Button>
+              <p className="text-white/40 font-bold uppercase text-[10px] tracking-[0.4em] max-w-md mx-auto leading-relaxed">Has alcanzado el límite de {MAX_EXERCISES} sesiones. Sincroniza tu club con el Plan Élite para desbloquear almacenamiento ilimitado y funciones IA.</p>
+              <Button className="h-14 lg:h-16 bg-primary text-black font-black uppercase text-[10px] lg:text-[11px] tracking-[0.3em] px-8 lg:px-12 rounded-2xl cyan-glow border-none" asChild><Link href="/login">Actualizar a Plan Pro <Sparkles className="h-4 w-4 ml-3" /></Link></Button>
             </div>
           )}
         </main>
