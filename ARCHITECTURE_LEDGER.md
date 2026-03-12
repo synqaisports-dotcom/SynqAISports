@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v9.16.0 (Edición Estratégica)
+# SynqSports Pro - ARCHITECTURE_LEDGER v9.17.0 (Edición Estratégica)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro. Es el ADN del proyecto y debe preservarse íntegramente en cada iteración.
 
@@ -46,7 +46,7 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
     - Ads Integration: Incorporación de placeholders de publicidad no intrusiva en terminales Promo.
 - **v9.10.1**: **Estabilidad de Iconos**: Corrección de importación de `lucide-react`.
 
-## 7. Modelo de Negocio y Blindaje Estratégico (v9.11.0 - v9.16.0)
+## 7. Modelo de Negocio y Blindaje Estratégico (v9.11.0 - v9.17.0)
 - **v9.11.0**: **PROTOCOLO_NEGOCIO_DUAL**:
     - **Modelo Dual-Surcharge**: Estructura de 12€ (SynqAI) + 12€ (Margen Club) por atleta/año.
     - **Revenue Share 60/40**: Reparto de ingresos publicitarios.
@@ -68,3 +68,5 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 - **v9.16.0**: **PROTOCOLO_INTERVALOS_SINCRO**:
     - Implementación de intervalos de aviso de cambio programables (5m, 8m, Mitad de tiempo).
     - Integración de toggle de activación para notificaciones rotacionales por tiempo en el Watch.
+- **v9.17.0**: **PROTOCOLO_POCKET_MASTER**:
+    - Definición del Smartphone como nodo de redundancia. En ausencia de Tablet, el móvil asume el rol de Master Time Server y Relay de Telemetría para el Smartwatch mediante sincronización en la nube.
