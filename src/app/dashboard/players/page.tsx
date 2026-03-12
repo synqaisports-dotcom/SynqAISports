@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -27,7 +28,8 @@ import {
   Camera,
   X,
   Clock,
-  Hash
+  Hash,
+  Database
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -98,7 +100,7 @@ const TACTICAL_POSITIONS = [
 const INITIAL_PLAYERS = [
   { id: "p1", name: "Lucas", surname: "García", number: "10", nickname: "LUKY", email: "l.garcia@tutor.com", category: "Infantil", teamSuffix: "A", position: "MC, MCO", status: "Active", attendance: "98%", isMinor: true, tutorName: "MARÍA", tutorSurname: "GARCÍA", tutorPhone: "600 000 001", tutorEmail: "m.garcia@tutor.com", photoUrl: "", birthDate: "2011-05-15", joinDate: "2023-09-01" },
   { id: "p2", name: "Elena", surname: "Rossi", number: "9", nickname: "ROSSI", email: "e.rossi@tutor.it", category: "Alevín", teamSuffix: "B", position: "DC", status: "Active", attendance: "92%", isMinor: true, tutorName: "PAOLO", tutorSurname: "ROSSI", tutorPhone: "+39 300 000 000", tutorEmail: "p.rossi@tutor.it", photoUrl: "", birthDate: "2013-02-20", joinDate: "2024-01-10" },
-  { id: "p3", name: "Marc", surname: "Soler", number: "1", nickname: "MARCUS", email: "m.soler@tutor.es", category: "Cadete", teamSuffix: "C", position: "POR", status: "Injured", attendance: "45%", isMinor: false, photoUrl: "", birthDate: "2009-11-05", joinDate: "2022-08-15" },
+  { id: "p3", name: "Marc", surname: "Soler", number: "1", nickname: "MARCUS", email: "m.soler@tutor.es", category: "Cadete", teamSuffix: "C", position: "POR", status: "Injured", attendance: "45%", isMinor: false, tutorName: "ADMIN", tutorSurname: "CONTACTO", tutorPhone: "600 000 000", tutorEmail: "m.soler@tutor.es", photoUrl: "", birthDate: "2009-11-05", joinDate: "2022-08-15" },
   { id: "p4", name: "Sofía", surname: "Mendes", number: "4", nickname: "SOFI", email: "s.mendes@tutor.br", category: "Benjamín", teamSuffix: "A", position: "DFC, LD", status: "Active", attendance: "100%", isMinor: true, tutorName: "LUIS", tutorSurname: "MENDES", tutorPhone: "+55 11 0000 0000", tutorEmail: "l.mendes@tutor.br", photoUrl: "", birthDate: "2015-07-30", joinDate: "2024-02-01" },
 ];
 
@@ -124,7 +126,7 @@ export default function PlayersManagementPage() {
     teamSuffix: "A",
     position: [] as string[],
     status: "Active",
-    isMinor: false,
+    isMinor: true,
     tutorName: "",
     tutorSurname: "",
     tutorPhone: "",
@@ -146,7 +148,7 @@ export default function PlayersManagementPage() {
       teamSuffix: "A",
       position: [], 
       status: "Active",
-      isMinor: false,
+      isMinor: true,
       tutorName: "",
       tutorSurname: "",
       tutorPhone: "",
@@ -170,7 +172,7 @@ export default function PlayersManagementPage() {
       teamSuffix: player.teamSuffix,
       position: player.position ? player.position.split(", ") : [],
       status: player.status,
-      isMinor: player.isMinor || false,
+      isMinor: player.isMinor ?? true,
       tutorName: player.tutorName || "",
       tutorSurname: player.tutorSurname || "",
       tutorPhone: player.tutorPhone || "",
@@ -199,8 +201,18 @@ export default function PlayersManagementPage() {
 
   const handleSavePlayer = (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     
+    // PROTOCOLO CEPO DE DATOS: Validación obligatoria de Tutor Email
+    if (!formData.tutorEmail) {
+      toast({
+        variant: "destructive",
+        title: "ERROR_CEPO_DATOS",
+        description: "El Vínculo de Tutor (Email) es obligatorio para garantizar el inventario de red.",
+      });
+      return;
+    }
+
+    setLoading(true);
     const playerToSave = {
       ...formData,
       position: formData.position.join(", ")
@@ -412,7 +424,7 @@ export default function PlayersManagementPage() {
             <SheetHeader className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary italic">Athlete_Deploy_v1.0</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary italic">Athlete_Deploy_v1.5</span>
               </div>
               <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left">
                 {editingId ? "MODIFICAR_ATLETA" : "ALTA_DE_ATLETA"}
@@ -509,14 +521,14 @@ export default function PlayersManagementPage() {
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Email del Atleta</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-3.5 h-4 w-4 text-primary/40" />
+                  <Mail className="absolute left-4 top-3.5 h-4 w-4 text-primary/40" />
                   <Input 
                     required
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                     placeholder="ATLETA@MAIL.COM" 
-                    className="pl-10 h-12 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-all text-primary placeholder:text-primary/20" 
+                    className="pl-12 h-12 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-all text-primary placeholder:text-primary/20" 
                   />
                 </div>
               </div>
@@ -627,10 +639,73 @@ export default function PlayersManagementPage() {
                 </Select>
               </div>
 
+              {/* CEPO_DE_DATOS: Sección de Tutor Obligatoria */}
+              <div className="space-y-6 p-6 border border-primary/30 bg-primary/5 rounded-3xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-10">
+                  <Database className="h-20 w-20 text-primary" />
+                </div>
+                
+                <div className="flex items-center gap-3 border-b border-primary/20 pb-4 mb-4">
+                  <ShieldCheck className="h-4 w-4 text-primary" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary italic">Vínculo de Tutor (Cepo de Datos)</span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Nombre Tutor</Label>
+                    <Input 
+                      required
+                      value={formData.tutorName}
+                      onChange={(e) => setFormData({...formData, tutorName: e.target.value.toUpperCase()})}
+                      placeholder="EJ: MARÍA" 
+                      className="h-11 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-all text-primary placeholder:text-primary/20" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Apellidos Tutor</Label>
+                    <Input 
+                      required
+                      value={formData.tutorSurname}
+                      onChange={(e) => setFormData({...formData, tutorSurname: e.target.value.toUpperCase()})}
+                      placeholder="EJ: LÓPEZ" 
+                      className="h-11 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-all text-primary placeholder:text-primary/20" 
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Email Tutor (REQUISITO_RED)</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3.5 h-4 w-4 text-primary/40" />
+                    <Input 
+                      required
+                      type="email"
+                      value={formData.tutorEmail}
+                      onChange={(e) => setFormData({...formData, tutorEmail: e.target.value})}
+                      placeholder="TUTOR@MAIL.COM" 
+                      className="pl-10 h-11 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-all text-primary placeholder:text-primary/20" 
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Teléfono Tutor</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-3.5 h-4 w-4 text-primary/40" />
+                    <Input 
+                      required
+                      value={formData.tutorPhone}
+                      onChange={(e) => setFormData({...formData, tutorPhone: e.target.value})}
+                      placeholder="600 000 000" 
+                      className="pl-10 h-11 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-all text-primary placeholder:text-primary/20" 
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div className="flex items-center justify-between p-4 bg-primary/5 border border-primary/20 rounded-2xl">
                 <div className="space-y-0.5">
-                  <Label className="text-[10px] font-black uppercase text-primary tracking-widest italic">¿Es Menor de Edad?</Label>
-                  <p className="text-[8px] text-primary/40 uppercase font-bold tracking-tighter italic">Requiere tutor legal para sincronización</p>
+                  <Label className="text-[10px] font-black uppercase text-primary tracking-widest italic">Minor_Age_Status</Label>
+                  <p className="text-[8px] text-primary/40 uppercase font-bold tracking-tighter italic">Flag informativo para protocolos de viaje</p>
                 </div>
                 <Switch 
                   checked={formData.isMinor} 
@@ -638,69 +713,15 @@ export default function PlayersManagementPage() {
                   className="data-[state=checked]:bg-primary"
                 />
               </div>
-
-              {formData.isMinor && (
-                <div className="space-y-6 p-6 border border-primary/30 bg-primary/5 rounded-3xl animate-in zoom-in-95 duration-700 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-4 opacity-10">
-                    <ShieldCheck className="h-20 w-20 text-primary" />
-                  </div>
-                  
-                  <div className="flex items-center gap-3 border-b border-primary/20 pb-4 mb-4">
-                    <ShieldCheck className="h-4 w-4 text-primary" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary italic">Datos del Tutor Legal</span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Nombre</Label>
-                      <Input 
-                        value={formData.tutorName}
-                        onChange={(e) => setFormData({...formData, tutorName: e.target.value.toUpperCase()})}
-                        placeholder="EJ: MARÍA" 
-                        className="h-11 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-all text-primary placeholder:text-primary/20" 
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Apellidos</Label>
-                      <Input 
-                        value={formData.tutorSurname}
-                        onChange={(e) => setFormData({...formData, tutorSurname: e.target.value.toUpperCase()})}
-                        placeholder="EJ: LÓPEZ" 
-                        className="h-11 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-all text-primary placeholder:text-primary/20" 
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Mail Tutor</Label>
-                    <Input 
-                      type="email"
-                      value={formData.tutorEmail}
-                      onChange={(e) => setFormData({...formData, tutorEmail: e.target.value})}
-                      placeholder="TUTOR@MAIL.COM" 
-                      className="h-11 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-all text-primary placeholder:text-primary/20" 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Teléfono Tutor</Label>
-                    <Input 
-                      value={formData.tutorPhone}
-                      onChange={(e) => setFormData({...formData, tutorPhone: e.target.value})}
-                      placeholder="600 000 000" 
-                      className="h-11 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-all text-primary placeholder:text-primary/20" 
-                    />
-                  </div>
-                </div>
-              )}
             </div>
 
             <div className="p-6 bg-primary/5 border border-primary/20 rounded-3xl space-y-3">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="h-3 w-3 text-primary" />
-                <span className="text-[9px] font-black uppercase text-primary tracking-widest italic">Protocolo de Privacidad</span>
+                <span className="text-[9px] font-black uppercase text-primary tracking-widest italic">Protocolo de Privacidad y Negocio</span>
               </div>
               <p className="text-[9px] text-primary/40 leading-relaxed font-bold uppercase italic">
-                La creación de una ficha activa automáticamente el Portal de Tutor. La familia recibirá un código de sincronización para acceder a la telemetría del atleta.
+                El Tutor_Email es el ancla técnica de SynQAI. Activa el Portal de Familias y garantiza el inventario publicitario necesario para el mantenimiento del nodo.
               </p>
             </div>
           </form>

@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v9.11.0 (Edición Estratégica)
+# SynqSports Pro - ARCHITECTURE_LEDGER v9.12.0 (Edición Estratégica)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro. Es el ADN del proyecto y debe preservarse íntegramente en cada iteración.
 
@@ -34,7 +34,8 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 - **v9.8.0**: **Live Toolbar Input**: Integración de campo de texto en cabecera para edición directa de consignas sin diálogos externos.
 - **v9.8.1**: **Geometría Circular**: Forzado de relación de aspecto 1:1 en píxeles para jugadores y círculos, eliminando distorsiones ovaladas.
 - **v9.8.2**: **Inteligencia de Dorsales**: Autoincremento secuencial (n+1) al duplicar atletas.
-- **v9.8.6**: **Sincronización de Materiales**: Portado del motor de alta fidelidad (sombras y patrones) a la Pizarra Promo.
+- **v9.8.5**: **Blindaje de Interacción**: Fix definitivo a `ReferenceError: maxY is not defined` en el escalado de objetos.
+- **v9.8.6**: **Sincronización de Materiales**: Paridad visual total entre Pizarra Promo y Profesional (sombras y texturas).
 - **v9.8.7**: **Unificación Funcional**: Activación de Carriles Tácticos en modo Promo y eliminación de restricciones visuales de capacidad.
 
 ## 6. Auditoría y Estrategia de Captación (v9.9.0 - v9.10.1)
@@ -43,12 +44,13 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
     - Implementación de Registro Email/Password obligatorio para todos los niveles (Free/Pro).
     - Sandbox Promo: Límite de 20 ejercicios (4 Calentamientos, 12 Partes Principales, 4 Vueltas a la Calma) y 4 Sesiones.
     - Ads Integration: Incorporación de placeholders de publicidad no intrusiva en terminales Promo.
-- **v9.10.1**: **Estabilidad de Iconos**: Corrección de importación errónea de `lucide-center` a `lucide-react` en el terminal de acceso.
+- **v9.10.1**: **Estabilidad de Iconos**: Corrección de importación de `lucide-react`.
 
-## 7. Modelo de Negocio y Blindaje Estratégico (v9.11.0)
+## 7. Modelo de Negocio y Blindaje Estratégico (v9.11.0 - v9.12.0)
 - **v9.11.0**: **PROTOCOLO_NEGOCIO_DUAL**:
-    - **Modelo Dual-Surcharge**: Estructura de 12€ (SynqAI) + 12€ (Margen Club) por atleta/año. El software actúa como centro de beneficios para la entidad.
-    - **Revenue Share 60/40**: Reparto de ingresos publicitarios (60% Club / 40% SynqAI) para incentivar el uso en redes gratuitas y mercados emergentes.
-    - **Cepo de Datos**: Requisito técnico obligatorio de `Tutor_Email` en cada ficha de jugador. Garantiza la integridad del inventario publicitario y la captación de leads.
-    - **Blindaje Superadmin**: Acceso total y bypass exclusivo para `munozmartinez.ismael@gmail.com`.
-    - **Persistencia Híbrida**: Almacenamiento local para usuarios Promo con sincronización forzada a Firestore tras conversión a Pro.
+    - **Modelo Dual-Surcharge**: Estructura de 12€ (SynqAI) + 12€ (Margen Club) por atleta/año.
+    - **Revenue Share 60/40**: Reparto de ingresos publicitarios.
+    - **Blindaje Superadmin**: Acceso total para `munozmartinez.ismael@gmail.com`.
+- **v9.12.0**: **CEPO_DE_DATOS_ABSOLUTO**:
+    - Requisito técnico obligatorio de `Tutor_Email` en cada ficha de jugador, independientemente de la edad o el rol. 
+    - Garantiza la integridad del inventario publicitario y el despliegue futuro de las Apps de Tutor y Jugador.
