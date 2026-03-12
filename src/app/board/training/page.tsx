@@ -199,7 +199,6 @@ function TrainingBoardContent() {
         break;
       case 'circle':
         ctx.beginPath();
-        // FORCE CIRCULARITY
         const radius = Math.min(width, height) / 2;
         ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
         ctx.fill(); ctx.stroke();
@@ -370,7 +369,6 @@ function TrainingBoardContent() {
     const ctx = canvas?.getContext('2d');
     if (!ctx || !canvas) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
     const sortedElements = [...elements].sort((a, b) => {
       if (a.type === 'text' && b.type !== 'text') return 1;
       if (a.type !== 'text' && b.type === 'text') return -1;
@@ -393,14 +391,9 @@ function TrainingBoardContent() {
 
   const addElementAtCenter = (tool: DrawingTool) => {
     const pNum = tool === 'player' ? elements.filter(e => e.type === 'player').length + 1 : undefined;
-    
-    // ADJUST INITIAL SIZE FOR CIRCULARITY
     const canvasRatio = canvasRef.current ? (canvasRef.current.width / canvasRef.current.height) : 1.5;
-    
     const defW = tool === 'ladder' ? 0.15 : (tool === 'minigoal' || tool === 'cross-arrow' ? 0.1 : tool === 'barrier' ? 0.12 : tool === 'text' ? 0.3 : 0.05);
-    // If circular, adjust height to match width in pixels
     const defH = isCircular(tool) ? (defW * canvasRatio) : (tool === 'ladder' ? 0.05 : (tool === 'minigoal' || tool === 'cross-arrow' ? 0.08 : tool === 'barrier' ? 0.12 : 0.05));
-    
     const newElement: DrawingElement = { id: `el-${Date.now()}`, type: tool, points: [{ x: 0.5 - defW/2, y: 0.5 - defH/2 }, { x: 0.5 + defW/2, y: 0.5 + defH/2 }], controlPoint: ['arrow', 'double-arrow', 'zigzag'].includes(tool) ? { x: 0.5, y: 0.45 } : undefined, color: currentColor, rotation: 0, lineStyle: 'solid', number: pNum, opacity: 1.0, text: tool === 'text' ? "CONSIGNA TÁCTICA" : undefined };
     setElements(prev => [...prev, newElement]); setSelectedIds([newElement.id]); setActiveTool('select');
   };
@@ -457,9 +450,7 @@ function TrainingBoardContent() {
         const bounds = getElementBounds(el, wPx, hPx);
         const local = rotatePoint({ x: point.x * wPx, y: point.y * hPx }, { x: bounds.centerX, y: bounds.centerY }, -el.rotation);
         const next = [...el.points]; const h = activeHandleIndex.current!;
-        
         if (isCircular(el.type)) {
-          // FORCE 1:1 RATIO IN PIXELS
           const dxPx = Math.abs(local.x - bounds.centerX) * 2;
           const dyPx = dxPx;
           next[0] = { x: (bounds.centerX - dxPx/2) / wPx, y: (bounds.centerY - dyPx/2) / hPx }; 
@@ -511,7 +502,7 @@ function TrainingBoardContent() {
           <div className="flex flex-col shrink-0">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-amber-500 animate-pulse" />
-              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Precision_v9.8.1</span>
+              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Precision_v9.8.2</span>
             </div>
             <h1 className="text-lg lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase leading-none">Estudio Élite</h1>
           </div>
@@ -574,7 +565,26 @@ function TrainingBoardContent() {
               )}
               
               <div className="flex gap-1">
-                <Button variant="outline" size="icon" className="h-9 w-9 border-white/10 text-white/40 hover:text-white" onClick={() => { const next = selectedElements.map(el => ({ ...el, id: `el-${Date.now()}-${Math.random()}`, points: el.points.map(p => ({ x: p.x + 0.02, y: p.y + 0.02 })) })); setElements(prev => [...prev, ...next]); setSelectedIds(next.map(e => e.id)); }}><Copy className="h-4 w-4" /></Button>
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className="h-9 w-9 border-white/10 text-white/40 hover:text-white" 
+                  onClick={() => { 
+                    const next = selectedElements.map(el => {
+                      const newId = `el-${Date.now()}-${Math.random()}`;
+                      const newPoints = el.points.map(p => ({ x: p.x + 0.02, y: p.y + 0.02 }));
+                      let newNumber = el.number;
+                      if (el.type === 'player' && el.number !== undefined) {
+                        newNumber = el.number + 1;
+                      }
+                      return { ...el, id: newId, points: newPoints, number: newNumber };
+                    }); 
+                    setElements(prev => [...prev, ...next]); 
+                    setSelectedIds(next.map(e => e.id)); 
+                  }}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
                 <Button variant="outline" size="icon" className="h-9 w-9 border-rose-500/20 text-rose-500/40 hover:text-rose-500" onClick={() => { setElements(prev => prev.filter(el => !selectedIds.includes(el.id))); setSelectedIds([]); }}><Trash2 className="h-4 w-4" /></Button>
               </div>
             </div>
