@@ -341,6 +341,15 @@ export default function PromoBoardPage() {
     }
   };
 
+  const handleEditText = useCallback(() => {
+    const elId = selectedIds[0];
+    const el = elements.find(e => e.id === elId);
+    if (el && el.type === 'text') {
+      const val = window.prompt("EDITAR TEXTO PROMO:", el.text);
+      if (val !== null) setElements(prev => prev.map(e => e.id === elId ? { ...e, text: val.toUpperCase() } : e));
+    }
+  }, [elements, selectedIds]);
+
   const handlePointerDown = (e: React.PointerEvent) => {
     if (!canvasRef.current || isLocked) return;
     const rect = canvasRef.current.getBoundingClientRect();
@@ -373,8 +382,18 @@ export default function PromoBoardPage() {
     });
 
     if (clicked) {
+      const isAlreadySelected = selectedIds.includes(clicked.id);
       if (e.shiftKey) setSelectedIds(prev => prev.includes(clicked.id) ? prev.filter(id => id !== clicked.id) : [...prev, clicked.id]);
-      else if (!selectedIds.includes(clicked.id)) setSelectedIds([clicked.id]);
+      else if (!isAlreadySelected) setSelectedIds([clicked.id]);
+      
+      // PROTOCOLO_EDICION_DIRECTA
+      if (clicked.type === 'text' && isAlreadySelected && !e.shiftKey) {
+        setTimeout(() => {
+          const v = window.prompt("EDITAR TEXTO PROMO:", clicked.text);
+          if (v) setElements(prev => prev.map(el => el.id === clicked.id ? {...el, text: v.toUpperCase()} : el));
+        }, 100);
+      }
+
       setActiveTool('select'); interactionMode.current = 'dragging';
     } else setSelectedIds([]);
     redrawAll();
@@ -422,14 +441,6 @@ export default function PromoBoardPage() {
   };
 
   const handlePointerUp = () => { isDrawing.current = false; interactionMode.current = 'none'; activeHandleIndex.current = null; };
-
-  const handleEditText = () => {
-    const el = elements.find(e => e.id === selectedIds[0]);
-    if (el && el.type === 'text') {
-      const val = window.prompt("EDITAR TEXTO PROMO:", el.text);
-      if (val !== null) setElements(prev => prev.map(e => e.id === el.id ? { ...e, text: val.toUpperCase() } : e));
-    }
-  };
 
   const selectedElements = elements.filter(e => selectedIds.includes(e.id));
   const commonOpacity = selectedElements.length > 0 ? selectedElements[0].opacity : 1.0;

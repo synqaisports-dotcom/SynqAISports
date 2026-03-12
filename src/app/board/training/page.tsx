@@ -476,6 +476,17 @@ function TrainingBoardContent() {
     }
   };
 
+  const handleEditText = useCallback(() => {
+    const elId = selectedIds[0];
+    const el = elements.find(e => e.id === elId);
+    if (el && el.type === 'text') {
+      const val = window.prompt("EDITAR TEXTO TÁCTICO:", el.text);
+      if (val !== null) {
+        setElements(prev => prev.map(e => e.id === elId ? { ...e, text: val.toUpperCase() } : e));
+      }
+    }
+  }, [elements, selectedIds]);
+
   const handlePointerDown = (e: React.PointerEvent) => {
     if (!canvasRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect();
@@ -535,12 +546,25 @@ function TrainingBoardContent() {
     });
 
     if (clicked) {
+      const isAlreadySelected = selectedIds.includes(clicked.id);
       if (e.shiftKey) {
         setSelectedIds(prev => prev.includes(clicked.id) ? prev.filter(id => id !== clicked.id) : [...prev, clicked.id]);
-      } else if (!selectedIds.includes(clicked.id)) {
+      } else if (!isAlreadySelected) {
         setSelectedIds([clicked.id]);
       }
-      setActiveTool('select'); interactionMode.current = 'dragging';
+      
+      // PROTOCOLO_EDICION_DIRECTA: Si es texto y ya está seleccionado, permitir edición por pulsación
+      if (clicked.type === 'text' && isAlreadySelected && !e.shiftKey) {
+        setTimeout(() => {
+          const val = window.prompt("EDITAR TEXTO TÁCTICO:", clicked.text);
+          if (val !== null) {
+            setElements(prev => prev.map(e => e.id === clicked.id ? { ...e, text: val.toUpperCase() } : e));
+          }
+        }, 100);
+      }
+
+      setActiveTool('select'); 
+      interactionMode.current = 'dragging';
     } else {
       setSelectedIds([]);
     }
@@ -622,16 +646,6 @@ function TrainingBoardContent() {
     if (isFromForm) setTimeout(() => router.back(), 1500);
   };
 
-  const handleEditText = () => {
-    const el = elements.find(e => e.id === selectedIds[0]);
-    if (el && el.type === 'text') {
-      const val = window.prompt("EDITAR TEXTO TÁCTICO:", el.text);
-      if (val !== null) {
-        setElements(prev => prev.map(e => e.id === el.id ? { ...e, text: val.toUpperCase() } : e));
-      }
-    }
-  };
-
   const selectedElements = elements.filter(e => selectedIds.includes(e.id));
   const commonOpacity = selectedElements.length > 0 ? selectedElements[0].opacity : 1.0;
 
@@ -642,7 +656,7 @@ function TrainingBoardContent() {
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-amber-500 animate-pulse" />
-              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Precision_v9.6</span>
+              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Precision_v9.7.4</span>
             </div>
             <h1 className="text-lg lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase leading-none">Estudio Élite</h1>
           </div>
@@ -688,7 +702,7 @@ function TrainingBoardContent() {
 
                 {selectedElements.length === 1 && (
                   <>
-                    {!isMaterial(selectedElements[0].type) && (
+                    {!isMaterial(selectedElements[0].type) && selectedElements[0].type !== 'text' && (
                       <Button 
                         variant="outline" size="sm" 
                         className={cn("h-9 border-white/10 text-[9px] font-black uppercase", selectedElements[0].lineStyle === 'dashed' ? 'bg-amber-500 text-black' : 'text-white/40')}
