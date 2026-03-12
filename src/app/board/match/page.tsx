@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo, useRef, memo, useCallback } from "react";
@@ -24,7 +23,10 @@ import {
   Watch,
   Activity,
   ArrowRight,
-  ShieldAlert
+  ShieldAlert,
+  Smartphone,
+  X,
+  UserPlus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -52,6 +54,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const TIME_PRESETS = [
   { label: "15 min", value: 15 },
@@ -146,6 +149,8 @@ const MemoizedPlayerChip = memo(PlayerChip);
 export default function MatchBoardPage() {
   const { profile } = useAuth();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
+  
   const [timeLeft, setTimeLeft] = useState(45 * 60);
   const [isRunning, setIsRunning] = useState(false);
   const [score, setScore] = useState({ home: 0, guest: 0 });
@@ -212,7 +217,7 @@ export default function MatchBoardPage() {
       interval = setInterval(() => {
         setTimeLeft(prev => {
           const next = prev - 1;
-          // Simulación de Alerta de Smartwatch (ej: al llegar al min 25)
+          // Simulación de Alerta de Smartwatch
           if (next === (25 * 60)) {
             setWatchAlert("CAMBIO_SUGERIDO: Jugador #10 (Fatiga)");
             toast({
@@ -301,11 +306,6 @@ export default function MatchBoardPage() {
         if (!isGK) {
           finalX = Math.max(finalX, innerAreaLimit);
           finalX = Math.min(finalX, outerAreaLimit);
-          
-          if (phase === "ataque") {
-            if (isMID) finalX = Math.min(finalX, 72);
-            if (isDEF) finalX = Math.min(finalX, 55);
-          }
         } else {
           finalX = 5;
           finalY = 50;
@@ -317,11 +317,6 @@ export default function MatchBoardPage() {
         if (!isGK) {
           finalX = Math.min(finalX, outerAreaLimit);
           finalX = Math.max(finalX, innerAreaLimit);
-          
-          if (phase === "ataque") {
-            if (isMID) finalX = Math.max(finalX, 28);
-            if (isDEF) finalX = Math.max(finalX, 45);
-          }
         } else {
           finalX = 95;
           finalY = 50;
@@ -368,6 +363,7 @@ export default function MatchBoardPage() {
   }, []);
 
   useEffect(() => {
+    if (isMobile) return;
     const canvas = canvasRef.current;
     if (!canvas || !canvas.parentElement) return;
 
@@ -379,7 +375,7 @@ export default function MatchBoardPage() {
     initCanvas();
 
     return () => observer.disconnect();
-  }, [initCanvas]);
+  }, [initCanvas, isMobile]);
 
   const startDrawing = (e: React.PointerEvent) => {
     if (!isPaintMode) return;
@@ -461,27 +457,138 @@ export default function MatchBoardPage() {
     setTeamRoster(prev => {
       const subIdx = prev.findIndex(p => p.number === subNum);
       const starterIdx = prev.findIndex(p => p.number === starterNum);
-      
       if (subIdx === -1 || starterIdx === -1) return prev;
-      
       const newRoster = [...prev];
       const sub = { ...newRoster[subIdx], isStarter: true };
       const starter = { ...newRoster[starterIdx], isStarter: false };
-      
       newRoster[subIdx] = starter;
       newRoster[starterIdx] = sub;
-      
       return newRoster;
     });
-    
-    // Limpiar alertas si se ejecuta el cambio
     setWatchAlert(null);
+    toast({ title: "SINCRO_ACTIVA", description: "Sustitución ejecutada y enviada al Watch." });
   };
 
   const currentFormations = useMemo(() => Object.keys(FORMATIONS_DATA[fieldType]), [fieldType]);
   const starters = teamRoster.filter(p => p.isStarter);
   const substitutes = teamRoster.filter(p => !p.isStarter);
 
+  // VISTA POCKET MASTER PARA MÓVILES
+  if (isMobile) {
+    return (
+      <div className="flex-1 flex flex-col bg-black overflow-hidden font-body relative touch-none p-6 gap-6">
+        {/* HEADER POCKET */}
+        <div className="flex items-center justify-between border-b border-white/5 pb-4">
+           <div className="flex items-center gap-3">
+              <Smartphone className="h-5 w-5 text-primary animate-pulse" />
+              <div className="flex flex-col">
+                 <span className="text-[8px] font-black text-primary uppercase tracking-[0.3em]">Pocket_Master_Active</span>
+                 <h1 className="text-sm font-headline font-black text-white uppercase italic">Modo Banquillo</h1>
+              </div>
+           </div>
+           <div className="flex items-center gap-2 px-3 py-1 bg-primary/5 border border-primary/20 rounded-full">
+              <Watch className={cn("h-3 w-3", watchConnected ? "text-primary animate-pulse" : "text-white/20")} />
+              <span className="text-[8px] font-black text-primary/60 uppercase">Watch Sincro</span>
+           </div>
+        </div>
+
+        {/* SCORE & TIME POCKET */}
+        <div className="grid grid-cols-1 gap-4">
+           <Card className="glass-panel border-primary/20 bg-primary/5 p-6 flex flex-col items-center justify-center space-y-4 rounded-3xl">
+              <span className={cn(
+                "text-6xl font-black font-headline tabular-nums tracking-tighter",
+                timeLeft === 0 ? "text-rose-500 animate-pulse" : "text-primary cyan-text-glow"
+              )}>
+                {formatTime(timeLeft)}
+              </span>
+              <div className="flex gap-4">
+                 <Button 
+                  size="lg" 
+                  onClick={() => setIsRunning(!isRunning)}
+                  className={cn(
+                    "h-16 w-16 rounded-full flex items-center justify-center transition-all shadow-2xl",
+                    isRunning ? "bg-amber-500 text-black" : "bg-primary text-black"
+                  )}
+                >
+                  {isRunning ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 ml-1" />}
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => { setIsRunning(false); setTimeLeft(45 * 60); }} className="h-16 w-16 rounded-full border border-white/10 text-white/20">
+                  <RotateCcw className="h-6 w-6" />
+                </Button>
+              </div>
+           </Card>
+
+           <div className="grid grid-cols-2 gap-4">
+              <Card className="glass-panel p-6 flex flex-col items-center gap-2 border-primary/10 rounded-3xl">
+                 <span className="text-[10px] font-black text-white/30 uppercase">LOCAL</span>
+                 <div className="flex items-center gap-4">
+                    <button onClick={() => setScore(s => ({...s, home: Math.max(0, s.home - 1)}))} className="text-primary/20 text-2xl">-</button>
+                    <span className="text-4xl font-black text-white tabular-nums">{score.home}</span>
+                    <button onClick={() => setScore(s => ({...s, home: s.home + 1}))} className="text-primary/20 text-2xl">+</button>
+                 </div>
+              </Card>
+              <Card className="glass-panel p-6 flex flex-col items-center gap-2 border-rose-500/10 rounded-3xl">
+                 <span className="text-[10px] font-black text-white/30 uppercase">VISITANTE</span>
+                 <div className="flex items-center gap-4">
+                    <button onClick={() => setScore(s => ({...s, guest: Math.max(0, s.guest - 1)}))} className="text-rose-500/20 text-2xl">-</button>
+                    <span className="text-4xl font-black text-white tabular-nums">{score.guest}</span>
+                    <button onClick={() => setScore(s => ({...s, guest: s.guest + 1}))} className="text-rose-500/20 text-2xl">+</button>
+                 </div>
+              </Card>
+           </div>
+        </div>
+
+        {/* QUICK SUBS POCKET */}
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button size="lg" className="h-20 bg-primary text-black font-black uppercase text-xs tracking-widest rounded-3xl cyan-glow shadow-[0_0_30px_rgba(0,242,255,0.2)]">
+              <Users className="h-5 w-5 mr-3" /> SUSTITUCIÓN RÁPIDA
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="bottom" className="h-[80vh] bg-[#04070c]/98 backdrop-blur-3xl border-t border-primary/20 rounded-t-[3rem] text-white p-0">
+             <div className="p-8 border-b border-white/5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                   <Dna className="h-5 w-5 text-primary animate-pulse" />
+                   <h3 className="text-2xl font-black italic uppercase tracking-tighter">ROSTER_LIVE</h3>
+                </div>
+                <SheetClose className="h-10 w-10 bg-white/5 rounded-full flex items-center justify-center"><X className="h-5 w-5" /></SheetClose>
+             </div>
+             <div className="p-6 overflow-y-auto h-full pb-20 custom-scrollbar">
+                <div className="grid gap-3">
+                   {starters.map(p => (
+                     <PlayerListItem key={p.number} player={p} onDrop={(subNum) => handleSubstitution(subNum, p.number)} />
+                   ))}
+                   <div className="h-8" />
+                   <span className="text-[10px] font-black text-primary/40 uppercase tracking-widest px-4">Suplentes Disponibles</span>
+                   {substitutes.map(p => (
+                     <PlayerListItem key={p.number} player={p} isSub />
+                   ))}
+                </div>
+             </div>
+          </SheetContent>
+        </Sheet>
+
+        {/* ALERT MONITOR POCKET */}
+        <div className="mt-auto space-y-4">
+           {watchAlert && (
+             <div className="bg-primary/10 border-2 border-primary rounded-2xl p-4 flex items-center justify-between animate-in slide-in-from-bottom-4">
+                <div className="flex items-center gap-3">
+                   <ShieldAlert className="h-5 w-5 text-primary animate-pulse" />
+                   <p className="text-[10px] font-black text-white uppercase italic">{watchAlert}</p>
+                </div>
+                <Button onClick={() => { setWatchAlert(null); toast({ title: "SOLICITUD_PROCESADA", description: "Cambio enviado al campo." }); }} size="sm" className="bg-primary text-black font-black text-[8px] h-8 px-4 uppercase rounded-lg">EJECUTAR</Button>
+             </div>
+           )}
+           <div className="flex items-center justify-between px-2">
+              <span className="text-[8px] font-black text-white/20 uppercase tracking-[0.5em]">Synchronizing_Nodes...</span>
+              <Activity className="h-3 w-3 text-primary animate-pulse opacity-40" />
+           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // VISTA FULL EXPERIENCE (TABLET/PC)
   return (
     <div 
       className={cn(
@@ -641,7 +748,7 @@ export default function MatchBoardPage() {
             </div>
           </TacticalField>
 
-          {/* HUB DE NOTIFICACIONES SMARTWATCH (CENTRO DE MANDO) */}
+          {/* HUB DE NOTIFICACIONES SMARTWATCH */}
           {watchAlert && (
             <div className="absolute top-32 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-top-8 duration-500">
                <div className="bg-black/80 backdrop-blur-2xl border-2 border-primary rounded-3xl p-6 shadow-[0_0_50px_rgba(0,242,255,0.3)] flex items-center gap-6 group">
@@ -941,8 +1048,4 @@ function PlayerListItem({ player, isSub, onDrop }: { player: any, isSub?: boolea
       </Badge>
     </div>
   );
-}
-
-function X(props: any) {
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M18 6L6 18M6 6l12 12" /></svg>
 }
