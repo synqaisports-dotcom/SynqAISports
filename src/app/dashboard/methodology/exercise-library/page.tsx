@@ -349,9 +349,10 @@ export default function ExerciseLibraryPage() {
                   <div className="space-y-3">
                     <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Tiempo (Min)</Label>
                     <Input 
+                      type="number"
                       value={formData.time}
                       onChange={(e) => setFormData({...formData, time: e.target.value})}
-                      placeholder="EJ: 15’" 
+                      placeholder="15" 
                       className="h-14 bg-black/40 border-amber-500/20 rounded-2xl font-bold text-amber-500" 
                     />
                   </div>
