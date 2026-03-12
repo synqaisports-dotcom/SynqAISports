@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 export default function WatchConfigPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [operationalAlertsActive, setOperationalAlertsActive] = useState(true);
 
   // ESTADO DE CONFIGURACIÓN DE ALERTAS
   const [config, setConfig] = useState({
@@ -127,12 +128,20 @@ export default function WatchConfigPage() {
           
           {/* SECCIÓN 1: ALERTAS OPERATIVAS */}
           <Card className="glass-panel border-none bg-black/40 overflow-hidden shadow-2xl rounded-3xl">
-            <CardHeader className="p-8 border-b border-white/5 bg-white/[0.01]">
+            <CardHeader className="p-8 border-b border-white/5 bg-white/[0.01] flex flex-row items-center justify-between">
               <CardTitle className="text-xs font-black uppercase tracking-[0.4em] flex items-center gap-4 text-primary/60">
                 <Bell className="h-5 w-5 text-primary" /> Alertas Operativas de Partido
               </CardTitle>
+              <Switch 
+                checked={operationalAlertsActive} 
+                onCheckedChange={setOperationalAlertsActive}
+                className="data-[state=checked]:bg-primary"
+              />
             </CardHeader>
-            <CardContent className="p-8 space-y-10">
+            <CardContent className={cn(
+              "p-8 space-y-10 transition-all duration-500",
+              !operationalAlertsActive && "opacity-30 pointer-events-none grayscale"
+            )}>
               
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
                 <div className="space-y-1 max-w-sm">

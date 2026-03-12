@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v9.14.0 (Edición Estratégica)
+# SynqSports Pro - ARCHITECTURE_LEDGER v9.14.1 (Edición Estratégica)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro. Es el ADN del proyecto y debe preservarse íntegramente en cada iteración.
 
@@ -46,7 +46,7 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
     - Ads Integration: Incorporación de placeholders de publicidad no intrusiva en terminales Promo.
 - **v9.10.1**: **Estabilidad de Iconos**: Corrección de importación de `lucide-react`.
 
-## 7. Modelo de Negocio y Blindaje Estratégico (v9.11.0 - v9.14.0)
+## 7. Modelo de Negocio y Blindaje Estratégico (v9.11.0 - v9.14.1)
 - **v9.11.0**: **PROTOCOLO_NEGOCIO_DUAL**:
     - **Modelo Dual-Surcharge**: Estructura de 12€ (SynqAI) + 12€ (Margen Club) por atleta/año.
     - **Revenue Share 60/40**: Reparto de ingresos publicitarios.
@@ -60,3 +60,6 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 - **v9.14.0**: **PROTOCOLO_TELEMETRÍA_CONFIGURABLE**:
     - Implementación de la terminal de configuración de alertas de Smartwatch (`/dashboard/watch-config`).
     - Definición de umbrales de fatiga, frecuencia cardíaca y sincronización de eventos operativos.
+- **v9.14.1**: **CONTROL_MAESTRO_HÁPTICO**:
+    - Implementación de switch de activación global para alertas operativas en `/dashboard/watch-config`.
+    - Mejora de la granularidad en la gestión de telemetría de partido.
