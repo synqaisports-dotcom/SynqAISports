@@ -29,7 +29,12 @@ import {
   Redo2,
   Video,
   ArrowUpRight,
-  MousePointerClick
+  MousePointerClick,
+  ClipboardList,
+  Target,
+  Clock,
+  ShieldCheck,
+  ArrowRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +50,16 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetDescription,
+  SheetFooter,
+  SheetClose
+} from "@/components/ui/sheet";
+import { Textarea } from "@/components/ui/textarea";
 import { useSearchParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -73,6 +88,8 @@ const COLORS = [
   { id: 'white', value: '#ffffff', label: 'Neutro' },
 ];
 
+const STAGES = ["Debutantes", "Prebenjamín", "Benjamín", "Alevín", "Infantil", "Cadete", "Juvenil", "Senior"];
+
 const isMaterial = (type: DrawingTool) => 
   ['player', 'ball', 'cone', 'seta', 'ladder', 'hurdle', 'minigoal', 'pica', 'barrier'].includes(type);
 
@@ -82,6 +99,7 @@ function TrainingBoardContent() {
   const [activeTool, setActiveTool] = useState<DrawingTool>("select");
   const [currentColor, setCurrentColor] = useState("#facc15");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isSaveSheetOpen, setIsSaveSheetOpen] = useState(false);
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -93,6 +111,15 @@ function TrainingBoardContent() {
   const lastPoint = useRef<Point | null>(null);
   const interactionMode = useRef<'drawing' | 'resizing' | 'rotating' | 'dragging' | 'curving' | 'none'>('none');
   const activeHandleIndex = useRef<number | null>(null);
+
+  // Formulario de Ficha Técnica
+  const [saveFormData, setSaveFormData] = useState({
+    title: "",
+    stage: "Alevín",
+    dimension: "Táctica",
+    objective: "",
+    description: ""
+  });
 
   const isFromForm = searchParams.get("source") === "form";
 
@@ -189,21 +216,14 @@ function TrainingBoardContent() {
         ctx.beginPath();
         if (element.controlPoint) {
           const cp = { x: element.controlPoint.x * widthPx, y: element.controlPoint.y * heightPx };
-          if (element.type === 'zigzag') {
-            // Zigzag curvo simplificado
-            ctx.moveTo(p[0].x, p[0].y);
-            ctx.quadraticCurveTo(cp.x, cp.y, p[1].x, p[1].y);
-          } else {
-            ctx.moveTo(p[0].x, p[0].y);
-            ctx.quadraticCurveTo(cp.x, cp.y, p[1].x, p[1].y);
-          }
+          ctx.moveTo(p[0].x, p[0].y);
+          ctx.quadraticCurveTo(cp.x, cp.y, p[1].x, p[1].y);
         } else {
           ctx.moveTo(p[0].x, p[0].y);
           ctx.lineTo(p[1].x, p[1].y);
         }
         ctx.stroke();
 
-        // Cabeza de flecha (orientada según la curva al final)
         const head = 15;
         let angle;
         if (element.controlPoint) {
@@ -225,7 +245,7 @@ function TrainingBoardContent() {
         drawH(p[1].x, p[1].y, angle);
         if (element.type === 'double-arrow') {
           const startAngle = element.controlPoint 
-            ? Math.atan2(p[0].y - (element.controlPoint.x * widthPx), p[0].x - (element.controlPoint.y * heightPx))
+            ? Math.atan2(p[0].y - (element.controlPoint.y * heightPx), p[0].x - (element.controlPoint.x * widthPx))
             : angle + Math.PI;
           drawH(p[0].x, p[0].y, startAngle);
         }
@@ -370,16 +390,14 @@ function TrainingBoardContent() {
       ];
       handles.forEach(h => { ctx.beginPath(); ctx.arc(h.x, h.y, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
       
-      // Nodo de rotación
       const rotY = minY - pad - 40;
       ctx.beginPath(); ctx.moveTo(centerX, minY - pad); ctx.lineTo(centerX, rotY); ctx.stroke();
       ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(centerX, rotY, 8, 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.stroke();
 
-      // Nodo de Curvatura (Para flechas y zigzags)
       if (element.controlPoint && ['arrow', 'double-arrow', 'zigzag'].includes(element.type)) {
         const cp = { x: element.controlPoint.x * widthPx, y: element.controlPoint.y * heightPx };
-        ctx.restore(); ctx.save(); // Salir de rotación para handle de curva global
+        ctx.restore(); ctx.save();
         ctx.setLineDash([4, 4]); ctx.strokeStyle = '#3b82f6aa';
         ctx.beginPath(); ctx.moveTo(centerX, centerY); ctx.lineTo(cp.x, cp.y); ctx.stroke();
         ctx.fillStyle = '#3b82f6'; ctx.beginPath(); ctx.arc(cp.x, cp.y, 8, 0, Math.PI * 2); ctx.fill();
@@ -470,7 +488,6 @@ function TrainingBoardContent() {
     const widthPx = rect.width;
     const heightPx = rect.height;
 
-    // Detectar interacción con handles si solo hay uno seleccionado
     if (selectedIds.length === 1) {
       const el = elements.find(e => e.id === selectedIds[0]);
       if (el) {
@@ -478,7 +495,6 @@ function TrainingBoardContent() {
         const { centerX, centerY, minX, minY } = bounds;
         const pad = 10;
         
-        // Handle Curvatura (Fuera de rotación)
         if (el.controlPoint) {
           const cpPx = { x: el.controlPoint.x * widthPx, y: el.controlPoint.y * heightPx };
           const distToCP = Math.sqrt(Math.pow(point.x * widthPx - cpPx.x, 2) + Math.pow(point.y * heightPx - cpPx.y, 2));
@@ -493,7 +509,6 @@ function TrainingBoardContent() {
           -el.rotation
         );
         
-        // Handle rotación
         const rotHandlePx = rotatePoint({ x: centerX, y: minY - pad - 40 }, { x: centerX, y: centerY }, el.rotation);
         const distToRot = Math.sqrt(Math.pow(point.x * widthPx - rotHandlePx.x, 2) + Math.pow(point.y * heightPx - rotHandlePx.y, 2));
         
@@ -501,7 +516,6 @@ function TrainingBoardContent() {
           interactionMode.current = 'rotating'; return;
         }
 
-        // Handles escala
         const handles = [
           { x: minX - pad, y: minY - pad }, { x: centerX, y: minY - pad }, { x: bounds.maxX + pad, y: minY - pad },
           { x: minX - pad, y: centerY }, { x: bounds.maxX + pad, y: centerY },
@@ -514,7 +528,6 @@ function TrainingBoardContent() {
       }
     }
 
-    // Selección de objetos
     const clicked = [...elements].reverse().find(el => {
       const bounds = getElementBounds(el, widthPx, heightPx);
       const local = rotatePoint({ x: point.x * widthPx, y: point.y * heightPx }, { x: bounds.centerX, y: bounds.centerY }, -el.rotation);
@@ -552,7 +565,6 @@ function TrainingBoardContent() {
         const next = [...el.points];
         const h = activeHandleIndex.current!;
         
-        // Mantener escala proporcional para materiales
         if (isMaterial(el.type)) {
           const ratio = bounds.width / bounds.height;
           const dx = Math.abs(localPoint.x - bounds.centerX) * 2;
@@ -597,8 +609,16 @@ function TrainingBoardContent() {
     isDrawing.current = false; interactionMode.current = 'none'; activeHandleIndex.current = null;
   };
 
-  const handleSave = () => {
-    toast({ title: isFromForm ? "DIAGRAMA_VINCULADO" : "DIAGRAMA_GUARDADO", description: "Ejercicio sincronizado correctamente." });
+  const handleConfirmSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!saveFormData.title) {
+      toast({ variant: "destructive", title: "ERROR", description: "Debe asignar un título al ejercicio." });
+      return;
+    }
+    
+    toast({ title: "SINCRO_EXITOSA", description: `El ejercicio "${saveFormData.title}" se ha guardado en su cuaderno de campo.` });
+    setIsSaveSheetOpen(false);
+    
     if (isFromForm) setTimeout(() => router.back(), 1500);
   };
 
@@ -622,7 +642,7 @@ function TrainingBoardContent() {
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-amber-500 animate-pulse" />
-              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Precision_v9.5</span>
+              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Precision_v9.6</span>
             </div>
             <h1 className="text-lg lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase leading-none">Estudio Élite</h1>
           </div>
@@ -703,7 +723,7 @@ function TrainingBoardContent() {
             )}
           </div>
         </div>
-        <Button onClick={handleSave} className="h-11 bg-amber-500 text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl shadow-[0_0_25px_rgba(245,158,11,0.3)] border-none">
+        <Button onClick={() => setIsSaveSheetOpen(true)} className="h-11 bg-amber-500 text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl shadow-[0_0_25px_rgba(245,158,11,0.3)] border-none">
           <Save className="h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">Guardar Táctica</span>
         </Button>
       </header>
@@ -724,6 +744,109 @@ function TrainingBoardContent() {
           </div>
         </div>
       </div>
+
+      {/* SHEET DE FICHA TÉCNICA (EVITAR FICHA VACÍA) */}
+      <Sheet open={isSaveSheetOpen} onOpenChange={setIsSaveSheetOpen}>
+        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-amber-500/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+          <div className="p-10 border-b border-white/5 bg-black/40">
+            <SheetHeader className="space-y-4">
+              <div className="flex items-center gap-3">
+                <ClipboardList className="h-5 w-5 text-amber-500 animate-pulse" />
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500 italic">Technical_Sheet_Sync_v1.0</span>
+              </div>
+              <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left leading-none">
+                VINCULAR <span className="text-amber-500">DATOS</span>
+              </SheetTitle>
+              <SheetDescription className="text-[10px] uppercase font-bold text-amber-500/40 tracking-widest text-left italic">
+                Complete los parámetros metodológicos para su cuaderno de campo.
+              </SheetDescription>
+            </SheetHeader>
+          </div>
+
+          <form onSubmit={handleConfirmSave} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-8">
+            <div className="space-y-6">
+              <div className="space-y-3">
+                <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Título del Ejercicio</Label>
+                <Input 
+                  required
+                  value={saveFormData.title}
+                  onChange={(e) => setSaveFormData({...saveFormData, title: e.target.value.toUpperCase()})}
+                  placeholder="EJ: SALIDA DE BALÓN 4-3-3" 
+                  className="h-14 bg-white/5 border-amber-500/20 rounded-2xl font-bold uppercase focus:border-amber-500 text-amber-500 text-lg" 
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Etapa Federativa</Label>
+                  <Select value={saveFormData.stage} onValueChange={(v) => setSaveFormData({...saveFormData, stage: v})}>
+                    <SelectTrigger className="h-12 bg-white/5 border-amber-500/20 rounded-xl text-white font-bold uppercase text-[10px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#0a0f18] border-amber-500/20">
+                      {STAGES.map(s => (
+                        <SelectItem key={s} value={s} className="text-[10px] font-black uppercase">{s}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Dimensión</Label>
+                  <Select value={saveFormData.dimension} onValueChange={(v) => setSaveFormData({...saveFormData, dimension: v})}>
+                    <SelectTrigger className="h-12 bg-white/5 border-amber-500/20 rounded-xl text-white font-bold uppercase text-[10px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#0a0f18] border-amber-500/20">
+                      <SelectItem value="Táctica" className="text-[10px] font-black uppercase">Táctica</SelectItem>
+                      <SelectItem value="Técnica" className="text-[10px] font-black uppercase">Técnica</SelectItem>
+                      <SelectItem value="Física" className="text-[10px] font-black uppercase">Física</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Objetivo Táctico Primario</Label>
+                <div className="relative">
+                  <Target className="absolute left-3 top-3.5 h-4 w-4 text-amber-500/40" />
+                  <Input 
+                    value={saveFormData.objective}
+                    onChange={(e) => setSaveFormData({...saveFormData, objective: e.target.value.toUpperCase()})}
+                    placeholder="EJ: GENERAR SUPERIORIDAD POR DENTRO" 
+                    className="pl-10 h-12 bg-white/5 border-amber-500/20 rounded-xl font-bold uppercase text-xs text-amber-500" 
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Descripción / Consignas</Label>
+                <Textarea 
+                  value={saveFormData.description}
+                  onChange={(e) => setSaveFormData({...saveFormData, description: e.target.value})}
+                  placeholder="Explique la dinámica del ejercicio y las reglas de provocación..." 
+                  className="min-h-[120px] bg-white/5 border-amber-500/20 rounded-2xl font-bold text-amber-500 placeholder:text-amber-500/20" 
+                />
+              </div>
+            </div>
+
+            <div className="p-6 bg-amber-500/5 border border-amber-500/20 rounded-3xl space-y-3">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-3 w-3 text-amber-500" />
+                <span className="text-[9px] font-black uppercase text-amber-500 tracking-widest italic">Protocolo de Registro</span>
+              </div>
+              <p className="text-[9px] text-amber-500/40 leading-relaxed font-bold uppercase italic">
+                El diagrama táctico actual se capturará como el activo visual principal para esta ficha técnica.
+              </p>
+            </div>
+          </form>
+
+          <div className="p-10 bg-black/60 border-t border-white/5">
+            <Button onClick={handleConfirmSave} className="w-full h-16 bg-amber-500 text-black font-black uppercase tracking-[0.2em] rounded-2xl amber-glow shadow-[0_0_30px_rgba(245,158,11,0.3)]">
+              GUARDAR_EN_CUADERNO <ArrowRight className="h-4 w-4 ml-3" />
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
