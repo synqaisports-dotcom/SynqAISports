@@ -1,9 +1,9 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v9.8.2 (Edición Integrada)
+# SynqSports Pro - ARCHITECTURE_LEDGER v9.8.3 (Edición Integrada)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
-## 5. Protocolo de Pizarra y Dibujo (v9.8.2)
+## 5. Protocolo de Pizarra y Dibujo (v9.8.3)
 
 ### 5.1. Independencia de Resolución (v9.4.0)
 - **Coordenadas Decimales**: Migración de píxeles a sistema normalizado (0.000 a 1.000). Garantiza que los ejercicios se vean idénticos en cualquier pantalla.
@@ -29,3 +29,6 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 
 ### 5.8. Inteligencia de Dorsales (v9.8.2)
 - **Autoincremento al Duplicar**: Implementación de lógica secuencial en la función de copiado. Si se duplica un elemento 'player', el nuevo elemento recibe automáticamente el número n+1.
+
+### 5.9. Corrección de Enrutamiento (v9.8.3)
+- **Fix Link Imports**: Corrección de importaciones erróneas de `Link` (desde `next/navigation` en lugar de `next/link`) que causaban errores de tipo de elemento inválido en los terminales de pizarra y login.

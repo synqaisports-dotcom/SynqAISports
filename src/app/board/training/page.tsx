@@ -56,11 +56,12 @@ import {
   SheetHeader, 
   SheetTitle, 
   SheetDescription,
-  SheetFooter,
+  SheetFooter, 
   SheetClose
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 interface Point {
@@ -229,7 +230,7 @@ function TrainingBoardContent() {
         drawH(p[1].x, p[1].y, angle);
         if (element.type === 'double-arrow') {
           const startAngle = element.controlPoint ? Math.atan2(p[0].y - (element.controlPoint.y * heightPx), p[0].x - (element.controlPoint.x * widthPx)) : angle + Math.PI;
-          drawH(p[0].x, p[0].y, startAngle);
+          drawH(p[0].y, p[0].y, startAngle);
         }
         break;
       case 'cross-arrow':
@@ -417,7 +418,7 @@ function TrainingBoardContent() {
         if (Math.sqrt(Math.pow(point.x * wPx - rotHandlePx.x, 2) + Math.pow(point.y * hPx - rotHandlePx.y, 2)) < 20) { interactionMode.current = 'rotating'; return; }
         const local = rotatePoint({ x: point.x * wPx, y: point.y * hPx }, { x: bounds.centerX, y: bounds.centerY }, -el.rotation);
         const pad = 10;
-        const handles = [{ x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY }, { x: bounds.minX - pad, y: bounds.maxY + pad }, { x: bounds.centerX, y: bounds.maxY + pad }, { x: bounds.maxX + pad, y: bounds.maxY + pad }];
+        const handles = [{ x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY }, { x: bounds.minX - pad, y: maxY + pad }, { x: bounds.centerX, y: maxY + pad }, { x: bounds.maxX + pad, y: maxY + pad }];
         const hIdx = handles.findIndex(h => Math.sqrt(Math.pow(local.x - h.x, 2) + Math.pow(local.y - h.y, 2)) < 15);
         if (hIdx !== -1) { interactionMode.current = 'resizing'; activeHandleIndex.current = hIdx; return; }
       }

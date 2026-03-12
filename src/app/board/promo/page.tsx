@@ -45,7 +45,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import Link from "next/navigation";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 interface Point {
@@ -277,7 +277,7 @@ export default function PromoBoardPage() {
         const rotHandlePx = rotatePoint({ x: bounds.centerX, y: bounds.minY - 50 }, { x: bounds.centerX, y: bounds.centerY }, el.rotation);
         if (Math.sqrt(Math.pow(p.x * wPx - rotHandlePx.x, 2) + Math.pow(p.y * hPx - rotHandlePx.y, 2)) < 20) { interactionMode.current = 'rotating'; return; }
         const local = rotatePoint({ x: p.x * wPx, y: p.y * hPx }, { x: bounds.centerX, y: bounds.centerY }, -el.rotation);
-        const pad = 10; const handles = [{ x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY }, { x: bounds.minX - pad, y: bounds.maxY + pad }, { x: bounds.centerX, y: bounds.maxY + pad }, { x: bounds.maxX + pad, y: bounds.maxY + pad }];
+        const pad = 10; const handles = [{ x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY }, { x: bounds.minX - pad, y: maxY + pad }, { x: centerX, y: maxY + pad }, { x: maxX + pad, y: maxY + pad }];
         const hIdx = handles.findIndex(h => Math.sqrt(Math.pow(local.x - h.x, 2) + Math.pow(local.y - h.y, 2)) < 15);
         if (hIdx !== -1) { interactionMode.current = 'resizing'; activeHandleIndex.current = hIdx; return; }
       }
