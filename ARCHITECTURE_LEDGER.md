@@ -1,9 +1,9 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v9.8.6 (Edición Integrada)
+# SynqSports Pro - ARCHITECTURE_LEDGER v9.8.7 (Edición Integrada)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
-## 5. Protocolo de Pizarra y Drawing (v9.8.6)
+## 5. Protocolo de Pizarra y Drawing (v9.8.7)
 
 ### 5.1. Independencia de Resolución (v9.4.0)
 - **Coordenadas Decimales**: Migración de píxeles a sistema normalizado (0.000 a 1.000). Garantiza que los ejercicios se vean idénticos en cualquier pantalla.
@@ -25,3 +25,6 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 
 ### 5.11. Sincronización de Materiales (v9.8.6)
 - **Fidelidad Total**: Portado del motor de renderizado de alta resolución (sombras, gradientes y texturas) a la Pizarra Promo, garantizando paridad visual absoluta con la versión profesional.
+
+### 5.12. Unificación Funcional (v9.8.7)
+- **Activación de Carriles en Promo**: Eliminación del indicador de capacidad limitada en el header de Promo para sustituirlo por el control de "Carriles Tácticos", unificando la experiencia de usuario entre todos los niveles de acceso.

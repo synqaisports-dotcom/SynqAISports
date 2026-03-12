@@ -280,7 +280,7 @@ export default function PromoBoardPage() {
     obs.observe(canvas.parentElement!); return () => obs.disconnect();
   }, [redrawAll]);
 
-  useEffect(() => { redrawAll(); }, [elements, selectedIds, fieldType, redrawAll]);
+  useEffect(() => { redrawAll(); }, [elements, selectedIds, fieldType, showLanes, redrawAll]);
 
   const addElementAtCenter = (tool: DrawingTool) => {
     if (isLocked) return; 
@@ -374,13 +374,22 @@ export default function PromoBoardPage() {
       <header className="h-20 border-b border-primary/20 bg-black/40 backdrop-blur-3xl flex items-center justify-between px-4 lg:px-8 shrink-0 z-50">
         <div className="flex items-center gap-4 lg:gap-6 overflow-hidden">
           <div className="flex flex-col shrink-0">
-            <div className="flex items-center gap-2"><Zap className="h-4 w-4 text-primary animate-pulse" /><span className="text-[10px] font-black text-primary tracking-[0.4em] uppercase">Tactical_Board_v9.8.6</span></div>
+            <div className="flex items-center gap-2"><Zap className="h-4 w-4 text-primary animate-pulse" /><span className="text-[10px] font-black text-primary tracking-[0.4em] uppercase">Tactical_Board_v9.8.7</span></div>
             <h1 className="text-sm lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase leading-none">Free</h1>
           </div>
           
           <div className="hidden md:flex items-center gap-3 shrink-0">
             <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}><SelectTrigger className="w-[150px] h-10 bg-white/5 border-primary/20 rounded-xl text-[10px] font-black uppercase text-primary"><LayoutGrid className="h-3 w-3 mr-2" /> <SelectValue placeholder="Superficie" /></SelectTrigger><SelectContent className="bg-[#0a0f18] border-primary/20"><SelectItem value="f11" className="text-[10px] font-black uppercase">Fútbol 11</SelectItem><SelectItem value="f7" className="text-[10px] font-black uppercase">Fútbol 7</SelectItem><SelectItem value="futsal" className="text-[10px] font-black uppercase">Fútbol Sala</SelectItem></SelectContent></Select>
-            <div className="px-4 py-1.5 bg-primary/10 border border-primary/20 rounded-full flex items-center gap-3"><span className="text-[9px] font-black text-primary uppercase">CAPACIDAD:</span><div className="h-1.5 w-16 lg:w-24 bg-black/40 rounded-full overflow-hidden"><div className={cn("h-full transition-all duration-1000", isLocked ? "bg-rose-500" : "bg-primary")} style={{ width: `${(exercisesCount / MAX_EXERCISES) * 100}%` }} /></div><span className="text-[10px] font-black text-white">{exercisesCount}/{MAX_EXERCISES}</span></div>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowLanes(!showLanes)} 
+              className={cn(
+                "h-10 px-4 border-primary/20 text-[10px] font-black uppercase rounded-xl", 
+                showLanes ? "bg-primary text-black shadow-[0_0_20px_rgba(0,242,255,0.3)]" : "bg-white/5 text-primary/40"
+              )}
+            >
+              <Columns3 className="h-4 w-4 mr-2" /> Carriles
+            </Button>
           </div>
 
           {selectedIds.length > 0 && (
@@ -441,7 +450,7 @@ export default function PromoBoardPage() {
       </header>
       <div className="flex-1 flex overflow-hidden relative">
         <main className="flex-1 flex items-center justify-center relative overflow-hidden touch-none">
-          <TacticalField theme="cyan" fieldType={fieldType} showWatermark><canvas ref={canvasRef} className="absolute inset-0 z-30 pointer-events-auto" onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp} /></TacticalField>
+          <TacticalField theme="cyan" fieldType={fieldType} showWatermark showLanes={showLanes}><canvas ref={canvasRef} className="absolute inset-0 z-30 pointer-events-auto" onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp} /></TacticalField>
           <div className="absolute bottom-6 left-0 right-0 flex justify-center items-end gap-12 px-12 z-50 pointer-events-none">
             <div className="pointer-events-auto"><BoardToolbar theme="cyan" variant="materials" orientation="horizontal" activeTool={activeTool} onToolSelect={(t) => { addElementAtCenter(t); setSelectedIds([]); }} className="border-2 shadow-2xl" /></div>
             <div className="pointer-events-auto"><BoardToolbar theme="cyan" variant="training" orientation="horizontal" activeTool={activeTool} onToolSelect={(t) => { if(t === 'select') { setActiveTool('select'); setSelectedIds([]); } else addElementAtCenter(t); }} onClear={() => { setElements([]); setSelectedIds([]); }} className="border-2 shadow-2xl" /></div>
