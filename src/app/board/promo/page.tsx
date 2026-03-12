@@ -44,19 +44,20 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 interface Point {
-  x: number; // 0.0 to 1.0
-  y: number; // 0.0 to 1.0
+  x: number; // 0.0 to 1.0 (Normalized)
+  y: number; // 0.0 to 1.0 (Normalized)
 }
 
 interface DrawingElement {
   id: string;
   type: DrawingTool;
   points: Point[];
-  controlPoint?: Point;
+  controlPoint?: Point; 
   color: string;
   rotation: number;
   lineStyle: 'solid' | 'dashed';
@@ -78,6 +79,7 @@ const isMaterial = (type: DrawingTool) =>
 export default function PromoBoardPage() {
   const [exercisesCount, setExercisesCount] = useState(2);
   const [fieldType, setFieldType] = useState<FieldType>("f11");
+  const [showLanes, setShowLanes] = useState(false);
   const [activeTool, setActiveTool] = useState<DrawingTool>("select");
   const [currentColor, setCurrentColor] = useState("#00f2ff");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -156,6 +158,12 @@ export default function PromoBoardPage() {
         ctx.fillText(element.text || "TEXTO TÁCTICO", centerX, centerY);
         ctx.restore();
         break;
+      case 'freehand':
+        ctx.beginPath();
+        ctx.moveTo(p[0].x, p[0].y);
+        for (let i = 1; i < p.length; i++) ctx.lineTo(p[i].x, p[i].y);
+        ctx.stroke();
+        break;
       case 'rect':
         ctx.beginPath(); ctx.rect(minX, minY, width, height); ctx.fill(); ctx.stroke();
         break;
@@ -174,7 +182,10 @@ export default function PromoBoardPage() {
         }
         ctx.stroke();
         const head = 15;
-        let angle = element.controlPoint ? Math.atan2(p[1].y - (element.controlPoint.y * heightPx), p[1].x - (element.controlPoint.x * widthPx)) : Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x);
+        let angle = element.controlPoint 
+          ? Math.atan2(p[1].y - (element.controlPoint.y * heightPx), p[1].x - (element.controlPoint.x * widthPx)) 
+          : Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x);
+        
         ctx.setLineDash([]);
         const drawH = (tx: number, ty: number, ang: number) => {
           ctx.beginPath(); ctx.moveTo(tx, ty);
@@ -184,7 +195,12 @@ export default function PromoBoardPage() {
           ctx.stroke();
         };
         drawH(p[1].x, p[1].y, angle);
-        if (element.type === 'double-arrow') drawH(p[0].x, p[0].y, element.controlPoint ? Math.atan2(p[0].y - (element.controlPoint.y * heightPx), p[0].x - (element.controlPoint.x * widthPx)) : angle + Math.PI);
+        if (element.type === 'double-arrow') {
+          const startAngle = element.controlPoint 
+            ? Math.atan2(p[0].y - (element.controlPoint.y * heightPx), p[0].x - (element.controlPoint.x * widthPx))
+            : angle + Math.PI;
+          drawH(p[0].x, p[0].y, startAngle);
+        }
         break;
       case 'cross-arrow':
         ctx.save(); ctx.translate(centerX, centerY);
@@ -195,9 +211,21 @@ export default function PromoBoardPage() {
           ctx.beginPath();
           if (isVert) { ctx.moveTo(-thickness/2, -cSize + arrowHead); ctx.lineTo(thickness/2, -cSize + arrowHead); ctx.lineTo(thickness/2, cSize - arrowHead); ctx.lineTo(-thickness/2, cSize - arrowHead); }
           else { ctx.moveTo(-cSize + arrowHead, -thickness/2); ctx.lineTo(cSize - arrowHead, -thickness/2); ctx.lineTo(cSize - arrowHead, thickness/2); ctx.lineTo(-cSize + arrowHead, thickness/2); }
-          ctx.closePath(); ctx.fillStyle = element.color; ctx.fill(); ctx.stroke();
+          ctx.closePath();
+          const barGrad = ctx.createLinearGradient(isVert ? -thickness/2 : -cSize, isVert ? -cSize : -thickness/2, isVert ? thickness/2 : cSize, isVert ? cSize : thickness/2);
+          barGrad.addColorStop(0, element.color); barGrad.addColorStop(0.5, '#ffffffaa'); barGrad.addColorStop(1, hexToRgba(element.color, 0.8));
+          ctx.fillStyle = barGrad; ctx.fill(); ctx.stroke();
+        };
+        const drawArrowHead = (tx: number, ty: number, rot: number) => {
+          ctx.save(); ctx.translate(tx, ty); ctx.rotate(rot); ctx.beginPath();
+          ctx.moveTo(0, 0); ctx.lineTo(-arrowHead, arrowHead); ctx.lineTo(arrowHead, arrowHead); ctx.closePath();
+          const headGrad = ctx.createLinearGradient(-arrowHead, 0, arrowHead, arrowHead);
+          headGrad.addColorStop(0, element.color); headGrad.addColorStop(0.5, '#ffffffaa'); headGrad.addColorStop(1, hexToRgba(element.color, 0.8));
+          ctx.fillStyle = headGrad; ctx.fill(); ctx.stroke(); ctx.restore();
         };
         drawCrossBar(false); drawCrossBar(true);
+        drawArrowHead(0, -cSize, 0); drawArrowHead(cSize, 0, Math.PI/2);
+        drawArrowHead(0, cSize, Math.PI); drawArrowHead(-cSize, 0, -Math.PI/2);
         ctx.restore();
         break;
       case 'player':
@@ -217,6 +245,31 @@ export default function PromoBoardPage() {
         for(let i=-1; i<=1; i++) {
           ctx.save(); ctx.translate(i * (width/3) * 0.8, 0); ctx.beginPath(); ctx.ellipse(0, 0, width/6, height/2, 0, 0, Math.PI * 2); ctx.fillStyle = element.color; ctx.fill(); ctx.restore();
         }
+        ctx.restore();
+        break;
+      case 'ladder':
+        ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/200, height/50);
+        ctx.strokeStyle = '#334155'; ctx.lineWidth = 5; ctx.strokeRect(-100, -25, 200, 50);
+        ctx.lineWidth = 3; ctx.strokeStyle = element.color;
+        for(let x=-100; x<=100; x+=40) { ctx.beginPath(); ctx.moveTo(x, -25); ctx.lineTo(x, 25); ctx.stroke(); }
+        ctx.restore();
+        break;
+      case 'hurdle':
+        ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/60, height/30);
+        ctx.strokeStyle = element.color; ctx.lineWidth = 6;
+        ctx.beginPath(); ctx.moveTo(-30, 15); ctx.lineTo(-30, -15); ctx.lineTo(30, -15); ctx.lineTo(30, 15); ctx.stroke();
+        ctx.restore();
+        break;
+      case 'minigoal':
+        ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/100, height/60);
+        ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(-50, -30, 100, 60);
+        ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 5; ctx.strokeRect(-50, -30, 100, 60);
+        ctx.restore();
+        break;
+      case 'pica':
+        ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/36, height/80);
+        ctx.beginPath(); ctx.arc(0, 30, 18, 0, Math.PI * 2); ctx.fillStyle = '#334155'; ctx.fill();
+        ctx.fillStyle = element.color; ctx.fillRect(-4, -40, 8, 70);
         ctx.restore();
         break;
     }
@@ -267,9 +320,25 @@ export default function PromoBoardPage() {
     const pNum = tool === 'player' ? elements.filter(e => e.type === 'player').length + 1 : undefined;
     const defW = tool === 'ladder' ? 0.15 : (['minigoal', 'cross-arrow', 'barrier'].includes(tool) ? 0.1 : 0.05);
     const defH = tool === 'ladder' ? 0.05 : (['minigoal', 'cross-arrow', 'barrier'].includes(tool) ? 0.08 : 0.05);
-    const newEl: DrawingElement = { id: `el-${Date.now()}`, type: tool, points: [{ x: 0.5 - defW/2, y: 0.5 - defH/2 }, { x: 0.5 + defW/2, y: 0.5 + defH/2 }], controlPoint: ['arrow', 'double-arrow', 'zigzag'].includes(tool) ? { x: 0.5, y: 0.45 } : undefined, color: currentColor, rotation: 0, lineStyle: 'solid', number: pNum, opacity: 1.0, text: tool === 'text' ? "CONSIGNA PROMO" : undefined };
+    const newEl: DrawingElement = { 
+      id: `el-${Date.now()}`, 
+      type: tool, 
+      points: [{ x: 0.5 - defW/2, y: 0.5 - defH/2 }, { x: 0.5 + defW/2, y: 0.5 + defH/2 }], 
+      controlPoint: ['arrow', 'double-arrow', 'zigzag'].includes(tool) ? { x: 0.5, y: 0.45 } : undefined, 
+      color: currentColor, 
+      rotation: 0, 
+      lineStyle: 'solid', 
+      number: pNum, 
+      opacity: 1.0, 
+      text: tool === 'text' ? "CONSIGNA PROMO" : undefined 
+    };
     setElements(prev => [...prev, newEl]); setSelectedIds([newEl.id]); setActiveTool('select');
-    if (tool === 'text') { setTimeout(() => { const v = window.prompt("TEXTO PROMO:", "CONSIGNA PROMO"); if(v) setElements(prev => prev.map(el => el.id === newEl.id ? {...el, text: v.toUpperCase()} : el)); }, 100); }
+    if (tool === 'text') { 
+      setTimeout(() => { 
+        const v = window.prompt("TEXTO PROMO:", "CONSIGNA PROMO"); 
+        if(v) setElements(prev => prev.map(el => el.id === newEl.id ? {...el, text: v.toUpperCase()} : el)); 
+      }, 100); 
+    }
   };
 
   const handlePointerDown = (e: React.PointerEvent) => {
@@ -354,6 +423,14 @@ export default function PromoBoardPage() {
 
   const handlePointerUp = () => { isDrawing.current = false; interactionMode.current = 'none'; activeHandleIndex.current = null; };
 
+  const handleEditText = () => {
+    const el = elements.find(e => e.id === selectedIds[0]);
+    if (el && el.type === 'text') {
+      const val = window.prompt("EDITAR TEXTO PROMO:", el.text);
+      if (val !== null) setElements(prev => prev.map(e => e.id === el.id ? { ...e, text: val.toUpperCase() } : e));
+    }
+  };
+
   const selectedElements = elements.filter(e => selectedIds.includes(e.id));
   const commonOpacity = selectedElements.length > 0 ? selectedElements[0].opacity : 1.0;
 
@@ -396,11 +473,22 @@ export default function PromoBoardPage() {
                   <button key={c.id} onClick={() => setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, color: c.value} : el))} className={cn("h-6 w-6 rounded-full border-2 transition-all", selectedElements.every(el => el.color === c.value) ? "border-white scale-110" : "border-transparent opacity-40 hover:opacity-100")} style={{ backgroundColor: c.value }} />
                 ))}
               </div>
-              <div className="flex flex-col gap-2 w-24 px-2">
+              <div className="flex flex-col gap-2 w-32 px-2">
                 <div className="flex justify-between items-center"><span className="text-[8px] font-black text-white/40 uppercase">Opacidad</span><span className="text-[8px] font-black text-primary">{Math.round(commonOpacity * 100)}%</span></div>
                 <Slider value={[commonOpacity * 100]} min={10} max={100} onValueChange={(v) => setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, opacity: v[0] / 100} : el))} />
               </div>
-              <Button variant="outline" size="icon" className="h-9 w-9 border-rose-500/20 text-rose-500/40 hover:text-rose-500" onClick={() => { setElements(prev => prev.filter(el => !selectedIds.includes(el.id))); setSelectedIds([]); }}><Trash2 className="h-4 w-4" /></Button>
+              {selectedElements.length === 1 && selectedElements[0].type === 'text' && (
+                <Button variant="outline" size="sm" onClick={handleEditText} className="h-9 border-primary/20 bg-primary/5 text-primary font-black uppercase text-[9px]">
+                  <Pencil className="h-3 w-3 mr-2" /> Editar
+                </Button>
+              )}
+              <div className="flex gap-1">
+                <Button variant="outline" size="icon" className="h-9 w-9 border-white/10 text-white/40 hover:text-white" onClick={() => {
+                  const next = selectedElements.map(el => ({ ...el, id: `el-${Date.now()}-${Math.random()}`, points: el.points.map(p => ({ x: p.x + 0.02, y: p.y + 0.02 })) }));
+                  setElements(prev => [...prev, ...next]); setSelectedIds(next.map(e => e.id));
+                }}><Copy className="h-4 w-4" /></Button>
+                <Button variant="outline" size="icon" className="h-9 w-9 border-rose-500/20 text-rose-500/40 hover:text-rose-500" onClick={() => { setElements(prev => prev.filter(el => !selectedIds.includes(el.id))); setSelectedIds([]); }}><Trash2 className="h-4 w-4" /></Button>
+              </div>
             </div>
           )}
         </div>
