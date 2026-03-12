@@ -17,7 +17,8 @@ import {
   Flame,
   Vibrate,
   ShieldAlert,
-  History
+  History,
+  Timer
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,13 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -45,7 +53,9 @@ export default function WatchConfigPage() {
     autoConfirmSubs: false,
     alertMatchTime: true,
     timeIncrement: 1,
-    syncMasterTimer: true
+    syncMasterTimer: true,
+    intervalAlertsActive: true,
+    changeInterval: "5"
   });
 
   const handleSaveProtocol = () => {
@@ -181,6 +191,37 @@ export default function WatchConfigPage() {
                   <Badge className="bg-primary/10 text-primary border-primary/20 font-black px-4 py-1.5 rounded-none uppercase text-[10px] tracking-widest min-w-[80px] text-center">
                     {config.fatigueThreshold} MIN
                   </Badge>
+                </div>
+              </div>
+
+              {/* NUEVA LÓGICA DE INTERVALOS DE AVISO */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+                <div className="space-y-1 max-w-sm">
+                  <h4 className="text-sm font-black text-white uppercase italic">Intervalos de Aviso de Cambio</h4>
+                  <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest leading-relaxed">
+                    Notificar sugerencias de rotación en intervalos fijos de tiempo.
+                  </p>
+                </div>
+                <div className="flex items-center gap-6">
+                  <Select 
+                    value={config.changeInterval} 
+                    onValueChange={(v) => setConfig({...config, changeInterval: v})}
+                    disabled={!config.intervalAlertsActive}
+                  >
+                    <SelectTrigger className="w-[180px] h-10 bg-white/5 border-primary/20 text-[10px] font-black uppercase tracking-widest">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#0a0f18] border-primary/20">
+                      <SelectItem value="5" className="text-[10px] font-black uppercase">Cada 5 Minutos</SelectItem>
+                      <SelectItem value="8" className="text-[10px] font-black uppercase">Cada 8 Minutos</SelectItem>
+                      <SelectItem value="half" className="text-[10px] font-black uppercase">Mitad del Tiempo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Switch 
+                    checked={config.intervalAlertsActive} 
+                    onCheckedChange={(v) => setConfig({...config, intervalAlertsActive: v})}
+                    className="data-[state=checked]:bg-primary"
+                  />
                 </div>
               </div>
 
