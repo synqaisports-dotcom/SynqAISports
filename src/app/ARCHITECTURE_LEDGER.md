@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v9.12.0 (Edición Estratégica)
+# SynqSports Pro - ARCHITECTURE_LEDGER v9.13.0 (Edición Estratégica)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro. Es el ADN del proyecto y debe preservarse íntegramente en cada iteración.
 
@@ -46,7 +46,7 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
     - Ads Integration: Incorporación de placeholders de publicidad no intrusiva en terminales Promo.
 - **v9.10.1**: **Estabilidad de Iconos**: Corrección de importación de `lucide-react`.
 
-## 7. Modelo de Negocio y Blindaje Estratégico (v9.11.0 - v9.12.0)
+## 7. Modelo de Negocio y Blindaje Estratégico (v9.11.0 - v9.13.0)
 - **v9.11.0**: **PROTOCOLO_NEGOCIO_DUAL**:
     - **Modelo Dual-Surcharge**: Estructura de 12€ (SynqAI) + 12€ (Margen Club) por atleta/año.
     - **Revenue Share 60/40**: Reparto de ingresos publicitarios.
@@ -54,3 +54,7 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 - **v9.12.0**: **CEPO_DE_DATOS_ABSOLUTO**:
     - Requisito técnico obligatorio de `Tutor_Email` en cada ficha de jugador, independientemente de la edad o el rol. 
     - Garantiza la integridad del inventario publicitario y el despliegue futuro de las Apps de Tutor y Jugador.
+- **v9.13.0**: **PROTOCOLO_SINCRONIZACIÓN_PERIFÉRICA**:
+    - Implementación del "Watch Synchronization Hub" en la Pizarra de Partido.
+    - Centralización de la lógica de cambios y tiempos: La Pizarra actúa como servidor de eventos para el Smartwatch.
+    - Sistema de Alertas Tácticas por telemetría (simulada) para sugerencias de sustitución automáticas.

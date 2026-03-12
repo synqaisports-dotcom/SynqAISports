@@ -20,7 +20,11 @@ import {
   Camera,
   Dna,
   Eye,
-  Megaphone
+  Megaphone,
+  Watch,
+  Activity,
+  ArrowRight,
+  ShieldAlert
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -47,6 +51,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 
 const TIME_PRESETS = [
   { label: "15 min", value: 15 },
@@ -140,6 +145,7 @@ const MemoizedPlayerChip = memo(PlayerChip);
 
 export default function MatchBoardPage() {
   const { profile } = useAuth();
+  const { toast } = useToast();
   const [timeLeft, setTimeLeft] = useState(45 * 60);
   const [isRunning, setIsRunning] = useState(false);
   const [score, setScore] = useState({ home: 0, guest: 0 });
@@ -168,6 +174,10 @@ export default function MatchBoardPage() {
 
   const fieldRef = useRef<HTMLDivElement>(null);
 
+  // ESTADO DE SINCRONIZACIÓN PERIFÉRICA (Smartwatch)
+  const [watchConnected, setWatchConnected] = useState(true);
+  const [watchAlert, setWatchAlert] = useState<string | null>(null);
+
   const hasClub = !!profile?.clubId;
   const isCoach = profile?.role === "coach" || profile?.role === "club_admin" || profile?.role === "superadmin";
   const isPromo = profile?.plan === "free";
@@ -195,17 +205,29 @@ export default function MatchBoardPage() {
     setGuestFormation(defaultFormations[fieldType]);
   }, [fieldType]);
 
+  // LÓGICA DE TIEMPOS Y ALERTAS PERIFÉRICAS
   useEffect(() => {
     let interval: any;
     if (isRunning && timeLeft > 0) {
       interval = setInterval(() => {
-        setTimeLeft(prev => prev - 1);
+        setTimeLeft(prev => {
+          const next = prev - 1;
+          // Simulación de Alerta de Smartwatch (ej: al llegar al min 25)
+          if (next === (25 * 60)) {
+            setWatchAlert("CAMBIO_SUGERIDO: Jugador #10 (Fatiga)");
+            toast({
+              title: "WATCH_ALERT",
+              description: "Sugerencia de cambio recibida desde Smartwatch.",
+            });
+          }
+          return next;
+        });
       }, 1000);
     } else if (timeLeft === 0) {
       setIsRunning(false);
     }
     return () => clearInterval(interval);
-  }, [isRunning, timeLeft]);
+  }, [isRunning, timeLeft, toast]);
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -451,6 +473,9 @@ export default function MatchBoardPage() {
       
       return newRoster;
     });
+    
+    // Limpiar alertas si se ejecuta el cambio
+    setWatchAlert(null);
   };
 
   const currentFormations = useMemo(() => Object.keys(FORMATIONS_DATA[fieldType]), [fieldType]);
@@ -477,6 +502,13 @@ export default function MatchBoardPage() {
             <h1 className="text-sm lg:text-lg font-headline font-black text-white italic tracking-tighter uppercase leading-none truncate">Partido</h1>
           </div>
 
+          <div className="hidden xl:flex items-center gap-2 px-4 py-1.5 bg-primary/5 border border-primary/20 rounded-full animate-in slide-in-from-left-4">
+             <Watch className={cn("h-3 w-3 transition-colors", watchConnected ? "text-primary animate-pulse" : "text-white/20")} />
+             <span className="text-[8px] font-black text-primary/60 uppercase tracking-widest">
+               {watchConnected ? 'WATCH_SYNC_CONNECTED' : 'WATCH_OFFLINE'}
+             </span>
+          </div>
+
           {showTeamSelector && (
             <div className="hidden sm:block">
               <Select value={selectedTeamId} onValueChange={handleTeamChange}>
@@ -494,13 +526,6 @@ export default function MatchBoardPage() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-          )}
-
-          {isPromo && (
-            <div className="hidden lg:flex items-center gap-4 bg-primary/5 border border-primary/20 px-6 py-2 rounded-2xl animate-in zoom-in-95">
-               <Megaphone className="h-4 w-4 text-primary/40" />
-               <span className="text-[9px] font-black text-primary/40 uppercase tracking-[0.5em]">Ad_Space_Reserved</span>
             </div>
           )}
         </div>
@@ -615,6 +640,29 @@ export default function MatchBoardPage() {
               ))}
             </div>
           </TacticalField>
+
+          {/* HUB DE NOTIFICACIONES SMARTWATCH (CENTRO DE MANDO) */}
+          {watchAlert && (
+            <div className="absolute top-32 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-top-8 duration-500">
+               <div className="bg-black/80 backdrop-blur-2xl border-2 border-primary rounded-3xl p-6 shadow-[0_0_50px_rgba(0,242,255,0.3)] flex items-center gap-6 group">
+                  <div className="h-12 w-12 bg-primary/20 rounded-2xl flex items-center justify-center border border-primary/40 pulse-glow">
+                    <Activity className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Protocolo_Biométrico_Watch</p>
+                    <p className="text-sm font-black text-white uppercase italic">{watchAlert}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={() => setWatchAlert(null)} variant="ghost" className="h-10 w-10 p-0 text-white/20 hover:text-rose-500 rounded-xl">
+                      <X className="h-5 w-5" />
+                    </Button>
+                    <Button onClick={() => { setWatchAlert(null); toast({ title: "SINCRO_ACTIVA", description: "Cambio procesado desde el centro de mando." }); }} className="h-10 bg-primary text-black font-black uppercase text-[10px] rounded-xl px-4">
+                      PROCESAR <ArrowRight className="h-3 w-3 ml-2" />
+                    </Button>
+                  </div>
+               </div>
+            </div>
+          )}
 
           {isPromo && (
             <div className="absolute bottom-24 left-1/2 -translate-x-1/2 w-full max-w-xl h-12 bg-black/60 border border-white/5 rounded-xl flex items-center justify-center gap-4 z-40 hidden md:flex">
@@ -893,4 +941,8 @@ function PlayerListItem({ player, isSub, onDrop }: { player: any, isSub?: boolea
       </Badge>
     </div>
   );
+}
+
+function X(props: any) {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M18 6L6 18M6 6l12 12" /></svg>
 }
