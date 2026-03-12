@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v9.10.1 (Edición de Estabilidad)
+# SynqSports Pro - ARCHITECTURE_LEDGER v9.11.0 (Edición Estratégica)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro. Es el ADN del proyecto y debe preservarse íntegramente en cada iteración.
 
@@ -44,3 +44,11 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
     - Sandbox Promo: Límite de 20 ejercicios (4 Calentamientos, 12 Partes Principales, 4 Vueltas a la Calma) y 4 Sesiones.
     - Ads Integration: Incorporación de placeholders de publicidad no intrusiva en terminales Promo.
 - **v9.10.1**: **Estabilidad de Iconos**: Corrección de importación errónea de `lucide-center` a `lucide-react` en el terminal de acceso.
+
+## 7. Modelo de Negocio y Blindaje Estratégico (v9.11.0)
+- **v9.11.0**: **PROTOCOLO_NEGOCIO_DUAL**:
+    - **Modelo Dual-Surcharge**: Estructura de 12€ (SynqAI) + 12€ (Margen Club) por atleta/año. El software actúa como centro de beneficios para la entidad.
+    - **Revenue Share 60/40**: Reparto de ingresos publicitarios (60% Club / 40% SynqAI) para incentivar el uso en redes gratuitas y mercados emergentes.
+    - **Cepo de Datos**: Requisito técnico obligatorio de `Tutor_Email` en cada ficha de jugador. Garantiza la integridad del inventario publicitario y la captación de leads.
+    - **Blindaje Superadmin**: Acceso total y bypass exclusivo para `munozmartinez.ismael@gmail.com`.
+    - **Persistencia Híbrida**: Almacenamiento local para usuarios Promo con sincronización forzada a Firestore tras conversión a Pro.
