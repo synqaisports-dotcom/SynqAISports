@@ -16,7 +16,8 @@ import {
   UserCheck,
   Flame,
   Vibrate,
-  ShieldAlert
+  ShieldAlert,
+  History
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,7 +44,8 @@ export default function WatchConfigPage() {
     syncSubs: true,
     autoConfirmSubs: false,
     alertMatchTime: true,
-    timeIncrement: 1
+    timeIncrement: 1,
+    syncMasterTimer: true
   });
 
   const handleSaveProtocol = () => {
@@ -143,6 +145,25 @@ export default function WatchConfigPage() {
               !operationalAlertsActive && "opacity-30 pointer-events-none grayscale"
             )}>
               
+              {/* NUEVA LÓGICA DE TIEMPO SINCRO */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 p-6 bg-primary/5 border border-primary/20 rounded-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-5"><History className="h-16 w-16 text-primary" /></div>
+                <div className="space-y-1 max-w-sm relative z-10">
+                  <h4 className="text-sm font-black text-white uppercase italic">Sincronización de Cronómetro Master</h4>
+                  <p className="text-[10px] text-primary/60 font-bold uppercase tracking-widest leading-relaxed">
+                    El tiempo del Watch viene dictado por la Pizarra central. El reloj actúa como terminal espejo.
+                  </p>
+                </div>
+                <div className="flex items-center gap-4 relative z-10">
+                   <Badge variant="outline" className="border-primary/20 text-primary text-[8px] font-black tracking-widest">SOURCE: MASTER_BOARD</Badge>
+                   <Switch 
+                    checked={config.syncMasterTimer} 
+                    onCheckedChange={(v) => setConfig({...config, syncMasterTimer: v})}
+                    className="data-[state=checked]:bg-primary"
+                  />
+                </div>
+              </div>
+
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
                 <div className="space-y-1 max-w-sm">
                   <h4 className="text-sm font-black text-white uppercase italic">Umbral de Fatiga (Tiempo)</h4>
