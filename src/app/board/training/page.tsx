@@ -378,24 +378,12 @@ function TrainingBoardContent() {
 
   useEffect(() => { redrawAll(); }, [elements, selectedIds, fieldType, showLanes, redrawAll]);
 
-  const handleEditText = useCallback((id?: string) => {
-    const elId = id || selectedIds[0];
-    const el = elements.find(e => e.id === elId);
-    if (el && el.type === 'text') {
-      const val = window.prompt("EDITAR TEXTO TÁCTICO:", el.text);
-      if (val !== null) {
-        setElements(prev => prev.map(e => e.id === elId ? { ...e, text: val.toUpperCase() } : e));
-      }
-    }
-  }, [elements, selectedIds]);
-
   const addElementAtCenter = (tool: DrawingTool) => {
     const pNum = tool === 'player' ? elements.filter(e => e.type === 'player').length + 1 : undefined;
     const defW = tool === 'ladder' ? 0.15 : (tool === 'minigoal' || tool === 'cross-arrow' ? 0.1 : tool === 'barrier' ? 0.12 : tool === 'text' ? 0.3 : 0.05);
     const defH = tool === 'ladder' ? 0.05 : (tool === 'minigoal' || tool === 'cross-arrow' ? 0.08 : tool === 'barrier' ? 0.12 : 0.05);
-    const newElement: DrawingElement = { id: `el-${Date.now()}`, type: tool, points: [{ x: 0.5 - defW/2, y: 0.5 - defH/2 }, { x: 0.5 + defW/2, y: 0.5 + defH/2 }], controlPoint: ['arrow', 'double-arrow', 'zigzag'].includes(tool) ? { x: 0.5, y: 0.45 } : undefined, color: currentColor, rotation: 0, lineStyle: 'solid', number: pNum, opacity: 1.0, text: tool === 'text' ? "TEXTO TÁCTICO" : undefined };
+    const newElement: DrawingElement = { id: `el-${Date.now()}`, type: tool, points: [{ x: 0.5 - defW/2, y: 0.5 - defH/2 }, { x: 0.5 + defW/2, y: 0.5 + defH/2 }], controlPoint: ['arrow', 'double-arrow', 'zigzag'].includes(tool) ? { x: 0.5, y: 0.45 } : undefined, color: currentColor, rotation: 0, lineStyle: 'solid', number: pNum, opacity: 1.0, text: tool === 'text' ? "CONSIGNA TÁCTICA" : undefined };
     setElements(prev => [...prev, newElement]); setSelectedIds([newElement.id]); setActiveTool('select');
-    if (tool === 'text') { setTimeout(() => handleEditText(newElement.id), 100); }
   };
 
   const handlePointerDown = (e: React.PointerEvent) => {
@@ -411,7 +399,7 @@ function TrainingBoardContent() {
         const bounds = getElementBounds(el, wPx, hPx);
         if (el.controlPoint) {
           const cpPx = { x: el.controlPoint.x * wPx, y: el.controlPoint.y * hPx };
-          if (Math.sqrt(Math.pow(point.x * wPx - cpPx.x, 2) + Math.pow(point.y * heightPx - cpPx.y, 2)) < 20) { interactionMode.current = 'curving'; return; }
+          if (Math.sqrt(Math.pow(point.x * wPx - cpPx.x, 2) + Math.pow(point.y * hPx - cpPx.y, 2)) < 20) { interactionMode.current = 'curving'; return; }
         }
         const rotHandlePx = rotatePoint({ x: bounds.centerX, y: bounds.minY - 50 }, { x: bounds.centerX, y: bounds.centerY }, el.rotation);
         if (Math.sqrt(Math.pow(point.x * wPx - rotHandlePx.x, 2) + Math.pow(point.y * hPx - rotHandlePx.y, 2)) < 20) { interactionMode.current = 'rotating'; return; }
@@ -426,15 +414,13 @@ function TrainingBoardContent() {
     const clicked = [...elements].reverse().find(el => {
       const bounds = getElementBounds(el, wPx, hPx);
       const local = rotatePoint({ x: point.x * wPx, y: point.y * hPx }, { x: bounds.centerX, y: bounds.centerY }, -el.rotation);
-      const hitPadding = el.type === 'text' ? 20 : 10;
+      const hitPadding = el.type === 'text' ? 25 : 10;
       return local.x >= bounds.minX - hitPadding && local.x <= bounds.maxX + hitPadding && local.y >= bounds.minY - hitPadding && local.y <= bounds.maxY + hitPadding;
     });
 
     if (clicked) {
-      const isAlreadySelected = selectedIds.includes(clicked.id);
       if (e.shiftKey) setSelectedIds(prev => prev.includes(clicked.id) ? prev.filter(id => id !== clicked.id) : [...prev, clicked.id]);
-      else if (!isAlreadySelected) setSelectedIds([clicked.id]);
-      if (clicked.type === 'text' && isAlreadySelected && !e.shiftKey) { handleEditText(clicked.id); }
+      else setSelectedIds([clicked.id]);
       setActiveTool('select'); interactionMode.current = 'dragging';
     } else setSelectedIds([]);
     redrawAll();
@@ -495,15 +481,16 @@ function TrainingBoardContent() {
   return (
     <div className="h-full flex flex-col bg-[#04070c] overflow-hidden">
       <header className="h-20 border-b border-amber-500/20 bg-black/60 backdrop-blur-3xl flex items-center justify-between px-4 lg:px-8 shrink-0 z-50">
-        <div className="flex items-center gap-8">
-          <div className="flex flex-col">
+        <div className="flex items-center gap-8 overflow-hidden">
+          <div className="flex flex-col shrink-0">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-amber-500 animate-pulse" />
-              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Precision_v9.7.5</span>
+              <span className="text-[10px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Precision_v9.8.0</span>
             </div>
             <h1 className="text-lg lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase leading-none">Estudio Élite</h1>
           </div>
-          <div className="hidden md:flex items-center gap-3">
+          
+          <div className="hidden md:flex items-center gap-3 shrink-0">
             <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}>
               <SelectTrigger className="w-[160px] h-11 bg-white/5 border-amber-500/20 rounded-xl text-[10px] font-black uppercase text-amber-500">
                 <LayoutGrid className="h-3.5 w-3.5 mr-2" /> <SelectValue />
@@ -517,44 +504,57 @@ function TrainingBoardContent() {
             <Button variant="outline" onClick={() => setShowLanes(!showLanes)} className={cn("h-11 px-4 border-amber-500/20 text-[10px] font-black uppercase", showLanes ? "bg-amber-500 text-black shadow-[0_0_20px_rgba(245,158,11,0.3)]" : "bg-white/5 text-amber-500/40")}>
               <Columns3 className="h-4 w-4 mr-2" /> Carriles
             </Button>
+          </div>
 
-            {selectedIds.length > 0 && (
-              <div className="flex items-center gap-2 pl-4 border-l border-white/10 animate-in slide-in-from-left-4 fade-in duration-300">
+          {selectedIds.length > 0 && (
+            <div className="flex items-center gap-2 pl-4 border-l border-white/10 animate-in slide-in-from-left-4 fade-in duration-300">
+              {selectedElements.length === 1 && selectedElements[0].type === 'text' ? (
+                <div className="flex items-center gap-2 px-3 bg-black/40 border border-amber-500/30 rounded-2xl">
+                  <Type className="h-4 w-4 text-amber-500" />
+                  <Input 
+                    value={selectedElements[0].text || ""} 
+                    onChange={(e) => {
+                      const val = e.target.value.toUpperCase();
+                      setElements(prev => prev.map(el => el.id === selectedIds[0] ? { ...el, text: val } : el));
+                    }}
+                    placeholder="ESCRIBIR CONSIGN..."
+                    className="h-10 w-48 lg:w-64 bg-transparent border-none text-amber-500 font-black uppercase text-[11px] focus-visible:ring-0 placeholder:text-amber-500/20"
+                  />
+                </div>
+              ) : (
                 <div className="flex gap-1.5 p-1 bg-black/40 border border-white/5 rounded-xl mr-2">
                   {COLORS.map(c => (
                     <button key={c.id} onClick={() => setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, color: c.value} : el))} className={cn("h-6 w-6 rounded-full border-2 transition-all", selectedElements.every(el => el.color === c.value) ? "border-white scale-110" : "border-transparent opacity-40 hover:opacity-100")} style={{ backgroundColor: c.value }} />
                   ))}
                 </div>
-                <div className="flex flex-col gap-2 w-32 px-2">
-                  <div className="flex justify-between items-center"><span className="text-[8px] font-black text-white/40 uppercase tracking-widest">Opacidad</span><span className="text-[8px] font-black text-amber-500">{Math.round(commonOpacity * 100)}%</span></div>
-                  <Slider value={[commonOpacity * 100]} min={10} max={100} step={1} onValueChange={(val) => setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, opacity: val[0] / 100} : el))} className="w-full" />
-                </div>
-                {selectedElements.length === 1 && (
-                  <>
-                    {!isMaterial(selectedElements[0].type) && selectedElements[0].type !== 'text' && (
-                      <Button variant="outline" size="sm" className={cn("h-9 border-white/10 text-[9px] font-black uppercase", selectedElements[0].lineStyle === 'dashed' ? 'bg-amber-500 text-black' : 'text-white/40')} onClick={() => setElements(prev => prev.map(el => el.id === selectedIds[0] ? {...el, lineStyle: el.lineStyle === 'solid' ? 'dashed' : 'solid'} : el))}>
-                        {selectedElements[0].lineStyle === 'dashed' ? 'Discontinua' : 'Sólida'}
-                      </Button>
-                    )}
-                    {selectedElements[0].type === 'text' && (
-                      <Button variant="outline" size="sm" onClick={() => handleEditText()} className="h-9 border-amber-500/20 bg-amber-500/5 text-amber-500 font-black uppercase text-[9px]">
-                        <Pencil className="h-3 w-3 mr-2" /> Editar Texto
-                      </Button>
-                    )}
-                    {selectedElements[0].type === 'player' && (
-                      <Input type="number" value={selectedElements[0].number || 1} onChange={(e) => setElements(prev => prev.map(el => el.id === selectedIds[0] ? {...el, number: parseInt(e.target.value)} : el))} className="h-9 w-12 bg-black/40 border-amber-500/20 text-amber-500 font-black text-xs text-center rounded-lg" />
-                    )}
-                  </>
-                )}
-                <div className="flex gap-1">
-                  <Button variant="outline" size="icon" className="h-9 w-9 border-white/10 text-white/40 hover:text-white" onClick={() => { const next = selectedElements.map(el => ({ ...el, id: `el-${Date.now()}-${Math.random()}`, points: el.points.map(p => ({ x: p.x + 0.02, y: p.y + 0.02 })) })); setElements(prev => [...prev, ...next]); setSelectedIds(next.map(e => e.id)); }}><Copy className="h-4 w-4" /></Button>
-                  <Button variant="outline" size="icon" className="h-9 w-9 border-rose-500/20 text-rose-500/40 hover:text-rose-500" onClick={() => { setElements(prev => prev.filter(el => !selectedIds.includes(el.id))); setSelectedIds([]); }}><Trash2 className="h-4 w-4" /></Button>
-                </div>
+              )}
+              
+              <div className="flex flex-col gap-2 w-24 lg:w-32 px-2 hidden sm:flex">
+                <div className="flex justify-between items-center"><span className="text-[8px] font-black text-white/40 uppercase tracking-widest">Opacidad</span><span className="text-[8px] font-black text-amber-500">{Math.round(commonOpacity * 100)}%</span></div>
+                <Slider value={[commonOpacity * 100]} min={10} max={100} step={1} onValueChange={(val) => setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, opacity: val[0] / 100} : el))} className="w-full" />
               </div>
-            )}
-          </div>
+
+              {selectedElements.length === 1 && (
+                <>
+                  {!isMaterial(selectedElements[0].type) && selectedElements[0].type !== 'text' && (
+                    <Button variant="outline" size="sm" className={cn("h-9 border-white/10 text-[9px] font-black uppercase hidden lg:flex", selectedElements[0].lineStyle === 'dashed' ? 'bg-amber-500 text-black' : 'text-white/40')} onClick={() => setElements(prev => prev.map(el => el.id === selectedIds[0] ? {...el, lineStyle: el.lineStyle === 'solid' ? 'dashed' : 'solid'} : el))}>
+                      {selectedElements[0].lineStyle === 'dashed' ? 'Discontinua' : 'Sólida'}
+                    </Button>
+                  )}
+                  {selectedElements[0].type === 'player' && (
+                    <Input type="number" value={selectedElements[0].number || 1} onChange={(e) => setElements(prev => prev.map(el => el.id === selectedIds[0] ? {...el, number: parseInt(e.target.value)} : el))} className="h-9 w-12 bg-black/40 border-amber-500/20 text-amber-500 font-black text-xs text-center rounded-lg" />
+                  )}
+                </>
+              )}
+              
+              <div className="flex gap-1">
+                <Button variant="outline" size="icon" className="h-9 w-9 border-white/10 text-white/40 hover:text-white" onClick={() => { const next = selectedElements.map(el => ({ ...el, id: `el-${Date.now()}-${Math.random()}`, points: el.points.map(p => ({ x: p.x + 0.02, y: p.y + 0.02 })) })); setElements(prev => [...prev, ...next]); setSelectedIds(next.map(e => e.id)); }}><Copy className="h-4 w-4" /></Button>
+                <Button variant="outline" size="icon" className="h-9 w-9 border-rose-500/20 text-rose-500/40 hover:text-rose-500" onClick={() => { setElements(prev => prev.filter(el => !selectedIds.includes(el.id))); setSelectedIds([]); }}><Trash2 className="h-4 w-4" /></Button>
+              </div>
+            </div>
+          )}
         </div>
-        <Button onClick={() => setIsSaveSheetOpen(true)} className="h-11 bg-amber-500 text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl shadow-[0_0_25px_rgba(245,158,11,0.3)] border-none">
+        <Button onClick={() => setIsSaveSheetOpen(true)} className="h-11 bg-amber-500 text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl shadow-[0_0_25px_rgba(245,158,11,0.3)] border-none shrink-0">
           <Save className="h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">Guardar Táctica</span>
         </Button>
       </header>
@@ -592,14 +592,14 @@ function TrainingBoardContent() {
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-3">
                   <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Etapa Federativa</Label>
-                  <Select value={saveFormData.stage} onValueChange={(v) => setSaveFormData({...saveFormData, stage: v})}>
+                  <Select value={saveFormData.stage} onValueChange={(v) => setSaveFormData({...formData, stage: v})}>
                     <SelectTrigger className="h-12 bg-black/40 border-amber-500/20 rounded-xl text-white font-bold uppercase text-[10px]"><SelectValue /></SelectTrigger>
                     <SelectContent className="bg-[#0a0f18] border-amber-500/20">{STAGES.map(s => <SelectItem key={s} value={s} className="text-[10px] font-black uppercase">{s}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-3">
                   <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Dimensión</Label>
-                  <Select value={saveFormData.dimension} onValueChange={(v) => setSaveFormData({...saveFormData, dimension: v})}>
+                  <Select value={saveFormData.dimension} onValueChange={(v) => setSaveFormData({...formData, dimension: v})}>
                     <SelectTrigger className="h-12 bg-black/40 border-amber-500/20 rounded-xl text-white font-bold uppercase text-[10px]"><SelectValue /></SelectTrigger>
                     <SelectContent className="bg-[#0a0f18] border-amber-500/20"><SelectItem value="Táctica" className="text-[10px] font-black uppercase">Táctica</SelectItem><SelectItem value="Técnica" className="text-[10px] font-black uppercase">Técnica</SelectItem><SelectItem value="Física" className="text-[10px] font-black uppercase">Física</SelectItem></SelectContent>
                   </Select>

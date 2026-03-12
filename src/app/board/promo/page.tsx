@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import { Input } from "@/components/ui/input";
 import { TacticalField, FieldType } from "@/components/board/TacticalField";
 import { BoardToolbar, DrawingTool } from "@/components/board/BoardToolbar";
 import { 
@@ -44,7 +45,6 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -232,21 +232,12 @@ export default function PromoBoardPage() {
 
   useEffect(() => { redrawAll(); }, [elements, selectedIds, fieldType, redrawAll]);
 
-  const handleEditText = useCallback((id?: string) => {
-    const elId = id || selectedIds[0]; const el = elements.find(e => e.id === elId);
-    if (el && el.type === 'text') {
-      const val = window.prompt("EDITAR TEXTO PROMO:", el.text);
-      if (val !== null) setElements(prev => prev.map(e => e.id === elId ? { ...e, text: val.toUpperCase() } : e));
-    }
-  }, [elements, selectedIds]);
-
   const addElementAtCenter = (tool: DrawingTool) => {
     if (isLocked) return; const pNum = tool === 'player' ? elements.filter(e => e.type === 'player').length + 1 : undefined;
     const defW = tool === 'ladder' ? 0.15 : (['minigoal', 'cross-arrow', 'barrier'].includes(tool) ? 0.1 : tool === 'text' ? 0.3 : 0.05);
     const defH = tool === 'ladder' ? 0.05 : (['minigoal', 'cross-arrow', 'barrier'].includes(tool) ? 0.08 : 0.05);
     const newEl: DrawingElement = { id: `el-${Date.now()}`, type: tool, points: [{ x: 0.5 - defW/2, y: 0.5 - defH/2 }, { x: 0.5 + defW/2, y: 0.5 + defH/2 }], controlPoint: ['arrow', 'double-arrow', 'zigzag'].includes(tool) ? { x: 0.5, y: 0.45 } : undefined, color: currentColor, rotation: 0, lineStyle: 'solid', number: pNum, opacity: 1.0, text: tool === 'text' ? "CONSIGNA PROMO" : undefined };
     setElements(prev => [...prev, newEl]); setSelectedIds([newEl.id]); setActiveTool('select');
-    if (tool === 'text') { setTimeout(() => handleEditText(newEl.id), 100); }
   };
 
   const handlePointerDown = (e: React.PointerEvent) => {
@@ -272,15 +263,13 @@ export default function PromoBoardPage() {
 
     const clicked = [...elements].reverse().find(el => {
       const b = getElementBounds(el, wPx, hPx); const l = rotatePoint({ x: p.x * wPx, y: p.y * hPx }, { x: b.centerX, y: b.centerY }, -el.rotation);
-      const hitPadding = el.type === 'text' ? 20 : 10;
+      const hitPadding = el.type === 'text' ? 25 : 10;
       return l.x >= b.minX - hitPadding && l.x <= b.maxX + hitPadding && l.y >= b.minY - hitPadding && l.y <= b.maxY + hitPadding;
     });
 
     if (clicked) {
-      const isAlreadySelected = selectedIds.includes(clicked.id);
       if (e.shiftKey) setSelectedIds(prev => prev.includes(clicked.id) ? prev.filter(id => id !== clicked.id) : [...prev, clicked.id]);
-      else if (!isAlreadySelected) setSelectedIds([clicked.id]);
-      if (clicked.type === 'text' && isAlreadySelected && !e.shiftKey) { handleEditText(clicked.id); }
+      else setSelectedIds([clicked.id]);
       setActiveTool('select'); interactionMode.current = 'dragging';
     } else setSelectedIds([]);
     redrawAll();
@@ -324,31 +313,45 @@ export default function PromoBoardPage() {
   return (
     <div className="h-full flex flex-col bg-[#04070c] overflow-hidden">
       <header className="h-20 border-b border-primary/20 bg-black/60 backdrop-blur-3xl flex items-center justify-between px-4 lg:px-8 shrink-0 z-50">
-        <div className="flex items-center gap-4 lg:gap-6">
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2"><Zap className="h-4 w-4 text-primary animate-pulse" /><span className="text-[10px] font-black text-primary tracking-[0.4em] uppercase">Tactical_Board_PROMO</span></div>
+        <div className="flex items-center gap-4 lg:gap-6 overflow-hidden">
+          <div className="flex flex-col shrink-0">
+            <div className="flex items-center gap-2"><Zap className="h-4 w-4 text-primary animate-pulse" /><span className="text-[10px] font-black text-primary tracking-[0.4em] uppercase">Tactical_Board_v9.8.0</span></div>
             <h1 className="text-sm lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase leading-none">Free</h1>
           </div>
-          <div className="hidden md:flex items-center gap-3">
+          
+          <div className="hidden md:flex items-center gap-3 shrink-0">
             <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}><SelectTrigger className="w-[150px] h-10 bg-white/5 border-primary/20 rounded-xl text-[10px] font-black uppercase text-primary"><LayoutGrid className="h-3 w-3 mr-2" /> <SelectValue placeholder="Superficie" /></SelectTrigger><SelectContent className="bg-[#0a0f18] border-primary/20"><SelectItem value="f11" className="text-[10px] font-black uppercase">Fútbol 11</SelectItem><SelectItem value="f7" className="text-[10px] font-black uppercase">Fútbol 7</SelectItem><SelectItem value="futsal" className="text-[10px] font-black uppercase">Fútbol Sala</SelectItem></SelectContent></Select>
             <div className="px-4 py-1.5 bg-primary/10 border border-primary/20 rounded-full flex items-center gap-3"><span className="text-[9px] font-black text-primary uppercase">CAPACIDAD:</span><div className="h-1.5 w-16 lg:w-24 bg-black/40 rounded-full overflow-hidden"><div className={cn("h-full transition-all duration-1000", isLocked ? "bg-rose-500" : "bg-primary")} style={{ width: `${(exercisesCount / MAX_EXERCISES) * 100}%` }} /></div><span className="text-[10px] font-black text-white">{exercisesCount}/{MAX_EXERCISES}</span></div>
           </div>
+
           {selectedIds.length > 0 && (
-            <div className="flex items-center gap-2 pl-4 border-l border-white/10 animate-in fade-in duration-300">
-              <div className="flex gap-1 p-1 bg-black/40 border border-white/5 rounded-xl mr-2">
-                {COLORS.map(c => (
-                  <button key={c.id} onClick={() => setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, color: c.value} : el))} className={cn("h-6 w-6 rounded-full border-2 transition-all", selectedElements.every(el => el.color === c.value) ? "border-white scale-110" : "border-transparent opacity-40 hover:opacity-100")} style={{ backgroundColor: c.value }} />
-                ))}
-              </div>
-              <div className="flex flex-col gap-2 w-32 px-2">
+            <div className="flex items-center gap-2 pl-4 border-l border-white/10 animate-in fade-in duration-300 overflow-hidden">
+              {selectedElements.length === 1 && selectedElements[0].type === 'text' ? (
+                <div className="flex items-center gap-2 px-3 bg-black/40 border border-primary/30 rounded-2xl">
+                  <Type className="h-4 w-4 text-primary" />
+                  <Input 
+                    value={selectedElements[0].text || ""} 
+                    onChange={(e) => {
+                      const val = e.target.value.toUpperCase();
+                      setElements(prev => prev.map(el => el.id === selectedIds[0] ? { ...el, text: val } : el));
+                    }}
+                    placeholder="ESCRIBIR CONSIGN..."
+                    className="h-10 w-48 lg:w-64 bg-transparent border-none text-primary font-black uppercase text-[11px] focus-visible:ring-0 placeholder:text-primary/20"
+                  />
+                </div>
+              ) : (
+                <div className="flex gap-1 p-1 bg-black/40 border border-white/5 rounded-xl mr-2">
+                  {COLORS.map(c => (
+                    <button key={c.id} onClick={() => setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, color: c.value} : el))} className={cn("h-6 w-6 rounded-full border-2 transition-all", selectedElements.every(el => el.color === c.value) ? "border-white scale-110" : "border-transparent opacity-40 hover:opacity-100")} style={{ backgroundColor: c.value }} />
+                  ))}
+                </div>
+              )}
+              
+              <div className="flex flex-col gap-2 w-24 lg:w-32 px-2 hidden lg:flex">
                 <div className="flex justify-between items-center"><span className="text-[8px] font-black text-white/40 uppercase">Opacidad</span><span className="text-[8px] font-black text-primary">{Math.round(commonOpacity * 100)}%</span></div>
                 <Slider value={[commonOpacity * 100]} min={10} max={100} onValueChange={(v) => setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, opacity: v[0] / 100} : el))} />
               </div>
-              {selectedElements.length === 1 && selectedElements[0].type === 'text' && (
-                <Button variant="outline" size="sm" onClick={() => handleEditText()} className="h-9 border-primary/20 bg-primary/5 text-primary font-black uppercase text-[9px]">
-                  <Pencil className="h-3 w-3 mr-2" /> Editar Texto
-                </Button>
-              )}
+              
               <div className="flex gap-1">
                 <Button variant="outline" size="icon" className="h-9 w-9 border-white/10 text-white/40 hover:text-white" onClick={() => { const next = selectedElements.map(el => ({ ...el, id: `el-${Date.now()}-${Math.random()}`, points: el.points.map(p => ({ x: p.x + 0.02, y: p.y + 0.02 })) })); setElements(prev => [...prev, ...next]); setSelectedIds(next.map(e => e.id)); }}><Copy className="h-4 w-4" /></Button>
                 <Button variant="outline" size="icon" className="h-9 w-9 border-rose-500/20 text-rose-500/40 hover:text-rose-500" onClick={() => { setElements(prev => prev.filter(el => !selectedIds.includes(el.id))); setSelectedIds([]); }}><Trash2 className="h-4 w-4" /></Button>
@@ -356,7 +359,7 @@ export default function PromoBoardPage() {
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2 lg:gap-4"><Button className="h-11 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-4 lg:px-8 rounded-xl cyan-glow border-none" asChild><Link href="/login">Acceso Pro <ArrowRight className="h-4 w-4 ml-2" /></Link></Button></div>
+        <div className="flex items-center gap-2 lg:gap-4 shrink-0"><Button className="h-11 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-4 lg:px-8 rounded-xl cyan-glow border-none" asChild><Link href="/login">Acceso Pro <ArrowRight className="h-4 w-4 ml-2" /></Link></Button></div>
       </header>
       <div className="flex-1 flex overflow-hidden relative">
         <main className="flex-1 flex items-center justify-center relative overflow-hidden touch-none">

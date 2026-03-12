@@ -1,9 +1,9 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v9.7.5 (Sincronización Global)
+# SynqSports Pro - ARCHITECTURE_LEDGER v9.8.0 (Edición Integrada)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
-## 5. Protocolo de Pizarra y Dibujo (v9.7.5)
+## 5. Protocolo de Pizarra y Dibujo (v9.8.0)
 
 ### 5.1. Independencia de Resolución (v9.4.0)
 - **Coordenadas Decimales**: Migración de píxeles a sistema normalizado (0.000 a 1.000). Garantiza que los ejercicios se vean idénticos en cualquier pantalla.
@@ -13,16 +13,14 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 - **Creación Universal**: Inserción instantánea de materiales en el centro del campo.
 
 ### 5.3. Gestión de Capas y Edición (v9.7.1)
-- **Z-Index Automático**: Los materiales técnicos se renderizan por encima de los dibujos.
-- **Multiselección Pro**: Soporte para Shift+Click y edición masiva.
+- **Z-Index Automático**: Los materiales técnicos se renderizarán por encima de los dibujos. El texto siempre ocupa la capa superior absoluta.
 
 ### 5.4. Integridad Metodológica (v9.7.2)
-- **Metadata Sheet**: Integración obligatoria de ficha técnica al guardar.
+- **Metadata Sheet**: Integración obligatoria de ficha técnica dual al guardar.
 
 ### 5.5. Sincronización Funcional Promo (v9.7.3)
 - **Paridad Total**: La Pizarra Promo hereda el 100% de las herramientas del Estudio de Entrenamiento.
 
-### 5.6. Reparación de Interacción de Texto (v9.7.5)
-- **Hitbox Expansion**: Aumento del área de detección de clics en textos para facilitar la selección.
-- **Top-Layer Rendering**: El texto se dibuja ahora en la capa superior absoluta para evitar bloqueos por otros objetos.
-- **Direct Edit Fix**: Corrección de la lógica de sincronización para asegurar que el prompt de edición funcione tanto en canvas como en cabecera.
+### 5.6. Edición Directa en Toolbar (v9.8.0)
+- **Live Text Input**: Eliminación de prompts externos. La edición de texto se realiza ahora mediante un Input integrado en la cabecera que se activa al seleccionar el elemento.
+- **Hotfix de Detección**: Hitbox expandida para asegurar la selección de textos cortos o frases largas.
