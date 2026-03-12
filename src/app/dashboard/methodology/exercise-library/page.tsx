@@ -29,7 +29,8 @@ import {
   AlertCircle,
   Camera,
   Upload,
-  PencilLine
+  PencilLine,
+  ArrowRight
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -154,9 +155,9 @@ export default function ExerciseLibraryPage() {
           <Table>
             <TableHeader className="bg-white/[0.02]">
               <TableRow className="border-white/5">
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-amber-500/40">Título de la Tarea / Autor</th>
-                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-amber-500/40">Etapa Objetivada</th>
-                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-amber-500/40">Dimensión</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-amber-500/40 text-left">Título de la Tarea / Autor</th>
+                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-amber-500/40 text-center">Etapa Objetivada</th>
+                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-amber-500/40 text-center">Dimensión</th>
                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-amber-500/40 text-center">Estado</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-amber-500/40 text-right">Acciones</th>
               </TableRow>
@@ -175,10 +176,10 @@ export default function ExerciseLibraryPage() {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-center">
                     <Badge variant="outline" className="rounded-lg border-amber-500/20 text-amber-500 text-[8px] font-black px-3 py-1 uppercase">{ex.stage}</Badge>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-center">
                     <span className="text-[9px] font-black text-white/40 uppercase tracking-widest italic">{ex.dimension}</span>
                   </TableCell>
                   <TableCell className="text-center">
@@ -209,7 +210,7 @@ export default function ExerciseLibraryPage() {
           <div className="p-10 border-b border-white/5 bg-black/40">
             <SheetHeader className="space-y-4">
               <div className="flex items-center gap-3">
-                <ShieldCheck className="h-5 w-5 text-amber-500 animate-pulse" />
+                <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
                 <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500 italic">Master_Asset_Factory_v6.3</span>
               </div>
               <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left leading-none">
@@ -260,35 +261,67 @@ export default function ExerciseLibraryPage() {
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Título de la Tarea</Label>
                   <Input 
                     required
                     value={formData.title}
                     onChange={(e) => setFormData({...formData, title: e.target.value.toUpperCase()})}
                     placeholder="EJ: JUEGO ADAPTADO CONDUCCIÓN" 
-                    className="h-12 bg-white/5 border-amber-500/20 rounded-xl font-bold uppercase focus:border-amber-500 text-amber-500 placeholder:text-amber-500/20" 
+                    className="h-14 bg-white/5 border-amber-500/20 rounded-2xl font-bold uppercase focus:border-amber-500 text-amber-500 text-lg placeholder:text-amber-500/20" 
                   />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Estrategia Didáctica</Label>
                   <Input 
                     value={formData.didacticStrategy}
                     onChange={(e) => setFormData({...formData, didacticStrategy: e.target.value.toUpperCase()})}
-                    placeholder="EJ: JUEGO ADAPTADO AL FÚTBOL" 
-                    className="h-12 bg-white/5 border-amber-500/20 rounded-xl font-bold uppercase focus:border-amber-500 text-amber-500 placeholder:text-amber-500/20" 
+                    placeholder="EJ: JUEGO ADAPTADO" 
+                    className="h-14 bg-white/5 border-amber-500/20 rounded-2xl font-bold uppercase focus:border-amber-500 text-amber-500 text-lg placeholder:text-amber-500/20" 
                   />
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Etapa Federativa</Label>
+                  <Select value={formData.stage} onValueChange={(v) => setFormData({...formData, stage: v})}>
+                    <SelectTrigger className="h-14 bg-white/5 border-amber-500/20 rounded-2xl text-white font-bold uppercase text-[10px] focus:border-amber-500">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#0a0f18] border-amber-500/20 rounded-xl">
+                      {STAGES.map(s => (
+                        <SelectItem key={s} value={s} className="text-[10px] font-black uppercase">{s}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Dimensión</Label>
+                  <Select value={formData.dimension} onValueChange={(v) => setFormData({...formData, dimension: v})}>
+                    <SelectTrigger className="h-14 bg-white/5 border-amber-500/20 rounded-2xl text-white font-bold uppercase text-[10px] focus:border-amber-500">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#0a0f18] border-amber-500/20 rounded-xl">
+                      <SelectItem value="Táctica" className="text-[10px] font-black uppercase">Táctica</SelectItem>
+                      <SelectItem value="Técnica" className="text-[10px] font-black uppercase">Técnica</SelectItem>
+                      <SelectItem value="Física" className="text-[10px] font-black uppercase">Física</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-3">
                 <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Objetivos Principales</Label>
-                <Textarea 
-                  value={formData.objectives}
-                  onChange={(e) => setFormData({...formData, objectives: e.target.value})}
-                  placeholder="EJ: TRABAJAR LA CONDUCCIÓN DEL BALÓN..." 
-                  className="min-h-[80px] bg-white/5 border-amber-500/20 rounded-xl font-bold uppercase focus:border-amber-500 text-amber-500 placeholder:text-amber-500/20" 
-                />
+                <div className="relative">
+                  <Target className="absolute left-3 top-3.5 h-4 w-4 text-amber-500/40" />
+                  <Textarea 
+                    value={formData.objectives}
+                    onChange={(e) => setFormData({...formData, objectives: e.target.value})}
+                    placeholder="EJ: TRABAJAR LA CONDUCCIÓN DEL BALÓN..." 
+                    className="min-h-[100px] pl-10 bg-white/5 border-amber-500/20 rounded-2xl font-bold uppercase focus:border-amber-500 text-amber-500 placeholder:text-amber-500/20" 
+                  />
+                </div>
               </div>
             </div>
 
@@ -300,7 +333,7 @@ export default function ExerciseLibraryPage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Contenido Condicional</Label>
                   <Input 
                     value={formData.conditionalContent}
@@ -309,22 +342,22 @@ export default function ExerciseLibraryPage() {
                     className="h-12 bg-white/5 border-amber-500/20 rounded-xl font-bold uppercase focus:border-amber-500 text-amber-500 placeholder:text-amber-500/20" 
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Tiempo (Min)</Label>
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Tiempo Sugerido</Label>
                   <div className="relative">
-                    <Clock className="absolute left-3 top-3.5 h-4 w-4 text-amber-500/40" />
+                    <Clock className="absolute left-3 top-3 h-4 w-4 text-amber-500/40" />
                     <Input 
                       value={formData.time}
                       onChange={(e) => setFormData({...formData, time: e.target.value})}
-                      placeholder="EJ: 10’" 
+                      placeholder="EJ: 15’" 
                       className="pl-10 h-12 bg-white/5 border-amber-500/20 rounded-xl font-bold focus:border-amber-500 text-amber-500 placeholder:text-amber-500/20" 
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Espacio / Dimensiones</Label>
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Espacio / Área</Label>
                   <div className="relative">
-                    <Maximize2 className="absolute left-3 top-3.5 h-4 w-4 text-amber-500/40" />
+                    <Maximize2 className="absolute left-3 top-3 h-4 w-4 text-amber-500/40" />
                     <Input 
                       value={formData.space}
                       onChange={(e) => setFormData({...formData, space: e.target.value})}
@@ -335,7 +368,7 @@ export default function ExerciseLibraryPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Situación de Juego</Label>
                 <Input 
                   value={formData.gameSituation}
@@ -354,26 +387,26 @@ export default function ExerciseLibraryPage() {
               </div>
 
               <div className="space-y-6">
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Acción Técnica / Habilidad Coordinativa</Label>
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Habilidad Coordinativa / Técnica</Label>
                   <Input 
                     value={formData.technicalAction}
                     onChange={(e) => setFormData({...formData, technicalAction: e.target.value})}
-                    placeholder="EJ: CONDUCCIÓN-ARRANCADAS/FRENADAS" 
+                    placeholder="EJ: CONDUCCIÓN Y REGATE" 
                     className="h-12 bg-white/5 border-amber-500/20 rounded-xl font-bold uppercase focus:border-amber-500 text-amber-500 placeholder:text-amber-500/20" 
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Acción Táctica / Intención</Label>
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Intención Táctica Individual</Label>
                   <Input 
                     value={formData.tacticalAction}
                     onChange={(e) => setFormData({...formData, tacticalAction: e.target.value})}
-                    placeholder="EJ: SUPERAR LÍNEA MEDIANTE CAMBIO DE RITMO" 
+                    placeholder="EJ: SUPERAR OPONENTE" 
                     className="h-12 bg-white/5 border-amber-500/20 rounded-xl font-bold uppercase focus:border-amber-500 text-amber-500 placeholder:text-amber-500/20" 
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Contenido de Juego Colectivo</Label>
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Contenido Colectivo del Modelo</Label>
                   <Input 
                     value={formData.collectiveContent}
                     onChange={(e) => setFormData({...formData, collectiveContent: e.target.value})}
@@ -391,23 +424,23 @@ export default function ExerciseLibraryPage() {
                 <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-amber-500 italic">Mecánica y Normativa</h3>
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Descripción Detallada</Label>
+              <div className="space-y-3">
+                <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Descripción Dinámica</Label>
                 <Textarea 
                   value={formData.description}
                   onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  placeholder="• EL JUEGO CONSISTE EN ESTAR DENTRO DEL ESPACIO..." 
-                  className="min-h-[120px] bg-white/5 border-amber-500/20 rounded-xl font-bold focus:border-amber-500 text-amber-500 placeholder:text-amber-500/20" 
+                  placeholder="EXPLIQUE LA DINÁMICA DEL EJERCICIO..." 
+                  className="min-h-[140px] bg-white/5 border-amber-500/20 rounded-2xl font-bold focus:border-amber-500 text-amber-500 placeholder:text-amber-500/20" 
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Normas de Provocación / Normativa</Label>
+              <div className="space-y-3">
+                <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Reglas de Provocación</Label>
                 <Textarea 
                   value={formData.provocationRules}
                   onChange={(e) => setFormData({...formData, provocationRules: e.target.value})}
-                  placeholder="EJ: NO SE PUEDE PASAR AL MISMO COMODÍN DOS VECES..." 
-                  className="min-h-[80px] bg-white/5 border-amber-500/20 rounded-xl font-bold focus:border-amber-500 text-amber-500 placeholder:text-amber-500/20" 
+                  placeholder="EJ: TOQUES LIMITADOS, PUNTUACIÓN DOBLE..." 
+                  className="min-h-[100px] bg-white/5 border-amber-500/20 rounded-2xl font-bold focus:border-amber-500 text-amber-500 placeholder:text-amber-500/20" 
                 />
               </div>
             </div>
@@ -419,27 +452,39 @@ export default function ExerciseLibraryPage() {
                 <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-amber-500 italic">Consignas y Recursos</h3>
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Consignas para el Entrenador</Label>
+              <div className="space-y-3">
+                <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Consignas Clave (Coaching)</Label>
                 <Textarea 
                   value={formData.instructions}
                   onChange={(e) => setFormData({...formData, instructions: e.target.value})}
-                  placeholder="• LLEVAR EL CENTRO DE GRAVEDAD BAJO. • CONTACTOS CORTOS..." 
-                  className="min-h-[100px] bg-white/5 border-amber-500/20 rounded-xl font-bold focus:border-amber-500 text-amber-500 placeholder:text-amber-500/20" 
+                  placeholder="• BAJAR CENTRO DE GRAVEDAD • CONTACTOS CORTOS..." 
+                  className="min-h-[100px] bg-white/5 border-amber-500/20 rounded-2xl font-bold focus:border-amber-500 text-amber-500 placeholder:text-amber-500/20" 
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Material Necesario</Label>
-                <Input 
-                  value={formData.equipment}
-                  onChange={(e) => setFormData({...formData, equipment: e.target.value})}
-                  placeholder="EJ: 10 BALONES, 4 CONOS CHINOS, 2 PETOS..." 
-                  className="h-12 bg-white/5 border-amber-500/20 rounded-xl font-bold uppercase focus:border-amber-500 text-amber-500 placeholder:text-amber-500/20" 
-                />
+              <div className="space-y-3">
+                <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Material Técnico Necesario</Label>
+                <div className="relative">
+                  <Dumbbell className="absolute left-3 top-3.5 h-4 w-4 text-amber-500/40" />
+                  <Input 
+                    value={formData.equipment}
+                    onChange={(e) => setFormData({...formData, equipment: e.target.value})}
+                    placeholder="EJ: 10 BALONES, 4 CONOS, 2 PETOS..." 
+                    className="pl-10 h-12 bg-white/5 border-amber-500/20 rounded-xl font-bold uppercase focus:border-amber-500 text-amber-500 placeholder:text-amber-500/20" 
+                  />
+                </div>
               </div>
             </div>
 
+            <div className="p-8 bg-amber-500/5 border border-amber-500/20 rounded-3xl space-y-4">
+              <div className="flex items-center gap-3">
+                <ShieldCheck className="h-4 w-4 text-amber-500" />
+                <span className="text-[10px] font-black uppercase text-amber-500 tracking-widest">Protocolo de Registro Maestro</span>
+              </div>
+              <p className="text-[10px] text-amber-500/40 leading-relaxed font-bold uppercase italic">
+                Al blindar esta tarea, estará disponible para todos los entrenadores del club bajo el manual oficial de estilo.
+              </p>
+            </div>
           </form>
 
           <div className="p-10 bg-black/60 border-t border-white/5 flex gap-6">
@@ -453,7 +498,7 @@ export default function ExerciseLibraryPage() {
               disabled={loading}
               className="flex-[2] h-16 bg-amber-500 text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-2xl amber-glow hover:scale-[1.02] transition-all border-none"
             >
-              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "BLINDAR_TAREA_MAESTRA"}
+              {loading ? "SINCRO_PROCESO..." : "BLINDAR_TAREA_MAESTRA"} <ArrowRight className="h-4 w-4 ml-3" />
             </Button>
           </div>
         </SheetContent>
