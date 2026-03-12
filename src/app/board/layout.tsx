@@ -1,11 +1,30 @@
+
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
 import { DashboardSidebar } from "@/components/dashboard/Sidebar";
-import { Loader2, ChevronsRight, ChevronLeft, Maximize2, Minimize2 } from "lucide-react";
+import { Loader2, ChevronsRight, ChevronLeft, Maximize2, Minimize2, Menu, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
 import { SidebarProvider, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
+
+function BoardMobileHeader() {
+  return (
+    <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-black/60 backdrop-blur-xl border-b border-primary/20 z-[100] flex items-center px-6 justify-between">
+      <div className="flex items-center gap-3">
+        <div className="p-1.5 rounded-lg bg-primary shadow-[0_0_15px_rgba(0,242,255,0.4)]">
+          <Zap className="h-4 w-4 text-black animate-pulse" />
+        </div>
+        <span className="font-headline font-black text-lg tracking-tighter text-white uppercase italic">
+          Synq<span className="text-primary">AI</span>
+        </span>
+      </div>
+      <SidebarTrigger className="h-10 w-10 text-primary border border-primary/20 bg-primary/5 hover:bg-primary/10 rounded-xl flex items-center justify-center">
+         <Menu className="h-5 w-5" />
+      </SidebarTrigger>
+    </div>
+  );
+}
 
 function BoardTabTrigger() {
   const { state } = useSidebar();
@@ -13,7 +32,7 @@ function BoardTabTrigger() {
 
   return (
     <div 
-      className={`fixed top-1/2 -translate-y-1/2 z-[100] transition-all duration-500 ease-in-out ${
+      className={`fixed top-1/2 -translate-y-1/2 z-[100] transition-all duration-500 ease-in-out hidden lg:block ${
         isExpanded ? 'left-[16rem]' : 'left-0'
       }`}
     >
@@ -84,7 +103,9 @@ export default function BoardLayout({ children }: { children: React.ReactNode })
     <SidebarProvider defaultOpen={false}>
       <div className="h-[100dvh] w-full bg-[#020408] flex overflow-hidden relative">
         <DashboardSidebar />
+        
         <BoardTabTrigger />
+        <BoardMobileHeader />
 
         <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,242,255,0.03),transparent_70%)] pointer-events-none" />
@@ -99,7 +120,7 @@ export default function BoardLayout({ children }: { children: React.ReactNode })
             <div className="absolute inset-0 bg-primary/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
           </button>
 
-          <div className="flex-1 relative z-10 flex flex-col overflow-hidden animate-in fade-in duration-1000">
+          <div className="flex-1 relative z-10 flex flex-col overflow-hidden animate-in fade-in duration-1000 pt-16 lg:pt-0">
             {children}
           </div>
         </main>
