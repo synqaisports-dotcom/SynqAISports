@@ -17,9 +17,9 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 
 /**
- * PROTOCOLO_SMARTWATCH_V9.21.0
+ * PROTOCOLO_SMARTWATCH_V9.22.1
  * Protocolo de Sustitución Táctil (Tap-to-Tap).
- * Se elimina el arrastre para evitar errores en pantallas circulares.
+ * Ajuste ergonómico del botón principal para evitar desbordamiento circular.
  * Fondo: Deep Night (#0F172A).
  */
 export default function SmartwatchPage() {
@@ -150,11 +150,12 @@ export default function SmartwatchPage() {
                  </button>
               </div>
 
+              {/* AJUSTE ERGONÓMICO v9.22.1: El botón no desborda la curva inferior */}
               <button 
                 onClick={startSubProcess}
-                className="w-full h-14 mt-3 bg-white/5 border-2 border-white/10 rounded-[2rem] flex items-center justify-center gap-3 active:bg-white/20 transition-all active:scale-95"
+                className="w-[85%] h-12 mt-2 bg-white/5 border-2 border-white/10 rounded-[2rem] flex items-center justify-center gap-3 active:bg-white/20 transition-all active:scale-95 shrink-0 shadow-lg"
               >
-                <Users className="h-5 w-5 text-primary" />
+                <Users className="h-4 w-4 text-primary" />
                 <span className="text-[10px] font-black uppercase tracking-widest text-white">SUSTITUCIÓN</span>
               </button>
             </div>

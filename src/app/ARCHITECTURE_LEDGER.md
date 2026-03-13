@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v9.22.0 (Edición Estratégica)
+# SynqSports Pro - ARCHITECTURE_LEDGER v9.22.1 (Edición Estratégica)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro. Es el ADN del proyecto y debe preservarse íntegramente en cada iteración.
 
@@ -73,7 +73,7 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 - **v9.19.2**: **PROTOCOL_PORTAL_RESILIENCE**: Control de hidratación y estabilidad de Radix Portals.
 - **v9.19.3**: **ACCESSIBILITY_REINFORCEMENT**: Eliminación de errores de consola de Radix UI mediante `sr-only` titles.
 
-## 9. Ecosistema de Hardware Inteligente (v9.20.0 - v9.22.0)
+## 9. Ecosistema de Hardware Inteligente (v9.20.0 - v9.22.1)
 - **v9.20.0**: **PROTOCOL_SMARTWATCH_PWA**: Micro-app Smartwatch en `/smartwatch` con diseño circular.
 - **v9.20.1**: **PROTOCOL_DEEP_NIGHT_REFINE**: 
     - Sincronización cromática al color Deep Night (#0F172A).
@@ -86,3 +86,5 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
     - Extensión del protocolo Tap-to-Sub al Pocket Master (Móvil).
     - Mantenimiento del Drag-and-Drop original en Tablet/PC para máxima eficiencia en pantallas grandes.
     - Activación de vibración háptica en móvil para confirmación de cambios.
+- **v9.22.1**: **PROTOCOL_WATCH_ERGONOMICS**:
+    - Ajuste de dimensiones del botón principal de Smartwatch para evitar desbordamientos en la curvatura inferior de la esfera.
