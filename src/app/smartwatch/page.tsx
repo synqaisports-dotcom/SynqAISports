@@ -17,9 +17,10 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 
 /**
- * PROTOCOLO_SMARTWATCH_V9.22.2
- * Protocolo de Ajuste de Esfera.
- * Ajuste de cabeceras para evitar desbordamiento en pantallas circulares.
+ * PROTOCOLO_SMARTWATCH_V9.22.3
+ * Protocolo de Ajuste Radial.
+ * Ajuste de cabeceras para evitar desbordamiento en pantallas circulares (px-10).
+ * Optimización de scroll táctil (touch-pan-y).
  * Fondo: Deep Night (#0F172A).
  */
 export default function SmartwatchPage() {
@@ -162,13 +163,14 @@ export default function SmartwatchPage() {
 
           {view === 'subs_out' && (
             <div className="w-full h-full flex flex-col animate-in slide-in-from-bottom-6 duration-500">
-               {/* AJUSTE ERGONÓMICO v9.22.2: pt-6 para evitar recorte superior en esfera */}
-               <div className="flex items-center justify-between pt-6 pb-2 shrink-0">
+               {/* AJUSTE RADIAL v9.22.3: px-10 para evitar recorte de botones laterales */}
+               <div className="flex items-center justify-between pt-6 pb-2 px-10 shrink-0">
                   <button onClick={() => setView('main')} className="p-2 bg-white/5 rounded-full active:bg-primary/20"><X className="h-4 w-4 text-primary" /></button>
-                  <span className="text-[9px] font-black text-primary uppercase tracking-widest">¿QUIÉN SALE? (OUT)</span>
+                  <span className="text-[9px] font-black text-primary uppercase tracking-widest">¿QUIÉN SALE?</span>
                   <div className="w-8" />
                </div>
-               <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pb-10">
+               {/* OPTIMIZACIÓN TÁCTIL: touch-pan-y activa para scroll fluido con el dedo */}
+               <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pb-10 px-2 touch-pan-y">
                   {starters.map(num => (
                     <button 
                       key={num} 
@@ -185,16 +187,19 @@ export default function SmartwatchPage() {
 
           {view === 'subs_in' && (
             <div className="w-full h-full flex flex-col animate-in slide-in-from-right-6 duration-500">
-               {/* AJUSTE ERGONÓMICO v9.22.2: pt-6 para evitar recorte superior en esfera */}
-               <div className="flex items-center justify-between pt-6 pb-2 shrink-0">
+               {/* AJUSTE RADIAL v9.22.3: px-10 para evitar recorte de botones laterales */}
+               <div className="flex items-center justify-between pt-6 pb-2 px-10 shrink-0">
                   <button onClick={() => setView('subs_out')} className="p-2 bg-white/5 rounded-full active:bg-primary/20"><ChevronLeft className="h-4 w-4 text-primary" /></button>
-                  <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">¿QUIÉN ENTRA? (IN)</span>
+                  <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">¿QUIÉN ENTRA?</span>
                   <div className="w-8" />
                </div>
-               <div className="p-2 bg-primary/10 border border-primary/20 rounded-xl mb-2 text-center">
-                  <span className="text-[8px] font-black text-white uppercase italic">Sustituyendo a #{selectedOut}</span>
+               <div className="px-4 mb-2">
+                  <div className="p-2 bg-primary/10 border border-primary/20 rounded-xl text-center">
+                    <span className="text-[8px] font-black text-white uppercase italic">Sustituyendo a #{selectedOut}</span>
+                  </div>
                </div>
-               <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pb-10">
+               {/* OPTIMIZACIÓN TÁCTIL: touch-pan-y activa para scroll fluido con el dedo */}
+               <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pb-10 px-2 touch-pan-y">
                   {substitutes.map(num => (
                     <button 
                       key={num} 

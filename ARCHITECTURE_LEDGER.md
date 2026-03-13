@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v9.22.2 (Edición Estratégica)
+# SynqSports Pro - ARCHITECTURE_LEDGER v9.22.3 (Edición Estratégica)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro. Es el ADN del proyecto y debe preservarse íntegramente en cada iteración.
 
@@ -73,10 +73,11 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 - **v9.19.2**: **PROTOCOL_PORTAL_RESILIENCE**: Control de hidratación y estabilidad de Radix Portals.
 - **v9.19.3**: **ACCESSIBILITY_REINFORCEMENT**: Eliminación de errores de consola de Radix UI mediante `sr-only` titles.
 
-## 9. Ecosistema de Hardware Inteligente (v9.20.0 - v9.22.2)
+## 9. Ecosistema de Hardware Inteligente (v9.20.0 - v9.22.3)
 - **v9.20.0**: **PROTOCOL_SMARTWATCH_PWA**: Micro-app Smartwatch en `/smartwatch` con diseño circular.
 - **v9.20.1**: **PROTOCOL_DEEP_NIGHT_REFINE**: Sincronización cromática y optimización "Fat Finger".
 - **v9.21.0**: **PROTOCOL_TAP_TO_SUB**: Implementación de sustitución en 2 pasos (OUT/IN).
 - **v9.22.0**: **PROTOCOL_UNIFIED_SUB_POCKET**: Extensión del protocolo Tap-to-Sub al Pocket Master (Móvil).
 - **v9.22.1**: **PROTOCOL_WATCH_ERGONOMICS**: Redimensionamiento del botón de sustitución para evitar desbordamientos en la curvatura inferior.
 - **v9.22.2**: **PROTOCOL_WATCH_DIAL_ADJUST**: Ajuste de padding en cabeceras de sub-vistas para evitar recorte de botones en pantallas circulares.
+- **v9.22.3**: **PROTOCOL_RADIAL_CONSTRAINT_PATCH**: Refuerzo de padding horizontal en cabeceras (px-10) y optimización de scroll táctil en el reloj.
