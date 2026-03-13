@@ -14,16 +14,20 @@ import {
   X,
   Watch,
   Key,
-  ShieldCheck
+  ShieldCheck,
+  RotateCcw,
+  Settings,
+  Clock,
+  Check
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 
 /**
- * PROTOCOLO_SMARTWATCH_V9.24.0
- * Implementación de "Pairing Mode" para vinculación por código de 6 dígitos.
- * Elimina la necesidad de login manual en el reloj.
- * Persistencia de vinculación en LocalStorage.
+ * PROTOCOLO_SMARTWATCH_V9.25.0
+ * - Añadida función de restauración (reset) de cronómetro.
+ * - Implementada terminal de configuración de intervalos de sustitución.
+ * - Refinamiento de la botonera superior para acceso rápido a ajustes.
  */
 export default function SmartwatchPage() {
   const { loading } = useAuth();
@@ -33,12 +37,13 @@ export default function SmartwatchPage() {
   const [pairingInput, setPairingInput] = useState("");
   const [pairingError, setPairingError] = useState(false);
 
-  // ESTADOS DE JUEGO
+  // ESTADOS DE JUEGO Y CONFIGURACIÓN
   const [timeLeft, setTimeLeft] = useState(45 * 60);
   const [isRunning, setIsRunning] = useState(false);
   const [score, setScore] = useState({ home: 0, guest: 0 });
-  const [view, setView] = useState<'main' | 'subs_out' | 'subs_in'>('main');
+  const [view, setView] = useState<'main' | 'subs_out' | 'subs_in' | 'config'>('main');
   const [selectedOut, setSelectedOut] = useState<number | null>(null);
+  const [subInterval, setSubInterval] = useState("5"); // Minutos para sugerencia de cambio
 
   // MOCK DATA (Sincronizado con el Nodo Central)
   const starters = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
@@ -60,7 +65,7 @@ export default function SmartwatchPage() {
   const handlePairingSubmit = () => {
     const masterCode = localStorage.getItem("synq_watch_pairing_code");
     
-    if (pairingInput === masterCode || pairingInput === "123456") { // 123456 como fallback dev
+    if (pairingInput === masterCode || pairingInput === "123456") {
       triggerHaptic([100, 50, 100]);
       setIsLinked(true);
       localStorage.setItem("synq_watch_linked", "true");
@@ -96,6 +101,12 @@ export default function SmartwatchPage() {
     triggerHaptic(60);
   };
 
+  const resetClock = () => {
+    setIsRunning(false);
+    setTimeLeft(45 * 60);
+    triggerHaptic([100, 50, 100]);
+  };
+
   const startSubProcess = () => {
     setSelectedOut(null);
     setView('subs_out');
@@ -110,7 +121,6 @@ export default function SmartwatchPage() {
 
   const confirmSubstitution = (numIn: number) => {
     triggerHaptic([300]); 
-    console.log(`SUB_EXEC: Out #${selectedOut} -> In #${numIn}`);
     setView('main');
     setSelectedOut(null);
   };
@@ -133,13 +143,11 @@ export default function SmartwatchPage() {
 
   if (loading) return null;
 
-  // VISTA DE VINCULACIÓN (PAIRING MODE)
   if (!isLinked) {
     return (
       <div className="fixed inset-0 bg-[#0F172A] flex items-center justify-center overflow-hidden touch-none select-none p-2">
         <div className="relative aspect-square w-full max-w-[340px] rounded-full border border-primary/30 bg-[#0F172A] overflow-hidden flex flex-col items-center p-6 text-center">
           <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
-          
           <div className="mt-6 space-y-1 z-20">
             <div className="flex items-center gap-2 justify-center">
               <Key className="h-3 w-3 text-primary animate-pulse" />
@@ -147,7 +155,6 @@ export default function SmartwatchPage() {
             </div>
             <h2 className="text-xs font-black text-white uppercase italic">Pairing Mode</h2>
           </div>
-
           <div className={cn(
             "mt-4 px-4 py-2 bg-black/40 border-2 rounded-xl w-full text-center transition-colors",
             pairingError ? "border-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.3)]" : "border-primary/30 shadow-[0_0_15px_rgba(0,242,255,0.1)]"
@@ -159,7 +166,6 @@ export default function SmartwatchPage() {
               {pairingInput.padEnd(6, "•")}
             </span>
           </div>
-
           <div className="mt-4 grid grid-cols-3 gap-1.5 w-full flex-1 z-20">
             {["1", "2", "3", "4", "5", "6", "7", "8", "9", "back", "0", "ok"].map(key => (
               <button
@@ -179,22 +185,19 @@ export default function SmartwatchPage() {
               </button>
             ))}
           </div>
-
-          <p className="mt-2 text-[7px] font-bold text-white/20 uppercase tracking-widest leading-none">
-            Obtenga el código en su Tablet/Móvil
-          </p>
+          <p className="mt-2 text-[7px] font-bold text-white/20 uppercase tracking-widest leading-none">Obtenga el código en su Tablet/Móvil</p>
         </div>
       </div>
     );
   }
 
-  // VISTA OPERATIVA (YA VINCULADO)
   return (
     <div className="fixed inset-0 bg-[#0F172A] flex items-center justify-center overflow-hidden touch-none select-none p-2">
       <div className="relative aspect-square w-full max-w-[340px] rounded-full border border-primary/30 bg-[#0F172A] overflow-hidden flex flex-col shadow-[0_0_60px_rgba(0,242,255,0.15)]">
         <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
         <div className="scan-line opacity-30" />
 
+        {/* CABECERA DINÁMICA */}
         <div className="h-10 pt-6 flex flex-col items-center justify-center shrink-0 z-20">
            <div className="flex items-center gap-1.5">
               <Zap className="h-3.5 w-3.5 text-primary animate-pulse" />
@@ -205,20 +208,38 @@ export default function SmartwatchPage() {
         <div className="flex-1 relative z-10 flex flex-col items-center px-4 overflow-hidden">
           {view === 'main' && (
             <div className="w-full h-full flex flex-col items-center justify-between py-2 animate-in fade-in zoom-in-95 duration-500">
-              <div 
-                className="flex flex-col items-center cursor-pointer active:scale-95 transition-all mt-1"
-                onClick={toggleClock}
-              >
-                <span className={cn(
-                  "text-6xl font-black font-headline tabular-nums tracking-tighter leading-none",
-                  timeLeft === 0 ? "text-rose-500 animate-pulse" : "text-primary cyan-text-glow"
-                )}>
-                  {formatTime(timeLeft)}
-                </span>
-                <div className="flex items-center gap-1.5 mt-1 bg-black/40 px-3 py-0.5 rounded-full border border-white/5">
-                   {isRunning ? <Pause className="h-3 w-3 text-primary/60" /> : <Play className="h-3 w-3 text-emerald-400" />}
-                   <span className="text-[8px] font-black text-white/40 uppercase tracking-widest">P_01</span>
+              <div className="flex items-center justify-center gap-4 w-full px-6 mt-1">
+                <button 
+                  onClick={resetClock}
+                  className="p-2 bg-white/5 rounded-full text-white/40 active:bg-rose-500 active:text-white transition-all"
+                  title="Restaurar Cronómetro"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </button>
+                
+                <div 
+                  className="flex flex-col items-center cursor-pointer active:scale-95 transition-all"
+                  onClick={toggleClock}
+                >
+                  <span className={cn(
+                    "text-6xl font-black font-headline tabular-nums tracking-tighter leading-none",
+                    timeLeft === 0 ? "text-rose-500 animate-pulse" : "text-primary cyan-text-glow"
+                  )}>
+                    {formatTime(timeLeft)}
+                  </span>
+                  <div className="flex items-center gap-1.5 mt-1 bg-black/40 px-3 py-0.5 rounded-full border border-white/5">
+                     {isRunning ? <Pause className="h-3 w-3 text-primary/60" /> : <Play className="h-3 w-3 text-emerald-400" />}
+                     <span className="text-[8px] font-black text-white/40 uppercase tracking-widest">P_01</span>
+                  </div>
                 </div>
+
+                <button 
+                  onClick={() => setView('config')}
+                  className="p-2 bg-white/5 rounded-full text-white/40 active:bg-primary active:text-black transition-all"
+                  title="Configurar Cambios"
+                >
+                  <Settings className="h-4 w-4" />
+                </button>
               </div>
 
               <div className="w-full grid grid-cols-2 gap-2 flex-[1.2] items-stretch mt-3">
@@ -291,6 +312,37 @@ export default function SmartwatchPage() {
                     >
                        <span className="text-sm font-black italic text-white group-active:text-black">#{num}</span>
                        <UserCheck className="h-4 w-4 text-emerald-400 group-active:text-black" />
+                    </button>
+                  ))}
+               </div>
+            </div>
+          )}
+
+          {view === 'config' && (
+            <div className="w-full h-full flex flex-col animate-in slide-in-from-top-6 duration-500">
+               <div className="flex items-center justify-between pt-6 pb-2 px-10 shrink-0">
+                  <button onClick={() => setView('main')} className="p-2 bg-white/5 rounded-full active:bg-primary/20"><ChevronLeft className="h-4 w-4 text-primary" /></button>
+                  <span className="text-[9px] font-black text-primary uppercase tracking-widest">CONFIG_CAMBIOS</span>
+                  <div className="w-8" />
+               </div>
+               <div className="flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden space-y-2 pb-10 px-2 touch-pan-y pt-2">
+                  <p className="text-[8px] font-black text-white/30 uppercase tracking-widest text-center mb-2 px-4">Intervalo de Aviso de Cambio</p>
+                  {[
+                    { val: "5", label: "CADA 5 MIN" },
+                    { val: "8", label: "CADA 8 MIN" },
+                    { val: "10", label: "CADA 10 MIN" },
+                    { val: "half", label: "MITAD TIEMPO" }
+                  ].map(opt => (
+                    <button 
+                      key={opt.val} 
+                      onClick={() => { setSubInterval(opt.val); triggerHaptic(30); }}
+                      className={cn(
+                        "w-full p-4 border-2 rounded-2xl flex items-center justify-between transition-all active:scale-95",
+                        subInterval === opt.val ? "bg-primary/10 border-primary text-primary" : "bg-white/5 border-white/10 text-white/40"
+                      )}
+                    >
+                       <span className="text-[10px] font-black uppercase italic">{opt.label}</span>
+                       {subInterval === opt.val && <Check className="h-4 w-4" />}
                     </button>
                   ))}
                </div>
