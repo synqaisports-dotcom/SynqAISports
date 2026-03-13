@@ -153,6 +153,10 @@ export default function MatchBoardPage() {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   
+  // PROTOCOLO_HIDRATACION: Evita errores de renderizado durante el switch de vistas
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
   const [timeLeft, setTimeLeft] = useState(45 * 60);
   const [isRunning, setIsRunning] = useState(false);
   const [score, setScore] = useState({ home: 0, guest: 0 });
@@ -365,7 +369,7 @@ export default function MatchBoardPage() {
   }, []);
 
   useEffect(() => {
-    if (isMobile) return;
+    if (isMobile || !mounted) return;
     const canvas = canvasRef.current;
     if (!canvas || !canvas.parentElement) return;
 
@@ -377,7 +381,7 @@ export default function MatchBoardPage() {
     initCanvas();
 
     return () => observer.disconnect();
-  }, [initCanvas, isMobile]);
+  }, [initCanvas, isMobile, mounted]);
 
   const startDrawing = (e: React.PointerEvent) => {
     if (!isPaintMode) return;
@@ -474,6 +478,8 @@ export default function MatchBoardPage() {
   const currentFormations = useMemo(() => Object.keys(FORMATIONS_DATA[fieldType]), [fieldType]);
   const starters = teamRoster.filter(p => p.isStarter);
   const substitutes = teamRoster.filter(p => !p.isStarter);
+
+  if (!mounted) return null;
 
   // VISTA POCKET MASTER PARA MÓVILES
   if (isMobile) {
