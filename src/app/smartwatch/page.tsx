@@ -18,16 +18,17 @@ import {
   RotateCcw,
   Settings,
   Clock,
-  Check
+  Check,
+  Minus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 
 /**
- * PROTOCOLO_SMARTWATCH_V9.25.0
- * - Añadida función de restauración (reset) de cronómetro.
- * - Implementada terminal de configuración de intervalos de sustitución.
- * - Refinamiento de la botonera superior para acceso rápido a ajustes.
+ * PROTOCOLO_SMARTWATCH_V9.26.0
+ * - Implementación de corrección de marcador (decremento).
+ * - Implementación de reseteo global de resultado en terminal config.
+ * - Refinamiento de UI Fat Finger para corrección rápida.
  */
 export default function SmartwatchPage() {
   const { loading } = useAuth();
@@ -94,6 +95,16 @@ export default function SmartwatchPage() {
   const handleGoal = (team: 'home' | 'guest') => {
     setScore(prev => ({ ...prev, [team]: prev[team] + 1 }));
     triggerHaptic([150, 50, 150]); 
+  };
+
+  const handleSubtractGoal = (team: 'home' | 'guest') => {
+    setScore(prev => ({ ...prev, [team]: Math.max(0, prev[team] - 1) }));
+    triggerHaptic(100); 
+  };
+
+  const resetScore = () => {
+    setScore({ home: 0, guest: 0 });
+    triggerHaptic([100, 50, 100]);
   };
 
   const toggleClock = () => {
@@ -243,20 +254,39 @@ export default function SmartwatchPage() {
               </div>
 
               <div className="w-full grid grid-cols-2 gap-2 flex-[1.2] items-stretch mt-3">
-                 <button 
-                  onClick={() => handleGoal('home')}
-                  className="bg-primary/5 border-2 border-primary/20 rounded-3xl flex flex-col items-center justify-center active:bg-primary active:text-black transition-all group shadow-inner"
-                 >
-                    <span className="text-[9px] font-black text-primary/60 uppercase mb-1">LOC</span>
-                    <span className="text-4xl font-black text-white group-active:text-black">{score.home}</span>
-                 </button>
-                 <button 
-                  onClick={() => handleGoal('guest')}
-                  className="bg-rose-500/5 border-2 border-rose-500/20 rounded-3xl flex flex-col items-center justify-center active:bg-rose-500 active:text-white transition-all group shadow-inner"
-                 >
-                    <span className="text-[9px] font-black text-rose-400/60 uppercase mb-1">VIS</span>
-                    <span className="text-4xl font-black text-white group-active:text-white">{score.guest}</span>
-                 </button>
+                 {/* SCORE_CARD_LOCAL */}
+                 <div className="relative bg-primary/5 border-2 border-primary/20 rounded-3xl flex flex-col items-center justify-center group shadow-inner overflow-hidden">
+                    <button 
+                      onClick={() => handleGoal('home')}
+                      className="w-full h-full flex flex-col items-center justify-center active:bg-primary active:text-black transition-all"
+                    >
+                      <span className="text-[9px] font-black text-primary/60 uppercase mb-1">LOC</span>
+                      <span className="text-4xl font-black text-white group-active:text-black">{score.home}</span>
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleSubtractGoal('home'); }}
+                      className="absolute top-1 right-1 p-2 bg-black/40 rounded-xl text-rose-500 active:bg-rose-500 active:text-white transition-all"
+                    >
+                      <Minus className="h-3 w-3" />
+                    </button>
+                 </div>
+
+                 {/* SCORE_CARD_VISITOR */}
+                 <div className="relative bg-rose-500/5 border-2 border-rose-500/20 rounded-3xl flex flex-col items-center justify-center group shadow-inner overflow-hidden">
+                    <button 
+                      onClick={() => handleGoal('guest')}
+                      className="w-full h-full flex flex-col items-center justify-center active:bg-rose-500 active:text-white transition-all"
+                    >
+                      <span className="text-[9px] font-black text-rose-400/60 uppercase mb-1">VIS</span>
+                      <span className="text-4xl font-black text-white group-active:text-white">{score.guest}</span>
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleSubtractGoal('guest'); }}
+                      className="absolute top-1 left-1 p-2 bg-black/40 rounded-xl text-rose-500 active:bg-rose-500 active:text-white transition-all"
+                    >
+                      <Minus className="h-3 w-3" />
+                    </button>
+                 </div>
               </div>
 
               <button 
@@ -322,10 +352,20 @@ export default function SmartwatchPage() {
             <div className="w-full h-full flex flex-col animate-in slide-in-from-top-6 duration-500">
                <div className="flex items-center justify-between pt-6 pb-2 px-10 shrink-0">
                   <button onClick={() => setView('main')} className="p-2 bg-white/5 rounded-full active:bg-primary/20"><ChevronLeft className="h-4 w-4 text-primary" /></button>
-                  <span className="text-[9px] font-black text-primary uppercase tracking-widest">CONFIG_CAMBIOS</span>
+                  <span className="text-[9px] font-black text-primary uppercase tracking-widest">CONFIG_MATCH</span>
                   <div className="w-8" />
                </div>
                <div className="flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden space-y-2 pb-10 px-2 touch-pan-y pt-2">
+                  {/* RESET_SCORE_ACTION */}
+                  <button 
+                    onClick={() => { resetScore(); setView('main'); }}
+                    className="w-full p-4 bg-rose-500/10 border-2 border-rose-500/20 rounded-2xl flex items-center justify-between active:bg-rose-500 active:text-white transition-all group"
+                  >
+                     <span className="text-[10px] font-black uppercase italic group-active:text-white">RESETEAR MARCADOR</span>
+                     <RotateCcw className="h-4 w-4 text-rose-500 group-active:text-white" />
+                  </button>
+
+                  <div className="h-4" />
                   <p className="text-[8px] font-black text-white/30 uppercase tracking-widest text-center mb-2 px-4">Intervalo de Aviso de Cambio</p>
                   {[
                     { val: "5", label: "CADA 5 MIN" },
