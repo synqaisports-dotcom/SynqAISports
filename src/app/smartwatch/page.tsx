@@ -9,24 +9,32 @@ import {
   Pause, 
   ChevronLeft,
   Activity,
-  UserCheck
+  UserCheck,
+  ArrowRight,
+  X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 
 /**
- * PROTOCOLO_SMARTWATCH_V9.20.1
- * Diseño circular "Fat Finger" optimizado para alta competición.
- * Fondo: Deep Night (#0F172A) de borde a borde.
+ * PROTOCOLO_SMARTWATCH_V9.21.0
+ * Protocolo de Sustitución Táctil (Tap-to-Tap).
+ * Se elimina el arrastre para evitar errores en pantallas circulares.
+ * Fondo: Deep Night (#0F172A).
  */
 export default function SmartwatchPage() {
   const { loading } = useAuth();
   
-  // ESTADOS DE JUEGO (Simulados para el prototipo)
+  // ESTADOS DE JUEGO
   const [timeLeft, setTimeLeft] = useState(45 * 60);
   const [isRunning, setIsRunning] = useState(false);
   const [score, setScore] = useState({ home: 0, guest: 0 });
-  const [view, setView] = useState<'main' | 'subs'>('main');
+  const [view, setView] = useState<'main' | 'subs_out' | 'subs_in'>('main');
+  const [selectedOut, setSelectedOut] = useState<number | null>(null);
+
+  // MOCK DATA (Sincronizado con el Nodo Central)
+  const starters = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+  const substitutes = [12, 14, 15, 19];
 
   // HAPTIC FEEDBACK ENGINE
   const triggerHaptic = (pattern: number | number[]) => {
@@ -37,17 +45,31 @@ export default function SmartwatchPage() {
 
   const handleGoal = (team: 'home' | 'guest') => {
     setScore(prev => ({ ...prev, [team]: prev[team] + 1 }));
-    triggerHaptic([150, 50, 150]); // Pulso potente para GOL
+    triggerHaptic([150, 50, 150]); 
   };
 
   const toggleClock = () => {
     setIsRunning(!isRunning);
-    triggerHaptic(60); // Pulso de confirmación
+    triggerHaptic(60);
   };
 
-  const handleSubConfirm = () => {
-    triggerHaptic([300]); // Pulso largo de éxito
+  const startSubProcess = () => {
+    setSelectedOut(null);
+    setView('subs_out');
+    triggerHaptic(40);
+  };
+
+  const selectPlayerOut = (num: number) => {
+    setSelectedOut(num);
+    setView('subs_in');
+    triggerHaptic(40);
+  };
+
+  const confirmSubstitution = (numIn: number) => {
+    triggerHaptic([300]); 
+    console.log(`SUB_EXEC: Out #${selectedOut} -> In #${numIn}`);
     setView('main');
+    setSelectedOut(null);
   };
 
   // SINCRO_HEARTBEAT
@@ -72,7 +94,10 @@ export default function SmartwatchPage() {
   return (
     <div className="fixed inset-0 bg-[#0F172A] flex items-center justify-center overflow-hidden touch-none select-none p-2">
       {/* ESFERA CIRCULAR VIRTUAL */}
-      <div className="relative aspect-square w-full max-w-[340px] rounded-full border border-primary/30 bg-[#0F172A] overflow-hidden flex flex-col shadow-[0_0_60px_rgba(0,242,255,0.15)]">
+      <div 
+        className="relative aspect-square w-full max-w-[340px] rounded-full border border-primary/30 bg-[#0F172A] overflow-hidden flex flex-col shadow-[0_0_60px_rgba(0,242,255,0.15)]"
+        draggable="false"
+      >
         
         {/* EFECTOS TÉCNICOS */}
         <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
@@ -87,12 +112,11 @@ export default function SmartwatchPage() {
         </div>
 
         {/* VISTAS */}
-        <div className="flex-1 relative z-10 flex flex-col items-center px-4">
+        <div className="flex-1 relative z-10 flex flex-col items-center px-4 overflow-hidden">
           
           {view === 'main' && (
             <div className="w-full h-full flex flex-col items-center justify-between py-2 animate-in fade-in zoom-in-95 duration-500">
               
-              {/* CRONÓMETRO GIGANTE */}
               <div 
                 className="flex flex-col items-center cursor-pointer active:scale-95 transition-all mt-1"
                 onClick={toggleClock}
@@ -109,7 +133,6 @@ export default function SmartwatchPage() {
                 </div>
               </div>
 
-              {/* MARCADOR "FAT FINGER" (45% DE LA PANTALLA) */}
               <div className="w-full grid grid-cols-2 gap-2 flex-[1.2] items-stretch mt-3">
                  <button 
                   onClick={() => handleGoal('home')}
@@ -127,9 +150,8 @@ export default function SmartwatchPage() {
                  </button>
               </div>
 
-              {/* BOTÓN DE ACCIÓN RÁPIDA */}
               <button 
-                onClick={() => setView('subs')}
+                onClick={startSubProcess}
                 className="w-full h-14 mt-3 bg-white/5 border-2 border-white/10 rounded-[2rem] flex items-center justify-center gap-3 active:bg-white/20 transition-all active:scale-95"
               >
                 <Users className="h-5 w-5 text-primary" />
@@ -138,30 +160,49 @@ export default function SmartwatchPage() {
             </div>
           )}
 
-          {view === 'subs' && (
+          {view === 'subs_out' && (
             <div className="w-full h-full flex flex-col animate-in slide-in-from-bottom-6 duration-500">
-               <div className="flex items-center justify-between mb-2 mt-2">
-                  <button onClick={() => setView('main')} className="p-3 bg-white/5 rounded-full"><ChevronLeft className="h-5 w-5 text-primary" /></button>
-                  <span className="text-[9px] font-black text-primary uppercase tracking-widest">ROSTER_LIVE</span>
-                  <div className="w-10" />
+               <div className="flex items-center justify-between py-2 shrink-0">
+                  <button onClick={() => setView('main')} className="p-2 bg-white/5 rounded-full active:bg-primary/20"><X className="h-4 w-4 text-primary" /></button>
+                  <span className="text-[9px] font-black text-primary uppercase tracking-widest">¿QUIÉN SALE? (OUT)</span>
+                  <div className="w-8" />
                </div>
-               <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-3 pb-10">
-                  {[10, 7, 9, 4, 11].map(num => (
-                    <div 
+               <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pb-10">
+                  {starters.map(num => (
+                    <button 
                       key={num} 
-                      onClick={handleSubConfirm}
-                      className="p-4 bg-primary/10 border-2 border-primary/20 rounded-2xl flex items-center justify-between active:bg-primary active:text-black group transition-all"
+                      onClick={() => selectPlayerOut(num)}
+                      className="w-full p-4 bg-white/5 border-2 border-white/10 rounded-2xl flex items-center justify-between active:bg-primary active:text-black group transition-all"
                     >
-                       <div className="flex items-center gap-4">
-                          <span className="text-sm font-black italic text-white group-active:text-black">#{num}</span>
-                          <span className="text-[8px] font-bold uppercase opacity-40 group-active:opacity-100 group-active:text-black">OUT_TARGET</span>
-                       </div>
-                       <UserCheck className="h-4 w-4 text-primary group-active:text-black" />
-                    </div>
+                       <span className="text-sm font-black italic text-white group-active:text-black">#{num}</span>
+                       <span className="text-[8px] font-black uppercase text-rose-400/60 group-active:text-black">Titular</span>
+                    </button>
                   ))}
-                  <div className="p-6 border-2 border-dashed border-white/10 rounded-2xl text-center">
-                     <span className="text-[8px] font-bold text-white/20 uppercase tracking-[0.3em]">End_Of_Roster</span>
-                  </div>
+               </div>
+            </div>
+          )}
+
+          {view === 'subs_in' && (
+            <div className="w-full h-full flex flex-col animate-in slide-in-from-right-6 duration-500">
+               <div className="flex items-center justify-between py-2 shrink-0">
+                  <button onClick={() => setView('subs_out')} className="p-2 bg-white/5 rounded-full active:bg-primary/20"><ChevronLeft className="h-4 w-4 text-primary" /></button>
+                  <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">¿QUIÉN ENTRA? (IN)</span>
+                  <div className="w-8" />
+               </div>
+               <div className="p-2 bg-primary/10 border border-primary/20 rounded-xl mb-2 text-center">
+                  <span className="text-[8px] font-black text-white uppercase italic">Sustituyendo a #{selectedOut}</span>
+               </div>
+               <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pb-10">
+                  {substitutes.map(num => (
+                    <button 
+                      key={num} 
+                      onClick={() => confirmSubstitution(num)}
+                      className="w-full p-4 bg-emerald-500/10 border-2 border-emerald-500/20 rounded-2xl flex items-center justify-between active:bg-emerald-500 active:text-black group transition-all"
+                    >
+                       <span className="text-sm font-black italic text-white group-active:text-black">#{num}</span>
+                       <UserCheck className="h-4 w-4 text-emerald-400 group-active:text-black" />
+                    </button>
+                  ))}
                </div>
             </div>
           )}
