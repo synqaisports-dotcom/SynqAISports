@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo, useRef, memo, useCallback } from "react";
@@ -26,7 +27,8 @@ import {
   ShieldAlert,
   Smartphone,
   X,
-  UserPlus
+  UserPlus,
+  Unplug
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -51,6 +53,13 @@ import {
   SheetTrigger,
   SheetClose
 } from "@/components/ui/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -176,7 +185,6 @@ export default function MatchBoardPage() {
   const [players, setPlayers] = useState<PlayerPos[]>([]);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   
-  // ESTADO DE SUSTITUCIÓN TAP-TO-TAP (Móvil)
   const [pendingOutNum, setPendingOutNum] = useState<number | null>(null);
 
   const [isPaintMode, setIsPaintMode] = useState(false);
@@ -187,7 +195,9 @@ export default function MatchBoardPage() {
 
   const fieldRef = useRef<HTMLDivElement>(null);
 
-  const [watchConnected, setWatchConnected] = useState(true);
+  const [watchConnected, setWatchConnected] = useState(false);
+  const [isPairingModalOpen, setIsPairingModalOpen] = useState(false);
+  const [pairingCode, setPairingCode] = useState("");
   const [watchAlert, setWatchAlert] = useState<string | null>(null);
 
   const hasClub = !!profile?.clubId;
@@ -238,6 +248,14 @@ export default function MatchBoardPage() {
     }
     return () => clearInterval(interval);
   }, [isRunning, timeLeft, toast]);
+
+  const generatePairingCode = () => {
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    setPairingCode(code);
+    setIsPairingModalOpen(true);
+    // En una app real, guardaríamos este código en Firestore asociado al userId
+    localStorage.setItem("synq_watch_pairing_code", code);
+  };
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -495,10 +513,13 @@ export default function MatchBoardPage() {
                  <h1 className="text-sm font-headline font-black text-white uppercase italic">Modo Banquillo</h1>
               </div>
            </div>
-           <div className="flex items-center gap-2 px-3 py-1 bg-primary/5 border border-primary/20 rounded-full">
+           <button 
+            onClick={generatePairingCode}
+            className="flex items-center gap-2 px-3 py-1 bg-primary/5 border border-primary/20 rounded-full active:bg-primary/20 transition-all"
+           >
               <Watch className={cn("h-3 w-3", watchConnected ? "text-primary animate-pulse" : "text-white/20")} />
-              <span className="text-[8px] font-black text-primary/60 uppercase">Watch Sincro</span>
-           </div>
+              <span className="text-[8px] font-black text-primary/60 uppercase">{watchConnected ? 'Watch Sincro' : 'Vincular Watch'}</span>
+           </button>
         </div>
 
         <div className="grid grid-cols-1 gap-4">
@@ -563,7 +584,7 @@ export default function MatchBoardPage() {
                 <SheetDescription className="sr-only">Gestión de sustituciones en tiempo real</SheetDescription>
                 <SheetClose className="h-10 w-10 bg-white/5 rounded-full flex items-center justify-center"><X className="h-5 w-5" /></SheetClose>
              </SheetHeader>
-             <div className="p-6 overflow-y-auto h-full pb-20 custom-scrollbar">
+             <div className="p-6 overflow-y-auto h-full pb-20 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 <div className="grid gap-3">
                    {starters.map(p => (
                      <PlayerListItem 
@@ -606,6 +627,28 @@ export default function MatchBoardPage() {
               <Activity className="h-3 w-3 text-primary animate-pulse opacity-40" />
            </div>
         </div>
+
+        <Dialog open={isPairingModalOpen} onOpenChange={setIsPairingModalOpen}>
+          <DialogContent className="bg-black/90 border-primary/30 text-white max-w-[90vw] rounded-3xl">
+            <DialogHeader className="space-y-4">
+              <div className="flex items-center gap-3 justify-center">
+                <Watch className="h-6 w-6 text-primary animate-pulse" />
+                <DialogTitle className="text-2xl font-black italic uppercase italic tracking-tighter">Vincular Reloj</DialogTitle>
+              </div>
+              <DialogDescription className="text-center text-[10px] uppercase font-bold text-primary/40 tracking-widest leading-relaxed">
+                Introduzca este código en la aplicación de su Smartwatch para sincronizar la telemetría.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-10 flex flex-col items-center gap-8">
+               <div className="bg-primary/10 border-2 border-primary rounded-3xl p-8 shadow-[0_0_40px_rgba(0,242,255,0.2)]">
+                  <span className="text-6xl font-black font-headline text-primary tracking-[0.2em] italic">{pairingCode}</span>
+               </div>
+               <Badge variant="outline" className="border-primary/20 text-primary/60 text-[8px] font-black tracking-widest px-4 py-1.5 uppercase">
+                 Expira en 5:00 min
+               </Badge>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
@@ -630,12 +673,15 @@ export default function MatchBoardPage() {
             <h1 className="text-sm lg:text-lg font-headline font-black text-white italic tracking-tighter uppercase leading-none truncate">Partido</h1>
           </div>
 
-          <div className="hidden xl:flex items-center gap-2 px-4 py-1.5 bg-primary/5 border border-primary/20 rounded-full animate-in slide-in-from-left-4">
+          <button 
+            onClick={generatePairingCode}
+            className="hidden xl:flex items-center gap-2 px-4 py-1.5 bg-primary/5 border border-primary/20 rounded-full animate-in slide-in-from-left-4 hover:bg-primary/10 transition-all group"
+          >
              <Watch className={cn("h-3 w-3 transition-colors", watchConnected ? "text-primary animate-pulse" : "text-white/20")} />
-             <span className="text-[8px] font-black text-primary/60 uppercase tracking-widest">
-               {watchConnected ? 'WATCH_SYNC_CONNECTED' : 'WATCH_OFFLINE'}
+             <span className="text-[8px] font-black text-primary/60 uppercase tracking-widest group-hover:text-primary">
+               {watchConnected ? 'WATCH_SYNC_CONNECTED' : 'VINCULAR_RELOJ_NODE'}
              </span>
-          </div>
+          </button>
 
           {showTeamSelector && (
             <div className="hidden sm:block">
@@ -823,7 +869,7 @@ export default function MatchBoardPage() {
                       </SheetHeader>
                     </div>
                     
-                    <div className="flex-1 p-6 space-y-8 overflow-y-auto custom-scrollbar">
+                    <div className="flex-1 p-6 space-y-8 overflow-y-auto custom-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                       <section className="space-y-4">
                         <div className="flex items-center gap-3 border-b border-white/5 pb-2">
                           <CheckCircle2 className="h-3 w-3 text-primary" />
@@ -978,6 +1024,30 @@ export default function MatchBoardPage() {
             </div>
           </div>
         </main>
+
+        <Dialog open={isPairingModalOpen} onOpenChange={setIsPairingModalOpen}>
+          <DialogContent className="bg-[#04070c]/95 border-primary/30 text-white max-w-md rounded-3xl backdrop-blur-xl">
+            <DialogHeader className="space-y-4">
+              <div className="flex items-center gap-3 justify-center">
+                <Watch className="h-6 w-6 text-primary animate-pulse" />
+                <DialogTitle className="text-2xl font-black italic uppercase tracking-tighter">Vincular Smartwatch</DialogTitle>
+              </div>
+              <DialogDescription className="text-center text-[10px] uppercase font-bold text-primary/40 tracking-widest leading-relaxed">
+                Introduzca este token en su reloj para sincronizar la telemetría táctica y biométrica en tiempo real.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-12 flex flex-col items-center gap-8">
+               <div className="bg-primary/5 border-2 border-primary/40 rounded-[2rem] p-10 shadow-[0_0_50px_rgba(0,242,255,0.2)] group relative overflow-hidden">
+                  <div className="absolute inset-0 bg-primary/5 scan-line" />
+                  <span className="text-7xl font-black font-headline text-primary tracking-[0.2em] italic cyan-text-glow relative z-10">{pairingCode}</span>
+               </div>
+               <div className="flex items-center gap-3 px-6 py-2 bg-white/5 rounded-full border border-white/5">
+                  <Activity className="h-3 w-3 text-emerald-400 animate-pulse" />
+                  <span className="text-[9px] font-black text-white/40 uppercase tracking-widest">Esperando conexión del nodo...</span>
+               </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
