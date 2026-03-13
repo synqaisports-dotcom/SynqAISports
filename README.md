@@ -21,7 +21,7 @@ La plataforma utiliza un sistema de **Micro-Apps** basado en el rol del usuario:
 *   **Persistencia Prototipo**: Sistema de `localStorage` activo para asegurar la integridad de datos globales (Clubs, Usuarios, Logs) entre sesiones de desarrollo.
 
 ## 4. PROTOCOLO_ÉLITE: Acceso Total (Superadmin)
-Las Security Rules de Firestore y el sistema de autenticación tienen configurado el siguiente blindaje administrativo inmutable para los socios fundadores:
+Las Security Rules de Firestore y el sistema de autenticación tienen configurado el siguiente blindaje administrativo inmutable para los socios fundadores:.
 
 ```rules
 // PROTOCOLO_ELITE: Acceso total para administradores autorizados
