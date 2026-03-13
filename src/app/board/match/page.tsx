@@ -554,13 +554,14 @@ export default function MatchBoardPage() {
             </Button>
           </SheetTrigger>
           <SheetContent side="bottom" className="h-[80vh] bg-[#04070c]/98 backdrop-blur-3xl border-t border-primary/20 rounded-t-[3rem] text-white p-0">
-             <div className="p-8 border-b border-white/5 flex items-center justify-between">
+             <SheetHeader className="p-8 border-b border-white/5 flex flex-row items-center justify-between space-y-0">
                 <div className="flex items-center gap-3">
                    <Dna className="h-5 w-5 text-primary animate-pulse" />
-                   <h3 className="text-2xl font-black italic uppercase tracking-tighter">ROSTER_LIVE</h3>
+                   <SheetTitle className="text-2xl font-black italic uppercase tracking-tighter text-white">ROSTER_LIVE</SheetTitle>
                 </div>
+                <SheetDescription className="sr-only">Gestión de sustituciones en tiempo real</SheetDescription>
                 <SheetClose className="h-10 w-10 bg-white/5 rounded-full flex items-center justify-center"><X className="h-5 w-5" /></SheetClose>
-             </div>
+             </SheetHeader>
              <div className="p-6 overflow-y-auto h-full pb-20 custom-scrollbar">
                 <div className="grid gap-3">
                    {starters.map(p => (
