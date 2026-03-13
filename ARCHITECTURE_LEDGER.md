@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v9.19.3 (Edición Estratégica)
+# SynqSports Pro - ARCHITECTURE_LEDGER v9.20.0 (Edición Estratégica)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro. Es el ADN del proyecto y debe preservarse íntegramente en cada iteración.
 
@@ -88,3 +88,11 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 - **v9.19.3**: **ACCESSIBILITY_REINFORCEMENT**:
     - Inyección de `SheetTitle` y `SheetDescription` con clase `sr-only` en el Sidebar móvil.
     - Resolución del error de consola de Radix UI sobre requerimientos de accesibilidad en `DialogContent`.
+
+## 9. Ecosistema de Hardware Inteligente (v9.20.0)
+- **v9.20.0**: **PROTOCOL_SMARTWATCH_PWA**:
+    - Implementación de la Micro-app Smartwatch en `/smartwatch`.
+    - Activación de Modo Standalone (PWA) mediante `manifest.json`.
+    - Interfaz "Fat Finger" circular optimizada para visibilidad extrema.
+    - Integración de Haptic Feedback (`navigator.vibrate`) para confirmación de goles y cambios.
+    - Sincronización maestra de tiempo y marcador con la Pizarra de Partido.

@@ -1,3 +1,4 @@
+
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
@@ -6,6 +7,14 @@ import { AuthProvider } from "@/lib/auth-context";
 export const metadata: Metadata = {
   title: 'SynqSports Pro | Tecnología Pro para todo el Deporte Base',
   description: 'Democratizando las herramientas de élite para canteras y clubes locales de cualquier disciplina. Gestión avanzada al alcance de todos.',
+  manifest: '/manifest.json',
+  themeColor: '#04070c',
+  viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'SynqAI Pro'
+  }
 };
 
 export default function RootLayout({
