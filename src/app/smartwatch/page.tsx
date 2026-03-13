@@ -17,9 +17,9 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 
 /**
- * PROTOCOLO_SMARTWATCH_V9.22.1
- * Protocolo de Sustitución Táctil (Tap-to-Tap).
- * Ajuste ergonómico del botón principal para evitar desbordamiento circular.
+ * PROTOCOLO_SMARTWATCH_V9.22.2
+ * Protocolo de Ajuste de Esfera.
+ * Ajuste de cabeceras para evitar desbordamiento en pantallas circulares.
  * Fondo: Deep Night (#0F172A).
  */
 export default function SmartwatchPage() {
@@ -150,7 +150,6 @@ export default function SmartwatchPage() {
                  </button>
               </div>
 
-              {/* AJUSTE ERGONÓMICO v9.22.1: El botón no desborda la curva inferior */}
               <button 
                 onClick={startSubProcess}
                 className="w-[85%] h-12 mt-2 bg-white/5 border-2 border-white/10 rounded-[2rem] flex items-center justify-center gap-3 active:bg-white/20 transition-all active:scale-95 shrink-0 shadow-lg"
@@ -163,7 +162,8 @@ export default function SmartwatchPage() {
 
           {view === 'subs_out' && (
             <div className="w-full h-full flex flex-col animate-in slide-in-from-bottom-6 duration-500">
-               <div className="flex items-center justify-between py-2 shrink-0">
+               {/* AJUSTE ERGONÓMICO v9.22.2: pt-6 para evitar recorte superior en esfera */}
+               <div className="flex items-center justify-between pt-6 pb-2 shrink-0">
                   <button onClick={() => setView('main')} className="p-2 bg-white/5 rounded-full active:bg-primary/20"><X className="h-4 w-4 text-primary" /></button>
                   <span className="text-[9px] font-black text-primary uppercase tracking-widest">¿QUIÉN SALE? (OUT)</span>
                   <div className="w-8" />
@@ -185,7 +185,8 @@ export default function SmartwatchPage() {
 
           {view === 'subs_in' && (
             <div className="w-full h-full flex flex-col animate-in slide-in-from-right-6 duration-500">
-               <div className="flex items-center justify-between py-2 shrink-0">
+               {/* AJUSTE ERGONÓMICO v9.22.2: pt-6 para evitar recorte superior en esfera */}
+               <div className="flex items-center justify-between pt-6 pb-2 shrink-0">
                   <button onClick={() => setView('subs_out')} className="p-2 bg-white/5 rounded-full active:bg-primary/20"><ChevronLeft className="h-4 w-4 text-primary" /></button>
                   <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">¿QUIÉN ENTRA? (IN)</span>
                   <div className="w-8" />
