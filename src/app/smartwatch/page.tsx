@@ -17,10 +17,10 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 
 /**
- * PROTOCOLO_SMARTWATCH_V9.22.3
- * Protocolo de Ajuste Radial.
- * Ajuste de cabeceras para evitar desbordamiento en pantallas circulares (px-10).
- * Optimización de scroll táctil (touch-pan-y).
+ * PROTOCOLO_SMARTWATCH_V9.22.4
+ * Protocolo de Limpieza Visual.
+ * Eliminación de barra de scroll física ([scrollbar-width:none] y [&::-webkit-scrollbar]:hidden).
+ * Mantenimiento de touch-pan-y para scroll táctil fluido.
  * Fondo: Deep Night (#0F172A).
  */
 export default function SmartwatchPage() {
@@ -163,14 +163,13 @@ export default function SmartwatchPage() {
 
           {view === 'subs_out' && (
             <div className="w-full h-full flex flex-col animate-in slide-in-from-bottom-6 duration-500">
-               {/* AJUSTE RADIAL v9.22.3: px-10 para evitar recorte de botones laterales */}
                <div className="flex items-center justify-between pt-6 pb-2 px-10 shrink-0">
                   <button onClick={() => setView('main')} className="p-2 bg-white/5 rounded-full active:bg-primary/20"><X className="h-4 w-4 text-primary" /></button>
                   <span className="text-[9px] font-black text-primary uppercase tracking-widest">¿QUIÉN SALE?</span>
                   <div className="w-8" />
                </div>
-               {/* OPTIMIZACIÓN TÁCTIL: touch-pan-y activa para scroll fluido con el dedo */}
-               <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pb-10 px-2 touch-pan-y">
+               {/* OPTIMIZACIÓN TÁCTIL v9.22.4: Eliminada barra de scroll visual ([scrollbar-width:none] y [&::-webkit-scrollbar]:hidden) */}
+               <div className="flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden space-y-2 pb-10 px-2 touch-pan-y">
                   {starters.map(num => (
                     <button 
                       key={num} 
@@ -187,7 +186,6 @@ export default function SmartwatchPage() {
 
           {view === 'subs_in' && (
             <div className="w-full h-full flex flex-col animate-in slide-in-from-right-6 duration-500">
-               {/* AJUSTE RADIAL v9.22.3: px-10 para evitar recorte de botones laterales */}
                <div className="flex items-center justify-between pt-6 pb-2 px-10 shrink-0">
                   <button onClick={() => setView('subs_out')} className="p-2 bg-white/5 rounded-full active:bg-primary/20"><ChevronLeft className="h-4 w-4 text-primary" /></button>
                   <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">¿QUIÉN ENTRA?</span>
@@ -198,8 +196,8 @@ export default function SmartwatchPage() {
                     <span className="text-[8px] font-black text-white uppercase italic">Sustituyendo a #{selectedOut}</span>
                   </div>
                </div>
-               {/* OPTIMIZACIÓN TÁCTIL: touch-pan-y activa para scroll fluido con el dedo */}
-               <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pb-10 px-2 touch-pan-y">
+               {/* OPTIMIZACIÓN TÁCTIL v9.22.4: Eliminada barra de scroll visual */}
+               <div className="flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden space-y-2 pb-10 px-2 touch-pan-y">
                   {substitutes.map(num => (
                     <button 
                       key={num} 
