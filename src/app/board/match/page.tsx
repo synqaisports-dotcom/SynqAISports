@@ -153,7 +153,6 @@ export default function MatchBoardPage() {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   
-  // PROTOCOLO_HIDRATACION: Evita errores de renderizado durante el switch de vistas
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
@@ -177,6 +176,9 @@ export default function MatchBoardPage() {
   const [players, setPlayers] = useState<PlayerPos[]>([]);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   
+  // ESTADO DE SUSTITUCIÓN TAP-TO-TAP (Móvil)
+  const [pendingOutNum, setPendingOutNum] = useState<number | null>(null);
+
   const [isPaintMode, setIsPaintMode] = useState(false);
   const [currentColor, setCurrentColor] = useState("#00f2ff");
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -185,7 +187,6 @@ export default function MatchBoardPage() {
 
   const fieldRef = useRef<HTMLDivElement>(null);
 
-  // ESTADO DE SINCRONIZACIÓN PERIFÉRICA (Smartwatch)
   const [watchConnected, setWatchConnected] = useState(true);
   const [watchAlert, setWatchAlert] = useState<string | null>(null);
 
@@ -216,14 +217,12 @@ export default function MatchBoardPage() {
     setGuestFormation(defaultFormations[fieldType]);
   }, [fieldType]);
 
-  // LÓGICA DE TIEMPOS Y ALERTAS PERIFÉRICAS
   useEffect(() => {
     let interval: any;
     if (isRunning && timeLeft > 0) {
       interval = setInterval(() => {
         setTimeLeft(prev => {
           const next = prev - 1;
-          // Simulación de Alerta de Smartwatch
           if (next === (25 * 60)) {
             setWatchAlert("CAMBIO_SUGERIDO: Jugador #10 (Fatiga)");
             toast({
@@ -472,6 +471,10 @@ export default function MatchBoardPage() {
       return newRoster;
     });
     setWatchAlert(null);
+    setPendingOutNum(null);
+    if (typeof window !== "undefined" && window.navigator.vibrate) {
+      window.navigator.vibrate(200);
+    }
     toast({ title: "SINCRO_ACTIVA", description: "Sustitución ejecutada y enviada al Watch." });
   };
 
@@ -481,11 +484,9 @@ export default function MatchBoardPage() {
 
   if (!mounted) return null;
 
-  // VISTA POCKET MASTER PARA MÓVILES
   if (isMobile) {
     return (
       <div className="flex-1 flex flex-col bg-black overflow-hidden font-body relative touch-none p-6 gap-6">
-        {/* HEADER POCKET */}
         <div className="flex items-center justify-between border-b border-white/5 pb-4">
            <div className="flex items-center gap-3">
               <Smartphone className="h-5 w-5 text-primary animate-pulse" />
@@ -500,7 +501,6 @@ export default function MatchBoardPage() {
            </div>
         </div>
 
-        {/* SCORE & TIME POCKET */}
         <div className="grid grid-cols-1 gap-4">
            <Card className="glass-panel border-primary/20 bg-primary/5 p-6 flex flex-col items-center justify-center space-y-4 rounded-3xl">
               <span className={cn(
@@ -546,8 +546,7 @@ export default function MatchBoardPage() {
            </div>
         </div>
 
-        {/* QUICK SUBS POCKET */}
-        <Sheet>
+        <Sheet onOpenChange={(open) => !open && setPendingOutNum(null)}>
           <SheetTrigger asChild>
             <Button size="lg" className="h-20 bg-primary text-black font-black uppercase text-xs tracking-widest rounded-3xl cyan-glow shadow-[0_0_30px_rgba(0,242,255,0.2)]">
               <Users className="h-5 w-5 mr-3" /> SUSTITUCIÓN RÁPIDA
@@ -557,7 +556,9 @@ export default function MatchBoardPage() {
              <SheetHeader className="p-8 border-b border-white/5 flex flex-row items-center justify-between space-y-0">
                 <div className="flex items-center gap-3">
                    <Dna className="h-5 w-5 text-primary animate-pulse" />
-                   <SheetTitle className="text-2xl font-black italic uppercase tracking-tighter text-white">ROSTER_LIVE</SheetTitle>
+                   <SheetTitle className="text-2xl font-black italic uppercase tracking-tighter text-white">
+                    {pendingOutNum ? "SELECCIONAR ENTRADA" : "SELECCIONAR SALIDA"}
+                   </SheetTitle>
                 </div>
                 <SheetDescription className="sr-only">Gestión de sustituciones en tiempo real</SheetDescription>
                 <SheetClose className="h-10 w-10 bg-white/5 rounded-full flex items-center justify-center"><X className="h-5 w-5" /></SheetClose>
@@ -565,19 +566,31 @@ export default function MatchBoardPage() {
              <div className="p-6 overflow-y-auto h-full pb-20 custom-scrollbar">
                 <div className="grid gap-3">
                    {starters.map(p => (
-                     <PlayerListItem key={p.number} player={p} onDrop={(subNum) => handleSubstitution(subNum, p.number)} />
+                     <PlayerListItem 
+                      key={p.number} 
+                      player={p} 
+                      selected={pendingOutNum === p.number}
+                      onClick={() => setPendingOutNum(pendingOutNum === p.number ? null : p.number)}
+                    />
                    ))}
                    <div className="h-8" />
                    <span className="text-[10px] font-black text-primary/40 uppercase tracking-widest px-4">Suplentes Disponibles</span>
                    {substitutes.map(p => (
-                     <PlayerListItem key={p.number} player={p} isSub />
+                     <PlayerListItem 
+                      key={p.number} 
+                      player={p} 
+                      isSub 
+                      onClick={() => {
+                        if (pendingOutNum) handleSubstitution(p.number, pendingOutNum);
+                        else toast({ title: "PASO_REQUERIDO", description: "Seleccione primero el jugador que sale." });
+                      }}
+                    />
                    ))}
                 </div>
              </div>
           </SheetContent>
         </Sheet>
 
-        {/* ALERT MONITOR POCKET */}
         <div className="mt-auto space-y-4">
            {watchAlert && (
              <div className="bg-primary/10 border-2 border-primary rounded-2xl p-4 flex items-center justify-between animate-in slide-in-from-bottom-4">
@@ -597,7 +610,6 @@ export default function MatchBoardPage() {
     );
   }
 
-  // VISTA FULL EXPERIENCE (TABLET/PC)
   return (
     <div 
       className={cn(
@@ -757,7 +769,6 @@ export default function MatchBoardPage() {
             </div>
           </TacticalField>
 
-          {/* HUB DE NOTIFICACIONES SMARTWATCH */}
           {watchAlert && (
             <div className="absolute top-32 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-top-8 duration-500">
                <div className="bg-black/80 backdrop-blur-2xl border-2 border-primary rounded-3xl p-6 shadow-[0_0_50px_rgba(0,242,255,0.3)] flex items-center gap-6 group">
@@ -990,26 +1001,28 @@ function PhaseButton({ label, active, onClick, color }: { label: string, active:
   );
 }
 
-function PlayerListItem({ player, isSub, onDrop }: { player: any, isSub?: boolean, onDrop?: (subNum: number) => void }) {
+function PlayerListItem({ player, isSub, onDrop, selected, onClick }: { player: any, isSub?: boolean, onDrop?: (subNum: number) => void, selected?: boolean, onClick?: () => void }) {
   const posStyle = POSITION_COLORS[player.pos] || "text-white/40 border-white/10 bg-white/5";
   const [isOver, setIsOver] = useState(false);
   
   return (
     <div 
       className={cn(
-        "p-4 bg-primary/5 border rounded-2xl flex items-center justify-between group transition-all cursor-default",
-        isSub ? "border-white/5 opacity-60 hover:opacity-100 cursor-grab active:cursor-grabbing" : "border-primary/10 hover:border-primary/30",
-        isOver && !isSub && "border-primary bg-primary/20 scale-[1.02] shadow-[0_0_20px_rgba(0,242,255,0.2)]"
+        "p-4 bg-primary/5 border rounded-2xl flex items-center justify-between group transition-all",
+        isSub ? "border-white/5 opacity-60 hover:opacity-100 cursor-pointer" : "border-primary/10 hover:border-primary/30 cursor-pointer",
+        isOver && !isSub && "border-primary bg-primary/20 scale-[1.02] shadow-[0_0_20px_rgba(0,242,255,0.2)]",
+        selected && "border-primary bg-primary/20 scale-[1.02] shadow-[0_0_20px_rgba(0,242,255,0.2)]"
       )}
-      draggable={isSub}
+      onClick={onClick}
+      draggable={!onClick && isSub}
       onDragStart={(e) => {
-        if (isSub) {
+        if (!onClick && isSub) {
           e.dataTransfer.setData("text/plain", player.number.toString());
           e.dataTransfer.effectAllowed = "move";
         }
       }}
       onDragOver={(e) => {
-        if (!isSub) {
+        if (!onClick && !isSub) {
           e.preventDefault();
           e.dataTransfer.dropEffect = "move";
           setIsOver(true);
@@ -1017,7 +1030,7 @@ function PlayerListItem({ player, isSub, onDrop }: { player: any, isSub?: boolea
       }}
       onDragLeave={() => setIsOver(false)}
       onDrop={(e) => {
-        if (!isSub && onDrop) {
+        if (!onClick && !isSub && onDrop) {
           e.preventDefault();
           setIsOver(false);
           const subNum = parseInt(e.dataTransfer.getData("text/plain") || "0");
@@ -1030,7 +1043,8 @@ function PlayerListItem({ player, isSub, onDrop }: { player: any, isSub?: boolea
       <div className="flex items-center gap-4">
         <div className={cn(
           "h-10 w-10 rounded-xl bg-black border flex items-center justify-center text-[10px] font-black italic shadow-lg group-hover:scale-110 transition-transform",
-          isSub ? "border-white/10 text-white/40" : "border-primary/20 text-primary"
+          isSub ? "border-white/10 text-white/40" : "border-primary/20 text-primary",
+          selected && "border-primary text-primary"
         )}>
           {player.number}
         </div>
@@ -1051,9 +1065,10 @@ function PlayerListItem({ player, isSub, onDrop }: { player: any, isSub?: boolea
       </div>
       <Badge variant="outline" className={cn(
         "font-black text-[8px] rounded-full",
-        isSub ? "border-white/5 text-white/10" : "border-primary/20 text-primary"
+        isSub ? "border-white/5 text-white/10" : "border-primary/20 text-primary",
+        selected && "border-primary text-primary"
       )}>
-        {isSub ? 'SUB' : 'SINC_OK'}
+        {selected ? 'OUT_TARGET' : isSub ? 'SUB' : 'SINC_OK'}
       </Badge>
     </div>
   );
