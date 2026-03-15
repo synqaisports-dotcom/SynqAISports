@@ -22,7 +22,19 @@ import {
   Monitor,
   ChevronDown,
   Zap,
-  Lock
+  Lock,
+  Target,
+  GitBranch,
+  BookOpen,
+  Library,
+  CalendarDays,
+  Smartphone,
+  Trophy,
+  Users,
+  Building,
+  MapPin,
+  Stethoscope,
+  LayoutGrid
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -54,43 +66,57 @@ const INITIAL_ROLES = [
   { id: "r2", name: "Administrador del Club", users: 12, status: "Active", permissions: ["Club_Manage", "User_Manage"] },
   { id: "r3", name: "Director de Cantera", users: 5, status: "Active", permissions: ["Academy_Manage"] },
   { id: "r4", name: "Director de Metodología", users: 4, status: "Active", permissions: ["Methodology_Manage"] },
-  { id: "r5", name: "Coordinador de Etapa", users: 8, status: "Active", permissions: ["Stage_Manage"] },
-  { id: "r6", name: "Entrenador", users: 85, status: "Active", permissions: ["Tactics_Create", "Session_Manage"] },
-  { id: "r7", name: "Delegado", users: 20, status: "Active", permissions: ["Match_Report"] },
-  { id: "r8", name: "Tutor", users: 150, status: "Active", permissions: ["Consult_Only"] },
+  { id: "r5", name: "Entrenador Pro", users: 85, status: "Active", permissions: ["Tactics_Create", "Session_Manage"] },
+  { id: "r6", name: "Entrenador Promo", users: 150, status: "Active", permissions: ["Promo_Board_Only"] },
+  { id: "r7", name: "Tutor / Familia", users: 320, status: "Active", permissions: ["View_Only"] },
 ];
 
 const SECTOR_PERMISSIONS = [
   {
     id: "global",
-    label: "Control Global",
+    label: "Control Global (Emerald)",
     icon: Globe,
     color: "text-emerald-400",
     modules: [
-      { id: "clubs", label: "Gestión de Clubes", features: ["Ver", "Crear", "Editar", "Suspender"] },
-      { id: "plans", label: "Gestión de Planes", features: ["Ver", "Modificar Precios", "Crear Protocolos"] },
-      { id: "promos", label: "Promociones IA", features: ["Ver", "Generar Códigos", "Analítica ROI"] },
+      { id: "clubs", label: "Red de Clubes", features: ["Ver Nodos", "Vincular Club", "Modificar Protocolo", "Suspender"] },
+      { id: "plans", label: "Gestión de Planes", features: ["Ver Tarifas", "Editar Precios", "Protocolos de Escalado"] },
+      { id: "promos", label: "Promociones IA", features: ["Generar Magic Links", "Analítica de Conversión", "Gestión de Tokens"] },
+      { id: "users_admin", label: "Usuarios Sistema", features: ["Emitir Credenciales", "Resetear Claves", "Bajas de Red"] },
+      { id: "warehouse", label: "Almacén Neural", features: ["Acceso Global Ejercicios", "Exportar para Gemini"] },
     ]
   },
   {
-    id: "elite",
-    label: "Operativa Élite",
+    id: "methodology",
+    label: "Estrategia Metodológica (Amber)",
+    icon: Target,
+    color: "text-amber-500",
+    modules: [
+      { id: "identity", label: "Hoja de Ruta", features: ["Items Aprendizaje", "Objetivos Tácticos"] },
+      { id: "cyclic", label: "Planificación", features: ["Ciclo-Planner", "Planificador de Sesiones"] },
+      { id: "boards_master", label: "Pizarras Tácticas", features: ["Estudio de Diseño (Pro)", "Terminal Partido", "Modo Promo (Restringido)"] },
+      { id: "library_master", label: "Libro de Estilo", features: ["Validar Tareas Maestras", "Gestionar Biblioteca Club"] },
+    ]
+  },
+  {
+    id: "operational",
+    label: "Operativa Élite (Cyan)",
     icon: Cpu,
     color: "text-primary",
     modules: [
-      { id: "coach_hub", label: "Coach Hub", features: ["Dashboard", "Gestión Atletas", "Informes"] },
-      { id: "tactical_board", label: "Tactical Board", features: ["Acceso", "Guardar Tácticas", "Exportar Video"] },
-      { id: "neural_planner", label: "Neural Planner", features: ["Generar Planes", "Biblioteca IA", "Ajustes Avanzados"] },
+      { id: "coach_hub", label: "Coach Hub", features: ["Dashboard Personal", "Mis Sesiones", "Calendario"] },
+      { id: "academy_ops", label: "Gestión Formativa", features: ["Equipos/Categorías", "Fichas Jugadores", "Control Asistencia"] },
+      { id: "facilities_ops", label: "Logística", features: ["Instalaciones", "Subdivisiones/Zonas"] },
+      { id: "tech_ops", label: "Tecnología Aplicada", features: ["Neural Planner (AI)", "Configuración Watch", "Métricas en Vivo"] },
     ]
   },
   {
     id: "terminals",
-    label: "Terminales de Acceso",
+    label: "Terminales de Acceso (White)",
     icon: Monitor,
     color: "text-white/60",
     modules: [
-      { id: "tutor", label: "Portal Tutor", features: ["Consultas", "Chat Directo", "Pagos"] },
-      { id: "smartwatch", label: "Link Reloj Inteligente", features: ["Sincronización", "Métricas en Vivo"] },
+      { id: "tutor_portal", label: "Portal Tutores", features: ["Ver Ficha Hijo", "Mensajería", "Pagos"] },
+      { id: "watch_link", label: "Smartwatch Link", features: ["Sincronización Periférico", "Control de Partido"] },
     ]
   }
 ];
@@ -101,7 +127,7 @@ export default function GlobalRolesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<any>(null);
-  const [activeSectors, setActiveSectors] = useState<Record<string, boolean>>({ global: true });
+  const [activeSectors, setActiveSectors] = useState<Record<string, boolean>>({ global: true, methodology: true, operational: true, terminals: true });
   const { toast } = useToast();
 
   const handleToggleStatus = (id: string) => {
@@ -109,43 +135,22 @@ export default function GlobalRolesPage() {
     if (!role) return;
 
     if (role.status === "System") {
-      toast({
-        variant: "destructive",
-        title: "ACCESO_DENEGADO",
-        description: "No se pueden suspender protocolos críticos del sistema.",
-      });
+      toast({ variant: "destructive", title: "ACCESO_DENEGADO", description: "Protocolos críticos del sistema no pueden ser alterados." });
       return;
     }
 
-    const isCurrentlyActive = role.status === "Active";
-    const newStatus = isCurrentlyActive ? "Inactive" : "Active";
-
-    setRoles(prev => prev.map(r => 
-      r.id === id ? { ...r, status: newStatus } : r
-    ));
-
-    toast({
-      title: isCurrentlyActive ? "IDENTIDAD_SUSPENDIDA" : "IDENTIDAD_REACTIVADA",
-      description: `El rol ${role.name} ha cambiado su estado a ${newStatus.toUpperCase()}.`,
-    });
+    const newStatus = role.status === "Active" ? "Inactive" : "Active";
+    setRoles(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
+    toast({ title: newStatus === "Active" ? "IDENTIDAD_REACTIVADA" : "IDENTIDAD_SUSPENDIDA", description: `El rol ${role.name} ha sido sincronizado.` });
   };
 
   const openSheet = (role: any = null) => {
     setEditingRole(role);
     setIsSheetOpen(true);
-    if (role) {
-      toast({
-        title: "CONFIG_TERMINAL_OPEN",
-        description: `Sincronizando matriz de niveles para el rol ${role.name}.`,
-      });
-    }
   };
 
   const toggleSector = (sectorId: string) => {
-    setActiveSectors(prev => ({
-      ...prev,
-      [sectorId]: !prev[sectorId]
-    }));
+    setActiveSectors(prev => ({ ...prev, [sectorId]: !prev[sectorId] }));
   };
 
   const filteredRoles = roles.filter(r => 
@@ -174,72 +179,54 @@ export default function GlobalRolesPage() {
         </Button>
 
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-          <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-emerald-500/20 text-white w-full sm:max-w-2xl shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
-            <div className="p-10 pb-6 border-b border-white/5">
+          <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-emerald-500/20 text-white w-full sm:max-w-2xl lg:max-w-3xl shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+            <div className="p-10 pb-6 border-b border-white/5 bg-black/40">
               <SheetHeader className="space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400">Terminal_Identidad_v2.5</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400">Hierarchy_Designer_v9.28.0</span>
                 </div>
                 <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left">
                   {editingRole ? `EDITAR: ${editingRole.name}` : "CONFIG_NUEVO_ROL"}
                 </SheetTitle>
-                <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left">Matriz de autoridad multinivel y sectores de acceso.</SheetDescription>
+                <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left italic">
+                  Defina los privilegios de acceso granular para este perfil en toda la red.
+                </SheetDescription>
               </SheetHeader>
             </div>
 
             <div className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10">
               
-              {profile?.role === "superadmin" && (
-                <div className="p-8 bg-emerald-500/5 border border-emerald-500/30 rounded-3xl space-y-4 relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-all">
-                    <Crown className="h-16 w-16 text-emerald-400" />
-                  </div>
-                  <div className="flex items-center justify-between relative z-10">
-                    <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 bg-emerald-500/20 rounded-2xl flex items-center justify-center border border-emerald-500/40">
-                        <ShieldCheck className="h-6 w-6 text-emerald-400 animate-pulse" />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-[11px] font-black uppercase tracking-[0.2em] text-emerald-400">PROTOCOLO_ACCESO_TOTAL</span>
-                        <span className="text-[8px] font-bold uppercase text-white/40 tracking-widest">AUTORIDAD RAÍZ DEL SISTEMA</span>
-                      </div>
-                    </div>
-                    <Switch className="data-[state=checked]:bg-emerald-500" />
-                  </div>
-                </div>
-              )}
-
               <div className="space-y-4">
-                <label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Identificador_Nodo</label>
+                <label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Identificador del Rol</label>
                 <Input 
                   defaultValue={editingRole?.name || ""}
-                  placeholder="EJ: ANALISTA_TACTICO_PRO" 
+                  placeholder="EJ: ENTRENADOR_PROMO_CANTERA" 
                   className="h-16 bg-white/5 border-emerald-500/20 rounded-2xl font-bold uppercase focus:border-emerald-500 transition-all text-lg placeholder:text-white/10" 
                 />
               </div>
               
               <div className="space-y-6">
-                <label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest block ml-1">Configuración de Sectores y Niveles</label>
+                <label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest block ml-1">Matriz de Acceso por Sectores Operativos</label>
                 
-                <Accordion type="multiple" className="space-y-4">
+                <Accordion type="multiple" defaultValue={["operational", "methodology"]} className="space-y-4">
                   {SECTOR_PERMISSIONS.map(sector => (
                     <AccordionItem 
                       key={sector.id} 
                       value={sector.id} 
                       className={cn(
-                        "border border-white/5 rounded-3xl overflow-hidden bg-white/[0.02] transition-all",
-                        activeSectors[sector.id] ? "border-emerald-500/20" : "opacity-50"
+                        "border border-white/5 rounded-3xl overflow-hidden bg-white/[0.02] transition-all shadow-xl",
+                        activeSectors[sector.id] ? "border-emerald-500/20" : "opacity-40 grayscale"
                       )}
                     >
-                      <div className="px-6 py-4 flex items-center justify-between bg-black/40">
+                      <div className="px-6 py-5 flex items-center justify-between bg-black/40">
                         <div className="flex items-center gap-4">
-                          <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center bg-white/5", sector.color)}>
-                            <sector.icon className="h-5 w-5" />
+                          <div className={cn("h-12 w-12 rounded-2xl flex items-center justify-center bg-white/5 border border-white/10", sector.color)}>
+                            <sector.icon className="h-6 w-6" />
                           </div>
                           <div>
-                            <span className="text-xs font-black uppercase tracking-widest text-white">{sector.label}</span>
-                            <p className="text-[8px] font-bold text-white/30 uppercase tracking-widest mt-0.5">Acceso a Sector</p>
+                            <span className="text-sm font-black uppercase tracking-widest text-white">{sector.label}</span>
+                            <p className="text-[8px] font-bold text-white/30 uppercase tracking-widest mt-0.5">Interruptor Maestro de Sector</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-6">
@@ -248,30 +235,33 @@ export default function GlobalRolesPage() {
                             onCheckedChange={() => toggleSector(sector.id)}
                             className="data-[state=checked]:bg-emerald-500"
                           />
-                          <AccordionTrigger className="hover:no-underline p-0 h-8 w-8 rounded-full hover:bg-white/5 justify-center" />
+                          <AccordionTrigger className="hover:no-underline p-0 h-10 w-10 rounded-full hover:bg-white/5 justify-center" />
                         </div>
                       </div>
 
-                      <AccordionContent className="p-6 pt-2 space-y-6">
-                        {sector.modules.map(module => (
-                          <div key={module.id} className="space-y-4 p-5 bg-black/60 rounded-2xl border border-white/5 relative group/module">
-                            <div className="flex items-center justify-between mb-4">
-                               <div className="flex items-center gap-3">
-                                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-500/50" />
-                                  <span className="text-[10px] font-black uppercase tracking-widest text-white/70">{module.label}</span>
-                               </div>
-                               <Checkbox className="rounded-md border-emerald-500/40 data-[state=checked]:bg-emerald-500 data-[state=checked]:text-black" />
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                              {module.features.map(feature => (
-                                <div key={feature} className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/5 hover:border-emerald-500/20 transition-all cursor-pointer">
-                                   <Checkbox className="h-3.5 w-3.5 rounded-sm border-emerald-500/20 data-[state=checked]:bg-emerald-500 data-[state=checked]:text-black" />
-                                   <span className="text-[9px] font-bold text-white/40 uppercase tracking-tighter group-hover/module:text-white/60">{feature}</span>
+                      <AccordionContent className="p-6 space-y-6 bg-black/20">
+                        <div className="grid grid-cols-1 gap-4">
+                          {sector.modules.map(module => (
+                            <div key={module.id} className="p-6 bg-black/60 rounded-[2rem] border border-white/5 space-y-6">
+                              <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                                <div className="flex items-center gap-3">
+                                  <div className={cn("h-2 w-2 rounded-full", sector.color.replace('text', 'bg'))} />
+                                  <span className="text-xs font-black uppercase tracking-widest text-white">{module.label}</span>
                                 </div>
-                              ))}
+                                <Badge variant="outline" className="text-[8px] border-white/10 text-white/20">MÓDULO_SINCRO</Badge>
+                              </div>
+                              
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {module.features.map(feature => (
+                                  <div key={feature} className="flex items-center justify-between bg-white/[0.03] p-4 rounded-2xl border border-white/5 hover:border-emerald-500/20 transition-all cursor-pointer group/feat">
+                                     <span className="text-[10px] font-bold text-white/40 uppercase tracking-tight group-hover/feat:text-white/80">{feature}</span>
+                                     <Checkbox className="h-4 w-4 rounded-md border-white/20 data-[state=checked]:bg-emerald-500 data-[state=checked]:text-black" defaultChecked />
+                                  </div>
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </AccordionContent>
                     </AccordionItem>
                   ))}
@@ -282,7 +272,7 @@ export default function GlobalRolesPage() {
             <div className="p-10 pt-6 border-t border-white/5 bg-black/40">
               <Button 
                 onClick={() => {
-                  toast({ title: "SINC_ESTABLECIDA", description: "La matriz de niveles ha sido actualizada en la red." });
+                  toast({ title: "IDENTIDAD_SINCRO", description: "Los protocolos de acceso han sido actualizados en la red." });
                   setIsSheetOpen(false);
                 }}
                 className="w-full h-16 bg-emerald-500 text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-2xl shadow-[0_0_40px_rgba(16,185,129,0.2)] hover:scale-[1.02] transition-all border-none"
@@ -295,12 +285,12 @@ export default function GlobalRolesPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8">
-        <Card className="glass-panel overflow-hidden border-none relative bg-black/40">
+        <Card className="glass-panel overflow-hidden border-none relative bg-black/40 rounded-[2.5rem] shadow-2xl">
           <CardHeader className="p-8 pb-4">
             <div className="relative w-full max-w-md">
               <Search className="absolute left-4 top-4 h-5 w-5 text-emerald-500 opacity-50" />
               <Input 
-                placeholder="BUSCAR IDENTIDAD DE ROL..." 
+                placeholder="FILTRAR POR IDENTIDAD DE ROL..." 
                 className="pl-12 h-14 bg-white/[0.03] border-emerald-500/20 rounded-2xl text-white font-bold uppercase text-[11px] tracking-widest focus:ring-emerald-500/30 transition-all"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -311,10 +301,10 @@ export default function GlobalRolesPage() {
             <Table>
               <TableHeader className="bg-white/[0.01]">
                 <TableRow className="border-white/5 hover:bg-transparent">
-                  <TableHead className="font-black text-[11px] uppercase tracking-[0.2em] text-white/40 h-16 pl-10">Identidad_Rol</TableHead>
-                  <TableHead className="font-black text-[11px] uppercase tracking-[0.2em] text-white/40">Nodos_Asignados</TableHead>
-                  <TableHead className="font-black text-[11px] uppercase tracking-[0.2em] text-white/40 text-center">Estatus</TableHead>
-                  <TableHead className="text-right font-black text-[11px] uppercase tracking-[0.2em] text-white/40 pr-10">Terminal_Acciones</TableHead>
+                  <TableHead className="font-black text-[11px] uppercase tracking-[0.2em] text-white/40 h-16 pl-10 italic">Identidad_Nodo</TableHead>
+                  <TableHead className="font-black text-[11px] uppercase tracking-[0.2em] text-white/40 text-center italic">Nodos_Sincro</TableHead>
+                  <TableHead className="font-black text-[11px] uppercase tracking-[0.2em] text-white/40 text-center italic">Estatus</TableHead>
+                  <TableHead className="text-right font-black text-[11px] uppercase tracking-[0.2em] text-white/40 pr-10 italic">Terminal</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -323,19 +313,19 @@ export default function GlobalRolesPage() {
                     <TableCell className="pl-10 py-6">
                       <div className="flex items-center gap-5">
                         <div className="h-12 w-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center border border-emerald-500/20 group-hover:scale-110 group-hover:bg-emerald-500/20 transition-all relative overflow-hidden">
-                          <Shield className="h-5 w-5 text-emerald-400 relative z-10" />
+                          <Fingerprint className="h-5 w-5 text-emerald-400 relative z-10" />
                           <div className="absolute inset-0 bg-emerald-500/5 scan-line" />
                         </div>
                         <div>
                           <p className="font-black text-white uppercase text-sm italic group-hover:emerald-text-glow transition-all tracking-tighter">
                             {role.name}
                           </p>
-                          <p className="text-[9px] text-white/30 font-bold uppercase tracking-widest mt-1">ID_AUTH: {role.id.toUpperCase()}</p>
+                          <p className="text-[9px] text-white/30 font-bold uppercase tracking-widest mt-1">ID_RED: {role.id.toUpperCase()}</p>
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
+                    <TableCell className="text-center">
+                      <div className="flex items-center justify-center gap-2">
                          <Activity className="h-3 w-3 text-emerald-500/30" />
                          <span className="font-mono text-base text-white/80 font-bold">{role.users}</span>
                       </div>
@@ -357,7 +347,6 @@ export default function GlobalRolesPage() {
                           size="icon" 
                           className="h-10 w-10 rounded-xl text-white/20 hover:text-emerald-400 hover:bg-emerald-500/10 border border-white/5 hover:border-emerald-500/20 transition-all"
                           onClick={() => openSheet(role)}
-                          title="Modificar Protocolo"
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -370,14 +359,10 @@ export default function GlobalRolesPage() {
                               ? "hover:border-amber-500/50 hover:bg-amber-500/10 text-white/20 hover:text-amber-400" 
                               : "hover:border-emerald-500/50 hover:bg-emerald-500/10 text-white/20 hover:text-emerald-400"
                           )}
-                          title={role.status === "Active" ? "Suspender Identidad" : "Reactivar Identidad"}
                           onClick={() => handleToggleStatus(role.id)}
                           disabled={role.status === "System"}
                         >
                           {role.status === "Active" ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-white/20 hover:text-emerald-400 hover:bg-emerald-500/10 border border-white/5">
-                          <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>
@@ -386,51 +371,43 @@ export default function GlobalRolesPage() {
               </TableBody>
             </Table>
           </CardContent>
-          <div className="p-6 bg-black/20 text-[9px] font-black text-white/20 uppercase tracking-[0.4em] flex justify-between rounded-b-3xl">
-            <span className="flex items-center gap-2">
-              <Activity className="h-3 w-3 text-emerald-500 animate-pulse" /> Sincronización de matriz activa
-            </span>
-            <span className="flex items-center gap-2">
-              <Lock className="h-3 w-3 text-emerald-500/50" /> Seguridad Nivel 4
-            </span>
-          </div>
         </Card>
 
         <div className="space-y-6">
-          <Card className="glass-panel border-emerald-500/20 bg-emerald-500/[0.03] overflow-hidden group">
-            <CardHeader className="pb-2">
+          <Card className="glass-panel border-emerald-500/20 bg-emerald-500/[0.03] overflow-hidden group rounded-[2rem]">
+            <CardHeader className="p-8">
               <CardTitle className="text-xs font-black uppercase tracking-[0.3em] text-emerald-400 flex items-center gap-3">
                 <Shield className="h-4 w-4 animate-pulse" /> Resumen de Auditoría
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4 pt-4">
+            <CardContent className="px-8 pb-8 space-y-4">
               <div className="p-6 bg-black/60 rounded-2xl border border-white/5 space-y-2 group-hover:border-emerald-500/30 transition-all">
-                <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Nodos Críticos Inmutables</p>
+                <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Protocolos Inmutables</p>
                 <div className="flex items-end gap-3">
                   <p className="text-4xl font-black italic text-white tracking-tighter">01</p>
-                  <span className="text-[10px] text-emerald-400 font-bold mb-1 uppercase tracking-widest italic">Estable</span>
+                  <span className="text-[10px] text-emerald-400 font-bold mb-1 uppercase tracking-widest italic">ESTABLE</span>
                 </div>
               </div>
               <div className="p-6 bg-black/60 rounded-2xl border border-white/5 space-y-2 group-hover:border-emerald-500/30 transition-all">
-                <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Protocolos Personalizados</p>
+                <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Matriz Personalizada</p>
                 <div className="flex items-end gap-3">
-                  <p className="text-4xl font-black italic text-emerald-400 tracking-tighter">{filteredRoles.filter(r => r.status !== 'System').length}</p>
-                  <span className="text-[10px] text-white/30 font-bold mb-1 uppercase tracking-widest italic">Sincronizados</span>
+                  <p className="text-4xl font-black italic text-emerald-400 tracking-tighter">{filteredRoles.length}</p>
+                  <span className="text-[10px] text-white/30 font-bold mb-1 uppercase tracking-widest italic">NODOS</span>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <div className="p-8 rounded-3xl border border-white/5 bg-black/40 space-y-4 relative overflow-hidden group">
+          <div className="p-8 rounded-[2.5rem] border border-white/5 bg-black/40 space-y-4 relative overflow-hidden group">
              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-20 transition-all">
-                <Fingerprint className="h-20 w-20 text-emerald-500" />
+                <Lock className="h-20 w-20 text-emerald-500" />
              </div>
              <div className="flex items-center gap-3">
                 <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
                 <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/60">Operativa_Matrix</span>
              </div>
              <p className="text-[10px] text-white/40 leading-relaxed font-bold uppercase italic tracking-wider">
-               La matriz multinivel permite activar sectores completos y refinar permisos específicos dentro de cada módulo. Use con precaución operativa.
+               La configuración granular permite que un usuario PROMO solo acceda a las pizarras de marketing, mientras que un COORDINADOR puede ver toda la metodología del club.
              </p>
           </div>
         </div>
