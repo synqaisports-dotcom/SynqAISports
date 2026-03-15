@@ -19,10 +19,27 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, MoreHorizontal, Building2, Globe2, Activity, Pencil, Pause, Play } from "lucide-react";
+import { Plus, Search, MoreHorizontal, Building2, Globe2, Activity, Pencil, Pause, Play, ShieldCheck, Globe, Layers } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetDescription,
+  SheetFooter, 
+  SheetClose
+} from "@/components/ui/sheet";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const INITIAL_CLUBS = [
   { id: "c1", name: "Elite Soccer Academy", plan: "Enterprise", users: 120, status: "Active", country: "ES" },
@@ -35,6 +52,15 @@ export default function ManageClubsPage() {
   const [clubs, setClubs] = useState(INITIAL_CLUBS);
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
+  
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [editingClubId, setEditingId] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    plan: "Pro",
+    country: "ES",
+    status: "Active"
+  });
 
   useEffect(() => {
     // Sincronización con el "almacenamiento global simulado" del prototipo
@@ -68,11 +94,29 @@ export default function ManageClubsPage() {
     });
   };
 
-  const handleEdit = (name: string) => {
-    toast({
-      title: "PROTOCOLO_EDICIÓN",
-      description: `Sincronizando terminal de configuración para ${name}.`,
+  const handleEdit = (club: any) => {
+    setEditingId(club.id);
+    setFormData({
+      name: club.name,
+      plan: club.plan,
+      country: club.country,
+      status: club.status
     });
+    setIsSheetOpen(true);
+  };
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    setClubs(prev => prev.map(c => 
+      c.id === editingClubId ? { ...c, ...formData } : c
+    ));
+    
+    toast({
+      title: "NODO_ACTUALIZADO",
+      description: `La configuración de ${formData.name} ha sido sincronizada en la red.`,
+    });
+    
+    setIsSheetOpen(false);
   };
 
   const filteredClubs = clubs.filter(c => 
@@ -181,7 +225,7 @@ export default function ManageClubsPage() {
                         size="icon" 
                         className="h-10 w-10 rounded-xl border border-white/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 text-white/20 hover:text-emerald-400 transition-all" 
                         title="Modificar Protocolo"
-                        onClick={() => handleEdit(club.name)}
+                        onClick={() => handleEdit(club)}
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -214,6 +258,107 @@ export default function ManageClubsPage() {
           <span className="flex items-center gap-2"><Activity className="h-3 w-3 text-emerald-500 animate-pulse" /> Sincronización de Red: Óptima</span>
         </div>
       </Card>
+
+      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-emerald-500/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+          <div className="p-8 border-b border-white/5 bg-black/40">
+            <SheetHeader className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400">Node_Config_v2.0</span>
+              </div>
+              <SheetTitle className="text-3xl font-black italic tracking-tighter text-white uppercase text-left">
+                MODIFICAR_NODO
+              </SheetTitle>
+              <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left italic">
+                Ajuste los parámetros del club en la red global.
+              </SheetDescription>
+            </SheetHeader>
+          </div>
+
+          <form onSubmit={handleSave} className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-8">
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1 italic">Nombre de la Entidad</Label>
+                <div className="relative">
+                  <Building2 className="absolute left-3 top-3 h-4 w-4 text-emerald-500/30" />
+                  <Input 
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})}
+                    className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-2xl font-bold uppercase focus:border-emerald-500 transition-all text-emerald-400" 
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1 italic">Protocolo Plan</Label>
+                  <Select value={formData.plan} onValueChange={(v) => setFormData({...formData, plan: v})}>
+                    <SelectTrigger className="h-12 bg-white/5 border-emerald-500/20 rounded-2xl text-emerald-400 font-bold uppercase focus:border-emerald-500">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#04070c] border-emerald-500/20">
+                      <SelectItem value="Enterprise" className="text-[10px] font-black uppercase">ENTERPRISE</SelectItem>
+                      <SelectItem value="Pro" className="text-[10px] font-black uppercase">PRO</SelectItem>
+                      <SelectItem value="Basic" className="text-[10px] font-black uppercase">BASIC</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1 italic">Sector País</Label>
+                  <div className="relative">
+                    <Globe className="absolute left-3 top-3 h-4 w-4 text-emerald-500/30" />
+                    <Input 
+                      value={formData.country}
+                      onChange={(e) => setFormData({...formData, country: e.target.value.toUpperCase()})}
+                      className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-2xl font-bold uppercase text-emerald-400" 
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1 italic">Estatus de Red</Label>
+                <Select value={formData.status} onValueChange={(v) => setFormData({...formData, status: v})}>
+                  <SelectTrigger className="h-12 bg-white/5 border-emerald-500/20 rounded-2xl text-emerald-400 font-bold uppercase focus:border-emerald-500">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#04070c] border-emerald-500/20">
+                    <SelectItem value="Active" className="text-[10px] font-black uppercase">ACTIVO</SelectItem>
+                    <SelectItem value="Inactive" className="text-[10px] font-black uppercase text-rose-400">INACTIVO</SelectItem>
+                    <SelectItem value="Overdue" className="text-[10px] font-black uppercase text-amber-400">PAGO_PENDIENTE</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="p-6 bg-emerald-500/5 border border-emerald-500/20 rounded-3xl space-y-3">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-3 w-3 text-emerald-400" />
+                <span className="text-[9px] font-black uppercase text-emerald-400 tracking-widest italic">Aviso de Seguridad</span>
+              </div>
+              <p className="text-[9px] text-emerald-400/40 leading-relaxed font-bold uppercase italic">
+                La modificación de estos parámetros afecta la visibilidad y capacidad de cómputo del nodo en tiempo real.
+              </p>
+            </div>
+          </form>
+
+          <div className="p-8 bg-black/40 border-t border-white/5 flex gap-4">
+            <SheetClose asChild>
+              <Button variant="ghost" className="flex-1 h-14 border border-white/10 text-white/40 font-black uppercase text-[10px] tracking-widest rounded-2xl">
+                CANCELAR
+              </Button>
+            </SheetClose>
+            <Button 
+              onClick={handleSave}
+              className="flex-[2] h-14 bg-emerald-500 text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:scale-[1.02] transition-all border-none"
+            >
+              SINCRONIZAR_NODO
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
