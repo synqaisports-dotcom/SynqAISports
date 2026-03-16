@@ -15,7 +15,11 @@ import {
   ShieldCheck,
   Megaphone,
   Info,
-  Download
+  Download,
+  CloudSun,
+  Thermometer,
+  Wind as WindIcon,
+  Droplets
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -23,15 +27,32 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { synqSync } from "@/lib/sync-service";
 
 export default function PromoStatsPage() {
   const { toast } = useToast();
   const [vault, setVault] = useState<any>({ exercises: [], sessions: [], matches: [] });
+  const [isOnline, setIsOnline] = useState(true);
 
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": [], "sessions": [], "matches": []}');
     setVault(saved);
-  }, []);
+    setIsOnline(navigator.onLine);
+
+    const handleOnlineStatus = () => {
+      setIsOnline(navigator.onLine);
+      if (navigator.onLine) {
+        toast({ title: "CONEXIÓN_RESTABLECIDA", description: "Sincronizando datos de red en segundo plano..." });
+      }
+    };
+
+    window.addEventListener('online', handleOnlineStatus);
+    window.addEventListener('offline', handleOnlineStatus);
+    return () => {
+      window.removeEventListener('online', handleOnlineStatus);
+      window.removeEventListener('offline', handleOnlineStatus);
+    };
+  }, [toast]);
 
   const stats = useMemo(() => {
     const matches = vault.matches || [];
@@ -63,11 +84,11 @@ export default function PromoStatsPage() {
   }, [vault]);
 
   const handlePrintPDF = () => {
+    synqSync.trackEvent('ad_click', { action: 'export_pdf_stats' });
     toast({
       title: "GENERANDO_REPORTE",
       description: "Preparando documento PDF de rendimiento local...",
     });
-    // Simulación de generación de PDF mediante impresión de ventana
     setTimeout(() => {
       window.print();
     }, 1000);
@@ -88,6 +109,11 @@ export default function PromoStatsPage() {
         </div>
 
         <div className="flex items-center gap-4">
+           {!isOnline && (
+             <Badge variant="outline" className="border-rose-500/40 text-rose-500 text-[8px] font-black uppercase tracking-widest px-3 py-1 animate-pulse mr-4">
+               TRABAJANDO_OFFLINE
+             </Badge>
+           )}
            <div className="text-right">
               <p className="text-[8px] font-black text-white/20 uppercase tracking-widest print:text-black/40">Partidos Analizados</p>
               <p className="text-2xl font-black text-white italic tracking-tighter print:text-black">{stats.played}</p>
@@ -110,7 +136,7 @@ export default function PromoStatsPage() {
         <StatsMiniCard label="Victorias" value={stats.wins.toString()} icon={Trophy} highlight />
         <StatsMiniCard label="Goles a Favor" value={stats.goalsFor.toString()} icon={Zap} />
         <StatsMiniCard label="Goles en Contra" value={stats.goalsAgainst.toString()} icon={Activity} warning={stats.goalsAgainst > stats.goalsFor} />
-        <StatsMiniCard label="Balance Neto" value={(stats.goalsFor - stats.goalsAgainst).toString()} icon={Target} />
+        <WeatherWidget isOnline={isOnline} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-10">
@@ -240,7 +266,7 @@ function StatsMiniCard({ label, value, icon: Icon, highlight, warning }: any) {
        <div className={cn(
          "h-12 w-12 flex items-center justify-center border transition-all rotate-3 group-hover:rotate-0 duration-500 rounded-2xl bg-white/5 border-white/10 print:bg-black/5 print:border-black/10",
          highlight ? "border-primary/20 bg-primary/5" : "",
-         warning ? "border-rose-500/20 bg-rose-500/5" : ""
+         warning ? "border-rose-500/20 bg-rose-500/10" : ""
        )}>
           <Icon className={cn("h-6 w-6", highlight ? "text-primary print:text-black" : "text-white/20 print:text-black/20", warning ? "text-rose-500" : "")} />
        </div>
@@ -253,6 +279,38 @@ function StatsMiniCard({ label, value, icon: Icon, highlight, warning }: any) {
                warning ? "text-rose-500" : ""
              )}>{value}</p>
           </div>
+       </div>
+    </Card>
+  );
+}
+
+function WeatherWidget({ isOnline }: { isOnline: boolean }) {
+  return (
+    <Card className={cn(
+      "glass-panel p-5 flex items-center gap-5 relative overflow-hidden group border border-white/5 rounded-3xl transition-all duration-700",
+      isOnline ? "bg-primary/5 border-primary/20" : "bg-white/5 grayscale"
+    )}>
+       <div className={cn(
+         "h-12 w-12 flex items-center justify-center border transition-all rounded-2xl",
+         isOnline ? "bg-primary/10 border-primary/30" : "bg-white/5 border-white/10"
+       )}>
+          <CloudSun className={cn("h-6 w-6", isOnline ? "text-primary animate-pulse" : "text-white/20")} />
+       </div>
+       <div className="relative z-10">
+          <p className="text-[9px] font-black text-white/30 uppercase tracking-widest italic">Clima_Campo</p>
+          <div className="flex items-baseline gap-2">
+             {isOnline ? (
+               <>
+                 <p className="text-2xl font-black text-primary italic tracking-tighter">18°C</p>
+                 <span className="text-[8px] font-bold text-white/40 uppercase">Nublado</span>
+               </>
+             ) : (
+               <p className="text-sm font-black text-white/20 uppercase tracking-widest animate-pulse">OFFLINE</p>
+             )}
+          </div>
+       </div>
+       <div className="absolute top-0 right-0 p-2 opacity-5">
+          <Thermometer className="h-10 w-10 text-primary" />
        </div>
     </Card>
   );

@@ -34,7 +34,9 @@ import {
   MousePointerClick,
   Info,
   Save,
-  Megaphone
+  Megaphone,
+  CloudSun,
+  Thermometer
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -61,6 +63,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/hooks/use-toast";
+import { synqSync } from "@/lib/sync-service";
 
 interface Point {
   x: number; // 0.0 to 1.0 (Normalized)
@@ -103,6 +106,7 @@ export default function PromoBoardPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [elements, setElements] = useState<DrawingElement[]>([]);
   const [isSaveSheetOpen, setIsSaveSheetOpen] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
 
   // LÍMITES_PROMO (Lead Tunel)
   const [promoStats, setPromoStats] = useState({
@@ -134,6 +138,10 @@ export default function PromoBoardPage() {
       cooldown: exercises.filter((e: any) => e.block === 'cooldown').length,
       sessions: (vault.sessions || []).length
     });
+
+    setIsOnline(navigator.onLine);
+    window.addEventListener('online', () => setIsOnline(true));
+    window.addEventListener('offline', () => setIsOnline(false));
   }, []);
 
   const hexToRgba = (hex: string, alpha: number) => {
@@ -420,6 +428,9 @@ export default function PromoBoardPage() {
     setPromoStats({ ...promoStats, [block]: promoStats[block] + 1 });
     setIsSaveSheetOpen(false);
     toast({ title: "SINCRO_LOCAL_OK", description: `Ejercicio blindado en tu Sandbox de Cantera.` });
+    
+    // Tracking publicitario diferido
+    synqSync.trackEvent('session_save', { block, elementCount: elements.length });
   };
 
   const selectedElements = elements.filter(e => selectedIds.includes(e.id));
@@ -473,6 +484,13 @@ export default function PromoBoardPage() {
           )}
         </div>
         <div className="flex items-center gap-4">
+           <div className={cn("flex items-center gap-3 px-4 py-2 bg-black/40 border border-white/5 rounded-xl hidden xl:flex", isOnline ? "border-primary/20" : "grayscale opacity-50")}>
+              <CloudSun className={cn("h-4 w-4", isOnline ? "text-primary animate-pulse" : "text-white/20")} />
+              <div className="flex flex-col">
+                 <span className="text-[7px] font-black text-white/30 uppercase tracking-widest">Clima_Campo</span>
+                 <span className="text-[9px] font-black text-primary uppercase">{isOnline ? '18°C' : 'OFFLINE'}</span>
+              </div>
+           </div>
            <Button onClick={() => setIsSaveSheetOpen(true)} className="h-11 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl cyan-glow border-none"><Save className="h-4 w-4 mr-2" /> Guardar Local</Button>
            <Button className="h-11 bg-white/5 border border-white/10 text-white font-black uppercase text-[10px] tracking-widest px-6 rounded-xl hover:bg-white/10 transition-all" asChild><Link href="/login">Acceso Pro <ArrowRight className="h-4 w-4 ml-2" /></Link></Button>
         </div>
@@ -530,7 +548,7 @@ export default function PromoBoardPage() {
           <div className="mt-12 p-6 bg-primary/5 border border-primary/30 rounded-3xl space-y-4">
              <div className="flex items-center gap-3"><Info className="h-4 w-4 text-primary" /><span className="text-[10px] font-black uppercase text-primary">Ventajas de la Red Pro</span></div>
              <p className="text-[10px] text-white/40 leading-relaxed font-bold uppercase italic">Sincronice sus ejercicios con la nube, elimine la publicidad y desbloquee el Neural Planner para generar variantes automáticamente.</p>
-             <Button className="w-full h-12 bg-primary text-black font-black uppercase text-[10px] tracking-widest rounded-xl" asChild><Link href="/login">ACTUALIZAR_AHORA</Link></Button>
+             <Button className="w-full h-12 bg-primary text-black font-black uppercase text-[10px] tracking-widest rounded-xl" asChild><Link href="/login" onClick={() => synqSync.trackEvent('ad_click', { action: 'upgrade_pro_sheet' })}>ACTUALIZAR_AHORA</Link></Button>
           </div>
         </SheetContent>
       </Sheet>
