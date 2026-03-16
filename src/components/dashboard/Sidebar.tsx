@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from "react";
@@ -134,7 +135,8 @@ export function DashboardSidebar() {
   if (pathname === "/dashboard/coach/onboarding") return null;
 
   const isSuperAdmin = profile?.role === "superadmin";
-  const isFree = profile?.plan === "free";
+  // Deteción robusta: Plan free O Rol promo_coach (para limpiar memorias antiguas)
+  const isFree = profile?.plan === "free" || profile?.role === "promo_coach";
   const isCollapsed = state === "collapsed";
 
   const handleLogout = () => {
@@ -143,14 +145,23 @@ export function DashboardSidebar() {
   };
 
   const filteredItems = navItems.filter(item => {
+    // 1. Superadmin ve todo para auditoría
+    if (isSuperAdmin) return true;
+
+    // 2. Filtrado por roles específicos (si el item los tiene)
     if (item.roles && profile) {
       if (!item.roles.includes(profile.role)) return false;
     }
     
+    // 3. Lógica de bifurcación Pro vs Sandbox
     if (isFree) {
-      return ["sandbox", "user", "operational"].includes(item.category) && 
-             !["club", "staff", "academy", "instalaciones", "admin"].some(slug => item.href.includes(slug));
+      // Sandbox: Solo ve su categoría, utilidades de usuario y el Dashboard principal (Coach Hub)
+      if (item.category === "sandbox" || item.category === "user") return true;
+      if (item.category === "operational" && item.href === "/dashboard") return true;
+      return false;
     } else {
+      // Pro: No necesita ver la sección Sandbox (ya tiene la operativa de club)
+      if (item.category === "sandbox") return false;
       return true;
     }
   });
@@ -238,15 +249,18 @@ export function DashboardSidebar() {
           </SidebarGroupWrapper>
         )}
 
-        <SidebarGroupWrapper title="Mi_Sandbox" color="text-blue-400" isCollapsed={isCollapsed}>
-          <SidebarMenu>
-            {filteredItems.filter(i => i.category === "sandbox").map((item) => (
-              <SidebarMenuItem key={item.href}>
-                <SidebarLink item={item} isActive={pathname === item.href} isSandbox />
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarGroupWrapper>
+        {/* Sección Sandbox: Solo para Superadmins o Usuarios Free */}
+        {(isFree || isSuperAdmin) && (
+          <SidebarGroupWrapper title="Mi_Sandbox" color="text-blue-400" isCollapsed={isCollapsed}>
+            <SidebarMenu>
+              {filteredItems.filter(i => i.category === "sandbox").map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarLink item={item} isActive={pathname === item.href} isSandbox />
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupWrapper>
+        )}
 
         <SidebarGroupWrapper title={isFree ? "Terminal_Juego" : "Operativa_Elite"} color="text-primary" isCollapsed={isCollapsed}>
           <SidebarMenu>
