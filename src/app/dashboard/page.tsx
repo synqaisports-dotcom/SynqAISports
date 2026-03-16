@@ -10,6 +10,7 @@ import {
   CardDescription 
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { 
   Users, 
   TrendingUp,
@@ -20,17 +21,38 @@ import {
   Clock,
   ChevronRight,
   Globe,
-  Heart
+  Heart,
+  Award,
+  Zap,
+  Sparkles
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
 
+/**
+ * Dashboard Maestro - v9.45.0
+ * Incluye el sistema de Gamificación "Coach Level" para incentivar la adicción al Sandbox.
+ */
 export default function DashboardPage() {
   const { profile } = useAuth();
+  const [coachXP, setCoachXP] = useState(0);
+
+  useEffect(() => {
+    // Simulación de cálculo de XP basado en actividad local
+    const vault = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": [], "matches": []}');
+    const xp = (vault.exercises?.length * 50) + (vault.matches?.length * 100);
+    setCoachXP(xp);
+  }, []);
 
   if (!profile) return null;
 
   const isSuperAdmin = profile.role === "superadmin";
+  
+  // Cálculo de niveles
+  const coachLevel = Math.floor(coachXP / 500) + 1;
+  const levelProgress = (coachXP % 500) / 5;
+  const rankLabel = coachLevel >= 5 ? "GOLD_COACH" : coachLevel >= 3 ? "SILVER_COACH" : "BRONZE_COACH";
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
@@ -49,12 +71,20 @@ export default function DashboardPage() {
           <p className="text-[10px] font-black text-primary/60 tracking-[0.2em] uppercase">Optimización Multideporte y Formación Base</p>
         </div>
         
-        <div className="flex flex-wrap gap-4">
-          {isSuperAdmin && (
-            <Button variant="outline" className="rounded-2xl border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 uppercase text-[10px] tracking-widest h-14 px-8 font-black shadow-[0_0_15px_rgba(16,185,129,0.1)]" asChild>
-              <Link href="/admin-global"><Globe className="h-4 w-4 mr-2" /> Núcleo Global</Link>
-            </Button>
-          )}
+        {/* SISTEMA DE GAMIFICACIÓN (v9.45.0) */}
+        <div className="flex items-center gap-6 p-4 bg-primary/5 border border-primary/20 rounded-[2rem] shadow-xl group hover:border-primary/40 transition-all">
+           <div className="h-14 w-14 rounded-2xl bg-black border-2 border-primary/40 flex items-center justify-center relative overflow-hidden group-hover:scale-110 transition-transform">
+              <Award className="h-8 w-8 text-primary group-hover:animate-bounce" />
+              <div className="absolute inset-0 bg-primary/5 scan-line" />
+           </div>
+           <div className="space-y-2 min-w-[160px]">
+              <div className="flex justify-between items-end">
+                 <span className="text-[9px] font-black text-primary uppercase italic">{rankLabel}</span>
+                 <span className="text-[10px] font-black text-white italic">LVL {coachLevel}</span>
+              </div>
+              <Progress value={levelProgress} className="h-1.5 bg-white/5" />
+              <p className="text-[7px] font-bold text-primary/40 uppercase tracking-widest italic">+{500 - (coachXP % 500)} XP para el siguiente rango</p>
+           </div>
         </div>
       </div>
       
@@ -124,13 +154,6 @@ export default function DashboardPage() {
                 category="Cadete C" 
                 focus="Lectura Táctica" 
                 location="Sala Táctica"
-                status="pending"
-              />
-              <TrainingItem 
-                time="Mañana" 
-                category="Iniciación" 
-                focus="Juegos Formativos" 
-                location="Pista Anexa"
                 status="pending"
               />
             </div>
