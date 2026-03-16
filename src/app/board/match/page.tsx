@@ -183,9 +183,9 @@ export default function MatchBoardPage() {
   const [watchAlert, setWatchAlert] = useState<string | null>(null);
 
   const hasClub = !!profile?.clubId && profile.clubId !== "global-hq";
-  const isCoach = profile?.role === "coach" || profile?.role === "club_admin" || profile?.role === "superadmin";
+  const isCoach = profile?.role === "coach" || profile?.role === "club_admin" || profile?.role === "superadmin" || profile?.role === "promo_coach";
   const isPromo = profile?.plan === "free" || profile?.role === "promo_coach";
-  const showTeamSelector = hasClub && !isPromo && isCoach;
+  const showTeamSelector = hasClub && !isPromo;
 
   useEffect(() => {
     if (!hasClub || isPromo) {
