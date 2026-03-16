@@ -151,7 +151,7 @@ export default function MatchBoardPage() {
   const [fieldType, setFieldType] = useState<FieldType>("f11");
   const [selectedTeamId, setSelectedTeamId] = useState("t1");
   
-  const [teamRoster, setTeamRoster] = useState<any[]>(MOCK_PLAYERS_BY_TEAM["t1"]);
+  const [teamRoster, setTeamRoster] = useState<any[]>([]);
   
   const [homePhase, setHomePhase] = useState<TacticalPhase>("defensa");
   const [guestPhase, setGuestPhase] = useState<TacticalPhase>("defensa");
@@ -182,20 +182,30 @@ export default function MatchBoardPage() {
 
   const hasClub = !!profile?.clubId && profile.clubId !== "global-hq";
   const isCoach = profile?.role === "coach" || profile?.role === "club_admin" || profile?.role === "superadmin";
-  const isPromo = profile?.plan === "free";
+  const isPromo = profile?.plan === "free" || profile?.role === "promo_coach";
   const showTeamSelector = hasClub && isCoach;
 
-  // PROTOCOLO_SINCRO_SANDBOX v9.33.0
+  // PROTOCOLO_SINCRO_SUPERFICIE_AUTOMÁTICO v10.9.0
   useEffect(() => {
-    if (!hasClub) {
+    if (!hasClub || isPromo) {
       const savedTeam = JSON.parse(localStorage.getItem("synq_promo_team") || "null");
       if (savedTeam) {
-        setFieldType(savedTeam.type);
+        const type = savedTeam.type as FieldType;
+        setFieldType(type);
+        
+        // Sincronizar formaciones disponibles para el nuevo tipo
+        const availableFormations = Object.keys(FORMATIONS_DATA[type]);
+        const defaultFormation = availableFormations[0];
+        
+        // Forzamos el reseteo de la formación para que coincida con el campo (F7, F11, etc.)
+        setHomeFormation(defaultFormation);
+        setGuestFormation(defaultFormation);
+
         const mappedRoster = [
           ...savedTeam.starters.map((name: string, i: number) => ({
             number: i + 1,
             name: name || `JUGADOR ${i+1}`,
-            pos: FORMATIONS_DATA[savedTeam.type][Object.keys(FORMATIONS_DATA[savedTeam.type])[0]][i]?.pos || "FLD",
+            pos: "FLD",
             isStarter: true
           })),
           ...savedTeam.substitutes.map((name: string, i: number) => ({
@@ -210,7 +220,7 @@ export default function MatchBoardPage() {
     } else if (MOCK_PLAYERS_BY_TEAM[selectedTeamId]) {
       setTeamRoster(MOCK_PLAYERS_BY_TEAM[selectedTeamId]);
     }
-  }, [hasClub, selectedTeamId]);
+  }, [hasClub, isPromo, selectedTeamId]);
 
   useEffect(() => {
     let interval: any;
@@ -261,7 +271,10 @@ export default function MatchBoardPage() {
   };
 
   const calculatePositions = (team: "local" | "visitor", formation: string, phase: TacticalPhase, lateral: LateralShift, currentRoster: any[]) => {
-    const baseCoords = FORMATIONS_DATA[fieldType][formation] || FORMATIONS_DATA[fieldType][Object.keys(FORMATIONS_DATA[fieldType])[0]];
+    // Aseguramos que usamos los datos de formación correctos para el fieldType activo
+    const formationsForField = FORMATIONS_DATA[fieldType];
+    const baseCoords = formationsForField[formation] || formationsForField[Object.keys(formationsForField)[0]];
+    
     const innerAreaLimit = 19.5; 
     const outerAreaLimit = 80.5;
 
@@ -480,12 +493,8 @@ export default function MatchBoardPage() {
     toast({ title: "SINCRO_ACTIVA", description: "Sustitución ejecutada y enviada al Watch." });
   };
 
-  /**
-   * PROTOCOLO_SINCRO_LOCAL_MATCH v9.35.0
-   * Guarda el resultado del partido en el almacenamiento local para usuarios Sandbox.
-   */
   const handleSaveMatchResult = () => {
-    if (!hasClub) {
+    if (!hasClub || isPromo) {
       const vault = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": [], "sessions": [], "matches": []}');
       const matches = vault.matches || [];
       
@@ -721,7 +730,6 @@ export default function MatchBoardPage() {
                 </Select>
               </div>
 
-              {/* PROTOCOLO_SINCRO_CAMPO v9.36.0: Selector de superficie solo para modo Pro */}
               <div className="hidden md:block">
                 <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}>
                   <SelectTrigger className="w-[130px] lg:w-[150px] h-9 lg:h-10 bg-primary/5 border-primary/30 rounded-xl text-[8px] lg:text-[9px] font-black uppercase text-primary hover:bg-primary/10 transition-all">
@@ -863,7 +871,7 @@ export default function MatchBoardPage() {
                     <p className="text-sm font-black text-white uppercase italic">{watchAlert}</p>
                   </div>
                   <div className="flex gap-2">
-                    <Button onClick={() => setX(null)} variant="ghost" className="h-10 w-10 p-0 text-white/20 hover:text-rose-500 rounded-xl">
+                    <Button onClick={() => setWatchAlert(null)} variant="ghost" className="h-10 w-10 p-0 text-white/20 hover:text-rose-500 rounded-xl">
                       <X className="h-5 w-5" />
                     </Button>
                     <Button onClick={() => { setWatchAlert(null); toast({ title: "SINCRO_ACTIVA", description: "Cambio procesado desde el centro de mando." }); }} className="h-10 bg-primary text-black font-black uppercase text-[10px] rounded-xl px-4">
@@ -885,7 +893,7 @@ export default function MatchBoardPage() {
             <Sheet>
               <SheetTrigger asChild>
                 <button className="h-14 w-14 rounded-2xl bg-primary text-black flex items-center justify-center transition-all active:scale-95 shadow-[0_0_30px_rgba(0,242,255,0.4)] hover:scale-110 cyan-glow">
-                  {hasClub ? <Settings className="h-6 w-6" /> : <Plus className="h-6 w-6" />}
+                  {hasClub && !isPromo ? <Settings className="h-6 w-6" /> : <Plus className="h-6 w-6" />}
                 </button>
               </SheetTrigger>
               <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
@@ -901,7 +909,7 @@ export default function MatchBoardPage() {
                           ROSTER <span className="text-primary">ACTIVO</span>
                         </SheetTitle>
                         <SheetDescription className="text-[10px] uppercase font-bold text-primary/40 tracking-widest text-left italic">
-                          {hasClub ? "Gestionado por el Club." : "Sincronizado desde el Sandbox."}
+                          {hasClub && !isPromo ? "Gestionado por el Club." : "Sincronizado desde el Sandbox."}
                         </SheetDescription>
                       </SheetHeader>
                     </div>
@@ -944,7 +952,7 @@ export default function MatchBoardPage() {
                     
                     <div className="p-10 bg-black/40 border-t border-white/5">
                        <Button className="w-full h-14 bg-primary/5 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-primary hover:text-black transition-all">
-                        {hasClub ? "GESTIONAR ALTAS" : "IR AL SANDBOX"}
+                        {hasClub && !isPromo ? "GESTIONAR ALTAS" : "IR AL SANDBOX"}
                        </Button>
                     </div>
                   </>
@@ -1030,7 +1038,7 @@ export default function MatchBoardPage() {
                   <SelectTrigger className="h-8 lg:h-9 w-20 lg:w-24 bg-transparent border-none text-[8px] lg:text-[10px] font-bold text-white/60 text-right focus:ring-0">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#0a0f18] border-rose-500/20">
+                  <SelectContent className="bg-[#0a0f18] border-primary/20">
                     {currentFormations.map(f => <SelectItem key={f} value={f} className="text-[9px] font-black uppercase">{f}</SelectItem>)}
                   </SelectContent>
                 </Select>
