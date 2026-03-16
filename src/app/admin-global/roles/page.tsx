@@ -34,7 +34,8 @@ import {
   Building,
   MapPin,
   Stethoscope,
-  LayoutGrid
+  LayoutGrid,
+  Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -110,6 +111,18 @@ const SECTOR_PERMISSIONS = [
     ]
   },
   {
+    id: "sandbox",
+    label: "Mi Sandbox (Blue)",
+    icon: Zap,
+    color: "text-blue-400",
+    modules: [
+      { id: "team_local", label: "Equipo Local", features: ["Configurar Plantilla", "Editar Roster", "Atributos Nodo"] },
+      { id: "tasks_local", label: "Tareas Sandbox", features: ["Guardar Ejercicio", "Gestionar Slots (20)", "Viral Loop (Marca Agua)"] },
+      { id: "sessions_local", label: "Agenda Promo", features: ["Planificador Diario", "Impresión Ficha PDF"] },
+      { id: "stats_local", label: "Analítica Local", features: ["Dashboards Rendimiento", "Sistema XP/Niveles", "Reporte Temporada PDF"] },
+    ]
+  },
+  {
     id: "terminals",
     label: "Terminales de Acceso (White)",
     icon: Monitor,
@@ -127,7 +140,13 @@ export default function GlobalRolesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<any>(null);
-  const [activeSectors, setActiveSectors] = useState<Record<string, boolean>>({ global: true, methodology: true, operational: true, terminals: true });
+  const [activeSectors, setActiveSectors] = useState<Record<string, boolean>>({ 
+    global: true, 
+    methodology: true, 
+    operational: true, 
+    terminals: true,
+    sandbox: true
+  });
   const { toast } = useToast();
 
   const handleToggleStatus = (id: string) => {
@@ -209,7 +228,7 @@ export default function GlobalRolesPage() {
               <div className="space-y-6">
                 <label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest block ml-1">Matriz de Acceso por Sectores Operativos</label>
                 
-                <Accordion type="multiple" defaultValue={["operational", "methodology"]} className="space-y-4">
+                <Accordion type="multiple" defaultValue={["operational", "methodology", "sandbox"]} className="space-y-4">
                   {SECTOR_PERMISSIONS.map(sector => (
                     <AccordionItem 
                       key={sector.id} 
