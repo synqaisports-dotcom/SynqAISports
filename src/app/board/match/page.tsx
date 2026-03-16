@@ -28,7 +28,9 @@ import {
   Smartphone,
   X,
   UserPlus,
-  Unplug
+  Unplug,
+  Database,
+  Cloud
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -183,9 +185,8 @@ export default function MatchBoardPage() {
   const hasClub = !!profile?.clubId && profile.clubId !== "global-hq";
   const isCoach = profile?.role === "coach" || profile?.role === "club_admin" || profile?.role === "superadmin";
   const isPromo = profile?.plan === "free" || profile?.role === "promo_coach";
-  const showTeamSelector = hasClub && isCoach;
+  const showTeamSelector = hasClub && !isPromo && isCoach;
 
-  // PROTOCOLO_SINCRO_SUPERFICIE_AUTOMÁTICO v10.9.0
   useEffect(() => {
     if (!hasClub || isPromo) {
       const savedTeam = JSON.parse(localStorage.getItem("synq_promo_team") || "null");
@@ -193,11 +194,9 @@ export default function MatchBoardPage() {
         const type = savedTeam.type as FieldType;
         setFieldType(type);
         
-        // Sincronizar formaciones disponibles para el nuevo tipo
         const availableFormations = Object.keys(FORMATIONS_DATA[type]);
         const defaultFormation = availableFormations[0];
         
-        // Forzamos el reseteo de la formación para que coincida con el campo (F7, F11, etc.)
         setHomeFormation(defaultFormation);
         setGuestFormation(defaultFormation);
 
@@ -271,7 +270,6 @@ export default function MatchBoardPage() {
   };
 
   const calculatePositions = (team: "local" | "visitor", formation: string, phase: TacticalPhase, lateral: LateralShift, currentRoster: any[]) => {
-    // Aseguramos que usamos los datos de formación correctos para el fieldType activo
     const formationsForField = FORMATIONS_DATA[fieldType];
     const baseCoords = formationsForField[formation] || formationsForField[Object.keys(formationsForField)[0]];
     
@@ -494,7 +492,7 @@ export default function MatchBoardPage() {
   };
 
   const handleSaveMatchResult = () => {
-    if (!hasClub || isPromo) {
+    if (isPromo) {
       const vault = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": [], "sessions": [], "matches": []}');
       const matches = vault.matches || [];
       
@@ -502,7 +500,7 @@ export default function MatchBoardPage() {
         id: Date.now(),
         date: new Date().toISOString().split('T')[0],
         score,
-        teamName: "MI EQUIPO LOCAL",
+        teamName: teamRoster.length > 0 ? "MI EQUIPO LOCAL" : "RIVAL_MODO_PRUEBA",
         rivalName: "RIVAL_MODO_PRUEBA",
         status: "Played",
         fieldType
@@ -512,13 +510,13 @@ export default function MatchBoardPage() {
       localStorage.setItem("synq_promo_vault", JSON.stringify(vault));
       
       toast({
-        title: "RESULTADO_SINCRO_LOCAL",
-        description: "El marcador ha sido blindado en tu historial del Sandbox.",
+        title: "RESULTADO_BLINDADO_LOCAL",
+        description: "El marcador ha sido guardado en tu historial Sandbox.",
       });
     } else {
       toast({
         title: "SINCRO_CLOUD_ELITE",
-        description: "Datos del partido sincronizados con la base de datos del club.",
+        description: "Datos del partido sincronizados con la base de datos central del club.",
       });
     }
   };
@@ -694,11 +692,19 @@ export default function MatchBoardPage() {
         <div className="flex items-center gap-3 lg:gap-6 overflow-hidden">
           <div className="flex flex-col shrink-0">
             <div className="flex items-center gap-2">
-              <Trophy className="h-3 w-3 lg:h-4 lg:w-4 text-primary animate-pulse" />
-              <span className="text-[8px] lg:text-[10px] font-black text-primary tracking-[0.4em] uppercase">Match_Live</span>
+              <Trophy className={cn("h-3 w-3 lg:h-4 lg:w-4 animate-pulse", isPromo ? "text-blue-400" : "text-primary")} />
+              <span className={cn("text-[8px] lg:text-[10px] font-black tracking-[0.4em] uppercase", isPromo ? "text-blue-400" : "text-primary")}>
+                {isPromo ? 'Match_Sandbox' : 'Match_Live'}
+              </span>
             </div>
             <h1 className="text-sm lg:text-lg font-headline font-black text-white italic tracking-tighter uppercase leading-none truncate">Partido</h1>
           </div>
+
+          {isPromo && (
+            <Badge variant="outline" className="hidden xl:flex border-blue-500/20 text-blue-400 font-black text-[8px] uppercase px-3 py-1 animate-pulse italic">
+              MODO_SANDBOX_ACTIVE
+            </Badge>
+          )}
 
           <button 
             onClick={generatePairingCode}
@@ -813,8 +819,15 @@ export default function MatchBoardPage() {
         </div>
 
         <div className="flex items-center gap-2 lg:gap-3 shrink-0">
-          <Button onClick={handleSaveMatchResult} className="h-9 lg:h-11 bg-primary text-black font-black uppercase text-[8px] lg:text-[10px] tracking-[0.2em] px-3 lg:px-6 rounded-xl cyan-glow border-none hover:scale-105 transition-all">
+          <Button 
+            onClick={handleSaveMatchResult} 
+            className={cn(
+              "h-9 lg:h-11 font-black uppercase text-[8px] lg:text-[10px] tracking-[0.2em] px-3 lg:px-6 rounded-xl border-none hover:scale-105 transition-all shadow-xl flex items-center gap-2",
+              isPromo ? "bg-blue-500 text-white blue-glow" : "bg-primary text-black cyan-glow"
+            )}
+          >
             <Save className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
+            <span className="hidden sm:inline">{isPromo ? 'BLINDAR_LOCAL' : 'SINCRO_CLOUD'}</span>
           </Button>
         </div>
       </header>
@@ -831,7 +844,7 @@ export default function MatchBoardPage() {
         />
         
         <main className="flex-1 relative overflow-hidden">
-          <TacticalField theme="cyan" fieldType={fieldType} containerRef={fieldRef}>
+          <TacticalField theme={isPromo ? "cyan" : "cyan"} fieldType={fieldType} containerRef={fieldRef}>
             <canvas 
               ref={canvasRef}
               className={cn(
@@ -892,24 +905,32 @@ export default function MatchBoardPage() {
           <div className="absolute bottom-6 right-6 z-[60] pointer-events-auto">
             <Sheet>
               <SheetTrigger asChild>
-                <button className="h-14 w-14 rounded-2xl bg-primary text-black flex items-center justify-center transition-all active:scale-95 shadow-[0_0_30px_rgba(0,242,255,0.4)] hover:scale-110 cyan-glow">
+                <button className={cn(
+                  "h-14 w-14 rounded-2xl flex items-center justify-center transition-all active:scale-95 shadow-2xl hover:scale-110",
+                  isPromo ? "bg-blue-500 text-white blue-glow" : "bg-primary text-black cyan-glow"
+                )}>
                   {hasClub && !isPromo ? <Settings className="h-6 w-6" /> : <Plus className="h-6 w-6" />}
                 </button>
               </SheetTrigger>
-              <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+              <SheetContent side="right" className={cn(
+                "bg-[#04070c]/98 backdrop-blur-3xl text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col border-l",
+                isPromo ? "border-blue-500/20" : "border-primary/20"
+              )}>
                 {hasClub || teamRoster.length > 0 ? (
                   <>
                     <div className="p-10 border-b border-white/5 bg-black/40">
                       <SheetHeader className="space-y-4">
                         <div className="flex items-center gap-3">
-                          <Dna className="h-4 w-4 text-primary animate-pulse" />
-                          <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary italic">Plantilla_Scanned_v2.5</span>
+                          {isPromo ? <Database className="h-4 w-4 text-blue-400 animate-pulse" /> : <Cloud className="h-4 w-4 text-primary animate-pulse" />}
+                          <span className={cn("text-[10px] font-black uppercase tracking-[0.4em] italic", isPromo ? "text-blue-400" : "text-primary")}>
+                            {isPromo ? 'Local_Storage_Sync' : 'Cloud_Elite_Network'}
+                          </span>
                         </div>
                         <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left leading-none">
-                          ROSTER <span className="text-primary">ACTIVO</span>
+                          ROSTER <span className={isPromo ? "text-blue-400" : "text-primary"}>ACTIVO</span>
                         </SheetTitle>
-                        <SheetDescription className="text-[10px] uppercase font-bold text-primary/40 tracking-widest text-left italic">
-                          {hasClub && !isPromo ? "Gestionado por el Club." : "Sincronizado desde el Sandbox."}
+                        <SheetDescription className={cn("text-[10px] uppercase font-bold tracking-widest text-left italic", isPromo ? "text-blue-400/40" : "text-primary/40")}>
+                          {hasClub && !isPromo ? "Sincronizado con la base de datos del Club." : "Cargado desde tu Sandbox personal."}
                         </SheetDescription>
                       </SheetHeader>
                     </div>
@@ -917,8 +938,8 @@ export default function MatchBoardPage() {
                     <div className="flex-1 p-6 space-y-8 overflow-y-auto custom-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                       <section className="space-y-4">
                         <div className="flex items-center gap-3 border-b border-white/5 pb-2">
-                          <CheckCircle2 className="h-3 w-3 text-primary" />
-                          <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary italic">Titulares ({starters.length})</h3>
+                          <CheckCircle2 className={cn("h-3 w-3", isPromo ? "text-blue-400" : "text-primary")} />
+                          <h3 className={cn("text-[10px] font-black uppercase tracking-[0.3em] italic", isPromo ? "text-blue-400" : "text-primary")}>Titulares ({starters.length})</h3>
                         </div>
                         <div className="space-y-2">
                           {starters.map((player) => (
@@ -926,6 +947,7 @@ export default function MatchBoardPage() {
                               key={player.number} 
                               player={player} 
                               onDrop={(subNum) => handleSubstitution(subNum, player.number)}
+                              theme={isPromo ? 'blue' : 'cyan'}
                             />
                           ))}
                         </div>
@@ -943,6 +965,7 @@ export default function MatchBoardPage() {
                                 key={player.number} 
                                 player={player} 
                                 isSub 
+                                theme={isPromo ? 'blue' : 'cyan'}
                               />
                             ))}
                           </div>
@@ -950,9 +973,25 @@ export default function MatchBoardPage() {
                       )}
                     </div>
                     
-                    <div className="p-10 bg-black/40 border-t border-white/5">
-                       <Button className="w-full h-14 bg-primary/5 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-primary hover:text-black transition-all">
-                        {hasClub && !isPromo ? "GESTIONAR ALTAS" : "IR AL SANDBOX"}
+                    <div className="p-10 bg-black/40 border-t border-white/5 space-y-4">
+                       {isPromo && (
+                         <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-2xl mb-4">
+                            <p className="text-[9px] text-blue-400/60 font-bold uppercase italic leading-relaxed">
+                              MODO_SANDBOX: Los cambios de hoy no se verán en las estadísticas acumuladas del club hasta que vincules tu cuenta.
+                            </p>
+                         </div>
+                       )}
+                       <Button className={cn(
+                         "w-full h-14 font-black uppercase text-[10px] tracking-widest rounded-2xl transition-all",
+                         isPromo 
+                          ? "bg-blue-500 text-white blue-glow" 
+                          : "bg-primary/5 border border-primary/20 text-primary hover:bg-primary hover:text-black"
+                       )} asChild={isPromo}>
+                        {hasClub && !isPromo ? (
+                          "GESTIONAR ALTAS"
+                        ) : (
+                          <Link href="/dashboard/promo/team">CONFIGURAR PLANTILLA <ArrowRight className="h-3.5 w-3.5 ml-2" /></Link>
+                        )}
                        </Button>
                     </div>
                   </>
@@ -1106,17 +1145,23 @@ function PhaseButton({ label, active, onClick, color }: { label: string, active:
   );
 }
 
-function PlayerListItem({ player, isSub, onDrop, selected, onClick }: { player: any, isSub?: boolean, onDrop?: (subNum: number) => void, selected?: boolean, onClick?: () => void }) {
+function PlayerListItem({ player, isSub, onDrop, selected, onClick, theme = 'cyan' }: { player: any, isSub?: boolean, onDrop?: (subNum: number) => void, selected?: boolean, onClick?: () => void, theme?: 'cyan' | 'blue' }) {
   const posStyle = POSITION_COLORS[player.pos] || "text-white/40 border-white/10 bg-white/5";
   const [isOver, setIsOver] = useState(false);
   
+  const accentBorder = theme === 'blue' ? "border-blue-500/30 hover:border-blue-500/50" : "border-primary/10 hover:border-primary/30";
+  const accentBg = theme === 'blue' ? "bg-blue-500/5" : "bg-primary/5";
+  const activeBg = theme === 'blue' ? "bg-blue-500/20 border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.2)]" : "bg-primary/20 border-primary shadow-[0_0_20px_rgba(0,242,255,0.2)]";
+  const textAccent = theme === 'blue' ? "text-blue-400" : "text-primary";
+
   return (
     <div 
       className={cn(
-        "p-4 bg-primary/5 border rounded-2xl flex items-center justify-between group transition-all",
-        isSub ? "border-white/5 opacity-60 hover:opacity-100 cursor-pointer" : "border-primary/10 hover:border-primary/30 cursor-pointer",
-        isOver && !isSub && "border-primary bg-primary/20 scale-[1.02] shadow-[0_0_20px_rgba(0,242,255,0.2)]",
-        selected && "border-primary bg-primary/20 scale-[1.02] shadow-[0_0_20px_rgba(0,242,255,0.2)]"
+        "p-4 border rounded-2xl flex items-center justify-between group transition-all",
+        accentBg,
+        isSub ? "border-white/5 opacity-60 hover:opacity-100 cursor-pointer" : cn(accentBorder, "cursor-pointer"),
+        (isOver && !isSub) && activeBg,
+        selected && activeBg
       )}
       onClick={onClick}
       draggable={!onClick && isSub}
@@ -1148,15 +1193,16 @@ function PlayerListItem({ player, isSub, onDrop, selected, onClick }: { player: 
       <div className="flex items-center gap-4">
         <div className={cn(
           "h-10 w-10 rounded-xl bg-black border flex items-center justify-center text-[10px] font-black italic shadow-lg group-hover:scale-110 transition-transform",
-          isSub ? "border-white/10 text-white/40" : "border-primary/20 text-primary",
-          selected && "border-primary text-primary"
+          isSub ? "border-white/10 text-white/40" : cn(theme === 'blue' ? "border-blue-500/20 text-blue-400" : "border-primary/20 text-primary"),
+          selected && (theme === 'blue' ? "border-blue-500 text-blue-400" : "border-primary text-primary")
         )}>
           {player.number}
         </div>
         <div className="flex flex-col">
           <span className={cn(
-            "text-xs font-black uppercase italic group-hover:cyan-text-glow transition-all",
-            isSub ? "text-white/40" : "text-white"
+            "text-xs font-black uppercase italic transition-all",
+            isSub ? "text-white/40" : "text-white",
+            !isSub && (theme === 'blue' ? "group-hover:text-blue-400" : "group-hover:cyan-text-glow")
           )}>
             {player.name}
           </span>
@@ -1164,14 +1210,16 @@ function PlayerListItem({ player, isSub, onDrop, selected, onClick }: { player: 
             <Badge variant="outline" className={cn("text-[7px] font-black uppercase rounded-lg px-2 py-0", posStyle)}>
               {player.pos}
             </Badge>
-            {!isSub && <span className="text-[7px] font-bold text-primary/40 uppercase tracking-widest">TITULAR_NODE</span>}
+            {!isSub && <span className={cn("text-[7px] font-bold uppercase tracking-widest", theme === 'blue' ? "text-blue-400/40" : "text-primary/40")}>
+              {theme === 'blue' ? 'SANDBOX_NODE' : 'TITULAR_NODE'}
+            </span>}
           </div>
         </div>
       </div>
       <Badge variant="outline" className={cn(
         "font-black text-[8px] rounded-full",
-        isSub ? "border-white/5 text-white/10" : "border-primary/20 text-primary",
-        selected && "border-primary text-primary"
+        isSub ? "border-white/5 text-white/10" : cn(theme === 'blue' ? "border-blue-500/20 text-blue-400" : "border-primary/20 text-primary"),
+        selected && (theme === 'blue' ? "border-blue-500 text-blue-400" : "border-primary text-primary")
       )}>
         {selected ? 'OUT_TARGET' : isSub ? 'SUB' : 'SINC_OK'}
       </Badge>
