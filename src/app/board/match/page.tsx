@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo, useRef, memo, useCallback } from "react";
@@ -187,6 +188,7 @@ export default function MatchBoardPage() {
   const isPromo = profile?.plan === "free" || profile?.role === "promo_coach";
   const showTeamSelector = hasClub && !isPromo;
 
+  // Sincronización de datos inicial
   useEffect(() => {
     if (!hasClub || isPromo) {
       const savedTeam = JSON.parse(localStorage.getItem("synq_promo_team") || "null");
@@ -221,27 +223,39 @@ export default function MatchBoardPage() {
     }
   }, [hasClub, isPromo, selectedTeamId]);
 
+  // MOTOR DEL CRONÓMETRO - CORREGIDO v10.9.6
   useEffect(() => {
-    let interval: any;
-    if (isRunning && timeLeft > 0) {
+    let interval: NodeJS.Timeout;
+    if (isRunning) {
       interval = setInterval(() => {
-        setTimeLeft(prev => {
-          const next = prev - 1;
-          if (next === (25 * 60)) {
-            setWatchAlert("CAMBIO_SUGERIDO: Jugador #10 (Fatiga)");
-            toast({
-              title: "WATCH_ALERT",
-              description: "Sugerencia de cambio recibida desde Smartwatch.",
-            });
+        setTimeLeft((prev) => {
+          if (prev <= 0) {
+            setIsRunning(false);
+            return 0;
           }
+          const next = prev - 1;
+          
+          // Alerta de fatiga simulada a mitad de periodo (25 min)
+          if (next === 25 * 60) {
+            setWatchAlert("CAMBIO_SUGERIDO: Jugador #10 (Fatiga)");
+          }
+          
           return next;
         });
       }, 1000);
-    } else if (timeLeft === 0) {
-      setIsRunning(false);
     }
     return () => clearInterval(interval);
-  }, [isRunning, timeLeft, toast]);
+  }, [isRunning]);
+
+  // Manejo de alertas de toast fuera del setter de tiempo para evitar inconsistencias
+  useEffect(() => {
+    if (watchAlert) {
+      toast({
+        title: "WATCH_ALERT",
+        description: "Sugerencia de cambio recibida desde Smartwatch.",
+      });
+    }
+  }, [watchAlert, toast]);
 
   const generatePairingCode = () => {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
@@ -922,7 +936,7 @@ export default function MatchBoardPage() {
                       <SheetHeader className="space-y-4">
                         <div className="flex items-center gap-3">
                           {isPromo ? <Database className="h-4 w-4 text-blue-400 animate-pulse" /> : <Cloud className="h-4 w-4 text-primary animate-pulse" />}
-                          <span className={cn("text-[10px] font-black uppercase tracking-[0.4em] italic", isPromo ? "text-blue-400" : "text-primary")}>
+                          <span className={cn("text-[10px] font-black uppercase tracking-[0.4em] italic", isPromo ? 'Local_Storage_Sync' : 'Cloud_Elite_Network')}>
                             {isPromo ? 'Local_Storage_Sync' : 'Cloud_Elite_Network'}
                           </span>
                         </div>
@@ -1015,9 +1029,9 @@ export default function MatchBoardPage() {
                       <div className="space-y-6">
                         <div className="space-y-3">
                           <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1 italic">Nombre del Equipo</Label>
-                          <Input 
+                          <input 
                             placeholder="EJ: RAYO VALLECANO" 
-                            className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary text-primary" 
+                            className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary text-primary px-4" 
                           />
                         </div>
                         <div className="space-y-4">

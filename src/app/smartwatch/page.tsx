@@ -96,6 +96,23 @@ export default function SmartwatchPage() {
     };
   }, [profile, isLinked]);
 
+  // MOTOR DEL CRONÓMETRO SMARTWATCH - v9.41.5
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isRunning) {
+      interval = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 0) {
+            setIsRunning(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isRunning]);
+
   const triggerHaptic = (pattern: number | number[]) => {
     if (typeof window !== "undefined" && window.navigator.vibrate) {
       window.navigator.vibrate(pattern);
