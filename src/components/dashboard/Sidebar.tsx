@@ -36,7 +36,9 @@ import {
   Trophy,
   Sparkles,
   Database,
-  Smartphone
+  Smartphone,
+  LayoutGrid,
+  Calendar
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
@@ -56,7 +58,7 @@ interface NavItem {
   title: string;
   href: string;
   icon: any;
-  category: "global" | "operational" | "methodology" | "user";
+  category: "global" | "operational" | "methodology" | "sandbox" | "user";
   roles?: string[];
 }
 
@@ -71,6 +73,12 @@ const navItems: NavItem[] = [
   { title: "Analytics Global", href: "/admin-global/analytics", icon: BarChart3, category: "global" },
   { title: "Almacén Neural", href: "/admin-global/exercises", icon: Database, category: "global" },
   
+  // MI_SANDBOX (PROMO MODE) - WHITE/PRIMARY THEME
+  { title: "Mis Tareas (4-12-4)", href: "/dashboard/promo/tasks", icon: LayoutGrid, category: "sandbox" },
+  { title: "Mi Agenda Promo", href: "/dashboard/promo/sessions", icon: Calendar, category: "sandbox" },
+  { title: "Pizarra Promo", href: "/board/promo", icon: Zap, category: "sandbox" },
+  { title: "Pizarra Partido", href: "/board/match", icon: Trophy, category: "sandbox" },
+
   // ESTRATEGIA_METODOLÓGICA - AMBER THEME
   { title: "Items Aprendizaje", href: "/dashboard/methodology/learning-items", icon: BookOpen, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director"] },
   { title: "Objetivos", href: "/dashboard/methodology/objectives", icon: Target, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director"] },
@@ -109,6 +117,7 @@ export function DashboardSidebar() {
   if (pathname === "/dashboard/coach/onboarding") return null;
 
   const isSuperAdmin = profile?.role === "superadmin";
+  const isFree = profile?.plan === "free";
   const isCollapsed = state === "collapsed";
 
   const handleLogout = () => {
@@ -117,10 +126,20 @@ export function DashboardSidebar() {
   };
 
   const filteredItems = navItems.filter(item => {
+    // 1. Filtrar por Rol
     if (item.roles && profile) {
-      return item.roles.includes(profile.role);
+      if (!item.roles.includes(profile.role)) return false;
     }
-    return true;
+    
+    // 2. Filtrar por Plan (Cepo de Datos)
+    if (isFree) {
+      // Un usuario FREE solo ve Sandbox y User Terminals, y Coach Hub básico
+      return ["sandbox", "user", "operational"].includes(item.category) && 
+             !["club", "staff", "academy", "instalaciones", "admin"].some(slug => item.href.includes(slug));
+    } else {
+      // Un usuario PRO no ve la sección Sandbox (ya tiene la oficial)
+      return item.category !== "sandbox";
+    }
   });
 
   return (
@@ -195,19 +214,34 @@ export function DashboardSidebar() {
           </SidebarGroupWrapper>
         )}
 
-        {/* STRATEGIC METHODOLOGY - AMBER THEME */}
-        <SidebarGroupWrapper title="Estrategia_Metodológica" color="text-amber-500" isCollapsed={isCollapsed}>
-          <SidebarMenu>
-            {filteredItems.filter(i => i.category === "methodology").map((item) => (
-              <SidebarMenuItem key={item.href}>
-                <SidebarLink item={item} isActive={pathname === item.href} isMethodology />
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarGroupWrapper>
+        {/* MI_SANDBOX (PROMO MODE) */}
+        {isFree && (
+          <SidebarGroupWrapper title="Mi_Sandbox" color="text-primary" isCollapsed={isCollapsed}>
+            <SidebarMenu>
+              {filteredItems.filter(i => i.category === "sandbox").map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarLink item={item} isActive={pathname === item.href} />
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupWrapper>
+        )}
+
+        {/* STRATEGIC METHODOLOGY - AMBER THEME (PRO ONLY) */}
+        {!isFree && (
+          <SidebarGroupWrapper title="Estrategia_Metodológica" color="text-amber-500" isCollapsed={isCollapsed}>
+            <SidebarMenu>
+              {filteredItems.filter(i => i.category === "methodology").map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarLink item={item} isActive={pathname === item.href} isMethodology />
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupWrapper>
+        )}
 
         {/* OPERATIONAL ELITE */}
-        <SidebarGroupWrapper title="Operativa_Elite" color="text-primary" isCollapsed={isCollapsed}>
+        <SidebarGroupWrapper title={isFree ? "Terminal_Juego" : "Operativa_Elite"} color="text-primary" isCollapsed={isCollapsed}>
           <SidebarMenu>
             {filteredItems.filter(i => i.category === "operational").map((item) => (
               <SidebarMenuItem key={item.href}>
