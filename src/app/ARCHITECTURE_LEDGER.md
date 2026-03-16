@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v9.33.0 (Edición Estratégica)
+# SynqSports Pro - ARCHITECTURE_LEDGER v9.34.0 (Edición Estratégica)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro. Es el ADN del proyecto y debe preservarse íntegramente en cada iteración.
 
@@ -87,9 +87,10 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 - **v9.25.0**: **PROTOCOL_WATCH_RESTORE_CONFIG**: Implementación de restauración de cronómetro y configuración de intervalos de cambio en el reloj.
 - **v9.26.0**: **PROTOCOL_WATCH_SCORE_CORRECTION**: Implementación de funciones de corrección y reseteo de marcador en el reloj.
 
-## 10. Refinamiento Operativo y Publicitario (v9.29.0 - v9.33.0)
+## 10. Refinamiento Operativo y Publicitario (v9.29.0 - v9.34.0)
 - **v9.29.0**: **REFINAMIENTO_VISIBILIDAD_PROMO**: Ajuste de posición del banner publicitario horizontal (`top-6`) para evitar la obstrucción del campo táctico y mejorar la experiencia de diseño del usuario.
 - **v9.30.0**: **PROTOCOL_SANDBOX_TERMINAL**: Implementación de la sección "MI SANDBOX" (Tareas y Agenda) para usuarios Promo, segregando la operativa personal de la institucional.
 - **v9.31.0**: **VISIBILIDAD_UNIVERSAL_SANDBOX**: Reubicación de la sección Sandbox entre Metodología y Operativa Élite, habilitando el acceso para todos los roles (Superadmin/Pro) para propósitos de testeo y uso personal.
 - **v9.32.0**: **PROTOCOL_LOCAL_TEAM_CREATION**: Implementación de la terminal "Mi Equipo" en el Sandbox, con soporte para F11, F7 y Futsal, y campo oculto de deporte para futura expansión.
 - **v9.33.0**: **PROTOCOL_ENVIRONMENT_MIRRORING**: El Smartwatch detecta automáticamente si opera en un entorno de Club (Cloud) o Sandbox (Local), sincronizando el roster de jugadores correspondiente.
+- **v9.34.0**: **PROTOCOL_SANDBOX_THEME_ELECTRIC**: Implementación del tema Azul Marino Eléctrico para la sección Sandbox, diferenciándola cromáticamente de la operativa institucional.

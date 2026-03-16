@@ -47,7 +47,6 @@ export default function PromoTeamPage() {
   const [substitutes, setSubstitutes] = useState<string[]>(["", "", "", ""]);
   const [loading, setLoading] = useState(false);
 
-  // Inicializar nombres vacíos según el tipo de equipo
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("synq_promo_team") || "null");
     if (saved && saved.type === teamType) {
@@ -67,13 +66,12 @@ export default function PromoTeamPage() {
         type: teamType,
         starters,
         substitutes,
-        sportType: "football", // Campo oculto para futura expansión
+        sportType: "football", 
         updatedAt: new Date().toISOString()
       };
       
       localStorage.setItem("synq_promo_team", JSON.stringify(teamData));
       
-      // Sincronizar con el vault general si fuera necesario
       const vault = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": [], "sessions": []}');
       localStorage.setItem("synq_promo_vault", JSON.stringify({ ...vault, team: teamData }));
 
@@ -105,7 +103,7 @@ export default function PromoTeamPage() {
             <Users className="h-5 w-5 text-primary animate-pulse" />
             <span className="text-[10px] font-black text-primary tracking-[0.5em] uppercase italic">Local_Squad_Designer_v1.0</span>
           </div>
-          <h1 className="text-5xl font-headline font-black text-white uppercase italic tracking-tighter cyan-text-glow leading-none">
+          <h1 className="text-5xl font-headline font-black text-white uppercase italic tracking-tighter blue-text-glow leading-none">
             MI_EQUIPO_LOCAL
           </h1>
           <p className="text-[11px] font-black text-primary/30 tracking-[0.3em] uppercase">Gestión de Plantilla Sandbox</p>
@@ -131,7 +129,7 @@ export default function PromoTeamPage() {
            <Button 
             onClick={handleSaveTeam}
             disabled={loading}
-            className="h-12 mt-auto bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl cyan-glow hover:scale-105 transition-all border-none"
+            className="h-12 mt-auto bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl blue-glow hover:scale-105 transition-all border-none"
            >
             {loading ? "Sincronizando..." : "Guardar Plantilla"} <Save className="h-4 w-4 ml-2" />
            </Button>
@@ -141,7 +139,6 @@ export default function PromoTeamPage() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-10">
         
         <div className="xl:col-span-2 space-y-10">
-          {/* TITULARES */}
           <section className="space-y-6">
             <div className="flex items-center gap-3 px-2">
               <ShieldCheck className="h-4 w-4 text-primary" />
@@ -164,7 +161,6 @@ export default function PromoTeamPage() {
             </div>
           </section>
 
-          {/* SUPLENTES */}
           <section className="space-y-6">
             <div className="flex items-center gap-3 px-2">
               <Activity className="h-4 w-4 text-primary/40" />
@@ -213,20 +209,19 @@ export default function PromoTeamPage() {
             </div>
           </Card>
 
-          <Card className="glass-panel border-amber-500/20 bg-amber-500/5 p-8 rounded-[2.5rem]">
+          <Card className="glass-panel border-primary/20 bg-primary/5 p-8 rounded-[2.5rem]">
              <div className="flex items-center gap-3 mb-6">
-                <Zap className="h-5 w-5 text-amber-500 animate-pulse" />
+                <Zap className="h-5 w-5 text-primary animate-pulse" />
                 <h4 className="text-sm font-black italic uppercase text-white tracking-tighter">Ventaja Elite Club</h4>
              </div>
-             <p className="text-[10px] text-amber-500/60 font-bold uppercase tracking-widest leading-relaxed mb-8">
+             <p className="text-[10px] text-primary/60 font-bold uppercase tracking-widest leading-relaxed mb-8">
                ¿Cansado de escribir nombres manualmente? El plan Pro permite importar atletas desde Excel, gestionar historiales médicos y telemetría de fatiga en tiempo real.
              </p>
-             <Button className="w-full h-14 bg-amber-500 text-black font-black uppercase text-[10px] tracking-widest rounded-xl amber-glow" asChild>
+             <Button className="w-full h-14 bg-primary text-black font-black uppercase text-[10px] tracking-widest rounded-xl blue-glow" asChild>
                 <Link href="/login">ACTUALIZAR A PRO <ArrowRight className="h-4 w-4 ml-2" /></Link>
              </Button>
           </Card>
 
-          {/* CAMPO NO VISIBLE PARA FUTURA EXPANSIÓN MULTIDEPORTE */}
           <input type="hidden" name="sportType" value="football" />
         </aside>
       </div>

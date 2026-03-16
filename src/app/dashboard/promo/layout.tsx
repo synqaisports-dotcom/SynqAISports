@@ -29,7 +29,7 @@ export default function PromoSandboxLayout({ children }: { children: React.React
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen sandbox-theme">
       {children}
     </div>
   );

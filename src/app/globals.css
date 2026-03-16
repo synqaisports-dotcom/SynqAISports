@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -60,12 +61,21 @@
   }
 
   .methodology-theme {
-    --scroll-color: hsla(32, 100%, 50%, 0.5); /* Always visible color */
+    --scroll-color: hsla(32, 100%, 50%, 0.5); 
     --scroll-hover: hsla(32, 100%, 50%, 0.9);
     --scroll-glow: hsla(32, 100%, 50%, 0.8);
     --sidebar-primary: 32 100% 50%;
     --sidebar-ring: 32 100% 50%;
     --primary: 32 100% 50%;
+  }
+
+  .sandbox-theme {
+    --scroll-color: hsla(217, 91%, 60%, 0.4);
+    --scroll-hover: hsla(217, 91%, 60%, 0.9);
+    --scroll-glow: hsla(217, 91%, 60%, 0.7);
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-ring: 217 91% 60%;
+    --primary: 217 91% 60%;
   }
 }
 
@@ -110,7 +120,6 @@
 
 ::-webkit-scrollbar-thumb:active {
   background: var(--scroll-hover);
-  /* Glow effect when moving */
   box-shadow: 0 0 15px var(--scroll-glow), inset 0 0 5px var(--scroll-glow);
 }
 
@@ -145,6 +154,10 @@
   box-shadow: 0 0 30px hsla(32, 100%, 50%, 0.4);
 }
 
+.blue-glow {
+  box-shadow: 0 0 30px hsla(217, 91%, 60%, 0.4);
+}
+
 .cyan-text-glow {
   text-shadow: 0 0 15px hsla(183, 100%, 50%, 0.8);
 }
@@ -155,6 +168,10 @@
 
 .amber-text-glow {
   text-shadow: 0 0 15px hsla(32, 100%, 50%, 0.8);
+}
+
+.blue-text-glow {
+  text-shadow: 0 0 15px hsla(217, 91%, 60%, 0.8);
 }
 
 .pulse-glow {
@@ -182,7 +199,6 @@
   100% { transform: translateY(100%); }
 }
 
-/* TRANSICIONES_ELITE */
 .animate-in {
   animation-duration: 0.7s;
 }

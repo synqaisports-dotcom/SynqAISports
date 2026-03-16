@@ -51,7 +51,7 @@ export default function PromoSessionsPage() {
             <Calendar className="h-5 w-5 text-primary animate-pulse" />
             <span className="text-[10px] font-black text-primary tracking-[0.5em] uppercase italic">Sandbox_Agenda_v1.0</span>
           </div>
-          <h1 className="text-5xl font-headline font-black text-white uppercase italic tracking-tighter cyan-text-glow leading-none">
+          <h1 className="text-5xl font-headline font-black text-white uppercase italic tracking-tighter blue-text-glow leading-none">
             MI_AGENDA_PROMO
           </h1>
           <p className="text-[11px] font-black text-primary/30 tracking-[0.3em] uppercase">Planificación Diaria Simplificada</p>
@@ -88,7 +88,7 @@ export default function PromoSessionsPage() {
                        <SessionPart label="Vuelta a la Calma" status="SINCRO_OK" />
                     </CardContent>
                     <CardFooter className="p-6 bg-black/40 border-t border-white/5 flex justify-center">
-                       <Button variant="ghost" className="text-[9px] font-black text-primary uppercase tracking-widest hover:cyan-text-glow" asChild>
+                       <Button variant="ghost" className="text-[9px] font-black text-primary uppercase tracking-widest hover:blue-text-glow" asChild>
                           <Link href="/board/match">ABRIR EN PARTIDO <ArrowRight className="h-3 w-3 ml-2" /></Link>
                        </Button>
                     </CardFooter>
@@ -109,26 +109,25 @@ export default function PromoSessionsPage() {
         })}
       </div>
 
-      {/* BANNER DE UPGRADE */}
-      <div className="mt-16 p-12 bg-black/40 border-2 border-amber-500/20 rounded-[3rem] relative overflow-hidden group">
+      <div className="mt-16 p-12 bg-black/40 border-2 border-primary/20 rounded-[3rem] relative overflow-hidden group">
          <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
-         <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-all"><CalendarDays className="h-48 w-48 text-amber-500" /></div>
+         <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-all"><CalendarDays className="h-48 w-48 text-primary" /></div>
          
          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-12 items-center">
             <div className="space-y-6">
                <div className="flex items-center gap-3">
-                  <ShieldCheck className="h-6 w-6 text-amber-500" />
-                  <span className="text-[11px] font-black uppercase tracking-[0.5em] text-amber-500">Upgrade_To_Elite_Methodology</span>
+                  <ShieldCheck className="h-6 w-6 text-primary" />
+                  <span className="text-[11px] font-black uppercase tracking-[0.5em] text-primary">Upgrade_To_Elite_Methodology</span>
                </div>
                <h2 className="text-4xl font-headline font-black text-white italic tracking-tighter uppercase leading-tight">
                   PLANIFICACIÓN SIN LÍMITES <br />
-                  <span className="text-amber-500">PARA TU CLUB</span>
+                  <span className="text-primary">PARA TU CLUB</span>
                </h2>
                <p className="text-white/40 font-bold uppercase text-[11px] tracking-[0.3em] leading-loose max-w-2xl">
                   Accede al Macrociclo Anual, control de asistencia en tiempo real, histórico de progresión de atletas y sincronización multiplataforma. Deja atrás los slots locales y profesionaliza tu cantera.
                </p>
             </div>
-            <Button className="h-20 bg-amber-500 text-black font-black uppercase text-xs tracking-[0.3em] rounded-3xl amber-glow hover:scale-[1.02] transition-all border-none" asChild>
+            <Button className="h-20 bg-primary text-black font-black uppercase text-xs tracking-[0.3em] rounded-3xl blue-glow hover:scale-[1.02] transition-all border-none" asChild>
                <Link href="/login">PASAR A MODO PRO <Zap className="h-5 w-5 ml-3" /></Link>
             </Button>
          </div>

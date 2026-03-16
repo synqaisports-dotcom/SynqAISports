@@ -62,7 +62,7 @@ export default function PromoTasksPage() {
             <LayoutGrid className="h-5 w-5 text-primary animate-pulse" />
             <span className="text-[10px] font-black text-primary tracking-[0.5em] uppercase italic">Sandbox_Storage_v1.0</span>
           </div>
-          <h1 className="text-5xl font-headline font-black text-white uppercase italic tracking-tighter cyan-text-glow leading-none">
+          <h1 className="text-5xl font-headline font-black text-white uppercase italic tracking-tighter blue-text-glow leading-none">
             MIS_TAREAS
           </h1>
           <p className="text-[11px] font-black text-primary/30 tracking-[0.3em] uppercase">Almacenamiento Local Temporal</p>
@@ -79,7 +79,6 @@ export default function PromoTasksPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-12">
         <div className="space-y-16">
-          {/* SECCIÓN CALENTAMIENTO */}
           <section className="space-y-6">
             <div className="flex items-center justify-between px-2">
               <div className="flex items-center gap-3">
@@ -96,7 +95,6 @@ export default function PromoTasksPage() {
             </div>
           </section>
 
-          {/* SECCIÓN PARTE PRINCIPAL */}
           <section className="space-y-6">
             <div className="flex items-center justify-between px-2">
               <div className="flex items-center gap-3">
@@ -113,7 +111,6 @@ export default function PromoTasksPage() {
             </div>
           </section>
 
-          {/* SECCIÓN VUELTA A LA CALMA */}
           <section className="space-y-6">
             <div className="flex items-center justify-between px-2">
               <div className="flex items-center gap-3">

@@ -73,7 +73,7 @@ const navItems: NavItem[] = [
   { title: "Analytics Global", href: "/admin-global/analytics", icon: BarChart3, category: "global" },
   { title: "Almacén Neural", href: "/admin-global/exercises", icon: Database, category: "global" },
   
-  // MI_SANDBOX (PROMO MODE) - WHITE/PRIMARY THEME
+  // MI_SANDBOX (PROMO MODE) - ELECTRIC BLUE THEME
   { title: "Mi Equipo Local", href: "/dashboard/promo/team", icon: Users, category: "sandbox" },
   { title: "Mis Tareas (4-12-4)", href: "/dashboard/promo/tasks", icon: LayoutGrid, category: "sandbox" },
   { title: "Mi Agenda Promo", href: "/dashboard/promo/sessions", icon: Calendar, category: "sandbox" },
@@ -127,18 +127,14 @@ export function DashboardSidebar() {
   };
 
   const filteredItems = navItems.filter(item => {
-    // 1. Filtrar por Rol
     if (item.roles && profile) {
       if (!item.roles.includes(profile.role)) return false;
     }
     
-    // 2. Filtrar por Plan (Cepo de Datos)
     if (isFree) {
-      // Un usuario FREE solo ve Sandbox y User Terminals, y Coach Hub básico
       return ["sandbox", "user", "operational"].includes(item.category) && 
              !["club", "staff", "academy", "instalaciones", "admin"].some(slug => item.href.includes(slug));
     } else {
-      // Un usuario PRO o Superadmin puede ver todo incluyendo el Sandbox para testeo/personal
       return true;
     }
   });
@@ -202,7 +198,6 @@ export function DashboardSidebar() {
         "px-3 py-8 space-y-10 custom-scrollbar overflow-x-hidden transition-all duration-700",
         isCollapsed && "py-4 space-y-6"
       )}>
-        {/* 1. CONTROL_GLOBAL - ONLY FOR SUPERADMIN */}
         {isSuperAdmin && (
           <SidebarGroupWrapper title="Control_Global" color="text-emerald-400" isCollapsed={isCollapsed}>
             <SidebarMenu>
@@ -215,7 +210,6 @@ export function DashboardSidebar() {
           </SidebarGroupWrapper>
         )}
 
-        {/* 2. STRATEGIC METHODOLOGY - AMBER THEME (PRO ONLY) */}
         {!isFree && (
           <SidebarGroupWrapper title="Estrategia_Metodológica" color="text-amber-500" isCollapsed={isCollapsed}>
             <SidebarMenu>
@@ -228,18 +222,16 @@ export function DashboardSidebar() {
           </SidebarGroupWrapper>
         )}
 
-        {/* 3. MI_SANDBOX (PROMO MODE / PERSONAL) - NOW PLACED BETWEEN METHODOLOGY AND OPERATIONAL */}
-        <SidebarGroupWrapper title="Mi_Sandbox" color="text-white/20" isCollapsed={isCollapsed}>
+        <SidebarGroupWrapper title="Mi_Sandbox" color="text-blue-400" isCollapsed={isCollapsed}>
           <SidebarMenu>
             {filteredItems.filter(i => i.category === "sandbox").map((item) => (
               <SidebarMenuItem key={item.href}>
-                <SidebarLink item={item} isActive={pathname === item.href} />
+                <SidebarLink item={item} isActive={pathname === item.href} isSandbox />
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
         </SidebarGroupWrapper>
 
-        {/* 4. OPERATIONAL ELITE */}
         <SidebarGroupWrapper title={isFree ? "Terminal_Juego" : "Operativa_Elite"} color="text-primary" isCollapsed={isCollapsed}>
           <SidebarMenu>
             {filteredItems.filter(i => i.category === "operational").map((item) => (
@@ -250,7 +242,6 @@ export function DashboardSidebar() {
           </SidebarMenu>
         </SidebarGroupWrapper>
 
-        {/* 5. USER TERMINALS */}
         <SidebarGroupWrapper title="Terminales_Acceso" color="text-white/10" isCollapsed={isCollapsed}>
           <SidebarMenu>
             {filteredItems.filter(i => i.category === "user").map((item) => (
@@ -293,7 +284,7 @@ function SidebarGroupWrapper({ children, title, color, isCollapsed }: any) {
   );
 }
 
-function SidebarLink({ item, isActive, isGlobal, isMethodology }: { item: NavItem; isActive: boolean; isGlobal?: boolean; isMethodology?: boolean }) {
+function SidebarLink({ item, isActive, isGlobal, isMethodology, isSandbox }: { item: NavItem; isActive: boolean; isGlobal?: boolean; isMethodology?: boolean; isSandbox?: boolean }) {
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
 
@@ -301,12 +292,16 @@ function SidebarLink({ item, isActive, isGlobal, isMethodology }: { item: NavIte
     ? "bg-emerald-500/10 text-emerald-400 shadow-[0_4px_15px_rgba(16,185,129,0.15)] emerald-text-glow"
     : isMethodology
     ? "bg-amber-500/10 text-amber-500 shadow-[0_4px_15px_rgba(245,158,11,0.15)] amber-text-glow"
+    : isSandbox
+    ? "bg-blue-500/10 text-blue-400 shadow-[0_4px_15px_rgba(59,130,246,0.15)] blue-text-glow"
     : "bg-primary/10 text-primary shadow-[0_4px_15px_rgba(0,242,255,0.15)] cyan-text-glow";
 
   const iconClass = isGlobal 
     ? (isActive ? "text-emerald-400 scale-110" : "group-hover:text-emerald-400 group-hover:scale-110")
     : isMethodology
     ? (isActive ? "text-amber-500 scale-110" : "group-hover:text-amber-500 group-hover:scale-110")
+    : isSandbox
+    ? (isActive ? "text-blue-400 scale-110" : "group-hover:text-blue-400 group-hover:scale-110")
     : (isActive ? "text-primary scale-110" : "group-hover:text-primary group-hover:scale-110");
 
   return (
@@ -328,7 +323,7 @@ function SidebarLink({ item, isActive, isGlobal, isMethodology }: { item: NavIte
         {isActive && (
           <div className={cn(
             "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-3/5 rounded-full",
-            isGlobal ? "bg-emerald-500" : isMethodology ? "bg-amber-500" : "bg-primary"
+            isGlobal ? "bg-emerald-500" : isMethodology ? "bg-amber-500" : isSandbox ? "bg-blue-500" : "bg-primary"
           )} />
         )}
       </Link>
