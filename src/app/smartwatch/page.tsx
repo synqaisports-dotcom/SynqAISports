@@ -25,18 +25,19 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 
 /**
- * PROTOCOLO_SMARTWATCH_V9.26.0
- * - Implementación de corrección de marcador (decremento).
- * - Implementación de reseteo global de resultado en terminal config.
- * - Refinamiento de UI Fat Finger para corrección rápida.
+ * PROTOCOLO_SMARTWATCH_V9.33.0
+ * - Implementación de Mirroring de Entorno (Club vs Sandbox).
+ * - Carga dinámica de roster desde localStorage para modo Promo.
+ * - Feedback hápico contextual según el tipo de nodo conectado.
  */
 export default function SmartwatchPage() {
-  const { loading } = useAuth();
+  const { loading, profile } = useAuth();
   
   // ESTADOS DE VINCULACIÓN
   const [isLinked, setIsLinked] = useState(false);
   const [pairingInput, setPairingInput] = useState("");
   const [pairingError, setPairingError] = useState(false);
+  const [isClubMode, setIsClubMode] = useState(false);
 
   // ESTADOS DE JUEGO Y CONFIGURACIÓN
   const [timeLeft, setTimeLeft] = useState(45 * 60);
@@ -44,17 +45,40 @@ export default function SmartwatchPage() {
   const [score, setScore] = useState({ home: 0, guest: 0 });
   const [view, setView] = useState<'main' | 'subs_out' | 'subs_in' | 'config'>('main');
   const [selectedOut, setSelectedOut] = useState<number | null>(null);
-  const [subInterval, setSubInterval] = useState("5"); // Minutos para sugerencia de cambio
+  const [subInterval, setSubInterval] = useState("5");
 
-  // MOCK DATA (Sincronizado con el Nodo Central)
-  const starters = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-  const substitutes = [12, 14, 15, 19];
+  // ROSTER DINÁMICO
+  const [starters, setStarters] = useState<number[]>([]);
+  const [substitutes, setSubstitutes] = useState<number[]>([]);
 
-  // PERSISTENCIA DE VINCULACIÓN
+  // CARGA DE ENTORNO Y ROSTER
   useEffect(() => {
     const linked = localStorage.getItem("synq_watch_linked") === "true";
     setIsLinked(linked);
-  }, []);
+
+    if (linked) {
+      // 1. Detectar Entorno
+      const clubId = profile?.clubId;
+      if (clubId && clubId !== "global-hq") {
+        setIsClubMode(true);
+        // En un caso real aquí cargaríamos de Firestore
+        setStarters([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+        setSubstitutes([12, 14, 15, 19]);
+      } else {
+        // MODO SANDBOX: Cargar de local
+        setIsClubMode(false);
+        const savedTeam = JSON.parse(localStorage.getItem("synq_promo_team") || "null");
+        if (savedTeam) {
+          setStarters(savedTeam.starters.map((_: any, i: number) => i + 1));
+          setSubstitutes(savedTeam.substitutes.map((_: any, i: number) => savedTeam.starters.length + i + 1));
+        } else {
+          // Fallback Default
+          setStarters([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+          setSubstitutes([12, 14, 15, 19]);
+        }
+      }
+    }
+  }, [profile, isLinked]);
 
   // HAPTIC FEEDBACK ENGINE
   const triggerHaptic = (pattern: number | number[]) => {
@@ -211,8 +235,10 @@ export default function SmartwatchPage() {
         {/* CABECERA DINÁMICA */}
         <div className="h-10 pt-6 flex flex-col items-center justify-center shrink-0 z-20">
            <div className="flex items-center gap-1.5">
-              <Zap className="h-3.5 w-3.5 text-primary animate-pulse" />
-              <span className="text-[9px] font-black text-primary uppercase tracking-[0.4em] cyan-text-glow">SynqAI_Watch</span>
+              <Zap className={cn("h-3.5 w-3.5 animate-pulse", isClubMode ? "text-primary" : "text-white/40")} />
+              <span className={cn("text-[9px] font-black uppercase tracking-[0.4em] italic", isClubMode ? "text-primary cyan-text-glow" : "text-white/60")}>
+                {isClubMode ? 'SynqAI_Club' : 'Sandbox_Local'}
+              </span>
            </div>
         </div>
 
@@ -223,7 +249,6 @@ export default function SmartwatchPage() {
                 <button 
                   onClick={resetClock}
                   className="p-2 bg-white/5 rounded-full text-white/40 active:bg-rose-500 active:text-white transition-all"
-                  title="Restaurar Cronómetro"
                 >
                   <RotateCcw className="h-4 w-4" />
                 </button>
@@ -247,14 +272,12 @@ export default function SmartwatchPage() {
                 <button 
                   onClick={() => setView('config')}
                   className="p-2 bg-white/5 rounded-full text-white/40 active:bg-primary active:text-black transition-all"
-                  title="Configurar Cambios"
                 >
                   <Settings className="h-4 w-4" />
                 </button>
               </div>
 
               <div className="w-full grid grid-cols-2 gap-2 flex-[1.2] items-stretch mt-3">
-                 {/* SCORE_CARD_LOCAL */}
                  <div className="relative bg-primary/5 border-2 border-primary/20 rounded-3xl flex flex-col items-center justify-center group shadow-inner overflow-hidden">
                     <button 
                       onClick={() => handleGoal('home')}
@@ -271,7 +294,6 @@ export default function SmartwatchPage() {
                     </button>
                  </div>
 
-                 {/* SCORE_CARD_VISITOR */}
                  <div className="relative bg-rose-500/5 border-2 border-rose-500/20 rounded-3xl flex flex-col items-center justify-center group shadow-inner overflow-hidden">
                     <button 
                       onClick={() => handleGoal('guest')}
@@ -356,7 +378,6 @@ export default function SmartwatchPage() {
                   <div className="w-8" />
                </div>
                <div className="flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden space-y-2 pb-10 px-2 touch-pan-y pt-2">
-                  {/* RESET_SCORE_ACTION */}
                   <button 
                     onClick={() => { resetScore(); setView('main'); }}
                     className="w-full p-4 bg-rose-500/10 border-2 border-rose-500/20 rounded-2xl flex items-center justify-between active:bg-rose-500 active:text-white transition-all group"
@@ -392,8 +413,10 @@ export default function SmartwatchPage() {
 
         <div className="h-12 pb-6 flex items-center justify-center gap-4 shrink-0 z-20">
            <div className="flex items-center gap-2 px-4 py-1 bg-black/40 rounded-full border border-white/5">
-              <ShieldCheck className="h-2.5 w-2.5 text-emerald-400 animate-pulse" />
-              <span className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em]">LINK_ESTABLISHED</span>
+              <ShieldCheck className={cn("h-2.5 w-2.5 animate-pulse", isClubMode ? "text-emerald-400" : "text-white/40")} />
+              <span className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em]">
+                {isClubMode ? 'CLOUD_SINCRO' : 'LOCAL_STORAGE'}
+              </span>
            </div>
         </div>
       </div>

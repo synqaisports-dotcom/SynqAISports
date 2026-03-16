@@ -49,7 +49,7 @@ import {
   SheetContent, 
   SheetHeader, 
   SheetTitle, 
-  SheetDescription,
+  SheetDescription, 
   SheetTrigger,
   SheetClose
 } from "@/components/ui/sheet";
@@ -121,26 +121,6 @@ const MOCK_PLAYERS_BY_TEAM: Record<string, any[]> = {
     { number: 15, name: "KOKE M.", pos: "MC", isStarter: false },
     { number: 19, name: "FERRAN T.", pos: "DC", isStarter: false },
   ],
-  t2: [
-    { number: 1, name: "PAU R.", pos: "POR", isStarter: true },
-    { number: 2, name: "ERIC T.", pos: "DEF", isStarter: true },
-    { number: 3, name: "POL S.", pos: "DEF", isStarter: true },
-    { number: 4, name: "BIEL M.", pos: "DEF", isStarter: true },
-    { number: 6, name: "NIL G.", pos: "MID", isStarter: true },
-    { number: 8, name: "ARNAU F.", pos: "MID", isStarter: true },
-    { number: 9, name: "JAN L.", pos: "ATK", isStarter: true },
-    { number: 10, name: "MARC Q.", pos: "ATK", isStarter: false },
-    { number: 12, name: "TEO B.", pos: "MID", isStarter: false },
-  ],
-  t5: [
-    { number: 1, name: "ALBERTO", pos: "POR", isStarter: true },
-    { number: 5, name: "CARLOS", pos: "FIXO", isStarter: true },
-    { number: 7, name: "JAVI", pos: "ALA", isStarter: true },
-    { number: 8, name: "MANU", pos: "ALA", isStarter: true },
-    { number: 10, name: "RAÚL", pos: "PIVOT", isStarter: true },
-    { number: 12, name: "BORJA", pos: "ALA", isStarter: false },
-    { number: 14, name: "DANI", pos: "FIXO", isStarter: false },
-  ]
 };
 
 type TacticalPhase = "defensa" | "tda" | "ataque" | "tad" | "salida";
@@ -171,7 +151,7 @@ export default function MatchBoardPage() {
   const [fieldType, setFieldType] = useState<FieldType>("f11");
   const [selectedTeamId, setSelectedTeamId] = useState("t1");
   
-  const [teamRoster, setTeamRoster] = useState<any[]>(MOCK_PLAYERS_BY_TEAM[selectedTeamId] || MOCK_PLAYERS_BY_TEAM["t1"]);
+  const [teamRoster, setTeamRoster] = useState<any[]>(MOCK_PLAYERS_BY_TEAM["t1"]);
   
   const [homePhase, setHomePhase] = useState<TacticalPhase>("defensa");
   const [guestPhase, setGuestPhase] = useState<TacticalPhase>("defensa");
@@ -205,27 +185,32 @@ export default function MatchBoardPage() {
   const isPromo = profile?.plan === "free";
   const showTeamSelector = hasClub && isCoach;
 
-  const [localTeamData, setLocalTeamData] = useState({
-    name: "",
-    shortName: "",
-    primaryColor: "#00f2ff"
-  });
-
+  // PROTOCOLO_SINCRO_SANDBOX v9.33.0
   useEffect(() => {
-    if (MOCK_PLAYERS_BY_TEAM[selectedTeamId]) {
+    if (!hasClub) {
+      const savedTeam = JSON.parse(localStorage.getItem("synq_promo_team") || "null");
+      if (savedTeam) {
+        setFieldType(savedTeam.type);
+        const mappedRoster = [
+          ...savedTeam.starters.map((name: string, i: number) => ({
+            number: i + 1,
+            name: name || `JUGADOR ${i+1}`,
+            pos: FORMATIONS_DATA[savedTeam.type][Object.keys(FORMATIONS_DATA[savedTeam.type])[0]][i]?.pos || "FLD",
+            isStarter: true
+          })),
+          ...savedTeam.substitutes.map((name: string, i: number) => ({
+            number: savedTeam.starters.length + i + 1,
+            name: name || `SUPLENTE ${i+1}`,
+            pos: "SUB",
+            isStarter: false
+          }))
+        ];
+        setTeamRoster(mappedRoster);
+      }
+    } else if (MOCK_PLAYERS_BY_TEAM[selectedTeamId]) {
       setTeamRoster(MOCK_PLAYERS_BY_TEAM[selectedTeamId]);
     }
-  }, [selectedTeamId]);
-
-  useEffect(() => {
-    const defaultFormations: Record<FieldType, string> = {
-      f11: "4-3-3",
-      f7: "3-2-1",
-      futsal: "1-2-1"
-    };
-    setHomeFormation(defaultFormations[fieldType]);
-    setGuestFormation(defaultFormations[fieldType]);
-  }, [fieldType]);
+  }, [hasClub, selectedTeamId]);
 
   useEffect(() => {
     let interval: any;
@@ -253,7 +238,6 @@ export default function MatchBoardPage() {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     setPairingCode(code);
     setIsPairingModalOpen(true);
-    // En una app real, guardaríamos este código en Firestore asociado al userId
     localStorage.setItem("synq_watch_pairing_code", code);
   };
 
@@ -852,7 +836,7 @@ export default function MatchBoardPage() {
                 </button>
               </SheetTrigger>
               <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
-                {hasClub ? (
+                {hasClub || teamRoster.length > 0 ? (
                   <>
                     <div className="p-10 border-b border-white/5 bg-black/40">
                       <SheetHeader className="space-y-4">
@@ -864,7 +848,7 @@ export default function MatchBoardPage() {
                           ROSTER <span className="text-primary">ACTIVO</span>
                         </SheetTitle>
                         <SheetDescription className="text-[10px] uppercase font-bold text-primary/40 tracking-widest text-left italic">
-                          Arrastra un suplente sobre un titular para sustituir.
+                          {hasClub ? "Gestionado por el Club." : "Sincronizado desde el Sandbox."}
                         </SheetDescription>
                       </SheetHeader>
                     </div>
@@ -906,7 +890,9 @@ export default function MatchBoardPage() {
                     </div>
                     
                     <div className="p-10 bg-black/40 border-t border-white/5">
-                       <Button className="w-full h-14 bg-primary/5 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-primary hover:text-black transition-all">GESTIONAR ALTAS</Button>
+                       <Button className="w-full h-14 bg-primary/5 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-primary hover:text-black transition-all">
+                        {hasClub ? "GESTIONAR ALTAS" : "IR AL SANDBOX"}
+                       </Button>
                     </div>
                   </>
                 ) : (
@@ -932,18 +918,6 @@ export default function MatchBoardPage() {
                           <Input 
                             placeholder="EJ: RAYO VALLECANO" 
                             className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary text-primary" 
-                            value={localTeamData.name}
-                            onChange={(e) => setLocalTeamData({...localTeamData, name: e.target.value.toUpperCase()})}
-                          />
-                        </div>
-                        <div className="space-y-3">
-                          <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1 italic">Siglas / Corto</Label>
-                          <Input 
-                            placeholder="EJ: RAY" 
-                            maxLength={3}
-                            className="h-14 bg-white/5 border-primary/20 rounded-2xl font-black text-center text-xl focus:border-primary text-primary"
-                            value={localTeamData.shortName}
-                            onChange={(e) => setLocalTeamData({...localTeamData, shortName: e.target.value.toUpperCase()})}
                           />
                         </div>
                         <div className="space-y-4">
