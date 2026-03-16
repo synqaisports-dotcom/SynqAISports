@@ -19,7 +19,9 @@ import {
   CloudSun,
   Thermometer,
   Wind as WindIcon,
-  Droplets
+  Droplets,
+  Award,
+  Heart
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -29,15 +31,26 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { synqSync } from "@/lib/sync-service";
 
+/**
+ * Estadísticas Sandbox - v10.1.0
+ * Integra el sistema de Gamificación (XP) en el corazón del análisis local.
+ */
 export default function PromoStatsPage() {
   const { toast } = useToast();
   const [vault, setVault] = useState<any>({ exercises: [], sessions: [], matches: [] });
   const [isOnline, setIsOnline] = useState(true);
+  const [coachXP, setCoachXP] = useState(0);
 
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": [], "sessions": [], "matches": []}');
     setVault(saved);
     setIsOnline(navigator.onLine);
+
+    // Cálculo de XP local: 50 por Tarea, 100 por Partido
+    const exercisesCount = saved.exercises?.length || 0;
+    const matchesCount = saved.matches?.length || 0;
+    const totalXP = (exercisesCount * 50) + (matchesCount * 100);
+    setCoachXP(totalXP);
 
     const handleOnlineStatus = () => {
       setIsOnline(navigator.onLine);
@@ -57,65 +70,51 @@ export default function PromoStatsPage() {
   const stats = useMemo(() => {
     const matches = vault.matches || [];
     const played = matches.filter((m: any) => m.status === 'Played');
-    
     const wins = played.filter((m: any) => m.score.home > m.score.guest).length;
     const losses = played.filter((m: any) => m.score.home < m.score.guest).length;
     const draws = played.filter((m: any) => m.score.home === m.score.guest).length;
-    
     const goalsFor = played.reduce((acc: number, m: any) => acc + (m.score.home || 0), 0);
     const goalsAgainst = played.reduce((acc: number, m: any) => acc + (m.score.guest || 0), 0);
-    
     const winRate = played.length > 0 ? (wins / played.length) * 100 : 0;
-    
     const nextMatch = matches
       .filter((m: any) => m.status === 'Scheduled')
       .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
 
-    return {
-      played: played.length,
-      wins,
-      losses,
-      draws,
-      goalsFor,
-      goalsAgainst,
-      winRate,
-      nextMatch
-    };
+    return { played: played.length, wins, losses, draws, goalsFor, goalsAgainst, winRate, nextMatch };
   }, [vault]);
+
+  // Lógica de Niveles (Cada 500 XP = 1 Nivel)
+  const coachLevel = Math.floor(coachXP / 500) + 1;
+  const levelProgress = (coachXP % 500) / 5;
+  const rank = coachLevel >= 5 ? { label: "GOLD_COACH", color: "text-amber-400" } : 
+               coachLevel >= 3 ? { label: "SILVER_COACH", color: "text-slate-300" } : 
+               { label: "BRONZE_COACH", color: "text-orange-400" };
 
   const handlePrintPDF = () => {
     synqSync.trackEvent('ad_click', { action: 'export_pdf_stats' });
-    toast({
-      title: "GENERANDO_REPORTE",
-      description: "Preparando documento PDF de rendimiento local...",
-    });
-    setTimeout(() => {
-      window.print();
-    }, 1000);
+    toast({ title: "GENERANDO_REPORTE", description: "Preparando documento PDF de rendimiento local..." });
+    setTimeout(() => { window.print(); }, 1000);
   };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000 p-8 lg:p-12 print:p-0 print:bg-white">
+      {/* HEADER TÁCTICO */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 border-b border-white/5 pb-8 print:border-black/10">
         <div className="space-y-2">
           <div className="flex items-center gap-3 print:hidden">
             <BarChart3 className="h-5 w-5 text-primary animate-pulse" />
             <span className="text-[10px] font-black text-primary tracking-[0.5em] uppercase italic">Local_Analytics_Module_v1.0</span>
           </div>
-          <h1 className="text-5xl font-headline font-black text-white uppercase italic tracking-tighter blue-text-glow leading-none print:text-black print:text-glow-none">
+          <h1 className="text-5xl font-headline font-black text-white uppercase italic tracking-tighter blue-text-glow leading-none print:text-black">
             ESTADÍSTICAS_SANDBOX
           </h1>
           <p className="text-[11px] font-black text-primary/30 tracking-[0.3em] uppercase print:text-black/40">Rendimiento Técnico del Equipo Local</p>
         </div>
 
         <div className="flex items-center gap-4">
-           {!isOnline && (
-             <Badge variant="outline" className="border-rose-500/40 text-rose-500 text-[8px] font-black uppercase tracking-widest px-3 py-1 animate-pulse mr-4">
-               TRABAJANDO_OFFLINE
-             </Badge>
-           )}
+           {!isOnline && <Badge variant="outline" className="border-rose-500/40 text-rose-500 text-[8px] font-black uppercase px-3 py-1 animate-pulse mr-4">TRABAJANDO_OFFLINE</Badge>}
            <div className="text-right">
-              <p className="text-[8px] font-black text-white/20 uppercase tracking-widest print:text-black/40">Partidos Analizados</p>
+              <p className="text-[8px] font-black text-white/20 uppercase tracking-widest print:text-black/40">Partidos</p>
               <p className="text-2xl font-black text-white italic tracking-tighter print:text-black">{stats.played}</p>
            </div>
            <div className="h-10 w-[1px] bg-white/10 print:bg-black/10" />
@@ -123,13 +122,36 @@ export default function PromoStatsPage() {
               <p className="text-[8px] font-black text-white/20 uppercase tracking-widest print:text-black/40">Efectividad</p>
               <p className="text-2xl font-black text-primary italic tracking-tighter print:text-black">{Math.round(stats.winRate)}%</p>
            </div>
-           <Button 
-            onClick={handlePrintPDF}
-            className="h-12 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl blue-glow hover:scale-105 transition-all border-none print:hidden ml-4"
-           >
+           <Button onClick={handlePrintPDF} className="h-12 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl blue-glow hover:scale-105 transition-all border-none print:hidden ml-4">
             <Download className="h-4 w-4 mr-2" /> Exportar PDF
            </Button>
         </div>
+      </div>
+
+      {/* BLOQUE DE GAMIFICACIÓN INTEGRADO (v10.1.0) */}
+      <div className="flex items-center gap-6 p-6 bg-primary/5 border border-primary/20 rounded-[2.5rem] shadow-2xl group hover:border-primary/40 transition-all relative overflow-hidden print:hidden">
+         <div className="absolute inset-0 bg-primary/5 scan-line opacity-20" />
+         <div className="h-16 w-16 rounded-2xl bg-black border-2 border-primary/40 flex items-center justify-center relative overflow-hidden group-hover:scale-110 transition-transform shadow-[0_0_20px_rgba(0,242,255,0.2)]">
+            <Award className={cn("h-8 w-8", rank.color)} />
+         </div>
+         <div className="space-y-2 min-w-[220px] relative z-10">
+            <div className="flex justify-between items-end">
+               <span className={cn("text-[9px] font-black uppercase italic tracking-widest", rank.color)}>{rank.label}</span>
+               <span className="text-[11px] font-black text-white italic">LVL {coachLevel}</span>
+            </div>
+            <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+               <div className="h-full bg-primary shadow-[0_0_10px_var(--primary)] transition-all duration-1000" style={{ width: `${levelProgress}%` }} />
+            </div>
+            <div className="flex justify-between items-center">
+              <p className="text-[7px] font-bold text-primary/40 uppercase tracking-widest italic">+{500 - (coachXP % 500)} XP para subir de rango</p>
+              {coachLevel >= 3 && <Badge className="bg-primary text-black text-[7px] font-black px-2 py-0 animate-pulse">BONUS_IA_READY</Badge>}
+            </div>
+         </div>
+         <div className="hidden md:block ml-auto max-w-[200px] text-right">
+            <p className="text-[8px] font-black text-primary/40 uppercase tracking-widest leading-relaxed italic">
+              Tu actividad en el Sandbox desbloquea niveles de reconocimiento en la red global de SynqAI.
+            </p>
+         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -140,7 +162,6 @@ export default function PromoStatsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-10">
-        
         <div className="space-y-8">
           <Card className="glass-panel border-none bg-black/40 overflow-hidden relative rounded-[2.5rem] print:bg-white print:border print:border-black/10">
             <CardHeader className="p-8 border-b border-white/5 bg-white/[0.01] print:border-black/10">
@@ -152,57 +173,19 @@ export default function PromoStatsPage() {
                <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
                   <div className="space-y-4">
                      <div className="flex justify-between items-end"><span className="text-[10px] font-black text-white/40 uppercase print:text-black/40">Victorias</span><span className="text-xs font-black text-primary print:text-black">{stats.wins}</span></div>
-                     <Progress value={(stats.wins / stats.played) * 100} className="h-1.5 bg-white/5 print:bg-black/5" />
+                     <Progress value={stats.played > 0 ? (stats.wins / stats.played) * 100 : 0} className="h-1.5 bg-white/5 print:bg-black/5" />
                   </div>
                   <div className="space-y-4">
                      <div className="flex justify-between items-end"><span className="text-[10px] font-black text-white/40 uppercase print:text-black/40">Empates</span><span className="text-xs font-black text-white/60 print:text-black/60">{stats.draws}</span></div>
-                     <Progress value={(stats.draws / stats.played) * 100} className="h-1.5 bg-white/5 print:bg-black/5" />
+                     <Progress value={stats.played > 0 ? (stats.draws / stats.played) * 100 : 0} className="h-1.5 bg-white/5 print:bg-black/5" />
                   </div>
                   <div className="space-y-4">
                      <div className="flex justify-between items-end"><span className="text-[10px] font-black text-white/40 uppercase print:text-black/40">Derrotas</span><span className="text-xs font-black text-rose-500 print:text-black">{stats.losses}</span></div>
-                     <Progress value={(stats.losses / stats.played) * 100} className="h-1.5 bg-white/5 print:bg-black/5" />
-                  </div>
-               </div>
-
-               <div className="p-8 bg-primary/5 border border-primary/20 rounded-3xl flex items-center justify-between group overflow-hidden print:bg-black/5 print:border-black/10">
-                  <div className="flex items-center gap-6">
-                     <div className="h-14 w-14 rounded-2xl bg-black/40 border border-primary/30 flex items-center justify-center pulse-glow print:bg-white print:border-black/20">
-                        <Activity className="h-6 w-6 text-primary print:text-black" />
-                     </div>
-                     <div>
-                        <p className="text-xs font-black text-white uppercase italic tracking-widest print:text-black">Promedio de Goles por Partido</p>
-                        <p className="text-[10px] font-bold text-primary/40 uppercase tracking-widest mt-1 print:text-black/40">
-                           Ofensivo: {(stats.goalsFor / stats.played || 0).toFixed(1)} • Defensivo: {(stats.goalsAgainst / stats.played || 0).toFixed(1)}
-                        </p>
-                     </div>
-                  </div>
-                  <div className="text-right print:hidden">
-                     <span className="text-4xl font-black italic text-primary/20 group-hover:text-primary transition-colors duration-700">SINCRO_OK</span>
+                     <Progress value={stats.played > 0 ? (stats.losses / stats.played) * 100 : 0} className="h-1.5 bg-white/5 print:bg-black/5" />
                   </div>
                </div>
             </CardContent>
           </Card>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             <div className="p-8 glass-panel border-white/5 rounded-3xl space-y-4 print:bg-white print:border-black/10">
-                <div className="flex items-center gap-3">
-                   <ShieldCheck className="h-4 w-4 text-emerald-400 print:text-black" />
-                   <span className="text-[10px] font-black text-white/60 uppercase tracking-widest print:text-black/60">Fortaleza Defensiva</span>
-                </div>
-                <p className="text-[9px] text-white/20 uppercase font-bold leading-relaxed italic print:text-black/40">
-                   El sistema detecta una solidez del {Math.max(0, 100 - (stats.goalsAgainst * 10))}% en los últimos bloqueos tácticos registrados en la pizarra de partido.
-                </p>
-             </div>
-             <div className="p-8 glass-panel border-white/5 rounded-3xl space-y-4 print:bg-white print:border-black/10">
-                <div className="flex items-center gap-3">
-                   <Zap className="h-4 w-4 text-amber-400 print:text-black" />
-                   <span className="text-[10px] font-black text-white/60 uppercase tracking-widest print:text-black/60">Eficacia en Transición</span>
-                </div>
-                <p className="text-[9px] text-white/20 uppercase font-bold leading-relaxed italic print:text-black/40">
-                   Tus goles a favor representan un índice de conversión del {Math.min(100, stats.goalsFor * 5)}% respecto a las jugadas de ataque diagramadas.
-                </p>
-             </div>
-          </div>
         </div>
 
         <aside className="space-y-8 print:hidden">
@@ -212,12 +195,11 @@ export default function PromoStatsPage() {
                <Calendar className="h-4 w-4 text-primary animate-pulse" />
                <span className="text-[10px] font-black uppercase text-primary tracking-widest">PRÓXIMO_OBJETIVO</span>
             </div>
-            
             {stats.nextMatch ? (
               <div className="space-y-6 relative z-10">
                  <div className="space-y-1">
                     <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">Encuentro Agendado</p>
-                    <h4 className="text-2xl font-black text-white uppercase italic italic tracking-tighter">vs {stats.nextMatch.rivalName}</h4>
+                    <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter">vs {stats.nextMatch.rivalName}</h4>
                  </div>
                  <div className="flex items-center gap-4 py-4 border-y border-white/5">
                     <div className="flex flex-col">
@@ -239,21 +221,6 @@ export default function PromoStatsPage() {
               </div>
             )}
           </Card>
-
-          <div className="p-8 border border-dashed border-white/10 bg-white/[0.01] rounded-[2.5rem] flex flex-col items-center justify-center text-center space-y-4 group hover:border-primary/20 transition-all">
-             <Megaphone className="h-10 w-10 text-white/10 group-hover:text-primary/20 transition-colors" />
-             <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em]">Google_Ad_Slot_Sidebar_Analytics</p>
-          </div>
-
-          <div className="p-8 bg-black/40 border border-white/5 rounded-3xl space-y-4">
-             <div className="flex items-center gap-3">
-                <ShieldCheck className="h-4 w-4 text-primary/40" />
-                <span className="text-[10px] font-black uppercase text-white/40">Protocolo de Datos</span>
-             </div>
-             <p className="text-[9px] text-white/20 leading-relaxed font-bold uppercase italic">
-                Estas analíticas son temporales y se basan en el almacenamiento local. Para informes históricos por jugador y comparativas de red, activa el modo Elite Club.
-             </p>
-          </div>
         </aside>
       </div>
     </div>

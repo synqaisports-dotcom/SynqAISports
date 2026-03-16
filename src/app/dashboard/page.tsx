@@ -10,7 +10,6 @@ import {
   CardDescription 
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { 
   Users, 
   TrendingUp,
@@ -30,42 +29,18 @@ import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 
 /**
- * Dashboard Maestro - v9.45.0
- * Centro de mando que integra el sistema de Gamificación para fidelización de usuarios Sandbox.
+ * Dashboard Maestro - v10.1.0
+ * Centro de mando simplificado. La gamificación se ha movido a Estadísticas Sandbox
+ * para usuarios Free para optimizar el túnel de conversión.
  */
 export default function DashboardPage() {
   const { profile } = useAuth();
-  const [coachXP, setCoachXP] = useState(0);
-
-  useEffect(() => {
-    // Sincronización de XP basada en la actividad del Sandbox local
-    const vault = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": [], "matches": []}');
-    const exercisesCount = vault.exercises?.length || 0;
-    const matchesCount = vault.matches?.length || 0;
-    
-    // Algoritmo de Crecimiento: 50 XP por Tarea, 100 XP por Partido dirigido
-    const xp = (exercisesCount * 50) + (matchesCount * 100);
-    setCoachXP(xp);
-  }, []);
 
   if (!profile) return null;
 
-  // Lógica de Niveles (Cada 500 XP = 1 Nivel)
-  const coachLevel = Math.floor(coachXP / 500) + 1;
-  const levelProgress = (coachXP % 500) / 5; // Porcentaje para la barra (0-100)
-  
-  const getRank = (lvl: number) => {
-    if (lvl >= 10) return { label: "PLATINUM_MASTER", color: "text-primary" };
-    if (lvl >= 5) return { label: "GOLD_COACH", color: "text-amber-400" };
-    if (lvl >= 3) return { label: "SILVER_COACH", color: "text-slate-300" };
-    return { label: "BRONZE_COACH", color: "text-orange-400" };
-  };
-
-  const rank = getRank(coachLevel);
-
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
-      {/* HEADER TÁCTICO CON BLOQUE DE GAMIFICACIÓN */}
+      {/* HEADER TÁCTICO LIMPIO */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-white/5 pb-8">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
@@ -80,30 +55,10 @@ export default function DashboardPage() {
           <p className="text-[10px] font-black text-primary/60 tracking-[0.2em] uppercase">Optimización Multideporte y Formación Base</p>
         </div>
         
-        {/* SISTEMA DE GAMIFICACIÓN (Incentivo Pro) */}
-        <div className="flex items-center gap-6 p-5 bg-primary/5 border border-primary/20 rounded-[2.5rem] shadow-2xl group hover:border-primary/40 transition-all relative overflow-hidden">
-           <div className="absolute inset-0 bg-primary/5 scan-line opacity-20" />
-           <div className="h-16 w-16 rounded-2xl bg-black border-2 border-primary/40 flex items-center justify-center relative overflow-hidden group-hover:scale-110 transition-transform shadow-[0_0_20px_rgba(0,242,255,0.2)]">
-              <Award className={cn("h-8 w-8", rank.color)} />
-           </div>
-           <div className="space-y-2 min-w-[180px] relative z-10">
-              <div className="flex justify-between items-end">
-                 <span className={cn("text-[9px] font-black uppercase italic tracking-widest", rank.color)}>{rank.label}</span>
-                 <span className="text-[11px] font-black text-white italic">LVL {coachLevel}</span>
-              </div>
-              <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-                 <div 
-                  className="h-full bg-primary shadow-[0_0_10px_var(--primary)] transition-all duration-1000" 
-                  style={{ width: `${levelProgress}%` }} 
-                 />
-              </div>
-              <div className="flex justify-between items-center">
-                <p className="text-[7px] font-bold text-primary/40 uppercase tracking-widest italic">+{500 - (coachXP % 500)} XP para subir</p>
-                {coachLevel >= 3 && (
-                  <Badge className="bg-primary text-black text-[7px] font-black px-2 py-0 animate-pulse">BONUS_IA_READY</Badge>
-                )}
-              </div>
-           </div>
+        <div className="flex items-center gap-4">
+           <Badge variant="outline" className="border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest px-6 py-2 rounded-2xl">
+             SINCRO_ESTABLE
+           </Badge>
         </div>
       </div>
       
@@ -199,9 +154,6 @@ export default function DashboardPage() {
                 title="Alerta_Asistencia" 
                 desc="Baja asistencia detectada en el grupo Cadete B." 
               />
-            </div>
-            <div className="p-8 pt-0">
-               <Button variant="outline" className="w-full h-12 rounded-2xl border-primary/20 text-primary uppercase text-[10px] tracking-widest font-black hover:bg-primary/10 transition-all">Ver Actividad Completa</Button>
             </div>
           </CardContent>
         </Card>

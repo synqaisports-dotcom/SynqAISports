@@ -39,7 +39,9 @@ import {
   Smartphone,
   LayoutGrid,
   Calendar,
-  Swords
+  Swords,
+  Globe,
+  ChevronDown
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
@@ -54,6 +56,13 @@ import {
   useSidebar,
   SidebarGroup
 } from "@/components/ui/sidebar";
+import { AVAILABLE_LOCALES } from "@/lib/i18n-config";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface NavItem {
   title: string;
@@ -117,6 +126,7 @@ export function DashboardSidebar() {
   const router = useRouter();
   const { toggleSidebar, state } = useSidebar();
   const { profile, logout } = useAuth();
+  const [currentLang, setCurrentLang] = useState(AVAILABLE_LOCALES[0]);
   
   if (pathname === "/dashboard/coach/onboarding") return null;
 
@@ -257,11 +267,43 @@ export function DashboardSidebar() {
       </SidebarContent>
 
       <SidebarFooter className={cn(
-        "p-6 border-t transition-all duration-700",
+        "p-6 border-t transition-all duration-700 space-y-4",
         isCollapsed 
           ? "bg-transparent border-primary/20 p-2" 
           : "bg-[#04070c] border-r border-white/5 shadow-[4px_0_24px_rgba(0,0,0,0.5)]"
       )}>
+        {/* SELECTOR DE IDIOMA GLOBAL (v10.1.0) */}
+        {!isCollapsed && (
+          <div className="px-4 py-2 border-b border-white/5 pb-4 mb-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center justify-between w-full p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all group">
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg">{currentLang.flag}</span>
+                    <span className="text-[10px] font-black text-white/60 uppercase tracking-widest group-hover:text-white transition-colors">{currentLang.label}</span>
+                  </div>
+                  <ChevronDown className="h-3 w-3 text-white/20 group-hover:text-primary" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 bg-[#0a0f18] border-primary/20 text-white rounded-2xl shadow-2xl p-2 mb-2">
+                {AVAILABLE_LOCALES.map((lang) => (
+                  <DropdownMenuItem 
+                    key={lang.code} 
+                    onClick={() => setCurrentLang(lang)}
+                    className="flex items-center justify-between p-3 rounded-xl hover:bg-primary/10 hover:text-primary cursor-pointer transition-all"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span>{lang.flag}</span>
+                      <span className="text-[9px] font-black uppercase tracking-widest">{lang.label}</span>
+                    </div>
+                    {currentLang.code === lang.code && <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
+
         <button 
           onClick={handleLogout}
           className="flex items-center gap-4 px-4 py-4 text-white/30 hover:text-white transition-all font-black text-[10px] uppercase tracking-widest hover:bg-white/5 rounded-2xl group overflow-hidden w-full text-left"
