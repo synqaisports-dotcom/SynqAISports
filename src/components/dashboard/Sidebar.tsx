@@ -78,6 +78,7 @@ const navItems: NavItem[] = [
   // CONTROL_GLOBAL (Admin Global) - EMERALD THEME
   { title: "Dashboard", href: "/admin-global", icon: LayoutDashboard, category: "global" },
   { title: "Gestión Clubes", href: "/admin-global/clubs", icon: Building2, category: "global" },
+  { title: "Leads & Feedback", href: "/admin-global/collaboration", icon: MessageSquareQuote, category: "global" },
   { title: "Gestión Planes", href: "/admin-global/plans", icon: TicketPercent, category: "global" },
   { title: "Gestión Roles", href: "/admin-global/roles", icon: Fingerprint, category: "global" },
   { title: "Promos AI", href: "/admin-global/promos", icon: Zap, category: "global" },

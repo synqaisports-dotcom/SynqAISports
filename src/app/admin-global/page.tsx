@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Shield, TrendingUp, Users, Building2, Zap, Activity, ArrowUpRight } from "lucide-react";
+import { Shield, TrendingUp, Users, Building2, Zap, Activity, ArrowUpRight, MessageSquareQuote, Gift, Sparkles } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -14,6 +14,9 @@ export default function AdminGlobalDashboard() {
     const existingLogs = JSON.parse(localStorage.getItem("synq_audit_logs") || "[]");
     setLogs(existingLogs);
   }, []);
+
+  const allianceLeads = logs.filter(l => l.title === "LEAD_ALIANZA_CLUB").length;
+  const feedbackCount = logs.filter(l => l.title === "FEEDBACK_RECIBIDO").length;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
@@ -35,6 +38,45 @@ export default function AdminGlobalDashboard() {
         <MetricCard title="Nodos Globales" value="1.2k" icon={Users} trend="+12%" />
         <MetricCard title="Ingresos Red" value="$42.5k" icon={TrendingUp} trend="+8.2%" />
         <MetricCard title="Carga IA" value="14%" icon={Zap} trend="Óptima" />
+      </div>
+
+      {/* SECCIÓN DE ALIANZAS CRÍTICAS (LEADS SANDBOX) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+         <Link href="/admin-global/collaboration" className="block">
+            <Card className="glass-panel p-8 border-emerald-500/20 bg-emerald-500/5 rounded-[2.5rem] relative overflow-hidden group hover:scale-[1.02] transition-all">
+               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-all"><Gift className="h-32 w-32 text-emerald-500" /></div>
+               <div className="flex items-center gap-4 mb-6 relative z-10">
+                  <div className="h-12 w-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center pulse-glow">
+                     <Sparkles className="h-6 w-6 text-emerald-500" />
+                  </div>
+                  <div>
+                     <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest italic">Leads de Alianza Pendientes</p>
+                     <h3 className="text-3xl font-black text-white italic tracking-tighter">{allianceLeads} SOLICITUDES</h3>
+                  </div>
+               </div>
+               <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest leading-loose">
+                  Entrenadores Sandbox solicitando acceso profesional para sus clubes. Prioridad alta para el equipo de ventas.
+               </p>
+            </Card>
+         </Link>
+
+         <Link href="/admin-global/collaboration" className="block">
+            <Card className="glass-panel p-8 border-primary/20 bg-primary/5 rounded-[2.5rem] relative overflow-hidden group hover:scale-[1.02] transition-all">
+               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-all"><MessageSquareQuote className="h-32 w-32 text-primary" /></div>
+               <div className="flex items-center gap-4 mb-6 relative z-10">
+                  <div className="h-12 w-12 rounded-2xl bg-primary/20 border border-primary/40 flex items-center justify-center pulse-glow">
+                     <Activity className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                     <p className="text-[10px] font-black text-primary uppercase tracking-widest italic">Sugerencias Metodológicas</p>
+                     <h3 className="text-3xl font-black text-white italic tracking-tighter">{feedbackCount} PROPUESTAS</h3>
+                  </div>
+               </div>
+               <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest leading-loose">
+                  Ideas de nuevas herramientas tácticas recibidas desde el Sandbox. Analizar para el roadmap v11.
+               </p>
+            </Card>
+         </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
