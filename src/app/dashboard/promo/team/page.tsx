@@ -14,7 +14,11 @@ import {
   Trash2,
   Plus,
   Activity,
-  Dumbbell
+  Dumbbell,
+  Building2,
+  Globe,
+  MapPin,
+  Trophy
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,16 +47,33 @@ const POSITIONS: Record<TeamType, string[]> = {
 export default function PromoTeamPage() {
   const { toast } = useToast();
   const [teamType, setTeamType] = useState<TeamType>("f11");
+  const [teamName, setTeamName] = useState("");
+  const [country, setCountry] = useState("");
+  const [city, setCity] = useState("");
+  const [category, setCategory] = useState("");
   const [starters, setStarters] = useState<string[]>([]);
   const [substitutes, setSubstitutes] = useState<string[]>(["", "", "", ""]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("synq_promo_team") || "null");
-    if (saved && saved.type === teamType) {
-      setStarters(saved.starters);
-      setSubstitutes(saved.substitutes);
+    if (saved) {
+      setTeamType(saved.type || "f11");
+      setTeamName(saved.name || "");
+      setCountry(saved.country || "");
+      setCity(saved.city || "");
+      setCategory(saved.category || "");
+      setStarters(saved.starters || []);
+      setSubstitutes(saved.substitutes || ["", "", "", ""]);
     } else {
+      setStarters(Array(POSITIONS[teamType].length).fill(""));
+    }
+  }, []);
+
+  // Efecto para reajustar titulares al cambiar de formato si no hay datos
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem("synq_promo_team") || "null");
+    if (!saved || saved.type !== teamType) {
       setStarters(Array(POSITIONS[teamType].length).fill(""));
     }
   }, [teamType]);
@@ -64,6 +85,10 @@ export default function PromoTeamPage() {
     setTimeout(() => {
       const teamData = {
         type: teamType,
+        name: teamName.toUpperCase(),
+        country: country.toUpperCase(),
+        city: city.toUpperCase(),
+        category: category.toUpperCase(),
         starters,
         substitutes,
         sportType: "football", 
@@ -72,13 +97,13 @@ export default function PromoTeamPage() {
       
       localStorage.setItem("synq_promo_team", JSON.stringify(teamData));
       
-      const vault = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": [], "sessions": []}');
+      const vault = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": [], "sessions": [], "matches": []}');
       localStorage.setItem("synq_promo_vault", JSON.stringify({ ...vault, team: teamData }));
 
       setLoading(false);
       toast({
         title: "EQUIPO_SINCRO_LOCAL",
-        description: "Tu plantilla personalizada ha sido blindada en el navegador.",
+        description: "Tu plantilla y atributos han sido blindados en el navegador.",
       });
     }, 1000);
   };
@@ -139,6 +164,67 @@ export default function PromoTeamPage() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-10">
         
         <div className="xl:col-span-2 space-y-10">
+          {/* SECCIÓN 1: ATRIBUTOS DE IDENTIDAD */}
+          <section className="space-y-6">
+            <div className="flex items-center gap-3 px-2">
+              <Building2 className="h-4 w-4 text-primary" />
+              <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-white">ATRIBUTOS_DEL_NODO</h3>
+            </div>
+            <Card className="glass-panel border-white/5 bg-black/40 p-8 rounded-[2rem]">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Nombre del Equipo</Label>
+                  <div className="relative">
+                    <Trophy className="absolute left-3 top-3 h-4 w-4 text-primary/20" />
+                    <Input 
+                      value={teamName}
+                      onChange={(e) => setTeamName(e.target.value)}
+                      placeholder="EJ: RAYO VALLECANO" 
+                      className="h-11 bg-white/5 border-white/10 rounded-xl text-white font-bold uppercase focus:border-primary pl-10"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Categoría / Etapa</Label>
+                  <div className="relative">
+                    <Dumbbell className="absolute left-3 top-3 h-4 w-4 text-primary/20" />
+                    <Input 
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
+                      placeholder="EJ: ALEVÍN A" 
+                      className="h-11 bg-white/5 border-white/10 rounded-xl text-white font-bold uppercase focus:border-primary pl-10"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">País Nodo</Label>
+                  <div className="relative">
+                    <Globe className="absolute left-3 top-3 h-4 w-4 text-primary/20" />
+                    <Input 
+                      value={country}
+                      onChange={(e) => setCountry(e.target.value)}
+                      placeholder="EJ: ESPAÑA" 
+                      className="h-11 bg-white/5 border-white/10 rounded-xl text-white font-bold uppercase focus:border-primary pl-10"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Ciudad Sede</Label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-3 h-4 w-4 text-primary/20" />
+                    <Input 
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      placeholder="EJ: MADRID" 
+                      className="h-11 bg-white/5 border-white/10 rounded-xl text-white font-bold uppercase focus:border-primary pl-10"
+                    />
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </section>
+
+          {/* SECCIÓN 2: ROSTER TITULAR */}
           <section className="space-y-6">
             <div className="flex items-center gap-3 px-2">
               <ShieldCheck className="h-4 w-4 text-primary" />
@@ -161,6 +247,7 @@ export default function PromoTeamPage() {
             </div>
           </section>
 
+          {/* SECCIÓN 3: SUPLENTES */}
           <section className="space-y-6">
             <div className="flex items-center gap-3 px-2">
               <Activity className="h-4 w-4 text-primary/40" />
@@ -196,15 +283,15 @@ export default function PromoTeamPage() {
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-all"><Sparkles className="h-32 w-32 text-primary" /></div>
             <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white mb-6">SINCRO_PIZARRA</h3>
             <p className="text-[11px] font-bold text-white/40 uppercase tracking-widest mb-10 leading-loose italic">
-              Los nombres configurados aquí aparecerán automáticamente en las fichas de la Pizarra de Partido y el Pocket Master.
+              Los nombres y atributos configurados aquí aparecerán automáticamente en las fichas de la Pizarra de Partido y el Pocket Master.
             </p>
             <div className="p-6 bg-black/40 border border-white/10 rounded-2xl space-y-4">
                <div className="flex items-center gap-3">
                   <Info className="h-4 w-4 text-primary" />
-                  <span className="text-[10px] font-black uppercase text-primary">Futura Expansión</span>
+                  <span className="text-[10px] font-black uppercase text-primary">Cepo de Datos Local</span>
                </div>
                <p className="text-[9px] text-white/20 uppercase font-bold leading-relaxed italic">
-                 Estamos estabilizando el protocolo de Fútbol. Próximamente activaremos Baloncesto, Balonmano y Hockey con sus demarcaciones específicas.
+                 Estamos estabilizando el protocolo de Fútbol. La información geográfica nos ayuda a optimizar los servidores regionales para tu Sandbox.
                </p>
             </div>
           </Card>
@@ -217,7 +304,7 @@ export default function PromoTeamPage() {
              <p className="text-[10px] text-primary/60 font-bold uppercase tracking-widest leading-relaxed mb-8">
                ¿Cansado de escribir nombres manualmente? El plan Pro permite importar atletas desde Excel, gestionar historiales médicos y telemetría de fatiga en tiempo real.
              </p>
-             <Button className="w-full h-14 bg-primary text-black font-black uppercase text-[10px] tracking-widest rounded-xl blue-glow" asChild>
+             <Button className="w-full h-14 bg-primary text-black font-black uppercase text-[10px] tracking-widest rounded-xl blue-glow border-none" asChild>
                 <Link href="/login">ACTUALIZAR A PRO <ArrowRight className="h-4 w-4 ml-2" /></Link>
              </Button>
           </Card>
