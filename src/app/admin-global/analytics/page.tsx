@@ -1,14 +1,15 @@
 
 "use client";
 
-import { BarChart3, TrendingUp, Users, Zap, Globe, Activity, Target, Flame, MousePointerClick } from "lucide-react";
+import { BarChart3, TrendingUp, Users, Zap, Globe, Activity, Target, Flame, MousePointerClick, ShieldCheck } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 /**
  * Global Analytics - v9.46.0
- * Incluye la Terminal de Conversión Sandbox para detección de Leads Calientes.
+ * Terminal de Conversión Sandbox para detección de Leads Calientes y saturación de slots.
  */
 export default function GlobalAnalyticsPage() {
   return (
@@ -30,7 +31,7 @@ export default function GlobalAnalyticsPage() {
         <AnalyticsMiniCard label="Nodos Totales" value="4.8k" trend="+5%" icon={Globe} />
         <AnalyticsMiniCard label="Sesiones / Día" value="12k" trend="+20%" icon={Activity} />
         <AnalyticsMiniCard label="Tasa Conversión" value="8.4%" trend="+1.2%" icon={Zap} />
-        <AnalyticsMiniCard label="Retención Red" value="98.2%" trend="+0.5%" icon={Shield} />
+        <AnalyticsMiniCard label="Retención Red" value="98.2%" trend="+0.5%" icon={ShieldCheck} />
       </div>
 
       {/* TERMINAL DE CONVERSIÓN SANDBOX (LEAD DETECTOR) */}
@@ -41,7 +42,7 @@ export default function GlobalAnalyticsPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* SATURACIÓN DE SLOTS */}
+          {/* SATURACIÓN DE SLOTS (Venta Directa) */}
           <Card className="glass-panel border-emerald-500/20 bg-black/40 p-8 rounded-[2.5rem] relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-5"><Flame className="h-24 w-24 text-emerald-500" /></div>
             <div className="space-y-6 relative z-10">
@@ -53,7 +54,13 @@ export default function GlobalAnalyticsPage() {
               <p className="text-[9px] text-white/30 uppercase font-bold leading-relaxed">
                 Usuarios con el Sandbox lleno. Prioridad alta para campaña de Magic Token "Upgrade Pro".
               </p>
-              <Progress value={72} className="h-1 bg-emerald-500/20" />
+              <div className="space-y-2">
+                 <div className="flex justify-between text-[8px] font-black text-emerald-400/60 uppercase">
+                    <span>Tráfico Orgánico</span>
+                    <span>72%</span>
+                 </div>
+                 <Progress value={72} className="h-1 bg-emerald-500/20" />
+              </div>
             </div>
           </Card>
 
@@ -129,9 +136,3 @@ function AnalyticsMiniCard({ label, value, trend, icon: Icon }: any) {
     </Card>
   );
 }
-
-const Shield = ({ className }: any) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
-  </svg>
-);
