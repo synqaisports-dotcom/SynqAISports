@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v9.36.0 (Edición Estratégica)
+# SynqSports Pro - ARCHITECTURE_LEDGER v9.37.0 (Edición Estratégica)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro. Es el ADN del proyecto y debe preservarse íntegramente en cada iteración.
 
@@ -36,7 +36,7 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 - **v9.8.2**: **Inteligencia de Dorsales**: Autoincremento secuencial (n+1) al duplicar atletas.
 - **v9.8.5**: **Blindaje de Interacción**: Fix definitivo a `ReferenceError: maxY is not defined` en el escalado de objetos.
 - **v9.8.6**: **Sincronización de Materiales**: Paridad visual total entre Pizarra Promo y Profesional (sombras y texturas).
-- **v9.8.7**: **Unificación Funcional**: Activación de Carriles Tácticos en modo Promo y eliminación de restricciones visuales de capacidad.
+- **v9.8.7**: **Unificación Funcional**: Activación de Carriles Tácticos en modo Promo y eliminación de complicaciones visuales.
 
 ## 6. Auditoría y Estrategia de Captación (v9.9.0 - v9.10.1)
 - **v9.9.0**: Auditoría integral completada. Blindaje de protocolos Superadmin verificado.
@@ -96,5 +96,6 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 - **v9.34.0**: **PROTOCOL_SANDBOX_THEME_ELECTRIC**: Implementación del tema Azul Marino Eléctrico para la sección Sandbox, diferenciándola cromáticamente de la operativa institucional.
 - **v9.35.0**: **PROTOCOL_LOCAL_MATCH_TRACKING**: Implementación de la terminal "Mis Partidos" en el Sandbox (Max 20 slots) y funcionalidad de guardado local de resultados desde la Pizarra de Partido.
 
-## 11. Control de Superficie y Roster (v9.36.0)
+## 11. Control de Superficie y Roster (v9.36.0 - v9.37.0)
 - **v9.36.0**: **PROTOCOL_FIELD_SELECTOR_LOGIC**: Implementación del selector de superficie (F11, F7, Futsal) condicional en la Pizarra de Partido. El selector solo es visible en modo Pro (Club), permitiendo ajustes manuales. En modo Promo, el campo queda bloqueado y sincronizado automáticamente con la configuración del Sandbox.
+- **v9.37.0**: **PROTOCOL_SANDBOX_ANALYTICS**: Implementación de la terminal de estadísticas locales para el Sandbox, procesando victorias, derrotas y balance de goles del almacenamiento local.
