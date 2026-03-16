@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -13,7 +12,8 @@ import {
   Loader2,
   CheckCircle2,
   Zap,
-  Dumbbell
+  Dumbbell,
+  Users
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -50,17 +50,21 @@ export default function OnboardingTunnel() {
   const router = useRouter();
   const { toast } = useToast();
   
-  const [clubName, setClubName] = useState("");
+  const [clubName, setClubName] = useState(profile?.clubName || "");
   const [selectedCountry, setSelectedCountry] = useState(profile?.country || "ES");
   const [selectedSport, setSelectedSport] = useState("Fútbol");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
   const isFromPromo = !!profile?.claimedToken;
+  const isSandbox = profile?.plan === 'free';
 
   useEffect(() => {
     if (profile?.country) {
       setSelectedCountry(profile.country);
+    }
+    if (profile?.clubName) {
+      setClubName(profile.clubName);
     }
   }, [profile]);
 
@@ -69,15 +73,14 @@ export default function OnboardingTunnel() {
       toast({
         variant: "destructive",
         title: "ERROR_DE_PROTOCOLO",
-        description: "Debe asignar una identidad al club para continuar.",
+        description: isSandbox ? "Debe asignar un nombre a su equipo local." : "Debe asignar una identidad al club para continuar.",
       });
       return;
     }
     setLoading(true);
     
-    // Simulación de generación de token y registro de nodo
     setTimeout(() => {
-      const generatedClubId = "NODE-" + Math.random().toString(36).substr(2, 6).toUpperCase();
+      const generatedClubId = isSandbox ? "SND-" + Math.random().toString(36).substr(2, 6).toUpperCase() : "NODE-" + Math.random().toString(36).substr(2, 6).toUpperCase();
       
       completeOnboarding({ 
         name: clubName, 
@@ -90,12 +93,12 @@ export default function OnboardingTunnel() {
       setLoading(false);
 
       toast({
-        title: "SINC_COMPLETA",
-        description: `El nodo ${clubName} ha sido vinculado con ID: ${generatedClubId}.`,
+        title: isSandbox ? "SANDBOX_LISTO" : "NODO_ACTIVADO",
+        description: isSandbox ? `Bienvenido, Coach. Tu equipo "${clubName}" está listo.` : `El nodo ${clubName} ha sido vinculado con ID: ${generatedClubId}.`,
       });
 
       setTimeout(() => {
-        router.push("/dashboard/club");
+        router.push(isSandbox ? "/dashboard/promo/team" : "/dashboard/club");
       }, 2000);
     }, 2500);
   };
@@ -110,8 +113,8 @@ export default function OnboardingTunnel() {
               <CheckCircle2 className="h-32 w-32 text-primary relative z-10" />
            </div>
            <div className="space-y-2">
-              <h2 className="text-4xl font-headline font-black text-white italic tracking-tighter uppercase">NODO_ACTIVADO</h2>
-              <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.5em]">Redireccionando a la Terminal Operativa...</p>
+              <h2 className="text-4xl font-headline font-black text-white italic tracking-tighter uppercase">{isSandbox ? 'ACCESO_AUTORIZADO' : 'NODO_ACTIVADO'}</h2>
+              <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.5em]">Sincronizando con la terminal de mado...</p>
            </div>
         </div>
       </div>
@@ -126,12 +129,14 @@ export default function OnboardingTunnel() {
         <div className="w-full max-w-4xl space-y-12">
           
           <div className="text-center space-y-6">
-            <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full border border-primary/20 bg-primary/5 mb-4">
+            <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full border border-primary/20 bg-primary/5 mb-4 animate-in fade-in slide-in-from-bottom-2 duration-700">
               <Cpu className="h-3 w-3 text-primary animate-pulse" />
-              <span className="text-[9px] font-black uppercase tracking-[0.3em] text-primary">Túnel de Vinculación de Nodo</span>
+              <span className="text-[9px] font-black uppercase tracking-[0.3em] text-primary">
+                {isSandbox ? 'Túnel de Entrada Sandbox (Light)' : 'Túnel de Vinculación de Nodo Pro'}
+              </span>
             </div>
             <h1 className="text-6xl font-headline font-black text-white italic tracking-tighter cyan-text-glow leading-tight">
-              GENERAR PERFIL DE CLUB
+              {isSandbox ? 'IDENTIDAD_LOCAL' : 'GENERAR PERFIL DE CLUB'}
             </h1>
             <p className="text-white/40 font-bold uppercase text-[10px] tracking-[0.5em]">
               Sincronizando Identidad: {profile?.name.toUpperCase() || 'USUARIO_PENDIENTE'}
@@ -145,7 +150,7 @@ export default function OnboardingTunnel() {
                </div>
                <div className="space-y-6 relative z-10">
                   <div className="h-16 w-16 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center pulse-glow">
-                    <Zap className="h-8 w-8 text-primary" />
+                    {isSandbox ? <Dumbbell className="h-8 w-8 text-primary" /> : <Zap className="h-8 w-8 text-primary" />}
                   </div>
                   <div className="space-y-4">
                     <div>
@@ -155,7 +160,9 @@ export default function OnboardingTunnel() {
                     <div>
                       <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Estado de Acceso</h3>
                       <p className="text-[10px] text-white/40 uppercase mt-1 leading-relaxed italic">
-                        {isFromPromo 
+                        {isSandbox 
+                          ? "ACCESO_SANDBOX: Dispone de slots limitados y pizarras con publicidad. Los datos se guardan localmente."
+                          : isFromPromo 
                           ? "ACCESO_PRE_AUTORIZADO: Se han bloqueado los parámetros regionales según la campaña activa."
                           : "ACCESO_ORGÁNICO: Defina sus parámetros operativos manualmente."
                         }
@@ -163,22 +170,26 @@ export default function OnboardingTunnel() {
                     </div>
                   </div>
                </div>
-               <div className="pt-6 border-t border-white/5 space-y-2">
-                  <span className="text-[8px] font-black uppercase tracking-[0.4em] text-white/20">Token de Sincronización</span>
-                  <p className="font-mono text-emerald-400 text-xs tracking-widest">
-                    {loading ? "GENERANDO..." : `AUTH_CODE_0X${Math.random().toString(16).substr(2, 8).toUpperCase()}`}
-                  </p>
-               </div>
+               {!isSandbox && (
+                 <div className="pt-6 border-t border-white/5 space-y-2">
+                    <span className="text-[8px] font-black uppercase tracking-[0.4em] text-white/20">Token de Sincronización</span>
+                    <p className="font-mono text-emerald-400 text-xs tracking-widest">
+                      {loading ? "GENERANDO..." : `AUTH_CODE_0X${Math.random().toString(16).substr(2, 8).toUpperCase()}`}
+                    </p>
+                 </div>
+               )}
             </div>
 
             <div className="glass-panel p-12 space-y-10 relative">
               <div className="space-y-6">
                 <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50 ml-1">Identidad de la Cantera (Nombre)</label>
+                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50 ml-1 italic">
+                    {isSandbox ? 'Nombre de tu Equipo Local' : 'Identidad de la Cantera (Nombre)'}
+                  </label>
                   <div className="relative">
-                    <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary/40" />
+                    {isSandbox ? <Users className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary/40" /> : <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary/40" />}
                     <Input 
-                      placeholder="EJ: FC BARCELONA ACADÈMIA"
+                      placeholder={isSandbox ? "EJ: RAYO VALLECANO" : "EJ: FC BARCELONA ACADÈMIA"}
                       value={clubName}
                       onChange={(e) => setClubName(e.target.value.toUpperCase())}
                       className="h-16 bg-white/5 border-primary/20 rounded-2xl pl-12 text-lg font-black italic tracking-tighter focus:border-primary transition-all placeholder:text-white/10"
@@ -187,7 +198,7 @@ export default function OnboardingTunnel() {
                 </div>
 
                 <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50 ml-1">Disciplina Deportiva</label>
+                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50 ml-1 italic">Disciplina Deportiva</label>
                   <Select value={selectedSport} onValueChange={setSelectedSport}>
                     <SelectTrigger className="h-16 bg-white/5 border-white/10 rounded-2xl text-white font-bold uppercase tracking-widest px-6">
                       <div className="flex items-center gap-3">
@@ -205,9 +216,9 @@ export default function OnboardingTunnel() {
                   </Select>
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
+                <div className={cn("grid gap-6", isSandbox ? "grid-cols-1" : "grid-cols-2")}>
                   <div className="space-y-3">
-                    <label className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50 ml-1">Sector Operativo</label>
+                    <label className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50 ml-1 italic">Sector Operativo (País)</label>
                     <Select 
                       value={selectedCountry} 
                       onValueChange={setSelectedCountry}
@@ -229,19 +240,21 @@ export default function OnboardingTunnel() {
                     </Select>
                   </div>
                   
-                  <div className="space-y-3">
-                    <label className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50 ml-1">Estructura de Entidad</label>
-                    <Select defaultValue="grassroots">
-                      <SelectTrigger className="h-16 bg-white/5 border-white/10 rounded-2xl text-white font-bold uppercase tracking-widest px-6">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-2xl">
-                        <SelectItem value="elite" className="text-[10px] font-black uppercase">Academia de Élite</SelectItem>
-                        <SelectItem value="pro" className="text-[10px] font-black uppercase">Club Profesional</SelectItem>
-                        <SelectItem value="grassroots" className="text-[10px] font-black uppercase">Fútbol Base / Cantera</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {!isSandbox && (
+                    <div className="space-y-3">
+                      <label className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50 ml-1 italic">Estructura de Entidad</label>
+                      <Select defaultValue="grassroots">
+                        <SelectTrigger className="h-16 bg-white/5 border-white/10 rounded-2xl text-white font-bold uppercase tracking-widest px-6">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-2xl">
+                          <SelectItem value="elite" className="text-[10px] font-black uppercase">Academia de Élite</SelectItem>
+                          <SelectItem value="pro" className="text-[10px] font-black uppercase">Club Profesional</SelectItem>
+                          <SelectItem value="grassroots" className="text-[10px] font-black uppercase">Fútbol Base / Cantera</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -250,7 +263,7 @@ export default function OnboardingTunnel() {
                 disabled={loading}
                 className="w-full h-20 bg-primary text-black font-black text-xs uppercase tracking-[0.4em] rounded-2xl cyan-glow hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_30px_rgba(0,242,255,0.2)] border-none"
               >
-                {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : "VINCULAR_CANTERA_A_LA_RED"}
+                {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : (isSandbox ? "EMPEZAR_A_ENTRENAR_GRATIS" : "VINCULAR_CANTERA_A_LA_RED")}
               </Button>
             </div>
           </div>

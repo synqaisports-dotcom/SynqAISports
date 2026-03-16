@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
@@ -84,7 +83,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const newProfile: UserProfile = {
       email,
       name,
-      role: "club_admin",
+      role: plan === 'free' ? "coach" : "club_admin",
       clubId: null,
       plan,
       country: "ES",

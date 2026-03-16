@@ -23,19 +23,21 @@ import {
   ChevronLeft,
   UserCircle,
   Building2,
-  LockKeyhole
+  LockKeyhole,
+  Dumbbell,
+  Users
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth-context";
 import { Badge } from "@/components/ui/badge";
-
-const UserCircleIcon = ({ className }: any) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-);
+import { cn } from "@/lib/utils";
 
 function LoginContent() {
   const [localLoading, setLocalLoading] = useState(false);
   const [forceStandard, setForceStandard] = useState(false);
+  const [regStep, setRegStep] = useState<'choice' | 'form'>('choice');
+  const [regType, setRegType] = useState<'free' | 'enterprise_scale'>('free');
+  
   const { profile, loginAsGuest, loginWithToken, register, login } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
@@ -82,7 +84,7 @@ function LoginContent() {
     e.preventDefault();
     setLocalLoading(true);
     try {
-      await register(regData.email, regData.pass, regData.name, regData.club, 'free');
+      await register(regData.email, regData.pass, regData.name, regData.club, regType);
       toast({ title: "CUENTA_CREADA", description: "Bienvenido a la red SynqAI. Sincronizando terminal..." });
     } catch (err) {
       toast({ variant: "destructive", title: "FALLO_SINCRO", description: "No se pudo crear el nodo de usuario." });
@@ -191,15 +193,61 @@ function LoginContent() {
           </TabsContent>
 
           <TabsContent value="register" className="space-y-6 animate-in fade-in zoom-in-95 duration-500">
-            <form onSubmit={handleRegister} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><label className="text-[9px] font-black uppercase text-primary ml-1 italic">NOMBRE</label><Input required value={regData.name} onChange={e => setRegData({...regData, name: e.target.value.toUpperCase()})} placeholder="MARC" className="h-12 bg-white/5 border-primary/20 rounded-2xl font-bold" /></div>
-                <div className="space-y-2"><label className="text-[9px] font-black uppercase text-primary ml-1 italic">CANTERA</label><Input required value={regData.club} onChange={e => setRegData({...regData, club: e.target.value.toUpperCase()})} placeholder="CLUB_CITY" className="h-12 bg-white/5 border-primary/20 rounded-2xl font-bold" /></div>
+            {regStep === 'choice' ? (
+              <div className="grid grid-cols-1 gap-4 py-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <button 
+                  onClick={() => { setRegType('free'); setRegStep('form'); }}
+                  className="p-8 bg-primary/5 border-2 border-primary/20 rounded-[2rem] group hover:border-primary transition-all text-left relative overflow-hidden"
+                >
+                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-all"><Zap className="h-20 w-20 text-primary" /></div>
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
+                      <Dumbbell className="h-6 w-6 text-primary" />
+                    </div>
+                    <span className="text-xs font-black text-white uppercase italic tracking-widest">Soy un Entrenador</span>
+                  </div>
+                  <h4 className="text-2xl font-black text-white italic tracking-tighter uppercase mb-2">ENTRADA_SANDBOX</h4>
+                  <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest leading-relaxed italic">
+                    Acceso gratuito a pizarras tácticas, gestión de equipo local y estadísticas. Ideal para el barro del campo.
+                  </p>
+                </button>
+
+                <button 
+                  onClick={() => { setRegType('enterprise_scale'); setRegStep('form'); }}
+                  className="p-8 bg-white/5 border-2 border-white/5 rounded-[2rem] group hover:border-primary/40 transition-all text-left relative overflow-hidden"
+                >
+                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-all"><Building2 className="h-20 w-20 text-white" /></div>
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="h-12 w-12 rounded-2xl bg-white/10 flex items-center justify-center border border-white/10">
+                      <Users className="h-6 w-6 text-white" />
+                    </div>
+                    <span className="text-xs font-black text-white/60 uppercase italic tracking-widest">Soy un Club</span>
+                  </div>
+                  <h4 className="text-2xl font-black text-white italic tracking-tighter uppercase mb-2">REGISTRO_PRO</h4>
+                  <p className="text-[10px] text-white/20 font-bold uppercase tracking-widest leading-relaxed italic">
+                    Digitaliza tu cantera. Neural Planner IA, gestión de staff, portal de padres y control de instalaciones.
+                  </p>
+                </button>
               </div>
-              <div className="space-y-2"><label className="text-[9px] font-black uppercase text-primary ml-1 italic">EMAIL_PROFESIONAL</label><Input required type="email" value={regData.email} onChange={e => setRegData({...regData, email: e.target.value})} placeholder="USER@CLUB.COM" className="h-12 bg-white/5 border-primary/20 rounded-2xl font-bold" /></div>
-              <div className="space-y-2"><label className="text-[9px] font-black uppercase text-primary ml-1 italic">NUEVA_CLAVE</label><Input required type="password" value={regData.pass} onChange={e => setRegData({...regData, pass: e.target.value})} placeholder="••••••••" className="h-12 bg-white/5 border-primary/20 rounded-2xl font-bold" /></div>
-              <Button type="submit" disabled={localLoading} className="w-full h-16 bg-primary text-black font-black uppercase tracking-[0.3em] text-xs rounded-2xl cyan-glow border-none">CREAR_IDENTIDAD_FREE <Sparkles className="h-4 w-4 ml-2" /></Button>
-            </form>
+            ) : (
+              <form onSubmit={handleRegister} className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-500">
+                <div className="flex items-center gap-3 mb-4">
+                  <button onClick={() => setRegStep('choice')} className="text-primary/40 hover:text-primary transition-all"><ChevronLeft className="h-5 w-5" /></button>
+                  <span className="text-[9px] font-black uppercase text-primary tracking-widest italic">
+                    {regType === 'free' ? 'MODO_SANDBOX_LIGHT' : 'PROTOCOLO_CLUB_PRO'}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2"><label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1 italic">TU_NOMBRE</label><Input required value={regData.name} onChange={e => setRegData({...regData, name: e.target.value.toUpperCase()})} placeholder="MARC" className="h-12 bg-white/5 border-primary/20 rounded-2xl font-bold" /></div>
+                  <div className="space-y-2"><label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1 italic">{regType === 'free' ? 'TU_EQUIPO' : 'TU_CANTERA'}</label><Input required value={regData.club} onChange={e => setRegData({...regData, club: e.target.value.toUpperCase()})} placeholder={regType === 'free' ? "MI EQUIPO" : "CLUB_CITY"} className="h-12 bg-white/5 border-primary/20 rounded-2xl font-bold" /></div>
+                </div>
+                <div className="space-y-2"><label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1 italic">EMAIL_PROFESIONAL_OBLIGATORIO</label><Input required type="email" value={regData.email} onChange={e => setRegData({...regData, email: e.target.value})} placeholder="USER@CLUB.COM" className="h-12 bg-white/5 border-primary/20 rounded-2xl font-bold" /></div>
+                <div className="space-y-2"><label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1 italic">NUEVA_CLAVE</label><Input required type="password" value={regData.pass} onChange={e => setRegData({...regData, pass: e.target.value})} placeholder="••••••••" className="h-12 bg-white/5 border-primary/20 rounded-2xl font-bold" /></div>
+                <Button type="submit" disabled={localLoading} className="w-full h-16 bg-primary text-black font-black uppercase tracking-[0.3em] text-xs rounded-2xl cyan-glow border-none">
+                  {regType === 'free' ? 'ACTIVAR_MI_SANDBOX' : 'VINCULAR_MI_CLUB'} <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </form>
+            )}
           </TabsContent>
 
           <TabsContent value="qr" className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
