@@ -19,7 +19,8 @@ import {
   CheckCircle2,
   RefreshCw,
   Zap,
-  Trash2
+  Trash2,
+  IdCard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -58,8 +59,12 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import Image from "next/image";
 
 const MOCK_REQUESTS = [
+  // NODO RECUPERADO (Legacy)
+  { id: "u-tp", name: "COACH", surname: "TRES PIEDRAS", email: "admin@trespiedras.fc", country: "España", status: "Approved", lastSeen: "Online", role: "promo_coach", clubId: "SND-MFGBFN" },
+  
   { id: "u1", name: "MARC", surname: "GARCÍA", email: "m.garcia@elite.com", country: "España", status: "Approved", lastSeen: "2m ago", role: "club_admin" },
   { id: "u2", name: "ELENA", surname: "ROSSI", email: "e.rossi@milan-training.it", country: "Italia", status: "Approved", lastSeen: "5h ago", role: "academy_director" },
   { id: "u3", name: "JOHN", surname: "SMITH", email: "j.smith@us-soccer.org", country: "USA", status: "Denied", lastSeen: "1d ago", role: "coach" },
@@ -70,6 +75,7 @@ const AVAILABLE_ROLES = [
   { value: "superadmin", label: "Superadmin" },
   { value: "club_admin", label: "Administrador de Club" },
   { value: "academy_director", label: "Director de Cantera" },
+  { value: "methodology_director", label: "Director Metodología" },
   { value: "coach", label: "Entrenador Pro" },
   { value: "promo_coach", label: "Entrenador Promo" },
   { value: "tutor", label: "Tutor / Familia" },
@@ -211,6 +217,7 @@ export default function GlobalUsersPage() {
 
   const filteredUsers = users.filter(u => 
     u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.surname.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.country?.toLowerCase().includes(searchTerm.toLowerCase())
   );
