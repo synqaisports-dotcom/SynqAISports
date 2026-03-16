@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v9.37.0 (Edición Estratégica)
+# SynqSports Pro - ARCHITECTURE_LEDGER v9.38.0 (Edición Estratégica)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro. Es el ADN del proyecto y debe preservarse íntegramente en cada iteración.
 
@@ -92,10 +92,11 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 - **v9.30.0**: **PROTOCOL_SANDBOX_TERMINAL**: Implementación de la sección "MI SANDBOX" (Tareas y Agenda) para usuarios Promo, segregando la operativa personal de la institucional.
 - **v9.31.0**: **VISIBILIDAD_UNIVERSAL_SANDBOX**: Reubicación de la sección Sandbox entre Metodología y Operativa Élite, habilitando el acceso para todos los roles (Superadmin/Pro) para propósitos de testeo y uso personal.
 - **v9.32.0**: **PROTOCOL_LOCAL_TEAM_CREATION**: Implementación de la terminal "Mi Equipo" en el Sandbox, con soporte para F11, F7 y Futsal, y campo oculto de deporte para futura expansión.
-- **v9.33.0**: **PROTOCOL_ENVIRONMENT_MIRRORING**: El Smartwatch detecta automáticamente si opera en un entorno de Club (Cloud) o Sandbox (Local), sincronizando el roster de jugadores correspondiente.
+- **v9.33.0**: **PROTOCOL_ENVIRONMENT_MIRRORING**: El Smartwatch detecta automáticamente si opera en un entorno de Club (Cloud) or Sandbox (Local), sincronizando el roster de jugadores correspondiente.
 - **v9.34.0**: **PROTOCOL_SANDBOX_THEME_ELECTRIC**: Implementación del tema Azul Marino Eléctrico para la sección Sandbox, diferenciándola cromáticamente de la operativa institucional.
 - **v9.35.0**: **PROTOCOL_LOCAL_MATCH_TRACKING**: Implementación de la terminal "Mis Partidos" en el Sandbox (Max 20 slots) y funcionalidad de guardado local de resultados desde la Pizarra de Partido.
 
-## 11. Control de Superficie y Roster (v9.36.0 - v9.37.0)
+## 11. Control de Superficie y Roster (v9.36.0 - v9.38.0)
 - **v9.36.0**: **PROTOCOL_FIELD_SELECTOR_LOGIC**: Implementación del selector de superficie (F11, F7, Futsal) condicional en la Pizarra de Partido. El selector solo es visible en modo Pro (Club), permitiendo ajustes manuales. En modo Promo, el campo queda bloqueado y sincronizado automáticamente con la configuración del Sandbox.
 - **v9.37.0**: **PROTOCOL_SANDBOX_ANALYTICS**: Implementación de la terminal de estadísticas locales para el Sandbox, procesando victorias, derrotas y balance de goles del almacenamiento local.
+- **v9.38.0**: **PROTOCOL_ANALYTIC_EXPORT**: Implementación de botón de exportación PDF en la terminal de estadísticas del Sandbox para facilitar el reporte de rendimiento local.
