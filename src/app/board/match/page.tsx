@@ -702,23 +702,42 @@ export default function MatchBoardPage() {
           </button>
 
           {showTeamSelector && (
-            <div className="hidden sm:block">
-              <Select value={selectedTeamId} onValueChange={handleTeamChange}>
-                <SelectTrigger className="w-[140px] lg:w-[180px] h-9 lg:h-10 bg-primary/5 border-primary/30 rounded-xl text-[8px] lg:text-[9px] font-black uppercase tracking-widest text-primary hover:bg-primary/10 transition-all">
-                  <div className="flex items-center gap-2">
-                    <Users className="h-3 w-3 lg:h-3.5 lg:w-3.5" />
-                    <SelectValue placeholder="Mis Equipos" />
-                  </div>
-                </SelectTrigger>
-                <SelectContent className="bg-[#0a0f18] border-primary/20">
-                  {MOCK_TEAMS.map(team => (
-                    <SelectItem key={team.id} value={team.id} className="text-[9px] font-black uppercase">
-                      {team.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <>
+              <div className="hidden sm:block">
+                <Select value={selectedTeamId} onValueChange={handleTeamChange}>
+                  <SelectTrigger className="w-[140px] lg:w-[180px] h-9 lg:h-10 bg-primary/5 border-primary/30 rounded-xl text-[8px] lg:text-[9px] font-black uppercase tracking-widest text-primary hover:bg-primary/10 transition-all">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-3 w-3 lg:h-3.5 lg:w-3.5" />
+                      <SelectValue placeholder="Mis Equipos" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#0a0f18] border-primary/20">
+                    {MOCK_TEAMS.map(team => (
+                      <SelectItem key={team.id} value={team.id} className="text-[9px] font-black uppercase">
+                        {team.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* PROTOCOLO_SINCRO_CAMPO v9.36.0: Selector de superficie solo para modo Pro */}
+              <div className="hidden md:block">
+                <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}>
+                  <SelectTrigger className="w-[130px] lg:w-[150px] h-9 lg:h-10 bg-primary/5 border-primary/30 rounded-xl text-[8px] lg:text-[9px] font-black uppercase text-primary hover:bg-primary/10 transition-all">
+                    <div className="flex items-center gap-2">
+                      <LayoutGrid className="h-3 w-3 lg:h-3.5 lg:w-3.5" />
+                      <SelectValue />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#0a0f18] border-primary/20">
+                    <SelectItem value="f11" className="text-[9px] font-black uppercase">Fútbol 11</SelectItem>
+                    <SelectItem value="f7" className="text-[9px] font-black uppercase">Fútbol 7</SelectItem>
+                    <SelectItem value="futsal" className="text-[9px] font-black uppercase">Fútbol Sala</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
           )}
         </div>
 
@@ -844,7 +863,7 @@ export default function MatchBoardPage() {
                     <p className="text-sm font-black text-white uppercase italic">{watchAlert}</p>
                   </div>
                   <div className="flex gap-2">
-                    <Button onClick={() => setWatchAlert(null)} variant="ghost" className="h-10 w-10 p-0 text-white/20 hover:text-rose-500 rounded-xl">
+                    <Button onClick={() => setX(null)} variant="ghost" className="h-10 w-10 p-0 text-white/20 hover:text-rose-500 rounded-xl">
                       <X className="h-5 w-5" />
                     </Button>
                     <Button onClick={() => { setWatchAlert(null); toast({ title: "SINCRO_ACTIVA", description: "Cambio procesado desde el centro de mando." }); }} className="h-10 bg-primary text-black font-black uppercase text-[10px] rounded-xl px-4">
