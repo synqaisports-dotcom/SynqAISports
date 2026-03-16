@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-export type UserRole = "superadmin" | "club_admin" | "coach" | "tutor" | "athlete";
+export type UserRole = "superadmin" | "club_admin" | "coach" | "promo_coach" | "tutor" | "athlete";
 
 interface UserProfile {
   email: string;
@@ -83,7 +83,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const newProfile: UserProfile = {
       email,
       name,
-      role: plan === 'free' ? "coach" : "club_admin",
+      role: plan === 'free' ? "promo_coach" : "club_admin",
       clubId: null,
       plan,
       country: "ES",
@@ -101,9 +101,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Simulación de login en prototipo
     const guestUser = { uid: "u-simulated", email };
     const guestProfile: UserProfile = {
-      email,
+      email: "u-simulated@synqai.com",
       name: "Usuario Sincronizado",
-      role: "coach",
+      role: "promo_coach",
       clubId: "club-simulated",
       plan: "free",
       country: "ES",

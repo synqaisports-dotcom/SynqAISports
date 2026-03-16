@@ -58,7 +58,7 @@ export default function OnboardingTunnel() {
   const [success, setSuccess] = useState(false);
 
   const isFromPromo = !!profile?.claimedToken;
-  const isSandbox = profile?.plan === 'free';
+  const isSandbox = profile?.plan === 'free' || profile?.role === 'promo_coach';
 
   useEffect(() => {
     if (profile?.country) {

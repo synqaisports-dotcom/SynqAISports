@@ -61,14 +61,15 @@ const MOCK_REQUESTS = [
   { id: "u1", name: "Marc", surname: "García", email: "m.garcia@elite.com", country: "España", status: "Pending", lastSeen: "2m ago", role: "club_admin" },
   { id: "u2", name: "Elena", surname: "Rossi", email: "e.rossi@milan-training.it", country: "Italia", status: "Approved", lastSeen: "5h ago", role: "academy_director" },
   { id: "u3", name: "John", surname: "Smith", email: "j.smith@us-soccer.org", country: "USA", status: "Denied", lastSeen: "1d ago", role: "coach" },
-  { id: "u4", name: "Lucas", surname: "Silva", email: "l.silva@brasil-academy.br", country: "Brasil", status: "Pending", lastSeen: "Just now", role: "club_admin" },
+  { id: "u4", name: "Lucas", surname: "Silva", email: "l.silva@brasil-academy.br", country: "Brasil", status: "Pending", lastSeen: "Just now", role: "promo_coach" },
 ];
 
 const AVAILABLE_ROLES = [
   { value: "superadmin", label: "Superadmin" },
   { value: "club_admin", label: "Administrador de Club" },
   { value: "academy_director", label: "Director de Cantera" },
-  { value: "coach", label: "Entrenador" },
+  { value: "coach", label: "Entrenador Pro" },
+  { value: "promo_coach", label: "Entrenador Promo" },
   { value: "tutor", label: "Tutor / Familia" },
 ];
 
@@ -386,7 +387,10 @@ export default function GlobalUsersPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="rounded-2xl border-emerald-500/20 text-emerald-400 font-black text-[9px] uppercase tracking-widest bg-emerald-500/5 px-3">
+                    <Badge variant="outline" className={cn(
+                      "rounded-2xl border-emerald-500/20 text-emerald-400 font-black text-[9px] uppercase tracking-widest px-3",
+                      user.role === 'promo_coach' ? 'bg-blue-500/5 border-blue-500/20 text-blue-400' : 'bg-emerald-500/5'
+                    )}>
                       {AVAILABLE_ROLES.find(r => r.value === user.role)?.label || user.role}
                     </Badge>
                   </TableCell>
@@ -438,7 +442,7 @@ export default function GlobalUsersPage() {
                       <Button 
                         variant="ghost" 
                         size="icon" 
-                        className="h-8 w-8 rounded-xl border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10 active:scale-90 transition-all"
+                        className="h-8 w-8 rounded-xl border border-emerald-500 text-emerald-400 hover:bg-emerald-500/10 active:scale-90 transition-all"
                         onClick={() => handleEdit(user)}
                         title="Modificar Credencial"
                       >

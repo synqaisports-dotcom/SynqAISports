@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
@@ -55,7 +54,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     if (!loading && profile) {
-      if ((profile.role === "club_admin" || profile.role === "coach") && 
+      if ((profile.role === "club_admin" || profile.role === "coach" || profile.role === "promo_coach") && 
           !profile.clubCreated && 
           pathname !== "/dashboard/coach/onboarding") {
         router.push("/dashboard/coach/onboarding");
