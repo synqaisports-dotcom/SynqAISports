@@ -74,6 +74,7 @@ const navItems: NavItem[] = [
   { title: "Almacén Neural", href: "/admin-global/exercises", icon: Database, category: "global" },
   
   // MI_SANDBOX (PROMO MODE) - WHITE/PRIMARY THEME
+  { title: "Mi Equipo Local", href: "/dashboard/promo/team", icon: Users, category: "sandbox" },
   { title: "Mis Tareas (4-12-4)", href: "/dashboard/promo/tasks", icon: LayoutGrid, category: "sandbox" },
   { title: "Mi Agenda Promo", href: "/dashboard/promo/sessions", icon: Calendar, category: "sandbox" },
   { title: "Pizarra Promo", href: "/board/promo", icon: Zap, category: "sandbox" },
