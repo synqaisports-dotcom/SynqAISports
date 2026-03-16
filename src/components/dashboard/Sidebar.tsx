@@ -38,7 +38,8 @@ import {
   Database,
   Smartphone,
   LayoutGrid,
-  Calendar
+  Calendar,
+  Swords
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
@@ -77,6 +78,7 @@ const navItems: NavItem[] = [
   { title: "Mi Equipo Local", href: "/dashboard/promo/team", icon: Users, category: "sandbox" },
   { title: "Mis Tareas (4-12-4)", href: "/dashboard/promo/tasks", icon: LayoutGrid, category: "sandbox" },
   { title: "Mi Agenda Promo", href: "/dashboard/promo/sessions", icon: Calendar, category: "sandbox" },
+  { title: "Mis Partidos (Max 20)", href: "/dashboard/promo/matches", icon: Swords, category: "sandbox" },
   { title: "Pizarra Promo", href: "/board/promo", icon: Zap, category: "sandbox" },
   { title: "Pizarra Partido", href: "/board/match", icon: Trophy, category: "sandbox" },
 
@@ -257,7 +259,7 @@ export function DashboardSidebar() {
         "p-6 border-t transition-all duration-700",
         isCollapsed 
           ? "bg-transparent border-primary/20 p-2" 
-          : "bg-black/60 backdrop-blur-md border-white/5"
+          : "bg-[#04070c] border-r border-white/5 shadow-[4px_0_24px_rgba(0,0,0,0.5)]"
       )}>
         <button 
           onClick={handleLogout}

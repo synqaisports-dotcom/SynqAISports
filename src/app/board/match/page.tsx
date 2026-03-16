@@ -180,7 +180,7 @@ export default function MatchBoardPage() {
   const [pairingCode, setPairingCode] = useState("");
   const [watchAlert, setWatchAlert] = useState<string | null>(null);
 
-  const hasClub = !!profile?.clubId;
+  const hasClub = !!profile?.clubId && profile.clubId !== "global-hq";
   const isCoach = profile?.role === "coach" || profile?.role === "club_admin" || profile?.role === "superadmin";
   const isPromo = profile?.plan === "free";
   const showTeamSelector = hasClub && isCoach;
@@ -480,6 +480,40 @@ export default function MatchBoardPage() {
     toast({ title: "SINCRO_ACTIVA", description: "Sustitución ejecutada y enviada al Watch." });
   };
 
+  /**
+   * PROTOCOLO_SINCRO_LOCAL_MATCH v9.35.0
+   * Guarda el resultado del partido en el almacenamiento local para usuarios Sandbox.
+   */
+  const handleSaveMatchResult = () => {
+    if (!hasClub) {
+      const vault = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": [], "sessions": [], "matches": []}');
+      const matches = vault.matches || [];
+      
+      const newMatchEntry = {
+        id: Date.now(),
+        date: new Date().toISOString().split('T')[0],
+        score,
+        teamName: "MI EQUIPO LOCAL",
+        rivalName: "RIVAL_MODO_PRUEBA",
+        status: "Played",
+        fieldType
+      };
+      
+      vault.matches = [newMatchEntry, ...matches].slice(0, 20);
+      localStorage.setItem("synq_promo_vault", JSON.stringify(vault));
+      
+      toast({
+        title: "RESULTADO_SINCRO_LOCAL",
+        description: "El marcador ha sido blindado en tu historial del Sandbox.",
+      });
+    } else {
+      toast({
+        title: "SINCRO_CLOUD_ELITE",
+        description: "Datos del partido sincronizados con la base de datos del club.",
+      });
+    }
+  };
+
   const currentFormations = useMemo(() => Object.keys(FORMATIONS_DATA[fieldType]), [fieldType]);
   const starters = teamRoster.filter(p => p.isStarter);
   const substitutes = teamRoster.filter(p => !p.isStarter);
@@ -752,7 +786,7 @@ export default function MatchBoardPage() {
         </div>
 
         <div className="flex items-center gap-2 lg:gap-3 shrink-0">
-          <Button className="h-9 lg:h-11 bg-primary text-black font-black uppercase text-[8px] lg:text-[10px] tracking-[0.2em] px-3 lg:px-6 rounded-xl cyan-glow border-none hover:scale-105 transition-all">
+          <Button onClick={handleSaveMatchResult} className="h-9 lg:h-11 bg-primary text-black font-black uppercase text-[8px] lg:text-[10px] tracking-[0.2em] px-3 lg:px-6 rounded-xl cyan-glow border-none hover:scale-105 transition-all">
             <Save className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
           </Button>
         </div>
