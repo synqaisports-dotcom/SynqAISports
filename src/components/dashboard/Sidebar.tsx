@@ -42,7 +42,8 @@ import {
   Calendar,
   Swords,
   Globe,
-  ChevronDown
+  ChevronDown,
+  MessageSquareQuote
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
@@ -92,6 +93,7 @@ const navItems: NavItem[] = [
   { title: "Estadísticas Local", href: "/dashboard/promo/stats", icon: BarChart3, category: "sandbox" },
   { title: "Pizarra Promo", href: "/board/promo", icon: Zap, category: "sandbox" },
   { title: "Pizarra Partido", href: "/board/match", icon: Trophy, category: "sandbox" },
+  { title: "Mejorar y Alianzas", href: "/dashboard/promo/collaboration", icon: MessageSquareQuote, category: "sandbox" },
 
   // ESTRATEGIA_METODOLÓGICA - AMBER THEME
   { title: "Items Aprendizaje", href: "/dashboard/methodology/learning-items", icon: BookOpen, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director"] },
@@ -273,7 +275,6 @@ export function DashboardSidebar() {
           ? "bg-transparent border-primary/20 p-2" 
           : "bg-[#04070c] border-r border-white/5 shadow-[4px_0_24px_rgba(0,0,0,0.5)]"
       )}>
-        {/* SELECTOR DE IDIOMA GLOBAL (v10.1.0) */}
         {!isCollapsed && (
           <div className="px-4 py-2 border-b border-white/5 pb-4 mb-2">
             <DropdownMenu>
