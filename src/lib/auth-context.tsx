@@ -78,7 +78,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const register = async (email: string, pass: string, name: string, clubName: string, plan: 'free' | 'enterprise_scale' = 'free') => {
-    // Simulación de registro en prototipo
     const newUser = { uid: `u-${Date.now()}`, email };
     const newProfile: UserProfile = {
       email,
@@ -98,10 +97,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const login = async (email: string, pass: string) => {
-    // Simulación de login en prototipo
     const guestUser = { uid: "u-simulated", email };
     const guestProfile: UserProfile = {
-      email: "u-simulated@synqai.com",
+      email: email,
       name: "Usuario Sincronizado",
       role: "promo_coach",
       clubId: "club-simulated",
@@ -149,6 +147,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setProfile(updatedProfile);
       localStorage.setItem("synq_profile", JSON.stringify(updatedProfile));
       
+      // Sincronización Global de Clubes
       const existingClubs = JSON.parse(localStorage.getItem("synq_global_clubs") || "[]");
       const newClubEntry = {
         id: clubData.id,
@@ -160,6 +159,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         sport: clubData.sport
       };
       localStorage.setItem("synq_global_clubs", JSON.stringify([...existingClubs, newClubEntry]));
+
+      // Sincronización Global de Usuarios (Auditoría Superadmin)
+      const existingGlobalUsers = JSON.parse(localStorage.getItem("synq_global_users") || "[]");
+      const newUserEntry = {
+        id: `u-${Date.now()}`,
+        name: profile.name,
+        email: profile.email,
+        role: profile.role,
+        country: clubData.country,
+        status: "Approved",
+        clubId: clubData.id
+      };
+      localStorage.setItem("synq_global_users", JSON.stringify([...existingGlobalUsers, newUserEntry]));
     }
   };
 
