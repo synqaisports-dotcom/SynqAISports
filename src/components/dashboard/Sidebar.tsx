@@ -137,8 +137,8 @@ export function DashboardSidebar() {
       return ["sandbox", "user", "operational"].includes(item.category) && 
              !["club", "staff", "academy", "instalaciones", "admin"].some(slug => item.href.includes(slug));
     } else {
-      // Un usuario PRO no ve la sección Sandbox (ya tiene la oficial)
-      return item.category !== "sandbox";
+      // Un usuario PRO o Superadmin puede ver todo incluyendo el Sandbox para testeo/personal
+      return true;
     }
   });
 
@@ -201,7 +201,7 @@ export function DashboardSidebar() {
         "px-3 py-8 space-y-10 custom-scrollbar overflow-x-hidden transition-all duration-700",
         isCollapsed && "py-4 space-y-6"
       )}>
-        {/* GLOBAL CONTROL - ONLY FOR SUPERADMIN */}
+        {/* 1. CONTROL_GLOBAL - ONLY FOR SUPERADMIN */}
         {isSuperAdmin && (
           <SidebarGroupWrapper title="Control_Global" color="text-emerald-400" isCollapsed={isCollapsed}>
             <SidebarMenu>
@@ -214,20 +214,7 @@ export function DashboardSidebar() {
           </SidebarGroupWrapper>
         )}
 
-        {/* MI_SANDBOX (PROMO MODE) */}
-        {isFree && (
-          <SidebarGroupWrapper title="Mi_Sandbox" color="text-primary" isCollapsed={isCollapsed}>
-            <SidebarMenu>
-              {filteredItems.filter(i => i.category === "sandbox").map((item) => (
-                <SidebarMenuItem key={item.href}>
-                  <SidebarLink item={item} isActive={pathname === item.href} />
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupWrapper>
-        )}
-
-        {/* STRATEGIC METHODOLOGY - AMBER THEME (PRO ONLY) */}
+        {/* 2. STRATEGIC METHODOLOGY - AMBER THEME (PRO ONLY) */}
         {!isFree && (
           <SidebarGroupWrapper title="Estrategia_Metodológica" color="text-amber-500" isCollapsed={isCollapsed}>
             <SidebarMenu>
@@ -240,7 +227,18 @@ export function DashboardSidebar() {
           </SidebarGroupWrapper>
         )}
 
-        {/* OPERATIONAL ELITE */}
+        {/* 3. MI_SANDBOX (PROMO MODE / PERSONAL) - NOW PLACED BETWEEN METHODOLOGY AND OPERATIONAL */}
+        <SidebarGroupWrapper title="Mi_Sandbox" color="text-white/20" isCollapsed={isCollapsed}>
+          <SidebarMenu>
+            {filteredItems.filter(i => i.category === "sandbox").map((item) => (
+              <SidebarMenuItem key={item.href}>
+                <SidebarLink item={item} isActive={pathname === item.href} />
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarGroupWrapper>
+
+        {/* 4. OPERATIONAL ELITE */}
         <SidebarGroupWrapper title={isFree ? "Terminal_Juego" : "Operativa_Elite"} color="text-primary" isCollapsed={isCollapsed}>
           <SidebarMenu>
             {filteredItems.filter(i => i.category === "operational").map((item) => (
@@ -251,8 +249,8 @@ export function DashboardSidebar() {
           </SidebarMenu>
         </SidebarGroupWrapper>
 
-        {/* USER TERMINALS */}
-        <SidebarGroupWrapper title="Terminales_Acceso" color="text-white/20" isCollapsed={isCollapsed}>
+        {/* 5. USER TERMINALS */}
+        <SidebarGroupWrapper title="Terminales_Acceso" color="text-white/10" isCollapsed={isCollapsed}>
           <SidebarMenu>
             {filteredItems.filter(i => i.category === "user").map((item) => (
               <SidebarMenuItem key={item.href}>
