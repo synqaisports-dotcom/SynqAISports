@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v9.26.0 (Edición Estratégica)
+# SynqSports Pro - ARCHITECTURE_LEDGER v9.29.0 (Edición Estratégica)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro. Es el ADN del proyecto y debe preservarse íntegramente en cada iteración.
 
@@ -86,3 +86,6 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 - **v9.24.0**: **PROTOCOL_PAIRING_TOKEN**: Implementación del flujo de vinculación por código de 6 dígitos para el Smartwatch.
 - **v9.25.0**: **PROTOCOL_WATCH_RESTORE_CONFIG**: Implementación de restauración de cronómetro y configuración de intervalos de cambio en el reloj.
 - **v9.26.0**: **PROTOCOL_WATCH_SCORE_CORRECTION**: Implementación de funciones de corrección y reseteo de marcador en el reloj.
+
+## 10. Refinamiento Operativo y Publicitario (v9.29.0)
+- **v9.29.0**: **REFINAMIENTO_VISIBILIDAD_PROMO**: Ajuste de posición del banner publicitario horizontal (`top-6`) para evitar la obstrucción del campo táctico y mejorar la experiencia de diseño del usuario.

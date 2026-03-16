@@ -495,8 +495,8 @@ export default function PromoBoardPage() {
             <div className="pointer-events-auto"><BoardToolbar theme="cyan" variant="training" orientation="horizontal" activeTool={activeTool} onToolSelect={(t) => { if(t === 'select') { setActiveTool('select'); setSelectedIds([]); } else addElementAtCenter(t); }} onClear={() => { setElements([]); setSelectedIds([]); }} className="border-2 shadow-2xl" /></div>
           </div>
 
-          {/* PUBLICIDAD_HORIZONTAL_BANNER */}
-          <div className="absolute top-24 left-1/2 -translate-x-1/2 w-full max-w-2xl h-16 bg-black/60 backdrop-blur-md border border-white/5 rounded-2xl flex items-center justify-center gap-4 z-40 hidden sm:flex">
+          {/* PUBLICIDAD_HORIZONTAL_BANNER (Ajustado v9.29.0 para no obstruir el ejercicio) */}
+          <div className="absolute top-6 left-1/2 -translate-x-1/2 w-full max-w-2xl h-16 bg-black/60 backdrop-blur-md border border-white/5 rounded-2xl flex items-center justify-center gap-4 z-40 hidden sm:flex">
              <Megaphone className="h-4 w-4 text-white/10" />
              <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.5em]">Google_Ad_Slot_Leaderboard_728x90</span>
           </div>
@@ -514,18 +514,18 @@ export default function PromoBoardPage() {
             <SheetDescription className="text-[10px] uppercase font-bold text-primary/40 tracking-widest text-left italic">Asigne el ejercicio a un bloque metodológico local.</SheetDescription>
           </SheetHeader>
           <div className="space-y-6">
-             <Button onClick={() => handleSaveLocal('warmup')} variant="outline" className="w-full h-20 bg-primary/5 border-primary/20 rounded-2xl flex flex-col items-center justify-center gap-1 group hover:bg-primary hover:text-black">
+             <button onClick={() => handleSaveLocal('warmup')} className="w-full h-20 bg-primary/5 border border-primary/20 rounded-2xl flex flex-col items-center justify-center gap-1 group hover:bg-primary hover:text-black transition-all">
                 <span className="text-[11px] font-black uppercase tracking-widest italic">CALENTAMIENTO</span>
                 <span className="text-[8px] font-bold opacity-40 group-hover:opacity-100 uppercase">{promoStats.warmup}/{MAX_WARMUP} DISPONIBLES</span>
-             </Button>
-             <Button onClick={() => handleSaveLocal('main')} variant="outline" className="w-full h-20 bg-primary/5 border-primary/20 rounded-2xl flex flex-col items-center justify-center gap-1 group hover:bg-primary hover:text-black">
+             </button>
+             <button onClick={() => handleSaveLocal('main')} className="w-full h-20 bg-primary/5 border border-primary/20 rounded-2xl flex flex-col items-center justify-center gap-1 group hover:bg-primary hover:text-black transition-all">
                 <span className="text-[11px] font-black uppercase tracking-widest italic">PARTE PRINCIPAL</span>
                 <span className="text-[8px] font-bold opacity-40 group-hover:opacity-100 uppercase">{promoStats.main}/{MAX_MAIN} DISPONIBLES</span>
-             </Button>
-             <Button onClick={() => handleSaveLocal('cooldown')} variant="outline" className="w-full h-20 bg-primary/5 border-primary/20 rounded-2xl flex flex-col items-center justify-center gap-1 group hover:bg-primary hover:text-black">
+             </button>
+             <button onClick={() => handleSaveLocal('cooldown')} className="w-full h-20 bg-primary/5 border border-primary/20 rounded-2xl flex flex-col items-center justify-center gap-1 group hover:bg-primary hover:text-black transition-all">
                 <span className="text-[11px] font-black uppercase tracking-widest italic">VUELTA A LA CALMA</span>
                 <span className="text-[8px] font-bold opacity-40 group-hover:opacity-100 uppercase">{promoStats.cooldown}/{MAX_COOLDOWN} DISPONIBLES</span>
-             </Button>
+             </button>
           </div>
           <div className="mt-12 p-6 bg-primary/5 border border-primary/30 rounded-3xl space-y-4">
              <div className="flex items-center gap-3"><Info className="h-4 w-4 text-primary" /><span className="text-[10px] font-black uppercase text-primary">Ventajas de la Red Pro</span></div>
