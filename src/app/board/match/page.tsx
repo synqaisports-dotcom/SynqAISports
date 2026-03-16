@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo, useRef, memo, useCallback } from "react";
@@ -39,6 +38,7 @@ import { BoardToolbar } from "@/components/board/BoardToolbar";
 import { PlayerChip } from "@/components/board/PlayerChip";
 import { FORMATIONS_DATA } from "@/lib/formations";
 import { useAuth } from "@/lib/auth-context";
+import Link from "next/link";
 import { 
   Select, 
   SelectContent, 
