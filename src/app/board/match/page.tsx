@@ -30,7 +30,8 @@ import {
   UserPlus,
   Unplug,
   Database,
-  Cloud
+  Cloud,
+  MoveHorizontal
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -69,15 +70,6 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-
-const TIME_PRESETS = [
-  { label: "15 min", value: 15 },
-  { label: "20 min", value: 20 },
-  { label: "25 min", value: 25 },
-  { label: "30 min", value: 30 },
-  { label: "35 min", value: 35 },
-  { label: "45 min", value: 45 },
-];
 
 const POSITION_COLORS: Record<string, string> = {
   "POR": "text-blue-400 border-blue-500/20 bg-blue-500/10",
@@ -161,17 +153,11 @@ export default function MatchBoardPage() {
   const [guestFormation, setGuestFormation] = useState("4-3-3");
   const [players, setPlayers] = useState<PlayerPos[]>([]);
   const [draggingId, setDraggingId] = useState<string | null>(null);
-  const [pendingOutNum, setPendingOutNum] = useState<number | null>(null);
   const [isPaintMode, setIsPaintMode] = useState(false);
   const [currentColor, setCurrentColor] = useState("#00f2ff");
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const isDrawing = useRef(false);
-  const lastPoint = useRef<{ x: number; y: number } | null>(null);
   const fieldRef = useRef<HTMLDivElement>(null);
-  const [watchConnected, setWatchConnected] = useState(false);
   const [isPairingModalOpen, setIsPairingModalOpen] = useState(false);
-  const [pairingCode, setPairingCode] = useState("");
-  const [watchAlert, setWatchAlert] = useState<string | null>(null);
 
   const isPromo = profile?.plan === "free" || profile?.role === "promo_coach";
 
@@ -201,9 +187,7 @@ export default function MatchBoardPage() {
       interval = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 0) { setIsRunning(false); return 0; }
-          const next = prev - 1;
-          if (next === 25 * 60) setWatchAlert("CAMBIO_SUGERIDO: Jugador #10 (Fatiga)");
-          return next;
+          return prev - 1;
         });
       }, 1000);
     }
@@ -219,20 +203,33 @@ export default function MatchBoardPage() {
     const formationsForField = FORMATIONS_DATA[fieldType];
     const baseCoords = formationsForField[formation] || formationsForField[Object.keys(formationsForField)[0]];
     const starters = currentRoster.filter(p => p.isStarter);
+    
     return baseCoords.map((pos, idx) => {
       let finalX, finalY;
       const isGK = pos.x < 0.1; const isDEF = pos.x >= 0.1 && pos.x < 0.4; const isMID = pos.x >= 0.4 && pos.x < 0.7; const isATK = pos.x >= 0.7;
       let phaseShift = 0; let yShift = 0;
+      
       if (!isGK) {
         if (lateral === "left") yShift = -0.15; else if (lateral === "right") yShift = 0.15;
+        
         if (phase === "defensa") { if (isDEF) phaseShift = -0.12; else if (isMID) phaseShift = -0.22; else if (isATK) phaseShift = -0.35; }
         else if (phase === "tda") { if (isDEF) phaseShift = 0.05; else if (isMID) phaseShift = 0.08; else if (isATK) phaseShift = 0.12; }
         else if (phase === "ataque") { if (isDEF) phaseShift = 0.15; else if (isMID) phaseShift = 0.20; else if (isATK) phaseShift = 0.28; }
         else if (phase === "tad") { if (isDEF) phaseShift = -0.05; else if (isMID) phaseShift = -0.08; else if (isATK) phaseShift = -0.12; }
         else if (phase === "salida") { if (isDEF) { phaseShift = -0.10; yShift = idx % 2 === 0 ? -0.2 : 0.2; } }
       }
-      if (team === "local") { finalX = (0.05 + (pos.x * 0.9) + phaseShift) * 100; finalY = (pos.y + yShift) * 100; if (isGK) { finalX = 5; finalY = 50; } }
-      else { finalX = (0.95 - (pos.x * 0.9) - phaseShift) * 100; finalY = ((1 - pos.y) - yShift) * 100; if (isGK) { finalX = 95; finalY = 50; } }
+      
+      if (team === "local") { 
+        finalX = (0.05 + (pos.x * 0.9) + phaseShift) * 100; 
+        finalY = (pos.y + yShift) * 100; 
+        if (isGK) { finalX = 5; finalY = 50; } 
+      }
+      else { 
+        finalX = (0.95 - (pos.x * 0.9) - phaseShift) * 100; 
+        finalY = ((1 - pos.y) - yShift) * 100; 
+        if (isGK) { finalX = 95; finalY = 50; } 
+      }
+      
       const playerInfo = team === "local" ? starters[idx] : null;
       return { id: `${team}-${idx}`, number: playerInfo?.number || (idx + 1), name: playerInfo?.name || "", team, x: Math.max(2, Math.min(98, finalX)), y: Math.max(5, Math.min(95, finalY)) };
     });
@@ -259,6 +256,8 @@ export default function MatchBoardPage() {
     setPlayers(prev => prev.map(p => p.id === draggingId ? { ...p, x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) } : p));
   };
   const handlePointerUp = (e: React.PointerEvent) => { if (draggingId) { (e.target as HTMLElement).releasePointerCapture(e.pointerId); setDraggingId(null); } };
+
+  const formations = useMemo(() => Object.keys(FORMATIONS_DATA[fieldType]), [fieldType]);
 
   return (
     <div className="flex-1 flex flex-col bg-black overflow-hidden font-body relative touch-none" onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}>
@@ -301,26 +300,72 @@ export default function MatchBoardPage() {
         </div>
       </header>
 
-      {/* FLOATING_PHASE_CONTROLS_LEFT */}
-      <div className="fixed top-24 left-10 z-[100] flex flex-col gap-3 pointer-events-none">
-        <div className="pointer-events-auto glass-panel p-2 border-primary/30 flex flex-col gap-2 rounded-2xl animate-in slide-in-from-left-4">
-          <span className="text-[8px] font-black text-primary uppercase text-center">LOCAL_PHASE</span>
+      {/* FLOATING_CONTROL_ISLAND_LEFT (Local) */}
+      <div className="fixed top-24 left-10 z-[100] flex flex-col gap-4 pointer-events-none">
+        <div className="pointer-events-auto glass-panel p-4 border-primary/30 flex flex-col gap-4 rounded-[2rem] animate-in slide-in-from-left-4">
+          <div className="space-y-3">
+            <span className="text-[8px] font-black text-primary uppercase tracking-widest block text-center">LOCAL_SQUAD</span>
+            <Select value={homeFormation} onValueChange={setHomeFormation}>
+              <SelectTrigger className="h-10 bg-black/40 border-primary/20 text-primary font-black uppercase text-[9px] rounded-xl w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-[#0a0f18] border-primary/20">
+                {formations.map(f => <SelectItem key={f} value={f} className="text-[10px] font-black">{f}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="grid grid-cols-1 gap-1">
+            <span className="text-[7px] font-black text-white/20 uppercase text-center mb-1">FASE TÁCTICA</span>
             {["defensa", "tda", "salida", "ataque", "tad"].map(p => (
               <button key={p} onClick={() => setHomePhase(p as TacticalPhase)} className={cn("px-3 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all", homePhase === p ? "bg-primary text-black" : "text-white/20 hover:bg-white/5")}>{p.toUpperCase()}</button>
             ))}
           </div>
+
+          <div className="pt-2 border-t border-white/5">
+            <span className="text-[7px] font-black text-white/20 uppercase text-center block mb-2">BASCULACIÓN</span>
+            <div className="flex gap-1 bg-black/40 p-1 rounded-xl">
+              {["left", "center", "right"].map(l => (
+                <button key={l} onClick={() => setHomeLateral(l as LateralShift)} className={cn("h-8 flex-1 rounded-lg flex items-center justify-center transition-all", homeLateral === l ? "bg-primary text-black" : "text-white/20")}>
+                  <MoveHorizontal className={cn("h-3.5 w-3.5", l === 'left' ? 'rotate-180' : l === 'center' ? 'scale-75' : '')} />
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* FLOATING_PHASE_CONTROLS_RIGHT */}
-      <div className="fixed top-24 right-10 z-[100] flex flex-col gap-3 pointer-events-none">
-        <div className="pointer-events-auto glass-panel p-2 border-rose-500/30 flex flex-col gap-2 rounded-2xl animate-in slide-in-from-right-4">
-          <span className="text-[8px] font-black text-rose-500 uppercase text-center">VISIT_PHASE</span>
+      {/* FLOATING_CONTROL_ISLAND_RIGHT (Visitor) */}
+      <div className="fixed top-24 right-10 z-[100] flex flex-col gap-4 pointer-events-none">
+        <div className="pointer-events-auto glass-panel p-4 border-rose-500/30 flex flex-col gap-4 rounded-[2rem] animate-in slide-in-from-right-4">
+          <div className="space-y-3">
+            <span className="text-[8px] font-black text-rose-500 uppercase tracking-widest block text-center">VISIT_SQUAD</span>
+            <Select value={guestFormation} onValueChange={setGuestFormation}>
+              <SelectTrigger className="h-10 bg-black/40 border-rose-500/20 text-rose-500 font-black uppercase text-[9px] rounded-xl w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-[#0a0f18] border-rose-500/20">
+                {formations.map(f => <SelectItem key={f} value={f} className="text-[10px] font-black">{f}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="grid grid-cols-1 gap-1">
+            <span className="text-[7px] font-black text-white/20 uppercase text-center mb-1">FASE TÁCTICA</span>
             {["defensa", "tda", "salida", "ataque", "tad"].map(p => (
               <button key={p} onClick={() => setGuestPhase(p as TacticalPhase)} className={cn("px-3 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all", guestPhase === p ? "bg-rose-500 text-white" : "text-white/20 hover:bg-white/5")}>{p.toUpperCase()}</button>
             ))}
+          </div>
+
+          <div className="pt-2 border-t border-white/5">
+            <span className="text-[7px] font-black text-white/20 uppercase text-center block mb-2">BASCULACIÓN</span>
+            <div className="flex gap-1 bg-black/40 p-1 rounded-xl">
+              {["left", "center", "right"].map(l => (
+                <button key={l} onClick={() => setGuestLateral(l as LateralShift)} className={cn("h-8 flex-1 rounded-lg flex items-center justify-center transition-all", guestLateral === l ? "bg-rose-500 text-white" : "text-white/20")}>
+                  <MoveHorizontal className={cn("h-3.5 w-3.5", l === 'left' ? 'rotate-180' : l === 'center' ? 'scale-75' : '')} />
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>

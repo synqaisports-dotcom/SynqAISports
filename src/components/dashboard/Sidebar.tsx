@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from "react";
@@ -130,7 +131,7 @@ const navItems: NavItem[] = [
 export function DashboardSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { toggleSidebar, state } = useSidebar();
+  const { toggleSidebar, state, setOpenMobile, isMobile } = useSidebar();
   const { profile, logout } = useAuth();
   const [currentLang, setCurrentLang] = useState(AVAILABLE_LOCALES[0]);
   
@@ -180,8 +181,8 @@ export function DashboardSidebar() {
           <div className="flex items-center gap-4">
             <div className={cn(
               "p-2.5 rounded-xl shrink-0 transition-all duration-700",
-              isSuperAdmin ? "bg-emerald-500 emerald-text-glow" : "bg-primary cyan-glow",
-              isCollapsed && "p-1.5 shadow-[0_0_15px_rgba(0,242,255,0.3)]"
+              isSuperAdmin ? "bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]" : "bg-primary shadow-[0_0_15px_rgba(0,242,255,0.3)]",
+              isCollapsed && "p-1.5"
             )}>
               <Zap className={cn("text-black animate-pulse", isCollapsed ? "h-4 w-4" : "h-6 w-6")} />
             </div>
@@ -215,7 +216,7 @@ export function DashboardSidebar() {
             <SidebarMenu>
               {filteredItems.filter(i => i.category === "global").map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarLink item={item} isActive={pathname === item.href} isGlobal />
+                  <SidebarLink item={item} isActive={pathname === item.href} isGlobal isMobile={isMobile} setOpenMobile={setOpenMobile} />
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -227,7 +228,7 @@ export function DashboardSidebar() {
             <SidebarMenu>
               {filteredItems.filter(i => i.category === "methodology").map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarLink item={item} isActive={pathname === item.href} isMethodology />
+                  <SidebarLink item={item} isActive={pathname === item.href} isMethodology isMobile={isMobile} setOpenMobile={setOpenMobile} />
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -239,7 +240,7 @@ export function DashboardSidebar() {
             <SidebarMenu>
               {filteredItems.filter(i => i.category === "sandbox").map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarLink item={item} isActive={pathname === item.href} isSandbox />
+                  <SidebarLink item={item} isActive={pathname === item.href} isSandbox isMobile={isMobile} setOpenMobile={setOpenMobile} />
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -250,7 +251,7 @@ export function DashboardSidebar() {
           <SidebarMenu>
             {filteredItems.filter(i => i.category === "operational").map((item) => (
               <SidebarMenuItem key={item.href}>
-                <SidebarLink item={item} isActive={pathname === item.href} />
+                <SidebarLink item={item} isActive={pathname === item.href} isMobile={isMobile} setOpenMobile={setOpenMobile} />
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
@@ -260,7 +261,7 @@ export function DashboardSidebar() {
           <SidebarMenu>
             {filteredItems.filter(i => i.category === "user").map((item) => (
               <SidebarMenuItem key={item.href}>
-                <SidebarLink item={item} isActive={pathname === item.href} />
+                <SidebarLink item={item} isActive={pathname === item.href} isMobile={isMobile} setOpenMobile={setOpenMobile} />
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
@@ -327,10 +328,23 @@ function SidebarGroupWrapper({ children, title, color, isCollapsed }: any) {
   );
 }
 
-function SidebarLink({ item, isActive, isGlobal, isMethodology, isSandbox }: { item: NavItem; isActive: boolean; isGlobal?: boolean; isMethodology?: boolean; isSandbox?: boolean }) {
-  const { state } = useSidebar();
-  const isCollapsed = state === "collapsed";
-
+function SidebarLink({ 
+  item, 
+  isActive, 
+  isGlobal, 
+  isMethodology, 
+  isSandbox,
+  isMobile,
+  setOpenMobile
+}: { 
+  item: NavItem; 
+  isActive: boolean; 
+  isGlobal?: boolean; 
+  isMethodology?: boolean; 
+  isSandbox?: boolean;
+  isMobile: boolean;
+  setOpenMobile: (open: boolean) => void;
+}) {
   const activeClass = isGlobal 
     ? "bg-emerald-500/10 text-emerald-400 shadow-[0_4px_15px_rgba(16,185,129,0.15)] emerald-text-glow"
     : isMethodology
@@ -356,13 +370,16 @@ function SidebarLink({ item, isActive, isGlobal, isMethodology, isSandbox }: { i
         isActive ? activeClass : "text-white/40 hover:text-white hover:bg-white/[0.04]"
       )}
     >
-      <Link href={item.href}>
+      <Link 
+        href={item.href}
+        onClick={() => {
+          if (isMobile) setOpenMobile(false);
+        }}
+      >
         <item.icon className={cn("h-5 w-5 shrink-0 transition-all duration-700", iconClass)} />
-        {!isCollapsed && (
-          <span className="font-bold text-[10px] uppercase tracking-[0.25em] whitespace-nowrap animate-in fade-in duration-700">
-            {item.title}
-          </span>
-        )}
+        <span className="font-bold text-[10px] uppercase tracking-[0.25em] whitespace-nowrap animate-in fade-in duration-700">
+          {item.title}
+        </span>
         {isActive && (
           <div className={cn(
             "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-3/5 rounded-full",
