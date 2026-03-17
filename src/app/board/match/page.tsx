@@ -220,7 +220,7 @@ export default function MatchBoardPage() {
         </div>
       </div>
 
-      {/* ISLA DE TELEMETRÍA Y GUARDADO (TOP-RIGHT) - v15.2.0 */}
+      {/* ISLA DE TELEMETRÍA Y GUARDADO (TOP-RIGHT) - v15.4.0 */}
       <div className="fixed top-4 right-6 z-[100] flex items-center gap-3 animate-in slide-in-from-right-4 duration-700">
         
         {/* BOTÓN VINCULACIÓN WATCH */}
@@ -253,12 +253,32 @@ export default function MatchBoardPage() {
           </DialogContent>
         </Dialog>
 
+        {/* ISLA CRONÓMETRO CON CONTROLES - v15.4.0 */}
         <div className="flex items-center gap-4 px-4 py-1.5 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl">
           <div className="flex flex-col items-center min-w-[70px]">
             <span className={cn("text-2xl font-black font-headline tabular-nums tracking-tighter", isRunning ? "text-primary cyan-text-glow" : "text-white/40")}>
               {formatTime(timeLeft)}
             </span>
-            <button onClick={() => setIsRunning(!isRunning)} className="text-[7px] font-black uppercase text-primary/60 tracking-widest hover:text-primary">{isRunning ? 'PAUSE' : 'START'}</button>
+          </div>
+          
+          <div className="flex items-center gap-1 border-l border-white/10 pl-3">
+            <button 
+              onClick={() => setIsRunning(!isRunning)} 
+              className={cn(
+                "h-8 w-8 rounded-xl flex items-center justify-center transition-all active:scale-90",
+                isRunning ? "text-amber-400 hover:bg-amber-400/10" : "text-emerald-400 hover:bg-emerald-400/10"
+              )}
+              title={isRunning ? "Pausar" : "Iniciar"}
+            >
+              {isRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+            </button>
+            <button 
+              onClick={() => { setIsRunning(false); setTimeLeft(45 * 60); }} 
+              className="h-8 w-8 rounded-xl flex items-center justify-center text-white/20 hover:text-white hover:bg-white/10 transition-all active:scale-90"
+              title="Resetear"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </button>
           </div>
         </div>
 
