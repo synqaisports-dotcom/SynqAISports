@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v12.0.0 (Edición Inmersión Total)
+# SynqSports Pro - ARCHITECTURE_LEDGER v12.2.0 (Edición Inmersión Total)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -12,5 +12,7 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 - **v9.41.0**: **PROTOCOL_WATCH_UNIVERSAL_GEOMETRY**: Soporte para esferas cuadradas/redondas.
 - **v9.42.0**: **PROTOCOL_LOCAL_IDENTITY_EXPANSION**: Formulario extendido de identidad en el Sandbox.
 
-## 12. Inmersión y Ergonomía (v12.0.0)
+## 12. Inmersión y Ergonomía (v12.0.0 - v12.2.0)
 - **v12.0.0**: **PROTOCOL_IMMERSIVE_CANVAS**: Rediseño de pizarras para ocupar el 100% de la pantalla. Cabeceras y herramientas flotantes. Sidebar oculto por defecto para maximizar área de dibujo en tablets.
+- **v12.1.0**: **PROTOCOL_FULL_WIDTH_PITCH**: Eliminación definitiva del sidebar en layouts de pizarra. Maximización del ancho del campo al 98% en tablets. Compactación de toolbars para evitar desbordamientos en pantallas 4:3.
+- **v12.2.0**: **PROTOCOL_INTERACTION_ENGINE_RESTORE**: Restauración del motor de redimensionado, rotación y curvas en la Pizarra Promo. Optimización de eventos táctiles para manipulación de elementos en entorno inmersivo.

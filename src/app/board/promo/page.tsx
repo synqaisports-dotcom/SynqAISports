@@ -12,7 +12,9 @@ import {
   X,
   Target,
   ClipboardList,
-  ArrowRight
+  ArrowRight,
+  Copy,
+  PencilLine
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -67,6 +69,12 @@ const COLORS = [
 
 const STAGES = ["Debutantes", "Prebenjamín", "Benjamín", "Alevín", "Infantil", "Cadete", "Juvenil", "Senior"];
 
+const isMaterial = (type: DrawingTool) => 
+  ['player', 'ball', 'cone', 'seta', 'ladder', 'hurdle', 'minigoal', 'pica', 'barrier'].includes(type);
+
+const isCircular = (type: DrawingTool) => 
+  ['player', 'ball', 'circle', 'seta'].includes(type);
+
 function PromoBoardContent() {
   const { profile } = useAuth();
   const { toast } = useToast();
@@ -88,8 +96,10 @@ function PromoBoardContent() {
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawing = useRef(false);
+  const startPoint = useRef<Point | null>(null);
   const lastPoint = useRef<Point | null>(null);
-  const interactionMode = useRef<'drawing' | 'dragging' | 'none'>('none');
+  const interactionMode = useRef<'drawing' | 'resizing' | 'rotating' | 'dragging' | 'curving' | 'none'>('none');
+  const activeHandleIndex = useRef<number | null>(null);
 
   useEffect(() => {
     if (exerciseId) {
@@ -108,6 +118,12 @@ function PromoBoardContent() {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
 
+  const rotatePoint = (point: Point, center: Point, angle: number): Point => {
+    const cos = Math.cos(angle); const sin = Math.sin(angle);
+    const dx = point.x - center.x; const dy = point.y - center.y;
+    return { x: center.x + dx * cos - dy * sin, y: center.y + dx * sin + dy * cos };
+  };
+
   const getElementBounds = (element: DrawingElement, widthPx: number, heightPx: number) => {
     const p = element.points.map(pt => ({ x: pt.x * widthPx, y: pt.y * heightPx }));
     const minX = Math.min(...p.map(pt => pt.x)); const minY = Math.min(...p.map(pt => pt.y));
@@ -117,27 +133,42 @@ function PromoBoardContent() {
 
   const drawElement = useCallback((ctx: CanvasRenderingContext2D, element: DrawingElement, isSelected: boolean) => {
     const pRaw = element.points; if (pRaw.length < 1) return;
-    const wPx = ctx.canvas.width; const hPx = ctx.canvas.height;
-    const b = getElementBounds(element, wPx, hPx);
-    ctx.save(); ctx.globalAlpha = element.opacity; ctx.translate(b.centerX, b.centerY); ctx.rotate(element.rotation); ctx.translate(-b.centerX, -b.centerY);
+    const widthPx = ctx.canvas.width; const heightPx = ctx.canvas.height;
+    const bounds = getElementBounds(element, widthPx, heightPx);
+    const { centerX, centerY, width, height, minX, minY, maxX, maxY } = bounds;
+
+    ctx.save(); ctx.globalAlpha = element.opacity; ctx.translate(centerX, centerY); ctx.rotate(element.rotation); ctx.translate(-centerX, -centerY);
     ctx.strokeStyle = element.color; ctx.fillStyle = hexToRgba(element.color, 0.15); ctx.lineWidth = 3;
     if (element.lineStyle === 'dashed') ctx.setLineDash([10, 5]); else ctx.setLineDash([]);
-    
+
     if (element.type === 'player') {
-      ctx.beginPath(); ctx.arc(b.centerX, b.centerY, Math.min(b.width, b.height)/2, 0, Math.PI*2); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = '#fff'; ctx.font = 'bold 12px Space Grotesk'; ctx.textAlign = 'center'; ctx.fillText((element.number || 1).toString(), b.centerX, b.centerY + 4);
+      ctx.beginPath(); ctx.arc(centerX, centerY, width/2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 12px Space Grotesk'; ctx.textAlign = 'center'; ctx.fillText((element.number || 1).toString(), centerX, centerY + 4);
     } else if (element.type === 'ball') {
-      ctx.beginPath(); ctx.arc(b.centerX, b.centerY, 5, 0, Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.arc(centerX, centerY, 5, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.stroke();
     } else if (element.type === 'rect') {
-      ctx.strokeRect(b.minX, b.minY, b.width, b.height); ctx.fill();
+      ctx.beginPath(); ctx.rect(minX, minY, width, height); ctx.fill(); ctx.stroke();
     } else if (element.type === 'circle') {
-      ctx.beginPath(); ctx.arc(b.centerX, b.centerY, b.width/2, 0, Math.PI*2); ctx.fill(); ctx.stroke();
-    } else {
-      ctx.beginPath(); ctx.moveTo(element.points[0].x * wPx, element.points[0].y * hPx); ctx.lineTo(element.points[1].x * wPx, element.points[1].y * hPx); ctx.stroke();
+      ctx.beginPath(); ctx.arc(centerX, centerY, width/2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    } else if (['arrow', 'double-arrow', 'zigzag'].includes(element.type)) {
+      ctx.beginPath();
+      const p0 = { x: element.points[0].x * widthPx, y: element.points[0].y * heightPx };
+      const p1 = { x: element.points[1].x * widthPx, y: element.points[1].y * heightPx };
+      if (element.controlPoint) {
+        const cp = { x: element.controlPoint.x * widthPx, y: element.controlPoint.y * heightPx };
+        ctx.moveTo(p0.x, p0.y); ctx.quadraticCurveTo(cp.x, cp.y, p1.x, p1.y);
+      } else { ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); }
+      ctx.stroke();
     }
 
     if (isSelected) {
-      ctx.strokeStyle = '#00f2ffaa'; ctx.setLineDash([5, 5]); ctx.strokeRect(b.minX - 5, b.minY - 5, b.width + 10, b.height + 10);
+      ctx.restore(); ctx.save(); ctx.translate(centerX, centerY); ctx.rotate(element.rotation); ctx.translate(-centerX, -centerY);
+      ctx.strokeStyle = '#00f2ffaa'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]); const pad = 10; ctx.strokeRect(minX - pad, minY - pad, width + pad * 2, height + pad * 2);
+      ctx.setLineDash([]); ctx.fillStyle = '#fff'; 
+      const handles = [{ x: minX - pad, y: minY - pad }, { x: maxX + pad, y: minY - pad }, { x: minX - pad, y: maxY + pad }, { x: maxX + pad, y: maxY + pad }];
+      handles.forEach(h => { ctx.beginPath(); ctx.arc(h.x, h.y, 5, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
+      // Rot handle
+      ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(centerX, minY - pad - 20, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     } ctx.restore();
   }, [hexToRgba]);
 
@@ -149,11 +180,15 @@ function PromoBoardContent() {
 
   useEffect(() => { redrawAll(); }, [elements, selectedIds, fieldType, showLanes, redrawAll]);
 
-  const addElement = (tool: DrawingTool) => {
+  const addElementAtCenter = (tool: DrawingTool) => {
+    const canvasRatio = canvasRef.current ? (canvasRef.current.width / canvasRef.current.height) : 1.5;
+    const defW = tool === 'ladder' ? 0.15 : (tool === 'text' ? 0.3 : 0.05);
+    const defH = isCircular(tool) ? (defW * canvasRatio) : 0.05;
     const newEl: DrawingElement = { 
       id: `el-${Date.now()}`, 
       type: tool, 
-      points: [{ x: 0.45, y: 0.45 }, { x: 0.55, y: 0.55 }], 
+      points: [{ x: 0.5 - defW/2, y: 0.5 - defH/2 }, { x: 0.5 + defW/2, y: 0.5 + defH/2 }], 
+      controlPoint: ['arrow', 'double-arrow', 'zigzag'].includes(tool) ? { x: 0.5, y: 0.45 } : undefined,
       color: currentColor, 
       rotation: 0, 
       lineStyle: isDashed ? 'dashed' : 'solid', 
@@ -165,46 +200,75 @@ function PromoBoardContent() {
 
   const handlePointerDown = (e: React.PointerEvent) => {
     if (!canvasRef.current) return; const rect = canvasRef.current.getBoundingClientRect();
-    const p = { x: (e.clientX - rect.left) / rect.width, y: (e.clientY - rect.top) / rect.height };
+    const point = { x: (e.clientX - rect.left) / rect.width, y: (e.clientY - rect.top) / rect.height };
+    startPoint.current = point; lastPoint.current = point; isDrawing.current = true; const wPx = rect.width; const hPx = rect.height;
+
+    if (selectedIds.length === 1) {
+      const el = elements.find(e => e.id === selectedIds[0]);
+      if (el) {
+        const bounds = getElementBounds(el, wPx, hPx);
+        if (el.controlPoint) {
+          const cpPx = { x: el.controlPoint.x * wPx, y: el.controlPoint.y * hPx };
+          if (Math.sqrt(Math.pow(point.x * wPx - cpPx.x, 2) + Math.pow(point.y * hPx - cpPx.y, 2)) < 20) { interactionMode.current = 'curving'; return; }
+        }
+        const rotHandlePx = rotatePoint({ x: bounds.centerX, y: bounds.minY - 30 }, { x: bounds.centerX, y: bounds.centerY }, el.rotation);
+        if (Math.sqrt(Math.pow(point.x * wPx - rotHandlePx.x, 2) + Math.pow(point.y * hPx - rotHandlePx.y, 2)) < 20) { interactionMode.current = 'rotating'; return; }
+        
+        const pad = 10;
+        const handles = [{ x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, { x: bounds.minX - pad, y: bounds.maxY + pad }, { x: bounds.maxX + pad, y: bounds.maxY + pad }];
+        const hIdx = handles.findIndex(h => Math.sqrt(Math.pow(rotatePoint(h, { x: bounds.centerX, y: bounds.centerY }, el.rotation).x - point.x * wPx, 2) + Math.pow(rotatePoint(h, { x: bounds.centerX, y: bounds.centerY }, el.rotation).y - point.y * hPx, 2)) < 15);
+        if (hIdx !== -1) { interactionMode.current = 'resizing'; activeHandleIndex.current = hIdx; return; }
+      }
+    }
+
     const clicked = [...elements].reverse().find(el => {
-      const b = getElementBounds(el, rect.width, rect.height);
-      return p.x * rect.width >= b.minX && p.x * rect.width <= b.maxX && p.y * rect.height >= b.minY && p.y * rect.height <= b.maxY;
+      const b = getElementBounds(el, wPx, hPx); const local = rotatePoint({ x: point.x * wPx, y: point.y * hPx }, { x: b.centerX, y: b.centerY }, -el.rotation);
+      return local.x >= b.minX - 10 && local.x <= b.maxX + 10 && local.y >= b.minY - 10 && local.y <= b.maxY + 10;
     });
-    if (clicked) { setSelectedIds([clicked.id]); interactionMode.current = 'dragging'; lastPoint.current = p; }
-    else setSelectedIds([]); redrawAll();
+
+    if (clicked) {
+      if (e.shiftKey) setSelectedIds(prev => prev.includes(clicked.id) ? prev.filter(id => id !== clicked.id) : [...prev, clicked.id]);
+      else setSelectedIds([clicked.id]);
+      setActiveTool('select'); interactionMode.current = 'dragging';
+    } else setSelectedIds([]);
+    redrawAll();
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
-    if (interactionMode.current === 'dragging' && lastPoint.current) {
-      const rect = canvasRef.current!.getBoundingClientRect();
-      const p = { x: (e.clientX - rect.left) / rect.width, y: (e.clientY - rect.top) / rect.height };
-      const dx = p.x - lastPoint.current.x; const dy = p.y - lastPoint.current.y;
-      setElements(prev => prev.map(el => selectedIds.includes(el.id) ? { ...el, points: el.points.map(pt => ({ x: pt.x + dx, y: pt.y + dy })) } : el));
-      lastPoint.current = p; redrawAll();
-    }
+    if (!isDrawing.current || !canvasRef.current) return; const rect = canvasRef.current.getBoundingClientRect();
+    const point = { x: (e.clientX - rect.left) / rect.width, y: (e.clientY - rect.top) / rect.height }; const wPx = rect.width; const hPx = rect.height;
+
+    if (interactionMode.current === 'resizing' && selectedIds.length === 1 && activeHandleIndex.current !== null) {
+      setElements(prev => prev.map(el => {
+        if (el.id !== selectedIds[0]) return el;
+        const next = [...el.points]; const h = activeHandleIndex.current!;
+        if ([0, 2].includes(h)) next[0].x = point.x; else next[1].x = point.x;
+        if ([0, 1].includes(h)) next[0].y = point.y; else next[1].y = point.y;
+        return { ...el, points: next };
+      }));
+    } else if (interactionMode.current === 'curving' && selectedIds.length === 1) setElements(prev => prev.map(el => el.id === selectedIds[0] ? { ...el, controlPoint: point } : el));
+    else if (interactionMode.current === 'rotating' && selectedIds.length === 1) {
+      const el = elements.find(e => e.id === selectedIds[0]); if (el) {
+        const b = getElementBounds(el, wPx, hPx); const angle = Math.atan2(point.y * hPx - b.centerY, point.x * wPx - b.centerX) + Math.PI / 2;
+        setElements(prev => prev.map(e => e.id === selectedIds[0] ? { ...e, rotation: angle } : e));
+      }
+    } else if (interactionMode.current === 'dragging' && selectedIds.length > 0 && lastPoint.current) {
+      const dx = point.x - lastPoint.current.x; const dy = point.y - lastPoint.current.y;
+      setElements(prev => prev.map(el => {
+        if (!selectedIds.includes(el.id)) return el;
+        const next = { ...el, points: el.points.map(p => ({ x: p.x + dx, y: p.y + dy })) };
+        if (el.controlPoint) next.controlPoint = { x: el.controlPoint.x + dx, y: el.controlPoint.y + dy };
+        return next;
+      })); lastPoint.current = point;
+    } redrawAll();
   };
 
-  const toggleLineStyle = () => {
-    const nextDashed = !isDashed;
-    setIsDashed(nextDashed);
-    if (selectedIds.length > 0) {
-      setElements(prev => prev.map(el => selectedIds.includes(el.id) ? { ...el, lineStyle: nextDashed ? 'dashed' : 'solid' } : el));
-    }
-  };
+  const handlePointerUp = () => { isDrawing.current = false; interactionMode.current = 'none'; activeHandleIndex.current = null; };
 
   const handleSaveToBlock = (block: string) => {
-    if (!saveFormData.title) {
-      toast({ variant: "destructive", title: "ERROR", description: "Asigne un título antes de guardar." });
-      return;
-    }
+    if (!saveFormData.title) { toast({ variant: "destructive", title: "ERROR", description: "Asigne un título antes de guardar." }); return; }
     const vault = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": []}');
-    const newExercise = {
-      id: Date.now(),
-      block,
-      elements,
-      fieldType,
-      metadata: saveFormData
-    };
+    const newExercise = { id: Date.now(), block, elements, fieldType, metadata: saveFormData };
     vault.exercises = [newExercise, ...(vault.exercises || [])];
     localStorage.setItem("synq_promo_vault", JSON.stringify(vault));
     toast({ title: "SINCRO_LOCAL", description: `Ejercicio blindado en slot ${block.toUpperCase()}.` });
@@ -215,7 +279,7 @@ function PromoBoardContent() {
 
   return (
     <div className="h-full w-full flex flex-col bg-black overflow-hidden relative">
-      {/* FLOATING_HEADER_PROMO (Ultra-Compact v12.1) */}
+      {/* FLOATING_HEADER_PROMO (v12.2) */}
       <header className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 px-4 py-2 bg-black/60 backdrop-blur-2xl border border-primary/30 rounded-2xl shadow-2xl animate-in slide-in-from-top-2">
         <div className="flex flex-col pr-3 border-r border-white/10 shrink-0">
           <div className="flex items-center gap-1.5"><Zap className="h-3 w-3 text-primary animate-pulse" /><span className="text-[7px] font-black text-primary tracking-widest uppercase italic">Promo_Mode</span></div>
@@ -234,7 +298,7 @@ function PromoBoardContent() {
                 <button key={c.id} onClick={() => setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, color: c.value} : el))} className={cn("h-4 w-4 rounded-full border border-white/20", elements.find(e => selectedIds.includes(e.id))?.color === c.value && "border-white scale-110")} style={{ backgroundColor: c.value }} />
               ))}
             </div>
-            <button onClick={toggleLineStyle} className={cn("h-8 px-2 border rounded-lg text-[7px] font-black uppercase", isDashed ? "bg-primary text-black" : "border-primary/20 text-primary/40")}>{isDashed ? 'Discontinua' : 'Continua'}</button>
+            <button onClick={() => { const next = !isDashed; setIsDashed(next); setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, lineStyle: next ? 'dashed' : 'solid'} : el)); }} className={cn("h-8 px-2 border rounded-lg text-[7px] font-black uppercase", isDashed ? "bg-primary text-black" : "border-primary/20 text-primary/40")}>{isDashed ? 'Discontinua' : 'Continua'}</button>
             <Slider value={[commonOpacity * 100]} min={10} max={100} onValueChange={(v) => setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, opacity: v[0]/100} : el))} className="w-12" />
             <button onClick={() => { setElements(prev => prev.filter(el => !selectedIds.includes(el.id))); setSelectedIds([]); }} className="text-rose-500/60 hover:text-rose-500"><Trash2 className="h-3.5 w-3.5" /></button>
           </div>
@@ -248,14 +312,18 @@ function PromoBoardContent() {
       {/* FULL_SCREEN_CANVAS_AREA */}
       <main className="flex-1 relative flex overflow-hidden">
         <TacticalField theme="cyan" fieldType={fieldType} showWatermark showLanes={showLanes}>
-          <canvas ref={canvasRef} className="absolute inset-0 z-30 pointer-events-auto" onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={() => interactionMode.current = 'none'} />
+          <canvas ref={canvasRef} className="absolute inset-0 z-30 pointer-events-auto" onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} />
         </TacticalField>
       </main>
 
-      {/* FLOATING_TOOLBARS_BOTTOM (Optimized for width v12.1) */}
+      {/* FLOATING_TOOLBARS_BOTTOM (Optimized v12.2) */}
       <div className="fixed bottom-6 left-0 right-0 flex justify-center items-end gap-4 px-4 z-[100] pointer-events-none">
-        <div className="pointer-events-auto"><BoardToolbar theme="cyan" variant="materials" orientation="horizontal" activeTool={activeTool} onToolSelect={(t) => { addElement(t); }} /></div>
-        <div className="pointer-events-auto"><BoardToolbar theme="cyan" variant="training" orientation="horizontal" activeTool={activeTool} onToolSelect={(t) => { if(t === 'select') { setActiveTool('select'); setSelectedIds([]); } else addElement(t); }} onClear={() => { setElements([]); setSelectedIds([]); }} /></div>
+        <div className="pointer-events-auto">
+          <BoardToolbar theme="cyan" variant="materials" orientation="horizontal" activeTool={activeTool} onToolSelect={(t) => { addElementAtCenter(t); }} />
+        </div>
+        <div className="pointer-events-auto">
+          <BoardToolbar theme="cyan" variant="training" orientation="horizontal" activeTool={activeTool} onToolSelect={(t) => { if(t === 'select') { setActiveTool('select'); setSelectedIds([]); } else addElementAtCenter(t); }} onClear={() => { setElements([]); setSelectedIds([]); }} />
+        </div>
       </div>
 
       {/* SAVE_SHEET (Formulario de Paridad Pro) */}
