@@ -16,7 +16,7 @@ import {
   TableHead, 
   TableHeader, 
   TableRow 
-} from "@/table";
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, MoreHorizontal, Building2, Globe2, Activity, Pencil, Pause, Play, ShieldCheck, Globe, Layers } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -333,7 +333,7 @@ export default function ManageClubsPage() {
                     <SelectTrigger className="h-12 bg-white/5 border-emerald-500/20 rounded-2xl text-emerald-400 font-bold uppercase focus:border-emerald-500">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#04070c] border-emerald-500/20">
+                    <SelectContent className="bg-[#0a0f18] border-emerald-500/20">
                       <SelectItem value="Enterprise" className="text-[10px] font-black uppercase">ENTERPRISE</SelectItem>
                       <SelectItem value="Pro" className="text-[10px] font-black uppercase">PRO</SelectItem>
                       <SelectItem value="Basic" className="text-[10px] font-black uppercase">BASIC</SelectItem>
@@ -359,7 +359,7 @@ export default function ManageClubsPage() {
                   <SelectTrigger className="h-12 bg-white/5 border-emerald-500/20 rounded-2xl text-emerald-400 font-bold uppercase focus:border-emerald-500">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#04070c] border-emerald-500/20">
+                  <SelectContent className="bg-[#0a0f18] border-emerald-500/20">
                     <SelectItem value="Active" className="text-[10px] font-black uppercase">ACTIVO</SelectItem>
                     <SelectItem value="Inactive" className="text-[10px] font-black uppercase text-rose-400">INACTIVO</SelectItem>
                     <SelectItem value="Overdue" className="text-[10px] font-black uppercase text-amber-400">PAGO_PENDIENTE</SelectItem>
