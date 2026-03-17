@@ -15,9 +15,10 @@ interface PlayerChipProps {
 }
 
 /**
- * PlayerChip - Nodo de Atleta en Pizarra.
- * Optimizado para Latencia Cero en dispositivos táctiles mediante desactivación 
- * dinámica de transiciones durante el arrastre.
+ * PlayerChip - Nodo de Atleta en Pizarra v14.1.0
+ * Optimizado para fluidez total.
+ * - Escala reducida en tablets para no saturar el campo.
+ * - Transiciones inteligentes: Desactivadas durante el drag, activas en cambios de formación.
  */
 export function PlayerChip({ 
   number, 
@@ -28,6 +29,7 @@ export function PlayerChip({
   className, 
   isDragging,
   onPointerDown 
+ Suker
 }: PlayerChipProps) {
   const isLocal = team === "local";
   
@@ -41,14 +43,16 @@ export function PlayerChip({
       style={{ 
         left: `${x}%`, 
         top: `${y}%`,
-        // CRÍTICO: Desactivar transiciones durante el arrastre para eliminar el lag visual
-        transition: isDragging ? 'none' : 'left 0.3s ease-out, top 0.3s ease-out, transform 0.2s ease'
+        // will-change optimiza el renderizado de la GPU para movimientos frecuentes
+        willChange: "left, top, transform",
+        // Solo aplicamos transición cuando NO estamos arrastrando para evitar el lag de "goma elástica"
+        transition: isDragging ? 'none' : 'left 0.5s cubic-bezier(0.4, 0, 0.2, 1), top 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s ease'
       }}
       onPointerDown={onPointerDown}
     >
       <div 
         className={cn(
-          "h-8 w-8 md:h-10 md:w-10 rounded-full border-2 flex items-center justify-center text-[10px] md:text-xs font-black shadow-lg",
+          "h-7 w-7 md:h-10 md:w-10 rounded-full border-2 flex items-center justify-center text-[9px] md:text-xs font-black shadow-lg transition-colors duration-300",
           isLocal 
             ? "bg-primary/20 border-primary text-primary shadow-[0_0_15px_rgba(0,242,255,0.3)]" 
             : "bg-rose-500/20 border-rose-500 text-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.3)]",
@@ -59,7 +63,7 @@ export function PlayerChip({
       </div>
       {label && (
         <span className={cn(
-          "text-[8px] font-black uppercase tracking-tighter whitespace-nowrap bg-black/60 px-1.5 py-0.5 rounded-sm transition-opacity",
+          "text-[7px] md:text-[8px] font-black uppercase tracking-tighter whitespace-nowrap bg-black/60 px-1.5 py-0.5 rounded-sm transition-opacity",
           isDragging ? "opacity-0" : "opacity-100"
         )}>
           {label}

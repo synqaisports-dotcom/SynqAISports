@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v12.6.0 (Edición Fluidez Táctica)
+# SynqSports Pro - ARCHITECTURE_LEDGER v14.1.0 (Edición Fluidez Táctica)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -20,3 +20,7 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 - **v12.4.0**: **PROTOCOL_TACTICAL_FIDELITY_TOTAL**: Restauración de los diseños técnicos detallados de materiales (Porterías, Barreras, Vallas) y paridad funcional de 8 tiradores de control en el modo Sandbox.
 - **v12.5.0**: **PROTOCOL_SMOOTH_INTERACTION_V2**: Optimización de rendimiento para tablets de baja gama. Corrección de la visibilidad de tiradores de control y aumento del área de contacto táctil.
 - **v12.6.0**: **PROTOCOL_TABLET_FIRST_ERGONOMICS**: Incremento del breakpoint móvil a 1024px. El Sidebar ahora es un Drawer en tablets por defecto. Reducción del ancho master a 14rem para maximizar área operativa.
+
+## 13. Rendimiento y Fluidez (v14.0.0 - v14.1.0)
+- **v14.0.0**: **PROTOCOL_PERFORMANCE_OPTIMIZATION**: Ajuste de densidades y escalado 0.8x en paneles flotantes para tablets. Eliminación de efectos GPU redundantes para asegurar 60fps en dispositivos móviles.
+- **v14.1.0**: **PROTOCOL_SMOOTH_FORMATION_RESTORE**: Restauración de las transiciones cinemáticas (`transition-all`) en cambios de formación. Reajuste de escala de los chips de jugadores para entorno tablet. Implementación de `will-change` para aceleración por hardware.
