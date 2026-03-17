@@ -16,9 +16,9 @@ interface TacticalFieldProps {
 }
 
 /**
- * TacticalField - v2.4.0
- * Optimización de Safe-Area para publicidad y controles táctiles.
- * Reducción de efectos GPU pesados en dispositivos móviles.
+ * TacticalField - v15.0.0
+ * PROTOCOLO_MAX_PITCH_SURFACE: Maximización del área táctica al 98% del viewport.
+ * Eliminación de restricciones de Safe-Area excesivas para priorizar visualización.
  */
 export function TacticalField({ 
   theme = "cyan", 
@@ -37,32 +37,29 @@ export function TacticalField({
   const ratio = isFutsal ? 2.0 : 1.54;
   
   return (
-    <div className="absolute inset-0 flex items-center justify-center p-4 md:p-8 overflow-hidden select-none pointer-events-none bg-black">
-      {/* ESPACIO PARA PUBLICIDAD SUPERIOR (RESERVA DE 40px) */}
+    <div className="absolute inset-0 flex items-center justify-center p-1 md:p-2 overflow-hidden select-none pointer-events-none bg-black">
       <div 
         ref={containerRef}
         className={cn(
-          "relative rounded-[1.5rem] md:rounded-[3rem] overflow-hidden shadow-[0_0_60px_rgba(0,0,0,0.8)] border-2 transition-all duration-700 pointer-events-auto",
+          "relative rounded-lg md:rounded-[2rem] overflow-hidden shadow-[0_0_60px_rgba(0,0,0,0.8)] border-2 transition-all duration-700 pointer-events-auto",
           accentColor,
           bgClass
         )}
         style={{
-          // Ajuste de ancho dinámico para dejar aire en los laterales para publicidad vertical
-          width: '94vw',
-          height: `calc(94vw / ${ratio})`,
-          // Limitar altura para no chocar con la botonera inferior (Safe Area)
-          maxHeight: '78vh',
-          maxWidth: `calc(78vh * ${ratio})`
+          width: '98vw',
+          height: `calc(98vw / ${ratio})`,
+          maxHeight: '96vh',
+          maxWidth: `calc(96vh * ${ratio})`
         }}
       >
-        {/* TEXTURAS OPTIMIZADAS (Sin gradientes pesados en móvil si es posible) */}
+        {/* TEXTURAS OPTIMIZADAS */}
         {!isFutsal ? (
           <div className="absolute inset-0 opacity-10 bg-[repeating-linear-gradient(90deg,transparent_0%,transparent_10%,#000_10%,#000_20%)]" />
         ) : (
           <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.05)_0%,transparent_100%)]" />
         )}
         
-        {/* LÍNEAS REGLAMENTARIAS - MÁS FINAS PARA MAYOR LIMPIEZA VISUAL */}
+        {/* LÍNEAS REGLAMENTARIAS */}
         <div className="absolute inset-[4%] border border-white/20 rounded-sm pointer-events-none">
           
           {showLanes && (
