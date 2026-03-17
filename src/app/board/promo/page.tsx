@@ -14,7 +14,10 @@ import {
   ClipboardList,
   ArrowRight,
   Copy,
-  PencilLine
+  PencilLine,
+  Type,
+  Move,
+  LayoutDashboard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -40,7 +43,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/hooks/use-toast";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 
 interface Point {
   x: number;
@@ -79,6 +82,7 @@ function PromoBoardContent() {
   const { profile } = useAuth();
   const { toast } = useToast();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const exerciseId = searchParams.get("id");
 
   const [fieldType, setFieldType] = useState<FieldType>("f11");
@@ -134,72 +138,121 @@ function PromoBoardContent() {
   const drawElement = useCallback((ctx: CanvasRenderingContext2D, element: DrawingElement, isSelected: boolean) => {
     const pRaw = element.points; if (pRaw.length < 1) return;
     const widthPx = ctx.canvas.width; const heightPx = ctx.canvas.height;
+    const p = pRaw.map(pt => ({ x: pt.x * widthPx, y: pt.y * heightPx }));
     const bounds = getElementBounds(element, widthPx, heightPx);
     const { centerX, centerY, width, height, minX, minY, maxX, maxY } = bounds;
 
     ctx.save(); ctx.globalAlpha = element.opacity; ctx.translate(centerX, centerY); ctx.rotate(element.rotation); ctx.translate(-centerX, -centerY);
-    ctx.strokeStyle = element.color; ctx.fillStyle = hexToRgba(element.color, 0.15); ctx.lineWidth = 3;
+    ctx.strokeStyle = element.color; ctx.fillStyle = hexToRgba(element.color, 0.15); ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
     if (element.lineStyle === 'dashed') ctx.setLineDash([10, 5]); else ctx.setLineDash([]);
 
     switch (element.type) {
-      case 'player':
-        ctx.beginPath(); ctx.arc(centerX, centerY, width/2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-        ctx.fillStyle = '#fff'; ctx.font = 'bold 12px Space Grotesk'; ctx.textAlign = 'center'; ctx.fillText((element.number || 1).toString(), centerX, centerY + 4);
-        break;
-      case 'ball':
-        ctx.beginPath(); ctx.arc(centerX, centerY, 5, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.stroke();
-        break;
-      case 'rect':
-        ctx.beginPath(); ctx.rect(minX, minY, width, height); ctx.fill(); ctx.stroke();
-        break;
+      case 'text':
+        ctx.save(); ctx.setLineDash([]); ctx.fillStyle = element.color; ctx.font = `bold ${Math.floor(height || 24)}px Space Grotesk`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(element.text || "TEXTO TÁCTICO", centerX, centerY); ctx.restore(); break;
+      case 'freehand':
+        ctx.beginPath(); ctx.moveTo(p[0].x, p[0].y); for (let i = 1; i < p.length; i++) ctx.lineTo(p[i].x, p[i].y); ctx.stroke(); break;
+      case 'rect': ctx.beginPath(); ctx.rect(minX, minY, width, height); ctx.fill(); ctx.stroke(); break;
       case 'circle':
-        ctx.beginPath(); ctx.arc(centerX, centerY, width/2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-        break;
+        ctx.beginPath(); const radius = Math.min(width, height) / 2;
+        ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI); ctx.fill(); ctx.stroke(); break;
       case 'arrow':
       case 'double-arrow':
       case 'zigzag':
         ctx.beginPath();
-        const p0 = { x: element.points[0].x * widthPx, y: element.points[0].y * heightPx };
-        const p1 = { x: element.points[1].x * widthPx, y: element.points[1].y * heightPx };
         if (element.controlPoint) {
           const cp = { x: element.controlPoint.x * widthPx, y: element.controlPoint.y * heightPx };
-          ctx.moveTo(p0.x, p0.y); ctx.quadraticCurveTo(cp.x, cp.y, p1.x, p1.y);
-        } else { ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); }
-        ctx.stroke();
-        break;
-      case 'cone':
-        ctx.beginPath(); ctx.moveTo(centerX - 10, maxY); ctx.lineTo(centerX + 10, maxY); ctx.lineTo(centerX, minY); ctx.closePath(); ctx.fill(); ctx.stroke();
-        break;
-      case 'seta':
-        ctx.beginPath(); ctx.ellipse(centerX, centerY, width/2, height/2, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-        break;
-      case 'ladder':
-        ctx.strokeRect(minX, minY, width, height);
-        for(let i=1; i<5; i++) {
-          const x = minX + (width * i / 5);
-          ctx.beginPath(); ctx.moveTo(x, minY); ctx.lineTo(x, maxY); ctx.stroke();
+          ctx.moveTo(p[0].x, p[0].y); ctx.quadraticCurveTo(cp.x, cp.y, p[1].x, p[1].y);
+        } else { ctx.moveTo(p[0].x, p[0].y); ctx.lineTo(p[1].x, p[1].y); }
+        ctx.stroke(); const head = 15;
+        let angle = element.controlPoint ? Math.atan2(p[1].y - (element.controlPoint.y * heightPx), p[1].x - (element.controlPoint.x * widthPx)) : Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x);
+        ctx.setLineDash([]); const drawH = (tx: number, ty: number, ang: number) => {
+          ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(tx - head * Math.cos(ang - Math.PI / 6), ty - head * Math.sin(ang - Math.PI / 6));
+          ctx.moveTo(tx, ty); ctx.lineTo(tx - head * Math.cos(ang + Math.PI / 6), ty - head * Math.sin(ang + Math.PI / 6)); ctx.stroke();
+        };
+        drawH(p[1].x, p[1].y, angle);
+        if (element.type === 'double-arrow') {
+          const startAngle = element.controlPoint ? Math.atan2(p[0].y - (element.controlPoint.y * heightPx), p[0].x - (element.controlPoint.x * widthPx)) : angle + Math.PI;
+          drawH(p[0].x, p[0].y, startAngle);
         }
         break;
+      case 'cross-arrow':
+        ctx.save(); ctx.translate(centerX, centerY); const cSize = Math.min(width, height) / 2; const thickness = cSize * 0.35; const arrowHead = cSize * 0.4;
+        const dCB = (isV: boolean) => {
+          ctx.beginPath(); if (isV) { ctx.moveTo(-thickness/2, -cSize + arrowHead); ctx.lineTo(thickness/2, -cSize + arrowHead); ctx.lineTo(thickness/2, cSize - arrowHead); ctx.lineTo(-thickness/2, cSize - arrowHead); }
+          else { ctx.moveTo(-cSize + arrowHead, -thickness/2); ctx.lineTo(cSize - arrowHead, -thickness/2); ctx.lineTo(cSize - arrowHead, thickness/2); ctx.lineTo(-cSize + arrowHead, thickness/2); }
+          ctx.closePath(); const barGrad = ctx.createLinearGradient(isV ? -thickness/2 : -cSize, isV ? -cSize : -thickness/2, isV ? thickness/2 : cSize, isV ? cSize : thickness/2);
+          barGrad.addColorStop(0, element.color); barGrad.addColorStop(0.5, '#ffffffaa'); barGrad.addColorStop(1, hexToRgba(element.color, 0.8)); ctx.fillStyle = barGrad; ctx.fill(); ctx.stroke();
+        };
+        const dAH = (tx: number, ty: number, rot: number) => {
+          ctx.save(); ctx.translate(tx, ty); ctx.rotate(rot); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-arrowHead, arrowHead); ctx.lineTo(arrowHead, arrowHead); ctx.closePath();
+          const headGrad = ctx.createLinearGradient(-arrowHead, 0, arrowHead, arrowHead); headGrad.addColorStop(0, element.color); headGrad.addColorStop(0.5, '#ffffffaa'); headGrad.addColorStop(1, hexToRgba(element.color, 0.8)); ctx.fillStyle = headGrad; ctx.fill(); ctx.stroke(); ctx.restore();
+        };
+        dCB(false); dCB(true); dAH(0, -cSize, 0); dAH(cSize, 0, Math.PI/2); dAH(0, cSize, Math.PI); dAH(-cSize, 0, -Math.PI/2); ctx.restore(); break;
+      case 'player':
+        ctx.save(); ctx.shadowBlur = 20; ctx.shadowColor = hexToRgba(element.color, 0.4); const pRadius = Math.min(width, height) / 2;
+        ctx.beginPath(); ctx.arc(centerX, centerY, pRadius, 0, Math.PI * 2);
+        const pGrad = ctx.createRadialGradient(centerX - pRadius/3, centerY - pRadius/3, 0, centerX, centerY, pRadius);
+        pGrad.addColorStop(0, '#ffffff44'); pGrad.addColorStop(0.5, hexToRgba(element.color, 0.3)); pGrad.addColorStop(1, hexToRgba(element.color, 0.1));
+        ctx.fillStyle = pGrad; ctx.fill(); ctx.strokeStyle = element.color; ctx.stroke();
+        ctx.fillStyle = '#fff'; ctx.font = `bold ${Math.floor(pRadius * 0.64)}px Space Grotesk`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText((element.number || 1).toString(), centerX, centerY + (pRadius * 0.04)); ctx.restore(); break;
+      case 'ball':
+        ctx.save(); ctx.translate(centerX, centerY); const bRadius = Math.min(width, height) / 2; ctx.scale(bRadius/40, bRadius/40);
+        ctx.beginPath(); ctx.arc(0, 5, 40, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fill();
+        const bG = ctx.createRadialGradient(-15, -15, 0, 0, 0, 40); bG.addColorStop(0, '#ffffff'); bG.addColorStop(1, '#E2E8F0');
+        ctx.beginPath(); ctx.arc(0, 0, 40, 0, Math.PI * 2); ctx.fillStyle = bG; ctx.fill(); ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.beginPath(); [[50,10,35,25], [50,10,65,25], [50,90,35,75], [50,90,65,75], [10,50,25,35], [10,50,25,65], [90,50,75,35], [90,50,75,65]].forEach(pat => { ctx.moveTo(pat[0]-50, pat[1]-50); ctx.lineTo(pat[2]-50, pat[3]-50); }); ctx.stroke(); ctx.beginPath(); ctx.arc(0, 0, 15, 0, Math.PI * 2); ctx.stroke(); ctx.restore(); break;
+      case 'cone':
+        ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/50, height/50); ctx.beginPath(); ctx.ellipse(0, 15, 25, 10, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fill();
+        ctx.beginPath(); ctx.ellipse(0, 12, 20, 8, 0, 0, Math.PI * 2); ctx.fillStyle = '#ea580c'; ctx.fill();
+        const cGrad = ctx.createLinearGradient(-20, 0, 20, 0); cGrad.addColorStop(0, '#ea580c'); cGrad.addColorStop(0.5, '#fb923c'); cGrad.addColorStop(1, '#9a3412');
+        ctx.beginPath(); ctx.moveTo(-15, 12); ctx.lineTo(15, 12); ctx.lineTo(2, -30); ctx.lineTo(-2, -30); ctx.closePath(); ctx.fillStyle = cGrad; ctx.fill(); ctx.fillStyle = '#ffffff'; ctx.fillRect(-8, -5, 16, 6); ctx.fillRect(-4, -20, 8, 4); ctx.restore(); break;
+      case 'seta':
+        ctx.save(); ctx.translate(centerX, centerY); const sSize = Math.min(width, height); ctx.scale(sSize/44, sSize/20);
+        ctx.beginPath(); ctx.ellipse(0, 5, 22, 10, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fill();
+        ctx.beginPath(); ctx.ellipse(0, 0, 22, 12, 0, 0, Math.PI * 2); const sG = ctx.createRadialGradient(0, -5, 0, 0, 0, 22); sG.addColorStop(0, '#ffffff'); sG.addColorStop(0.3, element.color); sG.addColorStop(1, hexToRgba(element.color, 0.8)); ctx.fillStyle = sG; ctx.fill(); ctx.restore(); break;
+      case 'ladder':
+        ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/200, height/50); ctx.strokeStyle = '#334155'; ctx.lineWidth = 5; ctx.strokeRect(-100, -25, 200, 50); ctx.lineWidth = 3; ctx.strokeStyle = element.color;
+        for(let x=-100; x<=100; x+=40) { ctx.beginPath(); ctx.moveTo(x, -25); ctx.lineTo(x, 25); ctx.stroke(); } ctx.restore(); break;
+      case 'hurdle':
+        ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/60, height/30); ctx.strokeStyle = element.color; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(-30, 15); ctx.lineTo(-30, -15); ctx.lineTo(30, -15); ctx.lineTo(30, 15); ctx.stroke(); ctx.restore(); break;
       case 'minigoal':
-        ctx.strokeRect(minX, minY, width, height);
-        ctx.setLineDash([2, 2]); ctx.strokeRect(minX + 2, minY + 2, width - 4, height - 4);
-        break;
+        ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/100, height/60); ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(-50, -30, 100, 60); ctx.setLineDash([3, 3]); ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1;
+        for(let i=-50; i<50; i+=10) { ctx.beginPath(); ctx.moveTo(i, -30); ctx.lineTo(i, 30); ctx.stroke(); } for(let j=-30; j<30; j+=10) { ctx.beginPath(); ctx.moveTo(-50, j); ctx.lineTo(50, j); ctx.stroke(); } ctx.setLineDash([]); ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 5; ctx.strokeRect(-50, -30, 100, 60); ctx.restore(); break;
+      case 'pica':
+        ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/36, height/80); ctx.beginPath(); ctx.arc(0, 30, 18, 0, Math.PI * 2); ctx.fillStyle = '#334155'; ctx.fill(); ctx.fillStyle = element.color; ctx.fillRect(-4, -40, 8, 70); ctx.restore(); break;
+      case 'barrier':
+        ctx.save(); ctx.translate(centerX, centerY); const bw = width / 3;
+        for (let i = -1; i <= 1; i++) {
+          ctx.save(); ctx.translate(i * bw * 0.8, 0); ctx.beginPath(); ctx.ellipse(0, 0, bw/2, height/2, 0, 0, Math.PI * 2);
+          const bGrad = ctx.createLinearGradient(-bw/2, 0, bw/2, 0); bGrad.addColorStop(0, hexToRgba(element.color, 0.8)); bGrad.addColorStop(0.5, element.color); bGrad.addColorStop(1, hexToRgba(element.color, 0.6)); ctx.fillStyle = bGrad; ctx.fill(); ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.stroke(); ctx.restore();
+        } ctx.restore(); break;
     }
 
     if (isSelected) {
       ctx.restore(); ctx.save(); ctx.translate(centerX, centerY); ctx.rotate(element.rotation); ctx.translate(-centerX, -centerY);
-      ctx.strokeStyle = '#00f2ffaa'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]); const pad = 10; ctx.strokeRect(minX - pad, minY - pad, width + pad * 2, height + pad * 2);
-      ctx.setLineDash([]); ctx.fillStyle = '#fff'; 
-      const handles = [{ x: minX - pad, y: minY - pad }, { x: maxX + pad, y: minY - pad }, { x: minX - pad, y: maxY + pad }, { x: maxX + pad, y: maxY + pad }];
-      handles.forEach(h => { ctx.beginPath(); ctx.arc(h.x, h.y, 5, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
-      ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(centerX, minY - pad - 20, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = '#ffffffaa'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]); const pad = 10; ctx.strokeRect(minX - pad, minY - pad, width + pad * 2, height + pad * 2);
+      ctx.setLineDash([]); ctx.fillStyle = '#ffffff'; const handles = [{ x: minX - pad, y: minY - pad }, { x: centerX, y: minY - pad }, { x: maxX + pad, y: minY - pad }, { x: minX - pad, y: centerY }, { x: maxX + pad, y: centerY }, { x: minX - pad, y: maxY + pad }, { x: centerX, y: maxY + pad }, { x: maxX + pad, y: maxY + pad }];
+      handles.forEach(h => { ctx.beginPath(); ctx.arc(6, 6, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
+      const rotY = minY - pad - 40; ctx.beginPath(); ctx.moveTo(centerX, minY - pad); ctx.lineTo(centerX, rotY); ctx.stroke();
+      ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(centerX, rotY, 8, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.stroke();
+      if (element.controlPoint && ['arrow', 'double-arrow', 'zigzag'].includes(element.type)) {
+        const cp = { x: element.controlPoint.x * widthPx, y: element.controlPoint.y * heightPx };
+        ctx.restore(); ctx.save(); ctx.setLineDash([4, 4]); ctx.strokeStyle = '#3b82f6aa'; ctx.beginPath(); ctx.moveTo(centerX, centerY); ctx.lineTo(cp.x, cp.y); ctx.stroke();
+        ctx.fillStyle = '#3b82f6'; ctx.beginPath(); ctx.arc(cp.x, cp.y, 8, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+      }
     } ctx.restore();
   }, [hexToRgba]);
 
   const redrawAll = useCallback(() => {
     const canvas = canvasRef.current; const ctx = canvas?.getContext('2d'); if (!ctx || !canvas) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    elements.forEach(el => drawElement(ctx, el, selectedIds.includes(el.id)));
+    const sorted = [...elements].sort((a, b) => {
+      if (a.type === 'text' && b.type !== 'text') return 1; if (a.type !== 'text' && b.type === 'text') return -1;
+      const aMat = isMaterial(a.type); const bMat = isMaterial(b.type); if (aMat && !bMat) return 1; if (!aMat && bMat) return -1; return 0;
+    });
+    sorted.forEach(el => drawElement(ctx, el, selectedIds.includes(el.id)));
   }, [elements, selectedIds, drawElement]);
 
   useEffect(() => {
@@ -217,9 +270,10 @@ function PromoBoardContent() {
   useEffect(() => { redrawAll(); }, [elements, selectedIds, fieldType, showLanes, redrawAll]);
 
   const addElementAtCenter = (tool: DrawingTool) => {
+    const pNum = tool === 'player' ? elements.filter(e => e.type === 'player').length + 1 : undefined;
     const canvasRatio = canvasRef.current ? (canvasRef.current.width / canvasRef.current.height) : 1.5;
-    const defW = tool === 'ladder' ? 0.15 : (tool === 'text' ? 0.3 : 0.05);
-    const defH = isCircular(tool) ? (defW * canvasRatio) : 0.05;
+    const defW = tool === 'ladder' ? 0.15 : (tool === 'minigoal' || tool === 'cross-arrow' ? 0.1 : tool === 'barrier' ? 0.12 : tool === 'text' ? 0.3 : 0.05);
+    const defH = isCircular(tool) ? (defW * canvasRatio) : (tool === 'ladder' ? 0.05 : (tool === 'minigoal' || tool === 'cross-arrow' ? 0.08 : tool === 'barrier' ? 0.12 : 0.05));
     const newEl: DrawingElement = { 
       id: `el-${Date.now()}`, 
       type: tool, 
@@ -228,8 +282,9 @@ function PromoBoardContent() {
       color: currentColor, 
       rotation: 0, 
       lineStyle: isDashed ? 'dashed' : 'solid', 
-      number: tool === 'player' ? elements.filter(e => e.type === 'player').length + 1 : undefined, 
-      opacity: 1.0 
+      number: pNum, 
+      opacity: 1.0,
+      text: tool === 'text' ? "CONSIGNA TÁCTICA" : undefined
     };
     setElements(prev => [...prev, newEl]); setSelectedIds([newEl.id]); setActiveTool('select');
   };
@@ -247,19 +302,19 @@ function PromoBoardContent() {
           const cpPx = { x: el.controlPoint.x * wPx, y: el.controlPoint.y * hPx };
           if (Math.sqrt(Math.pow(point.x * wPx - cpPx.x, 2) + Math.pow(point.y * hPx - cpPx.y, 2)) < 20) { interactionMode.current = 'curving'; return; }
         }
-        const rotHandlePx = rotatePoint({ x: bounds.centerX, y: bounds.minY - 30 }, { x: bounds.centerX, y: bounds.centerY }, el.rotation);
+        const rotHandlePx = rotatePoint({ x: bounds.centerX, y: bounds.minY - 50 }, { x: bounds.centerX, y: bounds.centerY }, el.rotation);
         if (Math.sqrt(Math.pow(point.x * wPx - rotHandlePx.x, 2) + Math.pow(point.y * hPx - rotHandlePx.y, 2)) < 20) { interactionMode.current = 'rotating'; return; }
-        
-        const pad = 10;
-        const handles = [{ x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, { x: bounds.minX - pad, y: bounds.maxY + pad }, { x: bounds.maxX + pad, y: bounds.maxY + pad }];
-        const hIdx = handles.findIndex(h => Math.sqrt(Math.pow(rotatePoint(h, { x: bounds.centerX, y: bounds.centerY }, el.rotation).x - point.x * wPx, 2) + Math.pow(rotatePoint(h, { x: bounds.centerX, y: bounds.centerY }, el.rotation).y - point.y * hPx, 2)) < 15);
+        const local = rotatePoint({ x: point.x * wPx, y: point.y * hPx }, { x: bounds.centerX, y: bounds.centerY }, -el.rotation);
+        const pad = 10; const handles = [{ x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY }, { x: bounds.minX - pad, y: bounds.maxY + pad }, { x: bounds.centerX, y: bounds.maxY + pad }, { x: bounds.maxX + pad, y: bounds.maxY + pad }];
+        const hIdx = handles.findIndex(h => Math.sqrt(Math.pow(local.x - h.x, 2) + Math.pow(local.y - h.y, 2)) < 15);
         if (hIdx !== -1) { interactionMode.current = 'resizing'; activeHandleIndex.current = hIdx; return; }
       }
     }
 
     const clicked = [...elements].reverse().find(el => {
       const b = getElementBounds(el, wPx, hPx); const local = rotatePoint({ x: point.x * wPx, y: point.y * hPx }, { x: b.centerX, y: b.centerY }, -el.rotation);
-      return local.x >= b.minX - 10 && local.x <= b.maxX + 10 && local.y >= b.minY - 10 && local.y <= b.maxY + 10;
+      const hitPadding = el.type === 'text' ? 25 : 10;
+      return local.x >= b.minX - hitPadding && local.x <= b.maxX + hitPadding && local.y >= b.minY - hitPadding && local.y <= b.maxY + hitPadding;
     });
 
     if (clicked) {
@@ -277,10 +332,20 @@ function PromoBoardContent() {
     if (interactionMode.current === 'resizing' && selectedIds.length === 1 && activeHandleIndex.current !== null) {
       setElements(prev => prev.map(el => {
         if (el.id !== selectedIds[0]) return el;
+        const bounds = getElementBounds(el, wPx, hPx); const local = rotatePoint({ x: point.x * wPx, y: point.y * hPx }, { x: bounds.centerX, y: bounds.centerY }, -el.rotation);
         const next = [...el.points]; const h = activeHandleIndex.current!;
-        if ([0, 2].includes(h)) next[0].x = point.x; else next[1].x = point.x;
-        if ([0, 1].includes(h)) next[0].y = point.y; else next[1].y = point.y;
-        return { ...el, points: next };
+        if (isCircular(el.type)) {
+          const dxPx = Math.abs(local.x - bounds.centerX) * 2; const dyPx = dxPx;
+          next[0] = { x: (bounds.centerX - dxPx/2) / wPx, y: (bounds.centerY - dyPx/2) / hPx }; 
+          next[1] = { x: (bounds.centerX + dxPx/2) / wPx, y: (bounds.centerY + dyPx/2) / hPx };
+        } else if (isMaterial(el.type)) {
+          const ratio = bounds.width / bounds.height; const dx = Math.abs(local.x - bounds.centerX) * 2; const dy = dx / ratio;
+          next[0] = { x: (bounds.centerX - dx/2) / wPx, y: (bounds.centerY - dy/2) / hPx }; next[1] = { x: (bounds.centerX + dx/2) / wPx, y: (bounds.centerY + dy/2) / hPx };
+        } else {
+          const p0Px = { x: next[0].x * wPx, y: next[0].y * hPx }; const p1Px = { x: next[1].x * wPx, y: next[1].y * hPx };
+          if ([0, 3, 5].includes(h)) p0Px.x = local.x; if ([2, 4, 7].includes(h)) p1Px.x = local.x; if ([0, 1, 2].includes(h)) p0Px.y = local.y; if ([5, 6, 7].includes(h)) p1Px.y = local.y;
+          next[0] = { x: p0Px.x / wPx, y: p0Px.y / hPx }; next[1] = { x: p1Px.x / wPx, y: p1Px.y / hPx };
+        } return { ...el, points: next };
       }));
     } else if (interactionMode.current === 'curving' && selectedIds.length === 1) setElements(prev => prev.map(el => el.id === selectedIds[0] ? { ...el, controlPoint: point } : el));
     else if (interactionMode.current === 'rotating' && selectedIds.length === 1) {
@@ -311,11 +376,12 @@ function PromoBoardContent() {
     setIsSaveSheetOpen(false);
   };
 
-  const commonOpacity = elements.find(e => selectedIds.includes(e.id))?.opacity || 1.0;
+  const selectedElements = elements.filter(e => selectedIds.includes(e.id));
+  const commonOpacity = selectedElements.length > 0 ? selectedElements[0].opacity : 1.0;
 
   return (
     <div className="h-full w-full flex flex-col bg-black overflow-hidden relative">
-      <header className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 px-4 py-2 bg-black/60 backdrop-blur-2xl border border-primary/30 rounded-2xl shadow-2xl animate-in slide-in-from-top-2">
+      <header className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 px-4 py-2 bg-black/60 backdrop-blur-2xl border border-primary/30 rounded-2xl shadow-2xl animate-in slide-in-from-top-2">
         <div className="flex flex-col pr-3 border-r border-white/10 shrink-0">
           <div className="flex items-center gap-1.5"><Zap className="h-3 w-3 text-primary animate-pulse" /><span className="text-[7px] font-black text-primary tracking-widest uppercase italic">Promo_Mode</span></div>
           <h1 className="text-[10px] font-headline font-black text-white italic uppercase leading-none">{exerciseId ? 'Edición' : 'Sandbox'}</h1>
@@ -328,13 +394,20 @@ function PromoBoardContent() {
 
         {selectedIds.length > 0 && (
           <div className="flex items-center gap-3 border-l border-white/10 pl-3 animate-in zoom-in-95 duration-200">
-            <div className="flex gap-1">
-              {COLORS.map(c => (
-                <button key={c.id} onClick={() => setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, color: c.value} : el))} className={cn("h-4 w-4 rounded-full border border-white/20", elements.find(e => selectedIds.includes(e.id))?.color === c.value && "border-white scale-110")} style={{ backgroundColor: c.value }} />
-              ))}
-            </div>
+            {selectedElements.length === 1 && selectedElements[0].type === 'text' ? (
+              <div className="flex items-center gap-2 px-2 bg-black/40 border border-primary/30 rounded-lg">
+                <Type className="h-3 w-3 text-primary" />
+                <Input value={selectedElements[0].text || ""} onChange={(e) => setElements(prev => prev.map(el => el.id === selectedIds[0] ? { ...el, text: e.target.value.toUpperCase() } : el))} className="h-7 w-32 bg-transparent border-none text-primary font-black uppercase text-[8px] focus-visible:ring-0 p-0" />
+              </div>
+            ) : (
+              <div className="flex gap-1">
+                {COLORS.map(c => (
+                  <button key={c.id} onClick={() => setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, color: c.value} : el))} className={cn("h-4 w-4 rounded-full border border-white/20", selectedElements.every(el => el.color === c.value) && "border-white scale-110")} style={{ backgroundColor: c.value }} />
+                ))}
+              </div>
+            )}
             <button onClick={() => { const next = !isDashed; setIsDashed(next); setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, lineStyle: next ? 'dashed' : 'solid'} : el)); }} className={cn("h-8 px-2 border rounded-lg text-[7px] font-black uppercase", isDashed ? "bg-primary text-black" : "border-primary/20 text-primary/40")}>{isDashed ? 'Discontinua' : 'Continua'}</button>
-            <Slider value={[commonOpacity * 100]} min={10} max={100} onValueChange={(v) => setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, opacity: v[0]/100} : el))} className="w-12" />
+            <div className="w-16 px-2"><Slider value={[commonOpacity * 100]} min={10} max={100} onValueChange={(v) => setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, opacity: v[0]/100} : el))} className="w-full" /></div>
             <button onClick={() => { setElements(prev => prev.filter(el => !selectedIds.includes(el.id))); setSelectedIds([]); }} className="text-rose-500/60 hover:text-rose-500"><Trash2 className="h-3.5 w-3.5" /></button>
           </div>
         )}
@@ -344,18 +417,24 @@ function PromoBoardContent() {
         </Button>
       </header>
 
-      <main className="flex-1 relative flex overflow-hidden">
+      <div className="fixed top-6 left-6 z-[200]">
+        <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard')} className="h-12 w-12 rounded-2xl bg-black/60 backdrop-blur-2xl border border-white/10 text-white/40 hover:text-primary transition-all">
+          <LayoutDashboard className="h-5 w-5" />
+        </Button>
+      </div>
+
+      <main className="flex-1 relative flex overflow-hidden touch-none">
         <TacticalField theme="cyan" fieldType={fieldType} showWatermark showLanes={showLanes}>
           <canvas ref={canvasRef} className="absolute inset-0 z-30 pointer-events-auto" onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} />
         </TacticalField>
       </main>
 
-      <div className="fixed bottom-6 left-0 right-0 flex justify-center items-end gap-4 px-4 z-[100] pointer-events-none">
+      <div className="fixed bottom-10 left-0 right-0 flex justify-center items-end gap-12 px-12 z-[100] pointer-events-none">
         <div className="pointer-events-auto">
-          <BoardToolbar theme="cyan" variant="materials" orientation="horizontal" activeTool={activeTool} onToolSelect={(t) => { addElementAtCenter(t); }} />
+          <BoardToolbar theme="cyan" variant="materials" orientation="horizontal" activeTool={activeTool} onToolSelect={(t) => { addElementAtCenter(t); setSelectedIds([]); }} className="border shadow-2xl" />
         </div>
         <div className="pointer-events-auto">
-          <BoardToolbar theme="cyan" variant="training" orientation="horizontal" activeTool={activeTool} onToolSelect={(t) => { if(t === 'select') { setActiveTool('select'); setSelectedIds([]); } else addElementAtCenter(t); }} onClear={() => { setElements([]); setSelectedIds([]); }} />
+          <BoardToolbar theme="cyan" variant="training" orientation="horizontal" activeTool={activeTool} onToolSelect={(t) => { if(t === 'select') { setActiveTool('select'); setSelectedIds([]); } else addElementAtCenter(t); }} onClear={() => { setElements([]); setSelectedIds([]); }} className="border shadow-2xl" />
         </div>
       </div>
 
