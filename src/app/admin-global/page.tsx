@@ -1,12 +1,32 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
-import { Shield, TrendingUp, Users, Building2, Zap, Activity, ArrowUpRight, MessageSquareQuote, Gift, Sparkles } from "lucide-react";
+import { 
+  Shield, 
+  TrendingUp, 
+  Users, 
+  Building2, 
+  Zap, 
+  Activity, 
+  ArrowUpRight, 
+  MessageSquareQuote, 
+  Gift, 
+  Sparkles,
+  CheckCircle2,
+  ShieldCheck,
+  ShieldAlert,
+  RefreshCw,
+  ArrowRight
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 
+/**
+ * Global Admin Overview - v14.2.0
+ * Restauración de estabilidad y utilidades de renderizado.
+ */
 export default function AdminGlobalDashboard() {
   const [logs, setLogs] = useState<any[]>([]);
 
@@ -20,7 +40,6 @@ export default function AdminGlobalDashboard() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
-      {/* HEADER SECTOR */}
       <div className="flex flex-col gap-2 border-b border-white/5 pb-6">
         <div className="flex items-center gap-3">
           <Shield className="h-5 w-5 text-emerald-400 animate-pulse" />
@@ -32,7 +51,6 @@ export default function AdminGlobalDashboard() {
         <p className="text-[10px] font-black text-emerald-400/30 tracking-[0.2em] uppercase">Sincronización de Red: Nodos 100% Operativos</p>
       </div>
 
-      {/* METRICS GRID */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <MetricCard title="Clubes Activos" value="24" icon={Building2} trend="+3" />
         <MetricCard title="Nodos Globales" value="1.2k" icon={Users} trend="+12%" />
@@ -40,7 +58,6 @@ export default function AdminGlobalDashboard() {
         <MetricCard title="Carga IA" value="14%" icon={Zap} trend="Óptima" />
       </div>
 
-      {/* SECCIÓN DE ALIANZAS CRÍTICAS (LEADS SANDBOX) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
          <Link href="/admin-global/collaboration" className="block">
             <Card className="glass-panel p-8 border-emerald-500/20 bg-emerald-500/5 rounded-[2.5rem] relative overflow-hidden group hover:scale-[1.02] transition-all">
@@ -80,7 +97,6 @@ export default function AdminGlobalDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* TRAFFIC MONITOR */}
         <Card className="glass-panel lg:col-span-2 overflow-hidden relative group border border-emerald-500/20">
           <div className="absolute top-0 right-0 p-1 bg-emerald-500/20 text-[8px] font-black px-2 uppercase tracking-widest text-emerald-400">Live_Network_Traffic</div>
           <CardHeader>
@@ -88,43 +104,36 @@ export default function AdminGlobalDashboard() {
               <Activity className="h-4 w-4 text-emerald-400" /> Monitoreo de Flujos Globales
             </CardTitle>
           </CardHeader>
-          <CardContent className="h-80 flex flex-col items-center justify-center m-6 mt-0 border border-emerald-500/10 bg-black/40 relative overflow-hidden">
+          <CardContent className="h-80 flex flex-col items-center justify-center m-6 mt-0 border border-emerald-500/10 bg-black/40 relative overflow-hidden rounded-3xl">
              <div className="absolute inset-0 opacity-20 bg-[url('https://picsum.photos/seed/cyber/1200/600')] bg-cover bg-center" />
              <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
              <div className="scan-line" />
              <div className="relative z-10 text-center space-y-4">
                 <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.5em] animate-pulse">Analizando_Nodos_Tácticos...</span>
-                <div className="flex gap-4">
-                   <div className="h-2 w-32 bg-emerald-500/20 rounded-full overflow-hidden">
-                      <div className="h-full bg-emerald-500 w-2/3 animate-pulse" />
-                   </div>
+                <div className="h-2 w-48 bg-emerald-500/20 rounded-full mx-auto overflow-hidden">
+                   <div className="h-full bg-emerald-500 w-2/3 animate-pulse" />
                 </div>
              </div>
           </CardContent>
         </Card>
         
-        {/* ACCESS LOGS - AUDIT REGISTRY */}
-        <Card className="glass-panel border border-emerald-500/20 bg-black/40">
+        <Card className="glass-panel border border-emerald-500/20 bg-black/40 flex flex-col">
           <CardHeader className="border-b border-white/5 bg-white/[0.01]">
             <CardTitle className="text-sm uppercase tracking-widest font-black text-emerald-400">Registros de Seguridad</CardTitle>
           </CardHeader>
-          <CardContent className="p-0 max-h-[400px] overflow-y-auto custom-scrollbar">
+          <CardContent className="p-0 flex-1 overflow-y-auto custom-scrollbar max-h-[400px]">
             <div className="divide-y divide-white/5">
-              {logs.length > 0 ? logs.map((log) => (
-                <LogItem key={log.id} type={log.type} title={log.title} desc={log.desc} />
-              )) : (
-                <div className="p-10 text-center space-y-4">
-                   <Activity className="h-8 w-8 text-emerald-500/20 mx-auto animate-pulse" />
-                   <p className="text-[10px] font-black text-emerald-400/20 uppercase tracking-widest">Esperando flujo de datos...</p>
-                </div>
-              )}
-              {/* Logs estáticos de sistema */}
-              <LogItem type="Info" title="Update_IA_Complete" desc="Despliegue de Neural Planner finalizado." />
-              <LogItem type="Warning" title="Intento_Acceso_Denegado" desc="IP no autorizada bloqueada en nodo Tutor." />
+              <LogItem type="Success" title="Sincronización_Exitosa" desc="Nodo del Club Elite Madrid validado." icon={CheckCircle2} />
+              <LogItem type="Info" title="Identidad_Validada" desc="IP autorizada en sector metodología." icon={ShieldCheck} />
+              <LogItem type="Warning" title="Alerta_Acceso_IA" desc="Latencia detectada en motor Gemini." icon={ShieldAlert} />
+              <LogItem type="Success" title="Update_Completo" desc="Parches de seguridad v12.7 aplicados." icon={RefreshCw} />
+              {logs.map((log) => (
+                <LogItem key={log.id} type={log.type} title={log.title} desc={log.desc} icon={Activity} />
+              ))}
             </div>
           </CardContent>
           <div className="p-4 border-t border-white/5">
-             <Button variant="ghost" className="w-full h-10 rounded-none border border-emerald-500/10 text-[9px] font-black uppercase tracking-widest text-emerald-400 hover:bg-emerald-500/5 transition-all active:scale-95" asChild>
+             <Button variant="ghost" className="w-full h-10 border border-emerald-500/10 text-[9px] font-black uppercase tracking-widest text-emerald-400 hover:bg-emerald-500/5 transition-all" asChild>
                 <Link href="/admin-global/users">Ver todos los usuarios <ArrowRight className="h-3 w-3 ml-2" /></Link>
              </Button>
           </div>
@@ -136,7 +145,7 @@ export default function AdminGlobalDashboard() {
 
 function MetricCard({ title, value, icon: Icon, trend }: any) {
   return (
-    <Card className="glass-panel relative overflow-hidden group hover:scale-[1.02] transition-all border border-emerald-500/20 bg-black/20">
+    <Card className="glass-panel relative overflow-hidden group hover:scale-[1.02] transition-all border border-emerald-500/20 bg-black/20 rounded-3xl">
       <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
         <Icon className="h-12 w-12 text-emerald-500" />
       </div>
@@ -154,23 +163,20 @@ function MetricCard({ title, value, icon: Icon, trend }: any) {
   );
 }
 
-function LogItem({ type, title, desc }: any) {
+function LogItem({ type, title, desc, icon: Icon }: any) {
   const color = type === 'Success' ? 'text-emerald-400' : type === 'Warning' ? 'text-rose-400' : 'text-emerald-500';
   return (
-    <div className="p-5 hover:bg-white/[0.02] transition-colors group cursor-default">
-      <div className="flex items-center gap-3 mb-1">
-         <div className={`h-1.5 w-1.5 rounded-full animate-pulse ${type === 'Success' ? 'bg-emerald-400 shadow-[0_0_8px_var(--emerald-400)]' : type === 'Warning' ? 'bg-rose-400' : 'bg-emerald-500'}`} />
-         <p className={`text-[10px] font-black uppercase tracking-widest ${color}`}>{title}</p>
+    <div className="p-6 hover:bg-emerald-500/[0.02] transition-colors group cursor-default flex items-start gap-5">
+      <div className={cn("h-10 w-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 transition-transform group-hover:rotate-12", color.replace('text', 'border'))}>
+         <Icon className={cn("h-5 w-5", color)} />
       </div>
-      <p className="text-[10px] text-emerald-400/40 leading-tight uppercase font-bold pl-[18px]">{desc}</p>
+      <div className="space-y-1">
+         <div className="flex items-center gap-3">
+            <div className={cn("h-1.5 w-1.5 rounded-full animate-pulse", color.replace('text', 'bg'))} />
+            <p className={cn("text-[10px] font-black uppercase tracking-widest", color)}>{title}</p>
+         </div>
+         <p className="text-[10px] text-white/40 leading-tight uppercase font-bold">{desc}</p>
+      </div>
     </div>
-  );
-}
-
-function ArrowRight({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M5 12h14M12 5l7 7-7 7" />
-    </svg>
   );
 }

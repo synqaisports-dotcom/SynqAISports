@@ -1,4 +1,3 @@
-
 "use client";
 
 import { cn } from "@/lib/utils";
@@ -15,10 +14,11 @@ interface PlayerChipProps {
 }
 
 /**
- * PlayerChip - Nodo de Atleta en Pizarra v14.1.0
+ * PlayerChip - Nodo de Atleta en Pizarra v14.2.0
  * Optimizado para fluidez total.
- * - Escala reducida en tablets para no saturar el campo.
+ * - Escala reducida en tablets (h-7) para no saturar el campo.
  * - Transiciones inteligentes: Desactivadas durante el drag, activas en cambios de formación.
+ * - Aceleración por hardware mediante will-change.
  */
 export function PlayerChip({ 
   number, 
@@ -29,7 +29,6 @@ export function PlayerChip({
   className, 
   isDragging,
   onPointerDown 
- Suker
 }: PlayerChipProps) {
   const isLocal = team === "local";
   
@@ -43,9 +42,7 @@ export function PlayerChip({
       style={{ 
         left: `${x}%`, 
         top: `${y}%`,
-        // will-change optimiza el renderizado de la GPU para movimientos frecuentes
         willChange: "left, top, transform",
-        // Solo aplicamos transición cuando NO estamos arrastrando para evitar el lag de "goma elástica"
         transition: isDragging ? 'none' : 'left 0.5s cubic-bezier(0.4, 0, 0.2, 1), top 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s ease'
       }}
       onPointerDown={onPointerDown}
