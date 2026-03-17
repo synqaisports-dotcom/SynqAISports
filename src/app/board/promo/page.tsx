@@ -39,11 +39,15 @@ import {
   Thermometer,
   Share2,
   Download,
-  Database
+  Database,
+  Target,
+  ClipboardList
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { TacticalField, FieldType } from "@/components/board/TacticalField";
 import { BoardToolbar, DrawingTool } from "@/components/board/BoardToolbar";
 import { 
@@ -94,6 +98,8 @@ const COLORS = [
   { id: 'white', value: '#ffffff', label: 'Neutro' },
 ];
 
+const STAGES = ["Debutantes", "Prebenjamín", "Benjamín", "Alevín", "Infantil", "Cadete", "Juvenil", "Senior"];
+
 const isMaterial = (type: DrawingTool) => 
   ['player', 'ball', 'cone', 'seta', 'ladder', 'hurdle', 'minigoal', 'pica', 'barrier'].includes(type);
 
@@ -114,6 +120,15 @@ function PromoBoardContent() {
   const [elements, setElements] = useState<DrawingElement[]>([]);
   const [isSaveSheetOpen, setIsSaveSheetOpen] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
+
+  // ESTADO DEL FORMULARIO TÉCNICO (Portado de Pro)
+  const [saveFormData, setSaveFormData] = useState({
+    title: "",
+    stage: "Alevín",
+    dimension: "Táctica",
+    objective: "",
+    description: ""
+  });
 
   // LÍMITES_PROMO (Lead Tunel)
   const [promoStats, setPromoStats] = useState({
@@ -153,6 +168,16 @@ function PromoBoardContent() {
       if (target) {
         setElements(target.elements || []);
         if (target.fieldType) setFieldType(target.fieldType);
+        // Cargar datos del formulario si existen
+        if (target.metadata) {
+          setSaveFormData({
+            title: target.metadata.title || "",
+            stage: target.metadata.stage || "Alevín",
+            dimension: target.metadata.dimension || "Táctica",
+            objective: target.metadata.objective || "",
+            description: target.metadata.description || ""
+          });
+        }
         toast({ title: "EJERCICIO_CARGADO", description: `Sincronizando slot local ${exerciseId.slice(-4)}` });
       }
     }
@@ -436,14 +461,26 @@ function PromoBoardContent() {
   const handlePointerUp = () => { isDrawing.current = false; interactionMode.current = 'none'; activeHandleIndex.current = null; };
 
   const handleSaveLocal = (block: 'warmup' | 'main' | 'cooldown') => {
+    if (!saveFormData.title) {
+      toast({ variant: "destructive", title: "DATOS_INCOMPLETOS", description: "Debe asignar al menos un título al ejercicio." });
+      return;
+    }
+
     const vault = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": [], "sessions": []}');
     const exercises = vault.exercises || [];
     
-    // Si estamos editando un ejercicio existente, lo actualizamos en lugar de crear uno nuevo
+    const exerciseData = {
+      block,
+      elements,
+      fieldType,
+      metadata: { ...saveFormData },
+      updatedAt: Date.now()
+    };
+
     if (exerciseId) {
       const idx = exercises.findIndex((e: any) => e.id.toString() === exerciseId);
       if (idx !== -1) {
-        exercises[idx] = { ...exercises[idx], block, elements, fieldType, updatedAt: Date.now() };
+        exercises[idx] = { ...exercises[idx], ...exerciseData };
         localStorage.setItem("synq_promo_vault", JSON.stringify({ ...vault, exercises }));
         toast({ title: "ACTUALIZACIÓN_COMPLETA", description: `Los cambios han sido guardados en el slot ${exerciseId.slice(-4)}` });
         setIsSaveSheetOpen(false);
@@ -456,7 +493,7 @@ function PromoBoardContent() {
     if (block === 'main' && promoStats.main >= MAX_MAIN) { toast({ variant: "destructive", title: "LÍMITE_PARTE_PRINCIPAL", description: "Capacidad local agotada (Máx 12)." }); return; }
     if (block === 'cooldown' && promoStats.cooldown >= MAX_COOLDOWN) { toast({ variant: "destructive", title: "LÍMITE_VUELTA_CALMA", description: "Capacidad local agotada (Máx 4)." }); return; }
 
-    const newEx = { id: Date.now(), block, elements, fieldType };
+    const newEx = { id: Date.now(), ...exerciseData };
     vault.exercises.push(newEx);
     localStorage.setItem("synq_promo_vault", JSON.stringify(vault));
     
@@ -492,7 +529,6 @@ function PromoBoardContent() {
   };
 
   const selectedElements = elements.filter(e => selectedIds.includes(e.id));
-  const commonOpacity = selectedElements.length > 0 ? selectedElements[0].opacity : 1.0;
 
   return (
     <div className="h-full flex flex-col bg-[#04070c] overflow-hidden">
@@ -570,35 +606,115 @@ function PromoBoardContent() {
       </div>
 
       <Sheet open={isSaveSheetOpen} onOpenChange={setIsSaveSheetOpen}>
-        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white sm:max-w-md">
-          <SheetHeader className="space-y-4 mb-10">
-            <div className="flex items-center gap-3">
-              <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Promo_Vault_Sync</span>
-            </div>
-            <SheetTitle className="text-3xl font-black italic tracking-tighter uppercase text-left">
-              {exerciseId ? 'ACTUALIZAR SLOT' : 'BLINDAR EJERCICIO'}
-            </SheetTitle>
-            <SheetDescription className="text-[10px] uppercase font-bold text-primary/40 tracking-widest text-left italic">Asigne el ejercicio a un bloque metodológico local.</SheetDescription>
-          </SheetHeader>
-          <div className="space-y-6">
-             <button onClick={() => handleSaveLocal('warmup')} className="w-full h-20 bg-primary/5 border border-primary/20 rounded-2xl flex flex-col items-center justify-center gap-1 group hover:bg-primary hover:text-black transition-all">
-                <span className="text-[11px] font-black uppercase tracking-widest italic">CALENTAMIENTO</span>
-                <span className="text-[8px] font-bold opacity-40 group-hover:opacity-100 uppercase">{promoStats.warmup}/{MAX_WARMUP} DISPONIBLES</span>
-             </button>
-             <button onClick={() => handleSaveLocal('main')} className="w-full h-20 bg-primary/5 border border-primary/20 rounded-2xl flex flex-col items-center justify-center gap-1 group hover:bg-primary hover:text-black transition-all">
-                <span className="text-[11px] font-black uppercase tracking-widest italic">PARTE PRINCIPAL</span>
-                <span className="text-[8px] font-bold opacity-40 group-hover:opacity-100 uppercase">{promoStats.main}/{MAX_MAIN} DISPONIBLES</span>
-             </button>
-             <button onClick={() => handleSaveLocal('cooldown')} className="w-full h-20 bg-primary/5 border border-primary/20 rounded-2xl flex flex-col items-center justify-center gap-1 group hover:bg-primary hover:text-black transition-all">
-                <span className="text-[11px] font-black uppercase tracking-widest italic">VUELTA A LA CALMA</span>
-                <span className="text-[8px] font-bold opacity-40 group-hover:opacity-100 uppercase">{promoStats.cooldown}/{MAX_COOLDOWN} DISPONIBLES</span>
-             </button>
+        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-xl shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+          <div className="p-10 border-b border-white/5 bg-black/40">
+            <SheetHeader className="space-y-4">
+              <div className="flex items-center gap-3">
+                <ClipboardList className="h-5 w-5 text-primary animate-pulse" />
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary italic">Technical_Sheet_Sync_v1.0</span>
+              </div>
+              <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left leading-none">VINCULAR <span className="text-primary">DATOS</span></SheetTitle>
+              <SheetDescription className="text-[10px] uppercase font-bold text-primary/40 tracking-widest text-left italic">Complete los parámetros metodológicos para su cuaderno de campo local.</SheetDescription>
+            </SheetHeader>
           </div>
-          <div className="mt-12 p-6 bg-primary/5 border border-primary/30 rounded-3xl space-y-4">
-             <div className="flex items-center gap-3"><Info className="h-4 w-4 text-primary" /><span className="text-[10px] font-black uppercase text-primary">Sincronización Total</span></div>
-             <p className="text-[10px] text-white/40 leading-relaxed font-bold uppercase italic">Actualice sus ejercicios guardados en tiempo real. La red detecta automáticamente el slot para no duplicar datos.</p>
-             <Button className="w-full h-12 bg-primary text-black font-black uppercase text-[10px] tracking-widest rounded-xl" asChild><Link href="/login" onClick={() => synqSync.trackEvent('ad_click', { action: 'upgrade_pro_sheet' })}>ACTUALIZAR A MODO PRO</Link></Button>
+
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-12">
+            <div className="space-y-10">
+              <section className="space-y-6">
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Título del Ejercicio</Label>
+                  <Input 
+                    required 
+                    value={saveFormData.title} 
+                    onChange={(e) => setSaveFormData({...saveFormData, title: e.target.value.toUpperCase()})} 
+                    placeholder="EJ: SALIDA DE BALÓN 4-3-3" 
+                    className="h-14 bg-black/40 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary text-primary text-lg" 
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Etapa Federativa</Label>
+                    <Select value={saveFormData.stage} onValueChange={(v) => setSaveFormData({...saveFormData, stage: v})}>
+                      <SelectTrigger className="h-12 bg-black/40 border-primary/20 rounded-xl text-white font-bold uppercase text-[10px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#0a0f18] border-primary/20">
+                        {STAGES.map(s => <SelectItem key={s} value={s} className="text-[10px] font-black uppercase">{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-3">
+                    <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Dimensión</Label>
+                    <Select value={saveFormData.dimension} onValueChange={(v) => setSaveFormData({...saveFormData, dimension: v})}>
+                      <SelectTrigger className="h-12 bg-black/40 border-primary/20 rounded-xl text-white font-bold uppercase text-[10px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#0a0f18] border-primary/20">
+                        <SelectItem value="Táctica" className="text-[10px] font-black uppercase">Táctica</SelectItem>
+                        <SelectItem value="Técnica" className="text-[10px] font-black uppercase">Técnica</SelectItem>
+                        <SelectItem value="Física" className="text-[10px] font-black uppercase">Física</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Objetivo Táctico Primario</Label>
+                  <div className="relative">
+                    <Target className="absolute left-3 top-3.5 h-4 w-4 text-primary/40" />
+                    <Input 
+                      value={saveFormData.objective} 
+                      onChange={(e) => setSaveFormData({...saveFormData, objective: e.target.value.toUpperCase()})} 
+                      placeholder="EJ: GENERAR SUPERIORIDAD POR DENTRO" 
+                      className="pl-10 h-12 bg-black/40 border-primary/20 rounded-xl font-bold uppercase text-xs text-primary" 
+                    />
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Descripción / Consignas</Label>
+                  <Textarea 
+                    value={saveFormData.description} 
+                    onChange={(e) => setSaveFormData({...saveFormData, description: e.target.value})} 
+                    placeholder="Explique la dinámica del ejercicio y las reglas de provocación..." 
+                    className="min-h-[120px] bg-black/40 border-primary/20 rounded-2xl font-bold text-primary placeholder:text-primary/20" 
+                  />
+                </div>
+              </section>
+
+              <section className="space-y-6">
+                <div className="flex items-center gap-3 border-b border-primary/20 pb-4">
+                  <Layers className="h-4 w-4 text-primary" />
+                  <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-primary">BLOQUE METODOLÓGICO LOCAL</h3>
+                </div>
+                <div className="grid grid-cols-1 gap-4">
+                  <button onClick={() => handleSaveLocal('warmup')} className="w-full h-16 bg-primary/5 border border-primary/20 rounded-2xl flex flex-col items-center justify-center gap-1 group hover:bg-primary hover:text-black transition-all">
+                    <span className="text-[11px] font-black uppercase tracking-widest italic">CALENTAMIENTO</span>
+                    <span className="text-[8px] font-bold opacity-40 group-hover:opacity-100 uppercase">{promoStats.warmup}/{MAX_WARMUP} DISPONIBLES</span>
+                  </button>
+                  <button onClick={() => handleSaveLocal('main')} className="w-full h-16 bg-primary/5 border border-primary/20 rounded-2xl flex flex-col items-center justify-center gap-1 group hover:bg-primary hover:text-black transition-all">
+                    <span className="text-[11px] font-black uppercase tracking-widest italic">PARTE PRINCIPAL</span>
+                    <span className="text-[8px] font-bold opacity-40 group-hover:opacity-100 uppercase">{promoStats.main}/{MAX_MAIN} DISPONIBLES</span>
+                  </button>
+                  <button onClick={() => handleSaveLocal('cooldown')} className="w-full h-16 bg-primary/5 border border-primary/20 rounded-2xl flex flex-col items-center justify-center gap-1 group hover:bg-primary hover:text-black transition-all">
+                    <span className="text-[11px] font-black uppercase tracking-widest italic">VUELTA A LA CALMA</span>
+                    <span className="text-[8px] font-bold opacity-40 group-hover:opacity-100 uppercase">{promoStats.cooldown}/{MAX_COOLDOWN} DISPONIBLES</span>
+                  </button>
+                </div>
+              </section>
+            </div>
+
+            <div className="p-6 bg-primary/5 border border-primary/30 rounded-3xl space-y-4">
+               <div className="flex items-center gap-3"><Info className="h-4 w-4 text-primary" /><span className="text-[10px] font-black uppercase text-primary">Sincronización Total</span></div>
+               <p className="text-[10px] text-white/40 leading-relaxed font-bold uppercase italic">Actualice sus ejercicios guardados en tiempo real. La red detecta automáticamente el slot para no duplicar datos.</p>
+               <Button className="w-full h-12 bg-primary text-black font-black uppercase text-[10px] tracking-widest rounded-xl" asChild><Link href="/login" onClick={() => synqSync.trackEvent('ad_click', { action: 'upgrade_pro_sheet' })}>ACTUALIZAR A MODO PRO</Link></Button>
+            </div>
+          </div>
+
+          <div className="p-10 bg-black/60 border-t border-white/5">
+            <SheetClose asChild>
+              <Button variant="ghost" className="w-full h-16 border border-white/10 text-white/40 font-black uppercase text-[10px] tracking-widest rounded-2xl">
+                CANCELAR
+              </Button>
+            </SheetClose>
           </div>
         </SheetContent>
       </Sheet>
