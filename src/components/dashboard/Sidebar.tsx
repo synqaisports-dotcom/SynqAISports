@@ -176,50 +176,32 @@ export function DashboardSidebar() {
           ? "bg-transparent border-primary/20 p-2" 
           : "bg-black/60 backdrop-blur-md border-white/5"
       )}>
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className={cn(
-                "p-2.5 rounded-xl shrink-0 transition-all duration-700",
-                isSuperAdmin ? "bg-emerald-500 emerald-text-glow" : "bg-primary cyan-glow",
-                isCollapsed && "p-1.5 shadow-[0_0_15px_rgba(0,242,255,0.3)]"
-              )}>
-                <Zap className={cn("text-black animate-pulse", isCollapsed ? "h-4 w-4" : "h-6 w-6")} />
-              </div>
-              {!isCollapsed && (
-                <div className="flex flex-col overflow-hidden animate-in fade-in duration-700">
-                  <span className="font-headline font-black text-2xl tracking-tighter text-white uppercase italic">
-                    Synq<span className={cn(isSuperAdmin ? "text-emerald-400" : "text-primary")}>AI</span>
-                  </span>
-                  <span className="text-[9px] font-black text-white/30 tracking-[0.4em] uppercase">SPORTS_PRO</span>
-                </div>
-              )}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className={cn(
+              "p-2.5 rounded-xl shrink-0 transition-all duration-700",
+              isSuperAdmin ? "bg-emerald-500 emerald-text-glow" : "bg-primary cyan-glow",
+              isCollapsed && "p-1.5 shadow-[0_0_15px_rgba(0,242,255,0.3)]"
+            )}>
+              <Zap className={cn("text-black animate-pulse", isCollapsed ? "h-4 w-4" : "h-6 w-6")} />
             </div>
             {!isCollapsed && (
-              <button 
-                onClick={toggleSidebar}
-                className="h-8 w-8 rounded-xl bg-white/5 flex items-center justify-center text-white/40 hover:text-primary transition-all border border-white/5 lg:hidden"
-                title="Ocultar Terminal"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
+              <div className="flex flex-col overflow-hidden animate-in fade-in duration-700">
+                <span className="font-headline font-black text-2xl tracking-tighter text-white uppercase italic">
+                  Synq<span className={cn(isSuperAdmin ? "text-emerald-400" : "text-primary")}>AI</span>
+                </span>
+                <span className="text-[9px] font-black text-white/30 tracking-[0.4em] uppercase">SPORTS_PRO</span>
+              </div>
             )}
           </div>
-
-          {!isCollapsed && isSuperAdmin && (
-            <div className="flex flex-col gap-4 mt-2">
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg animate-in fade-in zoom-in-95">
-                <ShieldCheck className="h-3 w-3 text-emerald-400 animate-pulse" />
-                <span className="text-[8px] font-black text-emerald-400 uppercase tracking-[0.2em]">SUPERADMIN_ACTIVE</span>
-              </div>
-              
-              <Button 
-                onClick={() => router.push("/admin-global/clubs")}
-                className="w-full bg-emerald-500 text-black font-black uppercase text-[10px] tracking-[0.2em] h-11 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-[1.02] transition-all border-none"
-              >
-                <Plus className="h-4 w-4 mr-2" /> VINCULAR NUEVO NODO
-              </Button>
-            </div>
+          {!isCollapsed && (
+            <button 
+              onClick={toggleSidebar}
+              className="h-8 w-8 rounded-xl bg-white/5 flex items-center justify-center text-white/40 hover:text-primary transition-all border border-white/5 lg:hidden"
+              title="Ocultar Terminal"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
           )}
         </div>
       </SidebarHeader>
@@ -287,16 +269,16 @@ export function DashboardSidebar() {
 
       <SidebarFooter className={cn(
         "border-t transition-all duration-700",
-        isCollapsed ? "p-2" : "p-4 lg:p-6 space-y-3 lg:space-y-4 bg-[#04070c] border-r border-white/5 shadow-[4px_0_24px_rgba(0,0,0,0.5)]"
+        isCollapsed ? "p-2" : "p-4 space-y-2 bg-[#04070c] border-r border-white/5 shadow-[4px_0_24px_rgba(0,0,0,0.5)]"
       )}>
         {!isCollapsed && (
-          <div className="px-2 lg:px-4 py-1 lg:py-2 border-b border-white/5 pb-3 lg:pb-4 mb-1 lg:mb-2">
+          <div className="px-2 py-1 border-b border-white/5 pb-2 mb-1">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center justify-between w-full p-2 lg:p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all group">
-                  <div className="flex items-center gap-3">
-                    <span className="text-lg">{currentLang.flag}</span>
-                    <span className="text-[10px] font-black text-white/60 uppercase tracking-widest group-hover:text-white transition-colors">{currentLang.label}</span>
+                <button className="flex items-center justify-between w-full p-2 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all group">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">{currentLang.flag}</span>
+                    <span className="text-[9px] font-black text-white/60 uppercase tracking-widest group-hover:text-white transition-colors">{currentLang.label}</span>
                   </div>
                   <ChevronDown className="h-3 w-3 text-white/20 group-hover:text-primary" />
                 </button>
@@ -322,9 +304,9 @@ export function DashboardSidebar() {
 
         <button 
           onClick={handleLogout}
-          className="flex items-center gap-4 px-4 py-3 text-white/30 hover:text-white transition-all font-black text-[10px] uppercase tracking-widest hover:bg-white/5 rounded-2xl group overflow-hidden w-full text-left"
+          className="flex items-center gap-3 px-3 py-2.5 text-white/30 hover:text-white transition-all font-black text-[9px] uppercase tracking-widest hover:bg-white/5 rounded-xl group overflow-hidden w-full text-left"
         >
-          <LogOut className="h-5 w-5 shrink-0 group-hover:translate-x-1 transition-transform" />
+          <LogOut className="h-4 w-4 shrink-0 group-hover:translate-x-1 transition-transform" />
           {!isCollapsed && <span className="whitespace-nowrap font-bold animate-in fade-in duration-700">CERRAR_SESIÓN</span>}
         </button>
       </SidebarFooter>
