@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
@@ -9,7 +10,7 @@ import { SidebarProvider, SidebarTrigger, useSidebar } from "@/components/ui/sid
 
 function OperationalMobileHeader() {
   return (
-    <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-[#04070c]/80 backdrop-blur-xl border-b border-primary/20 z-[100] flex items-center px-6 justify-between">
+    <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-[#04070c]/80 backdrop-blur-xl border-b border-primary/20 z-40 flex items-center px-6 justify-between">
       <div className="flex items-center gap-3">
         <div className="p-1.5 rounded-lg bg-primary shadow-[0_0_15px_rgba(0,242,255,0.4)]">
           <Zap className="h-4 w-4 text-black animate-pulse" />
