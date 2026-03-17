@@ -74,8 +74,8 @@ import { synqSync } from "@/lib/sync-service";
 import { useSearchParams } from "next/navigation";
 
 interface Point {
-  x: number; // 0.0 to 1.0 (Normalized)
-  y: number; // 0.0 to 1.0 (Normalized)
+  x: number;
+  y: number;
 }
 
 interface DrawingElement {
@@ -121,7 +121,7 @@ function PromoBoardContent() {
   const [isSaveSheetOpen, setIsSaveSheetOpen] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
 
-  // ESTADO DEL FORMULARIO TÉCNICO (Portado de Pro)
+  // ESTADO DEL FORMULARIO TÉCNICO
   const [saveFormData, setSaveFormData] = useState({
     title: "",
     stage: "Alevín",
@@ -130,7 +130,6 @@ function PromoBoardContent() {
     description: ""
   });
 
-  // LÍMITES_PROMO (Lead Tunel)
   const [promoStats, setPromoStats] = useState({
     warmup: 0,
     main: 0,
@@ -141,7 +140,6 @@ function PromoBoardContent() {
   const MAX_WARMUP = 4;
   const MAX_MAIN = 12;
   const MAX_COOLDOWN = 4;
-  const MAX_SESSIONS = 4;
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawing = useRef(false);
@@ -150,7 +148,6 @@ function PromoBoardContent() {
   const interactionMode = useRef<'drawing' | 'resizing' | 'rotating' | 'dragging' | 'curving' | 'none'>('none');
   const activeHandleIndex = useRef<number | null>(null);
 
-  // Carga inicial y detección de ejercicio específico
   useEffect(() => {
     const vault = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": [], "sessions": []}');
     const exercises = vault.exercises || [];
@@ -162,13 +159,11 @@ function PromoBoardContent() {
       sessions: (vault.sessions || []).length
     });
 
-    // Cargar ejercicio si hay ID en la URL
     if (exerciseId) {
       const target = exercises.find((e: any) => e.id.toString() === exerciseId);
       if (target) {
         setElements(target.elements || []);
         if (target.fieldType) setFieldType(target.fieldType);
-        // Cargar datos del formulario si existen
         if (target.metadata) {
           setSaveFormData({
             title: target.metadata.title || "",
@@ -178,7 +173,6 @@ function PromoBoardContent() {
             description: target.metadata.description || ""
           });
         }
-        toast({ title: "EJERCICIO_CARGADO", description: `Sincronizando slot local ${exerciseId.slice(-4)}` });
       }
     }
 
@@ -190,7 +184,7 @@ function PromoBoardContent() {
       window.removeEventListener('online', handleConnectivity);
       window.removeEventListener('offline', handleConnectivity);
     };
-  }, [exerciseId, toast]);
+  }, [exerciseId]);
 
   const hexToRgba = (hex: string, alpha: number) => {
     const r = parseInt(hex.slice(1, 3), 16);
@@ -488,7 +482,6 @@ function PromoBoardContent() {
       }
     }
 
-    // Validar Límites para nuevas tareas
     if (block === 'warmup' && promoStats.warmup >= MAX_WARMUP) { toast({ variant: "destructive", title: "LÍMITE_CALENTAMIENTO", description: "Capacidad local agotada (Máx 4)." }); return; }
     if (block === 'main' && promoStats.main >= MAX_MAIN) { toast({ variant: "destructive", title: "LÍMITE_PARTE_PRINCIPAL", description: "Capacidad local agotada (Máx 12)." }); return; }
     if (block === 'cooldown' && promoStats.cooldown >= MAX_COOLDOWN) { toast({ variant: "destructive", title: "LÍMITE_VUELTA_CALMA", description: "Capacidad local agotada (Máx 4)." }); return; }
