@@ -144,6 +144,12 @@ export function DashboardSidebar() {
     router.push("/");
   };
 
+  const handleNavClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
+
   const filteredItems = navItems.filter(item => {
     if (isSuperAdmin) return true;
     if (item.roles && profile) {
@@ -214,7 +220,7 @@ export function DashboardSidebar() {
             <SidebarMenu>
               {filteredItems.filter(i => i.category === "global").map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarLink item={item} isActive={pathname === item.href} isGlobal setOpenMobile={setOpenMobile} isMobile={isMobile} />
+                  <SidebarLink item={item} isActive={pathname === item.href} isGlobal onNavClick={handleNavClick} />
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -226,7 +232,7 @@ export function DashboardSidebar() {
             <SidebarMenu>
               {filteredItems.filter(i => i.category === "methodology").map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarLink item={item} isActive={pathname === item.href} isMethodology setOpenMobile={setOpenMobile} isMobile={isMobile} />
+                  <SidebarLink item={item} isActive={pathname === item.href} isMethodology onNavClick={handleNavClick} />
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -238,7 +244,7 @@ export function DashboardSidebar() {
             <SidebarMenu>
               {filteredItems.filter(i => i.category === "sandbox").map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarLink item={item} isActive={pathname === item.href} isSandbox setOpenMobile={setOpenMobile} isMobile={isMobile} />
+                  <SidebarLink item={item} isActive={pathname === item.href} isSandbox onNavClick={handleNavClick} />
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -249,7 +255,7 @@ export function DashboardSidebar() {
           <SidebarMenu>
             {filteredItems.filter(i => i.category === "operational").map((item) => (
               <SidebarMenuItem key={item.href}>
-                <SidebarLink item={item} isActive={pathname === item.href} setOpenMobile={setOpenMobile} isMobile={isMobile} />
+                <SidebarLink item={item} isActive={pathname === item.href} onNavClick={handleNavClick} />
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
@@ -259,7 +265,7 @@ export function DashboardSidebar() {
           <SidebarMenu>
             {filteredItems.filter(i => i.category === "user").map((item) => (
               <SidebarMenuItem key={item.href}>
-                <SidebarLink item={item} isActive={pathname === item.href} setOpenMobile={setOpenMobile} isMobile={isMobile} />
+                <SidebarLink item={item} isActive={pathname === item.href} onNavClick={handleNavClick} />
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
@@ -332,16 +338,14 @@ function SidebarLink({
   isGlobal, 
   isMethodology, 
   isSandbox,
-  setOpenMobile,
-  isMobile
+  onNavClick
 }: { 
   item: NavItem; 
   isActive: boolean; 
   isGlobal?: boolean; 
   isMethodology?: boolean; 
   isSandbox?: boolean;
-  setOpenMobile: (open: boolean) => void;
-  isMobile: boolean;
+  onNavClick: () => void;
 }) {
   const activeClass = isGlobal 
     ? "bg-emerald-500/10 text-emerald-400 shadow-[0_4px_15px_rgba(16,185,129,0.15)] emerald-text-glow"
@@ -370,9 +374,7 @@ function SidebarLink({
     >
       <Link 
         href={item.href}
-        onClick={() => {
-          if (isMobile) setOpenMobile(false);
-        }}
+        onClick={onNavClick}
       >
         <item.icon className={cn("h-5 w-5 shrink-0 transition-all duration-700", iconClass)} />
         <span className="font-bold text-[10px] uppercase tracking-[0.25em] whitespace-nowrap animate-in fade-in duration-700">
