@@ -43,8 +43,7 @@ import {
   Swords,
   Globe,
   ChevronDown,
-  MessageSquareQuote,
-  Plus
+  MessageSquareQuote
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
@@ -66,7 +65,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 
 interface NavItem {
   title: string;
@@ -216,7 +214,7 @@ export function DashboardSidebar() {
             <SidebarMenu>
               {filteredItems.filter(i => i.category === "global").map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarLink item={item} isActive={pathname === item.href} isGlobal />
+                  <SidebarLink item={item} isActive={pathname === item.href} isGlobal setOpenMobile={setOpenMobile} isMobile={isMobile} />
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -228,7 +226,7 @@ export function DashboardSidebar() {
             <SidebarMenu>
               {filteredItems.filter(i => i.category === "methodology").map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarLink item={item} isActive={pathname === item.href} isMethodology />
+                  <SidebarLink item={item} isActive={pathname === item.href} isMethodology setOpenMobile={setOpenMobile} isMobile={isMobile} />
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -240,7 +238,7 @@ export function DashboardSidebar() {
             <SidebarMenu>
               {filteredItems.filter(i => i.category === "sandbox").map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarLink item={item} isActive={pathname === item.href} isSandbox />
+                  <SidebarLink item={item} isActive={pathname === item.href} isSandbox setOpenMobile={setOpenMobile} isMobile={isMobile} />
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -251,7 +249,7 @@ export function DashboardSidebar() {
           <SidebarMenu>
             {filteredItems.filter(i => i.category === "operational").map((item) => (
               <SidebarMenuItem key={item.href}>
-                <SidebarLink item={item} isActive={pathname === item.href} />
+                <SidebarLink item={item} isActive={pathname === item.href} setOpenMobile={setOpenMobile} isMobile={isMobile} />
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
@@ -261,7 +259,7 @@ export function DashboardSidebar() {
           <SidebarMenu>
             {filteredItems.filter(i => i.category === "user").map((item) => (
               <SidebarMenuItem key={item.href}>
-                <SidebarLink item={item} isActive={pathname === item.href} />
+                <SidebarLink item={item} isActive={pathname === item.href} setOpenMobile={setOpenMobile} isMobile={isMobile} />
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
@@ -333,15 +331,18 @@ function SidebarLink({
   isActive, 
   isGlobal, 
   isMethodology, 
-  isSandbox
+  isSandbox,
+  setOpenMobile,
+  isMobile
 }: { 
   item: NavItem; 
   isActive: boolean; 
   isGlobal?: boolean; 
   isMethodology?: boolean; 
   isSandbox?: boolean;
+  setOpenMobile: (open: boolean) => void;
+  isMobile: boolean;
 }) {
-  const { isMobile, setOpenMobile } = useSidebar();
   const activeClass = isGlobal 
     ? "bg-emerald-500/10 text-emerald-400 shadow-[0_4px_15px_rgba(16,185,129,0.15)] emerald-text-glow"
     : isMethodology
