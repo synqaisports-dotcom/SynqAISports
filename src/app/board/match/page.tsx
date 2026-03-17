@@ -71,25 +71,6 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-const POSITION_COLORS: Record<string, string> = {
-  "POR": "text-blue-400 border-blue-500/20 bg-blue-500/10",
-  "DFC": "text-emerald-400 border-emerald-500/20 bg-emerald-500/10",
-  "LD": "text-emerald-400 border-emerald-500/20 bg-emerald-500/10",
-  "LI": "text-emerald-400 border-emerald-500/20 bg-emerald-500/10",
-  "DEF": "text-emerald-400 border-emerald-500/20 bg-emerald-500/10",
-  "MC": "text-primary border-primary/20 bg-primary/10",
-  "MCD": "text-primary border-primary/20 bg-primary/10",
-  "MCO": "text-primary border-primary/20 bg-primary/10",
-  "MID": "text-primary border-primary/20 bg-primary/10",
-  "DC": "text-rose-400 border-rose-500/20 bg-rose-500/10",
-  "ED": "text-rose-400 border-rose-500/20 bg-rose-500/10",
-  "EI": "text-rose-400 border-rose-500/20 bg-rose-500/10",
-  "ATK": "text-rose-400 border-rose-500/20 bg-rose-500/10",
-  "FIXO": "text-emerald-400 border-emerald-500/20 bg-emerald-500/10",
-  "ALA": "text-primary border-primary/20 bg-primary/10",
-  "PIVOT": "text-rose-400 border-rose-500/20 bg-rose-500/10",
-};
-
 const MOCK_TEAMS = [
   { id: "t1", name: "Infantil A", field: "f11" as FieldType },
   { id: "t2", name: "Alevín B", field: "f7" as FieldType },
@@ -116,7 +97,7 @@ const MOCK_PLAYERS_BY_TEAM: Record<string, any[]> = {
   ],
 };
 
-type TacticalPhase = "defensa" | "tda" | "ataque" | "tad" | "salida";
+type TacticalPhase = "defensa" | "tda" | "salida" | "ataque" | "tad";
 type LateralShift = "left" | "center" | "right";
 
 interface PlayerPos {
@@ -261,52 +242,52 @@ export default function MatchBoardPage() {
 
   return (
     <div className="flex-1 flex flex-col bg-black overflow-hidden font-body relative touch-none" onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}>
-      {/* FLOATING_HEADER_MATCH */}
-      <header className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-4 px-6 py-3 bg-black/60 backdrop-blur-2xl border border-primary/30 rounded-[2.5rem] shadow-2xl animate-in slide-in-from-top-4 duration-700">
-        <div className="flex items-center gap-4 pr-4 border-r border-white/10">
+      {/* CABECERA FLOTANTE */}
+      <header className="fixed top-4 lg:top-6 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2 lg:gap-4 px-4 lg:px-6 py-2 lg:py-3 bg-black/60 backdrop-blur-2xl border border-primary/30 rounded-[2.5rem] shadow-2xl animate-in slide-in-from-top-4 duration-700">
+        <div className="flex items-center gap-2 lg:gap-4 pr-2 lg:pr-4 border-r border-white/10 shrink-0">
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <Trophy className="h-3 w-3 text-primary animate-pulse" />
-              <span className="text-[8px] font-black text-primary tracking-[0.4em] uppercase">Match_Live</span>
+              <span className="text-[7px] lg:text-[8px] font-black text-primary tracking-[0.4em] uppercase">Match_Live</span>
             </div>
-            <h1 className="text-sm font-headline font-black text-white italic uppercase tracking-tighter leading-none truncate">Partido</h1>
+            <h1 className="text-xs lg:text-sm font-headline font-black text-white italic uppercase tracking-tighter leading-none truncate">Partido</h1>
           </div>
         </div>
 
-        <div className="flex items-center gap-4 px-4 bg-primary/5 border border-primary/20 rounded-2xl py-1.5 shadow-inner">
-          <div className="flex items-center gap-2">
-            <button onClick={() => setScore(s => ({...s, home: Math.max(0, s.home - 1)}))} className="text-primary/40">-</button>
-            <span className="text-xl font-black text-white tabular-nums min-w-[20px] text-center">{score.home}</span>
-            <button onClick={() => setScore(s => ({...s, home: s.home + 1}))} className="text-primary/40">+</button>
+        <div className="flex items-center gap-2 lg:gap-4 px-2 lg:px-4 bg-primary/5 border border-primary/20 rounded-2xl py-1 lg:py-1.5 shadow-inner">
+          <div className="flex items-center gap-1 lg:gap-2">
+            <button onClick={() => setScore(s => ({...s, home: Math.max(0, s.home - 1)}))} className="text-primary/40 text-sm">-</button>
+            <span className="text-lg lg:text-xl font-black text-white tabular-nums min-w-[15px] lg:min-w-[20px] text-center">{score.home}</span>
+            <button onClick={() => setScore(s => ({...s, home: s.home + 1}))} className="text-primary/40 text-sm">+</button>
           </div>
           <div className="flex flex-col items-center">
-            <span className={cn("text-xl font-black font-headline tabular-nums tracking-tighter", timeLeft === 0 ? "text-rose-500 animate-pulse" : "text-primary cyan-text-glow")}>{formatTime(timeLeft)}</span>
-            <button onClick={() => setIsRunning(!isRunning)} className="text-[7px] font-black uppercase text-primary/60">{isRunning ? 'PAUSE' : 'START'}</button>
+            <span className={cn("text-lg lg:text-xl font-black font-headline tabular-nums tracking-tighter", timeLeft === 0 ? "text-rose-500 animate-pulse" : "text-primary cyan-text-glow")}>{formatTime(timeLeft)}</span>
+            <button onClick={() => setIsRunning(!isRunning)} className="text-[6px] lg:text-[7px] font-black uppercase text-primary/60">{isRunning ? 'PAUSE' : 'START'}</button>
           </div>
-          <div className="flex items-center gap-2">
-            <button onClick={() => setScore(s => ({...s, guest: Math.max(0, s.guest - 1)}))} className="text-primary/40">-</button>
-            <span className="text-xl font-black text-white tabular-nums min-w-[20px] text-center">{score.guest}</span>
-            <button onClick={() => setScore(s => ({...s, guest: s.guest + 1}))} className="text-primary/40">+</button>
+          <div className="flex items-center gap-1 lg:gap-2">
+            <button onClick={() => setScore(s => ({...s, guest: Math.max(0, s.guest - 1)}))} className="text-primary/40 text-sm">-</button>
+            <span className="text-lg lg:text-xl font-black text-white tabular-nums min-w-[15px] lg:min-w-[20px] text-center">{score.guest}</span>
+            <button onClick={() => setScore(s => ({...s, guest: s.guest + 1}))} className="text-primary/40 text-sm">+</button>
           </div>
         </div>
 
-        <div className="flex gap-2">
-          <button onClick={() => setIsPairingModalOpen(true)} className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center text-primary group hover:bg-primary hover:text-black transition-all">
-            <Watch className="h-5 w-5" />
+        <div className="flex gap-1 lg:gap-2 shrink-0">
+          <button onClick={() => setIsPairingModalOpen(true)} className="h-8 w-8 lg:h-10 lg:w-10 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center text-primary group hover:bg-primary hover:text-black transition-all">
+            <Watch className="h-4 w-4 lg:h-5 lg:w-5" />
           </button>
-          <Button className="h-10 bg-primary text-black font-black uppercase text-[9px] tracking-widest px-6 rounded-xl cyan-glow">
-            <Save className="h-3.5 w-3.5 mr-2" /> GUARDAR
+          <Button className="h-8 lg:h-10 bg-primary text-black font-black uppercase text-[7px] lg:text-[9px] tracking-widest px-3 lg:px-6 rounded-xl cyan-glow">
+            <Save className="h-3 w-3 lg:h-3.5 lg:w-3.5 mr-1 lg:mr-2" /> GUARDAR
           </Button>
         </div>
       </header>
 
-      {/* FLOATING_CONTROL_ISLAND_LEFT (Local) - REUBICADO AL BOTTOM */}
-      <div className="fixed bottom-10 left-10 z-[100] flex flex-col gap-4 pointer-events-none">
-        <div className="pointer-events-auto glass-panel p-4 border-primary/30 flex items-center gap-6 rounded-[2rem] animate-in slide-in-from-bottom-4">
-          <div className="space-y-1.5 border-r border-white/10 pr-4">
-            <span className="text-[8px] font-black text-primary uppercase tracking-widest block text-center italic">LOCAL_SQUAD</span>
+      {/* ISLA CONTROL LOCAL (BOTTOM LEFT) */}
+      <div className="fixed bottom-4 lg:bottom-10 left-4 lg:left-10 z-[100] pointer-events-none scale-90 lg:scale-100 origin-bottom-left">
+        <div className="pointer-events-auto glass-panel p-3 lg:p-4 border-primary/30 flex items-center gap-3 lg:gap-6 rounded-[2rem] animate-in slide-in-from-bottom-4 shadow-2xl">
+          <div className="space-y-1 lg:space-y-1.5 border-r border-white/10 pr-3 lg:pr-4">
+            <span className="hidden lg:block text-[8px] font-black text-primary uppercase tracking-widest text-center italic">LOCAL_SQUAD</span>
             <Select value={homeFormation} onValueChange={setHomeFormation}>
-              <SelectTrigger className="h-9 bg-black/40 border-primary/20 text-primary font-black uppercase text-[9px] rounded-xl w-28">
+              <SelectTrigger className="h-8 lg:h-9 bg-black/40 border-primary/20 text-primary font-black uppercase text-[8px] lg:text-[9px] rounded-xl w-24 lg:w-28">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-[#0a0f18] border-primary/20">
@@ -315,18 +296,18 @@ export default function MatchBoardPage() {
             </Select>
           </div>
 
-          <div className="flex items-center gap-1 border-r border-white/10 pr-4">
+          <div className="flex items-center gap-0.5 lg:gap-1 border-r border-white/10 pr-3 lg:pr-4">
             {["defensa", "tda", "salida", "ataque", "tad"].map(p => (
-              <button key={p} onClick={() => setHomePhase(p as TacticalPhase)} className={cn("px-3 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all", homePhase === p ? "bg-primary text-black" : "text-white/20 hover:bg-white/5")}>{p.toUpperCase()}</button>
+              <button key={p} onClick={() => setHomePhase(p as TacticalPhase)} className={cn("px-2 lg:px-3 py-1 lg:py-1.5 rounded-lg text-[7px] lg:text-[8px] font-black uppercase transition-all", homePhase === p ? "bg-primary text-black" : "text-white/20 hover:bg-white/5")}>{p === 'defensa' ? 'DEF' : p === 'ataque' ? 'ATK' : p.toUpperCase()}</button>
             ))}
           </div>
 
-          <div className="flex items-center gap-3">
-            <span className="text-[7px] font-black text-white/20 uppercase">BASCULACIÓN</span>
+          <div className="flex items-center gap-2 lg:gap-3">
+            <span className="hidden xl:block text-[7px] font-black text-white/20 uppercase">BASCULACIÓN</span>
             <div className="flex gap-1 bg-black/40 p-1 rounded-xl">
               {["left", "center", "right"].map(l => (
-                <button key={l} onClick={() => setHomeLateral(l as LateralShift)} className={cn("h-8 w-10 rounded-lg flex items-center justify-center transition-all", homeLateral === l ? "bg-primary text-black" : "text-white/20")}>
-                  <MoveHorizontal className={cn("h-3.5 w-3.5", l === 'left' ? 'rotate-180' : l === 'center' ? 'scale-75' : '')} />
+                <button key={l} onClick={() => setHomeLateral(l as LateralShift)} className={cn("h-7 w-8 lg:h-8 lg:w-10 rounded-lg flex items-center justify-center transition-all", homeLateral === l ? "bg-primary text-black" : "text-white/20")}>
+                  <MoveHorizontal className={cn("h-3 w-3 lg:h-3.5 lg:w-3.5", l === 'left' ? 'rotate-180' : l === 'center' ? 'scale-75' : '')} />
                 </button>
               ))}
             </div>
@@ -334,30 +315,30 @@ export default function MatchBoardPage() {
         </div>
       </div>
 
-      {/* FLOATING_CONTROL_ISLAND_RIGHT (Visitor) - REUBICADO AL BOTTOM */}
-      <div className="fixed bottom-10 right-10 z-[100] flex flex-col gap-4 pointer-events-none">
-        <div className="pointer-events-auto glass-panel p-4 border-rose-500/30 flex items-center gap-6 rounded-[2rem] animate-in slide-in-from-bottom-4">
-          <div className="flex items-center gap-3 border-r border-white/10 pr-4">
+      {/* ISLA CONTROL VISITANTE (BOTTOM RIGHT) */}
+      <div className="fixed bottom-4 lg:bottom-10 right-4 lg:right-10 z-[100] pointer-events-none scale-90 lg:scale-100 origin-bottom-right">
+        <div className="pointer-events-auto glass-panel p-3 lg:p-4 border-rose-500/30 flex items-center gap-3 lg:gap-6 rounded-[2rem] animate-in slide-in-from-bottom-4 shadow-2xl">
+          <div className="flex items-center gap-2 lg:gap-3 border-r border-white/10 pr-3 lg:pr-4">
             <div className="flex gap-1 bg-black/40 p-1 rounded-xl">
               {["left", "center", "right"].map(l => (
-                <button key={l} onClick={() => setGuestLateral(l as LateralShift)} className={cn("h-8 w-10 rounded-lg flex items-center justify-center transition-all", guestLateral === l ? "bg-rose-500 text-white" : "text-white/20")}>
-                  <MoveHorizontal className={cn("h-3.5 w-3.5", l === 'left' ? 'rotate-180' : l === 'center' ? 'scale-75' : '')} />
+                <button key={l} onClick={() => setGuestLateral(l as LateralShift)} className={cn("h-7 w-8 lg:h-8 lg:w-10 rounded-lg flex items-center justify-center transition-all", guestLateral === l ? "bg-rose-500 text-white" : "text-white/20")}>
+                  <MoveHorizontal className={cn("h-3 w-3 lg:h-3.5 lg:w-3.5", l === 'left' ? 'rotate-180' : l === 'center' ? 'scale-75' : '')} />
                 </button>
               ))}
             </div>
-            <span className="text-[7px] font-black text-white/20 uppercase">BASCULACIÓN</span>
+            <span className="hidden xl:block text-[7px] font-black text-white/20 uppercase">BASCULACIÓN</span>
           </div>
 
-          <div className="flex items-center gap-1 border-r border-white/10 pr-4">
+          <div className="flex items-center gap-0.5 lg:gap-1 border-r border-white/10 pr-3 lg:pr-4">
             {["defensa", "tda", "salida", "ataque", "tad"].map(p => (
-              <button key={p} onClick={() => setGuestPhase(p as TacticalPhase)} className={cn("px-3 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all", guestPhase === p ? "bg-rose-500 text-white" : "text-white/20 hover:bg-white/5")}>{p.toUpperCase()}</button>
+              <button key={p} onClick={() => setGuestPhase(p as TacticalPhase)} className={cn("px-2 lg:px-3 py-1 lg:py-1.5 rounded-lg text-[7px] lg:text-[8px] font-black uppercase transition-all", guestPhase === p ? "bg-rose-500 text-white" : "text-white/20 hover:bg-white/5")}>{p === 'defensa' ? 'DEF' : p === 'ataque' ? 'ATK' : p.toUpperCase()}</button>
             ))}
           </div>
 
-          <div className="space-y-1.5 border-l border-white/10 pl-4">
-            <span className="text-[8px] font-black text-rose-500 uppercase tracking-widest block text-center italic">VISIT_SQUAD</span>
+          <div className="space-y-1 lg:space-y-1.5 border-l border-white/10 pl-3 lg:pl-4">
+            <span className="hidden lg:block text-[8px] font-black text-rose-500 uppercase tracking-widest text-center italic">VISIT_SQUAD</span>
             <Select value={guestFormation} onValueChange={setGuestFormation}>
-              <SelectTrigger className="h-9 bg-black/40 border-rose-500/20 text-rose-500 font-black uppercase text-[9px] rounded-xl w-28">
+              <SelectTrigger className="h-8 lg:h-9 bg-black/40 border-rose-500/20 text-rose-500 font-black uppercase text-[8px] lg:text-[9px] rounded-xl w-24 lg:w-28">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-[#0a0f18] border-rose-500/20">
@@ -379,15 +360,15 @@ export default function MatchBoardPage() {
         </TacticalField>
       </main>
 
-      {/* TOOLBAR CENTRADO AL FONDO */}
-      <BoardToolbar variant="match" isPaintMode={isPaintMode} onTogglePaintMode={setIsPaintMode} onColorSelect={setCurrentColor} onClear={() => {}} activeColor={currentColor} className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[150] border-2 shadow-2xl" />
+      {/* TOOLBAR CENTRAL */}
+      <BoardToolbar variant="match" isPaintMode={isPaintMode} onTogglePaintMode={setIsPaintMode} onColorSelect={setCurrentColor} onClear={() => {}} activeColor={currentColor} className="fixed bottom-4 lg:bottom-10 left-1/2 -translate-x-1/2 z-[150] scale-90 lg:scale-100 shadow-2xl" />
 
-      {/* ROSTER TOGGLE REUBICADO */}
-      <div className="fixed bottom-28 right-10 z-[100]">
+      {/* ROSTER TOGGLE */}
+      <div className="fixed bottom-24 lg:bottom-32 right-4 lg:right-10 z-[100]">
         <Sheet>
           <SheetTrigger asChild>
-            <button className="h-14 w-14 rounded-2xl bg-primary text-black flex items-center justify-center shadow-2xl hover:scale-110 transition-all cyan-glow">
-              <Users className="h-6 w-6" />
+            <button className="h-12 w-12 lg:h-14 lg:w-14 rounded-2xl bg-primary text-black flex items-center justify-center shadow-2xl hover:scale-110 transition-all cyan-glow">
+              <Users className="h-5 w-5 lg:h-6 lg:w-6" />
             </button>
           </SheetTrigger>
           <SheetContent className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white sm:max-w-md">
