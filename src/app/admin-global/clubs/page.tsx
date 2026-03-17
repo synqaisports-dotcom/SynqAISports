@@ -94,6 +94,17 @@ export default function ManageClubsPage() {
     });
   };
 
+  const handleOpenCreate = () => {
+    setEditingId(null);
+    setFormData({
+      name: "",
+      plan: "Pro",
+      country: "ES",
+      status: "Active"
+    });
+    setIsSheetOpen(true);
+  };
+
   const handleEdit = (club: any) => {
     setEditingId(club.id);
     setFormData({
@@ -107,14 +118,38 @@ export default function ManageClubsPage() {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    setClubs(prev => prev.map(c => 
-      c.id === editingClubId ? { ...c, ...formData } : c
-    ));
-    
-    toast({
-      title: "NODO_ACTUALIZADO",
-      description: `La configuración de ${formData.name} ha sido sincronizada en la red.`,
-    });
+    if (editingClubId) {
+      setClubs(prev => prev.map(c => 
+        c.id === editingClubId ? { ...c, ...formData } : c
+      ));
+      
+      const savedClubs = JSON.parse(localStorage.getItem("synq_global_clubs") || "[]");
+      const updated = savedClubs.map((sc: any) => sc.id === editingClubId ? { ...sc, ...formData } : sc);
+      localStorage.setItem("synq_global_clubs", JSON.stringify(updated));
+
+      toast({
+        title: "NODO_ACTUALIZADO",
+        description: `La configuración de ${formData.name} ha sido sincronizada en la red.`,
+      });
+    } else {
+      const newClub = {
+        id: `c${Date.now()}`,
+        name: formData.name,
+        plan: formData.plan,
+        country: formData.country,
+        status: formData.status,
+        users: 0
+      };
+      setClubs(prev => [newClub, ...prev]);
+      
+      const savedClubs = JSON.parse(localStorage.getItem("synq_global_clubs") || "[]");
+      localStorage.setItem("synq_global_clubs", JSON.stringify([newClub, ...savedClubs]));
+
+      toast({
+        title: "NODO_VINCULADO",
+        description: `El club ${formData.name} ha sido desplegado correctamente.`,
+      });
+    }
     
     setIsSheetOpen(false);
   };
@@ -136,7 +171,10 @@ export default function ManageClubsPage() {
             Gestión de clubes
           </h1>
         </div>
-        <Button className="rounded-2xl bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 transition-all border-none">
+        <Button 
+          onClick={handleOpenCreate}
+          className="rounded-2xl bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 transition-all border-none"
+        >
           <Plus className="h-4 w-4 mr-2" /> Vincular Nuevo Nodo
         </Button>
       </div>
@@ -268,7 +306,7 @@ export default function ManageClubsPage() {
                 <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400">Node_Config_v2.0</span>
               </div>
               <SheetTitle className="text-3xl font-black italic tracking-tighter text-white uppercase text-left">
-                MODIFICAR_NODO
+                {editingClubId ? "MODIFICAR_NODO" : "VINCULAR_NODO"}
               </SheetTitle>
               <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left italic">
                 Ajuste los parámetros del club en la red global.
@@ -346,7 +384,7 @@ export default function ManageClubsPage() {
 
           <div className="p-8 bg-black/40 border-t border-white/5 flex gap-4">
             <SheetClose asChild>
-              <Button variant="ghost" className="flex-1 h-14 border border-white/10 text-white/40 font-black uppercase text-[10px] tracking-widest rounded-2xl">
+              <Button variant="ghost" className="flex-1 h-14 border border-white/10 text-white/40 font-black uppercase text-[10px] tracking-widest">
                 CANCELAR
               </Button>
             </SheetClose>
@@ -354,7 +392,7 @@ export default function ManageClubsPage() {
               onClick={handleSave}
               className="flex-[2] h-14 bg-emerald-500 text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:scale-[1.02] transition-all border-none"
             >
-              SINCRONIZAR_NODO
+              {editingClubId ? "SINCRONIZAR_NODO" : "DESPLEGAR_NODO"}
             </Button>
           </div>
         </SheetContent>
