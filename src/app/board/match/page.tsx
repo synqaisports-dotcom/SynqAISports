@@ -184,43 +184,46 @@ export default function MatchBoardPage() {
   return (
     <div className="flex-1 flex flex-col bg-black overflow-hidden relative touch-none select-none" onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}>
       
-      {/* MARCADOR CENTRAL - v15.1.0 */}
-      <header className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-4 px-6 py-2 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-full shadow-2xl transition-all scale-90 md:scale-100">
-        <div className="flex flex-col items-start border-r border-white/10 pr-4">
-          <div className="flex items-center gap-1.5">
-            <Trophy className="h-3 w-3 text-primary animate-pulse" />
-            <span className="text-[8px] font-black text-primary tracking-widest uppercase">MATCH_LIVE</span>
-          </div>
-          <h1 className="text-[10px] font-headline font-black text-white italic uppercase tracking-tight leading-none">DIRECTO</h1>
-        </div>
-
-        <div className="flex items-center gap-8 px-4 bg-black/20 border border-white/5 rounded-2xl py-1.5 min-w-[200px] justify-center">
-          <div className="flex flex-col items-center">
-            <span className="text-[7px] font-black text-white/40 uppercase mb-1">LOCAL</span>
-            <div className="flex items-center gap-2">
-              <button onClick={() => setScore(s => ({...s, home: Math.max(0, s.home - 1)}))} className="text-white/20 hover:text-white text-xs">-</button>
-              <span className="text-2xl font-black text-white tabular-nums">{score.home}</span>
-              <button onClick={() => setScore(s => ({...s, home: s.home + 1}))} className="text-white/20 hover:text-white text-xs">+</button>
-            </div>
-          </div>
-          
-          <div className="text-xl font-black text-white/20 italic self-end pb-1">VS</div>
-
-          <div className="flex flex-col items-center">
-            <span className="text-[7px] font-black text-white/40 uppercase mb-1">VISITANTE</span>
-            <div className="flex items-center gap-2">
-              <button onClick={() => setScore(s => ({...s, guest: Math.max(0, s.guest - 1)}))} className="text-white/20 hover:text-white text-xs">-</button>
-              <span className="text-2xl font-black text-white tabular-nums">{score.guest}</span>
-              <button onClick={() => setScore(s => ({...s, guest: s.guest + 1}))} className="text-white/20 hover:text-white text-xs">+</button>
-            </div>
+      {/* CABECERA DE ESTADO (CENTRAL) - v15.3.0 */}
+      <header className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 px-4 py-1.5 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-full shadow-2xl transition-all scale-90 md:scale-100">
+        <div className="flex items-center gap-2">
+          <Trophy className="h-3 w-3 text-primary animate-pulse" />
+          <div className="flex flex-col">
+            <span className="text-[7px] font-black text-primary tracking-widest uppercase">MATCH_LIVE</span>
+            <h1 className="text-[8px] font-headline font-black text-white italic uppercase tracking-tight leading-none">DIRECTO</h1>
           </div>
         </div>
       </header>
 
+      {/* MARCADOR INDEPENDIENTE (TOP-LEFT) - v15.3.0 */}
+      <div className="fixed top-4 left-20 z-[100] flex items-center gap-4 px-4 py-1 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl animate-in slide-in-from-left-4 duration-700">
+        <div className="flex items-center gap-4">
+          <div className="flex flex-col items-center">
+            <span className="text-[6px] font-black text-white/40 uppercase">LOC</span>
+            <div className="flex items-center gap-1.5">
+              <button onClick={() => setScore(s => ({...s, home: Math.max(0, s.home - 1)}))} className="text-white/20 hover:text-white text-[8px]">-</button>
+              <span className="text-xl font-black text-white tabular-nums">{score.home}</span>
+              <button onClick={() => setScore(s => ({...s, home: s.home + 1}))} className="text-white/20 hover:text-white text-[8px]">+</button>
+            </div>
+          </div>
+          
+          <div className="text-xs font-black text-white/20 italic">VS</div>
+
+          <div className="flex flex-col items-center">
+            <span className="text-[6px] font-black text-white/40 uppercase">VIS</span>
+            <div className="flex items-center gap-1.5">
+              <button onClick={() => setScore(s => ({...s, guest: Math.max(0, s.guest - 1)}))} className="text-white/20 hover:text-white text-[8px]">-</button>
+              <span className="text-xl font-black text-white tabular-nums">{score.guest}</span>
+              <button onClick={() => setScore(s => ({...s, guest: s.guest + 1}))} className="text-white/20 hover:text-white text-[8px]">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* ISLA DE TELEMETRÍA Y GUARDADO (TOP-RIGHT) - v15.2.0 */}
       <div className="fixed top-4 right-6 z-[100] flex items-center gap-3 animate-in slide-in-from-right-4 duration-700">
         
-        {/* BOTÓN VINCULACIÓN WATCH (EXTRAÍDO Y FUNCIONAL) */}
+        {/* BOTÓN VINCULACIÓN WATCH */}
         <Dialog>
           <DialogTrigger asChild>
             <button className="h-12 w-12 rounded-2xl bg-black/60 backdrop-blur-2xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all shadow-2xl active:scale-95 group">
