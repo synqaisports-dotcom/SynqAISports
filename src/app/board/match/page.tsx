@@ -165,7 +165,7 @@ export default function MatchBoardPage() {
   return (
     <div className="flex-1 flex flex-col bg-black overflow-hidden relative touch-none select-none" onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}>
       
-      {/* CABECERA DINÁMICA - v14.1.0 */}
+      {/* MARCADOR CENTRAL - v15.1.0 */}
       <header className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-4 px-6 py-2 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-full shadow-2xl transition-all scale-90 md:scale-100">
         <div className="flex flex-col items-start border-r border-white/10 pr-4">
           <div className="flex items-center gap-1.5">
@@ -175,12 +175,35 @@ export default function MatchBoardPage() {
           <h1 className="text-[10px] font-headline font-black text-white italic uppercase tracking-tight leading-none">DIRECTO</h1>
         </div>
 
-        <div className="flex items-center gap-4 px-4 bg-black/20 border border-white/5 rounded-2xl py-1.5">
-          <div className="flex items-center gap-2">
-            <button onClick={() => setScore(s => ({...s, home: Math.max(0, s.home - 1)}))} className="text-white/20 hover:text-white text-xs">-</button>
-            <span className="text-xl font-black text-white tabular-nums">{score.home}</span>
-            <button onClick={() => setScore(s => ({...s, home: s.home + 1}))} className="text-white/20 hover:text-white text-xs">+</button>
+        <div className="flex items-center gap-8 px-4 bg-black/20 border border-white/5 rounded-2xl py-1.5 min-w-[200px] justify-center">
+          <div className="flex flex-col items-center">
+            <span className="text-[7px] font-black text-white/40 uppercase mb-1">LOCAL</span>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setScore(s => ({...s, home: Math.max(0, s.home - 1)}))} className="text-white/20 hover:text-white text-xs">-</button>
+              <span className="text-2xl font-black text-white tabular-nums">{score.home}</span>
+              <button onClick={() => setScore(s => ({...s, home: s.home + 1}))} className="text-white/20 hover:text-white text-xs">+</button>
+            </div>
           </div>
+          
+          <div className="text-xl font-black text-white/20 italic self-end pb-1">VS</div>
+
+          <div className="flex flex-col items-center">
+            <span className="text-[7px] font-black text-white/40 uppercase mb-1">VISITANTE</span>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setScore(s => ({...s, guest: Math.max(0, s.guest - 1)}))} className="text-white/20 hover:text-white text-xs">-</button>
+              <span className="text-2xl font-black text-white tabular-nums">{score.guest}</span>
+              <button onClick={() => setScore(s => ({...s, guest: s.guest + 1}))} className="text-white/20 hover:text-white text-xs">+</button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* ISLA DE TELEMETRÍA Y GUARDADO (TOP-RIGHT) - v15.1.0 */}
+      <div className="fixed top-4 right-6 z-[100] flex items-center gap-3 animate-in slide-in-from-right-4 duration-700">
+        <div className="flex items-center gap-4 px-4 py-1.5 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl">
+          <button className="h-9 w-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all">
+            <Watch className="h-4 w-4" />
+          </button>
           
           <div className="flex flex-col items-center min-w-[70px]">
             <span className={cn("text-2xl font-black font-headline tabular-nums tracking-tighter", isRunning ? "text-primary cyan-text-glow" : "text-white/40")}>
@@ -188,23 +211,12 @@ export default function MatchBoardPage() {
             </span>
             <button onClick={() => setIsRunning(!isRunning)} className="text-[7px] font-black uppercase text-primary/60 tracking-widest hover:text-primary">{isRunning ? 'PAUSE' : 'START'}</button>
           </div>
-
-          <div className="flex items-center gap-2">
-            <button onClick={() => setScore(s => ({...s, guest: Math.max(0, s.guest - 1)}))} className="text-white/20 hover:text-white text-xs">-</button>
-            <span className="text-xl font-black text-white tabular-nums">{score.guest}</span>
-            <button onClick={() => setScore(s => ({...s, guest: s.guest + 1}))} className="text-white/20 hover:text-white text-xs">+</button>
-          </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button className="h-9 w-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all">
-            <Watch className="h-4 w-4" />
-          </button>
-          <Button className="h-9 bg-primary text-black font-black uppercase text-[9px] tracking-widest px-5 rounded-xl cyan-glow border-none shadow-xl hover:scale-105 transition-all">
-            GUARDAR
-          </Button>
-        </div>
-      </header>
+        <Button className="h-12 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-2xl cyan-glow border-none shadow-xl hover:scale-105 transition-all">
+          GUARDAR
+        </Button>
+      </div>
 
       {/* ÁREA DE JUEGO */}
       <main className="flex-1 relative overflow-hidden flex items-center justify-center pt-20 pb-28">

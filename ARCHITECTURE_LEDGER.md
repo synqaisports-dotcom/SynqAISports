@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v15.0.0 (Edición Fluidez Táctica)
+# SynqSports Pro - ARCHITECTURE_LEDGER v15.1.0 (Edición Fluidez Táctica)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -26,5 +26,6 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 - **v14.1.0**: **PROTOCOL_SMOOTH_FORMATION_RESTORE**: Restauración de las transiciones cinemáticas (`transition-all`) en cambios de formación. Reajuste de escala de los chips de jugadores para entorno tablet. Implementación de `will-change` para aceleración por hardware.
 - **v14.2.0**: **PROTOCOL_STABILITY_RESTORE**: Corrección de error de sintaxis en `PlayerChip.tsx`. Restauración de importaciones críticas y utilidad `cn` en `admin-global/page.tsx`. Blindaje del auto-cierre del Sidebar tras navegación en tablets.
 
-## 14. Maximización del Área Operativa (v15.0.0)
+## 14. Maximización del Área Operativa (v15.0.0 - v15.1.0)
 - **v15.0.0**: **PROTOCOL_MAX_PITCH_SURFACE**: Ajuste del componente `TacticalField` para ocupar el 98% del ancho y 96% del alto de la pantalla, maximizando el área táctica en tablets y PC.
+- **v15.1.0**: **PROTOCOL_TELEMETRY_RELOCATION**: Reubicación del cronómetro y controles de tiempo a la esquina superior derecha, separándolos del marcador central para mayor limpieza visual.
