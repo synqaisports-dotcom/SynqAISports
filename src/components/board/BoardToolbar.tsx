@@ -95,11 +95,6 @@ const MATERIAL_TOOLS = [
   { id: 'pica', icon: Flag, label: 'Pica' },
 ] as const;
 
-/**
- * BoardToolbar - v2.1.0
- * Compactado para Tablets. Botones de 36px y gaps de 4px.
- * Reducción de ancho total para evitar desbordamientos.
- */
 export function BoardToolbar({ 
   theme = "cyan", 
   onToolSelect, 
@@ -122,13 +117,12 @@ export function BoardToolbar({
   const activeClass = `${accentColor} text-black ${glowShadow} scale-105`;
   const isHorizontal = orientation === "horizontal";
 
-  // Estilos de botones compactos para tablet
-  const btnClass = "h-9 w-9 rounded-xl flex items-center justify-center transition-all group relative shrink-0";
+  const btnClass = "h-9 w-9 rounded-xl flex items-center justify-center transition-all group relative shrink-0 active:scale-95";
 
   if (variant === "match") {
     return (
       <aside className={cn(
-        "w-14 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] flex flex-col items-center py-4 gap-3 z-50 shadow-2xl",
+        "w-14 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] flex flex-col items-center py-4 gap-3 z-50 shadow-2xl pointer-events-auto",
         className
       )}>
         <button onClick={() => onTogglePaintMode?.(false)} className={cn(btnClass, !isPaintMode ? activeClass : "text-white/20 hover:text-white")} title="Modo Selección">
@@ -168,7 +162,7 @@ export function BoardToolbar({
 
   return (
     <aside className={cn(
-      "bg-black/60 backdrop-blur-2xl border border-white/10 transition-all duration-500 flex items-center z-50 overflow-hidden shadow-2xl",
+      "bg-black/60 backdrop-blur-2xl border border-white/10 transition-all duration-500 flex items-center z-50 overflow-hidden shadow-2xl pointer-events-auto",
       theme === "amber" ? "border-amber-500/30 shadow-amber-500/10" : "border-primary/30 shadow-primary/10",
       isHorizontal 
         ? "flex-row px-2 rounded-full h-12" 

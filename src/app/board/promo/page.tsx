@@ -141,24 +141,49 @@ function PromoBoardContent() {
     ctx.strokeStyle = element.color; ctx.fillStyle = hexToRgba(element.color, 0.15); ctx.lineWidth = 3;
     if (element.lineStyle === 'dashed') ctx.setLineDash([10, 5]); else ctx.setLineDash([]);
 
-    if (element.type === 'player') {
-      ctx.beginPath(); ctx.arc(centerX, centerY, width/2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = '#fff'; ctx.font = 'bold 12px Space Grotesk'; ctx.textAlign = 'center'; ctx.fillText((element.number || 1).toString(), centerX, centerY + 4);
-    } else if (element.type === 'ball') {
-      ctx.beginPath(); ctx.arc(centerX, centerY, 5, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.stroke();
-    } else if (element.type === 'rect') {
-      ctx.beginPath(); ctx.rect(minX, minY, width, height); ctx.fill(); ctx.stroke();
-    } else if (element.type === 'circle') {
-      ctx.beginPath(); ctx.arc(centerX, centerY, width/2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    } else if (['arrow', 'double-arrow', 'zigzag'].includes(element.type)) {
-      ctx.beginPath();
-      const p0 = { x: element.points[0].x * widthPx, y: element.points[0].y * heightPx };
-      const p1 = { x: element.points[1].x * widthPx, y: element.points[1].y * heightPx };
-      if (element.controlPoint) {
-        const cp = { x: element.controlPoint.x * widthPx, y: element.controlPoint.y * heightPx };
-        ctx.moveTo(p0.x, p0.y); ctx.quadraticCurveTo(cp.x, cp.y, p1.x, p1.y);
-      } else { ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); }
-      ctx.stroke();
+    switch (element.type) {
+      case 'player':
+        ctx.beginPath(); ctx.arc(centerX, centerY, width/2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 12px Space Grotesk'; ctx.textAlign = 'center'; ctx.fillText((element.number || 1).toString(), centerX, centerY + 4);
+        break;
+      case 'ball':
+        ctx.beginPath(); ctx.arc(centerX, centerY, 5, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.stroke();
+        break;
+      case 'rect':
+        ctx.beginPath(); ctx.rect(minX, minY, width, height); ctx.fill(); ctx.stroke();
+        break;
+      case 'circle':
+        ctx.beginPath(); ctx.arc(centerX, centerY, width/2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        break;
+      case 'arrow':
+      case 'double-arrow':
+      case 'zigzag':
+        ctx.beginPath();
+        const p0 = { x: element.points[0].x * widthPx, y: element.points[0].y * heightPx };
+        const p1 = { x: element.points[1].x * widthPx, y: element.points[1].y * heightPx };
+        if (element.controlPoint) {
+          const cp = { x: element.controlPoint.x * widthPx, y: element.controlPoint.y * heightPx };
+          ctx.moveTo(p0.x, p0.y); ctx.quadraticCurveTo(cp.x, cp.y, p1.x, p1.y);
+        } else { ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); }
+        ctx.stroke();
+        break;
+      case 'cone':
+        ctx.beginPath(); ctx.moveTo(centerX - 10, maxY); ctx.lineTo(centerX + 10, maxY); ctx.lineTo(centerX, minY); ctx.closePath(); ctx.fill(); ctx.stroke();
+        break;
+      case 'seta':
+        ctx.beginPath(); ctx.ellipse(centerX, centerY, width/2, height/2, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        break;
+      case 'ladder':
+        ctx.strokeRect(minX, minY, width, height);
+        for(let i=1; i<5; i++) {
+          const x = minX + (width * i / 5);
+          ctx.beginPath(); ctx.moveTo(x, minY); ctx.lineTo(x, maxY); ctx.stroke();
+        }
+        break;
+      case 'minigoal':
+        ctx.strokeRect(minX, minY, width, height);
+        ctx.setLineDash([2, 2]); ctx.strokeRect(minX + 2, minY + 2, width - 4, height - 4);
+        break;
     }
 
     if (isSelected) {
@@ -167,7 +192,6 @@ function PromoBoardContent() {
       ctx.setLineDash([]); ctx.fillStyle = '#fff'; 
       const handles = [{ x: minX - pad, y: minY - pad }, { x: maxX + pad, y: minY - pad }, { x: minX - pad, y: maxY + pad }, { x: maxX + pad, y: maxY + pad }];
       handles.forEach(h => { ctx.beginPath(); ctx.arc(h.x, h.y, 5, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
-      // Rot handle
       ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(centerX, minY - pad - 20, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     } ctx.restore();
   }, [hexToRgba]);
@@ -177,6 +201,18 @@ function PromoBoardContent() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     elements.forEach(el => drawElement(ctx, el, selectedIds.includes(el.id)));
   }, [elements, selectedIds, drawElement]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current; if (!canvas) return;
+    const obs = new ResizeObserver(() => {
+      if (canvas.parentElement) { 
+        canvas.width = canvas.parentElement.clientWidth; 
+        canvas.height = canvas.parentElement.clientHeight; 
+        redrawAll(); 
+      }
+    });
+    obs.observe(canvas.parentElement!); return () => obs.disconnect();
+  }, [redrawAll]);
 
   useEffect(() => { redrawAll(); }, [elements, selectedIds, fieldType, showLanes, redrawAll]);
 
@@ -279,7 +315,6 @@ function PromoBoardContent() {
 
   return (
     <div className="h-full w-full flex flex-col bg-black overflow-hidden relative">
-      {/* FLOATING_HEADER_PROMO (v12.2) */}
       <header className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 px-4 py-2 bg-black/60 backdrop-blur-2xl border border-primary/30 rounded-2xl shadow-2xl animate-in slide-in-from-top-2">
         <div className="flex flex-col pr-3 border-r border-white/10 shrink-0">
           <div className="flex items-center gap-1.5"><Zap className="h-3 w-3 text-primary animate-pulse" /><span className="text-[7px] font-black text-primary tracking-widest uppercase italic">Promo_Mode</span></div>
@@ -309,14 +344,12 @@ function PromoBoardContent() {
         </Button>
       </header>
 
-      {/* FULL_SCREEN_CANVAS_AREA */}
       <main className="flex-1 relative flex overflow-hidden">
         <TacticalField theme="cyan" fieldType={fieldType} showWatermark showLanes={showLanes}>
           <canvas ref={canvasRef} className="absolute inset-0 z-30 pointer-events-auto" onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} />
         </TacticalField>
       </main>
 
-      {/* FLOATING_TOOLBARS_BOTTOM (Optimized v12.2) */}
       <div className="fixed bottom-6 left-0 right-0 flex justify-center items-end gap-4 px-4 z-[100] pointer-events-none">
         <div className="pointer-events-auto">
           <BoardToolbar theme="cyan" variant="materials" orientation="horizontal" activeTool={activeTool} onToolSelect={(t) => { addElementAtCenter(t); }} />
@@ -326,7 +359,6 @@ function PromoBoardContent() {
         </div>
       </div>
 
-      {/* SAVE_SHEET (Formulario de Paridad Pro) */}
       <Sheet open={isSaveSheetOpen} onOpenChange={setIsSaveSheetOpen}>
         <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
           <div className="p-8 border-b border-white/5 bg-black/40">
