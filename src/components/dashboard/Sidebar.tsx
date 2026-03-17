@@ -121,9 +121,9 @@ const navItems: NavItem[] = [
   { title: "Biblioteca Táctica", href: "/dashboard/coach/library", icon: Dumbbell, category: "operational" },
   { title: "Neural Planner", href: "/dashboard/coach/planner", icon: Activity, category: "operational" },
   
-  // TERMINALES_ACCESO
-  { title: "Tutor Portal", href: "/tutor", icon: UserCircle, category: "user" },
-  { title: "Smartwatch Link", href: "/smartwatch", icon: Watch, category: "user" },
+  // TERMINALES_ACCESO - RESTRINGIDOS A SUPERADMIN (v11.5.0)
+  { title: "Tutor Portal", href: "/tutor", icon: UserCircle, category: "user", roles: ["superadmin"] },
+  { title: "Smartwatch Link", href: "/smartwatch", icon: Watch, category: "user", roles: ["superadmin"] },
 ];
 
 export function DashboardSidebar() {
