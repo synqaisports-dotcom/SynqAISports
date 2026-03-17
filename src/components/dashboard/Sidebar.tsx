@@ -91,6 +91,7 @@ const navItems: NavItem[] = [
   { title: "Mis Tareas (4-12-4)", href: "/dashboard/promo/tasks", icon: LayoutGrid, category: "sandbox" },
   { title: "Mi Agenda Promo", href: "/dashboard/promo/sessions", icon: Calendar, category: "sandbox" },
   { title: "Mis Partidos (Max 20)", href: "/dashboard/promo/matches", icon: Swords, category: "sandbox" },
+  { title: "Vincular Watch", href: "/dashboard/promo/watch-config", icon: Smartphone, category: "sandbox" },
   { title: "Estadísticas Local", href: "/dashboard/promo/stats", icon: BarChart3, category: "sandbox" },
   { title: "Pizarra Promo", href: "/board/promo", icon: Zap, category: "sandbox" },
   { title: "Pizarra Partido", href: "/board/match", icon: Trophy, category: "sandbox" },
