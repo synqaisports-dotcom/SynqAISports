@@ -24,7 +24,8 @@ import {
   Settings2,
   ChevronLeft,
   ChevronRight,
-  Menu
+  Menu,
+  Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -46,6 +47,13 @@ import {
   SheetTitle, 
   SheetTrigger
 } from "@/components/ui/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 
@@ -81,10 +89,21 @@ export default function MatchBoardPage() {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [isPaintMode, setIsPaintMode] = useState(false);
   const [currentColor, setCurrentColor] = useState("#00f2ff");
+  const [pairingCode, setPairingCode] = useState("");
+  
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fieldRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { setMounted(true); }, []);
+
+  useEffect(() => {
+    let code = localStorage.getItem("synq_watch_pairing_code");
+    if (!code) {
+      code = Math.floor(100000 + Math.random() * 900000).toString();
+      localStorage.setItem("synq_watch_pairing_code", code);
+    }
+    setPairingCode(code);
+  }, []);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -198,13 +217,40 @@ export default function MatchBoardPage() {
         </div>
       </header>
 
-      {/* ISLA DE TELEMETRÍA Y GUARDADO (TOP-RIGHT) - v15.1.0 */}
+      {/* ISLA DE TELEMETRÍA Y GUARDADO (TOP-RIGHT) - v15.2.0 */}
       <div className="fixed top-4 right-6 z-[100] flex items-center gap-3 animate-in slide-in-from-right-4 duration-700">
+        
+        {/* BOTÓN VINCULACIÓN WATCH (EXTRAÍDO Y FUNCIONAL) */}
+        <Dialog>
+          <DialogTrigger asChild>
+            <button className="h-12 w-12 rounded-2xl bg-black/60 backdrop-blur-2xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all shadow-2xl active:scale-95 group">
+              <Watch className="h-5 w-5 group-hover:animate-pulse" />
+            </button>
+          </DialogTrigger>
+          <DialogContent className="bg-[#04070c]/98 backdrop-blur-3xl border-primary/20 text-white max-w-sm rounded-[2rem] shadow-[0_0_50px_rgba(0,242,255,0.2)]">
+            <DialogHeader className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Zap className="h-4 w-4 text-primary animate-pulse" />
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Watch_Link_Protocol</span>
+              </div>
+              <DialogTitle className="text-2xl font-black italic uppercase tracking-tighter">VINCULAR RELOJ</DialogTitle>
+            </DialogHeader>
+            <div className="py-10 flex flex-col items-center gap-6">
+              <div className="p-6 bg-primary/5 border border-primary/20 rounded-3xl w-full text-center relative overflow-hidden">
+                <div className="absolute inset-0 bg-primary/5 scan-line opacity-20" />
+                <p className="text-[9px] font-black text-primary/40 uppercase tracking-[0.3em] mb-4">Código de Emparejamiento</p>
+                <span className="text-5xl font-black font-headline tracking-[0.2em] text-primary cyan-text-glow italic relative z-10">
+                  {pairingCode}
+                </span>
+              </div>
+              <p className="text-[10px] text-white/40 text-center uppercase font-bold tracking-widest leading-loose italic">
+                Introduzca este código en su Smartwatch para sincronizar la telemetría y el cronómetro master en tiempo real.
+              </p>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         <div className="flex items-center gap-4 px-4 py-1.5 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl">
-          <button className="h-9 w-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all">
-            <Watch className="h-4 w-4" />
-          </button>
-          
           <div className="flex flex-col items-center min-w-[70px]">
             <span className={cn("text-2xl font-black font-headline tabular-nums tracking-tighter", isRunning ? "text-primary cyan-text-glow" : "text-white/40")}>
               {formatTime(timeLeft)}
