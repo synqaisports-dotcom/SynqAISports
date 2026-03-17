@@ -18,7 +18,11 @@ import {
   Vibrate,
   ShieldAlert,
   History,
-  Timer
+  Timer,
+  Info,
+  QrCode,
+  Download,
+  Share2
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,6 +37,14 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetDescription,
+  SheetTrigger
+} from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -83,13 +95,63 @@ export default function WatchConfigPage() {
           </h1>
         </div>
         
-        <Button 
-          onClick={handleSaveProtocol}
-          disabled={loading}
-          className="rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none"
-        >
-          {loading ? "Sincronizando..." : "Guardar Protocolo"} <Save className="h-4 w-4 ml-2" />
-        </Button>
+        <div className="flex gap-4">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" className="h-12 border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest px-6 rounded-xl hover:bg-primary/10">
+                Guía de Instalación
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)]">
+              <SheetHeader className="space-y-4 mb-10">
+                <div className="flex items-center gap-3">
+                  <Download className="h-4 w-4 text-primary animate-pulse" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Deploy_Manual_v1.0</span>
+                </div>
+                <SheetTitle className="text-3xl font-black italic tracking-tighter uppercase leading-none">INSTALAR EN RELOJ</SheetTitle>
+                <SheetDescription className="text-[10px] uppercase font-bold text-primary/40 tracking-widest italic">Flujo universal de despliegue PWA.</SheetDescription>
+              </SheetHeader>
+              
+              <div className="space-y-8">
+                <div className="space-y-6">
+                  <InstallationStep 
+                    step="01" 
+                    title="Acceder al Nodo" 
+                    desc="Abra el navegador en su Smartwatch y acceda a synqai.sports/smartwatch" 
+                  />
+                  <InstallationStep 
+                    step="02" 
+                    title="Añadir a Inicio" 
+                    desc="En el menú del navegador del reloj, seleccione 'Añadir a pantalla de inicio'. Esto creará el icono de SynqAI." 
+                  />
+                  <InstallationStep 
+                    step="03" 
+                    title="Vincular Token" 
+                    desc="Inicie la App instalada en el reloj e introduzca el código generado en su Pizarra de Partido." 
+                  />
+                </div>
+
+                <div className="p-6 bg-primary/5 border border-primary/20 rounded-3xl space-y-4">
+                   <div className="flex items-center gap-3">
+                      <ShieldCheck className="h-4 w-4 text-primary" />
+                      <span className="text-[10px] font-black uppercase text-primary tracking-widest">Sin App Store</span>
+                   </div>
+                   <p className="text-[10px] text-white/40 leading-relaxed font-bold uppercase italic">
+                     Utilizamos tecnología PWA para que el despliegue sea instantáneo y gratuito para todos los entrenadores del club.
+                   </p>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+
+          <Button 
+            onClick={handleSaveProtocol}
+            disabled={loading}
+            className="rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none"
+          >
+            {loading ? "Sincronizando..." : "Guardar Protocolo"} <Save className="h-4 w-4 ml-2" />
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
@@ -155,7 +217,7 @@ export default function WatchConfigPage() {
               !operationalAlertsActive && "opacity-30 pointer-events-none grayscale"
             )}>
               
-              {/* NUEVA LÓGICA DE TIEMPO SINCRO */}
+              {/* LÓGICA DE TIEMPO SINCRO */}
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 p-6 bg-primary/5 border border-primary/20 rounded-2xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4 opacity-5"><History className="h-16 w-16 text-primary" /></div>
                 <div className="space-y-1 max-w-sm relative z-10">
@@ -194,7 +256,7 @@ export default function WatchConfigPage() {
                 </div>
               </div>
 
-              {/* NUEVA LÓGICA DE INTERVALOS DE AVISO */}
+              {/* LÓGICA DE INTERVALOS DE AVISO */}
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
                 <div className="space-y-1 max-w-sm">
                   <h4 className="text-sm font-black text-white uppercase italic">Intervalos de Aviso de Cambio</h4>
@@ -323,6 +385,18 @@ export default function WatchConfigPage() {
           </Card>
 
         </div>
+      </div>
+    </div>
+  );
+}
+
+function InstallationStep({ step, title, desc }: { step: string, title: string, desc: string }) {
+  return (
+    <div className="flex gap-6 group">
+      <span className="text-2xl font-black italic text-primary/20 group-hover:text-primary transition-colors">{step}</span>
+      <div className="space-y-1">
+        <h4 className="text-sm font-black text-white uppercase italic">{title}</h4>
+        <p className="text-[10px] text-white/40 font-bold uppercase leading-relaxed">{desc}</p>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v11.2.0 (Edición Crecimiento Exponencial)
+# SynqSports Pro - ARCHITECTURE_LEDGER v11.3.0 (Edición Crecimiento Exponencial)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -25,3 +25,4 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 - **v11.0.0**: **PROTOCOL_THUMBNAIL_ENGINE**: Implementación de renderizado dinámico de miniaturas tácticas en el Sandbox.
 - **v11.1.0**: **PROTOCOL_SANDBOX_TECHNICAL_SHEET**: Integración del formulario de ficha técnica profesional en el guardado del Sandbox.
 - **v11.2.0**: **PROTOCOL_VISUAL_PRECISION_PARITY**: Activación de controles de opacidad y estilos de línea discontinua en la Pizarra Promo para paridad con el modo Pro.
+- **v11.3.0**: **PROTOCOL_PWA_WATCH_FLOW**: Definición del flujo de instalación sin App Store para Smartwatches mediante tecnología PWA y emparejamiento por token.
