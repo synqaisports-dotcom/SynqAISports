@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { 
   Zap, 
   Lock, 
@@ -38,7 +38,8 @@ import {
   CloudSun,
   Thermometer,
   Share2,
-  Download
+  Download,
+  Database
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -66,6 +67,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { synqSync } from "@/lib/sync-service";
+import { useSearchParams } from "next/navigation";
 
 interface Point {
   x: number; // 0.0 to 1.0 (Normalized)
@@ -98,9 +100,12 @@ const isMaterial = (type: DrawingTool) =>
 const isCircular = (type: DrawingTool) => 
   ['player', 'ball', 'circle', 'seta'].includes(type);
 
-export default function PromoBoardPage() {
+function PromoBoardContent() {
   const { profile } = useAuth();
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+  const exerciseId = searchParams.get("id");
+
   const [fieldType, setFieldType] = useState<FieldType>("f11");
   const [showLanes, setShowLanes] = useState(false);
   const [activeTool, setActiveTool] = useState<DrawingTool>("select");
@@ -130,10 +135,11 @@ export default function PromoBoardPage() {
   const interactionMode = useRef<'drawing' | 'resizing' | 'rotating' | 'dragging' | 'curving' | 'none'>('none');
   const activeHandleIndex = useRef<number | null>(null);
 
+  // Carga inicial y detección de ejercicio específico
   useEffect(() => {
-    // Carga de stats locales
     const vault = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": [], "sessions": []}');
     const exercises = vault.exercises || [];
+    
     setPromoStats({
       warmup: exercises.filter((e: any) => e.block === 'warmup').length,
       main: exercises.filter((e: any) => e.block === 'main').length,
@@ -141,10 +147,25 @@ export default function PromoBoardPage() {
       sessions: (vault.sessions || []).length
     });
 
+    // Cargar ejercicio si hay ID en la URL
+    if (exerciseId) {
+      const target = exercises.find((e: any) => e.id.toString() === exerciseId);
+      if (target) {
+        setElements(target.elements || []);
+        if (target.fieldType) setFieldType(target.fieldType);
+        toast({ title: "EJERCICIO_CARGADO", description: `Sincronizando slot local ${exerciseId.slice(-4)}` });
+      }
+    }
+
     setIsOnline(navigator.onLine);
-    window.addEventListener('online', () => setIsOnline(true));
-    window.addEventListener('offline', () => setIsOnline(false));
-  }, []);
+    const handleConnectivity = () => setIsOnline(navigator.onLine);
+    window.addEventListener('online', handleConnectivity);
+    window.addEventListener('offline', handleConnectivity);
+    return () => {
+      window.removeEventListener('online', handleConnectivity);
+      window.removeEventListener('offline', handleConnectivity);
+    };
+  }, [exerciseId, toast]);
 
   const hexToRgba = (hex: string, alpha: number) => {
     const r = parseInt(hex.slice(1, 3), 16);
@@ -418,12 +439,24 @@ export default function PromoBoardPage() {
     const vault = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": [], "sessions": []}');
     const exercises = vault.exercises || [];
     
-    // Validar Límites
+    // Si estamos editando un ejercicio existente, lo actualizamos en lugar de crear uno nuevo
+    if (exerciseId) {
+      const idx = exercises.findIndex((e: any) => e.id.toString() === exerciseId);
+      if (idx !== -1) {
+        exercises[idx] = { ...exercises[idx], block, elements, fieldType, updatedAt: Date.now() };
+        localStorage.setItem("synq_promo_vault", JSON.stringify({ ...vault, exercises }));
+        toast({ title: "ACTUALIZACIÓN_COMPLETA", description: `Los cambios han sido guardados en el slot ${exerciseId.slice(-4)}` });
+        setIsSaveSheetOpen(false);
+        return;
+      }
+    }
+
+    // Validar Límites para nuevas tareas
     if (block === 'warmup' && promoStats.warmup >= MAX_WARMUP) { toast({ variant: "destructive", title: "LÍMITE_CALENTAMIENTO", description: "Capacidad local agotada (Máx 4)." }); return; }
     if (block === 'main' && promoStats.main >= MAX_MAIN) { toast({ variant: "destructive", title: "LÍMITE_PARTE_PRINCIPAL", description: "Capacidad local agotada (Máx 12)." }); return; }
     if (block === 'cooldown' && promoStats.cooldown >= MAX_COOLDOWN) { toast({ variant: "destructive", title: "LÍMITE_VUELTA_CALMA", description: "Capacidad local agotada (Máx 4)." }); return; }
 
-    const newEx = { id: Date.now(), block, elements };
+    const newEx = { id: Date.now(), block, elements, fieldType };
     vault.exercises.push(newEx);
     localStorage.setItem("synq_promo_vault", JSON.stringify(vault));
     
@@ -431,58 +464,30 @@ export default function PromoBoardPage() {
     setIsSaveSheetOpen(false);
     toast({ title: "SINCRO_LOCAL_OK", description: `Ejercicio blindado en tu Sandbox de Cantera.` });
     
-    // Tracking publicitario diferido
     synqSync.trackEvent('session_save', { block, elementCount: elements.length });
   };
 
-  /**
-   * PROTOCOLO_VIRAL_LOOP v9.43.0
-   * Genera captura del canvas con marca de agua inyectada para captación orgánica.
-   */
   const handleExportViral = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
-    // Crear un canvas temporal para la exportación con marca de agua
     const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = canvas.width;
-    tempCanvas.height = canvas.height;
+    tempCanvas.width = canvas.width; tempCanvas.height = canvas.height;
     const tCtx = tempCanvas.getContext('2d');
     if (!tCtx) return;
-
-    // 1. Dibujar el fondo (Campo) - Simulamos redibujando el fondo táctico o usando el contenido actual
     tCtx.fillStyle = fieldType === 'futsal' ? "#0a2e5c" : "#143d14";
     tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-    
-    // 2. Copiar el contenido del canvas de dibujo
     tCtx.drawImage(canvas, 0, 0);
-
-    // 3. INYECTAR MARCA DE AGUA ESTRATÉGICA
     tCtx.save();
     tCtx.fillStyle = "rgba(255, 255, 255, 0.8)";
-    tCtx.font = "bold 14px Space Grotesk";
-    tCtx.textAlign = "right";
-    const watermarkText = "Diseñado con SynqAI Sports - Consigue tu pizarra gratis";
-    tCtx.fillText(watermarkText, tempCanvas.width - 20, tempCanvas.height - 20);
-    
-    // Logo SynqAI pequeño
-    tCtx.fillStyle = "#00f2ff";
-    tCtx.font = "black 18px Space Grotesk";
+    tCtx.font = "bold 14px Space Grotesk"; tCtx.textAlign = "right";
+    tCtx.fillText("Diseñado con SynqAI Sports - Consigue tu pizarra gratis", tempCanvas.width - 20, tempCanvas.height - 20);
+    tCtx.fillStyle = "#00f2ff"; tCtx.font = "black 18px Space Grotesk";
     tCtx.fillText("SynqAI", tempCanvas.width - 20, tempCanvas.height - 40);
     tCtx.restore();
-
-    // 4. Disparar descarga
     const url = tempCanvas.toDataURL("image/png");
     const link = document.createElement('a');
-    link.download = `SynqAI_Tactic_${Date.now()}.png`;
-    link.href = url;
-    link.click();
-
-    toast({
-      title: "ASSET_VIRAL_GENERADO",
-      description: "Captura con marca de agua lista para compartir.",
-    });
-    
+    link.download = `SynqAI_Tactic_${Date.now()}.png`; link.href = url; link.click();
+    toast({ title: "ASSET_VIRAL_GENERADO", description: "Captura con marca de agua lista para compartir." });
     synqSync.trackEvent('ad_click', { action: 'export_viral_share' });
   };
 
@@ -495,24 +500,14 @@ export default function PromoBoardPage() {
         <div className="flex items-center gap-4 lg:gap-6 overflow-hidden">
           <div className="flex flex-col shrink-0">
             <div className="flex items-center gap-2"><Zap className="h-4 w-4 text-primary animate-pulse" /><span className="text-[10px] font-black text-primary tracking-[0.4em] uppercase">Tactical_Board_Promo</span></div>
-            <h1 className="text-sm lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase leading-none">Free Sandbox</h1>
+            <h1 className="text-sm lg:text-xl font-headline font-black text-white italic tracking-tighter uppercase leading-none">
+              {exerciseId ? `Editando Slot ${exerciseId.slice(-4)}` : 'Free Sandbox'}
+            </h1>
           </div>
           
           <div className="hidden md:flex items-center gap-3 shrink-0">
-            <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}><SelectTrigger className="w-[150px] h-10 bg-white/5 border-primary/20 rounded-xl text-[10px] font-black uppercase text-primary"><LayoutGrid className="h-3 w-3 mr-2" /> <SelectValue placeholder="Superficie" /></SelectTrigger><SelectContent className="bg-[#0a0f18] border-primary/20"><SelectItem value="f11" className="text-[10px] font-black uppercase">Fútbol 11</SelectItem><SelectItem value="f7" className="text-[10px] font-black uppercase">Fútbol 7</SelectItem><SelectItem value="futsal" className="text-[10px] font-black uppercase">Fútbol Sala</SelectItem></SelectContent></Select>
+            <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}><SelectTrigger className="w-[150px] h-10 bg-white/5 border-primary/20 rounded-xl text-[10px] font-black uppercase text-primary"><LayoutGrid className="h-3.5 w-3.5 mr-2" /> <SelectValue placeholder="Superficie" /></SelectTrigger><SelectContent className="bg-[#0a0f18] border-primary/20"><SelectItem value="f11" className="text-[10px] font-black uppercase">Fútbol 11</SelectItem><SelectItem value="f7" className="text-[10px] font-black uppercase">Fútbol 7</SelectItem><SelectItem value="futsal" className="text-[10px] font-black uppercase">Fútbol Sala</SelectItem></SelectContent></Select>
             <Button variant="outline" onClick={() => setShowLanes(!showLanes)} className={cn("h-10 px-4 border-primary/20 text-[10px] font-black uppercase rounded-xl", showLanes ? "bg-primary text-black shadow-[0_0_20px_rgba(0,242,255,0.3)]" : "bg-white/5 text-primary/40")}><Columns3 className="h-4 w-4 mr-2" /> Carriles</Button>
-          </div>
-
-          <div className="flex items-center gap-2 bg-black/40 border border-white/5 rounded-full px-4 py-1.5">
-             <div className="flex flex-col">
-                <span className="text-[7px] font-black text-white/30 uppercase tracking-widest">Ejercicios Sandbox</span>
-                <span className="text-[9px] font-black text-primary uppercase">{promoStats.warmup+promoStats.main+promoStats.cooldown}/20</span>
-             </div>
-             <div className="w-[1px] h-6 bg-white/10 mx-2" />
-             <div className="flex flex-col">
-                <span className="text-[7px] font-black text-white/30 uppercase tracking-widest">Sesiones</span>
-                <span className="text-[9px] font-black text-primary uppercase">{promoStats.sessions}/4</span>
-             </div>
           </div>
 
           {selectedIds.length > 0 && (
@@ -537,16 +532,21 @@ export default function PromoBoardPage() {
           )}
         </div>
         <div className="flex items-center gap-4">
+           {exerciseId && (
+             <Button variant="ghost" className="h-11 border border-white/10 text-white/40 font-black uppercase text-[10px] px-6 rounded-xl hover:bg-white/5" asChild>
+                <Link href="/dashboard/promo/tasks">Cerrar Edición</Link>
+             </Button>
+           )}
            <Button onClick={handleExportViral} variant="ghost" className="h-11 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest px-6 rounded-xl hover:bg-primary/10 transition-all">
-              <Share2 className="h-4 w-4 mr-2" /> Compartir RRSS
+              <Share2 className="h-4 w-4 mr-2" /> Compartir
            </Button>
-           <Button onClick={() => setIsSaveSheetOpen(true)} className="h-11 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl cyan-glow border-none"><Save className="h-4 w-4 mr-2" /> Guardar Local</Button>
-           <Button className="h-11 bg-white/5 border border-white/10 text-white font-black uppercase text-[10px] tracking-widest px-6 rounded-xl hover:bg-white/10 transition-all" asChild><Link href="/login">Acceso Pro <ArrowRight className="h-4 w-4 ml-2" /></Link></Button>
+           <Button onClick={() => setIsSaveSheetOpen(true)} className="h-11 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl cyan-glow border-none">
+              <Save className="h-4 w-4 mr-2" /> {exerciseId ? 'Actualizar Slot' : 'Guardar Local'}
+           </Button>
         </div>
       </header>
 
       <div className="flex-1 flex overflow-hidden relative">
-        {/* PUBLICIDAD_PLACEHOLDER_LATERAL */}
         <aside className="w-48 bg-black/40 border-r border-white/5 flex flex-col items-center py-10 hidden lg:flex">
            <div className="w-40 h-80 bg-white/5 border border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center p-4 text-center">
               <Megaphone className="h-8 w-8 text-white/10 mb-4" />
@@ -562,7 +562,6 @@ export default function PromoBoardPage() {
             <div className="pointer-events-auto"><BoardToolbar theme="cyan" variant="training" orientation="horizontal" activeTool={activeTool} onToolSelect={(t) => { if(t === 'select') { setActiveTool('select'); setSelectedIds([]); } else addElementAtCenter(t); }} onClear={() => { setElements([]); setSelectedIds([]); }} className="border-2 shadow-2xl" /></div>
           </div>
 
-          {/* PUBLICIDAD_HORIZONTAL_BANNER */}
           <div className="absolute top-6 left-1/2 -translate-x-1/2 w-full max-w-2xl h-16 bg-black/60 backdrop-blur-md border border-white/5 rounded-2xl flex items-center justify-center gap-4 z-40 hidden sm:flex">
              <Megaphone className="h-4 w-4 text-white/10" />
              <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.5em]">Google_Ad_Slot_Leaderboard_728x90</span>
@@ -577,7 +576,9 @@ export default function PromoBoardPage() {
               <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
               <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Promo_Vault_Sync</span>
             </div>
-            <SheetTitle className="text-3xl font-black italic tracking-tighter uppercase text-left">BLINDAR EJERCICIO</SheetTitle>
+            <SheetTitle className="text-3xl font-black italic tracking-tighter uppercase text-left">
+              {exerciseId ? 'ACTUALIZAR SLOT' : 'BLINDAR EJERCICIO'}
+            </SheetTitle>
             <SheetDescription className="text-[10px] uppercase font-bold text-primary/40 tracking-widest text-left italic">Asigne el ejercicio a un bloque metodológico local.</SheetDescription>
           </SheetHeader>
           <div className="space-y-6">
@@ -595,12 +596,16 @@ export default function PromoBoardPage() {
              </button>
           </div>
           <div className="mt-12 p-6 bg-primary/5 border border-primary/30 rounded-3xl space-y-4">
-             <div className="flex items-center gap-3"><Info className="h-4 w-4 text-primary" /><span className="text-[10px] font-black uppercase text-primary">Ventajas de la Red Pro</span></div>
-             <p className="text-[10px] text-white/40 leading-relaxed font-bold uppercase italic">Sincronice sus ejercicios con la nube, elimine la publicidad y desbloquee el Neural Planner para generar variantes automáticamente.</p>
-             <Button className="w-full h-12 bg-primary text-black font-black uppercase text-[10px] tracking-widest rounded-xl" asChild><Link href="/login" onClick={() => synqSync.trackEvent('ad_click', { action: 'upgrade_pro_sheet' })}>ACTUALIZAR_AHORA</Link></Button>
+             <div className="flex items-center gap-3"><Info className="h-4 w-4 text-primary" /><span className="text-[10px] font-black uppercase text-primary">Sincronización Total</span></div>
+             <p className="text-[10px] text-white/40 leading-relaxed font-bold uppercase italic">Actualice sus ejercicios guardados en tiempo real. La red detecta automáticamente el slot para no duplicar datos.</p>
+             <Button className="w-full h-12 bg-primary text-black font-black uppercase text-[10px] tracking-widest rounded-xl" asChild><Link href="/login" onClick={() => synqSync.trackEvent('ad_click', { action: 'upgrade_pro_sheet' })}>ACTUALIZAR A MODO PRO</Link></Button>
           </div>
         </SheetContent>
       </Sheet>
     </div>
   );
+}
+
+export default function PromoBoardPage() {
+  return <Suspense fallback={<div className="h-screen w-full flex items-center justify-center bg-black text-primary font-black uppercase tracking-[0.5em] animate-pulse">Sincronizando_Sandbox...</div>}><PromoBoardContent /></Suspense>;
 }

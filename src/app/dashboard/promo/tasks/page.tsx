@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { 
   LayoutGrid, 
   Plus, 
@@ -16,7 +16,8 @@ import {
   Dumbbell,
   Wind,
   Search,
-  Megaphone
+  Megaphone,
+  CheckCircle2
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,88 @@ const MAX_WARMUP = 4;
 const MAX_MAIN = 12;
 const MAX_COOLDOWN = 4;
 const TOTAL_MAX = 20;
+
+/**
+ * Componente de renderizado de miniatura táctica.
+ * Replica de forma simplificada la lógica de dibujo de la pizarra.
+ */
+function TaskThumbnail({ elements, fieldType = 'f11' }: { elements: any[], fieldType?: string }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !elements) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Dimensiones de la miniatura
+    const w = canvas.width;
+    const h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+    // Dibujar fondo de campo simplificado
+    ctx.fillStyle = fieldType === 'futsal' ? '#0a2e5c' : '#143d14';
+    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(5, 5, w - 10, h - 10);
+    ctx.beginPath();
+    ctx.moveTo(w/2, 5);
+    ctx.lineTo(w/2, h - 5);
+    ctx.stroke();
+
+    // Dibujar elementos
+    elements.forEach(el => {
+      if (!el.points || el.points.length === 0) return;
+      
+      ctx.save();
+      const centerX = (el.points[0].x + (el.points[1]?.x || el.points[0].x)) / 2 * w;
+      const centerY = (el.points[0].y + (el.points[1]?.y || el.points[0].y)) / 2 * h;
+      
+      ctx.translate(centerX, centerY);
+      ctx.rotate(el.rotation || 0);
+      ctx.translate(-centerX, -centerY);
+      
+      ctx.strokeStyle = el.color || '#00f2ff';
+      ctx.fillStyle = el.color + '44'; // Opacidad baja para el relleno
+      ctx.lineWidth = 2;
+
+      const p0 = { x: el.points[0].x * w, y: el.points[0].y * h };
+      const p1 = el.points[1] ? { x: el.points[1].x * w, y: el.points[1].y * h } : p0;
+
+      if (el.type === 'player') {
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      } else if (el.type === 'ball') {
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      } else if (['arrow', 'freehand', 'zigzag'].includes(el.type)) {
+        ctx.beginPath();
+        ctx.moveTo(p0.x, p0.y);
+        ctx.lineTo(p1.x, p1.y);
+        ctx.stroke();
+      } else if (el.type === 'rect') {
+        ctx.strokeRect(p0.x, p0.y, p1.x - p0.x, p1.y - p0.y);
+      } else if (el.type === 'circle') {
+        const radius = Math.abs(p1.x - p0.x) / 2;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        ctx.stroke();
+      } else {
+        // Material genérico (conos, etc)
+        ctx.fillRect(centerX - 3, centerY - 3, 6, 6);
+      }
+      ctx.restore();
+    });
+  }, [elements, fieldType]);
+
+  return <canvas ref={canvasRef} width={240} height={150} className="w-full h-full object-cover" />;
+}
 
 export default function PromoTasksPage() {
   const { toast } = useToast();
@@ -143,7 +226,7 @@ export default function PromoTasksPage() {
           <div className="p-8 border border-white/5 bg-black/40 rounded-[2.5rem] space-y-6">
              <div className="flex items-center gap-3"><Info className="h-4 w-4 text-primary/40" /><span className="text-[10px] font-black uppercase tracking-widest text-white/40">Protocolo Sandbox</span></div>
              <p className="text-[10px] text-white/20 leading-relaxed font-bold uppercase italic">
-               Los ejercicios se guardan mediante IndexedDB en este navegador. Si borras el historial o cambias de dispositivo, perderás el acceso a estos slots.
+               Los ejercicios se guardan localmente. Al cargar un ejercicio, podrás editarlo y re-guardarlo en el mismo slot.
              </p>
           </div>
 
@@ -169,18 +252,27 @@ function TaskSlot({ task, onDelete, type }: { task?: any, onDelete: (id: number)
 
   return (
     <Card className="aspect-video bg-black border border-white/10 rounded-2xl overflow-hidden relative group">
-      <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+      {/* Miniatura Dinámica */}
+      <div className="absolute inset-0 opacity-60 group-hover:opacity-100 transition-opacity">
+        <TaskThumbnail elements={task.elements} fieldType={task.fieldType} />
+      </div>
+      
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
+
       <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all z-20">
-         <button className="h-7 w-7 bg-black/60 backdrop-blur-md rounded-lg flex items-center justify-center text-white/40 hover:text-primary"><Monitor className="h-3.5 w-3.5" /></button>
-         <button onClick={() => onDelete(task.id)} className="h-7 w-7 bg-black/60 backdrop-blur-md rounded-lg flex items-center justify-center text-rose-500/40 hover:text-rose-500"><Trash2 className="h-3.5 w-3.5" /></button>
+         <Button variant="ghost" size="icon" className="h-7 w-7 bg-black/60 backdrop-blur-md rounded-lg flex items-center justify-center text-white/40 hover:text-primary" asChild>
+            <Link href={`/board/promo?id=${task.id}`}><Monitor className="h-3.5 w-3.5" /></Link>
+         </Button>
+         <button onClick={() => onDelete(task.id)} className="h-7 w-7 bg-black/60 backdrop-blur-md rounded-lg flex items-center justify-center text-rose-500/40 hover:text-rose-500 transition-colors"><Trash2 className="h-3.5 w-3.5" /></button>
       </div>
-      <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
-         <Zap className="h-6 w-6 text-primary/20 mb-2" />
-         <p className="text-[9px] font-black text-white/60 uppercase text-center truncate w-full px-2">EJERCICIO_{task.id.toString().slice(-4)}</p>
-      </div>
-      <div className="absolute bottom-0 left-0 right-0 p-2 bg-black/60 backdrop-blur-md border-t border-white/5 flex items-center justify-between">
-         <Badge variant="outline" className="text-[7px] border-white/10 text-white/40">SINCRO_LOCAL</Badge>
-         <Lock className="h-2.5 w-2.5 text-white/10" />
+
+      <Link href={`/board/promo?id=${task.id}`} className="absolute inset-0 z-10 flex flex-col items-center justify-center p-4">
+         <p className="text-[9px] font-black text-white uppercase text-center truncate w-full px-2 mt-auto group-hover:cyan-text-glow transition-all">EJERCICIO_{task.id.toString().slice(-4)}</p>
+      </Link>
+
+      <div className="absolute bottom-0 left-0 right-0 p-2 bg-black/60 backdrop-blur-md border-t border-white/5 flex items-center justify-between z-20">
+         <Badge variant="outline" className="text-[7px] border-primary/20 text-primary/60 bg-primary/5 uppercase font-black">SINCRO_LOCAL</Badge>
+         <CheckCircle2 className="h-2.5 w-2.5 text-emerald-500/40" />
       </div>
     </Card>
   );
