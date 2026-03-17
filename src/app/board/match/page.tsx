@@ -318,22 +318,24 @@ export default function MatchBoardPage() {
               </Select>
             </div>
 
+            {/* SELECTOR FASE LOCAL - AÉREO */}
+            <div className="pointer-events-auto bg-black/80 backdrop-blur-xl border border-primary/20 p-2 rounded-2xl animate-in slide-in-from-bottom-2 shadow-xl flex gap-1">
+              {["DEF", "TDA", "SAL", "ATK"].map(p => (
+                <button 
+                  key={p} 
+                  onClick={() => setHomePhase(p.toLowerCase() as TacticalPhase)}
+                  className={cn(
+                    "h-8 px-3 rounded-xl text-[8px] font-black uppercase transition-all",
+                    homePhase === p.toLowerCase() ? "bg-primary text-black cyan-glow" : "text-white/20 hover:bg-white/5 border border-white/5"
+                  )}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+
             <div className="pointer-events-auto bg-black/80 backdrop-blur-xl border border-primary/20 p-3 rounded-[2rem] flex items-center gap-4 animate-in slide-in-from-left-4 shadow-2xl scale-[0.85] lg:scale-100 origin-bottom-left">
               <div className="flex flex-col gap-2">
-                <div className="flex gap-1">
-                  {["DEF", "TDA", "SAL", "ATK"].map(p => (
-                    <button 
-                      key={p} 
-                      onClick={() => setHomePhase(p.toLowerCase() as TacticalPhase)}
-                      className={cn(
-                        "h-8 px-3 rounded-xl text-[8px] font-black uppercase transition-all",
-                        homePhase === p.toLowerCase() ? "bg-primary text-black cyan-glow" : "text-white/20 hover:bg-white/5 border border-white/5"
-                      )}
-                    >
-                      {p}
-                    </button>
-                  ))}
-                </div>
                 <div className="flex items-center gap-2 bg-black/40 p-1 rounded-xl border border-white/5">
                   <button onClick={() => setHomeShift("left")} className={cn("flex-1 h-6 rounded-lg flex items-center justify-center transition-all", homeShift === 'left' ? 'bg-primary/20 text-primary' : 'text-white/10')}><ChevronLeft className="h-4 w-4" /></button>
                   <button onClick={() => setHomeShift("center")} className={cn("flex-1 h-6 rounded-lg flex items-center justify-center transition-all", homeShift === 'center' ? 'bg-primary/20 text-primary' : 'text-white/10')}><div className="h-1.5 w-1.5 rounded-full bg-current" /></button>
@@ -376,22 +378,24 @@ export default function MatchBoardPage() {
               </Select>
             </div>
 
+            {/* SELECTOR FASE VISITANTE - AÉREO */}
+            <div className="pointer-events-auto bg-black/80 backdrop-blur-xl border border-rose-500/20 p-2 rounded-2xl animate-in slide-in-from-bottom-2 shadow-xl flex gap-1">
+              {["DEF", "TDA", "SAL", "ATK"].map(p => (
+                <button 
+                  key={p} 
+                  onClick={() => setGuestPhase(p.toLowerCase() as TacticalPhase)}
+                  className={cn(
+                    "h-8 px-3 rounded-xl text-[8px] font-black uppercase transition-all",
+                    guestPhase === p.toLowerCase() ? "bg-rose-600 text-white shadow-[0_0_15px_rgba(225,29,72,0.4)]" : "text-white/20 hover:bg-white/5 border border-white/5"
+                  )}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+
             <div className="pointer-events-auto bg-black/80 backdrop-blur-xl border border-rose-500/20 p-3 rounded-[2rem] flex items-center gap-4 animate-in slide-in-from-right-4 shadow-2xl scale-[0.85] lg:scale-100 origin-bottom-right">
               <div className="flex flex-col gap-2">
-                <div className="flex gap-1">
-                  {["DEF", "TDA", "SAL", "ATK"].map(p => (
-                    <button 
-                      key={p} 
-                      onClick={() => setGuestPhase(p.toLowerCase() as TacticalPhase)}
-                      className={cn(
-                        "h-8 px-3 rounded-xl text-[8px] font-black uppercase transition-all",
-                        guestPhase === p.toLowerCase() ? "bg-rose-600 text-white shadow-[0_0_15px_rgba(225,29,72,0.4)]" : "text-white/20 hover:bg-white/5 border border-white/5"
-                      )}
-                    >
-                      {p}
-                    </button>
-                  ))}
-                </div>
                 <div className="flex items-center gap-2 bg-black/40 p-1 rounded-xl border border-white/5">
                   <button onClick={() => setGuestShift("left")} className={cn("flex-1 h-6 rounded-lg flex items-center justify-center transition-all", guestShift === 'left' ? 'bg-rose-500/20 text-rose-500' : 'text-white/10')}><ChevronLeft className="h-4 w-4" /></button>
                   <button onClick={() => setGuestShift("center")} className={cn("flex-1 h-6 rounded-lg flex items-center justify-center transition-all", guestShift === 'center' ? 'bg-rose-500/20 text-rose-500' : 'text-white/10')}><div className="h-1.5 w-1.5 rounded-full bg-current" /></button>
