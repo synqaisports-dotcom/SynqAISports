@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -17,7 +16,7 @@ import {
   TableHead, 
   TableHeader, 
   TableRow 
-} from "@/components/ui/table";
+} from "@/table";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, MoreHorizontal, Building2, Globe2, Activity, Pencil, Pause, Play, ShieldCheck, Globe, Layers } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -63,10 +62,8 @@ export default function ManageClubsPage() {
   });
 
   useEffect(() => {
-    // Sincronización con el "almacenamiento global simulado" del prototipo
     const savedClubs = JSON.parse(localStorage.getItem("synq_global_clubs") || "[]");
     if (savedClubs.length > 0) {
-      // Evitar duplicados si ya existen en INITIAL_CLUBS (solo para el prototipo)
       const merged = [...INITIAL_CLUBS];
       savedClubs.forEach((sc: any) => {
         if (!merged.find(m => m.id === sc.id)) {

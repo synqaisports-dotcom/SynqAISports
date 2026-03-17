@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from "react";
@@ -43,7 +42,8 @@ import {
   Swords,
   Globe,
   ChevronDown,
-  MessageSquareQuote
+  MessageSquareQuote,
+  Plus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
@@ -65,6 +65,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 interface NavItem {
   title: string;
@@ -121,7 +122,7 @@ const navItems: NavItem[] = [
   { title: "Biblioteca Táctica", href: "/dashboard/coach/library", icon: Dumbbell, category: "operational" },
   { title: "Neural Planner", href: "/dashboard/coach/planner", icon: Activity, category: "operational" },
   
-  // TERMINALES_ACCESO - RESTRINGIDOS A SUPERADMIN (v11.5.0)
+  // TERMINALES_ACCESO - RESTRINGIDOS A SUPERADMIN
   { title: "Tutor Portal", href: "/tutor", icon: UserCircle, category: "user", roles: ["superadmin"] },
   { title: "Smartwatch Link", href: "/smartwatch", icon: Watch, category: "user", roles: ["superadmin"] },
 ];
@@ -136,7 +137,6 @@ export function DashboardSidebar() {
   if (pathname === "/dashboard/coach/onboarding") return null;
 
   const isSuperAdmin = profile?.role === "superadmin";
-  // Deteción robusta: Plan free O Rol promo_coach (para limpiar memorias antiguas)
   const isFree = profile?.plan === "free" || profile?.role === "promo_coach";
   const isCollapsed = state === "collapsed";
 
@@ -146,22 +146,15 @@ export function DashboardSidebar() {
   };
 
   const filteredItems = navItems.filter(item => {
-    // 1. Superadmin ve todo para auditoría
     if (isSuperAdmin) return true;
-
-    // 2. Filtrado por roles específicos (si el item los tiene)
     if (item.roles && profile) {
       if (!item.roles.includes(profile.role)) return false;
     }
-    
-    // 3. Lógica de bifurcación Pro vs Sandbox
     if (isFree) {
-      // Sandbox: Solo ve su categoría, utilidades de usuario y el Dashboard principal (Coach Hub)
       if (item.category === "sandbox" || item.category === "user") return true;
       if (item.category === "operational" && item.href === "/dashboard") return true;
       return false;
     } else {
-      // Pro: No necesita ver la sección Sandbox (ya tiene la operativa de club)
       if (item.category === "sandbox") return false;
       return true;
     }
@@ -214,9 +207,18 @@ export function DashboardSidebar() {
           </div>
 
           {!isCollapsed && isSuperAdmin && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg animate-in fade-in zoom-in-95">
-              <ShieldCheck className="h-3 w-3 text-emerald-400 animate-pulse" />
-              <span className="text-[8px] font-black text-emerald-400 uppercase tracking-[0.2em]">SUPERADMIN_ACTIVE</span>
+            <div className="flex flex-col gap-4 mt-2">
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg animate-in fade-in zoom-in-95">
+                <ShieldCheck className="h-3 w-3 text-emerald-400 animate-pulse" />
+                <span className="text-[8px] font-black text-emerald-400 uppercase tracking-[0.2em]">SUPERADMIN_ACTIVE</span>
+              </div>
+              
+              <Button 
+                onClick={() => router.push("/admin-global/clubs")}
+                className="w-full bg-emerald-500 text-black font-black uppercase text-[10px] tracking-[0.2em] h-11 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-[1.02] transition-all border-none"
+              >
+                <Plus className="h-4 w-4 mr-2" /> VINCULAR NUEVO NODO
+              </Button>
             </div>
           )}
         </div>
@@ -250,7 +252,6 @@ export function DashboardSidebar() {
           </SidebarGroupWrapper>
         )}
 
-        {/* Sección Sandbox: Solo para Superadmins o Usuarios Free */}
         {(isFree || isSuperAdmin) && (
           <SidebarGroupWrapper title="Mi_Sandbox" color="text-blue-400" isCollapsed={isCollapsed}>
             <SidebarMenu>
@@ -285,16 +286,14 @@ export function DashboardSidebar() {
       </SidebarContent>
 
       <SidebarFooter className={cn(
-        "p-6 border-t transition-all duration-700 space-y-4",
-        isCollapsed 
-          ? "bg-transparent border-primary/20 p-2" 
-          : "bg-[#04070c] border-r border-white/5 shadow-[4px_0_24px_rgba(0,0,0,0.5)]"
+        "border-t transition-all duration-700",
+        isCollapsed ? "p-2" : "p-4 lg:p-6 space-y-3 lg:space-y-4 bg-[#04070c] border-r border-white/5 shadow-[4px_0_24px_rgba(0,0,0,0.5)]"
       )}>
         {!isCollapsed && (
-          <div className="px-4 py-2 border-b border-white/5 pb-4 mb-2">
+          <div className="px-2 lg:px-4 py-1 lg:py-2 border-b border-white/5 pb-3 lg:pb-4 mb-1 lg:mb-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center justify-between w-full p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all group">
+                <button className="flex items-center justify-between w-full p-2 lg:p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all group">
                   <div className="flex items-center gap-3">
                     <span className="text-lg">{currentLang.flag}</span>
                     <span className="text-[10px] font-black text-white/60 uppercase tracking-widest group-hover:text-white transition-colors">{currentLang.label}</span>
@@ -323,7 +322,7 @@ export function DashboardSidebar() {
 
         <button 
           onClick={handleLogout}
-          className="flex items-center gap-4 px-4 py-4 text-white/30 hover:text-white transition-all font-black text-[10px] uppercase tracking-widest hover:bg-white/5 rounded-2xl group overflow-hidden w-full text-left"
+          className="flex items-center gap-4 px-4 py-3 text-white/30 hover:text-white transition-all font-black text-[10px] uppercase tracking-widest hover:bg-white/5 rounded-2xl group overflow-hidden w-full text-left"
         >
           <LogOut className="h-5 w-5 shrink-0 group-hover:translate-x-1 transition-transform" />
           {!isCollapsed && <span className="whitespace-nowrap font-bold animate-in fade-in duration-700">CERRAR_SESIÓN</span>}
