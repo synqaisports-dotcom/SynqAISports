@@ -522,6 +522,7 @@ function PromoBoardContent() {
   };
 
   const selectedElements = elements.filter(e => selectedIds.includes(e.id));
+  const commonOpacity = selectedElements.length > 0 ? selectedElements[0].opacity : 1.0;
 
   return (
     <div className="h-full flex flex-col bg-[#04070c] overflow-hidden">
@@ -553,6 +554,26 @@ function PromoBoardContent() {
                   ))}
                 </div>
               )}
+
+              {/* CONTROLES DE PRECISIÓN: OPACIDAD Y LÍNEA */}
+              <div className="flex flex-col gap-2 w-24 lg:w-32 px-2 hidden sm:flex">
+                <div className="flex justify-between items-center"><span className="text-[8px] font-black text-white/40 uppercase tracking-widest">Opacidad</span><span className="text-[8px] font-black text-primary">{Math.round(commonOpacity * 100)}%</span></div>
+                <Slider value={[commonOpacity * 100]} min={10} max={100} step={1} onValueChange={(val) => setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, opacity: val[0] / 100} : el))} className="w-full" />
+              </div>
+
+              {selectedElements.length === 1 && (
+                <>
+                  {!isMaterial(selectedElements[0].type) && selectedElements[0].type !== 'text' && (
+                    <Button variant="outline" size="sm" className={cn("h-9 border-white/10 text-[9px] font-black uppercase hidden lg:flex", selectedElements[0].lineStyle === 'dashed' ? 'bg-primary text-black' : 'text-white/40')} onClick={() => setElements(prev => prev.map(el => el.id === selectedIds[0] ? {...el, lineStyle: el.lineStyle === 'solid' ? 'dashed' : 'solid'} : el))}>
+                      {selectedElements[0].lineStyle === 'dashed' ? 'Discontinua' : 'Sólida'}
+                    </Button>
+                  )}
+                  {selectedElements[0].type === 'player' && (
+                    <Input type="number" value={selectedElements[0].number || 1} onChange={(e) => setElements(prev => prev.map(el => el.id === selectedIds[0] ? {...el, number: parseInt(e.target.value)} : el))} className="h-9 w-12 bg-black/40 border-primary/20 text-primary font-black text-xs text-center rounded-lg" />
+                  )}
+                </>
+              )}
+
               <div className="flex gap-1">
                 <Button variant="outline" size="icon" className="h-9 w-9 border-white/10 text-white/40 hover:text-white" onClick={() => { const next = selectedElements.map(el => { const newId = `el-${Date.now()}-${Math.random()}`; const newPoints = el.points.map(p => ({ x: p.x + 0.02, y: p.y + 0.02 })); let newNumber = el.number; if (el.type === 'player' && el.number !== undefined) newNumber = el.number + 1; return { ...el, id: newId, points: newPoints, number: newNumber }; }); setElements(prev => [...prev, ...next]); setSelectedIds(next.map(e => e.id)); }}><Copy className="h-4 w-4" /></Button>
                 <Button variant="outline" size="icon" className="h-9 w-9 border-rose-500/20 text-rose-500/40 hover:text-rose-500" onClick={() => { setElements(prev => prev.filter(el => !selectedIds.includes(el.id))); setSelectedIds([]); }}><Trash2 className="h-4 w-4" /></Button>
@@ -569,7 +590,7 @@ function PromoBoardContent() {
            <Button onClick={handleExportViral} variant="ghost" className="h-11 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest px-6 rounded-xl hover:bg-primary/10 transition-all">
               <Share2 className="h-4 w-4 mr-2" /> Compartir
            </Button>
-           <Button onClick={() => setIsSaveSheetOpen(true)} className="h-11 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl cyan-glow border-none">
+           <Button onClick={() => setIsSaveSheetOpen(true)} className="h-11 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl blue-glow border-none">
               <Save className="h-4 w-4 mr-2" /> {exerciseId ? 'Actualizar Slot' : 'Guardar Local'}
            </Button>
         </div>

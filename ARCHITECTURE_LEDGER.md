@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v11.1.0 (Edición Crecimiento Exponencial)
+# SynqSports Pro - ARCHITECTURE_LEDGER v11.2.0 (Edición Crecimiento Exponencial)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -12,7 +12,7 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 - **v9.41.0**: **PROTOCOL_WATCH_UNIVERSAL_GEOMETRY**: Soporte para esferas cuadradas/redondas.
 - **v9.42.0**: **PROTOCOL_LOCAL_IDENTITY_EXPANSION**: Formulario extendido de identidad en el Sandbox.
 
-## 12. Motor de Crecimiento y Viralidad (v9.43.0 - v11.1.0)
+## 12. Motor de Crecimiento y Viralidad (v9.43.0 - v11.2.0)
 - **v9.43.0**: **PROTOCOL_VIRAL_LOOP**: Botón "Compartir" en pizarras con inyección de marca de agua dinámica para captación orgánica.
 - **v9.44.0**: **PROTOCOL_SESSION_PDF**: Exportación de ficha de sesión completa (3 bloques) optimizada para impresión física.
 - **v9.45.0**: **PROTOCOL_COACH_GAMIFICATION**: Sistema de Niveles (Bronce/Plata/Oro) basado en actividad local para incentivar el Upselling.
@@ -24,3 +24,4 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 - **v10.2.0**: **PROTOCOL_GROWTH_CONSOLIDATION**: Cierre del círculo de captación con el Centro de Colaboración Sandbox.
 - **v11.0.0**: **PROTOCOL_THUMBNAIL_ENGINE**: Implementación de renderizado dinámico de miniaturas tácticas en el Sandbox.
 - **v11.1.0**: **PROTOCOL_SANDBOX_TECHNICAL_SHEET**: Integración del formulario de ficha técnica profesional en el guardado del Sandbox.
+- **v11.2.0**: **PROTOCOL_VISUAL_PRECISION_PARITY**: Activación de controles de opacidad y estilos de línea discontinua en la Pizarra Promo para paridad con el modo Pro.
