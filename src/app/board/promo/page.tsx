@@ -142,8 +142,18 @@ function PromoBoardContent() {
     const bounds = getElementBounds(element, widthPx, heightPx);
     const { centerX, centerY, width, height, minX, minY, maxX, maxY } = bounds;
 
-    ctx.save(); ctx.globalAlpha = element.opacity; ctx.translate(centerX, centerY); ctx.rotate(element.rotation); ctx.translate(-centerX, -centerY);
-    ctx.strokeStyle = element.color; ctx.fillStyle = hexToRgba(element.color, 0.15); ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctx.save(); 
+    ctx.globalAlpha = element.opacity; 
+    ctx.translate(centerX, centerY); 
+    ctx.rotate(element.rotation); 
+    ctx.translate(-centerX, -centerY);
+    
+    ctx.strokeStyle = element.color; 
+    ctx.fillStyle = hexToRgba(element.color, 0.15); 
+    ctx.lineWidth = 3; 
+    ctx.lineJoin = 'round'; 
+    ctx.lineCap = 'round';
+    
     if (element.lineStyle === 'dashed') ctx.setLineDash([10, 5]); else ctx.setLineDash([]);
 
     switch (element.type) {
@@ -232,15 +242,35 @@ function PromoBoardContent() {
 
     if (isSelected) {
       ctx.restore(); ctx.save(); ctx.translate(centerX, centerY); ctx.rotate(element.rotation); ctx.translate(-centerX, -centerY);
-      ctx.strokeStyle = '#ffffffaa'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]); const pad = 10; ctx.strokeRect(minX - pad, minY - pad, width + pad * 2, height + pad * 2);
-      ctx.setLineDash([]); ctx.fillStyle = '#ffffff'; const handles = [{ x: minX - pad, y: minY - pad }, { x: centerX, y: minY - pad }, { x: maxX + pad, y: minY - pad }, { x: minX - pad, y: centerY }, { x: maxX + pad, y: centerY }, { x: minX - pad, y: maxY + pad }, { x: centerX, y: maxY + pad }, { x: maxX + pad, y: maxY + pad }];
-      handles.forEach(h => { ctx.beginPath(); ctx.arc(6, 6, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
-      const rotY = minY - pad - 40; ctx.beginPath(); ctx.moveTo(centerX, minY - pad); ctx.lineTo(centerX, rotY); ctx.stroke();
-      ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(centerX, rotY, 8, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.strokeStyle = '#ffffffaa'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]); const pad = 12; 
+      ctx.strokeRect(minX - pad, minY - pad, width + pad * 2, height + pad * 2);
+      
+      ctx.setLineDash([]); 
+      ctx.fillStyle = '#ffffff'; 
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 1.5;
+      
+      const handles = [
+        { x: minX - pad, y: minY - pad }, { x: centerX, y: minY - pad }, { x: maxX + pad, y: minY - pad },
+        { x: minX - pad, y: centerY }, { x: maxX + pad, y: centerY },
+        { x: minX - pad, y: maxY + pad }, { x: centerX, y: maxY + pad }, { x: maxX + pad, y: maxY + pad }
+      ];
+      
+      handles.forEach(h => { 
+        ctx.beginPath(); 
+        ctx.arc(h.x, h.y, 8, 0, Math.PI * 2); 
+        ctx.fill(); 
+        ctx.stroke(); 
+      });
+      
+      const rotY = minY - pad - 45; 
+      ctx.beginPath(); ctx.moveTo(centerX, minY - pad); ctx.lineTo(centerX, rotY); ctx.stroke();
+      ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(centerX, rotY, 10, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      
       if (element.controlPoint && ['arrow', 'double-arrow', 'zigzag'].includes(element.type)) {
         const cp = { x: element.controlPoint.x * widthPx, y: element.controlPoint.y * heightPx };
         ctx.restore(); ctx.save(); ctx.setLineDash([4, 4]); ctx.strokeStyle = '#3b82f6aa'; ctx.beginPath(); ctx.moveTo(centerX, centerY); ctx.lineTo(cp.x, cp.y); ctx.stroke();
-        ctx.fillStyle = '#3b82f6'; ctx.beginPath(); ctx.arc(cp.x, cp.y, 8, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.fillStyle = '#3b82f6'; ctx.beginPath(); ctx.arc(cp.x, cp.y, 10, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
       }
     } ctx.restore();
   }, [hexToRgba]);
@@ -300,20 +330,20 @@ function PromoBoardContent() {
         const bounds = getElementBounds(el, wPx, hPx);
         if (el.controlPoint) {
           const cpPx = { x: el.controlPoint.x * wPx, y: el.controlPoint.y * hPx };
-          if (Math.sqrt(Math.pow(point.x * wPx - cpPx.x, 2) + Math.pow(point.y * hPx - cpPx.y, 2)) < 20) { interactionMode.current = 'curving'; return; }
+          if (Math.sqrt(Math.pow(point.x * wPx - cpPx.x, 2) + Math.pow(point.y * hPx - cpPx.y, 2)) < 25) { interactionMode.current = 'curving'; return; }
         }
-        const rotHandlePx = rotatePoint({ x: bounds.centerX, y: bounds.minY - 50 }, { x: bounds.centerX, y: bounds.centerY }, el.rotation);
-        if (Math.sqrt(Math.pow(point.x * wPx - rotHandlePx.x, 2) + Math.pow(point.y * hPx - rotHandlePx.y, 2)) < 20) { interactionMode.current = 'rotating'; return; }
+        const rotHandlePx = rotatePoint({ x: bounds.centerX, y: bounds.minY - 45 }, { x: bounds.centerX, y: bounds.centerY }, el.rotation);
+        if (Math.sqrt(Math.pow(point.x * wPx - rotHandlePx.x, 2) + Math.pow(point.y * hPx - rotHandlePx.y, 2)) < 25) { interactionMode.current = 'rotating'; return; }
         const local = rotatePoint({ x: point.x * wPx, y: point.y * hPx }, { x: bounds.centerX, y: bounds.centerY }, -el.rotation);
-        const pad = 10; const handles = [{ x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY }, { x: bounds.minX - pad, y: bounds.maxY + pad }, { x: bounds.centerX, y: bounds.maxY + pad }, { x: bounds.maxX + pad, y: bounds.maxY + pad }];
-        const hIdx = handles.findIndex(h => Math.sqrt(Math.pow(local.x - h.x, 2) + Math.pow(local.y - h.y, 2)) < 15);
+        const pad = 12; const handles = [{ x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY }, { x: bounds.minX - pad, y: bounds.maxY + pad }, { x: bounds.centerX, y: bounds.maxY + pad }, { x: bounds.maxX + pad, y: bounds.maxY + pad }];
+        const hIdx = handles.findIndex(h => Math.sqrt(Math.pow(local.x - h.x, 2) + Math.pow(local.y - h.y, 2)) < 20);
         if (hIdx !== -1) { interactionMode.current = 'resizing'; activeHandleIndex.current = hIdx; return; }
       }
     }
 
     const clicked = [...elements].reverse().find(el => {
       const b = getElementBounds(el, wPx, hPx); const local = rotatePoint({ x: point.x * wPx, y: point.y * hPx }, { x: b.centerX, y: b.centerY }, -el.rotation);
-      const hitPadding = el.type === 'text' ? 25 : 10;
+      const hitPadding = el.type === 'text' ? 25 : 15;
       return local.x >= b.minX - hitPadding && local.x <= b.maxX + hitPadding && local.y >= b.minY - hitPadding && local.y <= b.maxY + hitPadding;
     });
 
