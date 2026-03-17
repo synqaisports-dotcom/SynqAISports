@@ -300,13 +300,13 @@ export default function MatchBoardPage() {
         </div>
       </header>
 
-      {/* FLOATING_CONTROL_ISLAND_LEFT (Local) */}
-      <div className="fixed top-24 left-10 z-[100] flex flex-col gap-4 pointer-events-none">
-        <div className="pointer-events-auto glass-panel p-4 border-primary/30 flex flex-col gap-4 rounded-[2rem] animate-in slide-in-from-left-4">
-          <div className="space-y-3">
-            <span className="text-[8px] font-black text-primary uppercase tracking-widest block text-center">LOCAL_SQUAD</span>
+      {/* FLOATING_CONTROL_ISLAND_LEFT (Local) - REUBICADO AL BOTTOM */}
+      <div className="fixed bottom-10 left-10 z-[100] flex flex-col gap-4 pointer-events-none">
+        <div className="pointer-events-auto glass-panel p-4 border-primary/30 flex items-center gap-6 rounded-[2rem] animate-in slide-in-from-bottom-4">
+          <div className="space-y-1.5 border-r border-white/10 pr-4">
+            <span className="text-[8px] font-black text-primary uppercase tracking-widest block text-center italic">LOCAL_SQUAD</span>
             <Select value={homeFormation} onValueChange={setHomeFormation}>
-              <SelectTrigger className="h-10 bg-black/40 border-primary/20 text-primary font-black uppercase text-[9px] rounded-xl w-32">
+              <SelectTrigger className="h-9 bg-black/40 border-primary/20 text-primary font-black uppercase text-[9px] rounded-xl w-28">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-[#0a0f18] border-primary/20">
@@ -315,18 +315,17 @@ export default function MatchBoardPage() {
             </Select>
           </div>
 
-          <div className="grid grid-cols-1 gap-1">
-            <span className="text-[7px] font-black text-white/20 uppercase text-center mb-1">FASE TÁCTICA</span>
+          <div className="flex items-center gap-1 border-r border-white/10 pr-4">
             {["defensa", "tda", "salida", "ataque", "tad"].map(p => (
               <button key={p} onClick={() => setHomePhase(p as TacticalPhase)} className={cn("px-3 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all", homePhase === p ? "bg-primary text-black" : "text-white/20 hover:bg-white/5")}>{p.toUpperCase()}</button>
             ))}
           </div>
 
-          <div className="pt-2 border-t border-white/5">
-            <span className="text-[7px] font-black text-white/20 uppercase text-center block mb-2">BASCULACIÓN</span>
+          <div className="flex items-center gap-3">
+            <span className="text-[7px] font-black text-white/20 uppercase">BASCULACIÓN</span>
             <div className="flex gap-1 bg-black/40 p-1 rounded-xl">
               {["left", "center", "right"].map(l => (
-                <button key={l} onClick={() => setHomeLateral(l as LateralShift)} className={cn("h-8 flex-1 rounded-lg flex items-center justify-center transition-all", homeLateral === l ? "bg-primary text-black" : "text-white/20")}>
+                <button key={l} onClick={() => setHomeLateral(l as LateralShift)} className={cn("h-8 w-10 rounded-lg flex items-center justify-center transition-all", homeLateral === l ? "bg-primary text-black" : "text-white/20")}>
                   <MoveHorizontal className={cn("h-3.5 w-3.5", l === 'left' ? 'rotate-180' : l === 'center' ? 'scale-75' : '')} />
                 </button>
               ))}
@@ -335,37 +334,36 @@ export default function MatchBoardPage() {
         </div>
       </div>
 
-      {/* FLOATING_CONTROL_ISLAND_RIGHT (Visitor) */}
-      <div className="fixed top-24 right-10 z-[100] flex flex-col gap-4 pointer-events-none">
-        <div className="pointer-events-auto glass-panel p-4 border-rose-500/30 flex flex-col gap-4 rounded-[2rem] animate-in slide-in-from-right-4">
-          <div className="space-y-3">
-            <span className="text-[8px] font-black text-rose-500 uppercase tracking-widest block text-center">VISIT_SQUAD</span>
+      {/* FLOATING_CONTROL_ISLAND_RIGHT (Visitor) - REUBICADO AL BOTTOM */}
+      <div className="fixed bottom-10 right-10 z-[100] flex flex-col gap-4 pointer-events-none">
+        <div className="pointer-events-auto glass-panel p-4 border-rose-500/30 flex items-center gap-6 rounded-[2rem] animate-in slide-in-from-bottom-4">
+          <div className="flex items-center gap-3 border-r border-white/10 pr-4">
+            <div className="flex gap-1 bg-black/40 p-1 rounded-xl">
+              {["left", "center", "right"].map(l => (
+                <button key={l} onClick={() => setGuestLateral(l as LateralShift)} className={cn("h-8 w-10 rounded-lg flex items-center justify-center transition-all", guestLateral === l ? "bg-rose-500 text-white" : "text-white/20")}>
+                  <MoveHorizontal className={cn("h-3.5 w-3.5", l === 'left' ? 'rotate-180' : l === 'center' ? 'scale-75' : '')} />
+                </button>
+              ))}
+            </div>
+            <span className="text-[7px] font-black text-white/20 uppercase">BASCULACIÓN</span>
+          </div>
+
+          <div className="flex items-center gap-1 border-r border-white/10 pr-4">
+            {["defensa", "tda", "salida", "ataque", "tad"].map(p => (
+              <button key={p} onClick={() => setGuestPhase(p as TacticalPhase)} className={cn("px-3 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all", guestPhase === p ? "bg-rose-500 text-white" : "text-white/20 hover:bg-white/5")}>{p.toUpperCase()}</button>
+            ))}
+          </div>
+
+          <div className="space-y-1.5 border-l border-white/10 pl-4">
+            <span className="text-[8px] font-black text-rose-500 uppercase tracking-widest block text-center italic">VISIT_SQUAD</span>
             <Select value={guestFormation} onValueChange={setGuestFormation}>
-              <SelectTrigger className="h-10 bg-black/40 border-rose-500/20 text-rose-500 font-black uppercase text-[9px] rounded-xl w-32">
+              <SelectTrigger className="h-9 bg-black/40 border-rose-500/20 text-rose-500 font-black uppercase text-[9px] rounded-xl w-28">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-[#0a0f18] border-rose-500/20">
                 {formations.map(f => <SelectItem key={f} value={f} className="text-[10px] font-black">{f}</SelectItem>)}
               </SelectContent>
             </Select>
-          </div>
-
-          <div className="grid grid-cols-1 gap-1">
-            <span className="text-[7px] font-black text-white/20 uppercase text-center mb-1">FASE TÁCTICA</span>
-            {["defensa", "tda", "salida", "ataque", "tad"].map(p => (
-              <button key={p} onClick={() => setGuestPhase(p as TacticalPhase)} className={cn("px-3 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all", guestPhase === p ? "bg-rose-500 text-white" : "text-white/20 hover:bg-white/5")}>{p.toUpperCase()}</button>
-            ))}
-          </div>
-
-          <div className="pt-2 border-t border-white/5">
-            <span className="text-[7px] font-black text-white/20 uppercase text-center block mb-2">BASCULACIÓN</span>
-            <div className="flex gap-1 bg-black/40 p-1 rounded-xl">
-              {["left", "center", "right"].map(l => (
-                <button key={l} onClick={() => setGuestLateral(l as LateralShift)} className={cn("h-8 flex-1 rounded-lg flex items-center justify-center transition-all", guestLateral === l ? "bg-rose-500 text-white" : "text-white/20")}>
-                  <MoveHorizontal className={cn("h-3.5 w-3.5", l === 'left' ? 'rotate-180' : l === 'center' ? 'scale-75' : '')} />
-                </button>
-              ))}
-            </div>
           </div>
         </div>
       </div>
@@ -381,9 +379,11 @@ export default function MatchBoardPage() {
         </TacticalField>
       </main>
 
-      <BoardToolbar variant="match" isPaintMode={isPaintMode} onTogglePaintMode={setIsPaintMode} onColorSelect={setCurrentColor} onClear={() => {}} activeColor={currentColor} className="fixed bottom-10 left-10 z-[100] border-2 shadow-2xl" />
+      {/* TOOLBAR CENTRADO AL FONDO */}
+      <BoardToolbar variant="match" isPaintMode={isPaintMode} onTogglePaintMode={setIsPaintMode} onColorSelect={setCurrentColor} onClear={() => {}} activeColor={currentColor} className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[150] border-2 shadow-2xl" />
 
-      <div className="fixed bottom-10 right-10 z-[100]">
+      {/* ROSTER TOGGLE REUBICADO */}
+      <div className="fixed bottom-28 right-10 z-[100]">
         <Sheet>
           <SheetTrigger asChild>
             <button className="h-14 w-14 rounded-2xl bg-primary text-black flex items-center justify-center shadow-2xl hover:scale-110 transition-all cyan-glow">
