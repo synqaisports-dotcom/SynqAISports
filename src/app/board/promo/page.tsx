@@ -4,44 +4,15 @@
 import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { 
   Zap, 
-  Lock, 
-  ArrowRight, 
-  Sparkles, 
-  LayoutGrid, 
   Trash2, 
-  MousePointer2, 
-  Copy, 
-  Pencil,
-  Plus,
-  Columns3,
-  Layers,
-  Activity,
-  Circle,
-  Flag,
-  UserCircle,
-  X,
-  Type,
-  Maximize2,
-  ChevronDown,
-  Move,
-  Upload,
-  PencilLine,
-  Palette,
-  Undo2,
-  Redo2,
-  Video,
-  ArrowUpRight,
-  MousePointerClick,
-  Info,
   Save,
-  Megaphone,
-  CloudSun,
-  Thermometer,
-  Share2,
-  Download,
-  Database,
+  Columns3,
+  LayoutGrid,
+  Maximize2,
+  X,
   Target,
-  ClipboardList
+  ClipboardList,
+  ArrowRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -62,15 +33,11 @@ import {
   SheetContent, 
   SheetHeader, 
   SheetTitle, 
-  SheetDescription,
-  SheetFooter, 
   SheetClose
 } from "@/components/ui/sheet";
-import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/hooks/use-toast";
-import { synqSync } from "@/lib/sync-service";
 import { useSearchParams } from "next/navigation";
 
 interface Point {
@@ -100,12 +67,6 @@ const COLORS = [
 
 const STAGES = ["Debutantes", "Prebenjamín", "Benjamín", "Alevín", "Infantil", "Cadete", "Juvenil", "Senior"];
 
-const isMaterial = (type: DrawingTool) => 
-  ['player', 'ball', 'cone', 'seta', 'ladder', 'hurdle', 'minigoal', 'pica', 'barrier'].includes(type);
-
-const isCircular = (type: DrawingTool) => 
-  ['player', 'ball', 'circle', 'seta'].includes(type);
-
 function PromoBoardContent() {
   const { profile } = useAuth();
   const { toast } = useToast();
@@ -119,31 +80,26 @@ function PromoBoardContent() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [elements, setElements] = useState<DrawingElement[]>([]);
   const [isSaveSheetOpen, setIsSaveSheetOpen] = useState(false);
+  const [isDashed, setIsDashed] = useState(false);
 
   const [saveFormData, setSaveFormData] = useState({
     title: "", stage: "Alevín", dimension: "Táctica", objective: "", description: ""
   });
 
-  const [promoStats, setPromoStats] = useState({ warmup: 0, main: 0, cooldown: 0 });
-
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawing = useRef(false);
-  const startPoint = useRef<Point | null>(null);
   const lastPoint = useRef<Point | null>(null);
-  const interactionMode = useRef<'drawing' | 'resizing' | 'rotating' | 'dragging' | 'curving' | 'none'>('none');
-  const activeHandleIndex = useRef<number | null>(null);
+  const interactionMode = useRef<'drawing' | 'dragging' | 'none'>('none');
 
   useEffect(() => {
-    const vault = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": []}');
-    const exercises = vault.exercises || [];
-    setPromoStats({
-      warmup: exercises.filter((e: any) => e.block === 'warmup').length,
-      main: exercises.filter((e: any) => e.block === 'main').length,
-      cooldown: exercises.filter((e: any) => e.block === 'cooldown').length,
-    });
     if (exerciseId) {
-      const target = exercises.find((e: any) => e.id.toString() === exerciseId);
-      if (target) { setElements(target.elements || []); setFieldType(target.fieldType || "f11"); setSaveFormData(target.metadata || saveFormData); }
+      const vault = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": []}');
+      const target = vault.exercises?.find((e: any) => e.id.toString() === exerciseId);
+      if (target) { 
+        setElements(target.elements || []); 
+        setFieldType(target.fieldType || "f11"); 
+        setSaveFormData(target.metadata || saveFormData); 
+      }
     }
   }, [exerciseId]);
 
@@ -194,7 +150,16 @@ function PromoBoardContent() {
   useEffect(() => { redrawAll(); }, [elements, selectedIds, fieldType, showLanes, redrawAll]);
 
   const addElement = (tool: DrawingTool) => {
-    const newEl: DrawingElement = { id: `el-${Date.now()}`, type: tool, points: [{ x: 0.45, y: 0.45 }, { x: 0.55, y: 0.55 }], color: currentColor, rotation: 0, lineStyle: 'solid', number: tool === 'player' ? elements.filter(e => e.type === 'player').length + 1 : undefined, opacity: 1.0 };
+    const newEl: DrawingElement = { 
+      id: `el-${Date.now()}`, 
+      type: tool, 
+      points: [{ x: 0.45, y: 0.45 }, { x: 0.55, y: 0.55 }], 
+      color: currentColor, 
+      rotation: 0, 
+      lineStyle: isDashed ? 'dashed' : 'solid', 
+      number: tool === 'player' ? elements.filter(e => e.type === 'player').length + 1 : undefined, 
+      opacity: 1.0 
+    };
     setElements(prev => [...prev, newEl]); setSelectedIds([newEl.id]); setActiveTool('select');
   };
 
@@ -219,38 +184,64 @@ function PromoBoardContent() {
     }
   };
 
+  const toggleLineStyle = () => {
+    const nextDashed = !isDashed;
+    setIsDashed(nextDashed);
+    if (selectedIds.length > 0) {
+      setElements(prev => prev.map(el => selectedIds.includes(el.id) ? { ...el, lineStyle: nextDashed ? 'dashed' : 'solid' } : el));
+    }
+  };
+
+  const handleSaveToBlock = (block: string) => {
+    if (!saveFormData.title) {
+      toast({ variant: "destructive", title: "ERROR", description: "Asigne un título antes de guardar." });
+      return;
+    }
+    const vault = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": []}');
+    const newExercise = {
+      id: Date.now(),
+      block,
+      elements,
+      fieldType,
+      metadata: saveFormData
+    };
+    vault.exercises = [newExercise, ...(vault.exercises || [])];
+    localStorage.setItem("synq_promo_vault", JSON.stringify(vault));
+    toast({ title: "SINCRO_LOCAL", description: `Ejercicio blindado en slot ${block.toUpperCase()}.` });
+    setIsSaveSheetOpen(false);
+  };
+
   const commonOpacity = elements.find(e => selectedIds.includes(e.id))?.opacity || 1.0;
 
   return (
-    <div className="h-full flex flex-col bg-[#04070c] overflow-hidden relative">
-      {/* FLOATING_HEADER_PROMO */}
-      <header className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-4 px-6 py-3 bg-black/60 backdrop-blur-2xl border border-primary/30 rounded-[2rem] shadow-2xl animate-in slide-in-from-top-4 duration-700">
-        <div className="flex flex-col pr-4 border-r border-white/10 shrink-0">
-          <div className="flex items-center gap-2"><Zap className="h-3 w-3 text-primary animate-pulse" /><span className="text-[8px] font-black text-primary tracking-[0.4em] uppercase">Promo_Sandbox</span></div>
-          <h1 className="text-xs font-headline font-black text-white italic uppercase tracking-tighter leading-none">{exerciseId ? 'Modo Edición' : 'Lienzo Libre'}</h1>
+    <div className="h-full w-full flex flex-col bg-black overflow-hidden relative">
+      {/* FLOATING_HEADER_PROMO (Ultra-Compact v12.1) */}
+      <header className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 px-4 py-2 bg-black/60 backdrop-blur-2xl border border-primary/30 rounded-2xl shadow-2xl animate-in slide-in-from-top-2">
+        <div className="flex flex-col pr-3 border-r border-white/10 shrink-0">
+          <div className="flex items-center gap-1.5"><Zap className="h-3 w-3 text-primary animate-pulse" /><span className="text-[7px] font-black text-primary tracking-widest uppercase italic">Promo_Mode</span></div>
+          <h1 className="text-[10px] font-headline font-black text-white italic uppercase leading-none">{exerciseId ? 'Edición' : 'Sandbox'}</h1>
         </div>
         
         <div className="flex items-center gap-2">
-          <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}><SelectTrigger className="w-[110px] h-9 bg-white/5 border-primary/20 rounded-xl text-[8px] font-black uppercase text-primary focus:ring-0"><LayoutGrid className="h-3 w-3 mr-2" /><SelectValue /></SelectTrigger><SelectContent className="bg-[#0a0f18] border-primary/20"><SelectItem value="f11" className="text-[9px] font-black">F11</SelectItem><SelectItem value="f7" className="text-[9px] font-black">F7</SelectItem><SelectItem value="futsal" className="text-[9px] font-black">FUTSAL</SelectItem></SelectContent></Select>
-          <Button variant="ghost" onClick={() => setShowLanes(!showLanes)} className={cn("h-9 px-3 border border-primary/20 text-[8px] font-black uppercase rounded-xl", showLanes ? "bg-primary text-black" : "text-primary/40")}><Columns3 className="h-3.5 w-3.5 mr-2" /> Carriles</Button>
+          <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}><SelectTrigger className="w-[100px] h-8 bg-white/5 border-primary/20 rounded-lg text-[7px] font-black uppercase text-primary focus:ring-0 px-2"><SelectValue /></SelectTrigger><SelectContent className="bg-[#0a0f18] border-primary/20"><SelectItem value="f11" className="text-[8px] font-black">F11</SelectItem><SelectItem value="f7" className="text-[8px] font-black">F7</SelectItem><SelectItem value="futsal" className="text-[8px] font-black">FUTSAL</SelectItem></SelectContent></Select>
+          <Button variant="ghost" onClick={() => setShowLanes(!showLanes)} className={cn("h-8 px-2 border border-primary/20 text-[7px] font-black uppercase rounded-lg", showLanes ? "bg-primary text-black" : "text-primary/40")}><Columns3 className="h-3 w-3 mr-1" /> Carriles</Button>
         </div>
 
-        <div className="h-6 w-[1px] bg-white/10 mx-1" />
-
         {selectedIds.length > 0 && (
-          <div className="flex items-center gap-3 animate-in zoom-in-95 duration-200">
+          <div className="flex items-center gap-3 border-l border-white/10 pl-3 animate-in zoom-in-95 duration-200">
             <div className="flex gap-1">
               {COLORS.map(c => (
-                <button key={c.id} onClick={() => setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, color: c.value} : el))} className={cn("h-5 w-5 rounded-full border border-white/20", elements.find(e => selectedIds.includes(e.id))?.color === c.value && "border-white scale-110")} style={{ backgroundColor: c.value }} />
+                <button key={c.id} onClick={() => setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, color: c.value} : el))} className={cn("h-4 w-4 rounded-full border border-white/20", elements.find(e => selectedIds.includes(e.id))?.color === c.value && "border-white scale-110")} style={{ backgroundColor: c.value }} />
               ))}
             </div>
-            <Slider value={[commonOpacity * 100]} min={10} max={100} onValueChange={(v) => setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, opacity: v[0]/100} : el))} className="w-16" />
-            <button onClick={() => { setElements(prev => prev.filter(el => !selectedIds.includes(el.id))); setSelectedIds([]); }} className="text-rose-500/60 hover:text-rose-500"><Trash2 className="h-4 w-4" /></button>
+            <button onClick={toggleLineStyle} className={cn("h-8 px-2 border rounded-lg text-[7px] font-black uppercase", isDashed ? "bg-primary text-black" : "border-primary/20 text-primary/40")}>{isDashed ? 'Discontinua' : 'Continua'}</button>
+            <Slider value={[commonOpacity * 100]} min={10} max={100} onValueChange={(v) => setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, opacity: v[0]/100} : el))} className="w-12" />
+            <button onClick={() => { setElements(prev => prev.filter(el => !selectedIds.includes(el.id))); setSelectedIds([]); }} className="text-rose-500/60 hover:text-rose-500"><Trash2 className="h-3.5 w-3.5" /></button>
           </div>
         )}
 
-        <Button onClick={() => setIsSaveSheetOpen(true)} className="h-10 bg-primary text-black font-black uppercase text-[9px] tracking-widest px-6 rounded-xl blue-glow border-none">
-          <Save className="h-3.5 w-3.5 mr-2" /> GUARDAR LOCAL
+        <Button onClick={() => setIsSaveSheetOpen(true)} className="h-8 bg-primary text-black font-black uppercase text-[7px] tracking-widest px-4 rounded-lg blue-glow border-none">
+          <Save className="h-3 w-3 mr-1.5" /> GUARDAR
         </Button>
       </header>
 
@@ -261,33 +252,74 @@ function PromoBoardContent() {
         </TacticalField>
       </main>
 
-      {/* FLOATING_TOOLBARS_BOTTOM */}
-      <div className="fixed bottom-10 left-0 right-0 flex justify-center items-end gap-12 px-12 z-[100] pointer-events-none">
-        <div className="pointer-events-auto"><BoardToolbar theme="cyan" variant="materials" orientation="horizontal" activeTool={activeTool} onToolSelect={(t) => { addElement(t); }} className="border shadow-2xl" /></div>
-        <div className="pointer-events-auto"><BoardToolbar theme="cyan" variant="training" orientation="horizontal" activeTool={activeTool} onToolSelect={(t) => { if(t === 'select') { setActiveTool('select'); setSelectedIds([]); } else addElement(t); }} onClear={() => { setElements([]); setSelectedIds([]); }} className="border shadow-2xl" /></div>
+      {/* FLOATING_TOOLBARS_BOTTOM (Optimized for width v12.1) */}
+      <div className="fixed bottom-6 left-0 right-0 flex justify-center items-end gap-4 px-4 z-[100] pointer-events-none">
+        <div className="pointer-events-auto"><BoardToolbar theme="cyan" variant="materials" orientation="horizontal" activeTool={activeTool} onToolSelect={(t) => { addElement(t); }} /></div>
+        <div className="pointer-events-auto"><BoardToolbar theme="cyan" variant="training" orientation="horizontal" activeTool={activeTool} onToolSelect={(t) => { if(t === 'select') { setActiveTool('select'); setSelectedIds([]); } else addElement(t); }} onClear={() => { setElements([]); setSelectedIds([]); }} /></div>
       </div>
 
-      {/* SAVE_SHEET */}
+      {/* SAVE_SHEET (Formulario de Paridad Pro) */}
       <Sheet open={isSaveSheetOpen} onOpenChange={setIsSaveSheetOpen}>
-        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)]">
-          <SheetHeader className="p-6 border-b border-white/5">
-            <SheetTitle className="text-2xl font-black italic uppercase tracking-tighter">VINCULAR_DATOS</SheetTitle>
-          </SheetHeader>
-          <div className="p-6 space-y-6">
-            <div className="space-y-2">
-              <Label className="text-[10px] font-black uppercase text-primary tracking-widest">Título del Ejercicio</Label>
-              <Input value={saveFormData.title} onChange={(e) => setSaveFormData({...saveFormData, title: e.target.value.toUpperCase()})} placeholder="EJ: RONDO 4X1" className="h-12 bg-white/5 border-primary/20 text-primary uppercase font-bold" />
+        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+          <div className="p-8 border-b border-white/5 bg-black/40">
+            <SheetHeader className="space-y-4">
+              <div className="flex items-center gap-3">
+                <ClipboardList className="h-5 w-5 text-primary animate-pulse" />
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary italic">Technical_Sheet_Sync_v1.1</span>
+              </div>
+              <SheetTitle className="text-3xl font-black italic uppercase tracking-tighter text-white">VINCULAR <span className="text-primary">DATOS</span></SheetTitle>
+            </SheetHeader>
+          </div>
+
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-8">
+            <div className="space-y-6">
+              <div className="space-y-3">
+                <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Título del Ejercicio</Label>
+                <Input value={saveFormData.title} onChange={(e) => setSaveFormData({...saveFormData, title: e.target.value.toUpperCase()})} placeholder="EJ: SALIDA DE BALÓN 4-3-3" className="h-14 bg-black/40 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary text-primary text-lg" />
+              </div>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Etapa Federativa</Label>
+                  <Select value={saveFormData.stage} onValueChange={(v) => setSaveFormData({...saveFormData, stage: v})}>
+                    <SelectTrigger className="h-12 bg-black/40 border-primary/20 rounded-xl text-white font-bold uppercase text-[10px]"><SelectValue /></SelectTrigger>
+                    <SelectContent className="bg-[#0a0f18] border-primary/20">{STAGES.map(s => <SelectItem key={s} value={s} className="text-[10px] font-black uppercase">{s}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Dimensión</Label>
+                  <Select value={saveFormData.dimension} onValueChange={(v) => setSaveFormData({...saveFormData, dimension: v})}>
+                    <SelectTrigger className="h-12 bg-black/40 border-primary/20 rounded-xl text-white font-bold uppercase text-[10px]"><SelectValue /></SelectTrigger>
+                    <SelectContent className="bg-[#0a0f18] border-primary/20"><SelectItem value="Táctica" className="text-[10px] font-black uppercase">Táctica</SelectItem><SelectItem value="Técnica" className="text-[10px] font-black uppercase">Técnica</SelectItem><SelectItem value="Física" className="text-[10px] font-black uppercase">Física</SelectItem></SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Objetivo Táctico Primario</Label>
+                <div className="relative">
+                  <Target className="absolute left-3 top-3.5 h-4 w-4 text-primary/40" />
+                  <Input value={saveFormData.objective} onChange={(e) => setSaveFormData({...saveFormData, objective: e.target.value.toUpperCase()})} placeholder="EJ: GENERAR SUPERIORIDAD" className="pl-10 h-12 bg-black/40 border-primary/20 rounded-xl font-bold uppercase text-xs text-primary" />
+                </div>
+              </div>
+              <div className="space-y-3">
+                <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Consignas para el Equipo</Label>
+                <Textarea value={saveFormData.description} onChange={(e) => setSaveFormData({...saveFormData, description: e.target.value})} placeholder="Explique la dinámica..." className="min-h-[120px] bg-black/40 border-primary/20 rounded-2xl font-bold text-primary" />
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest">Etapa</Label><Select value={saveFormData.stage} onValueChange={(v) => setSaveFormData({...saveFormData, stage: v})}><SelectTrigger className="h-10 bg-black border-primary/20 text-[9px] uppercase"><SelectValue /></SelectTrigger><SelectContent className="bg-[#0a0f18] border-primary/20">{STAGES.map(s => <SelectItem key={s} value={s} className="text-[9px] uppercase">{s}</SelectItem>)}</SelectContent></Select></div>
-              <div className="space-y-2"><Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest">Dimensión</Label><Select value={saveFormData.dimension} onValueChange={(v) => setSaveFormData({...saveFormData, dimension: v})}><SelectTrigger className="h-10 bg-black border-primary/20 text-[9px] uppercase"><SelectValue /></SelectTrigger><SelectContent className="bg-[#0a0f18] border-primary/20"><SelectItem value="Táctica" className="text-[9px]">TÁCTICA</SelectItem><SelectItem value="Técnica" className="text-[9px]">TÉCNICA</SelectItem></SelectContent></Select></div>
+
+            <div className="space-y-4 pt-4 border-t border-white/5">
+              <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1 italic">BLOQUE METODOLÓGICO LOCAL</Label>
+              <div className="grid grid-cols-3 gap-2">
+                <Button onClick={() => handleSaveToBlock('warmup')} className="h-14 bg-primary/10 border border-primary/30 text-primary text-[8px] font-black uppercase hover:bg-primary hover:text-black">WARMUP</Button>
+                <Button onClick={() => handleSaveToBlock('main')} className="h-14 bg-primary/10 border border-primary/30 text-primary text-[8px] font-black uppercase hover:bg-primary hover:text-black">MAIN</Button>
+                <Button onClick={() => handleSaveToBlock('cooldown')} className="h-14 bg-primary/10 border border-primary/30 text-primary text-[8px] font-black uppercase hover:bg-primary hover:text-black">COOL</Button>
+              </div>
             </div>
-            <div className="space-y-2"><Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest">Consignas</Label><Textarea value={saveFormData.description} onChange={(e) => setSaveFormData({...saveFormData, description: e.target.value})} className="h-24 bg-black border-primary/20 text-primary text-[10px]" /></div>
-            <div className="grid grid-cols-3 gap-2 pt-4">
-              <Button onClick={() => toast({ title: 'SINCRO_LOCAL', description: 'Ejercicio blindado en slot Calentamiento.' })} className="h-14 bg-primary/10 border border-primary/30 text-primary text-[8px] font-black uppercase hover:bg-primary hover:text-black">WARMUP</Button>
-              <Button onClick={() => toast({ title: 'SINCRO_LOCAL', description: 'Ejercicio blindado en slot Principal.' })} className="h-14 bg-primary/10 border border-primary/30 text-primary text-[8px] font-black uppercase hover:bg-primary hover:text-black">MAIN</Button>
-              <Button onClick={() => toast({ title: 'SINCRO_LOCAL', description: 'Ejercicio blindado en slot Vuelta Calma.' })} className="h-14 bg-primary/10 border border-primary/30 text-primary text-[8px] font-black uppercase hover:bg-primary hover:text-black">COOL</Button>
-            </div>
+          </div>
+
+          <div className="p-8 bg-black/60 border-t border-white/5">
+            <SheetClose asChild>
+              <Button variant="ghost" className="w-full h-16 border border-primary/20 text-primary/60 font-black uppercase text-[11px] tracking-widest rounded-2xl hover:bg-primary/5">CERRAR_TERMINAL</Button>
+            </SheetClose>
           </div>
         </SheetContent>
       </Sheet>

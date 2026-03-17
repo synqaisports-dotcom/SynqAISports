@@ -95,6 +95,11 @@ const MATERIAL_TOOLS = [
   { id: 'pica', icon: Flag, label: 'Pica' },
 ] as const;
 
+/**
+ * BoardToolbar - v2.1.0
+ * Compactado para Tablets. Botones de 36px y gaps de 4px.
+ * Reducción de ancho total para evitar desbordamientos.
+ */
 export function BoardToolbar({ 
   theme = "cyan", 
   onToolSelect, 
@@ -113,63 +118,47 @@ export function BoardToolbar({
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const accentColor = theme === "cyan" ? "bg-primary" : "bg-amber-500";
-  const glowShadow = theme === "cyan" ? "shadow-[0_0_20px_rgba(0,242,255,0.3)]" : "shadow-[0_0_20px_rgba(245,158,11,0.3)]";
-  const activeClass = `${accentColor} text-black ${glowShadow} scale-110`;
+  const glowShadow = theme === "cyan" ? "shadow-[0_0_15px_rgba(0,242,255,0.3)]" : "shadow-[0_0_15px_rgba(245,158,11,0.3)]";
+  const activeClass = `${accentColor} text-black ${glowShadow} scale-105`;
   const isHorizontal = orientation === "horizontal";
+
+  // Estilos de botones compactos para tablet
+  const btnClass = "h-9 w-9 rounded-xl flex items-center justify-center transition-all group relative shrink-0";
 
   if (variant === "match") {
     return (
       <aside className={cn(
-        "w-16 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-3xl flex flex-col items-center py-6 gap-4 z-50",
+        "w-14 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] flex flex-col items-center py-4 gap-3 z-50 shadow-2xl",
         className
       )}>
-        <button
-          onClick={() => onTogglePaintMode?.(false)}
-          className={cn(
-            "h-10 w-10 rounded-xl flex items-center justify-center transition-all group relative",
-            !isPaintMode ? activeClass : "text-white/20 hover:text-white"
-          )}
-          title="Modo Selección"
-        >
-          <MousePointer2 className="h-5 w-5" />
+        <button onClick={() => onTogglePaintMode?.(false)} className={cn(btnClass, !isPaintMode ? activeClass : "text-white/20 hover:text-white")} title="Modo Selección">
+          <MousePointer2 className="h-4 w-4" />
         </button>
 
-        <button
-          onClick={() => onTogglePaintMode?.(true)}
-          className={cn(
-            "h-10 w-10 rounded-xl flex items-center justify-center transition-all group relative",
-            isPaintMode ? activeClass : "text-white/20 hover:text-white"
-          )}
-          title="Modo Pizarra"
-        >
-          <Paintbrush className="h-5 w-5" />
+        <button onClick={() => onTogglePaintMode?.(true)} className={cn(btnClass, isPaintMode ? activeClass : "text-white/20 hover:text-white")} title="Modo Pizarra">
+          <Paintbrush className="h-4 w-4" />
         </button>
 
-        <div className="w-8 h-[1px] bg-white/10 my-2" />
+        <div className="w-6 h-[1px] bg-white/10 my-1" />
 
-        <div className={cn("flex flex-col gap-3 transition-all duration-500", isPaintMode ? "opacity-100 scale-100" : "opacity-20 scale-90 pointer-events-none")}>
+        <div className={cn("flex flex-col gap-2 transition-all duration-500", isPaintMode ? "opacity-100 scale-100" : "opacity-20 scale-90 pointer-events-none")}>
           {COLORS.map(color => (
             <button
               key={color.id}
               onClick={() => onColorSelect?.(color.value)}
               className={cn(
-                "h-6 w-6 rounded-full border-2 transition-all hover:scale-110",
-                activeColor === color.value ? "border-white scale-125 shadow-lg" : "border-transparent opacity-60"
+                "h-5 w-5 rounded-full border-2 transition-all",
+                activeColor === color.value ? "border-white scale-110 shadow-lg" : "border-transparent opacity-60"
               )}
               style={{ backgroundColor: color.value }}
-              title={color.label}
             />
           ))}
         </div>
 
-        <div className="w-8 h-[1px] bg-white/10 my-2" />
+        <div className="w-6 h-[1px] bg-white/10 my-1" />
 
-        <button 
-          onClick={onClear}
-          className="text-rose-500/40 hover:text-rose-500 transition-colors h-10 w-10 flex items-center justify-center"
-          title="Limpiar Pizarra"
-        >
-          <Trash2 className="h-5 w-5" />
+        <button onClick={onClear} className="text-rose-500/40 hover:text-rose-500 h-9 w-9 flex items-center justify-center">
+          <Trash2 className="h-4 w-4" />
         </button>
       </aside>
     );
@@ -179,27 +168,26 @@ export function BoardToolbar({
 
   return (
     <aside className={cn(
-      "bg-black/60 backdrop-blur-2xl border-2 transition-all duration-500 flex items-center z-50 overflow-hidden",
-      theme === "amber" ? "border-amber-500/30 shadow-[0_0_30px_rgba(245,158,11,0.1)]" : "border-primary/30 shadow-[0_0_30px_rgba(0,242,255,0.1)]",
+      "bg-black/60 backdrop-blur-2xl border border-white/10 transition-all duration-500 flex items-center z-50 overflow-hidden shadow-2xl",
+      theme === "amber" ? "border-amber-500/30 shadow-amber-500/10" : "border-primary/30 shadow-primary/10",
       isHorizontal 
-        ? "flex-row px-2 rounded-full h-14" 
-        : "flex-col py-6 rounded-3xl w-16",
+        ? "flex-row px-2 rounded-full h-12" 
+        : "flex-col py-4 rounded-[1.5rem] w-14",
       isCollapsed 
-        ? (isHorizontal ? "w-14 px-0" : "h-14 py-0") 
-        : (isHorizontal ? "max-w-[1000px] gap-2 px-4" : "max-h-[1000px] gap-4 py-6"),
+        ? (isHorizontal ? "w-12 px-0" : "h-12 py-0") 
+        : (isHorizontal ? "max-w-fit gap-1 px-3" : "max-h-fit gap-2 py-4"),
       className
     )}>
       {isCollapsed ? (
         <button 
           onClick={() => setIsCollapsed(false)}
           className={cn(
-            "h-10 w-10 flex items-center justify-center text-white/40 hover:text-white transition-all rounded-xl",
+            "h-9 w-9 flex items-center justify-center text-white/40 hover:text-white transition-all rounded-xl",
             theme === "amber" ? "hover:bg-amber-500/10 hover:text-amber-500" : "hover:bg-primary/10 hover:text-primary",
             isHorizontal ? "mx-auto" : "my-auto"
           )}
-          title={variant === 'materials' ? "Expandir Materiales" : "Expandir Herramientas"}
         >
-          {variant === 'materials' ? <Library className="h-5 w-5" /> : <Pencil className="h-5 w-5" />}
+          {variant === 'materials' ? <Library className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
         </button>
       ) : (
         <>
@@ -207,15 +195,11 @@ export function BoardToolbar({
             <>
               <button
                 onClick={() => onToolSelect?.('select')}
-                className={cn(
-                  "h-10 w-10 rounded-xl flex items-center justify-center transition-all group relative",
-                  activeTool === 'select' ? activeClass : "text-white/20 hover:text-white"
-                )}
-                title="Seleccionar / Mover"
+                className={cn(btnClass, activeTool === 'select' ? activeClass : "text-white/40 hover:text-white")}
               >
-                <MousePointer2 className="h-5 w-5" />
+                <MousePointer2 className="h-4 w-4" />
               </button>
-              <div className={cn(isHorizontal ? "h-6 w-[1px]" : "w-8 h-[1px]", "bg-white/10")} />
+              <div className={cn(isHorizontal ? "h-5 w-[1px]" : "w-6 h-[1px]", "bg-white/10")} />
             </>
           )}
 
@@ -223,37 +207,26 @@ export function BoardToolbar({
             <button
               key={tool.id}
               onClick={() => onToolSelect?.(tool.id as DrawingTool)}
-              className={cn(
-                "h-10 w-10 rounded-xl flex items-center justify-center transition-all group relative",
-                activeTool === tool.id ? activeClass : "text-white/20 hover:text-white"
-              )}
+              className={cn(btnClass, activeTool === tool.id ? activeClass : "text-white/40 hover:text-white")}
               title={tool.label}
             >
-              <tool.icon className="h-5 w-5" />
+              <tool.icon className="h-4 w-4" />
             </button>
           ))}
 
           {variant !== 'materials' && (
             <>
-              <div className={cn(isHorizontal ? "h-6 w-[1px]" : "w-8 h-[1px]", "bg-white/10")} />
-              <button 
-                onClick={onClear} 
-                className="text-rose-500/40 hover:text-rose-500 transition-colors h-10 w-10 flex items-center justify-center rounded-xl hover:bg-rose-500/10"
-                title="Borrar Todo"
-              >
-                <Trash2 className="h-5 w-5" />
+              <div className={cn(isHorizontal ? "h-5 w-[1px]" : "w-6 h-[1px]", "bg-white/10")} />
+              <button onClick={onClear} className="text-rose-500/40 hover:text-rose-500 h-9 w-9 flex items-center justify-center rounded-xl hover:bg-rose-500/10">
+                <Trash2 className="h-4 w-4" />
               </button>
             </>
           )}
 
-          <div className={cn(isHorizontal ? "h-6 w-[1px]" : "w-8 h-[1px]", "bg-white/10")} />
+          <div className={cn(isHorizontal ? "h-5 w-[1px]" : "w-6 h-[1px]", "bg-white/10")} />
 
-          <button 
-            onClick={() => setIsCollapsed(true)}
-            className="text-white/20 hover:text-white h-10 w-10 flex items-center justify-center transition-all rounded-xl hover:bg-white/5"
-            title="Colapsar"
-          >
-            {isHorizontal ? <ChevronDown className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
+          <button onClick={() => setIsCollapsed(true)} className="text-white/20 hover:text-white h-9 w-9 flex items-center justify-center transition-all rounded-xl">
+            {isHorizontal ? <ChevronDown className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </button>
         </>
       )}
