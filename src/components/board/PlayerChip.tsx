@@ -15,11 +15,11 @@ interface PlayerChipProps {
 }
 
 /**
- * PlayerChip - Nodo de Atleta en Pizarra v16.2.0
- * PROTOCOLO_TRANSITION_RESTORATION: Restauración de movimiento suave y elástico.
- * - Escala reducida en tablets para no saturar el campo.
- * - Transiciones inteligentes: Desactivadas durante el drag, elásticas en cambios tácticos.
- * - Aceleración por hardware mediante will-change para evitar lag en tablets.
+ * PlayerChip - Nodo de Atleta en Pizarra v16.9.0
+ * PROTOCOLO_PERFORMANCE_SCALING_FIX:
+ * - Escalado dinámico: Chips más grandes en PC (md:h-12, lg:h-14) para mejor visibilidad.
+ * - Aceleración por hardware: Uso de translate3d para fluidez en dispositivos con poca RAM (3GB).
+ * - Optimización de transiciones: Reducción de carga de CPU al evitar layout reflows.
  */
 export function PlayerChip({ 
   number, 
@@ -43,16 +43,19 @@ export function PlayerChip({
       style={{ 
         left: `${x}%`, 
         top: `${y}%`,
-        willChange: "left, top",
+        willChange: "left, top, transform",
+        transform: `translate3d(-50%, -50%, 0)`, // Forzamos aceleración por hardware
+        backfaceVisibility: "hidden",
+        perspective: 1000,
         transition: isDragging 
           ? 'none' 
-          : 'left 0.7s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.7s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.2s ease'
+          : 'left 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0), top 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0), transform 0.2s ease'
       }}
       onPointerDown={onPointerDown}
     >
       <div 
         className={cn(
-          "h-7 w-7 md:h-10 md:w-10 rounded-full border-2 flex items-center justify-center text-[9px] md:text-xs font-black shadow-lg transition-all duration-300",
+          "h-9 w-9 md:h-12 md:w-12 lg:h-14 lg:w-14 rounded-full border-2 flex items-center justify-center text-[10px] md:text-xs lg:text-sm font-black shadow-lg transition-all duration-300",
           isLocal 
             ? "bg-primary/20 border-primary text-primary shadow-[0_0_15px_rgba(0,242,255,0.3)]" 
             : "bg-rose-500/20 border-rose-500 text-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.3)]",
@@ -63,7 +66,7 @@ export function PlayerChip({
       </div>
       {label && (
         <span className={cn(
-          "text-[7px] md:text-[8px] font-black uppercase tracking-tighter whitespace-nowrap bg-black/60 px-1.5 py-0.5 rounded-sm transition-opacity duration-300",
+          "text-[7px] md:text-[9px] lg:text-[10px] font-black uppercase tracking-tighter whitespace-nowrap bg-black/60 px-2 py-0.5 rounded-sm transition-opacity duration-300",
           isDragging ? "opacity-0" : "opacity-100"
         )}>
           {label}

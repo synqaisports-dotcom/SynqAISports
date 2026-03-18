@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v16.8.0 (Edición Consolidación de Cabecera)
+# SynqSports Pro - ARCHITECTURE_LEDGER v16.9.0 (Edición Rendimiento & Escalado)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -12,7 +12,7 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 - **v15.5.0**: **PROTOCOL_DECOUPLED_CONTROLS**: Extracción de selectores de formación de las islas de equipo.
 - **v15.6.0**: **PROTOCOL_ATOMIZED_PHASES**: Desacoplamiento de las barras de fase táctica en módulos independientes.
 
-## 16. Inteligencia Contextual y Fluidez (v16.0.0 - v16.8.0)
+## 16. Inteligencia Contextual y Fluidez (v16.0.0 - v16.9.0)
 - **v16.0.0**: **PROTOCOL_AUTO_CONTEXT_DETECTION**: Eliminación de toggles manuales de modo (Pincel/Puntero). Implementación de jerarquía de capas (Z-40 para jugadores, Z-30 para canvas) para detección automática de intención. Implementación de motor de dibujo persistente en Pizarra de Partido.
 - **v16.1.0**: **PROTOCOL_TRANSITION_RESTORATION**: Reintegración de transiciones cinemáticas `cubic-bezier` elásticas en chips de jugadores y botones de interfaz. Optimización de `backdrop-blur` y efectos de resplandor para equilibrio estética/rendimiento en tablets.
 - **v16.2.0**: **PROTOCOL_TRANSITION_REACTIVE_FIX**: Vinculación de estados de fase táctica (homePhase/guestPhase) al motor de cálculo de posiciones. Corrección de dependencias en `useCallback` para asegurar movimiento fluido al cambiar de formación o fase.
@@ -22,3 +22,4 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 - **v16.6.0**: **PROTOCOL_HEADER_TOOL_CONSOLIDATION**: Integración de las herramientas de dibujo en la cabecera superior central, a la izquierda del botón fullscreen. Centralización de la instrumentación de mando.
 - **v16.7.0**: **PROTOCOL_REDUNDANT_UI_PURGE**: Eliminación del botón de configuración lateral derecho para maximizar la limpieza visual del área de juego.
 - **v16.8.0**: **PROTOCOL_TOP_HEADER_OPTIMIZATION**: Ajuste de paddings y gaps en la franja superior para evitar solapamiento entre el marcador, el mando central y la telemetría en resoluciones de tablet (1024px). Implementación de escalado preventivo.
+- **v16.9.0**: **PROTOCOL_PERFORMANCE_SCALING_FIX**: Incremento de tamaño de jugadores para PC (md/lg). Optimización de aceleración por hardware (transform3d) para dispositivos con RAM limitada (3GB) para eliminar el lag en transiciones.

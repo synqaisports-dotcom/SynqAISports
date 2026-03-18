@@ -67,6 +67,12 @@ interface DrawingLine {
 
 const MemoizedPlayerChip = memo(PlayerChip);
 
+/**
+ * MatchBoardPage - v16.9.0
+ * PROTOCOLO_PERFORMANCE_OPTIMIZATION:
+ * - Ajuste de transición suave para dispositivos con RAM limitada (3GB).
+ * - Escalado responsivo de jugadores para visualización óptima en PC.
+ */
 export default function MatchBoardPage() {
   const { profile } = useAuth();
   const { toast } = useToast();
@@ -88,7 +94,6 @@ export default function MatchBoardPage() {
   const [pairingCode, setPairingCode] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
   
-  // Dibujo persistente
   const [drawings, setDrawings] = useState<DrawingLine[]>([]);
   const [activeDrawing, setActiveDrawing] = useState<{x: number, y: number}[] | null>(null);
   
@@ -261,7 +266,6 @@ export default function MatchBoardPage() {
   return (
     <div className="flex-1 flex flex-col bg-black overflow-hidden relative touch-none select-none" onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}>
       
-      {/* MANDO CENTRAL CONSOLIDADO - v16.8.0 (Optimización de Espacio) */}
       <header className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-full shadow-2xl transition-all scale-[0.8] lg:scale-100">
         <div className="flex items-center gap-1 px-1 border-r border-white/10 pr-2 mr-1">
           <div className="flex items-center gap-1.5 px-1.5">
@@ -291,7 +295,6 @@ export default function MatchBoardPage() {
         </div>
       </header>
 
-      {/* MARCADOR INDEPENDIENTE (IZQUIERDA) - v16.8.0 (Escalado preventivo) */}
       <div className="fixed top-4 left-24 z-[100] flex items-center gap-3 px-3 py-1 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl animate-in slide-in-from-left-4 duration-700 scale-[0.8] lg:scale-100">
         <div className="flex items-center gap-4">
           <div className="flex flex-col items-center">
@@ -314,7 +317,6 @@ export default function MatchBoardPage() {
         </div>
       </div>
 
-      {/* ISLA DE TELEMETRÍA (DERECHA) - v16.8.0 (Optimización de desbordamiento) */}
       <div className="fixed top-4 right-4 z-[100] flex items-center gap-2 animate-in slide-in-from-right-4 duration-700 scale-[0.8] lg:scale-100">
         <Dialog>
           <DialogTrigger asChild>
