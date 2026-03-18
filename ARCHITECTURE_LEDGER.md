@@ -1,13 +1,10 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v21.0.0 (Equilibrio Espacial de Medios)
+# SynqSports Pro - ARCHITECTURE_LEDGER v22.0.0 (Equilibrio de Bloque)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
-## 19. Calibración Táctica de Alta Precisión (v19.0.0)
-- **v19.0.0**: **PROTOCOL_TACTICAL_OFFSET_FINAL**: Recalibración de rangos de movimiento. DEF: Offset -9% (Línea defensiva en frontal del área propia). ATK: Offset +15% (Ataque posicionado en área rival sin desbordar fondo). Mantenimiento de restricción de 50% en DEF.
-
-## 20. Micro-Escalado y Límite de Área (v20.0.0)
-- **v20.0.0**: **PROTOCOL_TACTICAL_BOX_LIMIT**: Reajuste de offset ATK a +7% para que el bloque no rebase el área grande rival. **PROTOCOL_TABLET_CHIP_REDUCTION**: Reducción del 50% en el tamaño de los chips en tablet (h-4) para maximizar la superficie de visión táctica.
-
 ## 21. Centrado Geométrico de Medios (v21.0.0)
 - **v21.0.0**: **PROTOCOL_MIDFIELD_CENTERING**: Recalibración de coordenadas base en formations.ts. La línea de medios se sitúa ahora exactamente en el punto medio (promedio x) entre la línea defensiva y la ofensiva para todas las categorías y deportes.
+
+## 22. Reequilibrio de Bloque Táctico (v22.0.0)
+- **v22.0.0**: **PROTOCOL_MIDFIELD_REBALANCE**: Ajuste de la medular hacia posiciones más retrasadas en todas las formaciones. Este cambio amplía el pasillo central con la delantera en fase DEF, evitando que el "Midfield Lock" (50%) amontone las líneas visualmente en tablets.
