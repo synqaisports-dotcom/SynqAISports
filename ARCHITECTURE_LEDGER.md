@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v20.0.0 (Calibración Táctica Final)
+# SynqSports Pro - ARCHITECTURE_LEDGER v21.0.0 (Equilibrio Espacial de Medios)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -8,3 +8,6 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 
 ## 20. Micro-Escalado y Límite de Área (v20.0.0)
 - **v20.0.0**: **PROTOCOL_TACTICAL_BOX_LIMIT**: Reajuste de offset ATK a +7% para que el bloque no rebase el área grande rival. **PROTOCOL_TABLET_CHIP_REDUCTION**: Reducción del 50% en el tamaño de los chips en tablet (h-4) para maximizar la superficie de visión táctica.
+
+## 21. Centrado Geométrico de Medios (v21.0.0)
+- **v21.0.0**: **PROTOCOL_MIDFIELD_CENTERING**: Recalibración de coordenadas base en formations.ts. La línea de medios se sitúa ahora exactamente en el punto medio (promedio x) entre la línea defensiva y la ofensiva para todas las categorías y deportes.
