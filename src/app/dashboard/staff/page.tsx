@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   UserCog, 
   Plus, 
@@ -87,6 +88,17 @@ export default function StaffManagementPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isFormReady, setIsFormReady] = useState(false);
+
+  // OPTIMIZACIÓN: Renderizado Diferido del formulario
+  useEffect(() => {
+    if (isSheetOpen) {
+      const timer = setTimeout(() => setIsFormReady(true), 150);
+      return () => clearTimeout(timer);
+    } else {
+      setIsFormReady(false);
+    }
+  }, [isSheetOpen]);
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -362,7 +374,7 @@ export default function StaffManagementPage() {
       </Card>
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent side="right" className={cn("bg-[#04070c]/98 backdrop-blur-3xl border-l text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col", isSuperAdmin ? "border-emerald-500/20" : "border-primary/20")}>
+        <SheetContent side="right" className={cn("bg-[#04070c]/98 backdrop-blur-xl border-l text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col", isSuperAdmin ? "border-emerald-500/20" : "border-primary/20")}>
           <div className="p-10 border-b border-white/5 bg-black/40">
             <SheetHeader className="space-y-4">
               <div className="flex items-center gap-3">
@@ -378,156 +390,165 @@ export default function StaffManagementPage() {
             </SheetHeader>
           </div>
 
-          <form onSubmit={handleSaveStaff} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10">
-            {/* SECCIÓN DE IDENTIDAD VISUAL CIRCULAR */}
-            <div className="space-y-4">
-              <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1 italic", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>Identidad Visual Staff</Label>
-              <div className={cn("flex flex-col items-center justify-center p-8 rounded-3xl relative overflow-hidden", isSuperAdmin ? "bg-emerald-500/5" : "bg-primary/5")}>
-                <div className={cn("relative h-40 w-40 rounded-full border-2 border-dashed group cursor-pointer transition-all flex items-center justify-center bg-black/40 shadow-[0_0_30px_rgba(0,0,0,0.5)]", isSuperAdmin ? "border-emerald-500/30 hover:border-emerald-500/60" : "border-primary/30 hover:border-primary/60")}>
-                  {formData.photoUrl ? (
-                    <div className={cn("relative h-full w-full rounded-full overflow-hidden border", isSuperAdmin ? "border-emerald-500/40" : "border-primary/40")}>
-                      <Image src={formData.photoUrl} alt="Preview" fill className="object-cover rounded-full" />
-                      <button 
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); setFormData({...formData, photoUrl: ""}); }}
-                        className="absolute inset-0 bg-black/60 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity z-20"
-                      >
-                        <X className="h-6 w-6" />
-                      </button>
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-10">
+            {!isFormReady ? (
+              <div className="h-full flex flex-col items-center justify-center space-y-4 opacity-20">
+                <Loader2 className="h-8 w-8 animate-spin" />
+                <span className="text-[10px] font-black uppercase tracking-widest">Sincronizando Formulario...</span>
+              </div>
+            ) : (
+              <form onSubmit={handleSaveStaff} className="space-y-10 animate-in fade-in duration-300">
+                {/* SECCIÓN DE IDENTIDAD VISUAL CIRCULAR */}
+                <div className="space-y-4">
+                  <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1 italic", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>Identidad Visual Staff</Label>
+                  <div className={cn("flex flex-col items-center justify-center p-8 rounded-3xl relative overflow-hidden", isSuperAdmin ? "bg-emerald-500/5" : "bg-primary/5")}>
+                    <div className={cn("relative h-40 w-40 rounded-full border-2 border-dashed group cursor-pointer transition-all flex items-center justify-center bg-black/40 shadow-[0_0_30px_rgba(0,0,0,0.5)]", isSuperAdmin ? "border-emerald-500/30 hover:border-emerald-500/60" : "border-primary/30 hover:border-primary/60")}>
+                      {formData.photoUrl ? (
+                        <div className={cn("relative h-full w-full rounded-full overflow-hidden border", isSuperAdmin ? "border-emerald-500/40" : "border-primary/40")}>
+                          <Image src={formData.photoUrl} alt="Preview" fill className="object-cover rounded-full" />
+                          <button 
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setFormData({...formData, photoUrl: ""}); }}
+                            className="absolute inset-0 bg-black/60 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                          >
+                            <X className="h-6 w-6" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center gap-3">
+                          <div className={cn("h-16 w-16 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform", isSuperAdmin ? "bg-emerald-500/10 border border-emerald-500/20" : "bg-primary/10 border border-primary/20")}>
+                            <Camera className={cn("h-8 w-8", isSuperAdmin ? "text-emerald-400/40" : "text-primary/40")} />
+                          </div>
+                          <span className={cn("text-[8px] font-black uppercase tracking-widest text-center italic", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>SINCRO_FOTO</span>
+                        </div>
+                      )}
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="absolute inset-0 opacity-0 cursor-pointer z-10" 
+                        onChange={handlePhotoUpload}
+                      />
                     </div>
-                  ) : (
-                    <div className="flex flex-col items-center gap-3">
-                      <div className={cn("h-16 w-16 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform", isSuperAdmin ? "bg-emerald-500/10 border border-emerald-500/20" : "bg-primary/10 border border-primary/20")}>
-                        <Camera className={cn("h-8 w-8", isSuperAdmin ? "text-emerald-400/40" : "text-primary/40")} />
-                      </div>
-                      <span className={cn("text-[8px] font-black uppercase tracking-widest text-center italic", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>SINCRO_FOTO</span>
-                    </div>
-                  )}
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    className="absolute inset-0 opacity-0 cursor-pointer z-10" 
-                    onChange={handlePhotoUpload}
-                  />
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1 italic", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>Nombre</Label>
-                  <Input 
-                    required
-                    value={formData.firstName}
-                    onChange={(e) => setFormData({...formData, firstName: e.target.value.toUpperCase()})}
-                    placeholder="EJ: JUAN" 
-                    className={cn(
-                      "h-14 bg-white/5 border rounded-2xl font-bold uppercase transition-all text-lg",
-                      isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500 text-emerald-400 placeholder:text-emerald-400/20" : "border-primary/20 focus:border-primary text-primary placeholder:text-primary/20"
-                    )}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1 italic", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>Apellidos</Label>
-                  <Input 
-                    required
-                    value={formData.lastName}
-                    onChange={(e) => setFormData({...formData, lastName: e.target.value.toUpperCase()})}
-                    placeholder="EJ: PÉREZ" 
-                    className={cn(
-                      "h-14 bg-white/5 border rounded-2xl font-bold uppercase transition-all text-lg",
-                      isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500 text-emerald-400 placeholder:text-emerald-400/20" : "border-primary/20 focus:border-primary text-primary placeholder:text-primary/20"
-                    )}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1 italic", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>Email Profesional</Label>
-                <div className="relative">
-                  <Mail className={cn("absolute left-3 top-4 h-4 w-4", isSuperAdmin ? "text-emerald-400/40" : "text-primary/40")} />
-                  <Input 
-                    required
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    placeholder="USER@CLUB.COM" 
-                    className={cn(
-                      "pl-10 h-14 bg-white/5 border rounded-2xl font-bold transition-all",
-                      isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500 text-emerald-400 placeholder:text-emerald-400/20" : "border-primary/20 focus:border-primary text-primary placeholder:text-primary/20"
-                    )}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1 italic", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>Nivel Jerárquico</Label>
-                  <Select 
-                    value={formData.role} 
-                    onValueChange={(v) => setFormData({...formData, role: v as UserRole})}
-                  >
-                    <SelectTrigger className={cn(
-                      "h-12 bg-white/5 border rounded-2xl font-bold uppercase tracking-widest transition-all",
-                      isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500 text-emerald-400" : "border-primary/20 focus:border-primary text-primary"
-                    )}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
-                      {availableRoles.map(role => (
-                        <SelectItem key={role} value={role} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary">
-                          {ROLES_INFO[role]?.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1 italic", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>Teléfono de Contacto</Label>
-                  <div className="flex gap-2">
-                    <div className="w-24 shrink-0">
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1 italic", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>Nombre</Label>
                       <Input 
-                        value={formData.countryPrefix}
-                        onChange={(e) => setFormData({...formData, countryPrefix: e.target.value})}
-                        placeholder="+34" 
+                        required
+                        value={formData.firstName}
+                        onChange={(e) => setFormData({...formData, firstName: e.target.value.toUpperCase()})}
+                        placeholder="EJ: JUAN" 
                         className={cn(
-                          "h-12 bg-white/5 border rounded-2xl font-bold text-center transition-all",
-                          isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500 text-emerald-400" : "border-primary/20 focus:border-primary text-primary"
+                          "h-14 bg-white/5 border rounded-2xl font-bold uppercase transition-all text-lg",
+                          isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500 text-emerald-400 placeholder:text-emerald-400/20" : "border-primary/20 focus:border-primary text-primary placeholder:text-primary/20"
                         )}
                       />
                     </div>
-                    <div className="relative flex-1">
-                      <Phone className={cn("absolute left-3 top-3.5 h-4 w-4", isSuperAdmin ? "text-emerald-400/40" : "text-primary/40")} />
+                    <div className="space-y-2">
+                      <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1 italic", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>Apellidos</Label>
                       <Input 
-                        value={formData.phone}
-                        onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                        placeholder="600 000 000" 
+                        required
+                        value={formData.lastName}
+                        onChange={(e) => setFormData({...formData, lastName: e.target.value.toUpperCase()})}
+                        placeholder="EJ: PÉREZ" 
                         className={cn(
-                          "pl-10 h-12 bg-white/5 border rounded-2xl font-bold transition-all",
+                          "h-14 bg-white/5 border rounded-2xl font-bold uppercase transition-all text-lg",
                           isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500 text-emerald-400 placeholder:text-emerald-400/20" : "border-primary/20 focus:border-primary text-primary placeholder:text-primary/20"
                         )}
                       />
                     </div>
                   </div>
-                </div>
-              </div>
-            </div>
 
-            <div className={cn("p-6 border space-y-3 rounded-3xl", isSuperAdmin ? "bg-emerald-500/5 border-emerald-500/20" : "bg-primary/5 border-primary/20")}>
-              <div className="flex items-center gap-2">
-                <ShieldCheck className={cn("h-3 w-3", isSuperAdmin ? "text-emerald-400" : "text-primary")} />
-                <span className={cn("text-[9px] font-black uppercase tracking-widest italic", isSuperAdmin ? "text-emerald-400" : "text-primary")}>Protocolo de Jerarquía</span>
-              </div>
-              <p className={cn("text-[9px] leading-relaxed font-bold uppercase italic", isSuperAdmin ? "text-emerald-400/40" : "text-primary/40")}>
-                {isSuperAdmin 
-                  ? "SISTEMA_ROOT: Como Superadmin, puedes emitir credenciales para cualquier nivel de la red, incluyendo Administradores de Club."
-                  : "El sistema de SynQAI solo permite la creación de perfiles con un rango inferior al del administrador actual."
-                }
-              </p>
-            </div>
-          </form>
+                  <div className="space-y-2">
+                    <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1 italic", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>Email Profesional</Label>
+                    <div className="relative">
+                      <Mail className={cn("absolute left-3 top-4 h-4 w-4", isSuperAdmin ? "text-emerald-400/40" : "text-primary/40")} />
+                      <Input 
+                        required
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => setFormData({...formData, email: e.target.value})}
+                        placeholder="USER@CLUB.COM" 
+                        className={cn(
+                          "pl-10 h-14 bg-white/5 border rounded-2xl font-bold transition-all",
+                          isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500 text-emerald-400 placeholder:text-emerald-400/20" : "border-primary/20 focus:border-primary text-primary placeholder:text-primary/20"
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1 italic", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>Nivel Jerárquico</Label>
+                      <Select 
+                        value={formData.role} 
+                        onValueChange={(v) => setFormData({...formData, role: v as UserRole})}
+                      >
+                        <SelectTrigger className={cn(
+                          "h-12 bg-white/5 border rounded-2xl font-bold uppercase tracking-widest transition-all",
+                          isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500 text-emerald-400" : "border-primary/20 focus:border-primary text-primary"
+                        )}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
+                          {availableRoles.map(role => (
+                            <SelectItem key={role} value={role} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary">
+                              {ROLES_INFO[role]?.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1 italic", isSuperAdmin ? "text-emerald-400/60" : "text-primary/60")}>Teléfono de Contacto</Label>
+                      <div className="flex gap-2">
+                        <div className="w-24 shrink-0">
+                          <Input 
+                            value={formData.countryPrefix}
+                            onChange={(e) => setFormData({...formData, countryPrefix: e.target.value})}
+                            placeholder="+34" 
+                            className={cn(
+                              "h-12 bg-white/5 border rounded-2xl font-bold text-center transition-all",
+                              isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500 text-emerald-400" : "border-primary/20 focus:border-primary text-primary"
+                            )}
+                          />
+                        </div>
+                        <div className="relative flex-1">
+                          <Phone className={cn("absolute left-3 top-3.5 h-4 w-4", isSuperAdmin ? "text-emerald-400/40" : "text-primary/40")} />
+                          <Input 
+                            value={formData.phone}
+                            onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                            placeholder="600 000 000" 
+                            className={cn(
+                              "pl-10 h-12 bg-white/5 border rounded-2xl font-bold transition-all",
+                              isSuperAdmin ? "border-emerald-500/20 focus:border-emerald-500 text-emerald-400 placeholder:text-emerald-400/20" : "border-primary/20 focus:border-primary text-primary placeholder:text-primary/20"
+                            )}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={cn("p-6 border space-y-3 rounded-3xl", isSuperAdmin ? "bg-emerald-500/5 border-emerald-500/20" : "bg-primary/5 border-primary/20")}>
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className={cn("h-3 w-3", isSuperAdmin ? "text-emerald-400" : "text-primary")} />
+                    <span className={cn("text-[9px] font-black uppercase tracking-widest italic", isSuperAdmin ? "text-emerald-400" : "text-primary")}>Protocolo de Jerarquía</span>
+                  </div>
+                  <p className={cn("text-[9px] leading-relaxed font-bold uppercase italic", isSuperAdmin ? "text-emerald-400/40" : "text-primary/40")}>
+                    {isSuperAdmin 
+                      ? "SISTEMA_ROOT: Como Superadmin, puedes emitir credenciales para cualquier nivel de la red, incluyendo Administradores de Club."
+                      : "El sistema de SynQAI solo permite la creación de perfiles con un rango inferior al del administrador actual."
+                    }
+                  </p>
+                </div>
+              </form>
+            )}
+          </div>
 
           <div className="p-10 bg-black/40 border-t border-white/5 flex gap-4">
             <SheetClose asChild>
@@ -537,7 +558,7 @@ export default function StaffManagementPage() {
             </SheetClose>
             <Button 
               onClick={handleSaveStaff}
-              disabled={loading}
+              disabled={loading || !isFormReady}
               className={cn(
                 "flex-[2] h-16 text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] transition-all border-none active:scale-95",
                 isSuperAdmin ? "bg-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.3)]" : "bg-primary"

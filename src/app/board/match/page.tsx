@@ -70,12 +70,9 @@ interface DrawingLine {
 const MemoizedPlayerChip = memo(PlayerChip);
 
 /**
- * MatchBoardPage - v20.1.0
- * PROTOCOLO_TACTICAL_BOX_LIMIT_REFINED:
- * - DEF: Offset -11.5% (Línea defensiva exactamente en frontal de área grande).
- * - ATK: Offset +7% (El ataque se detiene en la frontal del área rival).
- * - Midfield Lock conservado en fase DEF.
- * - Transiciones independientes local/visitante optimizadas para 3GB RAM.
+ * MatchBoardPage - v26.0.0
+ * OPTIMIZACIÓN_RENDIMIENTO: Suspensión de ciclos de dibujo cuando hay diálogos abiertos
+ * para liberar el hilo principal (Main Thread).
  */
 export default function MatchBoardPage() {
   const { profile } = useAuth();
@@ -98,6 +95,7 @@ export default function MatchBoardPage() {
   const [currentColor, setCurrentColor] = useState("#00f2ff");
   const [pairingCode, setPairingCode] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isAnyDialogOpen, setIsAnyDialogOpen] = useState(false);
   
   const [drawings, setDrawings] = useState<DrawingLine[]>([]);
   const [activeDrawing, setActiveDrawing] = useState<{x: number, y: number}[] | null>(null);
@@ -147,6 +145,8 @@ export default function MatchBoardPage() {
   };
 
   const calculatePositions = useCallback(() => {
+    if (isAnyDialogOpen) return; // OPTIMIZACIÓN: No recalcular si hay modal abierto
+
     const formationsForField = FORMATIONS_DATA[fieldType];
     const hForm = formationsForField[homeFormation] || formationsForField["4-3-3"];
     const gForm = formationsForField[guestFormation] || formationsForField["4-3-3"];
@@ -159,10 +159,10 @@ export default function MatchBoardPage() {
 
     const phaseOffset = (phase: TacticalPhase) => {
       switch(phase) {
-        case 'def': return -11.5; // Ajuste milimétrico para frontal de área grande propia
+        case 'def': return -11.5;
         case 'tda': return 2;  
         case 'sal': return 10;  
-        case 'atk': return 7;  // Ataque detenido en frontal del área rival
+        case 'atk': return 7;  
         default: return 0;
       }
     };
@@ -174,7 +174,6 @@ export default function MatchBoardPage() {
       else {
         finalY = finalY + shiftX(homeShift);
         finalX = finalX + phaseOffset(homePhase);
-        // CONSTRAINT: Ningún jugador pasa del centro del campo en DEFENSA
         if (homePhase === 'def') finalX = Math.min(50, finalX);
         finalX = Math.max(5, Math.min(95, finalX));
       }
@@ -188,7 +187,6 @@ export default function MatchBoardPage() {
       else {
         finalY = finalY - shiftX(guestShift);
         finalX = finalX - phaseOffset(guestPhase);
-        // CONSTRAINT: Ningún jugador pasa del centro del campo en DEFENSA
         if (guestPhase === 'def') finalX = Math.max(50, finalX);
         finalX = Math.max(5, Math.min(95, finalX));
       }
@@ -196,7 +194,7 @@ export default function MatchBoardPage() {
     });
 
     setPlayers([...hp, ...gp]);
-  }, [fieldType, homeFormation, guestFormation, homeShift, guestShift, homePhase, guestPhase]);
+  }, [fieldType, homeFormation, guestFormation, homeShift, guestShift, homePhase, guestPhase, isAnyDialogOpen]);
 
   useEffect(() => { calculatePositions(); }, [calculatePositions]);
 
@@ -238,6 +236,8 @@ export default function MatchBoardPage() {
   };
 
   useEffect(() => {
+    if (isAnyDialogOpen) return; // OPTIMIZACIÓN: Suspender ciclos de dibujo
+
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -269,15 +269,15 @@ export default function MatchBoardPage() {
 
     drawings.forEach(d => drawLine(d.points, d.color));
     if (activeDrawing) drawLine(activeDrawing, currentColor);
-  }, [drawings, activeDrawing, currentColor, fieldType]);
+  }, [drawings, activeDrawing, currentColor, fieldType, isAnyDialogOpen]);
 
   if (!mounted) return null;
 
   return (
     <div className="flex-1 flex flex-col bg-black overflow-hidden relative touch-none select-none" onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}>
       
-      {/* MANDO CENTRAL INTEGRADO (v16.6.0) */}
-      <header className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-full shadow-2xl transition-all scale-[0.8] lg:scale-100">
+      {/* MANDO CENTRAL INTEGRADO */}
+      <header className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl transition-all scale-[0.8] lg:scale-100">
         <div className="flex items-center gap-1 px-1 border-r border-white/10 pr-2 mr-1">
           <div className="flex items-center gap-1.5 px-1.5">
             {["#00f2ff", "#f43f5e", "#facc15"].map(c => (
@@ -307,7 +307,7 @@ export default function MatchBoardPage() {
       </header>
 
       {/* MARCADOR DE GOLES (IZQUIERDA) */}
-      <div className="fixed top-4 left-24 z-[100] flex items-center gap-3 px-3 py-1 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl animate-in slide-in-from-left-4 duration-700 scale-[0.8] lg:scale-100">
+      <div className="fixed top-4 left-24 z-[100] flex items-center gap-3 px-3 py-1 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl animate-in slide-in-from-left-4 duration-700 scale-[0.8] lg:scale-100">
         <div className="flex items-center gap-4">
           <div className="flex flex-col items-center">
             <span className="text-[6px] font-black text-white/40 uppercase">LOC</span>
@@ -331,13 +331,13 @@ export default function MatchBoardPage() {
 
       {/* TELEMETRÍA Y CONTROL DE TIEMPO (DERECHA) */}
       <div className="fixed top-4 right-4 z-[100] flex items-center gap-2 animate-in slide-in-from-right-4 duration-700 scale-[0.8] lg:scale-100">
-        <Dialog>
+        <Dialog onOpenChange={setIsAnyDialogOpen}>
           <DialogTrigger asChild>
-            <button className="h-10 w-10 rounded-xl bg-black/60 backdrop-blur-2xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all shadow-2xl active:scale-95 group">
+            <button className="h-10 w-10 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all shadow-2xl active:scale-95 group">
               <Watch className="h-4 w-4 group-hover:animate-pulse" />
             </button>
           </DialogTrigger>
-          <DialogContent className="bg-[#04070c]/98 backdrop-blur-3xl border-primary/20 text-white max-w-sm rounded-[2rem] shadow-[0_0_50px_rgba(0,242,255,0.2)]">
+          <DialogContent className="bg-[#04070c]/98 backdrop-blur-xl border-primary/20 text-white max-w-sm rounded-[2rem] shadow-[0_0_50px_rgba(0,242,255,0.2)]">
             <DialogHeader className="space-y-4">
               <div className="flex items-center gap-3">
                 <Zap className="h-4 w-4 text-primary animate-pulse" />
@@ -360,7 +360,7 @@ export default function MatchBoardPage() {
           </DialogContent>
         </Dialog>
 
-        <div className="flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-xl shadow-2xl">
+        <div className="flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl">
           <div className="flex flex-col items-center min-w-[60px]">
             <span className={cn("text-xl font-black font-headline tabular-nums tracking-tighter transition-all duration-500", isRunning ? "text-primary cyan-text-glow" : "text-white/40")}>
               {formatTime(timeLeft)}
@@ -413,10 +413,10 @@ export default function MatchBoardPage() {
         </TacticalField>
       </main>
 
-      {/* CONTROLES TÁCTICOS INFERIORES DE EJE ÚNICO (v16.3.0) */}
+      {/* CONTROLES TÁCTICOS INFERIORES */}
       <div className="fixed bottom-6 left-0 right-0 px-6 z-[150] pointer-events-none">
         <div className="flex items-end justify-between w-full max-w-[1600px] mx-auto">
-          {/* BLOQUE LOCAL (IZQUIERDA) */}
+          {/* BLOQUE LOCAL */}
           <div className="flex items-center gap-2 pointer-events-auto">
             <div className="bg-black/80 backdrop-blur-xl border border-primary/20 p-1 rounded-xl shadow-xl flex items-center h-10 transition-all duration-500">
               <Select value={homeFormation} onValueChange={setHomeFormation}>
@@ -455,7 +455,7 @@ export default function MatchBoardPage() {
 
           <div className="flex-1" />
 
-          {/* BLOQUE VISITANTE (DERECHA) */}
+          {/* BLOQUE VISITANTE */}
           <div className="flex items-center gap-2 pointer-events-auto">
             <div className="bg-black/80 backdrop-blur-xl border border-rose-500/20 p-1 rounded-xl shadow-xl flex items-center h-10 transition-all duration-500">
               <div className="flex items-center gap-1 bg-black/40 p-0.5 rounded-lg border border-white/5">
@@ -495,13 +495,13 @@ export default function MatchBoardPage() {
       </div>
 
       {/* ROSTER LATERAL */}
-      <Sheet>
+      <Sheet onOpenChange={setIsAnyDialogOpen}>
         <SheetTrigger asChild>
           <button className="fixed bottom-32 right-6 h-12 w-12 rounded-2xl bg-primary text-black flex items-center justify-center shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-110 transition-all duration-300 z-[160] active:scale-95">
             <Users className="h-5 w-5" />
           </button>
         </SheetTrigger>
-        <SheetContent className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white sm:max-w-md">
+        <SheetContent className="bg-[#04070c]/98 backdrop-blur-xl border-l border-primary/20 text-white sm:max-w-md">
           <SheetHeader className="p-6 border-b border-white/5">
             <SheetTitle className="text-2xl font-black italic uppercase tracking-tighter">ROSTER_LIVE</SheetTitle>
           </SheetHeader>
