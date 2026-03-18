@@ -379,17 +379,16 @@ export default function MatchBoardPage() {
         </TacticalField>
       </main>
 
-      {/* CONTROLES INFERIORES ANCLADOS */}
+      {/* CONTROLES INFERIORES ALINEADOS (v16.3.0) */}
       <div className="fixed bottom-6 left-0 right-0 px-6 z-[150] pointer-events-none">
         <div className="flex items-end justify-between w-full max-w-[1600px] mx-auto">
           
-          {/* ISLA LOCAL - ANCLADA IZQUIERDA */}
-          <div className="flex flex-col items-start gap-2">
-            {/* SELECTOR FORMACIÓN LOCAL - AÉREO */}
-            <div className="pointer-events-auto bg-black/80 backdrop-blur-xl border border-primary/20 p-2 rounded-xl animate-in slide-in-from-bottom-2 shadow-xl flex flex-col gap-1 transition-all duration-500">
-              <span className="text-[6px] font-black text-primary/60 uppercase tracking-widest leading-none ml-1">FORMATION</span>
+          {/* GRUPO LOCAL - ALINEADO IZQUIERDA */}
+          <div className="flex items-center gap-2 pointer-events-auto">
+            {/* SELECTOR FORMACIÓN LOCAL */}
+            <div className="bg-black/80 backdrop-blur-xl border border-primary/20 p-1 rounded-xl shadow-xl flex items-center h-10 transition-all duration-500">
               <Select value={homeFormation} onValueChange={setHomeFormation}>
-                <SelectTrigger className="h-8 w-28 bg-black border-primary/20 text-white font-black uppercase text-[9px] rounded-xl focus:ring-0 transition-all duration-300">
+                <SelectTrigger className="h-8 w-24 bg-black border-primary/10 text-white font-black uppercase text-[9px] rounded-lg focus:ring-0 transition-all duration-300">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[#0a0f18] border-primary/20">
@@ -398,35 +397,36 @@ export default function MatchBoardPage() {
               </Select>
             </div>
 
-            {/* SELECTOR FASE LOCAL - AÉREO */}
-            <div className="pointer-events-auto bg-black/80 backdrop-blur-xl border border-primary/20 p-2 rounded-2xl animate-in slide-in-from-bottom-2 shadow-xl flex gap-1 transition-all duration-500">
-              {["DEF", "TDA", "SAL", "ATK"].map(p => (
-                <button 
-                  key={p} 
-                  onClick={() => setHomePhase(p.toLowerCase() as TacticalPhase)}
-                  className={cn(
-                    "h-8 px-3 rounded-xl text-[8px] font-black uppercase transition-all duration-300",
-                    homePhase === p.toLowerCase() ? "bg-primary text-black cyan-glow" : "text-white/20 hover:bg-white/5 border border-white/5"
-                  )}
-                >
-                  {p}
-                </button>
-              ))}
+            {/* SELECTOR FASE LOCAL */}
+            <div className="bg-black/80 backdrop-blur-xl border border-primary/20 p-1 rounded-xl shadow-xl flex items-center h-10 transition-all duration-500">
+              <div className="flex gap-1">
+                {["DEF", "TDA", "SAL", "ATK"].map(p => (
+                  <button 
+                    key={p} 
+                    onClick={() => setHomePhase(p.toLowerCase() as TacticalPhase)}
+                    className={cn(
+                      "h-8 px-3 rounded-lg text-[8px] font-black uppercase transition-all duration-300",
+                      homePhase === p.toLowerCase() ? "bg-primary text-black cyan-glow" : "text-white/20 hover:bg-white/5"
+                    )}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <div className="pointer-events-auto bg-black/80 backdrop-blur-xl border border-primary/20 p-3 rounded-[2rem] flex items-center gap-4 animate-in slide-in-from-left-4 shadow-2xl scale-[0.85] lg:scale-100 origin-bottom-left transition-all duration-500">
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2 bg-black/40 p-1 rounded-xl border border-white/5">
-                  <button onClick={() => setHomeShift("left")} className={cn("flex-1 h-6 rounded-lg flex items-center justify-center transition-all duration-300", homeShift === 'left' ? 'bg-primary/20 text-primary' : 'text-white/10')}><ChevronLeft className="h-4 w-4" /></button>
-                  <button onClick={() => setHomeShift("center")} className={cn("flex-1 h-6 rounded-lg flex items-center justify-center transition-all duration-300", homeShift === 'center' ? 'bg-primary/20 text-primary' : 'text-white/10')}><div className="h-1.5 w-1.5 rounded-full bg-current" /></button>
-                  <button onClick={() => setHomeShift("right")} className={cn("flex-1 h-6 rounded-lg flex items-center justify-center transition-all duration-300", homeShift === 'right' ? 'bg-primary/20 text-primary' : 'text-white/10')}><ChevronRight className="h-4 w-4" /></button>
-                </div>
+            {/* BASCULACIÓN LOCAL */}
+            <div className="bg-black/80 backdrop-blur-xl border border-primary/20 p-1 rounded-xl shadow-xl flex items-center h-10 transition-all duration-500">
+              <div className="flex items-center gap-1 bg-black/40 p-0.5 rounded-lg border border-white/5">
+                <button onClick={() => setHomeShift("left")} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all duration-300", homeShift === 'left' ? 'bg-primary/20 text-primary' : 'text-white/10')}><ChevronLeft className="h-3 w-3" /></button>
+                <button onClick={() => setHomeShift("center")} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all duration-300", homeShift === 'center' ? 'bg-primary/20 text-primary' : 'text-white/10')}><div className="h-1.5 w-1.5 rounded-full bg-current" /></button>
+                <button onClick={() => setHomeShift("right")} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all duration-300", homeShift === 'right' ? 'bg-primary/20 text-primary' : 'text-white/10')}><ChevronRight className="h-3 w-3" /></button>
               </div>
             </div>
           </div>
 
-          {/* ISLA HERRAMIENTAS - CENTRO (Detección Automática) */}
-          <div className="pointer-events-auto bg-black/90 backdrop-blur-2xl border border-white/10 p-2 rounded-2xl flex items-center gap-2 shadow-[0_0_40px_rgba(0,0,0,0.8)] animate-in slide-in-from-bottom-4 scale-[0.85] lg:scale-100 origin-bottom transition-all duration-500">
+          {/* ISLA HERRAMIENTAS - CENTRO */}
+          <div className="pointer-events-auto bg-black/90 backdrop-blur-2xl border border-white/10 p-2 rounded-2xl flex items-center gap-2 shadow-[0_0_40px_rgba(0,0,0,0.8)] transition-all duration-500">
             <div className="flex items-center gap-2 px-3">
               {["#00f2ff", "#f43f5e", "#facc15"].map(c => (
                 <button key={c} onClick={() => setCurrentColor(c)} className={cn("h-6 w-6 rounded-full border-2 transition-all duration-300", currentColor === c ? "border-white scale-110 shadow-lg" : "border-transparent opacity-40")} style={{ backgroundColor: c }} />
@@ -438,45 +438,45 @@ export default function MatchBoardPage() {
             </button>
           </div>
 
-          {/* ISLA VISITANTE - ANCLADA DERECHA */}
-          <div className="flex flex-col items-end gap-2">
-            {/* SELECTOR FORMACIÓN VISITANTE - AÉREO */}
-            <div className="pointer-events-auto bg-black/80 backdrop-blur-xl border border-rose-500/20 p-2 rounded-xl animate-in slide-in-from-bottom-2 shadow-xl flex flex-col gap-1 transition-all duration-500">
-              <span className="text-[6px] font-black text-rose-500/60 uppercase tracking-widest leading-none mr-1 text-right">FORMATION</span>
+          {/* GRUPO VISITANTE - ALINEADO DERECHA */}
+          <div className="flex items-center gap-2 pointer-events-auto">
+            {/* BASCULACIÓN VISITANTE */}
+            <div className="bg-black/80 backdrop-blur-xl border border-rose-500/20 p-1 rounded-xl shadow-xl flex items-center h-10 transition-all duration-500">
+              <div className="flex items-center gap-1 bg-black/40 p-0.5 rounded-lg border border-white/5">
+                <button onClick={() => setGuestShift("left")} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all duration-300", guestShift === 'left' ? 'bg-rose-500/20 text-rose-500' : 'text-white/10')}><ChevronLeft className="h-3 w-3" /></button>
+                <button onClick={() => setGuestShift("center")} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all duration-300", guestShift === 'center' ? 'bg-rose-500/20 text-rose-500' : 'text-white/10')}><div className="h-1.5 w-1.5 rounded-full bg-current" /></button>
+                <button onClick={() => setGuestShift("right")} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all duration-300", guestShift === 'right' ? 'bg-rose-500/20 text-rose-500' : 'text-white/10')}><ChevronRight className="h-3 w-3" /></button>
+              </div>
+            </div>
+
+            {/* SELECTOR FASE VISITANTE */}
+            <div className="bg-black/80 backdrop-blur-xl border border-rose-500/20 p-1 rounded-xl shadow-xl flex items-center h-10 transition-all duration-500">
+              <div className="flex gap-1">
+                {["DEF", "TDA", "SAL", "ATK"].map(p => (
+                  <button 
+                    key={p} 
+                    onClick={() => setGuestPhase(p.toLowerCase() as TacticalPhase)}
+                    className={cn(
+                      "h-8 px-3 rounded-lg text-[8px] font-black uppercase transition-all duration-300",
+                      guestPhase === p.toLowerCase() ? "bg-rose-600 text-white shadow-[0_0_15px_rgba(225,29,72,0.4)]" : "text-white/20 hover:bg-white/5"
+                    )}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* SELECTOR FORMACIÓN VISITANTE */}
+            <div className="bg-black/80 backdrop-blur-xl border border-rose-500/20 p-1 rounded-xl shadow-xl flex items-center h-10 transition-all duration-500">
               <Select value={guestFormation} onValueChange={setGuestFormation}>
-                <SelectTrigger className="h-8 w-28 bg-black border-rose-500/20 text-white font-black uppercase text-[9px] rounded-xl focus:ring-0 transition-all duration-300">
+                <SelectTrigger className="h-8 w-24 bg-black border-rose-500/10 text-white font-black uppercase text-[9px] rounded-lg focus:ring-0 transition-all duration-300">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[#0a0f18] border-rose-500/20">
                   {Object.keys(FORMATIONS_DATA[fieldType]).map(f => <SelectItem key={f} value={f} className="text-[10px] font-black uppercase">{f}</SelectItem>)}
                 </SelectContent>
               </Select>
-            </div>
-
-            {/* SELECTOR FASE VISITANTE - AÉREO */}
-            <div className="pointer-events-auto bg-black/80 backdrop-blur-xl border border-rose-500/20 p-2 rounded-2xl animate-in slide-in-from-bottom-2 shadow-xl flex gap-1 transition-all duration-500">
-              {["DEF", "TDA", "SAL", "ATK"].map(p => (
-                <button 
-                  key={p} 
-                  onClick={() => setGuestPhase(p.toLowerCase() as TacticalPhase)}
-                  className={cn(
-                    "h-8 px-3 rounded-xl text-[8px] font-black uppercase transition-all duration-300",
-                    guestPhase === p.toLowerCase() ? "bg-rose-600 text-white shadow-[0_0_15px_rgba(225,29,72,0.4)]" : "text-white/20 hover:bg-white/5 border border-white/5"
-                  )}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
-
-            <div className="pointer-events-auto bg-black/80 backdrop-blur-xl border border-rose-500/20 p-3 rounded-[2rem] flex items-center gap-4 animate-in slide-in-from-right-4 shadow-2xl scale-[0.85] lg:scale-100 origin-bottom-right transition-all duration-500">
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2 bg-black/40 p-1 rounded-xl border border-white/5">
-                  <button onClick={() => setGuestShift("left")} className={cn("flex-1 h-6 rounded-lg flex items-center justify-center transition-all duration-300", guestShift === 'left' ? 'bg-rose-500/20 text-rose-500' : 'text-white/10')}><ChevronLeft className="h-4 w-4" /></button>
-                  <button onClick={() => setGuestShift("center")} className={cn("flex-1 h-6 rounded-lg flex items-center justify-center transition-all duration-300", guestShift === 'center' ? 'bg-rose-500/20 text-rose-500' : 'text-white/10')}><div className="h-1.5 w-1.5 rounded-full bg-current" /></button>
-                  <button onClick={() => setGuestShift("right")} className={cn("flex-1 h-6 rounded-lg flex items-center justify-center transition-all duration-300", guestShift === 'right' ? 'bg-rose-500/20 text-rose-500' : 'text-white/10')}><ChevronRight className="h-4 w-4" /></button>
-                </div>
-              </div>
             </div>
           </div>
 
