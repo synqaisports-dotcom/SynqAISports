@@ -1,7 +1,8 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { 
   Zap, 
   Users, 
@@ -21,20 +22,16 @@ import {
   Check,
   Minus,
   CloudSun,
-  Thermometer
+  Thermometer,
+  Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { synqSync } from "@/lib/sync-service";
 
-/**
- * PROTOCOLO_SMARTWATCH_V9.41.0
- * - Implementación de Geometría Universal (Cuadrada/Redonda).
- * - Integración de Telemetría Meteorológica como disparador de Sincronización.
- * - Refinamiento de Safe Area para evitar recortes en esferas circulares.
- */
-export default function SmartwatchPage() {
+function SmartwatchContent() {
   const { loading, profile } = useAuth();
+  const searchParams = useSearchParams();
   
   // ESTADOS DE VINCULACIÓN
   const [isLinked, setIsLinked] = useState(false);
@@ -42,6 +39,7 @@ export default function SmartwatchPage() {
   const [pairingError, setPairingError] = useState(false);
   const [isClubMode, setIsClubMode] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
+  const [autoLinking, setAutoLinking] = useState(false);
 
   // ESTADOS DE JUEGO Y CONFIGURACIÓN
   const [timeLeft, setTimeLeft] = useState(45 * 60);
@@ -54,6 +52,20 @@ export default function SmartwatchPage() {
   // ROSTER DINÁMICO
   const [starters, setStarters] = useState<number[]>([]);
   const [substitutes, setSubstitutes] = useState<number[]>([]);
+
+  // DETECCIÓN DE AUTO-LINK (TOKEN EN URL)
+  useEffect(() => {
+    const codeInUrl = searchParams.get("code") || searchParams.get("token");
+    if (codeInUrl && !isLinked) {
+      setAutoLinking(true);
+      setTimeout(() => {
+        setIsLinked(true);
+        localStorage.setItem("synq_watch_linked", "true");
+        localStorage.setItem("synq_watch_pairing_code", codeInUrl);
+        setAutoLinking(false);
+      }, 1500);
+    }
+  }, [searchParams, isLinked]);
 
   // CARGA DE ENTORNO Y ROSTER
   useEffect(() => {
@@ -96,18 +108,11 @@ export default function SmartwatchPage() {
     };
   }, [profile, isLinked]);
 
-  // MOTOR DEL CRONÓMETRO SMARTWATCH - v9.41.5
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isRunning) {
       interval = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 0) {
-            setIsRunning(false);
-            return 0;
-          }
-          return prev - 1;
-        });
+        setTimeLeft((prev) => (prev <= 0 ? 0 : prev - 1));
       }, 1000);
     }
     return () => clearInterval(interval);
@@ -125,7 +130,6 @@ export default function SmartwatchPage() {
       triggerHaptic([100, 50, 100]);
       setIsLinked(true);
       localStorage.setItem("synq_watch_linked", "true");
-      synqSync.trackEvent('ad_impression', { context: 'watch_pairing_success' });
     } else {
       triggerHaptic(200);
       setPairingError(true);
@@ -146,12 +150,6 @@ export default function SmartwatchPage() {
   const handleGoal = (team: 'home' | 'guest') => {
     setScore(prev => ({ ...prev, [team]: prev[team] + 1 }));
     triggerHaptic([150, 50, 150]);
-    synqSync.trackEvent('match_result', { team, action: 'goal', score: score });
-  };
-
-  const handleSubtractGoal = (team: 'home' | 'guest') => {
-    setScore(prev => ({ ...prev, [team]: Math.max(0, prev[team] - 1) }));
-    triggerHaptic(100);
   };
 
   const toggleClock = () => {
@@ -165,7 +163,14 @@ export default function SmartwatchPage() {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  if (loading) return null;
+  if (loading || autoLinking) {
+    return (
+      <div className="fixed inset-0 bg-[#04070c] flex flex-col items-center justify-center p-2">
+        <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />
+        <p className="text-[10px] font-black text-primary uppercase tracking-[0.5em] animate-pulse">Sincronizando_Token...</p>
+      </div>
+    );
+  }
 
   if (!isLinked) {
     return (
@@ -215,11 +220,9 @@ export default function SmartwatchPage() {
 
   return (
     <div className="fixed inset-0 bg-[#04070c] flex items-center justify-center overflow-hidden touch-none select-none p-2">
-      {/* CONTENEDOR UNIVERSAL (Adaptable a esferas redondas y cuadradas) */}
       <div className="relative aspect-square w-full max-w-[340px] rounded-[clamp(2rem,20%,50%)] border border-primary/30 bg-[#04070c] overflow-hidden flex flex-col shadow-[0_0_60px_rgba(0,242,255,0.15)]">
         <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
         
-        {/* CABECERA DE TELEMETRÍA (Widget Clima + Nodo) */}
         <div className="h-14 pt-6 px-10 flex items-center justify-between shrink-0 z-20">
            <div className="flex items-center gap-1.5">
               <Zap className={cn("h-3 w-3 animate-pulse", isClubMode ? "text-primary" : "text-white/40")} />
@@ -330,7 +333,6 @@ export default function SmartwatchPage() {
           )}
         </div>
 
-        {/* PIE DE PÁGINA (Estado de Red) */}
         <div className="h-12 pb-6 flex items-center justify-center shrink-0 z-20">
            <div className="flex items-center gap-2 px-4 py-1 bg-black/40 rounded-full border border-white/5">
               <ShieldCheck className={cn("h-2.5 w-2.5 animate-pulse", isOnline ? "text-emerald-400" : "text-rose-500")} />
@@ -341,5 +343,13 @@ export default function SmartwatchPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SmartwatchPage() {
+  return (
+    <Suspense fallback={<div className="fixed inset-0 bg-[#04070c] flex items-center justify-center text-primary font-black uppercase tracking-widest animate-pulse">Cargando_Ecosistema...</div>}>
+      <SmartwatchContent />
+    </Suspense>
   );
 }

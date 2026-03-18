@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Smartphone, 
   Watch, 
@@ -17,7 +17,8 @@ import {
   History,
   Download,
   Info,
-  ArrowRight
+  ArrowRight,
+  QrCode
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,10 +45,21 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { QRCodeCanvas } from "qrcode.react";
 
 export default function SandboxWatchConfigPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [pairingCode, setPairingCode] = useState("");
+
+  useEffect(() => {
+    let code = localStorage.getItem("synq_watch_pairing_code");
+    if (!code) {
+      code = Math.floor(100000 + Math.random() * 900000).toString();
+      localStorage.setItem("synq_watch_pairing_code", code);
+    }
+    setPairingCode(code);
+  }, []);
 
   // ESTADO DE CONFIGURACIÓN LOCAL
   const [config, setConfig] = useState({
@@ -71,13 +83,17 @@ export default function SandboxWatchConfigPage() {
     }, 1000);
   };
 
+  const watchUrl = typeof window !== 'undefined' 
+    ? `${window.location.origin}/smartwatch?code=${pairingCode}`
+    : "";
+
   return (
     <div className="space-y-8 animate-in fade-in duration-1000 p-8 lg:p-12">
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 border-b border-white/5 pb-8">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <Smartphone className="h-5 w-5 text-primary animate-pulse" />
-            <span className="text-[10px] font-black text-primary tracking-[0.5em] uppercase italic">Local_Watch_Protocol_v1.0</span>
+            <span className="text-[10px] font-black text-primary tracking-[0.5em] uppercase italic">Local_Watch_Protocol_v1.5</span>
           </div>
           <h1 className="text-5xl font-headline font-black text-white uppercase italic tracking-tighter blue-text-glow leading-none">
             VINCULAR_WATCH
@@ -89,54 +105,51 @@ export default function SandboxWatchConfigPage() {
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="outline" className="h-12 border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest px-6 rounded-xl hover:bg-primary/10 transition-all">
-                Guía de Instalación
+                <QrCode className="h-4 w-4 mr-2" /> Vínculo Express (QR)
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
               <div className="p-10 border-b border-white/5 bg-black/40">
                 <SheetHeader className="space-y-4">
                   <div className="flex items-center gap-3">
-                    <Download className="h-4 w-4 text-primary animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Deploy_Manual_v1.0</span>
+                    <Zap className="h-4 w-4 text-primary animate-pulse" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Express_Link_Sandbox</span>
                   </div>
-                  <SheetTitle className="text-3xl font-black italic tracking-tighter uppercase leading-none">INSTALAR EN RELOJ</SheetTitle>
-                  <SheetDescription className="text-[10px] uppercase font-bold text-primary/40 tracking-widest italic">Flujo universal de despliegue PWA.</SheetDescription>
+                  <SheetTitle className="text-3xl font-black italic tracking-tighter uppercase leading-none">VINCULAR RELOJ</SheetTitle>
+                  <SheetDescription className="text-[10px] uppercase font-bold text-primary/40 tracking-widest italic">Vínculo instantáneo por QR.</SheetDescription>
                 </SheetHeader>
               </div>
               
-              <div className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10">
-                <div className="space-y-8">
-                  <InstallationStep 
-                    step="01" 
-                    title="Acceder al Nodo" 
-                    desc="Abra el navegador en su Smartwatch y acceda a synqai.sports/smartwatch" 
-                  />
-                  <InstallationStep 
-                    step="02" 
-                    title="Añadir a Inicio" 
-                    desc="En el menú del navegador del reloj, seleccione 'Añadir a pantalla de inicio'. Esto creará el icono de SynqAI." 
-                  />
-                  <InstallationStep 
-                    step="03" 
-                    title="Vincular Token" 
-                    desc="Inicie la App instalada en el reloj e introduzca el código generado en su Pizarra de Partido." 
-                  />
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-10 flex flex-col items-center justify-center space-y-10">
+                <div className="p-6 bg-white rounded-3xl shadow-[0_0_50px_rgba(59,130,246,0.3)]">
+                  <QRCodeCanvas value={watchUrl} size={240} level="H" fgColor="#000000" bgColor="#ffffff" />
                 </div>
 
-                <div className="p-6 bg-primary/5 border border-primary/20 rounded-3xl space-y-4">
+                <div className="space-y-6 w-full">
+                  <div className="flex gap-4 group">
+                    <span className="text-xl font-black italic text-primary/40">01</span>
+                    <p className="text-[10px] text-white/60 font-bold uppercase leading-relaxed">Escanee con el móvil para abrir el vínculo.</p>
+                  </div>
+                  <div className="flex gap-4 group">
+                    <span className="text-xl font-black italic text-primary/40">02</span>
+                    <p className="text-[10px] text-white/60 font-bold uppercase leading-relaxed italic">La app se emparejará automáticamente al detectar el nodo local.</p>
+                  </div>
+                </div>
+
+                <div className="p-6 bg-primary/5 border border-primary/20 rounded-3xl space-y-4 w-full">
                    <div className="flex items-center gap-3">
                       <ShieldCheck className="h-4 w-4 text-primary" />
-                      <span className="text-[10px] font-black uppercase text-primary tracking-widest">Sin App Store</span>
+                      <span className="text-[10px] font-black uppercase text-primary tracking-widest">Sincro Sin Cables</span>
                    </div>
                    <p className="text-[10px] text-white/40 leading-relaxed font-bold uppercase italic">
-                     Utilizamos tecnología PWA para que el despliegue sea instantáneo y gratuito para todos los entrenadores del club.
+                     El código QR elimina la necesidad de teclear la URL en la pantalla táctil del Smartwatch.
                    </p>
                 </div>
               </div>
               <div className="p-10 bg-black/60 border-t border-white/5">
                 <SheetClose asChild>
                   <Button variant="ghost" className="w-full h-16 border border-white/10 text-white/40 font-black uppercase text-[10px] tracking-widest rounded-2xl">
-                    CERRAR
+                    CERRAR_ASISTENTE
                   </Button>
                 </SheetClose>
               </div>
@@ -174,8 +187,8 @@ export default function SandboxWatchConfigPage() {
                   <span className="text-[10px] font-black text-primary italic uppercase">SynqWatch_Lite</span>
                </div>
                <div className="flex justify-between items-center py-3 border-b border-white/5">
-                  <span className="text-[10px] font-black text-white/40 uppercase">Latencia Local</span>
-                  <span className="text-[10px] font-black text-emerald-400 italic uppercase">&lt; 10ms</span>
+                  <span className="text-[10px] font-black text-white/40 uppercase">Código Nodo</span>
+                  <span className="text-[10px] font-black text-white uppercase tracking-widest">{pairingCode}</span>
                </div>
             </div>
           </Card>
@@ -295,18 +308,6 @@ export default function SandboxWatchConfigPage() {
              </p>
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function InstallationStep({ step, title, desc }: { step: string, title: string, desc: string }) {
-  return (
-    <div className="flex gap-6 group">
-      <span className="text-2xl font-black italic text-primary/20 group-hover:text-primary transition-colors">{step}</span>
-      <div className="space-y-1">
-        <h4 className="text-sm font-black text-white uppercase italic">{title}</h4>
-        <p className="text-[10px] text-white/40 font-bold uppercase leading-relaxed">{desc}</p>
       </div>
     </div>
   );

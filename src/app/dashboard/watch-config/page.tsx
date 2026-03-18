@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Smartphone, 
   Watch, 
@@ -22,7 +22,8 @@ import {
   Info,
   QrCode,
   Download,
-  Share2
+  Share2,
+  ExternalLink
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,15 +44,28 @@ import {
   SheetHeader, 
   SheetTitle, 
   SheetDescription,
-  SheetTrigger
+  SheetTrigger,
+  SheetClose
 } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { QRCodeCanvas } from "qrcode.react";
 
 export default function WatchConfigPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [operationalAlertsActive, setOperationalAlertsActive] = useState(true);
+  const [pairingCode, setPairingCode] = useState("");
+
+  useEffect(() => {
+    let code = localStorage.getItem("synq_watch_pairing_code");
+    if (!code) {
+      code = Math.floor(100000 + Math.random() * 900000).toString();
+      localStorage.setItem("synq_watch_pairing_code", code);
+    }
+    setPairingCode(code);
+  }, []);
 
   // ESTADO DE CONFIGURACIÓN DE ALERTAS
   const [config, setConfig] = useState({
@@ -81,14 +95,17 @@ export default function WatchConfigPage() {
     }, 1500);
   };
 
+  const watchUrl = typeof window !== 'undefined' 
+    ? `${window.location.origin}/smartwatch?code=${pairingCode}`
+    : "";
+
   return (
     <div className="space-y-8 animate-in fade-in duration-1000 pb-24">
-      {/* HEADER TÁCTICO */}
       <div className="flex justify-between items-end border-b border-white/5 pb-6">
         <div className="space-y-1">
           <div className="flex items-center gap-3 mb-2">
             <Smartphone className="h-5 w-5 text-primary animate-pulse" />
-            <span className="text-[10px] font-black text-primary tracking-[0.5em] uppercase italic">Peripheral_Protocol_v2.1</span>
+            <span className="text-[10px] font-black text-primary tracking-[0.5em] uppercase italic">Peripheral_Protocol_v2.5</span>
           </div>
           <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic cyan-text-glow">
             Watch Protocol
@@ -99,47 +116,58 @@ export default function WatchConfigPage() {
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="outline" className="h-12 border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest px-6 rounded-xl hover:bg-primary/10">
-                Guía de Instalación
+                <QrCode className="h-4 w-4 mr-2" /> Vínculo Express
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)]">
-              <SheetHeader className="space-y-4 mb-10">
-                <div className="flex items-center gap-3">
-                  <Download className="h-4 w-4 text-primary animate-pulse" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Deploy_Manual_v1.0</span>
-                </div>
-                <SheetTitle className="text-3xl font-black italic tracking-tighter uppercase leading-none">INSTALAR EN RELOJ</SheetTitle>
-                <SheetDescription className="text-[10px] uppercase font-bold text-primary/40 tracking-widest italic">Flujo universal de despliegue PWA.</SheetDescription>
-              </SheetHeader>
+            <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+              <div className="p-10 border-b border-white/5 bg-black/40">
+                <SheetHeader className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <Zap className="h-4 w-4 text-primary animate-pulse" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Express_Link_Protocol</span>
+                  </div>
+                  <SheetTitle className="text-3xl font-black italic tracking-tighter uppercase leading-none">VINCULAR RELOJ</SheetTitle>
+                  <SheetDescription className="text-[10px] uppercase font-bold text-primary/40 tracking-widest italic">Escanee para abrir la app en el reloj sin teclear.</SheetDescription>
+                </SheetHeader>
+              </div>
               
-              <div className="space-y-8">
-                <div className="space-y-6">
-                  <InstallationStep 
-                    step="01" 
-                    title="Acceder al Nodo" 
-                    desc="Abra el navegador en su Smartwatch y acceda a synqai.sports/smartwatch" 
-                  />
-                  <InstallationStep 
-                    step="02" 
-                    title="Añadir a Inicio" 
-                    desc="En el menú del navegador del reloj, seleccione 'Añadir a pantalla de inicio'. Esto creará el icono de SynqAI." 
-                  />
-                  <InstallationStep 
-                    step="03" 
-                    title="Vincular Token" 
-                    desc="Inicie la App instalada en el reloj e introduzca el código generado en su Pizarra de Partido." 
-                  />
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-10 flex flex-col items-center justify-center space-y-10">
+                <div className="p-6 bg-white rounded-3xl shadow-[0_0_50px_rgba(0,242,255,0.3)] group relative overflow-hidden">
+                  <QRCodeCanvas value={watchUrl} size={240} level="H" fgColor="#000000" bgColor="#ffffff" />
+                  <div className="absolute inset-0 border-8 border-primary/20 pointer-events-none rounded-3xl" />
                 </div>
 
-                <div className="p-6 bg-primary/5 border border-primary/20 rounded-3xl space-y-4">
+                <div className="space-y-6 w-full">
+                  <div className="flex gap-4 group">
+                    <span className="text-xl font-black italic text-primary/40">01</span>
+                    <p className="text-[10px] text-white/60 font-bold uppercase leading-relaxed">Escanee el código con la cámara de su móvil.</p>
+                  </div>
+                  <div className="flex gap-4 group">
+                    <span className="text-xl font-black italic text-primary/40">02</span>
+                    <p className="text-[10px] text-white/60 font-bold uppercase leading-relaxed">Al abrirse el enlace, pulse "Compartir" y seleccione su Reloj.</p>
+                  </div>
+                  <div className="flex gap-4 group">
+                    <span className="text-xl font-black italic text-primary/40">03</span>
+                    <p className="text-[10px] text-white/60 font-bold uppercase leading-relaxed italic">La app se vinculará automáticamente al detectar el token.</p>
+                  </div>
+                </div>
+
+                <div className="p-6 bg-primary/5 border border-primary/20 rounded-3xl space-y-4 w-full">
                    <div className="flex items-center gap-3">
                       <ShieldCheck className="h-4 w-4 text-primary" />
-                      <span className="text-[10px] font-black uppercase text-primary tracking-widest">Sin App Store</span>
+                      <span className="text-[9px] font-black uppercase text-primary tracking-widest">Sincronización AES-256</span>
                    </div>
-                   <p className="text-[10px] text-white/40 leading-relaxed font-bold uppercase italic">
-                     Utilizamos tecnología PWA para que el despliegue sea instantáneo y gratuito para todos los entrenadores del club.
+                   <p className="text-[9px] text-white/40 leading-relaxed font-bold uppercase italic">
+                     El QR contiene un token de sesión seguro que expira tras la vinculación exitosa.
                    </p>
                 </div>
+              </div>
+              <div className="p-10 bg-black/60 border-t border-white/5">
+                <SheetClose asChild>
+                  <Button variant="ghost" className="w-full h-16 border border-white/10 text-white/40 font-black uppercase text-[10px] tracking-widest rounded-2xl">
+                    CERRAR_ASISTENTE
+                  </Button>
+                </SheetClose>
               </div>
             </SheetContent>
           </Sheet>
@@ -156,7 +184,6 @@ export default function WatchConfigPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         
-        {/* COLUMNA IZQUIERDA: ESTADO DE CONEXIÓN */}
         <div className="space-y-8">
           <Card className="glass-panel border-primary/20 bg-primary/5 p-8 relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-all">
@@ -170,15 +197,15 @@ export default function WatchConfigPage() {
             <div className="space-y-4 relative z-10">
                <div className="flex justify-between items-center py-3 border-b border-white/5">
                   <span className="text-[10px] font-black text-white/40 uppercase">Hardware Detectado</span>
-                  <span className="text-[10px] font-black text-primary italic uppercase">SynqWatch_Alpha_v2</span>
+                  <span className="text-[10px] font-black text-primary italic uppercase">SynqWatch_Alpha_v2.5</span>
                </div>
                <div className="flex justify-between items-center py-3 border-b border-white/5">
                   <span className="text-[10px] font-black text-white/40 uppercase">Latencia de Red</span>
                   <span className="text-[10px] font-black text-emerald-400 italic uppercase">4ms [Excelente]</span>
                </div>
                <div className="flex justify-between items-center py-3">
-                  <span className="text-[10px] font-black text-white/40 uppercase">Batería Nodo</span>
-                  <span className="text-[10px] font-black text-white uppercase">84%</span>
+                  <span className="text-[10px] font-black text-white/40 uppercase">Código de Nodo</span>
+                  <span className="text-[10px] font-black text-white uppercase tracking-widest">{pairingCode}</span>
                </div>
             </div>
           </Card>
@@ -197,10 +224,7 @@ export default function WatchConfigPage() {
           </div>
         </div>
 
-        {/* COLUMNA CENTRAL Y DERECHA: AJUSTES DE TELEMETRÍA */}
         <div className="lg:col-span-2 space-y-8">
-          
-          {/* SECCIÓN 1: ALERTAS OPERATIVAS */}
           <Card className="glass-panel border-none bg-black/40 overflow-hidden shadow-2xl rounded-3xl">
             <CardHeader className="p-8 border-b border-white/5 bg-white/[0.01] flex flex-row items-center justify-between">
               <CardTitle className="text-xs font-black uppercase tracking-[0.4em] flex items-center gap-4 text-primary/60">
@@ -216,8 +240,6 @@ export default function WatchConfigPage() {
               "p-8 space-y-10 transition-all duration-500",
               !operationalAlertsActive && "opacity-30 pointer-events-none grayscale"
             )}>
-              
-              {/* LÓGICA DE TIEMPO SINCRO */}
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 p-6 bg-primary/5 border border-primary/20 rounded-2xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4 opacity-5"><History className="h-16 w-16 text-primary" /></div>
                 <div className="space-y-1 max-w-sm relative z-10">
@@ -256,7 +278,6 @@ export default function WatchConfigPage() {
                 </div>
               </div>
 
-              {/* LÓGICA DE INTERVALOS DE AVISO */}
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
                 <div className="space-y-1 max-w-sm">
                   <h4 className="text-sm font-black text-white uppercase italic">Intervalos de Aviso de Cambio</h4>
@@ -290,7 +311,7 @@ export default function WatchConfigPage() {
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
                 <div className="space-y-1 max-w-sm">
                   <h4 className="text-sm font-black text-white uppercase italic">Sincronización de Sustituciones</h4>
-                  <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest leading-relaxed">
+                  <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest leading-relaxed italic">
                     Permitir confirmar cambios de roster directamente desde la muñeca.
                   </p>
                 </div>
@@ -325,11 +346,9 @@ export default function WatchConfigPage() {
                   />
                 </div>
               </div>
-
             </CardContent>
           </Card>
 
-          {/* SECCIÓN 2: TELEMETRÍA AVANZADA */}
           <Card className="glass-panel border-none bg-black/40 overflow-hidden shadow-2xl rounded-3xl">
             <CardHeader className="p-8 border-b border-white/5 bg-white/[0.01]">
               <CardTitle className="text-xs font-black uppercase tracking-[0.4em] flex items-center gap-4 text-primary/60">
@@ -337,7 +356,6 @@ export default function WatchConfigPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-8 space-y-10">
-              
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
                 <div className="space-y-1 max-w-sm">
                   <h4 className="text-sm font-black text-white uppercase italic">Alerta de Frecuencia Crítica</h4>
@@ -374,16 +392,14 @@ export default function WatchConfigPage() {
                   className="data-[state=checked]:bg-primary"
                 />
               </div>
-
             </CardContent>
-            <div className="p-6 bg-black/40 border-t border-white/5 flex justify-between items-center text-[9px] font-black text-white/20 uppercase tracking-[0.5em]">
+            <div className="p-6 bg-black/40 border-t border-white/5 flex justify-between items-center text-[9px] font-black text-primary/20 uppercase tracking-[0.5em]">
               <span>Protocolo de Transmisión: Encriptado AES-256</span>
               <span className="flex items-center gap-2">
                 <RotateCcw className="h-3 w-3 text-primary/40" /> Actualización de Nodos en Tiempo Real
               </span>
             </div>
           </Card>
-
         </div>
       </div>
     </div>
