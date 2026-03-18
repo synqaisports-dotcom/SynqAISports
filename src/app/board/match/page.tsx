@@ -310,7 +310,7 @@ export default function MatchBoardPage() {
         {/* ISLA CRONÓMETRO CON CONTROLES */}
         <div className="flex items-center gap-4 px-4 py-1.5 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl">
           <div className="flex flex-col items-center min-w-[70px]">
-            <span className={cn("text-2xl font-black font-headline tabular-nums tracking-tighter", isRunning ? "text-primary cyan-text-glow" : "text-white/40")}>
+            <span className={cn("text-2xl font-black font-headline tabular-nums tracking-tighter transition-all duration-500", isRunning ? "text-primary cyan-text-glow" : "text-white/40")}>
               {formatTime(timeLeft)}
             </span>
           </div>
@@ -319,7 +319,7 @@ export default function MatchBoardPage() {
             <button 
               onClick={() => setIsRunning(!isRunning)} 
               className={cn(
-                "h-8 w-8 rounded-xl flex items-center justify-center transition-all active:scale-90",
+                "h-8 w-8 rounded-xl flex items-center justify-center transition-all duration-300 active:scale-90",
                 isRunning ? "text-amber-400 hover:bg-amber-400/10" : "text-emerald-400 hover:bg-emerald-400/10"
               )}
               title={isRunning ? "Pausar" : "Iniciar"}
@@ -328,7 +328,7 @@ export default function MatchBoardPage() {
             </button>
             <button 
               onClick={() => { setIsRunning(false); setTimeLeft(45 * 60); }} 
-              className="h-8 w-8 rounded-xl flex items-center justify-center text-white/20 hover:text-white hover:bg-white/10 transition-all active:scale-90"
+              className="h-8 w-8 rounded-xl flex items-center justify-center text-white/20 hover:text-white hover:bg-white/10 transition-all duration-300 active:scale-90"
               title="Resetear"
             >
               <RotateCcw className="h-4 w-4" />
@@ -336,7 +336,7 @@ export default function MatchBoardPage() {
           </div>
         </div>
 
-        <Button className="h-12 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-2xl cyan-glow border-none shadow-xl hover:scale-105 transition-all">
+        <Button className="h-12 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-2xl cyan-glow border-none shadow-xl hover:scale-105 transition-all duration-300">
           GUARDAR
         </Button>
       </div>
@@ -373,10 +373,10 @@ export default function MatchBoardPage() {
           {/* ISLA LOCAL - ANCLADA IZQUIERDA */}
           <div className="flex flex-col items-start gap-2">
             {/* SELECTOR FORMACIÓN LOCAL - AÉREO */}
-            <div className="pointer-events-auto bg-black/80 backdrop-blur-xl border border-primary/20 p-2 rounded-xl animate-in slide-in-from-bottom-2 shadow-xl flex flex-col gap-1">
+            <div className="pointer-events-auto bg-black/80 backdrop-blur-xl border border-primary/20 p-2 rounded-xl animate-in slide-in-from-bottom-2 shadow-xl flex flex-col gap-1 transition-all duration-500">
               <span className="text-[6px] font-black text-primary/60 uppercase tracking-widest leading-none ml-1">FORMATION</span>
               <Select value={homeFormation} onValueChange={setHomeFormation}>
-                <SelectTrigger className="h-8 w-28 bg-black border-primary/20 text-white font-black uppercase text-[9px] rounded-xl focus:ring-0">
+                <SelectTrigger className="h-8 w-28 bg-black border-primary/20 text-white font-black uppercase text-[9px] rounded-xl focus:ring-0 transition-all duration-300">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[#0a0f18] border-primary/20">
@@ -386,13 +386,13 @@ export default function MatchBoardPage() {
             </div>
 
             {/* SELECTOR FASE LOCAL - AÉREO */}
-            <div className="pointer-events-auto bg-black/80 backdrop-blur-xl border border-primary/20 p-2 rounded-2xl animate-in slide-in-from-bottom-2 shadow-xl flex gap-1">
+            <div className="pointer-events-auto bg-black/80 backdrop-blur-xl border border-primary/20 p-2 rounded-2xl animate-in slide-in-from-bottom-2 shadow-xl flex gap-1 transition-all duration-500">
               {["DEF", "TDA", "SAL", "ATK"].map(p => (
                 <button 
                   key={p} 
                   onClick={() => setHomePhase(p.toLowerCase() as TacticalPhase)}
                   className={cn(
-                    "h-8 px-3 rounded-xl text-[8px] font-black uppercase transition-all",
+                    "h-8 px-3 rounded-xl text-[8px] font-black uppercase transition-all duration-300",
                     homePhase === p.toLowerCase() ? "bg-primary text-black cyan-glow" : "text-white/20 hover:bg-white/5 border border-white/5"
                   )}
                 >
@@ -401,26 +401,26 @@ export default function MatchBoardPage() {
               ))}
             </div>
 
-            <div className="pointer-events-auto bg-black/80 backdrop-blur-xl border border-primary/20 p-3 rounded-[2rem] flex items-center gap-4 animate-in slide-in-from-left-4 shadow-2xl scale-[0.85] lg:scale-100 origin-bottom-left">
+            <div className="pointer-events-auto bg-black/80 backdrop-blur-xl border border-primary/20 p-3 rounded-[2rem] flex items-center gap-4 animate-in slide-in-from-left-4 shadow-2xl scale-[0.85] lg:scale-100 origin-bottom-left transition-all duration-500">
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2 bg-black/40 p-1 rounded-xl border border-white/5">
-                  <button onClick={() => setHomeShift("left")} className={cn("flex-1 h-6 rounded-lg flex items-center justify-center transition-all", homeShift === 'left' ? 'bg-primary/20 text-primary' : 'text-white/10')}><ChevronLeft className="h-4 w-4" /></button>
-                  <button onClick={() => setHomeShift("center")} className={cn("flex-1 h-6 rounded-lg flex items-center justify-center transition-all", homeShift === 'center' ? 'bg-primary/20 text-primary' : 'text-white/10')}><div className="h-1.5 w-1.5 rounded-full bg-current" /></button>
-                  <button onClick={() => setHomeShift("right")} className={cn("flex-1 h-6 rounded-lg flex items-center justify-center transition-all", homeShift === 'right' ? 'bg-primary/20 text-primary' : 'text-white/10')}><ChevronRight className="h-4 w-4" /></button>
+                  <button onClick={() => setHomeShift("left")} className={cn("flex-1 h-6 rounded-lg flex items-center justify-center transition-all duration-300", homeShift === 'left' ? 'bg-primary/20 text-primary' : 'text-white/10')}><ChevronLeft className="h-4 w-4" /></button>
+                  <button onClick={() => setHomeShift("center")} className={cn("flex-1 h-6 rounded-lg flex items-center justify-center transition-all duration-300", homeShift === 'center' ? 'bg-primary/20 text-primary' : 'text-white/10')}><div className="h-1.5 w-1.5 rounded-full bg-current" /></button>
+                  <button onClick={() => setHomeShift("right")} className={cn("flex-1 h-6 rounded-lg flex items-center justify-center transition-all duration-300", homeShift === 'right' ? 'bg-primary/20 text-primary' : 'text-white/10')}><ChevronRight className="h-4 w-4" /></button>
                 </div>
               </div>
             </div>
           </div>
 
           {/* ISLA HERRAMIENTAS - CENTRO (Detección Automática) */}
-          <div className="pointer-events-auto bg-black/90 backdrop-blur-2xl border border-white/10 p-2 rounded-2xl flex items-center gap-2 shadow-[0_0_40px_rgba(0,0,0,0.8)] animate-in slide-in-from-bottom-4 scale-[0.85] lg:scale-100 origin-bottom">
+          <div className="pointer-events-auto bg-black/90 backdrop-blur-2xl border border-white/10 p-2 rounded-2xl flex items-center gap-2 shadow-[0_0_40px_rgba(0,0,0,0.8)] animate-in slide-in-from-bottom-4 scale-[0.85] lg:scale-100 origin-bottom transition-all duration-500">
             <div className="flex items-center gap-2 px-3">
               {["#00f2ff", "#f43f5e", "#facc15"].map(c => (
-                <button key={c} onClick={() => setCurrentColor(c)} className={cn("h-6 w-6 rounded-full border-2 transition-all", currentColor === c ? "border-white scale-110 shadow-lg" : "border-transparent opacity-40")} style={{ backgroundColor: c }} />
+                <button key={c} onClick={() => setCurrentColor(c)} className={cn("h-6 w-6 rounded-full border-2 transition-all duration-300", currentColor === c ? "border-white scale-110 shadow-lg" : "border-transparent opacity-40")} style={{ backgroundColor: c }} />
               ))}
             </div>
             <div className="w-[1px] h-6 bg-white/10 mx-1" />
-            <button onClick={() => setDrawings([])} className="text-rose-500/40 hover:text-rose-500 p-2" title="Borrar Trazos">
+            <button onClick={() => setDrawings([])} className="text-rose-500/40 hover:text-rose-500 p-2 transition-colors duration-300" title="Borrar Trazos">
               <Trash2 className="h-5 w-5" />
             </button>
           </div>
@@ -428,10 +428,10 @@ export default function MatchBoardPage() {
           {/* ISLA VISITANTE - ANCLADA DERECHA */}
           <div className="flex flex-col items-end gap-2">
             {/* SELECTOR FORMACIÓN VISITANTE - AÉREO */}
-            <div className="pointer-events-auto bg-black/80 backdrop-blur-xl border border-rose-500/20 p-2 rounded-xl animate-in slide-in-from-bottom-2 shadow-xl flex flex-col gap-1">
+            <div className="pointer-events-auto bg-black/80 backdrop-blur-xl border border-rose-500/20 p-2 rounded-xl animate-in slide-in-from-bottom-2 shadow-xl flex flex-col gap-1 transition-all duration-500">
               <span className="text-[6px] font-black text-rose-500/60 uppercase tracking-widest leading-none mr-1 text-right">FORMATION</span>
               <Select value={guestFormation} onValueChange={setGuestFormation}>
-                <SelectTrigger className="h-8 w-28 bg-black border-rose-500/20 text-white font-black uppercase text-[9px] rounded-xl focus:ring-0">
+                <SelectTrigger className="h-8 w-28 bg-black border-rose-500/20 text-white font-black uppercase text-[9px] rounded-xl focus:ring-0 transition-all duration-300">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[#0a0f18] border-rose-500/20">
@@ -441,13 +441,13 @@ export default function MatchBoardPage() {
             </div>
 
             {/* SELECTOR FASE VISITANTE - AÉREO */}
-            <div className="pointer-events-auto bg-black/80 backdrop-blur-xl border border-rose-500/20 p-2 rounded-2xl animate-in slide-in-from-bottom-2 shadow-xl flex gap-1">
+            <div className="pointer-events-auto bg-black/80 backdrop-blur-xl border border-rose-500/20 p-2 rounded-2xl animate-in slide-in-from-bottom-2 shadow-xl flex gap-1 transition-all duration-500">
               {["DEF", "TDA", "SAL", "ATK"].map(p => (
                 <button 
                   key={p} 
                   onClick={() => setGuestPhase(p.toLowerCase() as TacticalPhase)}
                   className={cn(
-                    "h-8 px-3 rounded-xl text-[8px] font-black uppercase transition-all",
+                    "h-8 px-3 rounded-xl text-[8px] font-black uppercase transition-all duration-300",
                     guestPhase === p.toLowerCase() ? "bg-rose-600 text-white shadow-[0_0_15px_rgba(225,29,72,0.4)]" : "text-white/20 hover:bg-white/5 border border-white/5"
                   )}
                 >
@@ -456,12 +456,12 @@ export default function MatchBoardPage() {
               ))}
             </div>
 
-            <div className="pointer-events-auto bg-black/80 backdrop-blur-xl border border-rose-500/20 p-3 rounded-[2rem] flex items-center gap-4 animate-in slide-in-from-right-4 shadow-2xl scale-[0.85] lg:scale-100 origin-bottom-right">
+            <div className="pointer-events-auto bg-black/80 backdrop-blur-xl border border-rose-500/20 p-3 rounded-[2rem] flex items-center gap-4 animate-in slide-in-from-right-4 shadow-2xl scale-[0.85] lg:scale-100 origin-bottom-right transition-all duration-500">
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2 bg-black/40 p-1 rounded-xl border border-white/5">
-                  <button onClick={() => setGuestShift("left")} className={cn("flex-1 h-6 rounded-lg flex items-center justify-center transition-all", guestShift === 'left' ? 'bg-rose-500/20 text-rose-500' : 'text-white/10')}><ChevronLeft className="h-4 w-4" /></button>
-                  <button onClick={() => setGuestShift("center")} className={cn("flex-1 h-6 rounded-lg flex items-center justify-center transition-all", guestShift === 'center' ? 'bg-rose-500/20 text-rose-500' : 'text-white/10')}><div className="h-1.5 w-1.5 rounded-full bg-current" /></button>
-                  <button onClick={() => setGuestShift("right")} className={cn("flex-1 h-6 rounded-lg flex items-center justify-center transition-all", guestShift === 'right' ? 'bg-rose-500/20 text-rose-500' : 'text-white/10')}><ChevronRight className="h-4 w-4" /></button>
+                  <button onClick={() => setGuestShift("left")} className={cn("flex-1 h-6 rounded-lg flex items-center justify-center transition-all duration-300", guestShift === 'left' ? 'bg-rose-500/20 text-rose-500' : 'text-white/10')}><ChevronLeft className="h-4 w-4" /></button>
+                  <button onClick={() => setGuestShift("center")} className={cn("flex-1 h-6 rounded-lg flex items-center justify-center transition-all duration-300", guestShift === 'center' ? 'bg-rose-500/20 text-rose-500' : 'text-white/10')}><div className="h-1.5 w-1.5 rounded-full bg-current" /></button>
+                  <button onClick={() => setGuestShift("right")} className={cn("flex-1 h-6 rounded-lg flex items-center justify-center transition-all duration-300", guestShift === 'right' ? 'bg-rose-500/20 text-rose-500' : 'text-white/10')}><ChevronRight className="h-4 w-4" /></button>
                 </div>
               </div>
             </div>
@@ -471,13 +471,13 @@ export default function MatchBoardPage() {
       </div>
 
       {/* BOTONES AUXILIARES */}
-      <button className="fixed top-1/2 right-6 -translate-y-1/2 h-10 w-10 rounded-xl bg-black/60 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/20 hover:text-primary transition-all shadow-xl z-[160] active:scale-95">
+      <button className="fixed top-1/2 right-6 -translate-y-1/2 h-10 w-10 rounded-xl bg-black/60 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/20 hover:text-primary transition-all duration-300 shadow-xl z-[160] active:scale-95">
         <Settings2 className="h-5 w-5" />
       </button>
 
       <Sheet>
         <SheetTrigger asChild>
-          <button className="fixed bottom-32 right-6 h-12 w-12 rounded-2xl bg-primary text-black flex items-center justify-center shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-110 transition-all z-[160] active:scale-95">
+          <button className="fixed bottom-32 right-6 h-12 w-12 rounded-2xl bg-primary text-black flex items-center justify-center shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-110 transition-all duration-300 z-[160] active:scale-95">
             <Users className="h-5 w-5" />
           </button>
         </SheetTrigger>
@@ -487,7 +487,7 @@ export default function MatchBoardPage() {
           </SheetHeader>
           <div className="p-6 overflow-y-auto h-full space-y-3">
             {players.filter(p => p.team === 'local').map(p => (
-              <div key={p.id} className="p-3 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-between">
+              <div key={p.id} className="p-3 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-between transition-all duration-300 hover:bg-primary/10">
                 <span className="text-[10px] font-black text-white italic">#{p.number} {p.name}</span>
                 <Badge className="bg-primary/10 text-primary text-[7px] font-black uppercase">EN CAMPO</Badge>
               </div>

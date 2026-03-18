@@ -1,3 +1,4 @@
+
 "use client";
 
 import { cn } from "@/lib/utils";
@@ -14,10 +15,10 @@ interface PlayerChipProps {
 }
 
 /**
- * PlayerChip - Nodo de Atleta en Pizarra v14.2.0
- * Optimizado para fluidez total.
- * - Escala reducida en tablets (h-7) para no saturar el campo.
- * - Transiciones inteligentes: Desactivadas durante el drag, activas en cambios de formación.
+ * PlayerChip - Nodo de Atleta en Pizarra v16.1.0
+ * PROTOCOLO_TRANSITION_RESTORATION: Restauración de movimiento suave y elástico.
+ * - Escala reducida en tablets para no saturar el campo.
+ * - Transiciones inteligentes: Desactivadas durante el drag, elásticas en cambios tácticos.
  * - Aceleración por hardware mediante will-change.
  */
 export function PlayerChip({ 
@@ -43,7 +44,7 @@ export function PlayerChip({
         left: `${x}%`, 
         top: `${y}%`,
         willChange: "left, top, transform",
-        transition: isDragging ? 'none' : 'left 0.5s cubic-bezier(0.4, 0, 0.2, 1), top 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s ease'
+        transition: isDragging ? 'none' : 'left 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.2s ease'
       }}
       onPointerDown={onPointerDown}
     >
@@ -60,7 +61,7 @@ export function PlayerChip({
       </div>
       {label && (
         <span className={cn(
-          "text-[7px] md:text-[8px] font-black uppercase tracking-tighter whitespace-nowrap bg-black/60 px-1.5 py-0.5 rounded-sm transition-opacity",
+          "text-[7px] md:text-[8px] font-black uppercase tracking-tighter whitespace-nowrap bg-black/60 px-1.5 py-0.5 rounded-sm transition-opacity duration-300",
           isDragging ? "opacity-0" : "opacity-100"
         )}>
           {label}
