@@ -18,7 +18,8 @@ import {
   PencilLine,
   Type,
   Move,
-  LayoutDashboard
+  LayoutDashboard,
+  Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -45,6 +46,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { useSearchParams, useRouter } from "next/navigation";
+import { FORMATIONS_DATA } from "@/lib/formations";
 
 interface Point {
   x: number;
@@ -95,6 +97,7 @@ function PromoBoardContent() {
   const [isSaveSheetOpen, setIsSaveSheetOpen] = useState(false);
   const [isDashed, setIsDashed] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [teamConfig, setTeamConfig] = useState<any>(null);
 
   const [saveFormData, setSaveFormData] = useState({
     title: "", stage: "Alevín", dimension: "Táctica", objective: "", description: ""
@@ -108,6 +111,15 @@ function PromoBoardContent() {
   const activeHandleIndex = useRef<number | null>(null);
 
   useEffect(() => {
+    // CARGAR CONFIGURACIÓN DE EQUIPO
+    const savedTeam = JSON.parse(localStorage.getItem("synq_promo_team") || "null");
+    if (savedTeam) {
+      setTeamConfig(savedTeam);
+      if (!exerciseId) {
+        setFieldType(savedTeam.type || "f11");
+      }
+    }
+
     if (exerciseId) {
       const vault = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": []}');
       const target = vault.exercises?.find((e: any) => e.id.toString() === exerciseId);
@@ -129,7 +141,7 @@ function PromoBoardContent() {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(() => {});
     } else {
-      document.exitFullscreen().catch(() => {});
+      if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
     }
   }, []);
 
@@ -149,6 +161,50 @@ function PromoBoardContent() {
     const minX = Math.min(...p.map(pt => pt.x)); const minY = Math.min(...p.map(pt => pt.y));
     const maxX = Math.max(...p.map(pt => pt.x)); const maxY = Math.max(...p.map(pt => pt.y));
     return { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY, centerX: (minX + maxX) / 2, centerY: (minY + maxY) / 2 };
+  };
+
+  const loadTeamFromSandbox = () => {
+    const savedTeam = JSON.parse(localStorage.getItem("synq_promo_team") || "null");
+    if (!savedTeam) {
+      toast({ variant: "destructive", title: "ERROR_SINCRO", description: "Configure su equipo en la sección 'Mi Equipo' primero." });
+      return;
+    }
+
+    setFieldType(savedTeam.type || "f11");
+    const canvasRatio = canvasRef.current ? (canvasRef.current.width / canvasRef.current.height) : 1.5;
+    const defW = 0.05;
+    const defH = defW * canvasRatio;
+
+    const formationsForField = FORMATIONS_DATA[savedTeam.type || "f11"];
+    const defaultFormation = savedTeam.type === "futsal" ? "1-2-1" : savedTeam.type === "f7" ? "3-2-1" : "4-3-3";
+    const positions = formationsForField[defaultFormation];
+
+    const teamElements: DrawingElement[] = savedTeam.starters
+      .filter((name: string) => name.trim() !== "")
+      .map((name: string, i: number) => {
+        const pos = positions[i] || { x: 0.1 + (i * 0.05), y: 0.1 + (i * 0.05) };
+        return {
+          id: `el-team-${Date.now()}-${i}`,
+          type: 'player',
+          points: [
+            { x: pos.x - defW/2, y: pos.y - defH/2 },
+            { x: pos.x + defW/2, y: pos.y + defH/2 }
+          ],
+          color: currentColor,
+          rotation: 0,
+          lineStyle: 'solid',
+          number: i + 1,
+          opacity: 1.0
+        };
+      });
+
+    if (teamElements.length === 0) {
+      toast({ variant: "destructive", title: "SINCRO_VACÍA", description: "No hay nombres de titulares configurados." });
+      return;
+    }
+
+    setElements(prev => [...prev, ...teamElements]);
+    toast({ title: "SINCRO_EQUIPO_OK", description: `Se han volcado los titulares de ${savedTeam.name} en el campo.` });
   };
 
   const drawElement = useCallback((ctx: CanvasRenderingContext2D, element: DrawingElement, isSelected: boolean) => {
@@ -222,7 +278,19 @@ function PromoBoardContent() {
         pGrad.addColorStop(0, '#ffffff44'); pGrad.addColorStop(0.5, hexToRgba(element.color, 0.3)); pGrad.addColorStop(1, hexToRgba(element.color, 0.1));
         ctx.fillStyle = pGrad; ctx.fill(); ctx.strokeStyle = element.color; ctx.stroke();
         ctx.fillStyle = '#fff'; ctx.font = `bold ${Math.floor(pRadius * 0.64)}px Space Grotesk`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText((element.number || 1).toString(), centerX, centerY + (pRadius * 0.04)); ctx.restore(); break;
+        ctx.fillText((element.number || 1).toString(), centerX, centerY + (pRadius * 0.04)); 
+        
+        // MOSTRAR NOMBRE SI EXISTE EN CONFIG DEL EQUIPO
+        if (teamConfig && element.number) {
+          const playerName = teamConfig.starters[element.number - 1];
+          if (playerName) {
+            ctx.setLineDash([]);
+            ctx.font = `bold ${Math.floor(pRadius * 0.35)}px Space Grotesk`;
+            ctx.fillStyle = 'rgba(255,255,255,0.8)';
+            ctx.fillText(playerName, centerX, centerY + pRadius + 12);
+          }
+        }
+        ctx.restore(); break;
       case 'ball':
         ctx.save(); ctx.translate(centerX, centerY); const bRadius = Math.min(width, height) / 2; ctx.scale(bRadius/40, bRadius/40);
         ctx.beginPath(); ctx.arc(0, 5, 40, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fill();
@@ -289,7 +357,7 @@ function PromoBoardContent() {
         ctx.fillStyle = '#3b82f6'; ctx.beginPath(); ctx.arc(cp.x, cp.y, 10, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
       }
     } ctx.restore();
-  }, [hexToRgba]);
+  }, [hexToRgba, teamConfig]);
 
   const redrawAll = useCallback(() => {
     const canvas = canvasRef.current; const ctx = canvas?.getContext('2d'); if (!ctx || !canvas) return;
@@ -444,6 +512,15 @@ function PromoBoardContent() {
         
         <div className="flex items-center gap-2">
           <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}><SelectTrigger className="w-[100px] h-8 bg-white/5 border-primary/20 rounded-lg text-[7px] font-black uppercase text-primary focus:ring-0 px-2"><SelectValue /></SelectTrigger><SelectContent className="bg-[#0a0f18] border-primary/20"><SelectItem value="f11" className="text-[8px] font-black">F11</SelectItem><SelectItem value="f7" className="text-[8px] font-black">F7</SelectItem><SelectItem value="futsal" className="text-[8px] font-black">FUTSAL</SelectItem></SelectContent></Select>
+          
+          <Button 
+            variant="outline" 
+            onClick={loadTeamFromSandbox}
+            className="h-8 px-2 border-primary/20 bg-primary/10 text-primary font-black uppercase text-[7px] rounded-lg hover:bg-primary hover:text-black transition-all"
+          >
+            <Users className="h-3 w-3 mr-1" /> Cargar Mi Equipo
+          </Button>
+
           <Button variant="ghost" onClick={() => setShowLanes(!showLanes)} className={cn("h-8 px-2 border border-primary/20 text-[7px] font-black uppercase rounded-lg", showLanes ? "bg-primary text-black" : "text-primary/40")}><Columns3 className="h-3 w-3 mr-1" /> Carriles</Button>
         </div>
 
