@@ -135,12 +135,24 @@ export default function MatchBoardPage() {
       return 0;
     };
 
+    const phaseOffset = (phase: TacticalPhase) => {
+      switch(phase) {
+        case 'defensa': return -8;
+        case 'tda': return 5;
+        case 'salida': return 0;
+        case 'ataque': return 12;
+        case 'tad': return -4;
+        default: return 0;
+      }
+    };
+
     const hp = hForm.map((pos, idx) => {
       let finalX = (0.05 + (pos.x * 0.9)) * 100;
       let finalY = pos.y * 100;
       if (idx === 0) { finalX = 5; finalY = 50; } 
       else {
         finalY = finalY + shiftX(homeShift);
+        finalX = Math.max(5, Math.min(95, finalX + phaseOffset(homePhase)));
       }
       return { id: `local-${idx}`, number: idx + 1, name: `JUGADOR ${idx + 1}`, team: "local" as const, x: finalX, y: finalY };
     });
@@ -151,12 +163,13 @@ export default function MatchBoardPage() {
       if (idx === 0) { finalX = 95; finalY = 50; }
       else {
         finalY = finalY - shiftX(guestShift);
+        finalX = Math.max(5, Math.min(95, finalX - phaseOffset(guestPhase)));
       }
       return { id: `visitor-${idx}`, number: idx + 1, name: `RIVAL ${idx + 1}`, team: "visitor" as const, x: finalX, y: finalY };
     });
 
     setPlayers([...hp, ...gp]);
-  }, [fieldType, homeFormation, guestFormation, homeShift, guestShift]);
+  }, [fieldType, homeFormation, guestFormation, homeShift, guestShift, homePhase, guestPhase]);
 
   useEffect(() => { calculatePositions(); }, [calculatePositions]);
 
