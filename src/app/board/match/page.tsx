@@ -10,7 +10,7 @@ import {
   Play, 
   Pause, 
   RotateCcw, 
-  Users,
+  Users, 
   Plus,
   Watch,
   Activity,
@@ -18,7 +18,6 @@ import {
   Maximize2,
   Minimize2,
   Trash2,
-  Settings2,
   ChevronLeft,
   ChevronRight,
   Zap
@@ -49,7 +48,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/dialog";
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 
@@ -189,7 +188,6 @@ export default function MatchBoardPage() {
 
   useEffect(() => { calculatePositions(); }, [calculatePositions]);
 
-  // MANEJO DE INTERACCIÓN INTELIGENTE
   const handlePointerDownPlayer = (e: React.PointerEvent, id: string) => {
     e.stopPropagation();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
@@ -227,7 +225,6 @@ export default function MatchBoardPage() {
     }
   };
 
-  // REDIBUJADO DEL CANVAS
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -267,10 +264,7 @@ export default function MatchBoardPage() {
   return (
     <div className="flex-1 flex flex-col bg-black overflow-hidden relative touch-none select-none" onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}>
       
-      {/* CABECERA DE ESTADO (CENTRAL) CON FULLSCREEN E INSTRUMENTAL INTEGRADO */}
       <header className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 px-4 py-1.5 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-full shadow-2xl transition-all scale-90 md:scale-100">
-        
-        {/* ISLA HERRAMIENTAS INTEGRADA (v16.6.0) */}
         <div className="flex items-center gap-1.5 px-1.5 border-r border-white/10 pr-3 mr-1">
           <div className="flex items-center gap-1.5 px-1.5">
             {["#00f2ff", "#f43f5e", "#facc15"].map(c => (
@@ -299,7 +293,6 @@ export default function MatchBoardPage() {
         </div>
       </header>
 
-      {/* MARCADOR INDEPENDIENTE (TOP-LEFT) */}
       <div className="fixed top-4 left-20 z-[100] flex items-center gap-4 px-4 py-1 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl animate-in slide-in-from-left-4 duration-700">
         <div className="flex items-center gap-4">
           <div className="flex flex-col items-center">
@@ -310,9 +303,7 @@ export default function MatchBoardPage() {
               <button onClick={() => setScore(s => ({...s, home: s.home + 1}))} className="text-white/20 hover:text-white text-[8px]">+</button>
             </div>
           </div>
-          
           <div className="text-xs font-black text-white/20 italic">VS</div>
-
           <div className="flex flex-col items-center">
             <span className="text-[6px] font-black text-white/40 uppercase">VIS</span>
             <div className="flex items-center gap-1.5">
@@ -324,10 +315,7 @@ export default function MatchBoardPage() {
         </div>
       </div>
 
-      {/* ISLA DE TELEMETRÍA Y GUARDADO (TOP-RIGHT) */}
       <div className="fixed top-4 right-6 z-[100] flex items-center gap-3 animate-in slide-in-from-right-4 duration-700">
-        
-        {/* BOTÓN VINCULACIÓN WATCH */}
         <Dialog>
           <DialogTrigger asChild>
             <button className="h-12 w-12 rounded-2xl bg-black/60 backdrop-blur-2xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all shadow-2xl active:scale-95 group">
@@ -357,14 +345,12 @@ export default function MatchBoardPage() {
           </DialogContent>
         </Dialog>
 
-        {/* ISLA CRONÓMETRO CON CONTROLES */}
         <div className="flex items-center gap-4 px-4 py-1.5 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl">
           <div className="flex flex-col items-center min-w-[70px]">
             <span className={cn("text-2xl font-black font-headline tabular-nums tracking-tighter transition-all duration-500", isRunning ? "text-primary cyan-text-glow" : "text-white/40")}>
               {formatTime(timeLeft)}
             </span>
           </div>
-          
           <div className="flex items-center gap-1 border-l border-white/10 pl-3">
             <button 
               onClick={() => setIsRunning(!isRunning)} 
@@ -391,13 +377,9 @@ export default function MatchBoardPage() {
         </Button>
       </div>
 
-      {/* ÁREA DE JUEGO */}
       <main className="flex-1 relative overflow-hidden flex items-center justify-center pt-20 pb-28">
         <TacticalField theme="cyan" fieldType={fieldType} containerRef={fieldRef}>
-          {/* Capa de Dibujo - Interactiva si no hay jugador bloqueando */}
           <canvas ref={canvasRef} onPointerDown={handleCanvasPointerDown} className="absolute inset-0 z-30 pointer-events-auto" />
-          
-          {/* Capa de Jugadores - Superior para permitir arrastre prioritario */}
           <div className="absolute inset-0 z-40 pointer-events-none">
             {players.map(p => (
               <MemoizedPlayerChip 
@@ -416,13 +398,9 @@ export default function MatchBoardPage() {
         </TacticalField>
       </main>
 
-      {/* CONTROLES INFERIORES ALINEADOS (v16.3.0) */}
       <div className="fixed bottom-6 left-0 right-0 px-6 z-[150] pointer-events-none">
         <div className="flex items-end justify-between w-full max-w-[1600px] mx-auto">
-          
-          {/* GRUPO LOCAL - ALINEADO IZQUIERDA */}
           <div className="flex items-center gap-2 pointer-events-auto">
-            {/* SELECTOR FORMACIÓN LOCAL */}
             <div className="bg-black/80 backdrop-blur-xl border border-primary/20 p-1 rounded-xl shadow-xl flex items-center h-10 transition-all duration-500">
               <Select value={homeFormation} onValueChange={setHomeFormation}>
                 <SelectTrigger className="h-8 w-24 bg-black border-primary/10 text-white font-black uppercase text-[9px] rounded-lg focus:ring-0 transition-all duration-300">
@@ -433,8 +411,6 @@ export default function MatchBoardPage() {
                 </SelectContent>
               </Select>
             </div>
-
-            {/* SELECTOR FASE LOCAL */}
             <div className="bg-black/80 backdrop-blur-xl border border-primary/20 p-1 rounded-xl shadow-xl flex items-center h-10 transition-all duration-500">
               <div className="flex gap-1">
                 {["DEF", "TDA", "SAL", "ATK"].map(p => (
@@ -451,8 +427,6 @@ export default function MatchBoardPage() {
                 ))}
               </div>
             </div>
-
-            {/* BASCULACIÓN LOCAL */}
             <div className="bg-black/80 backdrop-blur-xl border border-primary/20 p-1 rounded-xl shadow-xl flex items-center h-10 transition-all duration-500">
               <div className="flex items-center gap-1 bg-black/40 p-0.5 rounded-lg border border-white/5">
                 <button onClick={() => setHomeShift("left")} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all duration-300", homeShift === 'left' ? 'bg-primary/20 text-primary' : 'text-white/10')}><ChevronLeft className="h-3 w-3" /></button>
@@ -461,13 +435,8 @@ export default function MatchBoardPage() {
               </div>
             </div>
           </div>
-
-          {/* ESPACIO CENTRAL LIBRE (v16.6.0) */}
           <div className="flex-1" />
-
-          {/* GRUPO VISITANTE - ALINEADO DERECHA */}
           <div className="flex items-center gap-2 pointer-events-auto">
-            {/* BASCULACIÓN VISITANTE */}
             <div className="bg-black/80 backdrop-blur-xl border border-rose-500/20 p-1 rounded-xl shadow-xl flex items-center h-10 transition-all duration-500">
               <div className="flex items-center gap-1 bg-black/40 p-0.5 rounded-lg border border-white/5">
                 <button onClick={() => setGuestShift("left")} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all duration-300", guestShift === 'left' ? 'bg-rose-500/20 text-rose-500' : 'text-white/10')}><ChevronLeft className="h-3 w-3" /></button>
@@ -475,8 +444,6 @@ export default function MatchBoardPage() {
                 <button onClick={() => setGuestShift("right")} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all duration-300", guestShift === 'right' ? 'bg-rose-500/20 text-rose-500' : 'text-white/10')}><ChevronRight className="h-3 w-3" /></button>
               </div>
             </div>
-
-            {/* SELECTOR FASE VISITANTE */}
             <div className="bg-black/80 backdrop-blur-xl border border-rose-500/20 p-1 rounded-xl shadow-xl flex items-center h-10 transition-all duration-500">
               <div className="flex gap-1">
                 {["DEF", "TDA", "SAL", "ATK"].map(p => (
@@ -493,8 +460,6 @@ export default function MatchBoardPage() {
                 ))}
               </div>
             </div>
-
-            {/* SELECTOR FORMACIÓN VISITANTE */}
             <div className="bg-black/80 backdrop-blur-xl border border-rose-500/20 p-1 rounded-xl shadow-xl flex items-center h-10 transition-all duration-500">
               <Select value={guestFormation} onValueChange={setGuestFormation}>
                 <SelectTrigger className="h-8 w-24 bg-black border-rose-500/10 text-white font-black uppercase text-[9px] rounded-lg focus:ring-0 transition-all duration-300">
@@ -506,7 +471,6 @@ export default function MatchBoardPage() {
               </Select>
             </div>
           </div>
-
         </div>
       </div>
 

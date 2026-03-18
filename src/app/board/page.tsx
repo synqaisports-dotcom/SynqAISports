@@ -123,9 +123,6 @@ export default function TacticalBoardPage() {
             <button className="h-12 w-12 rounded-2xl border border-white/10 flex items-center justify-center text-white/20 hover:text-primary transition-all">
               <Layers className="h-5 w-5" />
             </button>
-            <button className="h-12 w-12 rounded-2xl border border-white/10 flex items-center justify-center text-white/20 hover:text-primary transition-all">
-              <Settings2 className="h-5 w-5" />
-            </button>
           </div>
         </aside>
 
