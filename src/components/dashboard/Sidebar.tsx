@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { 
@@ -43,7 +43,9 @@ import {
   Swords,
   Globe,
   ChevronDown,
-  MessageSquareQuote
+  MessageSquareQuote,
+  Maximize2,
+  Minimize2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
@@ -132,6 +134,23 @@ export function DashboardSidebar() {
   const { toggleSidebar, state, setOpenMobile, isMobile } = useSidebar();
   const { profile, logout } = useAuth();
   const [currentLang, setCurrentLang] = useState(AVAILABLE_LOCALES[0]);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const syncFullscreen = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", syncFullscreen);
+    return () => document.removeEventListener("fullscreenchange", syncFullscreen);
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+  }, []);
   
   if (pathname === "/dashboard/coach/onboarding") return null;
 
@@ -276,6 +295,16 @@ export function DashboardSidebar() {
         "border-t transition-all duration-700",
         isCollapsed ? "p-2" : "p-4 space-y-2 bg-[#04070c] border-r border-white/5 shadow-[4px_0_24px_rgba(0,0,0,0.5)]"
       )}>
+        {!isCollapsed && (
+          <button 
+            onClick={toggleFullscreen}
+            className="flex items-center gap-3 px-3 py-2.5 text-white/30 hover:text-primary transition-all font-black text-[9px] uppercase tracking-widest hover:bg-white/5 rounded-xl group overflow-hidden w-full text-left"
+          >
+            {isFullscreen ? <Minimize2 className="h-4 w-4 shrink-0" /> : <Maximize2 className="h-4 w-4 shrink-0" />}
+            <span className="whitespace-nowrap font-bold animate-in fade-in duration-700">MODO_INMERSIVO</span>
+          </button>
+        )}
+
         {!isCollapsed && (
           <div className="px-2 py-1 border-b border-white/5 pb-2 mb-1">
             <DropdownMenu>

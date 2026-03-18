@@ -9,6 +9,7 @@ import {
   Columns3,
   LayoutGrid,
   Maximize2,
+  Minimize2,
   X,
   Target,
   ClipboardList,
@@ -93,6 +94,7 @@ function PromoBoardContent() {
   const [elements, setElements] = useState<DrawingElement[]>([]);
   const [isSaveSheetOpen, setIsSaveSheetOpen] = useState(false);
   const [isDashed, setIsDashed] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const [saveFormData, setSaveFormData] = useState({
     title: "", stage: "Alevín", dimension: "Táctica", objective: "", description: ""
@@ -116,6 +118,20 @@ function PromoBoardContent() {
       }
     }
   }, [exerciseId]);
+
+  useEffect(() => {
+    const syncFullscreen = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", syncFullscreen);
+    return () => document.removeEventListener("fullscreenchange", syncFullscreen);
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  }, []);
 
   const hexToRgba = (hex: string, alpha: number) => {
     const r = parseInt(hex.slice(1, 3), 16); const g = parseInt(hex.slice(3, 5), 16); const b = parseInt(hex.slice(5, 7), 16);
@@ -412,9 +428,18 @@ function PromoBoardContent() {
   return (
     <div className="h-full w-full flex flex-col bg-black overflow-hidden relative">
       <header className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 px-4 py-2 bg-black/60 backdrop-blur-2xl border border-primary/30 rounded-2xl shadow-2xl animate-in slide-in-from-top-2">
-        <div className="flex flex-col pr-3 border-r border-white/10 shrink-0">
-          <div className="flex items-center gap-1.5"><Zap className="h-3 w-3 text-primary animate-pulse" /><span className="text-[7px] font-black text-primary tracking-widest uppercase italic">Promo_Mode</span></div>
-          <h1 className="text-[10px] font-headline font-black text-white italic uppercase leading-none">{exerciseId ? 'Edición' : 'Sandbox'}</h1>
+        <div className="flex items-center gap-3 pr-3 border-r border-white/10 shrink-0">
+          <button 
+            onClick={toggleFullscreen}
+            className="h-8 w-8 flex items-center justify-center text-primary/40 hover:text-primary transition-all active:scale-90"
+            title={isFullscreen ? "Minimizar" : "Pantalla Completa"}
+          >
+            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+          </button>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-1.5"><Zap className="h-3 w-3 text-primary animate-pulse" /><span className="text-[7px] font-black text-primary tracking-widest uppercase italic">Promo_Mode</span></div>
+            <h1 className="text-[10px] font-headline font-black text-white italic uppercase leading-none">{exerciseId ? 'Edición' : 'Sandbox'}</h1>
+          </div>
         </div>
         
         <div className="flex items-center gap-2">

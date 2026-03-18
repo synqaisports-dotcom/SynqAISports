@@ -1,13 +1,13 @@
 
 {
-  "name": "SynqAI Smartwatch",
-  "short_name": "SynqWatch",
-  "description": "Terminal de muñeca para el control táctico de SynqAI Sports",
-  "start_url": "/smartwatch",
+  "name": "SynqSports Pro",
+  "short_name": "SynqPro",
+  "description": "Tecnología de Élite para todo el Deporte Base",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#04070c",
   "theme_color": "#04070c",
-  "orientation": "portrait",
+  "orientation": "any",
   "icons": [
     {
       "src": "https://placehold.co/192x192/04070c/00f2ff?text=SynqAI",

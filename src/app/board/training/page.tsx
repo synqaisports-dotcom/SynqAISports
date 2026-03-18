@@ -20,6 +20,7 @@ import {
   X,
   Type,
   Maximize2,
+  Minimize2,
   ChevronDown,
   Move,
   Upload,
@@ -34,7 +35,8 @@ import {
   Target,
   Clock,
   ShieldCheck,
-  ArrowRight
+  ArrowRight,
+  LayoutDashboard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -104,6 +106,7 @@ function TrainingBoardContent() {
   const [currentColor, setCurrentColor] = useState("#facc15");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isSaveSheetOpen, setIsSaveSheetOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -125,6 +128,20 @@ function TrainingBoardContent() {
   });
 
   const isFromForm = searchParams.get("source") === "form";
+
+  useEffect(() => {
+    const syncFullscreen = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", syncFullscreen);
+    return () => document.removeEventListener("fullscreenchange", syncFullscreen);
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  }, []);
 
   const hexToRgba = (hex: string, alpha: number) => {
     const r = parseInt(hex.slice(1, 3), 16);
@@ -301,7 +318,7 @@ function TrainingBoardContent() {
         const rotHandlePx = rotatePoint({ x: bounds.centerX, y: bounds.minY - 50 }, { x: bounds.centerX, y: bounds.centerY }, el.rotation);
         if (Math.sqrt(Math.pow(point.x * wPx - rotHandlePx.x, 2) + Math.pow(point.y * hPx - rotHandlePx.y, 2)) < 20) { interactionMode.current = 'rotating'; return; }
         const local = rotatePoint({ x: point.x * wPx, y: point.y * hPx }, { x: bounds.centerX, y: bounds.centerY }, -el.rotation);
-        const pad = 10; const handles = [{ x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY }, { x: bounds.minX - pad, y: bounds.maxY + pad }, { x: bounds.centerX, y: bounds.maxY + pad }, { x: bounds.maxX + pad, y: bounds.maxY + pad }];
+        const pad = 10; const handles = [{ x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, { x: minX - pad, y: centerY }, { x: maxX + pad, y: centerY }, { x: minX - pad, y: maxY + pad }, { x: centerX, y: maxY + pad }, { x: maxX + pad, y: maxY + pad }];
         const hIdx = handles.findIndex(h => Math.sqrt(Math.pow(local.x - h.x, 2) + Math.pow(local.y - h.y, 2)) < 15);
         if (hIdx !== -1) { interactionMode.current = 'resizing'; activeHandleIndex.current = hIdx; return; }
       }
@@ -376,6 +393,13 @@ function TrainingBoardContent() {
       {/* FLOATING_HEADER_TRAINING */}
       <header className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-4 px-6 py-3 bg-black/60 backdrop-blur-2xl border border-amber-500/30 rounded-[2rem] shadow-2xl animate-in slide-in-from-top-4 duration-700">
         <div className="flex items-center gap-4 pr-4 border-r border-white/10 shrink-0">
+          <button 
+            onClick={toggleFullscreen}
+            className="h-10 w-10 flex items-center justify-center text-amber-500/40 hover:text-amber-500 transition-all active:scale-90"
+            title={isFullscreen ? "Minimizar" : "Pantalla Completa"}
+          >
+            {isFullscreen ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
+          </button>
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <Sparkles className="h-3 w-3 text-amber-500 animate-pulse" />
@@ -388,7 +412,7 @@ function TrainingBoardContent() {
         <div className="flex items-center gap-3">
           <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}>
             <SelectTrigger className="w-[120px] h-9 bg-white/5 border-amber-500/20 rounded-xl text-[9px] font-black uppercase text-amber-500">
-              <LayoutGrid className="h-3 w-3 mr-2" /> <SelectValue />
+              <LayoutGrid className="h-3.5 w-3.5 mr-2" /> <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-[#0a0f18] border-amber-500/20">
               <SelectItem value="f11" className="text-[9px] font-black uppercase">Fútbol 11</SelectItem>
@@ -433,6 +457,13 @@ function TrainingBoardContent() {
         </div>
       )}
 
+      {/* BOTÓN DE RETORNO FLOTANTE */}
+      <div className="fixed top-6 left-6 z-[200]">
+        <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard')} className="h-12 w-12 rounded-2xl bg-black/60 backdrop-blur-2xl border border-white/10 text-white/40 hover:text-primary transition-all">
+          <LayoutDashboard className="h-5 w-5" />
+        </Button>
+      </div>
+
       {/* FULL_SCREEN_CANVAS_AREA */}
       <main className="flex-1 flex items-center justify-center relative touch-none">
         <TacticalField theme="amber" fieldType={fieldType} showLanes={showLanes}>
@@ -457,7 +488,7 @@ function TrainingBoardContent() {
               <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left leading-none">VINCULAR <span className="text-amber-500">DATOS</span></SheetTitle>
             </SheetHeader>
           </div>
-          <form onSubmit={handleConfirmSave} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-8">
+          <form onSubmit={handleConfirmSave} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10">
             <div className="space-y-6">
               <div className="space-y-3">
                 <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Título del Ejercicio</Label>
