@@ -5,22 +5,19 @@ import { useState, useEffect, useMemo, useRef, memo, useCallback } from "react";
 import { 
   Trophy, 
   Clock, 
-  Save, 
-  LayoutGrid, 
-  Play, 
-  Pause, 
   RotateCcw, 
   Users, 
   Plus,
   Watch,
   Activity,
-  ArrowRight,
   Maximize2,
   Minimize2,
   Trash2,
   ChevronLeft,
   ChevronRight,
-  Zap
+  Zap,
+  Pause,
+  Play
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -264,16 +261,17 @@ export default function MatchBoardPage() {
   return (
     <div className="flex-1 flex flex-col bg-black overflow-hidden relative touch-none select-none" onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}>
       
-      <header className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 px-4 py-1.5 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-full shadow-2xl transition-all scale-90 md:scale-100">
-        <div className="flex items-center gap-1.5 px-1.5 border-r border-white/10 pr-3 mr-1">
+      {/* MANDO CENTRAL CONSOLIDADO - v16.8.0 (Optimización de Espacio) */}
+      <header className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-full shadow-2xl transition-all scale-[0.8] lg:scale-100">
+        <div className="flex items-center gap-1 px-1 border-r border-white/10 pr-2 mr-1">
           <div className="flex items-center gap-1.5 px-1.5">
             {["#00f2ff", "#f43f5e", "#facc15"].map(c => (
-              <button key={c} onClick={() => setCurrentColor(c)} className={cn("h-4 w-4 md:h-5 md:w-5 rounded-full border transition-all duration-300", currentColor === c ? "border-white scale-110 shadow-lg" : "border-transparent opacity-40")} style={{ backgroundColor: c }} />
+              <button key={c} onClick={() => setCurrentColor(c)} className={cn("h-4 w-4 rounded-full border transition-all duration-300", currentColor === c ? "border-white scale-110 shadow-lg" : "border-transparent opacity-40")} style={{ backgroundColor: c }} />
             ))}
           </div>
           <div className="w-[1px] h-4 bg-white/10 mx-0.5" />
           <button onClick={() => setDrawings([])} className="text-rose-500/40 hover:text-rose-500 p-1.5 transition-colors duration-300 active:scale-90" title="Borrar Trazos">
-            <Trash2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
+            <Trash2 className="h-3.5 w-3.5" />
           </button>
         </div>
 
@@ -284,7 +282,7 @@ export default function MatchBoardPage() {
         >
           {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
         </button>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 pr-2">
           <Trophy className="h-3 w-3 text-primary animate-pulse" />
           <div className="flex flex-col">
             <span className="text-[7px] font-black text-primary tracking-widest uppercase">MATCH_LIVE</span>
@@ -293,7 +291,8 @@ export default function MatchBoardPage() {
         </div>
       </header>
 
-      <div className="fixed top-4 left-20 z-[100] flex items-center gap-4 px-4 py-1 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl animate-in slide-in-from-left-4 duration-700">
+      {/* MARCADOR INDEPENDIENTE (IZQUIERDA) - v16.8.0 (Escalado preventivo) */}
+      <div className="fixed top-4 left-24 z-[100] flex items-center gap-3 px-3 py-1 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl animate-in slide-in-from-left-4 duration-700 scale-[0.8] lg:scale-100">
         <div className="flex items-center gap-4">
           <div className="flex flex-col items-center">
             <span className="text-[6px] font-black text-white/40 uppercase">LOC</span>
@@ -315,11 +314,12 @@ export default function MatchBoardPage() {
         </div>
       </div>
 
-      <div className="fixed top-4 right-6 z-[100] flex items-center gap-3 animate-in slide-in-from-right-4 duration-700">
+      {/* ISLA DE TELEMETRÍA (DERECHA) - v16.8.0 (Optimización de desbordamiento) */}
+      <div className="fixed top-4 right-4 z-[100] flex items-center gap-2 animate-in slide-in-from-right-4 duration-700 scale-[0.8] lg:scale-100">
         <Dialog>
           <DialogTrigger asChild>
-            <button className="h-12 w-12 rounded-2xl bg-black/60 backdrop-blur-2xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all shadow-2xl active:scale-95 group">
-              <Watch className="h-5 w-5 group-hover:animate-pulse" />
+            <button className="h-10 w-10 rounded-xl bg-black/60 backdrop-blur-2xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all shadow-2xl active:scale-95 group">
+              <Watch className="h-4 w-4 group-hover:animate-pulse" />
             </button>
           </DialogTrigger>
           <DialogContent className="bg-[#04070c]/98 backdrop-blur-3xl border-primary/20 text-white max-w-sm rounded-[2rem] shadow-[0_0_50px_rgba(0,242,255,0.2)]">
@@ -345,34 +345,34 @@ export default function MatchBoardPage() {
           </DialogContent>
         </Dialog>
 
-        <div className="flex items-center gap-4 px-4 py-1.5 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl">
-          <div className="flex flex-col items-center min-w-[70px]">
-            <span className={cn("text-2xl font-black font-headline tabular-nums tracking-tighter transition-all duration-500", isRunning ? "text-primary cyan-text-glow" : "text-white/40")}>
+        <div className="flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-xl shadow-2xl">
+          <div className="flex flex-col items-center min-w-[60px]">
+            <span className={cn("text-xl font-black font-headline tabular-nums tracking-tighter transition-all duration-500", isRunning ? "text-primary cyan-text-glow" : "text-white/40")}>
               {formatTime(timeLeft)}
             </span>
           </div>
-          <div className="flex items-center gap-1 border-l border-white/10 pl-3">
+          <div className="flex items-center gap-1 border-l border-white/10 pl-2">
             <button 
               onClick={() => setIsRunning(!isRunning)} 
               className={cn(
-                "h-8 w-8 rounded-xl flex items-center justify-center transition-all duration-300 active:scale-90",
+                "h-7 w-7 rounded-lg flex items-center justify-center transition-all duration-300 active:scale-90",
                 isRunning ? "text-amber-400 hover:bg-amber-400/10" : "text-emerald-400 hover:bg-emerald-400/10"
               )}
               title={isRunning ? "Pausar" : "Iniciar"}
             >
-              {isRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              {isRunning ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
             </button>
             <button 
               onClick={() => { setIsRunning(false); setTimeLeft(45 * 60); }} 
-              className="h-8 w-8 rounded-xl flex items-center justify-center text-white/20 hover:text-white hover:bg-white/10 transition-all duration-300 active:scale-90"
+              className="h-7 w-7 rounded-lg flex items-center justify-center text-white/20 hover:text-white hover:bg-white/10 transition-all duration-300 active:scale-90"
               title="Resetear"
             >
-              <RotateCcw className="h-4 w-4" />
+              <RotateCcw className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>
 
-        <Button className="h-12 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-2xl cyan-glow border-none shadow-xl hover:scale-105 transition-all duration-300">
+        <Button className="h-10 bg-primary text-black font-black uppercase text-[9px] tracking-widest px-6 rounded-xl cyan-glow border-none shadow-xl hover:scale-105 transition-all duration-300">
           GUARDAR
         </Button>
       </div>
