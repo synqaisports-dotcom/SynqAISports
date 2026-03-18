@@ -448,16 +448,16 @@ export default function MatchBoardPage() {
             </div>
           </div>
 
-          {/* ISLA HERRAMIENTAS - CENTRO */}
-          <div className="pointer-events-auto bg-black/90 backdrop-blur-2xl border border-white/10 p-2 rounded-2xl flex items-center gap-2 shadow-[0_0_40px_rgba(0,0,0,0.8)] transition-all duration-500">
-            <div className="flex items-center gap-2 px-3">
+          {/* ISLA HERRAMIENTAS - CENTRO (Compactada v16.5.0) */}
+          <div className="pointer-events-auto bg-black/90 backdrop-blur-2xl border border-white/10 p-1.5 rounded-xl flex items-center gap-1.5 shadow-[0_0_40px_rgba(0,0,0,0.8)] transition-all duration-500 scale-90 md:scale-100">
+            <div className="flex items-center gap-1.5 px-1.5">
               {["#00f2ff", "#f43f5e", "#facc15"].map(c => (
-                <button key={c} onClick={() => setCurrentColor(c)} className={cn("h-6 w-6 rounded-full border-2 transition-all duration-300", currentColor === c ? "border-white scale-110 shadow-lg" : "border-transparent opacity-40")} style={{ backgroundColor: c }} />
+                <button key={c} onClick={() => setCurrentColor(c)} className={cn("h-5 w-5 rounded-full border-2 transition-all duration-300", currentColor === c ? "border-white scale-110 shadow-lg" : "border-transparent opacity-40")} style={{ backgroundColor: c }} />
               ))}
             </div>
-            <div className="w-[1px] h-6 bg-white/10 mx-1" />
-            <button onClick={() => setDrawings([])} className="text-rose-500/40 hover:text-rose-500 p-2 transition-colors duration-300" title="Borrar Trazos">
-              <Trash2 className="h-5 w-5" />
+            <div className="w-[1px] h-4 bg-white/10 mx-0.5" />
+            <button onClick={() => setDrawings([])} className="text-rose-500/40 hover:text-rose-500 p-1.5 transition-colors duration-300 active:scale-90" title="Borrar Trazos">
+              <Trash2 className="h-4 w-4" />
             </button>
           </div>
 
