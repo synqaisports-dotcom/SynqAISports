@@ -15,11 +15,10 @@ interface PlayerChipProps {
 }
 
 /**
- * PlayerChip - Nodo de Atleta en Pizarra v16.9.0
+ * PlayerChip - Nodo de Atleta en Pizarra v18.0.0
  * PROTOCOLO_PERFORMANCE_SCALING_FIX:
- * - Escalado dinámico: Chips más grandes en PC (md:h-12, lg:h-14) para mejor visibilidad.
+ * - Escalado dinámico: Chips reducidos en tablet (h-8) y optimizados en PC (md:h-12, lg:h-14).
  * - Aceleración por hardware: Uso de translate3d para fluidez en dispositivos con poca RAM (3GB).
- * - Optimización de transiciones: Reducción de carga de CPU al evitar layout reflows.
  */
 export function PlayerChip({ 
   number, 
@@ -44,7 +43,7 @@ export function PlayerChip({
         left: `${x}%`, 
         top: `${y}%`,
         willChange: "left, top, transform",
-        transform: `translate3d(-50%, -50%, 0)`, // Forzamos aceleración por hardware
+        transform: `translate3d(-50%, -50%, 0)`, 
         backfaceVisibility: "hidden",
         perspective: 1000,
         transition: isDragging 
@@ -55,7 +54,7 @@ export function PlayerChip({
     >
       <div 
         className={cn(
-          "h-9 w-9 md:h-12 md:w-12 lg:h-14 lg:w-14 rounded-full border-2 flex items-center justify-center text-[10px] md:text-xs lg:text-sm font-black shadow-lg transition-all duration-300",
+          "h-8 w-8 md:h-12 md:w-12 lg:h-14 lg:w-14 rounded-full border-2 flex items-center justify-center text-[9px] md:text-xs lg:text-sm font-black shadow-lg transition-all duration-300",
           isLocal 
             ? "bg-primary/20 border-primary text-primary shadow-[0_0_15px_rgba(0,242,255,0.3)]" 
             : "bg-rose-500/20 border-rose-500 text-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.3)]",
@@ -66,7 +65,7 @@ export function PlayerChip({
       </div>
       {label && (
         <span className={cn(
-          "text-[7px] md:text-[9px] lg:text-[10px] font-black uppercase tracking-tighter whitespace-nowrap bg-black/60 px-2 py-0.5 rounded-sm transition-opacity duration-300",
+          "text-[6px] md:text-[9px] lg:text-[10px] font-black uppercase tracking-tighter whitespace-nowrap bg-black/60 px-2 py-0.5 rounded-sm transition-opacity duration-300",
           isDragging ? "opacity-0" : "opacity-100"
         )}>
           {label}

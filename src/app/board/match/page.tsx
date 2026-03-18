@@ -68,10 +68,10 @@ interface DrawingLine {
 const MemoizedPlayerChip = memo(PlayerChip);
 
 /**
- * MatchBoardPage - v17.0.0
- * PROTOCOLO_TACTICAL_ENGINE_OVERHAUL:
- * - Recalibración de offsets de fase (DEF: -15, ATK: +25).
- * - Unificación de estados de fase para fluidez total.
+ * MatchBoardPage - v18.0.0
+ * PROTOCOLO_DEFENSIVE_MIDFIELD_LOCK:
+ * - Restricción de 50% en fase DEF para que nadie pase del medio campo.
+ * - Ajuste de offset defensivo para repliegue en área grande.
  */
 export default function MatchBoardPage() {
   const { profile } = useAuth();
@@ -154,10 +154,10 @@ export default function MatchBoardPage() {
 
     const phaseOffset = (phase: TacticalPhase) => {
       switch(phase) {
-        case 'def': return -15; // Bloque bajo: Inicio en área propia
-        case 'tda': return -5;  // Transición defensiva
-        case 'sal': return 10;  // Inicio de construcción
-        case 'atk': return 25;  // Presión alta: Finaliza en área rival
+        case 'def': return -20; // Repliegue a área propia
+        case 'tda': return -5;  
+        case 'sal': return 10;  
+        case 'atk': return 25;  
         default: return 0;
       }
     };
@@ -168,7 +168,10 @@ export default function MatchBoardPage() {
       if (idx === 0) { finalX = 5; finalY = 50; } 
       else {
         finalY = finalY + shiftX(homeShift);
-        finalX = Math.max(5, Math.min(95, finalX + phaseOffset(homePhase)));
+        finalX = finalX + phaseOffset(homePhase);
+        // CONSTRAINT: Ningún jugador pasa del centro del campo en DEFENSA
+        if (homePhase === 'def') finalX = Math.min(50, finalX);
+        finalX = Math.max(5, Math.min(95, finalX));
       }
       return { id: `local-${idx}`, number: idx + 1, name: `JUGADOR ${idx + 1}`, team: "local" as const, x: finalX, y: finalY };
     });
@@ -179,7 +182,10 @@ export default function MatchBoardPage() {
       if (idx === 0) { finalX = 95; finalY = 50; }
       else {
         finalY = finalY - shiftX(guestShift);
-        finalX = Math.max(5, Math.min(95, finalX - phaseOffset(guestPhase)));
+        finalX = finalX - phaseOffset(guestPhase);
+        // CONSTRAINT: Ningún jugador pasa del centro del campo en DEFENSA
+        if (guestPhase === 'def') finalX = Math.max(50, finalX);
+        finalX = Math.max(5, Math.min(95, finalX));
       }
       return { id: `visitor-${idx}`, number: idx + 1, name: `RIVAL ${idx + 1}`, team: "visitor" as const, x: finalX, y: finalY };
     });
