@@ -70,11 +70,12 @@ interface DrawingLine {
 const MemoizedPlayerChip = memo(PlayerChip);
 
 /**
- * MatchBoardPage - v20.0.0
- * PROTOCOLO_TACTICAL_BOX_LIMIT:
- * - DEF: Offset -9% (Línea defensiva en frontal de área grande).
+ * MatchBoardPage - v20.1.0
+ * PROTOCOLO_TACTICAL_BOX_LIMIT_REFINED:
+ * - DEF: Offset -11.5% (Línea defensiva exactamente en frontal de área grande).
  * - ATK: Offset +7% (El ataque se detiene en la frontal del área rival).
  * - Midfield Lock conservado en fase DEF.
+ * - Transiciones independientes local/visitante optimizadas para 3GB RAM.
  */
 export default function MatchBoardPage() {
   const { profile } = useAuth();
@@ -158,7 +159,7 @@ export default function MatchBoardPage() {
 
     const phaseOffset = (phase: TacticalPhase) => {
       switch(phase) {
-        case 'def': return -9; // Defensa en frontal de área grande propia
+        case 'def': return -11.5; // Ajuste milimétrico para frontal de área grande propia
         case 'tda': return 2;  
         case 'sal': return 10;  
         case 'atk': return 7;  // Ataque detenido en frontal del área rival
@@ -377,7 +378,7 @@ export default function MatchBoardPage() {
               {isRunning ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
             </button>
             <button 
-              onClick={() => { setIsRunning(false); setTimeLeft(45 * 60); triggerHaptic(60); }} 
+              onClick={() => { setIsRunning(false); setTimeLeft(45 * 60); }} 
               className="h-7 w-7 rounded-lg flex items-center justify-center text-white/20 hover:text-white hover:bg-white/10 transition-all duration-300 active:scale-90"
               title="Resetear"
             >

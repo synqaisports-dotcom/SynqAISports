@@ -8,3 +8,6 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 
 ## 18. Reequilibrio de Bloque Táctico (v22.0.0)
 - **v22.0.0**: **PROTOCOL_MIDFIELD_REBALANCE**: Retraso estratégico de la línea de medios en el motor de formaciones. El objetivo es garantizar una separación clara con la delantera cuando el equipo se repliega al 50% del campo en modo defensa.
+
+## 19. Optimización de Micro-Escalado y Rendimiento (v20.1.0)
+- **v20.1.0**: **PROTOCOL_TABLET_CHIP_OPTIMIZATION**: Reducción de chips de atletas a h-3.5 en tablet. Ajuste de offsets tácticos (DEF: -11.5) para posicionamiento exacto en áreas. Optimización de renderizado para hardware heredado (3GB RAM).
