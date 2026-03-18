@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v16.9.0 (Edición Rendimiento & Escalado)
+# SynqSports Pro - ARCHITECTURE_LEDGER v17.0.0 (Edición Táctica Avanzada)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -23,3 +23,6 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 - **v16.7.0**: **PROTOCOL_REDUNDANT_UI_PURGE**: Eliminación del botón de configuración lateral derecho para maximizar la limpieza visual del área de juego.
 - **v16.8.0**: **PROTOCOL_TOP_HEADER_OPTIMIZATION**: Ajuste de paddings y gaps en la franja superior para evitar solapamiento entre el marcador, el mando central y la telemetría en resoluciones de tablet (1024px). Implementación de escalado preventivo.
 - **v16.9.0**: **PROTOCOL_PERFORMANCE_SCALING_FIX**: Incremento de tamaño de jugadores para PC (md/lg). Optimización de aceleración por hardware (transform3d) para dispositivos con RAM limitada (3GB) para eliminar el lag en transiciones.
+
+## 17. Motor Táctico de Alta Precisión (v17.0.0)
+- **v17.0.0**: **PROTOCOL_TACTICAL_ENGINE_OVERHAUL**: Recalibración de offsets de fase. DEF: -15% (Área propia), ATK: +25% (Área rival). Unificación de tipos de estado para coherencia entre UI y motor de renderizado.

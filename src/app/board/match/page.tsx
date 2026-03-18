@@ -49,7 +49,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 
-type TacticalPhase = "defensa" | "tda" | "salida" | "ataque" | "tad";
+type TacticalPhase = "def" | "tda" | "sal" | "atk";
 
 interface PlayerPos {
   id: string;
@@ -68,10 +68,10 @@ interface DrawingLine {
 const MemoizedPlayerChip = memo(PlayerChip);
 
 /**
- * MatchBoardPage - v16.9.0
- * PROTOCOLO_PERFORMANCE_OPTIMIZATION:
- * - Ajuste de transición suave para dispositivos con RAM limitada (3GB).
- * - Escalado responsivo de jugadores para visualización óptima en PC.
+ * MatchBoardPage - v17.0.0
+ * PROTOCOLO_TACTICAL_ENGINE_OVERHAUL:
+ * - Recalibración de offsets de fase (DEF: -15, ATK: +25).
+ * - Unificación de estados de fase para fluidez total.
  */
 export default function MatchBoardPage() {
   const { profile } = useAuth();
@@ -82,8 +82,8 @@ export default function MatchBoardPage() {
   const [isRunning, setIsRunning] = useState(false);
   const [score, setScore] = useState({ home: 0, guest: 0 });
   const [fieldType, setFieldType] = useState<FieldType>("f11");
-  const [homePhase, setHomePhase] = useState<TacticalPhase>("defensa");
-  const [guestPhase, setGuestPhase] = useState<TacticalPhase>("defensa");
+  const [homePhase, setHomePhase] = useState<TacticalPhase>("def");
+  const [guestPhase, setGuestPhase] = useState<TacticalPhase>("def");
   const [homeFormation, setHomeFormation] = useState("4-3-3");
   const [guestFormation, setGuestFormation] = useState("4-3-3");
   const [homeShift, setHomeShift] = useState<"left" | "center" | "right">("center");
@@ -154,11 +154,10 @@ export default function MatchBoardPage() {
 
     const phaseOffset = (phase: TacticalPhase) => {
       switch(phase) {
-        case 'defensa': return -8;
-        case 'tda': return 5;
-        case 'salida': return 0;
-        case 'ataque': return 12;
-        case 'tad': return -4;
+        case 'def': return -15; // Bloque bajo: Inicio en área propia
+        case 'tda': return -5;  // Transición defensiva
+        case 'sal': return 10;  // Inicio de construcción
+        case 'atk': return 25;  // Presión alta: Finaliza en área rival
         default: return 0;
       }
     };
