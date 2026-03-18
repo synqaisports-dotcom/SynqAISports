@@ -19,7 +19,8 @@ import {
   Type,
   Move,
   LayoutDashboard,
-  Users
+  Users,
+  Square
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -90,6 +91,7 @@ function PromoBoardContent() {
 
   const [fieldType, setFieldType] = useState<FieldType>("f11");
   const [showLanes, setShowLanes] = useState(false);
+  const [isHalfField, setIsHalfField] = useState(false);
   const [activeTool, setActiveTool] = useState<DrawingTool>("select");
   const [currentColor, setCurrentColor] = useState("#00f2ff");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -381,7 +383,7 @@ function PromoBoardContent() {
     obs.observe(canvas.parentElement!); return () => obs.disconnect();
   }, [redrawAll]);
 
-  useEffect(() => { redrawAll(); }, [elements, selectedIds, fieldType, showLanes, redrawAll]);
+  useEffect(() => { redrawAll(); }, [elements, selectedIds, fieldType, showLanes, isHalfField, redrawAll]);
 
   const addElementAtCenter = (tool: DrawingTool) => {
     const pNum = tool === 'player' ? elements.filter(e => e.type === 'player').length + 1 : undefined;
@@ -513,6 +515,8 @@ function PromoBoardContent() {
         <div className="flex items-center gap-2">
           <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}><SelectTrigger className="w-[100px] h-8 bg-white/5 border-primary/20 rounded-lg text-[7px] font-black uppercase text-primary focus:ring-0 px-2"><SelectValue /></SelectTrigger><SelectContent className="bg-[#0a0f18] border-primary/20"><SelectItem value="f11" className="text-[8px] font-black">F11</SelectItem><SelectItem value="f7" className="text-[8px] font-black">F7</SelectItem><SelectItem value="futsal" className="text-[8px] font-black">FUTSAL</SelectItem></SelectContent></Select>
           
+          <Button variant="ghost" onClick={() => setIsHalfField(!isHalfField)} className={cn("h-8 px-2 border border-primary/20 text-[7px] font-black uppercase rounded-lg", isHalfField ? "bg-primary text-black" : "text-primary/40")}><Square className="h-3 w-3 mr-1" /> {isHalfField ? 'Campo Total' : 'Medio Campo'}</Button>
+
           <Button 
             variant="outline" 
             onClick={loadTeamFromSandbox}
@@ -556,7 +560,7 @@ function PromoBoardContent() {
       </div>
 
       <main className="flex-1 relative flex overflow-hidden touch-none">
-        <TacticalField theme="cyan" fieldType={fieldType} showWatermark showLanes={showLanes}>
+        <TacticalField theme="cyan" fieldType={fieldType} showWatermark showLanes={showLanes} isHalfField={isHalfField}>
           <canvas ref={canvasRef} className="absolute inset-0 z-30 pointer-events-auto" onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} />
         </TacticalField>
       </main>

@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v28.0.0 (Sincronización Equipo)
+# SynqSports Pro - ARCHITECTURE_LEDGER v29.0.0 (Medio Campo Vertical)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -11,3 +11,6 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 
 ## 28. Protocolo de Sincronización de Plantilla Sandbox (v28.0.0)
 - **v28.0.0**: **PROTOCOL_SANDBOX_SQUAD_SYNC**: Integración de la Pizarra Promo con la configuración de "Mi Equipo". Implementación de botón de volcado de titulares en Canvas basado en el `localStorage` de la sección equipo. El motor de dibujo ahora renderiza los nombres de los atletas vinculados automáticamente.
+
+## 29. Protocolo de Maximización de Superficie (v29.0.0)
+- **v29.0.0**: **PROTOCOL_VERTICAL_HALF_FIELD**: Implementación de modo de visualización de medio campo vertical en pizarras de ejercicios (Training/Promo). El sistema permite alternar dinámicamente entre campo completo y medio campo para ganar resolución y espacio de dibujo en tablets y PC.

@@ -36,7 +36,8 @@ import {
   Clock,
   ShieldCheck,
   ArrowRight,
-  LayoutDashboard
+  LayoutDashboard,
+  Square
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -102,6 +103,7 @@ const isCircular = (type: DrawingTool) =>
 function TrainingBoardContent() {
   const [fieldType, setFieldType] = useState<FieldType>("f11");
   const [showLanes, setShowLanes] = useState(false);
+  const [isHalfField, setIsHalfField] = useState(false);
   const [activeTool, setActiveTool] = useState<DrawingTool>("select");
   const [currentColor, setCurrentColor] = useState("#facc15");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -291,7 +293,7 @@ function TrainingBoardContent() {
     obs.observe(canvas.parentElement!); return () => obs.disconnect();
   }, [redrawAll]);
 
-  useEffect(() => { redrawAll(); }, [elements, selectedIds, fieldType, showLanes, redrawAll]);
+  useEffect(() => { redrawAll(); }, [elements, selectedIds, fieldType, showLanes, isHalfField, redrawAll]);
 
   const addElementAtCenter = (tool: DrawingTool) => {
     const pNum = tool === 'player' ? elements.filter(e => e.type === 'player').length + 1 : undefined;
@@ -420,6 +422,11 @@ function TrainingBoardContent() {
               <SelectItem value="futsal" className="text-[9px] font-black uppercase">Fútbol Sala</SelectItem>
             </SelectContent>
           </Select>
+
+          <Button variant="ghost" onClick={() => setIsHalfField(!isHalfField)} className={cn("h-9 px-3 border border-amber-500/20 text-[9px] font-black uppercase rounded-xl", isHalfField ? "bg-amber-500 text-black shadow-[0_0_20px_rgba(245,158,11,0.3)]" : "bg-white/5 text-amber-500/40")}>
+            <Square className="h-3.5 w-3.5 mr-2" /> {isHalfField ? 'Campo Total' : 'Medio Campo'}
+          </Button>
+
           <Button variant="outline" onClick={() => setShowLanes(!showLanes)} className={cn("h-9 px-3 border-amber-500/20 text-[9px] font-black uppercase rounded-xl", showLanes ? "bg-amber-500 text-black shadow-[0_0_20px_rgba(245,158,11,0.3)]" : "bg-white/5 text-amber-500/40")}>
             <Columns3 className="h-3.5 w-3.5 mr-2" /> Carriles
           </Button>
@@ -466,7 +473,7 @@ function TrainingBoardContent() {
 
       {/* FULL_SCREEN_CANVAS_AREA */}
       <main className="flex-1 flex items-center justify-center relative touch-none">
-        <TacticalField theme="amber" fieldType={fieldType} showLanes={showLanes}>
+        <TacticalField theme="amber" fieldType={fieldType} showLanes={showLanes} isHalfField={isHalfField}>
           <canvas ref={canvasRef} className="absolute inset-0 z-30 pointer-events-auto" onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp} />
         </TacticalField>
       </main>
