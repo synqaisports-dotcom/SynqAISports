@@ -15,10 +15,11 @@ interface PlayerChipProps {
 }
 
 /**
- * PlayerChip - Nodo de Atleta en Pizarra v18.0.0
- * PROTOCOLO_PERFORMANCE_SCALING_FIX:
- * - Escalado dinámico: Chips reducidos en tablet (h-8) y optimizados en PC (md:h-12, lg:h-14).
- * - Aceleración por hardware: Uso de translate3d para fluidez en dispositivos con poca RAM (3GB).
+ * PlayerChip - Nodo de Atleta en Pizarra v20.0.0
+ * PROTOCOLO_TABLET_CHIP_REDUCTION:
+ * - Reducción del 50% en tablet (h-4 w-4) para maximizar la superficie de campo.
+ * - Escalado profesional en PC (md:h-12, lg:h-14).
+ * - Aceleración por hardware (translate3d) activa.
  */
 export function PlayerChip({ 
   number, 
@@ -54,7 +55,7 @@ export function PlayerChip({
     >
       <div 
         className={cn(
-          "h-8 w-8 md:h-12 md:w-12 lg:h-14 lg:w-14 rounded-full border-2 flex items-center justify-center text-[9px] md:text-xs lg:text-sm font-black shadow-lg transition-all duration-300",
+          "h-4 w-4 md:h-12 md:w-12 lg:h-14 lg:w-14 rounded-full border-[1px] md:border-2 flex items-center justify-center text-[5px] md:text-xs lg:text-sm font-black shadow-lg transition-all duration-300",
           isLocal 
             ? "bg-primary/20 border-primary text-primary shadow-[0_0_15px_rgba(0,242,255,0.3)]" 
             : "bg-rose-500/20 border-rose-500 text-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.3)]",
@@ -65,7 +66,7 @@ export function PlayerChip({
       </div>
       {label && (
         <span className={cn(
-          "text-[6px] md:text-[9px] lg:text-[10px] font-black uppercase tracking-tighter whitespace-nowrap bg-black/60 px-2 py-0.5 rounded-sm transition-opacity duration-300",
+          "text-[4px] md:text-[9px] lg:text-[10px] font-black uppercase tracking-tighter whitespace-nowrap bg-black/60 px-1 py-0.2 md:px-2 md:py-0.5 rounded-sm transition-opacity duration-300",
           isDragging ? "opacity-0" : "opacity-100"
         )}>
           {label}

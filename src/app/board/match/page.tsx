@@ -70,10 +70,10 @@ interface DrawingLine {
 const MemoizedPlayerChip = memo(PlayerChip);
 
 /**
- * MatchBoardPage - v19.0.0
- * PROTOCOLO_TACTICAL_OFFSET_FINAL:
- * - DEF: Offset -9% (Defensa en frontal de área grande).
- * - ATK: Offset +15% (Ataque en área rival sin desbordar).
+ * MatchBoardPage - v20.0.0
+ * PROTOCOLO_TACTICAL_BOX_LIMIT:
+ * - DEF: Offset -9% (Línea defensiva en frontal de área grande).
+ * - ATK: Offset +7% (El ataque se detiene en la frontal del área rival).
  * - Midfield Lock conservado en fase DEF.
  */
 export default function MatchBoardPage() {
@@ -161,7 +161,7 @@ export default function MatchBoardPage() {
         case 'def': return -9; // Defensa en frontal de área grande propia
         case 'tda': return 2;  
         case 'sal': return 10;  
-        case 'atk': return 15; // Ataque en área rival (sin desbordar fondo)
+        case 'atk': return 7;  // Ataque detenido en frontal del área rival
         default: return 0;
       }
     };
@@ -277,7 +277,6 @@ export default function MatchBoardPage() {
       
       {/* MANDO CENTRAL INTEGRADO (v16.6.0) */}
       <header className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-full shadow-2xl transition-all scale-[0.8] lg:scale-100">
-        {/* ISLA DE DIBUJO COMPACTA (v16.5.0) */}
         <div className="flex items-center gap-1 px-1 border-r border-white/10 pr-2 mr-1">
           <div className="flex items-center gap-1.5 px-1.5">
             {["#00f2ff", "#f43f5e", "#facc15"].map(c => (
@@ -378,7 +377,7 @@ export default function MatchBoardPage() {
               {isRunning ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
             </button>
             <button 
-              onClick={() => { setIsRunning(false); setTimeLeft(45 * 60); }} 
+              onClick={() => { setIsRunning(false); setTimeLeft(45 * 60); triggerHaptic(60); }} 
               className="h-7 w-7 rounded-lg flex items-center justify-center text-white/20 hover:text-white hover:bg-white/10 transition-all duration-300 active:scale-90"
               title="Resetear"
             >
