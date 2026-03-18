@@ -49,7 +49,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from "@/dialog";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 
@@ -509,11 +509,6 @@ export default function MatchBoardPage() {
 
         </div>
       </div>
-
-      {/* BOTONES AUXILIARES */}
-      <button className="fixed top-1/2 right-6 -translate-y-1/2 h-10 w-10 rounded-xl bg-black/60 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/20 hover:text-primary transition-all duration-300 shadow-xl z-[160] active:scale-95">
-        <Settings2 className="h-5 w-5" />
-      </button>
 
       <Sheet>
         <SheetTrigger asChild>
