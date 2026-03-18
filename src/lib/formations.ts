@@ -17,7 +17,7 @@ export const FORMATIONS_DATA: Record<string, Record<FormationKey, Position[]>> =
     "4-3-3": [
       {x: 0.05, y: 0.5}, // GK
       {x: 0.25, y: 0.15}, {x: 0.25, y: 0.38}, {x: 0.25, y: 0.62}, {x: 0.25, y: 0.85}, // DEF (x=0.25)
-      {x: 0.48, y: 0.5}, {x: 0.53, y: 0.3}, {x: 0.53, y: 0.7}, // MID (avg centered ~0.51)
+      {x: 0.51, y: 0.5}, {x: 0.51, y: 0.3}, {x: 0.51, y: 0.7}, // MID (avg centered exactly 0.51)
       {x: 0.8, y: 0.5}, {x: 0.75, y: 0.2}, {x: 0.75, y: 0.8} // ATK (avg ~0.77)
     ],
     "4-4-2": [
@@ -29,7 +29,7 @@ export const FORMATIONS_DATA: Record<string, Record<FormationKey, Position[]>> =
     "3-5-2": [
       {x: 0.05, y: 0.5},
       {x: 0.25, y: 0.25}, {x: 0.25, y: 0.5}, {x: 0.25, y: 0.75},
-      {x: 0.52, y: 0.1}, {x: 0.52, y: 0.9}, {x: 0.52, y: 0.5}, {x: 0.52, y: 0.3}, {x: 0.52, y: 0.7}, // MID (avg 0.525)
+      {x: 0.525, y: 0.1}, {x: 0.525, y: 0.9}, {x: 0.525, y: 0.5}, {x: 0.525, y: 0.3}, {x: 0.525, y: 0.7}, // MID (avg 0.525)
       {x: 0.8, y: 0.4}, {x: 0.8, y: 0.6}
     ],
     "4-2-3-1": [
@@ -42,7 +42,7 @@ export const FORMATIONS_DATA: Record<string, Record<FormationKey, Position[]>> =
     "5-4-1": [
       {x: 0.05, y: 0.5},
       {x: 0.2, y: 0.1}, {x: 0.25, y: 0.3}, {x: 0.25, y: 0.5}, {x: 0.25, y: 0.7}, {x: 0.2, y: 0.9},
-      {x: 0.52, y: 0.2}, {x: 0.52, y: 0.4}, {x: 0.52, y: 0.6}, {x: 0.52, y: 0.8}, // MID (avg 0.525)
+      {x: 0.525, y: 0.2}, {x: 0.525, y: 0.4}, {x: 0.525, y: 0.6}, {x: 0.525, y: 0.8}, // MID (avg 0.525)
       {x: 0.8, y: 0.5}
     ]
   },
@@ -62,7 +62,7 @@ export const FORMATIONS_DATA: Record<string, Record<FormationKey, Position[]>> =
     "3-1-2": [
       {x: 0.05, y: 0.5},
       {x: 0.25, y: 0.2}, {x: 0.25, y: 0.5}, {x: 0.25, y: 0.8},
-      {x: 0.52, y: 0.5}, // MID (avg 0.525)
+      {x: 0.525, y: 0.5}, // MID (avg 0.525)
       {x: 0.8, y: 0.35}, {x: 0.8, y: 0.65}
     ],
     "2-2-2": [
