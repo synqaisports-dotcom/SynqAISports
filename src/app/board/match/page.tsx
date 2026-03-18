@@ -17,7 +17,8 @@ import {
   ChevronRight,
   Zap,
   Pause,
-  Play
+  Play,
+  LayoutDashboard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -48,6 +49,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 type TacticalPhase = "def" | "tda" | "sal" | "atk";
 
@@ -68,14 +70,16 @@ interface DrawingLine {
 const MemoizedPlayerChip = memo(PlayerChip);
 
 /**
- * MatchBoardPage - v18.0.0
- * PROTOCOLO_DEFENSIVE_MIDFIELD_LOCK:
- * - Restricción de 50% en fase DEF para que nadie pase del medio campo.
- * - Ajuste de offset defensivo para repliegue en área grande.
+ * MatchBoardPage - v19.0.0
+ * PROTOCOLO_TACTICAL_OFFSET_FINAL:
+ * - DEF: Offset -9% (Defensa en frontal de área grande).
+ * - ATK: Offset +15% (Ataque en área rival sin desbordar).
+ * - Midfield Lock conservado en fase DEF.
  */
 export default function MatchBoardPage() {
   const { profile } = useAuth();
   const { toast } = useToast();
+  const router = useRouter();
   
   const [mounted, setMounted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(45 * 60);
@@ -154,10 +158,10 @@ export default function MatchBoardPage() {
 
     const phaseOffset = (phase: TacticalPhase) => {
       switch(phase) {
-        case 'def': return -20; // Repliegue a área propia
-        case 'tda': return -5;  
+        case 'def': return -9; // Defensa en frontal de área grande propia
+        case 'tda': return 2;  
         case 'sal': return 10;  
-        case 'atk': return 25;  
+        case 'atk': return 15; // Ataque en área rival (sin desbordar fondo)
         default: return 0;
       }
     };
@@ -271,7 +275,9 @@ export default function MatchBoardPage() {
   return (
     <div className="flex-1 flex flex-col bg-black overflow-hidden relative touch-none select-none" onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}>
       
+      {/* MANDO CENTRAL INTEGRADO (v16.6.0) */}
       <header className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-full shadow-2xl transition-all scale-[0.8] lg:scale-100">
+        {/* ISLA DE DIBUJO COMPACTA (v16.5.0) */}
         <div className="flex items-center gap-1 px-1 border-r border-white/10 pr-2 mr-1">
           <div className="flex items-center gap-1.5 px-1.5">
             {["#00f2ff", "#f43f5e", "#facc15"].map(c => (
@@ -300,6 +306,7 @@ export default function MatchBoardPage() {
         </div>
       </header>
 
+      {/* MARCADOR DE GOLES (IZQUIERDA) */}
       <div className="fixed top-4 left-24 z-[100] flex items-center gap-3 px-3 py-1 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl animate-in slide-in-from-left-4 duration-700 scale-[0.8] lg:scale-100">
         <div className="flex items-center gap-4">
           <div className="flex flex-col items-center">
@@ -322,6 +329,7 @@ export default function MatchBoardPage() {
         </div>
       </div>
 
+      {/* TELEMETRÍA Y CONTROL DE TIEMPO (DERECHA) */}
       <div className="fixed top-4 right-4 z-[100] flex items-center gap-2 animate-in slide-in-from-right-4 duration-700 scale-[0.8] lg:scale-100">
         <Dialog>
           <DialogTrigger asChild>
@@ -405,8 +413,10 @@ export default function MatchBoardPage() {
         </TacticalField>
       </main>
 
+      {/* CONTROLES TÁCTICOS INFERIORES DE EJE ÚNICO (v16.3.0) */}
       <div className="fixed bottom-6 left-0 right-0 px-6 z-[150] pointer-events-none">
         <div className="flex items-end justify-between w-full max-w-[1600px] mx-auto">
+          {/* BLOQUE LOCAL (IZQUIERDA) */}
           <div className="flex items-center gap-2 pointer-events-auto">
             <div className="bg-black/80 backdrop-blur-xl border border-primary/20 p-1 rounded-xl shadow-xl flex items-center h-10 transition-all duration-500">
               <Select value={homeFormation} onValueChange={setHomeFormation}>
@@ -442,7 +452,10 @@ export default function MatchBoardPage() {
               </div>
             </div>
           </div>
+
           <div className="flex-1" />
+
+          {/* BLOQUE VISITANTE (DERECHA) */}
           <div className="flex items-center gap-2 pointer-events-auto">
             <div className="bg-black/80 backdrop-blur-xl border border-rose-500/20 p-1 rounded-xl shadow-xl flex items-center h-10 transition-all duration-500">
               <div className="flex items-center gap-1 bg-black/40 p-0.5 rounded-lg border border-white/5">
@@ -481,6 +494,7 @@ export default function MatchBoardPage() {
         </div>
       </div>
 
+      {/* ROSTER LATERAL */}
       <Sheet>
         <SheetTrigger asChild>
           <button className="fixed bottom-32 right-6 h-12 w-12 rounded-2xl bg-primary text-black flex items-center justify-center shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-110 transition-all duration-300 z-[160] active:scale-95">
