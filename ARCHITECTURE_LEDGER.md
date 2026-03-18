@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v29.0.0 (Medio Campo Vertical)
+# SynqSports Pro - ARCHITECTURE_LEDGER v30.0.0 (Wider Half Field)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -14,3 +14,6 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 
 ## 29. Protocolo de Maximización de Superficie (v29.0.0)
 - **v29.0.0**: **PROTOCOL_VERTICAL_HALF_FIELD**: Implementación de modo de visualización de medio campo vertical en pizarras de ejercicios (Training/Promo). El sistema permite alternar dinámicamente entre campo completo y medio campo para ganar resolución y espacio de dibujo en tablets y PC.
+
+## 30. Protocolo de Ensanchamiento Vertical (v30.0.0)
+- **v30.0.0**: **PROTOCOL_WIDER_HALF_FIELD**: Ajuste de ratio geométrico (de 0.72 a 0.85) en el modo foco de medio campo. El sistema ahora permite una mayor amplitud lateral (izquierda/derecha) para facilitar el dibujo de jugadas de banda y transiciones anchas en formato vertical.

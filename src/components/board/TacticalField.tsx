@@ -17,9 +17,9 @@ interface TacticalFieldProps {
 }
 
 /**
- * TacticalField - v29.0.0
- * PROTOCOLO_VERTICAL_HALF_FIELD: Soporte para vista de medio campo vertical.
- * Ajusta el ratio y las líneas para maximizar el área de dibujo en ejercicios.
+ * TacticalField - v30.0.0
+ * PROTOCOLO_WIDER_HALF_FIELD: Ajuste de ratio para ganar anchura en modo vertical.
+ * Incrementamos el ratio de 0.72 a 0.85 para permitir un dibujo más holgado en bandas.
  */
 export function TacticalField({ 
   theme = "cyan", 
@@ -35,8 +35,8 @@ export function TacticalField({
   const isFutsal = fieldType === "futsal";
   const bgClass = isFutsal ? "bg-[#0a2e5c]" : "bg-[#143d14]";
   
-  // Ratio W/H: Full horizontal es ~1.54. Half Vertical es ~0.75 (invertido y ajustado)
-  const ratio = isHalfField ? 0.72 : (isFutsal ? 2.0 : 1.54);
+  // Ratio W/H: Full horizontal es ~1.54. Half Vertical ensanchado es ~0.85
+  const ratio = isHalfField ? 0.85 : (isFutsal ? 2.0 : 1.54);
   
   return (
     <div className="absolute inset-0 flex items-center justify-center p-1 md:p-2 overflow-hidden select-none pointer-events-none bg-black">
@@ -48,10 +48,10 @@ export function TacticalField({
           bgClass
         )}
         style={{
-          width: isHalfField ? 'min(90vw, 65vh)' : '98vw',
+          width: isHalfField ? 'min(95vw, 82vh)' : '98vw',
           height: isHalfField ? '92vh' : `calc(98vw / ${ratio})`,
           maxHeight: '96vh',
-          maxWidth: isHalfField ? `calc(96vh * ${ratio})` : `calc(96vh * ${ratio})`
+          maxWidth: `calc(96vh * ${ratio})`
         }}
       >
         {/* TEXTURAS OPTIMIZADAS */}
