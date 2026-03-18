@@ -17,14 +17,9 @@ import {
   ArrowRight,
   Maximize2,
   Trash2,
-  MousePointer2,
-  Paintbrush,
-  MoveHorizontal,
-  ChevronUp,
   Settings2,
   ChevronLeft,
   ChevronRight,
-  Menu,
   Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -68,6 +63,11 @@ interface PlayerPos {
   y: number;
 }
 
+interface DrawingLine {
+  points: {x: number, y: number}[];
+  color: string;
+}
+
 const MemoizedPlayerChip = memo(PlayerChip);
 
 export default function MatchBoardPage() {
@@ -87,9 +87,12 @@ export default function MatchBoardPage() {
   const [guestShift, setGuestShift] = useState<"left" | "center" | "right">("center");
   const [players, setPlayers] = useState<PlayerPos[]>([]);
   const [draggingId, setDraggingId] = useState<string | null>(null);
-  const [isPaintMode, setIsPaintMode] = useState(false);
   const [currentColor, setCurrentColor] = useState("#00f2ff");
   const [pairingCode, setPairingCode] = useState("");
+  
+  // Dibujo persistente
+  const [drawings, setDrawings] = useState<DrawingLine[]>([]);
+  const [activeDrawing, setActiveDrawing] = useState<{x: number, y: number}[] | null>(null);
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fieldRef = useRef<HTMLDivElement>(null);
@@ -157,27 +160,78 @@ export default function MatchBoardPage() {
 
   useEffect(() => { calculatePositions(); }, [calculatePositions]);
 
+  // MANEJO DE INTERACCIÓN INTELIGENTE
   const handlePointerDownPlayer = (e: React.PointerEvent, id: string) => {
-    if (isPaintMode) return;
     e.stopPropagation();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     setDraggingId(id);
   };
 
-  const handlePointerMove = (e: React.PointerEvent) => {
-    if (!draggingId || !fieldRef.current) return;
+  const handleCanvasPointerDown = (e: React.PointerEvent) => {
+    if (!fieldRef.current) return;
     const rect = fieldRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
-    setPlayers(prev => prev.map(p => p.id === draggingId ? { ...p, x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) } : p));
+    setActiveDrawing([{x, y}]);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!fieldRef.current) return;
+    const rect = fieldRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    if (draggingId) {
+      setPlayers(prev => prev.map(p => p.id === draggingId ? { ...p, x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) } : p));
+    } else if (activeDrawing) {
+      setActiveDrawing(prev => [...(prev || []), {x, y}]);
+    }
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
     if (draggingId) {
       (e.target as HTMLElement).releasePointerCapture(e.pointerId);
       setDraggingId(null);
+    } else if (activeDrawing) {
+      setDrawings(prev => [...prev, { points: activeDrawing, color: currentColor }]);
+      setActiveDrawing(null);
     }
   };
+
+  // REDIBUJADO DEL CANVAS
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const parent = canvas.parentElement;
+    if (parent) {
+      if (canvas.width !== parent.clientWidth || canvas.height !== parent.clientHeight) {
+        canvas.width = parent.clientWidth;
+        canvas.height = parent.clientHeight;
+      }
+    }
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 3;
+
+    const drawLine = (points: {x:number, y:number}[], color: string) => {
+      if (points.length < 2) return;
+      ctx.beginPath();
+      ctx.strokeStyle = color;
+      ctx.moveTo(points[0].x / 100 * canvas.width, points[0].y / 100 * canvas.height);
+      for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i].x / 100 * canvas.width, points[i].y / 100 * canvas.height);
+      }
+      ctx.stroke();
+    };
+
+    drawings.forEach(d => drawLine(d.points, d.color));
+    if (activeDrawing) drawLine(activeDrawing, currentColor);
+  }, [drawings, activeDrawing, currentColor, fieldType]);
 
   if (!mounted) return null;
 
@@ -290,10 +344,23 @@ export default function MatchBoardPage() {
       {/* ÁREA DE JUEGO */}
       <main className="flex-1 relative overflow-hidden flex items-center justify-center pt-20 pb-28">
         <TacticalField theme="cyan" fieldType={fieldType} containerRef={fieldRef}>
-          <canvas ref={canvasRef} className={cn("absolute inset-0 z-30 pointer-events-none", isPaintMode && "pointer-events-auto")} />
-          <div className="absolute inset-0 z-20">
+          {/* Capa de Dibujo - Interactiva si no hay jugador bloqueando */}
+          <canvas ref={canvasRef} onPointerDown={handleCanvasPointerDown} className="absolute inset-0 z-30 pointer-events-auto" />
+          
+          {/* Capa de Jugadores - Superior para permitir arrastre prioritario */}
+          <div className="absolute inset-0 z-40 pointer-events-none">
             {players.map(p => (
-              <MemoizedPlayerChip key={p.id} team={p.team} number={p.number} label={p.name} x={p.x} y={p.y} isDragging={draggingId === p.id} onPointerDown={(e) => handlePointerDownPlayer(e, p.id)} />
+              <MemoizedPlayerChip 
+                key={p.id} 
+                team={p.team} 
+                number={p.number} 
+                label={p.name} 
+                x={p.x} 
+                y={p.y} 
+                isDragging={draggingId === p.id} 
+                onPointerDown={(e) => handlePointerDownPlayer(e, p.id)} 
+                className="pointer-events-auto"
+              />
             ))}
           </div>
         </TacticalField>
@@ -345,22 +412,17 @@ export default function MatchBoardPage() {
             </div>
           </div>
 
-          {/* ISLA HERRAMIENTAS - CENTRO */}
+          {/* ISLA HERRAMIENTAS - CENTRO (Detección Automática) */}
           <div className="pointer-events-auto bg-black/90 backdrop-blur-2xl border border-white/10 p-2 rounded-2xl flex items-center gap-2 shadow-[0_0_40px_rgba(0,0,0,0.8)] animate-in slide-in-from-bottom-4 scale-[0.85] lg:scale-100 origin-bottom">
-            <button onClick={() => setIsPaintMode(false)} className={cn("h-10 w-10 rounded-xl flex items-center justify-center transition-all", !isPaintMode ? "bg-primary text-black cyan-glow" : "text-white/20 hover:text-white/40")}>
-              <MousePointer2 className="h-5 w-5" />
-            </button>
-            <button onClick={() => setIsPaintMode(true)} className={cn("h-10 w-10 rounded-xl flex items-center justify-center transition-all", isPaintMode ? "bg-primary text-black cyan-glow" : "text-white/20 hover:text-white/40")}>
-              <Paintbrush className="h-5 w-5" />
-            </button>
-            <div className="w-[1px] h-6 bg-white/10 mx-1" />
-            <div className="flex gap-1.5">
+            <div className="flex items-center gap-2 px-3">
               {["#00f2ff", "#f43f5e", "#facc15"].map(c => (
-                <button key={c} onClick={() => setCurrentColor(c)} className={cn("h-5 w-5 rounded-full border-2 transition-all", currentColor === c ? "border-white scale-110" : "border-transparent opacity-40")} style={{ backgroundColor: c }} />
+                <button key={c} onClick={() => setCurrentColor(c)} className={cn("h-6 w-6 rounded-full border-2 transition-all", currentColor === c ? "border-white scale-110 shadow-lg" : "border-transparent opacity-40")} style={{ backgroundColor: c }} />
               ))}
             </div>
             <div className="w-[1px] h-6 bg-white/10 mx-1" />
-            <button className="text-rose-500/40 hover:text-rose-500 p-2"><Trash2 className="h-5 w-5" /></button>
+            <button onClick={() => setDrawings([])} className="text-rose-500/40 hover:text-rose-500 p-2" title="Borrar Trazos">
+              <Trash2 className="h-5 w-5" />
+            </button>
           </div>
 
           {/* ISLA VISITANTE - ANCLADA DERECHA */}
