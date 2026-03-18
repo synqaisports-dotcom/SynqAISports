@@ -16,6 +16,7 @@ import {
   Activity,
   ArrowRight,
   Maximize2,
+  Minimize2,
   Trash2,
   Settings2,
   ChevronLeft,
@@ -89,6 +90,7 @@ export default function MatchBoardPage() {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [currentColor, setCurrentColor] = useState("#00f2ff");
   const [pairingCode, setPairingCode] = useState("");
+  const [isFullscreen, setIsFullscreen] = useState(false);
   
   // Dibujo persistente
   const [drawings, setDrawings] = useState<DrawingLine[]>([]);
@@ -98,6 +100,20 @@ export default function MatchBoardPage() {
   const fieldRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { setMounted(true); }, []);
+
+  useEffect(() => {
+    const syncFullscreen = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", syncFullscreen);
+    return () => document.removeEventListener("fullscreenchange", syncFullscreen);
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  }, []);
 
   useEffect(() => {
     let code = localStorage.getItem("synq_watch_pairing_code");
@@ -251,8 +267,15 @@ export default function MatchBoardPage() {
   return (
     <div className="flex-1 flex flex-col bg-black overflow-hidden relative touch-none select-none" onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}>
       
-      {/* CABECERA DE ESTADO (CENTRAL) */}
+      {/* CABECERA DE ESTADO (CENTRAL) CON FULLSCREEN INTEGRADO */}
       <header className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 px-4 py-1.5 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-full shadow-2xl transition-all scale-90 md:scale-100">
+        <button 
+          onClick={toggleFullscreen}
+          className="h-8 w-8 flex items-center justify-center text-white/40 hover:text-primary transition-all active:scale-90 border-r border-white/10 pr-2 mr-1"
+          title={isFullscreen ? "Minimizar" : "Pantalla Completa"}
+        >
+          {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+        </button>
         <div className="flex items-center gap-2">
           <Trophy className="h-3 w-3 text-primary animate-pulse" />
           <div className="flex flex-col">
