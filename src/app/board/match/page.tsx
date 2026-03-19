@@ -75,9 +75,10 @@ interface DrawingLine {
 const MemoizedPlayerChip = memo(PlayerChip);
 
 /**
- * MatchBoardPage - v45.0.0
- * PROTOCOLO_MATCH_SAVE_RESTORE: Restaurado botón GUARDAR. 
- * PROTOCOLO_MATCH_UI_LEAN: Eliminada opción medio campo para evitar errores.
+ * MatchBoardPage - v46.0.0
+ * PROTOCOLO_BOTTOM_UNIFIED_CONTROLS: Barra de herramientas movida a la parte inferior.
+ * PROTOCOLO_MATCH_SAVE_RESTORE: Conservado botón GUARDAR en cabecera. 
+ * PROTOCOLO_MATCH_UI_LEAN: Vista fija en Campo Completo.
  */
 export default function MatchBoardPage() {
   const { profile } = useAuth();
@@ -120,7 +121,7 @@ export default function MatchBoardPage() {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(() => {});
     } else {
-      document.exitFullscreen().catch(() => {});
+      if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
     }
   }, []);
 
@@ -239,7 +240,6 @@ export default function MatchBoardPage() {
   };
 
   const handleSaveMatch = () => {
-    // Sincronización con el Vault Local
     const vault = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"matches": []}');
     const newMatchResult = {
       id: Date.now(),
@@ -314,41 +314,6 @@ export default function MatchBoardPage() {
   return (
     <div className="flex-1 flex flex-col bg-black overflow-hidden relative touch-none select-none" onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}>
       
-      {/* MANDO CENTRAL INTEGRADO */}
-      <header className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center gap-4 w-auto">
-        <div className="flex items-center gap-4 px-4 py-1.5 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl transition-all scale-[0.85] lg:scale-100">
-          <div className="flex items-center gap-2 px-1 border-r border-white/10 pr-3">
-            <div className="flex items-center gap-2">
-              {["#00f2ff", "#f43f5e", "#facc15"].map(c => (
-                <button key={c} onClick={() => setCurrentColor(c)} className={cn("h-4 w-4 rounded-full border transition-all duration-300", currentColor === c ? "border-white scale-110 shadow-lg" : "border-transparent opacity-40")} style={{ backgroundColor: c }} />
-              ))}
-            </div>
-            <div className="w-[1px] h-4 bg-white/10 mx-1" />
-            <button onClick={() => setDrawings([])} className="text-rose-500/40 hover:text-rose-500 p-1.5 transition-colors duration-300 active:scale-95" title="Borrar Trazos">
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2 px-1 border-r border-white/10 pr-3">
-            <button 
-              onClick={toggleFullscreen}
-              className="h-8 w-8 flex items-center justify-center text-white/40 hover:text-primary transition-all active:scale-90"
-              title={isFullscreen ? "Minimizar" : "Pantalla Completa"}
-            >
-              {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
-            </button>
-          </div>
-
-          <div className="flex items-center gap-3 pr-2">
-            <Trophy className="h-3.5 w-3.5 text-primary animate-pulse" />
-            <div className="flex flex-col">
-              <span className="text-[7px] font-black text-primary tracking-widest uppercase">MATCH_LIVE</span>
-              <h1 className="text-[9px] font-headline font-black text-white italic uppercase tracking-tight leading-none">DIRECTO</h1>
-            </div>
-          </div>
-        </div>
-      </header>
-
       {/* MARCADOR DE GOLES */}
       <div className="fixed top-4 left-4 lg:left-24 z-[100] flex items-center gap-3 px-3 py-1 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl animate-in slide-in-from-left-4 duration-700 scale-[0.75] origin-top-left lg:scale-100">
         <div className="flex items-center gap-4">
@@ -459,11 +424,12 @@ export default function MatchBoardPage() {
         </TacticalField>
       </main>
 
-      {/* CONTROLES TÁCTICOS INFERIORES */}
+      {/* CONTROLES TÁCTICOS INFERIORES UNIFICADOS */}
       <div className="fixed bottom-6 left-0 right-0 px-6 z-[150] pointer-events-none">
-        <div className="flex items-end justify-between w-full max-w-[1600px] mx-auto">
+        <div className="flex items-end justify-between w-full max-w-[1600px] mx-auto gap-4">
+          
           {/* BLOQUE LOCAL */}
-          <div className="flex items-center gap-2 pointer-events-auto scale-[0.8] origin-bottom-left lg:scale-100">
+          <div className="flex items-center gap-2 pointer-events-auto scale-[0.8] origin-bottom-left lg:scale-100 shrink-0">
             <div className="bg-black/80 backdrop-blur-xl border border-primary/20 p-1 rounded-xl shadow-xl flex items-center h-10 transition-all duration-500">
               <Select value={homeFormation} onValueChange={setHomeFormation}>
                 <SelectTrigger className="h-8 w-24 bg-black border-primary/10 text-white font-black uppercase text-[9px] rounded-lg focus:ring-0 transition-all duration-300">
@@ -500,10 +466,43 @@ export default function MatchBoardPage() {
             </div>
           </div>
 
-          <div className="flex-1" />
+          {/* MANDO CENTRAL INTEGRADO (UNIFICADO EN PARTE INFERIOR) */}
+          <div className="flex-1 flex justify-center pointer-events-auto">
+            <div className="flex items-center gap-4 px-4 h-10 bg-black/80 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl transition-all scale-[0.8] lg:scale-100">
+              <div className="flex items-center gap-2 px-1 border-r border-white/10 pr-3">
+                <div className="flex items-center gap-2">
+                  {["#00f2ff", "#f43f5e", "#facc15"].map(c => (
+                    <button key={c} onClick={() => setCurrentColor(c)} className={cn("h-4 w-4 rounded-full border transition-all duration-300", currentColor === c ? "border-white scale-110 shadow-lg" : "border-transparent opacity-40")} style={{ backgroundColor: c }} />
+                  ))}
+                </div>
+                <div className="w-[1px] h-4 bg-white/10 mx-1" />
+                <button onClick={() => setDrawings([])} className="text-rose-500/40 hover:text-rose-500 p-1.5 transition-colors duration-300 active:scale-95" title="Borrar Trazos">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2 px-1 border-r border-white/10 pr-3">
+                <button 
+                  onClick={toggleFullscreen}
+                  className="h-8 w-8 flex items-center justify-center text-white/40 hover:text-primary transition-all active:scale-90"
+                  title={isFullscreen ? "Minimizar" : "Pantalla Completa"}
+                >
+                  {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+                </button>
+              </div>
+
+              <div className="flex items-center gap-3 pr-2 shrink-0">
+                <Trophy className="h-3.5 w-3.5 text-primary animate-pulse" />
+                <div className="flex flex-col">
+                  <span className="text-[7px] font-black text-primary tracking-widest uppercase leading-none">MATCH_LIVE</span>
+                  <h1 className="text-[9px] font-headline font-black text-white italic uppercase tracking-tight leading-none mt-0.5">DIRECTO</h1>
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* BLOQUE VISITANTE */}
-          <div className="flex items-center gap-2 pointer-events-auto scale-[0.8] origin-bottom-right lg:scale-100">
+          <div className="flex items-center gap-2 pointer-events-auto scale-[0.8] origin-bottom-right lg:scale-100 shrink-0">
             <div className="bg-black/80 backdrop-blur-xl border border-rose-500/20 p-1 rounded-xl shadow-xl flex items-center h-10 transition-all duration-500">
               <div className="flex items-center gap-1 bg-black/40 p-0.5 rounded-lg border border-white/5">
                 <button onClick={() => setGuestShift("left")} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all duration-300", guestShift === 'left' ? 'bg-rose-500/20 text-rose-500' : 'text-white/10')}><ChevronLeft className="h-3 w-3" /></button>
