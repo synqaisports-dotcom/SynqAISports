@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v46.0.0 (Bottom Unified Controls)
+# SynqSports Pro - ARCHITECTURE_LEDGER v51.0.0 (Chrono Presets)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -11,3 +11,6 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 
 ## 46. Protocolo de Ergonomía Unificada (v46.0.0)
 - **v46.0.0**: **PROTOCOL_BOTTOM_UNIFIED_CONTROLS**: Traslado de la barra de herramientas central (dibujo y estado) a la parte inferior de la Pizarra de Partido. Se alinea con los bloques de formación y fases para agrupar toda la operativa en una sola zona de interacción, despejando la visión táctica superior.
+
+## 51. Protocolo de Presets Cronométricos (v51.0.0)
+- **v51.0.0**: **PROTOCOL_CHRONO_PRESETS**: Integración de selector de tiempos preconfigurados (15-45 min) y unificación de bordes cian en el bloque de telemetría superior de la Pizarra de Partido.

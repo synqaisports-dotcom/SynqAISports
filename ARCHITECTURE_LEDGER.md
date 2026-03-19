@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v50.0.0 (Scoreboard Shift)
+# SynqSports Pro - ARCHITECTURE_LEDGER v51.0.0 (Chrono Presets)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -23,3 +23,6 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 
 ## 50. Protocolo de Composición Superior (v50.0.0)
 - **v50.0.0**: **PROTOCOL_SCOREBOARD_SHIFT**: Desplazamiento horizontal del marcador hacia la derecha (`left-20 lg:left-32`) para evitar interferencias visuales con el botón de retorno del sistema y equilibrar la composición superior en tablets.
+
+## 51. Protocolo de Presets Cronométricos (v51.0.0)
+- **v51.0.0**: **PROTOCOL_CHRONO_PRESETS**: Integración de selector de tiempos preconfigurados (15-45 min) y unificación de bordes cian en el bloque de telemetría superior de la Pizarra de Partido.

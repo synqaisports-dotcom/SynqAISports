@@ -23,7 +23,8 @@ import {
   Megaphone,
   X,
   Save,
-  Columns3
+  Columns3,
+  Timer
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -76,8 +77,8 @@ interface DrawingLine {
 const MemoizedPlayerChip = memo(PlayerChip);
 
 /**
- * MatchBoardPage - v50.0.0
- * PROTOCOL_SCOREBOARD_SHIFT: Ajuste de posición 'left' para evitar colisión con botón de retorno.
+ * MatchBoardPage - v51.0.0
+ * PROTOCOL_CHRONO_PRESETS: Bordes cian y selector de tiempos (15-45 min).
  */
 export default function MatchBoardPage() {
   const { profile } = useAuth();
@@ -148,6 +149,15 @@ export default function MatchBoardPage() {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
+  const handleSetPresetTime = (minutes: number) => {
+    setIsRunning(false);
+    setTimeLeft(minutes * 60);
+    toast({
+      title: "TIEMPO_AJUSTADO",
+      description: `Cronómetro configurado a ${minutes} minutos.`,
+    });
   };
 
   const calculatePositions = useCallback(() => {
@@ -372,7 +382,19 @@ export default function MatchBoardPage() {
           </DialogContent>
         </Dialog>
 
-        <div className="flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl">
+        <div className="flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-xl border border-primary/30 rounded-xl shadow-2xl transition-all">
+          <div className="flex items-center gap-1 border-r border-white/10 pr-1">
+            <Select onValueChange={(v) => handleSetPresetTime(parseInt(v))}>
+              <SelectTrigger className="h-7 w-8 bg-transparent border-none text-primary/40 hover:text-primary transition-all p-0 focus:ring-0">
+                <Timer className="h-3.5 w-3.5" />
+              </SelectTrigger>
+              <SelectContent className="bg-[#0a0f18] border-primary/20">
+                {[15, 20, 25, 30, 35, 40, 45].map(m => (
+                  <SelectItem key={m} value={m.toString()} className="text-[10px] font-black uppercase">{m} MIN</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="flex flex-col items-center min-w-[60px]">
             <span className={cn("text-xl font-black font-headline tabular-nums tracking-tighter transition-all duration-500", isRunning ? "text-primary cyan-text-glow" : "text-white/40")}>
               {formatTime(timeLeft)}
