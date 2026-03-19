@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v39.0.0 (Visitor Color Restoration)
+# SynqSports Pro - ARCHITECTURE_LEDGER v40.0.0 (Player Chip Scaling)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -20,3 +20,6 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 
 ## 39. Protocolo de Restauración de Identidad Rival (v39.0.0)
 - **v39.0.0**: **PROTOCOL_RESTORE_VISITOR_COLOR**: Reversión de la unificación cromática. Se restaura el color Rose (Rojo) para el equipo visitante tanto en marcador, mandos tácticos como en fichas de jugador para mejorar la distinción operativa.
+
+## 40. Protocolo de Calibración Ergonómica (v40.0.0)
+- **v40.0.0**: **PROTOCOL_PLAYER_CHIP_SCALING**: Reducción del 20% en el tamaño de las fichas de jugador en la Pizarra de Partido para dispositivos tablet y escritorio. Mejora la visibilidad del lienzo y la precisión del dibujo táctico.
