@@ -22,7 +22,8 @@ import {
   Square,
   Megaphone,
   X,
-  Save
+  Save,
+  Columns3
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -75,10 +76,9 @@ interface DrawingLine {
 const MemoizedPlayerChip = memo(PlayerChip);
 
 /**
- * MatchBoardPage - v46.0.0
- * PROTOCOLO_BOTTOM_UNIFIED_CONTROLS: Barra de herramientas movida a la parte inferior.
- * PROTOCOLO_MATCH_SAVE_RESTORE: Conservado botón GUARDAR en cabecera. 
- * PROTOCOLO_MATCH_UI_LEAN: Vista fija en Campo Completo.
+ * MatchBoardPage - v48.0.0
+ * PROTOCOL_TABLET_SAFE_CONTROLS: Reajuste de contenedores inferiores para evitar overflow.
+ * PROTOCOL_FIX_SHOWLANES: Declaración de estado faltante.
  */
 export default function MatchBoardPage() {
   const { profile } = useAuth();
@@ -90,6 +90,7 @@ export default function MatchBoardPage() {
   const [isRunning, setIsRunning] = useState(false);
   const [score, setScore] = useState({ home: 0, guest: 0 });
   const [fieldType, setFieldType] = useState<FieldType>("f11");
+  const [showLanes, setShowLanes] = useState(false);
   const [homePhase, setHomePhase] = useState<TacticalPhase>("def");
   const [guestPhase, setGuestPhase] = useState<TacticalPhase>("def");
   const [homeFormation, setHomeFormation] = useState("4-3-3");
@@ -281,26 +282,29 @@ export default function MatchBoardPage() {
     const drawLine = (points: {x:number, y:number}[], color: string) => {
       if (points.length < 2) return;
       
+      /**
+       * PROTOCOL_SMOOTH_BRUSH_STROKES
+       * Implementación de suavizado mediante curvas cuadráticas.
+       */
       ctx.beginPath();
       ctx.strokeStyle = color;
       
-      const p0 = { x: points[0].x / 100 * canvas.width, y: points[0].y / 100 * canvas.height };
-      ctx.moveTo(p0.x, p0.y);
+      ctx.moveTo(points[0].x / 100 * canvas.width, points[0].y / 100 * canvas.height);
 
       if (points.length === 2) {
-        const p1 = { x: points[1].x / 100 * canvas.width, y: points[1].y / 100 * canvas.height };
-        ctx.lineTo(p1.x, p1.y);
+        ctx.lineTo(points[1].x / 100 * canvas.width, points[1].y / 100 * canvas.height);
       } else {
         for (let i = 1; i < points.length - 2; i++) {
-          const pCurrent = { x: points[i].x / 100 * canvas.width, y: points[i].y / 100 * canvas.height };
-          const pNext = { x: points[i+1].x / 100 * canvas.width, y: points[i+1].y / 100 * canvas.height };
-          const midX = (pCurrent.x + pNext.x) / 2;
-          const midY = (pCurrent.y + pNext.y) / 2;
-          ctx.quadraticCurveTo(pCurrent.x, pCurrent.y, midX, midY);
+          const xc = ((points[i].x + points[i + 1].x) / 2) / 100 * canvas.width;
+          const yc = ((points[i].y + points[i + 1].y) / 2) / 100 * canvas.height;
+          ctx.quadraticCurveTo(points[i].x / 100 * canvas.width, points[i].y / 100 * canvas.height, xc, yc);
         }
-        const pPenultimate = { x: points[points.length - 2].x / 100 * canvas.width, y: points[points.length - 2].y / 100 * canvas.height };
-        const pLast = { x: points[points.length - 1].x / 100 * canvas.width, y: points[points.length - 1].y / 100 * canvas.height };
-        ctx.quadraticCurveTo(pPenultimate.x, pPenultimate.y, pLast.x, pLast.y);
+        ctx.quadraticCurveTo(
+          points[points.length - 2].x / 100 * canvas.width, 
+          points[points.length - 2].y / 100 * canvas.height, 
+          points[points.length - 1].x / 100 * canvas.width, 
+          points[points.length - 1].y / 100 * canvas.height
+        );
       }
       ctx.stroke();
     };
@@ -404,7 +408,7 @@ export default function MatchBoardPage() {
       </div>
 
       <main className="flex-1 relative overflow-hidden flex items-center justify-center pt-20 pb-28">
-        <TacticalField theme="cyan" fieldType={fieldType} isHalfField={false} containerRef={fieldRef}>
+        <TacticalField theme="cyan" fieldType={fieldType} showWatermark showLanes={showLanes} isHalfField={false} containerRef={fieldRef}>
           <canvas ref={canvasRef} onPointerDown={handleCanvasPointerDown} className="absolute inset-0 z-30 pointer-events-auto" />
           <div className="absolute inset-0 z-40 pointer-events-none">
             {players.map(p => (
@@ -424,15 +428,15 @@ export default function MatchBoardPage() {
         </TacticalField>
       </main>
 
-      {/* CONTROLES TÁCTICOS INFERIORES UNIFICADOS */}
-      <div className="fixed bottom-6 left-0 right-0 px-6 z-[150] pointer-events-none">
-        <div className="flex items-end justify-between w-full max-w-[1600px] mx-auto gap-4">
+      {/* CONTROLES TÁCTICOS INFERIORES UNIFICADOS Y REEQUILIBRADOS */}
+      <div className="fixed bottom-6 left-0 right-0 px-4 z-[150] pointer-events-none">
+        <div className="flex items-center justify-between w-full max-w-[1400px] mx-auto gap-2">
           
-          {/* BLOQUE LOCAL */}
-          <div className="flex items-center gap-2 pointer-events-auto scale-[0.8] origin-bottom-left lg:scale-100 shrink-0">
-            <div className="bg-black/80 backdrop-blur-xl border border-primary/20 p-1 rounded-xl shadow-xl flex items-center h-10 transition-all duration-500">
+          {/* BLOQUE LOCAL (IZQUIERDA) */}
+          <div className="flex items-center gap-2 pointer-events-auto shrink-0">
+            <div className="bg-black/80 backdrop-blur-xl border border-primary/20 p-1 rounded-xl shadow-xl flex items-center h-12 transition-all">
               <Select value={homeFormation} onValueChange={setHomeFormation}>
-                <SelectTrigger className="h-8 w-24 bg-black border-primary/10 text-white font-black uppercase text-[9px] rounded-lg focus:ring-0 transition-all duration-300">
+                <SelectTrigger className="h-9 w-24 bg-black border-primary/10 text-white font-black uppercase text-[10px] rounded-lg focus:ring-0">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[#0a0f18] border-primary/20">
@@ -441,14 +445,14 @@ export default function MatchBoardPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="bg-black/80 backdrop-blur-xl border border-primary/20 p-1 rounded-xl shadow-xl flex items-center h-10 transition-all duration-500">
+            <div className="bg-black/80 backdrop-blur-xl border border-primary/20 p-1 rounded-xl shadow-xl flex items-center h-12">
               <div className="flex gap-1">
                 {["DEF", "TDA", "SAL", "ATK"].map(p => (
                   <button 
                     key={p} 
                     onClick={() => setHomePhase(p.toLowerCase() as TacticalPhase)}
                     className={cn(
-                      "h-8 px-3 rounded-lg text-[8px] font-black uppercase transition-all duration-300",
+                      "h-9 px-2.5 rounded-lg text-[9px] font-black uppercase transition-all",
                       homePhase === p.toLowerCase() ? "bg-primary text-black cyan-glow" : "text-white/20 hover:bg-white/5"
                     )}
                   >
@@ -457,67 +461,73 @@ export default function MatchBoardPage() {
                 ))}
               </div>
             </div>
-            <div className="bg-black/80 backdrop-blur-xl border border-primary/20 p-1 rounded-xl shadow-xl flex items-center h-10 transition-all duration-500">
+            <div className="bg-black/80 backdrop-blur-xl border border-primary/20 p-1 rounded-xl shadow-xl flex items-center h-12">
               <div className="flex items-center gap-1 bg-black/40 p-0.5 rounded-lg border border-white/5">
-                <button onClick={() => setHomeShift("left")} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all duration-300", homeShift === 'left' ? 'bg-primary/20 text-primary' : 'text-white/10')}><ChevronLeft className="h-3 w-3" /></button>
-                <button onClick={() => setHomeShift("center")} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all duration-300", homeShift === 'center' ? 'bg-primary/20 text-primary' : 'text-white/10')}><div className="h-1.5 w-1.5 rounded-full bg-current" /></button>
-                <button onClick={() => setHomeShift("right")} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all duration-300", homeShift === 'right' ? 'bg-primary/20 text-primary' : 'text-white/10')}><ChevronRight className="h-3 w-3" /></button>
+                <button onClick={() => setHomeShift("left")} className={cn("h-8 w-8 rounded-md flex items-center justify-center transition-all", homeShift === 'left' ? 'bg-primary/20 text-primary' : 'text-white/10')}><ChevronLeft className="h-4 w-4" /></button>
+                <button onClick={() => setHomeShift("center")} className={cn("h-8 w-8 rounded-md flex items-center justify-center transition-all", homeShift === 'center' ? 'bg-primary/20 text-primary' : 'text-white/10')}><div className="h-2 w-2 rounded-full bg-current" /></button>
+                <button onClick={() => setHomeShift("right")} className={cn("h-8 w-8 rounded-md flex items-center justify-center transition-all", homeShift === 'right' ? 'bg-primary/20 text-primary' : 'text-white/10')}><ChevronRight className="h-4 w-4" /></button>
               </div>
             </div>
           </div>
 
-          {/* MANDO CENTRAL INTEGRADO (UNIFICADO EN PARTE INFERIOR) */}
-          <div className="flex-1 flex justify-center pointer-events-auto">
-            <div className="flex items-center gap-4 px-4 h-10 bg-black/80 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl transition-all scale-[0.8] lg:scale-100">
-              <div className="flex items-center gap-2 px-1 border-r border-white/10 pr-3">
-                <div className="flex items-center gap-2">
-                  {["#00f2ff", "#f43f5e", "#facc15"].map(c => (
-                    <button key={c} onClick={() => setCurrentColor(c)} className={cn("h-4 w-4 rounded-full border transition-all duration-300", currentColor === c ? "border-white scale-110 shadow-lg" : "border-transparent opacity-40")} style={{ backgroundColor: c }} />
-                  ))}
-                </div>
-                <div className="w-[1px] h-4 bg-white/10 mx-1" />
-                <button onClick={() => setDrawings([])} className="text-rose-500/40 hover:text-rose-500 p-1.5 transition-colors duration-300 active:scale-95" title="Borrar Trazos">
-                  <Trash2 className="h-3.5 w-3.5" />
+          {/* MANDO CENTRAL (CENTRO) - REFUERZO DE HERRAMIENTAS */}
+          <div className="flex-1 flex justify-center pointer-events-auto min-w-0 px-2">
+            <div className="flex items-center gap-3 px-4 h-12 bg-black/80 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl max-w-full">
+              <div className="flex items-center gap-2 pr-3 border-r border-white/10 shrink-0">
+                {["#00f2ff", "#f43f5e", "#facc15"].map(c => (
+                  <button key={c} onClick={() => setCurrentColor(c)} className={cn("h-5 w-5 rounded-full border-2 transition-all", currentColor === c ? "border-white scale-110 shadow-lg" : "border-transparent opacity-40")} style={{ backgroundColor: c }} />
+                ))}
+                <div className="w-[1px] h-5 bg-white/10 mx-1" />
+                <button onClick={() => setDrawings([])} className="text-rose-500/40 hover:text-rose-500 p-1.5 transition-all active:scale-90" title="Borrar Trazos">
+                  <Trash2 className="h-4 w-4" />
                 </button>
               </div>
 
-              <div className="flex items-center gap-2 px-1 border-r border-white/10 pr-3">
+              <div className="flex items-center gap-3 px-1 border-r border-white/10 pr-3 shrink-0">
+                <button 
+                  onClick={() => setShowLanes(!showLanes)}
+                  className={cn("h-9 px-3 rounded-lg flex items-center gap-2 transition-all text-[9px] font-black uppercase", showLanes ? "bg-primary/20 text-primary" : "text-white/20 hover:text-white")}
+                  title="Alternar Carriles"
+                >
+                  <Columns3 className="h-4 w-4" />
+                  <span className="hidden md:inline">Carriles</span>
+                </button>
                 <button 
                   onClick={toggleFullscreen}
-                  className="h-8 w-8 flex items-center justify-center text-white/40 hover:text-primary transition-all active:scale-90"
+                  className="h-9 w-9 flex items-center justify-center text-white/40 hover:text-primary transition-all active:scale-90"
                   title={isFullscreen ? "Minimizar" : "Pantalla Completa"}
                 >
-                  {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+                  {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
                 </button>
               </div>
 
-              <div className="flex items-center gap-3 pr-2 shrink-0">
-                <Trophy className="h-3.5 w-3.5 text-primary animate-pulse" />
-                <div className="flex flex-col">
-                  <span className="text-[7px] font-black text-primary tracking-widest uppercase leading-none">MATCH_LIVE</span>
-                  <h1 className="text-[9px] font-headline font-black text-white italic uppercase tracking-tight leading-none mt-0.5">DIRECTO</h1>
+              <div className="flex items-center gap-3 pr-1 shrink-0 overflow-hidden">
+                <Trophy className="h-4 w-4 text-primary animate-pulse shrink-0" />
+                <div className="flex flex-col leading-none">
+                  <span className="text-[7px] font-black text-primary tracking-widest uppercase">MATCH_LIVE</span>
+                  <h1 className="text-[10px] font-headline font-black text-white italic uppercase tracking-tight mt-0.5 truncate">DIRECTO</h1>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* BLOQUE VISITANTE */}
-          <div className="flex items-center gap-2 pointer-events-auto scale-[0.8] origin-bottom-right lg:scale-100 shrink-0">
-            <div className="bg-black/80 backdrop-blur-xl border border-rose-500/20 p-1 rounded-xl shadow-xl flex items-center h-10 transition-all duration-500">
+          {/* BLOQUE VISITANTE (DERECHA) - ESPEJO DEL LOCAL */}
+          <div className="flex items-center gap-2 pointer-events-auto shrink-0">
+            <div className="bg-black/80 backdrop-blur-xl border border-rose-500/20 p-1 rounded-xl shadow-xl flex items-center h-12">
               <div className="flex items-center gap-1 bg-black/40 p-0.5 rounded-lg border border-white/5">
-                <button onClick={() => setGuestShift("left")} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all duration-300", guestShift === 'left' ? 'bg-rose-500/20 text-rose-500' : 'text-white/10')}><ChevronLeft className="h-3 w-3" /></button>
-                <button onClick={() => setGuestShift("center")} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all duration-300", guestShift === 'center' ? 'bg-rose-500/20 text-rose-500' : 'text-white/10')}><div className="h-1.5 w-1.5 rounded-full bg-current" /></button>
-                <button onClick={() => setGuestShift("right")} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all duration-300", guestShift === 'right' ? 'bg-rose-500/20 text-rose-500' : 'text-white/10')}><ChevronRight className="h-3 w-3" /></button>
+                <button onClick={() => setGuestShift("left")} className={cn("h-8 w-8 rounded-md flex items-center justify-center transition-all", guestShift === 'left' ? 'bg-rose-500/20 text-rose-500' : 'text-white/10')}><ChevronLeft className="h-4 w-4" /></button>
+                <button onClick={() => setGuestShift("center")} className={cn("h-8 w-8 rounded-md flex items-center justify-center transition-all", guestShift === 'center' ? 'bg-rose-500/20 text-rose-500' : 'text-white/10')}><div className="h-2 w-2 rounded-full bg-current" /></button>
+                <button onClick={() => setGuestShift("right")} className={cn("h-8 w-8 rounded-md flex items-center justify-center transition-all", guestShift === 'right' ? 'bg-rose-500/20 text-rose-500' : 'text-white/10')}><ChevronRight className="h-4 w-4" /></button>
               </div>
             </div>
-            <div className="bg-black/80 backdrop-blur-xl border border-rose-500/20 p-1 rounded-xl shadow-xl flex items-center h-10 transition-all duration-500">
+            <div className="bg-black/80 backdrop-blur-xl border border-rose-500/20 p-1 rounded-xl shadow-xl flex items-center h-12">
               <div className="flex gap-1">
                 {["DEF", "TDA", "SAL", "ATK"].map(p => (
                   <button 
                     key={p} 
                     onClick={() => setGuestPhase(p.toLowerCase() as TacticalPhase)}
                     className={cn(
-                      "h-8 px-3 rounded-lg text-[8px] font-black uppercase transition-all duration-300",
+                      "h-9 px-2.5 rounded-lg text-[9px] font-black uppercase transition-all",
                       guestPhase === p.toLowerCase() ? "bg-rose-500 text-black rose-glow" : "text-white/20 hover:bg-white/5"
                     )}
                   >
@@ -526,9 +536,9 @@ export default function MatchBoardPage() {
                 ))}
               </div>
             </div>
-            <div className="bg-black/80 backdrop-blur-xl border border-rose-500/20 p-1 rounded-xl shadow-xl flex items-center h-10 transition-all duration-500">
+            <div className="bg-black/80 backdrop-blur-xl border border-rose-500/20 p-1 rounded-xl shadow-xl flex items-center h-12">
               <Select value={guestFormation} onValueChange={setGuestFormation}>
-                <SelectTrigger className="h-8 w-24 bg-black border-rose-500/10 text-white font-black uppercase text-[9px] rounded-lg focus:ring-0 transition-all duration-300">
+                <SelectTrigger className="h-9 w-24 bg-black border-rose-500/10 text-white font-black uppercase text-[10px] rounded-lg focus:ring-0">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[#0a0f18] border-rose-500/20">
@@ -544,7 +554,7 @@ export default function MatchBoardPage() {
       {/* ROSTER LATERAL */}
       <Sheet onOpenChange={setIsAnyDialogOpen}>
         <SheetTrigger asChild>
-          <button className="fixed bottom-32 right-6 h-12 w-12 rounded-2xl bg-primary text-black flex items-center justify-center shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-110 transition-all duration-300 z-[160] active:scale-95">
+          <button className="fixed bottom-24 right-6 h-12 w-12 rounded-2xl bg-primary text-black flex items-center justify-center shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-110 transition-all duration-300 z-[160] active:scale-95">
             <Users className="h-5 w-5" />
           </button>
         </SheetTrigger>
