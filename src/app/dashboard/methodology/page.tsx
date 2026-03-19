@@ -10,9 +10,8 @@ export default function MethodologyDashboard() {
     { title: "Items de Aprendizaje", desc: "Defina la hoja de ruta formativa del club.", icon: BookOpen, href: "/dashboard/methodology/learning-items" },
     { title: "Objetivos", desc: "Metas tácticas por categoría y etapa.", icon: Target, href: "/dashboard/methodology/objectives" },
     { title: "Planificador de Ciclos", desc: "Gestión temporal del macrociclo.", icon: GitBranch, href: "/dashboard/methodology/cycle-planner" },
-    { title: "Pizarra de Partido", desc: "Terminal táctica de alta competición.", icon: Monitor, href: "/dashboard/methodology/board-match" },
-    { title: "Pizarra de Ejercicios", desc: "Diseño técnico de módulos de trabajo.", icon: PencilLine, href: "/dashboard/methodology/board-exercises" },
-    { title: "Pizarra Promo", desc: "Acceso limitado para captación de red.", icon: Zap, href: "/dashboard/methodology/board-promo" },
+    { title: "Pizarra de Partido", desc: "Terminal táctica de alta competición.", icon: Monitor, href: "/board/match" },
+    { title: "Pizarra de Ejercicios", desc: "Diseño técnico de módulos de trabajo.", icon: PencilLine, href: "/board/training" },
     { title: "Biblioteca (Sin IA)", desc: "Almacenamiento manual de tareas.", icon: Library, href: "/dashboard/methodology/exercise-library" },
     { title: "Planificador de Sesiones", desc: "Cronograma diario de entrenamientos.", icon: CalendarDays, href: "/dashboard/methodology/session-planner" },
   ];

@@ -105,7 +105,6 @@ const navItems: NavItem[] = [
   { title: "Planificador Ciclos", href: "/dashboard/methodology/cycle-planner", icon: GitBranch, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director"] },
   { title: "Pizarra Partido", href: "/board/match", icon: Trophy, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach", "promo_coach"] },
   { title: "Pizarra Ejercicios", href: "/board/training", icon: Sparkles, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach", "promo_coach"] },
-  { title: "Pizarra Promo", href: "/board/promo", icon: Zap, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach", "promo_coach"] },
   { title: "Biblioteca (Sin IA)", href: "/dashboard/methodology/exercise-library", icon: Library, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach", "promo_coach"] },
   { title: "Planif. Sesiones", href: "/dashboard/methodology/session-planner", icon: CalendarDays, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director"] },
 
