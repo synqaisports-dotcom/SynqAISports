@@ -17,9 +17,9 @@ interface TacticalFieldProps {
 }
 
 /**
- * TacticalField - v30.0.0
- * PROTOCOLO_WIDER_HALF_FIELD: Ajuste de ratio para ganar anchura en modo vertical.
- * Incrementamos el ratio de 0.72 a 0.85 para permitir un dibujo más holgado en bandas.
+ * TacticalField - v33.0.0
+ * PROTOCOLO_LANES_HALF_FIELD: Soporte para carriles en modo vertical.
+ * Los carriles se orientan verticalmente en modo medio campo para definir canales.
  */
 export function TacticalField({ 
   theme = "cyan", 
@@ -67,10 +67,20 @@ export function TacticalField({
           isHalfField ? "inset-x-[6%] top-[6%] bottom-[-50%]" : "inset-[4%]"
         )}>
           
-          {showLanes && !isHalfField && (
+          {/* CARRILES / CANALES TÁCTICOS */}
+          {showLanes && (
             <>
-              <div className="absolute left-0 right-0 top-[20%] h-[1px] border-t border-dashed border-white/20 z-0" />
-              <div className="absolute left-0 right-0 top-[80%] h-[1px] border-t border-dashed border-white/20 z-0" />
+              {isHalfField ? (
+                <>
+                  <div className="absolute top-0 bottom-0 left-[20%] w-[1px] border-l border-dashed border-white/20 z-0" />
+                  <div className="absolute top-0 bottom-0 left-[80%] w-[1px] border-l border-dashed border-white/20 z-0" />
+                </>
+              ) : (
+                <>
+                  <div className="absolute left-0 right-0 top-[20%] h-[1px] border-t border-dashed border-white/20 z-0" />
+                  <div className="absolute left-0 right-0 top-[80%] h-[1px] border-t border-dashed border-white/20 z-0" />
+                </>
+              )}
             </>
           )}
 
