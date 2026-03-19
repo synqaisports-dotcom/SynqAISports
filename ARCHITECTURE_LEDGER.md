@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v41.0.0 (Legacy Hardware Acceleration)
+# SynqSports Pro - ARCHITECTURE_LEDGER v42.0.0 (Squad Clear Action)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -26,3 +26,6 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 
 ## 41. Protocolo de Aceleración Legacy (v41.0.0)
 - **v41.0.0**: **PROTOCOL_LEGACY_HARDWARE_ACCELERATION**: Optimización de las transiciones tácticas para dispositivos antiguos. Se implementa forzado de GPU mediante `translateZ(0)` y curvas de tiempo reducidas (400ms) para garantizar una respuesta ágil en tablets de gama baja.
+
+## 42. Protocolo de Limpieza de Campo (v42.0.0)
+- **v42.0.0**: **PROTOCOL_SQUAD_CLEAR_ACTION**: Adición de la opción "NINGUNA" (Limpiar) en los selectores de formación. Permite vaciar el campo de jugadores instantáneamente para explicaciones técnicas de pizarra libre sin perder la configuración de partido.

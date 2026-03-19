@@ -112,8 +112,8 @@ function AdSlot({ orientation = 'horizontal' }: { orientation: 'horizontal' | 'v
 }
 
 /**
- * MatchBoardPage - v39.0.0
- * PROTOCOLO_RESTORE_VISITOR_COLOR: Restauración del color rojo para el equipo visitante.
+ * MatchBoardPage - v42.0.0
+ * PROTOCOLO_SQUAD_CLEAR_ACTION: Adición de opción "NINGUNA" para limpiar jugadores.
  */
 export default function MatchBoardPage() {
   const { profile } = useAuth();
@@ -193,8 +193,6 @@ export default function MatchBoardPage() {
     if (isAnyDialogOpen) return;
 
     const formationsForField = FORMATIONS_DATA[fieldType];
-    const hForm = formationsForField[homeFormation] || formationsForField["4-3-3"];
-    const gForm = formationsForField[guestFormation] || formationsForField["4-3-3"];
 
     const shiftX = (side: "left" | "center" | "right") => {
       if (side === "left") return -5;
@@ -212,7 +210,8 @@ export default function MatchBoardPage() {
       }
     };
 
-    const hp = hForm.map((pos, idx) => {
+    // PROTOCOLO_SQUAD_CLEAR: Si la formación es "NINGUNA", devolvemos array vacío para ese equipo.
+    const hp = homeFormation === "NINGUNA" ? [] : (formationsForField[homeFormation] || formationsForField["4-3-3"]).map((pos, idx) => {
       let finalX = (0.05 + (pos.x * 0.9)) * 100;
       let finalY = pos.y * 100;
       if (idx === 0) { finalX = 5; finalY = 50; } 
@@ -225,7 +224,7 @@ export default function MatchBoardPage() {
       return { id: `local-${idx}`, number: idx + 1, name: `JUGADOR ${idx + 1}`, team: "local" as const, x: finalX, y: finalY };
     });
 
-    const gp = gForm.map((pos, idx) => {
+    const gp = guestFormation === "NINGUNA" ? [] : (formationsForField[guestFormation] || formationsForField["4-3-3"]).map((pos, idx) => {
       let finalX = (0.95 - (pos.x * 0.9)) * 100;
       let finalY = (1 - pos.y) * 100;
       if (idx === 0) { finalX = 95; finalY = 50; }
@@ -454,7 +453,7 @@ export default function MatchBoardPage() {
               {isRunning ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
             </button>
             <button 
-              onClick={() => { setIsRunning(false); setTimeLeft(45 * 60); triggerHaptic(60); }} 
+              onClick={() => { setIsRunning(false); setTimeLeft(45 * 60); }} 
               className="h-7 w-7 rounded-lg flex items-center justify-center text-white/20 hover:text-white hover:bg-white/10 transition-all duration-300 active:scale-90"
               title="Resetear"
             >
@@ -500,6 +499,7 @@ export default function MatchBoardPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[#0a0f18] border-primary/20">
+                  <SelectItem value="NINGUNA" className="text-[10px] font-black uppercase text-rose-500 italic">LIMPIAR</SelectItem>
                   {Object.keys(FORMATIONS_DATA[fieldType]).map(f => <SelectItem key={f} value={f} className="text-[10px] font-black uppercase">{f}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -562,6 +562,7 @@ export default function MatchBoardPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[#0a0f18] border-rose-500/20">
+                  <SelectItem value="NINGUNA" className="text-[10px] font-black uppercase text-rose-500 italic">LIMPIAR</SelectItem>
                   {Object.keys(FORMATIONS_DATA[fieldType]).map(f => <SelectItem key={f} value={f} className="text-[10px] font-black uppercase">{f}</SelectItem>)}
                 </SelectContent>
               </Select>
