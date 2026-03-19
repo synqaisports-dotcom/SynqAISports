@@ -29,6 +29,7 @@ import { TacticalField, FieldType } from "@/components/board/TacticalField";
 import { PlayerChip } from "@/components/board/PlayerChip";
 import { FORMATIONS_DATA } from "@/lib/formations";
 import { useAuth } from "@/lib/auth-context";
+import { synqSync } from "@/lib/sync-service";
 import { 
   Select, 
   SelectContent, 
@@ -73,15 +74,34 @@ interface DrawingLine {
 const MemoizedPlayerChip = memo(PlayerChip);
 
 /**
- * AdSlot Component - v2.0.0
- * Contenedor visual mejorado para previsualización de espacios AdMob.
+ * AdSlot Component - v3.0.0
+ * Incluye Protocolo de Blindaje Offline para registro de impresiones y clics.
  */
 function AdSlot({ orientation = 'horizontal' }: { orientation: 'horizontal' | 'vertical' }) {
+  useEffect(() => {
+    // Registro de Impresión (Cepo de Datos Offline)
+    synqSync.trackEvent('ad_impression', { 
+      format: orientation, 
+      placement: 'match_board',
+      timestamp: new Date().toISOString()
+    });
+  }, [orientation]);
+
+  const handleAdClick = () => {
+    synqSync.trackEvent('ad_click', { 
+      format: orientation, 
+      placement: 'match_board' 
+    });
+  };
+
   return (
-    <div className={cn(
-      "bg-primary/5 border-2 border-dashed border-primary/20 flex flex-col items-center justify-center rounded-2xl overflow-hidden group transition-all hover:bg-primary/[0.08] pointer-events-auto shadow-[0_0_20px_rgba(0,242,255,0.05)] relative",
-      orientation === 'horizontal' ? "h-16 w-full max-w-[728px]" : "w-40 h-[600px]"
-    )}>
+    <div 
+      onClick={handleAdClick}
+      className={cn(
+        "bg-primary/5 border-2 border-dashed border-primary/20 flex flex-col items-center justify-center rounded-2xl overflow-hidden group transition-all hover:bg-primary/[0.08] pointer-events-auto shadow-[0_0_20px_rgba(0,242,255,0.05)] relative cursor-pointer",
+        orientation === 'horizontal' ? "h-16 w-full max-w-[728px]" : "w-40 h-[600px]"
+      )}
+    >
       <div className="absolute top-0 left-0 bg-primary/20 text-primary text-[6px] font-black px-2 py-0.5 uppercase tracking-widest italic">Ad_Slot_Active</div>
       <Megaphone className="h-5 w-5 text-primary/40 group-hover:text-primary transition-all mb-2 animate-pulse" />
       <span className="text-[8px] font-black text-primary/60 uppercase tracking-[0.3em] text-center px-4 italic">Sponsor_Broadcast_Space</span>
@@ -92,8 +112,8 @@ function AdSlot({ orientation = 'horizontal' }: { orientation: 'horizontal' | 'v
 }
 
 /**
- * MatchBoardPage - v28.0.0
- * PROTOCOLO_AD_CONTEXT_AWARE: Visibilidad reforzada para revisión de contenedores.
+ * MatchBoardPage - v29.0.0
+ * PROTOCOLO_AD_OFFLINE_SHIELD: Asegurando que la cola de eventos publicitario funcione sin red.
  */
 export default function MatchBoardPage() {
   const { profile } = useAuth();
@@ -362,8 +382,8 @@ export default function MatchBoardPage() {
         )}
       </header>
 
-      {/* MARCADOR DE GOLES (IZQUIERDA) */}
-      <div className="fixed top-4 left-24 z-[100] flex items-center gap-3 px-3 py-1 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl animate-in slide-in-from-left-4 duration-700 scale-[0.8] lg:scale-100">
+      {/* MARCADOR DE GOLES (REORGANIZADO PARA MÓVIL) */}
+      <div className="fixed top-4 left-4 lg:left-24 z-[100] flex items-center gap-3 px-3 py-1 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl animate-in slide-in-from-left-4 duration-700 scale-[0.75] origin-top-left lg:scale-100">
         <div className="flex items-center gap-4">
           <div className="flex flex-col items-center">
             <span className="text-[6px] font-black text-white/40 uppercase">LOC</span>
@@ -385,8 +405,8 @@ export default function MatchBoardPage() {
         </div>
       </div>
 
-      {/* TELEMETRÍA Y CONTROL DE TIEMPO (DERECHA) */}
-      <div className="fixed top-4 right-4 z-[100] flex items-center gap-2 animate-in slide-in-from-right-4 duration-700 scale-[0.8] lg:scale-100">
+      {/* TELEMETRÍA Y CONTROL DE TIEMPO (AJUSTADO PARA MÓVIL) */}
+      <div className="fixed top-4 right-4 z-[100] flex items-center gap-2 animate-in slide-in-from-right-4 duration-700 scale-[0.75] origin-top-right lg:scale-100">
         <Dialog onOpenChange={setIsAnyDialogOpen}>
           <DialogTrigger asChild>
             <button className="h-10 w-10 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all shadow-2xl active:scale-95 group">
@@ -434,7 +454,7 @@ export default function MatchBoardPage() {
               {isRunning ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
             </button>
             <button 
-              onClick={() => { setIsRunning(false); setTimeLeft(45 * 60); }} 
+              onClick={() => { setIsRunning(false); setTimeLeft(45 * 60); triggerHaptic(60); }} 
               className="h-7 w-7 rounded-lg flex items-center justify-center text-white/20 hover:text-white hover:bg-white/10 transition-all duration-300 active:scale-90"
               title="Resetear"
             >
@@ -443,7 +463,7 @@ export default function MatchBoardPage() {
           </div>
         </div>
 
-        <Button className="h-10 bg-primary text-black font-black uppercase text-[9px] tracking-widest px-6 rounded-xl cyan-glow border-none shadow-xl hover:scale-105 transition-all duration-300">
+        <Button className="h-10 bg-primary text-black font-black uppercase text-[9px] tracking-widest px-6 rounded-xl cyan-glow border-none shadow-xl hover:scale-105 transition-all duration-300 hidden md:flex">
           GUARDAR
         </Button>
       </div>
@@ -473,7 +493,7 @@ export default function MatchBoardPage() {
       <div className="fixed bottom-6 left-0 right-0 px-6 z-[150] pointer-events-none">
         <div className="flex items-end justify-between w-full max-w-[1600px] mx-auto">
           {/* BLOQUE LOCAL */}
-          <div className="flex items-center gap-2 pointer-events-auto">
+          <div className="flex items-center gap-2 pointer-events-auto scale-[0.8] origin-bottom-left lg:scale-100">
             <div className="bg-black/80 backdrop-blur-xl border border-primary/20 p-1 rounded-xl shadow-xl flex items-center h-10 transition-all duration-500">
               <Select value={homeFormation} onValueChange={setHomeFormation}>
                 <SelectTrigger className="h-8 w-24 bg-black border-primary/10 text-white font-black uppercase text-[9px] rounded-lg focus:ring-0 transition-all duration-300">
@@ -512,7 +532,7 @@ export default function MatchBoardPage() {
           <div className="flex-1" />
 
           {/* BLOQUE VISITANTE */}
-          <div className="flex items-center gap-2 pointer-events-auto">
+          <div className="flex items-center gap-2 pointer-events-auto scale-[0.8] origin-bottom-right lg:scale-100">
             <div className="bg-black/80 backdrop-blur-xl border border-rose-500/20 p-1 rounded-xl shadow-xl flex items-center h-10 transition-all duration-500">
               <div className="flex items-center gap-1 bg-black/40 p-0.5 rounded-lg border border-white/5">
                 <button onClick={() => setGuestShift("left")} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all duration-300", guestShift === 'left' ? 'bg-rose-500/20 text-rose-500' : 'text-white/10')}><ChevronLeft className="h-3 w-3" /></button>

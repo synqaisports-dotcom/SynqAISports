@@ -47,6 +47,7 @@ import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { TacticalField, FieldType } from "@/components/board/TacticalField";
 import { BoardToolbar, DrawingTool } from "@/components/board/BoardToolbar";
+import { synqSync } from "@/lib/sync-service";
 import { 
   Select, 
   SelectContent, 
@@ -103,15 +104,34 @@ const isCircular = (type: DrawingTool) =>
   ['player', 'ball', 'circle', 'seta'].includes(type);
 
 /**
- * AdSlot Component - v2.0.0
- * Contenedor visual mejorado para previsualización de espacios AdMob.
+ * AdSlot Component - v3.0.0
+ * Incluye Protocolo de Blindaje Offline para registro de impresiones y clics.
  */
 function AdSlot({ orientation = 'horizontal' }: { orientation: 'horizontal' | 'vertical' }) {
+  useEffect(() => {
+    // Registro de Impresión (Cepo de Datos Offline)
+    synqSync.trackEvent('ad_impression', { 
+      format: orientation, 
+      placement: 'training_board',
+      timestamp: new Date().toISOString()
+    });
+  }, [orientation]);
+
+  const handleAdClick = () => {
+    synqSync.trackEvent('ad_click', { 
+      format: orientation, 
+      placement: 'training_board' 
+    });
+  };
+
   return (
-    <div className={cn(
-      "bg-primary/5 border-2 border-dashed border-primary/20 flex flex-col items-center justify-center rounded-2xl overflow-hidden group transition-all hover:bg-primary/[0.08] pointer-events-auto shadow-[0_0_20px_rgba(0,242,255,0.05)] relative",
-      orientation === 'horizontal' ? "h-16 w-full max-w-[728px]" : "w-40 h-[600px]"
-    )}>
+    <div 
+      onClick={handleAdClick}
+      className={cn(
+        "bg-primary/5 border-2 border-dashed border-primary/20 flex flex-col items-center justify-center rounded-2xl overflow-hidden group transition-all hover:bg-primary/[0.08] pointer-events-auto shadow-[0_0_20px_rgba(0,242,255,0.05)] relative cursor-pointer",
+        orientation === 'horizontal' ? "h-16 w-full max-w-[728px]" : "w-40 h-[600px]"
+      )}
+    >
       <div className="absolute top-0 left-0 bg-primary/20 text-primary text-[6px] font-black px-2 py-0.5 uppercase tracking-widest italic">Ad_Slot_Active</div>
       <Megaphone className="h-5 w-5 text-primary/40 group-hover:text-primary transition-all mb-2 animate-pulse" />
       <span className="text-[8px] font-black text-primary/60 uppercase tracking-[0.3em] text-center px-4 italic">Sponsor_Broadcast_Space</span>

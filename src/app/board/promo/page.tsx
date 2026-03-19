@@ -30,6 +30,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { TacticalField, FieldType } from "@/components/board/TacticalField";
 import { BoardToolbar, DrawingTool } from "@/components/board/BoardToolbar";
+import { synqSync } from "@/lib/sync-service";
 import { 
   Select, 
   SelectContent, 
@@ -84,15 +85,34 @@ const isCircular = (type: DrawingTool) =>
   ['player', 'ball', 'circle', 'seta'].includes(type);
 
 /**
- * AdSlot Component - v2.0.0
- * Contenedor visual mejorado para previsualización de espacios AdMob.
+ * AdSlot Component - v3.0.0
+ * Incluye Protocolo de Blindaje Offline para registro de impresiones y clics.
  */
 function AdSlot({ orientation = 'horizontal' }: { orientation: 'horizontal' | 'vertical' }) {
+  useEffect(() => {
+    // Registro de Impresión (Cepo de Datos Offline)
+    synqSync.trackEvent('ad_impression', { 
+      format: orientation, 
+      placement: 'promo_board',
+      timestamp: new Date().toISOString()
+    });
+  }, [orientation]);
+
+  const handleAdClick = () => {
+    synqSync.trackEvent('ad_click', { 
+      format: orientation, 
+      placement: 'promo_board' 
+    });
+  };
+
   return (
-    <div className={cn(
-      "bg-primary/5 border-2 border-dashed border-primary/20 flex flex-col items-center justify-center rounded-2xl overflow-hidden group transition-all hover:bg-primary/[0.08] pointer-events-auto shadow-[0_0_20px_rgba(0,242,255,0.05)] relative",
-      orientation === 'horizontal' ? "h-16 w-full max-w-[728px]" : "w-40 h-[600px]"
-    )}>
+    <div 
+      onClick={handleAdClick}
+      className={cn(
+        "bg-primary/5 border-2 border-dashed border-primary/20 flex flex-col items-center justify-center rounded-2xl overflow-hidden group transition-all hover:bg-primary/[0.08] pointer-events-auto shadow-[0_0_20px_rgba(0,242,255,0.05)] relative cursor-pointer",
+        orientation === 'horizontal' ? "h-16 w-full max-w-[728px]" : "w-40 h-[600px]"
+      )}
+    >
       <div className="absolute top-0 left-0 bg-primary/20 text-primary text-[6px] font-black px-2 py-0.5 uppercase tracking-widest italic">Ad_Slot_Active</div>
       <Megaphone className="h-5 w-5 text-primary/40 group-hover:text-primary transition-all mb-2 animate-pulse" />
       <span className="text-[8px] font-black text-primary/60 uppercase tracking-[0.3em] text-center px-4 italic">Sponsor_Broadcast_Space</span>
@@ -154,7 +174,7 @@ function PromoBoardContent() {
         setSaveFormData(target.metadata || saveFormData); 
       }
     }
-  }, [exerciseId, saveFormData]);
+  }, [exerciseId]);
 
   useEffect(() => {
     const syncFullscreen = () => setIsFullscreen(!!document.fullscreenElement);
@@ -551,7 +571,7 @@ function PromoBoardContent() {
           <div className="flex items-center gap-2">
             <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}><SelectTrigger className="w-[100px] h-8 bg-white/5 border-primary/20 rounded-lg text-[7px] font-black uppercase text-primary focus:ring-0 px-2"><SelectValue /></SelectTrigger><SelectContent className="bg-[#0a0f18] border-primary/20"><SelectItem value="f11" className="text-[8px] font-black">F11</SelectItem><SelectItem value="f7" className="text-[8px] font-black">F7</SelectItem><SelectItem value="futsal" className="text-[8px] font-black">FUTSAL</SelectItem></SelectContent></Select>
             
-            <button variant="ghost" onClick={() => setIsHalfField(!isHalfField)} className={cn("h-8 px-2 border border-primary/20 text-[7px] font-black uppercase rounded-lg", isHalfField ? "bg-primary text-black" : "text-primary/40")}><Square className="h-3 w-3 mr-1" /> {isHalfField ? 'Campo Total' : 'Medio Campo'}</button>
+            <button onClick={() => setIsHalfField(!isHalfField)} className={cn("h-8 px-2 border border-primary/20 text-[7px] font-black uppercase rounded-lg transition-all", isHalfField ? "bg-primary text-black" : "text-primary/40")}><Square className="h-3 w-3 mr-1" /> {isHalfField ? 'Campo Total' : 'Medio Campo'}</button>
 
             <Button 
               variant="outline" 
