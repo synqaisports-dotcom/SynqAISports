@@ -21,7 +21,8 @@ import {
   LayoutDashboard,
   Square,
   Megaphone,
-  X
+  X,
+  Save
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -74,46 +75,9 @@ interface DrawingLine {
 const MemoizedPlayerChip = memo(PlayerChip);
 
 /**
- * AdSlot Component - v3.0.0
- * Incluye Protocolo de Blindaje Offline para registro de impresiones y clics.
- */
-function AdSlot({ orientation = 'horizontal' }: { orientation: 'horizontal' | 'vertical' }) {
-  useEffect(() => {
-    // Registro de Impresión (Cepo de Datos Offline)
-    synqSync.trackEvent('ad_impression', { 
-      format: orientation, 
-      placement: 'match_board',
-      timestamp: new Date().toISOString()
-    });
-  }, [orientation]);
-
-  const handleAdClick = () => {
-    synqSync.trackEvent('ad_click', { 
-      format: orientation, 
-      placement: 'match_board' 
-    });
-  };
-
-  return (
-    <div 
-      onClick={handleAdClick}
-      className={cn(
-        "bg-primary/5 border-2 border-dashed border-primary/20 flex flex-col items-center justify-center rounded-2xl overflow-hidden group transition-all hover:bg-primary/[0.08] pointer-events-auto shadow-[0_0_20px_rgba(0,242,255,0.05)] relative cursor-pointer",
-        orientation === 'horizontal' ? "h-16 w-full max-w-[728px]" : "w-40 h-[600px]"
-      )}
-    >
-      <div className="absolute top-0 left-0 bg-primary/20 text-primary text-[6px] font-black px-2 py-0.5 uppercase tracking-widest italic">Ad_Slot_Active</div>
-      <Megaphone className="h-5 w-5 text-primary/40 group-hover:text-primary transition-all mb-2 animate-pulse" />
-      <span className="text-[8px] font-black text-primary/60 uppercase tracking-[0.3em] text-center px-4 italic">Sponsor_Broadcast_Space</span>
-      <span className="text-[6px] text-white/20 mt-1 uppercase font-bold tracking-widest">{orientation === 'horizontal' ? '728 x 90' : '160 x 600'} • Responsive</span>
-      <div className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none" />
-    </div>
-  );
-}
-
-/**
- * MatchBoardPage - v44.0.0
- * PROTOCOLO_MATCH_UI_LEAN: Eliminación de medio campo, botón guardar y anuncios horizontales por solapamiento.
+ * MatchBoardPage - v45.0.0
+ * PROTOCOLO_MATCH_SAVE_RESTORE: Restaurado botón GUARDAR. 
+ * PROTOCOLO_MATCH_UI_LEAN: Eliminada opción medio campo para evitar errores.
  */
 export default function MatchBoardPage() {
   const { profile } = useAuth();
@@ -274,6 +238,25 @@ export default function MatchBoardPage() {
     }
   };
 
+  const handleSaveMatch = () => {
+    // Sincronización con el Vault Local
+    const vault = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"matches": []}');
+    const newMatchResult = {
+      id: Date.now(),
+      date: new Date().toLocaleDateString(),
+      score,
+      status: 'Played',
+      rivalName: 'RIVAL_SINCRO'
+    };
+    vault.matches = [newMatchResult, ...(vault.matches || [])];
+    localStorage.setItem("synq_promo_vault", JSON.stringify(vault));
+    
+    toast({
+      title: "PARTIDO_SINCRO_EXITOSA",
+      description: "Los datos del encuentro han sido blindados en el historial local.",
+    });
+  };
+
   useEffect(() => {
     if (isAnyDialogOpen) return;
 
@@ -331,7 +314,7 @@ export default function MatchBoardPage() {
   return (
     <div className="flex-1 flex flex-col bg-black overflow-hidden relative touch-none select-none" onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}>
       
-      {/* MANDO CENTRAL INTEGRADO - OPTIMIZADO PARA EVITAR SOLAPAMIENTOS */}
+      {/* MANDO CENTRAL INTEGRADO */}
       <header className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center gap-4 w-auto">
         <div className="flex items-center gap-4 px-4 py-1.5 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl transition-all scale-[0.85] lg:scale-100">
           <div className="flex items-center gap-2 px-1 border-r border-white/10 pr-3">
@@ -341,7 +324,7 @@ export default function MatchBoardPage() {
               ))}
             </div>
             <div className="w-[1px] h-4 bg-white/10 mx-1" />
-            <button onClick={() => setDrawings([])} className="text-rose-500/40 hover:text-rose-500 p-1.5 transition-colors duration-300 active:scale-90" title="Borrar Trazos">
+            <button onClick={() => setDrawings([])} className="text-rose-500/40 hover:text-rose-500 p-1.5 transition-colors duration-300 active:scale-95" title="Borrar Trazos">
               <Trash2 className="h-3.5 w-3.5" />
             </button>
           </div>
@@ -389,8 +372,15 @@ export default function MatchBoardPage() {
         </div>
       </div>
 
-      {/* TELEMETRÍA Y CONTROL DE TIEMPO */}
+      {/* TELEMETRÍA, TIEMPO Y GUARDADO */}
       <div className="fixed top-4 right-4 z-[100] flex items-center gap-2 animate-in slide-in-from-right-4 duration-700 scale-[0.75] origin-top-right lg:scale-100">
+        <Button 
+          onClick={handleSaveMatch}
+          className="h-10 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-6 rounded-xl shadow-[0_0_20px_rgba(0,242,255,0.2)] hover:scale-105 transition-all border-none hidden sm:flex"
+        >
+          <Save className="h-4 w-4 mr-2" /> GUARDAR
+        </Button>
+
         <Dialog onOpenChange={setIsAnyDialogOpen}>
           <DialogTrigger asChild>
             <button className="h-10 w-10 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all shadow-2xl active:scale-95 group">
