@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v49.0.0 (Tablet Precision UI)
+# SynqSports Pro - ARCHITECTURE_LEDGER v50.0.0 (Scoreboard Shift)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -20,3 +20,6 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 
 ## 49. Protocolo de Precisión UI Tablet (v49.0.0)
 - **v49.0.0**: **PROTOCOL_TABLET_PRECISION_UI**: Aplicación de factor de escala 0.85 en dispositivos móviles/tablets para controles inferiores. Reducción de altura a h-10 y anchos de Select a w-20. Optimización de gaps y paddings para garantizar visibilidad total sin desbordamientos.
+
+## 50. Protocolo de Composición Superior (v50.0.0)
+- **v50.0.0**: **PROTOCOL_SCOREBOARD_SHIFT**: Desplazamiento horizontal del marcador hacia la derecha (`left-20 lg:left-32`) para evitar interferencias visuales con el botón de retorno del sistema y equilibrar la composición superior en tablets.

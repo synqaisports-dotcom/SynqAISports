@@ -76,9 +76,8 @@ interface DrawingLine {
 const MemoizedPlayerChip = memo(PlayerChip);
 
 /**
- * MatchBoardPage - v49.0.0
- * PROTOCOL_TABLET_PRECISION_UI: Reducción de escala al 85% para evitar desbordamientos.
- * PROTOCOLO_FIX_SHOWLANES: Integración de estado y control de carriles.
+ * MatchBoardPage - v50.0.0
+ * PROTOCOL_SCOREBOARD_SHIFT: Ajuste de posición 'left' para evitar colisión con botón de retorno.
  */
 export default function MatchBoardPage() {
   const { profile } = useAuth();
@@ -313,7 +312,7 @@ export default function MatchBoardPage() {
     <div className="flex-1 flex flex-col bg-black overflow-hidden relative touch-none select-none" onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}>
       
       {/* MARCADOR DE GOLES */}
-      <div className="fixed top-4 left-4 lg:left-24 z-[100] flex items-center gap-3 px-3 py-1 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl animate-in slide-in-from-left-4 duration-700 scale-[0.75] origin-top-left lg:scale-100">
+      <div className="fixed top-4 left-20 lg:left-32 z-[100] flex items-center gap-3 px-3 py-1 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl animate-in slide-in-from-left-4 duration-700 scale-[0.75] origin-top-left lg:scale-100">
         <div className="flex items-center gap-4">
           <div className="flex flex-col items-center">
             <span className="text-[6px] font-black text-primary/40 uppercase">LOC</span>
