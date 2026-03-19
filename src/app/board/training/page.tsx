@@ -37,7 +37,8 @@ import {
   ShieldCheck,
   ArrowRight,
   LayoutDashboard,
-  Square
+  Square,
+  Megaphone
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -66,6 +67,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth-context";
 
 interface Point {
   x: number;
@@ -100,7 +102,26 @@ const isMaterial = (type: DrawingTool) =>
 const isCircular = (type: DrawingTool) => 
   ['player', 'ball', 'circle', 'seta'].includes(type);
 
+/**
+ * AdSlot Component - v1.0.0
+ * Representación visual de los espacios publicitarios adaptativos.
+ */
+function AdSlot({ orientation = 'horizontal' }: { orientation: 'horizontal' | 'vertical' }) {
+  return (
+    <div className={cn(
+      "bg-white/5 border border-dashed border-white/10 flex flex-col items-center justify-center rounded-2xl overflow-hidden group transition-all hover:bg-white/[0.08] pointer-events-auto",
+      orientation === 'horizontal' ? "h-14 w-full max-w-[728px]" : "w-32 h-[500px]"
+    )}>
+      <Megaphone className="h-4 w-4 text-white/10 group-hover:text-primary transition-colors mb-1" />
+      <span className="text-[7px] font-black text-white/20 uppercase tracking-widest italic">Sponsor_Ad_Slot</span>
+    </div>
+  );
+}
+
 function TrainingBoardContent() {
+  const { profile } = useAuth();
+  const isSandbox = profile?.plan === 'free' || profile?.role === 'promo_coach';
+
   const [fieldType, setFieldType] = useState<FieldType>("f11");
   const [showLanes, setShowLanes] = useState(false);
   const [isHalfField, setIsHalfField] = useState(false);
@@ -141,7 +162,7 @@ function TrainingBoardContent() {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(() => {});
     } else {
-      document.exitFullscreen().catch(() => {});
+      if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
     }
   }, []);
 
@@ -263,7 +284,7 @@ function TrainingBoardContent() {
     if (isSelected) {
       ctx.restore(); ctx.save(); ctx.translate(centerX, centerY); ctx.rotate(element.rotation); ctx.translate(-centerX, -centerY);
       ctx.strokeStyle = '#ffffffaa'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]); const pad = 10; ctx.strokeRect(minX - pad, minY - pad, width + pad * 2, height + pad * 2);
-      ctx.setLineDash([]); ctx.fillStyle = '#ffffff'; const handles = [{ x: minX - pad, y: minY - pad }, { x: centerX, y: minY - pad }, { x: maxX + pad, y: minY - pad }, { x: minX - pad, y: centerY }, { x: maxX + pad, y: centerY }, { x: minX - pad, y: maxY + pad }, { x: centerX, y: maxY + pad }, { x: maxX + pad, y: maxY + pad }];
+      ctx.setLineDash([]); ctx.fillStyle = '#ffffff'; const handles = [{ x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY }, { x: bounds.minX - pad, y: bounds.maxY + pad }, { x: bounds.centerX, y: bounds.maxY + pad }, { x: bounds.maxX + pad, y: bounds.maxY + pad }];
       handles.forEach(h => { ctx.beginPath(); ctx.arc(h.x, h.y, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
       const rotY = minY - pad - 40; ctx.beginPath(); ctx.moveTo(centerX, minY - pad); ctx.lineTo(centerX, rotY); ctx.stroke();
       ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(centerX, rotY, 8, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.stroke();
@@ -392,51 +413,72 @@ function TrainingBoardContent() {
 
   return (
     <div className="h-full flex flex-col bg-[#04070c] overflow-hidden relative">
-      {/* FLOATING_HEADER_TRAINING */}
-      <header className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-4 px-6 py-3 bg-black/60 backdrop-blur-2xl border border-amber-500/30 rounded-[2rem] shadow-2xl animate-in slide-in-from-top-4 duration-700">
-        <div className="flex items-center gap-4 pr-4 border-r border-white/10 shrink-0">
-          <button 
-            onClick={toggleFullscreen}
-            className="h-10 w-10 flex items-center justify-center text-amber-500/40 hover:text-amber-500 transition-all active:scale-90"
-            title={isFullscreen ? "Minimizar" : "Pantalla Completa"}
-          >
-            {isFullscreen ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
-          </button>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-3 w-3 text-amber-500 animate-pulse" />
-              <span className="text-[8px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Studio_Pro</span>
-            </div>
-            <h1 className="text-sm font-headline font-black text-white italic tracking-tighter uppercase leading-none truncate">Estudio Élite</h1>
+      {/* PUBLICIDAD LATERAL (MODO MEDIO CAMPO) */}
+      {isSandbox && isHalfField && (
+        <>
+          <div className="fixed left-4 top-1/2 -translate-y-1/2 z-[100] animate-in slide-in-from-left-4 duration-1000 hidden xl:block">
+            <AdSlot orientation="vertical" />
           </div>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}>
-            <SelectTrigger className="w-[120px] h-9 bg-white/5 border-amber-500/20 rounded-xl text-[9px] font-black uppercase text-amber-500">
-              <LayoutGrid className="h-3.5 w-3.5 mr-2" /> <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-[#0a0f18] border-amber-500/20">
-              <SelectItem value="f11" className="text-[9px] font-black uppercase">Fútbol 11</SelectItem>
-              <SelectItem value="f7" className="text-[9px] font-black uppercase">Fútbol 7</SelectItem>
-              <SelectItem value="futsal" className="text-[9px] font-black uppercase">Fútbol Sala</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="fixed right-4 top-1/2 -translate-y-1/2 z-[100] animate-in slide-in-from-right-4 duration-1000 hidden xl:block">
+            <AdSlot orientation="vertical" />
+          </div>
+        </>
+      )}
 
-          <Button variant="ghost" onClick={() => setIsHalfField(!isHalfField)} className={cn("h-9 px-3 border border-amber-500/20 text-[9px] font-black uppercase rounded-xl", isHalfField ? "bg-amber-500 text-black shadow-[0_0_20px_rgba(245,158,11,0.3)]" : "bg-white/5 text-amber-500/40")}>
-            <Square className="h-3.5 w-3.5 mr-2" /> {isHalfField ? 'Campo Total' : 'Medio Campo'}
+      {/* FLOATING_HEADER_TRAINING */}
+      <header className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center gap-4 w-full max-w-4xl">
+        <div className="flex items-center gap-4 px-6 py-3 bg-black/60 backdrop-blur-2xl border border-amber-500/30 rounded-[2rem] shadow-2xl animate-in slide-in-from-top-4 duration-700">
+          <div className="flex items-center gap-4 pr-4 border-r border-white/10 shrink-0">
+            <button 
+              onClick={toggleFullscreen}
+              className="h-10 w-10 flex items-center justify-center text-amber-500/40 hover:text-amber-500 transition-all active:scale-90"
+              title={isFullscreen ? "Minimizar" : "Pantalla Completa"}
+            >
+              {isFullscreen ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
+            </button>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-3 w-3 text-amber-500 animate-pulse" />
+                <span className="text-[8px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Studio_Pro</span>
+              </div>
+              <h1 className="text-sm font-headline font-black text-white italic tracking-tighter uppercase leading-none truncate">Estudio Élite</h1>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}>
+              <SelectTrigger className="w-[120px] h-9 bg-white/5 border-amber-500/20 rounded-xl text-[9px] font-black uppercase text-amber-500">
+                <LayoutGrid className="h-3.5 w-3.5 mr-2" /> <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-[#0a0f18] border-amber-500/20">
+                <SelectItem value="f11" className="text-[9px] font-black uppercase">Fútbol 11</SelectItem>
+                <SelectItem value="f7" className="text-[9px] font-black uppercase">Fútbol 7</SelectItem>
+                <SelectItem value="futsal" className="text-[9px] font-black uppercase">Fútbol Sala</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <button onClick={() => setIsHalfField(!isHalfField)} className={cn("h-9 px-3 border border-amber-500/20 text-[9px] font-black uppercase rounded-xl transition-all", isHalfField ? "bg-amber-500 text-black shadow-[0_0_20px_rgba(245,158,11,0.3)]" : "bg-white/5 text-amber-500/40")}>
+              <Square className="h-3.5 w-3.5 mr-2" /> {isHalfField ? 'Campo Total' : 'Medio Campo'}
+            </button>
+
+            <button onClick={() => setShowLanes(!showLanes)} className={cn("h-9 px-3 border-amber-500/20 text-[9px] font-black uppercase rounded-xl transition-all", showLanes ? "bg-amber-500 text-black shadow-[0_0_20px_rgba(245,158,11,0.3)]" : "bg-white/5 text-amber-500/40")}>
+              <Columns3 className="h-3.5 w-3.5 mr-2" /> Carriles
+            </button>
+          </div>
+
+          <div className="h-6 w-[1px] bg-white/10 mx-1" />
+
+          <Button onClick={() => setIsSaveSheetOpen(true)} className="h-10 bg-amber-500 text-black font-black uppercase text-[9px] tracking-widest px-6 rounded-xl shadow-[0_0_25px_rgba(245,158,11,0.3)] border-none">
+            <Save className="h-3.5 w-3.5 mr-2" /> Guardar Táctica
           </Button>
-
-          <Button variant="outline" onClick={() => setShowLanes(!showLanes)} className={cn("h-9 px-3 border-amber-500/20 text-[9px] font-black uppercase rounded-xl", showLanes ? "bg-amber-500 text-black shadow-[0_0_20px_rgba(245,158,11,0.3)]" : "bg-white/5 text-amber-500/40")}>
-            <Columns3 className="h-3.5 w-3.5 mr-2" /> Carriles
-          </Button>
         </div>
 
-        <div className="h-6 w-[1px] bg-white/10 mx-1" />
-
-        <Button onClick={() => setIsSaveSheetOpen(true)} className="h-10 bg-amber-500 text-black font-black uppercase text-[9px] tracking-widest px-6 rounded-xl shadow-[0_0_25px_rgba(245,158,11,0.3)] border-none">
-          <Save className="h-3.5 w-3.5 mr-2" /> Guardar Táctica
-        </Button>
+        {/* PUBLICIDAD HORIZONTAL (MODO CAMPO COMPLETO) */}
+        {isSandbox && !isHalfField && (
+          <div className="animate-in fade-in duration-1000 hidden md:block">
+            <AdSlot orientation="horizontal" />
+          </div>
+        )}
       </header>
 
       {/* FLOATING_PROPERTIES_BAR */}
@@ -485,7 +527,7 @@ function TrainingBoardContent() {
       </div>
 
       <Sheet open={isSaveSheetOpen} onOpenChange={setIsSaveSheetOpen}>
-        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-amber-500/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-xl border-l border-amber-500/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
           <div className="p-10 border-b border-white/5 bg-black/40">
             <SheetHeader className="space-y-4">
               <div className="flex items-center gap-3">

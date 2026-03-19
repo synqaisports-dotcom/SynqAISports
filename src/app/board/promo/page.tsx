@@ -20,7 +20,8 @@ import {
   Move,
   LayoutDashboard,
   Users,
-  Square
+  Square,
+  Megaphone
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -82,12 +83,30 @@ const isMaterial = (type: DrawingTool) =>
 const isCircular = (type: DrawingTool) => 
   ['player', 'ball', 'circle', 'seta'].includes(type);
 
+/**
+ * AdSlot Component - v1.0.0
+ * Representación visual de los espacios publicitarios adaptativos.
+ */
+function AdSlot({ orientation = 'horizontal' }: { orientation: 'horizontal' | 'vertical' }) {
+  return (
+    <div className={cn(
+      "bg-white/5 border border-dashed border-white/10 flex flex-col items-center justify-center rounded-2xl overflow-hidden group transition-all hover:bg-white/[0.08] pointer-events-auto",
+      orientation === 'horizontal' ? "h-14 w-full max-w-[728px]" : "w-32 h-[500px]"
+    )}>
+      <Megaphone className="h-4 w-4 text-white/10 group-hover:text-primary transition-colors mb-1" />
+      <span className="text-[7px] font-black text-white/20 uppercase tracking-widest italic">Sponsor_Ad_Slot</span>
+    </div>
+  );
+}
+
 function PromoBoardContent() {
   const { profile } = useAuth();
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const router = useRouter();
   const exerciseId = searchParams.get("id");
+
+  const isSandbox = profile?.plan === 'free' || profile?.role === 'promo_coach';
 
   const [fieldType, setFieldType] = useState<FieldType>("f11");
   const [showLanes, setShowLanes] = useState(false);
@@ -497,60 +516,81 @@ function PromoBoardContent() {
 
   return (
     <div className="h-full w-full flex flex-col bg-black overflow-hidden relative">
-      <header className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 px-4 py-2 bg-black/60 backdrop-blur-2xl border border-primary/30 rounded-2xl shadow-2xl animate-in slide-in-from-top-2">
-        <div className="flex items-center gap-3 pr-3 border-r border-white/10 shrink-0">
-          <button 
-            onClick={toggleFullscreen}
-            className="h-8 w-8 flex items-center justify-center text-primary/40 hover:text-primary transition-all active:scale-90"
-            title={isFullscreen ? "Minimizar" : "Pantalla Completa"}
-          >
-            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-          </button>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1.5"><Zap className="h-3 w-3 text-primary animate-pulse" /><span className="text-[7px] font-black text-primary tracking-widest uppercase italic">Promo_Mode</span></div>
-            <h1 className="text-[10px] font-headline font-black text-white italic uppercase leading-none">{exerciseId ? 'Edición' : 'Sandbox'}</h1>
+      {/* PUBLICIDAD LATERAL (MODO MEDIO CAMPO) */}
+      {isSandbox && isHalfField && (
+        <>
+          <div className="fixed left-4 top-1/2 -translate-y-1/2 z-[100] animate-in slide-in-from-left-4 duration-1000 hidden xl:block">
+            <AdSlot orientation="vertical" />
           </div>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}><SelectTrigger className="w-[100px] h-8 bg-white/5 border-primary/20 rounded-lg text-[7px] font-black uppercase text-primary focus:ring-0 px-2"><SelectValue /></SelectTrigger><SelectContent className="bg-[#0a0f18] border-primary/20"><SelectItem value="f11" className="text-[8px] font-black">F11</SelectItem><SelectItem value="f7" className="text-[8px] font-black">F7</SelectItem><SelectItem value="futsal" className="text-[8px] font-black">FUTSAL</SelectItem></SelectContent></Select>
+          <div className="fixed right-4 top-1/2 -translate-y-1/2 z-[100] animate-in slide-in-from-right-4 duration-1000 hidden xl:block">
+            <AdSlot orientation="vertical" />
+          </div>
+        </>
+      )}
+
+      <header className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center gap-4 w-full max-w-4xl">
+        <div className="flex items-center gap-3 px-4 py-2 bg-black/60 backdrop-blur-2xl border border-primary/30 rounded-2xl shadow-2xl animate-in slide-in-from-top-2">
+          <div className="flex items-center gap-3 pr-3 border-r border-white/10 shrink-0">
+            <button 
+              onClick={toggleFullscreen}
+              className="h-8 w-8 flex items-center justify-center text-primary/40 hover:text-primary transition-all active:scale-90"
+              title={isFullscreen ? "Minimizar" : "Pantalla Completa"}
+            >
+              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </button>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-1.5"><Zap className="h-3 w-3 text-primary animate-pulse" /><span className="text-[7px] font-black text-primary tracking-widest uppercase italic">Promo_Mode</span></div>
+              <h1 className="text-[10px] font-headline font-black text-white italic uppercase leading-none">{exerciseId ? 'Edición' : 'Sandbox'}</h1>
+            </div>
+          </div>
           
-          <Button variant="ghost" onClick={() => setIsHalfField(!isHalfField)} className={cn("h-8 px-2 border border-primary/20 text-[7px] font-black uppercase rounded-lg", isHalfField ? "bg-primary text-black" : "text-primary/40")}><Square className="h-3 w-3 mr-1" /> {isHalfField ? 'Campo Total' : 'Medio Campo'}</Button>
+          <div className="flex items-center gap-2">
+            <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}><SelectTrigger className="w-[100px] h-8 bg-white/5 border-primary/20 rounded-lg text-[7px] font-black uppercase text-primary focus:ring-0 px-2"><SelectValue /></SelectTrigger><SelectContent className="bg-[#0a0f18] border-primary/20"><SelectItem value="f11" className="text-[8px] font-black">F11</SelectItem><SelectItem value="f7" className="text-[8px] font-black">F7</SelectItem><SelectItem value="futsal" className="text-[8px] font-black">FUTSAL</SelectItem></SelectContent></Select>
+            
+            <Button variant="ghost" onClick={() => setIsHalfField(!isHalfField)} className={cn("h-8 px-2 border border-primary/20 text-[7px] font-black uppercase rounded-lg", isHalfField ? "bg-primary text-black" : "text-primary/40")}><Square className="h-3 w-3 mr-1" /> {isHalfField ? 'Campo Total' : 'Medio Campo'}</Button>
 
-          <Button 
-            variant="outline" 
-            onClick={loadTeamFromSandbox}
-            className="h-8 px-2 border-primary/20 bg-primary/10 text-primary font-black uppercase text-[7px] rounded-lg hover:bg-primary hover:text-black transition-all"
-          >
-            <Users className="h-3 w-3 mr-1" /> Cargar Mi Equipo
+            <Button 
+              variant="outline" 
+              onClick={loadTeamFromSandbox}
+              className="h-8 px-2 border-primary/20 bg-primary/10 text-primary font-black uppercase text-[7px] rounded-lg hover:bg-primary hover:text-black transition-all"
+            >
+              <Users className="h-3 w-3 mr-1" /> Cargar Mi Equipo
+            </Button>
+
+            <Button variant="ghost" onClick={() => setShowLanes(!showLanes)} className={cn("h-8 px-2 border border-primary/20 text-[7px] font-black uppercase rounded-lg", showLanes ? "bg-primary text-black" : "text-primary/40")}><Columns3 className="h-3 w-3 mr-1" /> Carriles</Button>
+          </div>
+
+          {selectedIds.length > 0 && (
+            <div className="flex items-center gap-3 border-l border-white/10 pl-3 animate-in zoom-in-95 duration-200">
+              {selectedElements.length === 1 && selectedElements[0].type === 'text' ? (
+                <div className="flex items-center gap-2 px-2 bg-black/40 border border-primary/30 rounded-lg">
+                  <Type className="h-3 w-3 text-primary" />
+                  <Input value={selectedElements[0].text || ""} onChange={(e) => setElements(prev => prev.map(el => el.id === selectedIds[0] ? { ...el, text: e.target.value.toUpperCase() } : el))} className="h-7 w-32 bg-transparent border-none text-primary font-black uppercase text-[8px] focus-visible:ring-0 p-0" />
+                </div>
+              ) : (
+                <div className="flex gap-1">
+                  {COLORS.map(c => (
+                    <button key={c.id} onClick={() => setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, color: c.value} : el))} className={cn("h-4 w-4 rounded-full border border-white/20", selectedElements.every(el => el.color === c.value) && "border-white scale-110")} style={{ backgroundColor: c.value }} />
+                  ))}
+                </div>
+              )}
+              <button onClick={() => { const next = !isDashed; setIsDashed(next); setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, lineStyle: next ? 'dashed' : 'solid'} : el)); }} className={cn("h-8 px-2 border rounded-lg text-[7px] font-black uppercase", isDashed ? "bg-primary text-black" : "border-primary/20 text-primary/40")}>{isDashed ? 'Discontinua' : 'Continua'}</button>
+              <div className="w-16 px-2"><Slider value={[commonOpacity * 100]} min={10} max={100} onValueChange={(v) => setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, opacity: v[0]/100} : el))} className="w-full" /></div>
+              <button onClick={() => { setElements(prev => prev.filter(el => !selectedIds.includes(el.id))); setSelectedIds([]); }} className="text-rose-500/60 hover:text-rose-500"><Trash2 className="h-3.5 w-3.5" /></button>
+            </div>
+          )}
+
+          <Button onClick={() => setIsSaveSheetOpen(true)} className="h-8 bg-primary text-black font-black uppercase text-[7px] tracking-widest px-4 rounded-lg blue-glow border-none">
+            <Save className="h-3 w-3 mr-1.5" /> GUARDAR
           </Button>
-
-          <Button variant="ghost" onClick={() => setShowLanes(!showLanes)} className={cn("h-8 px-2 border border-primary/20 text-[7px] font-black uppercase rounded-lg", showLanes ? "bg-primary text-black" : "text-primary/40")}><Columns3 className="h-3 w-3 mr-1" /> Carriles</Button>
         </div>
 
-        {selectedIds.length > 0 && (
-          <div className="flex items-center gap-3 border-l border-white/10 pl-3 animate-in zoom-in-95 duration-200">
-            {selectedElements.length === 1 && selectedElements[0].type === 'text' ? (
-              <div className="flex items-center gap-2 px-2 bg-black/40 border border-primary/30 rounded-lg">
-                <Type className="h-3 w-3 text-primary" />
-                <Input value={selectedElements[0].text || ""} onChange={(e) => setElements(prev => prev.map(el => el.id === selectedIds[0] ? { ...el, text: e.target.value.toUpperCase() } : el))} className="h-7 w-32 bg-transparent border-none text-primary font-black uppercase text-[8px] focus-visible:ring-0 p-0" />
-              </div>
-            ) : (
-              <div className="flex gap-1">
-                {COLORS.map(c => (
-                  <button key={c.id} onClick={() => setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, color: c.value} : el))} className={cn("h-4 w-4 rounded-full border border-white/20", selectedElements.every(el => el.color === c.value) && "border-white scale-110")} style={{ backgroundColor: c.value }} />
-                ))}
-              </div>
-            )}
-            <button onClick={() => { const next = !isDashed; setIsDashed(next); setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, lineStyle: next ? 'dashed' : 'solid'} : el)); }} className={cn("h-8 px-2 border rounded-lg text-[7px] font-black uppercase", isDashed ? "bg-primary text-black" : "border-primary/20 text-primary/40")}>{isDashed ? 'Discontinua' : 'Continua'}</button>
-            <div className="w-16 px-2"><Slider value={[commonOpacity * 100]} min={10} max={100} onValueChange={(v) => setElements(prev => prev.map(el => selectedIds.includes(el.id) ? {...el, opacity: v[0]/100} : el))} className="w-full" /></div>
-            <button onClick={() => { setElements(prev => prev.filter(el => !selectedIds.includes(el.id))); setSelectedIds([]); }} className="text-rose-500/60 hover:text-rose-500"><Trash2 className="h-3.5 w-3.5" /></button>
+        {/* PUBLICIDAD HORIZONTAL (MODO CAMPO COMPLETO) */}
+        {isSandbox && !isHalfField && (
+          <div className="animate-in fade-in duration-1000 hidden md:block">
+            <AdSlot orientation="horizontal" />
           </div>
         )}
-
-        <Button onClick={() => setIsSaveSheetOpen(true)} className="h-8 bg-primary text-black font-black uppercase text-[7px] tracking-widest px-4 rounded-lg blue-glow border-none">
-          <Save className="h-3 w-3 mr-1.5" /> GUARDAR
-        </Button>
       </header>
 
       <div className="fixed top-6 left-6 z-[200]">
@@ -559,7 +599,7 @@ function PromoBoardContent() {
         </Button>
       </div>
 
-      <main className="flex-1 relative flex overflow-hidden touch-none">
+      <main className="flex-1 relative flex items-center justify-center overflow-hidden touch-none">
         <TacticalField theme="cyan" fieldType={fieldType} showWatermark showLanes={showLanes} isHalfField={isHalfField}>
           <canvas ref={canvasRef} className="absolute inset-0 z-30 pointer-events-auto" onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} />
         </TacticalField>
@@ -575,7 +615,7 @@ function PromoBoardContent() {
       </div>
 
       <Sheet open={isSaveSheetOpen} onOpenChange={setIsSaveSheetOpen}>
-        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
           <div className="p-8 border-b border-white/5 bg-black/40">
             <SheetHeader className="space-y-4">
               <div className="flex items-center gap-3">

@@ -18,7 +18,9 @@ import {
   Zap,
   Pause,
   Play,
-  LayoutDashboard
+  LayoutDashboard,
+  Square,
+  Megaphone
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -70,20 +72,39 @@ interface DrawingLine {
 const MemoizedPlayerChip = memo(PlayerChip);
 
 /**
- * MatchBoardPage - v26.0.0
- * OPTIMIZACIÓN_RENDIMIENTO: Suspensión de ciclos de dibujo cuando hay diálogos abiertos
- * para liberar el hilo principal (Main Thread).
+ * AdSlot Component - v1.0.0
+ * Representación visual de los espacios publicitarios adaptativos.
+ */
+function AdSlot({ orientation = 'horizontal' }: { orientation: 'horizontal' | 'vertical' }) {
+  return (
+    <div className={cn(
+      "bg-white/5 border border-dashed border-white/10 flex flex-col items-center justify-center rounded-2xl overflow-hidden group transition-all hover:bg-white/[0.08] pointer-events-auto",
+      orientation === 'horizontal' ? "h-14 w-full max-w-[728px]" : "w-32 h-[500px]"
+    )}>
+      <Megaphone className="h-4 w-4 text-white/10 group-hover:text-primary transition-colors mb-1" />
+      <span className="text-[7px] font-black text-white/20 uppercase tracking-widest italic">Sponsor_Ad_Slot</span>
+    </div>
+  );
+}
+
+/**
+ * MatchBoardPage - v27.0.0
+ * PROTOCOLO_AD_CONTEXT_AWARE: Integración de publicidad adaptativa para usuarios Sandbox.
+ * Habilitado modo Medio Campo para análisis focalizado.
  */
 export default function MatchBoardPage() {
   const { profile } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   
+  const isSandbox = profile?.plan === 'free' || profile?.role === 'promo_coach';
+  
   const [mounted, setMounted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(45 * 60);
   const [isRunning, setIsRunning] = useState(false);
   const [score, setScore] = useState({ home: 0, guest: 0 });
   const [fieldType, setFieldType] = useState<FieldType>("f11");
+  const [isHalfField, setIsHalfField] = useState(false);
   const [homePhase, setHomePhase] = useState<TacticalPhase>("def");
   const [guestPhase, setGuestPhase] = useState<TacticalPhase>("def");
   const [homeFormation, setHomeFormation] = useState("4-3-3");
@@ -145,7 +166,7 @@ export default function MatchBoardPage() {
   };
 
   const calculatePositions = useCallback(() => {
-    if (isAnyDialogOpen) return; // OPTIMIZACIÓN: No recalcular si hay modal abierto
+    if (isAnyDialogOpen) return;
 
     const formationsForField = FORMATIONS_DATA[fieldType];
     const hForm = formationsForField[homeFormation] || formationsForField["4-3-3"];
@@ -236,7 +257,7 @@ export default function MatchBoardPage() {
   };
 
   useEffect(() => {
-    if (isAnyDialogOpen) return; // OPTIMIZACIÓN: Suspender ciclos de dibujo
+    if (isAnyDialogOpen) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -276,34 +297,65 @@ export default function MatchBoardPage() {
   return (
     <div className="flex-1 flex flex-col bg-black overflow-hidden relative touch-none select-none" onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}>
       
-      {/* MANDO CENTRAL INTEGRADO */}
-      <header className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl transition-all scale-[0.8] lg:scale-100">
-        <div className="flex items-center gap-1 px-1 border-r border-white/10 pr-2 mr-1">
-          <div className="flex items-center gap-1.5 px-1.5">
-            {["#00f2ff", "#f43f5e", "#facc15"].map(c => (
-              <button key={c} onClick={() => setCurrentColor(c)} className={cn("h-4 w-4 rounded-full border transition-all duration-300", currentColor === c ? "border-white scale-110 shadow-lg" : "border-transparent opacity-40")} style={{ backgroundColor: c }} />
-            ))}
+      {/* PUBLICIDAD LATERAL (MODO MEDIO CAMPO) */}
+      {isSandbox && isHalfField && (
+        <>
+          <div className="fixed left-4 top-1/2 -translate-y-1/2 z-[100] animate-in slide-in-from-left-4 duration-1000 hidden xl:block">
+            <AdSlot orientation="vertical" />
           </div>
-          <div className="w-[1px] h-4 bg-white/10 mx-0.5" />
-          <button onClick={() => setDrawings([])} className="text-rose-500/40 hover:text-rose-500 p-1.5 transition-colors duration-300 active:scale-90" title="Borrar Trazos">
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
+          <div className="fixed right-4 top-1/2 -translate-y-1/2 z-[100] animate-in slide-in-from-right-4 duration-1000 hidden xl:block">
+            <AdSlot orientation="vertical" />
+          </div>
+        </>
+      )}
+
+      {/* MANDO CENTRAL INTEGRADO */}
+      <header className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center gap-4 w-full px-6">
+        <div className="flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl transition-all scale-[0.8] lg:scale-100">
+          <div className="flex items-center gap-1 px-1 border-r border-white/10 pr-2 mr-1">
+            <div className="flex items-center gap-1.5 px-1.5">
+              {["#00f2ff", "#f43f5e", "#facc15"].map(c => (
+                <button key={c} onClick={() => setCurrentColor(c)} className={cn("h-4 w-4 rounded-full border transition-all duration-300", currentColor === c ? "border-white scale-110 shadow-lg" : "border-transparent opacity-40")} style={{ backgroundColor: c }} />
+              ))}
+            </div>
+            <div className="w-[1px] h-4 bg-white/10 mx-0.5" />
+            <button onClick={() => setDrawings([])} className="text-rose-500/40 hover:text-rose-500 p-1.5 transition-colors duration-300 active:scale-90" title="Borrar Trazos">
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2 px-1 border-r border-white/10 pr-2 mr-1">
+            <button 
+              onClick={() => setIsHalfField(!isHalfField)}
+              className={cn("h-8 w-8 flex items-center justify-center rounded-xl transition-all active:scale-90", isHalfField ? "bg-primary text-black" : "text-white/40 hover:text-white")}
+              title={isHalfField ? "Vista Total" : "Modo Foco"}
+            >
+              <Square className="h-3.5 w-3.5" />
+            </button>
+            <button 
+              onClick={toggleFullscreen}
+              className="h-8 w-8 flex items-center justify-center text-white/40 hover:text-primary transition-all active:scale-90"
+              title={isFullscreen ? "Minimizar" : "Pantalla Completa"}
+            >
+              {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2 pr-2">
+            <Trophy className="h-3 w-3 text-primary animate-pulse" />
+            <div className="flex flex-col">
+              <span className="text-[7px] font-black text-primary tracking-widest uppercase">MATCH_LIVE</span>
+              <h1 className="text-[8px] font-headline font-black text-white italic uppercase tracking-tight leading-none">DIRECTO</h1>
+            </div>
+          </div>
         </div>
 
-        <button 
-          onClick={toggleFullscreen}
-          className="h-8 w-8 flex items-center justify-center text-white/40 hover:text-primary transition-all active:scale-90 border-r border-white/10 pr-2 mr-1"
-          title={isFullscreen ? "Minimizar" : "Pantalla Completa"}
-        >
-          {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
-        </button>
-        <div className="flex items-center gap-2 pr-2">
-          <Trophy className="h-3 w-3 text-primary animate-pulse" />
-          <div className="flex flex-col">
-            <span className="text-[7px] font-black text-primary tracking-widest uppercase">MATCH_LIVE</span>
-            <h1 className="text-[8px] font-headline font-black text-white italic uppercase tracking-tight leading-none">DIRECTO</h1>
+        {/* PUBLICIDAD HORIZONTAL (MODO CAMPO COMPLETO) */}
+        {isSandbox && !isHalfField && (
+          <div className="animate-in fade-in duration-1000 hidden md:block">
+            <AdSlot orientation="horizontal" />
           </div>
-        </div>
+        )}
       </header>
 
       {/* MARCADOR DE GOLES (IZQUIERDA) */}
@@ -393,7 +445,7 @@ export default function MatchBoardPage() {
       </div>
 
       <main className="flex-1 relative overflow-hidden flex items-center justify-center pt-20 pb-28">
-        <TacticalField theme="cyan" fieldType={fieldType} containerRef={fieldRef}>
+        <TacticalField theme="cyan" fieldType={fieldType} isHalfField={isHalfField} containerRef={fieldRef}>
           <canvas ref={canvasRef} onPointerDown={handleCanvasPointerDown} className="absolute inset-0 z-30 pointer-events-auto" />
           <div className="absolute inset-0 z-40 pointer-events-none">
             {players.map(p => (
