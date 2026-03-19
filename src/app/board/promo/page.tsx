@@ -84,17 +84,20 @@ const isCircular = (type: DrawingTool) =>
   ['player', 'ball', 'circle', 'seta'].includes(type);
 
 /**
- * AdSlot Component - v1.0.0
- * Representación visual de los espacios publicitarios adaptativos.
+ * AdSlot Component - v2.0.0
+ * Contenedor visual mejorado para previsualización de espacios AdMob.
  */
 function AdSlot({ orientation = 'horizontal' }: { orientation: 'horizontal' | 'vertical' }) {
   return (
     <div className={cn(
-      "bg-white/5 border border-dashed border-white/10 flex flex-col items-center justify-center rounded-2xl overflow-hidden group transition-all hover:bg-white/[0.08] pointer-events-auto",
-      orientation === 'horizontal' ? "h-14 w-full max-w-[728px]" : "w-32 h-[500px]"
+      "bg-primary/5 border-2 border-dashed border-primary/20 flex flex-col items-center justify-center rounded-2xl overflow-hidden group transition-all hover:bg-primary/[0.08] pointer-events-auto shadow-[0_0_20px_rgba(0,242,255,0.05)] relative",
+      orientation === 'horizontal' ? "h-16 w-full max-w-[728px]" : "w-40 h-[600px]"
     )}>
-      <Megaphone className="h-4 w-4 text-white/10 group-hover:text-primary transition-colors mb-1" />
-      <span className="text-[7px] font-black text-white/20 uppercase tracking-widest italic">Sponsor_Ad_Slot</span>
+      <div className="absolute top-0 left-0 bg-primary/20 text-primary text-[6px] font-black px-2 py-0.5 uppercase tracking-widest italic">Ad_Slot_Active</div>
+      <Megaphone className="h-5 w-5 text-primary/40 group-hover:text-primary transition-all mb-2 animate-pulse" />
+      <span className="text-[8px] font-black text-primary/60 uppercase tracking-[0.3em] text-center px-4 italic">Sponsor_Broadcast_Space</span>
+      <span className="text-[6px] text-white/20 mt-1 uppercase font-bold tracking-widest">{orientation === 'horizontal' ? '728 x 90' : '160 x 600'} • Responsive</span>
+      <div className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none" />
     </div>
   );
 }
@@ -106,7 +109,8 @@ function PromoBoardContent() {
   const router = useRouter();
   const exerciseId = searchParams.get("id");
 
-  const isSandbox = profile?.plan === 'free' || profile?.role === 'promo_coach';
+  // Habilitamos visualización para sandbox Y para revisión de superadmin
+  const showAds = profile?.plan === 'free' || profile?.role === 'promo_coach' || profile?.role === 'superadmin';
 
   const [fieldType, setFieldType] = useState<FieldType>("f11");
   const [showLanes, setShowLanes] = useState(false);
@@ -150,7 +154,7 @@ function PromoBoardContent() {
         setSaveFormData(target.metadata || saveFormData); 
       }
     }
-  }, [exerciseId]);
+  }, [exerciseId, saveFormData]);
 
   useEffect(() => {
     const syncFullscreen = () => setIsFullscreen(!!document.fullscreenElement);
@@ -517,7 +521,7 @@ function PromoBoardContent() {
   return (
     <div className="h-full w-full flex flex-col bg-black overflow-hidden relative">
       {/* PUBLICIDAD LATERAL (MODO MEDIO CAMPO) */}
-      {isSandbox && isHalfField && (
+      {showAds && isHalfField && (
         <>
           <div className="fixed left-4 top-1/2 -translate-y-1/2 z-[100] animate-in slide-in-from-left-4 duration-1000 hidden xl:block">
             <AdSlot orientation="vertical" />
@@ -547,7 +551,7 @@ function PromoBoardContent() {
           <div className="flex items-center gap-2">
             <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}><SelectTrigger className="w-[100px] h-8 bg-white/5 border-primary/20 rounded-lg text-[7px] font-black uppercase text-primary focus:ring-0 px-2"><SelectValue /></SelectTrigger><SelectContent className="bg-[#0a0f18] border-primary/20"><SelectItem value="f11" className="text-[8px] font-black">F11</SelectItem><SelectItem value="f7" className="text-[8px] font-black">F7</SelectItem><SelectItem value="futsal" className="text-[8px] font-black">FUTSAL</SelectItem></SelectContent></Select>
             
-            <Button variant="ghost" onClick={() => setIsHalfField(!isHalfField)} className={cn("h-8 px-2 border border-primary/20 text-[7px] font-black uppercase rounded-lg", isHalfField ? "bg-primary text-black" : "text-primary/40")}><Square className="h-3 w-3 mr-1" /> {isHalfField ? 'Campo Total' : 'Medio Campo'}</Button>
+            <button variant="ghost" onClick={() => setIsHalfField(!isHalfField)} className={cn("h-8 px-2 border border-primary/20 text-[7px] font-black uppercase rounded-lg", isHalfField ? "bg-primary text-black" : "text-primary/40")}><Square className="h-3 w-3 mr-1" /> {isHalfField ? 'Campo Total' : 'Medio Campo'}</button>
 
             <Button 
               variant="outline" 
@@ -586,7 +590,7 @@ function PromoBoardContent() {
         </div>
 
         {/* PUBLICIDAD HORIZONTAL (MODO CAMPO COMPLETO) */}
-        {isSandbox && !isHalfField && (
+        {showAds && !isHalfField && (
           <div className="animate-in fade-in duration-1000 hidden md:block">
             <AdSlot orientation="horizontal" />
           </div>

@@ -20,7 +20,8 @@ import {
   Play,
   LayoutDashboard,
   Square,
-  Megaphone
+  Megaphone,
+  X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -72,32 +73,35 @@ interface DrawingLine {
 const MemoizedPlayerChip = memo(PlayerChip);
 
 /**
- * AdSlot Component - v1.0.0
- * Representación visual de los espacios publicitarios adaptativos.
+ * AdSlot Component - v2.0.0
+ * Contenedor visual mejorado para previsualización de espacios AdMob.
  */
 function AdSlot({ orientation = 'horizontal' }: { orientation: 'horizontal' | 'vertical' }) {
   return (
     <div className={cn(
-      "bg-white/5 border border-dashed border-white/10 flex flex-col items-center justify-center rounded-2xl overflow-hidden group transition-all hover:bg-white/[0.08] pointer-events-auto",
-      orientation === 'horizontal' ? "h-14 w-full max-w-[728px]" : "w-32 h-[500px]"
+      "bg-primary/5 border-2 border-dashed border-primary/20 flex flex-col items-center justify-center rounded-2xl overflow-hidden group transition-all hover:bg-primary/[0.08] pointer-events-auto shadow-[0_0_20px_rgba(0,242,255,0.05)] relative",
+      orientation === 'horizontal' ? "h-16 w-full max-w-[728px]" : "w-40 h-[600px]"
     )}>
-      <Megaphone className="h-4 w-4 text-white/10 group-hover:text-primary transition-colors mb-1" />
-      <span className="text-[7px] font-black text-white/20 uppercase tracking-widest italic">Sponsor_Ad_Slot</span>
+      <div className="absolute top-0 left-0 bg-primary/20 text-primary text-[6px] font-black px-2 py-0.5 uppercase tracking-widest italic">Ad_Slot_Active</div>
+      <Megaphone className="h-5 w-5 text-primary/40 group-hover:text-primary transition-all mb-2 animate-pulse" />
+      <span className="text-[8px] font-black text-primary/60 uppercase tracking-[0.3em] text-center px-4 italic">Sponsor_Broadcast_Space</span>
+      <span className="text-[6px] text-white/20 mt-1 uppercase font-bold tracking-widest">{orientation === 'horizontal' ? '728 x 90' : '160 x 600'} • Responsive</span>
+      <div className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none" />
     </div>
   );
 }
 
 /**
- * MatchBoardPage - v27.0.0
- * PROTOCOLO_AD_CONTEXT_AWARE: Integración de publicidad adaptativa para usuarios Sandbox.
- * Habilitado modo Medio Campo para análisis focalizado.
+ * MatchBoardPage - v28.0.0
+ * PROTOCOLO_AD_CONTEXT_AWARE: Visibilidad reforzada para revisión de contenedores.
  */
 export default function MatchBoardPage() {
   const { profile } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   
-  const isSandbox = profile?.plan === 'free' || profile?.role === 'promo_coach';
+  // Habilitamos visualización para sandbox Y para revisión de superadmin
+  const showAds = profile?.plan === 'free' || profile?.role === 'promo_coach' || profile?.role === 'superadmin';
   
   const [mounted, setMounted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(45 * 60);
@@ -298,7 +302,7 @@ export default function MatchBoardPage() {
     <div className="flex-1 flex flex-col bg-black overflow-hidden relative touch-none select-none" onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}>
       
       {/* PUBLICIDAD LATERAL (MODO MEDIO CAMPO) */}
-      {isSandbox && isHalfField && (
+      {showAds && isHalfField && (
         <>
           <div className="fixed left-4 top-1/2 -translate-y-1/2 z-[100] animate-in slide-in-from-left-4 duration-1000 hidden xl:block">
             <AdSlot orientation="vertical" />
@@ -351,7 +355,7 @@ export default function MatchBoardPage() {
         </div>
 
         {/* PUBLICIDAD HORIZONTAL (MODO CAMPO COMPLETO) */}
-        {isSandbox && !isHalfField && (
+        {showAds && !isHalfField && (
           <div className="animate-in fade-in duration-1000 hidden md:block">
             <AdSlot orientation="horizontal" />
           </div>
