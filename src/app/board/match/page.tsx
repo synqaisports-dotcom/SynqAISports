@@ -112,8 +112,8 @@ function AdSlot({ orientation = 'horizontal' }: { orientation: 'horizontal' | 'v
 }
 
 /**
- * MatchBoardPage - v42.0.0
- * PROTOCOLO_SQUAD_CLEAR_ACTION: Adición de opción "NINGUNA" para limpiar jugadores.
+ * MatchBoardPage - v43.0.0
+ * PROTOCOLO_SMOOTH_BRUSH_STROKES: Implementación de curvas de Bézier cuadráticas para suavizado de trazos.
  */
 export default function MatchBoardPage() {
   const { profile } = useAuth();
@@ -300,13 +300,34 @@ export default function MatchBoardPage() {
     ctx.lineJoin = 'round';
     ctx.lineWidth = 3;
 
+    /**
+     * PROTOCOLO_SMOOTH_BRUSH_STROKES
+     * Implementación de curvas de Bézier cuadráticas para suavizado de trazos manuales.
+     */
     const drawLine = (points: {x:number, y:number}[], color: string) => {
       if (points.length < 2) return;
+      
       ctx.beginPath();
       ctx.strokeStyle = color;
-      ctx.moveTo(points[0].x / 100 * canvas.width, points[0].y / 100 * canvas.height);
-      for (let i = 1; i < points.length; i++) {
-        ctx.lineTo(points[i].x / 100 * canvas.width, points[i].y / 100 * canvas.height);
+      
+      const p0 = { x: points[0].x / 100 * canvas.width, y: points[0].y / 100 * canvas.height };
+      ctx.moveTo(p0.x, p0.y);
+
+      if (points.length === 2) {
+        const p1 = { x: points[1].x / 100 * canvas.width, y: points[1].y / 100 * canvas.height };
+        ctx.lineTo(p1.x, p1.y);
+      } else {
+        for (let i = 1; i < points.length - 2; i++) {
+          const pCurrent = { x: points[i].x / 100 * canvas.width, y: points[i].y / 100 * canvas.height };
+          const pNext = { x: points[i+1].x / 100 * canvas.width, y: points[i+1].y / 100 * canvas.height };
+          const midX = (pCurrent.x + pNext.x) / 2;
+          const midY = (pCurrent.y + pNext.y) / 2;
+          ctx.quadraticCurveTo(pCurrent.x, pCurrent.y, midX, midY);
+        }
+        // Curva final a través de los dos últimos puntos
+        const pPenultimate = { x: points[points.length - 2].x / 100 * canvas.width, y: points[points.length - 2].y / 100 * canvas.height };
+        const pLast = { x: points[points.length - 1].x / 100 * canvas.width, y: points[points.length - 1].y / 100 * canvas.height };
+        ctx.quadraticCurveTo(pPenultimate.x, pPenultimate.y, pLast.x, pLast.y);
       }
       ctx.stroke();
     };

@@ -227,7 +227,28 @@ function TrainingBoardContent() {
         ctx.save(); ctx.setLineDash([]); ctx.fillStyle = element.color; ctx.font = `bold ${Math.floor(height || 24)}px Space Grotesk`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(element.text || "TEXTO TÁCTICO", centerX, centerY); ctx.restore(); break;
       case 'freehand':
-        ctx.beginPath(); ctx.moveTo(p[0].x, p[0].y); for (let i = 1; i < p.length; i++) ctx.lineTo(p[i].x, p[i].y); ctx.stroke(); break;
+        /**
+         * PROTOCOLO_SMOOTH_BRUSH_STROKES
+         * Implementación de curvas de Bézier cuadráticas para suavizado de trazos manuales.
+         */
+        if (p.length < 3) {
+          ctx.beginPath();
+          ctx.moveTo(p[0].x, p[0].y);
+          if (p.length === 2) ctx.lineTo(p[1].x, p[1].y);
+          ctx.stroke();
+        } else {
+          ctx.beginPath();
+          ctx.moveTo(p[0].x, p[0].y);
+          for (let i = 1; i < p.length - 2; i++) {
+            const xc = (p[i].x + p[i + 1].x) / 2;
+            const yc = (p[i].y + p[i + 1].y) / 2;
+            ctx.quadraticCurveTo(p[i].x, p[i].y, xc, yc);
+          }
+          // Curva final a través de los dos últimos puntos
+          ctx.quadraticCurveTo(p[p.length - 2].x, p[p.length - 2].y, p[p.length - 1].x, p[p.length - 1].y);
+          ctx.stroke();
+        }
+        break;
       case 'rect': ctx.beginPath(); ctx.rect(minX, minY, width, height); ctx.fill(); ctx.stroke(); break;
       case 'circle':
         ctx.beginPath(); const radius = Math.min(width, height) / 2;
@@ -566,7 +587,7 @@ function TrainingBoardContent() {
             <div className="space-y-6">
               <div className="space-y-3">
                 <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">Título del Ejercicio</Label>
-                <Input required value={saveFormData.title} onChange={(e) => setSaveFormData({...saveFormData, title: e.target.value.toUpperCase()})} placeholder="EJ: SALIDA DE BALÓN 4-3-3" className="h-14 bg-black/40 border-amber-500/20 rounded-2xl font-bold uppercase focus:border-amber-500 text-amber-500 text-lg" />
+                <Input required value={saveFormData.title} onChange={(e) => setSaveFormData({...formData, title: e.target.value.toUpperCase()})} placeholder="EJ: SALIDA DE BALÓN 4-3-3" className="h-14 bg-black/40 border-amber-500/20 rounded-2xl font-bold uppercase focus:border-amber-500 text-amber-500 text-lg" />
               </div>
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-3">

@@ -122,6 +122,10 @@ function AdSlot({ orientation = 'horizontal' }: { orientation: 'horizontal' | 'v
   );
 }
 
+/**
+ * PromoBoardPage - v43.0.0
+ * PROTOCOLO_SMOOTH_BRUSH_STROKES: Implementación de curvas de Bézier cuadráticas para suavizado de trazos.
+ */
 function PromoBoardContent() {
   const { profile } = useAuth();
   const { toast } = useToast();
@@ -278,7 +282,26 @@ function PromoBoardContent() {
         ctx.save(); ctx.setLineDash([]); ctx.fillStyle = element.color; ctx.font = `bold ${Math.floor(height || 24)}px Space Grotesk`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(element.text || "TEXTO TÁCTICO", centerX, centerY); ctx.restore(); break;
       case 'freehand':
-        ctx.beginPath(); ctx.moveTo(p[0].x, p[0].y); for (let i = 1; i < p.length; i++) ctx.lineTo(p[i].x, p[i].y); ctx.stroke(); break;
+        /**
+         * PROTOCOLO_SMOOTH_BRUSH_STROKES
+         */
+        if (p.length < 3) {
+          ctx.beginPath();
+          ctx.moveTo(p[0].x, p[0].y);
+          if (p.length === 2) ctx.lineTo(p[1].x, p[1].y);
+          ctx.stroke();
+        } else {
+          ctx.beginPath();
+          ctx.moveTo(p[0].x, p[0].y);
+          for (let i = 1; i < p.length - 2; i++) {
+            const xc = (p[i].x + p[i + 1].x) / 2;
+            const yc = (p[i].y + p[i + 1].y) / 2;
+            ctx.quadraticCurveTo(p[i].x, p[i].y, xc, yc);
+          }
+          ctx.quadraticCurveTo(p[p.length - 2].x, p[p.length - 2].y, p[p.length - 1].x, p[p.length - 1].y);
+          ctx.stroke();
+        }
+        break;
       case 'rect': ctx.beginPath(); ctx.rect(minX, minY, width, height); ctx.fill(); ctx.stroke(); break;
       case 'circle':
         ctx.beginPath(); const radius = Math.min(width, height) / 2;
@@ -300,7 +323,7 @@ function PromoBoardContent() {
         drawH(p[1].x, p[1].y, angle);
         if (element.type === 'double-arrow') {
           const startAngle = element.controlPoint ? Math.atan2(p[0].y - (element.controlPoint.y * heightPx), p[0].x - (element.controlPoint.x * widthPx)) : angle + Math.PI;
-          drawH(p[0].x, p[0].y, startAngle);
+          drawH(p[0].y, p[0].y, startAngle);
         }
         break;
       case 'cross-arrow':
