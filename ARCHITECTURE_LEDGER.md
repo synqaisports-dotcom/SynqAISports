@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v48.0.0 (Tablet Safe Bottom Controls)
+# SynqSports Pro - ARCHITECTURE_LEDGER v49.0.0 (Tablet Precision UI)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -17,3 +17,6 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 
 ## 48. Protocolo de Reequilibrio Táctico (v48.0.0)
 - **v48.0.0**: **PROTOCOL_TABLET_SAFE_CONTROLS**: Rediseño de la cuadrícula de controles inferiores para evitar desbordamientos laterales. Corrección de error de referencia `showLanes` e integración de botón de carriles en el mando central. Inversión del bloque visitante para simetría visual total.
+
+## 49. Protocolo de Precisión UI Tablet (v49.0.0)
+- **v49.0.0**: **PROTOCOL_TABLET_PRECISION_UI**: Aplicación de factor de escala 0.85 en dispositivos móviles/tablets para controles inferiores. Reducción de altura a h-10 y anchos de Select a w-20. Optimización de gaps y paddings para garantizar visibilidad total sin desbordamientos.
