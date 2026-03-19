@@ -1,3 +1,4 @@
+
 "use client";
 
 import { cn } from "@/lib/utils";
@@ -14,8 +15,8 @@ interface PlayerChipProps {
 }
 
 /**
- * PlayerChip - Nodo de Atleta en Pizarra v38.0.0
- * PROTOCOLO_UNIFIED_TEAM_COLORS: Unificación a color Primary para todos los atletas.
+ * PlayerChip - Nodo de Atleta en Pizarra v39.0.0
+ * PROTOCOLO_RESTORE_VISITOR_COLOR: Restauración de colores específicos por equipo.
  */
 export function PlayerChip({ 
   number, 
@@ -50,8 +51,10 @@ export function PlayerChip({
       <div 
         className={cn(
           "h-3.5 w-3.5 md:h-12 md:w-12 lg:h-14 lg:w-14 rounded-full border-[1px] md:border-2 flex items-center justify-center text-[4.5px] md:text-xs lg:text-sm font-black shadow-lg transition-all duration-300",
-          "bg-primary/20 border-primary text-primary shadow-[0_0_15px_rgba(0,242,255,0.3)]",
-          isDragging && "shadow-[0_0_30px_rgba(0,242,255,0.6)] border-white"
+          team === 'local' 
+            ? "bg-primary/20 border-primary text-primary shadow-[0_0_15px_rgba(0,242,255,0.3)]" 
+            : "bg-rose-500/20 border-rose-500 text-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.3)]",
+          isDragging && "shadow-[0_0_30px_rgba(255,255,255,0.6)] border-white"
         )}
       >
         {number}

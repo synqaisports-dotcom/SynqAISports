@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v36.0.0 (Offline Ad Tracking)
+# SynqSports Pro - ARCHITECTURE_LEDGER v39.0.0 (Visitor Color Restoration)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -11,3 +11,12 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 
 ## 36. Protocolo de Trazabilidad Publicitaria Offline (v36.0.0)
 - **v36.0.0**: **PROTOCOL_AD_OFFLINE_SHIELD**: Activación del seguimiento de impresiones y clics mediante el motor `synqSync`. Los componentes `AdSlot` ahora registran eventos en la cola local de forma automática al renderizarse (mount) y al interactuar. Esto garantiza el blindaje de ingresos publicitarios incluso cuando la tablet opera sin conexión en el campo.
+
+## 37. Protocolo de Ergonomía AdMob (v37.0.0)
+- **v37.0.0**: **PROTOCOL_AD_TABLET_READY**: Ajuste de los puntos de ruptura (breakpoints) de los anuncios laterales. Se reduce el umbral de visibilidad de `xl` a `lg` para asegurar que los banners laterales sean visibles en tablets estándar cuando el campo está en modo foco.
+
+## 38. Protocolo de Unificación Cromática (v38.0.0)
+- **v38.0.0**: **PROTOCOL_UNIFIED_TEAM_COLORS**: Unificación visual de Local y Visitante a color Primary (Cian) para una estética aeroespacial monocromática.
+
+## 39. Protocolo de Restauración de Identidad Rival (v39.0.0)
+- **v39.0.0**: **PROTOCOL_RESTORE_VISITOR_COLOR**: Reversión de la unificación cromática. Se restaura el color Rose (Rojo) para el equipo visitante tanto en marcador, mandos tácticos como en fichas de jugador para mejorar la distinción operativa.
