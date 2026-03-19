@@ -1,4 +1,3 @@
-
 "use client";
 
 import { cn } from "@/lib/utils";
@@ -15,11 +14,8 @@ interface PlayerChipProps {
 }
 
 /**
- * PlayerChip - Nodo de Atleta en Pizarra v20.1.0
- * PROTOCOLO_TABLET_CHIP_REDUCTION_EXTRA:
- * - Reducción adicional del 10% en tablet (h-3.5 w-3.5) para maximizar la superficie de campo.
- * - Escalado profesional en PC (md:h-12, lg:h-14).
- * - Aceleración por hardware (translate3d) activa para 3GB RAM.
+ * PlayerChip - Nodo de Atleta en Pizarra v38.0.0
+ * PROTOCOLO_UNIFIED_TEAM_COLORS: Unificación a color Primary para todos los atletas.
  */
 export function PlayerChip({ 
   number, 
@@ -31,8 +27,6 @@ export function PlayerChip({
   isDragging,
   onPointerDown 
 }: PlayerChipProps) {
-  const isLocal = team === "local";
-  
   return (
     <div 
       className={cn(
@@ -56,10 +50,8 @@ export function PlayerChip({
       <div 
         className={cn(
           "h-3.5 w-3.5 md:h-12 md:w-12 lg:h-14 lg:w-14 rounded-full border-[1px] md:border-2 flex items-center justify-center text-[4.5px] md:text-xs lg:text-sm font-black shadow-lg transition-all duration-300",
-          isLocal 
-            ? "bg-primary/20 border-primary text-primary shadow-[0_0_15px_rgba(0,242,255,0.3)]" 
-            : "bg-rose-500/20 border-rose-500 text-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.3)]",
-          isDragging && (isLocal ? "shadow-[0_0_30px_rgba(0,242,255,0.6)] border-white" : "shadow-[0_0_30px_rgba(244,63,94,0.6)] border-white")
+          "bg-primary/20 border-primary text-primary shadow-[0_0_15px_rgba(0,242,255,0.3)]",
+          isDragging && "shadow-[0_0_30px_rgba(0,242,255,0.6)] border-white"
         )}
       >
         {number}

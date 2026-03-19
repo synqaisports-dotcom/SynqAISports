@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo, useRef, memo, useCallback } from "react";
@@ -112,8 +111,8 @@ function AdSlot({ orientation = 'horizontal' }: { orientation: 'horizontal' | 'v
 }
 
 /**
- * MatchBoardPage - v29.0.0
- * PROTOCOLO_AD_OFFLINE_SHIELD: Asegurando que la cola de eventos publicitario funcione sin red.
+ * MatchBoardPage - v38.0.0
+ * PROTOCOLO_UNIFIED_TEAM_COLORS: Unificación de colores para Local y Visitante.
  */
 export default function MatchBoardPage() {
   const { profile } = useAuth();
@@ -324,10 +323,10 @@ export default function MatchBoardPage() {
       {/* PUBLICIDAD LATERAL (MODO MEDIO CAMPO) */}
       {showAds && isHalfField && (
         <>
-          <div className="fixed left-4 top-1/2 -translate-y-1/2 z-[100] animate-in slide-in-from-left-4 duration-1000 hidden xl:block">
+          <div className="fixed left-4 top-1/2 -translate-y-1/2 z-[100] animate-in slide-in-from-left-4 duration-1000 hidden lg:block">
             <AdSlot orientation="vertical" />
           </div>
-          <div className="fixed right-4 top-1/2 -translate-y-1/2 z-[100] animate-in slide-in-from-right-4 duration-1000 hidden xl:block">
+          <div className="fixed right-4 top-1/2 -translate-y-1/2 z-[100] animate-in slide-in-from-right-4 duration-1000 hidden lg:block">
             <AdSlot orientation="vertical" />
           </div>
         </>
@@ -382,24 +381,24 @@ export default function MatchBoardPage() {
         )}
       </header>
 
-      {/* MARCADOR DE GOLES (REORGANIZADO PARA MÓVIL) */}
+      {/* MARCADOR DE GOLES (UNIFICADO CROMÁTICAMENTE) */}
       <div className="fixed top-4 left-4 lg:left-24 z-[100] flex items-center gap-3 px-3 py-1 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl animate-in slide-in-from-left-4 duration-700 scale-[0.75] origin-top-left lg:scale-100">
         <div className="flex items-center gap-4">
           <div className="flex flex-col items-center">
-            <span className="text-[6px] font-black text-white/40 uppercase">LOC</span>
+            <span className="text-[6px] font-black text-primary/40 uppercase">LOC</span>
             <div className="flex items-center gap-1.5">
-              <button onClick={() => setScore(s => ({...s, home: Math.max(0, s.home - 1)}))} className="text-white/20 hover:text-white text-[8px]">-</button>
-              <span className="text-xl font-black text-white tabular-nums">{score.home}</span>
-              <button onClick={() => setScore(s => ({...s, home: s.home + 1}))} className="text-white/20 hover:text-white text-[8px]">+</button>
+              <button onClick={() => setScore(s => ({...s, home: Math.max(0, s.home - 1)}))} className="text-primary/20 hover:text-primary text-[8px]">-</button>
+              <span className="text-xl font-black text-primary cyan-text-glow tabular-nums">{score.home}</span>
+              <button onClick={() => setScore(s => ({...s, home: s.home + 1}))} className="text-primary/20 hover:text-primary text-[8px]">+</button>
             </div>
           </div>
           <div className="text-xs font-black text-white/20 italic">VS</div>
           <div className="flex flex-col items-center">
-            <span className="text-[6px] font-black text-white/40 uppercase">VIS</span>
+            <span className="text-[6px] font-black text-primary/40 uppercase">VIS</span>
             <div className="flex items-center gap-1.5">
-              <button onClick={() => setScore(s => ({...s, guest: Math.max(0, s.guest - 1)}))} className="text-white/20 hover:text-white text-[8px]">-</button>
-              <span className="text-xl font-black text-white tabular-nums">{score.guest}</span>
-              <button onClick={() => setScore(s => ({...s, guest: s.guest + 1}))} className="text-white/20 hover:text-white text-[8px]">+</button>
+              <button onClick={() => setScore(s => ({...s, guest: Math.max(0, s.guest - 1)}))} className="text-primary/20 hover:text-primary text-[8px]">-</button>
+              <span className="text-xl font-black text-primary cyan-text-glow tabular-nums">{score.guest}</span>
+              <button onClick={() => setScore(s => ({...s, guest: s.guest + 1}))} className="text-primary/20 hover:text-primary text-[8px]">+</button>
             </div>
           </div>
         </div>
@@ -489,7 +488,7 @@ export default function MatchBoardPage() {
         </TacticalField>
       </main>
 
-      {/* CONTROLES TÁCTICOS INFERIORES */}
+      {/* CONTROLES TÁCTICOS INFERIORES (UNIFICADOS A PRIMARY) */}
       <div className="fixed bottom-6 left-0 right-0 px-6 z-[150] pointer-events-none">
         <div className="flex items-end justify-between w-full max-w-[1600px] mx-auto">
           {/* BLOQUE LOCAL */}
@@ -531,16 +530,16 @@ export default function MatchBoardPage() {
 
           <div className="flex-1" />
 
-          {/* BLOQUE VISITANTE */}
+          {/* BLOQUE VISITANTE (UNIFICADO A PRIMARY) */}
           <div className="flex items-center gap-2 pointer-events-auto scale-[0.8] origin-bottom-right lg:scale-100">
-            <div className="bg-black/80 backdrop-blur-xl border border-rose-500/20 p-1 rounded-xl shadow-xl flex items-center h-10 transition-all duration-500">
+            <div className="bg-black/80 backdrop-blur-xl border border-primary/20 p-1 rounded-xl shadow-xl flex items-center h-10 transition-all duration-500">
               <div className="flex items-center gap-1 bg-black/40 p-0.5 rounded-lg border border-white/5">
-                <button onClick={() => setGuestShift("left")} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all duration-300", guestShift === 'left' ? 'bg-rose-500/20 text-rose-500' : 'text-white/10')}><ChevronLeft className="h-3 w-3" /></button>
-                <button onClick={() => setGuestShift("center")} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all duration-300", guestShift === 'center' ? 'bg-rose-500/20 text-rose-500' : 'text-white/10')}><div className="h-1.5 w-1.5 rounded-full bg-current" /></button>
-                <button onClick={() => setGuestShift("right")} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all duration-300", guestShift === 'right' ? 'bg-rose-500/20 text-rose-500' : 'text-white/10')}><ChevronRight className="h-3 w-3" /></button>
+                <button onClick={() => setGuestShift("left")} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all duration-300", guestShift === 'left' ? 'bg-primary/20 text-primary' : 'text-white/10')}><ChevronLeft className="h-3 w-3" /></button>
+                <button onClick={() => setGuestShift("center")} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all duration-300", guestShift === 'center' ? 'bg-primary/20 text-primary' : 'text-white/10')}><div className="h-1.5 w-1.5 rounded-full bg-current" /></button>
+                <button onClick={() => setGuestShift("right")} className={cn("h-7 w-7 rounded-md flex items-center justify-center transition-all duration-300", guestShift === 'right' ? 'bg-primary/20 text-primary' : 'text-white/10')}><ChevronRight className="h-3 w-3" /></button>
               </div>
             </div>
-            <div className="bg-black/80 backdrop-blur-xl border border-rose-500/20 p-1 rounded-xl shadow-xl flex items-center h-10 transition-all duration-500">
+            <div className="bg-black/80 backdrop-blur-xl border border-primary/20 p-1 rounded-xl shadow-xl flex items-center h-10 transition-all duration-500">
               <div className="flex gap-1">
                 {["DEF", "TDA", "SAL", "ATK"].map(p => (
                   <button 
@@ -548,7 +547,7 @@ export default function MatchBoardPage() {
                     onClick={() => setGuestPhase(p.toLowerCase() as TacticalPhase)}
                     className={cn(
                       "h-8 px-3 rounded-lg text-[8px] font-black uppercase transition-all duration-300",
-                      guestPhase === p.toLowerCase() ? "bg-rose-600 text-white shadow-[0_0_15px_rgba(225,29,72,0.4)]" : "text-white/20 hover:bg-white/5"
+                      guestPhase === p.toLowerCase() ? "bg-primary text-black cyan-glow" : "text-white/20 hover:bg-white/5"
                     )}
                   >
                     {p}
@@ -556,12 +555,12 @@ export default function MatchBoardPage() {
                 ))}
               </div>
             </div>
-            <div className="bg-black/80 backdrop-blur-xl border border-rose-500/20 p-1 rounded-xl shadow-xl flex items-center h-10 transition-all duration-500">
+            <div className="bg-black/80 backdrop-blur-xl border border-primary/20 p-1 rounded-xl shadow-xl flex items-center h-10 transition-all duration-500">
               <Select value={guestFormation} onValueChange={setGuestFormation}>
-                <SelectTrigger className="h-8 w-24 bg-black border-rose-500/10 text-white font-black uppercase text-[9px] rounded-lg focus:ring-0 transition-all duration-300">
+                <SelectTrigger className="h-8 w-24 bg-black border-primary/10 text-white font-black uppercase text-[9px] rounded-lg focus:ring-0 transition-all duration-300">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0a0f18] border-rose-500/20">
+                <SelectContent className="bg-[#0a0f18] border-primary/20">
                   {Object.keys(FORMATIONS_DATA[fieldType]).map(f => <SelectItem key={f} value={f} className="text-[10px] font-black uppercase">{f}</SelectItem>)}
                 </SelectContent>
               </Select>
