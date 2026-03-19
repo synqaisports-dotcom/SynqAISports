@@ -15,8 +15,9 @@ interface PlayerChipProps {
 }
 
 /**
- * PlayerChip - Nodo de Atleta en Pizarra v40.0.0
- * PROTOCOLO_PLAYER_CHIP_SCALING: Reducción de tamaño del 20% para modo tablet y desktop.
+ * PlayerChip - Nodo de Atleta en Pizarra v41.0.0
+ * PROTOCOLO_LEGACY_HARDWARE_ACCELERATION: Optimización drástica para tablets antiguas.
+ * Uso de translateZ(0) para forzar composición por GPU y curva de tiempo reducida (400ms).
  */
 export function PlayerChip({ 
   number, 
@@ -38,13 +39,13 @@ export function PlayerChip({
       style={{ 
         left: `${x}%`, 
         top: `${y}%`,
-        willChange: "left, top, transform",
-        transform: `translate3d(-50%, -50%, 0)`, 
+        willChange: "left, top",
+        transform: `translate3d(-50%, -50%, 0) translateZ(0)`, 
         backfaceVisibility: "hidden",
         perspective: 1000,
         transition: isDragging 
           ? 'none' 
-          : 'left 0.5s cubic-bezier(0.4, 0, 0.2, 1), top 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s ease'
+          : 'left 0.4s cubic-bezier(0.2, 0, 0, 1), top 0.4s cubic-bezier(0.2, 0, 0, 1)'
       }}
       onPointerDown={onPointerDown}
     >

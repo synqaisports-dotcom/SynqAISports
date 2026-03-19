@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v40.0.0 (Player Chip Scaling)
+# SynqSports Pro - ARCHITECTURE_LEDGER v41.0.0 (Legacy Hardware Acceleration)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -23,3 +23,6 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 
 ## 40. Protocolo de Calibración Ergonómica (v40.0.0)
 - **v40.0.0**: **PROTOCOL_PLAYER_CHIP_SCALING**: Reducción del 20% en el tamaño de las fichas de jugador en la Pizarra de Partido para dispositivos tablet y escritorio. Mejora la visibilidad del lienzo y la precisión del dibujo táctico.
+
+## 41. Protocolo de Aceleración Legacy (v41.0.0)
+- **v41.0.0**: **PROTOCOL_LEGACY_HARDWARE_ACCELERATION**: Optimización de las transiciones tácticas para dispositivos antiguos. Se implementa forzado de GPU mediante `translateZ(0)` y curvas de tiempo reducidas (400ms) para garantizar una respuesta ágil en tablets de gama baja.
