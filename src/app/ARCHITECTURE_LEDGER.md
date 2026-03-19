@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v43.0.0 (Smooth Brush Strokes)
+# SynqSports Pro - ARCHITECTURE_LEDGER v44.0.0 (Lean Match UI)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -32,3 +32,6 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 
 ## 43. Protocolo de Pincel Fluido (v43.0.0)
 - **v43.0.0**: **PROTOCOL_SMOOTH_BRUSH_STROKES**: Sustitución del dibujo lineal simple por curvas de Bézier cuadráticas mediante algoritmo de punto medio. Suaviza los trazos manuales en todas las pizarras para una experiencia de dibujo profesional y orgánica.
+
+## 44. Protocolo de Interfaz Live Aligerada (v44.0.0)
+- **v44.0.0**: **PROTOCOL_MATCH_UI_LEAN**: Eliminación del botón "GUARDAR" y de la opción "Medio Campo" en la Pizarra de Partido para evitar sobrecarga visual y errores operativos en directo. Se elimina el banner publicitario por solapamiento con el área táctica en esta vista.

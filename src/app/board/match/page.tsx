@@ -112,23 +112,19 @@ function AdSlot({ orientation = 'horizontal' }: { orientation: 'horizontal' | 'v
 }
 
 /**
- * MatchBoardPage - v43.0.0
- * PROTOCOLO_SMOOTH_BRUSH_STROKES: Implementación de curvas de Bézier cuadráticas para suavizado de trazos.
+ * MatchBoardPage - v44.0.0
+ * PROTOCOLO_MATCH_UI_LEAN: Eliminación de medio campo, botón guardar y anuncios horizontales por solapamiento.
  */
 export default function MatchBoardPage() {
   const { profile } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   
-  // Habilitamos visualización para sandbox Y para revisión de superadmin
-  const showAds = profile?.plan === 'free' || profile?.role === 'promo_coach' || profile?.role === 'superadmin';
-  
   const [mounted, setMounted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(45 * 60);
   const [isRunning, setIsRunning] = useState(false);
   const [score, setScore] = useState({ home: 0, guest: 0 });
   const [fieldType, setFieldType] = useState<FieldType>("f11");
-  const [isHalfField, setIsHalfField] = useState(false);
   const [homePhase, setHomePhase] = useState<TacticalPhase>("def");
   const [guestPhase, setGuestPhase] = useState<TacticalPhase>("def");
   const [homeFormation, setHomeFormation] = useState("4-3-3");
@@ -210,7 +206,6 @@ export default function MatchBoardPage() {
       }
     };
 
-    // PROTOCOLO_SQUAD_CLEAR: Si la formación es "NINGUNA", devolvemos array vacío para ese equipo.
     const hp = homeFormation === "NINGUNA" ? [] : (formationsForField[homeFormation] || formationsForField["4-3-3"]).map((pos, idx) => {
       let finalX = (0.05 + (pos.x * 0.9)) * 100;
       let finalY = pos.y * 100;
@@ -300,10 +295,6 @@ export default function MatchBoardPage() {
     ctx.lineJoin = 'round';
     ctx.lineWidth = 3;
 
-    /**
-     * PROTOCOLO_SMOOTH_BRUSH_STROKES
-     * Implementación de curvas de Bézier cuadráticas para suavizado de trazos manuales.
-     */
     const drawLine = (points: {x:number, y:number}[], color: string) => {
       if (points.length < 2) return;
       
@@ -324,7 +315,6 @@ export default function MatchBoardPage() {
           const midY = (pCurrent.y + pNext.y) / 2;
           ctx.quadraticCurveTo(pCurrent.x, pCurrent.y, midX, midY);
         }
-        // Curva final a través de los dos últimos puntos
         const pPenultimate = { x: points[points.length - 2].x / 100 * canvas.width, y: points[points.length - 2].y / 100 * canvas.height };
         const pLast = { x: points[points.length - 1].x / 100 * canvas.width, y: points[points.length - 1].y / 100 * canvas.height };
         ctx.quadraticCurveTo(pPenultimate.x, pPenultimate.y, pLast.x, pLast.y);
@@ -341,41 +331,22 @@ export default function MatchBoardPage() {
   return (
     <div className="flex-1 flex flex-col bg-black overflow-hidden relative touch-none select-none" onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}>
       
-      {/* PUBLICIDAD LATERAL (MODO MEDIO CAMPO) */}
-      {showAds && isHalfField && (
-        <>
-          <div className="fixed left-4 top-1/2 -translate-y-1/2 z-[100] animate-in slide-in-from-left-4 duration-1000 hidden lg:block">
-            <AdSlot orientation="vertical" />
-          </div>
-          <div className="fixed right-4 top-1/2 -translate-y-1/2 z-[100] animate-in slide-in-from-right-4 duration-1000 hidden lg:block">
-            <AdSlot orientation="vertical" />
-          </div>
-        </>
-      )}
-
-      {/* MANDO CENTRAL INTEGRADO */}
-      <header className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center gap-4 w-full px-6">
-        <div className="flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl transition-all scale-[0.8] lg:scale-100">
-          <div className="flex items-center gap-1 px-1 border-r border-white/10 pr-2 mr-1">
-            <div className="flex items-center gap-1.5 px-1.5">
+      {/* MANDO CENTRAL INTEGRADO - OPTIMIZADO PARA EVITAR SOLAPAMIENTOS */}
+      <header className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center gap-4 w-auto">
+        <div className="flex items-center gap-4 px-4 py-1.5 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl transition-all scale-[0.85] lg:scale-100">
+          <div className="flex items-center gap-2 px-1 border-r border-white/10 pr-3">
+            <div className="flex items-center gap-2">
               {["#00f2ff", "#f43f5e", "#facc15"].map(c => (
                 <button key={c} onClick={() => setCurrentColor(c)} className={cn("h-4 w-4 rounded-full border transition-all duration-300", currentColor === c ? "border-white scale-110 shadow-lg" : "border-transparent opacity-40")} style={{ backgroundColor: c }} />
               ))}
             </div>
-            <div className="w-[1px] h-4 bg-white/10 mx-0.5" />
+            <div className="w-[1px] h-4 bg-white/10 mx-1" />
             <button onClick={() => setDrawings([])} className="text-rose-500/40 hover:text-rose-500 p-1.5 transition-colors duration-300 active:scale-90" title="Borrar Trazos">
               <Trash2 className="h-3.5 w-3.5" />
             </button>
           </div>
 
-          <div className="flex items-center gap-2 px-1 border-r border-white/10 pr-2 mr-1">
-            <button 
-              onClick={() => setIsHalfField(!isHalfField)}
-              className={cn("h-8 w-8 flex items-center justify-center rounded-xl transition-all active:scale-90", isHalfField ? "bg-primary text-black" : "text-white/40 hover:text-white")}
-              title={isHalfField ? "Vista Total" : "Modo Foco"}
-            >
-              <Square className="h-3.5 w-3.5" />
-            </button>
+          <div className="flex items-center gap-2 px-1 border-r border-white/10 pr-3">
             <button 
               onClick={toggleFullscreen}
               className="h-8 w-8 flex items-center justify-center text-white/40 hover:text-primary transition-all active:scale-90"
@@ -385,24 +356,17 @@ export default function MatchBoardPage() {
             </button>
           </div>
 
-          <div className="flex items-center gap-2 pr-2">
-            <Trophy className="h-3 w-3 text-primary animate-pulse" />
+          <div className="flex items-center gap-3 pr-2">
+            <Trophy className="h-3.5 w-3.5 text-primary animate-pulse" />
             <div className="flex flex-col">
               <span className="text-[7px] font-black text-primary tracking-widest uppercase">MATCH_LIVE</span>
-              <h1 className="text-[8px] font-headline font-black text-white italic uppercase tracking-tight leading-none">DIRECTO</h1>
+              <h1 className="text-[9px] font-headline font-black text-white italic uppercase tracking-tight leading-none">DIRECTO</h1>
             </div>
           </div>
         </div>
-
-        {/* PUBLICIDAD HORIZONTAL (MODO CAMPO COMPLETO) */}
-        {showAds && !isHalfField && (
-          <div className="animate-in fade-in duration-1000 hidden md:block">
-            <AdSlot orientation="horizontal" />
-          </div>
-        )}
       </header>
 
-      {/* MARCADOR DE GOLES (RESTAURACIÓN DE COLORES RIVAL) */}
+      {/* MARCADOR DE GOLES */}
       <div className="fixed top-4 left-4 lg:left-24 z-[100] flex items-center gap-3 px-3 py-1 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl animate-in slide-in-from-left-4 duration-700 scale-[0.75] origin-top-left lg:scale-100">
         <div className="flex items-center gap-4">
           <div className="flex flex-col items-center">
@@ -425,7 +389,7 @@ export default function MatchBoardPage() {
         </div>
       </div>
 
-      {/* TELEMETRÍA Y CONTROL DE TIEMPO (AJUSTADO PARA MÓVIL) */}
+      {/* TELEMETRÍA Y CONTROL DE TIEMPO */}
       <div className="fixed top-4 right-4 z-[100] flex items-center gap-2 animate-in slide-in-from-right-4 duration-700 scale-[0.75] origin-top-right lg:scale-100">
         <Dialog onOpenChange={setIsAnyDialogOpen}>
           <DialogTrigger asChild>
@@ -482,14 +446,10 @@ export default function MatchBoardPage() {
             </button>
           </div>
         </div>
-
-        <Button className="h-10 bg-primary text-black font-black uppercase text-[9px] tracking-widest px-6 rounded-xl cyan-glow border-none shadow-xl hover:scale-105 transition-all duration-300 hidden md:flex">
-          GUARDAR
-        </Button>
       </div>
 
       <main className="flex-1 relative overflow-hidden flex items-center justify-center pt-20 pb-28">
-        <TacticalField theme="cyan" fieldType={fieldType} isHalfField={isHalfField} containerRef={fieldRef}>
+        <TacticalField theme="cyan" fieldType={fieldType} isHalfField={false} containerRef={fieldRef}>
           <canvas ref={canvasRef} onPointerDown={handleCanvasPointerDown} className="absolute inset-0 z-30 pointer-events-auto" />
           <div className="absolute inset-0 z-40 pointer-events-none">
             {players.map(p => (
@@ -509,7 +469,7 @@ export default function MatchBoardPage() {
         </TacticalField>
       </main>
 
-      {/* CONTROLES TÁCTICOS INFERIORES (RESTAURACIÓN DE COLORES RIVAL) */}
+      {/* CONTROLES TÁCTICOS INFERIORES */}
       <div className="fixed bottom-6 left-0 right-0 px-6 z-[150] pointer-events-none">
         <div className="flex items-end justify-between w-full max-w-[1600px] mx-auto">
           {/* BLOQUE LOCAL */}
@@ -552,7 +512,7 @@ export default function MatchBoardPage() {
 
           <div className="flex-1" />
 
-          {/* BLOQUE VISITANTE (RESTAURADO A ROSE) */}
+          {/* BLOQUE VISITANTE */}
           <div className="flex items-center gap-2 pointer-events-auto scale-[0.8] origin-bottom-right lg:scale-100">
             <div className="bg-black/80 backdrop-blur-xl border border-rose-500/20 p-1 rounded-xl shadow-xl flex items-center h-10 transition-all duration-500">
               <div className="flex items-center gap-1 bg-black/40 p-0.5 rounded-lg border border-white/5">
