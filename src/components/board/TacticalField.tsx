@@ -17,9 +17,9 @@ interface TacticalFieldProps {
 }
 
 /**
- * TacticalField - v33.0.0
- * PROTOCOLO_LANES_HALF_FIELD: Soporte para carriles en modo vertical.
- * Los carriles se orientan verticalmente en modo medio campo para definir canales.
+ * TacticalField - v57.0.0
+ * PROTOCOL_SAFE_WORK_AREA: Ajuste de dimensiones para evitar cortes en tablets.
+ * Se limita la altura al 72% del viewport dinámico para dejar espacio a cabeceras y footers.
  */
 export function TacticalField({ 
   theme = "cyan", 
@@ -39,7 +39,7 @@ export function TacticalField({
   const ratio = isHalfField ? 0.85 : (isFutsal ? 2.0 : 1.54);
   
   return (
-    <div className="absolute inset-0 flex items-center justify-center p-1 md:p-2 overflow-hidden select-none pointer-events-none bg-black">
+    <div className="absolute inset-0 flex items-center justify-center p-2 md:p-4 overflow-hidden select-none pointer-events-none bg-black">
       <div 
         ref={containerRef}
         className={cn(
@@ -48,10 +48,14 @@ export function TacticalField({
           bgClass
         )}
         style={{
-          width: isHalfField ? 'min(95vw, 82vh)' : '98vw',
-          height: isHalfField ? '92vh' : `calc(98vw / ${ratio})`,
-          maxHeight: '96vh',
-          maxWidth: `calc(96vh * ${ratio})`
+          // Ajustamos para que nunca exceda el 72% de la altura (espacio libre real entre header y footer)
+          width: isHalfField 
+            ? `min(90vw, calc(72dvh * ${ratio}))` 
+            : `min(95vw, calc(72dvh * ${ratio}))`,
+          height: isHalfField 
+            ? `min(72dvh, calc(90vw / ${ratio}))` 
+            : `min(72dvh, calc(95vw / ${ratio}))`,
+          margin: 'auto'
         }}
       >
         {/* TEXTURAS OPTIMIZADAS */}
