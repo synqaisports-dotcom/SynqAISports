@@ -14,6 +14,11 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: 'black-translucent',
     title: 'SynqAI Pro'
+  },
+  icons: {
+    apple: [
+      { url: 'https://placehold.co/180x180/04070c/00f2ff?text=SynqAI', sizes: '180x180', type: 'image/png' },
+    ],
   }
 };
 

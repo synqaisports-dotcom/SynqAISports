@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v51.0.0 (Chrono Presets)
+# SynqSports Pro - ARCHITECTURE_LEDGER v52.0.0 (PWA Identity)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -26,3 +26,6 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 
 ## 51. Protocolo de Presets Cronométricos (v51.0.0)
 - **v51.0.0**: **PROTOCOL_CHRONO_PRESETS**: Integración de selector de tiempos preconfigurados (15-45 min) y unificación de bordes cian en el bloque de telemetría superior de la Pizarra de Partido.
+
+## 52. Protocolo de Identidad PWA (v52.0.0)
+- **v52.0.0**: **PROTOCOL_PWA_IDENTITY**: Configuración de iconos de instalación maskable y metadatos de branding para iOS/Android, asegurando que el logotipo de SynqAI aparezca correctamente en la pantalla de inicio tras la instalación.
