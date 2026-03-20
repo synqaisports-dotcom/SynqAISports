@@ -77,9 +77,8 @@ interface DrawingLine {
 const MemoizedPlayerChip = memo(PlayerChip);
 
 /**
- * MatchBoardPage - v56.0.0
- * PROTOCOL_DPI_DOWNSAMPLING: Activada Opción 2.
- * Reduce el buffer interno del canvas al 75% en hardware legacy (T5) para eliminar lag.
+ * MatchBoardPage - v58.0.0
+ * PROTOCOL_PIXEL_PERFECT_CANVAS: Sincronización milimétrica mediante ResizeObserver.
  */
 export default function MatchBoardPage() {
   const { profile } = useAuth();
@@ -117,16 +116,13 @@ export default function MatchBoardPage() {
 
   useEffect(() => { 
     setMounted(true); 
-    
-    // DETECTOR DE HARDWARE LEGACY (Huawei MediaPad T5 / AGS2)
     const ua = window.navigator.userAgent;
     const isT5 = /AGS2/.test(ua);
     const lowCPU = (window.navigator.hardwareConcurrency || 8) <= 8;
     
     if (isT5 || lowCPU) {
-      console.log("[SynqAI] Detectado hardware legacy. Activando Protocolo de Downsampling DPI.");
       setIsLegacyDevice(true);
-      setRenderScale(0.75); // Opción 2 ACTIVA
+      setRenderScale(0.75); 
     }
   }, []);
 
@@ -180,15 +176,12 @@ export default function MatchBoardPage() {
 
   const calculatePositions = useCallback(() => {
     if (isAnyDialogOpen) return;
-
     const formationsForField = FORMATIONS_DATA[fieldType];
-
     const shiftX = (side: "left" | "center" | "right") => {
       if (side === "left") return -5;
       if (side === "right") return 5;
       return 0;
     };
-
     const phaseOffset = (phase: TacticalPhase) => {
       switch(phase) {
         case 'def': return -11.5;
@@ -198,7 +191,6 @@ export default function MatchBoardPage() {
         default: return 0;
       }
     };
-
     const hp = homeFormation === "NINGUNA" ? [] : (formationsForField[homeFormation] || formationsForField["4-3-3"]).map((pos, idx) => {
       let finalX = (0.05 + (pos.x * 0.9)) * 100;
       let finalY = pos.y * 100;
@@ -211,7 +203,6 @@ export default function MatchBoardPage() {
       }
       return { id: `local-${idx}`, number: idx + 1, name: `JUGADOR ${idx + 1}`, team: "local" as const, x: finalX, y: finalY };
     });
-
     const gp = guestFormation === "NINGUNA" ? [] : (formationsForField[guestFormation] || formationsForField["4-3-3"]).map((pos, idx) => {
       let finalX = (0.95 - (pos.x * 0.9)) * 100;
       let finalY = (1 - pos.y) * 100;
@@ -224,7 +215,6 @@ export default function MatchBoardPage() {
       }
       return { id: `visitor-${idx}`, number: idx + 1, name: `RIVAL ${idx + 1}`, team: "visitor" as const, x: finalX, y: finalY };
     });
-
     setPlayers([...hp, ...gp]);
   }, [fieldType, homeFormation, guestFormation, homeShift, guestShift, homePhase, guestPhase, isAnyDialogOpen]);
 
@@ -237,19 +227,18 @@ export default function MatchBoardPage() {
   };
 
   const handleCanvasPointerDown = (e: React.PointerEvent) => {
-    if (!fieldRef.current) return;
-    const rect = fieldRef.current.getBoundingClientRect();
+    if (!canvasRef.current) return;
+    const rect = canvasRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
     setActiveDrawing([{x, y}]);
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
-    if (!fieldRef.current) return;
-    const rect = fieldRef.current.getBoundingClientRect();
+    if (!canvasRef.current) return;
+    const rect = canvasRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
-
     if (draggingId) {
       setPlayers(prev => prev.map(p => p.id === draggingId ? { ...p, x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) } : p));
     } else if (activeDrawing) {
@@ -269,73 +258,59 @@ export default function MatchBoardPage() {
 
   const handleSaveMatch = () => {
     const vault = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"matches": []}');
-    const newMatchResult = {
-      id: Date.now(),
-      date: new Date().toLocaleDateString(),
-      score,
-      status: 'Played',
-      rivalName: 'RIVAL_SINCRO'
-    };
+    const newMatchResult = { id: Date.now(), date: new Date().toLocaleDateString(), score, status: 'Played', rivalName: 'RIVAL_SINCRO' };
     vault.matches = [newMatchResult, ...(vault.matches || [])];
     localStorage.setItem("synq_promo_vault", JSON.stringify(vault));
-    
-    toast({
-      title: "PARTIDO_SINCRO_EXITOSA",
-      description: "Los datos del encuentro han sido blindados en el historial local.",
-    });
+    toast({ title: "PARTIDO_SINCRO_EXITOSA", description: "Los datos del encuentro han sido blindados." });
   };
 
-  useEffect(() => {
-    if (isAnyDialogOpen) return;
-
+  const redrawAll = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-
-    const parent = canvas.parentElement;
-    if (parent) {
-      const targetW = parent.clientWidth * renderScale;
-      const targetH = parent.clientHeight * renderScale;
-      
-      if (canvas.width !== targetW || canvas.height !== targetH) {
-        canvas.width = targetW;
-        canvas.height = targetH;
-      }
-    }
-
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.lineWidth = 3 * renderScale;
-
     const drawLine = (points: {x:number, y:number}[], color: string) => {
       if (points.length < 2) return;
       ctx.beginPath();
       ctx.strokeStyle = color;
       ctx.moveTo(points[0].x / 100 * canvas.width, points[0].y / 100 * canvas.height);
-
-      if (points.length === 2) {
-        ctx.lineTo(points[1].x / 100 * canvas.width, points[1].y / 100 * canvas.height);
-      } else {
+      if (points.length === 2) { ctx.lineTo(points[1].x / 100 * canvas.width, points[1].y / 100 * canvas.height); } 
+      else {
         for (let i = 1; i < points.length - 2; i++) {
           const xc = ((points[i].x + points[i + 1].x) / 2) / 100 * canvas.width;
           const yc = ((points[i].y + points[i + 1].y) / 2) / 100 * canvas.height;
           ctx.quadraticCurveTo(points[i].x / 100 * canvas.width, points[i].y / 100 * canvas.height, xc, yc);
         }
-        ctx.quadraticCurveTo(
-          points[points.length - 2].x / 100 * canvas.width, 
-          points[points.length - 2].y / 100 * canvas.height, 
-          points[points.length - 1].x / 100 * canvas.width, 
-          points[points.length - 1].y / 100 * canvas.height
-        );
+        ctx.quadraticCurveTo(points[points.length - 2].x / 100 * canvas.width, points[points.length - 2].y / 100 * canvas.height, points[points.length - 1].x / 100 * canvas.width, points[points.length - 1].y / 100 * canvas.height);
       }
       ctx.stroke();
     };
-
     drawings.forEach(d => drawLine(d.points, d.color));
     if (activeDrawing) drawLine(activeDrawing, currentColor);
-  }, [drawings, activeDrawing, currentColor, fieldType, isAnyDialogOpen, renderScale]);
+  }, [drawings, activeDrawing, currentColor, renderScale]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !canvas.parentElement) return;
+    const handleResize = () => {
+      const parent = canvas.parentElement; if (!parent) return;
+      const rect = parent.getBoundingClientRect();
+      const w = rect.width; const h = rect.height;
+      canvas.width = w * renderScale;
+      canvas.height = h * renderScale;
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
+      redrawAll();
+    };
+    const obs = new ResizeObserver(handleResize);
+    obs.observe(canvas.parentElement);
+    handleResize();
+    return () => obs.disconnect();
+  }, [redrawAll, renderScale]);
 
   if (!mounted) return null;
 
@@ -452,7 +427,6 @@ export default function MatchBoardPage() {
             ref={canvasRef} 
             onPointerDown={handleCanvasPointerDown} 
             className="absolute inset-0 z-30 pointer-events-auto"
-            style={{ width: '100%', height: '100%' }}
           />
           <div className="absolute inset-0 z-40 pointer-events-none">
             {players.map(p => (

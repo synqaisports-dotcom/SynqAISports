@@ -17,9 +17,9 @@ interface TacticalFieldProps {
 }
 
 /**
- * TacticalField - v57.0.0
- * PROTOCOL_SAFE_WORK_AREA: Ajuste de dimensiones para evitar cortes en tablets.
- * Se limita la altura al 72% del viewport dinámico para dejar espacio a cabeceras y footers.
+ * TacticalField - v58.0.0
+ * PROTOCOL_PIXEL_PERFECT_CANVAS: Eliminado overflow-hidden del contenedor de hijos
+ * para permitir que los manejadores de selección en los bordes no se corten.
  */
 export function TacticalField({ 
   theme = "cyan", 
@@ -108,17 +108,15 @@ export function TacticalField({
             isHalfField ? "bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-1.5 h-1.5" : "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-1"
           )} />
 
-          {/* ÁREAS (Sólo una en modo Half) */}
+          {/* ÁREAS */}
           {!isFutsal ? (
             <>
-              {/* ÁREA GRANDE ARRIBA / IZQUIERDA */}
               <div className={cn(
                 "absolute border border-white/20 transition-all duration-700",
                 isHalfField 
                   ? "top-0 left-1/2 -translate-x-1/2 w-[60%] h-[15.5%] border-t-0" 
                   : "top-1/2 left-0 -translate-y-1/2 w-[15.5%] h-[60%] border-l-0"
               )} />
-              {/* ÁREA PEQUEÑA ARRIBA / IZQUIERDA */}
               <div className={cn(
                 "absolute border border-white/20 transition-all duration-700",
                 isHalfField 
@@ -161,7 +159,8 @@ export function TacticalField({
           </span>
         </div>
 
-        <div className="absolute inset-0 z-10 overflow-hidden">
+        {/* CONTENEDOR DE HIJOS: Ajustado a visible para evitar cortes en manejadores periféricos */}
+        <div className="absolute inset-0 z-10 overflow-visible">
           {children}
         </div>
       </div>

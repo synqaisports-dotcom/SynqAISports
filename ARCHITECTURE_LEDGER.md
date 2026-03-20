@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v57.0.0 (Work Area Padding)
+# SynqSports Pro - ARCHITECTURE_LEDGER v58.0.0 (Pixel Perfect Canvas)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -20,3 +20,6 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 
 ## 57. Protocolo de Área de Trabajo Segura (v57.0.0)
 - **v57.0.0**: **PROTOCOL_SAFE_WORK_AREA**: Reajuste de las dimensiones máximas del TacticalField. Se limita la altura al 72dvh para asegurar que el campo quepa siempre entre la cabecera superior y los controles inferiores sin cortarse en modo medio campo o campo completo en tablets.
+
+## 58. Protocolo de Precisión de Lienzo (v58.0.0)
+- **v58.0.0**: **PROTOCOL_PIXEL_PERFECT_CANVAS**: Sincronización milimétrica entre el contenedor y el área de dibujo mediante getBoundingClientRect y ResizeObserver. Se libera el desbordamiento (overflow-visible) para evitar cortes en los manejadores de selección en los bordes del campo.
