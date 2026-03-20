@@ -130,7 +130,7 @@ const AdSlot = memo(({ orientation = 'horizontal' }: { orientation: 'horizontal'
 AdSlot.displayName = "AdSlot";
 
 /**
- * TrainingBoardPage - v58.0.0
+ * TrainingBoardPage - v58.1.0
  * PROTOCOL_PIXEL_PERFECT_CANVAS: Sincronización milimétrica mediante ResizeObserver.
  */
 function TrainingBoardContent() {
@@ -280,7 +280,7 @@ function TrainingBoardContent() {
         const rotHandlePx = rotatePoint({ x: bounds.centerX, y: bounds.minY - 50 * renderScale }, { x: bounds.centerX, y: bounds.centerY }, el.rotation);
         if (Math.sqrt(Math.pow(point.x * wPx - rotHandlePx.x, 2) + Math.pow(point.y * hPx - rotHandlePx.y, 2)) < 20) { interactionMode.current = 'rotating'; return; }
         const local = rotatePoint({ x: point.x * wPx, y: point.y * hPx }, { x: bounds.centerX, y: bounds.centerY }, -el.rotation);
-        const pad = 10 * renderScale; const handles = [{ x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, { x: bounds.minX - pad, y: centerY }, { x: bounds.maxX + pad, y: centerY }, { x: bounds.minX - pad, y: maxY + pad }, { x: bounds.centerX, y: maxY + pad }, { x: bounds.maxX + pad, y: maxY + pad }];
+        const pad = 10 * renderScale; const handles = [{ x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY }, { x: bounds.minX - pad, y: maxY + pad }, { x: bounds.centerX, y: maxY + pad }, { x: bounds.maxX + pad, y: maxY + pad }];
         const hIdx = handles.findIndex(h => Math.sqrt(Math.pow(local.x - h.x, 2) + Math.pow(local.y - h.y, 2)) < 15);
         if (hIdx !== -1) { interactionMode.current = 'resizing'; activeHandleIndex.current = hIdx; return; }
       }
@@ -295,7 +295,14 @@ function TrainingBoardContent() {
     if (interactionMode.current === 'resizing' && selectedIds.length === 1 && activeHandleIndex.current !== null) {
       setElements(prev => prev.map(el => { if (el.id !== selectedIds[0]) return el; const bounds = getElementBounds(el, wPx, hPx); const local = rotatePoint({ x: point.x * wPx, y: point.y * hPx }, { x: bounds.centerX, y: bounds.centerY }, -el.rotation); const next = [...el.points]; const h = activeHandleIndex.current!; if (isCircular(el.type)) { const dxPx = Math.abs(local.x - bounds.centerX) * 2; const dyPx = dxPx; next[0] = { x: (bounds.centerX - dxPx/2) / wPx, y: (bounds.centerY - dyPx/2) / hPx }; next[1] = { x: (bounds.centerX + dxPx/2) / wPx, y: (bounds.centerY + dyPx/2) / hPx }; } else if (isMaterial(el.type)) { const ratio = bounds.width / bounds.height; const dx = Math.abs(local.x - bounds.centerX) * 2; const dy = dx / ratio; next[0] = { x: (bounds.centerX - dx/2) / wPx, y: (bounds.centerY - dy/2) / hPx }; next[1] = { x: (bounds.centerX + dx/2) / wPx, y: (bounds.centerY + dy/2) / hPx }; } else { const p0Px = { x: next[0].x * wPx, y: next[0].y * hPx }; const p1Px = { x: next[1].x * wPx, y: next[1].y * hPx }; if ([0, 3, 5].includes(h)) p0Px.x = local.x; if ([2, 4, 7].includes(h)) p1Px.x = local.x; if ([0, 1, 2].includes(h)) p0Px.y = local.y; if ([5, 6, 7].includes(h)) p1Px.y = local.y; next[0] = { x: p0Px.x / wPx, y: p0Px.y / hPx }; next[1] = { x: p1Px.x / wPx, y: p1Px.y / hPx }; } return { ...el, points: next }; }));
     } else if (interactionMode.current === 'curving' && selectedIds.length === 1) setElements(prev => prev.map(el => el.id === selectedIds[0] ? { ...el, controlPoint: point } : el));
-    else if (interactionMode.current === 'rotating' && selectedIds.length === 1) { const el = elements.find(e => e.id === selectedIds[0]); if (el) { const b = getElementBounds(el, wPx, hPx); const angle = Math.atan2(point.y * hPx - b.centerY, point.x * wPx - b.centerX) + Math.PI / 2; setElements(prev => e.id === selectedIds[0] ? { ...e, rotation: angle } : e)); } } 
+    else if (interactionMode.current === 'rotating' && selectedIds.length === 1) { 
+      const el = elements.find(e => e.id === selectedIds[0]); 
+      if (el) { 
+        const b = getElementBounds(el, wPx, hPx); 
+        const angle = Math.atan2(point.y * hPx - b.centerY, point.x * wPx - b.centerX) + Math.PI / 2; 
+        setElements(prev => prev.map(e => e.id === selectedIds[0] ? { ...e, rotation: angle } : e)); 
+      } 
+    } 
     else if (interactionMode.current === 'dragging' && selectedIds.length > 0 && lastPoint.current) { const dx = point.x - lastPoint.current.x; const dy = point.y - lastPoint.current.y; setElements(prev => prev.map(el => { if (!selectedIds.includes(el.id)) return el; const next = { ...el, points: el.points.map(p => ({ x: p.x + dx, y: p.y + dy })) }; if (el.controlPoint) next.controlPoint = { x: el.controlPoint.x + dx, y: el.controlPoint.y + dy }; return next; })); lastPoint.current = point; } 
     redrawAll();
   };

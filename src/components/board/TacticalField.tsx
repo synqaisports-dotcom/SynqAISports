@@ -17,8 +17,8 @@ interface TacticalFieldProps {
 }
 
 /**
- * TacticalField - v58.0.0
- * PROTOCOL_PIXEL_PERFECT_CANVAS: Eliminado overflow-hidden del contenedor de hijos
+ * TacticalField - v58.1.0
+ * PROTOCOL_PIXEL_PERFECT_CANVAS: Cambiado overflow-hidden a overflow-visible 
  * para permitir que los manejadores de selección en los bordes no se corten.
  */
 export function TacticalField({ 
@@ -43,7 +43,7 @@ export function TacticalField({
       <div 
         ref={containerRef}
         className={cn(
-          "relative rounded-lg md:rounded-[2rem] overflow-hidden shadow-[0_0_60px_rgba(0,0,0,0.8)] border-2 transition-all duration-700 pointer-events-auto",
+          "relative rounded-lg md:rounded-[2rem] shadow-[0_0_60px_rgba(0,0,0,0.8)] border-2 transition-all duration-700 pointer-events-auto",
           accentColor,
           bgClass
         )}
@@ -55,14 +55,15 @@ export function TacticalField({
           height: isHalfField 
             ? `min(72dvh, calc(90vw / ${ratio}))` 
             : `min(72dvh, calc(95vw / ${ratio}))`,
-          margin: 'auto'
+          margin: 'auto',
+          overflow: 'visible' // PROTOCOLO_PIXEL_PERFECT: Evita cortes en handles periféricos
         }}
       >
         {/* TEXTURAS OPTIMIZADAS */}
         {!isFutsal ? (
-          <div className="absolute inset-0 opacity-10 bg-[repeating-linear-gradient(90deg,transparent_0%,transparent_10%,#000_10%,#000_20%)]" />
+          <div className="absolute inset-0 opacity-10 bg-[repeating-linear-gradient(90deg,transparent_0%,transparent_10%,#000_10%,#000_20%)] rounded-[inherit]" />
         ) : (
-          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.05)_0%,transparent_100%)]" />
+          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.05)_0%,transparent_100%)] rounded-[inherit]" />
         )}
         
         {/* LÍNEAS REGLAMENTARIAS */}
