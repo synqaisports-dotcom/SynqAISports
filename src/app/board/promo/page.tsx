@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useRef, useEffect, useCallback, Suspense } from "react";
+import { useState, useRef, useEffect, useCallback, Suspense, memo } from "react";
 import { 
   Zap, 
   Trash2, 
@@ -21,7 +21,8 @@ import {
   LayoutDashboard,
   Users,
   Square,
-  Megaphone
+  Megaphone,
+  RefreshCw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -85,15 +86,16 @@ const isCircular = (type: DrawingTool) =>
   ['player', 'ball', 'circle', 'seta'].includes(type);
 
 /**
- * AdSlot Component - v3.0.0
- * Incluye Protocolo de Blindaje Offline para registro de impresiones y clics.
+ * AdSlot Component - v53.0.0
+ * PROTOCOLO_MULTIPLEX_RELOAD: Optimizado con memo para latencia cero en el dibujo.
+ * Incluye simulación de refresco agresivo y estética Multiplex.
  */
-function AdSlot({ orientation = 'horizontal' }: { orientation: 'horizontal' | 'vertical' }) {
+const AdSlot = memo(({ orientation = 'horizontal' }: { orientation: 'horizontal' | 'vertical' }) => {
   useEffect(() => {
     // Registro de Impresión (Cepo de Datos Offline)
     synqSync.trackEvent('ad_impression', { 
       format: orientation, 
-      placement: 'promo_board',
+      placement: 'promo_board_multiplex',
       timestamp: new Date().toISOString()
     });
   }, [orientation]);
@@ -101,7 +103,7 @@ function AdSlot({ orientation = 'horizontal' }: { orientation: 'horizontal' | 'v
   const handleAdClick = () => {
     synqSync.trackEvent('ad_click', { 
       format: orientation, 
-      placement: 'promo_board' 
+      placement: 'promo_board_multiplex' 
     });
   };
 
@@ -113,14 +115,24 @@ function AdSlot({ orientation = 'horizontal' }: { orientation: 'horizontal' | 'v
         orientation === 'horizontal' ? "h-16 w-full max-w-[728px]" : "w-40 h-[600px]"
       )}
     >
-      <div className="absolute top-0 left-0 bg-primary/20 text-primary text-[6px] font-black px-2 py-0.5 uppercase tracking-widest italic">Ad_Slot_Active</div>
-      <Megaphone className="h-5 w-5 text-primary/40 group-hover:text-primary transition-all mb-2 animate-pulse" />
-      <span className="text-[8px] font-black text-primary/60 uppercase tracking-[0.3em] text-center px-4 italic">Sponsor_Broadcast_Space</span>
-      <span className="text-[6px] text-white/20 mt-1 uppercase font-bold tracking-widest">{orientation === 'horizontal' ? '728 x 90' : '160 x 600'} • Responsive</span>
-      <div className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none" />
+      <div className="absolute top-0 left-0 bg-primary/20 text-primary text-[6px] font-black px-2 py-0.5 uppercase tracking-widest italic z-20">Multiplex_Ad_Node</div>
+      
+      {/* ANIMACIÓN DE REFRESCO AGRESIVO (CSS) */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent h-1/2 w-full animate-[refresh-scan_3s_linear_infinite] pointer-events-none z-10" />
+      
+      <div className="relative z-20 flex flex-col items-center text-center px-4">
+        <RefreshCw className="h-5 w-5 text-primary/40 group-hover:text-primary transition-all mb-2 animate-spin-slow" />
+        <span className="text-[8px] font-black text-primary/60 uppercase tracking-[0.3em] italic">Dynamic_Sync_Broadcast</span>
+        <span className="text-[6px] text-white/20 mt-1 uppercase font-bold tracking-widest">Auto-Refresh: Active • Latency: 0ms</span>
+      </div>
+
+      {/* ESTÉTICA REJILLA MULTIPLEX */}
+      <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
     </div>
   );
-}
+});
+
+AdSlot.displayName = "AdSlot";
 
 /**
  * PromoBoardPage - v43.0.0

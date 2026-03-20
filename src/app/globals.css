@@ -201,6 +201,21 @@
   100% { transform: translateY(100%); }
 }
 
+@keyframes refresh-scan {
+  0% { transform: translateY(-100%); opacity: 0; }
+  50% { opacity: 0.2; }
+  100% { transform: translateY(200%); opacity: 0; }
+}
+
 .animate-in {
   animation-duration: 0.7s;
+}
+
+.animate-spin-slow {
+  animation: spin 8s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
