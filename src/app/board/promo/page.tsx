@@ -135,8 +135,8 @@ const AdSlot = memo(({ orientation = 'horizontal' }: { orientation: 'horizontal'
 AdSlot.displayName = "AdSlot";
 
 /**
- * PromoBoardPage - v43.0.0
- * PROTOCOLO_SMOOTH_BRUSH_STROKES: Implementación de curvas de Bézier cuadráticas para suavizado de trazos.
+ * PromoBoardPage - v56.0.0
+ * PROTOCOL_DPI_DOWNSAMPLING: Implementado renderScale 0.75 para T5.
  */
 function PromoBoardContent() {
   const { profile } = useAuth();
@@ -144,6 +144,10 @@ function PromoBoardContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const exerciseId = searchParams.get("id");
+
+  // PERFORMANCE
+  const [renderScale, setRenderScale] = useState(1.0);
+  const [isLegacyDevice, setIsLegacyDevice] = useState(false);
 
   // Habilitamos visualización para sandbox Y para revisión de superadmin
   const showAds = profile?.plan === 'free' || profile?.role === 'promo_coach' || profile?.role === 'superadmin';
@@ -172,6 +176,17 @@ function PromoBoardContent() {
   const activeHandleIndex = useRef<number | null>(null);
 
   useEffect(() => {
+    // DETECTOR DE HARDWARE LEGACY
+    if (typeof window !== 'undefined') {
+      const ua = window.navigator.userAgent;
+      const isT5 = /AGS2/.test(ua);
+      const lowCPU = (window.navigator.hardwareConcurrency || 8) <= 8;
+      if (isT5 || lowCPU) {
+        setIsLegacyDevice(true);
+        setRenderScale(0.75);
+      }
+    }
+
     // CARGAR CONFIGURACIÓN DE EQUIPO
     const savedTeam = JSON.parse(localStorage.getItem("synq_promo_team") || "null");
     if (savedTeam) {
@@ -283,20 +298,17 @@ function PromoBoardContent() {
     
     ctx.strokeStyle = element.color; 
     ctx.fillStyle = hexToRgba(element.color, 0.15); 
-    ctx.lineWidth = 3; 
+    ctx.lineWidth = 3 * renderScale; 
     ctx.lineJoin = 'round'; 
     ctx.lineCap = 'round';
     
-    if (element.lineStyle === 'dashed') ctx.setLineDash([10, 5]); else ctx.setLineDash([]);
+    if (element.lineStyle === 'dashed') ctx.setLineDash([10 * renderScale, 5 * renderScale]); else ctx.setLineDash([]);
 
     switch (element.type) {
       case 'text':
         ctx.save(); ctx.setLineDash([]); ctx.fillStyle = element.color; ctx.font = `bold ${Math.floor(height || 24)}px Space Grotesk`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(element.text || "TEXTO TÁCTICO", centerX, centerY); ctx.restore(); break;
       case 'freehand':
-        /**
-         * PROTOCOLO_SMOOTH_BRUSH_STROKES
-         */
         if (p.length < 3) {
           ctx.beginPath();
           ctx.moveTo(p[0].x, p[0].y);
@@ -326,7 +338,7 @@ function PromoBoardContent() {
           const cp = { x: element.controlPoint.x * widthPx, y: element.controlPoint.y * heightPx };
           ctx.moveTo(p[0].x, p[0].y); ctx.quadraticCurveTo(cp.x, cp.y, p[1].x, p[1].y);
         } else { ctx.moveTo(p[0].x, p[0].y); ctx.lineTo(p[1].x, p[1].y); }
-        ctx.stroke(); const head = 15;
+        ctx.stroke(); const head = 15 * renderScale;
         let angle = element.controlPoint ? Math.atan2(p[1].y - (element.controlPoint.y * heightPx), p[1].x - (element.controlPoint.x * widthPx)) : Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x);
         ctx.setLineDash([]); const drawH = (tx: number, ty: number, ang: number) => {
           ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(tx - head * Math.cos(ang - Math.PI / 6), ty - head * Math.sin(ang - Math.PI / 6));
@@ -352,7 +364,7 @@ function PromoBoardContent() {
         };
         dCB(false); dCB(true); dAH(0, -cSize, 0); dAH(cSize, 0, Math.PI/2); dAH(0, cSize, Math.PI); dAH(-cSize, 0, -Math.PI/2); ctx.restore(); break;
       case 'player':
-        ctx.save(); ctx.shadowBlur = 20; ctx.shadowColor = hexToRgba(element.color, 0.4); const pRadius = Math.min(width, height) / 2;
+        ctx.save(); ctx.shadowBlur = 20 * renderScale; ctx.shadowColor = hexToRgba(element.color, 0.4); const pRadius = Math.min(width, height) / 2;
         ctx.beginPath(); ctx.arc(centerX, centerY, pRadius, 0, Math.PI * 2);
         const pGrad = ctx.createRadialGradient(centerX - pRadius/3, centerY - pRadius/3, 0, centerX, centerY, pRadius);
         pGrad.addColorStop(0, '#ffffff44'); pGrad.addColorStop(0.5, hexToRgba(element.color, 0.3)); pGrad.addColorStop(1, hexToRgba(element.color, 0.1));
@@ -367,7 +379,7 @@ function PromoBoardContent() {
             ctx.setLineDash([]);
             ctx.font = `bold ${Math.floor(pRadius * 0.35)}px Space Grotesk`;
             ctx.fillStyle = 'rgba(255,255,255,0.8)';
-            ctx.fillText(playerName, centerX, centerY + pRadius + 12);
+            ctx.fillText(playerName, centerX, centerY + pRadius + 12 * renderScale);
           }
         }
         ctx.restore(); break;
@@ -387,32 +399,32 @@ function PromoBoardContent() {
         ctx.beginPath(); ctx.ellipse(0, 5, 22, 10, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fill();
         ctx.beginPath(); ctx.ellipse(0, 0, 22, 12, 0, 0, Math.PI * 2); const sG = ctx.createRadialGradient(0, -5, 0, 0, 0, 22); sG.addColorStop(0, '#ffffff'); sG.addColorStop(0.3, element.color); sG.addColorStop(1, hexToRgba(element.color, 0.8)); ctx.fillStyle = sG; ctx.fill(); ctx.restore(); break;
       case 'ladder':
-        ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/200, height/50); ctx.strokeStyle = '#334155'; ctx.lineWidth = 5; ctx.strokeRect(-100, -25, 200, 50); ctx.lineWidth = 3; ctx.strokeStyle = element.color;
+        ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/200, height/50); ctx.strokeStyle = '#334155'; ctx.lineWidth = 5 * renderScale; ctx.strokeRect(-100, -25, 200, 50); ctx.lineWidth = 3 * renderScale; ctx.strokeStyle = element.color;
         for(let x=-100; x<=100; x+=40) { ctx.beginPath(); ctx.moveTo(x, -25); ctx.lineTo(x, 25); ctx.stroke(); } ctx.restore(); break;
       case 'hurdle':
-        ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/60, height/30); ctx.strokeStyle = element.color; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(-30, 15); ctx.lineTo(-30, -15); ctx.lineTo(30, -15); ctx.lineTo(30, 15); ctx.stroke(); ctx.restore(); break;
+        ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/60, height/30); ctx.strokeStyle = element.color; ctx.lineWidth = 6 * renderScale; ctx.beginPath(); ctx.moveTo(-30, 15); ctx.lineTo(-30, -15); ctx.lineTo(30, -15); ctx.lineTo(30, 15); ctx.stroke(); ctx.restore(); break;
       case 'minigoal':
-        ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/100, height/60); ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(-50, -30, 100, 60); ctx.setLineDash([3, 3]); ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1;
-        for(let i=-50; i<50; i+=10) { ctx.beginPath(); ctx.moveTo(i, -30); ctx.lineTo(i, 30); ctx.stroke(); } for(let j=-30; j<30; j+=10) { ctx.beginPath(); ctx.moveTo(-50, j); ctx.lineTo(50, j); ctx.stroke(); } ctx.setLineDash([]); ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 5; ctx.strokeRect(-50, -30, 100, 60); ctx.restore(); break;
+        ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/100, height/60); ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(-50, -30, 100, 60); ctx.setLineDash([3 * renderScale, 3 * renderScale]); ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1 * renderScale;
+        for(let i=-50; i<50; i+=10) { ctx.beginPath(); ctx.moveTo(i, -30); ctx.lineTo(i, 30); ctx.stroke(); } for(let j=-30; j<30; j+=10) { ctx.beginPath(); ctx.moveTo(-50, j); ctx.lineTo(50, j); ctx.stroke(); } ctx.setLineDash([]); ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 5 * renderScale; ctx.strokeRect(-50, -30, 100, 60); ctx.restore(); break;
       case 'pica':
         ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/36, height/80); ctx.beginPath(); ctx.arc(0, 30, 18, 0, Math.PI * 2); ctx.fillStyle = '#334155'; ctx.fill(); ctx.fillStyle = element.color; ctx.fillRect(-4, -40, 8, 70); ctx.restore(); break;
       case 'barrier':
         ctx.save(); ctx.translate(centerX, centerY); const bw = width / 3;
         for (let i = -1; i <= 1; i++) {
           ctx.save(); ctx.translate(i * bw * 0.8, 0); ctx.beginPath(); ctx.ellipse(0, 0, bw/2, height/2, 0, 0, Math.PI * 2);
-          const bGrad = ctx.createLinearGradient(-bw/2, 0, bw/2, 0); bGrad.addColorStop(0, hexToRgba(element.color, 0.8)); bGrad.addColorStop(0.5, element.color); bGrad.addColorStop(1, hexToRgba(element.color, 0.6)); ctx.fillStyle = bGrad; ctx.fill(); ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.stroke(); ctx.restore();
+          const bGrad = ctx.createLinearGradient(-bw/2, 0, bw/2, 0); bGrad.addColorStop(0, hexToRgba(element.color, 0.8)); bGrad.addColorStop(0.5, element.color); bGrad.addColorStop(1, hexToRgba(element.color, 0.6)); ctx.fillStyle = bGrad; ctx.fill(); ctx.strokeStyle = '#000'; ctx.lineWidth = 1 * renderScale; ctx.stroke(); ctx.restore();
         } ctx.restore(); break;
     }
 
     if (isSelected) {
       ctx.restore(); ctx.save(); ctx.translate(centerX, centerY); ctx.rotate(element.rotation); ctx.translate(-centerX, -centerY);
-      ctx.strokeStyle = '#ffffffaa'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]); const pad = 12; 
+      ctx.strokeStyle = '#ffffffaa'; ctx.lineWidth = 2 * renderScale; ctx.setLineDash([6 * renderScale, 4 * renderScale]); const pad = 12 * renderScale; 
       ctx.strokeRect(minX - pad, minY - pad, width + pad * 2, height + pad * 2);
       
       ctx.setLineDash([]); 
       ctx.fillStyle = '#ffffff'; 
       ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 1.5 * renderScale;
       
       const handles = [
         { x: minX - pad, y: minY - pad }, { x: centerX, y: minY - pad }, { x: maxX + pad, y: minY - pad },
@@ -422,22 +434,22 @@ function PromoBoardContent() {
       
       handles.forEach(h => { 
         ctx.beginPath(); 
-        ctx.arc(h.x, h.y, 8, 0, Math.PI * 2); 
+        ctx.arc(h.x, h.y, 8 * renderScale, 0, Math.PI * 2); 
         ctx.fill(); 
         ctx.stroke(); 
       });
       
-      const rotY = minY - pad - 45; 
+      const rotY = minY - pad - 45 * renderScale; 
       ctx.beginPath(); ctx.moveTo(centerX, minY - pad); ctx.lineTo(centerX, rotY); ctx.stroke();
-      ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(centerX, rotY, 10, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(centerX, rotY, 10 * renderScale, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
       
       if (element.controlPoint && ['arrow', 'double-arrow', 'zigzag'].includes(element.type)) {
         const cp = { x: element.controlPoint.x * widthPx, y: element.controlPoint.y * heightPx };
-        ctx.restore(); ctx.save(); ctx.setLineDash([4, 4]); ctx.strokeStyle = '#3b82f6aa'; ctx.beginPath(); ctx.moveTo(centerX, centerY); ctx.lineTo(cp.x, cp.y); ctx.stroke();
-        ctx.fillStyle = '#3b82f6'; ctx.beginPath(); ctx.arc(cp.x, cp.y, 10, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.restore(); ctx.save(); ctx.setLineDash([4 * renderScale, 4 * renderScale]); ctx.strokeStyle = '#3b82f6aa'; ctx.beginPath(); ctx.moveTo(centerX, centerY); ctx.lineTo(cp.x, cp.y); ctx.stroke();
+        ctx.fillStyle = '#3b82f6'; ctx.beginPath(); ctx.arc(cp.x, cp.y, 10 * renderScale, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2 * renderScale; ctx.stroke();
       }
     } ctx.restore();
-  }, [hexToRgba, teamConfig]);
+  }, [hexToRgba, teamConfig, renderScale]);
 
   const redrawAll = useCallback(() => {
     const canvas = canvasRef.current; const ctx = canvas?.getContext('2d'); if (!ctx || !canvas) return;
@@ -453,13 +465,13 @@ function PromoBoardContent() {
     const canvas = canvasRef.current; if (!canvas) return;
     const obs = new ResizeObserver(() => {
       if (canvas.parentElement) { 
-        canvas.width = canvas.parentElement.clientWidth; 
-        canvas.height = canvas.parentElement.clientHeight; 
+        canvas.width = canvas.parentElement.clientWidth * renderScale; 
+        canvas.height = canvas.parentElement.clientHeight * renderScale; 
         redrawAll(); 
       }
     });
     obs.observe(canvas.parentElement!); return () => obs.disconnect();
-  }, [redrawAll]);
+  }, [redrawAll, renderScale]);
 
   useEffect(() => { redrawAll(); }, [elements, selectedIds, fieldType, showLanes, isHalfField, redrawAll]);
 
@@ -496,10 +508,10 @@ function PromoBoardContent() {
           const cpPx = { x: el.controlPoint.x * wPx, y: el.controlPoint.y * hPx };
           if (Math.sqrt(Math.pow(point.x * wPx - cpPx.x, 2) + Math.pow(point.y * hPx - cpPx.y, 2)) < 25) { interactionMode.current = 'curving'; return; }
         }
-        const rotHandlePx = rotatePoint({ x: bounds.centerX, y: bounds.minY - 45 }, { x: bounds.centerX, y: bounds.centerY }, el.rotation);
+        const rotHandlePx = rotatePoint({ x: bounds.centerX, y: bounds.minY - 45 * renderScale }, { x: bounds.centerX, y: bounds.centerY }, el.rotation);
         if (Math.sqrt(Math.pow(point.x * wPx - rotHandlePx.x, 2) + Math.pow(point.y * hPx - rotHandlePx.y, 2)) < 25) { interactionMode.current = 'rotating'; return; }
         const local = rotatePoint({ x: point.x * wPx, y: point.y * hPx }, { x: bounds.centerX, y: bounds.centerY }, -el.rotation);
-        const pad = 12; const handles = [{ x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY }, { x: bounds.minX - pad, y: bounds.maxY + pad }, { x: bounds.centerX, y: bounds.maxY + pad }, { x: bounds.maxX + pad, y: bounds.maxY + pad }];
+        const pad = 12 * renderScale; const handles = [{ x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY }, { x: bounds.minX - pad, y: bounds.maxY + pad }, { x: bounds.centerX, y: bounds.maxY + pad }, { x: bounds.maxX + pad, y: bounds.maxY + pad }];
         const hIdx = handles.findIndex(h => Math.sqrt(Math.pow(local.x - h.x, 2) + Math.pow(local.y - h.y, 2)) < 20);
         if (hIdx !== -1) { interactionMode.current = 'resizing'; activeHandleIndex.current = hIdx; return; }
       }
@@ -574,7 +586,10 @@ function PromoBoardContent() {
   const commonOpacity = selectedElements.length > 0 ? selectedElements[0].opacity : 1.0;
 
   return (
-    <div className="h-full w-full flex flex-col bg-black overflow-hidden relative">
+    <div className={cn(
+      "h-full w-full flex flex-col bg-black overflow-hidden relative",
+      isLegacyDevice && "perf-lite"
+    )}>
       {/* PUBLICIDAD LATERAL (MODO MEDIO CAMPO) */}
       {showAds && isHalfField && (
         <>

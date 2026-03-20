@@ -77,10 +77,9 @@ interface DrawingLine {
 const MemoizedPlayerChip = memo(PlayerChip);
 
 /**
- * MatchBoardPage - v55.0.0
- * PROTOCOL_PERFORMANCE_OVERRIDE: Implementación de Opción 1 (GPU Relief).
- * Detecta Huawei MediaPad T5 (AGS2) y desactiva filtros backdrop-blur.
- * Estructura de renderScale lista para Opción 2.
+ * MatchBoardPage - v56.0.0
+ * PROTOCOL_DPI_DOWNSAMPLING: Activada Opción 2.
+ * Reduce el buffer interno del canvas al 75% en hardware legacy (T5) para eliminar lag.
  */
 export default function MatchBoardPage() {
   const { profile } = useAuth();
@@ -108,7 +107,7 @@ export default function MatchBoardPage() {
   
   // PERFORMANCE CONTROL
   const [isLegacyDevice, setIsLegacyDevice] = useState(false);
-  const [renderScale, setRenderScale] = useState(1.0); // Preparación Opción 2
+  const [renderScale, setRenderScale] = useState(1.0); 
   
   const [drawings, setDrawings] = useState<DrawingLine[]>([]);
   const [activeDrawing, setActiveDrawing] = useState<{x: number, y: number}[] | null>(null);
@@ -125,9 +124,9 @@ export default function MatchBoardPage() {
     const lowCPU = (window.navigator.hardwareConcurrency || 8) <= 8;
     
     if (isT5 || lowCPU) {
-      console.log("[SynqAI] Detectado hardware legacy. Activando Protocolo de Alivio GPU.");
+      console.log("[SynqAI] Detectado hardware legacy. Activando Protocolo de Downsampling DPI.");
       setIsLegacyDevice(true);
-      // setRenderScale(0.75); // Descomentar para activar Opción 2
+      setRenderScale(0.75); // Opción 2 ACTIVA
     }
   }, []);
 

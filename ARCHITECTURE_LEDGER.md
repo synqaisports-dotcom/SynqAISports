@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v55.0.0 (Hardware Optimization)
+# SynqSports Pro - ARCHITECTURE_LEDGER v56.0.0 (DPI Control)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -14,3 +14,6 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 
 ## 55. Protocolo de Optimización de Hardware (v55.0.0)
 - **v55.0.0**: **PROTOCOL_PERFORMANCE_OVERRIDE**: Implementación de la "Opción 1" (GPU Relief). Supresión dinámica de backdrop-filters en hardware detectado como legacy (Kirin 659 / Mali-T830). Estructuración de la lógica de renderScale para futura implementación de Downsampling (Opción 2).
+
+## 56. Protocolo de Control DPI (v56.0.0)
+- **v56.0.0**: **PROTOCOL_DPI_DOWNSAMPLING**: Implementación de la "Opción 2" (Canvas Downsampling). Reducción del buffer interno del Canvas al 75% (720p aprox) en hardware legacy detectado (MediaPad T5). El escalado CSS compensa el tamaño visual mientras que la GPU procesa un 44% menos de píxeles, eliminando el lag en el trazo.
