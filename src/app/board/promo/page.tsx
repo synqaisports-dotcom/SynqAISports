@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useEffect, useCallback, Suspense, memo } from "react";
@@ -243,7 +242,7 @@ function PromoBoardContent() {
       ctx.strokeStyle = '#ffffffaa'; ctx.lineWidth = 2 * renderScale; ctx.setLineDash([6 * renderScale, 4 * renderScale]); const pad = 12 * renderScale; 
       ctx.strokeRect(minX - pad, minY - pad, width + pad * 2, height + pad * 2);
       ctx.setLineDash([]); ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#000000'; ctx.lineWidth = 1.5 * renderScale;
-      const handles = [{ x: minX - pad, y: minY - pad }, { x: centerX, y: minY - pad }, { x: maxX + pad, y: minY - pad }, { x: minX - pad, y: centerY }, { x: maxX + pad, y: centerY }, { x: minX - pad, y: maxY + pad }, { x: centerX, y: maxY + pad }, { x: maxX + pad, y: maxY + pad }];
+      const handles = [{ x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY }, { x: bounds.minX - pad, y: bounds.maxY + pad }, { x: bounds.centerX, y: bounds.maxY + pad }, { x: bounds.maxX + pad, y: bounds.maxY + pad }];
       handles.forEach(h => { ctx.beginPath(); ctx.arc(h.x, h.y, 8 * renderScale, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
       const rotY = minY - pad - 45 * renderScale; ctx.beginPath(); ctx.moveTo(centerX, minY - pad); ctx.lineTo(centerX, rotY); ctx.stroke();
       ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(centerX, rotY, 10 * renderScale, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
@@ -281,7 +280,7 @@ function PromoBoardContent() {
     const canvasRatio = canvasRef.current ? (canvasRef.current.width / canvasRef.current.height) : 1.5;
     const defW = tool === 'ladder' ? 0.15 : (tool === 'minigoal' || tool === 'cross-arrow' ? 0.1 : tool === 'barrier' ? 0.12 : tool === 'text' ? 0.3 : 0.05);
     const defH = isCircular(tool) ? (defW * canvasRatio) : (tool === 'ladder' ? 0.05 : (tool === 'minigoal' || tool === 'cross-arrow' ? 0.08 : tool === 'barrier' ? 0.12 : 0.05));
-    const newEl: DrawingElement = { id: `el-${Date.now()}`, type: tool, points: [{ x: 0.5 - defW/2, y: 0.5 - defH/2 }, { x: 0.5 + defW/2, y: 0.5 + defH/2 }], controlPoint: ['arrow', 'double-arrow', 'zigzag'].includes(tool) ? { x: 0.5, y: 0.45 } : undefined, color: currentColor, rotation: 0, lineStyle: isDashed ? 'dashed' : 'solid', number: pNum, opacity: 1.0, text: tool === 'text' ? "CONSIGNA TÁCTICA" : undefined };
+    const newEl: DrawingElement = { id: `el-${Date.now()}`, type: tool, points: [{ x: 0.5 - defW/2, y: 0.5 - defH/2 }, { x: 0.5 + defW/2, y: 0.5 + defH/2 }], controlPoint: ['arrow', 'double-arrow', 'zigzag'].includes(tool) ? { x: 0.5, y: 0.45 } : undefined, color: currentColor, rotation: 0, lineStyle: 'solid', number: pNum, opacity: 1.0, text: tool === 'text' ? "CONSIGNA TÁCTICA" : undefined };
     setElements(prev => [...prev, newEl]); setSelectedIds([newEl.id]); setActiveTool('select');
   };
 

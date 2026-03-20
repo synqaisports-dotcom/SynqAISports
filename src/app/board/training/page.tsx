@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useEffect, useCallback, Suspense, memo } from "react";
@@ -226,7 +225,7 @@ function TrainingBoardContent() {
     if (isSelected) {
       ctx.restore(); ctx.save(); ctx.translate(centerX, centerY); ctx.rotate(element.rotation); ctx.translate(-centerX, -centerY);
       ctx.strokeStyle = '#ffffffaa'; ctx.lineWidth = 1.5 * renderScale; ctx.setLineDash([6 * renderScale, 4 * renderScale]); const pad = 10 * renderScale; ctx.strokeRect(minX - pad, minY - pad, width + pad * 2, height + pad * 2);
-      ctx.setLineDash([]); ctx.fillStyle = '#ffffff'; const handles = [{ x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY }, { x: bounds.minX - pad, y: maxY + pad }, { x: bounds.centerX, y: maxY + pad }, { x: bounds.maxX + pad, y: maxY + pad }];
+      ctx.setLineDash([]); ctx.fillStyle = '#ffffff'; const handles = [{ x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY }, { x: bounds.minX - pad, y: bounds.maxY + pad }, { x: bounds.centerX, y: bounds.maxY + pad }, { x: bounds.maxX + pad, y: bounds.maxY + pad }];
       handles.forEach(h => { ctx.beginPath(); ctx.arc(h.x, h.y, 6 * renderScale, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
       const rotY = minY - pad - 40 * renderScale; ctx.beginPath(); ctx.moveTo(centerX, minY - pad); ctx.lineTo(centerX, rotY); ctx.stroke();
       ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(centerX, rotY, 8 * renderScale, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#000'; ctx.lineWidth = 2 * renderScale; ctx.stroke();
@@ -280,7 +279,7 @@ function TrainingBoardContent() {
         const rotHandlePx = rotatePoint({ x: bounds.centerX, y: bounds.minY - 50 * renderScale }, { x: bounds.centerX, y: bounds.centerY }, el.rotation);
         if (Math.sqrt(Math.pow(point.x * wPx - rotHandlePx.x, 2) + Math.pow(point.y * hPx - rotHandlePx.y, 2)) < 20) { interactionMode.current = 'rotating'; return; }
         const local = rotatePoint({ x: point.x * wPx, y: point.y * hPx }, { x: bounds.centerX, y: bounds.centerY }, -el.rotation);
-        const pad = 10 * renderScale; const handles = [{ x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY }, { x: bounds.minX - pad, y: maxY + pad }, { x: bounds.centerX, y: maxY + pad }, { x: bounds.maxX + pad, y: maxY + pad }];
+        const pad = 10 * renderScale; const handles = [{ x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY }, { x: bounds.minX - pad, y: bounds.maxY + pad }, { x: bounds.centerX, y: bounds.maxY + pad }, { x: bounds.maxX + pad, y: bounds.maxY + pad }];
         const hIdx = handles.findIndex(h => Math.sqrt(Math.pow(local.x - h.x, 2) + Math.pow(local.y - h.y, 2)) < 15);
         if (hIdx !== -1) { interactionMode.current = 'resizing'; activeHandleIndex.current = hIdx; return; }
       }
@@ -330,7 +329,7 @@ function TrainingBoardContent() {
           <div className="flex items-center gap-3">
             <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}><SelectTrigger className="w-[120px] h-9 bg-white/5 border-amber-500/20 rounded-xl text-[9px] font-black uppercase text-amber-500"><LayoutGrid className="h-3.5 w-3.5 mr-2" /> <SelectValue /></SelectTrigger><SelectContent className="bg-[#0a0f18] border-amber-500/20"><SelectItem value="f11" className="text-[9px] font-black uppercase">Fútbol 11</SelectItem><SelectItem value="f7" className="text-[9px] font-black uppercase">Fútbol 7</SelectItem><SelectItem value="futsal" className="text-[9px] font-black uppercase">Fútbol Sala</SelectItem></SelectContent></Select>
             <button onClick={() => setIsHalfField(!isHalfField)} className={cn("h-9 px-3 border border-amber-500/20 text-[9px] font-black uppercase rounded-xl transition-all", isHalfField ? "bg-amber-500 text-black shadow-[0_0_20px_rgba(245,158,11,0.3)]" : "bg-white/5 text-amber-500/40")}><Square className="h-3.5 w-3.5 mr-2" /> {isHalfField ? 'Campo Total' : 'Medio Campo'}</button>
-            <button onClick={() => setShowLanes(!showLanes)} className={cn("h-9 px-3 border-amber-500/20 text-[9px] font-black uppercase rounded-xl transition-all", showLanes ? "bg-amber-500 text-black shadow-[0_0_20px_rgba(245,158,11,0.3)]" : "bg-white/5 text-amber-500/40")}><Columns3 className="h-3.5 w-3.5 mr-2" /> Carriles</button>
+            <button onClick={() => setShowLanes(!showLanes)} className={cn("h-9 px-3 border-amber-500/20 text-[9px] font-black uppercase rounded-xl transition-all", showLanes ? "bg-amber-500 text-black shadow-[0_0_30px_rgba(245,158,11,0.4)]" : "bg-white/5 text-amber-500/40")}><Columns3 className="h-3.5 w-3.5 mr-2" /> Carriles</button>
           </div>
           <div className="h-6 w-[1px] bg-white/10 mx-1" /><Button onClick={() => setIsSaveSheetOpen(true)} className="h-10 bg-amber-500 text-black font-black uppercase text-[9px] tracking-widest px-6 rounded-xl shadow-[0_0_25px_rgba(245,158,11,0.3)] border-none"><Save className="h-3.5 w-3.5 mr-2" /> Guardar Táctica</Button>
         </div>
