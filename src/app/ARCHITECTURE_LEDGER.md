@@ -1,19 +1,13 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v52.0.0 (PWA Identity)
+# SynqSports Pro - ARCHITECTURE_LEDGER v54.0.0 (Performance Audit)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
-## 44. Protocolo de Interfaz Live Aligerada (v44.0.0)
-- **v44.0.0**: **PROTOCOL_MATCH_UI_LEAN**: Eliminación de la opción "Medio Campo" en la Pizarra de Partido para evitar sobrecarga visual y errores operativos en directo. Se fija la vista en Campo Completo para máxima visibilidad táctica.
-
-## 45. Protocolo de Persistencia Garantizada (v45.0.0)
-- **v45.0.0**: **PROTOCOL_MATCH_SAVE_RESTORE**: Restauración del botón "GUARDAR" en la cabecera de la Pizarra de Partido. Se optimiza su diseño para evitar solapamientos en tablets, asegurando que la persistencia de datos local sea una función primaria ininterrumpida.
-
-## 46. Protocolo de Ergonomía Unificada (v46.0.0)
-- **v46.0.0**: **PROTOCOL_BOTTOM_UNIFIED_CONTROLS**: Traslado de la barra de herramientas central (dibujo y estado) a la parte inferior de la Pizarra de Partido. Se alinea con los bloques de formación y fases para agrupar toda la operativa en una sola zona de interacción, despejando la visión táctica superior.
-
-## 51. Protocolo de Presets Cronométricos (v51.0.0)
-- **v51.0.0**: **PROTOCOL_CHRONO_PRESETS**: Integración de selector de tiempos preconfigurados (15-45 min) y unificación de bordes cian en el bloque de telemetría superior de la Pizarra de Partido.
-
 ## 52. Protocolo de Identidad PWA (v52.0.0)
 - **v52.0.0**: **PROTOCOL_PWA_IDENTITY**: Configuración de iconos de instalación maskable y metadatos de branding para iOS/Android, asegurando que el logotipo de SynqAI aparezca correctamente en la pantalla de inicio tras la instalación.
+
+## 53. Protocolo de Monetización Multiplex (v53.0.0)
+- **v53.0.0**: **PROTOCOL_MULTIPLEX_RELOAD**: Optimización del componente AdSlot mediante memoización y animaciones CSS de bajo impacto para garantizar latencia cero en el área de dibujo táctico.
+
+## 54. Auditoría de Rendimiento Legacy (v54.0.0)
+- **v54.0.0**: **AUDIT_LEGACY_HARDWARE**: Análisis de latencia en dispositivos de 2018 (Huawei MediaPad T5). Identificación de cuellos de botella en filtros de post-procesado (backdrop-blur) y densidad de píxeles en Canvas. Se proponen tres vías de optimización: Supresión de filtros GPU, Downsampling de Lienzo y carga dinámica de módulos pesados.
