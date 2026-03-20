@@ -77,8 +77,10 @@ interface DrawingLine {
 const MemoizedPlayerChip = memo(PlayerChip);
 
 /**
- * MatchBoardPage - v51.0.0
- * PROTOCOL_CHRONO_PRESETS: Bordes cian y selector de tiempos (15-45 min).
+ * MatchBoardPage - v55.0.0
+ * PROTOCOL_PERFORMANCE_OVERRIDE: Implementación de Opción 1 (GPU Relief).
+ * Detecta Huawei MediaPad T5 (AGS2) y desactiva filtros backdrop-blur.
+ * Estructura de renderScale lista para Opción 2.
  */
 export default function MatchBoardPage() {
   const { profile } = useAuth();
@@ -104,13 +106,30 @@ export default function MatchBoardPage() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isAnyDialogOpen, setIsAnyDialogOpen] = useState(false);
   
+  // PERFORMANCE CONTROL
+  const [isLegacyDevice, setIsLegacyDevice] = useState(false);
+  const [renderScale, setRenderScale] = useState(1.0); // Preparación Opción 2
+  
   const [drawings, setDrawings] = useState<DrawingLine[]>([]);
   const [activeDrawing, setActiveDrawing] = useState<{x: number, y: number}[] | null>(null);
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fieldRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => { 
+    setMounted(true); 
+    
+    // DETECTOR DE HARDWARE LEGACY (Huawei MediaPad T5 / AGS2)
+    const ua = window.navigator.userAgent;
+    const isT5 = /AGS2/.test(ua);
+    const lowCPU = (window.navigator.hardwareConcurrency || 8) <= 8;
+    
+    if (isT5 || lowCPU) {
+      console.log("[SynqAI] Detectado hardware legacy. Activando Protocolo de Alivio GPU.");
+      setIsLegacyDevice(true);
+      // setRenderScale(0.75); // Descomentar para activar Opción 2
+    }
+  }, []);
 
   useEffect(() => {
     const syncFullscreen = () => setIsFullscreen(!!document.fullscreenElement);
@@ -277,16 +296,19 @@ export default function MatchBoardPage() {
 
     const parent = canvas.parentElement;
     if (parent) {
-      if (canvas.width !== parent.clientWidth || canvas.height !== parent.clientHeight) {
-        canvas.width = parent.clientWidth;
-        canvas.height = parent.clientHeight;
+      const targetW = parent.clientWidth * renderScale;
+      const targetH = parent.clientHeight * renderScale;
+      
+      if (canvas.width !== targetW || canvas.height !== targetH) {
+        canvas.width = targetW;
+        canvas.height = targetH;
       }
     }
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 3 * renderScale;
 
     const drawLine = (points: {x:number, y:number}[], color: string) => {
       if (points.length < 2) return;
@@ -314,15 +336,18 @@ export default function MatchBoardPage() {
 
     drawings.forEach(d => drawLine(d.points, d.color));
     if (activeDrawing) drawLine(activeDrawing, currentColor);
-  }, [drawings, activeDrawing, currentColor, fieldType, isAnyDialogOpen]);
+  }, [drawings, activeDrawing, currentColor, fieldType, isAnyDialogOpen, renderScale]);
 
   if (!mounted) return null;
 
   return (
-    <div className="flex-1 flex flex-col bg-black overflow-hidden relative touch-none select-none" onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}>
+    <div className={cn(
+      "flex-1 flex flex-col bg-black overflow-hidden relative touch-none select-none",
+      isLegacyDevice && "perf-lite"
+    )} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}>
       
       {/* MARCADOR DE GOLES */}
-      <div className="fixed top-4 left-20 lg:left-32 z-[100] flex items-center gap-3 px-3 py-1 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl animate-in slide-in-from-left-4 duration-700 scale-[0.75] origin-top-left lg:scale-100">
+      <div className="fixed top-4 left-20 lg:left-32 z-[100] flex items-center gap-3 px-3 py-1 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl animate-in slide-in-from-left-4 duration-700 scale-[0.75] origin-top-left lg:scale-100 glass-panel">
         <div className="flex items-center gap-4">
           <div className="flex flex-col items-center">
             <span className="text-[6px] font-black text-primary/40 uppercase">LOC</span>
@@ -355,7 +380,7 @@ export default function MatchBoardPage() {
 
         <Dialog onOpenChange={setIsAnyDialogOpen}>
           <DialogTrigger asChild>
-            <button className="h-10 w-10 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all shadow-2xl active:scale-95 group">
+            <button className="h-10 w-10 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all shadow-2xl active:scale-95 group glass-panel">
               <Watch className="h-4 w-4 group-hover:animate-pulse" />
             </button>
           </DialogTrigger>
@@ -382,7 +407,7 @@ export default function MatchBoardPage() {
           </DialogContent>
         </Dialog>
 
-        <div className="flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-xl border border-primary/30 rounded-xl shadow-2xl transition-all">
+        <div className="flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-xl border border-primary/30 rounded-xl shadow-2xl transition-all glass-panel">
           <div className="flex items-center gap-1 border-r border-white/10 pr-1">
             <Select onValueChange={(v) => handleSetPresetTime(parseInt(v))}>
               <SelectTrigger className="h-7 w-8 bg-transparent border-none text-primary/40 hover:text-primary transition-all p-0 focus:ring-0">
@@ -424,7 +449,12 @@ export default function MatchBoardPage() {
 
       <main className="flex-1 relative overflow-hidden flex items-center justify-center pt-20 pb-28">
         <TacticalField theme="cyan" fieldType={fieldType} showWatermark showLanes={showLanes} isHalfField={false} containerRef={fieldRef}>
-          <canvas ref={canvasRef} onPointerDown={handleCanvasPointerDown} className="absolute inset-0 z-30 pointer-events-auto" />
+          <canvas 
+            ref={canvasRef} 
+            onPointerDown={handleCanvasPointerDown} 
+            className="absolute inset-0 z-30 pointer-events-auto"
+            style={{ width: '100%', height: '100%' }}
+          />
           <div className="absolute inset-0 z-40 pointer-events-none">
             {players.map(p => (
               <MemoizedPlayerChip 
@@ -449,7 +479,7 @@ export default function MatchBoardPage() {
           
           {/* BLOQUE LOCAL (IZQUIERDA) */}
           <div className="flex items-center gap-1.5 lg:gap-2 pointer-events-auto shrink-0">
-            <div className="bg-black/80 backdrop-blur-xl border border-primary/20 p-1 rounded-xl shadow-xl flex items-center h-10 lg:h-11 transition-all">
+            <div className="bg-black/80 backdrop-blur-xl border border-primary/20 p-1 rounded-xl shadow-xl flex items-center h-10 lg:h-11 transition-all glass-panel">
               <Select value={homeFormation} onValueChange={setHomeFormation}>
                 <SelectTrigger className="h-8 w-20 lg:w-24 bg-black border-primary/10 text-white font-black uppercase text-[9px] lg:text-[10px] rounded-lg focus:ring-0">
                   <SelectValue />
@@ -460,7 +490,7 @@ export default function MatchBoardPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="bg-black/80 backdrop-blur-xl border border-primary/20 p-1 rounded-xl shadow-xl flex items-center h-10 lg:h-11">
+            <div className="bg-black/80 backdrop-blur-xl border border-primary/20 p-1 rounded-xl shadow-xl flex items-center h-10 lg:h-11 glass-panel">
               <div className="flex gap-0.5 lg:gap-1">
                 {["DEF", "TDA", "SAL", "ATK"].map(p => (
                   <button 
@@ -476,7 +506,7 @@ export default function MatchBoardPage() {
                 ))}
               </div>
             </div>
-            <div className="bg-black/80 backdrop-blur-xl border border-primary/20 p-1 rounded-xl shadow-xl flex items-center h-10 lg:h-11">
+            <div className="bg-black/80 backdrop-blur-xl border border-primary/20 p-1 rounded-xl shadow-xl flex items-center h-10 lg:h-11 glass-panel">
               <div className="flex items-center gap-0.5 bg-black/40 p-0.5 rounded-lg border border-white/5">
                 <button onClick={() => setHomeShift("left")} className={cn("h-7 w-7 lg:h-8 lg:w-8 rounded-md flex items-center justify-center transition-all", homeShift === 'left' ? 'bg-primary/20 text-primary' : 'text-white/10')}><ChevronLeft className="h-3 w-3 lg:h-4 lg:w-4" /></button>
                 <button onClick={() => setHomeShift("center")} className={cn("h-7 w-7 lg:h-8 lg:w-8 rounded-md flex items-center justify-center transition-all", homeShift === 'center' ? 'bg-primary/20 text-primary' : 'text-white/10')}><div className="h-1.5 w-1.5 lg:h-2 lg:w-2 rounded-full bg-current" /></button>
@@ -487,7 +517,7 @@ export default function MatchBoardPage() {
 
           {/* MANDO CENTRAL (CENTRO) - COMPACTADO */}
           <div className="flex-1 flex justify-center pointer-events-auto min-w-0">
-            <div className="flex items-center gap-2 lg:gap-3 px-3 lg:px-4 h-10 lg:h-11 bg-black/80 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl max-w-full overflow-hidden">
+            <div className="flex items-center gap-2 lg:gap-3 px-3 lg:px-4 h-10 lg:h-11 bg-black/80 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl max-w-full overflow-hidden glass-panel">
               <div className="flex items-center gap-1.5 lg:gap-2 pr-2 lg:pr-3 border-r border-white/10 shrink-0">
                 {["#00f2ff", "#f43f5e", "#facc15"].map(c => (
                   <button key={c} onClick={() => setCurrentColor(c)} className={cn("h-4 w-4 lg:h-5 lg:w-5 rounded-full border-2 transition-all", currentColor === c ? "border-white scale-110 shadow-lg" : "border-transparent opacity-40")} style={{ backgroundColor: c }} />
@@ -522,14 +552,14 @@ export default function MatchBoardPage() {
 
           {/* BLOQUE VISITANTE (DERECHA) - ESPEJO Y COMPACTO */}
           <div className="flex items-center gap-1.5 lg:gap-2 pointer-events-auto shrink-0">
-            <div className="bg-black/80 backdrop-blur-xl border border-rose-500/20 p-1 rounded-xl shadow-xl flex items-center h-10 lg:h-11">
+            <div className="bg-black/80 backdrop-blur-xl border border-rose-500/20 p-1 rounded-xl shadow-xl flex items-center h-10 lg:h-11 glass-panel">
               <div className="flex items-center gap-0.5 bg-black/40 p-0.5 rounded-lg border border-white/5">
                 <button onClick={() => setGuestShift("left")} className={cn("h-7 w-7 lg:h-8 lg:w-8 rounded-md flex items-center justify-center transition-all", guestShift === 'left' ? 'bg-rose-500/20 text-rose-500' : 'text-white/10')}><ChevronLeft className="h-3 w-3 lg:h-4 lg:w-4" /></button>
                 <button onClick={() => setGuestShift("center")} className={cn("h-7 w-7 lg:h-8 lg:w-8 rounded-md flex items-center justify-center transition-all", guestShift === 'center' ? 'bg-rose-500/20 text-rose-500' : 'text-white/10')}><div className="h-1.5 w-1.5 lg:h-2 lg:w-2 rounded-full bg-current" /></button>
                 <button onClick={() => setGuestShift("right")} className={cn("h-7 w-7 lg:h-8 lg:w-8 rounded-md flex items-center justify-center transition-all", guestShift === 'right' ? 'bg-rose-500/20 text-rose-500' : 'text-white/10')}><ChevronRight className="h-3 w-3 lg:h-4 lg:w-4" /></button>
               </div>
             </div>
-            <div className="bg-black/80 backdrop-blur-xl border border-rose-500/20 p-1 rounded-xl shadow-xl flex items-center h-10 lg:h-11">
+            <div className="bg-black/80 backdrop-blur-xl border border-rose-500/20 p-1 rounded-xl shadow-xl flex items-center h-10 lg:h-11 glass-panel">
               <div className="flex gap-0.5 lg:gap-1">
                 {["DEF", "TDA", "SAL", "ATK"].map(p => (
                   <button 
@@ -545,7 +575,7 @@ export default function MatchBoardPage() {
                 ))}
               </div>
             </div>
-            <div className="bg-black/80 backdrop-blur-xl border border-rose-500/20 p-1 rounded-xl shadow-xl flex items-center h-10 lg:h-11">
+            <div className="bg-black/80 backdrop-blur-xl border border-rose-500/20 p-1 rounded-xl shadow-xl flex items-center h-10 lg:h-11 glass-panel">
               <Select value={guestFormation} onValueChange={setGuestFormation}>
                 <SelectTrigger className="h-8 w-20 lg:w-24 bg-black border-rose-500/10 text-white font-black uppercase text-[9px] lg:text-[10px] rounded-lg focus:ring-0">
                   <SelectValue />

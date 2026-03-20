@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v54.0.0 (Performance Audit)
+# SynqSports Pro - ARCHITECTURE_LEDGER v55.0.0 (Hardware Optimization)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -11,3 +11,6 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 
 ## 54. Auditoría de Rendimiento Legacy (v54.0.0)
 - **v54.0.0**: **AUDIT_LEGACY_HARDWARE**: Análisis de latencia en dispositivos de 2018 (Huawei MediaPad T5). Identificación de cuellos de botella en filtros de post-procesado (backdrop-blur) y densidad de píxeles en Canvas. Se proponen tres vías de optimización: Supresión de filtros GPU, Downsampling de Lienzo y carga dinámica de módulos pesados.
+
+## 55. Protocolo de Optimización de Hardware (v55.0.0)
+- **v55.0.0**: **PROTOCOL_PERFORMANCE_OVERRIDE**: Implementación de la "Opción 1" (GPU Relief). Supresión dinámica de backdrop-filters en hardware detectado como legacy (Kirin 659 / Mali-T830). Estructuración de la lógica de renderScale para futura implementación de Downsampling (Opción 2).
