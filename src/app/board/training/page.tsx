@@ -104,23 +104,19 @@ const isMaterial = (type: DrawingTool) =>
 const isCircular = (type: DrawingTool) => 
   ['player', 'ball', 'circle', 'seta'].includes(type);
 
-/**
- * AdSlot Component - v53.0.0
- * PROTOCOLO_MULTIPLEX_RELOAD: Optimizado con memo para latencia cero en el dibujo.
- */
 const AdSlot = memo(({ orientation = 'horizontal' }: { orientation: 'horizontal' | 'vertical' }) => {
   useEffect(() => {
     synqSync.trackEvent('ad_impression', { format: orientation, placement: 'training_board_multiplex', timestamp: new Date().toISOString() });
   }, [orientation]);
   const handleAdClick = () => { synqSync.trackEvent('ad_click', { format: orientation, placement: 'training_board_multiplex' }); };
   return (
-    <div onClick={handleAdClick} className={cn("bg-primary/5 border-2 border-dashed border-primary/20 flex flex-col items-center justify-center rounded-2xl overflow-hidden group transition-all hover:bg-primary/[0.08] pointer-events-auto shadow-[0_0_20px_rgba(0,242,255,0.05)] relative cursor-pointer", orientation === 'horizontal' ? "h-16 w-full max-w-[728px]" : "w-40 h-[600px]")}>
+    <div onClick={handleAdClick} className={cn("bg-primary/5 border-2 border-dashed border-primary/20 flex flex-col items-center justify-center rounded-2xl overflow-hidden group transition-all hover:bg-primary/[0.08] pointer-events-auto shadow-[0_0_20px_rgba(0,242,255,0.05)] relative cursor-pointer", orientation === 'horizontal' ? "h-16 w-full" : "w-40 h-[600px]")}>
       <div className="absolute top-0 left-0 bg-primary/20 text-primary text-[6px] font-black px-2 py-0.5 uppercase tracking-widest italic z-20">Multiplex_Ad_Node</div>
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent h-1/2 w-full animate-[refresh-scan_3s_linear_infinite] pointer-events-none z-10" />
       <div className="relative z-20 flex flex-col items-center text-center px-4">
-        <RefreshCw className="h-5 w-5 text-primary/40 group-hover:text-primary transition-all mb-2 animate-spin-slow" />
-        <span className="text-[8px] font-black text-primary/60 uppercase tracking-[0.3em] italic">Dynamic_Sync_Broadcast</span>
-        <span className="text-[6px] text-white/20 mt-1 uppercase font-bold tracking-widest">Auto-Refresh: Active • Latency: 0ms</span>
+        <RefreshCw className="h-4 w-4 text-primary/40 group-hover:text-primary transition-all mb-1 animate-spin-slow" />
+        <span className="text-[7px] font-black text-primary/60 uppercase tracking-[0.2em] italic truncate">Sync_Broadcast</span>
+        <span className="text-[5px] text-white/20 uppercase font-bold tracking-widest">Auto-Refresh: Active</span>
       </div>
       <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
     </div>
@@ -129,10 +125,6 @@ const AdSlot = memo(({ orientation = 'horizontal' }: { orientation: 'horizontal'
 
 AdSlot.displayName = "AdSlot";
 
-/**
- * TrainingBoardPage - v58.1.0
- * PROTOCOLO_PIXEL_PERFECT_CANVAS: Sincronización milimétrica mediante ResizeObserver.
- */
 function TrainingBoardContent() {
   const { profile } = useAuth();
   const [renderScale, setRenderScale] = useState(1.0);
@@ -330,7 +322,15 @@ function TrainingBoardContent() {
 
   return (
     <div className={cn("h-full flex flex-col bg-[#04070c] overflow-hidden relative", isLegacyDevice && "perf-lite")}>
-      {showAds && isHalfField && ( <> <div className="fixed left-4 top-1/2 -translate-y-1/2 z-[100] animate-in slide-in-from-left-4 duration-1000 hidden xl:block"><AdSlot orientation="vertical" /></div> <div className="fixed right-4 top-1/2 -translate-y-1/2 z-[100] animate-in slide-in-from-right-4 duration-1000 hidden xl:block"><AdSlot orientation="vertical" /></div> </> )}
+      
+      {/* PUBLICIDAD BILATERAL INFERIOR */}
+      {showAds && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[100] w-full max-w-7xl px-6 flex gap-4 pointer-events-none animate-in fade-in duration-1000">
+          <div className="flex-1 pointer-events-auto"><AdSlot orientation="horizontal" /></div>
+          <div className="flex-1 pointer-events-auto"><AdSlot orientation="horizontal" /></div>
+        </div>
+      )}
+
       <header className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center gap-4 w-full max-w-4xl">
         <div className="flex items-center gap-4 px-6 py-3 bg-black/60 backdrop-blur-2xl border border-amber-500/30 rounded-[2rem] shadow-2xl animate-in slide-in-from-top-4 duration-700">
           <div className="flex items-center gap-4 pr-4 border-r border-white/10 shrink-0">
@@ -344,7 +344,6 @@ function TrainingBoardContent() {
           </div>
           <div className="h-6 w-[1px] bg-white/10 mx-1" /><Button onClick={() => setIsSaveSheetOpen(true)} className="h-10 bg-amber-500 text-black font-black uppercase text-[9px] tracking-widest px-6 rounded-xl shadow-[0_0_25px_rgba(245,158,11,0.3)] border-none"><Save className="h-3.5 w-3.5 mr-2" /> Guardar Táctica</Button>
         </div>
-        {showAds && !isHalfField && ( <div className="animate-in fade-in duration-1000 hidden md:block"><AdSlot orientation="horizontal" /></div> )}
       </header>
       {selectedIds.length > 0 && (
         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 px-4 py-2 bg-black/80 backdrop-blur-3xl border border-white/10 rounded-2xl animate-in zoom-in-95 duration-300">

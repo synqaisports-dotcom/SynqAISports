@@ -101,13 +101,13 @@ const AdSlot = memo(({ orientation = 'horizontal' }: { orientation: 'horizontal'
   }, [orientation]);
   const handleAdClick = () => { synqSync.trackEvent('ad_click', { format: orientation, placement: 'promo_board_multiplex' }); };
   return (
-    <div onClick={handleAdClick} className={cn("bg-primary/5 border-2 border-dashed border-primary/20 flex flex-col items-center justify-center rounded-2xl overflow-hidden group transition-all hover:bg-primary/[0.08] pointer-events-auto shadow-[0_0_20px_rgba(0,242,255,0.05)] relative cursor-pointer", orientation === 'horizontal' ? "h-16 w-full max-w-[728px]" : "w-40 h-[600px]")}>
+    <div onClick={handleAdClick} className={cn("bg-primary/5 border-2 border-dashed border-primary/20 flex flex-col items-center justify-center rounded-2xl overflow-hidden group transition-all hover:bg-primary/[0.08] pointer-events-auto shadow-[0_0_20px_rgba(0,242,255,0.05)] relative cursor-pointer", orientation === 'horizontal' ? "h-16 w-full" : "w-40 h-[600px]")}>
       <div className="absolute top-0 left-0 bg-primary/20 text-primary text-[6px] font-black px-2 py-0.5 uppercase tracking-widest italic z-20">Multiplex_Ad_Node</div>
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent h-1/2 w-full animate-[refresh-scan_3s_linear_infinite] pointer-events-none z-10" />
       <div className="relative z-20 flex flex-col items-center text-center px-4">
-        <RefreshCw className="h-5 w-5 text-primary/40 group-hover:text-primary transition-all mb-2 animate-spin-slow" />
-        <span className="text-[8px] font-black text-primary/60 uppercase tracking-[0.3em] italic">Dynamic_Sync_Broadcast</span>
-        <span className="text-[6px] text-white/20 mt-1 uppercase font-bold tracking-widest">Auto-Refresh: Active • Latency: 0ms</span>
+        <RefreshCw className="h-4 w-4 text-primary/40 group-hover:text-primary transition-all mb-1 animate-spin-slow" />
+        <span className="text-[7px] font-black text-primary/60 uppercase tracking-[0.2em] italic truncate">Sync_Broadcast</span>
+        <span className="text-[5px] text-white/20 uppercase font-bold tracking-widest">Auto-Refresh: Active</span>
       </div>
       <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
     </div>
@@ -368,16 +368,17 @@ function PromoBoardContent() {
 
   return (
     <div className={cn("h-full w-full flex flex-col bg-black overflow-hidden relative touch-none select-none", isLegacyDevice && "perf-lite")}>
-      {showAds && isHalfField && (
-        <>
-          <div className="fixed left-4 top-1/2 -translate-y-1/2 z-[100] animate-in slide-in-from-left-4 duration-1000 hidden xl:block"><AdSlot orientation="vertical" /></div>
-          <div className="fixed right-4 top-1/2 -translate-y-1/2 z-[100] animate-in slide-in-from-right-4 duration-1000 hidden xl:block"><AdSlot orientation="vertical" /></div>
-        </>
+      
+      {/* PUBLICIDAD BILATERAL INFERIOR */}
+      {showAds && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[100] w-full max-w-7xl px-6 flex gap-4 pointer-events-none animate-in fade-in duration-1000">
+          <div className="flex-1 pointer-events-auto"><AdSlot orientation="horizontal" /></div>
+          <div className="flex-1 pointer-events-auto"><AdSlot orientation="horizontal" /></div>
+        </div>
       )}
 
       {/* ICONOS FLOTANTES LATERALES - PROTOCOLO_TABLET_SIDE_ACCESS */}
       <div className="fixed left-6 top-1/2 -translate-y-1/2 z-[150] flex flex-col gap-4 pointer-events-none">
-        {/* MI EQUIPO */}
         <Sheet>
           <SheetTrigger asChild>
             <button className="h-14 w-14 rounded-2xl bg-black/60 backdrop-blur-2xl border border-primary/20 text-primary flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all pointer-events-auto group glass-panel">
@@ -430,7 +431,6 @@ function PromoBoardContent() {
           </SheetContent>
         </Sheet>
 
-        {/* MATERIAL TÉCNICO */}
         <Sheet>
           <SheetTrigger asChild>
             <button className="h-14 w-14 rounded-2xl bg-black/60 backdrop-blur-2xl border border-primary/20 text-primary flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all pointer-events-auto group glass-panel">
@@ -449,15 +449,7 @@ function PromoBoardContent() {
             </div>
             <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
               <div className="pointer-events-auto">
-                <BoardToolbar 
-                  theme="cyan" 
-                  variant="materials" 
-                  orientation="vertical" 
-                  activeTool={activeTool} 
-                  onToolSelect={(t) => { addElementAtCenter(t); setSelectedIds([]); }} 
-                  className="border-none bg-transparent shadow-none w-full" 
-                  showLabels
-                />
+                <BoardToolbar theme="cyan" variant="materials" orientation="vertical" activeTool={activeTool} onToolSelect={(t) => { addElementAtCenter(t); setSelectedIds([]); }} className="border-none bg-transparent shadow-none w-full" showLabels />
               </div>
             </div>
           </SheetContent>
@@ -465,7 +457,6 @@ function PromoBoardContent() {
       </div>
 
       <div className="fixed right-6 top-1/2 -translate-y-1/2 z-[150] flex flex-col gap-4 pointer-events-none">
-        {/* MIS TAREAS */}
         <Sheet>
           <SheetTrigger asChild>
             <button className="h-14 w-14 rounded-2xl bg-black/60 backdrop-blur-2xl border border-amber-500/20 text-amber-500 flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all pointer-events-auto group glass-panel">
@@ -489,11 +480,7 @@ function PromoBoardContent() {
               {vault.exercises && vault.exercises.length > 0 ? (
                 <div className="grid grid-cols-1 gap-4">
                   {vault.exercises.map((ex: any) => (
-                    <div 
-                      key={ex.id} 
-                      onClick={() => loadExercise(ex)}
-                      className="p-5 bg-white/[0.02] border border-white/5 rounded-3xl group hover:border-amber-500/40 hover:bg-amber-500/5 cursor-pointer transition-all relative overflow-hidden"
-                    >
+                    <div key={ex.id} onClick={() => loadExercise(ex)} className="p-5 bg-white/[0.02] border border-white/5 rounded-3xl group hover:border-amber-500/40 hover:bg-amber-500/5 cursor-pointer transition-all relative overflow-hidden">
                       <div className="flex justify-between items-start mb-2">
                         <Badge variant="outline" className="text-[7px] border-amber-500/20 text-amber-500 font-black px-2">{ex.block?.toUpperCase() || 'SANDBOX'}</Badge>
                         <span className="text-[8px] font-black text-white/20 uppercase tracking-widest">{ex.fieldType?.toUpperCase() || 'F11'}</span>
@@ -521,7 +508,6 @@ function PromoBoardContent() {
           </SheetContent>
         </Sheet>
 
-        {/* HERRAMIENTAS DE DIBUJO */}
         <Sheet>
           <SheetTrigger asChild>
             <button className="h-14 w-14 rounded-2xl bg-black/60 backdrop-blur-2xl border border-amber-500/20 text-amber-500 flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all pointer-events-auto group glass-panel">
@@ -540,23 +526,13 @@ function PromoBoardContent() {
             </div>
             <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
               <div className="pointer-events-auto">
-                <BoardToolbar 
-                  theme="amber" 
-                  variant="training" 
-                  orientation="vertical" 
-                  activeTool={activeTool} 
-                  onToolSelect={(t) => { if(t === 'select') { setActiveTool('select'); setSelectedIds([]); } else addElementAtCenter(t); }} 
-                  onClear={() => { setElements([]); setSelectedIds([]); }} 
-                  className="border-none bg-transparent shadow-none w-full" 
-                  showLabels
-                />
+                <BoardToolbar theme="amber" variant="training" orientation="vertical" activeTool={activeTool} onToolSelect={(t) => { if(t === 'select') { setActiveTool('select'); setSelectedIds([]); } else addElementAtCenter(t); }} onClear={() => { setElements([]); setSelectedIds([]); }} className="border-none bg-transparent shadow-none w-full" showLabels />
               </div>
             </div>
           </SheetContent>
         </Sheet>
       </div>
 
-      {/* HEADER TÁCTICO FLOTANTE COMPACTO */}
       <header className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center gap-4 w-full max-w-4xl">
         <div className="flex items-center gap-3 px-4 py-2 bg-black/60 backdrop-blur-2xl border border-primary/30 rounded-2xl shadow-2xl animate-in slide-in-from-top-2">
           <div className="flex items-center gap-3 pr-3 border-r border-white/10 shrink-0">
@@ -582,10 +558,8 @@ function PromoBoardContent() {
           )}
           <Button onClick={() => setIsSaveSheetOpen(true)} className="h-8 bg-primary text-black font-black uppercase text-[7px] tracking-widest px-4 rounded-lg blue-glow border-none"><Save className="h-3 w-3 mr-1.5" /> GUARDAR</Button>
         </div>
-        {showAds && !isHalfField && ( <div className="animate-in fade-in duration-1000 hidden md:block"><AdSlot orientation="horizontal" /></div> )}
       </header>
 
-      {/* BOTÓN DE RETORNO AL DASHBOARD */}
       <div className="fixed top-6 left-6 z-[200] lg:block hidden">
         <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard')} className="h-12 w-12 rounded-2xl bg-black/60 backdrop-blur-2xl border border-white/10 text-white/40 hover:text-primary transition-all shadow-xl">
           <LayoutDashboard className="h-5 w-5" />
@@ -598,7 +572,6 @@ function PromoBoardContent() {
         </TacticalField>
       </main>
 
-      {/* FICHA TÉCNICA DE GUARDADO */}
       <Sheet open={isSaveSheetOpen} onOpenChange={setIsSaveSheetOpen}>
         <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
           <div className="p-8 border-b border-white/5 bg-black/40"><SheetHeader className="space-y-4"><div className="flex items-center gap-3"><ClipboardList className="h-5 w-5 text-primary animate-pulse" /><span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary italic">Technical_Sheet_Sync_v1.1</span></div><SheetTitle className="text-3xl font-black italic uppercase tracking-tighter text-white">VINCULAR <span className="text-primary">DATOS</span></SheetTitle></SheetHeader></div>
