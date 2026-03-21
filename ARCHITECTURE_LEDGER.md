@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v58.0.0 (Pixel Perfect Canvas)
+# SynqSports Pro - ARCHITECTURE_LEDGER v60.0.0 (Immersive UI)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -23,3 +23,9 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 
 ## 58. Protocolo de Precisión de Lienzo (v58.0.0)
 - **v58.0.0**: **PROTOCOL_PIXEL_PERFECT_CANVAS**: Sincronización milimétrica entre el contenedor y el área de dibujo mediante getBoundingClientRect y ResizeObserver. Se libera el desbordamiento (overflow-visible) para evitar cortes en los manejadores de selección en los bordes del campo.
+
+## 59. Protocolo de Interfaz Inmersiva (v59.0.0)
+- **v59.0.0**: **PROTOCOL_SIDE_ACCESS_PANELS**: Reestructuración de la Pizarra Promo para integrar paneles laterales deslizantes para el Equipo y el Almacén de Tareas, liberando el área de dibujo central.
+
+## 60. Protocolo de Herramientas Flotantes (v60.0.0)
+- **v60.0.0**: **PROTOCOL_IMMERSIVE_SIDEBAR_TOOLS**: Eliminación de la botonera inferior en la Pizarra Promo. Migración de las herramientas de dibujo y material técnico a paneles laterales tipo Sheet para maximizar el área de trabajo y mejorar la ergonomía en tablets.

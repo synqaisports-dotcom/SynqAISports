@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect, useCallback, Suspense, memo } from "react";
@@ -25,7 +26,9 @@ import {
   Library,
   ChevronRight,
   ShieldCheck,
-  Smartphone
+  Smartphone,
+  Boxes,
+  Pencil
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -361,6 +364,7 @@ function PromoBoardContent() {
 
       {/* ICONOS FLOTANTES LATERALES - PROTOCOLO_TABLET_SIDE_ACCESS */}
       <div className="fixed left-6 top-1/2 -translate-y-1/2 z-[150] flex flex-col gap-4 pointer-events-none">
+        {/* MI EQUIPO */}
         <Sheet>
           <SheetTrigger asChild>
             <button className="h-14 w-14 rounded-2xl bg-black/60 backdrop-blur-2xl border border-primary/20 text-primary flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all pointer-events-auto group glass-panel">
@@ -412,9 +416,35 @@ function PromoBoardContent() {
             </div>
           </SheetContent>
         </Sheet>
+
+        {/* MATERIAL TÉCNICO */}
+        <Sheet>
+          <SheetTrigger asChild>
+            <button className="h-14 w-14 rounded-2xl bg-black/60 backdrop-blur-2xl border border-primary/20 text-primary flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all pointer-events-auto group glass-panel">
+              <Boxes className="h-6 w-6 group-hover:animate-pulse" />
+            </button>
+          </SheetTrigger>
+          <SheetContent side="left" className="bg-[#04070c]/98 backdrop-blur-3xl border-r border-primary/20 text-white w-full sm:max-w-xs shadow-[20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+            <div className="p-8 border-b border-white/5 bg-black/40">
+              <SheetHeader className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary italic">Equipment_Studio</span>
+                </div>
+                <SheetTitle className="text-2xl font-black italic uppercase tracking-tighter">MATERIAL</SheetTitle>
+              </SheetHeader>
+            </div>
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+              <div className="pointer-events-auto">
+                <BoardToolbar theme="cyan" variant="materials" orientation="vertical" activeTool={activeTool} onToolSelect={(t) => { addElementAtCenter(t); setSelectedIds([]); }} className="border-none bg-transparent shadow-none w-full" />
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
 
       <div className="fixed right-6 top-1/2 -translate-y-1/2 z-[150] flex flex-col gap-4 pointer-events-none">
+        {/* MIS TAREAS */}
         <Sheet>
           <SheetTrigger asChild>
             <button className="h-14 w-14 rounded-2xl bg-black/60 backdrop-blur-2xl border border-amber-500/20 text-amber-500 flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all pointer-events-auto group glass-panel">
@@ -469,6 +499,31 @@ function PromoBoardContent() {
             </div>
           </SheetContent>
         </Sheet>
+
+        {/* HERRAMIENTAS DE DIBUJO */}
+        <Sheet>
+          <SheetTrigger asChild>
+            <button className="h-14 w-14 rounded-2xl bg-black/60 backdrop-blur-2xl border border-amber-500/20 text-amber-500 flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all pointer-events-auto group glass-panel">
+              <Pencil className="h-6 w-6 group-hover:animate-pulse" />
+            </button>
+          </SheetTrigger>
+          <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-amber-500/20 text-white w-full sm:max-w-xs shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+            <div className="p-8 border-b border-white/5 bg-black/40">
+              <SheetHeader className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500 italic">Drawing_Studio</span>
+                </div>
+                <SheetTitle className="text-2xl font-black italic uppercase tracking-tighter">HERRAMIENTAS</SheetTitle>
+              </SheetHeader>
+            </div>
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+              <div className="pointer-events-auto">
+                <BoardToolbar theme="cyan" variant="training" orientation="vertical" activeTool={activeTool} onToolSelect={(t) => { if(t === 'select') { setActiveTool('select'); setSelectedIds([]); } else addElementAtCenter(t); }} onClear={() => { setElements([]); setSelectedIds([]); }} className="border-none bg-transparent shadow-none w-full" />
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
 
       {/* HEADER TÁCTICO FLOTANTE COMPACTO */}
@@ -512,11 +567,6 @@ function PromoBoardContent() {
           <canvas ref={canvasRef} className="absolute inset-0 z-30 pointer-events-auto" onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} />
         </TacticalField>
       </main>
-
-      <div className="fixed bottom-10 left-0 right-0 flex justify-center items-end gap-12 px-12 z-[100] pointer-events-none">
-        <div className="pointer-events-auto"><BoardToolbar theme="cyan" variant="materials" orientation="horizontal" activeTool={activeTool} onToolSelect={(t) => { addElementAtCenter(t); setSelectedIds([]); }} className="border shadow-2xl" /></div>
-        <div className="pointer-events-auto"><BoardToolbar theme="cyan" variant="training" orientation="horizontal" activeTool={activeTool} onToolSelect={(t) => { if(t === 'select') { setActiveTool('select'); setSelectedIds([]); } else addElementAtCenter(t); }} onClear={() => { setElements([]); setSelectedIds([]); }} className="border shadow-2xl" /></div>
-      </div>
 
       {/* FICHA TÉCNICA DE GUARDADO */}
       <Sheet open={isSaveSheetOpen} onOpenChange={setIsSaveSheetOpen}>
