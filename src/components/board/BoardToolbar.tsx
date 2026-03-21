@@ -42,6 +42,7 @@ interface BoardToolbarProps {
   variant?: "full" | "match" | "training" | "materials";
   orientation?: "vertical" | "horizontal";
   hasSelection?: boolean;
+  showLabels?: boolean;
 }
 
 const COLORS = [
@@ -108,7 +109,8 @@ export function BoardToolbar({
   className,
   variant = "full",
   orientation = "vertical",
-  hasSelection = false
+  hasSelection = false,
+  showLabels = false
 }: BoardToolbarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -117,7 +119,9 @@ export function BoardToolbar({
   const activeClass = `${accentColor} text-black ${glowShadow} scale-105`;
   const isHorizontal = orientation === "horizontal";
 
-  const btnClass = "h-9 w-9 rounded-xl flex items-center justify-center transition-all group relative shrink-0 active:scale-95";
+  const btnClass = showLabels
+    ? "h-11 w-full px-4 rounded-xl flex items-center gap-3 transition-all group relative shrink-0 active:scale-95 text-left"
+    : "h-9 w-9 rounded-xl flex items-center justify-center transition-all group relative shrink-0 active:scale-95";
 
   if (variant === "match") {
     return (
@@ -164,12 +168,13 @@ export function BoardToolbar({
     <aside className={cn(
       "bg-black/60 backdrop-blur-2xl border border-white/10 transition-all duration-500 flex items-center z-50 overflow-hidden shadow-2xl pointer-events-auto",
       theme === "amber" ? "border-amber-500/30 shadow-amber-500/10" : "border-primary/30 shadow-primary/10",
-      isHorizontal 
+      isHorizontal && !showLabels
         ? "flex-row px-2 rounded-full h-12" 
-        : "flex-col py-4 rounded-[1.5rem] w-14",
+        : "flex-col rounded-[1.5rem]",
+      showLabels ? "w-full p-2 gap-1" : (isHorizontal ? "h-12" : "w-14 py-4"),
       isCollapsed 
         ? (isHorizontal ? "w-12 px-0" : "h-12 py-0") 
-        : (isHorizontal ? "max-w-fit gap-1 px-3" : "max-h-fit gap-2 py-4"),
+        : (isHorizontal && !showLabels ? "max-w-fit gap-1 px-3" : (showLabels ? "max-h-fit" : "max-h-fit gap-2")),
       className
     )}>
       {isCollapsed ? (
@@ -191,9 +196,10 @@ export function BoardToolbar({
                 onClick={() => onToolSelect?.('select')}
                 className={cn(btnClass, activeTool === 'select' ? activeClass : "text-white/40 hover:text-white")}
               >
-                <MousePointer2 className="h-4 w-4" />
+                <MousePointer2 className="h-3.5 w-3.5 shrink-0" />
+                {showLabels && <span className="text-[10px] font-black uppercase tracking-widest">Selección</span>}
               </button>
-              <div className={cn(isHorizontal ? "h-5 w-[1px]" : "w-6 h-[1px]", "bg-white/10")} />
+              <div className={cn(isHorizontal && !showLabels ? "h-5 w-[1px]" : "w-full h-[1px]", "bg-white/10 my-1")} />
             </>
           )}
 
@@ -204,23 +210,38 @@ export function BoardToolbar({
               className={cn(btnClass, activeTool === tool.id ? activeClass : "text-white/40 hover:text-white")}
               title={tool.label}
             >
-              <tool.icon className="h-4 w-4" />
+              <tool.icon className="h-3.5 w-3.5 shrink-0" />
+              {showLabels && <span className="text-[10px] font-black uppercase tracking-widest truncate">{tool.label}</span>}
             </button>
           ))}
 
           {variant !== 'materials' && (
             <>
-              <div className={cn(isHorizontal ? "h-5 w-[1px]" : "w-6 h-[1px]", "bg-white/10")} />
-              <button onClick={onClear} className="text-rose-500/40 hover:text-rose-500 h-9 w-9 flex items-center justify-center rounded-xl hover:bg-rose-500/10">
-                <Trash2 className="h-4 w-4" />
+              <div className={cn(isHorizontal && !showLabels ? "h-5 w-[1px]" : "w-full h-[1px]", "bg-white/10 my-1")} />
+              <button 
+                onClick={onClear} 
+                className={cn(
+                  showLabels ? btnClass : "h-9 w-9 flex items-center justify-center rounded-xl",
+                  "text-rose-500/40 hover:text-rose-500 hover:bg-rose-500/10"
+                )}
+              >
+                <Trash2 className="h-3.5 w-3.5 shrink-0" />
+                {showLabels && <span className="text-[10px] font-black uppercase tracking-widest">Limpiar Campo</span>}
               </button>
             </>
           )}
 
-          <div className={cn(isHorizontal ? "h-5 w-[1px]" : "w-6 h-[1px]", "bg-white/10")} />
+          <div className={cn(isHorizontal && !showLabels ? "h-5 w-[1px]" : "w-full h-[1px]", "bg-white/10 my-1")} />
 
-          <button onClick={() => setIsCollapsed(true)} className="text-white/20 hover:text-white h-9 w-9 flex items-center justify-center transition-all rounded-xl">
-            {isHorizontal ? <ChevronDown className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          <button 
+            onClick={() => setIsCollapsed(true)} 
+            className={cn(
+              showLabels ? btnClass : "h-9 w-9 flex items-center justify-center transition-all rounded-xl",
+              "text-white/20 hover:text-white"
+            )}
+          >
+            {isHorizontal && !showLabels ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
+            {showLabels && <span className="text-[10px] font-black uppercase tracking-widest">Ocultar Menú</span>}
           </button>
         </>
       )}
