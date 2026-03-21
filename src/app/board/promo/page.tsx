@@ -377,92 +377,97 @@ function PromoBoardContent() {
         </div>
       )}
 
-      {/* ICONOS FLOTANTES LATERALES - SOLO EQUIPO Y MATERIALES (DERECHA MOVIDOS A HEADER) */}
-      <div className="fixed left-6 top-1/2 -translate-y-1/2 z-[150] flex flex-col gap-4 pointer-events-none">
-        <Sheet>
-          <SheetTrigger asChild>
-            <button className="h-14 w-14 rounded-2xl bg-black/60 backdrop-blur-2xl border border-primary/20 text-primary flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all pointer-events-auto group glass-panel">
-              <Users className="h-6 w-6 group-hover:animate-pulse" />
-              <div className="absolute -top-1 -right-1 h-4 w-4 bg-primary rounded-full border-2 border-black flex items-center justify-center">
-                <span className="text-[8px] font-black text-black">11</span>
-              </div>
-            </button>
-          </SheetTrigger>
-          <SheetContent side="left" className="bg-[#04070c]/98 backdrop-blur-3xl border-r border-primary/20 text-white w-full sm:max-w-md shadow-[20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
-            <div className="p-8 border-b border-white/5 bg-black/40">
-              <SheetHeader className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary italic">Squad_Roster_v1.0</span>
-                </div>
-                <SheetTitle className="text-3xl font-black italic uppercase tracking-tighter">MI <span className="text-primary">EQUIPO</span></SheetTitle>
-              </SheetHeader>
-            </div>
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-4">
-              <Button variant="outline" onClick={loadTeamFromSandbox} className="w-full h-14 border-primary/20 bg-primary/5 text-primary font-black uppercase text-[10px] rounded-2xl hover:bg-primary hover:text-black transition-all mb-6">
-                <Users className="h-4 w-4 mr-2" /> Volcar Titulares al Campo
-              </Button>
-              {teamConfig ? (
-                <div className="space-y-2">
-                  <p className="text-[9px] font-black uppercase text-primary/40 tracking-widest ml-1 mb-4 italic">Lista de Jugadores Sincronizada</p>
-                  {teamConfig.starters.filter((n: string) => n.trim() !== "").map((name: string, i: number) => (
-                    <div key={i} className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl flex items-center justify-between hover:bg-primary/5 hover:border-primary/20 transition-all group">
-                      <div className="flex items-center gap-4">
-                        <span className="text-[10px] font-black text-primary/40 group-hover:text-primary transition-colors">#{i+1}</span>
-                        <span className="text-xs font-black text-white uppercase italic group-hover:cyan-text-glow transition-all">{name}</span>
-                      </div>
-                      <Badge variant="outline" className="text-[7px] border-primary/10 text-primary/40">PROMO_NODE</Badge>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="p-10 text-center space-y-4 border-2 border-dashed border-white/5 rounded-3xl opacity-40">
-                  <Users className="h-10 w-10 mx-auto text-white/20" />
-                  <p className="text-[9px] font-black uppercase tracking-widest">Sin configuración de equipo</p>
-                  <Button variant="link" className="text-primary text-[10px] font-black uppercase p-0" asChild><Link href="/dashboard/promo/team">Configurar Ahora</Link></Button>
-                </div>
-              )}
-            </div>
-            <div className="p-8 bg-black/60 border-t border-white/5">
-              <SheetClose asChild>
-                <Button variant="ghost" className="w-full h-14 border border-primary/20 text-primary/60 font-black uppercase text-[10px] tracking-widest rounded-xl hover:bg-primary/5">OCULTAR_PANEL</Button>
-              </SheetClose>
-            </div>
-          </SheetContent>
-        </Sheet>
-
-        <Sheet>
-          <SheetTrigger asChild>
-            <button className="h-14 w-14 rounded-2xl bg-black/60 backdrop-blur-2xl border border-primary/20 text-primary flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all pointer-events-auto group glass-panel">
-              <Boxes className="h-6 w-6 group-hover:animate-pulse" />
-            </button>
-          </SheetTrigger>
-          <SheetContent side="left" className="bg-[#04070c]/98 backdrop-blur-3xl border-r border-primary/20 text-white w-full sm:max-w-xs shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
-            <div className="p-8 border-b border-white/5 bg-black/40">
-              <SheetHeader className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary italic">Equipment_Studio</span>
-                </div>
-                <SheetTitle className="text-2xl font-black italic uppercase tracking-tighter">MATERIAL</SheetTitle>
-              </SheetHeader>
-            </div>
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
-              <div className="pointer-events-auto">
-                <BoardToolbar theme="cyan" variant="materials" orientation="vertical" activeTool={activeTool} onToolSelect={(t) => { addElementAtCenter(t); setSelectedIds([]); }} className="border-none bg-transparent shadow-none w-full" showLabels />
-              </div>
-            </div>
-          </SheetContent>
-        </Sheet>
-      </div>
-
       <header className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center gap-4 w-full max-w-5xl px-4 pointer-events-none">
         <div className="flex items-center gap-2 md:gap-4 px-4 py-2 md:px-6 md:py-3 bg-black/60 backdrop-blur-2xl border border-primary/30 rounded-[2rem] shadow-2xl animate-in slide-in-from-top-2 scale-[0.8] md:scale-90 lg:scale-100 origin-top pointer-events-auto">
+          
+          {/* GRUPO 1: FULLSCREEN, ICONO Y TÍTULO */}
           <div className="flex items-center gap-3 pr-3 border-r border-white/10 shrink-0">
             <button onClick={toggleFullscreen} className="h-8 w-8 flex items-center justify-center text-primary/40 hover:text-primary transition-all active:scale-90" title={isFullscreen ? "Minimizar" : "Pantalla Completa"}>{isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}</button>
             <div className="flex flex-col"><div className="flex items-center gap-1.5"><Zap className="h-3 w-3 text-primary animate-pulse" /><span className="text-[7px] font-black text-primary tracking-widest uppercase italic">Promo_Mode</span></div><h1 className="text-[10px] font-headline font-black text-white italic uppercase leading-none">{exerciseId ? 'Edición' : 'Sandbox'}</h1></div>
           </div>
+
+          {/* GRUPO 2: EQUIPO Y MATERIAL (MIGRADOS AQUÍ) */}
+          <div className="flex items-center gap-2 px-1">
+            {/* PANEL DE EQUIPO */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <button className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center transition-all group relative">
+                  <Users className="h-4 w-4 group-hover:animate-pulse" />
+                  <div className="absolute -top-1 -right-1 h-3.5 w-3.5 bg-primary rounded-full border border-black flex items-center justify-center">
+                    <span className="text-[7px] font-black text-black">11</span>
+                  </div>
+                </button>
+              </SheetTrigger>
+              <SheetContent side="left" className="bg-[#04070c]/98 backdrop-blur-3xl border-r border-primary/20 text-white w-full sm:max-w-md shadow-[20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+                <div className="p-8 border-b border-white/5 bg-black/40">
+                  <SheetHeader className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary italic">Squad_Roster_v1.0</span>
+                    </div>
+                    <SheetTitle className="text-3xl font-black italic uppercase tracking-tighter">MI <span className="text-primary">EQUIPO</span></SheetTitle>
+                  </SheetHeader>
+                </div>
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-4">
+                  <Button variant="outline" onClick={loadTeamFromSandbox} className="w-full h-14 border-primary/20 bg-primary/5 text-primary font-black uppercase text-[10px] rounded-2xl hover:bg-primary hover:text-black transition-all mb-6">
+                    <Users className="h-4 w-4 mr-2" /> Volcar Titulares al Campo
+                  </Button>
+                  {teamConfig ? (
+                    <div className="space-y-2">
+                      <p className="text-[9px] font-black uppercase text-primary/40 tracking-widest ml-1 mb-4 italic">Lista de Jugadores Sincronizada</p>
+                      {teamConfig.starters.filter((n: string) => n.trim() !== "").map((name: string, i: number) => (
+                        <div key={i} className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl flex items-center justify-between hover:bg-primary/5 hover:border-primary/20 transition-all group">
+                          <div className="flex items-center gap-4">
+                            <span className="text-[10px] font-black text-primary/40 group-hover:text-primary transition-colors">#{i+1}</span>
+                            <span className="text-xs font-black text-white uppercase italic group-hover:cyan-text-glow transition-all">{name}</span>
+                          </div>
+                          <Badge variant="outline" className="text-[7px] border-primary/10 text-primary/40">PROMO_NODE</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-10 text-center space-y-4 border-2 border-dashed border-white/5 rounded-3xl opacity-40">
+                      <Users className="h-10 w-10 mx-auto text-white/20" />
+                      <p className="text-[9px] font-black uppercase tracking-widest">Sin configuración de equipo</p>
+                      <Button variant="link" className="text-primary text-[10px] font-black uppercase p-0" asChild><Link href="/dashboard/promo/team">Configurar Ahora</Link></Button>
+                    </div>
+                  )}
+                </div>
+                <div className="p-8 bg-black/60 border-t border-white/5">
+                  <SheetClose asChild>
+                    <Button variant="ghost" className="w-full h-14 border border-primary/20 text-primary/60 font-black uppercase text-[10px] tracking-widest rounded-xl hover:bg-primary/5">OCULTAR_PANEL</Button>
+                  </SheetClose>
+                </div>
+              </SheetContent>
+            </Sheet>
+
+            {/* PANEL DE MATERIALES */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <button className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center transition-all group">
+                  <Boxes className="h-4 w-4 group-hover:animate-pulse" />
+                </button>
+              </SheetTrigger>
+              <SheetContent side="left" className="bg-[#04070c]/98 backdrop-blur-3xl border-r border-primary/20 text-white w-full sm:max-w-xs shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+                <div className="p-8 border-b border-white/5 bg-black/40">
+                  <SheetHeader className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary italic">Equipment_Studio</span>
+                    </div>
+                    <SheetTitle className="text-2xl font-black italic uppercase tracking-tighter">MATERIAL</SheetTitle>
+                  </SheetHeader>
+                </div>
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+                  <BoardToolbar theme="cyan" variant="materials" orientation="vertical" activeTool={activeTool} onToolSelect={(t) => { addElementAtCenter(t); setSelectedIds([]); }} className="border-none bg-transparent shadow-none w-full" showLabels />
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+
+          <div className="h-6 w-[1px] bg-white/10 mx-1" />
           
+          {/* GRUPO 3: CONFIGURACIÓN DE CAMPO */}
           <div className="flex items-center gap-2">
             <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}><SelectTrigger className="w-[100px] h-8 bg-white/5 border-primary/20 rounded-lg text-[7px] font-black uppercase text-primary focus:ring-0 px-2"><SelectValue /></SelectTrigger><SelectContent className="bg-[#0a0f18] border-primary/20"><SelectItem value="f11" className="text-[8px] font-black">F11</SelectItem><SelectItem value="f7" className="text-[8px] font-black">F7</SelectItem><SelectItem value="futsal" className="text-[8px] font-black">FUTSAL</SelectItem></SelectContent></Select>
             <button onClick={() => setIsHalfField(!isHalfField)} className={cn("h-8 px-2 border border-primary/20 text-[7px] font-black uppercase rounded-lg transition-all", isHalfField ? "bg-primary text-black" : "text-primary/40")}><Square className="h-3 w-3 mr-1" /> {isHalfField ? 'Campo Total' : 'Medio Campo'}</button>
@@ -471,9 +476,8 @@ function PromoBoardContent() {
 
           <div className="h-6 w-[1px] bg-white/10 mx-1" />
 
-          {/* INTEGRACIÓN DE BOTONES LATERALES DERECHOS EN EL HEADER */}
+          {/* GRUPO 4: HERRAMIENTAS DE DISEÑO (DERECHA) */}
           <div className="flex items-center gap-2">
-            {/* HERRAMIENTAS DE DIBUJO */}
             <Sheet>
               <SheetTrigger asChild>
                 <button className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-500 flex items-center justify-center hover:bg-amber-500 hover:text-black transition-all group relative">
@@ -496,7 +500,6 @@ function PromoBoardContent() {
               </SheetContent>
             </Sheet>
 
-            {/* MIS TAREAS / VAULT */}
             <Sheet>
               <SheetTrigger asChild>
                 <button className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-500 flex items-center justify-center hover:bg-amber-500 hover:text-black transition-all group relative">
