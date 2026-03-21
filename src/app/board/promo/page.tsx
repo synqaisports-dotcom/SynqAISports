@@ -141,6 +141,12 @@ function PromoBoardContent() {
   const [teamConfig, setTeamConfig] = useState<any>(null);
   const [vault, setVault] = useState<any>({ exercises: [] });
 
+  // ESTADOS DE PANELES LATERALES
+  const [isTeamSheetOpen, setIsTeamSheetOpen] = useState(false);
+  const [isMaterialsSheetOpen, setIsMaterialsSheetOpen] = useState(false);
+  const [isDrawingSheetOpen, setIsDrawingSheetOpen] = useState(false);
+  const [isVaultSheetOpen, setIsVaultSheetOpen] = useState(false);
+
   const [saveFormData, setSaveFormData] = useState({
     title: "", stage: "Alevín", dimension: "Táctica", objective: "", description: ""
   });
@@ -261,9 +267,9 @@ function PromoBoardContent() {
       ctx.strokeRect(minX - pad, minY - pad, width + pad * 2, height + pad * 2);
       ctx.setLineDash([]); ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#000000'; ctx.lineWidth = 1.5 * renderScale;
       const handles = [
-        { x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, 
-        { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY }, 
-        { x: bounds.minX - pad, y: bounds.maxY + pad }, { x: bounds.centerX, y: bounds.maxY + pad }, { x: bounds.maxX + pad, y: bounds.maxY + pad }
+        { x: minX - pad, y: minY - pad }, { x: centerX, y: minY - pad }, { x: maxX + pad, y: minY - pad }, 
+        { x: minX - pad, y: centerY }, { x: maxX + pad, y: centerY }, 
+        { x: minX - pad, y: maxY + pad }, { x: centerX, y: maxY + pad }, { x: maxX + pad, y: maxY + pad }
       ];
       handles.forEach(h => { ctx.beginPath(); ctx.arc(h.x, h.y, 8 * renderScale, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
       const rotY = minY - pad - 45 * renderScale; ctx.beginPath(); ctx.moveTo(centerX, minY - pad); ctx.lineTo(centerX, rotY); ctx.stroke();
@@ -389,7 +395,7 @@ function PromoBoardContent() {
           {/* GRUPO 2: EQUIPO Y MATERIAL (MIGRADOS AQUÍ) */}
           <div className="flex items-center gap-2 px-1">
             {/* PANEL DE EQUIPO */}
-            <Sheet>
+            <Sheet open={isTeamSheetOpen} onOpenChange={setIsTeamSheetOpen}>
               <SheetTrigger asChild>
                 <button className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center transition-all group relative">
                   <Users className="h-4 w-4 group-hover:animate-pulse" />
@@ -409,7 +415,7 @@ function PromoBoardContent() {
                   </SheetHeader>
                 </div>
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-4">
-                  <Button variant="outline" onClick={loadTeamFromSandbox} className="w-full h-14 border-primary/20 bg-primary/5 text-primary font-black uppercase text-[10px] rounded-2xl hover:bg-primary hover:text-black transition-all mb-6">
+                  <Button variant="outline" onClick={() => { loadTeamFromSandbox(); setIsTeamSheetOpen(false); }} className="w-full h-14 border-primary/20 bg-primary/5 text-primary font-black uppercase text-[10px] rounded-2xl hover:bg-primary hover:text-black transition-all mb-6">
                     <Users className="h-4 w-4 mr-2" /> Volcar Titulares al Campo
                   </Button>
                   {teamConfig ? (
@@ -442,7 +448,7 @@ function PromoBoardContent() {
             </Sheet>
 
             {/* PANEL DE MATERIALES */}
-            <Sheet>
+            <Sheet open={isMaterialsSheetOpen} onOpenChange={setIsMaterialsSheetOpen}>
               <SheetTrigger asChild>
                 <button className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center transition-all group">
                   <Boxes className="h-4 w-4 group-hover:animate-pulse" />
@@ -459,7 +465,19 @@ function PromoBoardContent() {
                   </SheetHeader>
                 </div>
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
-                  <BoardToolbar theme="cyan" variant="materials" orientation="vertical" activeTool={activeTool} onToolSelect={(t) => { addElementAtCenter(t); setSelectedIds([]); }} className="border-none bg-transparent shadow-none w-full" showLabels />
+                  <BoardToolbar 
+                    theme="cyan" 
+                    variant="materials" 
+                    orientation="vertical" 
+                    activeTool={activeTool} 
+                    onToolSelect={(t) => { 
+                      addElementAtCenter(t); 
+                      setSelectedIds([]); 
+                      setIsMaterialsSheetOpen(false); 
+                    }} 
+                    className="border-none bg-transparent shadow-none w-full" 
+                    showLabels 
+                  />
                 </div>
               </SheetContent>
             </Sheet>
@@ -478,7 +496,7 @@ function PromoBoardContent() {
 
           {/* GRUPO 4: HERRAMIENTAS DE DISEÑO (DERECHA) */}
           <div className="flex items-center gap-2">
-            <Sheet>
+            <Sheet open={isDrawingSheetOpen} onOpenChange={setIsDrawingSheetOpen}>
               <SheetTrigger asChild>
                 <button className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-500 flex items-center justify-center hover:bg-amber-500 hover:text-black transition-all group relative">
                   <PencilLine className="h-4 w-4 group-hover:animate-pulse" />
@@ -495,12 +513,33 @@ function PromoBoardContent() {
                   </SheetHeader>
                 </div>
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
-                  <BoardToolbar theme="amber" variant="training" orientation="vertical" activeTool={activeTool} onToolSelect={(t) => { if(t === 'select') { setActiveTool('select'); setSelectedIds([]); } else addElementAtCenter(t); }} onClear={() => { setElements([]); setSelectedIds([]); }} className="border-none bg-transparent shadow-none w-full" showLabels />
+                  <BoardToolbar 
+                    theme="amber" 
+                    variant="training" 
+                    orientation="vertical" 
+                    activeTool={activeTool} 
+                    onToolSelect={(t) => { 
+                      if(t === 'select') { 
+                        setActiveTool('select'); 
+                        setSelectedIds([]); 
+                      } else {
+                        addElementAtCenter(t); 
+                      }
+                      setIsDrawingSheetOpen(false); 
+                    }} 
+                    onClear={() => { 
+                      setElements([]); 
+                      setSelectedIds([]); 
+                      setIsDrawingSheetOpen(false);
+                    }} 
+                    className="border-none bg-transparent shadow-none w-full" 
+                    showLabels 
+                  />
                 </div>
               </SheetContent>
             </Sheet>
 
-            <Sheet>
+            <Sheet open={isVaultSheetOpen} onOpenChange={setIsVaultSheetOpen}>
               <SheetTrigger asChild>
                 <button className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-500 flex items-center justify-center hover:bg-amber-500 hover:text-black transition-all group relative">
                   <Library className="h-4 w-4 group-hover:animate-pulse" />
@@ -523,7 +562,7 @@ function PromoBoardContent() {
                   {vault.exercises && vault.exercises.length > 0 ? (
                     <div className="grid grid-cols-1 gap-4">
                       {vault.exercises.map((ex: any) => (
-                        <div key={ex.id} onClick={() => loadExercise(ex)} className="p-5 bg-white/[0.02] border border-white/5 rounded-3xl group hover:border-amber-500/40 hover:bg-amber-500/5 cursor-pointer transition-all relative overflow-hidden">
+                        <div key={ex.id} onClick={() => { loadExercise(ex); setIsVaultSheetOpen(false); }} className="p-5 bg-white/[0.02] border border-white/5 rounded-3xl group hover:border-amber-500/40 hover:bg-amber-500/5 cursor-pointer transition-all relative overflow-hidden">
                           <div className="flex justify-between items-start mb-2">
                             <Badge variant="outline" className="text-[7px] border-amber-500/20 text-amber-500 font-black px-2">{ex.block?.toUpperCase() || 'SANDBOX'}</Badge>
                             <span className="text-[8px] font-black text-white/20 uppercase tracking-widest">{ex.fieldType?.toUpperCase() || 'F11'}</span>
