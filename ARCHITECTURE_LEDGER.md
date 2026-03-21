@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v64.0.0 (Bilateral Monetization)
+# SynqSports Pro - ARCHITECTURE_LEDGER v65.0.0 (UI Scaling)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -14,3 +14,6 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 
 ## 64. Protocolo de Monetización Bilateral (v64.0.0)
 - **v64.0.0**: **PROTOCOL_BILATERAL_AD_NODES**: Eliminación de slots publicitarios laterales y superiores. Implementación de doble banner horizontal en la base de la pantalla, asignando un nodo de impacto a cada mitad del campo táctico.
+
+## 65. Protocolo de Escala Proporcional (v65.0.0)
+- **v65.0.0**: **PROTOCOL_UI_SCALING_NORMALIZATION**: Implementación de escala reducida (0.8x) para cabeceras en tablets y móviles. Uso de origin-top para mantener la proporción visual idéntica a la versión de escritorio.
