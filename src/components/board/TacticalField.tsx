@@ -1,4 +1,3 @@
-
 "use client";
 
 import { cn } from "@/lib/utils";
@@ -17,9 +16,10 @@ interface TacticalFieldProps {
 }
 
 /**
- * TacticalField - v58.1.0
- * PROTOCOL_PIXEL_PERFECT_CANVAS: Cambiado overflow-hidden a overflow-visible 
- * para permitir que los manejadores de selección en los bordes no se corten.
+ * TacticalField - v62.0.0
+ * PROTOCOL_FULL_SCREEN_CANVAS: El lienzo de trabajo ahora ocupa el 100% del viewport.
+ * El fondo verde es infinito. Las líneas se ajustan para maximizar el espacio
+ * sin perder la proporción reglamentaria.
  */
 export function TacticalField({ 
   theme = "cyan", 
@@ -30,8 +30,6 @@ export function TacticalField({
   children,
   containerRef
 }: TacticalFieldProps) {
-  const accentColor = theme === "cyan" ? "border-primary/30" : "border-amber-500/30";
-  
   const isFutsal = fieldType === "futsal";
   const bgClass = isFutsal ? "bg-[#0a2e5c]" : "bg-[#143d14]";
   
@@ -39,112 +37,107 @@ export function TacticalField({
   const ratio = isHalfField ? 0.85 : (isFutsal ? 2.0 : 1.54);
   
   return (
-    <div className="absolute inset-0 flex items-center justify-center p-2 md:p-4 overflow-hidden select-none pointer-events-none bg-black">
+    <div className="absolute inset-0 flex items-center justify-center overflow-hidden select-none pointer-events-none bg-black">
       <div 
         ref={containerRef}
         className={cn(
-          "relative rounded-lg md:rounded-[2rem] shadow-[0_0_60px_rgba(0,0,0,0.8)] border-2 transition-all duration-700 pointer-events-auto",
-          accentColor,
+          "relative w-full h-full transition-all duration-700 pointer-events-auto",
           bgClass
         )}
-        style={{
-          // Ajustamos para que nunca exceda el 72% de la altura (espacio libre real entre header y footer)
-          width: isHalfField 
-            ? `min(90vw, calc(72dvh * ${ratio}))` 
-            : `min(95vw, calc(72dvh * ${ratio}))`,
-          height: isHalfField 
-            ? `min(72dvh, calc(90vw / ${ratio}))` 
-            : `min(72dvh, calc(95vw / ${ratio}))`,
-          margin: 'auto',
-          overflow: 'visible' // PROTOCOLO_PIXEL_PERFECT: Evita cortes en handles periféricos
-        }}
+        style={{ overflow: 'hidden' }}
       >
-        {/* TEXTURAS OPTIMIZADAS */}
+        {/* TEXTURAS */}
         {!isFutsal ? (
-          <div className="absolute inset-0 opacity-10 bg-[repeating-linear-gradient(90deg,transparent_0%,transparent_10%,#000_10%,#000_20%)] rounded-[inherit]" />
+          <div className="absolute inset-0 opacity-10 bg-[repeating-linear-gradient(90deg,transparent_0%,transparent_10%,#000_10%,#000_20%)]" />
         ) : (
-          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.05)_0%,transparent_100%)] rounded-[inherit]" />
+          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.05)_0%,transparent_100%)]" />
         )}
         
-        {/* LÍNEAS REGLAMENTARIAS */}
-        <div className={cn(
-          "absolute border border-white/20 rounded-sm pointer-events-none transition-all duration-700",
-          isHalfField ? "inset-x-[6%] top-[6%] bottom-[-50%]" : "inset-[4%]"
-        )}>
-          
-          {/* CARRILES / CANALES TÁCTICOS */}
-          {showLanes && (
-            <>
-              {isHalfField ? (
-                <>
-                  <div className="absolute top-0 bottom-0 left-[20%] w-[1px] border-l border-dashed border-white/20 z-0" />
-                  <div className="absolute top-0 bottom-0 left-[80%] w-[1px] border-l border-dashed border-white/20 z-0" />
-                </>
-              ) : (
-                <>
-                  <div className="absolute left-0 right-0 top-[20%] h-[1px] border-t border-dashed border-white/20 z-0" />
-                  <div className="absolute left-0 right-0 top-[80%] h-[1px] border-t border-dashed border-white/20 z-0" />
-                </>
-              )}
-            </>
-          )}
+        {/* LÍNEAS REGLAMENTARIAS (CENTRADO DINÁMICO CON RATIO) */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-700 pointer-events-none"
+             style={{
+               width: isHalfField ? `min(90vw, calc(90dvh * ${ratio}))` : `min(95vw, calc(95dvh * ${ratio}))`,
+               height: isHalfField ? `min(90dvh, calc(90vw / ${ratio}))` : `min(95dvh, calc(95vw / ${ratio}))`,
+             }}
+        >
+          <div className={cn(
+            "relative w-full h-full border border-white/20 rounded-sm transition-all duration-700 overflow-hidden",
+            isHalfField ? "h-[200%] top-[-100%] border-b-0" : ""
+          )}>
+            
+            {/* CARRILES */}
+            {showLanes && (
+              <>
+                {isHalfField ? (
+                  <>
+                    <div className="absolute top-0 bottom-0 left-[20%] w-[1px] border-l border-dashed border-white/20" />
+                    <div className="absolute top-0 bottom-0 left-[80%] w-[1px] border-l border-dashed border-white/20" />
+                  </>
+                ) : (
+                  <>
+                    <div className="absolute left-0 right-0 top-[20%] h-[1px] border-t border-dashed border-white/20" />
+                    <div className="absolute left-0 right-0 top-[80%] h-[1px] border-t border-dashed border-white/20" />
+                  </>
+                )}
+              </>
+            )}
 
-          {/* LÍNEA CENTRAL */}
-          <div className={cn(
-            "absolute bg-white/20 transition-all duration-700",
-            isHalfField ? "bottom-0 left-0 right-0 h-[1px]" : "top-0 left-1/2 w-[1px] h-full -translate-x-1/2"
-          )} />
-          
-          {/* CÍRCULO CENTRAL */}
-          <div className={cn(
-            "absolute border border-white/20 rounded-full transition-all duration-700",
-            isHalfField 
-              ? "bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-[40%] aspect-square" 
-              : (isFutsal ? "w-[15%] aspect-square top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" : "w-[18%] aspect-square top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2")
-          )} />
-          
-          {/* PUNTO CENTRAL */}
-          <div className={cn(
-            "absolute bg-white/30 rounded-full transition-all duration-700",
-            isHalfField ? "bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-1.5 h-1.5" : "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-1"
-          )} />
+            {/* LÍNEA CENTRAL */}
+            <div className={cn(
+              "absolute bg-white/20",
+              isHalfField ? "bottom-0 left-0 right-0 h-[1px]" : "top-0 left-1/2 w-[1px] h-full -translate-x-1/2"
+            )} />
+            
+            {/* CÍRCULO CENTRAL */}
+            <div className={cn(
+              "absolute border border-white/20 rounded-full",
+              isHalfField 
+                ? "bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-[40%] aspect-square" 
+                : (isFutsal ? "w-[15%] aspect-square top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" : "w-[18%] aspect-square top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2")
+            )} />
+            
+            {/* PUNTO CENTRAL */}
+            <div className={cn(
+              "absolute bg-white/30 rounded-full",
+              isHalfField ? "bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-1.5 h-1.5" : "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-1"
+            )} />
 
-          {/* ÁREAS */}
-          {!isFutsal ? (
-            <>
-              <div className={cn(
-                "absolute border border-white/20 transition-all duration-700",
-                isHalfField 
-                  ? "top-0 left-1/2 -translate-x-1/2 w-[60%] h-[15.5%] border-t-0" 
-                  : "top-1/2 left-0 -translate-y-1/2 w-[15.5%] h-[60%] border-l-0"
-              )} />
-              <div className={cn(
-                "absolute border border-white/20 transition-all duration-700",
-                isHalfField 
-                  ? "top-0 left-1/2 -translate-x-1/2 w-[26%] h-[5.5%] border-t-0" 
-                  : "top-1/2 left-0 -translate-y-1/2 w-[5.5%] h-[26%] border-l-0"
-              )} />
-              
-              {!isHalfField && (
-                <>
-                  <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[15.5%] h-[60%] border border-white/20 border-r-0" />
-                  <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[5.5%] h-[26%] border border-white/20 border-r-0" />
-                </>
-              )}
-            </>
-          ) : (
-            <>
-              <div className={cn(
-                "absolute border border-white/20 transition-all duration-700",
-                isHalfField 
-                  ? "top-0 left-1/2 -translate-x-1/2 w-[60%] h-[15%] border-t-0 rounded-b-full" 
-                  : "top-1/2 left-0 -translate-y-1/2 w-[15%] h-[60%] border-l-0 rounded-r-full"
-              )} />
-              {!isHalfField && (
-                <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[15%] h-[60%] border border-white/20 border-r-0 rounded-l-full" />
-              )}
-            </>
-          )}
+            {/* ÁREAS */}
+            {!isFutsal ? (
+              <>
+                <div className={cn(
+                  "absolute border border-white/20",
+                  isHalfField 
+                    ? "top-0 left-1/2 -translate-x-1/2 w-[60%] h-[15.5%] border-t-0" 
+                    : "top-1/2 left-0 -translate-y-1/2 w-[15.5%] h-[60%] border-l-0"
+                )} />
+                <div className={cn(
+                  "absolute border border-white/20",
+                  isHalfField 
+                    ? "top-0 left-1/2 -translate-x-1/2 w-[26%] h-[5.5%] border-t-0" 
+                    : "top-1/2 left-0 -translate-y-1/2 w-[5.5%] h-[26%] border-l-0"
+                )} />
+                {!isHalfField && (
+                  <>
+                    <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[15.5%] h-[60%] border border-white/20 border-r-0" />
+                    <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[5.5%] h-[26%] border border-white/20 border-r-0" />
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                <div className={cn(
+                  "absolute border border-white/20",
+                  isHalfField 
+                    ? "top-0 left-1/2 -translate-x-1/2 w-[60%] h-[15%] border-t-0 rounded-b-full" 
+                    : "top-1/2 left-0 -translate-y-1/2 w-[15%] h-[60%] border-l-0 rounded-r-full"
+                )} />
+                {!isHalfField && (
+                  <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[15%] h-[60%] border border-white/20 border-r-0 rounded-l-full" />
+                )}
+              </>
+            )}
+          </div>
         </div>
 
         {showWatermark && (
@@ -153,14 +146,14 @@ export function TacticalField({
           </div>
         )}
 
-        <div className="absolute top-4 left-4 flex items-center gap-2 bg-black/40 border border-white/10 px-3 py-1 rounded-xl z-50 scale-[0.8] origin-top-left">
+        <div className="absolute top-24 left-6 flex items-center gap-2 bg-black/40 border border-white/10 px-3 py-1 rounded-xl z-50 scale-[0.8] origin-top-left">
           <div className={cn("h-1.5 w-1.5 rounded-full animate-pulse", theme === "cyan" ? "bg-primary" : "bg-amber-500")} />
           <span className="text-[8px] font-black text-white/60 uppercase tracking-widest italic">
-            {isHalfField ? 'HALF_FOCUS' : `${fieldType.toUpperCase()}_SURFACE`}
+            {isHalfField ? 'FULL_SCREEN_HALF_FIELD' : `${fieldType.toUpperCase()}_FULL_IMMERSION`}
           </span>
         </div>
 
-        {/* CONTENEDOR DE HIJOS: Ajustado a visible para evitar cortes en manejadores periféricos */}
+        {/* CONTENEDOR DE HIJOS (CANVAS + PLAYERS) */}
         <div className="absolute inset-0 z-10 overflow-visible">
           {children}
         </div>

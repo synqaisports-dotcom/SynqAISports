@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo, useRef, memo, useCallback } from "react";
@@ -77,8 +76,8 @@ interface DrawingLine {
 const MemoizedPlayerChip = memo(PlayerChip);
 
 /**
- * MatchBoardPage - v58.0.0
- * PROTOCOL_PIXEL_PERFECT_CANVAS: Sincronización milimétrica mediante ResizeObserver.
+ * MatchBoardPage - v62.0.0
+ * PROTOCOL_FULL_SCREEN_CANVAS: Área de trabajo expandida al 100% del viewport.
  */
 export default function MatchBoardPage() {
   const { profile } = useAuth();
@@ -421,7 +420,7 @@ export default function MatchBoardPage() {
         </div>
       </div>
 
-      <main className="flex-1 relative overflow-hidden flex items-center justify-center pt-20 pb-28">
+      <main className="flex-1 relative overflow-hidden flex items-center justify-center">
         <TacticalField theme="cyan" fieldType={fieldType} showWatermark showLanes={showLanes} isHalfField={false} containerRef={fieldRef}>
           <canvas 
             ref={canvasRef} 
