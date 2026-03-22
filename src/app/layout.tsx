@@ -1,3 +1,4 @@
+
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
@@ -25,11 +26,13 @@ export const metadata: Metadata = {
   }
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
+export default async function RootLayout(props: {
   children: React.ReactNode;
-}>) {
+  params: Promise<any>;
+}) {
+  const params = await props.params;
+  const children = props.children;
+
   return (
     <html lang="es">
       <head>
