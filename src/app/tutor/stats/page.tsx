@@ -1,4 +1,3 @@
-
 "use client";
 
 import { 
@@ -9,19 +8,14 @@ import {
   ShieldCheck, 
   CheckCircle2,
   Award,
-  Activity,
   History,
   Info,
   Clock,
-  LayoutGrid,
-  Calendar,
-  XCircle,
-  AlertCircle
+  XCircle
 } from "lucide-react";
 import Link from "next/link";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { useTutor } from "@/app/tutor/layout";
+import { useTutor } from "@/app/tutor/tutor-client-layout";
 import { cn } from "@/lib/utils";
 
 const ATTENDANCE_LOG = [
@@ -32,10 +26,6 @@ const ATTENDANCE_LOG = [
   { date: '03 Oct', status: 'present', label: 'Jornada 12' },
 ];
 
-/**
- * Evolución del Atleta para Tutor - v1.2.0
- * Foco en progreso técnico y CONTROL DE ASISTENCIA detallado.
- */
 export default function TutorStats() {
   const { selectedChild } = useTutor();
 
@@ -77,7 +67,7 @@ export default function TutorStats() {
           </p>
         </section>
 
-        {/* CONTROL DE ASISTENCIA (NUEVO REQUERIMIENTO) */}
+        {/* REGISTRO DE PRESENCIA */}
         <section className="space-y-6">
           <div className="flex items-center justify-between px-2">
             <div className="flex items-center gap-3">
@@ -132,7 +122,7 @@ export default function TutorStats() {
           </div>
         </section>
 
-        {/* ÚLTIMAS VALORACIONES */}
+        {/* FEEDBACK METODOLÓGICO */}
         <section className="space-y-4 pt-4">
           <div className="flex items-center gap-3 px-2">
             <Zap className="h-4 w-4 text-primary" />

@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { 
   CalendarDays, 
   MessageSquareQuote, 
@@ -16,7 +15,6 @@ import {
   Info, 
   ChevronDown, 
   RefreshCw, 
-  LayoutGrid,
   ShieldCheck,
   Smartphone
 } from "lucide-react";
@@ -24,7 +22,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { useTutor } from "@/app/tutor/layout";
+import { useTutor } from "@/app/tutor/tutor-client-layout";
 
 const CHILDREN = [
   { id: 'c1', name: 'LUCAS GARCÍA', number: '10', team: 'INFANTIL A', category: 'FEDERADO' },
@@ -113,7 +111,6 @@ export default function TutorDashboard() {
         </Card>
       </div>
 
-      {/* MÓDULOS OPERATIVOS */}
       <div className="flex-1 p-6 space-y-6 pb-24">
         <div className="grid grid-cols-2 gap-4">
           <ModuleButton 
@@ -155,7 +152,6 @@ export default function TutorDashboard() {
           />
         </div>
 
-        {/* FEED DE NOTICIAS CLUB / SIMULACIÓN PUSH */}
         <section className="space-y-4 pt-4">
           <div className="flex items-center justify-between px-2">
             <h3 className="text-[10px] font-black text-white/30 tracking-[0.4em] italic uppercase">Avisos del Club</h3>
@@ -169,7 +165,6 @@ export default function TutorDashboard() {
           </div>
         </section>
 
-        {/* PUBLICIDAD INTEGRADA (BANNER) */}
         <div className="p-4 bg-primary/5 border border-dashed border-primary/20 rounded-3xl flex items-center justify-between group cursor-pointer hover:bg-primary/[0.08] transition-all">
            <div className="flex items-center gap-4">
               <div className="h-10 w-10 bg-black rounded-xl flex items-center justify-center">

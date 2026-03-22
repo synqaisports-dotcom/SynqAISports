@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -17,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { useTutor } from "@/app/tutor/layout";
+import { useTutor } from "@/app/tutor/tutor-client-layout";
 
 const MOCK_CHATS = [
   { id: "coach", name: "CARLOS RUIZ", role: "Primer Entrenador", lastMsg: "Recordad que el entreno de mañana es en el anexo por la lluvia.", time: "10:24", unread: 2, avatar: "CR", status: 'online' },
@@ -29,7 +28,7 @@ export default function TutorChatList() {
   const { showAd } = useTutor();
 
   const handleOpenChat = () => {
-    showAd(); // Lanzar publicidad al entrar en una conversación profunda
+    showAd(); 
   };
 
   return (
@@ -92,7 +91,6 @@ export default function TutorChatList() {
           </div>
         ))}
 
-        {/* BANNER PUBLICITARIO EN CHAT */}
         <div className="p-6 bg-emerald-500/5 border border-dashed border-emerald-500/20 rounded-[2.5rem] flex items-center justify-center gap-4 mt-6 opacity-60">
            <Zap className="h-4 w-4 text-emerald-400 animate-pulse" />
            <span className="text-[8px] font-black text-emerald-400 uppercase tracking-[0.3em]">Patrocinado: Campus de Verano Élite</span>

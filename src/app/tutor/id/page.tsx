@@ -1,28 +1,19 @@
-
 "use client";
 
-import { useState } from "react";
 import { 
   ChevronLeft, 
-  IdCard, 
-  QrCode, 
   Zap, 
   ShieldCheck, 
-  MapPin, 
   Shield,
   Download,
-  Share2
+  Share2,
+  QrCode
 } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { useTutor } from "@/app/tutor/layout";
+import { useTutor } from "@/app/tutor/tutor-client-layout";
 import { QRCodeCanvas } from "qrcode.react";
 
-/**
- * Carnet Digital del Atleta - v1.0.0
- * Protocolo de identificación para acceso seguro.
- */
 export default function AthleteIDPage() {
   const { selectedChild } = useTutor();
 
@@ -44,7 +35,6 @@ export default function AthleteIDPage() {
       </header>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-10">
-        {/* CARNET FRENTE */}
         <div className="relative aspect-[1.6/1] w-full bg-gradient-to-br from-primary/20 via-black to-black border-2 border-primary/30 rounded-[2.5rem] overflow-hidden shadow-2xl group transition-all hover:border-primary/60">
            <div className="absolute inset-0 bg-grid-pattern opacity-20 pointer-events-none" />
            <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-all"><Zap className="h-32 w-32 text-primary" /></div>
@@ -74,7 +64,6 @@ export default function AthleteIDPage() {
            </div>
         </div>
 
-        {/* QR DE ACCESO */}
         <section className="space-y-6 text-center">
            <div className="flex items-center justify-center gap-3">
               <QrCode className="h-4 w-4 text-primary" />
@@ -90,7 +79,6 @@ export default function AthleteIDPage() {
            </p>
         </section>
 
-        {/* PROTOCOLO DE SEGURIDAD */}
         <div className="p-8 bg-primary/5 border border-primary/20 rounded-[2.5rem] space-y-4">
            <div className="flex items-center gap-3">
               <ShieldCheck className="h-5 w-5 text-primary" />
