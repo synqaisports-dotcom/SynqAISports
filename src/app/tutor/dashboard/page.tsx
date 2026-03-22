@@ -92,8 +92,8 @@ export default function TutorDashboard() {
         )}
       </header>
 
-      {/* PRÓXIMO EVENTO */}
-      <div className="px-6 -mt-6 relative z-20">
+      {/* PRÓXIMO EVENTO - CORRECCIÓN DE SUPERPOSICIÓN */}
+      <div className="px-6 py-4 relative z-20">
         <Card className="glass-panel border-primary/20 bg-[#0a0f18] p-5 rounded-[2rem] shadow-2xl flex items-center justify-between group active:scale-[0.98] transition-all">
           <div className="flex items-center gap-4">
             <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 animate-pulse">
