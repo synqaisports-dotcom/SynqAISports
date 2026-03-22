@@ -64,7 +64,7 @@ export function TutorClientLayout({ children }: { children: ReactNode }) {
 
   return (
     <TutorContext.Provider value={{ selectedChild, setSelectedChild, showAd }}>
-      <div className="w-full max-w-[500px] bg-[#020408] min-h-screen relative shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col border-x border-white/5">
+      <div className="w-full max-w-[500px] bg-background min-h-screen relative shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col border-x border-white/5">
         
         <div className="flex-1 flex flex-col">
           {children}
@@ -72,7 +72,7 @@ export function TutorClientLayout({ children }: { children: ReactNode }) {
 
         {/* NAVEGACIÓN INFERIOR FIJA */}
         {!isLoginPage && (
-          <nav className="sticky bottom-0 h-20 bg-[#04070c]/80 backdrop-blur-xl border-t border-white/5 flex items-center justify-around px-6 z-[100] shrink-0">
+          <nav className="sticky bottom-0 h-20 bg-card/80 backdrop-blur-xl border-t border-white/5 flex items-center justify-around px-6 z-[100] shrink-0">
             <NavItem icon={Zap} href="/tutor/dashboard" active={pathname === '/tutor/dashboard'} />
             <NavItem icon={CalendarDays} href="/tutor/calendar" active={pathname === '/tutor/calendar'} />
             <NavItem icon={MessageSquareQuote} href="/tutor/chat" active={pathname === '/tutor/chat'} />
@@ -82,7 +82,7 @@ export function TutorClientLayout({ children }: { children: ReactNode }) {
 
         {/* PUBLICIDAD INTERSTICIAL */}
         {isInterstitialVisible && (
-          <div className="fixed inset-0 z-[300] bg-[#04070c] flex flex-col animate-in fade-in duration-500">
+          <div className="fixed inset-0 z-[300] bg-background flex flex-col animate-in fade-in duration-500">
             <div className="absolute top-6 right-6">
               <button 
                 onClick={() => setIsInterstitialVisible(false)}

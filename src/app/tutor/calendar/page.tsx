@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -30,8 +29,8 @@ const MOCK_EVENTS = [
  */
 export default function TutorCalendar() {
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#020408]">
-      <header className="p-8 bg-[#04070c] border-b border-white/5 space-y-6">
+    <div className="flex-1 flex flex-col h-full bg-background">
+      <header className="p-8 bg-card/40 backdrop-blur-md border-b border-white/5 space-y-6">
         <div className="flex items-center justify-between">
           <Link href="/tutor/dashboard" className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center text-white/40 active:scale-95 transition-all">
             <ChevronLeft className="h-5 w-5" />

@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 export default function TutorLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-[#04070c] flex justify-center font-body">
+    <div className="min-h-screen bg-background flex justify-center font-body">
       <TutorClientLayout>{children}</TutorClientLayout>
     </div>
   );

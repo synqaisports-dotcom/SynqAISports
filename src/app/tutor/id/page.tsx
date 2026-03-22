@@ -18,8 +18,8 @@ export default function AthleteIDPage() {
   const { selectedChild } = useTutor();
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#020408]">
-      <header className="p-8 bg-[#04070c] border-b border-white/5 space-y-6">
+    <div className="flex-1 flex flex-col h-full bg-background">
+      <header className="p-8 bg-card/40 backdrop-blur-md border-b border-white/5 space-y-6">
         <div className="flex items-center justify-between">
           <Link href="/tutor/dashboard" className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center text-white/40 active:scale-95 transition-all">
             <ChevronLeft className="h-5 w-5" />
@@ -90,7 +90,7 @@ export default function AthleteIDPage() {
         </div>
       </div>
 
-      <div className="p-8 border-t border-white/5 bg-[#04070c]/50 flex gap-4">
+      <div className="p-8 border-t border-white/5 bg-card/20 flex gap-4">
          <button className="flex-1 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center gap-3 text-[10px] font-black text-white/40 uppercase tracking-widest hover:text-white transition-all">
             <Share2 className="h-4 w-4" /> Compartir
          </button>
