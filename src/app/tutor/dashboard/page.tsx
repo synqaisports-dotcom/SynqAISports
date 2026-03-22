@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -15,7 +14,8 @@ import {
   UserCircle,
   Trophy,
   Dumbbell,
-  Smartphone
+  Smartphone,
+  Info
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,8 +23,9 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 /**
- * Dashboard del Tutor - v1.0.0
+ * Dashboard del Tutor - v1.0.1
  * Centro operativo modular para familias.
+ * v1.0.1: Corregida importación de Icono Info.
  */
 export default function TutorDashboard() {
   const [childName, setChildName] = useState("LUCAS GARCÍA");
