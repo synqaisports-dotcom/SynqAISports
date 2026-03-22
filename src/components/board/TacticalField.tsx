@@ -16,10 +16,11 @@ interface TacticalFieldProps {
 }
 
 /**
- * TacticalField - v62.0.0
- * PROTOCOL_FULL_SCREEN_CANVAS: El lienzo de trabajo ahora ocupa el 100% del viewport.
- * El fondo verde es infinito. Las líneas se ajustan para maximizar el espacio
- * sin perder la proporción reglamentaria.
+ * TacticalField - v70.0.0
+ * PROTOCOL_HORIZONTAL_HALF_FIELD_FIX: Corrección del encuadre de medio campo.
+ * Se ha invertido la lógica de desplazamiento (top-0) para mostrar la mitad superior
+ * donde reside la portería, y se ha ajustado el ratio a 1.5 para una visión 
+ * panorámica real en tablets.
  */
 export function TacticalField({ 
   theme = "cyan", 
@@ -33,8 +34,8 @@ export function TacticalField({
   const isFutsal = fieldType === "futsal";
   const bgClass = isFutsal ? "bg-[#0a2e5c]" : "bg-[#143d14]";
   
-  // Ratio W/H: Full horizontal es ~1.54. Half Vertical ensanchado es ~0.85
-  const ratio = isHalfField ? 0.85 : (isFutsal ? 2.0 : 1.54);
+  // Ratio W/H: Full horizontal es ~1.54. Half Horizontal es ~1.5 para tablets.
+  const ratio = isHalfField ? 1.5 : (isFutsal ? 2.0 : 1.54);
   
   return (
     <div className="absolute inset-0 flex items-center justify-center overflow-hidden select-none pointer-events-none bg-black">
@@ -56,24 +57,21 @@ export function TacticalField({
         {/* LÍNEAS REGLAMENTARIAS (CENTRADO DINÁMICO CON RATIO) */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-700 pointer-events-none"
              style={{
-               width: isHalfField ? `min(90vw, calc(90dvh * ${ratio}))` : `min(95vw, calc(95dvh * ${ratio}))`,
-               height: isHalfField ? `min(90dvh, calc(90vw / ${ratio}))` : `min(95dvh, calc(95vw / ${ratio}))`,
+               width: `min(95vw, calc(95dvh * ${ratio}))`,
+               height: `min(95dvh, calc(95vw / ${ratio}))`,
              }}
         >
           <div className={cn(
             "relative w-full h-full border border-white/20 rounded-sm transition-all duration-700 overflow-hidden",
-            isHalfField ? "h-[200%] top-[-100%] border-b-0" : ""
+            isHalfField ? "h-[200%] top-0 border-b-0" : ""
           )}>
             
             {/* CARRILES */}
             {showLanes && (
               <>
-                {isHalfField ? (
-                  <>
-                    <div className="absolute top-0 bottom-0 left-[20%] w-[1px] border-l border-dashed border-white/20" />
-                    <div className="absolute top-0 bottom-0 left-[80%] w-[1px] border-l border-dashed border-white/20" />
-                  </>
-                ) : (
+                <div className="absolute top-0 bottom-0 left-[20%] w-[1px] border-l border-dashed border-white/20" />
+                <div className="absolute top-0 bottom-0 left-[80%] w-[1px] border-l border-dashed border-white/20" />
+                {!isHalfField && (
                   <>
                     <div className="absolute left-0 right-0 top-[20%] h-[1px] border-t border-dashed border-white/20" />
                     <div className="absolute left-0 right-0 top-[80%] h-[1px] border-t border-dashed border-white/20" />
