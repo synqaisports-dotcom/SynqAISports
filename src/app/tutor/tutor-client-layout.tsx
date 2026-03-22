@@ -10,8 +10,8 @@ import { cn } from "@/lib/utils";
 const ADMIN_EMAILS = ['munozmartinez.ismael@gmail.com', 'synqaisports@gmail.com'];
 
 /**
- * Contexto de la App de Tutores - v1.3.0
- * PROTOCOLO_ELITE: Perfil maestro para administradores.
+ * Contexto de la App de Tutores - v1.4.0
+ * PROTOCOLO_SECURE_MIRROR: Gestión de sesión y redirección de seguridad.
  */
 interface TutorContextType {
   selectedChild: any;
@@ -47,6 +47,7 @@ export function TutorClientLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const isLoginPage = pathname === '/tutor';
+  const isOnboardingPage = pathname === '/tutor/onboarding';
 
   const [allChildren, setAllChildren] = useState<any[]>([]);
   const [selectedChild, setSelectedChild] = useState<any>(null);
@@ -55,7 +56,7 @@ export function TutorClientLayout({ children }: { children: ReactNode }) {
 
   // EFECTO DE SINCRONIZACIÓN DE SESIÓN Y ATLETAS
   useEffect(() => {
-    if (isLoginPage) {
+    if (isLoginPage || isOnboardingPage) {
       setLoading(false);
       return;
     }
@@ -93,7 +94,7 @@ export function TutorClientLayout({ children }: { children: ReactNode }) {
       }];
     }
 
-    if (myAtletas.length === 0 && !isLoginPage) {
+    if (myAtletas.length === 0 && !isLoginPage && !isOnboardingPage) {
       localStorage.removeItem("synq_tutor_session_email");
       router.push("/tutor");
       return;
@@ -104,7 +105,7 @@ export function TutorClientLayout({ children }: { children: ReactNode }) {
       setSelectedChild(myAtletas[0]);
     }
     setLoading(false);
-  }, [pathname, isLoginPage, router, selectedChild]);
+  }, [pathname, isLoginPage, isOnboardingPage, router, selectedChild]);
 
   const showAd = () => {
     const tutorEmail = localStorage.getItem("synq_tutor_session_email");
@@ -122,11 +123,11 @@ export function TutorClientLayout({ children }: { children: ReactNode }) {
     }
   };
 
-  if (loading && !isLoginPage) {
+  if (loading && !isLoginPage && !isOnboardingPage) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-background p-10 text-center space-y-4">
         <Loader2 className="h-10 w-10 text-primary animate-spin" />
-        <p className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Sincronizando_Atletas...</p>
+        <p className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Validando_Credenciales...</p>
       </div>
     );
   }
@@ -139,7 +140,7 @@ export function TutorClientLayout({ children }: { children: ReactNode }) {
           {children}
         </div>
 
-        {!isLoginPage && (
+        {!isLoginPage && !isOnboardingPage && (
           <nav className="sticky bottom-0 h-20 bg-card/80 backdrop-blur-xl border-t border-white/5 flex items-center justify-around px-6 z-[100] shrink-0">
             <NavItem icon={Zap} href="/tutor/dashboard" active={pathname === '/tutor/dashboard'} />
             <NavItem icon={CalendarDays} href="/tutor/calendar" active={pathname === '/tutor/calendar'} />
