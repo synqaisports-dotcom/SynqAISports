@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { 
   Zap, 
@@ -31,7 +31,7 @@ import { synqSync } from "@/lib/sync-service";
 
 function SmartwatchContent() {
   const { loading, profile } = useAuth();
-  const searchParams = useSearchParams();
+  const searchParamsHook = useSearchParams();
   
   // ESTADOS DE VINCULACIÓN
   const [isLinked, setIsLinked] = useState(false);
@@ -55,7 +55,7 @@ function SmartwatchContent() {
 
   // DETECCIÓN DE AUTO-LINK (TOKEN EN URL)
   useEffect(() => {
-    const codeInUrl = searchParams.get("code") || searchParams.get("token");
+    const codeInUrl = searchParamsHook.get("code") || searchParamsHook.get("token");
     if (codeInUrl && !isLinked) {
       setAutoLinking(true);
       setTimeout(() => {
@@ -65,7 +65,7 @@ function SmartwatchContent() {
         setAutoLinking(false);
       }, 1500);
     }
-  }, [searchParams, isLinked]);
+  }, [searchParamsHook, isLinked]);
 
   // CARGA DE ENTORNO Y ROSTER
   useEffect(() => {
@@ -346,7 +346,8 @@ function SmartwatchContent() {
   );
 }
 
-export default function SmartwatchPage() {
+export default function SmartwatchPage(props: { searchParams: Promise<any> }) {
+  const searchParams = React.use(props.searchParams);
   return (
     <Suspense fallback={<div className="fixed inset-0 bg-[#04070c] flex items-center justify-center text-primary font-black uppercase tracking-widest animate-pulse">Cargando_Ecosistema...</div>}>
       <SmartwatchContent />

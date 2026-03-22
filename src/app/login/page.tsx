@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -41,7 +42,7 @@ function LoginContent() {
   const { profile, loginAsGuest, loginWithToken, register, login } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParamsHook = useSearchParams();
   
   const [token, setToken] = useState<string | null>(null);
   const [campaignData, setCampaignData] = useState<any>(null);
@@ -63,7 +64,7 @@ function LoginContent() {
   }, [profile, router]);
 
   useEffect(() => {
-    const t = searchParams.get("token") || searchParams.get("t");
+    const t = searchParamsHook.get("token") || searchParamsHook.get("t");
     if (t && !forceStandard) {
       setToken(t);
       setCampaignData({
@@ -78,7 +79,7 @@ function LoginContent() {
         description: `Sincronizando campaña regional: ${t}`,
       });
     }
-  }, [searchParams, toast, forceStandard]);
+  }, [searchParamsHook, toast, forceStandard]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -242,7 +243,7 @@ function LoginContent() {
                   <div className="space-y-2"><label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1 italic">{regType === 'free' ? 'TU_EQUIPO' : 'TU_CANTERA'}</label><Input required value={regData.club} onChange={e => setRegData({...regData, club: e.target.value.toUpperCase()})} placeholder={regType === 'free' ? "MI EQUIPO" : "CLUB_CITY"} className="h-12 bg-white/5 border-primary/20 rounded-2xl font-bold" /></div>
                 </div>
                 <div className="space-y-2"><label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1 italic">EMAIL_PROFESIONAL_OBLIGATORIO</label><Input required type="email" value={regData.email} onChange={e => setRegData({...regData, email: e.target.value})} placeholder="USER@CLUB.COM" className="h-12 bg-white/5 border-primary/20 rounded-2xl font-bold" /></div>
-                <div className="space-y-2"><label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1 italic">NUEVA_CLAVE</label><Input required type="password" value={regData.pass} onChange={e => setRegData({...regData, pass: e.target.value})} placeholder="••••••••" className="h-12 bg-white/5 border-primary/20 rounded-2xl font-bold" /></div>
+                <div className="space-y-2"><label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1 italic">NUEVA_CLAVE</label><Input required type="password" value={regData.pass} onChange={e => setRegData({...regData, pass: e.target.value})} placeholder="••••••••" className="h-12 bg-white/5 border-primary/20 rounded-2xl text-white font-bold" /></div>
                 <Button type="submit" disabled={localLoading} className="w-full h-16 bg-primary text-black font-black uppercase tracking-[0.3em] text-xs rounded-2xl cyan-glow border-none">
                   {regType === 'free' ? 'ACTIVAR_MI_SANDBOX' : 'VINCULAR_MI_CLUB'} <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
@@ -266,7 +267,8 @@ function LoginContent() {
   );
 }
 
-export default function LoginPage() {
+export default function LoginPage(props: { searchParams: Promise<any> }) {
+  const searchParams = React.use(props.searchParams);
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#070a0f] px-6 relative overflow-hidden font-body">
       <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
