@@ -13,7 +13,8 @@ import {
   CheckCircle2,
   Zap,
   Dumbbell,
-  Users
+  Users,
+  ChevronLeft
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -47,7 +48,7 @@ const SPORTS = [
 ];
 
 export default function OnboardingTunnel() {
-  const { profile, completeOnboarding } = useAuth();
+  const { profile, completeOnboarding, logout } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   
@@ -104,9 +105,14 @@ export default function OnboardingTunnel() {
     }, 2500);
   };
 
+  const handleGoBack = () => {
+    logout();
+    router.push("/login");
+  };
+
   if (success) {
     return (
-      <div className="min-h-screen bg-[#04070c] flex items-center justify-center relative overflow-hidden">
+      <div className="min-h-screen bg-background flex items-center justify-center relative overflow-hidden">
         <div className="absolute inset-0 bg-grid-pattern opacity-20 pointer-events-none" />
         <div className="text-center space-y-8 animate-in zoom-in-95 duration-700">
            <div className="relative inline-block">
@@ -123,9 +129,20 @@ export default function OnboardingTunnel() {
   }
 
   return (
-    <div className="min-h-screen bg-[#04070c] relative overflow-hidden flex">
+    <div className="min-h-screen bg-background relative overflow-hidden flex">
       <div className="absolute inset-0 bg-grid-pattern opacity-40 pointer-events-none" />
       
+      {/* BOTÓN VOLVER */}
+      <div className="fixed top-8 left-8 z-[100]">
+        <Button 
+          variant="ghost" 
+          onClick={handleGoBack}
+          className="text-white/40 hover:text-primary font-black uppercase text-[10px] tracking-widest group border border-white/5 bg-black/20 rounded-xl px-4 h-10"
+        >
+          <ChevronLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" /> Volver al Acceso
+        </Button>
+      </div>
+
       <main className="flex-1 relative z-10 flex flex-col items-center justify-center p-12">
         <div className="w-full max-w-4xl space-y-12">
           
@@ -173,7 +190,7 @@ export default function OnboardingTunnel() {
                </div>
                {!isSandbox && (
                  <div className="pt-6 border-t border-white/5 space-y-2">
-                    <span className="text-[8px] font-black uppercase tracking-[0.4em] text-white/20">Token de Sincronización</span>
+                    <span className="text-[8px] font-black uppercase tracking-widest text-white/20">Token de Sincronización</span>
                     <p className="font-mono text-emerald-400 text-xs tracking-widest">
                       {loading ? "GENERANDO..." : `AUTH_CODE_0X${Math.random().toString(16).substr(2, 8).toUpperCase()}`}
                     </p>
