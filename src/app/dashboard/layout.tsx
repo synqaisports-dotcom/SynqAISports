@@ -65,7 +65,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (loading) {
     return (
-      <div className="h-screen w-full flex flex-col items-center justify-center bg-[#04070c]">
+      <div className="h-screen w-full flex flex-col items-center justify-center bg-background">
         <div className="relative">
           <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
           <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse" />
@@ -79,7 +79,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (isOnboarding) {
     return (
-      <div className="min-h-screen bg-[#04070c] flex">
+      <div className="min-h-screen bg-background flex">
         <main className="flex-1 p-8 overflow-y-auto relative custom-scrollbar">
           <div className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none" />
           <div className="max-w-[1600px] mx-auto relative z-10 animate-in fade-in slide-in-from-bottom-2 duration-700">
@@ -92,7 +92,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="min-h-screen bg-[#04070c] flex w-full relative">
+      <div className="min-h-screen bg-background flex w-full relative">
         <DashboardSidebar />
 
         <OperationalTabTrigger />

@@ -66,7 +66,7 @@ export default function AdminGlobalLayout({ children }: { children: React.ReactN
           <Loader2 className="h-12 w-12 text-emerald-500 animate-spin mb-4" />
           <div className="absolute inset-0 bg-emerald-500/20 blur-xl rounded-full animate-pulse" />
         </div>
-        <p className="text-[10px] font-black text-emerald-500 tracking-[0.5em] uppercase">Sincronizando_Terminal_Global...</p>
+        <p className="text-[10px] font-black text-emerald-400 tracking-[0.5em] uppercase">Sincronizando_Terminal_Global...</p>
       </div>
     );
   }
@@ -76,7 +76,7 @@ export default function AdminGlobalLayout({ children }: { children: React.ReactN
 
   if (profile.role !== "superadmin") {
     return (
-      <div className="h-screen w-full flex flex-col items-center justify-center bg-[#04070c] p-8 text-center">
+      <div className="h-screen w-full flex flex-col items-center justify-center bg-background p-8 text-center">
         <ShieldAlert className="h-16 w-16 text-rose-500 mb-6" />
         <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-2">ACCESO_DENEGADO</h2>
         <p className="text-white/40 font-bold uppercase text-[10px] tracking-widest mb-8">No tiene privilegios para acceder al Núcleo Global con esta identidad.</p>
@@ -94,7 +94,7 @@ export default function AdminGlobalLayout({ children }: { children: React.ReactN
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="min-h-screen bg-[#04070c] flex admin-global-theme w-full relative">
+      <div className="min-h-screen bg-background flex admin-global-theme w-full relative">
         <DashboardSidebar />
         
         <GlobalTabTrigger />
