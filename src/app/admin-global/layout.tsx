@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
@@ -6,7 +5,7 @@ import { DashboardSidebar } from "@/components/dashboard/Sidebar";
 import { Loader2, ChevronsRight, ChevronLeft, ShieldAlert, LogOut, Zap, Menu } from "lucide-react";
 import { SidebarProvider, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, use } from "react";
 import { Button } from "@/components/ui/button";
 
 function GlobalMobileHeader() {
@@ -49,7 +48,9 @@ function GlobalTabTrigger() {
   );
 }
 
-export default function AdminGlobalLayout({ children }: { children: React.ReactNode }) {
+export default function AdminGlobalLayout(props: { children: React.ReactNode; params: Promise<any> }) {
+  const params = use(props.params);
+  const children = props.children;
   const { profile, loading, logout } = useAuth();
   const router = useRouter();
 

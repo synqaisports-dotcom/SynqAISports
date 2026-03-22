@@ -1,12 +1,16 @@
-
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, use } from "react";
 
-export default function PromoSandboxLayout({ children }: { children: React.ReactNode }) {
+export default function PromoSandboxLayout(props: { 
+  children: React.ReactNode;
+  params: Promise<any>;
+}) {
+  const params = use(props.params);
+  const children = props.children;
   const { profile, loading } = useAuth();
   const router = useRouter();
 

@@ -3,9 +3,14 @@
 import { useAuth } from "@/lib/auth-context";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, use } from "react";
 
-export default function MethodologyLayout({ children }: { children: React.ReactNode }) {
+export default function MethodologyLayout(props: { 
+  children: React.ReactNode;
+  params: Promise<any>;
+}) {
+  const params = use(props.params);
+  const children = props.children;
   const { profile, loading } = useAuth();
   const router = useRouter();
 

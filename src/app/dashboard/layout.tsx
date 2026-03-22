@@ -1,11 +1,10 @@
-
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
 import { DashboardSidebar } from "@/components/dashboard/Sidebar";
 import { Loader2, ChevronsRight, ChevronLeft, Menu, Zap } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, use } from "react";
 import { SidebarProvider, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 
 function OperationalMobileHeader() {
@@ -48,7 +47,9 @@ function OperationalTabTrigger() {
   );
 }
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function DashboardLayout(props: { children: React.ReactNode; params: Promise<any> }) {
+  const params = use(props.params);
+  const children = props.children;
   const { profile, loading } = useAuth();
   const pathname = usePathname();
   const router = useRouter();

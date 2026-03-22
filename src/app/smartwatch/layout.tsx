@@ -1,4 +1,3 @@
-
 import { Metadata } from "next";
 import { ReactNode } from "react";
 
@@ -13,14 +12,13 @@ export const metadata: Metadata = {
   }
 };
 
-/**
- * Layout exclusivo para la App de Smartwatch.
- */
-export default async function SmartwatchLayout({ 
-  children,
-}: { 
+export default async function SmartwatchLayout(props: { 
   children: ReactNode;
+  params: Promise<any>;
 }) {
+  const params = await props.params;
+  const children = props.children;
+
   return (
     <div className="min-h-screen bg-background">
       {children}
