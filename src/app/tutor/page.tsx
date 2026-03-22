@@ -3,15 +3,15 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Mail, ArrowRight, Zap, ShieldCheck, Smartphone } from "lucide-react";
+import { Mail, ArrowRight, Zap, ShieldCheck, Smartphone, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 /**
- * Pantalla de Acceso Tutor - v1.0.0
- * Validación por email vinculado a la ficha del jugador.
+ * Pantalla de Acceso Tutor - v1.1.0
+ * VALIDACIÓN_REAL: Acceso vinculado al mail registrado en la plantilla del jugador.
  */
 export default function TutorLoginPage() {
   const [email, setEmail] = useState("");
@@ -24,19 +24,39 @@ export default function TutorLoginPage() {
     if (!email) return;
     
     setLoading(true);
+    
     // Simulación de validación contra el "Cepo de Datos" de jugadores
     setTimeout(() => {
+      // 1. Obtener jugadores de la base de datos local
+      const savedPlayers = JSON.parse(localStorage.getItem("synq_players") || "[]");
+      
+      // 2. Buscar coincidencias en tutorEmail
+      const foundMatch = savedPlayers.some((p: any) => 
+        p.tutorEmail?.toLowerCase() === email.toLowerCase()
+      );
+
+      if (foundMatch) {
+        // Guardar email de sesión del tutor
+        localStorage.setItem("synq_tutor_session_email", email.toLowerCase());
+        
+        toast({
+          title: "IDENTIDAD_VINCULADA",
+          description: "Acceso autorizado al nodo de familia. Sincronizando datos de atletas...",
+        });
+        router.push("/tutor/dashboard");
+      } else {
+        toast({
+          variant: "destructive",
+          title: "ERROR_VINCULACIÓN",
+          description: "Este email no consta como Tutor en ninguna ficha activa del club. Verifique el dato con su coordinador.",
+        });
+      }
       setLoading(false);
-      toast({
-        title: "IDENTIDAD_VINCULADA",
-        description: "Acceso autorizado al nodo de familia.",
-      });
-      router.push("/tutor/dashboard");
     }, 1500);
   };
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-12 animate-in fade-in duration-700">
+    <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-12 animate-in fade-in duration-700 bg-background">
       <div className="text-center space-y-4">
         <div className="relative inline-block">
           <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full animate-pulse" />
@@ -87,8 +107,8 @@ export default function TutorLoginPage() {
           <ShieldCheck className="h-3 w-3 text-emerald-400" />
           <span className="text-[8px] font-black text-white/40 uppercase tracking-widest">Protocolo de Privacidad GDPR Activo</span>
         </div>
-        <p className="text-[9px] text-white/20 uppercase font-bold tracking-widest max-w-[200px] leading-loose">
-          Terminal exclusiva para dispositivos móviles.
+        <p className="text-[9px] text-white/20 uppercase font-bold tracking-widest max-w-[200px] leading-loose italic">
+          Terminal exclusiva para tutores legales verificados por el club.
         </p>
       </div>
     </div>

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Users, 
   UserPlus, 
@@ -98,7 +98,7 @@ const TACTICAL_POSITIONS = [
 ];
 
 const INITIAL_PLAYERS = [
-  { id: "p1", name: "Lucas", surname: "García", number: "10", nickname: "LUKY", email: "l.garcia@tutor.com", category: "Infantil", teamSuffix: "A", position: "MC, MCO", status: "Active", attendance: "98%", isMinor: true, tutorName: "MARÍA", tutorSurname: "GARCÍA", tutorPhone: "600 000 001", tutorEmail: "m.garcia@tutor.com", photoUrl: "", birthDate: "2011-05-15", joinDate: "2023-09-01" },
+  { id: "p1", name: "Lucas", surname: "García", number: "10", nickname: "LUKY", email: "l.garcia@tutor.com", category: "Infantil", teamSuffix: "A", position: "MC, MCO", status: "Active", attendance: "98%", isMinor: true, tutorName: "MARÍA", tutorSurname: "GARCÍA", tutorPhone: "600 000 001", tutorEmail: "l.garcia@tutor.com", photoUrl: "", birthDate: "2011-05-15", joinDate: "2023-09-01" },
   { id: "p2", name: "Elena", surname: "Rossi", number: "9", nickname: "ROSSI", email: "e.rossi@tutor.it", category: "Alevín", teamSuffix: "B", position: "DC", status: "Active", attendance: "92%", isMinor: true, tutorName: "PAOLO", tutorSurname: "ROSSI", tutorPhone: "+39 300 000 000", tutorEmail: "p.rossi@tutor.it", photoUrl: "", birthDate: "2013-02-20", joinDate: "2024-01-10" },
   { id: "p3", name: "Marc", surname: "Soler", number: "1", nickname: "MARCUS", email: "m.soler@tutor.es", category: "Cadete", teamSuffix: "C", position: "POR", status: "Injured", attendance: "45%", isMinor: false, tutorName: "ADMIN", tutorSurname: "CONTACTO", tutorPhone: "600 000 000", tutorEmail: "m.soler@tutor.es", photoUrl: "", birthDate: "2009-11-05", joinDate: "2022-08-15" },
   { id: "p4", name: "Sofía", surname: "Mendes", number: "4", nickname: "SOFI", email: "s.mendes@tutor.br", category: "Benjamín", teamSuffix: "A", position: "DFC, LD", status: "Active", attendance: "100%", isMinor: true, tutorName: "LUIS", tutorSurname: "MENDES", tutorPhone: "+55 11 0000 0000", tutorEmail: "l.mendes@tutor.br", photoUrl: "", birthDate: "2015-07-30", joinDate: "2024-02-01" },
@@ -107,11 +107,21 @@ const INITIAL_PLAYERS = [
 export default function PlayersManagementPage() {
   const { profile } = useAuth();
   const { toast } = useToast();
-  const [players, setPlayers] = useState(INITIAL_PLAYERS);
+  const [players, setPlayers] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("synq_players");
+    if (saved) {
+      setPlayers(JSON.parse(saved));
+    } else {
+      setPlayers(INITIAL_PLAYERS);
+      localStorage.setItem("synq_players", JSON.stringify(INITIAL_PLAYERS));
+    }
+  }, []);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -191,7 +201,9 @@ export default function PlayersManagementPage() {
   };
 
   const handleDelete = (id: string, name: string) => {
-    setPlayers(prev => prev.filter(p => p.id !== id));
+    const nextPlayers = players.filter(p => p.id !== id);
+    setPlayers(nextPlayers);
+    localStorage.setItem("synq_players", JSON.stringify(nextPlayers));
     toast({
       variant: "destructive",
       title: "ATLETA_DESVINCULADO",
@@ -202,7 +214,6 @@ export default function PlayersManagementPage() {
   const handleSavePlayer = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // PROTOCOLO CEPO DE DATOS: Validación obligatoria de Tutor Email
     if (!formData.tutorEmail) {
       toast({
         variant: "destructive",
@@ -219,8 +230,9 @@ export default function PlayersManagementPage() {
     };
 
     setTimeout(() => {
+      let nextPlayers;
       if (editingId) {
-        setPlayers(prev => prev.map(p => p.id === editingId ? { ...p, ...playerToSave } : p));
+        nextPlayers = players.map(p => p.id === editingId ? { ...p, ...playerToSave } : p);
         toast({ title: "FICHA_ACTUALIZADA", description: "Protocolo de atleta sincronizado." });
       } else {
         const newPlayer = { 
@@ -228,9 +240,11 @@ export default function PlayersManagementPage() {
           ...playerToSave, 
           attendance: "100%" 
         };
-        setPlayers([newPlayer, ...players]);
+        nextPlayers = [newPlayer, ...players];
         toast({ title: "ATLETA_REGISTRADO", description: `${formData.name} ya forma parte de la red.` });
       }
+      setPlayers(nextPlayers);
+      localStorage.setItem("synq_players", JSON.stringify(nextPlayers));
       setLoading(false);
       setIsSheetOpen(false);
     }, 1000);
@@ -277,7 +291,7 @@ export default function PlayersManagementPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <PlayerStat label="Atletas Totales" value={players.length.toString()} icon={Users} />
         <PlayerStat label="Asistencia Media" value="94.2%" icon={Activity} highlight />
-        <PlayerStat label="En Enfermería" value={players.filter(p => p.status === 'Injured').length.toString()} icon={Stethoscope} warning={players.some(p => p.status === 'Injured')} />
+        <PlayerStat label="En Enfermería" value={players.filter((p: any) => p.status === 'Injured').length.toString()} icon={Stethoscope} warning={players.some((p: any) => p.status === 'Injured')} />
         <PlayerStat label="Progreso Red" value="+12%" icon={TrendingUp} />
       </div>
 
@@ -639,7 +653,6 @@ export default function PlayersManagementPage() {
                 </Select>
               </div>
 
-              {/* CEPO_DE_DATOS: Sección de Tutor Obligatoria */}
               <div className="space-y-6 p-6 border border-primary/30 bg-primary/5 rounded-3xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4 opacity-10">
                   <Database className="h-20 w-20 text-primary" />

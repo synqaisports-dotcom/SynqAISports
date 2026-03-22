@@ -1,19 +1,22 @@
+
 "use client";
 
-import { ReactNode, useState, createContext, useContext } from "react";
-import { X, RefreshCw, Zap, CalendarDays, MessageSquareQuote, UserCircle } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { ReactNode, useState, createContext, useContext, useEffect } from "react";
+import { X, RefreshCw, Zap, CalendarDays, MessageSquareQuote, UserCircle, Loader2 } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 /**
- * Contexto de la App de Tutores
- * Maneja el hijo seleccionado y la lógica de anuncios.
+ * Contexto de la App de Tutores - v1.2.0
+ * PROTOCOLO_MULTI_HIJO: Filtra dinámicamente los atletas vinculados al mail de sesión.
  */
 interface TutorContextType {
   selectedChild: any;
   setSelectedChild: (child: any) => void;
   showAd: () => void;
+  allChildren: any[];
+  loading: boolean;
 }
 
 const TutorContext = createContext<TutorContextType | null>(null);
@@ -29,7 +32,7 @@ function NavItem({ icon: Icon, active, href = "#" }: any) {
     <Link href={href}>
       <button className={cn(
         "h-12 w-12 rounded-2xl flex items-center justify-center transition-all relative",
-        active ? "bg-primary/10 text-primary" : "text-white/20 hover:text-white"
+        active ? "bg-primary/10 text-primary shadow-[0_0_15px_rgba(0,242,255,0.1)]" : "text-white/20 hover:text-white"
       )}>
         <Icon className="h-6 w-6" />
         {active && <div className="absolute -bottom-1 h-1 w-4 bg-primary rounded-full" />}
@@ -40,17 +43,54 @@ function NavItem({ icon: Icon, active, href = "#" }: any) {
 
 export function TutorClientLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const isLoginPage = pathname === '/tutor';
 
-  const [selectedChild, setSelectedChild] = useState({
-    id: 'c1',
-    name: 'LUCAS GARCÍA',
-    number: '10',
-    team: 'INFANTIL A',
-    category: 'FEDERADO'
-  });
-
+  const [allChildren, setAllChildren] = useState<any[]>([]);
+  const [selectedChild, setSelectedChild] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [isInterstitialVisible, setIsInterstitialVisible] = useState(false);
+
+  // EFECTO DE SINCRONIZACIÓN DE SESIÓN Y ATLETAS
+  useEffect(() => {
+    if (isLoginPage) {
+      setLoading(false);
+      return;
+    }
+
+    const tutorEmail = localStorage.getItem("synq_tutor_session_email");
+    if (!tutorEmail) {
+      router.push("/tutor");
+      return;
+    }
+
+    // 1. Obtener todos los jugadores del club
+    const savedPlayers = JSON.parse(localStorage.getItem("synq_players") || "[]");
+    
+    // 2. Filtrar por el email del tutor logueado
+    const myAtletas = savedPlayers.filter((p: any) => 
+      p.tutorEmail?.toLowerCase() === tutorEmail.toLowerCase()
+    ).map((p: any) => ({
+      id: p.id,
+      name: `${p.name} ${p.surname}`.toUpperCase(),
+      number: p.number,
+      team: `${p.category} ${p.teamSuffix}`.toUpperCase(),
+      category: 'FEDERADO'
+    }));
+
+    if (myAtletas.length === 0 && !isLoginPage) {
+      // Si no hay jugadores para este email, cerramos sesión (posible dato borrado)
+      localStorage.removeItem("synq_tutor_session_email");
+      router.push("/tutor");
+      return;
+    }
+
+    setAllChildren(myAtletas);
+    if (!selectedChild) {
+      setSelectedChild(myAtletas[0]);
+    }
+    setLoading(false);
+  }, [pathname, isLoginPage, router, selectedChild]);
 
   const showAd = () => {
     const lastAd = localStorage.getItem('synq_tutor_last_ad');
@@ -62,15 +102,23 @@ export function TutorClientLayout({ children }: { children: ReactNode }) {
     }
   };
 
+  if (loading && !isLoginPage) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center bg-background p-10 text-center space-y-4">
+        <Loader2 className="h-10 w-10 text-primary animate-spin" />
+        <p className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Sincronizando_Atletas...</p>
+      </div>
+    );
+  }
+
   return (
-    <TutorContext.Provider value={{ selectedChild, setSelectedChild, showAd }}>
+    <TutorContext.Provider value={{ selectedChild, setSelectedChild, showAd, allChildren, loading }}>
       <div className="w-full max-w-[500px] bg-background min-h-screen relative shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col border-x border-white/5">
         
         <div className="flex-1 flex flex-col">
           {children}
         </div>
 
-        {/* NAVEGACIÓN INFERIOR FIJA */}
         {!isLoginPage && (
           <nav className="sticky bottom-0 h-20 bg-card/80 backdrop-blur-xl border-t border-white/5 flex items-center justify-around px-6 z-[100] shrink-0">
             <NavItem icon={Zap} href="/tutor/dashboard" active={pathname === '/tutor/dashboard'} />
@@ -80,7 +128,6 @@ export function TutorClientLayout({ children }: { children: ReactNode }) {
           </nav>
         )}
 
-        {/* PUBLICIDAD INTERSTICIAL */}
         {isInterstitialVisible && (
           <div className="fixed inset-0 z-[300] bg-background flex flex-col animate-in fade-in duration-500">
             <div className="absolute top-6 right-6">
