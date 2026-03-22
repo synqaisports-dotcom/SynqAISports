@@ -15,9 +15,8 @@ interface PlayerChipProps {
 }
 
 /**
- * PlayerChip - Nodo de Atleta en Pizarra v41.0.0
- * PROTOCOLO_LEGACY_HARDWARE_ACCELERATION: Optimización drástica para tablets antiguas.
- * Uso de translateZ(0) para forzar composición por GPU y curva de tiempo reducida (400ms).
+ * PlayerChip - Nodo de Atleta en Pizarra v69.0.0
+ * PROTOCOLO_MOBILE_SCALING: Aumentado el tamaño base para móviles (h-8) y fuentes legibles.
  */
 export function PlayerChip({ 
   number, 
@@ -51,7 +50,7 @@ export function PlayerChip({
     >
       <div 
         className={cn(
-          "h-3.5 w-3.5 md:h-10 md:w-10 lg:h-11 lg:w-11 rounded-full border-[1px] md:border-2 flex items-center justify-center text-[4.5px] md:text-[10px] lg:text-xs font-black shadow-lg transition-all duration-300",
+          "h-8 w-8 md:h-10 md:w-10 lg:h-11 lg:w-11 rounded-full border-[1.5px] md:border-2 flex items-center justify-center text-[10px] md:text-[10px] lg:text-xs font-black shadow-lg transition-all duration-300",
           team === 'local' 
             ? "bg-primary/20 border-primary text-primary shadow-[0_0_15px_rgba(0,242,255,0.3)]" 
             : "bg-rose-500/20 border-rose-500 text-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.3)]",
@@ -62,7 +61,7 @@ export function PlayerChip({
       </div>
       {label && (
         <span className={cn(
-          "text-[3.5px] md:text-[8px] lg:text-[9px] font-black uppercase tracking-tighter whitespace-nowrap bg-black/60 px-1 py-0.2 md:px-2 md:py-0.5 rounded-sm transition-opacity duration-300",
+          "text-[8px] md:text-[8px] lg:text-[9px] font-black uppercase tracking-tighter whitespace-nowrap bg-black/60 px-1.5 py-0.5 rounded-sm transition-opacity duration-300",
           isDragging ? "opacity-0" : "opacity-100"
         )}>
           {label}

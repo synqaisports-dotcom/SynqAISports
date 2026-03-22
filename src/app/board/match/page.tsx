@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo, useRef, memo, useCallback } from "react";
@@ -76,8 +77,9 @@ interface DrawingLine {
 const MemoizedPlayerChip = memo(PlayerChip);
 
 /**
- * MatchBoardPage - v62.0.0
- * PROTOCOL_FULL_SCREEN_CANVAS: Área de trabajo expandida al 100% del viewport.
+ * MatchBoardPage - v69.0.0
+ * PROTOCOL_FIELD_ALIGNMENT: Ajuste de límites para evitar que jugadores salgan del campo.
+ * PROTOCOLO_VISITOR_FLOW: Invertido orden de transiciones para equipo visitante.
  */
 export default function MatchBoardPage() {
   const { profile } = useAuth();
@@ -190,27 +192,36 @@ export default function MatchBoardPage() {
         default: return 0;
       }
     };
+    
+    // Márgenes de seguridad más estrictos (10% - 90%) para evitar que se salgan de las líneas
+    const minSafeX = 8;
+    const maxSafeX = 92;
+    const minSafeY = 8;
+    const maxSafeY = 92;
+
     const hp = homeFormation === "NINGUNA" ? [] : (formationsForField[homeFormation] || formationsForField["4-3-3"]).map((pos, idx) => {
       let finalX = (0.05 + (pos.x * 0.9)) * 100;
       let finalY = pos.y * 100;
-      if (idx === 0) { finalX = 5; finalY = 50; } 
+      if (idx === 0) { finalX = 8; finalY = 50; } 
       else {
         finalY = finalY + shiftX(homeShift);
         finalX = finalX + phaseOffset(homePhase);
         if (homePhase === 'def') finalX = Math.min(50, finalX);
-        finalX = Math.max(5, Math.min(95, finalX));
+        finalX = Math.max(minSafeX, Math.min(maxSafeX, finalX));
+        finalY = Math.max(minSafeY, Math.min(maxSafeY, finalY));
       }
       return { id: `local-${idx}`, number: idx + 1, name: `JUGADOR ${idx + 1}`, team: "local" as const, x: finalX, y: finalY };
     });
     const gp = guestFormation === "NINGUNA" ? [] : (formationsForField[guestFormation] || formationsForField["4-3-3"]).map((pos, idx) => {
       let finalX = (0.95 - (pos.x * 0.9)) * 100;
       let finalY = (1 - pos.y) * 100;
-      if (idx === 0) { finalX = 95; finalY = 50; }
+      if (idx === 0) { finalX = 92; finalY = 50; }
       else {
         finalY = finalY - shiftX(guestShift);
         finalX = finalX - phaseOffset(guestPhase);
         if (guestPhase === 'def') finalX = Math.max(50, finalX);
-        finalX = Math.max(5, Math.min(95, finalX));
+        finalX = Math.max(minSafeX, Math.min(maxSafeX, finalX));
+        finalY = Math.max(minSafeY, Math.min(maxSafeY, finalY));
       }
       return { id: `visitor-${idx}`, number: idx + 1, name: `RIVAL ${idx + 1}`, team: "visitor" as const, x: finalX, y: finalY };
     });
@@ -533,7 +544,8 @@ export default function MatchBoardPage() {
             </div>
             <div className="bg-black/80 backdrop-blur-xl border border-rose-500/20 p-1 rounded-xl shadow-xl flex items-center h-10 lg:h-11 glass-panel">
               <div className="flex gap-0.5 lg:gap-1">
-                {["DEF", "TDA", "SAL", "ATK"].map(p => (
+                {/* ORDEN INVERTIDO PARA VISITANTE: ATK -> DEF para coherencia con dirección de ataque */}
+                {["ATK", "SAL", "TDA", "DEF"].map(p => (
                   <button 
                     key={p} 
                     onClick={() => setGuestPhase(p.toLowerCase() as TacticalPhase)}
