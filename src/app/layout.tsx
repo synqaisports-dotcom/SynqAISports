@@ -1,4 +1,3 @@
-
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
@@ -21,7 +20,7 @@ export const metadata: Metadata = {
   },
   icons: {
     apple: [
-      { url: 'https://picsum.photos/seed/synqai-pro-icon/192/192', sizes: '192x192', type: 'image/png' },
+      { url: 'https://placehold.co/192x192/04070c/00f2ff?text=SynqAi', sizes: '192x192', type: 'image/png' },
     ],
   }
 };
