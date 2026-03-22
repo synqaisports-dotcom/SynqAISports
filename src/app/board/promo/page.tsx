@@ -141,7 +141,6 @@ function PromoBoardContent() {
   const [teamConfig, setTeamConfig] = useState<any>(null);
   const [vault, setVault] = useState<any>({ exercises: [] });
 
-  // ESTADOS DE PANELES LATERALES
   const [isTeamSheetOpen, setIsTeamSheetOpen] = useState(false);
   const [isMaterialsSheetOpen, setIsMaterialsSheetOpen] = useState(false);
   const [isDrawingSheetOpen, setIsDrawingSheetOpen] = useState(false);
@@ -259,7 +258,40 @@ function PromoBoardContent() {
       case 'hurdle': ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/60, height/30); ctx.strokeStyle = element.color; ctx.lineWidth = 6 * renderScale; ctx.beginPath(); ctx.moveTo(-30, 15); ctx.lineTo(-30, -15); ctx.lineTo(30, -15); ctx.lineTo(30, 15); ctx.stroke(); ctx.restore(); break;
       case 'minigoal': ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/100, height/60); ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(-50, -30, 100, 60); ctx.setLineDash([3 * renderScale, 3 * renderScale]); ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1 * renderScale; for(let i=-50; i<50; i+=10) { ctx.beginPath(); ctx.moveTo(i, -30); ctx.lineTo(i, 30); ctx.stroke(); } for(let j=-30; j<30; j+=10) { ctx.beginPath(); ctx.moveTo(-50, j); ctx.lineTo(50, j); ctx.stroke(); } ctx.setLineDash([]); ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 5 * renderScale; ctx.strokeRect(-50, -30, 100, 60); ctx.restore(); break;
       case 'pica': ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/36, height/80); ctx.beginPath(); ctx.arc(0, 30, 18, 0, Math.PI * 2); ctx.fillStyle = '#334155'; ctx.fill(); ctx.fillStyle = element.color; ctx.fillRect(-4, -40, 8, 70); ctx.restore(); break;
-      case 'barrier': ctx.save(); ctx.translate(centerX, centerY); const bw = width / 3; for (let i = -1; i <= 1; i++) { ctx.save(); ctx.translate(i * bw * 0.8, 0); ctx.beginPath(); ctx.ellipse(0, 0, bw/2, height/2, 0, 0, Math.PI * 2); const bGrad = ctx.createLinearGradient(-bw/2, 0, bw/2, 0); bGrad.addColorStop(0, hexToRgba(element.color, 0.8)); bGrad.addColorStop(0.5, element.color); bGrad.addColorStop(1, hexToRgba(element.color, 0.6)); ctx.fillStyle = bGrad; ctx.fill(); ctx.strokeStyle = '#000'; ctx.lineWidth = 1 * renderScale; ctx.stroke(); ctx.restore(); } ctx.restore(); break;
+      case 'barrier': 
+        ctx.save(); 
+        ctx.translate(centerX, centerY); 
+        const dummyW = width / 3; 
+        for (let i = -1; i <= 1; i++) { 
+          ctx.save(); 
+          ctx.translate(i * dummyW * 0.9, 0); 
+          // Head
+          ctx.beginPath(); 
+          ctx.arc(0, -height/3, dummyW/3.5, 0, Math.PI * 2); 
+          ctx.fillStyle = element.color; 
+          ctx.fill(); 
+          ctx.strokeStyle = '#000'; 
+          ctx.lineWidth = 1 * renderScale; 
+          ctx.stroke();
+          // Body (Shoulders and torso)
+          ctx.beginPath(); 
+          ctx.moveTo(-dummyW/2, height/2);
+          ctx.lineTo(-dummyW/2, -height/8);
+          ctx.quadraticCurveTo(-dummyW/2, -height/4, 0, -height/4);
+          ctx.quadraticCurveTo(dummyW/2, -height/4, dummyW/2, -height/8);
+          ctx.lineTo(dummyW/2, height/2);
+          ctx.closePath();
+          const bGrad = ctx.createLinearGradient(-dummyW/2, 0, dummyW/2, 0); 
+          bGrad.addColorStop(0, hexToRgba(element.color, 0.8)); 
+          bGrad.addColorStop(0.5, '#ffffff66'); 
+          bGrad.addColorStop(1, hexToRgba(element.color, 0.6)); 
+          ctx.fillStyle = bGrad; 
+          ctx.fill(); 
+          ctx.stroke(); 
+          ctx.restore(); 
+        } 
+        ctx.restore(); 
+        break;
     }
     if (isSelected) {
       ctx.restore(); ctx.save(); ctx.translate(centerX, centerY); ctx.rotate(element.rotation); ctx.translate(-centerX, -centerY);
@@ -267,9 +299,9 @@ function PromoBoardContent() {
       ctx.strokeRect(minX - pad, minY - pad, width + pad * 2, height + pad * 2);
       ctx.setLineDash([]); ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#000000'; ctx.lineWidth = 1.5 * renderScale;
       const handles = [
-        { x: minX - pad, y: minY - pad }, { x: centerX, y: minY - pad }, { x: maxX + pad, y: minY - pad }, 
-        { x: minX - pad, y: centerY }, { x: maxX + pad, y: centerY }, 
-        { x: minX - pad, y: maxY + pad }, { x: centerX, y: maxY + pad }, { x: maxX + pad, y: maxY + pad }
+        { x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, 
+        { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY }, 
+        { x: bounds.minX - pad, y: bounds.maxY + pad }, { x: bounds.centerX, y: bounds.maxY + pad }, { x: bounds.maxX + pad, y: bounds.maxY + pad }
       ];
       handles.forEach(h => { ctx.beginPath(); ctx.arc(h.x, h.y, 8 * renderScale, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
       const rotY = minY - pad - 45 * renderScale; ctx.beginPath(); ctx.moveTo(centerX, minY - pad); ctx.lineTo(centerX, rotY); ctx.stroke();
@@ -375,7 +407,6 @@ function PromoBoardContent() {
   return (
     <div className={cn("h-full w-full flex flex-col bg-black overflow-hidden relative touch-none select-none", isLegacyDevice && "perf-lite")}>
       
-      {/* PUBLICIDAD BILATERAL INFERIOR */}
       {showAds && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[100] w-full max-w-7xl px-6 flex gap-4 pointer-events-none animate-in fade-in duration-1000">
           <div className="flex-1 pointer-events-auto"><AdSlot orientation="horizontal" /></div>
@@ -386,15 +417,12 @@ function PromoBoardContent() {
       <header className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center gap-4 w-full max-w-5xl px-4 pointer-events-none">
         <div className="flex items-center gap-2 md:gap-4 px-4 py-2 md:px-6 md:py-3 bg-black/60 backdrop-blur-2xl border border-primary/30 rounded-[2rem] shadow-2xl animate-in slide-in-from-top-2 scale-[0.8] md:scale-90 lg:scale-100 origin-top pointer-events-auto">
           
-          {/* GRUPO 1: FULLSCREEN, ICONO Y TÍTULO */}
           <div className="flex items-center gap-3 pr-3 border-r border-white/10 shrink-0">
             <button onClick={toggleFullscreen} className="h-8 w-8 flex items-center justify-center text-primary/40 hover:text-primary transition-all active:scale-90" title={isFullscreen ? "Minimizar" : "Pantalla Completa"}>{isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}</button>
             <div className="flex flex-col"><div className="flex items-center gap-1.5"><Zap className="h-3 w-3 text-primary animate-pulse" /><span className="text-[7px] font-black text-primary tracking-widest uppercase italic">Promo_Mode</span></div><h1 className="text-[10px] font-headline font-black text-white italic uppercase leading-none">{exerciseId ? 'Edición' : 'Sandbox'}</h1></div>
           </div>
 
-          {/* GRUPO 2: EQUIPO Y MATERIAL (MIGRADOS AQUÍ) */}
           <div className="flex items-center gap-2 px-1">
-            {/* PANEL DE EQUIPO */}
             <Sheet open={isTeamSheetOpen} onOpenChange={setIsTeamSheetOpen}>
               <SheetTrigger asChild>
                 <button className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center transition-all group relative">
@@ -447,7 +475,6 @@ function PromoBoardContent() {
               </SheetContent>
             </Sheet>
 
-            {/* PANEL DE MATERIALES */}
             <Sheet open={isMaterialsSheetOpen} onOpenChange={setIsMaterialsSheetOpen}>
               <SheetTrigger asChild>
                 <button className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center transition-all group">
@@ -485,7 +512,6 @@ function PromoBoardContent() {
 
           <div className="h-6 w-[1px] bg-white/10 mx-1" />
           
-          {/* GRUPO 3: CONFIGURACIÓN DE CAMPO */}
           <div className="flex items-center gap-2">
             <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}><SelectTrigger className="w-[100px] h-8 bg-white/5 border-primary/20 rounded-lg text-[7px] font-black uppercase text-primary focus:ring-0 px-2"><SelectValue /></SelectTrigger><SelectContent className="bg-[#0a0f18] border-primary/20"><SelectItem value="f11" className="text-[8px] font-black">F11</SelectItem><SelectItem value="f7" className="text-[8px] font-black">F7</SelectItem><SelectItem value="futsal" className="text-[8px] font-black">FUTSAL</SelectItem></SelectContent></Select>
             <button onClick={() => setIsHalfField(!isHalfField)} className={cn("h-8 px-2 border border-primary/20 text-[7px] font-black uppercase rounded-lg transition-all", isHalfField ? "bg-primary text-black" : "text-primary/40")}><Square className="h-3 w-3 mr-1" /> {isHalfField ? 'Campo Total' : 'Medio Campo'}</button>
@@ -494,7 +520,6 @@ function PromoBoardContent() {
 
           <div className="h-6 w-[1px] bg-white/10 mx-1" />
 
-          {/* GRUPO 4: HERRAMIENTAS DE DISEÑO (DERECHA) */}
           <div className="flex items-center gap-2">
             <Sheet open={isDrawingSheetOpen} onOpenChange={setIsDrawingSheetOpen}>
               <SheetTrigger asChild>

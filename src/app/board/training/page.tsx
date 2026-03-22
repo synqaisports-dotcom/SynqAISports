@@ -39,7 +39,9 @@ import {
   LayoutDashboard,
   Square,
   Megaphone,
-  RefreshCw
+  RefreshCw,
+  Boxes,
+  Library
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,7 +65,8 @@ import {
   SheetTitle, 
   SheetDescription,
   SheetFooter, 
-  SheetClose
+  SheetClose,
+  SheetTrigger
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -151,6 +154,9 @@ function TrainingBoardContent() {
   const [saveFormData, setSaveFormData] = useState({ title: "", stage: "Alevín", dimension: "Táctica", objective: "", description: "" });
   const isFromForm = searchParams.get("source") === "form";
 
+  const [isMaterialsSheetOpen, setIsMaterialsSheetOpen] = useState(false);
+  const [isDrawingSheetOpen, setIsDrawingSheetOpen] = useState(false);
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const ua = window.navigator.userAgent;
@@ -213,16 +219,49 @@ function TrainingBoardContent() {
       case 'hurdle': ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/60, height/30); ctx.strokeStyle = element.color; ctx.lineWidth = 6 * renderScale; ctx.beginPath(); ctx.moveTo(-30, 15); ctx.lineTo(-30, -15); ctx.lineTo(30, -15); ctx.lineTo(30, 15); ctx.stroke(); ctx.restore(); break;
       case 'minigoal': ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/100, height/60); ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(-50, -30, 100, 60); ctx.setLineDash([3 * renderScale, 3 * renderScale]); ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1 * renderScale; for(let i=-50; i<50; i+=10) { ctx.beginPath(); ctx.moveTo(i, -30); ctx.lineTo(i, 30); ctx.stroke(); } for(let j=-30; j<30; j+=10) { ctx.beginPath(); ctx.moveTo(-50, j); ctx.lineTo(50, j); ctx.stroke(); } ctx.setLineDash([]); ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 5 * renderScale; ctx.strokeRect(-50, -30, 100, 60); ctx.restore(); break;
       case 'pica': ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/36, height/80); ctx.beginPath(); ctx.arc(0, 30, 18, 0, Math.PI * 2); ctx.fillStyle = '#334155'; ctx.fill(); ctx.fillStyle = element.color; ctx.fillRect(-4, -40, 8, 70); ctx.restore(); break;
-      case 'barrier': ctx.save(); ctx.translate(centerX, centerY); const bw = width / 3; for (let i = -1; i <= 1; i++) { ctx.save(); ctx.translate(i * bw * 0.8, 0); ctx.beginPath(); ctx.ellipse(0, 0, bw/2, height/2, 0, 0, Math.PI * 2); const bGrad = ctx.createLinearGradient(-bw/2, 0, bw/2, 0); bGrad.addColorStop(0, hexToRgba(element.color, 0.8)); bGrad.addColorStop(0.5, element.color); bGrad.addColorStop(1, hexToRgba(element.color, 0.6)); ctx.fillStyle = bGrad; ctx.fill(); ctx.strokeStyle = '#000'; ctx.lineWidth = 1 * renderScale; ctx.stroke(); ctx.restore(); } ctx.restore(); break;
+      case 'barrier': 
+        ctx.save(); 
+        ctx.translate(centerX, centerY); 
+        const dummyW = width / 3; 
+        for (let i = -1; i <= 1; i++) { 
+          ctx.save(); 
+          ctx.translate(i * dummyW * 0.9, 0); 
+          // Head
+          ctx.beginPath(); 
+          ctx.arc(0, -height/3, dummyW/3.5, 0, Math.PI * 2); 
+          ctx.fillStyle = element.color; 
+          ctx.fill(); 
+          ctx.strokeStyle = '#000'; 
+          ctx.lineWidth = 1 * renderScale; 
+          ctx.stroke();
+          // Body (Shoulders and torso)
+          ctx.beginPath(); 
+          ctx.moveTo(-dummyW/2, height/2);
+          ctx.lineTo(-dummyW/2, -height/8);
+          ctx.quadraticCurveTo(-dummyW/2, -height/4, 0, -height/4);
+          ctx.quadraticCurveTo(dummyW/2, -height/4, dummyW/2, -height/8);
+          ctx.lineTo(dummyW/2, height/2);
+          ctx.closePath();
+          const bGrad = ctx.createLinearGradient(-dummyW/2, 0, dummyW/2, 0); 
+          bGrad.addColorStop(0, hexToRgba(element.color, 0.8)); 
+          bGrad.addColorStop(0.5, '#ffffff66'); 
+          bGrad.addColorStop(1, hexToRgba(element.color, 0.6)); 
+          ctx.fillStyle = bGrad; 
+          ctx.fill(); 
+          ctx.stroke(); 
+          ctx.restore(); 
+        } 
+        ctx.restore(); 
+        break;
     }
     if (isSelected) {
       ctx.restore(); ctx.save(); ctx.translate(centerX, centerY); ctx.rotate(element.rotation); ctx.translate(-centerX, -centerY);
       ctx.strokeStyle = '#ffffffaa'; ctx.lineWidth = 1.5 * renderScale; ctx.setLineDash([6 * renderScale, 4 * renderScale]); const pad = 10 * renderScale; ctx.strokeRect(minX - pad, minY - pad, width + pad * 2, height + pad * 2);
       ctx.setLineDash([]); ctx.fillStyle = '#ffffff'; 
       const handles = [
-        { x: minX - pad, y: minY - pad }, { x: centerX, y: minY - pad }, { x: maxX + pad, y: minY - pad }, 
-        { x: minX - pad, y: centerY }, { x: maxX + pad, y: centerY }, 
-        { x: minX - pad, y: maxY + pad }, { x: centerX, y: maxY + pad }, { x: maxX + pad, y: maxY + pad }
+        { x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, 
+        { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY }, 
+        { x: bounds.minX - pad, y: bounds.maxY + pad }, { x: bounds.centerX, y: bounds.maxY + pad }, { x: bounds.maxX + pad, y: bounds.maxY + pad }
       ];
       handles.forEach(h => { ctx.beginPath(); ctx.arc(h.x, h.y, 6 * renderScale, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
       const rotY = minY - pad - 40 * renderScale; ctx.beginPath(); ctx.moveTo(centerX, minY - pad); ctx.lineTo(centerX, rotY); ctx.stroke();
@@ -323,7 +362,6 @@ function TrainingBoardContent() {
   return (
     <div className={cn("h-full flex flex-col bg-[#04070c] overflow-hidden relative", isLegacyDevice && "perf-lite")}>
       
-      {/* PUBLICIDAD BILATERAL INFERIOR */}
       {showAds && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[100] w-full max-w-7xl px-6 flex gap-4 pointer-events-none animate-in fade-in duration-1000">
           <div className="flex-1 pointer-events-auto"><AdSlot orientation="horizontal" /></div>
@@ -337,12 +375,99 @@ function TrainingBoardContent() {
             <button onClick={toggleFullscreen} className="h-10 w-10 flex items-center justify-center text-amber-500/40 hover:text-amber-500 transition-all active:scale-90" title={isFullscreen ? "Minimizar" : "Pantalla Completa"}>{isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}</button>
             <div className="flex flex-col"><div className="flex items-center gap-2"><Sparkles className="h-3 w-3 text-amber-500 animate-pulse" /><span className="text-[8px] font-black text-amber-500 tracking-[0.4em] uppercase">Tactical_Studio_Pro</span></div><h1 className="text-sm font-headline font-black text-white italic tracking-tighter uppercase leading-none truncate">Estudio Élite</h1></div>
           </div>
+
+          <div className="flex items-center gap-3">
+            <Sheet open={isMaterialsSheetOpen} onOpenChange={setIsMaterialsSheetOpen}>
+              <SheetTrigger asChild>
+                <button className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center transition-all group">
+                  <Boxes className="h-4 w-4 group-hover:animate-pulse" />
+                </button>
+              </SheetTrigger>
+              <SheetContent side="left" className="bg-[#04070c]/98 backdrop-blur-3xl border-r border-amber-500/20 text-white w-full sm:max-w-xs shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+                <div className="p-8 border-b border-white/5 bg-black/40">
+                  <SheetHeader className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500 italic">Equipment_Studio</span>
+                    </div>
+                    <SheetTitle className="text-2xl font-black italic uppercase tracking-tighter">MATERIAL</SheetTitle>
+                  </SheetHeader>
+                </div>
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+                  <BoardToolbar 
+                    theme="amber" 
+                    variant="materials" 
+                    orientation="vertical" 
+                    activeTool={activeTool} 
+                    onToolSelect={(t) => { 
+                      addElementAtCenter(t); 
+                      setSelectedIds([]); 
+                      setIsMaterialsSheetOpen(false); 
+                    }} 
+                    className="border-none bg-transparent shadow-none w-full" 
+                    showLabels 
+                  />
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+
+          <div className="h-6 w-[1px] bg-white/10 mx-1" />
+
           <div className="flex items-center gap-3">
             <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}><SelectTrigger className="w-[120px] h-9 bg-white/5 border-amber-500/20 rounded-xl text-[9px] font-black uppercase text-amber-500"><LayoutGrid className="h-3.5 w-3.5 mr-2" /> <SelectValue /></SelectTrigger><SelectContent className="bg-[#0a0f18] border-amber-500/20"><SelectItem value="f11" className="text-[9px] font-black uppercase">Fútbol 11</SelectItem><SelectItem value="f7" className="text-[9px] font-black uppercase">Fútbol 7</SelectItem><SelectItem value="futsal" className="text-[9px] font-black uppercase">Fútbol Sala</SelectItem></SelectContent></Select>
             <button onClick={() => setIsHalfField(!isHalfField)} className={cn("h-9 px-3 border border-amber-500/20 text-[9px] font-black uppercase rounded-xl transition-all", isHalfField ? "bg-amber-500 text-black shadow-[0_0_20px_rgba(245,158,11,0.3)]" : "bg-white/5 text-amber-500/40")}><Square className="h-3.5 w-3.5 mr-2" /> {isHalfField ? 'Campo Total' : 'Medio Campo'}</button>
             <button onClick={() => setShowLanes(!showLanes)} className={cn("h-9 px-3 border-amber-500/20 text-[9px] font-black uppercase rounded-xl transition-all", showLanes ? "bg-amber-500 text-black shadow-[0_0_30px_rgba(245,158,11,0.4)]" : "bg-white/5 text-amber-500/40")}><Columns3 className="h-3.5 w-3.5 mr-2" /> Carriles</button>
           </div>
-          <div className="h-6 w-[1px] bg-white/10 mx-1" /><Button onClick={() => setIsSaveSheetOpen(true)} className="h-10 bg-amber-500 text-black font-black uppercase text-[9px] tracking-widest px-6 rounded-xl shadow-[0_0_25px_rgba(245,158,11,0.3)] border-none"><Save className="h-3.5 w-3.5 mr-2" /> Guardar Táctica</Button>
+
+          <div className="h-6 w-[1px] bg-white/10 mx-1" />
+
+          <div className="flex items-center gap-3">
+            <Sheet open={isDrawingSheetOpen} onOpenChange={setIsDrawingSheetOpen}>
+              <SheetTrigger asChild>
+                <button className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-500 flex items-center justify-center hover:bg-amber-500 hover:text-black transition-all group relative">
+                  <PencilLine className="h-4 w-4 group-hover:animate-pulse" />
+                </button>
+              </SheetTrigger>
+              <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-amber-500/20 text-white w-full sm:max-w-xs shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+                <div className="p-8 border-b border-white/5 bg-black/40">
+                  <SheetHeader className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500 italic">Drawing_Studio</span>
+                    </div>
+                    <SheetTitle className="text-2xl font-black italic uppercase tracking-tighter">HERRAMIENTAS</SheetTitle>
+                  </SheetHeader>
+                </div>
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+                  <BoardToolbar 
+                    theme="amber" 
+                    variant="training" 
+                    orientation="vertical" 
+                    activeTool={activeTool} 
+                    onToolSelect={(t) => { 
+                      if(t === 'select') { 
+                        setActiveTool('select'); 
+                        setSelectedIds([]); 
+                      } else {
+                        addElementAtCenter(t); 
+                      }
+                      setIsDrawingSheetOpen(false); 
+                    }} 
+                    onClear={() => { 
+                      setElements([]); 
+                      setSelectedIds([]); 
+                      setIsDrawingSheetOpen(false);
+                    }} 
+                    className="border-none bg-transparent shadow-none w-full" 
+                    showLabels 
+                  />
+                </div>
+              </SheetContent>
+            </Sheet>
+
+            <Button onClick={() => setIsSaveSheetOpen(true)} className="h-10 bg-amber-500 text-black font-black uppercase text-[9px] tracking-widest px-6 rounded-xl shadow-[0_0_25px_rgba(245,158,11,0.3)] border-none"><Save className="h-3.5 w-3.5 mr-2" /> Guardar Táctica</Button>
+          </div>
         </div>
       </header>
       {selectedIds.length > 0 && (
@@ -365,10 +490,6 @@ function TrainingBoardContent() {
           <canvas ref={canvasRef} className="absolute inset-0 z-30 pointer-events-auto" onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp} />
         </TacticalField>
       </main>
-      <div className="fixed bottom-10 left-0 right-0 flex justify-center items-end gap-12 px-12 z-[100] pointer-events-none">
-        <div className="pointer-events-auto"><BoardToolbar theme="amber" variant="materials" orientation="horizontal" activeTool={activeTool} onToolSelect={(tool) => { addElementAtCenter(tool); setSelectedIds([]); }} className="border shadow-2xl" /></div>
-        <div className="pointer-events-auto"><BoardToolbar theme="amber" variant="training" orientation="horizontal" activeTool={activeTool} onToolSelect={(tool) => { if (tool === 'select') { setActiveTool('select'); setSelectedIds([]); } else { addElementAtCenter(tool); } }} onClear={() => { setElements([]); setSelectedIds([]); }} className="border shadow-2xl" /></div>
-      </div>
       <Sheet open={isSaveSheetOpen} onOpenChange={setIsSaveSheetOpen}>
         <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-xl border-l border-amber-500/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
           <div className="p-10 border-b border-white/5 bg-black/40"><SheetHeader className="space-y-4"><div className="flex items-center gap-3"><ClipboardList className="h-5 w-5 text-amber-500 animate-pulse" /><span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500 italic">Technical_Sheet_Sync_v1.0</span></div><SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left leading-none">VINCULAR <span className="text-amber-500">DATOS</span></SheetTitle></SheetHeader></div>

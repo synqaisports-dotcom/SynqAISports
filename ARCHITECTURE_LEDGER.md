@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v68.0.0 (Auto-Close Flow)
+# SynqSports Pro - ARCHITECTURE_LEDGER v71.0.0 (Professional Barrier)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -26,3 +26,12 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 
 ## 68. Protocolo de Flujo de Diseño (v68.0.0)
 - **v68.0.0**: **PROTOCOL_AUTO_CLOSE_SHEETS**: Implementación de cierre automático de paneles laterales (Sheets) tras la selección de herramientas o materiales. Optimización del flujo de dibujo para evitar clics adicionales de cierre manual.
+
+## 69. Protocolo de Ergonomía Móvil (v69.0.0)
+- **v69.0.0**: **PROTOCOL_MOBILE_CHIP_SCALING**: Aumento de escala de los jugadores (h-8) para visibilidad en móviles. Ajuste de márgenes de seguridad (10%) para evitar que los jugadores se salgan del campo en pantalla completa.
+
+## 70. Protocolo de Encuadre Panorámico (v70.0.0)
+- **v70.0.0**: **PROTOCOL_PANORAMIC_VIEWPORT**: Inversión de anclaje en medio campo (top-0) para asegurar la visibilidad de la portería. Ajuste de ratio a 1.5 para tablets.
+
+## 71. Protocolo de Barrera Profesional (v71.0.0)
+- **v71.0.0**: **PROTOCOL_PROFESSIONAL_BARRIER_DUMMIES**: Rediseño del activo de barrera. Sustitución de elipses por maniquíes tácticos con cabeza y hombros definidos, mejorando la estética del "Stylebook" oficial.
