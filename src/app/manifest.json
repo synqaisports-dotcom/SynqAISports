@@ -3,7 +3,7 @@
   "name": "Tutor by SynqAi",
   "short_name": "SynqTutor",
   "description": "Portal Oficial de Familias - Red SynqAi Sports",
-  "id": "com.synqai.tutor",
+  "id": "com.synqai.tutor.v1",
   "start_url": "/tutor",
   "scope": "/",
   "display": "standalone",

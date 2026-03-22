@@ -8,7 +8,7 @@ export const dynamic = 'force-static';
 
 export async function GET() {
   const swCode = `
-    const CACHE_NAME = 'synqai-tutor-v1';
+    const CACHE_NAME = 'synqai-tutor-v2';
     
     self.addEventListener('install', (event) => {
       self.skipWaiting();
@@ -19,16 +19,17 @@ export async function GET() {
     });
 
     self.addEventListener('fetch', (event) => {
-      // El evento fetch es obligatorio para que el navegador muestre el prompt de instalación.
-      // En este prototipo no cacheamos para permitir actualizaciones rápidas en desarrollo.
-      return;
+      // Necesario para la validación de PWA de Chrome en Android
+      if (event.request.mode === 'navigate') {
+        event.respondWith(fetch(event.request));
+      }
     });
   `;
 
   return new Response(swCode, {
     headers: {
       'Content-Type': 'application/javascript',
-      'Cache-Control': 'no-cache',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
     },
   });
 }

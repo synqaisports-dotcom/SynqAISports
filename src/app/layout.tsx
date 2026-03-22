@@ -5,15 +5,15 @@ import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/lib/auth-context";
 
 export const metadata: Metadata = {
-  title: 'SynqSports Pro | Tecnología Pro para todo el Deporte Base',
-  description: 'Democratizando las herramientas de élite para canteras y clubes locales de cualquier disciplina. Gestión avanzada al alcance de todos.',
+  title: 'SynqSports Pro',
+  description: 'Tecnología Pro para todo el Deporte Base',
   manifest: '/manifest.json',
   themeColor: '#04070c',
   viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'SynqAI Pro'
+    title: 'Tutor by SynqAi'
   },
   other: {
     'mobile-web-app-capable': 'yes',
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   },
   icons: {
     apple: [
-      { url: 'https://picsum.photos/seed/synqicon/180/180', sizes: '180x180', type: 'image/png' },
+      { url: 'https://picsum.photos/seed/synq192/192/192', sizes: '192x192', type: 'image/png' },
     ],
   }
 };
@@ -44,9 +44,9 @@ export default function RootLayout({
               if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function() {
                   navigator.serviceWorker.register('/sw.js').then(function(registration) {
-                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                  }, function(err) {
-                    console.log('ServiceWorker registration failed: ', err);
+                    console.log('SW registered: ', registration.scope);
+                  }).catch(function(err) {
+                    console.log('SW registration failed: ', err);
                   });
                 });
               }
