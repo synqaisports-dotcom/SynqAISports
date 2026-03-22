@@ -10,13 +10,15 @@ import {
   Zap, 
   Bell, 
   Clock, 
-  ChevronRight,
-  UserCircle,
-  Trophy,
-  Info,
-  ChevronDown,
-  RefreshCw,
-  LayoutGrid
+  ChevronRight, 
+  UserCircle, 
+  Trophy, 
+  Info, 
+  ChevronDown, 
+  RefreshCw, 
+  LayoutGrid,
+  ShieldCheck,
+  Smartphone
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -36,7 +38,7 @@ export default function TutorDashboard() {
   const handleSwitchChild = (child: any) => {
     setSelectedChild(child);
     setIsSelectorOpen(false);
-    showAd(); // Lanzar lógica de anuncio al cambiar de perfil
+    showAd(); 
   };
 
   return (
@@ -63,10 +65,13 @@ export default function TutorDashboard() {
               </Badge>
             </div>
           </div>
-          <button className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center relative active:scale-90 transition-all">
-            <Bell className="h-5 w-5 text-white/40" />
-            <div className="absolute top-3 right-3 h-2 w-2 bg-rose-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(244,63,94,0.5)]" />
-          </button>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="h-8 border-emerald-500/20 text-emerald-400 uppercase text-[7px] font-black tracking-widest hidden sm:flex">PUSH_ACTIVE</Badge>
+            <button className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center relative active:scale-90 transition-all">
+              <Bell className="h-5 w-5 text-white/40" />
+              <div className="absolute top-3 right-3 h-2 w-2 bg-rose-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(244,63,94,0.5)]" />
+            </button>
+          </div>
         </div>
 
         {/* SELECTOR DESPLEGABLE */}
@@ -92,7 +97,7 @@ export default function TutorDashboard() {
         )}
       </header>
 
-      {/* PRÓXIMO EVENTO - CORRECCIÓN DE SUPERPOSICIÓN */}
+      {/* PRÓXIMO EVENTO */}
       <div className="px-6 py-4 relative z-20">
         <Card className="glass-panel border-primary/20 bg-[#0a0f18] p-5 rounded-[2rem] shadow-2xl flex items-center justify-between group active:scale-[0.98] transition-all">
           <div className="flex items-center gap-4">
@@ -109,7 +114,7 @@ export default function TutorDashboard() {
       </div>
 
       {/* MÓDULOS OPERATIVOS */}
-      <div className="flex-1 p-6 space-y-6 pb-10">
+      <div className="flex-1 p-6 space-y-6 pb-24">
         <div className="grid grid-cols-2 gap-4">
           <ModuleButton 
             title="Agenda" 
@@ -132,7 +137,7 @@ export default function TutorDashboard() {
           />
           <ModuleButton 
             title="Progreso" 
-            desc="Evolución Técnica" 
+            desc="Ver Asistencia" 
             icon={TrendingUp} 
             href="/tutor/stats" 
             color="text-amber-400" 
@@ -150,6 +155,20 @@ export default function TutorDashboard() {
           />
         </div>
 
+        {/* FEED DE NOTICIAS CLUB / SIMULACIÓN PUSH */}
+        <section className="space-y-4 pt-4">
+          <div className="flex items-center justify-between px-2">
+            <h3 className="text-[10px] font-black text-white/30 tracking-[0.4em] italic uppercase">Avisos del Club</h3>
+            <span className="text-[7px] font-black text-emerald-400/40 uppercase tracking-widest flex items-center gap-1">
+              <ShieldCheck className="h-2 w-2" /> Canales Oficiales
+            </span>
+          </div>
+          <div className="space-y-3">
+            <ClubNotice title="Partido vs CD Ciudad" desc="Confirmada ubicación en Estadio Municipal." type="match" />
+            <ClubNotice title="Nueva Equipación" desc="Ya disponible para recogida en oficinas." type="info" />
+          </div>
+        </section>
+
         {/* PUBLICIDAD INTEGRADA (BANNER) */}
         <div className="p-4 bg-primary/5 border border-dashed border-primary/20 rounded-3xl flex items-center justify-between group cursor-pointer hover:bg-primary/[0.08] transition-all">
            <div className="flex items-center gap-4">
@@ -158,20 +177,11 @@ export default function TutorDashboard() {
               </div>
               <div className="flex flex-col">
                  <span className="text-[7px] font-black text-primary/60 uppercase tracking-[0.2em] italic">Multiplex_Ad_Node</span>
-                 <span className="text-[9px] font-bold text-white/40 uppercase">Promoción Nike Academy</span>
+                 <span className="text-[9px] font-bold text-white/40 uppercase">Sponsor: Academia Nike Training</span>
               </div>
            </div>
            <ChevronRight className="h-4 w-4 text-white/10 group-hover:text-primary transition-all" />
         </div>
-
-        {/* FEED DE NOTICIAS CLUB */}
-        <section className="space-y-4 pt-4">
-          <h3 className="text-[10px] font-black text-white/30 tracking-[0.4em] px-2 italic uppercase">Avisos del Club</h3>
-          <div className="space-y-3">
-            <ClubNotice title="Partido vs CD Ciudad" desc="Confirmada ubicación en Estadio Municipal." type="match" />
-            <ClubNotice title="Nueva Equipación" desc="Ya disponible para recogida en oficinas." type="info" />
-          </div>
-        </section>
       </div>
     </div>
   );

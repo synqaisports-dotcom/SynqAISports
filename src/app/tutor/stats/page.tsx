@@ -13,7 +13,10 @@ import {
   History,
   Info,
   Clock,
-  LayoutGrid
+  LayoutGrid,
+  Calendar,
+  XCircle,
+  AlertCircle
 } from "lucide-react";
 import Link from "next/link";
 import { Progress } from "@/components/ui/progress";
@@ -21,9 +24,17 @@ import { Badge } from "@/components/ui/badge";
 import { useTutor } from "@/app/tutor/layout";
 import { cn } from "@/lib/utils";
 
+const ATTENDANCE_LOG = [
+  { date: '12 Oct', status: 'present', label: 'Entrenamiento' },
+  { date: '10 Oct', status: 'present', label: 'Entrenamiento' },
+  { date: '08 Oct', status: 'late', label: 'Entrenamiento' },
+  { date: '05 Oct', status: 'absent', label: 'Sesión Técnica' },
+  { date: '03 Oct', status: 'present', label: 'Jornada 12' },
+];
+
 /**
- * Evolución del Atleta para Tutor - v1.1.0
- * Foco en progreso técnico, compromiso y gamificación local.
+ * Evolución del Atleta para Tutor - v1.2.0
+ * Foco en progreso técnico y CONTROL DE ASISTENCIA detallado.
  */
 export default function TutorStats() {
   const { selectedChild } = useTutor();
@@ -45,7 +56,7 @@ export default function TutorStats() {
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8">
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-10 pb-24">
         {/* COMPROMISO Y NIVEL */}
         <section className="bg-primary/5 border border-primary/20 rounded-[2.5rem] p-8 space-y-6 relative overflow-hidden group shadow-2xl">
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-all">
@@ -66,6 +77,46 @@ export default function TutorStats() {
           </p>
         </section>
 
+        {/* CONTROL DE ASISTENCIA (NUEVO REQUERIMIENTO) */}
+        <section className="space-y-6">
+          <div className="flex items-center justify-between px-2">
+            <div className="flex items-center gap-3">
+              <History className="h-4 w-4 text-emerald-400 animate-pulse" />
+              <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-white">Registro de Presencia</h3>
+            </div>
+            <Badge variant="outline" className="border-white/5 text-white/20 text-[7px] font-black">ÚLTIMAS 5 SESIONES</Badge>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3">
+            {ATTENDANCE_LOG.map((log, i) => (
+              <div key={i} className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl flex items-center justify-between group hover:bg-white/[0.04] transition-all">
+                <div className="flex items-center gap-4">
+                  <div className={cn(
+                    "h-10 w-10 rounded-xl border flex items-center justify-center shrink-0",
+                    log.status === 'present' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
+                    log.status === 'late' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' :
+                    'bg-rose-500/10 border-rose-500/20 text-rose-400'
+                  )}>
+                    {log.status === 'present' ? <CheckCircle2 className="h-5 w-5" /> : 
+                     log.status === 'late' ? <Clock className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
+                  </div>
+                  <div>
+                    <p className="text-xs font-black text-white uppercase italic">{log.label}</p>
+                    <p className="text-[9px] font-bold text-white/20 uppercase tracking-widest">{log.date}</p>
+                  </div>
+                </div>
+                <Badge className={cn(
+                  "text-[7px] font-black px-2 py-0.5 rounded-none uppercase",
+                  log.status === 'present' ? 'bg-emerald-500 text-black' : 
+                  log.status === 'late' ? 'bg-amber-500 text-black' : 'bg-rose-500 text-white'
+                )}>
+                  {log.status === 'present' ? 'PRESENT' : log.status === 'late' ? 'LATE' : 'ABSENT'}
+                </Badge>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* MÉTRICAS TÉCNICAS */}
         <section className="space-y-6">
           <div className="flex items-center gap-3 px-2">
@@ -81,17 +132,11 @@ export default function TutorStats() {
           </div>
         </section>
 
-        {/* BANNER PUBLICITARIO EN STATS */}
-        <div className="p-6 bg-white/[0.02] border border-white/5 rounded-[2.5rem] flex items-center justify-center gap-4 group cursor-pointer hover:bg-white/5 transition-all">
-           <Info className="h-4 w-4 text-white/20" />
-           <span className="text-[8px] font-black text-white/20 uppercase tracking-[0.3em]">Seguros Pelayo: Protegemos el futuro de tu atleta</span>
-        </div>
-
         {/* ÚLTIMAS VALORACIONES */}
         <section className="space-y-4 pt-4">
           <div className="flex items-center gap-3 px-2">
             <Zap className="h-4 w-4 text-primary" />
-            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-white">Últimas Valoraciones</h3>
+            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-white">Feedback Metodológico</h3>
           </div>
           
           <div className="p-6 bg-white/[0.02] border border-white/5 rounded-[2.5rem] space-y-4 relative overflow-hidden group hover:border-primary/20 transition-all">
