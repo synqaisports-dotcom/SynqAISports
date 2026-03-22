@@ -100,7 +100,6 @@ const navItems: NavItem[] = [
   { title: "Mejorar y Alianzas", href: "/dashboard/promo/collaboration", icon: MessageSquareQuote, category: "sandbox" },
 
   // ESTRATEGIA_METODOLÓGICA - AMBER THEME
-  { title: "Items Aprendizaje", href: "/dashboard/methodology/learning-items", icon: BookOpen, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director"] },
   { title: "Objetivos", href: "/dashboard/methodology/objectives", icon: Target, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director"] },
   { title: "Planificador Ciclos", href: "/dashboard/methodology/cycle-planner", icon: GitBranch, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director"] },
   { title: "Pizarra Partido", href: "/board/match", icon: Trophy, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach", "promo_coach"] },
@@ -396,7 +395,7 @@ function SidebarLink({
       asChild
       isActive={isActive}
       className={cn(
-        "flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-700 relative group overflow-hidden h-12",
+        "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 h-12 px-5 py-4 rounded-2xl transition-all duration-700 relative group overflow-hidden",
         isActive ? activeClass : "text-white/40 hover:text-white hover:bg-white/[0.04]"
       )}
     >

@@ -1,13 +1,12 @@
 
 "use client";
 
-import { BookOpen, Target, GitBranch, Library, CalendarDays, Monitor, PencilLine, Zap, Sparkles } from "lucide-react";
+import { Target, GitBranch, Library, CalendarDays, Monitor, PencilLine, Zap, Sparkles } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import Link from "next/link";
 
 export default function MethodologyDashboard() {
   const sections = [
-    { title: "Items de Aprendizaje", desc: "Defina la hoja de ruta formativa del club.", icon: BookOpen, href: "/dashboard/methodology/learning-items" },
     { title: "Objetivos", desc: "Metas tácticas por categoría y etapa.", icon: Target, href: "/dashboard/methodology/objectives" },
     { title: "Planificador de Ciclos", desc: "Gestión temporal del macrociclo.", icon: GitBranch, href: "/dashboard/methodology/cycle-planner" },
     { title: "Pizarra de Partido", desc: "Terminal táctica de alta competición.", icon: Monitor, href: "/board/match" },
