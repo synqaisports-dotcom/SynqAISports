@@ -2,14 +2,16 @@
 "use client";
 
 import { ReactNode, useState, createContext, useContext, useEffect } from "react";
-import { X, RefreshCw, Zap, CalendarDays, MessageSquareQuote, UserCircle, Loader2 } from "lucide-react";
+import { X, RefreshCw, Zap, CalendarDays, MessageSquareQuote, UserCircle, Loader2, ShieldAlert } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
+const ADMIN_EMAILS = ['munozmartinez.ismael@gmail.com', 'synqaisports@gmail.com'];
+
 /**
- * Contexto de la App de Tutores - v1.2.0
- * PROTOCOLO_MULTI_HIJO: Filtra dinámicamente los atletas vinculados al mail de sesión.
+ * Contexto de la App de Tutores - v1.3.0
+ * PROTOCOLO_ELITE: Perfil maestro para administradores.
  */
 interface TutorContextType {
   selectedChild: any;
@@ -64,11 +66,13 @@ export function TutorClientLayout({ children }: { children: ReactNode }) {
       return;
     }
 
+    const isRootAdmin = ADMIN_EMAILS.includes(tutorEmail.toLowerCase());
+
     // 1. Obtener todos los jugadores del club
     const savedPlayers = JSON.parse(localStorage.getItem("synq_players") || "[]");
     
     // 2. Filtrar por el email del tutor logueado
-    const myAtletas = savedPlayers.filter((p: any) => 
+    let myAtletas = savedPlayers.filter((p: any) => 
       p.tutorEmail?.toLowerCase() === tutorEmail.toLowerCase()
     ).map((p: any) => ({
       id: p.id,
@@ -78,8 +82,18 @@ export function TutorClientLayout({ children }: { children: ReactNode }) {
       category: 'FEDERADO'
     }));
 
+    // 3. PROTOCOLO_ELITE: Si es admin y no tiene hijos, inyectar perfil maestro
+    if (isRootAdmin && myAtletas.length === 0) {
+      myAtletas = [{
+        id: "root-auditor",
+        name: "MASTER_AUDITOR",
+        number: "00",
+        team: "TODOS_LOS_EQUIPOS",
+        category: "ROOT_ACCESS"
+      }];
+    }
+
     if (myAtletas.length === 0 && !isLoginPage) {
-      // Si no hay jugadores para este email, cerramos sesión (posible dato borrado)
       localStorage.removeItem("synq_tutor_session_email");
       router.push("/tutor");
       return;
@@ -93,6 +107,12 @@ export function TutorClientLayout({ children }: { children: ReactNode }) {
   }, [pathname, isLoginPage, router, selectedChild]);
 
   const showAd = () => {
+    const tutorEmail = localStorage.getItem("synq_tutor_session_email");
+    const isRootAdmin = tutorEmail && ADMIN_EMAILS.includes(tutorEmail.toLowerCase());
+    
+    // Los administradores no ven publicidad
+    if (isRootAdmin) return;
+
     const lastAd = localStorage.getItem('synq_tutor_last_ad');
     const now = Date.now();
     

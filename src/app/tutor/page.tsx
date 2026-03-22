@@ -9,9 +9,11 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
+const ADMIN_EMAILS = ['munozmartinez.ismael@gmail.com', 'synqaisports@gmail.com'];
+
 /**
- * Pantalla de Acceso Tutor - v1.1.0
- * VALIDACIÓN_REAL: Acceso vinculado al mail registrado en la plantilla del jugador.
+ * Pantalla de Acceso Tutor - v1.2.0
+ * PROTOCOLO_ELITE: Bypass para administradores del sistema.
  */
 export default function TutorLoginPage() {
   const [email, setEmail] = useState("");
@@ -27,21 +29,21 @@ export default function TutorLoginPage() {
     
     // Simulación de validación contra el "Cepo de Datos" de jugadores
     setTimeout(() => {
-      // 1. Obtener jugadores de la base de datos local
+      const isRootAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
       const savedPlayers = JSON.parse(localStorage.getItem("synq_players") || "[]");
       
-      // 2. Buscar coincidencias en tutorEmail
       const foundMatch = savedPlayers.some((p: any) => 
         p.tutorEmail?.toLowerCase() === email.toLowerCase()
       );
 
-      if (foundMatch) {
-        // Guardar email de sesión del tutor
+      if (foundMatch || isRootAdmin) {
         localStorage.setItem("synq_tutor_session_email", email.toLowerCase());
         
         toast({
-          title: "IDENTIDAD_VINCULADA",
-          description: "Acceso autorizado al nodo de familia. Sincronizando datos de atletas...",
+          title: isRootAdmin ? "PROTOCOLO_ELITE_ACTIVADO" : "IDENTIDAD_VINCULADA",
+          description: isRootAdmin 
+            ? "Acceso de autoridad raíz concedido. Sincronizando terminal de auditoría..."
+            : "Acceso autorizado al nodo de familia. Sincronizando datos de atletas...",
         });
         router.push("/tutor/dashboard");
       } else {
