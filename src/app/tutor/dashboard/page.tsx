@@ -41,9 +41,10 @@ export default function TutorDashboard() {
 
   return (
     <div className="flex-1 flex flex-col h-full animate-in fade-in duration-700">
-      {/* HEADER PERFIL Y SELECTOR MULTI-HIJO */}
-      <header className="p-8 pb-12 border-b border-white/5 bg-gradient-to-b from-primary/5 to-transparent relative overflow-hidden">
-        <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
+      {/* HEADER PERFIL Y SELECTOR MULTI-HIJO - Corregido overflow y z-index */}
+      <header className="p-8 pb-12 border-b border-white/5 bg-gradient-to-b from-primary/5 to-transparent relative z-50">
+        <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none overflow-hidden rounded-b-[2.5rem]" />
+        
         <div className="flex items-center justify-between relative z-10">
           <div className="flex items-center gap-4 cursor-pointer group" onClick={() => setIsSelectorOpen(!isSelectorOpen)}>
             <div className="h-16 w-16 bg-primary/10 border-2 border-primary/30 rounded-2xl flex items-center justify-center relative transition-transform group-active:scale-95">
@@ -68,9 +69,9 @@ export default function TutorDashboard() {
           </button>
         </div>
 
-        {/* SELECTOR DESPLEGABLE */}
+        {/* SELECTOR DESPLEGABLE - Mejorado z-index y sombreado */}
         {isSelectorOpen && (
-          <div className="absolute top-28 left-8 right-8 z-[100] bg-[#0a0f18] border border-primary/20 rounded-3xl p-2 shadow-2xl animate-in slide-in-from-top-2 duration-300">
+          <div className="absolute top-24 left-8 right-8 z-[100] bg-[#0a0f18] border border-primary/20 rounded-3xl p-2 shadow-[0_20px_50px_rgba(0,0,0,0.8)] animate-in slide-in-from-top-2 duration-300">
             {CHILDREN.map((child) => (
               <button 
                 key={child.id}
