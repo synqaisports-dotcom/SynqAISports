@@ -1,3 +1,4 @@
+
 "use client";
 
 import { 
@@ -15,22 +16,35 @@ import {
   Target,
   Heart,
   ChevronDown,
-  Mail,
+  Mail, 
   Building2,
   Send,
   Dumbbell,
-  Trophy
+  Trophy,
+  QrCode,
+  Smartphone,
+  Download
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
+import { QRCodeCanvas } from "qrcode.react";
+import { useEffect, useState } from "react";
 
 export default function SynqAiLandingPage() {
   const { toast } = useToast();
+  const [baseUrl, setBaseUrl] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setBaseUrl(window.location.origin);
+    }
+  }, []);
 
   const handleContactSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -194,12 +208,50 @@ export default function SynqAiLandingPage() {
           </div>
         </section>
 
-        {/* ESCALADO DE PRECIOS */}
-        <section className="py-32 bg-white/[0.02] border-y border-white/5 relative overflow-hidden">
+        {/* SECCIÓN DE DESCARGA QR */}
+        <section className="py-32 bg-primary/[0.02] border-y border-white/5 relative overflow-hidden">
           <div className="absolute inset-0 bg-grid-pattern opacity-5" />
           <div className="max-w-7xl mx-auto px-6 relative">
              <div className="text-center space-y-4 mb-20">
-                <h3 className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">Protocolo de Democratización</h3>
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/20 bg-primary/5 mb-4">
+                   <Smartphone className="h-3 w-3 text-primary animate-pulse" />
+                   <span className="text-[9px] font-black uppercase tracking-[0.4em] text-primary">PWA_Independent_Nodes</span>
+                </div>
+                <h2 className="text-5xl font-headline font-black italic tracking-tighter uppercase">INSTALA NUESTRAS APPS</h2>
+                <p className="text-white/40 font-bold uppercase text-[10px] tracking-[0.5em] max-w-2xl mx-auto">
+                  Escanea el código correspondiente para instalar el nodo específico en tu pantalla de inicio.
+                </p>
+             </div>
+
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                <QRAppCard 
+                  title="SynqAi Pro" 
+                  desc="Gestión, Táctica e IA para Directivos y Coaches." 
+                  url={`${baseUrl}/`} 
+                  icon={Zap}
+                />
+                <QRAppCard 
+                  title="Tutor by SynqAi" 
+                  desc="Portal Oficial de Familias. Agenda, Chat y Asistencia." 
+                  url={`${baseUrl}/tutor`} 
+                  icon={UserCircle}
+                  highlight
+                />
+                <QRAppCard 
+                  title="Smartwatch Link" 
+                  desc="Telemetría y Control de Partido en tu muñeca." 
+                  url={`${baseUrl}/smartwatch`} 
+                  icon={Watch}
+                />
+             </div>
+          </div>
+        </section>
+
+        {/* ESCALADO DE PRECIOS */}
+        <section className="py-32 relative overflow-hidden">
+          <div className="max-w-7xl mx-auto px-6 relative">
+             <div className="text-center space-y-4 mb-20">
+                <h3 className="text-[10px] font-black uppercase tracking-[0.5em] text-primary/40">Protocolo de Democratización</h3>
                 <h2 className="text-5xl font-headline font-black italic tracking-tighter uppercase">COSTES SIN BARRERAS</h2>
              </div>
 
@@ -370,6 +422,45 @@ function PricingStep({ step, title, price, desc, featured }: any) {
        <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 leading-relaxed">{desc}</p>
        <div className="h-[1px] w-full bg-white/5" />
     </div>
+  );
+}
+
+function QRAppCard({ title, desc, url, icon: Icon, highlight }: any) {
+  return (
+    <Card className={cn(
+      "glass-panel p-8 flex flex-col items-center text-center space-y-6 transition-all group overflow-hidden relative",
+      highlight ? "border-primary/40 shadow-[0_0_40px_rgba(0,242,255,0.1)]" : "border-white/5"
+    )}>
+       {highlight && <div className="absolute top-0 left-0 bg-primary text-black text-[7px] font-black px-3 py-1 uppercase tracking-widest">Recomendado_Padres</div>}
+       <div className={cn(
+         "h-12 w-12 rounded-2xl flex items-center justify-center border transition-all",
+         highlight ? "bg-primary/10 border-primary/20 text-primary" : "bg-white/5 border-white/10 text-white/20"
+       )}>
+          <Icon className="h-6 w-6" />
+       </div>
+       <div className="space-y-2">
+          <h4 className="text-lg font-black text-white uppercase italic tracking-tighter">{title}</h4>
+          <p className="text-[9px] font-bold text-white/30 uppercase leading-relaxed tracking-widest px-4">{desc}</p>
+       </div>
+       
+       <div className="p-4 bg-white rounded-2xl shadow-2xl relative group-hover:scale-105 transition-transform duration-500">
+          <QRCodeCanvas 
+            value={url || "https://synqai.sports"} 
+            size={140} 
+            level="H" 
+            fgColor="#000000" 
+            bgColor="#ffffff"
+          />
+          <div className="absolute inset-0 border-4 border-black/5 pointer-events-none rounded-2xl" />
+       </div>
+
+       <div className="pt-4 flex flex-col items-center gap-2">
+          <span className="text-[8px] font-black text-primary/40 uppercase tracking-[0.3em]">Scan_to_Install</span>
+          <Button variant="link" className="text-primary text-[10px] font-black uppercase tracking-widest p-0 h-auto" asChild>
+             <Link href={url || "#"}>Abrir Link <ArrowRight className="h-3 w-3 ml-1" /></Link>
+          </Button>
+       </div>
+    </Card>
   );
 }
 
