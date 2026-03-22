@@ -41,7 +41,7 @@ export default function TutorDashboard() {
 
   return (
     <div className="flex-1 flex flex-col h-full animate-in fade-in duration-700">
-      {/* HEADER PERFIL Y SELECTOR MULTI-HIJO - Corregido overflow y z-index */}
+      {/* HEADER PERFIL Y SELECTOR MULTI-HIJO */}
       <header className="p-8 pb-12 border-b border-white/5 bg-gradient-to-b from-primary/5 to-transparent relative z-50">
         <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none overflow-hidden rounded-b-[2.5rem]" />
         
@@ -69,7 +69,7 @@ export default function TutorDashboard() {
           </button>
         </div>
 
-        {/* SELECTOR DESPLEGABLE - Mejorado z-index y sombreado */}
+        {/* SELECTOR DESPLEGABLE */}
         {isSelectorOpen && (
           <div className="absolute top-24 left-8 right-8 z-[100] bg-[#0a0f18] border border-primary/20 rounded-3xl p-2 shadow-[0_20px_50px_rgba(0,0,0,0.8)] animate-in slide-in-from-top-2 duration-300">
             {CHILDREN.map((child) => (
@@ -109,7 +109,7 @@ export default function TutorDashboard() {
       </div>
 
       {/* MÓDULOS OPERATIVOS */}
-      <div className="flex-1 p-6 space-y-6">
+      <div className="flex-1 p-6 space-y-6 pb-10">
         <div className="grid grid-cols-2 gap-4">
           <ModuleButton 
             title="Agenda" 
@@ -173,14 +173,6 @@ export default function TutorDashboard() {
           </div>
         </section>
       </div>
-
-      {/* NAVEGACIÓN INFERIOR */}
-      <nav className="h-20 bg-[#04070c]/80 backdrop-blur-xl border-t border-white/5 flex items-center justify-around px-6">
-        <NavItem icon={Zap} active />
-        <NavItem icon={CalendarDays} href="/tutor/calendar" />
-        <NavItem icon={MessageSquareQuote} href="/tutor/chat" />
-        <NavItem icon={UserCircle} href="/tutor/id" />
-      </nav>
     </div>
   );
 }
@@ -219,19 +211,5 @@ function ClubNotice({ title, desc, type }: any) {
       </div>
       <ChevronRight className="h-4 w-4 text-white/10 group-active:text-primary transition-all" />
     </div>
-  );
-}
-
-function NavItem({ icon: Icon, active, href = "#" }: any) {
-  return (
-    <Link href={href}>
-      <button className={cn(
-        "h-12 w-12 rounded-2xl flex items-center justify-center transition-all relative",
-        active ? "bg-primary/10 text-primary" : "text-white/20 hover:text-white"
-      )}>
-        <Icon className="h-6 w-6" />
-        {active && <div className="absolute -bottom-1 h-1 w-4 bg-primary rounded-full" />}
-      </button>
-    </Link>
   );
 }

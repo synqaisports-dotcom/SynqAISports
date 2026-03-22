@@ -2,7 +2,9 @@
 "use client";
 
 import { ReactNode, useState, useEffect, createContext, useContext } from "react";
-import { X, RefreshCw } from "lucide-react";
+import { X, RefreshCw, Zap, CalendarDays, MessageSquareQuote, UserCircle } from "lucide-react";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 /**
@@ -23,7 +25,24 @@ export const useTutor = () => {
   return context;
 };
 
+function NavItem({ icon: Icon, active, href = "#" }: any) {
+  return (
+    <Link href={href}>
+      <button className={cn(
+        "h-12 w-12 rounded-2xl flex items-center justify-center transition-all relative",
+        active ? "bg-primary/10 text-primary" : "text-white/20 hover:text-white"
+      )}>
+        <Icon className="h-6 w-6" />
+        {active && <div className="absolute -bottom-1 h-1 w-4 bg-primary rounded-full" />}
+      </button>
+    </Link>
+  );
+}
+
 export default function TutorLayout({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const isLoginPage = pathname === '/tutor';
+
   const [selectedChild, setSelectedChild] = useState({
     id: 'c1',
     name: 'LUCAS GARCÍA',
@@ -49,7 +68,20 @@ export default function TutorLayout({ children }: { children: ReactNode }) {
     <TutorContext.Provider value={{ selectedChild, setSelectedChild, showAd }}>
       <div className="min-h-screen bg-[#04070c] flex justify-center font-body">
         <div className="w-full max-w-[500px] bg-[#020408] min-h-screen relative shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col border-x border-white/5">
-          {children}
+          
+          <div className="flex-1 flex flex-col">
+            {children}
+          </div>
+
+          {/* NAVEGACIÓN INFERIOR FIJA */}
+          {!isLoginPage && (
+            <nav className="sticky bottom-0 h-20 bg-[#04070c]/80 backdrop-blur-xl border-t border-white/5 flex items-center justify-around px-6 z-[100] shrink-0">
+              <NavItem icon={Zap} href="/tutor/dashboard" active={pathname === '/tutor/dashboard'} />
+              <NavItem icon={CalendarDays} href="/tutor/calendar" active={pathname === '/tutor/calendar'} />
+              <NavItem icon={MessageSquareQuote} href="/tutor/chat" active={pathname === '/tutor/chat'} />
+              <NavItem icon={UserCircle} href="/tutor/id" active={pathname === '/tutor/id'} />
+            </nav>
+          )}
 
           {/* PUBLICIDAD INTERSTICIAL (BAJA FRECUENCIA) */}
           {isInterstitialVisible && (
@@ -77,12 +109,12 @@ export default function TutorLayout({ children }: { children: ReactNode }) {
                 <div className="w-full aspect-video bg-white/5 border border-white/10 rounded-3xl flex items-center justify-center">
                    <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">Video_Ad_Container</span>
                 </div>
-                <Button 
+                <button 
                   onClick={() => setIsInterstitialVisible(false)}
-                  className="w-full h-16 bg-white/5 border border-white/10 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl"
+                  className="w-full h-16 bg-white/5 border border-white/10 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl active:scale-95 transition-all"
                 >
                   Continuar a la App
-                </Button>
+                </button>
               </div>
             </div>
           )}
@@ -90,8 +122,4 @@ export default function TutorLayout({ children }: { children: ReactNode }) {
       </div>
     </TutorContext.Provider>
   );
-}
-
-function Button({ className, ...props }: any) {
-  return <button className={cn("inline-flex items-center justify-center transition-all active:scale-95", className)} {...props} />;
 }
