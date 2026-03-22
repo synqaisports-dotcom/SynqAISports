@@ -346,8 +346,7 @@ function SmartwatchContent() {
   );
 }
 
-export default function SmartwatchPage(props: { searchParams: Promise<any> }) {
-  const searchParams = React.use(props.searchParams);
+export default function SmartwatchPage() {
   return (
     <Suspense fallback={<div className="fixed inset-0 bg-[#04070c] flex items-center justify-center text-primary font-black uppercase tracking-widest animate-pulse">Cargando_Ecosistema...</div>}>
       <SmartwatchContent />

@@ -43,7 +43,6 @@ export default function SynqAiLandingPage() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // Capturamos el origen real (ej: https://synqai.sports o la URL del workstation)
       setBaseUrl(window.location.origin);
     }
   }, []);
@@ -104,7 +103,7 @@ export default function SynqAiLandingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#04070c] text-white font-body selection:bg-primary/30 selection:text-white">
+    <div className="min-h-screen bg-background text-white font-body selection:bg-primary/30 selection:text-white">
       {/* CAPA TÉCNICA DE FONDO */}
       <div className="fixed inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,242,255,0.05),transparent_70%)] pointer-events-none" />

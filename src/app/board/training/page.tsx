@@ -522,7 +522,6 @@ function TrainingBoardContent() {
   );
 }
 
-export default function TrainingBoardPage(props: { searchParams: Promise<any> }) {
-  const searchParams = React.use(props.searchParams);
+export default function TrainingBoardPage() {
   return <Suspense fallback={<div className="h-screen w-full flex items-center justify-center bg-black text-amber-500 font-black uppercase tracking-[0.5em] animate-pulse">Sincronizando_Estudio_Pro...</div>}><TrainingBoardContent /></Suspense>;
 }

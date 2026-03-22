@@ -267,8 +267,7 @@ function LoginContent() {
   );
 }
 
-export default function LoginPage(props: { searchParams: Promise<any> }) {
-  const searchParams = React.use(props.searchParams);
+export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#070a0f] px-6 relative overflow-hidden font-body">
       <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
