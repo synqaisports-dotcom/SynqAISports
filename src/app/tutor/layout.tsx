@@ -66,6 +66,12 @@ export default function TutorLayout({ children }: { children: ReactNode }) {
 
   return (
     <TutorContext.Provider value={{ selectedChild, setSelectedChild, showAd }}>
+      {/* VINCULACIÓN DE MANIFIESTO EXCLUSIVO PARA TUTORES */}
+      <head>
+        <link rel="manifest" href="/tutor/manifest.json" />
+        <meta name="apple-mobile-web-app-title" content="Tutor by SynqAi" />
+      </head>
+      
       <div className="min-h-screen bg-[#04070c] flex justify-center font-body">
         <div className="w-full max-w-[500px] bg-[#020408] min-h-screen relative shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col border-x border-white/5">
           

@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Tutor by SynqAi'
+    title: 'SynqAi Pro'
   },
   other: {
     'mobile-web-app-capable': 'yes',
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   },
   icons: {
     apple: [
-      { url: 'https://picsum.photos/seed/synq192/192/192', sizes: '192x192', type: 'image/png' },
+      { url: 'https://picsum.photos/seed/synqai-pro-icon/192/192', sizes: '192x192', type: 'image/png' },
     ],
   }
 };

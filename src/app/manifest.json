@@ -1,24 +1,24 @@
 
 {
-  "name": "Tutor by SynqAi",
-  "short_name": "SynqTutor",
-  "description": "Portal Oficial de Familias - Red SynqAi Sports",
-  "id": "com.synqai.tutor.v1",
-  "start_url": "/tutor",
+  "name": "SynqAi Pro",
+  "short_name": "SynqAi",
+  "description": "Plataforma de Gestión y Táctica para Clubes de Élite",
+  "id": "com.synqai.pro.v1",
+  "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",
   "background_color": "#04070c",
   "theme_color": "#00f2ff",
-  "orientation": "portrait",
+  "orientation": "any",
   "icons": [
     {
-      "src": "https://picsum.photos/seed/synq192/192/192",
+      "src": "https://picsum.photos/seed/synqai-pro-icon/192/192",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "https://picsum.photos/seed/synq512/512/512",
+      "src": "https://picsum.photos/seed/synqai-pro-icon/512/512",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
