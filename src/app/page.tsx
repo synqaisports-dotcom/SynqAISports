@@ -23,7 +23,8 @@ import {
   Trophy,
   QrCode,
   Smartphone,
-  Download
+  Download,
+  RefreshCw
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -34,7 +35,7 @@ import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
 import { QRCodeCanvas } from "qrcode.react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 export default function SynqAiLandingPage() {
   const { toast } = useToast();
@@ -53,6 +54,13 @@ export default function SynqAiLandingPage() {
       description: "Su solicitud de alianza ha sido encriptada y enviada al Centro de Mando.",
     });
   };
+
+  const scrollToSection = useCallback((id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, []);
 
   const categories = [
     {
@@ -87,6 +95,13 @@ export default function SynqAiLandingPage() {
     }
   ];
 
+  const menuItems = [
+    { label: 'Ecosistema', id: 'ecosistema' },
+    { label: 'Misión', id: 'mision' },
+    { label: 'Multideporte', id: 'multideporte' },
+    { label: 'Contacto', id: 'contacto' },
+  ];
+
   return (
     <div className="min-h-screen bg-[#04070c] text-white font-body selection:bg-primary/30 selection:text-white">
       {/* CAPA TÉCNICA DE FONDO */}
@@ -106,9 +121,13 @@ export default function SynqAiLandingPage() {
           </div>
           
           <div className="hidden md:flex items-center gap-10">
-            {['Ecosistema', 'Misión', 'Multideporte', 'Contacto'].map((item) => (
-              <button key={item} className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 hover:text-primary transition-colors">
-                {item}
+            {menuItems.map((item) => (
+              <button 
+                key={item.id} 
+                onClick={() => scrollToSection(item.id)}
+                className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 hover:text-primary transition-colors"
+              >
+                {item.label}
               </button>
             ))}
           </div>
@@ -158,7 +177,7 @@ export default function SynqAiLandingPage() {
         </section>
 
         {/* QUIENES SOMOS (VISIÓN MULTIDEPORTE) */}
-        <section className="py-32 px-6 max-w-7xl mx-auto">
+        <section id="mision" className="py-32 px-6 max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
             <div className="relative aspect-video rounded-3xl overflow-hidden glass-panel border-none group">
                <Image 
@@ -209,7 +228,7 @@ export default function SynqAiLandingPage() {
         </section>
 
         {/* SECCIÓN DE DESCARGA QR */}
-        <section className="py-32 bg-primary/[0.02] border-y border-white/5 relative overflow-hidden">
+        <section id="ecosistema" className="py-32 bg-primary/[0.02] border-y border-white/5 relative overflow-hidden">
           <div className="absolute inset-0 bg-grid-pattern opacity-5" />
           <div className="max-w-7xl mx-auto px-6 relative">
              <div className="text-center space-y-4 mb-20">
@@ -280,12 +299,13 @@ export default function SynqAiLandingPage() {
         </section>
 
         {/* CONTACTO */}
-        <section className="py-32 px-6 max-w-7xl mx-auto">
+        <section id="contacto" className="py-32 px-6 max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
             <div className="space-y-8">
               <div className="space-y-4">
                 <h3 className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">Suma tu Entidad</h3>
                 <h2 className="text-5xl font-headline font-black italic tracking-tighter uppercase">IMPULSA TU CANTERA</h2>
+                <h2 id="contacto" className="text-5xl font-headline font-black italic tracking-tighter uppercase">IMPULSA TU CANTERA</h2>
                 <p className="text-white/40 font-bold uppercase text-[10px] tracking-[0.4em] leading-relaxed">
                   ¿Quieres profesionalizar tu formación? Solicita el acceso al ecosistema y empieza a entrenar como los mejores.
                 </p>
@@ -343,7 +363,7 @@ export default function SynqAiLandingPage() {
         </section>
 
         {/* ACCESOS TERMINAL */}
-        <section className="py-32 px-6 max-w-7xl mx-auto space-y-24">
+        <section id="multideporte" className="py-32 px-6 max-w-7xl mx-auto space-y-24">
           <div className="text-center space-y-4">
              <h3 className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">Terminales de Mando</h3>
              <h2 className="text-5xl font-headline font-black italic tracking-tighter uppercase leading-tight">ACCESO A LA RED</h2>
