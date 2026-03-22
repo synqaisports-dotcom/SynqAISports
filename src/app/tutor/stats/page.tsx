@@ -1,3 +1,4 @@
+
 "use client";
 
 import { 
@@ -26,6 +27,10 @@ const ATTENDANCE_LOG = [
   { date: '03 Oct', status: 'present', label: 'Jornada 12' },
 ];
 
+/**
+ * Evolución del Atleta para Tutor - v1.1.0
+ * PROTOCOLO_ATTENDANCE_MIRROR: Visualización de asistencia sincronizada con el Staff.
+ */
 export default function TutorStats() {
   const { selectedChild } = useTutor();
 
@@ -72,7 +77,7 @@ export default function TutorStats() {
           <div className="flex items-center justify-between px-2">
             <div className="flex items-center gap-3">
               <History className="h-4 w-4 text-emerald-400 animate-pulse" />
-              <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-white">Registro de Presencia</h3>
+              <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-white">Registro de Presencia</h3>
             </div>
             <Badge variant="outline" className="border-white/5 text-white/20 text-[7px] font-black">ÚLTIMAS 5 SESIONES</Badge>
           </div>

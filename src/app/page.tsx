@@ -43,6 +43,7 @@ export default function SynqAiLandingPage() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // Capturamos el origen real (ej: https://synqai.sports o la URL del workstation)
       setBaseUrl(window.location.origin);
     }
   }, []);
@@ -161,7 +162,7 @@ export default function SynqAiLandingPage() {
              </p>
 
              <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-8">
-                <Button size="lg" className="bg-primary text-black font-black h-16 px-12 rounded-none cyan-glow uppercase tracking-[0.3em] text-[11px] shadow-[0_0_30px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none" asChild>
+                <Button size="lg" className="bg-primary text-black font-black h-16 px-12 rounded-none cyan-glow hover:scale-105 transition-all border-none uppercase tracking-[0.3em] text-[11px]" asChild>
                   <Link href="/login">UNIR MI CANTERA A LA RED <ArrowRight className="h-4 w-4 ml-3" /></Link>
                 </Button>
                 <div className="flex items-center gap-4 px-8 py-4 border border-white/5 bg-white/[0.02] backdrop-blur-md">
@@ -227,7 +228,7 @@ export default function SynqAiLandingPage() {
           </div>
         </section>
 
-        {/* SECCIÓN DE DESCARGA QR */}
+        {/* SECCIÓN DE DESCARGA QR DINÁMICA */}
         <section id="ecosistema" className="py-32 bg-primary/[0.02] border-y border-white/5 relative overflow-hidden">
           <div className="absolute inset-0 bg-grid-pattern opacity-5" />
           <div className="max-w-7xl mx-auto px-6 relative">
@@ -246,20 +247,20 @@ export default function SynqAiLandingPage() {
                 <QRAppCard 
                   title="SynqAi Pro" 
                   desc="Gestión, Táctica e IA para Directivos y Coaches." 
-                  url={`${baseUrl}/`} 
+                  url={baseUrl ? `${baseUrl}/` : ""} 
                   icon={Zap}
                 />
                 <QRAppCard 
                   title="Tutor by SynqAi" 
                   desc="Portal Oficial de Familias. Agenda, Chat y Asistencia." 
-                  url={`${baseUrl}/tutor`} 
+                  url={baseUrl ? `${baseUrl}/tutor` : ""} 
                   icon={UserCircle}
                   highlight
                 />
                 <QRAppCard 
                   title="Smartwatch Link" 
                   desc="Telemetría y Control de Partido en tu muñeca." 
-                  url={`${baseUrl}/smartwatch`} 
+                  url={baseUrl ? `${baseUrl}/smartwatch` : ""} 
                   icon={Watch}
                 />
              </div>
@@ -305,7 +306,6 @@ export default function SynqAiLandingPage() {
               <div className="space-y-4">
                 <h3 className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">Suma tu Entidad</h3>
                 <h2 className="text-5xl font-headline font-black italic tracking-tighter uppercase">IMPULSA TU CANTERA</h2>
-                <h2 id="contacto" className="text-5xl font-headline font-black italic tracking-tighter uppercase">IMPULSA TU CANTERA</h2>
                 <p className="text-white/40 font-bold uppercase text-[10px] tracking-[0.4em] leading-relaxed">
                   ¿Quieres profesionalizar tu formación? Solicita el acceso al ecosistema y empieza a entrenar como los mejores.
                 </p>
