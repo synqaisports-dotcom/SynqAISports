@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -201,7 +200,7 @@ function ModuleButton({ title, desc, icon: Icon, href, color, bg, border, badge 
         </div>
       )}
       <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center border", border)}>
-        <Icon className="h-5 w-5", color)} />
+        <Icon className={cn("h-5 w-5", color)} />
       </div>
       <div className="space-y-1">
         <h4 className="text-sm font-black text-white uppercase italic leading-none">{title}</h4>
