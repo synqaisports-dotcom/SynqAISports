@@ -20,7 +20,7 @@ import { Plus, Search, MoreHorizontal, Building2, Loader2, RefreshCw } from "luc
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { supabase, type Club } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured, type Club } from "@/lib/supabase";
 
 const FALLBACK_CLUBS: Club[] = [
   { id: "c1", name: "Elite Soccer Academy", plan: "Enterprise", users: 120, status: "Active", country: "ES" },
@@ -37,6 +37,21 @@ export default function ManageClubsPage() {
 
   const loadClubs = async () => {
     setIsLoading(true);
+    
+    // Si Supabase no está configurado, usar fallback inmediatamente
+    if (!isSupabaseConfigured || !supabase) {
+      const savedClubs = JSON.parse(localStorage.getItem("synq_global_clubs") || "[]");
+      const merged = [...FALLBACK_CLUBS];
+      savedClubs.forEach((sc: Club) => {
+        if (!merged.find(m => m.id === sc.id)) {
+          merged.push(sc);
+        }
+      });
+      setClubs(merged);
+      setIsUsingFallback(true);
+      setIsLoading(false);
+      return;
+    }
     
     try {
       const { data, error } = await supabase

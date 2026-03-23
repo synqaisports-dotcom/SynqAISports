@@ -36,7 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { supabase, type Club } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured, type Club } from "@/lib/supabase";
 
 // Datos de fallback si no hay conexión a Supabase
 const FALLBACK_CLUBS: Club[] = [
@@ -68,6 +68,21 @@ export default function ManageClubsPage() {
   const loadClubs = async () => {
     setIsLoading(true);
     setHasError(false);
+    
+    // Si Supabase no está configurado, usar fallback inmediatamente
+    if (!isSupabaseConfigured || !supabase) {
+      const savedClubs = JSON.parse(localStorage.getItem("synq_global_clubs") || "[]");
+      const merged = [...FALLBACK_CLUBS];
+      savedClubs.forEach((sc: Club) => {
+        if (!merged.find(m => m.id === sc.id)) {
+          merged.push(sc);
+        }
+      });
+      setClubs(merged);
+      setIsUsingFallback(true);
+      setIsLoading(false);
+      return;
+    }
     
     try {
       const { data, error } = await supabase
@@ -139,7 +154,7 @@ export default function ManageClubsPage() {
     ));
 
     // Intentar actualizar en Supabase
-    if (!isUsingFallback) {
+    if (!isUsingFallback && supabase) {
       const { error } = await supabase
         .from('clubs')
         .update({ status: newStatus })
@@ -195,7 +210,7 @@ export default function ManageClubsPage() {
     try {
       if (editingClubId) {
         // Actualizar club existente
-        if (!isUsingFallback) {
+        if (!isUsingFallback && supabase) {
           const { error } = await supabase
             .from('clubs')
             .update({
@@ -228,7 +243,7 @@ export default function ManageClubsPage() {
           users: 0
         };
 
-        if (!isUsingFallback) {
+        if (!isUsingFallback && supabase) {
           const { data, error } = await supabase
             .from('clubs')
             .insert(newClub)

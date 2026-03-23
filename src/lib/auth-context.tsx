@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { User, Session } from "@supabase/supabase-js";
 
 export type UserRole = "superadmin" | "club_admin" | "coach" | "promo_coach" | "tutor" | "athlete";
@@ -55,6 +55,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Escuchar cambios de autenticación de Supabase
   useEffect(() => {
+    // Si Supabase no está configurado, usar modo demo
+    if (!isSupabaseConfigured || !supabase) {
+      const savedProfile = localStorage.getItem("synq_profile");
+      if (savedProfile) {
+        setProfile(JSON.parse(savedProfile));
+      }
+      setLoading(false);
+      return;
+    }
+
     // Obtener sesión inicial
     const initializeAuth = async () => {
       try {
@@ -103,6 +113,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Cargar perfil del usuario desde Supabase
   const loadUserProfile = async (authUser: User) => {
+    if (!supabase) return;
+    
     try {
       // Intentar obtener perfil de la tabla profiles
       const { data: profileData, error } = await supabase
@@ -166,6 +178,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const register = async (email: string, pass: string, name: string, clubName: string, plan: 'free' | 'enterprise_scale' = 'free') => {
+    if (!supabase) {
+      throw new Error("Supabase no está configurado. Configure las variables de entorno.");
+    }
+    
     const { data, error } = await supabase.auth.signUp({
       email,
       password: pass,
@@ -209,6 +225,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const login = async (email: string, pass: string) => {
+    if (!supabase) {
+      throw new Error("Supabase no está configurado. Configure las variables de entorno.");
+    }
+    
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password: pass,
@@ -260,8 +280,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setProfile(updatedProfile);
       localStorage.setItem("synq_profile", JSON.stringify(updatedProfile));
 
-      // Actualizar perfil en Supabase
-      if (user.id && !user.id.startsWith('user-')) {
+      // Actualizar perfil en Supabase (solo si está configurado)
+      if (supabase && user.id && !user.id.startsWith('user-')) {
         await supabase
           .from('profiles')
           .update({
@@ -272,23 +292,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             club_created: true
           })
           .eq('id', user.id);
-      }
 
-      // Crear el club en la tabla clubs
-      const { error: clubError } = await supabase
-        .from('clubs')
-        .insert({
-          id: clubData.id,
-          name: clubData.name,
-          plan: profile.plan || 'free',
-          users: 1,
-          status: 'Active',
-          country: clubData.country,
-          sport: clubData.sport
-        });
+        // Crear el club en la tabla clubs
+        const { error: clubError } = await supabase
+          .from('clubs')
+          .insert({
+            id: clubData.id,
+            name: clubData.name,
+            plan: profile.plan || 'free',
+            users: 1,
+            status: 'Active',
+            country: clubData.country,
+            sport: clubData.sport
+          });
 
-      if (clubError && clubError.code !== '23505') {
-        console.error("[SynqAI] Error creando club:", clubError);
+        if (clubError && clubError.code !== '23505') {
+          console.error("[SynqAI] Error creando club:", clubError);
+        }
       }
 
       // Mantener compatibilidad con localStorage
@@ -319,7 +339,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const logout = async () => {
-    await supabase.auth.signOut();
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
     setUser(null);
     setSession(null);
     setProfile(null);
