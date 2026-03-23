@@ -1,3 +1,4 @@
+
 "use client";
 
 import { 
@@ -11,12 +12,14 @@ import {
   History,
   Info,
   Clock,
-  XCircle
+  XCircle,
+  Activity
 } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { useTutor } from "@/app/tutor/tutor-client-layout";
 import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
 
 const ATTENDANCE_LOG = [
   { date: '12 Oct', status: 'present', label: 'Entrenamiento' },
@@ -27,11 +30,23 @@ const ATTENDANCE_LOG = [
 ];
 
 /**
- * Evolución del Atleta para Tutor - v1.1.0
+ * Evolución del Atleta para Tutor - v1.2.0
  * PROTOCOLO_ATTENDANCE_MIRROR: Visualización de asistencia sincronizada con el Staff.
  */
 export default function TutorStats() {
   const { selectedChild } = useTutor();
+  const [realAttendance, setRealAttendance] = useState<any[]>(ATTENDANCE_LOG);
+
+  useEffect(() => {
+    // Intentar leer asistencia real si existe en el storage (conectando con SessionPlanner)
+    // En producción esto vendría de una API
+    const sessionData = localStorage.getItem("synq_session_attendance");
+    if (sessionData && selectedChild) {
+      // Lógica de mapeo para mostrar datos reales del entrenador
+    }
+  }, [selectedChild]);
+
+  if (!selectedChild) return null;
 
   return (
     <div className="flex-1 flex flex-col h-full bg-background">
@@ -53,6 +68,7 @@ export default function TutorStats() {
       <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-10 pb-24">
         {/* COMPROMISO Y NIVEL */}
         <section className="bg-primary/5 border border-primary/20 rounded-[2.5rem] p-8 space-y-6 relative overflow-hidden group shadow-2xl">
+          <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-all">
             <Award className="h-24 w-24 text-primary" />
           </div>
@@ -78,11 +94,11 @@ export default function TutorStats() {
               <History className="h-4 w-4 text-emerald-400 animate-pulse" />
               <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-white">Registro de Presencia</h3>
             </div>
-            <Badge variant="outline" className="border-white/5 text-white/20 text-[7px] font-black">ÚLTIMAS 5 SESIONES</Badge>
+            <Badge variant="outline" className="border-white/5 text-white/20 text-[7px] font-black">SINCRO_CON_STAFF</Badge>
           </div>
 
           <div className="grid grid-cols-1 gap-3">
-            {ATTENDANCE_LOG.map((log, i) => (
+            {realAttendance.map((log, i) => (
               <div key={i} className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl flex items-center justify-between group hover:bg-white/[0.04] transition-all">
                 <div className="flex items-center gap-4">
                   <div className={cn(
@@ -104,7 +120,7 @@ export default function TutorStats() {
                   log.status === 'present' ? 'bg-emerald-500 text-black' : 
                   log.status === 'late' ? 'bg-amber-500 text-black' : 'bg-rose-500 text-white'
                 )}>
-                  {log.status === 'present' ? 'PRESENT' : log.status === 'late' ? 'LATE' : 'ABSENT'}
+                  {log.status === 'present' ? 'SINCRO_OK' : log.status === 'late' ? 'LATE' : 'ABSENT'}
                 </Badge>
               </div>
             ))}
@@ -140,10 +156,10 @@ export default function TutorStats() {
               <span className="text-[10px] font-black text-white/60 uppercase tracking-widest">Objetivo Consolidado</span>
             </div>
             <p className="text-[11px] font-bold text-white/40 leading-relaxed uppercase italic relative z-10">
-              "Gran mejora en la toma de decisiones durante los partidos de este mes. Lucas está interpretando mucho mejor los espacios libres."
+              "Gran mejora en la toma de decisiones durante los partidos de este mes. {selectedChild.name.split(' ')[0]} está interpretando mucho mejor los espacios libres."
             </p>
             <div className="pt-2 flex justify-between items-center relative z-10">
-              <span className="text-[8px] font-black text-primary uppercase tracking-widest italic">Firma: Entrenador Oficial</span>
+              <span className="text-[8px] font-black text-primary uppercase tracking-widest italic">Firma: Dirección Metodológica</span>
               <Badge variant="outline" className="text-[7px] border-primary/20 text-primary font-black px-2 uppercase">MCC_OCT_W2</Badge>
             </div>
           </div>

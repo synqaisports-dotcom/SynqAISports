@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   CalendarDays, 
   MessageSquareQuote, 
@@ -17,7 +18,8 @@ import {
   RefreshCw, 
   ShieldCheck,
   Smartphone,
-  LogOut
+  LogOut,
+  Activity
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +32,14 @@ export default function TutorDashboard() {
   const router = useRouter();
   const { selectedChild, setSelectedChild, showAd, allChildren, loading } = useTutor();
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
+  const [notices, setNotices] = useState<any[]>([]);
+
+  useEffect(() => {
+    // Sincronizar avisos desde los logs del sistema
+    const logs = JSON.parse(localStorage.getItem("synq_audit_logs") || "[]");
+    const clubNotices = logs.filter((l: any) => l.type === 'Success' || l.type === 'Info').slice(0, 3);
+    setNotices(clubNotices);
+  }, []);
 
   const handleSwitchChild = (child: any) => {
     setSelectedChild(child);
@@ -42,7 +52,6 @@ export default function TutorDashboard() {
     router.push("/tutor");
   };
 
-  // Evitar crash si los datos aún no están listos
   if (loading || !selectedChild) return null;
 
   return (
@@ -64,9 +73,14 @@ export default function TutorDashboard() {
                 <h2 className="text-2xl font-headline font-black text-white italic tracking-tighter uppercase leading-none truncate max-w-[180px]">{selectedChild.name}</h2>
                 <ChevronDown className={cn("h-4 w-4 text-primary transition-transform", isSelectorOpen && "rotate-180")} />
               </div>
-              <Badge variant="outline" className="border-primary/20 bg-primary/5 text-primary text-[8px] font-black uppercase px-3">
-                {selectedChild.team} • {selectedChild.category}
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="border-primary/20 bg-primary/5 text-primary text-[8px] font-black uppercase px-3">
+                  {selectedChild.team}
+                </Badge>
+                {selectedChild.status === 'Injured' && (
+                  <Badge className="bg-rose-500 text-white text-[7px] font-black px-2 uppercase animate-pulse">ENFERMERÍA</Badge>
+                )}
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -169,8 +183,14 @@ export default function TutorDashboard() {
             </span>
           </div>
           <div className="space-y-3">
-            <ClubNotice title="Partido vs CD Ciudad" desc="Confirmada ubicación en Estadio Municipal." type="match" />
-            <ClubNotice title="Nueva Equipación" desc="Ya disponible para recogida en oficinas." type="info" />
+            {notices.length > 0 ? notices.map((log) => (
+              <ClubNotice key={log.id} title={log.title} desc={log.desc} type={log.title.includes('PARTIDO') ? 'match' : 'info'} />
+            )) : (
+              <>
+                <ClubNotice title="Partido vs CD Ciudad" desc="Confirmada ubicación en Estadio Municipal." type="match" />
+                <ClubNotice title="Nueva Equipación" desc="Ya disponible para recogida en oficinas." type="info" />
+              </>
+            )}
           </div>
         </section>
 
@@ -217,7 +237,7 @@ function ClubNotice({ title, desc, type }: any) {
         "h-10 w-10 rounded-xl flex items-center justify-center shrink-0",
         type === 'match' ? 'bg-primary/10 text-primary' : 'bg-white/5 text-white/40'
       )}>
-        {type === 'match' ? <Trophy className="h-5 w-5" /> : <Info className="h-5 w-5" />}
+        {type === 'match' ? <Trophy className="h-5 w-5" /> : <Activity className="h-5 w-5" />}
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-xs font-black text-white uppercase italic truncate">{title}</p>

@@ -1,17 +1,17 @@
 
 "use client";
 
-import { ReactNode, useState, createContext, useContext, useEffect } from "react";
+import { ReactNode, useState, createContext, useContext, useEffect, useCallback } from "react";
 import { X, RefreshCw, Zap, CalendarDays, MessageSquareQuote, UserCircle, Loader2, ShieldAlert } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-const ADMIN_EMAILS = ['munozmartinez.ismael@gmail.com', 'synqaisports@gmail.com'];
+const ADMIN_EMAILS = ['munozmartinez.ismael@gmail.com', 'synqaisports@gmail.com', 'admin@synqai.sports'];
 
 /**
- * Contexto de la App de Tutores - v1.4.0
- * PROTOCOLO_SECURE_MIRROR: Gestión de sesión y redirección de seguridad.
+ * Contexto de la App de Tutores - v1.5.0
+ * PROTOCOLO_SECURE_MIRROR: Gestión de sesión y sincronización reactiva con el panel Pro.
  */
 interface TutorContextType {
   selectedChild: any;
@@ -19,6 +19,7 @@ interface TutorContextType {
   showAd: () => void;
   allChildren: any[];
   loading: boolean;
+  refreshData: () => void;
 }
 
 const TutorContext = createContext<TutorContextType | null>(null);
@@ -54,8 +55,7 @@ export function TutorClientLayout({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isInterstitialVisible, setIsInterstitialVisible] = useState(false);
 
-  // EFECTO DE SINCRONIZACIÓN DE SESIÓN Y ATLETAS
-  useEffect(() => {
+  const syncData = useCallback(() => {
     if (isLoginPage || isOnboardingPage) {
       setLoading(false);
       return;
@@ -67,30 +67,33 @@ export function TutorClientLayout({ children }: { children: ReactNode }) {
       return;
     }
 
-    const isRootAdmin = ADMIN_EMAILS.includes(tutorEmail.toLowerCase());
+    const emailLower = tutorEmail.toLowerCase();
+    const isRootAdmin = ADMIN_EMAILS.includes(emailLower);
 
-    // 1. Obtener todos los jugadores del club
+    // 1. Obtener todos los jugadores del club (Sincronización real con /dashboard/players)
     const savedPlayers = JSON.parse(localStorage.getItem("synq_players") || "[]");
     
     // 2. Filtrar por el email del tutor logueado
     let myAtletas = savedPlayers.filter((p: any) => 
-      p.tutorEmail?.toLowerCase() === tutorEmail.toLowerCase()
+      p.tutorEmail?.toLowerCase() === emailLower || (isRootAdmin && !p.tutorEmail)
     ).map((p: any) => ({
       id: p.id,
       name: `${p.name} ${p.surname}`.toUpperCase(),
-      number: p.number,
-      team: `${p.category} ${p.teamSuffix}`.toUpperCase(),
-      category: 'FEDERADO'
+      number: p.number || "00",
+      team: `${p.category || 'S/C'} ${p.teamSuffix || ''}`.toUpperCase(),
+      category: p.category || 'SIN_ASIGNAR',
+      status: p.status || 'Active'
     }));
 
-    // 3. PROTOCOLO_ELITE: Si es admin y no tiene hijos, inyectar perfil maestro
+    // 3. PROTOCOLO_ELITE: Si es admin y no tiene hijos vinculados, inyectar perfil maestro
     if (isRootAdmin && myAtletas.length === 0) {
       myAtletas = [{
         id: "root-auditor",
         name: "MASTER_AUDITOR",
         number: "00",
         team: "TODOS_LOS_EQUIPOS",
-        category: "ROOT_ACCESS"
+        category: "ROOT_ACCESS",
+        status: 'Active'
       }];
     }
 
@@ -101,17 +104,38 @@ export function TutorClientLayout({ children }: { children: ReactNode }) {
     }
 
     setAllChildren(myAtletas);
-    if (!selectedChild) {
+    
+    // Si el hijo seleccionado ya no existe en la lista, resetear al primero
+    if (!selectedChild || !myAtletas.find(c => c.id === selectedChild.id)) {
       setSelectedChild(myAtletas[0]);
+    } else {
+      // Actualizar datos del hijo seleccionado por si cambiaron en la ficha Pro
+      const updated = myAtletas.find(c => c.id === selectedChild.id);
+      setSelectedChild(updated);
     }
+    
     setLoading(false);
-  }, [pathname, isLoginPage, isOnboardingPage, router, selectedChild]);
+  }, [isLoginPage, isOnboardingPage, router, selectedChild]);
+
+  // Sincronización inicial y reactiva
+  useEffect(() => {
+    syncData();
+
+    // Listener para cambios en otras pestañas/terminales
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'synq_players' || e.key === 'synq_tutor_session_email') {
+        syncData();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [syncData]);
 
   const showAd = () => {
     const tutorEmail = localStorage.getItem("synq_tutor_session_email");
     const isRootAdmin = tutorEmail && ADMIN_EMAILS.includes(tutorEmail.toLowerCase());
     
-    // Los administradores no ven publicidad
     if (isRootAdmin) return;
 
     const lastAd = localStorage.getItem('synq_tutor_last_ad');
@@ -127,13 +151,20 @@ export function TutorClientLayout({ children }: { children: ReactNode }) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-background p-10 text-center space-y-4">
         <Loader2 className="h-10 w-10 text-primary animate-spin" />
-        <p className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Validando_Credenciales...</p>
+        <p className="text-[10px] font-black text-primary uppercase tracking-[0.5em]">Sincronizando_Nodo_Familia...</p>
       </div>
     );
   }
 
   return (
-    <TutorContext.Provider value={{ selectedChild, setSelectedChild, showAd, allChildren, loading }}>
+    <TutorContext.Provider value={{ 
+      selectedChild, 
+      setSelectedChild, 
+      showAd, 
+      allChildren, 
+      loading,
+      refreshData: syncData
+    }}>
       <div className="w-full max-w-[500px] bg-background min-h-screen relative shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col border-x border-white/5">
         
         <div className="flex-1 flex flex-col">
