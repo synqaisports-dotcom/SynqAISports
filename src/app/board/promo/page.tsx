@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback, Suspense, memo } from "react";
@@ -181,7 +180,7 @@ function PromoBoardContent() {
         setSaveFormData(target.metadata || saveFormData); 
       }
     }
-  }, [exerciseId]);
+  }, [exerciseId, saveFormData]);
 
   useEffect(() => {
     const syncFullscreen = () => setIsFullscreen(!!document.fullscreenElement);
@@ -430,7 +429,7 @@ function PromoBoardContent() {
                   </div>
                 </button>
               </SheetTrigger>
-              <SheetContent side="left" className="bg-[#04070c]/98 backdrop-blur-3xl border-r border-primary/20 text-white w-full sm:max-w-md shadow-[20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+              <SheetContent side="left" className="bg-[#04070c]/98 backdrop-blur-3xl border-r border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
                 <div className="p-8 border-b border-white/5 bg-black/40">
                   <SheetHeader className="space-y-4">
                     <div className="flex items-center gap-3">

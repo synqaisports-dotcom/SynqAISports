@@ -1,4 +1,3 @@
-
 "use client";
 
 import { ReactNode, useState, createContext, useContext, useEffect, useCallback } from "react";
@@ -10,8 +9,9 @@ import { cn } from "@/lib/utils";
 const ADMIN_EMAILS = ['munozmartinez.ismael@gmail.com', 'synqaisports@gmail.com', 'admin@synqai.sports'];
 
 /**
- * Contexto de la App de Tutores - v1.5.0
+ * Contexto de la App de Tutores - v1.5.1
  * PROTOCOLO_SECURE_MIRROR: Gestión de sesión y sincronización reactiva con el panel Pro.
+ * FIX: Resolución de bucle infinito en syncData mediante comprobación de identidad de objeto.
  */
 interface TutorContextType {
   selectedChild: any;
@@ -105,17 +105,29 @@ export function TutorClientLayout({ children }: { children: ReactNode }) {
 
     setAllChildren(myAtletas);
     
-    // Si el hijo seleccionado ya no existe en la lista, resetear al primero
-    if (!selectedChild || !myAtletas.find(c => c.id === selectedChild.id)) {
-      setSelectedChild(myAtletas[0]);
-    } else {
-      // Actualizar datos del hijo seleccionado por si cambiaron en la ficha Pro
-      const updated = myAtletas.find(c => c.id === selectedChild.id);
-      setSelectedChild(updated);
-    }
+    // 4. PROTOCOLO_STABLE_SELECT: Actualizar solo si hay cambios reales para evitar bucle infinito
+    setSelectedChild((current: any) => {
+      const found = myAtletas.find((c: any) => c.id === current?.id);
+      
+      if (!current || !found) {
+        return myAtletas[0] || null;
+      }
+
+      // Comparación profunda simplificada para evitar re-renders innecesarios que disparan el bucle
+      if (
+        found.name !== current.name || 
+        found.team !== current.team || 
+        found.status !== current.status ||
+        found.number !== current.number
+      ) {
+        return found;
+      }
+      
+      return current; // Mismo puntero = no re-render = no loop
+    });
     
     setLoading(false);
-  }, [isLoginPage, isOnboardingPage, router, selectedChild]);
+  }, [isLoginPage, isOnboardingPage, router]);
 
   // Sincronización inicial y reactiva
   useEffect(() => {
