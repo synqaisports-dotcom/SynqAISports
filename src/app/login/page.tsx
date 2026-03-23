@@ -114,13 +114,6 @@ function LoginContent() {
     router.push("/dashboard/coach/onboarding");
   };
 
-  const handleBypass = () => {
-    setLocalLoading(true);
-    loginAsGuest();
-    toast({ title: "ACCESO_AUTORIZADO", description: "Sincronizando con el nodo central de administración..." });
-    router.push("/admin-global");
-  };
-
   if (token && campaignData && !forceStandard) {
     return (
       <Card className="w-full max-w-xl glass-panel shadow-2xl relative z-10 overflow-hidden border-t-2 border-primary animate-in fade-in zoom-in-95 duration-500 rounded-3xl">
@@ -257,10 +250,6 @@ function LoginContent() {
             </div>
           </TabsContent>
         </Tabs>
-
-        <div className="mt-12 pt-8 border-t border-white/5 flex flex-col items-center gap-6">
-          <button onClick={handleBypass} className="text-[9px] text-primary/40 hover:text-primary transition-all font-black uppercase tracking-[0.3em] border border-primary/20 px-8 py-3 hover:bg-primary/5 rounded-2xl">[ BYPASS_ADMIN_SISTEMA ]</button>
-        </div>
       </CardContent>
     </Card>
   );

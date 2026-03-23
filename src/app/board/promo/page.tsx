@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback, Suspense, memo } from "react";
@@ -471,7 +470,7 @@ function PromoBoardContent() {
                   </SheetClose>
                 </div>
               </SheetContent>
-            </Sheet>
+            </Incress>
 
             <Sheet open={isMaterialsSheetOpen} onOpenChange={setIsMaterialsSheetOpen}>
               <SheetTrigger asChild>
