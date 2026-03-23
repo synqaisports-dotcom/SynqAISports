@@ -1,40 +1,32 @@
-"use client";
+import { Metadata } from "next";
+import { PromoClientWrapper } from "./promo-client-wrapper";
 
-import { useAuth } from "@/lib/auth-context";
-import { Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, use } from "react";
+export const metadata: Metadata = {
+  title: "Sandbox by SynqAi",
+  description: "Entorno Táctico Local y Gestión Sandbox",
+  manifest: "/dashboard/promo/manifest.json",
+  themeColor: "#3b82f6",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "SynqAi Sandbox"
+  },
+  icons: {
+    apple: [
+      { url: 'https://placehold.co/192x192/04070c/3b82f6?text=Sandbox', sizes: '192x192', type: 'image/png' },
+    ],
+  }
+};
 
-export default function PromoSandboxLayout(props: { 
+export default async function PromoSandboxLayout(props: { 
   children: React.ReactNode;
   params: Promise<any>;
 }) {
-  const params = use(props.params);
   const children = props.children;
-  const { profile, loading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!loading && !profile) {
-      router.push("/login");
-    }
-  }, [profile, loading, router]);
-
-  if (loading) {
-    return (
-      <div className="h-screen w-full flex flex-col items-center justify-center bg-[#04070c]">
-        <div className="relative">
-          <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
-          <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse" />
-        </div>
-        <p className="text-[10px] font-black text-primary tracking-[0.5em] uppercase">Sincronizando_Sandbox_Terminal...</p>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen sandbox-theme">
+    <PromoClientWrapper>
       {children}
-    </div>
+    </PromoClientWrapper>
   );
 }
