@@ -6,8 +6,6 @@ import {
   Card, 
   CardContent, 
   CardHeader, 
-  CardTitle, 
-  CardDescription 
 } from "@/components/ui/card";
 import { 
   Table, 
@@ -18,7 +16,7 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, MoreHorizontal, Building2, Globe2, Activity, Pencil, Pause, Play, ShieldCheck, Globe, Layers } from "lucide-react";
+import { Plus, Search, MoreHorizontal, Building2, Globe2, Activity, Pencil, Pause, Play, ShieldCheck, Globe, Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -28,7 +26,6 @@ import {
   SheetHeader, 
   SheetTitle, 
   SheetDescription,
-  SheetFooter, 
   SheetClose
 } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
@@ -39,8 +36,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { supabase, isSupabaseConfigured, type Club } from "@/lib/supabase";
 
-const INITIAL_CLUBS = [
+// Datos de fallback si no hay conexión a Supabase
+const FALLBACK_CLUBS: Club[] = [
   { id: "c1", name: "Elite Soccer Academy", plan: "Enterprise", users: 120, status: "Active", country: "ES" },
   { id: "c2", name: "Velocity Basketball", plan: "Pro", users: 45, status: "Active", country: "US" },
   { id: "c3", name: "AquaSwim Club", plan: "Basic", users: 22, status: "Overdue", country: "IT" },
@@ -48,12 +47,16 @@ const INITIAL_CLUBS = [
 ];
 
 export default function ManageClubsPage() {
-  const [clubs, setClubs] = useState(INITIAL_CLUBS);
+  const [clubs, setClubs] = useState<Club[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  const [isUsingFallback, setIsUsingFallback] = useState(false);
   const { toast } = useToast();
   
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingClubId, setEditingId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     plan: "Pro",
@@ -61,29 +64,116 @@ export default function ManageClubsPage() {
     status: "Active"
   });
 
-  useEffect(() => {
-    const savedClubs = JSON.parse(localStorage.getItem("synq_global_clubs") || "[]");
-    if (savedClubs.length > 0) {
-      const merged = [...INITIAL_CLUBS];
-      savedClubs.forEach((sc: any) => {
+  // Cargar clubs desde Supabase
+  const loadClubs = async () => {
+    setIsLoading(true);
+    setHasError(false);
+    
+    // Si Supabase no está configurado, usar fallback inmediatamente
+    if (!isSupabaseConfigured || !supabase) {
+      const savedClubs = JSON.parse(localStorage.getItem("synq_global_clubs") || "[]");
+      const merged = [...FALLBACK_CLUBS];
+      savedClubs.forEach((sc: Club) => {
         if (!merged.find(m => m.id === sc.id)) {
           merged.push(sc);
         }
       });
       setClubs(merged);
+      setIsUsingFallback(true);
+      setIsLoading(false);
+      return;
     }
+    
+    try {
+      const { data, error } = await supabase
+        .from('clubs')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error("[SynqAI] Error cargando clubs:", error);
+        throw error;
+      }
+
+      if (data && data.length > 0) {
+        setClubs(data);
+        setIsUsingFallback(false);
+        toast({
+          title: "SINCRONIZACIÓN_COMPLETA",
+          description: `${data.length} nodos de club cargados desde la red.`,
+        });
+      } else {
+        // Si no hay datos en Supabase, usar fallback + localStorage
+        const savedClubs = JSON.parse(localStorage.getItem("synq_global_clubs") || "[]");
+        const merged = [...FALLBACK_CLUBS];
+        savedClubs.forEach((sc: Club) => {
+          if (!merged.find(m => m.id === sc.id)) {
+            merged.push(sc);
+          }
+        });
+        setClubs(merged);
+        setIsUsingFallback(true);
+        toast({
+          title: "MODO_OFFLINE",
+          description: "Usando datos locales. Conecte Supabase para sincronización real.",
+        });
+      }
+    } catch (error) {
+      console.error("[SynqAI] Error en loadClubs:", error);
+      setHasError(true);
+      
+      // Fallback a datos locales
+      const savedClubs = JSON.parse(localStorage.getItem("synq_global_clubs") || "[]");
+      const merged = [...FALLBACK_CLUBS];
+      savedClubs.forEach((sc: Club) => {
+        if (!merged.find(m => m.id === sc.id)) {
+          merged.push(sc);
+        }
+      });
+      setClubs(merged);
+      setIsUsingFallback(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadClubs();
   }, []);
 
-  const handleToggleStatus = (id: string) => {
+  const handleToggleStatus = async (id: string) => {
     const club = clubs.find(c => c.id === id);
     if (!club) return;
 
     const isCurrentlyActive = club.status === "Active";
     const newStatus = isCurrentlyActive ? "Inactive" : "Active";
 
+    // Actualizar localmente primero
     setClubs(prev => prev.map(c => 
       c.id === id ? { ...c, status: newStatus } : c
     ));
+
+    // Intentar actualizar en Supabase
+    if (!isUsingFallback && supabase) {
+      const { error } = await supabase
+        .from('clubs')
+        .update({ status: newStatus })
+        .eq('id', id);
+
+      if (error) {
+        console.error("[SynqAI] Error actualizando status:", error);
+        // Revertir cambio local si falla
+        setClubs(prev => prev.map(c => 
+          c.id === id ? { ...c, status: club.status } : c
+        ));
+        toast({
+          variant: "destructive",
+          title: "ERROR_SINCRO",
+          description: "No se pudo actualizar el estado del nodo.",
+        });
+        return;
+      }
+    }
 
     toast({
       title: isCurrentlyActive ? "NODO_SUSPENDIDO" : "NODO_ACTIVADO",
@@ -102,7 +192,7 @@ export default function ManageClubsPage() {
     setIsSheetOpen(true);
   };
 
-  const handleEdit = (club: any) => {
+  const handleEdit = (club: Club) => {
     setEditingId(club.id);
     setFormData({
       name: club.name,
@@ -113,42 +203,80 @@ export default function ManageClubsPage() {
     setIsSheetOpen(true);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingClubId) {
-      setClubs(prev => prev.map(c => 
-        c.id === editingClubId ? { ...c, ...formData } : c
-      ));
-      
-      const savedClubs = JSON.parse(localStorage.getItem("synq_global_clubs") || "[]");
-      const updated = savedClubs.map((sc: any) => sc.id === editingClubId ? { ...sc, ...formData } : sc);
-      localStorage.setItem("synq_global_clubs", JSON.stringify(updated));
+    setIsSaving(true);
 
-      toast({
-        title: "NODO_ACTUALIZADO",
-        description: `La configuración de ${formData.name} ha sido sincronizada en la red.`,
-      });
-    } else {
-      const newClub = {
-        id: `c${Date.now()}`,
-        name: formData.name,
-        plan: formData.plan,
-        country: formData.country,
-        status: formData.status,
-        users: 0
-      };
-      setClubs(prev => [newClub, ...prev]);
-      
-      const savedClubs = JSON.parse(localStorage.getItem("synq_global_clubs") || "[]");
-      localStorage.setItem("synq_global_clubs", JSON.stringify([newClub, ...savedClubs]));
+    try {
+      if (editingClubId) {
+        // Actualizar club existente
+        if (!isUsingFallback && supabase) {
+          const { error } = await supabase
+            .from('clubs')
+            .update({
+              name: formData.name,
+              plan: formData.plan,
+              country: formData.country,
+              status: formData.status
+            })
+            .eq('id', editingClubId);
 
+          if (error) throw error;
+        }
+
+        setClubs(prev => prev.map(c => 
+          c.id === editingClubId ? { ...c, ...formData } : c
+        ));
+
+        toast({
+          title: "NODO_ACTUALIZADO",
+          description: `La configuración de ${formData.name} ha sido sincronizada en la red.`,
+        });
+      } else {
+        // Crear nuevo club
+        const newClub: Club = {
+          id: `c${Date.now()}`,
+          name: formData.name,
+          plan: formData.plan,
+          country: formData.country,
+          status: formData.status,
+          users: 0
+        };
+
+        if (!isUsingFallback && supabase) {
+          const { data, error } = await supabase
+            .from('clubs')
+            .insert(newClub)
+            .select()
+            .single();
+
+          if (error) throw error;
+          if (data) newClub.id = data.id;
+        }
+
+        setClubs(prev => [newClub, ...prev]);
+        
+        // Guardar también en localStorage como backup
+        const savedClubs = JSON.parse(localStorage.getItem("synq_global_clubs") || "[]");
+        localStorage.setItem("synq_global_clubs", JSON.stringify([newClub, ...savedClubs]));
+
+        toast({
+          title: "NODO_VINCULADO",
+          description: `El club ${formData.name} ha sido desplegado correctamente.`,
+        });
+      }
+      
+      setIsSheetOpen(false);
+    } catch (error) {
+      console.error("[SynqAI] Error guardando club:", error);
       toast({
-        title: "NODO_VINCULADO",
-        description: `El club ${formData.name} ha sido desplegado correctamente.`,
+        variant: "destructive",
+        title: "ERROR_SINCRO",
+        description: "No se pudo guardar los cambios en la red.",
       });
+    } finally {
+      setIsSaving(false);
     }
-    
-    setIsSheetOpen(false);
   };
 
   const filteredClubs = clubs.filter(c => 
@@ -162,19 +290,46 @@ export default function ManageClubsPage() {
         <div className="space-y-1">
           <div className="flex items-center gap-3 mb-2">
             <Globe2 className="h-5 w-5 text-emerald-400 animate-pulse" />
-            <span className="text-[10px] font-black text-emerald-400 tracking-[0.5em] uppercase">Club_Network_Active</span>
+            <span className="text-[10px] font-black text-emerald-400 tracking-[0.5em] uppercase">
+              {isUsingFallback ? "Modo_Offline" : "Club_Network_Active"}
+            </span>
+            {isUsingFallback && (
+              <Badge variant="outline" className="text-amber-400 border-amber-400/30 text-[8px]">
+                DATOS LOCALES
+              </Badge>
+            )}
           </div>
           <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic emerald-text-glow">
-            Gestión de clubes
+            Gestion de clubes
           </h1>
         </div>
-        <Button 
-          onClick={handleOpenCreate}
-          className="rounded-2xl bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 transition-all border-none"
-        >
-          <Plus className="h-4 w-4 mr-2" /> Vincular Nuevo Nodo
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button 
+            onClick={loadClubs}
+            variant="ghost"
+            disabled={isLoading}
+            className="h-12 px-4 border border-white/10 rounded-2xl text-white/60 hover:text-emerald-400 hover:border-emerald-500/30"
+          >
+            <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
+            Sincronizar
+          </Button>
+          <Button 
+            onClick={handleOpenCreate}
+            className="rounded-2xl bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 transition-all border-none"
+          >
+            <Plus className="h-4 w-4 mr-2" /> Vincular Nuevo Nodo
+          </Button>
+        </div>
       </div>
+
+      {hasError && (
+        <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center gap-3">
+          <AlertCircle className="h-5 w-5 text-amber-400" />
+          <p className="text-[10px] text-amber-400 font-bold uppercase tracking-widest">
+            Conexion a Supabase no disponible. Mostrando datos locales. Configure las variables de entorno NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY.
+          </p>
+        </div>
+      )}
 
       <Card className="glass-panel overflow-hidden relative border-none">
         <CardHeader className="bg-black/40 border-b border-white/5 flex flex-col md:flex-row items-start md:items-center justify-between space-y-4 md:space-y-0 p-6">
@@ -189,8 +344,13 @@ export default function ManageClubsPage() {
           </div>
           <div className="flex items-center gap-6">
             <div className="flex flex-col items-end">
-               <span className="text-[9px] font-black text-white/30 uppercase tracking-widest">Estado de Sincronización</span>
-               <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest italic">ESTABLE_100%</span>
+               <span className="text-[9px] font-black text-white/30 uppercase tracking-widest">Estado de Sincronizacion</span>
+               <span className={cn(
+                 "text-[10px] font-black uppercase tracking-widest italic",
+                 isUsingFallback ? "text-amber-400" : "text-emerald-400"
+               )}>
+                 {isLoading ? "SINCRONIZANDO..." : isUsingFallback ? "MODO_LOCAL" : "ESTABLE_100%"}
+               </span>
             </div>
             <Badge variant="outline" className="rounded-full border-emerald-500/20 text-emerald-400 font-black text-[9px] px-4 py-1.5 uppercase tracking-widest">
               Total: {filteredClubs.length}
@@ -198,99 +358,117 @@ export default function ManageClubsPage() {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader className="bg-white/[0.02] border-b border-white/5">
-              <TableRow className="hover:bg-transparent border-white/5">
-                <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-white/40 h-16 pl-8">Identificador_Club</TableHead>
-                <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-white/40">Protocolo_Plan</TableHead>
-                <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-white/40 text-center">Nodos_Activos</TableHead>
-                <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-white/40">Estatus_Red</TableHead>
-                <TableHead className="text-right font-black text-[10px] uppercase tracking-[0.3em] text-white/40 pr-8">Terminal_Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredClubs.map((club) => (
-                <TableRow key={club.id} className="border-white/5 hover:bg-white/[0.03] transition-colors group">
-                  <TableCell className="pl-8">
-                    <div className="flex items-center gap-4 py-3">
-                      <div className="h-12 w-12 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl flex items-center justify-center relative overflow-hidden group-hover:bg-emerald-500/10 transition-all rotate-12 group-hover:rotate-0 duration-500">
-                        <Building2 className="h-5 w-5 text-emerald-500" />
-                        <div className="absolute inset-0 bg-emerald-500/5 scan-line opacity-20" />
-                      </div>
-                      <div>
-                        <p className="font-black text-white uppercase text-xs italic group-hover:emerald-text-glow transition-all tracking-tighter">
-                          {club.name}
-                        </p>
-                        <p className="text-[8px] text-white/30 font-bold uppercase tracking-widest mt-1">
-                          ID: {club.id.toUpperCase()} • Sector: {club.country}
-                        </p>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="rounded-full border-white/10 text-white/60 font-black text-[9px] uppercase tracking-widest bg-white/5 px-3">
-                      {club.plan}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <span className="text-sm font-headline font-bold text-white group-hover:text-emerald-400 transition-colors">
-                      {club.users}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className={cn(
-                        "w-2 h-2 rounded-full animate-pulse",
-                        club.status === "Active" ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : 
-                        club.status === "Inactive" ? "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]" : "bg-amber-400"
-                      )} />
-                      <span className={cn(
-                        "text-[9px] font-black uppercase tracking-[0.2em]",
-                        club.status === "Active" ? "text-emerald-400" : 
-                        club.status === "Inactive" ? "text-rose-400" : "text-amber-400"
-                      )}>
-                        {club.status}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right pr-8">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-10 w-10 rounded-xl border border-white/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 text-white/20 hover:text-emerald-400 transition-all" 
-                        title="Modificar Protocolo"
-                        onClick={() => handleEdit(club)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className={cn(
-                          "h-10 w-10 rounded-xl border border-white/5 transition-all",
-                          club.status === "Active" 
-                            ? "hover:border-amber-500/50 hover:bg-amber-500/10 text-white/20 hover:text-amber-400" 
-                            : "hover:border-emerald-500/50 hover:bg-emerald-500/10 text-white/20 hover:text-emerald-400"
-                        )}
-                        title={club.status === "Active" ? "Pausar Nodo" : "Activar Nodo"}
-                        onClick={() => handleToggleStatus(club.id)}
-                      >
-                        {club.status === "Active" ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl border border-white/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 text-white/20 hover:text-emerald-400 transition-all">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <Loader2 className="h-8 w-8 text-emerald-500 animate-spin" />
+              <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.5em]">Sincronizando_Nodos...</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader className="bg-white/[0.02] border-b border-white/5">
+                <TableRow className="hover:bg-transparent border-white/5">
+                  <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-white/40 h-16 pl-8">Identificador_Club</TableHead>
+                  <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-white/40">Protocolo_Plan</TableHead>
+                  <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-white/40 text-center">Nodos_Activos</TableHead>
+                  <TableHead className="font-black text-[10px] uppercase tracking-[0.3em] text-white/40">Estatus_Red</TableHead>
+                  <TableHead className="text-right font-black text-[10px] uppercase tracking-[0.3em] text-white/40 pr-8">Terminal_Acciones</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredClubs.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-16">
+                      <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.5em]">No se encontraron nodos de club</p>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredClubs.map((club) => (
+                    <TableRow key={club.id} className="border-white/5 hover:bg-white/[0.03] transition-colors group">
+                      <TableCell className="pl-8">
+                        <div className="flex items-center gap-4 py-3">
+                          <div className="h-12 w-12 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl flex items-center justify-center relative overflow-hidden group-hover:bg-emerald-500/10 transition-all rotate-12 group-hover:rotate-0 duration-500">
+                            <Building2 className="h-5 w-5 text-emerald-500" />
+                            <div className="absolute inset-0 bg-emerald-500/5 scan-line opacity-20" />
+                          </div>
+                          <div>
+                            <p className="font-black text-white uppercase text-xs italic group-hover:emerald-text-glow transition-all tracking-tighter">
+                              {club.name}
+                            </p>
+                            <p className="text-[8px] text-white/30 font-bold uppercase tracking-widest mt-1">
+                              ID: {club.id.toUpperCase()} | Sector: {club.country}
+                            </p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="rounded-full border-white/10 text-white/60 font-black text-[9px] uppercase tracking-widest bg-white/5 px-3">
+                          {club.plan}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className="text-sm font-headline font-bold text-white group-hover:text-emerald-400 transition-colors">
+                          {club.users}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className={cn(
+                            "w-2 h-2 rounded-full animate-pulse",
+                            club.status === "Active" ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : 
+                            club.status === "Inactive" ? "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]" : "bg-amber-400"
+                          )} />
+                          <span className={cn(
+                            "text-[9px] font-black uppercase tracking-[0.2em]",
+                            club.status === "Active" ? "text-emerald-400" : 
+                            club.status === "Inactive" ? "text-rose-400" : "text-amber-400"
+                          )}>
+                            {club.status}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right pr-8">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-10 w-10 rounded-xl border border-white/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 text-white/20 hover:text-emerald-400 transition-all" 
+                            title="Modificar Protocolo"
+                            onClick={() => handleEdit(club)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className={cn(
+                              "h-10 w-10 rounded-xl border border-white/5 transition-all",
+                              club.status === "Active" 
+                                ? "hover:border-amber-500/50 hover:bg-amber-500/10 text-white/20 hover:text-amber-400" 
+                                : "hover:border-emerald-500/50 hover:bg-emerald-500/10 text-white/20 hover:text-emerald-400"
+                            )}
+                            title={club.status === "Active" ? "Pausar Nodo" : "Activar Nodo"}
+                            onClick={() => handleToggleStatus(club.id)}
+                          >
+                            {club.status === "Active" ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl border border-white/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 text-white/20 hover:text-emerald-400 transition-all">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
         <div className="p-6 bg-black/20 border-t border-white/5 flex justify-between items-center text-[9px] font-black text-white/20 uppercase tracking-[0.5em] rounded-b-3xl">
           <span>Mostrando {filteredClubs.length} de {clubs.length} registros globales</span>
-          <span className="flex items-center gap-2"><Activity className="h-3 w-3 text-emerald-500 animate-pulse" /> Sincronización de Red: Óptima</span>
+          <span className="flex items-center gap-2">
+            <Activity className={cn("h-3 w-3 animate-pulse", isUsingFallback ? "text-amber-400" : "text-emerald-500")} />
+            Sincronizacion de Red: {isUsingFallback ? "Local" : "Optima"}
+          </span>
         </div>
       </Card>
 
@@ -306,7 +484,7 @@ export default function ManageClubsPage() {
                 {editingClubId ? "MODIFICAR_NODO" : "VINCULAR_NODO"}
               </SheetTitle>
               <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left italic">
-                Ajuste los parámetros del club en la red global.
+                Ajuste los parametros del club en la red global.
               </SheetDescription>
             </SheetHeader>
           </div>
@@ -341,7 +519,7 @@ export default function ManageClubsPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1 italic">Sector País</Label>
+                  <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1 italic">Sector Pais</Label>
                   <div className="relative">
                     <Globe className="absolute left-3 top-3 h-4 w-4 text-emerald-500/30" />
                     <Input 
@@ -374,7 +552,7 @@ export default function ManageClubsPage() {
                 <span className="text-[9px] font-black uppercase text-emerald-400 tracking-widest italic">Aviso de Seguridad</span>
               </div>
               <p className="text-[9px] text-emerald-400/40 leading-relaxed font-bold uppercase italic">
-                La modificación de estos parámetros afecta la visibilidad y capacidad de cómputo del nodo en tiempo real.
+                La modificacion de estos parametros afecta la visibilidad y capacidad de computo del nodo en tiempo real.
               </p>
             </div>
           </form>
@@ -387,9 +565,17 @@ export default function ManageClubsPage() {
             </SheetClose>
             <Button 
               onClick={handleSave}
-              className="flex-[2] h-14 bg-emerald-500 text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:scale-[1.02] transition-all border-none"
+              disabled={isSaving}
+              className="flex-[2] h-14 bg-emerald-500 text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:scale-[1.02] transition-all border-none disabled:opacity-50"
             >
-              {editingClubId ? "SINCRONIZAR_NODO" : "DESPLEGAR_NODO"}
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  SINCRONIZANDO...
+                </>
+              ) : (
+                editingClubId ? "SINCRONIZAR_NODO" : "DESPLEGAR_NODO"
+              )}
             </Button>
           </div>
         </SheetContent>
