@@ -11,7 +11,7 @@ export default function MethodologyDashboard() {
     { title: "Planificador de Ciclos", desc: "Gestión temporal del macrociclo.", icon: GitBranch, href: "/dashboard/methodology/cycle-planner" },
     { title: "Pizarra de Partido", desc: "Terminal táctica de alta competición.", icon: Monitor, href: "/board/match" },
     { title: "Pizarra de Ejercicios", desc: "Diseño técnico de módulos de trabajo.", icon: PencilLine, href: "/board/training" },
-    { title: "Biblioteca (Sin IA)", desc: "Almacenamiento manual de tareas.", icon: Library, href: "/dashboard/methodology/exercise-library" },
+    { title: "Biblioteca", desc: "Almacenamiento manual de tareas.", icon: Library, href: "/dashboard/methodology/exercise-library" },
     { title: "Planificador de Sesiones", desc: "Cronograma diario de entrenamientos.", icon: CalendarDays, href: "/dashboard/methodology/session-planner" },
   ];
 
@@ -41,7 +41,7 @@ export default function MethodologyDashboard() {
                 </CardTitle>
                 <CardDescription className="text-[9px] font-bold text-amber-500/40 uppercase tracking-widest mt-2 leading-relaxed">
                   {section.desc}
-                </CardDescription>
+                </section.desc>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-2 mt-4">
