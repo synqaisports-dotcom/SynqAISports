@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, Suspense } from "react";
@@ -165,7 +164,7 @@ function SmartwatchContent() {
 
   if (loading || autoLinking) {
     return (
-      <div className="fixed inset-0 bg-[#04070c] flex flex-col items-center justify-center p-2">
+      <div className="fixed inset-0 bg-background flex flex-col items-center justify-center p-2">
         <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />
         <p className="text-[10px] font-black text-primary uppercase tracking-[0.5em] animate-pulse">Sincronizando_Token...</p>
       </div>
@@ -174,8 +173,8 @@ function SmartwatchContent() {
 
   if (!isLinked) {
     return (
-      <div className="fixed inset-0 bg-[#04070c] flex items-center justify-center overflow-hidden touch-none select-none p-2">
-        <div className="relative aspect-square w-full max-w-[340px] rounded-[2.5rem] border border-primary/30 bg-[#04070c] overflow-hidden flex flex-col items-center p-6 text-center">
+      <div className="fixed inset-0 bg-background flex items-center justify-center overflow-hidden touch-none select-none p-2">
+        <div className="relative aspect-square w-full max-w-[340px] rounded-[2.5rem] border border-primary/30 bg-card overflow-hidden flex flex-col items-center p-6 text-center">
           <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
           <div className="mt-6 space-y-1 z-20">
             <div className="flex items-center gap-2 justify-center">
@@ -219,8 +218,8 @@ function SmartwatchContent() {
   }
 
   return (
-    <div className="fixed inset-0 bg-[#04070c] flex items-center justify-center overflow-hidden touch-none select-none p-2">
-      <div className="relative aspect-square w-full max-w-[340px] rounded-[clamp(2rem,20%,50%)] border border-primary/30 bg-[#04070c] overflow-hidden flex flex-col shadow-[0_0_60px_rgba(0,242,255,0.15)]">
+    <div className="fixed inset-0 bg-background flex items-center justify-center overflow-hidden touch-none select-none p-2">
+      <div className="relative aspect-square w-full max-w-[340px] rounded-[clamp(2rem,20%,50%)] border border-primary/30 bg-card overflow-hidden flex flex-col shadow-[0_0_60px_rgba(0,242,255,0.15)]">
         <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
         
         <div className="h-14 pt-6 px-10 flex items-center justify-between shrink-0 z-20">
@@ -348,7 +347,7 @@ function SmartwatchContent() {
 
 export default function SmartwatchPage() {
   return (
-    <Suspense fallback={<div className="fixed inset-0 bg-[#04070c] flex items-center justify-center text-primary font-black uppercase tracking-widest animate-pulse">Cargando_Ecosistema...</div>}>
+    <Suspense fallback={<div className="fixed inset-0 bg-background flex items-center justify-center text-primary font-black uppercase tracking-widest animate-pulse">Cargando_Ecosistema...</div>}>
       <SmartwatchContent />
     </Suspense>
   );
