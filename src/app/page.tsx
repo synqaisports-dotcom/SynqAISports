@@ -420,15 +420,15 @@ function QRAppCard({ title, desc, url, icon: Icon, highlight, qrColor = "#00f2ff
        </div>
        
        <div 
-         className="p-4 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.3)] relative group-hover:scale-105 transition-transform duration-500"
-         style={{ backgroundColor: qrColor }}
+         className="p-4 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.3)] relative group-hover:scale-105 transition-transform duration-500 bg-black"
+         style={{ backgroundColor: '#000000' }}
        >
           <QRCodeCanvas 
             value={url || "https://synqai.sports"} 
             size={140} 
             level="H" 
             fgColor="#ffffff" 
-            bgColor={qrColor}
+            bgColor="#000000"
             includeMargin={false}
           />
           <div className="absolute inset-0 border-4 border-white/10 pointer-events-none rounded-3xl" />
