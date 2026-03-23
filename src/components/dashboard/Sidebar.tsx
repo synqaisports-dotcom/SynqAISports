@@ -270,7 +270,7 @@ export function DashboardSidebar() {
           </SidebarGroupWrapper>
         )}
 
-        <SidebarGroupWrapper title="Terminales_Acceso" color="text-white/10" isCollapsed={isCollapsed}>
+        <SidebarGroupWrapper title="Terminales_Acceso" color="text-white/60" isCollapsed={isCollapsed}>
           {!isCollapsed && (
             <div className="px-4 py-2 mb-2 bg-blue-500/5 border border-blue-500/10 rounded-xl">
                <span className="text-[7px] font-black text-blue-400 uppercase tracking-[0.3em] italic flex items-center gap-2">
