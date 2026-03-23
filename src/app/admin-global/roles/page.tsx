@@ -111,23 +111,12 @@ const SECTOR_PERMISSIONS = [
     ]
   },
   {
-    id: "sandbox",
-    label: "Mi Sandbox (Blue)",
-    icon: Zap,
-    color: "text-blue-400",
-    modules: [
-      { id: "team_local", label: "Equipo Local", features: ["Configurar Plantilla", "Editar Roster", "Atributos Nodo"] },
-      { id: "tasks_local", label: "Tareas Sandbox", features: ["Guardar Ejercicio", "Gestionar Slots (20)", "Viral Loop (Marca Agua)"] },
-      { id: "sessions_local", label: "Agenda Promo", features: ["Planificador Diario", "Impresión Ficha PDF"] },
-      { id: "stats_local", label: "Analítica Local", features: ["Dashboards Rendimiento", "Sistema XP/Niveles", "Reporte Temporada PDF"] },
-    ]
-  },
-  {
     id: "terminals",
     label: "Terminales de Acceso (White)",
     icon: Monitor,
     color: "text-white/60",
     modules: [
+      { id: "sandbox_node", label: "Terminal Sandbox", features: ["Acceso Equipo Local", "Tareas Sandbox", "Slots Partidos (20)", "Analítica Local"] },
       { id: "tutor_portal", label: "Portal Tutores", features: ["Ver Ficha Hijo", "Mensajería", "Pagos"] },
       { id: "watch_link", label: "Smartwatch Link", features: ["Sincronización Periférico", "Control de Partido"] },
     ]
@@ -144,8 +133,7 @@ export default function GlobalRolesPage() {
     global: true, 
     methodology: true, 
     operational: true, 
-    terminals: true,
-    sandbox: true
+    terminals: true
   });
   const { toast } = useToast();
 
@@ -228,7 +216,7 @@ export default function GlobalRolesPage() {
               <div className="space-y-6">
                 <label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest block ml-1">Matriz de Acceso por Sectores Operativos</label>
                 
-                <Accordion type="multiple" defaultValue={["operational", "methodology", "sandbox"]} className="space-y-4">
+                <Accordion type="multiple" defaultValue={["operational", "methodology", "terminals"]} className="space-y-4">
                   {SECTOR_PERMISSIONS.map(sector => (
                     <AccordionItem 
                       key={sector.id} 
@@ -426,7 +414,7 @@ export default function GlobalRolesPage() {
                 <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/60">Operativa_Matrix</span>
              </div>
              <p className="text-[10px] text-white/40 leading-relaxed font-bold uppercase italic tracking-wider">
-               La configuración granular permite que un usuario PROMO solo acceda a las pizarras de marketing, mientras que un COORDINADOR puede ver toda la metodología del club.
+               La configuración granular permite que un usuario de nivel inferior solo acceda a terminales específicos como el Sandbox o el Portal de Tutores.
              </p>
           </div>
         </div>

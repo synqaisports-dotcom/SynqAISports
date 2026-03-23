@@ -64,9 +64,9 @@ export default function SynqAiLandingPage() {
   }, []);
 
   const externalAccessNodes = [
-    { label: "Smartwatch Link", icon: Watch, href: "/smartwatch", desc: "Telemetría en vivo" },
+    { label: "Terminal Sandbox", icon: LayoutGrid, href: "/dashboard/promo/team", desc: "Nodo personal gratis" },
     { label: "Portal Tutores", icon: UserCircle, href: "/tutor", desc: "Acceso familias" },
-    { label: "Acceso Sistema", icon: Key, href: "/login", desc: "Terminal Pro" },
+    { label: "Smartwatch Link", icon: Watch, href: "/smartwatch", desc: "Telemetría en vivo" },
   ];
 
   const menuItems = [

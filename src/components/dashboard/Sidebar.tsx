@@ -72,7 +72,7 @@ interface NavItem {
   title: string;
   href: string;
   icon: any;
-  category: "global" | "operational" | "methodology" | "sandbox" | "user";
+  category: "global" | "operational" | "methodology" | "user";
   roles?: string[];
 }
 
@@ -88,17 +88,6 @@ const navItems: NavItem[] = [
   { title: "Analytics Global", href: "/admin-global/analytics", icon: BarChart3, category: "global" },
   { title: "Almacén Neural", href: "/admin-global/exercises", icon: Database, category: "global" },
   
-  // MI_SANDBOX (PROMO MODE) - ELECTRIC BLUE THEME
-  { title: "Mi Equipo Local", href: "/dashboard/promo/team", icon: Users, category: "sandbox" },
-  { title: "Mis Tareas (4-12-4)", href: "/dashboard/promo/tasks", icon: LayoutGrid, category: "sandbox" },
-  { title: "Mi Agenda Promo", href: "/dashboard/promo/sessions", icon: Calendar, category: "sandbox" },
-  { title: "Mis Partidos (Max 20)", href: "/dashboard/promo/matches", icon: Swords, category: "sandbox" },
-  { title: "Vincular Watch", href: "/dashboard/promo/watch-config", icon: Smartphone, category: "sandbox" },
-  { title: "Estadísticas Local", href: "/dashboard/promo/stats", icon: BarChart3, category: "sandbox" },
-  { title: "Pizarra Promo", href: "/board/promo", icon: Zap, category: "sandbox" },
-  { title: "Pizarra Partido", href: "/board/match", icon: Trophy, category: "sandbox" },
-  { title: "Mejorar y Alianzas", href: "/dashboard/promo/collaboration", icon: MessageSquareQuote, category: "sandbox" },
-
   // ESTRATEGIA_METODOLÓGICA - AMBER THEME
   { title: "Objetivos", href: "/dashboard/methodology/objectives", icon: Target, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director"] },
   { title: "Planificador Ciclos", href: "/dashboard/methodology/cycle-planner", icon: GitBranch, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director"] },
@@ -121,7 +110,9 @@ const navItems: NavItem[] = [
   { title: "Biblioteca Táctica", href: "/dashboard/coach/library", icon: Dumbbell, category: "operational" },
   { title: "Neural Planner", href: "/dashboard/coach/planner", icon: Activity, category: "operational" },
   
-  // TERMINALES_ACCESO - RESTRINGIDOS A SUPERADMIN
+  // TERMINALES_ACCESO - SANDBOX INTEGRADO COMO TERMINAL
+  { title: "Terminal Sandbox", href: "/dashboard/promo/team", icon: LayoutGrid, category: "user" },
+  { title: "Pizarra Promo", href: "/board/promo", icon: Zap, category: "user" },
   { title: "Tutor Portal", href: "/tutor", icon: UserCircle, category: "user", roles: ["superadmin"] },
   { title: "Smartwatch Link", href: "/smartwatch", icon: Watch, category: "user", roles: ["superadmin"] },
 ];
@@ -173,11 +164,11 @@ export function DashboardSidebar() {
       if (!item.roles.includes(profile.role)) return false;
     }
     if (isFree) {
-      if (item.category === "sandbox" || item.category === "user") return true;
+      // Los usuarios gratuitos solo ven Terminales de Acceso y el Hub inicial
+      if (item.category === "user") return true;
       if (item.category === "operational" && item.href === "/dashboard") return true;
       return false;
     } else {
-      if (item.category === "sandbox") return false;
       return true;
     }
   });
@@ -210,7 +201,7 @@ export function DashboardSidebar() {
             {!isCollapsed && (
               <div className="flex flex-col overflow-hidden animate-in fade-in duration-700">
                 <span className="font-headline font-black text-2xl tracking-tighter text-white uppercase italic">
-                  Synq<span className={cn(isSuperAdmin ? "text-emerald-400" : "text-primary")}>AI</span>
+                  Synq<span className="text-primary">AI</span>
                 </span>
                 <span className="text-[9px] font-black text-white/30 tracking-[0.4em] uppercase">SPORTS_PRO</span>
               </div>
@@ -250,18 +241,6 @@ export function DashboardSidebar() {
               {filteredItems.filter(i => i.category === "methodology").map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarLink item={item} isActive={pathname === item.href} isMethodology onNavClick={handleNavClick} />
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupWrapper>
-        )}
-
-        {(isFree || isSuperAdmin) && (
-          <SidebarGroupWrapper title="Mi_Sandbox" color="text-blue-400" isCollapsed={isCollapsed}>
-            <SidebarMenu>
-              {filteredItems.filter(i => i.category === "sandbox").map((item) => (
-                <SidebarMenuItem key={item.href}>
-                  <SidebarLink item={item} isActive={pathname === item.href} isSandbox onNavClick={handleNavClick} />
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
