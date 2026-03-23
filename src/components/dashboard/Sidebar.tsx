@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useCallback, useEffect } from "react";
@@ -234,7 +235,7 @@ export function DashboardSidebar() {
         isCollapsed && "py-4 space-y-6"
       )}>
         {isSuperAdmin && (
-          <SidebarGroupWrapper title="Control_Global" color="text-emerald-400" isCollapsed={isCollapsed}>
+          <SidebarGroupWrapper title="Administración" color="text-emerald-400" isCollapsed={isCollapsed}>
             <SidebarMenu>
               {filteredItems.filter(i => i.category === "global").map((item) => (
                 <SidebarMenuItem key={item.href}>
@@ -336,7 +337,7 @@ export function DashboardSidebar() {
           onClick={handleLogout}
           className="flex items-center gap-3 px-3 py-2.5 text-white/30 hover:text-primary transition-all font-black text-[9px] uppercase tracking-widest hover:bg-white/5 rounded-xl group overflow-hidden w-full text-left"
         >
-          <LogOut className="h-4 w-4 shrink-0 group-hover:translate-x-1 transition-transform" />
+          <LogOut className="h-5 w-5 shrink-0 group-hover:translate-x-1 transition-transform" />
           {!isCollapsed && <span className="whitespace-nowrap font-bold animate-in fade-in duration-700">CERRAR_SESIÓN</span>}
         </button>
       </SidebarFooter>
