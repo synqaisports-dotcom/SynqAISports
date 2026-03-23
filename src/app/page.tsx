@@ -1,3 +1,4 @@
+
 "use client";
 
 import { 
@@ -61,37 +62,10 @@ export default function SynqAiLandingPage() {
     }
   }, []);
 
-  const categories = [
-    {
-      title: "Núcleo de Control",
-      description: "Administración global de redes deportivas",
-      color: "text-emerald-400",
-      nodes: [
-        { label: "Admin Global", icon: LayoutDashboard, href: "/admin-global" },
-        { label: "Red de Clubes", icon: Globe, href: "/admin-global/clubs" },
-        { label: "Gestión de Usuarios", icon: Users, href: "/admin-global/users" },
-      ]
-    },
-    {
-      title: "Operativa de Cantera",
-      description: "Terminales de rendimiento multideporte",
-      color: "text-primary",
-      nodes: [
-        { label: "Coach Hub", icon: Cpu, href: "/dashboard" },
-        { label: "Tactical Board", icon: Monitor, href: "/board" },
-        { label: "Neural Planner", icon: BrainCircuit, href: "/dashboard/coach/planner" },
-      ]
-    },
-    {
-      title: "Sincronización",
-      description: "Acceso y telemetría de atletas",
-      color: "text-white/40",
-      nodes: [
-        { label: "Smartwatch Link", icon: Watch, href: "/smartwatch" },
-        { label: "Portal Tutores", icon: UserCircle, href: "/tutor" },
-        { label: "Acceso Sistema", icon: Key, href: "/login" },
-      ]
-    }
+  const externalAccessNodes = [
+    { label: "Smartwatch Link", icon: Watch, href: "/smartwatch", desc: "Telemetría en vivo" },
+    { label: "Portal Tutores", icon: UserCircle, href: "/tutor", desc: "Acceso familias" },
+    { label: "Acceso Sistema", icon: Key, href: "/login", desc: "Terminal Pro" },
   ];
 
   const menuItems = [
@@ -140,7 +114,7 @@ export default function SynqAiLandingPage() {
       <main className="relative z-10">
         
         {/* HERO SECTION */}
-        <section className="relative min-h-[90vh] flex flex-col items-center justify-center pt-20 px-6">
+        <section className="relative min-h-[85vh] flex flex-col items-center justify-center pt-20 px-6">
           <div className="absolute top-20 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[400px] opacity-10 blur-[100px] bg-primary/40 rounded-full animate-pulse pointer-events-none" />
           
           <div className="max-w-5xl text-center space-y-12 relative">
@@ -169,9 +143,28 @@ export default function SynqAiLandingPage() {
                 </div>
              </div>
           </div>
+        </section>
 
-          <div className="absolute bottom-10 animate-bounce opacity-20">
-            <ChevronDown className="h-8 w-8 text-primary" />
+        {/* ACCESOS RÁPIDOS EXTERNOS (MOVIDO A LA PARTE SUPERIOR) */}
+        <section className="py-12 px-6 max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {externalAccessNodes.map((node, i) => (
+              <Link 
+                key={i} 
+                href={node.href} 
+                className="group flex items-center gap-6 p-6 glass-panel border border-white/5 hover:border-primary/40 transition-all duration-500 rounded-[2rem] relative overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="h-14 w-14 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 group-hover:border-primary/40 transition-all shrink-0">
+                  <node.icon className="h-6 w-6 text-white/20 group-hover:text-primary transition-all group-hover:scale-110" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white group-hover:cyan-text-glow transition-all">{node.label}</h3>
+                  <p className="text-[8px] font-bold text-white/20 uppercase tracking-widest italic">{node.desc}</p>
+                </div>
+                <ArrowRight className="h-4 w-4 ml-auto text-white/5 group-hover:text-primary transition-all group-hover:translate-x-1" />
+              </Link>
+            ))}
           </div>
         </section>
 
@@ -359,45 +352,6 @@ export default function SynqAiLandingPage() {
             </form>
           </div>
         </section>
-
-        {/* ACCESOS TERMINAL */}
-        <section id="multideporte" className="py-32 px-6 max-w-7xl mx-auto space-y-24">
-          <div className="text-center space-y-4">
-             <h3 className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">Terminales de Mando</h3>
-             <h2 className="text-5xl font-headline font-black italic tracking-tighter uppercase leading-tight">ACCESO A LA RED</h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            {categories.map((cat, idx) => (
-              <div key={idx} className="space-y-6">
-                <div className="px-4 space-y-1 border-l-2 border-white/5 ml-1">
-                  <div className="flex items-center gap-2">
-                     <div className={cn("h-1 w-1 rounded-full bg-current", cat.color)} />
-                     <h3 className={cn("text-[10px] font-black uppercase tracking-[0.4em]", cat.color)}>{cat.title}</h3>
-                  </div>
-                  <p className="text-[9px] font-bold text-white/20 uppercase tracking-widest ml-3">{cat.description}</p>
-                </div>
-
-                <div className="grid gap-3">
-                  {cat.nodes.map((node, i) => (
-                    <Link 
-                      key={i} 
-                      href={node.href} 
-                      className="group flex items-center gap-4 p-5 glass-panel border border-white/5 hover:border-primary/40 transition-all duration-500 rounded-2xl relative overflow-hidden"
-                    >
-                      <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      <node.icon className="h-5 w-5 text-white/20 group-hover:text-primary transition-all group-hover:scale-110 relative z-10" />
-                      <span className="text-[9px] font-black uppercase tracking-widest text-white/40 group-hover:text-white transition-colors relative z-10 group-hover:emerald-text-glow">
-                        {node.label}
-                      </span>
-                      <ArrowRight className="h-3 w-3 ml-auto text-white/5 group-hover:text-primary transition-all group-hover:translate-x-1" />
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
       </main>
 
       {/* FOOTER */}
@@ -429,7 +383,7 @@ function PricingStep({ step, title, price, desc, featured }: any) {
   return (
     <div className={cn(
       "glass-panel p-10 space-y-6 relative overflow-hidden group",
-      featured && "border-primary/40 bg-primary/5 shadow-[0_0_30px_rgba(0,242,255,0.05)]"
+      featured && "border-primary/40 bg-primary/5 shadow-[0_0_30px_rgba(242,255,255,0.05)]"
     )}>
        <span className="absolute top-8 right-8 text-4xl font-black italic opacity-5 group-hover:opacity-10 transition-all">{step}</span>
        <div className="space-y-1">
@@ -447,7 +401,7 @@ function QRAppCard({ title, desc, url, icon: Icon, highlight }: any) {
   return (
     <Card className={cn(
       "glass-panel p-8 flex flex-col items-center text-center space-y-6 transition-all group overflow-hidden relative",
-      highlight ? "border-primary/40 shadow-[0_0_40px_rgba(0,242,255,0.1)]" : "border-white/5"
+      highlight ? "border-primary/40 shadow-[0_0_40px_rgba(242,255,255,0.1)]" : "border-white/5"
     )}>
        {highlight && <div className="absolute top-0 left-0 bg-primary text-black text-[7px] font-black px-3 py-1 uppercase tracking-widest">Recomendado_Padres</div>}
        <div className={cn(
