@@ -24,7 +24,8 @@ import {
   QrCode,
   Smartphone,
   Download,
-  RefreshCw
+  RefreshCw,
+  LayoutGrid
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -145,7 +146,7 @@ export default function SynqAiLandingPage() {
           </div>
         </section>
 
-        {/* ACCESOS RÁPIDOS EXTERNOS (MOVIDO A LA PARTE SUPERIOR) */}
+        {/* ACCESOS RÁPIDOS EXTERNOS */}
         <section className="py-12 px-6 max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {externalAccessNodes.map((node, i) => (
@@ -236,10 +237,10 @@ export default function SynqAiLandingPage() {
 
              <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
                 <QRAppCard 
-                  title="SynqAi Pro" 
-                  desc="Gestión, Táctica e IA para Directivos y Coaches." 
-                  url={baseUrl ? `${baseUrl}/` : ""} 
-                  icon={Zap}
+                  title="SynqAi Sandbox" 
+                  desc="Tu equipo local. Pizarras, sesiones y partidos sin cuotas." 
+                  url={baseUrl ? `${baseUrl}/dashboard/promo/team` : ""} 
+                  icon={LayoutGrid}
                 />
                 <QRAppCard 
                   title="Tutor by SynqAi" 
