@@ -45,7 +45,9 @@ import {
   ChevronDown,
   MessageSquareQuote,
   Maximize2,
-  Minimize2
+  Minimize2,
+  Flame,
+  Wind
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
@@ -74,6 +76,7 @@ interface NavItem {
   icon: any;
   category: "global" | "operational" | "methodology" | "user";
   roles?: string[];
+  isSubItem?: boolean;
 }
 
 const navItems: NavItem[] = [
@@ -110,9 +113,17 @@ const navItems: NavItem[] = [
   { title: "Biblioteca Táctica", href: "/dashboard/coach/library", icon: Dumbbell, category: "operational" },
   { title: "Neural Planner", href: "/dashboard/coach/planner", icon: Activity, category: "operational" },
   
-  // TERMINALES_ACCESO - SANDBOX INTEGRADO COMO TERMINAL
-  { title: "Terminal Sandbox", href: "/dashboard/promo/team", icon: LayoutGrid, category: "user" },
+  // TERMINALES_ACCESO - NODO SANDBOX (Categoría User)
+  { title: "Mi Equipo Local", href: "/dashboard/promo/team", icon: Users, category: "user" },
+  { title: "Mis Tareas", href: "/dashboard/promo/tasks", icon: Dumbbell, category: "user" },
+  { title: "Agenda Promo", href: "/dashboard/promo/sessions", icon: Calendar, category: "user" },
+  { title: "Mis Partidos", href: "/dashboard/promo/matches", icon: Swords, category: "user" },
+  { title: "Estadísticas", href: "/dashboard/promo/stats", icon: BarChart3, category: "user" },
   { title: "Pizarra Promo", href: "/board/promo", icon: Zap, category: "user" },
+  { title: "Colaboración", href: "/dashboard/promo/collaboration", icon: MessageSquareQuote, category: "user" },
+  { title: "Config Watch", href: "/dashboard/promo/watch-config", icon: Watch, category: "user" },
+  
+  // OTROS TERMINALES
   { title: "Tutor Portal", href: "/tutor", icon: UserCircle, category: "user", roles: ["superadmin"] },
   { title: "Smartwatch Link", href: "/smartwatch", icon: Watch, category: "user", roles: ["superadmin"] },
 ];
@@ -164,7 +175,7 @@ export function DashboardSidebar() {
       if (!item.roles.includes(profile.role)) return false;
     }
     if (isFree) {
-      // Los usuarios gratuitos solo ven Terminales de Acceso y el Hub inicial
+      // Los usuarios gratuitos ven Terminales de Acceso y el Hub inicial
       if (item.category === "user") return true;
       if (item.category === "operational" && item.href === "/dashboard") return true;
       return false;
@@ -247,21 +258,30 @@ export function DashboardSidebar() {
           </SidebarGroupWrapper>
         )}
 
-        <SidebarGroupWrapper title={isFree ? "Terminal_Juego" : "Operativa_Elite"} color="text-primary" isCollapsed={isCollapsed}>
-          <SidebarMenu>
-            {filteredItems.filter(i => i.category === "operational").map((item) => (
-              <SidebarMenuItem key={item.href}>
-                <SidebarLink item={item} isActive={pathname === item.href} onNavClick={handleNavClick} />
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarGroupWrapper>
+        {!isFree && (
+          <SidebarGroupWrapper title="Operativa_Elite" color="text-primary" isCollapsed={isCollapsed}>
+            <SidebarMenu>
+              {filteredItems.filter(i => i.category === "operational").map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarLink item={item} isActive={pathname === item.href} onNavClick={handleNavClick} />
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupWrapper>
+        )}
 
         <SidebarGroupWrapper title="Terminales_Acceso" color="text-white/10" isCollapsed={isCollapsed}>
+          {!isCollapsed && (
+            <div className="px-4 py-2 mb-2 bg-blue-500/5 border border-blue-500/10 rounded-xl">
+               <span className="text-[7px] font-black text-blue-400 uppercase tracking-[0.3em] italic flex items-center gap-2">
+                 <LayoutGrid className="h-2.5 w-2.5" /> NODO_SANDBOX_ACTIVE
+               </span>
+            </div>
+          )}
           <SidebarMenu>
             {filteredItems.filter(i => i.category === "user").map((item) => (
               <SidebarMenuItem key={item.href}>
-                <SidebarLink item={item} isActive={pathname === item.href} onNavClick={handleNavClick} />
+                <SidebarLink item={item} isActive={pathname === item.href} isSandbox={item.href.includes('promo')} onNavClick={handleNavClick} />
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
@@ -315,7 +335,7 @@ export function DashboardSidebar() {
 
         <button 
           onClick={handleLogout}
-          className="flex items-center gap-3 px-3 py-2.5 text-white/30 hover:text-white transition-all font-black text-[9px] uppercase tracking-widest hover:bg-white/5 rounded-xl group overflow-hidden w-full text-left"
+          className="flex items-center gap-3 px-3 py-2.5 text-white/30 hover:text-primary transition-all font-black text-[9px] uppercase tracking-widest hover:bg-white/5 rounded-xl group overflow-hidden w-full text-left"
         >
           <LogOut className="h-4 w-4 shrink-0 group-hover:translate-x-1 transition-transform" />
           {!isCollapsed && <span className="whitespace-nowrap font-bold animate-in fade-in duration-700">CERRAR_SESIÓN</span>}
