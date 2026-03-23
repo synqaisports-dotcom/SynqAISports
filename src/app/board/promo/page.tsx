@@ -470,7 +470,7 @@ function PromoBoardContent() {
                   </SheetClose>
                 </div>
               </SheetContent>
-            </Incress>
+            </Sheet>
 
             <Sheet open={isMaterialsSheetOpen} onOpenChange={setIsMaterialsSheetOpen}>
               <SheetTrigger asChild>
