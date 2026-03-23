@@ -119,7 +119,6 @@ function TrainingBoardContent() {
   const [renderScale, setRenderScale] = useState(1.0);
   const [isLegacyDevice, setIsLegacyDevice] = useState(false);
 
-  // En la pizarra de ejercicios profesional, los anuncios dependen del plan del usuario
   const showAds = profile?.plan === 'free' || profile?.role === 'promo_coach';
 
   const [fieldType, setFieldType] = useState<FieldType>("f11");
@@ -168,10 +167,10 @@ function TrainingBoardContent() {
     else { if (document.exitFullscreen) document.exitFullscreen().catch(() => {}); }
   }, []);
 
-  const hexToRgba = (hex: string, alpha: number) => {
+  const hexToRgba = useCallback((hex: string, alpha: number) => {
     const r = parseInt(hex.slice(1, 3), 16); const g = parseInt(hex.slice(3, 5), 16); const b = parseInt(hex.slice(5, 7), 16);
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-  };
+  }, []);
 
   const rotatePoint = (point: Point, center: Point, angle: number): Point => {
     const cos = Math.cos(angle); const sin = Math.sin(angle);
@@ -294,7 +293,7 @@ function TrainingBoardContent() {
     const canvasRatio = canvasRef.current ? (canvasRef.current.width / canvasRef.current.height) : 1.5;
     const defW = tool === 'ladder' ? 0.15 : (tool === 'minigoal' || tool === 'cross-arrow' ? 0.1 : tool === 'barrier' ? 0.12 : tool === 'text' ? 0.3 : 0.05);
     const defH = isCircular(tool) ? (defW * canvasRatio) : (tool === 'ladder' ? 0.05 : (tool === 'minigoal' || tool === 'cross-arrow' ? 0.08 : tool === 'barrier' ? 0.12 : 0.05));
-    const newEl: DrawingElement = { id: `el-${Date.now()}`, type: tool, points: [{ x: 0.5 - defW/2, y: 0.5 - defH/2 }, { x: 0.5 + defW/2, y: 0.5 + defH/2 }], controlPoint: ['arrow', 'double-arrow', 'zigzag'].includes(tool) ? { x: 0.5, y: 0.45 } : undefined, color: currentColor, rotation: 0, lineStyle: 'solid', number: pNum, opacity: 1.0, text: tool === 'text' ? "CONSIGNA TÁCTICA" : undefined };
+    const newEl: DrawingElement = { id: `el-${Date.now()}`, type: tool, points: [{ x: 0.5 - defW/2, y: 0.5 - defH/2 }, { x: 0.5 + defW/2, y: 0.5 + defH/2 }], controlPoint: ['arrow', 'double-arrow', 'zigzag'].includes(tool) ? { x: 0.5, y: 0.45 } : undefined, color: currentColor, rotation: 0, lineStyle: 'solid' as const, number: pNum, opacity: 1.0, text: tool === 'text' ? "CONSIGNA TÁCTICA" : undefined };
     setElements(prev => [...prev, newEl]); setSelectedIds([newEl.id]); setActiveTool('select');
   };
 

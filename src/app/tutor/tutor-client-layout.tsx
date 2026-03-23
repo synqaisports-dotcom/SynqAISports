@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useState, createContext, useContext, useEffect, useCallback } from "react";
+import { ReactNode, useState, createContext, useContext, useEffect, useCallback, useRef } from "react";
 import { X, RefreshCw, Zap, CalendarDays, MessageSquareQuote, UserCircle, Loader2, ShieldAlert } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -9,9 +9,8 @@ import { cn } from "@/lib/utils";
 const ADMIN_EMAILS = ['munozmartinez.ismael@gmail.com', 'synqaisports@gmail.com', 'admin@synqai.sports'];
 
 /**
- * Contexto de la App de Tutores - v1.5.1
- * PROTOCOLO_SECURE_MIRROR: Gestión de sesión y sincronización reactiva con el panel Pro.
- * FIX: Resolución de bucle infinito en syncData mediante comprobación de identidad de objeto.
+ * Contexto de la App de Tutores - v1.6.0
+ * PROTOCOLO_STABLE_SYNC: Implementada comparación de identidad para evitar bucles infinitos.
  */
 interface TutorContextType {
   selectedChild: any;
@@ -54,6 +53,9 @@ export function TutorClientLayout({ children }: { children: ReactNode }) {
   const [selectedChild, setSelectedChild] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isInterstitialVisible, setIsInterstitialVisible] = useState(false);
+  
+  // Ref para evitar bucles de sincronización si los datos no han cambiado
+  const lastSyncDataRef = useRef<string>("");
 
   const syncData = useCallback(() => {
     if (isLoginPage || isOnboardingPage) {
@@ -69,11 +71,8 @@ export function TutorClientLayout({ children }: { children: ReactNode }) {
 
     const emailLower = tutorEmail.toLowerCase();
     const isRootAdmin = ADMIN_EMAILS.includes(emailLower);
-
-    // 1. Obtener todos los jugadores del club (Sincronización real con /dashboard/players)
     const savedPlayers = JSON.parse(localStorage.getItem("synq_players") || "[]");
     
-    // 2. Filtrar por el email del tutor logueado
     let myAtletas = savedPlayers.filter((p: any) => 
       p.tutorEmail?.toLowerCase() === emailLower || (isRootAdmin && !p.tutorEmail)
     ).map((p: any) => ({
@@ -85,7 +84,6 @@ export function TutorClientLayout({ children }: { children: ReactNode }) {
       status: p.status || 'Active'
     }));
 
-    // 3. PROTOCOLO_ELITE: Si es admin y no tiene hijos vinculados, inyectar perfil maestro
     if (isRootAdmin && myAtletas.length === 0) {
       myAtletas = [{
         id: "root-auditor",
@@ -97,62 +95,38 @@ export function TutorClientLayout({ children }: { children: ReactNode }) {
       }];
     }
 
-    if (myAtletas.length === 0 && !isLoginPage && !isOnboardingPage) {
-      localStorage.removeItem("synq_tutor_session_email");
-      router.push("/tutor");
-      return;
-    }
-
-    setAllChildren(myAtletas);
-    
-    // 4. PROTOCOLO_STABLE_SELECT: Actualizar solo si hay cambios reales para evitar bucle infinito
-    setSelectedChild((current: any) => {
-      const found = myAtletas.find((c: any) => c.id === current?.id);
+    // BREAK_LOOP: Solo actualizar si los datos han cambiado realmente
+    const currentDataStr = JSON.stringify(myAtletas);
+    if (currentDataStr !== lastSyncDataRef.current) {
+      lastSyncDataRef.current = currentDataStr;
+      setAllChildren(myAtletas);
       
-      if (!current || !found) {
-        return myAtletas[0] || null;
-      }
-
-      // Comparación profunda simplificada para evitar re-renders innecesarios que disparan el bucle
-      if (
-        found.name !== current.name || 
-        found.team !== current.team || 
-        found.status !== current.status ||
-        found.number !== current.number
-      ) {
+      setSelectedChild((current: any) => {
+        const found = myAtletas.find((c: any) => c.id === current?.id);
+        if (!current || !found) return myAtletas[0] || null;
         return found;
-      }
-      
-      return current; // Mismo puntero = no re-render = no loop
-    });
+      });
+    }
     
     setLoading(false);
   }, [isLoginPage, isOnboardingPage, router]);
 
-  // Sincronización inicial y reactiva
   useEffect(() => {
     syncData();
-
-    // Listener para cambios en otras pestañas/terminales
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'synq_players' || e.key === 'synq_tutor_session_email') {
         syncData();
       }
     };
-
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [syncData]);
 
   const showAd = () => {
     const tutorEmail = localStorage.getItem("synq_tutor_session_email");
-    const isRootAdmin = tutorEmail && ADMIN_EMAILS.includes(tutorEmail.toLowerCase());
-    
-    if (isRootAdmin) return;
-
+    if (tutorEmail && ADMIN_EMAILS.includes(tutorEmail.toLowerCase())) return;
     const lastAd = localStorage.getItem('synq_tutor_last_ad');
     const now = Date.now();
-    
     if (!lastAd || now - parseInt(lastAd) > 600000) {
       setIsInterstitialVisible(true);
       localStorage.setItem('synq_tutor_last_ad', now.toString());
@@ -178,11 +152,9 @@ export function TutorClientLayout({ children }: { children: ReactNode }) {
       refreshData: syncData
     }}>
       <div className="w-full max-w-[500px] bg-background min-h-screen relative shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col border-x border-white/5">
-        
         <div className="flex-1 flex flex-col">
           {children}
         </div>
-
         {!isLoginPage && !isOnboardingPage && (
           <nav className="sticky bottom-0 h-20 bg-card/80 backdrop-blur-xl border-t border-white/5 flex items-center justify-around px-6 z-[100] shrink-0">
             <NavItem icon={Zap} href="/tutor/dashboard" active={pathname === '/tutor/dashboard'} />
@@ -191,18 +163,11 @@ export function TutorClientLayout({ children }: { children: ReactNode }) {
             <NavItem icon={UserCircle} href="/tutor/id" active={pathname === '/tutor/id'} />
           </nav>
         )}
-
         {isInterstitialVisible && (
           <div className="fixed inset-0 z-[300] bg-background flex flex-col animate-in fade-in duration-500">
             <div className="absolute top-6 right-6">
-              <button 
-                onClick={() => setIsInterstitialVisible(false)}
-                className="h-10 w-10 rounded-full bg-white/10 flex items-center justify-center text-white"
-              >
-                <X className="h-5 w-5" />
-              </button>
+              <button onClick={() => setIsInterstitialVisible(false)} className="h-10 w-10 rounded-full bg-white/10 flex items-center justify-center text-white"><X className="h-5 w-5" /></button>
             </div>
-            
             <div className="flex-1 flex flex-col items-center justify-center p-10 text-center space-y-8">
               <div className="relative">
                 <div className="absolute inset-0 bg-primary/20 blur-3xl animate-pulse rounded-full" />
@@ -210,19 +175,12 @@ export function TutorClientLayout({ children }: { children: ReactNode }) {
               </div>
               <div className="space-y-4">
                 <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white">Sincronizando Patrocinador</h3>
-                <p className="text-[10px] text-white/40 font-bold uppercase tracking-[0.3em] leading-loose">
-                  Gracias a nuestros aliados, mantenemos la cuota gratuita para las familias de la red SynqAI.
-                </p>
+                <p className="text-[10px] text-white/40 font-bold uppercase tracking-[0.3em] leading-loose">Gracias a nuestros aliados, mantenemos la cuota gratuita para las familias de la red SynqAI.</p>
               </div>
               <div className="w-full aspect-video bg-white/5 border border-white/10 rounded-3xl flex items-center justify-center">
                  <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">Video_Ad_Container</span>
               </div>
-              <button 
-                onClick={() => setIsInterstitialVisible(false)}
-                className="w-full h-16 bg-white/5 border border-white/10 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl active:scale-95 transition-all"
-              >
-                Continuar a la App
-              </button>
+              <button onClick={() => setIsInterstitialVisible(false)} className="w-full h-16 bg-white/5 border border-white/10 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl active:scale-95 transition-all">Continuar a la App</button>
             </div>
           </div>
         )}
