@@ -401,7 +401,7 @@ function PricingStep({ step, title, price, desc, featured }: any) {
   );
 }
 
-function QRAppCard({ title, desc, url, icon: Icon, highlight, qrColor = "#000000" }: any) {
+function QRAppCard({ title, desc, url, icon: Icon, highlight, qrColor = "#00f2ff" }: any) {
   return (
     <Card className={cn(
       "glass-panel p-8 flex flex-col items-center text-center space-y-6 transition-all group overflow-hidden relative",
@@ -409,7 +409,7 @@ function QRAppCard({ title, desc, url, icon: Icon, highlight, qrColor = "#000000
     )}>
        {highlight && <div className="absolute top-0 left-0 bg-primary text-black text-[7px] font-black px-3 py-1 uppercase tracking-widest">Recomendado_Padres</div>}
        <div className={cn(
-         "h-12 w-12 rounded-2xl flex items-center justify-center border transition-all",
+         "h-12 w-12 rounded-2xl flex items-center justify-center border transition-all shadow-lg",
          qrColor === "#3b82f6" ? "bg-blue-500/10 border-blue-500/20 text-blue-400" : (highlight ? "bg-primary/10 border-primary/20 text-primary" : "bg-white/5 border-white/10 text-white/20")
        )}>
           <Icon className="h-6 w-6" />
@@ -419,15 +419,19 @@ function QRAppCard({ title, desc, url, icon: Icon, highlight, qrColor = "#000000
           <p className="text-[9px] font-bold text-white/30 uppercase leading-relaxed tracking-widest px-4">{desc}</p>
        </div>
        
-       <div className="p-4 bg-white rounded-2xl shadow-2xl relative group-hover:scale-105 transition-transform duration-500">
+       <div 
+         className="p-4 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.3)] relative group-hover:scale-105 transition-transform duration-500"
+         style={{ backgroundColor: qrColor }}
+       >
           <QRCodeCanvas 
             value={url || "https://synqai.sports"} 
             size={140} 
             level="H" 
-            fgColor={qrColor} 
-            bgColor="#ffffff"
+            fgColor="#ffffff" 
+            bgColor={qrColor}
+            includeMargin={false}
           />
-          <div className="absolute inset-0 border-4 border-black/5 pointer-events-none rounded-2xl" />
+          <div className="absolute inset-0 border-4 border-white/10 pointer-events-none rounded-3xl" />
        </div>
 
        <div className="pt-4 flex flex-col items-center gap-2">
