@@ -227,7 +227,7 @@ export default function SynqAiLandingPage() {
              <div className="text-center space-y-4 mb-20">
                 <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/20 bg-primary/5 mb-4">
                    <Smartphone className="h-3 w-3 text-primary animate-pulse" />
-                   <span className="text-[9px] font-black uppercase tracking-[0.4em] text-primary">PWA_Independent_Nodes</span>
+                   <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">PWA_Independent_Nodes</span>
                 </div>
                 <h2 className="text-5xl font-headline font-black italic tracking-tighter uppercase">INSTALA NUESTRAS APPS</h2>
                 <p className="text-white/40 font-bold uppercase text-[10px] tracking-[0.5em] max-w-2xl mx-auto">
@@ -241,6 +241,7 @@ export default function SynqAiLandingPage() {
                   desc="Tu equipo local. Pizarras, sesiones y partidos sin cuotas." 
                   url={baseUrl ? `${baseUrl}/dashboard/promo/team` : ""} 
                   icon={LayoutGrid}
+                  qrColor="#3b82f6"
                 />
                 <QRAppCard 
                   title="Tutor by SynqAi" 
@@ -248,12 +249,14 @@ export default function SynqAiLandingPage() {
                   url={baseUrl ? `${baseUrl}/tutor` : ""} 
                   icon={UserCircle}
                   highlight
+                  qrColor="#00f2ff"
                 />
                 <QRAppCard 
                   title="Smartwatch Link" 
                   desc="Telemetría y Control de Partido en tu muñeca." 
                   url={baseUrl ? `${baseUrl}/smartwatch` : ""} 
                   icon={Watch}
+                  qrColor="#00f2ff"
                 />
              </div>
           </div>
@@ -398,7 +401,7 @@ function PricingStep({ step, title, price, desc, featured }: any) {
   );
 }
 
-function QRAppCard({ title, desc, url, icon: Icon, highlight }: any) {
+function QRAppCard({ title, desc, url, icon: Icon, highlight, qrColor = "#000000" }: any) {
   return (
     <Card className={cn(
       "glass-panel p-8 flex flex-col items-center text-center space-y-6 transition-all group overflow-hidden relative",
@@ -407,7 +410,7 @@ function QRAppCard({ title, desc, url, icon: Icon, highlight }: any) {
        {highlight && <div className="absolute top-0 left-0 bg-primary text-black text-[7px] font-black px-3 py-1 uppercase tracking-widest">Recomendado_Padres</div>}
        <div className={cn(
          "h-12 w-12 rounded-2xl flex items-center justify-center border transition-all",
-         highlight ? "bg-primary/10 border-primary/20 text-primary" : "bg-white/5 border-white/10 text-white/20"
+         qrColor === "#3b82f6" ? "bg-blue-500/10 border-blue-500/20 text-blue-400" : (highlight ? "bg-primary/10 border-primary/20 text-primary" : "bg-white/5 border-white/10 text-white/20")
        )}>
           <Icon className="h-6 w-6" />
        </div>
@@ -421,15 +424,15 @@ function QRAppCard({ title, desc, url, icon: Icon, highlight }: any) {
             value={url || "https://synqai.sports"} 
             size={140} 
             level="H" 
-            fgColor="#000000" 
+            fgColor={qrColor} 
             bgColor="#ffffff"
           />
           <div className="absolute inset-0 border-4 border-black/5 pointer-events-none rounded-2xl" />
        </div>
 
        <div className="pt-4 flex flex-col items-center gap-2">
-          <span className="text-[8px] font-black text-primary/40 uppercase tracking-[0.3em]">Scan_to_Install</span>
-          <Button variant="link" className="text-primary text-[10px] font-black uppercase tracking-widest p-0 h-auto" asChild>
+          <span className={cn("text-[8px] font-black uppercase tracking-[0.3em]", qrColor === "#3b82f6" ? "text-blue-400/40" : "text-primary/40")}>Scan_to_Install</span>
+          <Button variant="link" className={cn("text-[10px] font-black uppercase tracking-widest p-0 h-auto", qrColor === "#3b82f6" ? "text-blue-400" : "text-primary")} asChild>
              <Link href={url || "#"}>Abrir Link <ArrowRight className="h-3 w-3 ml-1" /></Link>
           </Button>
        </div>
