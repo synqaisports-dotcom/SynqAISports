@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback, Suspense, memo } from "react";
@@ -180,7 +181,7 @@ function PromoBoardContent() {
         setSaveFormData(target.metadata || saveFormData); 
       }
     }
-  }, [exerciseId]);
+  }, [exerciseId, saveFormData]);
 
   useEffect(() => {
     const syncFullscreen = () => setIsFullscreen(!!document.fullscreenElement);

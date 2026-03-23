@@ -41,7 +41,7 @@ export default function MethodologyDashboard() {
                 </CardTitle>
                 <CardDescription className="text-[9px] font-bold text-amber-500/40 uppercase tracking-widest mt-2 leading-relaxed">
                   {section.desc}
-                </section.desc>
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-2 mt-4">
