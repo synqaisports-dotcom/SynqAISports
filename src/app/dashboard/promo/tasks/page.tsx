@@ -119,15 +119,21 @@ export default function PromoTasksPage() {
   const [vault, setVault] = useState<any>({ exercises: [], sessions: [] });
 
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": [], "sessions": []}');
-    setVault(saved);
+    try {
+      const saved = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": [], "sessions": []}');
+      if (saved && Array.isArray(saved.exercises)) {
+        setVault(saved);
+      }
+    } catch (e) {
+      console.error("Vault Sync Error:", e);
+    }
   }, []);
 
-  const warmupTasks = vault.exercises.filter((e: any) => e.block === 'warmup');
-  const mainTasks = vault.exercises.filter((e: any) => e.block === 'main');
-  const cooldownTasks = vault.exercises.filter((e: any) => e.block === 'cooldown');
+  const warmupTasks = (vault.exercises || []).filter((e: any) => e.block === 'warmup');
+  const mainTasks = (vault.exercises || []).filter((e: any) => e.block === 'main');
+  const cooldownTasks = (vault.exercises || []).filter((e: any) => e.block === 'cooldown');
 
-  const totalUsed = vault.exercises.length;
+  const totalUsed = (vault.exercises || []).length;
   const progressPercent = (totalUsed / TOTAL_MAX) * 100;
 
   const handleDelete = (id: number) => {
