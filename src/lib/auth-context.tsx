@@ -1,8 +1,11 @@
+
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 export type UserRole = "superadmin" | "club_admin" | "coach" | "promo_coach" | "tutor" | "athlete";
+
+const ADMIN_EMAILS = ['munozmartinez.ismael@gmail.com', 'synqaisports@gmail.com', 'admin@synqai.sports'];
 
 interface UserProfile {
   email: string;
@@ -78,15 +81,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const register = async (email: string, pass: string, name: string, clubName: string, plan: 'free' | 'enterprise_scale' = 'free') => {
+    const emailLower = email.toLowerCase();
+    const isAdmin = ADMIN_EMAILS.includes(emailLower);
+    
     const newUser = { uid: `u-${Date.now()}`, email };
     const newProfile: UserProfile = {
       email,
       name,
-      role: plan === 'free' ? "promo_coach" : "club_admin",
-      clubId: null,
-      plan,
+      role: isAdmin ? "superadmin" : (plan === 'free' ? "promo_coach" : "club_admin"),
+      clubId: isAdmin ? "global-hq" : null,
+      plan: isAdmin ? "enterprise_scale" : plan,
       country: "ES",
-      clubCreated: false,
+      clubCreated: isAdmin,
       clubName
     };
 
@@ -97,13 +103,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const login = async (email: string, pass: string) => {
-    const guestUser = { uid: "u-simulated", email };
+    const emailLower = email.toLowerCase();
+    const isAdmin = ADMIN_EMAILS.includes(emailLower);
+    
+    const guestUser = { uid: isAdmin ? "synq-root-dev" : "u-simulated", email };
     const guestProfile: UserProfile = {
       email: email,
-      name: "Usuario Sincronizado",
-      role: "promo_coach",
-      clubId: "club-simulated",
-      plan: "free",
+      name: isAdmin ? "SynqAi Founder" : "Usuario Sincronizado",
+      role: isAdmin ? "superadmin" : "promo_coach",
+      clubId: isAdmin ? "global-hq" : "club-simulated",
+      plan: isAdmin ? "enterprise_scale" : "free",
       country: "ES",
       clubCreated: true,
     };
@@ -147,7 +156,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setProfile(updatedProfile);
       localStorage.setItem("synq_profile", JSON.stringify(updatedProfile));
       
-      // Sincronización Global de Clubes
       const existingClubs = JSON.parse(localStorage.getItem("synq_global_clubs") || "[]");
       const newClubEntry = {
         id: clubData.id,
@@ -160,7 +168,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       };
       localStorage.setItem("synq_global_clubs", JSON.stringify([...existingClubs, newClubEntry]));
 
-      // Sincronización Global de Usuarios (Auditoría Superadmin)
       const existingGlobalUsers = JSON.parse(localStorage.getItem("synq_global_users") || "[]");
       const newUserEntry = {
         id: `u-${Date.now()}`,

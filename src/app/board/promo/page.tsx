@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback, Suspense, memo } from "react";
@@ -180,7 +181,7 @@ function PromoBoardContent() {
         setSaveFormData(target.metadata || saveFormData); 
       }
     }
-  }, [exerciseId, saveFormData]);
+  }, [exerciseId]);
 
   useEffect(() => {
     const syncFullscreen = () => setIsFullscreen(!!document.fullscreenElement);
@@ -415,7 +416,7 @@ function PromoBoardContent() {
         <div className="flex items-center gap-2 md:gap-4 px-4 py-2 md:px-6 md:py-3 bg-black/60 backdrop-blur-2xl border border-primary/30 rounded-[2rem] shadow-2xl animate-in slide-in-from-top-2 scale-[0.8] md:scale-90 lg:scale-100 origin-top pointer-events-auto">
           
           <div className="flex items-center gap-3 pr-3 border-r border-white/10 shrink-0">
-            <button onClick={toggleFullscreen} className="h-8 w-8 flex items-center justify-center text-primary/40 hover:text-primary transition-all active:scale-90" title={isFullscreen ? "Minimizar" : "Pantalla Completa"}>{isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}</button>
+            <button onClick={toggleFullscreen} className="h-8 w-8 flex items-center justify-center text-primary/40 hover:text-primary transition-all active:scale-95" title={isFullscreen ? "Minimizar" : "Pantalla Completa"}>{isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}</button>
             <div className="flex flex-col"><div className="flex items-center gap-1.5"><Zap className="h-3 w-3 text-primary animate-pulse" /><span className="text-[7px] font-black text-primary tracking-widest uppercase italic">Promo_Mode</span></div><h1 className="text-[10px] font-headline font-black text-white italic uppercase leading-none">{exerciseId ? 'Edición' : 'Sandbox'}</h1></div>
           </div>
 
