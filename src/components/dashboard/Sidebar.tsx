@@ -211,6 +211,16 @@ export function DashboardSidebar() {
         return false;
       }
     }
+    // Fail-closed: si aún no cargó matriz para usuarios no bypass/no free, ocultamos módulos sensibles.
+    if (
+      item.moduleId &&
+      profile?.role &&
+      !isFree &&
+      !shouldBypassClubMatrix(profile.role) &&
+      matrixLoading
+    ) {
+      return false;
+    }
     return true;
   });
 

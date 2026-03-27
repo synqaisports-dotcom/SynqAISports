@@ -25,16 +25,16 @@ function clientForUser(token: string) {
 export async function loadNormalizedStaffMatrixForClub(
   clubId: string,
   token: string,
-): Promise<StaffAccessMatrix> {
+): Promise<StaffAccessMatrix | null> {
   const defaults = buildDefaultStaffAccessMatrix();
   const userClient = clientForUser(token);
-  if (!userClient) return defaults;
+  if (!userClient) return null;
   const { data, error } = await userClient
     .from("club_staff_access_matrices")
     .select("payload")
     .eq("club_id", clubId)
     .maybeSingle();
-  if (error) return defaults;
+  if (error) return null;
   return normalizeStaffAccessMatrix((data?.payload ?? {}) as StaffAccessMatrix, defaults);
 }
 
@@ -52,6 +52,12 @@ export async function guardClubModuleOr403(
     return NextResponse.json({ error: "club_id requerido" }, { status: 403 });
   }
   const matrix = await loadNormalizedStaffMatrixForClub(gate.clubId, token);
+  if (!matrix) {
+    return NextResponse.json(
+      { error: "No se pudo validar la matriz de permisos del club" },
+      { status: 503 },
+    );
+  }
   if (!canAccessClubModule(matrix, gate.role, moduleId, level)) {
     return NextResponse.json(
       { error: "Permiso denegado según la matriz de acceso del club" },

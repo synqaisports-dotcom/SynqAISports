@@ -74,14 +74,16 @@ export function ClubAccessMatrixProvider({ children }: { children: React.ReactNo
 
       const raw = localStorage.getItem(storageKey);
       if (!raw) {
-        setRawMatrix(buildDefaultMatrix);
+        // Seguridad: si no hay matriz disponible, no abrimos permisos por defecto.
+        setRawMatrix({});
         setLoading(false);
         return;
       }
       const parsed = JSON.parse(raw) as StaffAccessMatrix;
       setRawMatrix(normalizeStaffAccessMatrix(parsed, buildDefaultMatrix));
     } catch {
-      setRawMatrix(buildDefaultMatrix);
+      // Seguridad: en error de lectura/parsing no elevamos permisos.
+      setRawMatrix({});
     } finally {
       setLoading(false);
     }
