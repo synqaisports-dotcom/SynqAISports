@@ -19,8 +19,33 @@ Este documento centraliza el histórico de auditorías técnicas del producto (b
   - 🔵 Baja: mejora recomendada o riesgo menor.
 - **Estado**
   - `abierto`, `aceptado_temporal`, `en_progreso`, `cerrado`.
+- **Marcado visual sugerido**
+  - `[x]` cerrado
+  - `[~]` en progreso / parcialmente cerrado
+  - `[ ]` abierto
 - **Referencia**
   - Archivo/ruta y, cuando sea útil, línea aproximada.
+
+---
+
+## Estado global de cierre (snapshot 2026-03-27)
+
+### Seguridad y enforcement
+- [x] UUID obligatorio en onboarding.
+- [x] Denegación por defecto en matriz para roles no mapeados.
+- [x] Guardas de módulo en layout de metodología y board.
+- [x] Guardas GET/PUT en APIs críticas de metodología.
+- [x] Fallback de matriz en servidor en modo fail-closed (si no puede verificar, deniega).
+- [x] Sidebar y cliente alineados para evitar aperturas durante carga/fallo de matriz.
+
+### Híbrido y operativa
+- [x] Scope por club en claves locales críticas de metodología (calendar/library).
+- [x] Estado de fuente (`remote/local/error`) visible en metodología.
+- [x] `dashboard/club` conectado a API segura y fallback local controlado.
+- [ ] Players aún en modelo local predominante.
+- [ ] Staff aún con base mock en pantalla.
+- [ ] Unificación final sessions/session-planner (doble fuente local+remoto).
+- [ ] Unificación instalaciones entre nodo instalaciones y warehouse.
 
 ---
 
@@ -48,17 +73,17 @@ Este documento centraliza el histórico de auditorías técnicas del producto (b
 
 2. **Bypass amplio en guard para perfiles free/promo (URL directa)**
    - Severidad: 🔴 Crítica.
-   - Estado: `abierto`.
+   - Estado: `cerrado`.
    - Referencia: `src/components/dashboard/ClubRouteGuard.tsx`.
 
 3. **Roles sin fila explícita en matriz con comportamiento permisivo**
    - Severidad: 🔴 Crítica.
-   - Estado: `abierto`.
+   - Estado: `cerrado`.
    - Referencia: `src/lib/club-permissions.ts` (`canAccessClubModule`).
 
 4. **GET de APIs club sin guard de módulo en algunas rutas**
    - Severidad: 🔴 Crítica.
-   - Estado: `abierto`.
+   - Estado: `cerrado` (alcance metodología + staff matrix GET).
    - Referencias:
      - `src/app/api/club/methodology-academy/route.ts`
      - `src/app/api/club/methodology-warehouse/route.ts`
@@ -66,12 +91,12 @@ Este documento centraliza el histórico de auditorías técnicas del producto (b
 
 5. **Fallback permisivo en guard API cuando falla lectura de matriz**
    - Severidad: 🟠 Alta.
-   - Estado: `abierto`.
+   - Estado: `cerrado`.
    - Referencia: `src/lib/club-matrix-api-guard.ts`.
 
 6. **/board fuera del enforcement unificado de matriz**
    - Severidad: 🟠 Alta.
-   - Estado: `abierto`.
+   - Estado: `cerrado`.
    - Referencia: `src/app/board/layout.tsx`.
 
 7. **Validación de rol mejorable en actualización de usuarios admin**
@@ -157,13 +182,13 @@ Este documento centraliza el histórico de auditorías técnicas del producto (b
 
 2. **Layout de metodología valida login pero no módulo/permisos**
    - Severidad: 🟠 Alta.
-   - Estado: `abierto`.
+   - Estado: `cerrado`.
    - Referencia: `src/app/dashboard/methodology/layout.tsx`.
    - Nota: URL directa puede cargar UI aunque sidebar oculte enlaces.
 
 3. **GET de APIs metodología sin guard de módulo en rutas concretas**
    - Severidad: 🟠 Alta.
-   - Estado: `abierto`.
+   - Estado: `cerrado`.
    - Referencias:
      - `src/app/api/club/methodology-academy/route.ts` (GET)
      - `src/app/api/club/methodology-warehouse/route.ts` (GET)
@@ -171,17 +196,17 @@ Este documento centraliza el histórico de auditorías técnicas del producto (b
 
 4. **Matriz permisiva para roles sin fila explícita**
    - Severidad: 🟠 Alta.
-   - Estado: `abierto`.
+   - Estado: `cerrado`.
    - Referencia: `src/lib/club-permissions.ts` (`canAccessClubModule`).
 
 5. **Hook de permisos concede todo si `role` es vacío**
    - Severidad: 🟡 Media.
-   - Estado: `abierto`.
+   - Estado: `cerrado`.
    - Referencia: `src/hooks/use-club-module-permissions.ts`.
 
 6. **Estrategia híbrida no uniforme entre secciones**
    - Severidad: 🟡 Media.
-   - Estado: `abierto`.
+   - Estado: `en_progreso`.
    - Referencias:
      - `src/app/dashboard/methodology/session-planner/page.tsx`
      - `src/app/dashboard/methodology/exercise-library/page.tsx`
@@ -190,7 +215,7 @@ Este documento centraliza el histórico de auditorías técnicas del producto (b
 
 7. **Modo prototipo visible en planner**
    - Severidad: 🔵 Baja.
-   - Estado: `abierto`.
+   - Estado: `abierto` (pendiente flag/remove).
    - Referencia: `src/app/dashboard/methodology/session-planner/page.tsx`.
 
 ### Fortalezas detectadas
@@ -249,17 +274,17 @@ Este documento centraliza el histórico de auditorías técnicas del producto (b
 
 2. **Onboarding con fallback no UUID puede romper operativa Supabase**
    - Severidad: 🔴 Crítica.
-   - Estado: `abierto`.
+   - Estado: `cerrado`.
    - Referencias: `src/app/dashboard/coach/onboarding/page.tsx`, `src/lib/operativa-sync.ts` (`canUseOperativaSupabase`).
 
 3. **Doble fuente de verdad en operativa (local + remoto)**
    - Severidad: 🟠 Alta.
-   - Estado: `abierto`.
+   - Estado: `en_progreso`.
    - Referencias: `src/app/dashboard/sessions/page.tsx`, `src/app/dashboard/methodology/session-planner/page.tsx`.
 
 4. **Gestión de Club sin persistencia real (UI/toast)**
    - Severidad: 🟠 Alta.
-   - Estado: `abierto`.
+   - Estado: `cerrado`.
    - Referencia: `src/app/dashboard/club/page.tsx`.
 
 5. **Staff en modo demostración (lista inicial en código)**
