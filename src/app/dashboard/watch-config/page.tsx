@@ -51,6 +51,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { QRCodeCanvas } from "qrcode.react";
+import { BoardPerformanceSettingsCard } from "@/components/board/BoardPerformanceSettingsCard";
 
 export default function WatchConfigPage() {
   const { toast } = useToast();
@@ -209,6 +210,8 @@ export default function WatchConfigPage() {
                </div>
             </div>
           </Card>
+
+          <BoardPerformanceSettingsCard />
 
           <div className="p-8 rounded-3xl border border-white/5 bg-black/40 space-y-4 relative overflow-hidden group">
              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-20 transition-all">

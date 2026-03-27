@@ -4,7 +4,17 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { User, Session } from "@supabase/supabase-js";
 
-export type UserRole = "superadmin" | "club_admin" | "coach" | "promo_coach" | "tutor" | "athlete";
+export type UserRole =
+                  | "superadmin"
+                  | "club_admin"
+                  | "academy_director"
+                  | "methodology_director"
+                  | "stage_coordinator"
+                  | "delegate"
+                  | "coach"
+                  | "promo_coach"
+                  | "tutor"
+                  | "athlete";
 
 const ADMIN_EMAILS = ['munozmartinez.ismael@gmail.com', 'synqaisports@gmail.com', 'admin@synqai.sports'];
 
@@ -65,10 +75,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
+    const client = supabase;
+
     // Obtener sesión inicial
     const initializeAuth = async () => {
       try {
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        const { data: { session: currentSession } } = await client.auth.getSession();
         
         if (currentSession?.user) {
           setSession(currentSession);
@@ -91,7 +103,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     initializeAuth();
 
     // Suscribirse a cambios de autenticación
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+    const { data: { subscription } } = client.auth.onAuthStateChange(async (event, newSession) => {
       console.log("[SynqAI] Auth state changed:", event);
       
       setSession(newSession);
@@ -133,7 +145,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const userProfile: UserProfile = profileData ? {
         email: profileData.email || authUser.email || '',
         name: profileData.name || authUser.user_metadata?.name || 'Usuario SynqAI',
-        role: profileData.role || (isAdmin ? 'superadmin' : 'promo_coach'),
+        role: (profileData.role || (isAdmin ? 'superadmin' : 'promo_coach')) as UserRole,
         clubId: profileData.club_id || (isAdmin ? 'global-hq' : null),
         plan: profileData.plan || (isAdmin ? 'enterprise_scale' : 'free'),
         country: profileData.country || 'ES',

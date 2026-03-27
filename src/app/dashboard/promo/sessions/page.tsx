@@ -167,7 +167,7 @@ export default function PromoSessionsPage() {
                     </CardContent>
                     <CardFooter className="p-6 bg-black/40 border-t border-white/5 flex justify-center print:hidden">
                        <Button variant="ghost" className="text-[9px] font-black text-primary uppercase tracking-widest hover:blue-text-glow" asChild>
-                          <Link href="/board/match">DIRIGIR EN PARTIDO <ArrowRight className="h-3 w-3 ml-2" /></Link>
+                          <Link href="/board/match?source=sandbox">DIRIGIR EN PARTIDO <ArrowRight className="h-3 w-3 ml-2" /></Link>
                        </Button>
                     </CardFooter>
                  </Card>

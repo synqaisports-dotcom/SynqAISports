@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { 
   UserPlus, 
   Search, 
@@ -9,6 +9,7 @@ import {
   UserX, 
   Globe2, 
   Mail, 
+  Phone,
   Shield,
   Activity,
   Fingerprint,
@@ -59,27 +60,12 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import Image from "next/image";
-
-const MOCK_REQUESTS = [
-  // NODO RECUPERADO (Legacy)
-  { id: "u-tp", name: "COACH", surname: "TRES PIEDRAS", email: "admin@trespiedras.fc", country: "España", status: "Approved", lastSeen: "Online", role: "promo_coach", clubId: "SND-MFGBFN" },
-  
-  { id: "u1", name: "MARC", surname: "GARCÍA", email: "m.garcia@elite.com", country: "España", status: "Approved", lastSeen: "2m ago", role: "club_admin" },
-  { id: "u2", name: "ELENA", surname: "ROSSI", email: "e.rossi@milan-training.it", country: "Italia", status: "Approved", lastSeen: "5h ago", role: "academy_director" },
-  { id: "u3", name: "JOHN", surname: "SMITH", email: "j.smith@us-soccer.org", country: "USA", status: "Denied", lastSeen: "1d ago", role: "coach" },
-  { id: "u4", name: "LUCAS", surname: "SILVA", email: "l.silva@sandbox.br", country: "Brasil", status: "Approved", lastSeen: "Just now", role: "promo_coach" },
-];
-
-const AVAILABLE_ROLES = [
-  { value: "superadmin", label: "Superadmin" },
-  { value: "club_admin", label: "Administrador de Club" },
-  { value: "academy_director", label: "Director de Cantera" },
-  { value: "methodology_director", label: "Director Metodología" },
-  { value: "coach", label: "Entrenador Pro" },
-  { value: "promo_coach", label: "Entrenador Promo" },
-  { value: "tutor", label: "Tutor / Familia" },
-];
+import { useAuth } from "@/lib/auth-context";
+import {
+  buildRoleSelectOptions,
+  getRoleDisplayLabel,
+  type SynqRoleRowLike,
+} from "@/lib/role-catalog";
 
 export default function GlobalUsersPage() {
   const [users, setUsers] = useState<any[]>([]);
@@ -94,25 +80,74 @@ export default function GlobalUsersPage() {
     surname: "",
     email: "",
     country: "España",
-    role: "promo_coach"
+    phonePrefix: "+34",
+    phone: "",
+    role: "promo_coach",
   });
 
+  const { session } = useAuth();
+  const [synqRoleRows, setSynqRoleRows] = useState<SynqRoleRowLike[]>([]);
+
+  const roleSelectOptions = useMemo(() => {
+    const base = buildRoleSelectOptions(synqRoleRows, { includeSuperadmin: true });
+    if (formData.role && !base.some((o) => o.value === formData.role)) {
+      return [
+        ...base,
+        {
+          value: formData.role,
+          label: getRoleDisplayLabel(formData.role, synqRoleRows),
+        },
+      ].sort((a, b) => a.label.localeCompare(b.label, "es"));
+    }
+    return base;
+  }, [synqRoleRows, formData.role]);
+
   useEffect(() => {
-    // Sincronización con el almacenamiento global de usuarios
-    const savedUsers = JSON.parse(localStorage.getItem("synq_global_users") || "[]");
-    // Mezclamos con los mocks evitando duplicados por email
-    const merged = [...MOCK_REQUESTS];
-    savedUsers.forEach((su: any) => {
-      if (!merged.find(m => m.email === su.email)) {
-        merged.push({
-          ...su,
-          status: su.status || "Approved",
-          lastSeen: "Online"
+    if (!session?.access_token) {
+      setSynqRoleRows([]);
+      return;
+    }
+    let cancelled = false;
+    void fetch("/api/roles/catalog", {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    })
+      .then(async (res) => {
+        const j = (await res.json()) as { roles?: SynqRoleRowLike[] };
+        if (!cancelled) setSynqRoleRows(j.roles ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setSynqRoleRows([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.access_token]);
+
+  useEffect(() => {
+    const loadUsers = async () => {
+      const savedUsers = JSON.parse(localStorage.getItem("synq_global_users") || "[]");
+      const normalized = savedUsers.map((su: any) => ({
+        ...su,
+        status: su.status || "Approved",
+        lastSeen: su.lastSeen || "Online",
+      }));
+      setUsers(normalized);
+      if (!session?.access_token) return;
+      try {
+        const res = await fetch("/api/admin/users", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
         });
+        if (!res.ok) return;
+        const data = (await res.json()) as { users?: any[] };
+        if (Array.isArray(data?.users) && data.users.length > 0) {
+          setUsers(data.users);
+        }
+      } catch {
+        // fallback local
       }
-    });
-    setUsers(merged);
-  }, []);
+    };
+    void loadUsers();
+  }, [session?.access_token]);
 
   const addAuditLog = (title: string, desc: string, type: 'Success' | 'Info' | 'Warning' = 'Success') => {
     const existingLogs = JSON.parse(localStorage.getItem("synq_audit_logs") || "[]");
@@ -124,12 +159,28 @@ export default function GlobalUsersPage() {
       timestamp: new Date().toISOString()
     };
     localStorage.setItem("synq_audit_logs", JSON.stringify([newLog, ...existingLogs].slice(0, 15)));
+    if (session?.access_token) {
+      void fetch("/api/admin/audit-logs", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          title,
+          description: desc,
+          type,
+          actorEmail: "",
+        }),
+      });
+    }
   };
 
-  const handleStatusChange = (id: string, newStatus: string) => {
+  const handleStatusChange = async (id: string, newStatus: string) => {
     const user = users.find(u => u.id === id);
     if (!user) return;
 
+    const prevUsers = users;
     const nextUsers = users.map(u => u.id === id ? { ...u, status: newStatus } : u);
     setUsers(nextUsers);
     
@@ -137,6 +188,25 @@ export default function GlobalUsersPage() {
     const savedUsers = JSON.parse(localStorage.getItem("synq_global_users") || "[]");
     const updatedGlobal = savedUsers.map((su: any) => su.email === user.email ? { ...su, status: newStatus } : su);
     localStorage.setItem("synq_global_users", JSON.stringify(updatedGlobal));
+    if (user.source === "remote" && session?.access_token) {
+      const res = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ id, status: newStatus, lastSeen: "Online" }),
+      });
+      if (!res.ok) {
+        setUsers(prevUsers);
+        toast({
+          variant: "destructive",
+          title: "ERROR_REMOTO",
+          description: "No se pudo actualizar el estado en red.",
+        });
+        return;
+      }
+    }
 
     const title = newStatus === 'Approved' ? "ACCESO_AUTORIZADO" : 
                   newStatus === 'Denied' ? "ACCESO_BLOQUEADO" : "PROTOCOLO_RESETEADO";
@@ -153,36 +223,70 @@ export default function GlobalUsersPage() {
 
   const handleOpenCreate = () => {
     setEditingId(null);
-    setFormData({ name: "", surname: "", email: "", country: "España", role: "promo_coach" });
+    setFormData({
+      name: "",
+      surname: "",
+      email: "",
+      country: "España",
+      phonePrefix: "+34",
+      phone: "",
+      role: "promo_coach",
+    });
     setIsSheetOpen(true);
   };
 
   const handleEdit = (user: any) => {
+    const phoneFull = String(user.phone || "");
+    const prefixMatch = phoneFull.match(/^(\+\d+)\s*(.*)$/);
+    const phonePrefix = prefixMatch ? prefixMatch[1] : "+34";
+    const phone = prefixMatch ? prefixMatch[2] : phoneFull;
     setEditingId(user.id);
     setFormData({
       name: user.name,
       surname: user.surname || "",
       email: user.email,
       country: user.country || "España",
-      role: user.role
+      phonePrefix,
+      phone,
+      role: user.role,
     });
     setIsSheetOpen(true);
   };
 
-  const handleDelete = (id: string, name: string) => {
-    const nextUsers = users.filter(u => u.id !== id);
-    setUsers(nextUsers);
-    
-    // Eliminar del storage global si existe
+  const handleDelete = async (id: string, name: string) => {
     const userToDelete = users.find(u => u.id === id);
-    if (userToDelete) {
-      const savedUsers = JSON.parse(localStorage.getItem("synq_global_users") || "[]");
-      const updatedGlobal = savedUsers.filter((su: any) => su.email !== userToDelete.email);
-      localStorage.setItem("synq_global_users", JSON.stringify(updatedGlobal));
+    if (!userToDelete) return;
+
+    if (userToDelete.source === "remote" && session?.access_token) {
+      const res = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ id, status: "Denied", lastSeen: "Blocked_by_admin" }),
+      });
+      if (!res.ok) {
+        toast({
+          variant: "destructive",
+          title: "ERROR_REMOTO",
+          description: "No se pudo bloquear el usuario remoto.",
+        });
+        return;
+      }
+      setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, status: "Denied", lastSeen: "Blocked_by_admin" } : u)));
+      addAuditLog("USUARIO_BLOQUEADO", `Nodo remoto de ${name} bloqueado por superadmin.`, "Warning");
+      toast({ title: "USUARIO_BLOQUEADO", description: "Usuario remoto marcado como DENIED." });
+      return;
     }
 
-    addAuditLog("USUARIO_ELIMINADO", `Nodo de ${name} desconectado de la red.`, "Warning");
-    toast({ variant: "destructive", title: "NODO_ELIMINADO", description: "El usuario ha sido desvinculado de la red." });
+    const nextUsers = users.filter(u => u.id !== id);
+    setUsers(nextUsers);
+    const savedUsers = JSON.parse(localStorage.getItem("synq_global_users") || "[]");
+    const updatedGlobal = savedUsers.filter((su: any) => su.email !== userToDelete.email);
+    localStorage.setItem("synq_global_users", JSON.stringify(updatedGlobal));
+    addAuditLog("USUARIO_ELIMINADO", `Nodo local de ${name} eliminado.`, "Warning");
+    toast({ variant: "destructive", title: "NODO_ELIMINADO", description: "Usuario local eliminado." });
   };
 
   const handleCreateCredential = (e: React.FormEvent) => {
@@ -190,14 +294,36 @@ export default function GlobalUsersPage() {
     setLoading(true);
     
     setTimeout(() => {
+      const fullPhone = `${formData.phonePrefix} ${formData.phone}`.trim();
       if (editingId) {
-        setUsers(prev => prev.map(u => u.id === editingId ? { ...u, ...formData } : u));
+        const editedUser = users.find((u) => u.id === editingId);
+        setUsers((prev) =>
+          prev.map((u) => (u.id === editingId ? { ...u, ...formData, phone: fullPhone } : u)),
+        );
+        if (editedUser?.source === "remote" && session?.access_token) {
+          void fetch("/api/admin/users", {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({
+              id: editingId,
+              name: formData.name,
+              email: formData.email,
+              role: formData.role,
+              country: formData.country,
+              phone: fullPhone,
+            }),
+          });
+        }
         addAuditLog("MODIFICACIÓN_USUARIO", `Perfil de ${formData.name} actualizado.`, "Info");
         toast({ title: "CREDENCIAL_ACTUALIZADA", description: `Sincronizado: ${formData.name}.` });
       } else {
         const newUser = {
           id: `u${Date.now()}`,
           ...formData,
+          phone: fullPhone,
           status: "Approved",
           lastSeen: "Just now"
         };
@@ -226,12 +352,13 @@ export default function GlobalUsersPage() {
     <div className="space-y-8 animate-in fade-in duration-1000">
       <div className="flex justify-between items-end border-b border-white/5 pb-6">
         <div className="space-y-1">
+          <p className="text-[10px] uppercase font-black tracking-widest text-emerald-400/50">Home</p>
           <div className="flex items-center gap-3 mb-2">
             <Fingerprint className="h-5 w-5 text-emerald-400 animate-pulse" />
             <span className="text-[10px] font-black text-emerald-400 tracking-[0.5em] uppercase italic">Global_User_Registry_v2.0</span>
           </div>
           <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic emerald-text-glow">
-            Gestión de Usuarios
+            Dashboard_Usuarios
           </h1>
         </div>
         
@@ -249,8 +376,8 @@ export default function GlobalUsersPage() {
         <MetricMiniCard label="Administradores Pro" value={users.filter(u => u.role === 'club_admin').length.toString()} color="text-emerald-400" />
       </div>
 
-      <Card className="glass-panel shadow-2xl overflow-hidden relative border border-emerald-500/20 bg-black/40 rounded-3xl">
-        <CardHeader className="bg-black/40 border-b border-white/5 p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <Card className="glass-panel shadow-2xl overflow-hidden relative border border-emerald-500/20 bg-slate-950/80 rounded-3xl">
+        <CardHeader className="bg-slate-950/80 border-b border-white/5 p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="relative w-full max-w-md">
             <Search className="absolute left-3 top-3.5 h-4 w-4 text-emerald-500 opacity-50" />
             <Input 
@@ -307,7 +434,7 @@ export default function GlobalUsersPage() {
                       "rounded-2xl font-black text-[9px] uppercase tracking-widest px-3",
                       user.role === 'promo_coach' ? 'bg-blue-500/10 border-blue-500/30 text-blue-400' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
                     )}>
-                      {AVAILABLE_ROLES.find(r => r.value === user.role)?.label || user.role}
+                      {getRoleDisplayLabel(String(user.role), synqRoleRows)}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -338,7 +465,7 @@ export default function GlobalUsersPage() {
       </Card>
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-emerald-500/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-emerald-500/20 text-white w-full sm:max-w-lg shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
           <div className="p-10 border-b border-white/5 bg-black/40">
             <SheetHeader className="space-y-4">
               <div className="flex items-center gap-3">
@@ -395,13 +522,36 @@ export default function GlobalUsersPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-[#04070c] border-emerald-500/20 rounded-2xl">
-                    {AVAILABLE_ROLES.map((role) => (
+                    {roleSelectOptions.map((role) => (
                       <SelectItem key={role.value} value={role.value} className="text-[10px] font-black uppercase tracking-widest focus:bg-emerald-500 focus:text-black">
                         {role.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-2 min-w-0">
+                <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1 italic">Teléfono de Contacto</Label>
+                <div className="flex w-full min-w-0 gap-2">
+                  <div className="w-[5.25rem] shrink-0 sm:w-24">
+                    <Input
+                      value={formData.phonePrefix}
+                      onChange={(e) => setFormData({ ...formData, phonePrefix: e.target.value })}
+                      placeholder="+34"
+                      className="h-12 w-full bg-white/5 border-emerald-500/20 rounded-2xl font-bold text-center transition-all focus:border-emerald-500 text-emerald-400"
+                    />
+                  </div>
+                  <div className="relative min-w-0 flex-1">
+                    <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-500/40" />
+                    <Input
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      placeholder="600 000 000"
+                      className="h-12 w-full min-w-0 pl-10 bg-white/5 border-emerald-500/20 rounded-2xl font-bold focus:border-emerald-500 text-emerald-400"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 

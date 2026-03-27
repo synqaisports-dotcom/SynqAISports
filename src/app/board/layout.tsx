@@ -3,7 +3,7 @@
 import { useAuth } from "@/lib/auth-context";
 import { Loader2, LayoutDashboard } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, use } from "react";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -13,9 +13,7 @@ import { Button } from "@/components/ui/button";
  */
 export default function BoardLayout(props: { 
   children: React.ReactNode;
-  params: Promise<any>;
 }) {
-  const params = use(props.params);
   const children = props.children;
   const { profile, loading } = useAuth();
   const router = useRouter();

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { 
   MapPin, 
   Plus, 
@@ -50,6 +50,8 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth-context";
+import { useClubModulePermissions } from "@/hooks/use-club-module-permissions";
 
 const SPORTS = [
   { value: "Fútbol", label: "Fútbol" },
@@ -76,6 +78,11 @@ const INITIAL_FACILITIES = [
 ];
 
 export default function FacilitiesManagementPage() {
+  const { profile } = useAuth();
+  const { canEdit: canEditFacilities, canDelete: canDeleteFacilities } = useClubModulePermissions("facilities");
+  const clubScopeId = profile?.clubId ?? "global-hq";
+  const facilitiesStorageKey = `synq_methodology_facilities_v1_${clubScopeId}`;
+
   const [facilities, setFacilities] = useState(INITIAL_FACILITIES);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -97,7 +104,36 @@ export default function FacilitiesManagementPage() {
     divisionEndTime: "21:00"
   });
 
+  const persistFacilities = (next: typeof INITIAL_FACILITIES) => {
+    if (typeof window === "undefined") return;
+    localStorage.setItem(facilitiesStorageKey, JSON.stringify(next));
+  };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = localStorage.getItem(facilitiesStorageKey);
+      if (!raw) {
+        persistFacilities(INITIAL_FACILITIES as any);
+        return;
+      }
+      const parsed = JSON.parse(raw) as typeof INITIAL_FACILITIES;
+      if (Array.isArray(parsed)) setFacilities(parsed);
+    } catch {
+      // No bloqueamos si falla el parseo
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [facilitiesStorageKey]);
+
   const handleOpenCreate = () => {
+    if (!canEditFacilities) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes permiso de edición en Instalaciones.",
+      });
+      return;
+    }
     setEditingId(null);
     setFormData({ 
       name: "", 
@@ -116,6 +152,14 @@ export default function FacilitiesManagementPage() {
   };
 
   const handleEdit = (facility: any) => {
+    if (!canEditFacilities) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes permiso de edición en Instalaciones.",
+      });
+      return;
+    }
     setEditingId(facility.id);
     setFormData({
       name: facility.name,
@@ -143,7 +187,19 @@ export default function FacilitiesManagementPage() {
   };
 
   const handleDelete = (id: string, name: string) => {
-    setFacilities(prev => prev.filter(f => f.id !== id));
+    if (!canDeleteFacilities) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes permiso de borrado en Instalaciones.",
+      });
+      return;
+    }
+    setFacilities((prev) => {
+      const next = prev.filter((f) => f.id !== id);
+      persistFacilities(next as any);
+      return next;
+    });
     toast({
       variant: "destructive",
       title: "ACTIVO_ELIMINADO",
@@ -153,15 +209,24 @@ export default function FacilitiesManagementPage() {
 
   const handleSaveFacility = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canEditFacilities) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes permiso de edición en Instalaciones.",
+      });
+      return;
+    }
     setLoading(true);
-    
+
+    const currentEditingId = editingId;
     setTimeout(() => {
-      if (editingId) {
-        setFacilities(prev => prev.map(f => 
-          f.id === editingId 
-            ? { ...f, ...formData } 
-            : f
-        ));
+      if (currentEditingId) {
+        setFacilities((prev) => {
+          const next = prev.map((f) => (f.id === currentEditingId ? { ...f, ...formData } : f));
+          persistFacilities(next as any);
+          return next;
+        });
         toast({
           title: "ACTIVO_ACTUALIZADO",
           description: `Los protocolos de ${formData.name} han sido sincronizados.`,
@@ -172,7 +237,11 @@ export default function FacilitiesManagementPage() {
           ...formData,
           nextMaintenance: "Próximamente"
         };
-        setFacilities([newFacility, ...facilities]);
+        setFacilities((prev) => {
+          const next = [newFacility, ...prev];
+          persistFacilities(next as any);
+          return next;
+        });
         toast({
           title: "INSTALACIÓN_REGISTRADA",
           description: `El nodo ${formData.name} ha sido añadido a la matriz del club.`,
@@ -205,7 +274,8 @@ export default function FacilitiesManagementPage() {
         
         <Button 
           onClick={handleOpenCreate}
-          className="rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none"
+          disabled={!canEditFacilities}
+          className="rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none disabled:opacity-40"
         >
           <Plus className="h-4 w-4 mr-2" /> Nuevo Activo
         </Button>
@@ -291,6 +361,7 @@ export default function FacilitiesManagementPage() {
                   size="icon" 
                   className="h-9 w-9 text-primary hover:bg-primary/10 border border-primary/10 transition-all rounded-xl active:scale-95"
                   onClick={() => handleEdit(f)}
+                  disabled={!canEditFacilities}
                   title="Modificar Activo"
                 >
                   <Pencil className="h-3.5 w-3.5" />
@@ -300,6 +371,7 @@ export default function FacilitiesManagementPage() {
                   size="icon" 
                   className="h-9 w-9 text-rose-500 hover:bg-rose-500/10 border border-rose-500/10 transition-all rounded-xl active:scale-95"
                   onClick={() => handleDelete(f.id, f.name)}
+                  disabled={!canDeleteFacilities}
                   title="Eliminar Activo"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
@@ -553,8 +625,8 @@ export default function FacilitiesManagementPage() {
             </SheetClose>
             <Button 
               onClick={handleSaveFacility}
-              disabled={loading}
-              className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] border-none active:scale-95"
+              disabled={loading || !canEditFacilities}
+              className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] border-none active:scale-95 disabled:opacity-40"
             >
               {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (editingId ? "SINCRONIZAR_CAMBIOS" : "VINCULAR_ACTIVO")}
             </Button>

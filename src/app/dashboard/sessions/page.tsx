@@ -1,7 +1,8 @@
 
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { 
   CalendarDays, 
   ChevronRight, 
@@ -41,9 +42,26 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth-context";
+import {
+  upsertOperativaAttendance,
+  upsertOperativaChangeRequest,
+} from "@/lib/operativa-sync";
+import { useOperativaSync } from "@/hooks/use-operativa-sync";
+import { useClubModulePermissions } from "@/hooks/use-club-module-permissions";
+import {
+  mapOperativaAssignmentsToUi,
+  mapOperativaRequestsToUi,
+} from "@/lib/operativa-mappers";
 
 // DATA MAESTRA DE LA TEMPORADA
 const MONTHS = [
@@ -59,50 +77,419 @@ const MONTHS = [
   { id: "jun", label: "JUNIO", weeks: 4 },
 ];
 
-const MOCK_ROSTER = [
-  { id: "p1", name: "LUCAS GARCÍA", number: 10 },
-  { id: "p2", name: "MARC SOLER", number: 1 },
-  { id: "p3", name: "ELENA ROSSI", number: 9 },
-  { id: "p4", name: "SOFÍA MENDES", number: 4 },
-  { id: "p5", name: "JUAN PÉREZ", number: 5 },
-  { id: "p6", name: "CARLOS RUIZ", number: 7 },
-  { id: "p7", name: "MIGUEL ÁNGEL", number: 8 },
-  { id: "p8", name: "LAURA SÁNCHEZ", number: 6 },
-];
+const PLAYER_STORAGE_KEY = "synq_players";
+const TEAMS_STORAGE_PREFIX = "synq_methodology_warehouse_teams_v1";
+const SESSION_PLANNER_STORAGE_PREFIX = "synq_methodology_session_planner_v1";
+const ACADEMY_CATEGORIES_STORAGE_PREFIX = "synq_academy_categories_v1";
+const SESSIONS_ATTENDANCE_STORAGE_PREFIX = "synq_coach_sessions_attendance_v1";
+const SESSIONS_REQUEST_SEEN_STORAGE_PREFIX = "synq_coach_sessions_request_seen_v1";
+
+type PlayerRow = {
+  id?: string;
+  name?: string;
+  surname?: string;
+  nickname?: string;
+  number?: string | number;
+  category?: string;
+  teamSuffix?: string;
+};
+
+type OperationalTeam = {
+  id: string;
+  name: string;
+  stage: string;
+  sessionsPerWeek?: number;
+};
+
+type SessionRosterPlayer = {
+  id: string;
+  name: string;
+  number: number;
+};
+
+type SessionPlannerAssignment = {
+  id: string;
+  teamId: string;
+  mcc: string;
+  session: string;
+  blockKey: "warmup" | "central" | "cooldown";
+  exerciseTitle?: string;
+};
+
+type SessionPlannerPersistedState = {
+  assignments?: SessionPlannerAssignment[];
+  changeRequests?: SessionPlannerChangeRequest[];
+  updatedAt?: string;
+};
+
+type SessionPlannerChangeRequest = {
+  id: string;
+  teamId: string;
+  mcc: string;
+  session: string;
+  blockKey: "warmup" | "central" | "cooldown";
+  original?: string;
+  proposed: string;
+  reason: string;
+  status: "Pending" | "Approved" | "Denied";
+  coach: string;
+  createdAt: string;
+  directorComment?: string;
+  processedAt?: string;
+};
+
+type AcademyTeam = {
+  id: string;
+  name: string;
+  stage: string;
+};
+
+function parseTeamName(teamName: string): { category: string; teamSuffix: string | null } {
+  const parts = String(teamName || "").trim().split(" ").filter(Boolean);
+  if (parts.length < 2) return { category: teamName, teamSuffix: null };
+  const last = parts[parts.length - 1]?.toUpperCase();
+  if (!["A", "B", "C", "D"].includes(last)) return { category: teamName, teamSuffix: null };
+  return { category: parts.slice(0, -1).join(" "), teamSuffix: last };
+}
+
+function blockTitleToKey(title: string): "warmup" | "central" | "cooldown" {
+  const safe = title.toLowerCase();
+  if (safe.includes("calent")) return "warmup";
+  if (safe.includes("central")) return "central";
+  if (safe.includes("calma")) return "cooldown";
+  return "central";
+}
 
 export default function CoachSessionsPage() {
-  const { profile } = useAuth();
+  const searchParams = useSearchParams();
+  const { profile, user, session } = useAuth();
   const { toast } = useToast();
-  
-  // Simulamos que el entrenador tiene asignado el "Infantil A"
-  const myTeam = { name: "Infantil A", stage: "Infantil", sessionsPerWeek: 3 };
+  const [myTeam, setMyTeam] = useState<OperationalTeam | null>(null);
+  const [roster, setRoster] = useState<SessionRosterPlayer[]>([]);
   
   const [selectedMCC, setSelectedMCC] = useState<string | null>(null);
   const [isAttendanceOpen, setIsAttendanceOpen] = useState(false);
   const [activeSessionInWeek, setActiveSessionInWeek] = useState("1");
   const [attendance, setAttendance] = useState<Record<string, Record<string, string>>>({});
+  const sessionsPerWeek = myTeam?.sessionsPerWeek ?? 3;
+  const [plannerAssignments, setPlannerAssignments] = useState<SessionPlannerAssignment[]>([]);
+  const [plannerTeams, setPlannerTeams] = useState<AcademyTeam[]>([]);
+  const [coachRequests, setCoachRequests] = useState<SessionPlannerChangeRequest[]>([]);
+  const [isRequestsOpen, setIsRequestsOpen] = useState(false);
+  const [seenResponses, setSeenResponses] = useState<Record<string, boolean>>({});
+  const notifiedResponseIdsRef = useRef<Record<string, boolean>>({});
+
+  const clubScopeId = profile?.clubId ?? "global-hq";
+  const attendanceStorageKey = `${SESSIONS_ATTENDANCE_STORAGE_PREFIX}_${clubScopeId}`;
+  const requestSeenStorageKey = `${SESSIONS_REQUEST_SEEN_STORAGE_PREFIX}_${clubScopeId}`;
+  const { canUseSupabase, loadSnapshot } = useOperativaSync(clubScopeId);
+  const { canEdit: canEditPlanner } = useClubModulePermissions("planner");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = localStorage.getItem(attendanceStorageKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as { attendance?: Record<string, Record<string, string>> };
+      if (parsed?.attendance && typeof parsed.attendance === "object") {
+        setAttendance(parsed.attendance);
+      }
+    } catch {
+      /* noop */
+    }
+  }, [attendanceStorageKey]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      localStorage.setItem(
+        attendanceStorageKey,
+        JSON.stringify({
+          version: 1,
+          updatedAt: new Date().toISOString(),
+          attendance,
+        }),
+      );
+    } catch {
+      /* noop */
+    }
+  }, [attendanceStorageKey, attendance]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = localStorage.getItem(requestSeenStorageKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as Record<string, boolean>;
+      if (parsed && typeof parsed === "object") {
+        setSeenResponses(parsed);
+      }
+    } catch {
+      /* noop */
+    }
+  }, [requestSeenStorageKey]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      localStorage.setItem(requestSeenStorageKey, JSON.stringify(seenResponses));
+    } catch {
+      /* noop */
+    }
+  }, [requestSeenStorageKey, seenResponses]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const queryTeam = (searchParams.get("team") || "").trim().toUpperCase();
+    const queryMcc = (searchParams.get("mcc") || "").trim().toUpperCase();
+    const querySessionRaw = (searchParams.get("session") || "").trim().toUpperCase();
+
+    const accessToken = session?.access_token;
+    let cancelled = false;
+
+    const run = async () => {
+      const teamsRaw = localStorage.getItem(`${TEAMS_STORAGE_PREFIX}_${clubScopeId}`);
+      const plannerRaw = localStorage.getItem(`${SESSION_PLANNER_STORAGE_PREFIX}_${clubScopeId}`);
+      const academyRaw = localStorage.getItem(`${ACADEMY_CATEGORIES_STORAGE_PREFIX}_${clubScopeId}`);
+
+      let selectedTeam: OperationalTeam | null = null;
+
+      // 1) Warehouse teams (Supabase o local)
+      let warehouseTeams: Array<{ id?: string; name?: string; stage?: string; sessionsPerWeek?: number }> = [];
+      try {
+        if (canUseSupabase && accessToken) {
+          const whRes = await fetch("/api/club/methodology-warehouse", {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+
+          if (!cancelled && whRes.ok) {
+            const json = (await whRes.json()) as { ok?: boolean; payload?: any };
+            const remoteTeams = json?.payload?.teams;
+            if (Array.isArray(remoteTeams)) {
+              warehouseTeams = remoteTeams.map((t: any) => ({
+                id: t?.id,
+                name: t?.name,
+                stage: t?.stage,
+                sessionsPerWeek: typeof t?.sessionsPerWeek === "number" ? t.sessionsPerWeek : 3,
+              }));
+            }
+          }
+        } else {
+          const parsed = JSON.parse(teamsRaw || "[]") as Array<{ id?: string; name?: string; stage?: string; sessionsPerWeek?: number }>;
+          if (Array.isArray(parsed) && parsed.length > 0) warehouseTeams = parsed;
+        }
+      } catch {
+        // fallback silencioso
+      }
+
+      try {
+        const byQuery =
+          queryTeam.length > 0
+            ? warehouseTeams.find((item) => String(item?.name ?? "").trim().toUpperCase() === queryTeam)
+            : null;
+        const t = byQuery ?? warehouseTeams[0];
+        if (t) {
+          selectedTeam = {
+            id: String(t.id ?? `team_${Date.now()}`),
+            name: String(t.name ?? "INFANTIL A"),
+            stage: String(t.stage ?? "Infantil"),
+            sessionsPerWeek: typeof t.sessionsPerWeek === "number" ? t.sessionsPerWeek : 3,
+          };
+        }
+      } catch {
+        /* noop */
+      }
+
+      // 2) Planner local state (assignments/requests)
+      try {
+        const parsed = JSON.parse(plannerRaw || "{}") as SessionPlannerPersistedState;
+        if (!cancelled) {
+          setPlannerAssignments(Array.isArray(parsed?.assignments) ? parsed.assignments : []);
+          setCoachRequests(Array.isArray(parsed?.changeRequests) ? parsed.changeRequests : []);
+        }
+      } catch {
+        if (!cancelled) {
+          setPlannerAssignments([]);
+          setCoachRequests([]);
+        }
+      }
+
+      // 3) Academy categories => plannerTeams (Supabase o local)
+      try {
+        let parsedAcademy: any[] = [];
+        if (canUseSupabase && accessToken) {
+          const res = await fetch("/api/club/methodology-academy", {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+          if (res.ok) {
+            const json = (await res.json()) as { ok?: boolean; payload?: any };
+            if (Array.isArray(json?.payload)) parsedAcademy = json.payload;
+          }
+        }
+        if (parsedAcademy.length === 0) {
+          parsedAcademy = JSON.parse(academyRaw || "[]") as any[];
+        }
+
+        const teams: AcademyTeam[] = [];
+        for (const cat of parsedAcademy) {
+          const catName = String(cat?.name ?? "").trim();
+          const catId = String(cat?.id ?? "cat");
+          const catTeams = Array.isArray(cat?.teams) ? cat.teams : [];
+          catTeams.forEach((t: any, idx: number) => {
+            const suffix = String(t?.suffix ?? `T${idx + 1}`);
+            teams.push({
+              id: `${catId}-${suffix}-${idx}`,
+              name: `${String(t?.name ?? catName)} ${suffix}`.trim(),
+              stage: catName,
+            });
+          });
+        }
+        if (!cancelled) setPlannerTeams(teams);
+      } catch {
+        if (!cancelled) setPlannerTeams([]);
+      }
+
+      // 4) Roster (local)
+      const playersRaw = localStorage.getItem(PLAYER_STORAGE_KEY);
+      const players = (() => {
+        try {
+          const parsed = JSON.parse(playersRaw || "[]");
+          return Array.isArray(parsed) ? (parsed as PlayerRow[]) : [];
+        } catch {
+          return [] as PlayerRow[];
+        }
+      })();
+
+      if (!selectedTeam) {
+        const firstCategory = String(players[0]?.category || "Infantil");
+        const firstSuffix = String(players[0]?.teamSuffix || "A");
+        selectedTeam = {
+          id: `team_${firstCategory}_${firstSuffix}`,
+          name: `${firstCategory} ${firstSuffix}`.trim().toUpperCase(),
+          stage: firstCategory,
+          sessionsPerWeek: 3,
+        };
+      }
+
+      if (!cancelled) {
+        setMyTeam(selectedTeam);
+
+        const parsedTeam = parseTeamName(selectedTeam.name);
+        const filteredPlayers = players
+          .filter((p) => {
+            const cat = String(p.category || "").toUpperCase();
+            const suffix = String(p.teamSuffix || "").toUpperCase();
+            const needCat = parsedTeam.category.toUpperCase();
+            if (cat !== needCat) return false;
+            if (!parsedTeam.teamSuffix) return true;
+            return suffix === parsedTeam.teamSuffix;
+          })
+          .slice(0, 30)
+          .map((p, idx) => {
+            const numberRaw =
+              typeof p.number === "string" ? parseInt(p.number, 10) : Number(p.number ?? idx + 1);
+            const number = Number.isFinite(numberRaw) ? numberRaw : idx + 1;
+            const name =
+              (p.nickname || `${p.name || ""} ${p.surname || ""}`.trim() || `JUGADOR ${idx + 1}`).toUpperCase();
+            return {
+              id: String(p.id ?? `p_${idx}`),
+              name,
+              number,
+            };
+          });
+        setRoster(filteredPlayers);
+      }
+
+      if (!cancelled) {
+        if (/^[A-Z]{3,4}_W\d+$/.test(queryMcc)) setSelectedMCC(queryMcc);
+        if (/^S?\d+$/.test(querySessionRaw)) {
+          const n = String(querySessionRaw).replace(/^S/i, "");
+          if (n) setActiveSessionInWeek(n);
+        }
+      }
+    };
+
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [clubScopeId, searchParams, canUseSupabase, session?.access_token]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const plannerStorageKey = `${SESSION_PLANNER_STORAGE_PREFIX}_${clubScopeId}`;
+    const readRequests = async () => {
+      try {
+        const raw = localStorage.getItem(plannerStorageKey);
+        const parsed = (raw ? JSON.parse(raw) : {}) as SessionPlannerPersistedState;
+        setCoachRequests(Array.isArray(parsed?.changeRequests) ? parsed.changeRequests : []);
+      } catch {
+        setCoachRequests([]);
+      }
+      if (!canUseSupabase) return;
+      const snapshot = await loadSnapshot();
+      if (snapshot.assignments.length > 0) {
+        setPlannerAssignments(mapOperativaAssignmentsToUi(snapshot.assignments));
+      }
+      if (Object.keys(snapshot.attendance).length > 0) {
+        setAttendance((prev) => ({ ...prev, ...snapshot.attendance }));
+      }
+      if (snapshot.requests.length > 0) {
+        setCoachRequests(mapOperativaRequestsToUi(snapshot.requests));
+      }
+    };
+    void readRequests();
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === plannerStorageKey) void readRequests();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [clubScopeId, canUseSupabase, loadSnapshot]);
+
+  const currentAttendanceKey = useMemo(() => {
+    const teamKey = myTeam?.id ?? "team_unknown";
+    return `${teamKey}_${selectedMCC}_S${activeSessionInWeek}`;
+  }, [myTeam, selectedMCC, activeSessionInWeek]);
 
   // Inicializar asistencia por defecto
   useEffect(() => {
-    if (selectedMCC) {
-      const sessionKey = `${selectedMCC}_S${activeSessionInWeek}`;
-      if (!attendance[sessionKey]) {
-        const defaultAtt = Object.fromEntries(MOCK_ROSTER.map(p => [p.id, 'present']));
-        setAttendance(prev => ({ ...prev, [sessionKey]: defaultAtt }));
+    if (selectedMCC && roster.length > 0) {
+      if (!attendance[currentAttendanceKey]) {
+        const defaultAtt = Object.fromEntries(roster.map((p) => [p.id, "present"]));
+        setAttendance(prev => ({ ...prev, [currentAttendanceKey]: defaultAtt }));
       }
     }
-  }, [selectedMCC, activeSessionInWeek, attendance]);
+  }, [selectedMCC, attendance, currentAttendanceKey, roster]);
 
   const toggleAttendance = (playerId: string) => {
-    const sessionKey = `${selectedMCC}_S${activeSessionInWeek}`;
-    const current = attendance[sessionKey] || {};
+    if (!canEditPlanner) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes permiso de edición en operativa / planificación.",
+      });
+      return;
+    }
+    const current = attendance[currentAttendanceKey] || {};
     const status = current[playerId];
     const nextStatus = status === 'present' ? 'absent' : status === 'absent' ? 'late' : 'present';
     
     setAttendance(prev => ({
       ...prev,
-      [sessionKey]: { ...current, [playerId]: nextStatus }
+      [currentAttendanceKey]: { ...current, [playerId]: nextStatus }
     }));
+    if (canUseSupabase && myTeam?.id && selectedMCC) {
+      void upsertOperativaAttendance({
+        clubId: clubScopeId,
+        teamId: myTeam.id,
+        mcc: selectedMCC,
+        session: activeSessionInWeek,
+        playerId,
+        status: nextStatus as "present" | "absent" | "late",
+        updatedBy: user?.id ?? null,
+      });
+    }
   };
 
   const canRequestChange = (mcc: string) => {
@@ -110,22 +497,235 @@ export default function CoachSessionsPage() {
     return true; 
   };
 
-  const handleMCCClic = (month: string, week: number) => {
+  const handleMccClick = (month: string, week: number) => {
     setSelectedMCC(`${month.toUpperCase()}_W${week}`);
     setActiveSessionInWeek("1");
   };
 
-  const handleSendRequest = () => {
+  const handleSendRequest = async (blockTitle: string, reason: string, proposedExerciseTitle: string) => {
+    if (!canEditPlanner) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes permiso para enviar sugerencias de cambio.",
+      });
+      return;
+    }
+    const plannerStorageKey = `${SESSION_PLANNER_STORAGE_PREFIX}_${clubScopeId}`;
+    const targetTeamId = activePlannerTeamId ?? myTeam?.id ?? "team_unknown";
+    const mcc = selectedMCC ?? "MCC_UNKNOWN";
+    const blockKey = blockTitleToKey(blockTitle);
+    const currentPlanned =
+      blockKey === "warmup"
+        ? plannedByBlock.warmup
+        : blockKey === "central"
+          ? plannedByBlock.central
+          : plannedByBlock.cooldown;
+
+    try {
+      const raw = localStorage.getItem(plannerStorageKey);
+      const parsed = (raw ? JSON.parse(raw) : {}) as SessionPlannerPersistedState;
+      const prevRequests = Array.isArray(parsed?.changeRequests) ? parsed.changeRequests : [];
+      const cleanReason = reason.trim();
+      const cleanProposed = proposedExerciseTitle.trim();
+      if (!cleanReason || !cleanProposed) {
+        toast({
+          title: "DATOS_INCOMPLETOS",
+          description: "Escribe motivo y ejercicio propuesto.",
+          variant: "destructive",
+        });
+        return;
+      }
+      const reqId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      const nextReq: SessionPlannerChangeRequest = {
+        id: reqId,
+        teamId: targetTeamId,
+        mcc,
+        session: activeSessionInWeek,
+        blockKey,
+        original: currentPlanned,
+        proposed: cleanProposed,
+        reason: cleanReason,
+        status: "Pending",
+        coach: "Coach Operativa",
+        createdAt: new Date().toISOString(),
+      };
+      const filtered = prevRequests.filter(
+        (r) =>
+          !(
+            r.teamId === nextReq.teamId &&
+            r.mcc === nextReq.mcc &&
+            r.session === nextReq.session &&
+            r.blockKey === nextReq.blockKey &&
+            r.status === "Pending"
+          ),
+      );
+      const nextPayload: SessionPlannerPersistedState = {
+        ...parsed,
+        assignments: Array.isArray(parsed?.assignments) ? parsed.assignments : [],
+        changeRequests: [nextReq, ...filtered].slice(0, 300),
+        updatedAt: new Date().toISOString(),
+      };
+      localStorage.setItem(plannerStorageKey, JSON.stringify(nextPayload));
+      setCoachRequests(nextPayload.changeRequests ?? []);
+      if (canUseSupabase) {
+        await upsertOperativaChangeRequest({
+          id: reqId,
+          clubId: clubScopeId,
+          teamId: targetTeamId,
+          mcc,
+          session: activeSessionInWeek,
+          blockKey,
+          originalExercise: currentPlanned,
+          proposedExercise: cleanProposed,
+          reason: cleanReason,
+          coachId: user?.id ?? null,
+          coachName: profile?.name ?? "Coach Operativa",
+        });
+      }
+    } catch {
+      toast({
+        title: "ERROR_GUARDANDO_SOLICITUD",
+        description: "No se pudo guardar en Planificador Maestro.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     toast({
       title: "SOLICITUD_ENVIADA",
-      description: "La propuesta de cambio ha sido enviada al Director de Metodología.",
+      description: `${blockTitle}: ${proposedExerciseTitle.slice(0, 60)}${proposedExerciseTitle.length > 60 ? "..." : ""}`,
     });
   };
 
   const currentSessionAttendance = useMemo(() => {
-    const sessionKey = `${selectedMCC}_S${activeSessionInWeek}`;
-    return attendance[sessionKey] || {};
-  }, [attendance, selectedMCC, activeSessionInWeek]);
+    return attendance[currentAttendanceKey] || {};
+  }, [attendance, currentAttendanceKey]);
+
+  const activePlannerTeamId = useMemo(() => {
+    if (!myTeam) return null;
+    const myName = myTeam.name.trim().toUpperCase();
+    const exact = plannerTeams.find((t) => t.name.trim().toUpperCase() === myName);
+    if (exact) return exact.id;
+    const parsedCurrent = parseTeamName(myTeam.name);
+    const byCategory = plannerTeams.find((t) => {
+      const parsed = parseTeamName(t.name);
+      return (
+        parsed.category.trim().toUpperCase() === parsedCurrent.category.trim().toUpperCase() &&
+        (!parsedCurrent.teamSuffix || parsed.teamSuffix === parsedCurrent.teamSuffix)
+      );
+    });
+    return byCategory?.id ?? null;
+  }, [myTeam, plannerTeams]);
+
+  const visibleCoachRequests = useMemo(() => {
+    const teamId = activePlannerTeamId ?? myTeam?.id;
+    if (!teamId) return [];
+    return coachRequests
+      .filter((r) => r.teamId === teamId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [coachRequests, activePlannerTeamId, myTeam?.id]);
+
+  const unreadResponsesCount = useMemo(
+    () =>
+      visibleCoachRequests.filter((r) => r.status !== "Pending" && !seenResponses[r.id]).length,
+    [visibleCoachRequests, seenResponses],
+  );
+
+  const markResponsesAsSeen = () => {
+    setSeenResponses((prev) => {
+      const next = { ...prev };
+      visibleCoachRequests.forEach((r) => {
+        if (r.status !== "Pending") next[r.id] = true;
+      });
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    visibleCoachRequests.forEach((req) => {
+      if (req.status === "Pending") return;
+      if (notifiedResponseIdsRef.current[req.id]) return;
+      notifiedResponseIdsRef.current[req.id] = true;
+      toast({
+        title: req.status === "Approved" ? "CAMBIO_APROBADO" : "CAMBIO_DENEGADO",
+        description: `${req.mcc} • SES_${req.session} • ${req.blockKey.toUpperCase()}${req.directorComment ? ` • ${req.directorComment}` : ""}`,
+        variant: req.status === "Approved" ? "default" : "destructive",
+      });
+    });
+  }, [visibleCoachRequests, toast]);
+
+  const plannedByBlock = useMemo(() => {
+    const fallback = {
+      warmup: "Rondo de Activación 4x1",
+      central: "Posesión 5x5 + 2 Comodines",
+      cooldown: "Estiramientos y Feedback",
+    };
+    if (!selectedMCC || !activePlannerTeamId) return fallback;
+    const forSession = plannerAssignments.filter(
+      (a) => a.teamId === activePlannerTeamId && a.mcc === selectedMCC && a.session === activeSessionInWeek,
+    );
+    if (!forSession.length) return fallback;
+    return {
+      warmup: forSession.find((a) => a.blockKey === "warmup")?.exerciseTitle || fallback.warmup,
+      central: forSession.find((a) => a.blockKey === "central")?.exerciseTitle || fallback.central,
+      cooldown: forSession.find((a) => a.blockKey === "cooldown")?.exerciseTitle || fallback.cooldown,
+    };
+  }, [plannerAssignments, activePlannerTeamId, selectedMCC, activeSessionInWeek]);
+
+  const blockRequestStatus = useMemo(() => {
+    const out: Record<"warmup" | "central" | "cooldown", SessionPlannerChangeRequest["status"] | null> = {
+      warmup: null,
+      central: null,
+      cooldown: null,
+    };
+    if (!selectedMCC) return out;
+    const forCurrent = visibleCoachRequests.filter(
+      (r) => r.mcc === selectedMCC && r.session === activeSessionInWeek,
+    );
+    (["warmup", "central", "cooldown"] as const).forEach((k) => {
+      const latest = forCurrent.find((r) => r.blockKey === k);
+      out[k] = latest?.status ?? null;
+    });
+    return out;
+  }, [visibleCoachRequests, selectedMCC, activeSessionInWeek]);
+
+  const allMccOptions = useMemo(() => {
+    const out: Array<{ id: string; label: string }> = [];
+    MONTHS.forEach((month) => {
+      for (let i = 1; i <= month.weeks; i++) {
+        out.push({
+          id: `${month.id.toUpperCase()}_W${i}`,
+          label: `${month.label} · SEMANA ${i}`,
+        });
+      }
+    });
+    return out;
+  }, []);
+
+  const activeMccIndex = useMemo(
+    () => (selectedMCC ? allMccOptions.findIndex((m) => m.id === selectedMCC) : -1),
+    [allMccOptions, selectedMCC],
+  );
+
+  const goToPrevMcc = () => {
+    if (activeMccIndex <= 0) return;
+    setSelectedMCC(allMccOptions[activeMccIndex - 1].id);
+    setActiveSessionInWeek("1");
+  };
+
+  const goToNextMcc = () => {
+    if (activeMccIndex < 0 || activeMccIndex >= allMccOptions.length - 1) return;
+    setSelectedMCC(allMccOptions[activeMccIndex + 1].id);
+    setActiveSessionInWeek("1");
+  };
+
+  useEffect(() => {
+    const current = parseInt(activeSessionInWeek, 10);
+    if (!Number.isFinite(current) || current < 1 || current > sessionsPerWeek) {
+      setActiveSessionInWeek("1");
+    }
+  }, [activeSessionInWeek, sessionsPerWeek]);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000 p-8 lg:p-12">
@@ -145,7 +745,7 @@ export default function CoachSessionsPage() {
             PLANIFICACIÓN_Y_SESIONES
           </h1>
           <p className="text-[11px] font-black text-primary/30 tracking-[0.3em] uppercase">
-            Equipo Asignado: {myTeam.name} • Etapa {myTeam.stage}
+            Equipo Asignado: {myTeam?.name ?? "SIN_EQUIPO"} • Etapa {myTeam?.stage ?? "—"}
           </p>
         </div>
 
@@ -159,6 +759,21 @@ export default function CoachSessionsPage() {
           </div>
           <Button className="h-12 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl cyan-glow hover:scale-105 transition-all border-none">
             <Download className="h-4 w-4 mr-2" /> Mi Temporada
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setIsRequestsOpen(true);
+              markResponsesAsSeen();
+            }}
+            className="h-12 border-white/15 text-white font-black uppercase text-[10px] tracking-widest px-5 rounded-xl relative"
+          >
+            <History className="h-4 w-4 mr-2" /> Mis Solicitudes
+            {unreadResponsesCount > 0 && (
+              <span className="absolute -top-2 -right-2 min-w-5 h-5 px-1 rounded-full bg-emerald-500 text-black text-[9px] leading-5 font-black">
+                {unreadResponsesCount}
+              </span>
+            )}
           </Button>
         </div>
       </div>
@@ -175,7 +790,7 @@ export default function CoachSessionsPage() {
               <div className="flex flex-col">
                 <span className="text-[10px] font-black text-black/60 uppercase tracking-[0.4em]">Temporada 2024 / 2025</span>
                 <h2 className="text-2xl font-black text-black italic tracking-tighter uppercase leading-none">
-                  Mi Agenda Táctica: <span className="text-black/80">{myTeam.name}</span>
+                  Mi Agenda Táctica: <span className="text-black/80">{myTeam?.name ?? "SIN_EQUIPO"}</span>
                 </h2>
               </div>
             </div>
@@ -187,7 +802,7 @@ export default function CoachSessionsPage() {
                <div className="h-8 w-[1px] bg-black/10" />
                <div className="text-right">
                   <p className="text-[8px] font-black text-black/40 uppercase tracking-widest">Sesiones/Semana</p>
-                  <p className="text-xl font-black text-black italic tracking-tighter">{myTeam.sessionsPerWeek} DÍAS</p>
+                  <p className="text-xl font-black text-black italic tracking-tighter">{sessionsPerWeek} DÍAS</p>
                </div>
             </div>
           </div>
@@ -205,7 +820,7 @@ export default function CoachSessionsPage() {
                       return (
                         <div 
                           key={i} 
-                          onClick={() => handleMCCClic(month.id, i + 1)}
+                          onClick={() => handleMccClick(month.id, i + 1)}
                           className={cn(
                             "p-4 rounded-xl border transition-all cursor-pointer group/mcc relative overflow-hidden",
                             selectedMCC === mccId 
@@ -223,7 +838,7 @@ export default function CoachSessionsPage() {
                           <p className={cn(
                             "text-[8px] font-bold uppercase",
                             selectedMCC === mccId ? "text-white" : "text-white/10"
-                          )}>{myTeam.sessionsPerWeek} Sesiones Previstas</p>
+                          )}>{sessionsPerWeek} Sesiones Previstas</p>
                         </div>
                       );
                     })}
@@ -231,6 +846,34 @@ export default function CoachSessionsPage() {
                 </div>
               ))}
             </div>
+          </div>
+
+          <div className="px-6 py-4 border-t border-white/5 bg-black/40 flex items-center gap-3">
+            <span className="text-[9px] font-black text-primary/60 uppercase tracking-widest whitespace-nowrap">
+              Salto rápido MCC
+            </span>
+            <Select
+              value={selectedMCC ?? undefined}
+              onValueChange={(value) => {
+                setSelectedMCC(value);
+                setActiveSessionInWeek("1");
+              }}
+            >
+              <SelectTrigger className="h-9 w-full max-w-[320px] bg-black/50 border-white/10 text-[10px] font-black uppercase tracking-wider">
+                <SelectValue placeholder="Selecciona semana MCC" />
+              </SelectTrigger>
+              <SelectContent className="bg-[#0a0f14] border-white/10 text-white">
+                {allMccOptions.map((mcc) => (
+                  <SelectItem
+                    key={mcc.id}
+                    value={mcc.id}
+                    className="text-[10px] font-bold uppercase tracking-wide"
+                  >
+                    {mcc.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="p-6 bg-black/40 border-t border-white/5 flex justify-between items-center text-[9px] font-black text-primary/20 uppercase tracking-[0.5em]">
@@ -255,14 +898,31 @@ export default function CoachSessionsPage() {
                   <div className="flex items-center justify-between">
                     <SheetTitle className="text-4xl font-black italic tracking-tighter uppercase leading-none text-white">Semana {selectedMCC}</SheetTitle>
                     <div className="flex gap-3">
+                      <Button
+                        onClick={goToPrevMcc}
+                        variant="outline"
+                        disabled={activeMccIndex <= 0}
+                        className="h-10 border-white/15 text-white/80 font-black uppercase text-[9px] tracking-widest px-4 rounded-xl disabled:opacity-30"
+                      >
+                        Anterior
+                      </Button>
+                      <Button
+                        onClick={goToNextMcc}
+                        variant="outline"
+                        disabled={activeMccIndex < 0 || activeMccIndex >= allMccOptions.length - 1}
+                        className="h-10 border-white/15 text-white/80 font-black uppercase text-[9px] tracking-widest px-4 rounded-xl disabled:opacity-30"
+                      >
+                        Siguiente
+                      </Button>
                       <Button 
                         onClick={() => setIsAttendanceOpen(true)}
-                        className="h-10 bg-emerald-500 text-black font-black uppercase text-[9px] tracking-widest px-6 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 transition-all border-none"
+                        disabled={roster.length === 0 || !canEditPlanner}
+                        className="h-10 bg-emerald-500 text-black font-black uppercase text-[9px] tracking-widest px-6 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 transition-all border-none disabled:opacity-40"
                       >
                         <UserCheck className="h-3.5 w-3.5 mr-2" /> Asistencia
                       </Button>
                       <Badge variant="outline" className="border-primary/20 text-primary font-black uppercase tracking-widest px-4 py-1.5 h-auto hidden sm:flex">
-                        CATEGORÍA: {myTeam.stage.toUpperCase()}
+                        CATEGORÍA: {(myTeam?.stage ?? "—").toUpperCase()}
                       </Badge>
                     </div>
                   </div>
@@ -271,8 +931,11 @@ export default function CoachSessionsPage() {
 
               <div className="px-8 py-4 bg-white/[0.02] border-b border-white/5">
                 <Tabs value={activeSessionInWeek} onValueChange={setActiveSessionInWeek} className="w-full">
-                  <TabsList className="grid w-full grid-cols-4 lg:grid-cols-7 bg-black/40 border border-white/10 p-1 h-12 rounded-xl">
-                    {Array.from({ length: myTeam.sessionsPerWeek }).map((_, i) => (
+                  <TabsList
+                    className="grid w-full bg-black/40 border border-white/10 p-1 h-12 rounded-xl"
+                    style={{ gridTemplateColumns: `repeat(${Math.max(1, sessionsPerWeek)}, minmax(0, 1fr))` }}
+                  >
+                    {Array.from({ length: sessionsPerWeek }).map((_, i) => (
                       <TabsTrigger 
                         key={i} 
                         value={(i + 1).toString()}
@@ -306,9 +969,10 @@ export default function CoachSessionsPage() {
                       time={15} 
                       icon={Flame} 
                       color="orange" 
-                      canRequest={canRequestChange(selectedMCC)}
-                      assignedExercise="Rondo de Activación 4x1"
+                      canRequest={canRequestChange(selectedMCC) && canEditPlanner}
+                      assignedExercise={plannedByBlock.warmup}
                       onSuggest={handleSendRequest}
+                      requestStatus={blockRequestStatus.warmup}
                     />
                     
                     <CoachSessionBlock 
@@ -316,9 +980,10 @@ export default function CoachSessionsPage() {
                       time={45} 
                       icon={Dumbbell} 
                       color="amber" 
-                      canRequest={canRequestChange(selectedMCC)}
-                      assignedExercise="Posesión 5x5 + 2 Comodines"
+                      canRequest={canRequestChange(selectedMCC) && canEditPlanner}
+                      assignedExercise={plannedByBlock.central}
                       onSuggest={handleSendRequest}
+                      requestStatus={blockRequestStatus.central}
                     />
 
                     <CoachSessionBlock 
@@ -326,9 +991,10 @@ export default function CoachSessionsPage() {
                       time={10} 
                       icon={Wind} 
                       color="blue" 
-                      canRequest={canRequestChange(selectedMCC)}
-                      assignedExercise="Estiramientos y Feedback"
+                      canRequest={canRequestChange(selectedMCC) && canEditPlanner}
+                      assignedExercise={plannedByBlock.cooldown}
                       onSuggest={handleSendRequest}
+                      requestStatus={blockRequestStatus.cooldown}
                     />
                   </div>
                 </div>
@@ -362,14 +1028,22 @@ export default function CoachSessionsPage() {
 
           <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {MOCK_ROSTER.map(player => {
+              {roster.length === 0 && (
+                <div className="col-span-full rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5">
+                  <p className="text-[10px] text-amber-400 font-black uppercase tracking-widest">
+                    Sin roster cargado para este equipo. Revisa Cantera/Jugadores.
+                  </p>
+                </div>
+              )}
+              {roster.map(player => {
                 const status = currentSessionAttendance[player.id] || 'present';
                 return (
                   <div 
                     key={player.id}
                     onClick={() => toggleAttendance(player.id)}
                     className={cn(
-                      "p-5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between group overflow-hidden relative",
+                      "p-5 rounded-2xl border transition-all flex items-center justify-between group overflow-hidden relative",
+                      canEditPlanner ? "cursor-pointer" : "cursor-not-allowed opacity-60",
                       status === 'present' ? "bg-emerald-500/5 border-emerald-500/20" :
                       status === 'absent' ? "bg-rose-500/5 border-rose-500/20" :
                       "bg-amber-500/5 border-amber-500/20"
@@ -418,10 +1092,70 @@ export default function CoachSessionsPage() {
                 toast({ title: "ASISTENCIA_GUARDADA", description: "Datos sincronizados con éxito." });
                 setIsAttendanceOpen(false);
               }}
-              className="flex-1 h-16 bg-emerald-500 text-black font-black uppercase text-[11px] tracking-[0.2em] rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:scale-[1.02] transition-all border-none"
+              disabled={!canEditPlanner}
+              className="flex-1 h-16 bg-emerald-500 text-black font-black uppercase text-[11px] tracking-[0.2em] rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:scale-[1.02] transition-all border-none disabled:opacity-40"
             >
               CONFIRMAR_ASISTENCIA <ArrowRight className="h-4 w-4 ml-3" />
             </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet
+        open={isRequestsOpen}
+        onOpenChange={(open) => {
+          setIsRequestsOpen(open);
+          if (open) markResponsesAsSeen();
+        }}
+      >
+        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-xl p-0 overflow-hidden flex flex-col">
+          <div className="p-8 border-b border-white/5 bg-black/40">
+            <SheetHeader className="space-y-3">
+              <SheetTitle className="text-3xl font-black italic tracking-tighter uppercase leading-none text-white">
+                Mis Solicitudes
+              </SheetTitle>
+              <SheetDescription className="text-[10px] uppercase font-bold text-primary/50 tracking-widest text-left">
+                Respuestas del Planificador Maestro
+              </SheetDescription>
+            </SheetHeader>
+          </div>
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-3">
+            {visibleCoachRequests.length === 0 && (
+              <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+                <p className="text-[10px] font-black uppercase text-white/50 tracking-widest">
+                  Aún no hay solicitudes para este equipo.
+                </p>
+              </div>
+            )}
+            {visibleCoachRequests.map((req) => {
+              const tone =
+                req.status === "Approved"
+                  ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-300"
+                  : req.status === "Denied"
+                    ? "border-rose-500/30 bg-rose-500/5 text-rose-300"
+                    : "border-amber-500/30 bg-amber-500/5 text-amber-300";
+              return (
+                <div key={req.id} className={cn("rounded-2xl border p-4 space-y-2", tone)}>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[10px] font-black uppercase tracking-widest">
+                      {req.mcc} • SES_{req.session} • {req.blockKey.toUpperCase()}
+                    </p>
+                    <Badge variant="outline" className="text-[9px] font-black uppercase">
+                      {req.status}
+                    </Badge>
+                  </div>
+                  <p className="text-[10px] font-bold uppercase text-white/80">{req.reason}</p>
+                  {req.directorComment && (
+                    <p className="text-[10px] font-bold uppercase text-white/60">
+                      Director: {req.directorComment}
+                    </p>
+                  )}
+                  <p className="text-[9px] font-bold uppercase text-white/40">
+                    {(req.processedAt ? new Date(req.processedAt) : new Date(req.createdAt)).toLocaleString("es-ES")}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         </SheetContent>
       </Sheet>
@@ -429,8 +1163,28 @@ export default function CoachSessionsPage() {
   );
 }
 
-function CoachSessionBlock({ title, time, icon: Icon, color, canRequest, assignedExercise, onSuggest }: any) {
+function CoachSessionBlock({
+  title,
+  time,
+  icon: Icon,
+  color,
+  canRequest,
+  assignedExercise,
+  onSuggest,
+  requestStatus,
+}: {
+  title: string;
+  time: number;
+  icon: any;
+  color: "orange" | "amber" | "blue";
+  canRequest: boolean;
+  assignedExercise: string;
+  onSuggest: (blockTitle: string, reason: string, proposedExerciseTitle: string) => void;
+  requestStatus: "Pending" | "Approved" | "Denied" | null;
+}) {
   const [showSuggest, setShowSuggest] = useState(false);
+  const [suggestionReason, setSuggestionReason] = useState("");
+  const [proposedExercise, setProposedExercise] = useState("");
   const colorClass = color === 'orange' ? 'text-orange-500 border-orange-500/20 bg-orange-500/10' : 
                      color === 'amber' ? 'text-amber-500 border-amber-500/20 bg-amber-500/10' : 
                      'text-blue-500 border-blue-500/20 bg-blue-500/10';
@@ -463,7 +1217,27 @@ function CoachSessionBlock({ title, time, icon: Icon, color, canRequest, assigne
                  <p className="text-[8px] font-bold text-white/20 uppercase tracking-widest">Protocolo Metodológico • SINCRO_OK</p>
               </div>
            </div>
-           <Badge variant="outline" className="border-emerald-500/20 text-emerald-400 text-[8px] font-black">VALIDADO</Badge>
+           <Badge
+             variant="outline"
+             className={cn(
+               "text-[8px] font-black uppercase",
+               requestStatus === "Approved"
+                 ? "border-emerald-500/20 text-emerald-400"
+                 : requestStatus === "Denied"
+                   ? "border-rose-500/20 text-rose-400"
+                   : requestStatus === "Pending"
+                     ? "border-amber-500/20 text-amber-400"
+                     : "border-emerald-500/20 text-emerald-400",
+             )}
+           >
+             {requestStatus === "Approved"
+               ? "APROBADA"
+               : requestStatus === "Denied"
+                 ? "DENEGADA"
+                 : requestStatus === "Pending"
+                   ? "PENDIENTE"
+                   : "VALIDADO"}
+           </Badge>
         </div>
       </div>
 
@@ -473,10 +1247,45 @@ function CoachSessionBlock({ title, time, icon: Icon, color, canRequest, assigne
               <MessageSquareQuote className="h-3 w-3 text-primary" />
               <span className="text-[9px] font-black text-primary uppercase">Motivo de la Sugerencia</span>
            </div>
-           <Input placeholder="EJ: PREFIERO UN TRABAJO DE MÁS INTENSIDAD..." className="h-10 bg-black/40 border-primary/20 text-[10px] uppercase font-bold text-primary" />
+           <Input
+             value={proposedExercise}
+             onChange={(e) => setProposedExercise(e.target.value)}
+             placeholder="EJ: POSESIÓN 6X4 + 3 APOYOS"
+             className="h-10 bg-black/40 border-primary/20 text-[10px] uppercase font-bold text-primary"
+           />
+           <Input
+             value={suggestionReason}
+             onChange={(e) => setSuggestionReason(e.target.value)}
+             placeholder="EJ: PREFIERO UN TRABAJO DE MÁS INTENSIDAD..."
+             className="h-10 bg-black/40 border-primary/20 text-[10px] uppercase font-bold text-primary"
+           />
            <div className="flex gap-2">
-              <Button onClick={() => { onSuggest(); setShowSuggest(false); }} className="flex-1 h-8 bg-primary text-black text-[8px] font-black uppercase rounded-lg">ENVIAR_SOLICITUD</Button>
-              <Button onClick={() => setShowSuggest(false)} variant="ghost" className="h-8 text-[8px] font-black uppercase text-white/20 border border-white/5 rounded-lg">CANCELAR</Button>
+              <Button
+                onClick={() => {
+                  const reason = suggestionReason.trim();
+                  const proposed = proposedExercise.trim();
+                  if (!reason || !proposed) return;
+                  onSuggest(title, reason, proposed);
+                  setSuggestionReason("");
+                  setProposedExercise("");
+                  setShowSuggest(false);
+                }}
+                disabled={!suggestionReason.trim() || !proposedExercise.trim()}
+                className="flex-1 h-8 bg-primary text-black text-[8px] font-black uppercase rounded-lg disabled:opacity-40"
+              >
+                ENVIAR_SOLICITUD
+              </Button>
+              <Button
+                onClick={() => {
+                  setSuggestionReason("");
+                  setProposedExercise("");
+                  setShowSuggest(false);
+                }}
+                variant="ghost"
+                className="h-8 text-[8px] font-black uppercase text-white/20 border border-white/5 rounded-lg"
+              >
+                CANCELAR
+              </Button>
            </div>
         </div>
       )}

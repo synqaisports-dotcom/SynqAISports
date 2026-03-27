@@ -48,6 +48,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/lib/auth-context";
+import { useClubModulePermissions } from "@/hooks/use-club-module-permissions";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -63,6 +64,7 @@ const SPORTS = [
 export default function ClubManagementPage() {
   const { profile } = useAuth();
   const { toast } = useToast();
+  const { canEdit: canEditClub } = useClubModulePermissions("club");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const isSuperAdmin = profile?.role === "superadmin";
@@ -83,6 +85,14 @@ export default function ClubManagementPage() {
 
   const handleUpdate = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (!canEditClub) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes permiso de edición sobre Identidad de Club.",
+      });
+      return;
+    }
     toast({
       title: "NODO_ACTUALIZADO",
       description: `La identidad de "${clubData.name}" ha sido sincronizada en la red.`,
@@ -108,7 +118,10 @@ export default function ClubManagementPage() {
         
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
           <SheetTrigger asChild>
-            <Button className="rounded-none bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none">
+            <Button
+              disabled={!canEditClub}
+              className="rounded-none bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none disabled:opacity-40"
+            >
               <Settings2 className="h-4 w-4 mr-2" /> Configurar Nodo
             </Button>
           </SheetTrigger>
@@ -221,7 +234,8 @@ export default function ClubManagementPage() {
               </SheetClose>
               <Button 
                 onClick={() => handleUpdate()}
-                className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] transition-all border-none"
+                disabled={!canEditClub}
+                className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] transition-all border-none disabled:opacity-40"
               >
                 SINCRONIZAR_CAMBIOS
               </Button>
@@ -250,7 +264,7 @@ export default function ClubManagementPage() {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#04070c] via-transparent to-transparent" />
         <div className="absolute top-8 right-8">
-           <Button variant="ghost" className="h-10 bg-black/40 backdrop-blur-md border border-primary/20 rounded-xl text-primary/60 hover:text-primary transition-all">
+           <Button variant="ghost" disabled={!canEditClub} className="h-10 bg-black/40 backdrop-blur-md border border-primary/20 rounded-xl text-primary/60 hover:text-primary transition-all disabled:opacity-40">
               <Camera className="h-4 w-4 mr-2" /> Editar Portada
            </Button>
         </div>
@@ -270,7 +284,7 @@ export default function ClubManagementPage() {
                   className="opacity-90 group-hover/logo:scale-110 transition-transform duration-700"
                   data-ai-hint="sports logo"
                 />
-                <button className="absolute inset-0 bg-black/60 opacity-0 group-hover/logo:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                <button type="button" disabled={!canEditClub} className="absolute inset-0 bg-black/60 opacity-0 group-hover/logo:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 disabled:opacity-0 disabled:pointer-events-none">
                    <Camera className="h-6 w-6 text-primary" />
                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Sincronizar Escudo</span>
                 </button>
@@ -368,7 +382,7 @@ export default function ClubManagementPage() {
               <p className="text-[11px] font-bold text-primary/40 uppercase tracking-widest mb-10 leading-loose">
                 Genere un informe PDF técnico de la estructura del club para patrocinadores, federaciones o redes de formación.
               </p>
-              <Button className="w-full h-16 bg-black/60 border border-primary/30 text-primary font-black uppercase text-[11px] tracking-[0.2em] rounded-2xl hover:bg-primary hover:text-black transition-all shadow-xl">
+              <Button disabled={!canEditClub} className="w-full h-16 bg-black/60 border border-primary/30 text-primary font-black uppercase text-[11px] tracking-[0.2em] rounded-2xl hover:bg-primary hover:text-black transition-all shadow-xl disabled:opacity-40">
                 Generar Informe <ArrowRight className="h-4 w-4 ml-3" />
               </Button>
            </Card>

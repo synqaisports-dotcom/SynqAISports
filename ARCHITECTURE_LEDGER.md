@@ -1,5 +1,5 @@
 
-# SynqSports Pro - ARCHITECTURE_LEDGER v71.0.0 (Professional Barrier)
+# SynqSports Pro - ARCHITECTURE_LEDGER v72.0.0 (Freemium to Pro)
 
 Este documento es el registro maestro inmutable de la arquitectura técnica, protocolos de seguridad y flujos de trabajo de SynqSports Pro.
 
@@ -35,3 +35,6 @@ Este documento es el registro maestro inmutable de la arquitectura técnica, pro
 
 ## 71. Protocolo de Barrera Profesional (v71.0.0)
 - **v71.0.0**: **PROTOCOL_PROFESSIONAL_BARRIER_DUMMIES**: Rediseño del activo de barrera. Sustitución de elipses por maniquíes tácticos con cabeza y hombros definidos, mejorando la estética del "Stylebook" oficial.
+
+## 72. Protocolo Freemium -> Pro (v72.0.0)
+- **v72.0.0**: **PROTOCOL_FREEMIUM_TO_PRO**: Formalizacion del modelo de negocio en dos capas de persistencia. `/board/*` opera como Hook de Adquisicion con `localStorage` (gratis, sin friccion, coste de infraestructura casi cero). La operativa profesional de club migra a Supabase bajo suscripcion (1EUR/mes) para auth, multiusuario y datos centralizados.

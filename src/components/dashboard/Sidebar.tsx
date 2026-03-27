@@ -47,7 +47,8 @@ import {
   Maximize2,
   Minimize2,
   Flame,
-  Wind
+  Wind,
+  Warehouse
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
@@ -69,6 +70,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useClubAccessMatrix } from "@/contexts/club-access-matrix-context";
+import {
+  canAccessClubModule,
+  shouldBypassClubMatrix,
+  type ClubModuleId,
+} from "@/lib/club-permissions";
 
 interface NavItem {
   title: string;
@@ -77,6 +84,14 @@ interface NavItem {
   category: "global" | "operational" | "methodology" | "user";
   roles?: string[];
   isSubItem?: boolean;
+  /** Módulo de matriz de club (filtro A/V/E/X vía `access`). */
+  moduleId?: ClubModuleId;
+}
+
+/** `usePathname()` no incluye query; alinear con enlaces tipo `/ruta?foo=bar`. */
+function pathnameFromNavHref(href: string): string {
+  const q = href.indexOf("?");
+  return q === -1 ? href : href.slice(0, q);
 }
 
 const navItems: NavItem[] = [
@@ -90,28 +105,33 @@ const navItems: NavItem[] = [
   { title: "Gen. Usuarios", href: "/admin-global/users", icon: UserPlus, category: "global" },
   { title: "Analytics Global", href: "/admin-global/analytics", icon: BarChart3, category: "global" },
   { title: "Almacén Neural", href: "/admin-global/exercises", icon: Database, category: "global" },
+  { title: "Cuadro Matriz Club", href: "/admin-global/club-access-matrix", icon: LayoutGrid, category: "global" },
   
   // ESTRATEGIA_METODOLÓGICA - AMBER THEME
-  { title: "Objetivos", href: "/dashboard/methodology/objectives", icon: Target, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director"] },
-  { title: "Planificador Ciclos", href: "/dashboard/methodology/cycle-planner", icon: GitBranch, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director"] },
-  { title: "Pizarra Partido", href: "/board/match", icon: Trophy, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach", "promo_coach"] },
-  { title: "Pizarra Ejercicios", href: "/board/training", icon: Sparkles, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach", "promo_coach"] },
-  { title: "Biblioteca", href: "/dashboard/methodology/exercise-library", icon: Library, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach", "promo_coach"] },
-  { title: "Planif. Sesiones", href: "/dashboard/methodology/session-planner", icon: CalendarDays, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director"] },
+  { title: "Objetivos", href: "/dashboard/methodology/objectives", icon: Target, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director"], moduleId: "planner" },
+  { title: "Planificador Ciclos", href: "/dashboard/methodology/cycle-planner", icon: GitBranch, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director"], moduleId: "planner" },
+  { title: "Agenda Ocupación", href: "/dashboard/methodology/calendar", icon: Calendar, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach", "promo_coach"], moduleId: "planner" },
+  { title: "Pizarra Partido", href: "/board/match?source=elite", icon: Trophy, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach", "promo_coach"], moduleId: "board" },
+  { title: "Pizarra Ejercicios", href: "/board/training", icon: Sparkles, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach", "promo_coach"], moduleId: "board" },
+  { title: "Biblioteca", href: "/dashboard/methodology/exercise-library", icon: Library, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach", "promo_coach"], moduleId: "exercises" },
+  { title: "Planif. Sesiones", href: "/dashboard/methodology/session-planner", icon: CalendarDays, category: "methodology", roles: ["superadmin", "club_admin", "academy_director", "methodology_director"], moduleId: "planner" },
+  { title: "Almacén (Club)", href: "/dashboard/methodology/warehouse", icon: Warehouse, category: "methodology", roles: ["superadmin", "club_admin", "coach", "academy_director", "methodology_director"], moduleId: "planner" },
 
   // OPERATIVA_ELITE - CYAN THEME
-  { title: "Coach Hub", href: "/dashboard", icon: Cpu, category: "operational" },
+  { title: "Dashboard Club", href: "/dashboard", icon: Cpu, category: "operational" },
   { title: "Admin & Permisos", href: "/dashboard/admin", icon: Settings2, category: "operational", roles: ["superadmin", "club_admin", "academy_director"] },
-  { title: "Club", href: "/dashboard/club", icon: Building, category: "operational" },
-  { title: "Planif. y Sesiones", href: "/dashboard/sessions", icon: CalendarDays, category: "operational" },
-  { title: "Instalaciones", href: "/dashboard/instalaciones", icon: MapPin, category: "operational" },
-  { title: "Staff", href: "/dashboard/staff", icon: UserCog, category: "operational" },
-  { title: "Cantera", href: "/dashboard/academy", icon: Sprout, category: "operational" },
-  { title: "Jugadores", href: "/dashboard/players", icon: Users, category: "operational" },
-  { title: "Tactical Board", href: "/board/match", icon: Monitor, category: "operational" },
-  { title: "Config. Watch", href: "/dashboard/watch-config", icon: Smartphone, category: "operational" },
-  { title: "Biblioteca Táctica", href: "/dashboard/coach/library", icon: Dumbbell, category: "operational" },
-  { title: "Neural Planner", href: "/dashboard/coach/planner", icon: Activity, category: "operational" },
+  { title: "Cuadro Matriz", href: "/dashboard/access-matrix", icon: LayoutGrid, category: "operational", roles: ["superadmin", "club_admin", "academy_director"] },
+  { title: "Club", href: "/dashboard/club", icon: Building, category: "operational", moduleId: "club" },
+  { title: "Instalaciones", href: "/dashboard/instalaciones", icon: MapPin, category: "operational", moduleId: "facilities" },
+  { title: "Staff", href: "/dashboard/staff", icon: UserCog, category: "operational", moduleId: "staff" },
+  { title: "Cantera", href: "/dashboard/academy", icon: Sprout, category: "operational", moduleId: "academy" },
+  { title: "Jugadores", href: "/dashboard/players", icon: Users, category: "operational", moduleId: "players" },
+  { title: "Tactical Board", href: "/board/match?source=elite", icon: Monitor, category: "operational", moduleId: "board" },
+  { title: "Config. Watch", href: "/dashboard/watch-config", icon: Smartphone, category: "operational", moduleId: "planner" },
+  { title: "Modo Continuidad", href: "/dashboard/mobile-continuity", icon: Smartphone, category: "operational", moduleId: "planner" },
+  { title: "Planif. y Sesiones", href: "/dashboard/sessions", icon: CalendarDays, category: "operational", moduleId: "planner" },
+  { title: "Biblioteca Táctica", href: "/dashboard/coach/library", icon: Dumbbell, category: "operational", moduleId: "exercises" },
+  { title: "Neural Planner", href: "/dashboard/coach/planner", icon: Activity, category: "operational", moduleId: "planner" },
   
   // TERMINALES_ACCESO - NODO SANDBOX (Categoría User)
   { title: "Mi Equipo Local", href: "/dashboard/promo/team", icon: Users, category: "user" },
@@ -133,6 +153,7 @@ export function DashboardSidebar() {
   const router = useRouter();
   const { toggleSidebar, state, setOpenMobile, isMobile } = useSidebar();
   const { profile, logout } = useAuth();
+  const { normalizedMatrix, loading: matrixLoading } = useClubAccessMatrix();
   const [currentLang, setCurrentLang] = useState(AVAILABLE_LOCALES[0]);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -179,9 +200,18 @@ export function DashboardSidebar() {
       if (item.category === "user") return true;
       if (item.category === "operational" && item.href === "/dashboard") return true;
       return false;
-    } else {
-      return true;
     }
+    if (
+      item.moduleId &&
+      profile?.role &&
+      !shouldBypassClubMatrix(profile.role) &&
+      !matrixLoading
+    ) {
+      if (!canAccessClubModule(normalizedMatrix, profile.role, item.moduleId, "access")) {
+        return false;
+      }
+    }
+    return true;
   });
 
   return (
@@ -239,7 +269,7 @@ export function DashboardSidebar() {
             <SidebarMenu>
               {filteredItems.filter(i => i.category === "global").map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarLink item={item} isActive={pathname === item.href} isGlobal onNavClick={handleNavClick} />
+                  <SidebarLink item={item} isActive={pathname === pathnameFromNavHref(item.href)} isGlobal onNavClick={handleNavClick} />
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -251,7 +281,7 @@ export function DashboardSidebar() {
             <SidebarMenu>
               {filteredItems.filter(i => i.category === "methodology").map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarLink item={item} isActive={pathname === item.href} isMethodology onNavClick={handleNavClick} />
+                  <SidebarLink item={item} isActive={pathname === pathnameFromNavHref(item.href)} isMethodology onNavClick={handleNavClick} />
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -259,11 +289,11 @@ export function DashboardSidebar() {
         )}
 
         {!isFree && (
-          <SidebarGroupWrapper title="Operativa_Elite" color="text-primary" isCollapsed={isCollapsed}>
+          <SidebarGroupWrapper title="Dashboard Club" color="text-primary" isCollapsed={isCollapsed}>
             <SidebarMenu>
               {filteredItems.filter(i => i.category === "operational").map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarLink item={item} isActive={pathname === item.href} onNavClick={handleNavClick} />
+                  <SidebarLink item={item} isActive={pathname === pathnameFromNavHref(item.href)} onNavClick={handleNavClick} />
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -281,7 +311,7 @@ export function DashboardSidebar() {
           <SidebarMenu>
             {filteredItems.filter(i => i.category === "user").map((item) => (
               <SidebarMenuItem key={item.href}>
-                <SidebarLink item={item} isActive={pathname === item.href} isSandbox={item.href.includes('promo')} onNavClick={handleNavClick} />
+                <SidebarLink item={item} isActive={pathname === pathnameFromNavHref(item.href)} isSandbox={item.href.includes('promo')} onNavClick={handleNavClick} />
               </SidebarMenuItem>
             ))}
           </SidebarMenu>

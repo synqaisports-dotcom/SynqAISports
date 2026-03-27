@@ -62,12 +62,12 @@
   }
 
   .methodology-theme {
-    --scroll-color: hsla(32, 100%, 50%, 0.5); 
-    --scroll-hover: hsla(32, 100%, 50%, 0.9);
-    --scroll-glow: hsla(32, 100%, 50%, 0.8);
-    --sidebar-primary: 32 100% 50%;
-    --sidebar-ring: 32 100% 50%;
-    --primary: 32 100% 50%;
+    --scroll-color: hsla(183, 100%, 50%, 0.5);
+    --scroll-hover: hsla(183, 100%, 50%, 0.9);
+    --scroll-glow: hsla(183, 100%, 50%, 0.8);
+    --sidebar-primary: 183 100% 50%;
+    --sidebar-ring: 183 100% 50%;
+    --primary: 183 100% 50%;
   }
 
   .sandbox-theme {
@@ -178,6 +178,76 @@
 
 .amber-text-glow {
   text-shadow: 0 0 15px hsla(32, 100%, 50%, 0.8);
+}
+
+/* METHODOLOGY_COLOR_NORMALIZATION: fuerza cyan en utilidades amber dentro del módulo */
+.methodology-theme [class*="text-amber-"] {
+  color: hsl(var(--primary)) !important;
+}
+
+/* Intensidades suaves: mejor legibilidad en blanco */
+.methodology-theme [class*="text-amber-"][class*="/10"],
+.methodology-theme [class*="text-amber-"][class*="/20"],
+.methodology-theme [class*="text-amber-"][class*="/30"],
+.methodology-theme [class*="text-amber-"][class*="/40"] {
+  color: hsl(var(--foreground) / 0.78) !important;
+}
+
+/* Intensidades medias-altas: cyan protagonista */
+.methodology-theme [class*="text-amber-"][class*="/50"],
+.methodology-theme [class*="text-amber-"][class*="/60"],
+.methodology-theme [class*="text-amber-"][class*="/70"],
+.methodology-theme [class*="text-amber-"][class*="/80"] {
+  color: hsl(var(--primary) / 0.9) !important;
+}
+
+.methodology-theme [class*="border-amber-"] {
+  border-color: hsl(var(--primary) / 0.25) !important;
+}
+
+.methodology-theme [class*="bg-amber-"] {
+  background-color: hsl(var(--primary) / 0.16) !important;
+}
+
+.methodology-theme [class*="hover:bg-amber-"]:hover {
+  background-color: hsl(var(--primary) / 0.24) !important;
+}
+
+.methodology-theme [class*="hover:border-amber-"]:hover {
+  border-color: hsl(var(--primary) / 0.55) !important;
+}
+
+.methodology-theme [class*="focus:border-amber-"]:focus,
+.methodology-theme [class*="focus-visible:ring-amber-"]:focus-visible {
+  border-color: hsl(var(--primary)) !important;
+  box-shadow: 0 0 0 1px hsl(var(--primary) / 0.45), 0 0 18px hsl(var(--primary) / 0.25) !important;
+}
+
+.methodology-theme [class*="accent-amber-"] {
+  accent-color: hsl(var(--primary)) !important;
+}
+
+.methodology-theme [class*="from-amber-"] {
+  --tw-gradient-from: hsl(var(--primary) / 0.2) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: hsl(var(--primary) / 0) var(--tw-gradient-to-position) !important;
+}
+
+.methodology-theme [class*="to-amber-"] {
+  --tw-gradient-to: hsl(var(--primary) / 0.2) var(--tw-gradient-to-position) !important;
+}
+
+.methodology-theme .amber-glow {
+  box-shadow: 0 0 38px hsla(183, 100%, 50%, 0.48), 0 0 14px hsla(183, 100%, 50%, 0.32) !important;
+}
+
+.methodology-theme .amber-text-glow {
+  text-shadow: 0 0 18px hsla(183, 100%, 50%, 0.9), 0 0 8px hsla(183, 100%, 50%, 0.5) !important;
+}
+
+/* Next.js DevTools overlay: evita que el portal interneo fuerce offset de layout. */
+nextjs-portal {
+  left: unset !important;
+  top: unset !important;
 }
 
 .blue-text-glow {

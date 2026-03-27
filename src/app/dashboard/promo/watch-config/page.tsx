@@ -46,6 +46,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { QRCodeCanvas } from "qrcode.react";
+import { BoardPerformanceSettingsCard } from "@/components/board/BoardPerformanceSettingsCard";
 
 export default function SandboxWatchConfigPage() {
   const { toast } = useToast();
@@ -192,6 +193,8 @@ export default function SandboxWatchConfigPage() {
                </div>
             </div>
           </Card>
+
+          <BoardPerformanceSettingsCard />
 
           <Card className="glass-panel border-primary/20 bg-primary/5 p-8 rounded-[2.5rem] relative overflow-hidden group">
              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-all"><Zap className="h-32 w-32 text-primary" /></div>

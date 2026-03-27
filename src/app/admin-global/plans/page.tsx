@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { 
   TicketPercent, 
   Plus, 
@@ -58,6 +58,13 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { isSupabaseConfigured, supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth-context";
+import {
+  buildRoleSelectOptions,
+  getRoleDisplayLabel,
+  type SynqRoleRowLike,
+} from "@/lib/role-catalog";
 
 const ACCESS_MODULES = [
   { id: "ia_planner", label: "Neural IA Planner", description: "Generación de planes tácticos con IA.", icon: Cpu },
@@ -68,19 +75,15 @@ const ACCESS_MODULES = [
   { id: "tutor_portal", label: "Portal de Tutores", description: "Terminal de comunicación con familias.", icon: Users },
 ];
 
-const AVAILABLE_ROLES = [
-  { value: "club_admin", label: "Administrador del Club" },
-  { value: "academy_director", label: "Director de Cantera" },
-  { value: "coach", label: "Entrenador" },
-  { value: "tutor", label: "Tutor / Familia" },
-  { value: "athlete", label: "Atleta / Jugador" },
-];
-
 export default function GlobalPlansPage() {
+  const { session } = useAuth();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isAccessDialogOpen, setIsAccessDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const { toast } = useToast();
+  const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
+  const [plans, setPlans] = useState<any[]>([]);
+  const canUseSupabase = isSupabaseConfigured && !!supabase && !!session?.access_token;
   
   const [newPlan, setNewPlan] = useState({
     title: "",
@@ -90,6 +93,70 @@ export default function GlobalPlansPage() {
     access: [] as string[],
     defaultRole: "club_admin"
   });
+
+  const [synqRoleRows, setSynqRoleRows] = useState<SynqRoleRowLike[]>([]);
+
+  const roleSelectOptions = useMemo(() => {
+    const base = buildRoleSelectOptions(synqRoleRows, { includeSuperadmin: false });
+    if (newPlan.defaultRole && !base.some((o) => o.value === newPlan.defaultRole)) {
+      return [
+        ...base,
+        {
+          value: newPlan.defaultRole,
+          label: getRoleDisplayLabel(newPlan.defaultRole, synqRoleRows),
+        },
+      ].sort((a, b) => a.label.localeCompare(b.label, "es"));
+    }
+    return base;
+  }, [synqRoleRows, newPlan.defaultRole]);
+
+  useEffect(() => {
+    if (!session?.access_token) {
+      setSynqRoleRows([]);
+      return;
+    }
+    let cancelled = false;
+    void fetch("/api/roles/catalog", {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    })
+      .then(async (res) => {
+        const j = (await res.json()) as { roles?: SynqRoleRowLike[] };
+        if (!cancelled) setSynqRoleRows(j.roles ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setSynqRoleRows([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.access_token]);
+
+  useEffect(() => {
+    const load = async () => {
+      const savedPlans = JSON.parse(localStorage.getItem("synq_global_plans") || "[]");
+      setPlans(savedPlans);
+      if (!canUseSupabase) return;
+      const res = await fetch("/api/admin/plans", {
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      const j = (await res.json()) as { plans?: any[] };
+      const data = Array.isArray(j.plans) ? j.plans : [];
+      if (res.ok && data.length > 0) {
+        const normalized = data.map((p) => ({
+          id: p.id,
+          title: p.title,
+          pricePerNode: p.price_per_node ?? "",
+          minNodes: p.min_nodes ?? "",
+          features: Array.isArray(p.features) ? p.features : [],
+          access: Array.isArray(p.access) ? p.access : [],
+          defaultRole: p.default_role ?? "club_admin",
+          isActive: p.is_active ?? true,
+        }));
+        setPlans(normalized);
+      }
+    };
+    void load();
+  }, [canUseSupabase, session?.access_token]);
 
   const handleToggleAccess = (moduleId: string) => {
     setNewPlan(prev => ({
@@ -102,6 +169,7 @@ export default function GlobalPlansPage() {
 
   const handleOpenCreate = () => {
     setIsEditing(false);
+    setEditingPlanId(null);
     setNewPlan({ 
       title: "", 
       pricePerNode: "", 
@@ -115,10 +183,11 @@ export default function GlobalPlansPage() {
 
   const handleOpenEdit = (plan: any) => {
     setIsEditing(true);
+    setEditingPlanId(plan.id);
     setNewPlan({
       title: plan.title,
-      pricePerNode: plan.pricePerNode || "1.00",
-      minNodes: plan.users || "100",
+      pricePerNode: plan.pricePerNode || "",
+      minNodes: plan.minNodes || "",
       features: plan.features || ["", "", ""],
       access: plan.access || [],
       defaultRole: plan.defaultRole || "club_admin"
@@ -126,8 +195,39 @@ export default function GlobalPlansPage() {
     setIsSheetOpen(true);
   };
 
-  const handleSincProtocol = (e: React.FormEvent) => {
+  const handleSincProtocol = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!newPlan.title.trim()) {
+      toast({ variant: "destructive", title: "TITULO_REQUERIDO", description: "Define un identificador de plan." });
+      return;
+    }
+    const payload = {
+      id: editingPlanId ?? `plan_${Date.now()}`,
+      title: newPlan.title.trim(),
+      pricePerNode: newPlan.pricePerNode.trim(),
+      minNodes: newPlan.minNodes.trim(),
+      features: newPlan.features.filter((f) => String(f).trim().length > 0),
+      access: newPlan.access,
+      defaultRole: newPlan.defaultRole,
+      isActive: true,
+    };
+    setPlans((prev) => {
+      const next = editingPlanId
+        ? prev.map((p) => (p.id === editingPlanId ? { ...p, ...payload, isActive: p.isActive ?? true } : p))
+        : [payload, ...prev];
+      localStorage.setItem("synq_global_plans", JSON.stringify(next));
+      return next;
+    });
+    if (canUseSupabase) {
+      await fetch("/api/admin/plans", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+    }
     toast({
       title: isEditing ? "PROTOCOLO_ACTUALIZADO" : "PROTOCOLO_SINC_EXITOSA",
       description: `El nodo "${newPlan.title || 'SIN_NOMBRE'}" ha sido ${isEditing ? 'actualizado' : 'desplegado'} correctamente.`,
@@ -135,16 +235,37 @@ export default function GlobalPlansPage() {
     setIsSheetOpen(false);
   };
 
+  const handleTogglePlanActive = (id: string) => {
+    setPlans((prev) => {
+      const next = prev.map((p) => (p.id === id ? { ...p, isActive: !(p.isActive ?? true) } : p));
+      localStorage.setItem("synq_global_plans", JSON.stringify(next));
+      return next;
+    });
+    if (canUseSupabase) {
+      const current = plans.find((p) => p.id === id);
+      const nextActive = !(current?.isActive ?? true);
+      void fetch("/api/admin/plans", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ id, isActive: nextActive }),
+      });
+    }
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
       <div className="flex justify-between items-end border-b border-white/5 pb-6">
         <div className="space-y-1">
+          <p className="text-[10px] uppercase font-black tracking-widest text-emerald-400/50">Home</p>
           <div className="flex items-center gap-3 mb-2">
             <TicketPercent className="h-5 w-5 text-emerald-400 animate-pulse" />
             <span className="text-[10px] font-black text-emerald-400 tracking-[0.5em] uppercase">Subscription_Protocols</span>
           </div>
           <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic emerald-text-glow">
-            CONFIGURACIÓN DE PLANES
+            Dashboard_Planes
           </h1>
         </div>
         
@@ -157,33 +278,23 @@ export default function GlobalPlansPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <PlanTerminalCard 
-          title="PROMO_LINK" 
-          price="DESDE 0,80€" 
-          users="ILIMITADOS" 
-          icon={Megaphone} 
-          features={["Pizarra con Publicidad", "Captación de Leads", "Informes ROI"]} 
-          onEdit={handleOpenEdit}
-          badge="GANCHO_REDES"
-        />
-        <PlanTerminalCard 
-          title="VOLUMEN_CORE" 
-          price="1,00€ / NIÑO" 
-          users="HASTA 500" 
-          icon={Shield} 
-          featured
-          features={["Todo en Promo", "Sin Publicidad", "Gestión Base", "Soporte Técnico"]} 
-          onEdit={handleOpenEdit}
-        />
-        <PlanTerminalCard 
-          title="ENTERPRISE_SCALE" 
-          price="0,70€ / NIÑO" 
-          users="+800 NIÑOS" 
-          icon={Crown} 
-          features={["Todo en Volumen", "IA Neural Planner", "API Acceso", "Marca Blanca"]} 
-          onEdit={handleOpenEdit}
-          badge="ESCALADO_ÉLITE"
-        />
+        {plans.length === 0 ? (
+          <Card className="glass-panel md:col-span-3 border border-amber-500/20 bg-amber-500/5 rounded-3xl">
+            <CardContent className="py-10 text-center space-y-2">
+              <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest">Sin planes mock precargados</p>
+              <p className="text-[10px] font-bold text-white/40 uppercase">Crea el primer protocolo real desde "Nuevo Protocolo".</p>
+            </CardContent>
+          </Card>
+        ) : (
+          plans.map((plan) => (
+            <PlanTerminalCard
+              key={plan.id}
+              plan={plan}
+              onEdit={handleOpenEdit}
+              onToggleActive={handleTogglePlanActive}
+            />
+          ))
+        )}
       </div>
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
@@ -259,7 +370,7 @@ export default function GlobalPlansPage() {
                       </div>
                     </SelectTrigger>
                     <SelectContent className="bg-[#04070c] border-emerald-500/20 rounded-2xl">
-                      {AVAILABLE_ROLES.map((role) => (
+                      {roleSelectOptions.map((role) => (
                         <SelectItem key={role.value} value={role.value} className="text-[10px] font-black uppercase tracking-widest text-white/70 focus:bg-emerald-500 focus:text-black">
                           {role.label}
                         </SelectItem>
@@ -371,17 +482,15 @@ export default function GlobalPlansPage() {
   );
 }
 
-function PlanTerminalCard({ title, price, users, icon: Icon, features, featured, onEdit, badge }: any) {
-  const [isActive, setIsActive] = useState(true);
-  const { toast } = useToast();
-
-  const handleToggleActive = () => {
-    setIsActive(!isActive);
-    toast({
-      title: isActive ? "PROTOCOLO_SUSPENDIDO" : "PROTOCOLO_REACTIVADO",
-      description: `El plan ${title} ha sido ${isActive ? 'desconectado de la red' : 'sincronizado nuevamente'}.`,
-    });
-  };
+function PlanTerminalCard({ plan, onEdit, onToggleActive }: any) {
+  const title = plan.title;
+  const price = plan.pricePerNode ? `${plan.pricePerNode}€ / NIÑO` : "SIN TARIFA";
+  const users = plan.minNodes ? `DESDE ${plan.minNodes}` : "SIN UMBRAL";
+  const features = plan.features || [];
+  const isActive = plan.isActive ?? true;
+  const Icon = title.toUpperCase().includes("PROMO") ? Megaphone : title.toUpperCase().includes("ENTERPRISE") ? Crown : Shield;
+  const featured = title.toUpperCase().includes("CORE");
+  const badge = title.toUpperCase().includes("PROMO") ? "GANCHO_REDES" : title.toUpperCase().includes("ENTERPRISE") ? "ESCALADO_ÉLITE" : undefined;
 
   return (
     <Card className={cn(
@@ -418,7 +527,7 @@ function PlanTerminalCard({ title, price, users, icon: Icon, features, featured,
       <CardFooter className="mt-auto p-6 border-t border-white/5 flex gap-3">
         <Button 
           className="flex-1 h-12 rounded-2xl border border-emerald-500/40 bg-transparent text-emerald-400 font-black uppercase text-[10px] tracking-widest hover:bg-emerald-500 hover:text-black transition-all"
-          onClick={() => onEdit({ title, users, features })}
+          onClick={() => onEdit(plan)}
         >
           <Pencil className="h-3.5 w-3.5 mr-2" /> Modificar
         </Button>
@@ -430,7 +539,7 @@ function PlanTerminalCard({ title, price, users, icon: Icon, features, featured,
               ? "border-white/10 text-white/20 hover:text-amber-400 hover:border-amber-500/50 hover:bg-amber-500/10" 
               : "border-emerald-500/30 text-emerald-400 bg-emerald-500/5 hover:bg-emerald-500 hover:text-black"
           )}
-          onClick={handleToggleActive}
+          onClick={() => onToggleActive(plan.id)}
           title={isActive ? "Pausar Protocolo" : "Activar Protocolo"}
         >
           {isActive ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}

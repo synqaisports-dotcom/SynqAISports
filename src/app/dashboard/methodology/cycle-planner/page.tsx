@@ -272,14 +272,14 @@ export default function CyclePlannerPage() {
               className={cn(
                 "flex items-center gap-4 px-8 py-4 rounded-xl transition-all whitespace-nowrap group relative overflow-hidden flex-1 min-w-[180px] border",
                 selectedCat === cat.id 
-                  ? "bg-amber-500 text-black border-amber-500 shadow-[0_0_30px_rgba(245,158,11,0.4)] z-10" 
-                  : "text-white/40 hover:text-white hover:bg-white/5 border-white/10 hover:border-amber-500/30"
+                  ? "bg-primary/20 text-white border-primary/40 shadow-[0_0_24px_rgba(0,242,255,0.32)] z-10" 
+                  : "text-primary/80 hover:text-white hover:bg-white/5 border-white/10 hover:border-primary/40"
               )}
             >
-              <cat.icon className={cn("h-5 w-5", selectedCat === cat.id ? "text-black" : "text-amber-500/40 group-hover:text-amber-500")} />
+              <cat.icon className={cn("h-5 w-5", selectedCat === cat.id ? "text-white" : "text-primary/70 group-hover:text-white")} />
               <div className="flex flex-col items-start leading-none gap-1">
                 <span className="text-[11px] font-black uppercase tracking-widest">{cat.label}</span>
-                <span className={cn("text-[9px] font-bold uppercase", selectedCat === cat.id ? "text-black/60" : "text-white/20")}>{cat.age}</span>
+                <span className={cn("text-[9px] font-bold uppercase", selectedCat === cat.id ? "text-white/80" : "text-primary/60 group-hover:text-white/80")}>{cat.age}</span>
               </div>
             </button>
           ))}

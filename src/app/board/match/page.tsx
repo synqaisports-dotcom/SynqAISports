@@ -1,7 +1,8 @@
 
 "use client";
 
-import { useState, useEffect, useMemo, useRef, memo, useCallback } from "react";
+import { useState, useEffect, useRef, memo, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { 
   Trophy, 
   Clock, 
@@ -13,8 +14,6 @@ import {
   Maximize2,
   Minimize2,
   Trash2,
-  ChevronLeft,
-  ChevronRight,
   Zap,
   Pause,
   Play,
@@ -56,7 +55,32 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
+import {
+  MATCH_BOARD_SOURCE_KEY,
+  resolveMatchBoardSource,
+  loadLocalLineupForMatchBoard,
+  type MatchBoardSource,
+} from "@/lib/match-board-bootstrap";
+import {
+  MATCH_TIMER_SYNC_KEY,
+  readMatchTimerSync,
+  shouldApplyRemoteTimer,
+  writeMatchTimerSync,
+  readMatchTimerPresetMinutes,
+  writeMatchTimerPresetMinutes,
+  type MatchTimerSyncPayload,
+} from "@/lib/match-timer-sync";
+import {
+  MATCH_SCORE_SYNC_KEY,
+  readMatchScoreSync,
+  shouldApplyRemoteScore,
+  writeMatchScoreSync,
+} from "@/lib/match-score-sync";
+import {
+  BOARD_HIGH_PERFORMANCE_KEY,
+  BOARD_PERF_CHANGE_EVENT,
+  resolveBoardVisualProfile,
+} from "@/lib/board-performance";
 
 type TacticalPhase = "def" | "tda" | "sal" | "atk";
 
@@ -80,14 +104,18 @@ const MemoizedPlayerChip = memo(PlayerChip);
  * MatchBoardPage - v69.0.0
  * PROTOCOL_FIELD_ALIGNMENT: Ajuste de límites para evitar que jugadores salgan del campo.
  * PROTOCOLO_VISITOR_FLOW: Invertido orden de transiciones para equipo visitante.
+ *
+ * Entrada dual: ?source=elite (Operaciones / metodología) | ?source=sandbox (Mis partidos promo).
+ * Equipo local: elite → synq_players | sandbox → synq_promo_team. Cronómetro ↔ smartwatch: localStorage (otras pestañas).
  */
-export default function MatchBoardPage() {
-  const { profile } = useAuth();
+function MatchBoardInner() {
+  useAuth();
   const { toast } = useToast();
-  const router = useRouter();
+  const searchParams = useSearchParams();
   
   const [mounted, setMounted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(45 * 60);
+  const [presetMinutes, setPresetMinutes] = useState(45);
   const [isRunning, setIsRunning] = useState(false);
   const [score, setScore] = useState({ home: 0, guest: 0 });
   const [fieldType, setFieldType] = useState<FieldType>("f11");
@@ -96,8 +124,6 @@ export default function MatchBoardPage() {
   const [guestPhase, setGuestPhase] = useState<TacticalPhase>("def");
   const [homeFormation, setHomeFormation] = useState("4-3-3");
   const [guestFormation, setGuestFormation] = useState("4-3-3");
-  const [homeShift, setHomeShift] = useState<"left" | "center" | "right">("center");
-  const [guestShift, setGuestShift] = useState<"left" | "center" | "right">("center");
   const [players, setPlayers] = useState<PlayerPos[]>([]);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [currentColor, setCurrentColor] = useState("#00f2ff");
@@ -114,18 +140,145 @@ export default function MatchBoardPage() {
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fieldRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => { 
-    setMounted(true); 
-    const ua = window.navigator.userAgent;
-    const isT5 = /AGS2/.test(ua);
-    const lowCPU = (window.navigator.hardwareConcurrency || 8) <= 8;
-    
-    if (isT5 || lowCPU) {
-      setIsLegacyDevice(true);
-      setRenderScale(0.75); 
-    }
+  const timeLeftRef = useRef(45 * 60);
+  const presetMinutesRef = useRef(45);
+  const lastTimerSyncAppliedRef = useRef(0);
+  const lastScoreSyncAppliedRef = useRef(0);
+  const draggingIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    draggingIdRef.current = draggingId;
+  }, [draggingId]);
+  const matchMoveRafRef = useRef<number | null>(null);
+  const pendingMatchDragRef = useRef<{ x: number; y: number } | null>(null);
+  useEffect(() => {
+    return () => {
+      if (matchMoveRafRef.current != null) cancelAnimationFrame(matchMoveRafRef.current);
+    };
   }, []);
+
+  const [matchSource, setMatchSource] = useState<MatchBoardSource>("elite");
+  const [localHomeNames, setLocalHomeNames] = useState<string[]>([]);
+  const safeFieldType: FieldType = FORMATIONS_DATA[fieldType] ? fieldType : "f11";
+
+  useEffect(() => {
+    setMounted(true);
+    if (typeof window === "undefined") return;
+    const apply = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const p = resolveBoardVisualProfile(dpr);
+      setIsLegacyDevice(p.perfLite);
+      setRenderScale(p.renderScale);
+    };
+    apply();
+    window.addEventListener(BOARD_PERF_CHANGE_EVENT, apply);
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === null || e.key === BOARD_HIGH_PERFORMANCE_KEY) apply();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener(BOARD_PERF_CHANGE_EVENT, apply);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, []);
+
+  useEffect(() => {
+    const q = searchParams.get("source");
+    const stored = typeof window !== "undefined" ? localStorage.getItem(MATCH_BOARD_SOURCE_KEY) : null;
+    const src = resolveMatchBoardSource(q, stored);
+    setMatchSource(src);
+    try {
+      localStorage.setItem(MATCH_BOARD_SOURCE_KEY, src);
+    } catch {
+      /* noop */
+    }
+    const { names, fieldType: ftBoot } = loadLocalLineupForMatchBoard(src);
+    setLocalHomeNames(names);
+    if (ftBoot && q === "sandbox") setFieldType(ftBoot);
+  }, [searchParams]);
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== "synq_promo_team" && e.key !== "synq_players") return;
+      const storedSrc = localStorage.getItem(MATCH_BOARD_SOURCE_KEY);
+      const resolved = resolveMatchBoardSource(null, storedSrc);
+      const { names } = loadLocalLineupForMatchBoard(resolved);
+      setLocalHomeNames(names);
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  // Mantener un preset de minutos para que `reset` no vuelva siempre a 45.
+  useEffect(() => {
+    const mins = readMatchTimerPresetMinutes(45);
+    setPresetMinutes(mins);
+    presetMinutesRef.current = mins;
+    const sec = mins * 60;
+    setTimeLeft(sec);
+    timeLeftRef.current = sec;
+  }, []);
+
+  useEffect(() => {
+    const p = readMatchTimerSync();
+    if (shouldApplyRemoteTimer(p, lastTimerSyncAppliedRef.current) && Date.now() - p.updatedAt < 3 * 60 * 60 * 1000) {
+      lastTimerSyncAppliedRef.current = p.updatedAt;
+      setTimeLeft(Math.max(0, p.remainingSec));
+      setIsRunning(p.running);
+    }
+
+    const onTimerStorage = (e: StorageEvent) => {
+      if (e.key !== MATCH_TIMER_SYNC_KEY || !e.newValue) return;
+      try {
+        const remote = JSON.parse(e.newValue) as MatchTimerSyncPayload;
+        if (!shouldApplyRemoteTimer(remote, lastTimerSyncAppliedRef.current)) return;
+        if (Date.now() - remote.updatedAt > 3 * 60 * 60 * 1000) return;
+        lastTimerSyncAppliedRef.current = remote.updatedAt;
+        setTimeLeft(Math.max(0, remote.remainingSec));
+        setIsRunning(remote.running);
+      } catch {
+        /* noop */
+      }
+    };
+    window.addEventListener("storage", onTimerStorage);
+    return () => window.removeEventListener("storage", onTimerStorage);
+  }, []);
+
+  useEffect(() => {
+    const p = readMatchScoreSync();
+    if (shouldApplyRemoteScore(p, lastScoreSyncAppliedRef.current) && Date.now() - p.updatedAt < 3 * 60 * 60 * 1000) {
+      lastScoreSyncAppliedRef.current = p.updatedAt;
+      setScore({ home: Math.max(0, p.home), guest: Math.max(0, p.guest) });
+    }
+
+    const onScoreStorage = (e: StorageEvent) => {
+      if (e.key !== MATCH_SCORE_SYNC_KEY || !e.newValue) return;
+      try {
+        const remote = JSON.parse(e.newValue) as { home: number; guest: number; updatedAt: number };
+        if (!shouldApplyRemoteScore(remote, lastScoreSyncAppliedRef.current)) return;
+        if (Date.now() - remote.updatedAt > 3 * 60 * 60 * 1000) return;
+        lastScoreSyncAppliedRef.current = remote.updatedAt;
+        setScore({ home: Math.max(0, remote.home), guest: Math.max(0, remote.guest) });
+      } catch {
+        /* noop */
+      }
+    };
+    window.addEventListener("storage", onScoreStorage);
+    return () => window.removeEventListener("storage", onScoreStorage);
+  }, []);
+
+  const changeScore = useCallback((deltaHome: number, deltaGuest: number) => {
+    setScore((prev) => {
+      const safe = { home: Math.max(0, prev.home + deltaHome), guest: Math.max(0, prev.guest + deltaGuest) };
+      const now = Date.now();
+      lastScoreSyncAppliedRef.current = now;
+      writeMatchScoreSync({ ...safe, updatedAt: now, origin: "board" });
+      return safe;
+    });
+  }, []);
+
+  useEffect(() => {
+    timeLeftRef.current = timeLeft;
+  }, [timeLeft]);
 
   useEffect(() => {
     const syncFullscreen = () => setIsFullscreen(!!document.fullscreenElement);
@@ -154,7 +307,13 @@ export default function MatchBoardPage() {
     let interval: NodeJS.Timeout;
     if (isRunning) {
       interval = setInterval(() => {
-        setTimeLeft((prev) => (prev <= 0 ? 0 : prev - 1));
+        setTimeLeft((prev) => {
+          const next = prev <= 0 ? 0 : prev - 1;
+          const now = Date.now();
+          lastTimerSyncAppliedRef.current = now;
+          writeMatchTimerSync({ remainingSec: next, running: true, updatedAt: now, origin: "board" });
+          return next;
+        });
       }, 1000);
     }
     return () => clearInterval(interval);
@@ -168,7 +327,15 @@ export default function MatchBoardPage() {
 
   const handleSetPresetTime = (minutes: number) => {
     setIsRunning(false);
-    setTimeLeft(minutes * 60);
+    setPresetMinutes(minutes);
+    presetMinutesRef.current = minutes;
+    writeMatchTimerPresetMinutes(minutes);
+    const sec = minutes * 60;
+    setTimeLeft(sec);
+    timeLeftRef.current = sec;
+    const now = Date.now();
+    lastTimerSyncAppliedRef.current = now;
+    writeMatchTimerSync({ remainingSec: sec, running: false, updatedAt: now, origin: "board" });
     toast({
       title: "TIEMPO_AJUSTADO",
       description: `Cronómetro configurado a ${minutes} minutos.`,
@@ -177,7 +344,16 @@ export default function MatchBoardPage() {
 
   const calculatePositions = useCallback(() => {
     if (isAnyDialogOpen) return;
-    const formationsForField = FORMATIONS_DATA[fieldType];
+    const formationsForField = FORMATIONS_DATA[safeFieldType] || FORMATIONS_DATA.f11;
+    const fallbackFormation = Object.keys(formationsForField)[0];
+    const homeShape =
+      homeFormation === "NINGUNA"
+        ? []
+        : formationsForField[homeFormation] || (fallbackFormation ? formationsForField[fallbackFormation] : []);
+    const guestShape =
+      guestFormation === "NINGUNA"
+        ? []
+        : formationsForField[guestFormation] || (fallbackFormation ? formationsForField[fallbackFormation] : []);
     const shiftX = (side: "left" | "center" | "right") => {
       if (side === "left") return -5;
       if (side === "right") return 5;
@@ -199,25 +375,31 @@ export default function MatchBoardPage() {
     const minSafeY = 8;
     const maxSafeY = 92;
 
-    const hp = homeFormation === "NINGUNA" ? [] : (formationsForField[homeFormation] || formationsForField["4-3-3"]).map((pos, idx) => {
+    const hp = homeShape.map((pos, idx) => {
       let finalX = (0.05 + (pos.x * 0.9)) * 100;
       let finalY = pos.y * 100;
       if (idx === 0) { finalX = 8; finalY = 50; } 
       else {
-        finalY = finalY + shiftX(homeShift);
         finalX = finalX + phaseOffset(homePhase);
         if (homePhase === 'def') finalX = Math.min(50, finalX);
         finalX = Math.max(minSafeX, Math.min(maxSafeX, finalX));
         finalY = Math.max(minSafeY, Math.min(maxSafeY, finalY));
       }
-      return { id: `local-${idx}`, number: idx + 1, name: `JUGADOR ${idx + 1}`, team: "local" as const, x: finalX, y: finalY };
+      const nm = localHomeNames[idx]?.trim();
+      return {
+        id: `local-${idx}`,
+        number: idx + 1,
+        name: nm ? nm.toUpperCase() : `JUGADOR ${idx + 1}`,
+        team: "local" as const,
+        x: finalX,
+        y: finalY,
+      };
     });
-    const gp = guestFormation === "NINGUNA" ? [] : (formationsForField[guestFormation] || formationsForField["4-3-3"]).map((pos, idx) => {
+    const gp = guestShape.map((pos, idx) => {
       let finalX = (0.95 - (pos.x * 0.9)) * 100;
       let finalY = (1 - pos.y) * 100;
       if (idx === 0) { finalX = 92; finalY = 50; }
       else {
-        finalY = finalY - shiftX(guestShift);
         finalX = finalX - phaseOffset(guestPhase);
         if (guestPhase === 'def') finalX = Math.max(50, finalX);
         finalX = Math.max(minSafeX, Math.min(maxSafeX, finalX));
@@ -226,7 +408,7 @@ export default function MatchBoardPage() {
       return { id: `visitor-${idx}`, number: idx + 1, name: `RIVAL ${idx + 1}`, team: "visitor" as const, x: finalX, y: finalY };
     });
     setPlayers([...hp, ...gp]);
-  }, [fieldType, homeFormation, guestFormation, homeShift, guestShift, homePhase, guestPhase, isAnyDialogOpen]);
+  }, [safeFieldType, homeFormation, guestFormation, homePhase, guestPhase, isAnyDialogOpen, localHomeNames]);
 
   useEffect(() => { calculatePositions(); }, [calculatePositions]);
 
@@ -250,18 +432,50 @@ export default function MatchBoardPage() {
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
     if (draggingId) {
-      setPlayers(prev => prev.map(p => p.id === draggingId ? { ...p, x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) } : p));
+      pendingMatchDragRef.current = { x, y };
+      if (matchMoveRafRef.current == null) {
+        matchMoveRafRef.current = requestAnimationFrame(() => {
+          matchMoveRafRef.current = null;
+          const pt = pendingMatchDragRef.current;
+          const id = draggingIdRef.current;
+          if (!pt || !id) return;
+          setPlayers((prev) =>
+            prev.map((p) =>
+              p.id === id
+                ? { ...p, x: Math.max(0, Math.min(100, pt.x)), y: Math.max(0, Math.min(100, pt.y)) }
+                : p,
+            ),
+          );
+        });
+      }
     } else if (activeDrawing) {
-      setActiveDrawing(prev => [...(prev || []), {x, y}]);
+      setActiveDrawing((prev) => [...(prev || []), { x, y }]);
     }
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
+    if (matchMoveRafRef.current != null) {
+      cancelAnimationFrame(matchMoveRafRef.current);
+      matchMoveRafRef.current = null;
+    }
+    const pt = pendingMatchDragRef.current;
+    const id = draggingIdRef.current;
+    if (pt && id) {
+      setPlayers((prev) =>
+        prev.map((p) =>
+          p.id === id
+            ? { ...p, x: Math.max(0, Math.min(100, pt.x)), y: Math.max(0, Math.min(100, pt.y)) }
+            : p,
+        ),
+      );
+    }
+    pendingMatchDragRef.current = null;
+
     if (draggingId) {
       (e.target as HTMLElement).releasePointerCapture(e.pointerId);
       setDraggingId(null);
     } else if (activeDrawing) {
-      setDrawings(prev => [...prev, { points: activeDrawing, color: currentColor }]);
+      setDrawings((prev) => [...prev, { points: activeDrawing, color: currentColor }]);
       setActiveDrawing(null);
     }
   };
@@ -331,23 +545,52 @@ export default function MatchBoardPage() {
     )} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}>
       
       {/* MARCADOR DE GOLES */}
-      <div className="fixed top-4 left-20 lg:left-32 z-[100] flex items-center gap-3 px-3 py-1 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl animate-in slide-in-from-left-4 duration-700 scale-[0.75] origin-top-left lg:scale-100 glass-panel">
+      <div className="fixed top-4 left-20 lg:left-32 z-[100] flex items-center gap-3 px-3 py-1.5 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl animate-in slide-in-from-left-4 duration-700 scale-[0.9] origin-top-left md:scale-100 glass-panel">
+        <Badge
+          variant="outline"
+          className={cn(
+            "text-[6px] font-black uppercase shrink-0 border-white/20",
+            matchSource === "sandbox" ? "text-primary border-primary/30" : "text-amber-500/80 border-amber-500/30",
+          )}
+        >
+          {matchSource === "sandbox" ? "Sandbox" : "Élite"}
+        </Badge>
         <div className="flex items-center gap-4">
           <div className="flex flex-col items-center">
             <span className="text-[6px] font-black text-primary/40 uppercase">LOC</span>
             <div className="flex items-center gap-1.5">
-              <button onClick={() => setScore(s => ({...s, home: Math.max(0, s.home - 1)}))} className="text-primary/20 hover:text-primary text-[8px]">-</button>
+              <button
+                onClick={() => changeScore(-1, 0)}
+                className="h-8 w-8 lg:h-9 lg:w-9 rounded-lg border border-primary/20 bg-primary/10 text-primary/70 hover:text-primary hover:bg-primary/20 text-sm lg:text-base font-black transition-all active:scale-95"
+              >
+                -
+              </button>
               <span className="text-xl font-black text-primary cyan-text-glow tabular-nums">{score.home}</span>
-              <button onClick={() => setScore(s => ({...s, home: s.home + 1}))} className="text-primary/20 hover:text-primary text-[8px]">+</button>
+              <button
+                onClick={() => changeScore(1, 0)}
+                className="h-8 w-8 lg:h-9 lg:w-9 rounded-lg border border-primary/20 bg-primary/10 text-primary/70 hover:text-primary hover:bg-primary/20 text-sm lg:text-base font-black transition-all active:scale-95"
+              >
+                +
+              </button>
             </div>
           </div>
           <div className="text-xs font-black text-white/20 italic">VS</div>
           <div className="flex flex-col items-center">
             <span className="text-[6px] font-black text-rose-400/40 uppercase">VIS</span>
             <div className="flex items-center gap-1.5">
-              <button onClick={() => setScore(s => ({...s, guest: Math.max(0, s.guest - 1)}))} className="text-rose-500/20 hover:text-rose-500 text-[8px]">-</button>
+              <button
+                onClick={() => changeScore(0, -1)}
+                className="h-8 w-8 lg:h-9 lg:w-9 rounded-lg border border-rose-500/20 bg-rose-500/10 text-rose-400/70 hover:text-rose-400 hover:bg-rose-500/20 text-sm lg:text-base font-black transition-all active:scale-95"
+              >
+                -
+              </button>
               <span className="text-xl font-black text-rose-500 rose-text-glow tabular-nums">{score.guest}</span>
-              <button onClick={() => setScore(s => ({...s, guest: s.guest + 1}))} className="text-rose-500/20 hover:text-rose-500 text-[8px]">+</button>
+              <button
+                onClick={() => changeScore(0, 1)}
+                className="h-8 w-8 lg:h-9 lg:w-9 rounded-lg border border-rose-500/20 bg-rose-500/10 text-rose-400/70 hover:text-rose-400 hover:bg-rose-500/20 text-sm lg:text-base font-black transition-all active:scale-95"
+              >
+                +
+              </button>
             </div>
           </div>
         </div>
@@ -385,7 +628,7 @@ export default function MatchBoardPage() {
                 </span>
               </div>
               <p className="text-[10px] text-white/40 text-center uppercase font-bold tracking-widest leading-loose italic">
-                Introduzca este código en su Smartwatch para sincronizar la telemetría y el cronómetro master en tiempo real.
+                Mismo código que en Config. Watch (Élite o Sandbox). La pizarra y /smartwatch sincronizan cronómetro y marcador entre pestañas vía almacén local.
               </p>
             </div>
           </DialogContent>
@@ -411,7 +654,23 @@ export default function MatchBoardPage() {
           </div>
           <div className="flex items-center gap-1 border-l border-white/10 pl-2">
             <button 
-              onClick={() => setIsRunning(!isRunning)} 
+              type="button"
+              onClick={() => {
+                setIsRunning((r) => {
+                  const next = !r;
+                  queueMicrotask(() => {
+                    const now = Date.now();
+                    lastTimerSyncAppliedRef.current = now;
+                    writeMatchTimerSync({
+                      remainingSec: timeLeftRef.current,
+                      running: next,
+                      updatedAt: now,
+                      origin: "board",
+                    });
+                  });
+                  return next;
+                });
+              }} 
               className={cn(
                 "h-7 w-7 rounded-lg flex items-center justify-center transition-all duration-300 active:scale-90",
                 isRunning ? "text-amber-400 hover:bg-amber-400/10" : "text-emerald-400 hover:bg-emerald-400/10"
@@ -421,7 +680,16 @@ export default function MatchBoardPage() {
               {isRunning ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
             </button>
             <button 
-              onClick={() => { setIsRunning(false); setTimeLeft(45 * 60); }} 
+              type="button"
+              onClick={() => {
+                setIsRunning(false);
+                const sec = presetMinutesRef.current * 60;
+                setTimeLeft(sec);
+                timeLeftRef.current = sec;
+                const now = Date.now();
+                lastTimerSyncAppliedRef.current = now;
+                writeMatchTimerSync({ remainingSec: sec, running: false, updatedAt: now, origin: "board" });
+              }} 
               className="h-7 w-7 rounded-lg flex items-center justify-center text-white/20 hover:text-white hover:bg-white/10 transition-all duration-300 active:scale-90"
               title="Resetear"
             >
@@ -469,7 +737,7 @@ export default function MatchBoardPage() {
                 </SelectTrigger>
                 <SelectContent className="bg-[#0a0f18] border-primary/20">
                   <SelectItem value="NINGUNA" className="text-[10px] font-black uppercase text-rose-500 italic">LIMPIAR</SelectItem>
-                  {Object.keys(FORMATIONS_DATA[fieldType]).map(f => <SelectItem key={f} value={f} className="text-[10px] font-black uppercase">{f}</SelectItem>)}
+                  {Object.keys(FORMATIONS_DATA[safeFieldType] || FORMATIONS_DATA.f11).map(f => <SelectItem key={f} value={f} className="text-[10px] font-black uppercase">{f}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -489,13 +757,6 @@ export default function MatchBoardPage() {
                 ))}
               </div>
             </div>
-            <div className="bg-black/80 backdrop-blur-xl border border-primary/20 p-1 rounded-xl shadow-xl flex items-center h-10 lg:h-11 glass-panel">
-              <div className="flex items-center gap-0.5 bg-black/40 p-0.5 rounded-lg border border-white/5">
-                <button onClick={() => setHomeShift("left")} className={cn("h-7 w-7 lg:h-8 lg:w-8 rounded-md flex items-center justify-center transition-all", homeShift === 'left' ? 'bg-primary/20 text-primary' : 'text-white/10')}><ChevronLeft className="h-3 w-3 lg:h-4 lg:w-4" /></button>
-                <button onClick={() => setHomeShift("center")} className={cn("h-7 w-7 lg:h-8 lg:w-8 rounded-md flex items-center justify-center transition-all", homeShift === 'center' ? 'bg-primary/20 text-primary' : 'text-white/10')}><div className="h-1.5 w-1.5 lg:h-2 lg:w-2 rounded-full bg-current" /></button>
-                <button onClick={() => setHomeShift("right")} className={cn("h-7 w-7 lg:h-8 lg:w-8 rounded-md flex items-center justify-center transition-all", homeShift === 'right' ? 'bg-primary/20 text-primary' : 'text-white/10')}><ChevronRight className="h-3 w-3 lg:h-4 lg:w-4" /></button>
-              </div>
-            </div>
           </div>
 
           {/* MANDO CENTRAL (CENTRO) - COMPACTADO */}
@@ -511,14 +772,37 @@ export default function MatchBoardPage() {
               </div>
 
               <div className="flex items-center gap-2 lg:gap-3 px-1 border-r border-white/10 pr-2 lg:pr-3 shrink-0">
+                <Select
+                  value={safeFieldType}
+                  onValueChange={(v: FieldType) => setFieldType(FORMATIONS_DATA[v] ? v : "f11")}
+                >
+                  <SelectTrigger
+                    title="Tipo de campo"
+                    className="h-8 w-[4.25rem] lg:w-[5rem] bg-black/50 border-white/10 text-[7px] lg:text-[8px] font-black uppercase text-primary rounded-lg focus:ring-0 px-1.5 shrink-0"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#0a0f18] border-primary/20">
+                    <SelectItem value="f11" className="text-[9px] font-black uppercase">
+                      F11
+                    </SelectItem>
+                    <SelectItem value="f7" className="text-[9px] font-black uppercase">
+                      F7
+                    </SelectItem>
+                    <SelectItem value="futsal" className="text-[9px] font-black uppercase">
+                      Futsal
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
                 <button 
+                  type="button"
                   onClick={() => setShowLanes(!showLanes)}
                   className={cn("h-8 px-2 lg:px-3 rounded-lg flex items-center gap-1.5 lg:gap-2 transition-all text-[8px] lg:text-[9px] font-black uppercase", showLanes ? "bg-primary/20 text-primary" : "text-white/20 hover:text-white")}
                 >
                   <Columns3 className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
                   <span className="hidden md:inline">Carriles</span>
                 </button>
-                <button onClick={toggleFullscreen} className="h-8 w-8 flex items-center justify-center text-white/40 hover:text-primary transition-all active:scale-90">
+                <button type="button" onClick={toggleFullscreen} className="h-8 w-8 flex items-center justify-center text-white/40 hover:text-primary transition-all active:scale-90">
                   {isFullscreen ? <Minimize2 className="h-3.5 w-3.5 lg:h-4 lg:w-4" /> : <Maximize2 className="h-3.5 w-3.5 lg:h-4 lg:w-4" />}
                 </button>
               </div>
@@ -536,15 +820,18 @@ export default function MatchBoardPage() {
           {/* BLOQUE VISITANTE (DERECHA) - ESPEJO Y COMPACTO */}
           <div className="flex items-center gap-1.5 lg:gap-2 pointer-events-auto shrink-0">
             <div className="bg-black/80 backdrop-blur-xl border border-rose-500/20 p-1 rounded-xl shadow-xl flex items-center h-10 lg:h-11 glass-panel">
-              <div className="flex items-center gap-0.5 bg-black/40 p-0.5 rounded-lg border border-white/5">
-                <button onClick={() => setGuestShift("left")} className={cn("h-7 w-7 lg:h-8 lg:w-8 rounded-md flex items-center justify-center transition-all", guestShift === 'left' ? 'bg-rose-500/20 text-rose-500' : 'text-white/10')}><ChevronLeft className="h-3 w-3 lg:h-4 lg:w-4" /></button>
-                <button onClick={() => setGuestShift("center")} className={cn("h-7 w-7 lg:h-8 lg:w-8 rounded-md flex items-center justify-center transition-all", guestShift === 'center' ? 'bg-rose-500/20 text-rose-500' : 'text-white/10')}><div className="h-1.5 w-1.5 lg:h-2 lg:w-2 rounded-full bg-current" /></button>
-                <button onClick={() => setGuestShift("right")} className={cn("h-7 w-7 lg:h-8 lg:w-8 rounded-md flex items-center justify-center transition-all", guestShift === 'right' ? 'bg-rose-500/20 text-rose-500' : 'text-white/10')}><ChevronRight className="h-3 w-3 lg:h-4 lg:w-4" /></button>
-              </div>
+              <Select value={guestFormation} onValueChange={setGuestFormation}>
+                <SelectTrigger className="h-8 w-20 lg:w-24 bg-black border-rose-500/10 text-white font-black uppercase text-[9px] lg:text-[10px] rounded-lg focus:ring-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#0a0f18] border-rose-500/20">
+                  <SelectItem value="NINGUNA" className="text-[10px] font-black uppercase text-rose-500 italic">LIMPIAR</SelectItem>
+                  {Object.keys(FORMATIONS_DATA[safeFieldType] || FORMATIONS_DATA.f11).map(f => <SelectItem key={f} value={f} className="text-[10px] font-black uppercase">{f}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
             <div className="bg-black/80 backdrop-blur-xl border border-rose-500/20 p-1 rounded-xl shadow-xl flex items-center h-10 lg:h-11 glass-panel">
               <div className="flex gap-0.5 lg:gap-1">
-                {/* ORDEN INVERTIDO PARA VISITANTE: ATK -> DEF para coherencia con dirección de ataque */}
                 {["ATK", "SAL", "TDA", "DEF"].map(p => (
                   <button 
                     key={p} 
@@ -558,17 +845,6 @@ export default function MatchBoardPage() {
                   </button>
                 ))}
               </div>
-            </div>
-            <div className="bg-black/80 backdrop-blur-xl border border-rose-500/20 p-1 rounded-xl shadow-xl flex items-center h-10 lg:h-11 glass-panel">
-              <Select value={guestFormation} onValueChange={setGuestFormation}>
-                <SelectTrigger className="h-8 w-20 lg:w-24 bg-black border-rose-500/10 text-white font-black uppercase text-[9px] lg:text-[10px] rounded-lg focus:ring-0">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-[#0a0f18] border-rose-500/20">
-                  <SelectItem value="NINGUNA" className="text-[10px] font-black uppercase text-rose-500 italic">LIMPIAR</SelectItem>
-                  {Object.keys(FORMATIONS_DATA[fieldType]).map(f => <SelectItem key={f} value={f} className="text-[10px] font-black uppercase">{f}</SelectItem>)}
-                </SelectContent>
-              </Select>
             </div>
           </div>
         </div>
@@ -596,5 +872,19 @@ export default function MatchBoardPage() {
         </SheetContent>
       </Sheet>
     </div>
+  );
+}
+
+export default function MatchBoardPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen flex-1 items-center justify-center bg-black text-primary font-black uppercase tracking-widest animate-pulse">
+          Cargando_Pizarra...
+        </div>
+      }
+    >
+      <MatchBoardInner />
+    </Suspense>
   );
 }

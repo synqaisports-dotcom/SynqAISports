@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { 
   Sprout, 
   Plus, 
@@ -64,6 +65,8 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { canUseOperativaSupabase } from "@/lib/operativa-sync";
+import { useClubModulePermissions } from "@/hooks/use-club-module-permissions";
 
 // PROTOCOLO DE ETAPAS MAESTRAS
 const STAGES = [
@@ -155,9 +158,81 @@ const WEEK_DAYS = [
 
 const ALPHABET = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
 
+const DAY_ORDER = ["L", "M", "X", "J", "V", "S", "D"] as const;
+type DayCode = (typeof DAY_ORDER)[number];
+
+function normalizeDays(input: string[]): DayCode[] {
+  const set = new Set(input.filter((d): d is DayCode => DAY_ORDER.includes(d as DayCode)));
+  // Orden fijo para consistencia (y para que luego se mapee a fechas reales de forma estable)
+  return DAY_ORDER.filter((d) => set.has(d));
+}
+
+const MONTH_TO_MCC: Record<number, string> = {
+  8: "SEPT",
+  9: "OCT",
+  10: "NOV",
+  11: "DEC",
+  0: "JAN",
+  1: "FEB",
+  2: "MAR",
+  3: "APR",
+  4: "MAY",
+  5: "JUN",
+};
+
+function nextSessionContextFromTeam(team: { name?: string; suffix?: string; days?: string[] }) {
+  const today = new Date();
+  const allowed = normalizeDays(Array.isArray(team.days) && team.days.length > 0 ? team.days : ["L", "X", "V"]);
+  const jsToCode: Record<number, DayCode> = { 1: "L", 2: "M", 3: "X", 4: "J", 5: "V", 6: "S", 0: "D" };
+  let target = new Date(today);
+  let targetCode: DayCode = allowed[0] ?? "L";
+  const startRaw = String((team as { startTime?: string }).startTime ?? "17:00");
+  const [startH, startM] = startRaw.split(":").map((v) => Number(v));
+  const safeStartH = Number.isFinite(startH) ? startH : 17;
+  const safeStartM = Number.isFinite(startM) ? startM : 0;
+
+  for (let i = 0; i < 7; i++) {
+    const probe = new Date(today);
+    probe.setDate(today.getDate() + i);
+    const code = jsToCode[probe.getDay()] ?? "L";
+    if (!allowed.includes(code)) continue;
+
+    // Si el entreno es hoy pero su hora de inicio ya pasó, buscamos el siguiente día programado.
+    if (i === 0) {
+      const startDate = new Date(probe);
+      startDate.setHours(safeStartH, safeStartM, 0, 0);
+      if (today.getTime() > startDate.getTime()) {
+        continue;
+      }
+    }
+
+    if (allowed.includes(code)) {
+      target = probe;
+      targetCode = code;
+      break;
+    }
+  }
+
+  const mccMonth = MONTH_TO_MCC[target.getMonth()] ?? "OCT";
+  const week = Math.min(5, Math.max(1, Math.floor((target.getDate() - 1) / 7) + 1));
+  const sessionIdx = Math.max(1, allowed.indexOf(targetCode) + 1);
+
+  return {
+    team: `${String(team.name ?? "").trim()} ${String(team.suffix ?? "").trim()}`.trim().toUpperCase(),
+    mcc: `${mccMonth}_W${week}`,
+    session: `S${sessionIdx}`,
+  };
+}
+
 export default function AcademyManagementPage() {
-  const { profile } = useAuth();
+  const { profile, session } = useAuth();
   const { toast } = useToast();
+  const { canEdit: canEditAcademy, canDelete: canDeleteAcademy } = useClubModulePermissions("academy");
+
+  const clubScopeId = profile?.clubId ?? "global-hq";
+  const categoriesStorageKey = `synq_academy_categories_v1_${clubScopeId}`;
+  const canUseAcademySupabase = canUseOperativaSupabase(clubScopeId) && !!session?.access_token;
+
   const [categories, setCategories] = useState(INITIAL_CATEGORIES);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isViewSheetOpen, setIsViewSheetOpen] = useState(false);
@@ -186,10 +261,95 @@ export default function AcademyManagementPage() {
     staffPhysical: ""
   });
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const accessToken = session?.access_token;
+    let cancelled = false;
+
+    const load = async () => {
+      if (canUseAcademySupabase && accessToken) {
+        try {
+          const res = await fetch("/api/club/methodology-academy", {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+          if (res.ok) {
+            const json = (await res.json()) as { ok?: boolean; payload?: any };
+            const payload = json?.payload;
+            if (!cancelled && Array.isArray(payload)) {
+              setCategories(payload);
+              try {
+                localStorage.setItem(categoriesStorageKey, JSON.stringify(payload));
+              } catch {
+                // ignore
+              }
+              return;
+            }
+          }
+        } catch {
+          // fallback a localStorage
+        }
+      }
+
+      try {
+        const raw = localStorage.getItem(categoriesStorageKey);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) setCategories(parsed);
+      } catch {
+        // ignore (fallback a INITIAL_CATEGORIES)
+      }
+    };
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categoriesStorageKey, canUseAcademySupabase, session?.access_token]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const accessToken = session?.access_token;
+
+    try {
+      localStorage.setItem(categoriesStorageKey, JSON.stringify(categories));
+    } catch {
+      // ignore
+    }
+
+    if (!canUseAcademySupabase || !accessToken) return;
+    if (!canEditAcademy) return;
+
+    const t = window.setTimeout(() => {
+      void fetch("/api/club/methodology-academy", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ payload: categories }),
+      }).catch(() => {
+        // ignore (seguimos con localStorage)
+      });
+    }, 600);
+
+    return () => {
+      window.clearTimeout(t);
+    };
+  }, [categories, categoriesStorageKey, canUseAcademySupabase, session?.access_token, canEditAcademy]);
+
   const selectedFacility = MOCK_FACILITIES.find(f => f.id === formData.facilityId);
   const hasZones = selectedFacility && parseInt(selectedFacility.subdivisions) > 1;
 
   const handleOpenSheet = (mode: 'category' | 'team') => {
+    if (!canEditAcademy) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes permiso de edición en Gestión de Cantera.",
+      });
+      return;
+    }
     setSheetMode(mode);
     setEditingId(null);
     setEditingTeamIdx(null);
@@ -215,6 +375,14 @@ export default function AcademyManagementPage() {
   };
 
   const handleEditCategory = (cat: any) => {
+    if (!canEditAcademy) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes permiso de edición en Gestión de Cantera.",
+      });
+      return;
+    }
     if (cat.id.startsWith('cat_')) {
       toast({
         variant: "destructive",
@@ -234,6 +402,14 @@ export default function AcademyManagementPage() {
   };
 
   const handleEditTeam = (catId: string, team: any, idx: number) => {
+    if (!canEditAcademy) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes permiso de edición en Gestión de Cantera.",
+      });
+      return;
+    }
     setSheetMode('team');
     setEditingId(catId);
     setEditingTeamIdx(idx);
@@ -261,6 +437,14 @@ export default function AcademyManagementPage() {
   };
 
   const handleToggleTeamStatus = (catId: string, teamIdx: number) => {
+    if (!canEditAcademy) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes permiso de edición en Gestión de Cantera.",
+      });
+      return;
+    }
     const category = categories.find(c => c.id === catId);
     if (!category) return;
     const team = category.teams[teamIdx];
@@ -285,6 +469,14 @@ export default function AcademyManagementPage() {
   };
 
   const handleDeleteTeam = (catId: string, teamIdx: number) => {
+    if (!canDeleteAcademy) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes permiso de borrado en Gestión de Cantera.",
+      });
+      return;
+    }
     setCategories(prev => prev.map(c => {
       if (c.id === catId) {
         const newTeams = [...c.teams];
@@ -301,6 +493,14 @@ export default function AcademyManagementPage() {
   };
 
   const handleDeleteCategory = (id: string, name: string) => {
+    if (!canDeleteAcademy) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes permiso de borrado en Gestión de Cantera.",
+      });
+      return;
+    }
     if (id.startsWith('cat_')) {
       toast({
         variant: "destructive",
@@ -324,6 +524,15 @@ export default function AcademyManagementPage() {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canEditAcademy) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes permiso de edición en Gestión de Cantera.",
+      });
+      return;
+    }
+    const normalizedDays = normalizeDays(formData.days || []);
     setLoading(true);
     
     setTimeout(() => {
@@ -353,7 +562,7 @@ export default function AcademyManagementPage() {
                 type: formData.type,
                 facility: selectedFacility?.name || "",
                 zone: formData.zone,
-                days: formData.days,
+                days: normalizedDays as unknown as string[],
                 startTime: formData.startTime,
                 endTime: formData.endTime,
                 status: formData.status,
@@ -381,7 +590,7 @@ export default function AcademyManagementPage() {
                   type: formData.type,
                   facility: selectedFacility?.name || "", 
                   zone: formData.zone, 
-                  days: formData.days,
+                  days: normalizedDays as unknown as string[],
                   startTime: formData.startTime,
                   endTime: formData.endTime,
                   status: "Active",
@@ -423,13 +632,15 @@ export default function AcademyManagementPage() {
           <Button 
             variant="outline"
             onClick={() => handleOpenSheet('category')}
-            className="rounded-2xl border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest h-12 px-6 hover:bg-primary/10 transition-all"
+            disabled={!canEditAcademy}
+            className="rounded-2xl border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest h-12 px-6 hover:bg-primary/10 transition-all disabled:opacity-40"
           >
             <FolderPlus className="h-4 w-4 mr-2" /> Nueva Categoría
           </Button>
           <Button 
             onClick={() => handleOpenSheet('team')}
-            className="rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none"
+            disabled={!canEditAcademy}
+            className="rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none disabled:opacity-40"
           >
             <Plus className="h-4 w-4 mr-2" /> Vincular Equipo
           </Button>
@@ -502,11 +713,32 @@ export default function AcademyManagementPage() {
                           
                           <div className="flex items-center gap-1 shrink-0">
                             <button onClick={() => handleViewTeam(team, cat.name)} className="p-1.5 hover:bg-primary/20 rounded-lg text-primary transition-all" title="Ver Ficha"><Eye className="h-3.5 w-3.5" /></button>
-                            <button onClick={() => handleEditTeam(cat.id, team, idx)} className="p-1.5 hover:bg-primary/20 rounded-lg text-primary transition-all" title="Editar Nodo"><Pencil className="h-3.5 w-3.5" /></button>
-                            <button onClick={() => handleToggleTeamStatus(cat.id, idx)} className="p-1.5 hover:bg-amber-500/20 rounded-lg text-amber-500 transition-all" title={team.status === "Paused" ? "Reactivar" : "Pausar"}>
+                            <Button
+                              asChild
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 p-1.5 hover:bg-emerald-500/20 rounded-lg text-emerald-400 transition-all"
+                              title="Abrir asistencia (próxima sesión)"
+                            >
+                              <Link
+                                href={(() => {
+                                  const ctx = nextSessionContextFromTeam(team);
+                                  const qs = new URLSearchParams({
+                                    team: ctx.team,
+                                    mcc: ctx.mcc,
+                                    session: ctx.session,
+                                  });
+                                  return `/dashboard/sessions?${qs.toString()}`;
+                                })()}
+                              >
+                                <ClipboardCheck className="h-3.5 w-3.5" />
+                              </Link>
+                            </Button>
+                            <button type="button" disabled={!canEditAcademy} onClick={() => handleEditTeam(cat.id, team, idx)} className="p-1.5 hover:bg-primary/20 rounded-lg text-primary transition-all disabled:opacity-30 disabled:pointer-events-none" title="Editar Nodo"><Pencil className="h-3.5 w-3.5" /></button>
+                            <button type="button" disabled={!canEditAcademy} onClick={() => handleToggleTeamStatus(cat.id, idx)} className="p-1.5 hover:bg-amber-500/20 rounded-lg text-amber-500 transition-all disabled:opacity-30 disabled:pointer-events-none" title={team.status === "Paused" ? "Reactivar" : "Pausar"}>
                               {team.status === "Paused" ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
                             </button>
-                            <button onClick={() => handleDeleteTeam(cat.id, idx)} className="p-1.5 hover:bg-rose-500/20 rounded-lg text-rose-500 transition-all" title="Borrar"><Trash2 className="h-3.5 w-3.5" /></button>
+                            <button type="button" disabled={!canDeleteAcademy} onClick={() => handleDeleteTeam(cat.id, idx)} className="p-1.5 hover:bg-rose-500/20 rounded-lg text-rose-500 transition-all disabled:opacity-30 disabled:pointer-events-none" title="Borrar"><Trash2 className="h-3.5 w-3.5" /></button>
                           </div>
                         </div>
                       ))}
@@ -516,14 +748,18 @@ export default function AcademyManagementPage() {
                     {!cat.id.startsWith('cat_') ? (
                       <>
                         <button 
+                          type="button"
+                          disabled={!canEditAcademy}
                           onClick={() => handleEditCategory(cat)}
-                          className="text-[8px] font-black text-primary hover:cyan-text-glow transition-all flex items-center gap-2 uppercase tracking-widest italic"
+                          className="text-[8px] font-black text-primary hover:cyan-text-glow transition-all flex items-center gap-2 uppercase tracking-widest italic disabled:opacity-30 disabled:pointer-events-none"
                         >
                           <Pencil className="h-2.5 w-2.5" /> Editar
                         </button>
                         <button 
+                          type="button"
+                          disabled={!canDeleteAcademy}
                           onClick={() => handleDeleteCategory(cat.id, cat.name)}
-                          className="text-[8px] font-black text-rose-500 hover:text-rose-400 transition-all flex items-center gap-2 uppercase tracking-widest italic"
+                          className="text-[8px] font-black text-rose-500 hover:text-rose-400 transition-all flex items-center gap-2 uppercase tracking-widest italic disabled:opacity-30 disabled:pointer-events-none"
                         >
                           <Trash2 className="h-2.5 w-2.5" /> Eliminar
                         </button>
@@ -854,7 +1090,7 @@ export default function AcademyManagementPage() {
             <SheetClose asChild>
               <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest rounded-2xl">CANCELAR</Button>
             </SheetClose>
-            <Button onClick={handleSave} disabled={loading} className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] transition-all active:scale-95">
+            <Button onClick={handleSave} disabled={loading || !canEditAcademy} className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] transition-all active:scale-95 disabled:opacity-40">
               {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (editingTeamIdx !== null ? "ACTUALIZAR_NODO" : "SINCRONIZAR_NODO")}
             </Button>
           </div>

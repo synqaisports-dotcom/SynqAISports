@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -46,6 +46,7 @@ function LoginContent() {
   
   const [token, setToken] = useState<string | null>(null);
   const [campaignData, setCampaignData] = useState<any>(null);
+  const trackSentForToken = useRef<string | null>(null);
 
   // Form states
   const [regData, setRegData] = useState({ name: "", email: "", pass: "", club: "" });
@@ -69,11 +70,19 @@ function LoginContent() {
       setToken(t);
       setCampaignData({
         plan: "Enterprise Scale",
-        price: "0.70€ / niño",
+        price: "Cuota al club (B2B) — ver condiciones en tu nodo",
         region: "Argentina",
         countryCode: "AR",
         limit: "10 primeros",
       });
+      if (trackSentForToken.current !== t) {
+        trackSentForToken.current = t;
+        void fetch("/api/promo/track", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: t }),
+        }).catch(() => {});
+      }
       toast({
         title: "INVITACIÓN_DETECTADA",
         description: `Sincronizando campaña regional: ${t}`,

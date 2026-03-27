@@ -29,7 +29,7 @@ export default function BoardMatchLauncher() {
            
            <div className="flex flex-col gap-4">
               <Button className="h-20 bg-amber-500 text-black font-black uppercase text-xs tracking-[0.3em] rounded-3xl amber-glow hover:scale-[1.02] transition-all border-none" asChild>
-                <Link href="/board/match">
+                <Link href="/board/match?source=elite">
                   <Play className="h-5 w-5 mr-3" /> INICIAR TERMINAL DE PARTIDO
                 </Link>
               </Button>

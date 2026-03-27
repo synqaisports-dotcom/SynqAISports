@@ -36,17 +36,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { supabase, isSupabaseConfigured, type Club } from "@/lib/supabase";
-
-// Datos de fallback si no hay conexión a Supabase
-const FALLBACK_CLUBS: Club[] = [
-  { id: "c1", name: "Elite Soccer Academy", plan: "Enterprise", users: 120, status: "Active", country: "ES" },
-  { id: "c2", name: "Velocity Basketball", plan: "Pro", users: 45, status: "Active", country: "US" },
-  { id: "c3", name: "AquaSwim Club", plan: "Basic", users: 22, status: "Overdue", country: "IT" },
-  { id: "c4", name: "Manchester Training", plan: "Enterprise", users: 89, status: "Active", country: "UK" },
-];
+import type { Club } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth-context";
 
 export default function ManageClubsPage() {
+  const { session } = useAuth();
   const [clubs, setClubs] = useState<Club[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -69,31 +63,23 @@ export default function ManageClubsPage() {
     setIsLoading(true);
     setHasError(false);
     
-    // Si Supabase no está configurado, usar fallback inmediatamente
-    if (!isSupabaseConfigured || !supabase) {
+    if (!session?.access_token) {
       const savedClubs = JSON.parse(localStorage.getItem("synq_global_clubs") || "[]");
-      const merged = [...FALLBACK_CLUBS];
-      savedClubs.forEach((sc: Club) => {
-        if (!merged.find(m => m.id === sc.id)) {
-          merged.push(sc);
-        }
-      });
-      setClubs(merged);
+      setClubs(savedClubs);
       setIsUsingFallback(true);
       setIsLoading(false);
       return;
     }
     
     try {
-      const { data, error } = await supabase
-        .from('clubs')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error("[SynqAI] Error cargando clubs:", error);
-        throw error;
+      const res = await fetch("/api/admin/clubs", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const j = (await res.json()) as { clubs?: Club[]; error?: string };
+      if (!res.ok) {
+        throw new Error(j.error ?? `HTTP ${res.status}`);
       }
+      const data = Array.isArray(j.clubs) ? j.clubs : [];
 
       if (data && data.length > 0) {
         setClubs(data);
@@ -103,34 +89,22 @@ export default function ManageClubsPage() {
           description: `${data.length} nodos de club cargados desde la red.`,
         });
       } else {
-        // Si no hay datos en Supabase, usar fallback + localStorage
+        // Si no hay datos en Supabase, usar únicamente localStorage de trabajo.
         const savedClubs = JSON.parse(localStorage.getItem("synq_global_clubs") || "[]");
-        const merged = [...FALLBACK_CLUBS];
-        savedClubs.forEach((sc: Club) => {
-          if (!merged.find(m => m.id === sc.id)) {
-            merged.push(sc);
-          }
-        });
-        setClubs(merged);
+        setClubs(savedClubs);
         setIsUsingFallback(true);
         toast({
           title: "MODO_OFFLINE",
-          description: "Usando datos locales. Conecte Supabase para sincronización real.",
+          description: "Sin seed de prueba: usando datos locales persistidos.",
         });
       }
     } catch (error) {
       console.error("[SynqAI] Error en loadClubs:", error);
       setHasError(true);
       
-      // Fallback a datos locales
+      // Fallback a datos locales (sin datos de prueba)
       const savedClubs = JSON.parse(localStorage.getItem("synq_global_clubs") || "[]");
-      const merged = [...FALLBACK_CLUBS];
-      savedClubs.forEach((sc: Club) => {
-        if (!merged.find(m => m.id === sc.id)) {
-          merged.push(sc);
-        }
-      });
-      setClubs(merged);
+      setClubs(savedClubs);
       setIsUsingFallback(true);
     } finally {
       setIsLoading(false);
@@ -138,8 +112,8 @@ export default function ManageClubsPage() {
   };
 
   useEffect(() => {
-    loadClubs();
-  }, []);
+    void loadClubs();
+  }, [session?.access_token]);
 
   const handleToggleStatus = async (id: string) => {
     const club = clubs.find(c => c.id === id);
@@ -154,14 +128,17 @@ export default function ManageClubsPage() {
     ));
 
     // Intentar actualizar en Supabase
-    if (!isUsingFallback && supabase) {
-      const { error } = await supabase
-        .from('clubs')
-        .update({ status: newStatus })
-        .eq('id', id);
-
-      if (error) {
-        console.error("[SynqAI] Error actualizando status:", error);
+    if (!isUsingFallback && session?.access_token) {
+      const res = await fetch("/api/admin/clubs", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ id, status: newStatus }),
+      });
+      if (!res.ok) {
+        console.error("[SynqAI] Error actualizando status:", res.status);
         // Revertir cambio local si falla
         setClubs(prev => prev.map(c => 
           c.id === id ? { ...c, status: club.status } : c
@@ -210,18 +187,22 @@ export default function ManageClubsPage() {
     try {
       if (editingClubId) {
         // Actualizar club existente
-        if (!isUsingFallback && supabase) {
-          const { error } = await supabase
-            .from('clubs')
-            .update({
+        if (!isUsingFallback && session?.access_token) {
+          const res = await fetch("/api/admin/clubs", {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({
+              id: editingClubId,
               name: formData.name,
               plan: formData.plan,
               country: formData.country,
-              status: formData.status
-            })
-            .eq('id', editingClubId);
-
-          if (error) throw error;
+              status: formData.status,
+            }),
+          });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
         }
 
         setClubs(prev => prev.map(c => 
@@ -243,15 +224,24 @@ export default function ManageClubsPage() {
           users: 0
         };
 
-        if (!isUsingFallback && supabase) {
-          const { data, error } = await supabase
-            .from('clubs')
-            .insert(newClub)
-            .select()
-            .single();
-
-          if (error) throw error;
-          if (data) newClub.id = data.id;
+        if (!isUsingFallback && session?.access_token) {
+          const res = await fetch("/api/admin/clubs", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({
+              name: newClub.name,
+              plan: newClub.plan,
+              country: newClub.country,
+              status: newClub.status,
+              users: newClub.users,
+            }),
+          });
+          const j = (await res.json()) as { club?: Club; error?: string };
+          if (!res.ok) throw new Error(j.error ?? `HTTP ${res.status}`);
+          if (j.club?.id) newClub.id = j.club.id;
         }
 
         setClubs(prev => [newClub, ...prev]);

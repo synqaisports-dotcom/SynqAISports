@@ -82,7 +82,12 @@ export default function OnboardingTunnel() {
     setLoading(true);
     
     setTimeout(() => {
-      const generatedClubId = isSandbox ? "SND-" + Math.random().toString(36).substr(2, 6).toUpperCase() : "NODE-" + Math.random().toString(36).substr(2, 6).toUpperCase();
+      // `clubs.id` y `profiles.club_id` deben ser UUID (RLS usa tipos uuid).
+      // Si el navegador soporta crypto.randomUUID, lo usamos; si no, fallback simple.
+      const generatedClubId =
+        typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+          ? crypto.randomUUID()
+          : `club-${Date.now()}-${Math.random().toString(16).slice(2)}`;
       
       completeOnboarding({ 
         name: clubName, 

@@ -1,11 +1,14 @@
-import { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { PromoClientWrapper } from "./promo-client-wrapper";
+
+export const viewport: Viewport = {
+  themeColor: "#3b82f6",
+};
 
 export const metadata: Metadata = {
   title: "Sandbox by SynqAi",
   description: "Entorno Táctico Local y Gestión Sandbox",
   manifest: "/dashboard/promo/manifest.json",
-  themeColor: "#3b82f6",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -20,7 +23,6 @@ export const metadata: Metadata = {
 
 export default async function PromoSandboxLayout(props: { 
   children: React.ReactNode;
-  params: Promise<any>;
 }) {
   const children = props.children;
 

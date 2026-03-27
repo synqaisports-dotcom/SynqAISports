@@ -154,7 +154,7 @@ export default function PromoMatchesPage() {
                </CardContent>
                <CardFooter className="p-4 bg-black/40 flex justify-center">
                   <Button variant="ghost" className="w-full text-[9px] font-black uppercase text-primary/60 hover:text-primary" asChild>
-                     <Link href="/board/match">DIRIGIR PARTIDO <ArrowRight className="h-3 w-3 ml-2" /></Link>
+                     <Link href="/board/match?source=sandbox">DIRIGIR PARTIDO <ArrowRight className="h-3 w-3 ml-2" /></Link>
                   </Button>
                </CardFooter>
             </Card>

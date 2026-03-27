@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { 
   Zap, 
@@ -27,6 +27,20 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { synqSync } from "@/lib/sync-service";
+import {
+  MATCH_TIMER_SYNC_KEY,
+  readMatchTimerSync,
+  shouldApplyRemoteTimer,
+  writeMatchTimerSync,
+  readMatchTimerPresetMinutes,
+  type MatchTimerSyncPayload,
+} from "@/lib/match-timer-sync";
+import {
+  MATCH_SCORE_SYNC_KEY,
+  readMatchScoreSync,
+  shouldApplyRemoteScore,
+  writeMatchScoreSync,
+} from "@/lib/match-score-sync";
 
 function SmartwatchContent() {
   const { loading, profile } = useAuth();
@@ -42,15 +56,22 @@ function SmartwatchContent() {
 
   // ESTADOS DE JUEGO Y CONFIGURACIÓN
   const [timeLeft, setTimeLeft] = useState(45 * 60);
+  const [presetMinutes, setPresetMinutes] = useState(45);
   const [isRunning, setIsRunning] = useState(false);
   const [score, setScore] = useState({ home: 0, guest: 0 });
   const [view, setView] = useState<'main' | 'subs_out' | 'subs_in' | 'config'>('main');
   const [selectedOut, setSelectedOut] = useState<number | null>(null);
   const [subInterval, setSubInterval] = useState("5");
+  const [isWatchCompact, setIsWatchCompact] = useState(false);
 
   // ROSTER DINÁMICO
   const [starters, setStarters] = useState<number[]>([]);
   const [substitutes, setSubstitutes] = useState<number[]>([]);
+
+  const timeLeftRef = useRef(45 * 60);
+  const presetMinutesRef = useRef(45);
+  const lastTimerSyncAppliedRef = useRef(0);
+  const lastScoreSyncAppliedRef = useRef(0);
 
   // DETECCIÓN DE AUTO-LINK (TOKEN EN URL)
   useEffect(() => {
@@ -75,7 +96,9 @@ function SmartwatchContent() {
     const handleConnectivity = () => {
       setIsOnline(navigator.onLine);
       if (navigator.onLine) {
-        synqSync.syncNow();
+        void synqSync.syncNow().catch(() => {
+          // Sync best-effort: no bloquear UX del reloj.
+        });
       }
     };
 
@@ -108,14 +131,106 @@ function SmartwatchContent() {
   }, [profile, isLinked]);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const applyWatchCompact = () => {
+      const minSide = Math.min(window.innerWidth || 0, window.innerHeight || 0);
+      setIsWatchCompact(minSide <= 380);
+    };
+    applyWatchCompact();
+    window.addEventListener("resize", applyWatchCompact);
+    return () => window.removeEventListener("resize", applyWatchCompact);
+  }, []);
+
+  useEffect(() => {
+    timeLeftRef.current = timeLeft;
+  }, [timeLeft]);
+
+  // Guardar un preset de minutos para que el botón reset no vuelva siempre a 45.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mins = readMatchTimerPresetMinutes(45);
+    setPresetMinutes(mins);
+    presetMinutesRef.current = mins;
+    const sec = mins * 60;
+    setTimeLeft(sec);
+    timeLeftRef.current = sec;
+  }, []);
+
+  useEffect(() => {
+    const p = readMatchTimerSync();
+    if (shouldApplyRemoteTimer(p, lastTimerSyncAppliedRef.current) && Date.now() - p.updatedAt < 3 * 60 * 60 * 1000) {
+      lastTimerSyncAppliedRef.current = p.updatedAt;
+      setTimeLeft(Math.max(0, p.remainingSec));
+      setIsRunning(p.running);
+    }
+
+    const onTimerStorage = (e: StorageEvent) => {
+      if (e.key !== MATCH_TIMER_SYNC_KEY || !e.newValue) return;
+      try {
+        const remote = JSON.parse(e.newValue) as MatchTimerSyncPayload;
+        if (!shouldApplyRemoteTimer(remote, lastTimerSyncAppliedRef.current)) return;
+        if (Date.now() - remote.updatedAt > 3 * 60 * 60 * 1000) return;
+        lastTimerSyncAppliedRef.current = remote.updatedAt;
+        setTimeLeft(Math.max(0, remote.remainingSec));
+        setIsRunning(remote.running);
+      } catch {
+        /* noop */
+      }
+    };
+    window.addEventListener("storage", onTimerStorage);
+    return () => window.removeEventListener("storage", onTimerStorage);
+  }, []);
+
+  useEffect(() => {
+    const p = readMatchScoreSync();
+    if (shouldApplyRemoteScore(p, lastScoreSyncAppliedRef.current) && Date.now() - p.updatedAt < 3 * 60 * 60 * 1000) {
+      lastScoreSyncAppliedRef.current = p.updatedAt;
+      setScore({ home: Math.max(0, p.home), guest: Math.max(0, p.guest) });
+    }
+
+    const onScoreStorage = (e: StorageEvent) => {
+      if (e.key !== MATCH_SCORE_SYNC_KEY || !e.newValue) return;
+      try {
+        const remote = JSON.parse(e.newValue) as { home: number; guest: number; updatedAt: number };
+        if (!shouldApplyRemoteScore(remote, lastScoreSyncAppliedRef.current)) return;
+        if (Date.now() - remote.updatedAt > 3 * 60 * 60 * 1000) return;
+        lastScoreSyncAppliedRef.current = remote.updatedAt;
+        setScore({ home: Math.max(0, remote.home), guest: Math.max(0, remote.guest) });
+      } catch {
+        /* noop */
+      }
+    };
+
+    window.addEventListener("storage", onScoreStorage);
+    return () => window.removeEventListener("storage", onScoreStorage);
+  }, []);
+
+  const updateScore = (updater: (prev: { home: number; guest: number }) => { home: number; guest: number }) => {
+    setScore((prev) => {
+      const next = updater(prev);
+      const safe = { home: Math.max(0, next.home), guest: Math.max(0, next.guest) };
+      const now = Date.now();
+      lastScoreSyncAppliedRef.current = now;
+      writeMatchScoreSync({ ...safe, updatedAt: now, origin: "watch" });
+      return safe;
+    });
+  };
+
+  useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (isRunning) {
+    if (isLinked && isRunning) {
       interval = setInterval(() => {
-        setTimeLeft((prev) => (prev <= 0 ? 0 : prev - 1));
+        setTimeLeft((prev) => {
+          const next = prev <= 0 ? 0 : prev - 1;
+          const now = Date.now();
+          lastTimerSyncAppliedRef.current = now;
+          writeMatchTimerSync({ remainingSec: next, running: true, updatedAt: now, origin: "watch" });
+          return next;
+        });
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [isRunning]);
+  }, [isLinked, isRunning]);
 
   const triggerHaptic = (pattern: number | number[]) => {
     if (typeof window !== "undefined" && window.navigator.vibrate) {
@@ -146,13 +261,30 @@ function SmartwatchContent() {
     }
   };
 
-  const handleGoal = (team: 'home' | 'guest') => {
-    setScore(prev => ({ ...prev, [team]: prev[team] + 1 }));
-    triggerHaptic([150, 50, 150]);
+  const handleGoal = (team: 'home' | 'guest', delta = 1) => {
+    updateScore((prev) =>
+      team === "home"
+        ? { home: prev.home + delta, guest: prev.guest }
+        : { home: prev.home, guest: prev.guest + delta },
+    );
+    triggerHaptic(delta > 0 ? [150, 50, 150] : 80);
   };
 
   const toggleClock = () => {
-    setIsRunning(!isRunning);
+    setIsRunning((r) => {
+      const next = !r;
+      queueMicrotask(() => {
+        const now = Date.now();
+        lastTimerSyncAppliedRef.current = now;
+        writeMatchTimerSync({
+          remainingSec: timeLeftRef.current,
+          running: next,
+          updatedAt: now,
+          origin: "watch",
+        });
+      });
+      return next;
+    });
     triggerHaptic(60);
   };
 
@@ -218,11 +350,11 @@ function SmartwatchContent() {
   }
 
   return (
-    <div className="fixed inset-0 bg-background flex items-center justify-center overflow-hidden touch-none select-none p-2">
-      <div className="relative aspect-square w-full max-w-[340px] rounded-[clamp(2rem,20%,50%)] border border-primary/30 bg-card overflow-hidden flex flex-col shadow-[0_0_60px_rgba(0,242,255,0.15)]">
+    <div className={cn("fixed inset-0 bg-background flex items-center justify-center overflow-hidden touch-none select-none", isWatchCompact ? "p-1" : "p-2")}>
+      <div className={cn("relative rounded-[clamp(2rem,22%,50%)] border border-primary/30 bg-card overflow-hidden flex flex-col shadow-[0_0_60px_rgba(0,242,255,0.15)]", isWatchCompact ? "w-[min(96vw,96dvh,360px)] h-[min(96vw,96dvh,360px)]" : "w-[min(92vw,92dvh,340px)] h-[min(92vw,92dvh,340px)]")}>
         <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
         
-        <div className="h-14 pt-6 px-10 flex items-center justify-between shrink-0 z-20">
+        <div className={cn("flex items-center justify-between shrink-0 z-20", isWatchCompact ? "h-12 pt-4 px-6" : "h-14 pt-6 px-8")}>
            <div className="flex items-center gap-1.5">
               <Zap className={cn("h-3 w-3 animate-pulse", isClubMode ? "text-primary" : "text-white/40")} />
               <span className={cn("text-[8px] font-black uppercase tracking-[0.2em] italic", isClubMode ? "text-primary" : "text-white/60")}>
@@ -239,35 +371,51 @@ function SmartwatchContent() {
            </div>
         </div>
 
-        <div className="flex-1 relative z-10 flex flex-col items-center px-6 overflow-hidden">
+        <div className={cn("flex-1 relative z-10 flex flex-col items-center overflow-hidden", isWatchCompact ? "px-4" : "px-6")}>
           {view === 'main' && (
-            <div className="w-full h-full flex flex-col items-center justify-between py-2 animate-in fade-in zoom-in-95">
-              <div className="flex items-center justify-center gap-4 w-full">
-                <button onClick={() => { setIsRunning(false); setTimeLeft(45*60); triggerHaptic(60); }} className="p-2.5 bg-white/5 rounded-full text-white/40 active:bg-rose-500"><RotateCcw className="h-4 w-4" /></button>
+            <div className={cn("w-full h-full flex flex-col items-center justify-between animate-in fade-in zoom-in-95", isWatchCompact ? "py-1" : "py-2")}>
+              <div className={cn("flex items-center justify-center w-full", isWatchCompact ? "gap-2.5" : "gap-4")}>
+              <button onClick={() => { setIsRunning(false); const sec = presetMinutesRef.current * 60; setTimeLeft(sec); timeLeftRef.current = sec; const now = Date.now(); lastTimerSyncAppliedRef.current = now; writeMatchTimerSync({ remainingSec: sec, running: false, updatedAt: now, origin: "watch" }); triggerHaptic(60); }} className={cn("bg-white/5 rounded-full text-white/40 active:bg-rose-500", isWatchCompact ? "p-3" : "p-2.5")}><RotateCcw className={cn(isWatchCompact ? "h-5 w-5" : "h-4 w-4")} /></button>
                 <div className="flex flex-col items-center cursor-pointer active:scale-95" onClick={toggleClock}>
-                  <span className={cn("text-6xl font-black font-headline tabular-nums tracking-tighter leading-none", timeLeft === 0 ? "text-rose-500 animate-pulse" : "text-primary cyan-text-glow")}>{formatTime(timeLeft)}</span>
+                  <span className={cn("font-black font-headline tabular-nums tracking-tighter leading-none", isWatchCompact ? "text-[3.2rem]" : "text-6xl", timeLeft === 0 ? "text-rose-500 animate-pulse" : "text-primary cyan-text-glow")}>{formatTime(timeLeft)}</span>
                   <div className="flex items-center gap-1.5 mt-1 bg-black/40 px-3 py-0.5 rounded-full border border-white/5">
                      {isRunning ? <Pause className="h-3 w-3 text-primary/60" /> : <Play className="h-3 w-3 text-emerald-400" />}
                      <span className="text-[8px] font-black text-white/40 uppercase">P_01</span>
                   </div>
                 </div>
-                <button onClick={() => setView('config')} className="p-2.5 bg-white/5 rounded-full text-white/40 active:bg-primary"><Settings className="h-4 w-4" /></button>
+                <button onClick={() => setView('config')} className={cn("bg-white/5 rounded-full text-white/40 active:bg-primary", isWatchCompact ? "p-3" : "p-2.5")}><Settings className={cn(isWatchCompact ? "h-5 w-5" : "h-4 w-4")} /></button>
               </div>
 
-              <div className="w-full grid grid-cols-2 gap-2 flex-1 items-stretch mt-3">
-                 <button onClick={() => handleGoal('home')} className="relative bg-primary/5 border-2 border-primary/20 rounded-3xl flex flex-col items-center justify-center active:bg-primary active:text-black group overflow-hidden">
+              <div className={cn("w-full grid grid-cols-2 flex-1 items-stretch", isWatchCompact ? "gap-2 mt-1.5" : "gap-2 mt-3")}>
+                 <button onClick={() => handleGoal('home')} className={cn("relative bg-primary/5 border-2 border-primary/20 rounded-3xl flex flex-col items-center justify-center active:bg-primary active:text-black group overflow-hidden", isWatchCompact && "min-h-[96px]")}>
+                    <span
+                      role="button"
+                      aria-label="Decrementar local"
+                      onClick={(e) => { e.stopPropagation(); handleGoal('home', -1); }}
+                      className="absolute top-2 right-2 h-7 w-7 rounded-full border border-primary/30 bg-black/35 flex items-center justify-center text-primary/80 active:scale-95"
+                    >
+                      <Minus className="h-3.5 w-3.5" />
+                    </span>
                     <span className="text-[8px] font-black text-primary/60 uppercase mb-1">LOC</span>
-                    <span className="text-4xl font-black text-white group-active:text-black">{score.home}</span>
+                    <span className={cn("font-black text-white group-active:text-black", isWatchCompact ? "text-4xl" : "text-4xl")}>{score.home}</span>
                  </button>
-                 <button onClick={() => handleGoal('guest')} className="relative bg-rose-500/5 border-2 border-rose-500/20 rounded-3xl flex flex-col items-center justify-center active:bg-rose-500 group overflow-hidden">
+                 <button onClick={() => handleGoal('guest')} className={cn("relative bg-rose-500/5 border-2 border-rose-500/20 rounded-3xl flex flex-col items-center justify-center active:bg-rose-500 group overflow-hidden", isWatchCompact && "min-h-[96px]")}>
+                    <span
+                      role="button"
+                      aria-label="Decrementar visitante"
+                      onClick={(e) => { e.stopPropagation(); handleGoal('guest', -1); }}
+                      className="absolute top-2 right-2 h-7 w-7 rounded-full border border-rose-500/30 bg-black/35 flex items-center justify-center text-rose-300/90 active:scale-95"
+                    >
+                      <Minus className="h-3.5 w-3.5" />
+                    </span>
                     <span className="text-[8px] font-black text-rose-400/60 uppercase mb-1">VIS</span>
-                    <span className="text-4xl font-black text-white group-active:text-white">{score.guest}</span>
+                    <span className={cn("font-black text-white group-active:text-white", isWatchCompact ? "text-4xl" : "text-4xl")}>{score.guest}</span>
                  </button>
               </div>
 
-              <button onClick={() => { setView('subs_out'); triggerHaptic(40); }} className="w-full h-12 mt-2 bg-white/5 border-2 border-white/10 rounded-[2rem] flex items-center justify-center gap-3 active:bg-white/20 shrink-0">
+              <button onClick={() => { setView('subs_out'); triggerHaptic(40); }} className={cn("w-full mt-0 bg-white/5 border-2 border-white/10 rounded-[2rem] flex items-center justify-center gap-2 active:bg-white/20 shrink-0", isWatchCompact ? "h-10 mb-2.5" : "h-12")}>
                 <Users className="h-4 w-4 text-primary" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-white">SUSTITUCIÓN</span>
+                <span className={cn("font-black uppercase tracking-widest text-white", isWatchCompact ? "text-[8px]" : "text-[10px]")}>SUSTITUCIÓN</span>
               </button>
             </div>
           )}
@@ -316,7 +464,7 @@ function SmartwatchContent() {
                   <div className="w-8" />
                </div>
                <div className="flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden space-y-2 pb-10 px-2">
-                  <button onClick={() => { setScore({home:0, guest:0}); setView('main'); triggerHaptic([100,50,100]); }} className="w-full p-4 bg-rose-500/10 border-2 border-rose-500/20 rounded-2xl flex items-center justify-between group active:bg-rose-500">
+                  <button onClick={() => { updateScore(() => ({home:0, guest:0})); setView('main'); triggerHaptic([100,50,100]); }} className="w-full p-4 bg-rose-500/10 border-2 border-rose-500/20 rounded-2xl flex items-center justify-between group active:bg-rose-500">
                      <span className="text-[10px] font-black uppercase italic group-active:text-white">RESET MARCADOR</span>
                      <RotateCcw className="h-4 w-4 text-rose-500 group-active:text-white" />
                   </button>
@@ -332,10 +480,10 @@ function SmartwatchContent() {
           )}
         </div>
 
-        <div className="h-12 pb-6 flex items-center justify-center shrink-0 z-20">
-           <div className="flex items-center gap-2 px-4 py-1 bg-black/40 rounded-full border border-white/5">
+        <div className={cn("flex items-center justify-center shrink-0 z-20", isWatchCompact ? "h-7 pb-1.5" : "h-12 pb-6", isWatchCompact && view === "main" && "hidden")}>
+           <div className={cn("flex items-center gap-2 bg-black/40 rounded-full border border-white/5", isWatchCompact ? "px-2.5 py-0.5" : "px-4 py-1")}>
               <ShieldCheck className={cn("h-2.5 w-2.5 animate-pulse", isOnline ? "text-emerald-400" : "text-rose-500")} />
-              <span className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em]">
+              <span className={cn("font-black text-white/30 uppercase tracking-[0.2em]", isWatchCompact ? "text-[7px]" : "text-[8px]")}>
                 {isOnline ? 'SINCRO_CLOUD' : 'MODO_LOCAL'}
               </span>
            </div>

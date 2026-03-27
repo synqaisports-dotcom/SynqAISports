@@ -16,46 +16,137 @@ import {
   ShieldCheck,
   ShieldAlert,
   RefreshCw,
-  ArrowRight
+  ArrowRight,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { useAuth } from "@/lib/auth-context";
 
 /**
  * Global Admin Overview - v14.2.0
  * Restauración de estabilidad y utilidades de renderizado.
  */
 export default function AdminGlobalDashboard() {
+  const { session } = useAuth();
   const [logs, setLogs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [metrics, setMetrics] = useState({
+    clubsActive: 0,
+    profilesTotal: 0,
+    promoScans: 0,
+    conversionRate: 0,
+    collabLeads: 0,
+    collabFeedback: 0,
+  });
 
   useEffect(() => {
-    const existingLogs = JSON.parse(localStorage.getItem("synq_audit_logs") || "[]");
-    setLogs(existingLogs);
-  }, []);
+    const loadLogs = async () => {
+      const existingLogs = JSON.parse(localStorage.getItem("synq_audit_logs") || "[]");
+      setLogs(existingLogs);
+      if (!session?.access_token) return;
+      try {
+        const res = await fetch("/api/admin/audit-logs", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (!res.ok) return;
+        const j = (await res.json()) as { logs?: Array<{ id: string; title: string; description: string; type: string }> };
+        if (Array.isArray(j.logs) && j.logs.length > 0) {
+          setLogs(
+            j.logs.map((l) => ({
+              id: l.id,
+              title: l.title,
+              desc: l.description,
+              type: l.type,
+            })),
+          );
+        }
+      } catch {
+        // fallback local
+      }
+    };
+    void loadLogs();
+  }, [session?.access_token]);
 
-  const allianceLeads = logs.filter(l => l.title === "LEAD_ALIANZA_CLUB").length;
-  const feedbackCount = logs.filter(l => l.title === "FEEDBACK_RECIBIDO").length;
+  useEffect(() => {
+    const loadMetrics = async () => {
+      if (!session?.access_token) {
+        setError("Inicia sesión como superadmin para cargar métricas reales.");
+        setLoading(false);
+        return;
+      }
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch("/api/admin/analytics", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        const j = (await res.json()) as {
+          ok?: boolean;
+          error?: string;
+          clubsActive?: number;
+          profilesTotal?: number;
+          promoScans?: number;
+          conversionRate?: number;
+          collabLeads?: number;
+          collabFeedback?: number;
+        };
+        if (!res.ok || !j.ok) {
+          setError(j.error ?? `HTTP ${res.status}`);
+          return;
+        }
+        setMetrics({
+          clubsActive: j.clubsActive ?? 0,
+          profilesTotal: j.profilesTotal ?? 0,
+          promoScans: j.promoScans ?? 0,
+          conversionRate: j.conversionRate ?? 0,
+          collabLeads: j.collabLeads ?? 0,
+          collabFeedback: j.collabFeedback ?? 0,
+        });
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Error cargando métricas");
+      } finally {
+        setLoading(false);
+      }
+    };
+    void loadMetrics();
+  }, [session?.access_token]);
+
+  const allianceLeads = metrics.collabLeads;
+  const feedbackCount = metrics.collabFeedback;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
       <div className="flex flex-col gap-2 border-b border-white/5 pb-6">
+        <p className="text-[10px] uppercase font-black tracking-widest text-emerald-400/50">Home</p>
         <div className="flex items-center gap-3">
           <Shield className="h-5 w-5 text-emerald-400 animate-pulse" />
           <span className="text-[10px] font-black text-emerald-400 tracking-[0.5em] uppercase">Global_Command_Center</span>
         </div>
         <h1 className="text-4xl font-headline font-black text-white uppercase italic tracking-tighter emerald-text-glow">
-          SYSTEM_OVERVIEW
+          Dashboard_Admin_Global
         </h1>
-        <p className="text-[10px] font-black text-emerald-400/30 tracking-[0.2em] uppercase">Sincronización de Red: Nodos 100% Operativos</p>
+        <p className="text-[10px] font-black text-emerald-400/30 tracking-[0.2em] uppercase">
+          {loading ? "Sincronizando métricas reales..." : "Vista ejecutiva de red y monetización"}
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <MetricCard title="Clubes Activos" value="24" icon={Building2} trend="+3" />
-        <MetricCard title="Nodos Globales" value="1.2k" icon={Users} trend="+12%" />
-        <MetricCard title="Ingresos Red" value="$42.5k" icon={TrendingUp} trend="+8.2%" />
-        <MetricCard title="Carga IA" value="14%" icon={Zap} trend="Óptima" />
+      {error && (
+        <Card className="glass-panel border-amber-500/30 bg-amber-500/5 rounded-2xl">
+          <CardContent className="py-4 text-[10px] font-bold text-amber-100/90 uppercase tracking-wide">
+            {error}
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <MetricCard title="Clubes Activos" value={loading ? "—" : String(metrics.clubsActive)} icon={Building2} trend={loading ? "..." : "LIVE"} />
+        <MetricCard title="Nodos Globales" value={loading ? "—" : formatCompact(metrics.profilesTotal)} icon={Users} trend={loading ? "..." : "PERFILES"} />
+        <MetricCard title="Escaneos Promo" value={loading ? "—" : formatCompact(metrics.promoScans)} icon={TrendingUp} trend={loading ? "..." : "ACUMULADO"} />
+        <MetricCard title="Conversión" value={loading ? "—" : `${metrics.conversionRate}%`} icon={Zap} trend={loading ? "..." : "LEAD/PERFIL"} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -68,7 +159,7 @@ export default function AdminGlobalDashboard() {
                   </div>
                   <div>
                      <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest italic">Leads de Alianza Pendientes</p>
-                     <h3 className="text-3xl font-black text-white italic tracking-tighter">{allianceLeads} SOLICITUDES</h3>
+                     <h3 className="text-3xl font-black text-white italic tracking-tighter">{loading ? "—" : allianceLeads} SOLICITUDES</h3>
                   </div>
                </div>
                <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest leading-loose">
@@ -86,7 +177,7 @@ export default function AdminGlobalDashboard() {
                   </div>
                   <div>
                      <p className="text-[10px] font-black text-primary uppercase tracking-widest italic">Sugerencias Metodológicas</p>
-                     <h3 className="text-3xl font-black text-white italic tracking-tighter">{feedbackCount} PROPUESTAS</h3>
+                     <h3 className="text-3xl font-black text-white italic tracking-tighter">{loading ? "—" : feedbackCount} PROPUESTAS</h3>
                   </div>
                </div>
                <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest leading-loose">
@@ -123,10 +214,10 @@ export default function AdminGlobalDashboard() {
           </CardHeader>
           <CardContent className="p-0 flex-1 overflow-y-auto custom-scrollbar max-h-[400px]">
             <div className="divide-y divide-white/5">
-              <LogItem type="Success" title="Sincronización_Exitosa" desc="Nodo del Club Elite Madrid validado." icon={CheckCircle2} />
-              <LogItem type="Info" title="Identidad_Validada" desc="IP autorizada en sector metodología." icon={ShieldCheck} />
-              <LogItem type="Warning" title="Alerta_Acceso_IA" desc="Latencia detectada en motor Gemini." icon={ShieldAlert} />
-              <LogItem type="Success" title="Update_Completo" desc="Parches de seguridad v12.7 aplicados." icon={RefreshCw} />
+              {loading && <LogItem type="Info" title="Cargando_Eventos" desc="Recibiendo actividad en tiempo real..." icon={Loader2} />}
+              {!loading && logs.length === 0 && (
+                <LogItem type="Info" title="Sin_Eventos" desc="No hay eventos de auditoría locales recientes." icon={ShieldCheck} />
+              )}
               {logs.map((log) => (
                 <LogItem key={log.id} type={log.type} title={log.title} desc={log.desc} icon={Activity} />
               ))}
@@ -141,6 +232,12 @@ export default function AdminGlobalDashboard() {
       </div>
     </div>
   );
+}
+
+function formatCompact(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 10_000) return `${(n / 1_000).toFixed(1)}k`;
+  return String(n);
 }
 
 function MetricCard({ title, value, icon: Icon, trend }: any) {

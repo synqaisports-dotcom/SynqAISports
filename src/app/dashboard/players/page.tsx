@@ -54,6 +54,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/lib/auth-context";
+import { useClubModulePermissions } from "@/hooks/use-club-module-permissions";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -107,6 +108,7 @@ const INITIAL_PLAYERS = [
 export default function PlayersManagementPage() {
   const { profile } = useAuth();
   const { toast } = useToast();
+  const { canEdit: canEditPlayers, canDelete: canDeletePlayers } = useClubModulePermissions("players");
   const [players, setPlayers] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -144,6 +146,14 @@ export default function PlayersManagementPage() {
   });
 
   const handleOpenCreate = () => {
+    if (!canEditPlayers) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes permiso de edición en Gestión de Jugadores.",
+      });
+      return;
+    }
     setEditingId(null);
     setFormData({ 
       name: "", 
@@ -168,6 +178,14 @@ export default function PlayersManagementPage() {
   };
 
   const handleEdit = (player: any) => {
+    if (!canEditPlayers) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes permiso de edición en Gestión de Jugadores.",
+      });
+      return;
+    }
     setEditingId(player.id);
     setFormData({
       name: player.name,
@@ -201,6 +219,14 @@ export default function PlayersManagementPage() {
   };
 
   const handleDelete = (id: string, name: string) => {
+    if (!canDeletePlayers) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes permiso de borrado en Gestión de Jugadores.",
+      });
+      return;
+    }
     const nextPlayers = players.filter(p => p.id !== id);
     setPlayers(nextPlayers);
     localStorage.setItem("synq_players", JSON.stringify(nextPlayers));
@@ -213,6 +239,15 @@ export default function PlayersManagementPage() {
 
   const handleSavePlayer = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!canEditPlayers) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes permiso de edición en Gestión de Jugadores.",
+      });
+      return;
+    }
     
     if (!formData.tutorEmail) {
       toast({
@@ -282,7 +317,8 @@ export default function PlayersManagementPage() {
         
         <Button 
           onClick={handleOpenCreate}
-          className="rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 active:scale-95 transition-all border-none"
+          disabled={!canEditPlayers}
+          className="rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 active:scale-95 transition-all border-none disabled:opacity-40"
         >
           <UserPlus className="h-4 w-4 mr-2" /> Nueva Inscripción
         </Button>
@@ -404,6 +440,7 @@ export default function PlayersManagementPage() {
                             size="icon" 
                             className="h-9 w-9 text-primary hover:bg-primary/10 border border-primary/10 transition-all active:scale-90 rounded-xl"
                             onClick={() => handleEdit(player)}
+                            disabled={!canEditPlayers}
                             title="Modificar Atleta"
                           >
                             <Pencil className="h-4 w-4" />
@@ -413,6 +450,7 @@ export default function PlayersManagementPage() {
                             size="icon" 
                             className="h-9 w-9 text-rose-500 hover:bg-rose-500/10 border border-rose-500/10 transition-all active:scale-90 rounded-xl"
                             onClick={() => handleDelete(player.id, player.name)}
+                            disabled={!canDeletePlayers}
                             title="Desvincular Atleta"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -747,7 +785,7 @@ export default function PlayersManagementPage() {
             </SheetClose>
             <Button 
               onClick={handleSavePlayer}
-              disabled={loading}
+              disabled={loading || !canEditPlayers}
               className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] active:scale-95 transition-all border-none"
             >
               {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (editingId ? "SINCRONIZAR_FICHA" : "VINCULAR_ATLETA")}
