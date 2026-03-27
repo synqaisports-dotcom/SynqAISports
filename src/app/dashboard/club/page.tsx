@@ -81,6 +81,9 @@ export default function ClubManagementPage() {
     sport: profile?.sport || "Fútbol",
     foundation: "2024",
     members: "142",
+    address: "AV. DEL DEPORTE 12, MADRID",
+    phone: "+34 900 000 000",
+    mapQuery: "Avenida del Deporte 12, Madrid",
     website: "www.cantera-synqai.com",
     socials: {
       instagram: "@club_academy",
@@ -227,10 +230,14 @@ export default function ClubManagementPage() {
     setSaving(false);
   };
 
+  const mapEmbedSrc = `https://www.google.com/maps?q=${encodeURIComponent(
+    clubData.mapQuery || clubData.address || "Madrid",
+  )}&output=embed`;
+
   return (
     <div className="space-y-8 animate-in fade-in duration-1000 pb-24">
       {/* SECCIÓN DE CABECERA Y TÍTULO */}
-      <div className="flex justify-between items-end border-b border-white/5 pb-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-end border-b border-white/5 pb-6">
         <div className="space-y-1">
           <div className="flex items-center gap-3 mb-2">
             <Building2 className="h-5 w-5 text-primary animate-pulse" />
@@ -238,7 +245,7 @@ export default function ClubManagementPage() {
               {isSuperAdmin ? "Global_Audit_Mode" : "Club_Identity_Matrix"}
             </span>
           </div>
-          <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic cyan-text-glow">
+          <h1 className="text-3xl sm:text-4xl font-headline font-black text-white uppercase tracking-tighter italic cyan-text-glow">
             {isSuperAdmin ? "Auditoría de Club" : "Gestión del Club"}
           </h1>
         </div>
@@ -268,7 +275,7 @@ export default function ClubManagementPage() {
           <SheetTrigger asChild>
             <Button
               disabled={!canEditClub}
-              className="rounded-none bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none disabled:opacity-40"
+              className="w-full sm:w-auto rounded-none bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none disabled:opacity-40"
             >
               <Settings2 className="h-4 w-4 mr-2" /> Configurar Nodo
             </Button>
@@ -347,6 +354,41 @@ export default function ClubManagementPage() {
                   />
                 </div>
 
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1">Dirección</Label>
+                  <Input
+                    value={clubData.address}
+                    onChange={(e) => {
+                      const next = e.target.value.toUpperCase();
+                      setClubData({
+                        ...clubData,
+                        address: next,
+                        mapQuery: clubData.mapQuery.trim() ? clubData.mapQuery : next,
+                      });
+                    }}
+                    className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary text-primary placeholder:text-primary/20"
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1">Teléfono de Contacto</Label>
+                  <Input
+                    value={clubData.phone}
+                    onChange={(e) => setClubData({ ...clubData, phone: e.target.value })}
+                    className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary text-primary placeholder:text-primary/20"
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1">Ubicación para Mapa</Label>
+                  <Input
+                    value={clubData.mapQuery}
+                    onChange={(e) => setClubData({ ...clubData, mapQuery: e.target.value })}
+                    placeholder="EJ: Avenida del Deporte 12, Madrid"
+                    className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary text-primary placeholder:text-primary/20"
+                  />
+                </div>
+
                 <div className="space-y-3 pt-6 border-t border-white/5">
                   <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1">Instagram (@)</Label>
                   <Input 
@@ -402,7 +444,7 @@ export default function ClubManagementPage() {
       )}
 
       {/* BANNER VISUAL */}
-      <div className="relative h-80 rounded-[3rem] overflow-hidden border border-primary/10 shadow-2xl">
+      <div className="relative h-56 sm:h-72 lg:h-80 rounded-[2rem] sm:rounded-[3rem] overflow-hidden border border-primary/10 shadow-2xl">
         <Image 
           src="https://picsum.photos/seed/stadium/1200/400" 
           alt="Club Banner" 
@@ -419,11 +461,11 @@ export default function ClubManagementPage() {
       </div>
 
       {/* IDENTIDAD DEL CLUB (BLOQUE DE FLUJO CON MARGEN NEGATIVO ELEVADO) */}
-      <div className="px-12 -mt-44 relative z-20 space-y-6 mb-24">
-        <div className="flex flex-col md:flex-row items-end gap-10">
+      <div className="px-4 sm:px-8 lg:px-12 -mt-24 sm:-mt-32 lg:-mt-44 relative z-20 space-y-6 mb-24">
+        <div className="flex flex-col md:flex-row md:items-end gap-8 lg:gap-10">
           <div className="relative group/logo">
              <div className="absolute inset-0 bg-primary/30 blur-3xl rounded-full opacity-0 group-hover/logo:opacity-100 transition-opacity" />
-             <div className="h-56 w-52 bg-black border-2 border-primary/40 rounded-[2rem] flex items-center justify-center relative z-10 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.9)] group-hover/logo:border-primary transition-all duration-500">
+             <div className="h-40 w-40 sm:h-48 sm:w-44 lg:h-56 lg:w-52 bg-black border-2 border-primary/40 rounded-[2rem] flex items-center justify-center relative z-10 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.9)] group-hover/logo:border-primary transition-all duration-500">
                 <Image 
                   src="https://picsum.photos/seed/clublogo/300/300" 
                   alt="Club Logo" 
@@ -442,11 +484,11 @@ export default function ClubManagementPage() {
           <div className="pb-6 space-y-4">
              <div className="space-y-1">
                 <span className="text-[10px] font-black text-primary/60 uppercase tracking-[0.5em] ml-1">Identidad de Nodo</span>
-                <h2 className="text-6xl lg:text-7xl font-headline font-black text-white uppercase italic tracking-tighter leading-[0.85] cyan-text-glow drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)]">
+                <h2 className="text-3xl sm:text-5xl lg:text-7xl font-headline font-black text-white uppercase italic tracking-tighter leading-[0.9] cyan-text-glow drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)]">
                   {clubData.name}
                 </h2>
              </div>
-             <div className="flex items-center gap-4 px-1">
+             <div className="flex flex-wrap items-center gap-3 sm:gap-4 px-1">
                <div className="flex items-center gap-2">
                  <Dumbbell className="h-3.5 w-3.5 text-primary" />
                  <span className="text-[11px] font-black text-primary uppercase tracking-widest">{clubData.sport}</span>
@@ -464,26 +506,26 @@ export default function ClubManagementPage() {
       </div>
 
       {/* MATRIZ DE DATOS Y TERMINALES */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 pt-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-10 pt-8">
         <div className="lg:col-span-2 space-y-10">
            <Card className="glass-panel border-none bg-black/40 overflow-hidden shadow-2xl">
-             <CardHeader className="border-b border-white/5 p-10">
+             <CardHeader className="border-b border-white/5 p-6 sm:p-8 lg:p-10">
                 <CardTitle className="text-xs font-black uppercase tracking-[0.4em] flex items-center gap-4 text-primary/60">
                   <ShieldCheck className="h-5 w-5 text-primary" /> Atributos de la Entidad
                 </CardTitle>
              </CardHeader>
-             <CardContent className="p-10">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
+             <CardContent className="p-6 sm:p-8 lg:p-10">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-16">
                    <DataNode label="Disciplina" value={clubData.sport} icon={Dumbbell} highlight />
                    <DataNode label="Año de Fundación" value={clubData.foundation} icon={Calendar} />
                    <DataNode label="Capacidad Cantera" value={`${clubData.members} Atletas`} icon={Users} />
                 </div>
 
-                <div className="mt-16 p-10 border border-primary/20 bg-primary/5 rounded-[2.5rem] space-y-5 relative overflow-hidden group">
+                <div className="mt-10 lg:mt-16 p-6 sm:p-8 lg:p-10 border border-primary/20 bg-primary/5 rounded-[2rem] sm:rounded-[2.5rem] space-y-5 relative overflow-hidden group">
                    <div className="absolute top-0 right-0 p-4 opacity-10">
                       <Trophy className="h-32 w-32 text-primary" />
                    </div>
-                   <div className="flex items-center justify-between relative z-10">
+                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between relative z-10">
                       <span className="text-[11px] font-black uppercase text-primary tracking-[0.3em]">Protocolo de Plan Activo</span>
                       <Badge className="bg-primary text-black font-black uppercase text-[9px] px-4 py-1.5 tracking-widest rounded-none">
                         {profile?.plan?.replace('_', ' ') || 'Enterprise Scale'}
@@ -496,23 +538,24 @@ export default function ClubManagementPage() {
              </CardContent>
            </Card>
 
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-10">
               <Card className="glass-panel border border-primary/10 bg-black/40 shadow-xl">
-                <CardHeader className="p-10 pb-4">
+                <CardHeader className="p-6 sm:p-8 lg:p-10 pb-4">
                    <CardTitle className="text-[11px] font-black uppercase tracking-[0.4em] text-primary/20">Terminales de Contacto</CardTitle>
                 </CardHeader>
-                <CardContent className="px-10 pb-10 space-y-5">
+                <CardContent className="px-6 sm:px-8 lg:px-10 pb-6 sm:pb-8 lg:pb-10 space-y-5">
                    <ContactLink icon={Globe} label="Portal Web" value={clubData.website} />
+                   <ContactLink icon={MapPin} label="Dirección" value={clubData.address} />
                    <ContactLink icon={Mail} label="Mail Administrativo" value={profile?.email || "admin@club.com"} />
-                   <ContactLink icon={Smartphone} label="Línea Directa" value="+34 900 000 000" />
+                   <ContactLink icon={Smartphone} label="Línea Directa" value={clubData.phone} />
                 </CardContent>
               </Card>
 
               <Card className="glass-panel border border-primary/10 bg-black/40 shadow-xl">
-                <CardHeader className="p-10 pb-4">
+                <CardHeader className="p-6 sm:p-8 lg:p-10 pb-4">
                    <CardTitle className="text-[11px] font-black uppercase tracking-[0.4em] text-primary/20">Nodos Sociales</CardTitle>
                 </CardHeader>
-                <CardContent className="px-10 pb-10 space-y-5">
+                <CardContent className="px-6 sm:px-8 lg:px-10 pb-6 sm:pb-8 lg:pb-10 space-y-5">
                    <ContactLink icon={Instagram} label="Instagram" value={clubData.socials.instagram} />
                    <ContactLink icon={Youtube} label="YouTube" value={clubData.socials.youtube} />
                    <ContactLink icon={Twitter} label="Twitter / X" value={clubData.socials.twitter} />
@@ -522,6 +565,28 @@ export default function ClubManagementPage() {
         </div>
 
         <div className="space-y-10">
+           <Card className="glass-panel border border-primary/10 bg-black/40 overflow-hidden shadow-xl">
+             <CardHeader className="p-6 sm:p-8 lg:p-10 pb-4">
+               <CardTitle className="text-[11px] font-black uppercase tracking-[0.4em] text-primary/20">
+                 Mapa del Club
+               </CardTitle>
+             </CardHeader>
+             <CardContent className="px-6 sm:px-8 lg:px-10 pb-6 sm:pb-8 lg:pb-10 space-y-4">
+               <div className="rounded-2xl overflow-hidden border border-primary/20 bg-black/60">
+                 <iframe
+                   title="Mapa del club"
+                   src={mapEmbedSrc}
+                   loading="lazy"
+                   referrerPolicy="no-referrer-when-downgrade"
+                   className="w-full h-64 md:h-72"
+                 />
+               </div>
+               <p className="text-[10px] font-bold uppercase tracking-widest text-primary/40">
+                 {clubData.address}
+               </p>
+             </CardContent>
+           </Card>
+
            <Card className="glass-panel border-primary/20 bg-primary/5 p-12 relative group overflow-hidden shadow-[0_0_50px_rgba(0,242,255,0.05)]">
               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-all">
                 <Share2 className="h-32 w-32 text-primary" />
