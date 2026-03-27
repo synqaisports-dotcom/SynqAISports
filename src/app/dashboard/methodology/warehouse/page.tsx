@@ -217,13 +217,33 @@ export default function WarehouseClubPage() {
       if (typeof window === "undefined") return;
 
       const facilitiesKey = `${FACILITIES_STORAGE_PREFIX}_${clubScopeId}`;
-      const facilitiesRaw = localStorage.getItem(facilitiesKey);
       let facilities: any[] = [];
-      try {
-        const parsed = JSON.parse(facilitiesRaw ?? "[]") as any[];
-        facilities = Array.isArray(parsed) ? parsed : [];
-      } catch {
-        facilities = [];
+      // Fuente única preferente: API segura de instalaciones.
+      if (canUseWarehouseSupabase && remoteAccessToken) {
+        try {
+          const facRes = await fetch("/api/club/facilities", {
+            headers: { Authorization: `Bearer ${remoteAccessToken}` },
+          });
+          if (facRes.ok) {
+            const facJson = (await facRes.json()) as { payload?: { facilities?: unknown[] } };
+            const fromApi = facJson?.payload?.facilities;
+            if (Array.isArray(fromApi)) {
+              facilities = fromApi as any[];
+              localStorage.setItem(facilitiesKey, JSON.stringify(facilities));
+            }
+          }
+        } catch {
+          // fallback local
+        }
+      }
+      if (facilities.length === 0) {
+        const facilitiesRaw = localStorage.getItem(facilitiesKey);
+        try {
+          const parsed = JSON.parse(facilitiesRaw ?? "[]") as any[];
+          facilities = Array.isArray(parsed) ? parsed : [];
+        } catch {
+          facilities = [];
+        }
       }
 
       const installationsFromFacilities: WarehouseInstallation[] = facilities.map((f) => ({

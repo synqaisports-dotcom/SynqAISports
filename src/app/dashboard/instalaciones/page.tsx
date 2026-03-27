@@ -52,6 +52,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { useClubModulePermissions } from "@/hooks/use-club-module-permissions";
+import { canUseOperativaSupabase } from "@/lib/operativa-sync";
 
 const SPORTS = [
   { value: "Fútbol", label: "Fútbol" },
@@ -78,15 +79,17 @@ const INITIAL_FACILITIES = [
 ];
 
 export default function FacilitiesManagementPage() {
-  const { profile } = useAuth();
+  const { profile, session } = useAuth();
   const { canEdit: canEditFacilities, canDelete: canDeleteFacilities } = useClubModulePermissions("facilities");
   const clubScopeId = profile?.clubId ?? "global-hq";
   const facilitiesStorageKey = `synq_methodology_facilities_v1_${clubScopeId}`;
+  const canUseRemote = canUseOperativaSupabase(clubScopeId) && !!session?.access_token;
 
   const [facilities, setFacilities] = useState(INITIAL_FACILITIES);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [syncMode, setSyncMode] = useState<"remote" | "local" | "restricted" | "local_error">("local");
   const [editingId, setEditingId] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -110,20 +113,89 @@ export default function FacilitiesManagementPage() {
   };
 
   useEffect(() => {
+    let cancelled = false;
     if (typeof window === "undefined") return;
-    try {
-      const raw = localStorage.getItem(facilitiesStorageKey);
-      if (!raw) {
-        persistFacilities(INITIAL_FACILITIES as any);
+    const loadFacilities = async () => {
+      try {
+        const raw = localStorage.getItem(facilitiesStorageKey);
+        if (!raw) {
+          persistFacilities(INITIAL_FACILITIES as any);
+        } else {
+          const parsed = JSON.parse(raw) as typeof INITIAL_FACILITIES;
+          if (Array.isArray(parsed) && !cancelled) setFacilities(parsed);
+        }
+      } catch {
+        // No bloqueamos si falla el parseo
+      }
+
+      if (!canUseRemote || !session?.access_token) {
+        if (!cancelled) setSyncMode("local");
         return;
       }
-      const parsed = JSON.parse(raw) as typeof INITIAL_FACILITIES;
-      if (Array.isArray(parsed)) setFacilities(parsed);
-    } catch {
-      // No bloqueamos si falla el parseo
-    }
+
+      try {
+        const res = await fetch("/api/club/facilities", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (res.status === 403) {
+          if (!cancelled) setSyncMode("restricted");
+          return;
+        }
+        if (!res.ok) {
+          if (!cancelled) setSyncMode("local_error");
+          return;
+        }
+        const json = (await res.json()) as { payload?: unknown[] };
+        const remoteFacilities = Array.isArray(json.payload) ? (json.payload as typeof INITIAL_FACILITIES) : [];
+        if (!cancelled) {
+          setFacilities(remoteFacilities);
+          setSyncMode("remote");
+        }
+        persistFacilities(remoteFacilities as any);
+      } catch {
+        if (!cancelled) setSyncMode("local_error");
+      }
+    };
+    void loadFacilities();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [facilitiesStorageKey]);
+  }, [facilitiesStorageKey, canUseRemote, session?.access_token]);
+
+  const persistFacilitiesHybrid = async (next: typeof INITIAL_FACILITIES) => {
+    persistFacilities(next);
+    if (!canUseRemote || !session?.access_token) {
+      setSyncMode("local");
+      return;
+    }
+    try {
+      const res = await fetch("/api/club/facilities", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ payload: next }),
+      });
+      if (res.status === 403) {
+        setSyncMode("restricted");
+        toast({
+          variant: "destructive",
+          title: "PERMISOS_LIMITADOS",
+          description: "Sin permisos para guardar instalaciones en servidor. Se guardó localmente.",
+        });
+        return;
+      }
+      if (!res.ok) {
+        setSyncMode("local_error");
+        return;
+      }
+      setSyncMode("remote");
+    } catch {
+      setSyncMode("local_error");
+    }
+  };
 
   const handleOpenCreate = () => {
     if (!canEditFacilities) {
@@ -197,7 +269,7 @@ export default function FacilitiesManagementPage() {
     }
     setFacilities((prev) => {
       const next = prev.filter((f) => f.id !== id);
-      persistFacilities(next as any);
+      void persistFacilitiesHybrid(next as any);
       return next;
     });
     toast({
@@ -224,7 +296,7 @@ export default function FacilitiesManagementPage() {
       if (currentEditingId) {
         setFacilities((prev) => {
           const next = prev.map((f) => (f.id === currentEditingId ? { ...f, ...formData } : f));
-          persistFacilities(next as any);
+          void persistFacilitiesHybrid(next as any);
           return next;
         });
         toast({
@@ -239,7 +311,7 @@ export default function FacilitiesManagementPage() {
         };
         setFacilities((prev) => {
           const next = [newFacility, ...prev];
-          persistFacilities(next as any);
+          void persistFacilitiesHybrid(next as any);
           return next;
         });
         toast({
@@ -270,6 +342,26 @@ export default function FacilitiesManagementPage() {
           <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic cyan-text-glow">
             Instalaciones
           </h1>
+          <p
+            className={cn(
+              "text-[9px] font-black uppercase tracking-widest mt-1",
+              syncMode === "remote"
+                ? "text-emerald-400/80"
+                : syncMode === "restricted"
+                ? "text-amber-400/80"
+                : syncMode === "local_error"
+                ? "text-rose-400/80"
+                : "text-white/40",
+            )}
+          >
+            {syncMode === "remote"
+              ? "SINCRO_REMOTA_ACTIVA"
+              : syncMode === "restricted"
+              ? "MODO_LOCAL_POR_PERMISOS"
+              : syncMode === "local_error"
+              ? "MODO_LOCAL_POR_ERROR"
+              : "MODO_LOCAL_FALLBACK"}
+          </p>
         </div>
         
         <Button 
