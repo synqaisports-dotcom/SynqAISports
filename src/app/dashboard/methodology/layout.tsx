@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { ClubRouteGuard } from "@/components/dashboard/ClubRouteGuard";
 
 export default function MethodologyLayout(props: { 
   children: React.ReactNode;
@@ -34,7 +35,7 @@ export default function MethodologyLayout(props: {
 
   return (
     <div className="methodology-theme min-h-screen">
-      {children}
+      <ClubRouteGuard>{children}</ClubRouteGuard>
     </div>
   );
 }

@@ -68,7 +68,7 @@ export function ClubRouteGuard({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
   if (isFree) {
-    return <>{children}</>;
+    return <AccessDenied />;
   }
 
   if (!ctx || !normalizedMatrix) {
