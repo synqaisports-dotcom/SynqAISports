@@ -48,6 +48,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
@@ -73,9 +74,9 @@ const WEEK_DAYS = [
 ];
 
 const INITIAL_FACILITIES = [
-  { id: "f1", name: "Campo de Fútbol Principal", type: "Campo Exterior", sport: "Fútbol", status: "Active", capacity: "22 Jugadores", nextMaintenance: "12 Oct", subdivisions: "2", divisionStartTime: "17:00", divisionEndTime: "21:00" },
-  { id: "f2", name: "Pabellón Cubierto A", type: "Pabellón", sport: "Baloncesto", status: "Active", capacity: "40 Atletas", nextMaintenance: "05 Nov", subdivisions: "1" },
-  { id: "f3", name: "Gimnasio de Alto Rendimiento", type: "Fitness", sport: "Multideporte", status: "Maintenance", capacity: "15 Atletas", nextMaintenance: "Hoy", subdivisions: "1" },
+  { id: "f1", name: "Campo de Fútbol Principal", type: "Campo Exterior", sport: "Fútbol", status: "Active", capacity: "22 Jugadores", nextMaintenance: "12 Oct", subdivisions: "2", divisionStartTime: "17:00", divisionEndTime: "21:00", divisionDays: ["L", "M", "X", "J", "V"], isHeadquarters: true },
+  { id: "f2", name: "Pabellón Cubierto A", type: "Pabellón", sport: "Baloncesto", status: "Active", capacity: "40 Atletas", nextMaintenance: "05 Nov", subdivisions: "1", isHeadquarters: false },
+  { id: "f3", name: "Gimnasio de Alto Rendimiento", type: "Fitness", sport: "Multideporte", status: "Maintenance", capacity: "15 Atletas", nextMaintenance: "Hoy", subdivisions: "1", isHeadquarters: false },
 ];
 
 export default function FacilitiesManagementPage() {
@@ -104,7 +105,9 @@ export default function FacilitiesManagementPage() {
     days: ["L", "M", "X", "J", "V", "S", "D"] as string[],
     subdivisions: "1",
     divisionStartTime: "17:00",
-    divisionEndTime: "21:00"
+    divisionEndTime: "21:00",
+    divisionDays: ["L", "M", "X", "J", "V"] as string[],
+    isHeadquarters: false,
   });
 
   const persistFacilities = (next: typeof INITIAL_FACILITIES) => {
@@ -218,7 +221,9 @@ export default function FacilitiesManagementPage() {
       days: ["L", "M", "X", "J", "V", "S", "D"],
       subdivisions: "1",
       divisionStartTime: "17:00",
-      divisionEndTime: "21:00"
+      divisionEndTime: "21:00",
+      divisionDays: ["L", "M", "X", "J", "V"],
+      isHeadquarters: false,
     });
     setIsSheetOpen(true);
   };
@@ -244,17 +249,19 @@ export default function FacilitiesManagementPage() {
       days: facility.days || ["L", "M", "X", "J", "V", "S", "D"],
       subdivisions: facility.subdivisions || "1",
       divisionStartTime: facility.divisionStartTime || "17:00",
-      divisionEndTime: facility.divisionEndTime || "21:00"
+      divisionEndTime: facility.divisionEndTime || "21:00",
+      divisionDays: facility.divisionDays || ["L", "M", "X", "J", "V"],
+      isHeadquarters: !!facility.isHeadquarters,
     });
     setIsSheetOpen(true);
   };
 
-  const toggleDay = (dayId: string) => {
+  const toggleDay = (dayId: string, key: "days" | "divisionDays" = "days") => {
     setFormData(prev => ({
       ...prev,
-      days: prev.days.includes(dayId) 
-        ? prev.days.filter(d => d !== dayId) 
-        : [...prev.days, dayId]
+      [key]: prev[key].includes(dayId)
+        ? prev[key].filter(d => d !== dayId)
+        : [...prev[key], dayId]
     }));
   };
 
@@ -426,6 +433,11 @@ export default function FacilitiesManagementPage() {
               <CardDescription className="text-[9px] font-black uppercase tracking-widest text-primary/30 italic">
                 {f.type} • {f.subdivisions === "1" ? "Espacio Único" : `${f.subdivisions} Divisiones`}
               </CardDescription>
+              {f.isHeadquarters && (
+                <Badge className="mt-3 rounded-xl bg-primary/15 text-primary border border-primary/30 text-[8px] font-black uppercase tracking-widest">
+                  Campo Sede de Partidos
+                </Badge>
+              )}
             </CardHeader>
             <CardContent className="px-6 pb-6 space-y-4">
               <div className="flex items-center justify-between p-3 bg-primary/5 rounded-2xl border border-primary/10">
@@ -475,8 +487,9 @@ export default function FacilitiesManagementPage() {
       </div>
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-xl shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
-          <div className="p-10 border-b border-white/5 bg-black/40">
+        <SheetContent side="right" className="relative bg-background/95 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-xl shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+          <div className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none" />
+          <div className="p-10 border-b border-white/5 bg-background/70 relative z-10">
             <SheetHeader className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
@@ -491,7 +504,7 @@ export default function FacilitiesManagementPage() {
             </SheetHeader>
           </div>
 
-          <form onSubmit={handleSaveFacility} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10">
+          <form onSubmit={handleSaveFacility} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10 relative z-10">
             <div className="space-y-6">
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Nombre de la Instalación</Label>
@@ -601,6 +614,26 @@ export default function FacilitiesManagementPage() {
                     <p className="text-[7px] text-primary/30 uppercase font-bold italic leading-relaxed">
                       Fuera de este horario, el sistema tratará la instalación como un Nodo de Espacio Único.
                     </p>
+                    <div className="space-y-2 pt-2">
+                      <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Días con División Activa</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {WEEK_DAYS.map(day => (
+                          <button
+                            key={`division-${day.id}`}
+                            type="button"
+                            onClick={() => toggleDay(day.id, "divisionDays")}
+                            className={cn(
+                              "h-9 min-w-9 px-2 flex items-center justify-center font-black text-[10px] border transition-all rounded-xl active:scale-95",
+                              formData.divisionDays.includes(day.id)
+                                ? "bg-primary text-black border-primary shadow-[0_0_15px_rgba(0,242,255,0.3)]"
+                                : "bg-white/5 border-primary/20 text-primary/40 hover:border-primary/40"
+                            )}
+                          >
+                            {day.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -696,6 +729,22 @@ export default function FacilitiesManagementPage() {
                   </Select>
                 </div>
               </div>
+
+              <div className="space-y-3 p-6 border border-primary/20 bg-primary/5 rounded-2xl">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <Label className="text-[10px] font-black uppercase text-primary tracking-widest italic">Campo sede para partidos</Label>
+                    <p className="text-[9px] text-primary/40 font-bold uppercase tracking-tight">
+                      Marca la instalación principal para partidos oficiales.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={formData.isHeadquarters}
+                    onCheckedChange={(checked) => setFormData({ ...formData, isHeadquarters: checked })}
+                    aria-label="Campo sede para partidos"
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="p-6 bg-primary/5 border border-primary/20 rounded-3xl space-y-3">
@@ -709,7 +758,7 @@ export default function FacilitiesManagementPage() {
             </div>
           </form>
 
-          <div className="p-10 bg-black/40 border-t border-white/5 flex gap-4">
+          <div className="p-10 bg-background/70 border-t border-white/5 flex gap-4 relative z-10">
             <SheetClose asChild>
               <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 transition-all rounded-2xl active:scale-95">
                 CANCELAR
