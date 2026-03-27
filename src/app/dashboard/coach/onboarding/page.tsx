@@ -30,6 +30,20 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
+function generateUuidV4(): string | null {
+  if (typeof crypto === "undefined") return null;
+  if (typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  if (typeof crypto.getRandomValues !== "function") return null;
+
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  bytes[6] = (bytes[6] & 0x0f) | 0x40; // version 4
+  bytes[8] = (bytes[8] & 0x3f) | 0x80; // variant 10
+
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
 const COUNTRIES = [
   { value: "ES", label: "España" },
   { value: "AR", label: "Argentina" },
@@ -82,12 +96,17 @@ export default function OnboardingTunnel() {
     setLoading(true);
     
     setTimeout(() => {
-      // `clubs.id` y `profiles.club_id` deben ser UUID (RLS usa tipos uuid).
-      // Si el navegador soporta crypto.randomUUID, lo usamos; si no, fallback simple.
-      const generatedClubId =
-        typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-          ? crypto.randomUUID()
-          : `club-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      // `clubs.id` y `profiles.club_id` deben ser UUID válidos para alinear con RLS/Supabase.
+      const generatedClubId = generateUuidV4();
+      if (!generatedClubId) {
+        setLoading(false);
+        toast({
+          variant: "destructive",
+          title: "UUID_NO_DISPONIBLE",
+          description: "No se pudo generar un identificador seguro del club en este dispositivo.",
+        });
+        return;
+      }
       
       completeOnboarding({ 
         name: clubName, 
