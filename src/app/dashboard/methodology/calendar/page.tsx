@@ -24,14 +24,14 @@ type SessionEvent = {
 
 type CalendarView = "month" | "week" | "day";
 
-const STORAGE_KEY = "synq_methodology_calendar_v1";
+const STORAGE_KEY_PREFIX = "synq_methodology_calendar_v1";
 const FIELDS = ["CAMPO 1", "CAMPO 2", "CAMPO 3", "PABELLON", "PISCINA"];
 const SECTIONS = ["DEBUTANTES", "ALEVIN", "INFANTIL", "CADETE", "JUVENIL", "PRIMER EQUIPO"];
 
-function readEvents(): SessionEvent[] {
+function readEvents(storageKey: string): SessionEvent[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(storageKey);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? (parsed as SessionEvent[]) : [];
@@ -109,12 +109,36 @@ function fieldBySession(session: string): string {
 export default function MethodologyCalendarPage() {
   const { profile } = useAuth();
   const clubScopeId = profile?.clubId ?? "global-hq";
+  const storageKey = `${STORAGE_KEY_PREFIX}_${clubScopeId}`;
+  const legacyStorageKey = STORAGE_KEY_PREFIX;
   const { canUseSupabase, loadSnapshot } = useOperativaSync(clubScopeId);
-  const [events, setEvents] = useState<SessionEvent[]>(() => readEvents());
+  const [events, setEvents] = useState<SessionEvent[]>([]);
   const [anchorDate, setAnchorDate] = useState<Date>(() => new Date());
   const [view, setView] = useState<CalendarView>("week");
   const [sectionFilter, setSectionFilter] = useState<string>("all");
   const [fieldFilter, setFieldFilter] = useState<string>("all");
+
+  useEffect(() => {
+    // Migración legacy: mover calendario global anterior a clave por club si existe.
+    if (typeof window === "undefined") return;
+    const scopedRaw = localStorage.getItem(storageKey);
+    if (scopedRaw) {
+      setEvents(readEvents(storageKey));
+      return;
+    }
+    const legacyRaw = localStorage.getItem(legacyStorageKey);
+    if (legacyRaw) {
+      localStorage.setItem(storageKey, legacyRaw);
+      setEvents(readEvents(storageKey));
+      return;
+    }
+    setEvents([]);
+  }, [storageKey, legacyStorageKey]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    localStorage.setItem(storageKey, JSON.stringify(events));
+  }, [events, storageKey]);
 
   useEffect(() => {
     if (!canUseSupabase) return;

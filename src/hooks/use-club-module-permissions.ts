@@ -22,13 +22,22 @@ export function useClubModulePermissions(moduleId: ClubModuleId) {
 
   return useMemo(() => {
     const bypass = shouldBypassClubMatrix(role);
-    if (bypass || !role) {
+    if (bypass) {
       return {
         canView: true,
         canEdit: true,
         canDelete: true,
         loading: false,
         bypass: true as const,
+      };
+    }
+    if (!role) {
+      return {
+        canView: false,
+        canEdit: false,
+        canDelete: false,
+        loading,
+        bypass: false as const,
       };
     }
     const matrix = normalized ?? {};

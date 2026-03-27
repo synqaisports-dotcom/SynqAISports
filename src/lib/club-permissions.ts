@@ -206,7 +206,7 @@ function getModuleState(matrix: StaffAccessMatrix, role: string, moduleId: ClubM
 
 /**
  * Comprueba permiso de módulo para un rol sobre matriz ya normalizada.
- * Si no hay regla explícita para el rol en la matriz, permite (compatibilidad hasta que exista fila).
+ * Política por defecto: denegar cuando el rol no tiene regla explícita.
  */
 export function canAccessClubModule(
   normalizedMatrix: StaffAccessMatrix,
@@ -215,9 +215,9 @@ export function canAccessClubModule(
   level: keyof ModulePermState
 ): boolean {
   if (!role) return false;
-  if (!normalizedMatrix[role]) return true;
+  if (!normalizedMatrix[role]) return false;
   const st = getModuleState(normalizedMatrix, role, moduleId);
-  if (!st) return true;
+  if (!st) return false;
   if (level === "access") return st.access;
   if (level === "view") return st.access && st.view;
   if (level === "edit") return st.access && st.view && st.edit;

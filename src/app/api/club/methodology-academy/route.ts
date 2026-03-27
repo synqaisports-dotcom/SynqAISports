@@ -31,6 +31,9 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'club_id inválido' }, { status: 400 });
   }
 
+  const deniedAcadGet = await guardClubModuleOr403(gate, token, 'academy', 'view');
+  if (deniedAcadGet) return deniedAcadGet;
+
   const userClient = clientForUser(token);
   if (!userClient) return NextResponse.json({ error: 'Supabase no configurado' }, { status: 503 });
 

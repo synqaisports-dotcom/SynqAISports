@@ -110,6 +110,7 @@ type MaterialRequirement = {
 };
 
 const STORAGE_METHODOLOGY_LIBRARY_DRAFTS = "synq_methodology_library_drafts";
+const PENDING_LIBRARY_PREFILL_KEY = "synq_methodology_library_prefill_from_board_v1";
 
 function safeParseArray(v: string | null): unknown[] {
   try {
@@ -120,10 +121,20 @@ function safeParseArray(v: string | null): unknown[] {
   }
 }
 
-function loadEntries(key: string): MethodologyLibraryEntry[] {
+function scopedKey(baseKey: string, clubScopeId: string): string {
+  return `${baseKey}_${clubScopeId}`;
+}
+
+function loadEntries(key: string, legacyKey?: string): MethodologyLibraryEntry[] {
   if (typeof window === "undefined") return [];
   const raw = localStorage.getItem(key);
-  return safeParseArray(raw) as MethodologyLibraryEntry[];
+  if (raw) return safeParseArray(raw) as MethodologyLibraryEntry[];
+  if (!legacyKey) return [];
+  const legacyRaw = localStorage.getItem(legacyKey);
+  if (!legacyRaw) return [];
+  const parsed = safeParseArray(legacyRaw) as MethodologyLibraryEntry[];
+  localStorage.setItem(key, JSON.stringify(parsed.slice(0, 300)));
+  return parsed;
 }
 
 function saveEntries(key: string, entries: MethodologyLibraryEntry[]) {
@@ -169,11 +180,15 @@ export default function ExerciseLibraryPage() {
   const [loading, setLoading] = useState(false);
   const [entries, setEntries] = useState<MethodologyLibraryEntry[]>([]);
   const [selectedStageFilter, setSelectedStageFilter] = useState<string>(STAGES[0] ?? "Debutantes");
+  const clubScopeId = profile?.clubId ?? "global-hq";
+  const neuralStorageKey = scopedKey(STORAGE_METHODOLOGY_NEURAL, clubScopeId);
+  const draftStorageKey = scopedKey(STORAGE_METHODOLOGY_LIBRARY_DRAFTS, clubScopeId);
+  const prefillStorageKey = scopedKey(PENDING_LIBRARY_PREFILL_KEY, clubScopeId);
   useEffect(() => {
     if (typeof window === "undefined") return;
     const loadFromApiOrLocal = async () => {
-      const localOfficial = loadEntries(STORAGE_METHODOLOGY_NEURAL);
-      const localDraft = loadEntries(STORAGE_METHODOLOGY_LIBRARY_DRAFTS);
+      const localOfficial = loadEntries(neuralStorageKey, STORAGE_METHODOLOGY_NEURAL);
+      const localDraft = loadEntries(draftStorageKey, STORAGE_METHODOLOGY_LIBRARY_DRAFTS);
       const localCombined = [...localOfficial, ...localDraft].sort((a, b) =>
         String(b.savedAt).localeCompare(String(a.savedAt), "es"),
       );
@@ -203,14 +218,13 @@ export default function ExerciseLibraryPage() {
       }
     };
     void loadFromApiOrLocal();
-  }, [session?.access_token]);
+  }, [session?.access_token, draftStorageKey, neuralStorageKey]);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const exercisePerms = useClubModulePermissions("exercises");
   const isElevated = profile?.role === "superadmin" || profile?.role === "club_admin";
   const canEditContent = isElevated || exercisePerms.canEdit;
   const canDeleteContent = isElevated || exercisePerms.canDelete;
-  const PENDING_LIBRARY_PREFILL_KEY = "synq_methodology_library_prefill_from_board_v1";
 
   const [materials, setMaterials] = useState<MaterialRequirement[]>([]);
   const [materialDraft, setMaterialDraft] = useState({
@@ -247,7 +261,9 @@ export default function ExerciseLibraryPage() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const raw = localStorage.getItem(PENDING_LIBRARY_PREFILL_KEY);
+    const raw =
+      localStorage.getItem(prefillStorageKey) ??
+      localStorage.getItem(PENDING_LIBRARY_PREFILL_KEY);
     if (!raw) return;
 
     try {
@@ -321,9 +337,10 @@ export default function ExerciseLibraryPage() {
     } catch {
       // El prefill es opcional: evitamos romper la UI si el payload está mal.
     } finally {
+      localStorage.removeItem(prefillStorageKey);
       localStorage.removeItem(PENDING_LIBRARY_PREFILL_KEY);
     }
-  }, [PENDING_LIBRARY_PREFILL_KEY, toast]);
+  }, [prefillStorageKey, toast]);
 
   const allEntries = useMemo(
     () =>
@@ -420,9 +437,9 @@ export default function ExerciseLibraryPage() {
         },
       };
 
-      const drafts = loadEntries(STORAGE_METHODOLOGY_LIBRARY_DRAFTS);
+      const drafts = loadEntries(draftStorageKey, STORAGE_METHODOLOGY_LIBRARY_DRAFTS);
       const nextDrafts = editingId ? drafts.map((d) => (d.id === editingId ? base : d)) : [base, ...drafts];
-      saveEntries(STORAGE_METHODOLOGY_LIBRARY_DRAFTS, nextDrafts);
+      saveEntries(draftStorageKey, nextDrafts);
 
       if (session?.access_token) {
         if (editingId) {
@@ -582,14 +599,14 @@ export default function ExerciseLibraryPage() {
       toast({ variant: "destructive", title: "SIN_PERMISOS", description: "No puedes publicar según la matriz del club." });
       return;
     }
-    const drafts = loadEntries(STORAGE_METHODOLOGY_LIBRARY_DRAFTS).filter((d) => d.id !== entry.id);
-    saveEntries(STORAGE_METHODOLOGY_LIBRARY_DRAFTS, drafts);
-    const official = loadEntries(STORAGE_METHODOLOGY_NEURAL);
+    const drafts = loadEntries(draftStorageKey, STORAGE_METHODOLOGY_LIBRARY_DRAFTS).filter((d) => d.id !== entry.id);
+    saveEntries(draftStorageKey, drafts);
+    const official = loadEntries(neuralStorageKey, STORAGE_METHODOLOGY_NEURAL);
     const nextOfficial: MethodologyLibraryEntry[] = [
       { ...entry, status: "Official", savedAt: new Date().toISOString() },
       ...official.filter((o) => o.id !== entry.id),
     ];
-    saveEntries(STORAGE_METHODOLOGY_NEURAL, nextOfficial);
+    saveEntries(neuralStorageKey, nextOfficial);
     if (session?.access_token) {
       await fetch(`/api/club/methodology-library/${entry.id}`, {
         method: "PATCH",
@@ -614,8 +631,10 @@ export default function ExerciseLibraryPage() {
       return;
     }
     if (!confirm(`¿Eliminar \"${entry.title}\"?`)) return;
-    const key = entry.status === "Official" ? STORAGE_METHODOLOGY_NEURAL : STORAGE_METHODOLOGY_LIBRARY_DRAFTS;
-    const next = loadEntries(key).filter((x) => x.id !== entry.id);
+    const key = entry.status === "Official" ? neuralStorageKey : draftStorageKey;
+    const legacyKey =
+      entry.status === "Official" ? STORAGE_METHODOLOGY_NEURAL : STORAGE_METHODOLOGY_LIBRARY_DRAFTS;
+    const next = loadEntries(key, legacyKey).filter((x) => x.id !== entry.id);
     saveEntries(key, next);
     if (session?.access_token) {
       await fetch(`/api/club/methodology-library/${entry.id}`, {
