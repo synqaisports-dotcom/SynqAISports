@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { 
   Building2, 
   Settings2, 
@@ -52,6 +52,7 @@ import { useClubModulePermissions } from "@/hooks/use-club-module-permissions";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { canUseOperativaSupabase } from "@/lib/operativa-sync";
 
 const SPORTS = [
   { value: "Fútbol", label: "Fútbol" },
@@ -62,12 +63,17 @@ const SPORTS = [
 ];
 
 export default function ClubManagementPage() {
-  const { profile } = useAuth();
+  const { profile, session } = useAuth();
   const { toast } = useToast();
   const { canEdit: canEditClub } = useClubModulePermissions("club");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [sourceMode, setSourceMode] = useState<"remote" | "local" | "local_forbidden" | "local_error">("local");
 
   const isSuperAdmin = profile?.role === "superadmin";
+  const clubScopeId = profile?.clubId ?? "global-hq";
+  const canUseRemote = canUseOperativaSupabase(clubScopeId) && !!session?.access_token;
+  const storageKey = `synq_club_identity_v1_${clubScopeId}`;
 
   const [clubData, setClubData] = useState({
     name: profile?.clubName || profile?.clubId || "Nodo de Cantera",
@@ -83,7 +89,78 @@ export default function ClubManagementPage() {
     }
   });
 
-  const handleUpdate = (e?: React.FormEvent) => {
+  useEffect(() => {
+    let cancelled = false;
+    const loadIdentity = async () => {
+      if (typeof window === "undefined") return;
+      const localRaw = localStorage.getItem(storageKey);
+      if (localRaw) {
+        try {
+          const parsed = JSON.parse(localRaw) as Partial<typeof clubData>;
+          if (!cancelled && parsed && typeof parsed === "object") {
+            setClubData((prev) => ({
+              ...prev,
+              ...parsed,
+              socials: {
+                ...prev.socials,
+                ...(parsed.socials ?? {}),
+              },
+            }));
+          }
+        } catch {
+          // ignore local parse errors
+        }
+      }
+
+      if (!canUseRemote || !session?.access_token) {
+        if (!cancelled) setSourceMode("local");
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/club/identity", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (res.status === 403) {
+          if (!cancelled) {
+            setSourceMode("local_forbidden");
+            setClubData((prev) => ({
+              ...prev,
+              name: profile?.clubName || prev.name,
+              country: profile?.country || prev.country,
+              sport: profile?.sport || prev.sport,
+            }));
+          }
+          return;
+        }
+        if (!res.ok) {
+          if (!cancelled) setSourceMode("local_error");
+          return;
+        }
+        const json = (await res.json()) as {
+          profile?: { clubName?: string | null; country?: string | null; sport?: string | null };
+          club?: { name?: string | null; country?: string | null; sport?: string | null };
+        };
+        if (!cancelled) {
+          setSourceMode("remote");
+          setClubData((prev) => ({
+            ...prev,
+            name: json.club?.name || json.profile?.clubName || prev.name,
+            country: json.club?.country || json.profile?.country || prev.country,
+            sport: json.club?.sport || json.profile?.sport || prev.sport,
+          }));
+        }
+      } catch {
+        if (!cancelled) setSourceMode("local_error");
+      }
+    };
+    void loadIdentity();
+    return () => {
+      cancelled = true;
+    };
+  }, [canUseRemote, profile?.clubName, profile?.country, profile?.sport, session?.access_token, storageKey]);
+
+  const handleUpdate = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!canEditClub) {
       toast({
@@ -93,11 +170,61 @@ export default function ClubManagementPage() {
       });
       return;
     }
+    setSaving(true);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(storageKey, JSON.stringify(clubData));
+    }
+    if (canUseRemote && session?.access_token) {
+      try {
+        const res = await fetch("/api/club/identity", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            name: clubData.name,
+            country: clubData.country,
+            sport: clubData.sport,
+          }),
+        });
+        if (res.status === 403) {
+          setSourceMode("local_forbidden");
+          toast({
+            variant: "destructive",
+            title: "PERMISOS_LIMITADOS",
+            description: "No tienes permiso en servidor para editar la identidad del club.",
+          });
+          setSaving(false);
+          return;
+        }
+        if (!res.ok) {
+          setSourceMode("local_error");
+          toast({
+            variant: "destructive",
+            title: "MODO_LOCAL_ACTIVO",
+            description: "No se pudo sincronizar con servidor. Se guardó localmente en este dispositivo.",
+          });
+          setSaving(false);
+          setIsSheetOpen(false);
+          return;
+        }
+        setSourceMode("remote");
+      } catch {
+        setSourceMode("local_error");
+      }
+    } else {
+      setSourceMode("local");
+    }
     toast({
       title: "NODO_ACTUALIZADO",
-      description: `La identidad de "${clubData.name}" ha sido sincronizada en la red.`,
+      description:
+        sourceMode === "remote"
+          ? `La identidad de "${clubData.name}" se guardó en servidor.`
+          : `La identidad de "${clubData.name}" se guardó localmente.`,
     });
     setIsSheetOpen(false);
+    setSaving(false);
   };
 
   return (
@@ -115,6 +242,27 @@ export default function ClubManagementPage() {
             {isSuperAdmin ? "Auditoría de Club" : "Gestión del Club"}
           </h1>
         </div>
+        <Badge
+          variant="outline"
+          className={cn(
+            "font-black uppercase text-[8px] tracking-widest rounded-xl px-3 py-1.5",
+            sourceMode === "remote"
+              ? "border-emerald-500/30 text-emerald-400"
+              : sourceMode === "local"
+              ? "border-amber-500/30 text-amber-400"
+              : sourceMode === "local_forbidden"
+              ? "border-rose-500/30 text-rose-400"
+              : "border-rose-500/30 text-rose-400",
+          )}
+        >
+          {sourceMode === "remote"
+            ? "Fuente: Servidor"
+            : sourceMode === "local"
+            ? "Fuente: Local"
+            : sourceMode === "local_forbidden"
+            ? "Local (permiso servidor denegado)"
+            : "Local (error de sincronización)"}
+        </Badge>
         
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
           <SheetTrigger asChild>
@@ -234,10 +382,10 @@ export default function ClubManagementPage() {
               </SheetClose>
               <Button 
                 onClick={() => handleUpdate()}
-                disabled={!canEditClub}
+                disabled={!canEditClub || saving}
                 className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] transition-all border-none disabled:opacity-40"
               >
-                SINCRONIZAR_CAMBIOS
+                {saving ? "GUARDANDO..." : "SINCRONIZAR_CAMBIOS"}
               </Button>
             </div>
           </SheetContent>
