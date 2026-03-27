@@ -133,3 +133,85 @@ Este documento centraliza el histórico de auditorías técnicas del producto (b
 ### Evidencia / notas
 - ...
 ```
+
+---
+
+## Auditoría #002 - 2026-03-27
+
+### Alcance
+
+- Nodo **Metodología** completo (`/dashboard/methodology/*`).
+- Secciones relacionadas en dashboard (`sessions`, `academy`, `instalaciones`, `mobile-continuity`, `dashboard` hub).
+- APIs de club asociadas (`/api/club/methodology-*`).
+- Enforcement de matriz (`access/view/edit/delete`) y patrón híbrido Supabase + fallback local.
+
+### Hallazgos registrados
+
+1. **Claves localStorage sin ámbito de club en partes de metodología**
+   - Severidad: 🔴 Crítica.
+   - Estado: `abierto`.
+   - Referencias:
+     - `src/app/dashboard/methodology/exercise-library/page.tsx`
+     - `src/app/dashboard/methodology/calendar/page.tsx`
+   - Nota: riesgo de mezcla/fuga de datos entre clubes en el mismo navegador.
+
+2. **Layout de metodología valida login pero no módulo/permisos**
+   - Severidad: 🟠 Alta.
+   - Estado: `abierto`.
+   - Referencia: `src/app/dashboard/methodology/layout.tsx`.
+   - Nota: URL directa puede cargar UI aunque sidebar oculte enlaces.
+
+3. **GET de APIs metodología sin guard de módulo en rutas concretas**
+   - Severidad: 🟠 Alta.
+   - Estado: `abierto`.
+   - Referencias:
+     - `src/app/api/club/methodology-academy/route.ts` (GET)
+     - `src/app/api/club/methodology-warehouse/route.ts` (GET)
+   - Nota: desalineación con enforcement de matriz aplicado en UI y otras APIs.
+
+4. **Matriz permisiva para roles sin fila explícita**
+   - Severidad: 🟠 Alta.
+   - Estado: `abierto`.
+   - Referencia: `src/lib/club-permissions.ts` (`canAccessClubModule`).
+
+5. **Hook de permisos concede todo si `role` es vacío**
+   - Severidad: 🟡 Media.
+   - Estado: `abierto`.
+   - Referencia: `src/hooks/use-club-module-permissions.ts`.
+
+6. **Estrategia híbrida no uniforme entre secciones**
+   - Severidad: 🟡 Media.
+   - Estado: `abierto`.
+   - Referencias:
+     - `src/app/dashboard/methodology/session-planner/page.tsx`
+     - `src/app/dashboard/methodology/exercise-library/page.tsx`
+     - `src/app/dashboard/methodology/warehouse/page.tsx`
+   - Nota: variaciones de merge remoto/local sin señalización clara de modo al usuario.
+
+7. **Modo prototipo visible en planner**
+   - Severidad: 🔵 Baja.
+   - Estado: `abierto`.
+   - Referencia: `src/app/dashboard/methodology/session-planner/page.tsx`.
+
+### Fortalezas detectadas
+
+- `methodology-library` aplica guard por matriz en API (view/edit/delete) de forma consistente.
+- Persistencia Supabase con RLS por club en tablas de metodología y operativa ya está establecida.
+- Integración de matriz en sidebar y hooks compartidos evita duplicación excesiva de lógica.
+
+### Plan de cierre sugerido (iterativo)
+
+1. Scopear todas las claves de metodología por `clubId` y migrar lectura legacy.
+2. Añadir guard de acceso por módulo en layout/rutas metodología.
+3. Aplicar `guardClubModuleOr403` también en GET de academy/warehouse.
+4. Endurecer comportamiento por defecto para roles no mapeados (deny-by-default).
+5. Ajustar hook de permisos para `!role` como no autorizado (o loading), no bypass.
+6. Unificar política de merge híbrido remoto/local y mostrar estado de sincronización.
+7. Retirar/aislar modo prototipo del planner con feature flag.
+
+### Pruebas críticas faltantes
+
+- Tests de autorización por módulo en APIs `methodology-*` (200/403 por rol).
+- Tests de no mezcla de datos al cambiar de club en el mismo navegador.
+- Tests de deep-link a rutas metodología con matriz restrictiva.
+- Tests de merge local/remoto en planner y biblioteca ante errores de API.
