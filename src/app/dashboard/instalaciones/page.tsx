@@ -495,8 +495,8 @@ export default function FacilitiesManagementPage() {
       </div>
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent side="right" className="z-[70] bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-xl shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
-          <div className="p-10 border-b border-white/5 bg-background/60">
+        <SheetContent side="right" className="z-[70] bg-background/95 bg-grid-pattern backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-xl shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+          <div className="p-10 border-b border-white/5 bg-background/70">
             <SheetHeader className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
@@ -511,7 +511,7 @@ export default function FacilitiesManagementPage() {
             </SheetHeader>
           </div>
 
-          <form onSubmit={handleSaveFacility} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10 bg-background/40">
+          <form onSubmit={handleSaveFacility} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10 bg-background/70">
             <div className="space-y-6">
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Nombre de la Instalación</Label>
@@ -765,7 +765,7 @@ export default function FacilitiesManagementPage() {
             </div>
           </form>
 
-          <div className="p-10 bg-background/60 border-t border-white/5 flex gap-4">
+          <div className="p-10 bg-background/70 border-t border-white/5 flex gap-4">
             <SheetClose asChild>
               <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 transition-all rounded-2xl active:scale-95">
                 CANCELAR
