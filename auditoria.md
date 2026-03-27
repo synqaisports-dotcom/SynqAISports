@@ -215,3 +215,78 @@ Este documento centraliza el histórico de auditorías técnicas del producto (b
 - Tests de no mezcla de datos al cambiar de club en el mismo navegador.
 - Tests de deep-link a rutas metodología con matriz restrictiva.
 - Tests de merge local/remoto en planner y biblioteca ante errores de API.
+
+---
+
+## Auditoría #003 - 2026-03-27
+
+### Alcance
+
+- Nodo **Dashboard Club** completo (`src/app/dashboard/**`).
+- Secciones de metodología y operativa conectadas al dashboard.
+- APIs de club relacionadas (`/api/club/*`) y patrón híbrido actual.
+
+### Inventario resumido por estado
+
+- **Remoto/Híbrido más maduro**
+  - `dashboard/admin` y `dashboard/access-matrix` (matriz por API + fallback local).
+  - `dashboard/methodology/exercise-library` (API + caché local).
+  - `dashboard/methodology/academy` y `warehouse` (API + fallback local).
+  - Guards de ruta/matriz en layout + sidebar.
+- **Híbrido parcial / con deuda**
+  - `dashboard/sessions`, `dashboard/mobile-continuity`, `dashboard/methodology/session-planner` (mezcla local + sync operativa remota).
+- **Predominio mock/local**
+  - `dashboard/club`, `dashboard/staff`, `dashboard/players`, `dashboard/instalaciones`.
+  - `dashboard/methodology/objectives`, `cycle-planner`, `learning-items`.
+  - `dashboard/coach/library` y parte de `dashboard/coach/*`.
+
+### Hallazgos registrados
+
+1. **Jugadores y roster en localStorage (sin fuente central por club)**
+   - Severidad: 🔴 Crítica.
+   - Estado: `abierto`.
+   - Referencias: `src/app/dashboard/players/page.tsx`, consumo en `sessions` / `mobile-continuity`.
+
+2. **Onboarding con fallback no UUID puede romper operativa Supabase**
+   - Severidad: 🔴 Crítica.
+   - Estado: `abierto`.
+   - Referencias: `src/app/dashboard/coach/onboarding/page.tsx`, `src/lib/operativa-sync.ts` (`canUseOperativaSupabase`).
+
+3. **Doble fuente de verdad en operativa (local + remoto)**
+   - Severidad: 🟠 Alta.
+   - Estado: `abierto`.
+   - Referencias: `src/app/dashboard/sessions/page.tsx`, `src/app/dashboard/methodology/session-planner/page.tsx`.
+
+4. **Gestión de Club sin persistencia real (UI/toast)**
+   - Severidad: 🟠 Alta.
+   - Estado: `abierto`.
+   - Referencia: `src/app/dashboard/club/page.tsx`.
+
+5. **Staff en modo demostración (lista inicial en código)**
+   - Severidad: 🟡 Media.
+   - Estado: `abierto`.
+   - Referencia: `src/app/dashboard/staff/page.tsx`.
+
+6. **Instalaciones duplicadas entre páginas con modelo local**
+   - Severidad: 🟡 Media.
+   - Estado: `abierto`.
+   - Referencias: `src/app/dashboard/instalaciones/page.tsx`, `src/app/dashboard/methodology/warehouse/page.tsx`.
+
+7. **Home del dashboard usa valores demo en ausencia de datos reales**
+   - Severidad: 🔵 Baja.
+   - Estado: `abierto`.
+   - Referencia: `src/app/dashboard/page.tsx`.
+
+### Plan de cierre sugerido (orden recomendado)
+
+1. Forzar `clubId` UUID real en onboarding (sin fallback no compatible).
+2. Migrar **Players** a persistencia remota por club (manteniendo fallback local controlado).
+3. Unificar operativa (`sessions`/`session-planner`) para reducir divergencia local-remoto.
+4. Persistir `dashboard/club` en API (dejar de ser solo mock UI).
+5. Sustituir `staff` mock por fuente real del club.
+6. Unificar modelo de instalaciones (una sola fuente para instalaciones + almacén).
+
+### Notas para ejecución
+
+- El nodo ya tiene base sólida de seguridad por matriz/rutas/API.
+- El foco siguiente es **consistencia de datos** y cierre de pantallas aún mock.
