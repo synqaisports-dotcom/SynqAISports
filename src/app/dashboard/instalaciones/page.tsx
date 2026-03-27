@@ -296,6 +296,14 @@ export default function FacilitiesManagementPage() {
       });
       return;
     }
+    if (parseInt(formData.subdivisions, 10) > 1 && formData.divisionDays.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "VALIDACIÓN_DIVISIÓN",
+        description: "Selecciona al menos un día para la división activa antes de guardar.",
+      });
+      return;
+    }
     setLoading(true);
 
     const currentEditingId = editingId;
