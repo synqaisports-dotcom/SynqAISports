@@ -20,6 +20,7 @@ type IdentityPayload = {
   country: string;
   sport: string;
   members?: string;
+  logoUrl?: string;
 };
 
 function sanitizeText(value: unknown, fallback = ""): string {
@@ -51,7 +52,7 @@ export async function GET(req: Request) {
       .single(),
     userClient
       .from("clubs")
-      .select("name,country,sport,users")
+      .select("name,country,sport,users,logo_url")
       .eq("id", gate.clubId)
       .maybeSingle(),
   ]);
@@ -64,6 +65,7 @@ export async function GET(req: Request) {
     country: sanitizeText(club?.country) || sanitizeText(prof?.country) || "España",
     sport: sanitizeText(club?.sport) || sanitizeText(prof?.sport) || "Fútbol",
     members: typeof club?.users === "number" ? String(club.users) : undefined,
+    logoUrl: sanitizeText(club?.logo_url),
   };
 
   return NextResponse.json({ ok: true, payload });
@@ -95,6 +97,7 @@ export async function PUT(req: Request) {
   const sport = sanitizeText(body.sport);
   const membersRaw = sanitizeText(body.members);
   const members = membersRaw ? Number(membersRaw) : null;
+  const logoUrl = sanitizeText(body.logoUrl);
 
   if (!clubName) return NextResponse.json({ error: "clubName requerido" }, { status: 400 });
   if (!country) return NextResponse.json({ error: "country requerido" }, { status: 400 });
@@ -119,12 +122,13 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: profileUpdateError.message }, { status: 500 });
   }
 
-  const clubPatch: { name: string; country: string; sport: string; users?: number } = {
+  const clubPatch: { name: string; country: string; sport: string; users?: number; logo_url?: string } = {
     name: clubName,
     country,
     sport,
   };
   if (members !== null) clubPatch.users = members;
+  if (logoUrl) clubPatch.logo_url = logoUrl;
 
   const { error: clubUpdateError } = await userClient
     .from("clubs")

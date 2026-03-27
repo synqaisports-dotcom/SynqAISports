@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
-import { 
+import { useEffect, useRef, useState } from "react";
+import {
   Building2, 
   Settings2, 
   Globe, 
@@ -12,7 +12,7 @@ import {
   MapPin, 
   Calendar, 
   Users, 
-  Plus, 
+  Plus,
   Camera, 
   ArrowUpRight,
   ShieldCheck,
@@ -23,7 +23,8 @@ import {
   Trophy,
   ArrowRight,
   Dumbbell,
-  ShieldAlert
+  ShieldAlert,
+  Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -69,6 +70,8 @@ export default function ClubManagementPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [sourceMode, setSourceMode] = useState<"remote" | "local" | "local_forbidden" | "local_error">("local");
+  const logoInputRef = useRef<HTMLInputElement | null>(null);
+  const bannerInputRef = useRef<HTMLInputElement | null>(null);
 
   const isSuperAdmin = profile?.role === "superadmin";
   const clubScopeId = profile?.clubId ?? "global-hq";
@@ -85,6 +88,8 @@ export default function ClubManagementPage() {
     phone: "+34 900 000 000",
     mapQuery: "Avenida del Deporte 12, Madrid",
     website: "www.cantera-synqai.com",
+    logoUrl: "https://picsum.photos/seed/clublogo/300/300",
+    bannerUrl: "https://picsum.photos/seed/stadium/1200/400",
     socials: {
       instagram: "@club_academy",
       youtube: "AcademyTV",
@@ -142,7 +147,7 @@ export default function ClubManagementPage() {
         }
         const json = (await res.json()) as {
           profile?: { clubName?: string | null; country?: string | null; sport?: string | null };
-          club?: { name?: string | null; country?: string | null; sport?: string | null };
+          club?: { name?: string | null; country?: string | null; sport?: string | null; logoUrl?: string | null; bannerUrl?: string | null };
         };
         if (!cancelled) {
           setSourceMode("remote");
@@ -151,6 +156,8 @@ export default function ClubManagementPage() {
             name: json.club?.name || json.profile?.clubName || prev.name,
             country: json.club?.country || json.profile?.country || prev.country,
             sport: json.club?.sport || json.profile?.sport || prev.sport,
+            logoUrl: json.club?.logoUrl || prev.logoUrl,
+            bannerUrl: json.club?.bannerUrl || prev.bannerUrl,
           }));
         }
       } catch {
@@ -189,6 +196,8 @@ export default function ClubManagementPage() {
             name: clubData.name,
             country: clubData.country,
             sport: clubData.sport,
+            logoUrl: clubData.logoUrl,
+            bannerUrl: clubData.bannerUrl,
           }),
         });
         if (res.status === 403) {
@@ -233,6 +242,29 @@ export default function ClubManagementPage() {
   const mapEmbedSrc = `https://www.google.com/maps?q=${encodeURIComponent(
     clubData.mapQuery || clubData.address || "Madrid",
   )}&output=embed`;
+
+  const handleImageUpload = (target: "logoUrl" | "bannerUrl", file?: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast({
+        variant: "destructive",
+        title: "FORMATO_NO_VÁLIDO",
+        description: "Selecciona una imagen válida.",
+      });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const dataUrl = String(reader.result || "");
+      if (!dataUrl) return;
+      setClubData((prev) => ({ ...prev, [target]: dataUrl }));
+      toast({
+        title: target === "logoUrl" ? "ESCUDO_CARGADO" : "PORTADA_CARGADA",
+        description: "Imagen preparada. Pulsa SINCRONIZAR_CAMBIOS para guardarla.",
+      });
+    };
+    reader.readAsDataURL(file);
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000 pb-24">
@@ -445,8 +477,8 @@ export default function ClubManagementPage() {
 
       {/* BANNER VISUAL */}
       <div className="relative h-56 sm:h-72 lg:h-80 rounded-[2rem] sm:rounded-[3rem] overflow-hidden border border-primary/10 shadow-2xl">
-        <Image 
-          src="https://picsum.photos/seed/stadium/1200/400" 
+        <Image
+          src={clubData.bannerUrl}
           alt="Club Banner" 
           fill 
           className="object-cover opacity-40 grayscale"
@@ -454,30 +486,54 @@ export default function ClubManagementPage() {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#04070c] via-transparent to-transparent" />
         <div className="absolute top-8 right-8">
-           <Button variant="ghost" disabled={!canEditClub} className="h-10 bg-black/40 backdrop-blur-md border border-primary/20 rounded-xl text-primary/60 hover:text-primary transition-all disabled:opacity-40">
-              <Camera className="h-4 w-4 mr-2" /> Editar Portada
+           <Button
+             variant="ghost"
+             disabled={!canEditClub}
+             onClick={() => bannerInputRef.current?.click()}
+             className="h-10 bg-black/40 backdrop-blur-md border border-primary/20 rounded-xl text-primary/60 hover:text-primary transition-all disabled:opacity-40"
+           >
+              <Upload className="h-4 w-4 mr-2" /> Editar Portada
            </Button>
+           <input
+             ref={bannerInputRef}
+             type="file"
+             accept="image/*"
+             className="hidden"
+             onChange={(e) => handleImageUpload("bannerUrl", e.target.files?.[0] ?? null)}
+           />
         </div>
       </div>
 
       {/* IDENTIDAD DEL CLUB (BLOQUE DE FLUJO CON MARGEN NEGATIVO ELEVADO) */}
-      <div className="px-4 sm:px-8 lg:px-12 -mt-24 sm:-mt-32 lg:-mt-44 relative z-20 space-y-6 mb-24">
+      <div className="px-4 sm:px-8 lg:px-12 -mt-28 sm:-mt-36 lg:-mt-48 relative z-20 space-y-6 mb-24">
         <div className="flex flex-col md:flex-row md:items-end gap-8 lg:gap-10">
           <div className="relative group/logo">
              <div className="absolute inset-0 bg-primary/30 blur-3xl rounded-full opacity-0 group-hover/logo:opacity-100 transition-opacity" />
-             <div className="h-40 w-40 sm:h-48 sm:w-44 lg:h-56 lg:w-52 bg-black border-2 border-primary/40 rounded-[2rem] flex items-center justify-center relative z-10 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.9)] group-hover/logo:border-primary transition-all duration-500">
-                <Image 
-                  src="https://picsum.photos/seed/clublogo/300/300" 
+             <div className="h-40 w-40 sm:h-48 sm:w-44 lg:h-56 lg:w-52 bg-black/90 border-2 border-primary/50 rounded-[2rem] flex items-center justify-center relative z-10 overflow-hidden shadow-[0_24px_60px_rgba(0,0,0,0.95)] group-hover/logo:border-primary transition-all duration-500 backdrop-blur-sm">
+                <Image
+                  src={clubData.logoUrl}
                   alt="Club Logo" 
                   width={180} 
                   height={180} 
                   className="opacity-90 group-hover/logo:scale-110 transition-transform duration-700"
                   data-ai-hint="sports logo"
                 />
-                <button type="button" disabled={!canEditClub} className="absolute inset-0 bg-black/60 opacity-0 group-hover/logo:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 disabled:opacity-0 disabled:pointer-events-none">
+                <button
+                  type="button"
+                  disabled={!canEditClub}
+                  onClick={() => logoInputRef.current?.click()}
+                  className="absolute inset-0 bg-black/60 opacity-0 group-hover/logo:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 disabled:opacity-0 disabled:pointer-events-none"
+                >
                    <Camera className="h-6 w-6 text-primary" />
                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Sincronizar Escudo</span>
                 </button>
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleImageUpload("logoUrl", e.target.files?.[0] ?? null)}
+                />
              </div>
           </div>
           
