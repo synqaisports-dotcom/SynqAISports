@@ -179,6 +179,7 @@ export default function ExerciseLibraryPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [entries, setEntries] = useState<MethodologyLibraryEntry[]>([]);
+  const [syncMode, setSyncMode] = useState<"remote" | "local" | "restricted">("local");
   const [selectedStageFilter, setSelectedStageFilter] = useState<string>(STAGES[0] ?? "Debutantes");
   const clubScopeId = profile?.clubId ?? "global-hq";
   const neuralStorageKey = scopedKey(STORAGE_METHODOLOGY_NEURAL, clubScopeId);
@@ -195,6 +196,7 @@ export default function ExerciseLibraryPage() {
 
       if (!session?.access_token) {
         setEntries(localCombined);
+        setSyncMode("local");
         return;
       }
 
@@ -202,19 +204,23 @@ export default function ExerciseLibraryPage() {
         const res = await fetch("/api/club/methodology-library", {
           headers: { Authorization: `Bearer ${session.access_token}` },
         });
+        if (res.status === 403) {
+          setEntries([]);
+          setSyncMode("restricted");
+          return;
+        }
         if (!res.ok) {
           setEntries(localCombined);
+          setSyncMode("local");
           return;
         }
         const data = (await res.json()) as { tasks?: MethodologyLibraryEntry[] };
         const remote = Array.isArray(data?.tasks) ? data.tasks : [];
-        if (remote.length === 0) {
-          setEntries(localCombined);
-          return;
-        }
         setEntries(remote);
+        setSyncMode("remote");
       } catch {
         setEntries(localCombined);
+        setSyncMode("local");
       }
     };
     void loadFromApiOrLocal();
@@ -659,6 +665,15 @@ export default function ExerciseLibraryPage() {
           <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic amber-text-glow leading-none">
             BIBLIOTECA_OFICIAL
           </h1>
+          <p className="text-[9px] font-black uppercase tracking-widest text-white/40 mt-2">
+            Modo:
+            {" "}
+            {syncMode === "remote"
+              ? "SINCRO_SUPABASE"
+              : syncMode === "restricted"
+                ? "ACCESO_RESTRINGIDO"
+                : "FALLBACK_LOCAL"}
+          </p>
         </div>
         
         <Button 

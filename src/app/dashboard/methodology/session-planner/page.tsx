@@ -219,6 +219,7 @@ type SessionPlannerPersistedState = {
 const STORAGE_SESSION_PLANNER_PREFIX = "synq_methodology_session_planner_v1";
 const LEAD_TIME_DAYS = 7;
 const STORAGE_METHODOLOGY_LIBRARY_DRAFTS = "synq_methodology_library_drafts";
+type HybridSyncState = "remote_ok" | "remote_forbidden" | "remote_error" | "local_only";
 
 function safeParseJsonArray<T>(raw: string | null): T[] {
   try {
@@ -457,6 +458,7 @@ export default function SessionPlannerPage() {
   const [assignments, setAssignments] = useState<SessionPlannerAssignment[]>([]);
   const [attendance, setAttendance] = useState<Record<string, Record<string, string>>>({});
   const [seasonRange, setSeasonRange] = useState<{ startDate: string; endDate: string }>(defaultSeasonRange);
+  const [syncState, setSyncState] = useState<HybridSyncState>("local_only");
 
   const seasonStartDate = useMemo(() => {
     if (!seasonRange.startDate) return null;
@@ -526,8 +528,11 @@ export default function SessionPlannerPage() {
           })),
         );
       }
+      setSyncState("remote_ok");
     };
-    void loadPlanner();
+    void loadPlanner().catch(() => {
+      setSyncState(canUseSupabase ? "remote_error" : "local_only");
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storageKey, canUseSupabase, clubScopeId, loadSnapshot]);
 
@@ -559,6 +564,10 @@ export default function SessionPlannerPage() {
             const res = await fetch("/api/club/methodology-academy", {
               headers: { Authorization: `Bearer ${session.access_token}` },
             });
+            if (res.status === 403) {
+              setSyncState("remote_forbidden");
+              return;
+            }
             if (res.ok) {
               const json = (await res.json()) as { ok?: boolean; payload?: any };
               const payload = json?.payload;
@@ -568,11 +577,12 @@ export default function SessionPlannerPage() {
                 if (!nextTeams.length) return;
                 setClubTeams(nextTeams);
                 if (!nextTeams.some((t) => t.id === selectedTeam)) setSelectedTeam(nextTeams[0].id);
+                setSyncState("remote_ok");
                 return;
               }
             }
           } catch {
-            // fallback => localStorage
+            setSyncState("remote_error");
           }
         }
 
@@ -1130,6 +1140,27 @@ export default function SessionPlannerPage() {
       
       {/* MODO_SWITCH_PROTOTIPO */}
       <div className="flex justify-end gap-2 mb-4">
+         <Badge
+           variant="outline"
+           className={cn(
+             "text-[8px] font-black uppercase tracking-widest",
+             syncState === "remote_ok"
+               ? "border-emerald-500/30 text-emerald-400"
+               : syncState === "remote_forbidden"
+                 ? "border-rose-500/30 text-rose-400"
+                 : syncState === "remote_error"
+                   ? "border-amber-500/30 text-amber-400"
+                   : "border-white/10 text-white/40"
+           )}
+         >
+           {syncState === "remote_ok"
+             ? "SYNC: REMOTO_OK"
+             : syncState === "remote_forbidden"
+               ? "SYNC: REMOTO_DENEGADO"
+               : syncState === "remote_error"
+                 ? "SYNC: REMOTO_ERROR (LOCAL)"
+                 : "SYNC: SOLO_LOCAL"}
+         </Badge>
          <Badge variant="outline" className="border-white/5 text-white/20 uppercase text-[8px] font-black mr-4">Preview_Role:</Badge>
         <button onClick={() => setViewRole("director")} className={cn("px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all", viewRole === 'director' ? 'bg-primary text-black border-primary shadow-[0_0_20px_rgba(0,242,255,0.25)]' : 'bg-white/5 text-white/40 border-white/5')}>DIRECTOR_MODO</button>
         <button onClick={() => setViewRole("coach")} className={cn("px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all", viewRole === 'coach' ? 'bg-primary text-black border-primary shadow-[0_0_20px_rgba(0,242,255,0.25)]' : 'bg-white/5 text-white/40 border-white/5')}>COACH_MODO</button>

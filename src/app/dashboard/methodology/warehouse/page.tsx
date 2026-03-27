@@ -164,6 +164,7 @@ export default function WarehouseClubPage() {
   const clubScopeId = profile?.clubId ?? "global-hq";
   const canUseWarehouseSupabase = canUseOperativaSupabase(clubScopeId) && !!session?.access_token;
   const remoteAccessToken = session?.access_token;
+  const [syncMode, setSyncMode] = useState<"remote" | "local" | "restricted">("local");
 
   const [state, setState] = useState<WarehouseState>({ installations: [], stores: [], materials: [] });
   const [loading, setLoading] = useState(false);
@@ -244,7 +245,10 @@ export default function WarehouseClubPage() {
           const res = await fetch("/api/club/methodology-warehouse", {
             headers: { Authorization: `Bearer ${remoteAccessToken}` },
           });
-          if (res.ok) {
+          if (res.status === 403) {
+            setSyncMode("restricted");
+          } else if (res.ok) {
+            setSyncMode("remote");
             const json = (await res.json()) as { ok?: boolean; payload?: any };
             const payload = json?.payload ?? {};
             const remoteState = payload?.state;
@@ -254,10 +258,15 @@ export default function WarehouseClubPage() {
             if (Array.isArray(payload?.teams)) {
               remoteTeams = payload.teams as WarehouseTeam[];
             }
+          } else {
+            setSyncMode("local");
           }
         } catch {
           // fallback => localStorage
+          setSyncMode("local");
         }
+      } else {
+        setSyncMode("local");
       }
 
       const facilityIds = new Set(installationsFromFacilities.map((i) => i.id));
@@ -604,6 +613,22 @@ export default function WarehouseClubPage() {
           </h1>
           <p className="text-[10px] font-bold uppercase tracking-widest text-white/35 mt-2">
             Inventario por instalaciones (ligado a tu club). Prototipo localStorage hasta conectar BD.
+          </p>
+          <p
+            className={cn(
+              "text-[9px] font-black uppercase tracking-widest mt-1",
+              syncMode === "remote"
+                ? "text-emerald-400/80"
+                : syncMode === "restricted"
+                ? "text-amber-400/80"
+                : "text-white/40",
+            )}
+          >
+            {syncMode === "remote"
+              ? "SINCRO_REMOTA_ACTIVA"
+              : syncMode === "restricted"
+              ? "MODO_LOCAL_POR_PERMISOS"
+              : "MODO_LOCAL_FALLBACK"}
           </p>
         </div>
 
