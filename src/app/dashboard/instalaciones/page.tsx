@@ -512,7 +512,7 @@ export default function FacilitiesManagementPage() {
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetContent side="right" className="z-[70] bg-background/95 bg-grid-pattern backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-xl shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
-          <div className="p-10 border-b border-white/5 bg-background/70">
+          <div className="sticky top-0 z-20 p-10 border-b border-white/5 bg-background/90 backdrop-blur-md">
             <SheetHeader className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
@@ -779,22 +779,22 @@ export default function FacilitiesManagementPage() {
                 La configuración de subdivisiones permite al motor de planificación de SynQAI gestionar la ocupación de zonas de forma inteligente sin solapar entrenamientos.
               </p>
             </div>
-          </form>
 
-          <div className="p-10 bg-background/70 border-t border-white/5 flex gap-4">
-            <SheetClose asChild>
-              <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 transition-all rounded-2xl active:scale-95">
-                CANCELAR
+            <div className="pt-2 flex gap-4">
+              <SheetClose asChild>
+                <Button type="button" variant="ghost" className="flex-1 h-14 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 transition-all rounded-2xl active:scale-95">
+                  CANCELAR
+                </Button>
+              </SheetClose>
+              <Button
+                type="submit"
+                disabled={loading || !canEditFacilities}
+                className="flex-[2] h-14 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] border-none active:scale-95 disabled:opacity-40"
+              >
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (editingId ? "SINCRONIZAR_CAMBIOS" : "VINCULAR_ACTIVO")}
               </Button>
-            </SheetClose>
-            <Button 
-              onClick={handleSaveFacility}
-              disabled={loading || !canEditFacilities}
-              className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] border-none active:scale-95 disabled:opacity-40"
-            >
-              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (editingId ? "SINCRONIZAR_CAMBIOS" : "VINCULAR_ACTIVO")}
-            </Button>
-          </div>
+            </div>
+          </form>
         </SheetContent>
       </Sheet>
     </div>
