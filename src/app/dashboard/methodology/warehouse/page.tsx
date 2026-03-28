@@ -626,12 +626,12 @@ export default function WarehouseClubPage() {
       <div className="flex justify-between items-end border-b border-white/5 pb-6">
         <div className="space-y-1">
           <div className="flex items-center gap-3 mb-2">
-            <Warehouse className="h-5 w-5 text-amber-500 animate-pulse" />
-            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">
+            <Warehouse className="h-5 w-5 text-primary animate-pulse" />
+            <span className="text-[10px] font-black text-primary/80 tracking-[0.5em] uppercase italic">
               Club_Warehouse_Control
             </span>
           </div>
-          <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic amber-text-glow leading-none">
+          <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic cyan-text-glow leading-none">
             ALMACÉN (CLUB)
           </h1>
           <p className="text-[10px] font-bold uppercase tracking-widest text-white/35 mt-2">
@@ -643,7 +643,7 @@ export default function WarehouseClubPage() {
               syncMode === "remote"
                 ? "text-emerald-400/80"
                 : syncMode === "restricted"
-                ? "text-amber-400/80"
+                ? "text-rose-400/80"
                 : "text-white/40",
             )}
           >
@@ -662,28 +662,28 @@ export default function WarehouseClubPage() {
 
       {loading ? (
         <div className="h-[300px] flex items-center justify-center">
-          <Loader2 className="h-7 w-7 animate-spin text-amber-500" />
+          <Loader2 className="h-7 w-7 animate-spin text-primary" />
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[420px_1fr]">
           <div className="space-y-6">
-            <Card className="glass-panel border-amber-500/20 bg-black/40 overflow-hidden rounded-3xl">
+            <Card className="glass-panel border-primary/20 bg-black/40 overflow-hidden rounded-3xl">
               <CardHeader className="p-6 border-b border-white/5">
                 <div className="flex items-center justify-between gap-3">
-                  <CardTitle className="text-sm font-black uppercase tracking-widest text-amber-500/60">
+                  <CardTitle className="text-sm font-black uppercase tracking-widest text-primary/60">
                     Instalaciones
                   </CardTitle>
-                  <Badge variant="outline" className="border-amber-500/20 text-amber-500 text-[8px] font-black uppercase">
+                  <Badge variant="outline" className="border-primary/20 text-primary text-[8px] font-black uppercase">
                     {state.installations.length}
                   </Badge>
                 </div>
                 <div className="mt-4 relative">
-                  <Search className="h-4 w-4 absolute left-3 top-3.5 text-amber-500/50" />
+                  <Search className="h-4 w-4 absolute left-3 top-3.5 text-primary/60" />
                   <Input
                     value={installationsSearch}
                     onChange={(e) => setInstallationsSearch(e.target.value)}
                     placeholder="Buscar instalación..."
-                    className="pl-10 h-12 bg-black/30 border-amber-500/20 rounded-2xl text-amber-500 font-bold uppercase text-[10px] tracking-widest"
+                    className="pl-10 h-12 bg-black/30 border-primary/20 rounded-2xl text-primary font-bold uppercase text-[10px] tracking-widest"
                   />
                 </div>
               </CardHeader>
@@ -706,14 +706,14 @@ export default function WarehouseClubPage() {
                           className={cn(
                             "w-full text-left rounded-2xl border p-4 transition-all",
                             isActive
-                              ? "border-amber-500/30 bg-amber-500/5"
-                              : "border-white/5 bg-black/20 hover:border-amber-500/20",
+                              ? "border-primary/30 bg-primary/5"
+                              : "border-white/5 bg-black/20 hover:border-primary/20",
                           )}
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="space-y-1">
                               <div className="flex items-center gap-2">
-                                <MapPin className="h-4 w-4 text-amber-500/70" />
+                                <MapPin className="h-4 w-4 text-primary/70" />
                                 <p className="text-[10px] font-black uppercase tracking-widest text-white">
                                   {inst.name}
                                 </p>
@@ -724,7 +724,7 @@ export default function WarehouseClubPage() {
                             </div>
                             <Badge
                               variant="outline"
-                              className="border-amber-500/20 text-amber-500 text-[8px] font-black uppercase"
+                              className="border-primary/20 text-primary text-[8px] font-black uppercase"
                             >
                               {itemCount} ítems
                             </Badge>
@@ -735,7 +735,7 @@ export default function WarehouseClubPage() {
                                 type="button"
                                 variant="ghost"
                                 size="icon"
-                                className="h-9 w-9 rounded-xl border border-white/5 text-amber-500/40 hover:text-amber-500"
+                                className="h-9 w-9 rounded-xl border border-white/5 text-primary/50 hover:text-primary"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   openEditInstallation(inst);
@@ -767,11 +767,11 @@ export default function WarehouseClubPage() {
           </div>
 
           <div className="space-y-6">
-            <Card className="glass-panel border-amber-500/20 bg-black/40 overflow-hidden rounded-3xl">
+            <Card className="glass-panel border-primary/20 bg-black/40 overflow-hidden rounded-3xl">
               <CardHeader className="p-6 border-b border-white/5">
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-1">
-                    <CardTitle className="text-sm font-black uppercase tracking-widest text-amber-500/60">
+                    <CardTitle className="text-sm font-black uppercase tracking-widest text-primary/60">
                       Inventario
                     </CardTitle>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-white/35">
@@ -779,7 +779,7 @@ export default function WarehouseClubPage() {
                     </p>
                   </div>
                   <div className="flex gap-3">
-                    <Badge variant="outline" className="border-amber-500/20 text-amber-500 text-[8px] font-black uppercase">
+                    <Badge variant="outline" className="border-primary/20 text-primary text-[8px] font-black uppercase">
                       {totals.items} ítems
                     </Badge>
                     <Badge variant="outline" className="border-white/10 text-white/60 text-[8px] font-black uppercase">
@@ -789,12 +789,12 @@ export default function WarehouseClubPage() {
                 </div>
 
                 <div className="mt-4 relative">
-                  <Search className="h-4 w-4 absolute left-3 top-3.5 text-amber-500/50" />
+                  <Search className="h-4 w-4 absolute left-3 top-3.5 text-primary/50" />
                   <Input
                     value={materialsSearch}
                     onChange={(e) => setMaterialsSearch(e.target.value)}
                     placeholder="Buscar material o ubicación..."
-                    className="pl-10 h-12 bg-black/30 border-amber-500/20 rounded-2xl text-amber-500 font-bold uppercase text-[10px] tracking-widest"
+                    className="pl-10 h-12 bg-black/30 border-primary/20 rounded-2xl text-primary font-bold uppercase text-[10px] tracking-widest"
                   />
                 </div>
 
@@ -839,12 +839,12 @@ export default function WarehouseClubPage() {
                         materialsForStore.map((m) => (
                           <TableRow
                             key={m.id}
-                            className="border-white/5 hover:bg-amber-500/[0.03] transition-colors group"
+                            className="border-white/5 hover:bg-primary/[0.03] transition-colors group"
                           >
                             <TableCell className="pl-8 py-5">
                               <div className="flex items-center gap-3">
-                                <div className="h-10 w-10 bg-amber-500/5 border border-amber-500/20 rounded-xl flex items-center justify-center">
-                                  <Package className="h-4 w-4 text-amber-500" />
+                                <div className="h-10 w-10 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-center">
+                                  <Package className="h-4 w-4 text-primary" />
                                 </div>
                                 <div>
                                   <p className="text-[10px] font-black uppercase tracking-widest text-white">
@@ -871,11 +871,11 @@ export default function WarehouseClubPage() {
                             <TableCell className="text-center">
                               <span className="text-[10px] font-black text-white">
                                 {m.quantity === null ? "—" : m.quantity}{" "}
-                                <span className="text-[9px] text-amber-500/80 font-black uppercase">{m.unit}</span>
+                                <span className="text-[9px] text-primary/80 font-black uppercase">{m.unit}</span>
                               </span>
                             </TableCell>
                             <TableCell className="text-center">
-                              <Badge variant="outline" className="border-amber-500/20 text-amber-500 text-[9px] font-black uppercase">
+                              <Badge variant="outline" className="border-primary/20 text-primary text-[9px] font-black uppercase">
                                 {m.location ?? selectedStore.name}
                               </Badge>
                             </TableCell>
@@ -885,7 +885,7 @@ export default function WarehouseClubPage() {
                                   type="button"
                                   variant="ghost"
                                   size="icon"
-                                  className="h-9 w-9 rounded-xl border border-white/5 text-amber-500/40 hover:text-amber-500 disabled:opacity-40"
+                                  className="h-9 w-9 rounded-xl border border-white/5 text-primary/40 hover:text-primary disabled:opacity-40"
                                   onClick={() => openEditMaterial(m)}
                                   disabled={!canMutateWarehouse}
                                 >
@@ -923,12 +923,12 @@ export default function WarehouseClubPage() {
 
       {/* Installation Sheet */}
       <Sheet open={isInstallationSheetOpen} onOpenChange={setIsInstallationSheetOpen}>
-        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-amber-500/20 text-white w-full sm:max-w-xl p-0 overflow-hidden flex flex-col shadow-[-20px_0_60px_rgba(0,0,0,0.8)]">
+        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-xl p-0 overflow-hidden flex flex-col shadow-[-20px_0_60px_rgba(0,0,0,0.8)]">
           <div className="p-10 border-b border-white/5 bg-black/40">
             <SheetHeader className="space-y-4 text-left">
               <div className="flex items-center gap-3">
-                <Warehouse className="h-5 w-5 text-amber-400" />
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-400 italic">
+                <Warehouse className="h-5 w-5 text-primary/80" />
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary/80 italic">
                   INSTALACIÓN_FACTORY
                 </span>
               </div>
@@ -940,33 +940,33 @@ export default function WarehouseClubPage() {
 
           <div className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-8">
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">
+              <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">
                 Nombre
               </Label>
               <Input
                 value={installationDraft.name}
                 onChange={(e) => setInstallationDraft((d) => ({ ...d, name: e.target.value }))}
                 placeholder="EJ: Campo Principal"
-                className="h-14 bg-black/40 border-amber-500/20 rounded-2xl font-bold uppercase focus:border-amber-500 text-amber-500"
+                className="h-14 bg-black/40 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary text-primary"
               />
             </div>
 
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">
+              <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">
                 Dirección / notas
               </Label>
               <Input
                 value={installationDraft.address}
                 onChange={(e) => setInstallationDraft((d) => ({ ...d, address: e.target.value }))}
                 placeholder="Opcional"
-                className="h-14 bg-black/40 border-amber-500/20 rounded-2xl font-bold uppercase focus:border-amber-500 text-amber-500"
+                className="h-14 bg-black/40 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary text-primary"
               />
             </div>
           </div>
 
           <div className="p-10 bg-black/60 border-t border-white/5 flex gap-4">
             <SheetClose asChild>
-              <Button variant="ghost" className="flex-1 h-16 border border-amber-500/20 text-amber-500/60 font-black uppercase text-[10px] tracking-widest rounded-2xl">
+              <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary/60 font-black uppercase text-[10px] tracking-widest rounded-2xl">
                 CANCELAR
               </Button>
             </SheetClose>
@@ -983,12 +983,12 @@ export default function WarehouseClubPage() {
 
       {/* Material Sheet */}
       <Sheet open={isMaterialSheetOpen} onOpenChange={setIsMaterialSheetOpen}>
-        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-amber-500/20 text-white w-full sm:max-w-xl p-0 overflow-hidden flex flex-col shadow-[-20px_0_60px_rgba(0,0,0,0.8)]">
+        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-xl p-0 overflow-hidden flex flex-col shadow-[-20px_0_60px_rgba(0,0,0,0.8)]">
           <div className="p-10 border-b border-white/5 bg-black/40">
             <SheetHeader className="space-y-4 text-left">
               <div className="flex items-center gap-3">
-                <Boxes className="h-5 w-5 text-amber-400" />
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-400 italic">
+                <Boxes className="h-5 w-5 text-primary/80" />
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary/80 italic">
                   INVENTORY_ITEM
                 </span>
               </div>
@@ -1001,7 +1001,7 @@ export default function WarehouseClubPage() {
           <div className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-8">
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               <div className="space-y-3">
-                <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">
+                <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">
                   Material (catálogo)
                 </Label>
                 <Select
@@ -1017,10 +1017,10 @@ export default function WarehouseClubPage() {
                     }));
                   }}
                 >
-                  <SelectTrigger className="h-14 bg-black/40 border-amber-500/20 rounded-2xl font-bold uppercase text-xs">
+                  <SelectTrigger className="h-14 bg-black/40 border-primary/20 rounded-2xl font-bold uppercase text-xs">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#04070c] border-amber-500/20 rounded-xl">
+                  <SelectContent className="bg-[#04070c] border-primary/20 rounded-xl">
                     {MATERIAL_CATALOG.map((m) => (
                       <SelectItem key={m.key} value={m.key} className="text-[10px] font-black uppercase">
                         {m.label}
@@ -1031,30 +1031,30 @@ export default function WarehouseClubPage() {
               </div>
 
               <div className="space-y-3">
-                <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">
+                <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">
                   Unidad
                 </Label>
                 <Input
                   value={materialDraft.unit}
                   disabled
-                  className="h-14 bg-black/40 border-amber-500/20 rounded-2xl font-bold uppercase focus:border-amber-500 text-amber-500"
+                  className="h-14 bg-black/40 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary text-primary"
                 />
               </div>
             </div>
 
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">
+              <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">
                 Ubicación (instalación activa)
               </Label>
               <Input
                 value={materialDraft.location || selectedStore?.name || ""}
                 onChange={(e) => setMaterialDraft((d) => ({ ...d, location: e.target.value }))}
-                className="h-14 bg-black/40 border-amber-500/20 rounded-2xl font-bold uppercase focus:border-amber-500 text-amber-500"
+                className="h-14 bg-black/40 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary text-primary"
               />
             </div>
 
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">
+              <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">
                 Asignación por equipo (cantidad por equipo)
               </Label>
               <div className="rounded-2xl border border-white/5 bg-black/30 p-4 space-y-3">
@@ -1076,9 +1076,9 @@ export default function WarehouseClubPage() {
                             }))
                           }
                           placeholder="0"
-                          className="w-28 h-12 bg-black/40 border-amber-500/20 rounded-2xl font-bold uppercase text-amber-500"
+                          className="w-28 h-12 bg-black/40 border-primary/20 rounded-2xl font-bold uppercase text-primary"
                         />
-                        <span className="text-[9px] font-black uppercase text-amber-500/60">{materialDraft.unit}</span>
+                        <span className="text-[9px] font-black uppercase text-primary/60">{materialDraft.unit}</span>
                       </div>
                     </div>
                   ))
@@ -1087,21 +1087,21 @@ export default function WarehouseClubPage() {
             </div>
 
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">
+              <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">
                 Notas (opcional)
               </Label>
               <Input
                 value={materialDraft.notes}
                 onChange={(e) => setMaterialDraft((d) => ({ ...d, notes: e.target.value }))}
                 placeholder="EJ: color, marca, etc."
-                className="h-14 bg-black/40 border-amber-500/20 rounded-2xl font-bold uppercase focus:border-amber-500 text-amber-500"
+                className="h-14 bg-black/40 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary text-primary"
               />
             </div>
           </div>
 
           <div className="p-10 bg-black/60 border-t border-white/5 flex gap-4">
             <SheetClose asChild>
-              <Button variant="ghost" className="flex-1 h-16 border border-amber-500/20 text-amber-500/60 font-black uppercase text-[10px] tracking-widest rounded-2xl">
+              <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary/60 font-black uppercase text-[10px] tracking-widest rounded-2xl">
                 CANCELAR
               </Button>
             </SheetClose>

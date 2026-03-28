@@ -1149,7 +1149,7 @@ export default function SessionPlannerPage() {
                : syncState === "remote_forbidden"
                  ? "border-rose-500/30 text-rose-400"
                  : syncState === "remote_error"
-                   ? "border-amber-500/30 text-amber-400"
+                   ? "border-primary/30 text-primary/80"
                    : "border-white/10 text-white/40"
            )}
          >
@@ -1170,13 +1170,13 @@ export default function SessionPlannerPage() {
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 border-b border-white/5 pb-8">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
-            <CalendarDays className="h-5 w-5 text-amber-500 animate-pulse" />
-            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Operational_Planning_v5.0</span>
+            <CalendarDays className="h-5 w-5 text-primary animate-pulse" />
+            <span className="text-[10px] font-black text-primary tracking-[0.5em] uppercase italic">Operational_Planning_v5.0</span>
           </div>
-          <h1 className="text-5xl font-headline font-black text-white uppercase italic tracking-tighter amber-text-glow leading-none">
+          <h1 className="text-5xl font-headline font-black text-white uppercase italic tracking-tighter cyan-text-glow leading-none">
             PLANIFICADOR_MAESTRO
           </h1>
-          <p className="text-[11px] font-black text-amber-500/30 tracking-[0.3em] uppercase">
+          <p className="text-[11px] font-black text-primary/30 tracking-[0.3em] uppercase">
             {viewRole === 'director' ? 'Terminal de Diseño Metodológico Central' : `Terminal Operativa: ${currentTeam?.name}`}
           </p>
         </div>
@@ -1187,15 +1187,15 @@ export default function SessionPlannerPage() {
               <div className="flex flex-col gap-1.5">
                 <span className="text-[8px] font-black text-white/30 uppercase tracking-widest ml-1">Configuración de Nodo</span>
                 <Select value={selectedTeam} onValueChange={setSelectedTeam}>
-                  <SelectTrigger className="w-[220px] h-12 bg-black border-amber-500/20 rounded-xl text-amber-500 font-black uppercase text-[10px] tracking-widest focus:ring-amber-500/30">
+                  <SelectTrigger className="w-[220px] h-12 bg-black border-primary/20 rounded-xl text-primary font-black uppercase text-[10px] tracking-widest focus:ring-primary/30">
                     <div className="flex items-center gap-3">
                       <Users className="h-4 w-4" />
                       <SelectValue />
                     </div>
                   </SelectTrigger>
-                  <SelectContent className="bg-[#0a0f18] border-amber-500/20">
+                  <SelectContent className="bg-[#0a0f18] border-primary/20">
                     {clubTeams.map(team => (
-                      <SelectItem key={team.id} value={team.id} className="text-[10px] font-black uppercase text-amber-500/80 focus:bg-amber-500 focus:text-black">
+                      <SelectItem key={team.id} value={team.id} className="text-[10px] font-black uppercase text-primary/80 focus:bg-primary focus:text-black">
                         {team.name} [{team.type}]
                       </SelectItem>
                     ))}
@@ -1205,15 +1205,15 @@ export default function SessionPlannerPage() {
 
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="outline" className="h-12 rounded-xl border-amber-500/20 text-amber-500 hover:bg-amber-500/10 font-black uppercase text-[10px] tracking-widest px-6">
+                  <Button variant="outline" className="h-12 rounded-xl border-primary/20 text-primary hover:bg-primary/10 font-black uppercase text-[10px] tracking-widest px-6">
                     <Settings2 className="h-4 w-4 mr-2" /> Estructura Sesión
                   </Button>
                 </SheetTrigger>
-                <SheetContent className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-amber-500/20 text-white sm:max-w-md">
+                <SheetContent className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white sm:max-w-md">
                   <SheetHeader className="space-y-4 mb-10">
                     <div className="flex items-center gap-3">
-                      <Clock className="h-4 w-4 text-amber-500" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500">Arquitectura_Maestra</span>
+                      <Clock className="h-4 w-4 text-primary" />
+                      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Arquitectura_Maestra</span>
                     </div>
                     <SheetTitle className="text-3xl font-black italic tracking-tighter uppercase leading-none">CONFIG_ESTRUCTURA</SheetTitle>
                   </SheetHeader>
@@ -1221,17 +1221,17 @@ export default function SessionPlannerPage() {
                   <div className="space-y-8">
                     <div className="p-6 bg-black/40 border border-white/5 rounded-3xl space-y-2 text-center">
                        <p className="text-[9px] font-black uppercase text-white/20 tracking-widest">Duración Total Sesión</p>
-                       <p className="text-5xl font-black text-amber-500 italic tracking-tighter amber-text-glow">
+                       <p className="text-5xl font-black text-primary italic tracking-tighter cyan-text-glow">
                         {totalTime} <span className="text-sm text-white/20">MIN</span>
                        </p>
                     </div>
 
                     <div className="space-y-4 p-5 bg-black/30 border border-white/5 rounded-3xl">
                       <div className="flex items-center justify-between">
-                        <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest">
+                        <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest">
                           Temporada Real (Fechas)
                         </Label>
-                        <Badge variant="outline" className="border-amber-500/20 text-amber-500 text-[8px] font-black uppercase tracking-widest">
+                        <Badge variant="outline" className="border-primary/20 text-primary text-[8px] font-black uppercase tracking-widest">
                           Lead-Time
                         </Badge>
                       </div>
@@ -1243,7 +1243,7 @@ export default function SessionPlannerPage() {
                           onChange={(e) =>
                             setSeasonRange((prev) => ({ ...prev, startDate: e.target.value }))
                           }
-                          className="h-12 bg-white/5 border-white/10 rounded-2xl text-white font-bold uppercase focus:border-amber-500"
+                          className="h-12 bg-white/5 border-white/10 rounded-2xl text-white font-bold uppercase focus:border-primary"
                         />
                       </div>
                       <div className="space-y-3">
@@ -1254,7 +1254,7 @@ export default function SessionPlannerPage() {
                           onChange={(e) =>
                             setSeasonRange((prev) => ({ ...prev, endDate: e.target.value }))
                           }
-                          className="h-12 bg-white/5 border-white/10 rounded-2xl text-white font-bold uppercase focus:border-amber-500"
+                          className="h-12 bg-white/5 border-white/10 rounded-2xl text-white font-bold uppercase focus:border-primary"
                         />
                       </div>
                     </div>
@@ -1262,40 +1262,40 @@ export default function SessionPlannerPage() {
                     <div className="space-y-6">
                       <div className="space-y-3">
                         <div className="flex justify-between items-center">
-                          <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest">1. Calentamiento / Activación</Label>
-                          <Badge variant="outline" className="text-[10px] border-amber-500/20 text-amber-500">{sessionTimes.warmup} min</Badge>
+                          <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest">1. Calentamiento / Activación</Label>
+                          <Badge variant="outline" className="text-[10px] border-primary/20 text-primary">{sessionTimes.warmup} min</Badge>
                         </div>
                         <Input 
                           type="range" min="5" max="30" step="5"
                           value={sessionTimes.warmup} 
                           onChange={(e) => setSessionTimes({...sessionTimes, warmup: parseInt(e.target.value)})}
-                          className="accent-amber-500" 
+                          className="accent-primary" 
                         />
                       </div>
 
                       <div className="space-y-3">
                         <div className="flex justify-between items-center">
-                          <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest">2. Zona Central (Ejercicios)</Label>
-                          <Badge variant="outline" className="text-[10px] border-amber-500/20 text-amber-500">{sessionTimes.central} min</Badge>
+                          <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest">2. Zona Central (Ejercicios)</Label>
+                          <Badge variant="outline" className="text-[10px] border-primary/20 text-primary">{sessionTimes.central} min</Badge>
                         </div>
                         <Input 
                           type="range" min="20" max="90" step="5"
                           value={sessionTimes.central} 
                           onChange={(e) => setSessionTimes({...sessionTimes, central: parseInt(e.target.value)})}
-                          className="accent-amber-500" 
+                          className="accent-primary" 
                         />
                       </div>
 
                       <div className="space-y-3">
                         <div className="flex justify-between items-center">
-                          <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest">3. Vuelta a la Calma</Label>
-                          <Badge variant="outline" className="text-[10px] border-amber-500/20 text-amber-500">{sessionTimes.cooldown} min</Badge>
+                          <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest">3. Vuelta a la Calma</Label>
+                          <Badge variant="outline" className="text-[10px] border-primary/20 text-primary">{sessionTimes.cooldown} min</Badge>
                         </div>
                         <Input 
                           type="range" min="5" max="20" step="5"
                           value={sessionTimes.cooldown} 
                           onChange={(e) => setSessionTimes({...sessionTimes, cooldown: parseInt(e.target.value)})}
-                          className="accent-amber-500" 
+                          className="accent-primary" 
                         />
                       </div>
                     </div>
@@ -1306,7 +1306,7 @@ export default function SessionPlannerPage() {
                         <SelectTrigger className="h-12 bg-white/5 border-white/10 text-white font-bold uppercase text-[10px]">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="bg-[#0a0f18] border-amber-500/20">
+                        <SelectContent className="bg-[#0a0f18] border-primary/20">
                           {[1,2,3,4,5,6,7].map(n => (
                             <SelectItem key={n} value={n.toString()} className="text-[10px] font-black uppercase">{n} Días / Semana</SelectItem>
                           ))}
@@ -1360,11 +1360,11 @@ export default function SessionPlannerPage() {
       {/* DASHBOARD DE VALIDACIONES PARA EL DIRECTOR */}
       {viewRole === 'director' && changeRequests.filter(r => r.status === 'Pending').length > 0 && (
         <div className="animate-in slide-in-from-top-4 duration-700">
-          <Card className="glass-panel border-amber-500/20 bg-amber-500/5 p-6 rounded-3xl relative overflow-hidden">
-             <div className="absolute top-0 right-0 p-4 opacity-5"><History className="h-20 w-20 text-amber-500" /></div>
+          <Card className="glass-panel border-primary/20 bg-primary/5 p-6 rounded-3xl relative overflow-hidden">
+             <div className="absolute top-0 right-0 p-4 opacity-5"><History className="h-20 w-20 text-primary" /></div>
              <div className="flex items-center gap-3 mb-6">
-                <ShieldAlert className="h-4 w-4 text-amber-500 animate-pulse" />
-                <span className="text-[10px] font-black uppercase text-amber-500 tracking-widest">SOLICITUDES_DE_CAMBIO_PENDIENTES</span>
+                <ShieldAlert className="h-4 w-4 text-primary animate-pulse" />
+                <span className="text-[10px] font-black uppercase text-primary tracking-widest">SOLICITUDES_DE_CAMBIO_PENDIENTES</span>
              </div>
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {changeRequests.filter(r => r.status === 'Pending').map(req => (
@@ -1374,7 +1374,7 @@ export default function SessionPlannerPage() {
                            <p className="text-[10px] font-black text-white uppercase italic">{req.coach}</p>
                            <p className="text-[8px] font-bold text-white/30 uppercase tracking-widest">{req.teamId} • {req.mcc} • SES_{req.session} • {req.blockKey}</p>
                         </div>
-                        <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[8px] font-black">PENDIENTE</Badge>
+                        <Badge className="bg-primary/10 text-primary border-primary/20 text-[8px] font-black">PENDIENTE</Badge>
                      </div>
                      <div className="p-3 bg-white/5 rounded-xl space-y-2 border border-white/5">
                         <div className="flex items-center gap-2">
@@ -1423,12 +1423,12 @@ export default function SessionPlannerPage() {
       {isCompact && (
         <div>
         <Card className="glass-panel border-none bg-black/60 overflow-hidden relative rounded-[2rem] shadow-2xl">
-          <div className="p-5 border-b border-white/5 bg-amber-500/10">
+          <div className="p-5 border-b border-white/5 bg-primary/10">
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
-                  <CalendarDays className="h-5 w-5 text-amber-500 animate-pulse" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.5em] text-amber-500/60">
+                  <CalendarDays className="h-5 w-5 text-primary animate-pulse" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.5em] text-primary/60">
                     Operativa
                   </span>
                 </div>
@@ -1447,7 +1447,7 @@ export default function SessionPlannerPage() {
               <div className="flex items-center gap-3">
                 <Badge
                   variant="outline"
-                  className="border-amber-500/20 bg-black/30 text-amber-500 text-[9px] font-black uppercase hidden sm:flex"
+                  className="border-primary/20 bg-black/30 text-primary text-[9px] font-black uppercase hidden sm:flex"
                 >
                   {sessionsPerWeek} DÍAS/SEM
                 </Badge>
@@ -1468,10 +1468,10 @@ export default function SessionPlannerPage() {
                 Semana / MCC
               </Label>
               <Select value={selectedMCC ?? undefined} onValueChange={(v) => setSelectedMCC(v)}>
-                <SelectTrigger className="h-12 bg-black/30 border-amber-500/20 rounded-2xl">
+                <SelectTrigger className="h-12 bg-black/30 border-primary/20 rounded-2xl">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0a0f18] border-amber-500/20 rounded-xl">
+                <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-xl">
                   {allMccOptions.map((opt) => (
                     <SelectItem key={opt.id} value={opt.id} className="text-[10px] font-black uppercase">
                       {opt.label}
@@ -1601,10 +1601,10 @@ export default function SessionPlannerPage() {
       {/* MATRIZ DE PLANIFICACIÓN (Desktop) */}
       {!isCompact && (
       <div className="relative group">
-        <div className="absolute -inset-1 bg-gradient-to-r from-amber-500/20 to-transparent blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
+        <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-transparent blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
         <Card className="glass-panel border-none bg-black/60 overflow-hidden relative rounded-[2rem] shadow-2xl">
           
-          <div className="bg-amber-500/15 px-10 py-6 flex items-center justify-between border-b border-white/10">
+          <div className="bg-primary/15 px-10 py-6 flex items-center justify-between border-b border-white/10">
             <div className="flex items-center gap-6">
               <div className="h-12 w-12 bg-black/20 rounded-xl flex items-center justify-center border border-white/20">
                 <LayoutGrid className="h-6 w-6 text-white" />
@@ -1645,7 +1645,7 @@ export default function SessionPlannerPage() {
               {MONTHS.map((month) => (
                 <div key={month.id} className="flex-1 border-r border-white/5 flex-col group/month hover:bg-white/[0.01] transition-colors">
                   <div className="p-4 text-center border-b border-white/5 bg-white/[0.02]">
-                    <span className="text-[11px] font-black text-amber-500 tracking-[0.3em] uppercase">{month.label}</span>
+                    <span className="text-[11px] font-black text-primary tracking-[0.3em] uppercase">{month.label}</span>
                   </div>
                   <div className="p-4 flex flex-col gap-2">
                     {Array.from({ length: month.weeks }).map((_, i) => {
@@ -1665,29 +1665,29 @@ export default function SessionPlannerPage() {
                             selectedMCC === mccId 
                               ? "bg-primary/20 border-primary shadow-[0_0_15px_rgba(0,242,255,0.2)]" 
                               : hasPending 
-                              ? "border-amber-500/40 bg-amber-500/5"
+                              ? "border-primary/40 bg-primary/5"
                               : hasValidated
                               ? "border-emerald-500/40 bg-emerald-500/5"
-                              : "bg-white/5 border-white/5 hover:border-amber-500/40 hover:bg-amber-500/5"
+                              : "bg-white/5 border-white/5 hover:border-primary/40 hover:bg-primary/5"
                           )}
                         >
                           <div className="flex justify-between items-center mb-1">
                             <span className={cn(
                               "text-[9px] font-black uppercase tracking-widest",
                               selectedMCC === mccId
-                                ? "text-amber-500"
+                                ? "text-primary"
                                 : hasPending
-                                ? "text-amber-400"
+                                ? "text-primary/80"
                                 : hasValidated
                                 ? "text-emerald-400"
                                 : "text-white/20"
                             )}>MCC_{i + 1}</span>
                             {hasPending ? (
-                              <ShieldAlert className="h-3 w-3 text-amber-500 animate-pulse" />
+                              <ShieldAlert className="h-3 w-3 text-primary animate-pulse" />
                             ) : hasValidated ? (
                               <CheckCircle2 className="h-3 w-3 text-emerald-500" />
                             ) : (
-                              <LayoutGrid className={cn("h-3 w-3", selectedMCC === mccId ? "text-amber-500" : "text-white/10")} />
+                              <LayoutGrid className={cn("h-3 w-3", selectedMCC === mccId ? "text-primary" : "text-white/10")} />
                             )}
                           </div>
                           <p className={cn(
@@ -1695,7 +1695,7 @@ export default function SessionPlannerPage() {
                             selectedMCC === mccId
                               ? "text-white"
                               : hasPending
-                              ? "text-amber-300/80"
+                              ? "text-primary/80"
                               : hasValidated
                               ? "text-emerald-300/80"
                               : "text-white/10"
@@ -1711,9 +1711,9 @@ export default function SessionPlannerPage() {
             </div>
           </div>
 
-          <div className="p-6 bg-black/40 border-t border-white/5 flex justify-between items-center text-[9px] font-black text-amber-500/20 uppercase tracking-[0.5em]">
+          <div className="p-6 bg-black/40 border-t border-white/5 flex justify-between items-center text-[9px] font-black text-primary/20 uppercase tracking-[0.5em]">
             <span className="flex items-center gap-2">
-              <Activity className="h-3 w-3 text-amber-500 animate-pulse" /> Sincronización de Red: Óptima
+              <Activity className="h-3 w-3 text-primary animate-pulse" /> Sincronización de Red: Óptima
             </span>
             <span>Protocolo de Validación v5.0 • Blindaje Metodológico Activo</span>
           </div>
@@ -1723,14 +1723,14 @@ export default function SessionPlannerPage() {
 
       {/* PANEL LATERAL DE DETALLE Y SOLICITUDES */}
       <Sheet open={!!selectedMCC && !isCompact} onOpenChange={(open) => !open && setSelectedMCC(null)}>
-        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-amber-500/20 text-white w-full sm:max-w-2xl lg:max-w-3xl p-0 overflow-hidden flex flex-col">
+        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-2xl lg:max-w-3xl p-0 overflow-hidden flex flex-col">
           {selectedMCC && (
             <>
               <div className="p-8 border-b border-white/5 bg-black/40">
                 <SheetHeader className="space-y-4">
                   <div className="flex items-center gap-3">
-                    <div className={cn("h-2 w-2 rounded-full animate-pulse", viewRole === 'director' ? 'bg-amber-500' : 'bg-primary')} />
-                    <span className={cn("text-[10px] font-black uppercase tracking-[0.4em]", viewRole === 'director' ? 'text-amber-500' : 'text-primary')}>
+                    <div className={cn("h-2 w-2 rounded-full animate-pulse", viewRole === 'director' ? 'bg-primary/80' : 'bg-primary')} />
+                    <span className={cn("text-[10px] font-black uppercase tracking-[0.4em]", "text-primary")}>
                       {viewRole === 'director' ? 'MCC_Design_Studio' : 'MCC_Operational_View'}
                     </span>
                   </div>
@@ -1754,7 +1754,7 @@ export default function SessionPlannerPage() {
                           {formatDateEs(selectedMccDates.start)} - {formatDateEs(selectedMccDates.end)}
                         </Badge>
                       )}
-                      <Badge variant="outline" className="border-amber-500/20 text-amber-500 font-black uppercase tracking-widest px-4 py-1.5 h-auto hidden sm:flex">
+                      <Badge variant="outline" className="border-primary/20 text-primary font-black uppercase tracking-widest px-4 py-1.5 h-auto hidden sm:flex">
                         ETAPA: {currentTeam?.stage.toUpperCase()}
                       </Badge>
                     </div>
@@ -1860,8 +1860,8 @@ export default function SessionPlannerPage() {
                   <div className="pt-12 border-t border-white/5 space-y-8">
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex items-center gap-3">
-                        <Library className="h-5 w-5 text-amber-500" />
-                        <span className="text-[11px] font-black uppercase tracking-[0.3em] text-amber-500 italic">
+                        <Library className="h-5 w-5 text-primary" />
+                        <span className="text-[11px] font-black uppercase tracking-[0.3em] text-primary italic">
                           Biblioteca por Etapa
                         </span>
                       </div>
@@ -1905,15 +1905,15 @@ export default function SessionPlannerPage() {
 
       {/* PANEL INDEPENDIENTE DE ASISTENCIA */}
       <Sheet open={isAttendanceOpen} onOpenChange={setIsAttendanceOpen}>
-        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-amber-500/20 text-white w-full sm:max-w-xl shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-xl shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
           <div className="p-8 border-b border-white/5 bg-black/40">
             <SheetHeader className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="h-2 w-2 rounded-full animate-pulse bg-amber-500" />
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500">Attendance_Master_Control</span>
+                <div className="h-2 w-2 rounded-full animate-pulse bg-primary" />
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Attendance_Master_Control</span>
               </div>
               <SheetTitle className="text-4xl font-black italic tracking-tighter uppercase leading-none text-white">Pasar Lista</SheetTitle>
-              <SheetDescription className="text-[10px] uppercase font-bold text-amber-500/40 tracking-widest text-left italic">
+              <SheetDescription className="text-[10px] uppercase font-bold text-primary/40 tracking-widest text-left italic">
                 {currentTeam?.name} • SESIÓN {activeSessionInWeek} • {activeSessionMeta?.dayLabel ?? ""} {activeSessionMeta ? formatDateEs(activeSessionMeta.date) : ""} • {selectedMCC}
               </SheetDescription>
             </SheetHeader>
@@ -1931,7 +1931,7 @@ export default function SessionPlannerPage() {
                       "p-5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between group overflow-hidden relative",
                       status === 'present' ? "bg-emerald-500/5 border-emerald-500/20" :
                       status === 'absent' ? "bg-rose-500/5 border-rose-500/20" :
-                      "bg-amber-500/5 border-amber-500/20"
+                      "bg-primary/5 border-primary/20"
                     )}
                   >
                       <div className="flex items-center gap-4 relative z-10">
@@ -1939,17 +1939,17 @@ export default function SessionPlannerPage() {
                           "h-10 w-10 border rounded-xl flex items-center justify-center text-[11px] font-black italic",
                           status === 'present' ? "bg-black/40 border-emerald-500/30 text-emerald-400" :
                           status === 'absent' ? "bg-black/40 border-rose-500/30 text-rose-400" :
-                          "bg-black/40 border-amber-500/30 text-amber-400"
+                          "bg-black/40 border-primary/30 text-primary/80"
                         )}>
                           {player.number}
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-[11px] font-black text-white uppercase italic group-hover:amber-text-glow transition-all">{player.name}</span>
+                          <span className="text-[11px] font-black text-white uppercase italic group-hover:cyan-text-glow transition-all">{player.name}</span>
                           <span className={cn(
                             "text-[8px] font-bold uppercase tracking-widest",
                             status === 'present' ? "text-emerald-400/60" :
                             status === 'absent' ? "text-rose-400/60" :
-                            "text-amber-400/60"
+                            "text-primary/60"
                           )}>
                             {status === 'present' ? 'SINCRO_OK' : status === 'absent' ? 'AUSENCIA' : 'RETRASO'}
                           </span>
@@ -1961,7 +1961,7 @@ export default function SessionPlannerPage() {
                         ) : status === 'absent' ? (
                           <UserX className="h-5 w-5 text-rose-500 animate-in zoom-in" />
                         ) : (
-                          <Clock className="h-5 w-5 text-amber-500 animate-in zoom-in" />
+                          <Clock className="h-5 w-5 text-primary animate-in zoom-in" />
                         )}
                       </div>
                       {status === 'present' && <div className="absolute inset-0 bg-emerald-500/5 scan-line opacity-20" />}
@@ -2020,7 +2020,7 @@ function SessionBlock({
     color === "orange"
       ? "text-orange-500 border-orange-500/20 bg-orange-500/10"
       : color === "amber"
-        ? "text-amber-500 border-amber-500/20 bg-amber-500/10"
+        ? "text-primary border-primary/20 bg-primary/10"
         : "text-blue-500 border-blue-500/20 bg-blue-500/10";
 
   const opts: ExerciseChoice[] = Array.isArray(exerciseOptions) ? exerciseOptions : [];
@@ -2100,7 +2100,7 @@ function SessionBlock({
                   type="button"
                   disabled={!matrixCanEdit}
                   onClick={() => setShowAssign(true)}
-                  className="p-2 hover:bg-amber-500/15 rounded-lg text-amber-500 transition-all disabled:opacity-30"
+                  className="p-2 hover:bg-primary/15 rounded-lg text-primary transition-all disabled:opacity-30"
                 >
                   <Pencil className="h-4 w-4" />
                 </button>
@@ -2122,7 +2122,7 @@ function SessionBlock({
               </Button>
             ) : (
               <>
-                <Plus className="h-5 w-5 text-white/10 group-hover:text-amber-500 transition-colors" />
+                <Plus className="h-5 w-5 text-white/10 group-hover:text-primary transition-colors" />
                 <span className="text-[10px] font-black text-white/10 uppercase tracking-widest">Sin asignar</span>
               </>
             )}

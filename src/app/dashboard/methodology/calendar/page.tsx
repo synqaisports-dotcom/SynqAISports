@@ -244,26 +244,26 @@ export default function MethodologyCalendarPage() {
     <div className="space-y-8 animate-in fade-in duration-700 p-8 lg:p-12">
       <div className="flex flex-col gap-3 border-b border-white/5 pb-6">
         <div className="flex items-center gap-3">
-          <CalendarDays className="h-5 w-5 text-amber-500 animate-pulse" />
-          <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase">Agenda_Operativa</span>
+          <CalendarDays className="h-5 w-5 text-primary animate-pulse" />
+          <span className="text-[10px] font-black text-primary tracking-[0.5em] uppercase">Agenda_Operativa</span>
         </div>
-        <h1 className="text-4xl font-headline font-black text-white uppercase italic tracking-tighter amber-text-glow">
+        <h1 className="text-4xl font-headline font-black text-white uppercase italic tracking-tighter cyan-text-glow">
           CALENDARIO_DE_OCUPACION
         </h1>
-        <p className="text-[10px] font-black text-amber-500/30 tracking-[0.2em] uppercase">
+        <p className="text-[10px] font-black text-primary/30 tracking-[0.2em] uppercase">
           Visualización agenda (mes/semana/día) sin edición
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <Card className="glass-panel lg:col-span-3 border border-amber-500/20 bg-black/20 rounded-3xl">
+        <Card className="glass-panel lg:col-span-3 border border-primary/20 bg-black/20 rounded-3xl">
           <CardHeader className="border-b border-white/5">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div className="flex items-center gap-2">
                 <Button variant="ghost" className="h-10 w-10 rounded-xl border border-white/10" onClick={() => moveRange(-1)}>
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <Badge variant="outline" className="text-[10px] font-black border-amber-500/30 text-amber-400 px-4 py-2">
+                <Badge variant="outline" className="text-[10px] font-black border-primary/30 text-primary/80 px-4 py-2">
                   {view === "day"
                     ? `DIA ${dayLabel(anchorDate)}`
                     : view === "week"
@@ -279,7 +279,7 @@ export default function MethodologyCalendarPage() {
                   <SelectTrigger className="h-10 w-[130px] bg-white/5 border-white/10 text-[10px] font-black uppercase">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#0a0f18] border-amber-500/20">
+                  <SelectContent className="bg-[#0a0f18] border-primary/20">
                     <SelectItem value="month">MES</SelectItem>
                     <SelectItem value="week">SEMANA</SelectItem>
                     <SelectItem value="day">DIA</SelectItem>
@@ -289,7 +289,7 @@ export default function MethodologyCalendarPage() {
                   <SelectTrigger className="h-10 w-[170px] bg-white/5 border-white/10 text-[10px] font-black uppercase">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#0a0f18] border-amber-500/20">
+                  <SelectContent className="bg-[#0a0f18] border-primary/20">
                     <SelectItem value="all">TODAS SECCIONES</SelectItem>
                     {SECTIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
@@ -298,7 +298,7 @@ export default function MethodologyCalendarPage() {
                   <SelectTrigger className="h-10 w-[150px] bg-white/5 border-white/10 text-[10px] font-black uppercase">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#0a0f18] border-amber-500/20">
+                  <SelectContent className="bg-[#0a0f18] border-primary/20">
                     <SelectItem value="all">TODOS CAMPOS</SelectItem>
                     {FIELDS.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
                   </SelectContent>
@@ -314,7 +314,7 @@ export default function MethodologyCalendarPage() {
                 return (
                   <div key={key} className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 space-y-3 min-h-[200px]">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest">{dayLabel(d)}</span>
+                      <span className="text-[10px] font-black text-primary/80 uppercase tracking-widest">{dayLabel(d)}</span>
                       <Badge variant="outline" className="text-[8px] border-white/15 text-white/60">{items.length} SES.</Badge>
                     </div>
                     <div className="space-y-2">
@@ -322,11 +322,11 @@ export default function MethodologyCalendarPage() {
                         <p className="text-[9px] uppercase text-white/25 font-bold">Sin ocupacion</p>
                       ) : (
                         items.map((it) => (
-                          <div key={it.id} className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-2.5">
+                          <div key={it.id} className="rounded-xl border border-primary/20 bg-primary/5 p-2.5">
                             <p className="text-[9px] font-black text-white uppercase truncate">{it.title}</p>
                             <p className="text-[8px] text-white/50 uppercase">{it.team} · {it.field}</p>
                             <div className="flex items-center justify-between mt-1">
-                              <span className="text-[8px] text-amber-400 font-black">{it.section}</span>
+                              <span className="text-[8px] text-primary/80 font-black">{it.section}</span>
                               <span className="text-[8px] text-white/60 font-black">{it.startTime}-{it.endTime}</span>
                             </div>
                           </div>
@@ -340,9 +340,9 @@ export default function MethodologyCalendarPage() {
           </CardContent>
         </Card>
 
-        <Card className="glass-panel border border-amber-500/20 bg-black/30 rounded-3xl">
+        <Card className="glass-panel border border-primary/20 bg-black/30 rounded-3xl">
           <CardHeader>
-            <CardTitle className="text-[11px] font-black uppercase tracking-widest text-amber-400 flex items-center gap-2">
+            <CardTitle className="text-[11px] font-black uppercase tracking-widest text-primary/80 flex items-center gap-2">
               <Filter className="h-4 w-4" /> Resumen agenda
             </CardTitle>
           </CardHeader>
@@ -353,7 +353,7 @@ export default function MethodologyCalendarPage() {
             </div>
             <div className="rounded-2xl border border-white/10 p-4 bg-white/[0.02]">
               <p className="text-[8px] text-white/40 uppercase font-black">Minutos visibles</p>
-              <p className="text-3xl font-black text-amber-400 italic">
+              <p className="text-3xl font-black text-primary italic cyan-text-glow">
                 {Math.round(filtered.reduce((s, e) => s + Math.max(0, timeToMinutes(e.endTime) - timeToMinutes(e.startTime)), 0))}
               </p>
             </div>
@@ -365,9 +365,9 @@ export default function MethodologyCalendarPage() {
               ))}
             </div>
             <div className="pt-2 text-[8px] text-white/35 uppercase font-bold space-y-1">
-              <p className="flex items-center gap-2"><Clock3 className="h-3 w-3 text-amber-400/60" /> Solo visualizacion; alta en Planif. Sesiones.</p>
-              <p className="flex items-center gap-2"><Users className="h-3 w-3 text-amber-400/60" /> Filtro por seccion/campo para ocupacion.</p>
-              <p className="flex items-center gap-2"><ShieldCheck className="h-3 w-3 text-amber-400/60" /> Base operativa para KDS multideporte.</p>
+              <p className="flex items-center gap-2"><Clock3 className="h-3 w-3 text-primary/60" /> Solo visualizacion; alta en Planif. Sesiones.</p>
+              <p className="flex items-center gap-2"><Users className="h-3 w-3 text-primary/60" /> Filtro por seccion/campo para ocupacion.</p>
+              <p className="flex items-center gap-2"><ShieldCheck className="h-3 w-3 text-primary/60" /> Base operativa para KDS multideporte.</p>
               {conflicts.length > 0 && <p className="flex items-center gap-2 text-rose-400/80"><AlertTriangle className="h-3 w-3" /> Revisa campos con solape.</p>}
             </div>
           </CardContent>

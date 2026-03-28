@@ -57,7 +57,7 @@ const PLANNING_DATA: Record<string, any> = {
     ],
     weeklyMicro: [
       { day: "Día 1", label: "Habilidad Individual", focus: "CONDUCCIÓN Y REGATE SIMPLE", color: "border-primary/20 bg-primary/5" },
-      { day: "Día 2", label: "Aplicación al Juego", focus: "MINI-JUEGOS 1v1 / 2v2", color: "border-amber-500/20 bg-amber-500/5" }
+      { day: "Día 2", label: "Aplicación al Juego", focus: "MINI-JUEGOS 1v1 / 2v2", color: "border-sky-400/30 bg-sky-400/10" }
     ],
     sessionStructure: [
       { part: "Calentamiento", time: "10 min", desc: "Juegos de activación y movilidad articular.", icon: Zap },
@@ -85,7 +85,7 @@ const PLANNING_DATA: Record<string, any> = {
     ],
     weeklyMicro: [
       { day: "Día 1", label: "Adquisición", focus: "TÉCNICA INDIVIDUAL Y ANALÍTICA", color: "border-primary/20 bg-primary/5" },
-      { day: "Día 2", label: "Aplicación", focus: "JUEGOS 2v1 / 2v2 Y PARTIDOS", color: "border-amber-500/20 bg-amber-500/5" }
+      { day: "Día 2", label: "Aplicación", focus: "JUEGOS 2v1 / 2v2 Y PARTIDOS", color: "border-sky-400/30 bg-sky-400/10" }
     ],
     sessionStructure: [
       { part: "Calentamiento", time: "15 min", desc: "Juegos con balón y activación progresiva.", icon: Zap },
@@ -111,7 +111,7 @@ const PLANNING_DATA: Record<string, any> = {
     ],
     weeklyMicro: [
       { day: "Día 1", label: "Técnico-Coordinativo", focus: "MEJORA INDIVIDUAL ESPECÍFICA", color: "border-primary/20 bg-primary/5" },
-      { day: "Día 2", label: "Táctico-Individual", focus: "SITUACIONES REDUCIDAS (1v1, 2v1)", color: "border-amber-500/20 bg-amber-500/5" },
+      { day: "Día 2", label: "Táctico-Individual", focus: "SITUACIONES REDUCIDAS (1v1, 2v1)", color: "border-sky-400/30 bg-sky-400/10" },
       { day: "Día 3", label: "Táctico-Colectivo", focus: "APLICACIÓN REAL (PARTIDO)", color: "border-blue-500/20 bg-blue-500/5" }
     ],
     sessionStructure: [
@@ -140,7 +140,7 @@ const PLANNING_DATA: Record<string, any> = {
     ],
     weeklyMicro: [
       { day: "Día 1", label: "Sub-principios", focus: "TAREAS DE ASPECTOS CONCRETOS", color: "border-primary/20 bg-primary/5" },
-      { day: "Día 2", label: "Principios Completos", focus: "TAREAS COLECTIVAS COMPLEJAS", color: "border-amber-500/20 bg-amber-500/5" },
+      { day: "Día 2", label: "Principios Completos", focus: "TAREAS COLECTIVAS COMPLEJAS", color: "border-sky-400/20 bg-sky-400/5" },
       { day: "Día 3", label: "Aplicación al Modelo", focus: "PARTIDO CONDICIONADO / REAL", color: "border-blue-500/20 bg-blue-500/5" }
     ],
     sessionStructure: [
@@ -169,7 +169,7 @@ const PLANNING_DATA: Record<string, any> = {
     weeklyMicro: [
       { day: "MD-4", label: "Condicional", focus: "FUERZA Y RESISTENCIA ESPECÍFICA", color: "border-blue-500/20 bg-blue-500/5" },
       { day: "MD-3", label: "Táctico", focus: "PRINCIPIOS DEL MODELO DE JUEGO", color: "border-primary/20 bg-primary/5" },
-      { day: "MD-2", label: "Velocidad", focus: "VELOCIDAD Y FINALIZACIÓN", color: "border-amber-500/20 bg-amber-500/5" },
+      { day: "MD-2", label: "Velocidad", focus: "VELOCIDAD Y FINALIZACIÓN", color: "border-sky-400/20 bg-sky-400/5" },
       { day: "MD-1", label: "Activación", focus: "AJUSTES TÁCTICOS Y ABP", color: "border-rose-500/20 bg-rose-500/5" }
     ],
     sessionStructure: [
@@ -197,7 +197,7 @@ const PLANNING_DATA: Record<string, any> = {
     weeklyMicro: [
       { day: "Lunes", label: "Recuperación", focus: "COMPENSATORIO / REGENERATIVO", color: "border-blue-500/20 bg-blue-500/5" },
       { day: "Martes", label: "Fuerza", focus: "TÁCTICA GENERAL DEL MODELO", color: "border-primary/20 bg-primary/5" },
-      { day: "Miércoles", label: "Resistencia", focus: "TÁCTICA ESPECÍFICA POR LÍNEAS", color: "border-amber-500/20 bg-amber-500/5" },
+      { day: "Miércoles", label: "Resistencia", focus: "TÁCTICA ESPECÍFICA POR LÍNEAS", color: "border-sky-400/20 bg-sky-400/5" },
       { day: "Jueves", label: "Velocidad", focus: "ABP Y VELOCIDAD DE REACCIÓN", color: "border-rose-500/20 bg-rose-500/5" },
       { day: "Viernes", label: "Activación", focus: "AJUSTES PRE-PARTIDO RIVAL", color: "border-emerald-500/20 bg-emerald-500/5" }
     ],
@@ -226,7 +226,7 @@ const PLANNING_DATA: Record<string, any> = {
     ],
     weeklyMicro: [
       { day: "Proyecto Semanal", label: "Análisis Rival", focus: "ESTRATEGIA ESPECÍFICA SEMANAL", color: "border-primary/20 bg-primary/5" },
-      { day: "Entrenamientos", label: "Carga GPS", focus: "CONTROL TECNOLÓGICO DE ESFUERZO", color: "border-amber-500/20 bg-amber-500/5" },
+      { day: "Entrenamientos", label: "Carga GPS", focus: "CONTROL TECNOLÓGICO DE ESFUERZO", color: "border-sky-400/20 bg-sky-400/5" },
       { day: "Específico", label: "Líneas / Jugador", focus: "ESPECIALIZACIÓN TÁCTICA PROFESIONAL", color: "border-blue-500/20 bg-blue-500/5" },
       { day: "Psicológico", label: "Mentalidad Élite", focus: "COACHING Y DINÁMICAS DE GRUPO", color: "border-rose-500/20 bg-rose-500/5" }
     ],
@@ -254,13 +254,13 @@ export default function CyclePlannerPage() {
       <div className="flex flex-col gap-8 border-b border-white/5 pb-10">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
-            <GitBranch className="h-5 w-5 text-amber-500 animate-pulse" />
-            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Cyclic_Planner_v3.6</span>
+            <GitBranch className="h-5 w-5 text-primary animate-pulse" />
+            <span className="text-[10px] font-black text-primary/80 tracking-[0.5em] uppercase italic">Cyclic_Planner_v3.6</span>
           </div>
-          <h1 className="text-5xl font-headline font-black text-white uppercase italic tracking-tighter amber-text-glow leading-none">
+          <h1 className="text-5xl font-headline font-black text-white uppercase italic tracking-tighter cyan-text-glow leading-none">
             PLANIFICACIÓN_CÍCLICA
           </h1>
-          <p className="text-[11px] font-black text-amber-500/30 tracking-[0.3em] uppercase">Cronograma Metodológico del Club</p>
+          <p className="text-[11px] font-black text-primary/30 tracking-[0.3em] uppercase">Cronograma Metodológico del Club</p>
         </div>
 
         {/* SELECTOR DE CATEGORÍAS */}
@@ -291,29 +291,29 @@ export default function CyclePlannerPage() {
           
           {/* COLUMNA IZQUIERDA: FILOSOFÍA Y ENFOQUE */}
           <div className="xl:col-span-1 space-y-8">
-            <Card className="glass-panel border-amber-500/20 bg-amber-500/5 p-8 relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-4 opacity-10"><Calendar className="h-24 w-24 text-amber-500" /></div>
+            <Card className="glass-panel border-primary/20 bg-primary/5 p-8 relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-4 opacity-10"><Calendar className="h-24 w-24 text-primary" /></div>
               <div className="flex items-center gap-3 mb-6 relative z-10">
-                <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500">Estrategia Temporal</span>
+                <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Estrategia Temporal</span>
               </div>
               <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white mb-4 leading-tight">
-                {data.title} <br /><span className="text-amber-500">{data.titleAccent}</span>
+                {data.title} <br /><span className="text-primary">{data.titleAccent}</span>
               </h3>
               <p className="text-[11px] font-bold text-white/60 uppercase tracking-widest leading-loose italic">
                 {data.description}
               </p>
             </Card>
 
-            <div className="p-8 rounded-[2.5rem] border border-amber-500/10 bg-black/40 space-y-6">
+            <div className="p-8 rounded-[2.5rem] border border-primary/10 bg-black/40 space-y-6">
               <div className="flex items-center gap-3">
-                <Info className="h-4 w-4 text-amber-500" />
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500/60">Pilares del Ciclo</span>
+                <Info className="h-4 w-4 text-primary" />
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/60">Pilares del Ciclo</span>
               </div>
               <div className="space-y-3">
                 {data.focusPoints.map((point: string, i: number) => (
-                  <div key={i} className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5 group hover:border-amber-500/20 transition-all">
-                    <CheckCircle2 className="h-3 w-3 text-amber-500/40 group-hover:text-amber-500" />
+                  <div key={i} className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5 group hover:border-primary/20 transition-all">
+                    <CheckCircle2 className="h-3 w-3 text-primary/50 group-hover:text-primary" />
                     <span className="text-[9px] font-black text-white/40 group-hover:text-white uppercase italic">{point}</span>
                   </div>
                 ))}
@@ -327,16 +327,16 @@ export default function CyclePlannerPage() {
             {/* BLOQUES TEMPORALES */}
             <section className="space-y-6">
               <div className="flex items-center gap-3 px-2">
-                <Layers className="h-4 w-4 text-amber-500" />
+                <Layers className="h-4 w-4 text-primary" />
                 <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-white">{data.blocksLabel}</h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {data.monthlyBlocks.map((block: any) => (
-                  <div key={block.id} className="p-6 bg-black/40 border border-white/5 rounded-3xl group hover:border-amber-500/30 transition-all relative overflow-hidden">
-                    <div className="absolute top-0 right-0 px-4 py-2 bg-amber-500/10 text-[10px] font-black text-amber-500 italic">{block.period}</div>
+                  <div key={block.id} className="p-6 bg-black/40 border border-white/5 rounded-3xl group hover:border-primary/30 transition-all relative overflow-hidden">
+                    <div className="absolute top-0 right-0 px-4 py-2 bg-primary/10 text-[10px] font-black text-primary italic">{block.period}</div>
                     <div className="space-y-1 mb-4">
-                      <h4 className="text-sm font-black text-white uppercase italic group-hover:amber-text-glow transition-all">{block.title}</h4>
-                      <p className="text-[9px] font-black text-amber-500/40 uppercase tracking-widest">{block.focus}</p>
+                      <h4 className="text-sm font-black text-white uppercase italic group-hover:cyan-text-glow transition-all">{block.title}</h4>
+                      <p className="text-[9px] font-black text-primary/40 uppercase tracking-widest">{block.focus}</p>
                     </div>
                     <p className="text-[10px] font-bold text-white/30 uppercase leading-relaxed">{block.desc}</p>
                   </div>
@@ -349,7 +349,7 @@ export default function CyclePlannerPage() {
               {/* SEMANA TIPO */}
               <section className="space-y-6">
                 <div className="flex items-center gap-3 px-2">
-                  <Calendar className="h-4 w-4 text-amber-500" />
+                  <Calendar className="h-4 w-4 text-primary" />
                   <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-white">Estructura Semanal</h3>
                 </div>
                 <div className="space-y-3">
@@ -357,7 +357,7 @@ export default function CyclePlannerPage() {
                     <div key={i} className={cn("p-5 border rounded-2xl relative group overflow-hidden", day.color)}>
                       <div className="flex justify-between items-center mb-1">
                         <span className="text-[9px] font-black text-white/40 uppercase">{day.day}</span>
-                        <ArrowRight className="h-3 w-3 text-white/10 group-hover:text-amber-500 transition-all" />
+                        <ArrowRight className="h-3 w-3 text-white/10 group-hover:text-primary transition-all" />
                       </div>
                       <p className="text-[10px] font-black text-white uppercase italic tracking-widest">{day.label}</p>
                       <p className="text-xs font-black text-white/80 uppercase italic mt-1">{day.focus}</p>
@@ -369,19 +369,19 @@ export default function CyclePlannerPage() {
               {/* DESGLOSE SESIÓN */}
               <section className="space-y-6">
                 <div className="flex items-center gap-3 px-2">
-                  <Clock className="h-4 w-4 text-amber-500" />
+                  <Clock className="h-4 w-4 text-primary" />
                   <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-white">Anatomía de la Sesión</h3>
                 </div>
                 <div className="bg-black/40 border border-white/5 rounded-[2.5rem] overflow-hidden divide-y divide-white/5">
                   {data.sessionStructure.map((part: any, i: number) => (
                     <div key={i} className="p-5 flex items-center gap-5 hover:bg-white/[0.02] transition-colors">
-                      <div className="h-10 w-10 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
-                        <part.icon className="h-5 w-5 text-amber-500" />
+                      <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
+                        <part.icon className="h-5 w-5 text-primary" />
                       </div>
                       <div className="flex-1">
                         <div className="flex justify-between items-center mb-0.5">
                           <span className="text-[10px] font-black text-white uppercase italic">{part.part}</span>
-                          <Badge variant="outline" className="text-[8px] font-black border-amber-500/20 text-amber-500">{part.time}</Badge>
+                          <Badge variant="outline" className="text-[8px] font-black border-primary/20 text-primary">{part.time}</Badge>
                         </div>
                         <p className="text-[9px] font-bold text-white/20 uppercase tracking-tighter">{part.desc}</p>
                       </div>
@@ -394,9 +394,9 @@ export default function CyclePlannerPage() {
           </div>
         </div>
       ) : (
-        <div className="p-20 text-center space-y-4 border border-dashed border-amber-500/20 bg-amber-500/5 rounded-[3rem]">
-           <Sparkles className="h-12 w-12 text-amber-500/20 mx-auto animate-pulse" />
-           <p className="text-[10px] font-black text-amber-500/40 uppercase tracking-[1em]">Terminal en espera de sincronización de datos</p>
+        <div className="p-20 text-center space-y-4 border border-dashed border-primary/20 bg-primary/5 rounded-[3rem]">
+           <Sparkles className="h-12 w-12 text-primary/20 mx-auto animate-pulse" />
+           <p className="text-[10px] font-black text-primary/40 uppercase tracking-[1em]">Terminal en espera de sincronización de datos</p>
         </div>
       )}
     </div>

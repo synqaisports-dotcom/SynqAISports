@@ -474,13 +474,13 @@ export default function ObjectivesPage() {
         {/* FILA 1: TÍTULO E IDENTIDAD */}
         <div className="space-y-2">
           <div className="flex items-center gap-3">
-            <Target className="h-5 w-5 text-amber-500 animate-pulse" />
-            <span className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase italic">Strategic_Objectives_v2.9</span>
+            <Target className="h-5 w-5 text-primary animate-pulse" />
+            <span className="text-[10px] font-black text-primary/80 tracking-[0.5em] uppercase italic">Strategic_Objectives_v2.9</span>
           </div>
-          <h1 className="text-5xl font-headline font-black text-white uppercase italic tracking-tighter amber-text-glow leading-none">
+          <h1 className="text-5xl font-headline font-black text-white uppercase italic tracking-tighter cyan-text-glow leading-none">
             OBJETIVOS_TÁCTICOS
           </h1>
-          <p className="text-[11px] font-black text-amber-500/30 tracking-[0.3em] uppercase">Hoja de Ruta Formativa del Club</p>
+          <p className="text-[11px] font-black text-primary/30 tracking-[0.3em] uppercase">Hoja de Ruta Formativa del Club</p>
         </div>
 
         {/* FILA 2: SELECTOR DE CATEGORÍAS (OCUPANDO TODO EL ANCHO) */}
@@ -513,26 +513,26 @@ export default function ObjectivesPage() {
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-10">
           
           <div className="xl:col-span-1 space-y-10">
-            <Card className="glass-panel border-amber-500/20 bg-amber-500/5 p-10 relative group overflow-hidden shadow-[0_0_50px_rgba(245,158,11,0.05)]">
+            <Card className="glass-panel border-primary/20 bg-primary/5 p-10 relative group overflow-hidden shadow-[0_0_50px_rgba(0,242,255,0.06)]">
               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-all">
-                <BookOpen className="h-32 w-32 text-amber-500" />
+                <BookOpen className="h-32 w-32 text-primary" />
               </div>
               <div className="flex items-center gap-3 mb-6 relative z-10">
-                <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-                <span className="text-[11px] font-black uppercase tracking-[0.4em] text-amber-500">Filosofía de Etapa</span>
+                <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                <span className="text-[11px] font-black uppercase tracking-[0.4em] text-primary">Filosofía de Etapa</span>
               </div>
               <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white mb-6 leading-tight">
-                {currentContent.title} <br /><span className="text-amber-500">{currentContent.titleAccent}</span>
+                {currentContent.title} <br /><span className="text-primary">{currentContent.titleAccent}</span>
               </h3>
               <p className="text-[11px] font-bold text-white/60 uppercase tracking-widest leading-loose italic relative z-10">
                 {currentContent.philosophy}
               </p>
             </Card>
 
-            <div className="p-8 rounded-[2.5rem] border border-amber-500/10 bg-black/40 space-y-6 relative overflow-hidden group">
+            <div className="p-8 rounded-[2.5rem] border border-primary/10 bg-black/40 space-y-6 relative overflow-hidden group">
               <div className="flex items-center gap-3">
-                <Info className="h-4 w-4 text-amber-500" />
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500/60">Guía para el Entrenador</span>
+                <Info className="h-4 w-4 text-primary" />
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/60">Guía para el Entrenador</span>
               </div>
               <div className="space-y-4">
                 {currentContent.tips.map((tip: string, i: number) => (
@@ -555,25 +555,25 @@ export default function ObjectivesPage() {
               ))}
             </div>
 
-            <div className="p-10 bg-amber-500/5 border border-amber-500/20 rounded-[3rem] flex items-center justify-between group hover:border-amber-500/40 transition-all cursor-pointer">
+            <div className="p-10 bg-primary/5 border border-primary/20 rounded-[3rem] flex items-center justify-between group hover:border-primary/40 transition-all cursor-pointer">
                <div className="flex items-center gap-6">
-                  <div className="h-14 w-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Sparkles className="h-7 w-7 text-amber-500" />
+                  <div className="h-14 w-14 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Sparkles className="h-7 w-7 text-primary" />
                   </div>
                   <div>
                     <p className="text-xs font-black text-white uppercase italic tracking-widest">Sincronización con Neural Planner</p>
-                    <p className="text-[10px] font-bold text-amber-500/40 uppercase tracking-widest">Los ejercicios generados por IA respetarán estos objetivos automáticamente.</p>
+                    <p className="text-[10px] font-bold text-primary/40 uppercase tracking-widest">Los ejercicios generados por IA respetarán estos objetivos automáticamente.</p>
                   </div>
                </div>
-               <ArrowRight className="h-6 w-6 text-amber-500/20 group-hover:text-amber-500 transition-colors" />
+               <ArrowRight className="h-6 w-6 text-primary/20 group-hover:text-primary transition-colors" />
             </div>
           </div>
 
         </div>
       ) : (
-        <div className="p-20 text-center space-y-4 border border-dashed border-amber-500/20 bg-amber-500/5 rounded-[3rem]">
-           <Sparkles className="h-12 w-12 text-amber-500/20 mx-auto animate-pulse" />
-           <p className="text-[10px] font-black text-amber-500/40 uppercase tracking-[1em]">Terminal en espera de sincronización de datos</p>
+        <div className="p-20 text-center space-y-4 border border-dashed border-primary/20 bg-primary/5 rounded-[3rem]">
+           <Sparkles className="h-12 w-12 text-primary/20 mx-auto animate-pulse" />
+           <p className="text-[10px] font-black text-primary/40 uppercase tracking-[1em]">Terminal en espera de sincronización de datos</p>
         </div>
       )}
     </div>
@@ -583,15 +583,15 @@ export default function ObjectivesPage() {
 function ObjectiveCard({ title, subtitle, icon: Icon, items }: any) {
   return (
     <Card className="glass-panel border-none bg-black/40 overflow-hidden group hover:bg-black/60 transition-all rounded-3xl">
-      <div className="h-1 w-full bg-amber-500/40" />
+      <div className="h-1 w-full bg-primary/40" />
       <CardHeader className="p-8 pb-4">
         <div className="flex items-center gap-4 mb-2">
-          <div className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-            <Icon className="h-5 w-5 text-amber-500" />
+          <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <Icon className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <CardTitle className="text-lg font-black text-white italic tracking-tighter uppercase group-hover:amber-text-glow transition-all">{title}</CardTitle>
-            <CardDescription className="text-[8px] font-black text-amber-500/40 uppercase tracking-[0.2em] italic">{subtitle}</CardDescription>
+            <CardTitle className="text-lg font-black text-white italic tracking-tighter uppercase group-hover:cyan-text-glow transition-all">{title}</CardTitle>
+            <CardDescription className="text-[8px] font-black text-primary/40 uppercase tracking-[0.2em] italic">{subtitle}</CardDescription>
           </div>
         </div>
       </CardHeader>
@@ -599,7 +599,7 @@ function ObjectiveCard({ title, subtitle, icon: Icon, items }: any) {
         <ul className="space-y-3">
           {items.map((item: string, idx: number) => (
             <li key={idx} className="flex gap-3 text-[10px] font-bold text-white/40 uppercase tracking-widest leading-relaxed">
-              <div className="h-1 w-1 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+              <div className="h-1 w-1 rounded-full bg-primary mt-1.5 shrink-0" />
               <span>{item}</span>
             </li>
           ))}
@@ -611,8 +611,8 @@ function ObjectiveCard({ title, subtitle, icon: Icon, items }: any) {
 
 function CoachTip({ text }: { text: string }) {
   return (
-    <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5 group hover:border-amber-500/20 transition-all">
-      <CheckCircle2 className="h-3 w-3 text-amber-500/40 group-hover:text-amber-500 transition-colors" />
+    <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5 group hover:border-primary/20 transition-all">
+      <CheckCircle2 className="h-3 w-3 text-primary/40 group-hover:text-primary transition-colors" />
       <span className="text-[9px] font-black text-white/40 group-hover:text-white uppercase tracking-tight italic">{text}</span>
     </div>
   );

@@ -287,7 +287,7 @@ export function DashboardSidebar() {
         )}
 
         {!isFree && (
-          <SidebarGroupWrapper title="Metodología" color="text-amber-500" isCollapsed={isCollapsed}>
+          <SidebarGroupWrapper title="Metodología" color="text-primary" isCollapsed={isCollapsed}>
             <SidebarMenu>
               {filteredItems.filter(i => i.category === "methodology").map((item) => (
                 <SidebarMenuItem key={item.href}>
@@ -423,7 +423,7 @@ function SidebarLink({
   const activeClass = isGlobal 
     ? "bg-emerald-500/10 text-emerald-400 shadow-[0_4px_15px_rgba(16,185,129,0.15)] emerald-text-glow"
     : isMethodology
-    ? "bg-amber-500/10 text-amber-500 shadow-[0_4px_15px_rgba(245,158,11,0.15)] amber-text-glow"
+    ? "bg-cyan-400/10 text-cyan-300 shadow-[0_4px_15px_rgba(34,211,238,0.18)] cyan-text-glow"
     : isSandbox
     ? "bg-blue-500/10 text-blue-400 shadow-[0_4px_15px_rgba(59,130,246,0.15)] blue-text-glow"
     : "bg-primary/10 text-primary shadow-[0_4px_15px_rgba(0,242,255,0.15)] cyan-text-glow";
@@ -431,7 +431,7 @@ function SidebarLink({
   const iconClass = isGlobal 
     ? (isActive ? "text-emerald-400 scale-110" : "group-hover:text-emerald-400 group-hover:scale-110")
     : isMethodology
-    ? (isActive ? "text-amber-500 scale-110" : "group-hover:text-amber-500 group-hover:scale-110")
+    ? (isActive ? "text-cyan-300 scale-110" : "group-hover:text-cyan-300 group-hover:scale-110")
     : isSandbox
     ? (isActive ? "text-blue-400 scale-110" : "group-hover:text-blue-400 group-hover:scale-110")
     : (isActive ? "text-primary scale-110" : "group-hover:text-primary group-hover:scale-110");
@@ -456,7 +456,7 @@ function SidebarLink({
         {isActive && (
           <div className={cn(
             "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-3/5 rounded-full",
-            isGlobal ? "bg-emerald-500" : isMethodology ? "bg-amber-500" : isSandbox ? "bg-blue-500" : "bg-primary"
+            isGlobal ? "bg-emerald-500" : isMethodology ? "bg-cyan-300" : isSandbox ? "bg-blue-500" : "bg-primary"
           )} />
         )}
       </Link>
