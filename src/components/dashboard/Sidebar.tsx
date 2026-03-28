@@ -310,22 +310,29 @@ export function DashboardSidebar() {
           </SidebarGroupWrapper>
         )}
 
-        <SidebarGroupWrapper title="Terminales_Acceso" color="text-white/60" isCollapsed={isCollapsed}>
-          {!isCollapsed && (
-            <div className="px-4 py-2 mb-2 bg-blue-500/5 border border-blue-500/10 rounded-xl">
-               <span className="text-[7px] font-black text-blue-400 uppercase tracking-[0.3em] italic flex items-center gap-2">
-                 <LayoutGrid className="h-2.5 w-2.5" /> NODO_SANDBOX_ACTIVE
-               </span>
-            </div>
-          )}
-          <SidebarMenu>
-            {filteredItems.filter(i => i.category === "user").map((item) => (
-              <SidebarMenuItem key={item.href}>
-                <SidebarLink item={item} isActive={pathname === pathnameFromNavHref(item.href)} isSandbox={item.href.includes('promo')} onNavClick={handleNavClick} />
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarGroupWrapper>
+        {(isFree || isSuperAdmin) && (
+          <SidebarGroupWrapper title="Terminales_Acceso" color="text-white/60" isCollapsed={isCollapsed}>
+            {!isCollapsed && (
+              <div className="px-4 py-2 mb-2 bg-blue-500/5 border border-blue-500/10 rounded-xl">
+                <span className="text-[7px] font-black text-blue-400 uppercase tracking-[0.3em] italic flex items-center gap-2">
+                  <LayoutGrid className="h-2.5 w-2.5" /> NODO_SANDBOX_ACTIVE
+                </span>
+              </div>
+            )}
+            <SidebarMenu>
+              {filteredItems.filter(i => i.category === "user").map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarLink
+                    item={item}
+                    isActive={pathname === pathnameFromNavHref(item.href)}
+                    isSandbox={item.href.includes('promo')}
+                    onNavClick={handleNavClick}
+                  />
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupWrapper>
+        )}
       </SidebarContent>
 
       <SidebarFooter className={cn(
