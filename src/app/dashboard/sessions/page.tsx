@@ -164,6 +164,7 @@ export default function CoachSessionsPage() {
   const searchParams = useSearchParams();
   const { profile, user, session } = useAuth();
   const { toast } = useToast();
+  const [syncMode, setSyncMode] = useState<"remote" | "local" | "restricted">("local");
   const [myTeam, setMyTeam] = useState<OperationalTeam | null>(null);
   const [roster, setRoster] = useState<SessionRosterPlayer[]>([]);
   
@@ -254,6 +255,8 @@ export default function CoachSessionsPage() {
       const academyRaw = localStorage.getItem(`${ACADEMY_CATEGORIES_STORAGE_PREFIX}_${clubScopeId}`);
 
       let selectedTeam: OperationalTeam | null = null;
+      let usedRemote = false;
+      let restricted = false;
 
       // 1) Warehouse teams (Supabase o local)
       let warehouseTeams: Array<{ id?: string; name?: string; stage?: string; sessionsPerWeek?: number }> = [];
@@ -263,7 +266,9 @@ export default function CoachSessionsPage() {
             headers: { Authorization: `Bearer ${accessToken}` },
           });
 
+          if (whRes.status === 403) restricted = true;
           if (!cancelled && whRes.ok) {
+            usedRemote = true;
             const json = (await whRes.json()) as { ok?: boolean; payload?: any };
             const remoteTeams = json?.payload?.teams;
             if (Array.isArray(remoteTeams)) {
@@ -322,7 +327,9 @@ export default function CoachSessionsPage() {
           const res = await fetch("/api/club/methodology-academy", {
             headers: { Authorization: `Bearer ${accessToken}` },
           });
+          if (res.status === 403) restricted = true;
           if (res.ok) {
+            usedRemote = true;
             const json = (await res.json()) as { ok?: boolean; payload?: any };
             if (Array.isArray(json?.payload)) parsedAcademy = json.payload;
           }
@@ -399,6 +406,12 @@ export default function CoachSessionsPage() {
           const n = String(querySessionRaw).replace(/^S/i, "");
           if (n) setActiveSessionInWeek(n);
         }
+      }
+
+      if (!cancelled) {
+        if (restricted) setSyncMode("restricted");
+        else if (usedRemote) setSyncMode("remote");
+        else setSyncMode("local");
       }
     };
 
@@ -720,7 +733,7 @@ export default function CoachSessionsPage() {
   }, [activeSessionInWeek, sessionsPerWeek]);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-1000 p-8 lg:p-12">
+    <div className="space-y-8 animate-in fade-in duration-1000 p-4 sm:p-6 lg:p-12">
       
       <div className="flex justify-end gap-2 mb-4">
          <Badge variant="outline" className="border-white/5 text-white/20 uppercase text-[8px] font-black mr-4">Preview_Role:</Badge>
@@ -733,7 +746,7 @@ export default function CoachSessionsPage() {
             <CalendarDays className="h-5 w-5 text-primary animate-pulse" />
             <span className="text-[10px] font-black text-primary tracking-[0.5em] uppercase italic">Coach_Operational_Mirror_v5.1</span>
           </div>
-          <h1 className="text-5xl font-headline font-black text-white uppercase italic tracking-tighter cyan-text-glow leading-none">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-headline font-black text-white uppercase italic tracking-tighter cyan-text-glow leading-none">
             PLANIFICACIÓN_Y_SESIONES
           </h1>
           <p className="text-[11px] font-black text-primary/30 tracking-[0.3em] uppercase">
@@ -741,15 +754,21 @@ export default function CoachSessionsPage() {
           </p>
         </div>
 
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full lg:w-auto">
           <div className="p-4 bg-primary/5 border border-primary/20 rounded-2xl flex items-center gap-4">
              <ShieldCheck className="h-5 w-5 text-primary" />
              <div>
                 <p className="text-[9px] font-black text-primary uppercase tracking-widest">MODO_LECTURA_ACTIVO</p>
-                <p className="text-[8px] font-bold text-white/40 uppercase italic">Sincronizado con Metodología Central</p>
+                <p className="text-[8px] font-bold text-white/40 uppercase italic">
+                  {syncMode === "remote"
+                    ? "Sincronizado con Metodología Central"
+                    : syncMode === "restricted"
+                      ? "Acceso restringido por permisos"
+                      : "Modo local (sin red) / Sandbox"}
+                </p>
              </div>
           </div>
-          <Button className="h-12 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl cyan-glow hover:scale-105 transition-all border-none">
+          <Button className="h-12 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-6 sm:px-8 rounded-xl cyan-glow hover:scale-105 transition-all border-none w-full sm:w-auto">
             <Download className="h-4 w-4 mr-2" /> Mi Temporada
           </Button>
           <Button
@@ -758,7 +777,7 @@ export default function CoachSessionsPage() {
               setIsRequestsOpen(true);
               markResponsesAsSeen();
             }}
-            className="h-12 border-white/15 text-white font-black uppercase text-[10px] tracking-widest px-5 rounded-xl relative"
+            className="h-12 border-white/15 text-white font-black uppercase text-[10px] tracking-widest px-5 rounded-xl relative w-full sm:w-auto"
           >
             <History className="h-4 w-4 mr-2" /> Mis Solicitudes
             {unreadResponsesCount > 0 && (
@@ -789,7 +808,9 @@ export default function CoachSessionsPage() {
             <div className="flex items-center gap-8">
                <div className="text-right">
                   <p className="text-[8px] font-black text-black/40 uppercase tracking-widest">Sincronización</p>
-                  <p className="text-xl font-black text-black italic tracking-tighter uppercase">ESTABLE_100%</p>
+                  <p className="text-xl font-black text-black italic tracking-tighter uppercase">
+                    {syncMode === "remote" ? "REMOTO_OK" : syncMode === "restricted" ? "RESTRINGIDO" : "LOCAL"}
+                  </p>
                </div>
                <div className="h-8 w-[1px] bg-black/10" />
                <div className="text-right">
@@ -800,7 +821,7 @@ export default function CoachSessionsPage() {
           </div>
 
           <div className="overflow-x-auto custom-scrollbar">
-            <div className="min-w-[1800px] flex">
+            <div className="min-w-[1200px] lg:min-w-[1800px] flex">
               {MONTHS.map((month) => (
                 <div key={month.id} className="flex-1 border-r border-white/5 flex-col group/month hover:bg-white/[0.01] transition-colors">
                   <div className="p-4 text-center border-b border-white/5 bg-white/[0.02]">
