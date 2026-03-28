@@ -57,6 +57,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useClubModulePermissions } from "@/hooks/use-club-module-permissions";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { canUseOperativaSupabase } from "@/lib/operativa-sync";
 import Image from "next/image";
 
 const CATEGORIES = [
@@ -106,7 +107,7 @@ const INITIAL_PLAYERS = [
 ];
 
 export default function PlayersManagementPage() {
-  const { profile } = useAuth();
+  const { profile, session } = useAuth();
   const { toast } = useToast();
   const { canEdit: canEditPlayers, canDelete: canDeletePlayers } = useClubModulePermissions("players");
   const [players, setPlayers] = useState<any[]>([]);
@@ -114,16 +115,129 @@ export default function PlayersManagementPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const clubScopeId = profile?.clubId ?? "global-hq";
+  const playersStorageKey = `synq_players_v1_${clubScopeId}`;
+  const canUseRemote = canUseOperativaSupabase(clubScopeId) && !!session?.access_token;
+  const [syncMode, setSyncMode] = useState<"remote" | "local" | "restricted" | "local_error">("local");
 
   useEffect(() => {
-    const saved = localStorage.getItem("synq_players");
-    if (saved) {
-      setPlayers(JSON.parse(saved));
-    } else {
-      setPlayers(INITIAL_PLAYERS);
-      localStorage.setItem("synq_players", JSON.stringify(INITIAL_PLAYERS));
+    let cancelled = false;
+    if (typeof window === "undefined") return;
+
+    const persistLocal = (next: any[]) => {
+      try {
+        localStorage.setItem(playersStorageKey, JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+    };
+
+    const load = async () => {
+      // 1) Load local scoped cache first (and migrate from legacy global key if needed).
+      try {
+        const rawScoped = localStorage.getItem(playersStorageKey);
+        if (rawScoped) {
+          const parsed = JSON.parse(rawScoped);
+          if (Array.isArray(parsed) && !cancelled) setPlayers(parsed);
+        } else {
+          const legacy = localStorage.getItem("synq_players");
+          if (legacy) {
+            const parsedLegacy = JSON.parse(legacy);
+            if (Array.isArray(parsedLegacy)) {
+              if (!cancelled) setPlayers(parsedLegacy);
+              persistLocal(parsedLegacy);
+            }
+          } else {
+            if (!cancelled) setPlayers(INITIAL_PLAYERS);
+            persistLocal(INITIAL_PLAYERS as any);
+          }
+        }
+      } catch {
+        // ignore
+      }
+
+      // 2) Try remote source.
+      if (!canUseRemote || !session?.access_token) {
+        if (!cancelled) setSyncMode("local");
+        return;
+      }
+      try {
+        const res = await fetch("/api/club/players", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (res.status === 403) {
+          if (!cancelled) setSyncMode("restricted");
+          return;
+        }
+        if (res.status === 404) {
+          if (!cancelled) setSyncMode("local");
+          return;
+        }
+        if (!res.ok) {
+          if (!cancelled) setSyncMode("local_error");
+          return;
+        }
+        const json = (await res.json()) as { payload?: { players?: unknown[] } };
+        const remotePlayers = Array.isArray(json?.payload?.players) ? (json.payload!.players as any[]) : [];
+        if (!cancelled) {
+          setPlayers(remotePlayers);
+          setSyncMode("remote");
+        }
+        persistLocal(remotePlayers);
+      } catch {
+        if (!cancelled) setSyncMode("local_error");
+      }
+    };
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playersStorageKey, canUseRemote, session?.access_token]);
+
+  const persistPlayersHybrid = async (next: any[]) => {
+    try {
+      localStorage.setItem(playersStorageKey, JSON.stringify(next));
+    } catch {
+      // ignore
     }
-  }, []);
+
+    if (!canUseRemote || !session?.access_token) {
+      setSyncMode("local");
+      return;
+    }
+    try {
+      const res = await fetch("/api/club/players", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ payload: { players: next } }),
+      });
+      if (res.status === 403) {
+        setSyncMode("restricted");
+        toast({
+          variant: "destructive",
+          title: "PERMISOS_LIMITADOS",
+          description: "Sin permisos para guardar jugadores en servidor. Se guardó localmente.",
+        });
+        return;
+      }
+      if (res.status === 404) {
+        setSyncMode("local");
+        return;
+      }
+      if (!res.ok) {
+        setSyncMode("local_error");
+        return;
+      }
+      setSyncMode("remote");
+    } catch {
+      setSyncMode("local_error");
+    }
+  };
 
   const [formData, setFormData] = useState({
     name: "",
@@ -229,7 +343,7 @@ export default function PlayersManagementPage() {
     }
     const nextPlayers = players.filter(p => p.id !== id);
     setPlayers(nextPlayers);
-    localStorage.setItem("synq_players", JSON.stringify(nextPlayers));
+    void persistPlayersHybrid(nextPlayers);
     toast({
       variant: "destructive",
       title: "ATLETA_DESVINCULADO",
@@ -279,7 +393,7 @@ export default function PlayersManagementPage() {
         toast({ title: "ATLETA_REGISTRADO", description: `${formData.name} ya forma parte de la red.` });
       }
       setPlayers(nextPlayers);
-      localStorage.setItem("synq_players", JSON.stringify(nextPlayers));
+      void persistPlayersHybrid(nextPlayers);
       setLoading(false);
       setIsSheetOpen(false);
     }, 1000);
@@ -304,7 +418,7 @@ export default function PlayersManagementPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
-      <div className="flex justify-between items-end border-b border-white/5 pb-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-end border-b border-white/5 pb-6">
         <div className="space-y-1">
           <div className="flex items-center gap-3 mb-2">
             <Users className="h-5 w-5 text-primary animate-pulse" />
@@ -313,12 +427,32 @@ export default function PlayersManagementPage() {
           <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic cyan-text-glow">
             Gestión de Jugadores
           </h1>
+          <p
+            className={cn(
+              "text-[9px] font-black uppercase tracking-widest mt-1",
+              syncMode === "remote"
+                ? "text-emerald-400/80"
+                : syncMode === "restricted"
+                ? "text-amber-400/80"
+                : syncMode === "local_error"
+                ? "text-rose-400/80"
+                : "text-white/40",
+            )}
+          >
+            {syncMode === "remote"
+              ? "SINCRO_REMOTA_ACTIVA"
+              : syncMode === "restricted"
+              ? "MODO_LOCAL_POR_PERMISOS"
+              : syncMode === "local_error"
+              ? "MODO_LOCAL_POR_ERROR"
+              : "MODO_LOCAL_FALLBACK"}
+          </p>
         </div>
         
         <Button 
           onClick={handleOpenCreate}
           disabled={!canEditPlayers}
-          className="rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 active:scale-95 transition-all border-none disabled:opacity-40"
+          className="w-full sm:w-auto rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 active:scale-95 transition-all border-none disabled:opacity-40"
         >
           <UserPlus className="h-4 w-4 mr-2" /> Nueva Inscripción
         </Button>
