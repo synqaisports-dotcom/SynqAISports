@@ -102,7 +102,7 @@ export default function CoachLibraryGrid() {
 
   const [syncMode, setSyncMode] = useState<"remote" | "local" | "restricted">("local");
   const [loading, setLoading] = useState(false);
-  const [tasks, setTasks] = useState<UiTask[]>(MOCK_COACH_TASKS);
+  const [tasks, setTasks] = useState<UiTask[]>(FALLBACK_MOCK_TASKS);
   const [query, setQuery] = useState("");
 
   useEffect(() => {
@@ -140,7 +140,7 @@ export default function CoachLibraryGrid() {
 
       if (!session?.access_token || !canUseSupabase) {
         if (!cancelled) {
-          setTasks(localCombined.length ? localCombined : MOCK_COACH_TASKS);
+          setTasks(localCombined.length ? localCombined : FALLBACK_MOCK_TASKS);
           setSyncMode("local");
           setLoading(false);
         }
@@ -194,7 +194,7 @@ export default function CoachLibraryGrid() {
           return;
         }
         if (!cancelled) {
-          setTasks(localCombined.length ? localCombined : MOCK_COACH_TASKS);
+          setTasks(localCombined.length ? localCombined : FALLBACK_MOCK_TASKS);
           setSyncMode("local");
           setLoading(false);
         }

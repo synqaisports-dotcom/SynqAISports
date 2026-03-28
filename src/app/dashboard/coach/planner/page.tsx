@@ -61,8 +61,8 @@ export default function AIPlannerPage() {
     if (typeof window === "undefined") return;
     const snap = readAiPlannerState(storageKey);
     if (!snap) return;
-    if (snap.form) setFormData(snap.form);
-    if (snap.plan) setPlan(snap.plan);
+    if (snap.form) setFormData(snap.form as GenerateTrainingPlanInput);
+    if (snap.plan) setPlan(snap.plan as GenerateTrainingPlanOutput);
   }, [storageKey]);
 
   const handleSubmit = async (e: React.FormEvent) => {
