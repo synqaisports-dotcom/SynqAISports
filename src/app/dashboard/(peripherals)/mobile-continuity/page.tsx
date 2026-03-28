@@ -32,6 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { QRCodeCanvas } from "qrcode.react";
+import { Copy, ExternalLink } from "lucide-react";
 import {
   MATCH_TIMER_SYNC_KEY,
   matchTimerSyncKey,
@@ -185,6 +186,17 @@ export default function MobileContinuityPage() {
     });
     return `${base}?${params.toString()}`;
   }, [watchPairingCode, selectedTeamId, selectedMcc, selectedSession]);
+
+  const copyText = async (label: string, value: string) => {
+    const text = String(value || "").trim();
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({ title: "COPIADO", description: `${label} copiado al portapapeles.` });
+    } catch {
+      toast({ title: "NO_COPIADO", description: "No se pudo copiar. Mantén pulsado para seleccionar." });
+    }
+  };
 
   const mccOptions = useMemo(
     () =>
