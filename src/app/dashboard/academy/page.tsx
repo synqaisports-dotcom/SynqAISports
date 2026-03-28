@@ -789,7 +789,7 @@ export default function AcademyManagementPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
-      <div className="flex justify-between items-end border-b border-white/5 pb-6">
+      <div className="flex flex-col gap-4 md:flex-row md:justify-between md:items-end border-b border-white/5 pb-6">
         <div className="space-y-1">
           <div className="flex items-center gap-3 mb-2">
             <Sprout className="h-5 w-5 text-primary animate-pulse" />
@@ -820,19 +820,19 @@ export default function AcademyManagementPage() {
           </p>
         </div>
         
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full md:w-auto">
           <Button 
             variant="outline"
             onClick={() => handleOpenSheet('category')}
             disabled={!canEditAcademy}
-            className="rounded-2xl border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest h-12 px-6 hover:bg-primary/10 transition-all disabled:opacity-40"
+            className="w-full sm:w-auto rounded-2xl border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest h-12 px-6 hover:bg-primary/10 transition-all disabled:opacity-40"
           >
             <FolderPlus className="h-4 w-4 mr-2" /> Nueva Categoría
           </Button>
           <Button 
             onClick={() => handleOpenSheet('team')}
             disabled={!canEditAcademy}
-            className="rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none disabled:opacity-40"
+            className="w-full sm:w-auto rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none disabled:opacity-40"
           >
             <Plus className="h-4 w-4 mr-2" /> Vincular Equipo
           </Button>
@@ -883,14 +883,14 @@ export default function AcademyManagementPage() {
                   <CardContent className="p-6 pt-4">
                     <div className="grid grid-cols-1 gap-2">
                       {cat.teams.map((team, idx) => (
-                        <div 
+                        <div
                           key={idx} 
                           className={cn(
-                            "flex items-center justify-between p-2.5 bg-primary/5 rounded-2xl border transition-all group/team cursor-default",
+                            "flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between p-2.5 bg-primary/5 rounded-2xl border transition-all group/team cursor-default",
                             team.status === "Paused" ? "border-amber-500/20 opacity-60" : "border-primary/10 hover:border-primary/30"
                           )}
                         >
-                          <div className="flex items-center gap-3 flex-1 min-w-0 mr-2" onClick={() => handleViewTeam(team, cat.name)}>
+                          <div className="flex items-center gap-3 w-full sm:flex-1 min-w-0 sm:mr-2" onClick={() => handleViewTeam(team, cat.name)}>
                             <div className={cn(
                               "h-1.5 w-1.5 rounded-full animate-pulse shrink-0",
                               team.status === "Paused" ? "bg-amber-500" : "bg-primary"
@@ -903,7 +903,7 @@ export default function AcademyManagementPage() {
                             </div>
                           </div>
                           
-                          <div className="flex items-center gap-1 shrink-0 rounded-xl border border-primary/15 bg-black/30 px-1 py-0.5">
+                          <div className="w-full sm:w-auto flex flex-wrap sm:flex-nowrap items-center justify-end gap-1 shrink-0 rounded-xl border border-primary/15 bg-black/30 px-1 py-0.5">
                             <button onClick={() => handleViewTeam(team, cat.name)} className="p-1.5 hover:bg-primary/20 rounded-lg text-primary transition-all" title="Ver Ficha"><Eye className="h-3.5 w-3.5" /></button>
                             <Button
                               asChild
@@ -937,7 +937,7 @@ export default function AcademyManagementPage() {
                       ))}
                     </div>
                   </CardContent>
-                  <CardFooter className="px-6 py-3 bg-black/40 border-t border-white/5 flex justify-between rounded-b-3xl">
+                  <CardFooter className="px-6 py-3 bg-black/40 border-t border-white/5 flex flex-wrap gap-3 justify-between rounded-b-3xl">
                     {!cat.id.startsWith('cat_') ? (
                       <>
                         <button 
