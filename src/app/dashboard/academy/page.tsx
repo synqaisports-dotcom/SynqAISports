@@ -903,7 +903,7 @@ export default function AcademyManagementPage() {
                             </div>
                           </div>
                           
-                          <div className="flex items-center gap-1 shrink-0">
+                          <div className="flex items-center gap-1 shrink-0 rounded-xl border border-primary/15 bg-black/30 px-1 py-0.5">
                             <button onClick={() => handleViewTeam(team, cat.name)} className="p-1.5 hover:bg-primary/20 rounded-lg text-primary transition-all" title="Ver Ficha"><Eye className="h-3.5 w-3.5" /></button>
                             <Button
                               asChild
@@ -977,10 +977,10 @@ export default function AcademyManagementPage() {
       </div>
 
       <Sheet open={isViewSheetOpen} onOpenChange={setIsViewSheetOpen}>
-        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-xl shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+        <SheetContent side="right" className="z-[70] bg-background/95 bg-grid-pattern backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-xl shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
           {selectedViewTeam && (
             <>
-              <div className="p-10 border-b border-white/5 bg-black/40">
+              <div className="sticky top-0 z-20 p-10 border-b border-white/5 bg-background/90 backdrop-blur-md">
                 <SheetHeader className="space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
@@ -995,7 +995,7 @@ export default function AcademyManagementPage() {
                 </SheetHeader>
               </div>
 
-              <div className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-12">
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-12 bg-background/70">
                 <section className="space-y-6">
                   <div className="flex items-center gap-3 border-b border-white/5 pb-4">
                     <MapPin className="h-4 w-4 text-primary" />
@@ -1062,7 +1062,7 @@ export default function AcademyManagementPage() {
                 </section>
               </div>
 
-              <div className="p-10 bg-black/40 border-t border-white/5 flex gap-4">
+              <div className="p-10 bg-background/80 border-t border-white/5 flex gap-4">
                 <button 
                   className="flex-1 h-16 bg-primary/5 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 rounded-2xl transition-all"
                   onClick={() => setIsViewSheetOpen(false)}
@@ -1086,8 +1086,8 @@ export default function AcademyManagementPage() {
       </Sheet>
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-xl shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
-          <div className="p-10 border-b border-white/5 bg-black/40">
+        <SheetContent side="right" className="z-[70] bg-background/95 bg-grid-pattern backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-xl shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+          <div className="sticky top-0 z-20 p-10 border-b border-white/5 bg-background/90 backdrop-blur-md">
             <SheetHeader className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
@@ -1099,7 +1099,7 @@ export default function AcademyManagementPage() {
             </SheetHeader>
           </div>
 
-          <form onSubmit={handleSave} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10">
+          <form onSubmit={handleSave} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10 bg-background/70">
             {sheetMode === 'category' ? (
               <div className="space-y-6">
                 <div className="space-y-3">
@@ -1118,7 +1118,7 @@ export default function AcademyManagementPage() {
                     <SelectTrigger className="h-14 bg-black/40 border-primary/20 rounded-2xl text-primary font-bold uppercase tracking-widest px-6 focus:border-primary">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-2xl">
+                    <SelectContent className="z-[120] bg-[#0a0f18] border-primary/20 rounded-2xl">
                       {STAGES.map(s => (
                         <SelectItem key={s.id} value={s.id} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary text-primary/80">{s.name}</SelectItem>
                       ))}
@@ -1140,7 +1140,7 @@ export default function AcademyManagementPage() {
                         <SelectTrigger className="h-14 bg-white/5 border-primary/20 rounded-2xl text-primary font-bold uppercase tracking-widest focus:border-primary">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-2xl">
+                        <SelectContent className="z-[120] bg-[#0a0f18] border-primary/20 rounded-2xl">
                           {categories.map(c => (
                             <SelectItem key={c.id} value={c.id} className="text-[10px] font-black uppercase focus:bg-primary">{c.name}</SelectItem>
                           ))}
@@ -1153,7 +1153,7 @@ export default function AcademyManagementPage() {
                         <SelectTrigger className="h-14 bg-white/5 border-primary/20 rounded-2xl text-primary font-black text-xl focus:border-primary">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-2xl">
+                        <SelectContent className="z-[120] bg-[#0a0f18] border-primary/20 rounded-2xl">
                           {ALPHABET.map(letter => (
                             <SelectItem key={letter} value={letter} className="text-lg font-black text-primary focus:bg-primary">{letter}</SelectItem>
                           ))}
@@ -1168,7 +1168,7 @@ export default function AcademyManagementPage() {
                       <SelectTrigger className="h-14 bg-white/5 border-primary/20 rounded-2xl text-primary font-bold uppercase tracking-widest focus:border-primary">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="bg-[#0a0f18] border-primary/20 rounded-2xl">
+                      <SelectContent className="z-[120] bg-[#0a0f18] border-primary/20 rounded-2xl">
                         <SelectItem value="f11" className="text-[10px] font-black uppercase focus:bg-primary">Fútbol 11</SelectItem>
                         <SelectItem value="f7" className="text-[10px] font-black uppercase focus:bg-primary">Fútbol 7</SelectItem>
                         <SelectItem value="futsal" className="text-[10px] font-black uppercase focus:bg-primary">Fútbol Sala</SelectItem>
@@ -1188,7 +1188,7 @@ export default function AcademyManagementPage() {
                       <SelectTrigger className="h-12 bg-black/40 border-primary/20 rounded-2xl text-primary font-bold uppercase text-[10px] tracking-widest focus:border-primary">
                         <SelectValue placeholder="SELECCIONAR CAMPO..." />
                       </SelectTrigger>
-                      <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
+                      <SelectContent className="z-[120] bg-[#04070c] border-primary/20 rounded-2xl">
                         {facilitiesCatalog.map(f => (
                           <SelectItem key={f.id} value={f.id} className="text-[10px] font-black uppercase focus:bg-primary">{f.name}</SelectItem>
                         ))}
@@ -1203,7 +1203,7 @@ export default function AcademyManagementPage() {
                         <SelectTrigger className="h-12 bg-primary/10 border-primary/40 rounded-2xl text-primary font-bold uppercase text-[10px] tracking-widest focus:border-primary shadow-[0_0_15px_rgba(0,242,255,0.1)]">
                           <SelectValue placeholder="ASIGNAR ZONA..." />
                         </SelectTrigger>
-                        <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
+                        <SelectContent className="z-[120] bg-[#04070c] border-primary/20 rounded-2xl">
                           {selectedFacility.zones.map(z => (
                             <SelectItem key={z} value={z} className="text-[10px] font-black uppercase focus:bg-primary">{z}</SelectItem>
                           ))}
@@ -1288,16 +1288,17 @@ export default function AcademyManagementPage() {
                 </div>
               </div>
             )}
+            <div className="pt-2 flex gap-4">
+              <SheetClose asChild>
+                <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-primary/10">
+                  CANCELAR
+                </Button>
+              </SheetClose>
+              <Button onClick={handleSave} disabled={loading || !canEditAcademy} className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] transition-all active:scale-95 disabled:opacity-40">
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (editingTeamIdx !== null ? "ACTUALIZAR_NODO" : "SINCRONIZAR_NODO")}
+              </Button>
+            </div>
           </form>
-
-          <div className="p-10 bg-black/40 border-t border-white/5 flex gap-4">
-            <SheetClose asChild>
-              <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest rounded-2xl">CANCELAR</Button>
-            </SheetClose>
-            <Button onClick={handleSave} disabled={loading || !canEditAcademy} className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] transition-all active:scale-95 disabled:opacity-40">
-              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (editingTeamIdx !== null ? "ACTUALIZAR_NODO" : "SINCRONIZAR_NODO")}
-            </Button>
-          </div>
         </SheetContent>
       </Sheet>
     </div>
