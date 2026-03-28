@@ -315,3 +315,39 @@ Este documento centraliza el histórico de auditorías técnicas del producto (b
 
 - El nodo ya tiene base sólida de seguridad por matriz/rutas/API.
 - El foco siguiente es **consistencia de datos** y cierre de pantallas aún mock.
+
+---
+
+## Auditoría #004 - 2026-03-28
+
+### Alcance
+
+- **Config. Watch** (`/dashboard/watch-config` + `/dashboard/promo/watch-config`).
+- **Modo Continuidad** (`/dashboard/mobile-continuity`) y su interacción con `/smartwatch`.
+- Sincronización local (localStorage) de **cronómetro** y **marcador** y el **emparejado** móvil↔watch.
+
+### Hallazgos registrados
+
+1. **Cronómetro/marcador con claves globales (riesgo de mezcla cross-club / cross-equipo)**
+   - Severidad: 🟠 Alta.
+   - Estado: `cerrado`.
+   - Referencias:
+     - `src/lib/match-timer-sync.ts`, `src/lib/match-score-sync.ts`
+     - `src/app/dashboard/mobile-continuity/page.tsx`
+     - `src/app/smartwatch/page.tsx`
+   - Fix: claves con contexto (`clubId + teamId + mcc + session + mode`) para Continuidad (móvil y watch), manteniendo compatibilidad legacy.
+
+2. **Emparejado watch con clave global (riesgo de colisión entre entornos y clubes)**
+   - Severidad: 🟡 Media.
+   - Estado: `cerrado`.
+   - Referencias:
+     - `src/lib/watch-pairing.ts`
+     - `src/app/dashboard/watch-config/page.tsx`
+     - `src/app/dashboard/promo/watch-config/page.tsx`
+     - `src/app/smartwatch/page.tsx`
+     - `src/app/board/match/page.tsx`
+   - Fix: `pairingCode` y `linked` ahora se resuelven por clave scopeada (`clubId + mode`) con migración best-effort desde legacy.
+
+### Notas / decisiones
+
+- **DEC-004**: mantener `/board/match` sobre clave legacy para no romper la sincronización actual de “pizarra ↔ watch” fuera de Continuidad. Continuidad (móvil+watch) queda aislado por contexto.
