@@ -44,10 +44,43 @@ Este documento centraliza el histórico de auditorías técnicas del producto (b
 - [x] `dashboard/club` conectado a API segura y fallback local controlado.
 - [ ] Players aún en modelo local predominante.
 - [ ] Staff aún con base mock en pantalla.
-- [ ] Unificación final sessions/session-planner (doble fuente local+remoto).
+- [x] `dashboard/sessions` muestra `syncMode` real (remote/local/restricted) y reduce overflow en móvil/tablet.
 - [ ] Unificación instalaciones entre nodo instalaciones y warehouse.
 
 ---
+
+## Auditoría #00X - 2026-03-28 — Coach: Sessions / Library / Neural Planner
+
+### Alcance
+
+- **Planif. y Sesiones**: `src/app/dashboard/sessions/page.tsx`
+- **Biblioteca táctica (Coach)**: `src/app/dashboard/coach/library/page.tsx`
+- **Neural Planner**: `src/app/dashboard/coach/planner/page.tsx`
+
+### Hallazgos y cierres
+
+1. **`/dashboard/sessions`: señalización incorrecta de sincronización y overflow**
+   - Severidad: 🟡 Media.
+   - Estado: `cerrado`.
+   - Cambio: el UI deja de “prometer” estabilidad fija y ahora calcula/visualiza `syncMode` (`remote/local/restricted`) según permisos/remote fetch; el grid reduce `min-width` en móvil/tablet manteniendo densidad en PC.
+   - Referencia: `src/app/dashboard/sessions/page.tsx`.
+
+2. **`/dashboard/coach/library`: pantalla 100% mock sin club-scope, sin permisos y sin origen real**
+   - Severidad: 🟠 Alta (riesgo de UX engañosa + falta de enforcement de acceso).
+   - Estado: `cerrado`.
+   - Cambio: conecta con API real `GET /api/club/methodology-library` (Draft/Official), aplica permisos de módulo `exercises` y muestra `syncMode` (`remote/local/restricted`) con fallback local (cache + neural local).
+   - Referencias:
+     - `src/app/dashboard/coach/library/page.tsx`
+     - `src/app/api/club/methodology-library/*`
+     - `src/lib/methodology-library-api.ts`
+
+3. **`/dashboard/coach/planner`: sin persistencia ni guardas de módulo**
+   - Severidad: 🟡 Media.
+   - Estado: `cerrado`.
+   - Cambio: añade persistencia local por club/usuario para estado (form+plan) y acciones “Guardar (local)” + “Exportar JSON”; aplica guard de módulo `planner` (deny con toast si no hay permiso).
+   - Referencias:
+     - `src/app/dashboard/coach/planner/page.tsx`
+     - `src/lib/ai-planner-storage.ts`
 
 ## Auditoría #001 - 2026-03-27
 
