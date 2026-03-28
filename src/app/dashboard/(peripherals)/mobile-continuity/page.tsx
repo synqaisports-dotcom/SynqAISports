@@ -23,6 +23,14 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -33,7 +41,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { QRCodeCanvas } from "qrcode.react";
-import { Copy, ExternalLink } from "lucide-react";
+import { Copy, ExternalLink, HelpCircle } from "lucide-react";
 import {
   MATCH_TIMER_SYNC_KEY,
   matchTimerSyncKey,
@@ -140,6 +148,7 @@ export default function MobileContinuityPage() {
   const [score, setScore] = useState({ home: 0, guest: 0 });
   const [remainingSec, setRemainingSec] = useState(45 * 60);
   const [running, setRunning] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
   const [teams, setTeams] = useState<ContinuityTeam[]>([]);
   const [selectedTeamId, setSelectedTeamId] = useState<string>("");
@@ -153,6 +162,7 @@ export default function MobileContinuityPage() {
   const [attendance, setAttendance] = useState<Record<string, "present" | "absent">>({});
   const lastTimerAppliedRef = useRef(0);
   const lastScoreAppliedRef = useRef(0);
+  const lastTickAtRef = useRef<number | null>(null);
 
   const players = useMemo(() => readPlayersLocal(clubScopeId), [clubScopeId]);
 
@@ -296,10 +306,15 @@ export default function MobileContinuityPage() {
 
   useEffect(() => {
     if (!running) return;
+    lastTickAtRef.current = Date.now();
     const id = window.setInterval(() => {
+      const now = Date.now();
+      const last = lastTickAtRef.current ?? now;
+      const deltaSec = Math.max(0, Math.floor((now - last) / 1000));
+      if (deltaSec <= 0) return;
+      lastTickAtRef.current = last + deltaSec * 1000;
       setRemainingSec((prev) => {
-        const next = Math.max(0, prev - 1);
-        const now = Date.now();
+        const next = Math.max(0, prev - deltaSec);
         lastTimerAppliedRef.current = now;
         writeMatchTimerSync({ remainingSec: next, running: next > 0, updatedAt: now, origin: "watch" }, timerSyncKey);
         return next;
@@ -355,6 +370,7 @@ export default function MobileContinuityPage() {
     setRunning((prev) => {
       const next = !prev;
       const now = Date.now();
+      if (next) lastTickAtRef.current = now;
       lastTimerAppliedRef.current = now;
       writeMatchTimerSync({ remainingSec, running: next, updatedAt: now, origin: "watch" }, timerSyncKey);
       return next;
@@ -365,6 +381,7 @@ export default function MobileContinuityPage() {
     const sec = readMatchTimerPresetMinutes(45) * 60;
     setRemainingSec(sec);
     setRunning(false);
+    lastTickAtRef.current = null;
     const now = Date.now();
     lastTimerAppliedRef.current = now;
     writeMatchTimerSync({ remainingSec: sec, running: false, updatedAt: now, origin: "watch" }, timerSyncKey);
@@ -518,6 +535,53 @@ export default function MobileContinuityPage() {
           <span className="text-[10px] uppercase text-white/60 font-black">
             Sync cloud (Supabase): {cloudSyncEnabled ? "ON" : "OFF"}
           </span>
+          <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
+            <DialogTrigger asChild>
+              <Button
+                size="sm"
+                variant="outline"
+                className="ml-auto h-8 border-white/10 text-white/70 font-black uppercase text-[10px] tracking-widest"
+              >
+                Ayuda
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-[#04070c]/98 backdrop-blur-xl border-primary/20 text-white max-w-lg rounded-3xl">
+              <DialogHeader>
+                <DialogTitle className="text-white uppercase font-black tracking-widest text-sm">
+                  Guía rápida · Modo Continuidad
+                </DialogTitle>
+                <DialogDescription className="text-[10px] uppercase text-white/40 font-bold leading-relaxed">
+                  Respaldo móvil para seguir operando sin tablet. Todo se guarda en local y, si activas Sync cloud,
+                  también en Supabase.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 text-[10px] uppercase font-bold text-white/60">
+                <div className="rounded-2xl border border-white/10 bg-black/40 p-4 space-y-2">
+                  <p className="text-white/80 font-black tracking-widest">¿Qué es MCC?</p>
+                  <p className="text-white/50 leading-relaxed">
+                    Es tu “código de semana/bloque” (ej. <span className="text-white/80">OCT_W1</span>) para ordenar
+                    incidencias y asistencia por periodos.
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-black/40 p-4 space-y-2">
+                  <p className="text-white/80 font-black tracking-widest">¿Dónde se anotan las incidencias?</p>
+                  <p className="text-white/50 leading-relaxed">
+                    - Siempre: se encolan en la cola local (para no perderlas offline).<br />
+                    - Con Sync cloud ON: se envían a <span className="text-white/80">Supabase</span> vía{" "}
+                    <span className="text-white/80">/api/operativa/incidents</span> y quedan en la tabla{" "}
+                    <span className="text-white/80">operativa_mobile_incidents</span> (por club).
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-black/40 p-4 space-y-2">
+                  <p className="text-white/80 font-black tracking-widest">Reloj sin cámara</p>
+                  <p className="text-white/50 leading-relaxed">
+                    Usa el <span className="text-white/80">código manual</span> en el reloj (pantalla de pairing). El QR
+                    es para escanearlo con un móvil con cámara.
+                  </p>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
