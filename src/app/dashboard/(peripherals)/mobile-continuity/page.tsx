@@ -62,6 +62,7 @@ import { synqSync } from "@/lib/sync-service";
 import { upsertOperativaAttendance } from "@/lib/operativa-sync";
 import { readPlayersLocal } from "@/lib/player-storage";
 import { ensureWatchPairingCode } from "@/lib/watch-pairing";
+import { writeContinuityContext } from "@/lib/continuity-context";
 
 type Incident = {
   id: string;
@@ -201,6 +202,18 @@ export default function MobileContinuityPage() {
     });
     return `${base}?${params.toString()}`;
   }, [watchPairingCode, selectedTeamId, selectedMcc, selectedSession, mode]);
+
+  // Mantener el “último contexto” actualizado para que el reloj pueda abrir sin parámetros.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    writeContinuityContext({
+      clubId: clubScopeId,
+      mode,
+      teamId: selectedTeamId || "team_unknown",
+      mcc: selectedMcc,
+      session: selectedSession,
+    });
+  }, [clubScopeId, mode, selectedTeamId, selectedMcc, selectedSession]);
 
   const copyText = async (label: string, value: string) => {
     const text = String(value || "").trim();

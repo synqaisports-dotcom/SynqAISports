@@ -50,6 +50,7 @@ import {
   writeWatchPairingCode,
   type WatchPairingScope,
 } from "@/lib/watch-pairing";
+import { readContinuityContext, subscribeContinuityContext } from "@/lib/continuity-context";
 
 function SmartwatchContent() {
   const { loading, profile } = useAuth();
