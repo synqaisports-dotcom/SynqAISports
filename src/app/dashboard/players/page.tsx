@@ -369,13 +369,34 @@ export default function PlayersManagementPage() {
       return;
     }
     
-    if (!formData.tutorEmail) {
-      toast({
-        variant: "destructive",
-        title: "ERROR_CEPO_DATOS",
-        description: "El Vínculo de Tutor (Email) es obligatorio para garantizar el inventario de red.",
-      });
-      return;
+    if (formData.isMinor) {
+      const missingTutor =
+        !String(formData.tutorEmail || "").trim() ||
+        !String(formData.tutorName || "").trim() ||
+        !String(formData.tutorSurname || "").trim() ||
+        !String(formData.tutorPhone || "").trim();
+      if (missingTutor) {
+        toast({
+          variant: "destructive",
+          title: "ERROR_CEPO_DATOS",
+          description: "Si el atleta es menor, el vínculo de Tutor (nombre, apellidos, teléfono y email) es obligatorio.",
+        });
+        return;
+      }
+    } else {
+      // Si se aporta cualquier campo del tutor, exigimos el email como ancla.
+      const anyTutor =
+        !!String(formData.tutorName || "").trim() ||
+        !!String(formData.tutorSurname || "").trim() ||
+        !!String(formData.tutorPhone || "").trim();
+      if (anyTutor && !String(formData.tutorEmail || "").trim()) {
+        toast({
+          variant: "destructive",
+          title: "TUTOR_EMAIL_REQUERIDO",
+          description: "Si rellenas datos del tutor, el email del tutor es obligatorio.",
+        });
+        return;
+      }
     }
 
     setLoading(true);
@@ -715,7 +736,6 @@ export default function PlayersManagementPage() {
                 <div className="relative">
                   <Mail className="absolute left-4 top-3.5 h-4 w-4 text-primary/40" />
                   <Input 
-                    required
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
@@ -845,7 +865,6 @@ export default function PlayersManagementPage() {
                   <div className="space-y-2">
                     <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Nombre Tutor</Label>
                     <Input 
-                      required
                       value={formData.tutorName}
                       onChange={(e) => setFormData({...formData, tutorName: e.target.value.toUpperCase()})}
                       placeholder="EJ: MARÍA" 
@@ -855,7 +874,6 @@ export default function PlayersManagementPage() {
                   <div className="space-y-2">
                     <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Apellidos Tutor</Label>
                     <Input 
-                      required
                       value={formData.tutorSurname}
                       onChange={(e) => setFormData({...formData, tutorSurname: e.target.value.toUpperCase()})}
                       placeholder="EJ: LÓPEZ" 
@@ -869,7 +887,6 @@ export default function PlayersManagementPage() {
                   <div className="relative">
                     <Mail className="absolute left-3 top-3.5 h-4 w-4 text-primary/40" />
                     <Input 
-                      required
                       type="email"
                       value={formData.tutorEmail}
                       onChange={(e) => setFormData({...formData, tutorEmail: e.target.value})}
@@ -883,7 +900,6 @@ export default function PlayersManagementPage() {
                   <div className="relative">
                     <Phone className="absolute left-3 top-3.5 h-4 w-4 text-primary/40" />
                     <Input 
-                      required
                       value={formData.tutorPhone}
                       onChange={(e) => setFormData({...formData, tutorPhone: e.target.value})}
                       placeholder="600 000 000" 

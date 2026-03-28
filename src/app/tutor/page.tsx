@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { readPlayersLocalAcrossClubs } from "@/lib/player-storage";
 
-const ADMIN_EMAILS = ['munozmartinez.ismael@gmail.com', 'synqaisports@gmail.com'];
+const ADMIN_EMAILS = ['munozmartinez.ismael@gmail.com', 'synqaisports@gmail.com', 'admin@synqai.sports'];
 
 /**
  * Pantalla de Acceso Tutor Evolucionada - v2.0.0
