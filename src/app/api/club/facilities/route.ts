@@ -19,6 +19,8 @@ type FacilityRow = {
   startTime?: string;
   endTime?: string;
   days?: string[];
+  divisionDays?: string[];
+  isHeadquarters?: boolean;
 };
 
 type FacilitiesPayload = {
@@ -42,6 +44,9 @@ function sanitizeFacility(input: unknown): FacilityRow | null {
   const name = typeof row.name === "string" ? row.name.trim() : "";
   if (!id || !name) return null;
   const days = Array.isArray(row.days) ? row.days.filter((d): d is string => typeof d === "string") : undefined;
+  const divisionDays = Array.isArray(row.divisionDays)
+    ? row.divisionDays.filter((d): d is string => typeof d === "string")
+    : undefined;
   return {
     id,
     name,
@@ -56,15 +61,21 @@ function sanitizeFacility(input: unknown): FacilityRow | null {
     startTime: typeof row.startTime === "string" ? row.startTime : undefined,
     endTime: typeof row.endTime === "string" ? row.endTime : undefined,
     days,
+    divisionDays,
+    isHeadquarters: row.isHeadquarters === true,
   };
 }
 
 function normalizeFacilitiesPayload(input: unknown): FacilitiesPayload {
-  const facilities = Array.isArray((input as { facilities?: unknown[] } | null)?.facilities)
-    ? ((input as { facilities: unknown[] }).facilities
+  const asRecord = (input && typeof input === "object") ? (input as { facilities?: unknown[] }) : null;
+  const source = Array.isArray(asRecord?.facilities)
+    ? asRecord?.facilities
+    : Array.isArray(input)
+      ? input
+      : [];
+  const facilities = source
         .map(sanitizeFacility)
-        .filter((x): x is FacilityRow => x !== null))
-    : [];
+        .filter((x): x is FacilityRow => x !== null);
   return { facilities };
 }
 

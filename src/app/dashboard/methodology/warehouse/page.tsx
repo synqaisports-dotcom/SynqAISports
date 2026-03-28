@@ -224,7 +224,10 @@ export default function WarehouseClubPage() {
           const facRes = await fetch("/api/club/facilities", {
             headers: { Authorization: `Bearer ${remoteAccessToken}` },
           });
-          if (facRes.ok) {
+          if (facRes.status === 404) {
+            // Endpoint no desplegado en este entorno: fallback local sin romper la vista.
+            setSyncMode((prev) => (prev === "remote" ? "remote" : "local"));
+          } else if (facRes.ok) {
             const facJson = (await facRes.json()) as { payload?: { facilities?: unknown[] } };
             const fromApi = facJson?.payload?.facilities;
             if (Array.isArray(fromApi)) {

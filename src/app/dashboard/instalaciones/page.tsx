@@ -140,6 +140,14 @@ export default function FacilitiesManagementPage() {
         const res = await fetch("/api/club/facilities", {
           headers: { Authorization: `Bearer ${session.access_token}` },
         });
+        if (res.status === 404) {
+          if (!cancelled) setSyncMode("local");
+          toast({
+            title: "API_FACILITIES_NO_DISPONIBLE",
+            description: "Ruta de servidor no encontrada (404). Operando en modo local.",
+          });
+          return;
+        }
         if (res.status === 403) {
           if (!cancelled) setSyncMode("restricted");
           return;
@@ -187,6 +195,14 @@ export default function FacilitiesManagementPage() {
           variant: "destructive",
           title: "PERMISOS_LIMITADOS",
           description: "Sin permisos para guardar instalaciones en servidor. Se guardó localmente.",
+        });
+        return;
+      }
+      if (res.status === 404) {
+        setSyncMode("local");
+        toast({
+          title: "API_FACILITIES_NO_DISPONIBLE",
+          description: "Ruta de servidor no encontrada (404). Se guardó en modo local.",
         });
         return;
       }
