@@ -68,6 +68,15 @@ import { cn } from "@/lib/utils";
 import { canUseOperativaSupabase } from "@/lib/operativa-sync";
 import { useClubModulePermissions } from "@/hooks/use-club-module-permissions";
 
+type FacilityOption = {
+  id: string;
+  name: string;
+  subdivisions: string;
+  zones: string[];
+  divisionStartTime?: string;
+  divisionEndTime?: string;
+};
+
 // PROTOCOLO DE ETAPAS MAESTRAS
 const STAGES = [
   { id: "s1", name: "Iniciación", description: "Descubrimiento y psicomotricidad básica.", color: "text-blue-400" },
@@ -140,7 +149,7 @@ const INITIAL_CATEGORIES = [
   },
 ];
 
-const MOCK_FACILITIES = [
+const MOCK_FACILITIES: FacilityOption[] = [
   { id: "f1", name: "Campo de Fútbol Principal", subdivisions: "2", zones: ["Zona A (Mitad 1)", "Zona B (Mitad 2)"], divisionStartTime: "17:00", divisionEndTime: "21:00" },
   { id: "f2", name: "Pabellón Cubierto A", subdivisions: "1", zones: [] },
   { id: "f3", name: "Anexo Formación", subdivisions: "4", zones: ["Zona A", "Zona B", "Zona C", "Zona D"], divisionStartTime: "16:00", divisionEndTime: "20:00" },
@@ -241,6 +250,8 @@ export default function AcademyManagementPage() {
   const [sheetMode, setSheetMode] = useState<'category' | 'team'>('category');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTeamIdx, setEditingTeamIdx] = useState<number | null>(null);
+  const [syncMode, setSyncMode] = useState<"remote" | "local" | "restricted" | "local_error">("local");
+  const [facilitiesCatalog, setFacilitiesCatalog] = useState<FacilityOption[]>(MOCK_FACILITIES);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -261,22 +272,93 @@ export default function AcademyManagementPage() {
     staffPhysical: ""
   });
 
+  const mapFacilityRow = (row: any): FacilityOption => {
+    const subdivisions = String(row?.subdivisions ?? "1");
+    const zones =
+      Array.isArray(row?.zones) && row.zones.length > 0
+        ? row.zones.filter((z: unknown): z is string => typeof z === "string")
+        : subdivisions === "2"
+          ? ["Zona A (Mitad 1)", "Zona B (Mitad 2)"]
+          : subdivisions === "4"
+            ? ["Zona A", "Zona B", "Zona C", "Zona D"]
+            : [];
+    return {
+      id: String(row?.id ?? `fac_${Math.random().toString(36).slice(2, 8)}`),
+      name: String(row?.name ?? "Instalación"),
+      subdivisions,
+      zones,
+      divisionStartTime: typeof row?.divisionStartTime === "string" ? row.divisionStartTime : undefined,
+      divisionEndTime: typeof row?.divisionEndTime === "string" ? row.divisionEndTime : undefined,
+    };
+  };
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const accessToken = session?.access_token;
     let cancelled = false;
+    const facilitiesStorageKey = `synq_methodology_facilities_v1_${clubScopeId}`;
 
     const load = async () => {
+      // Cargar catálogo de instalaciones reales (API o fallback local)
+      if (canUseAcademySupabase && accessToken) {
+        try {
+          const fRes = await fetch("/api/club/facilities", {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+          if (fRes.ok) {
+            const fJson = (await fRes.json()) as { payload?: { facilities?: unknown[] } };
+            const facilitiesPayload = Array.isArray(fJson?.payload?.facilities)
+              ? fJson.payload.facilities
+              : Array.isArray(fJson?.payload)
+                ? (fJson.payload as unknown[])
+                : [];
+            const normalizedFacilities = facilitiesPayload.map(mapFacilityRow);
+            if (!cancelled && normalizedFacilities.length > 0) {
+              setFacilitiesCatalog(normalizedFacilities);
+              localStorage.setItem(facilitiesStorageKey, JSON.stringify(normalizedFacilities));
+            }
+          }
+        } catch {
+          // fallback local
+        }
+      }
+      try {
+        const facRaw = localStorage.getItem(facilitiesStorageKey);
+        if (facRaw) {
+          const facParsed = JSON.parse(facRaw);
+          if (Array.isArray(facParsed) && facParsed.length > 0 && !cancelled) {
+            setFacilitiesCatalog(facParsed.map(mapFacilityRow));
+          }
+        }
+      } catch {
+        // ignore
+      }
+
       if (canUseAcademySupabase && accessToken) {
         try {
           const res = await fetch("/api/club/methodology-academy", {
             headers: { Authorization: `Bearer ${accessToken}` },
           });
+          if (res.status === 403) {
+            if (!cancelled) setSyncMode("restricted");
+            return;
+          }
+          if (res.status === 404) {
+            if (!cancelled) {
+              setSyncMode("local");
+              toast({
+                title: "API_NO_DISPONIBLE",
+                description: "Cantera operará en modo local en este entorno.",
+              });
+            }
+            return;
+          }
           if (res.ok) {
             const json = (await res.json()) as { ok?: boolean; payload?: any };
             const payload = json?.payload;
             if (!cancelled && Array.isArray(payload)) {
               setCategories(payload);
+              setSyncMode("remote");
               try {
                 localStorage.setItem(categoriesStorageKey, JSON.stringify(payload));
               } catch {
@@ -284,9 +366,12 @@ export default function AcademyManagementPage() {
               }
               return;
             }
+            if (!cancelled) setSyncMode("local_error");
+          } else if (!cancelled) {
+            setSyncMode("local_error");
           }
         } catch {
-          // fallback a localStorage
+          if (!cancelled) setSyncMode("local_error");
         }
       }
 
@@ -294,7 +379,10 @@ export default function AcademyManagementPage() {
         const raw = localStorage.getItem(categoriesStorageKey);
         if (!raw) return;
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) setCategories(parsed);
+        if (Array.isArray(parsed)) {
+          setCategories(parsed);
+          if (!cancelled) setSyncMode("local");
+        }
       } catch {
         // ignore (fallback a INITIAL_CATEGORIES)
       }
@@ -328,9 +416,25 @@ export default function AcademyManagementPage() {
           Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({ payload: categories }),
-      }).catch(() => {
-        // ignore (seguimos con localStorage)
-      });
+      })
+        .then((res) => {
+          if (res.status === 403) {
+            setSyncMode("restricted");
+            return;
+          }
+          if (res.status === 404) {
+            setSyncMode("local");
+            return;
+          }
+          if (!res.ok) {
+            setSyncMode("local_error");
+            return;
+          }
+          setSyncMode("remote");
+        })
+        .catch(() => {
+          setSyncMode("local_error");
+        });
     }, 600);
 
     return () => {
@@ -338,7 +442,7 @@ export default function AcademyManagementPage() {
     };
   }, [categories, categoriesStorageKey, canUseAcademySupabase, session?.access_token, canEditAcademy]);
 
-  const selectedFacility = MOCK_FACILITIES.find(f => f.id === formData.facilityId);
+  const selectedFacility = facilitiesCatalog.find(f => f.id === formData.facilityId);
   const hasZones = selectedFacility && parseInt(selectedFacility.subdivisions) > 1;
 
   const handleOpenSheet = (mode: 'category' | 'team') => {
@@ -626,6 +730,26 @@ export default function AcademyManagementPage() {
           <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic cyan-text-glow">
             Gestión de Cantera
           </h1>
+          <p
+            className={cn(
+              "text-[9px] font-black uppercase tracking-widest mt-1",
+              syncMode === "remote"
+                ? "text-emerald-400/80"
+                : syncMode === "restricted"
+                  ? "text-amber-400/80"
+                  : syncMode === "local_error"
+                    ? "text-rose-400/80"
+                    : "text-white/40",
+            )}
+          >
+            {syncMode === "remote"
+              ? "SINCRO_REMOTA_ACTIVA"
+              : syncMode === "restricted"
+                ? "MODO_LOCAL_POR_PERMISOS"
+                : syncMode === "local_error"
+                  ? "MODO_LOCAL_POR_ERROR"
+                  : "MODO_LOCAL_FALLBACK"}
+          </p>
         </div>
         
         <div className="flex gap-4">
@@ -985,7 +1109,7 @@ export default function AcademyManagementPage() {
                         <SelectValue placeholder="SELECCIONAR CAMPO..." />
                       </SelectTrigger>
                       <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
-                        {MOCK_FACILITIES.map(f => (
+                        {facilitiesCatalog.map(f => (
                           <SelectItem key={f.id} value={f.id} className="text-[10px] font-black uppercase focus:bg-primary">{f.name}</SelectItem>
                         ))}
                       </SelectContent>
