@@ -15,6 +15,7 @@ import {
   WifiOff,
   QrCode,
   RefreshCcw,
+  Share2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -413,6 +414,31 @@ export default function MobileContinuityPage() {
     void fetchIncidentHistory();
   };
 
+  const handleCopy = async (value: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast({ title: "COPIADO", description: `${label} copiado al portapapeles.` });
+    } catch {
+      toast({ title: "NO_COPIADO", description: "No se pudo copiar. Mantén pulsado para copiar manualmente." });
+    }
+  };
+
+  const handleShareToWatch = async () => {
+    try {
+      if (!("share" in navigator)) {
+        await handleCopy(watchUrl, "Enlace");
+        return;
+      }
+      await (navigator as unknown as { share: (data: { title?: string; text?: string; url?: string }) => Promise<void> }).share({
+        title: "SynqAI Smartwatch",
+        text: "Abrir smartwatch (Continuidad)",
+        url: watchUrl,
+      });
+    } catch {
+      // Si el usuario cancela share, no hacemos ruido.
+    }
+  };
+
   const pendingEvents = useMemo(() => synqSync.getPendingCount(), [isOnline, score.home, score.guest, remainingSec]);
 
   const fetchIncidentHistory = async () => {
@@ -614,6 +640,17 @@ export default function MobileContinuityPage() {
           <div className="rounded-xl bg-white p-2">
             <QRCodeCanvas value={watchUrl || "about:blank"} size={180} level="H" fgColor="#000000" bgColor="#ffffff" />
           </div>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <Button size="sm" className="h-9 bg-primary text-black border-none" onClick={() => window.open(watchUrl, "_blank", "noopener,noreferrer")}>
+              <Watch className="h-4 w-4 mr-2" /> Abrir smartwatch (móvil)
+            </Button>
+            <Button size="sm" variant="outline" className="h-9 border-white/10 text-white/70" onClick={handleShareToWatch}>
+              <Share2 className="h-4 w-4 mr-2" /> Enviar al reloj
+            </Button>
+            <Button size="sm" variant="outline" className="h-9 border-white/10 text-white/70" onClick={() => void handleCopy(watchUrl, "Enlace")}>
+              <Copy className="h-4 w-4 mr-2" /> Copiar enlace
+            </Button>
+          </div>
           <div className="w-full max-w-md rounded-xl border border-white/10 bg-black/30 p-3">
             <p className="text-[10px] uppercase text-white/50 font-black tracking-widest text-center">
               Código manual (reloj)
@@ -621,6 +658,17 @@ export default function MobileContinuityPage() {
             <p className="mt-1 text-center text-2xl font-black tracking-[0.35em] text-white">
               {watchPairingCode || "------"}
             </p>
+            <div className="mt-3 flex justify-center">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-9 border-white/10 text-white/70"
+                onClick={() => void handleCopy(watchPairingCode || "", "Código")}
+                disabled={!watchPairingCode}
+              >
+                <Copy className="h-4 w-4 mr-2" /> Copiar código
+              </Button>
+            </div>
           </div>
           <p className="text-[10px] uppercase text-white/50 break-all text-center">{watchUrl}</p>
         </CardContent>
