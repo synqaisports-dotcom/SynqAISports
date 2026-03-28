@@ -17,6 +17,8 @@ import {
   ShieldCheck,
   RotateCcw,
   Settings,
+  Trophy,
+  Dumbbell,
   Clock,
   Check,
   Minus,
@@ -50,7 +52,13 @@ import {
   writeWatchPairingCode,
   type WatchPairingScope,
 } from "@/lib/watch-pairing";
-import { readContinuityContext, subscribeContinuityContext } from "@/lib/continuity-context";
+import {
+  readContinuityContext,
+  subscribeContinuityContext,
+  writeContinuityContext,
+  type ContinuityContext,
+  type ContinuityMode,
+} from "@/lib/continuity-context";
 
 function SmartwatchContent() {
   const { loading, profile } = useAuth();
@@ -73,6 +81,10 @@ function SmartwatchContent() {
   const [selectedOut, setSelectedOut] = useState<number | null>(null);
   const [subInterval, setSubInterval] = useState("5");
   const [isWatchCompact, setIsWatchCompact] = useState(false);
+  const [activeMode, setActiveMode] = useState<ContinuityMode>("match");
+  const [activeCtx, setActiveCtx] = useState<ContinuityContext | null>(null);
+  const [screen, setScreen] = useState<"match" | "training" | "settings">("match");
+  const touchStartXRef = useRef<number | null>(null);
 
   // ROSTER DINÁMICO
   const [starters, setStarters] = useState<number[]>([]);
@@ -83,36 +95,97 @@ function SmartwatchContent() {
   const lastTimerSyncAppliedRef = useRef(0);
   const lastScoreSyncAppliedRef = useRef(0);
 
-  const continuityScope = React.useMemo(() => {
-    const mode = searchParamsHook.get("mode") || "";
-    if (mode !== "match" && mode !== "training" && mode !== "continuity") return null;
+  const clubScopeId = profile?.clubId ?? "global-hq";
+
+  const urlCtx = React.useMemo(() => {
+    const modeParam = searchParamsHook.get("mode") || "";
     const teamId = searchParamsHook.get("team") || "";
     const mcc = searchParamsHook.get("mcc") || "";
     const session = searchParamsHook.get("session") || "";
-    // En Sandbox/promo puede no existir clubId real; usamos un valor estable (mismo que en Continuidad móvil)
-    // para que el contexto se resuelva y respete `mode=training`.
-    const clubId = profile?.clubId ?? "global-hq";
-    if (!clubId || !teamId || !mcc || !session) return null;
-    // `mode` aquí actúa como "contexto" (partido vs entreno). Para compat, aceptamos legacy `continuity`.
-    const ctx: "match" | "training" = mode === "training" ? "training" : "match";
-    return { clubId, teamId, mcc, session, mode: ctx };
-  }, [searchParamsHook, profile?.clubId]);
+    if (!teamId || !mcc || !session) return null;
+    const ctx: ContinuityMode =
+      modeParam === "training" ? "training" : modeParam === "match" ? "match" : "match";
+    return {
+      clubId: clubScopeId,
+      mode: ctx,
+      teamId,
+      mcc,
+      session,
+      updatedAt: Date.now(),
+    } satisfies ContinuityContext;
+  }, [searchParamsHook, clubScopeId]);
+
+  const syncScope = React.useMemo(() => {
+    const c = activeCtx;
+    if (!c) return null;
+    return { clubId: c.clubId, teamId: c.teamId, mcc: c.mcc, session: c.session, mode: c.mode };
+  }, [activeCtx]);
 
   const timerKey = React.useMemo(
-    () => matchTimerSyncKey(continuityScope ?? undefined),
-    [continuityScope],
+    () => matchTimerSyncKey(syncScope ?? undefined),
+    [syncScope],
   );
   const scoreKey = React.useMemo(
-    () => matchScoreSyncKey(continuityScope ?? undefined),
-    [continuityScope],
+    () => matchScoreSyncKey(syncScope ?? undefined),
+    [syncScope],
   );
 
   const watchPairingScope = React.useMemo((): WatchPairingScope | null => {
-    if (continuityScope) return { clubId: continuityScope.clubId, mode: "continuity" };
+    if (syncScope) return { clubId: syncScope.clubId, mode: "continuity" };
     const clubId = profile?.clubId;
     if (clubId && clubId !== "global-hq") return { clubId, mode: "elite" };
     return { clubId: "sandbox", mode: "sandbox" };
-  }, [continuityScope, profile?.clubId]);
+  }, [syncScope, profile?.clubId]);
+
+  // Resolver modo/pantalla inicial: URL > contexto guardado > default
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const modeParam = searchParamsHook.get("mode") || "";
+    const requested: ContinuityMode | null =
+      modeParam === "training" ? "training" : modeParam === "match" ? "match" : null;
+
+    const initial = urlCtx ?? readContinuityContext(clubScopeId);
+    if (initial) {
+      setActiveCtx(initial);
+      setActiveMode(initial.mode);
+      setScreen(initial.mode);
+    } else if (requested) {
+      setActiveMode(requested);
+      setScreen(requested);
+    } else {
+      setActiveMode("match");
+      setScreen("match");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clubScopeId, urlCtx]);
+
+  // Escuchar cambios de contexto (empujados desde el móvil)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const unsub = subscribeContinuityContext(clubScopeId, (next) => {
+      if (!next) return;
+      setActiveCtx(next);
+      setActiveMode(next.mode);
+      // Si el usuario está en settings, no forzar navegación; si está en match/training, sí.
+      setScreen((prev) => (prev === "settings" ? prev : next.mode));
+    });
+    return () => unsub();
+  }, [clubScopeId]);
+
+  const setModeOnWatch = (nextMode: ContinuityMode) => {
+    setActiveMode(nextMode);
+    setScreen(nextMode);
+    if (activeCtx) {
+      const next = writeContinuityContext({
+        clubId: activeCtx.clubId,
+        mode: nextMode,
+        teamId: activeCtx.teamId,
+        mcc: activeCtx.mcc,
+        session: activeCtx.session,
+      });
+      setActiveCtx(next);
+    }
+  };
 
   // DETECCIÓN DE AUTO-LINK (TOKEN EN URL)
   useEffect(() => {
@@ -393,7 +466,30 @@ function SmartwatchContent() {
 
   return (
     <div className={cn("fixed inset-0 bg-background flex items-center justify-center overflow-hidden touch-none select-none", isWatchCompact ? "p-1" : "p-2")}>
-      <div className={cn("relative rounded-[clamp(2rem,22%,50%)] border border-primary/30 bg-card overflow-hidden flex flex-col shadow-[0_0_60px_rgba(0,242,255,0.15)]", isWatchCompact ? "w-[min(96vw,96dvh,360px)] h-[min(96vw,96dvh,360px)]" : "w-[min(92vw,92dvh,340px)] h-[min(92vw,92dvh,340px)]")}>
+      <div
+        className={cn(
+          "relative rounded-[clamp(2rem,22%,50%)] border border-primary/30 bg-card overflow-hidden flex flex-col shadow-[0_0_60px_rgba(0,242,255,0.15)]",
+          isWatchCompact ? "w-[min(96vw,96dvh,360px)] h-[min(96vw,96dvh,360px)]" : "w-[min(92vw,92dvh,340px)] h-[min(92vw,92dvh,340px)]",
+        )}
+        onTouchStart={(e) => {
+          touchStartXRef.current = e.touches?.[0]?.clientX ?? null;
+        }}
+        onTouchEnd={(e) => {
+          const startX = touchStartXRef.current;
+          const endX = e.changedTouches?.[0]?.clientX ?? null;
+          touchStartXRef.current = null;
+          if (startX == null || endX == null) return;
+          const dx = endX - startX;
+          if (Math.abs(dx) < 45) return;
+          const order: Array<"match" | "training" | "settings"> = ["match", "training", "settings"];
+          const idx = order.indexOf(screen);
+          const nextIdx = dx < 0 ? (idx + 1) % order.length : (idx - 1 + order.length) % order.length;
+          const next = order[nextIdx]!;
+          setScreen(next);
+          if (next === "match") setModeOnWatch("match");
+          if (next === "training") setModeOnWatch("training");
+        }}
+      >
         <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
         
         <div className={cn("flex items-center justify-between shrink-0 z-20", isWatchCompact ? "h-12 pt-4 px-6" : "h-14 pt-6 px-8")}>
@@ -414,7 +510,41 @@ function SmartwatchContent() {
         </div>
 
         <div className={cn("flex-1 relative z-10 flex flex-col items-center overflow-hidden", isWatchCompact ? "px-4" : "px-6")}>
-          {view === 'main' && (
+          {screen === "settings" ? (
+            <div className="w-full h-full flex flex-col items-center justify-center gap-3 animate-in fade-in zoom-in-95">
+              <div className="text-center space-y-2">
+                <Settings className="h-7 w-7 text-primary mx-auto" />
+                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/60">Ajustes</p>
+              </div>
+              <div className="w-full space-y-2">
+                <button
+                  className={cn(
+                    "w-full h-12 rounded-2xl border-2 font-black uppercase text-[10px] tracking-widest",
+                    activeMode === "match"
+                      ? "bg-primary text-black border-primary/30"
+                      : "bg-white/5 text-white/60 border-white/10",
+                  )}
+                  onClick={() => setModeOnWatch("match")}
+                >
+                  <Trophy className="h-4 w-4 inline-block mr-2" /> Partido
+                </button>
+                <button
+                  className={cn(
+                    "w-full h-12 rounded-2xl border-2 font-black uppercase text-[10px] tracking-widest",
+                    activeMode === "training"
+                      ? "bg-emerald-500 text-black border-emerald-500/30"
+                      : "bg-white/5 text-white/60 border-white/10",
+                  )}
+                  onClick={() => setModeOnWatch("training")}
+                >
+                  <Dumbbell className="h-4 w-4 inline-block mr-2" /> Entreno
+                </button>
+              </div>
+              <p className="text-[8px] uppercase font-bold text-white/30 text-center">
+                Desliza para cambiar de pantalla
+              </p>
+            </div>
+          ) : view === 'main' && screen === "match" ? (
             <div className={cn("w-full h-full flex flex-col items-center justify-between animate-in fade-in zoom-in-95", isWatchCompact ? "py-1" : "py-2")}>
               <div className={cn("flex items-center justify-center w-full", isWatchCompact ? "gap-2.5" : "gap-4")}>
               <button onClick={() => { setIsRunning(false); const sec = presetMinutesRef.current * 60; setTimeLeft(sec); timeLeftRef.current = sec; const now = Date.now(); lastTimerSyncAppliedRef.current = now; writeMatchTimerSync({ remainingSec: sec, running: false, updatedAt: now, origin: "watch" }, timerKey); triggerHaptic(60); }} className={cn("bg-white/5 rounded-full text-white/40 active:bg-rose-500", isWatchCompact ? "p-3" : "p-2.5")}><RotateCcw className={cn(isWatchCompact ? "h-5 w-5" : "h-4 w-4")} /></button>
@@ -460,7 +590,23 @@ function SmartwatchContent() {
                 <span className={cn("font-black uppercase tracking-widest text-white", isWatchCompact ? "text-[8px]" : "text-[10px]")}>SUSTITUCIÓN</span>
               </button>
             </div>
-          )}
+          ) : screen === "training" ? (
+            <div className="w-full h-full flex flex-col items-center justify-center animate-in fade-in zoom-in-95">
+              <div className="text-center space-y-2">
+                <Dumbbell className="h-8 w-8 text-emerald-400 mx-auto" />
+                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/60">Entreno</p>
+                <p className="text-[8px] uppercase font-bold text-white/30">
+                  (UI específica se ampliará)\nDesliza para Ajustes
+                </p>
+              </div>
+              <button
+                onClick={() => setView('config')}
+                className="mt-4 h-12 w-full rounded-2xl border-2 border-white/10 bg-white/5 text-white/70 font-black uppercase text-[10px] tracking-widest"
+              >
+                <Settings className="h-4 w-4 inline-block mr-2" /> Config
+              </button>
+            </div>
+          ) : null}
 
           {view === 'subs_out' && (
             <div className="w-full h-full flex flex-col animate-in slide-in-from-bottom-6">
