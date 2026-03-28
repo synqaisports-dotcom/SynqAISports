@@ -6,6 +6,7 @@ import { X, RefreshCw, Zap, CalendarDays, MessageSquareQuote, UserCircle, Loader
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { LEGACY_PLAYERS_STORAGE_KEY, readPlayersLocal, playersStorageKey } from "@/lib/player-storage";
 
 const ADMIN_EMAILS = ['munozmartinez.ismael@gmail.com', 'synqaisports@gmail.com', 'admin@synqai.sports'];
 
@@ -72,7 +73,8 @@ export function TutorClientLayout({ children }: { children: ReactNode }) {
 
     const emailLower = tutorEmail.toLowerCase();
     const isRootAdmin = ADMIN_EMAILS.includes(emailLower);
-    const savedPlayers = JSON.parse(localStorage.getItem("synq_players") || "[]");
+    const clubScopeId = "global-hq";
+    const savedPlayers = readPlayersLocal(clubScopeId);
     
     let myAtletas = savedPlayers.filter((p: any) => 
       p.tutorEmail?.toLowerCase() === emailLower || (isRootAdmin && !p.tutorEmail)
@@ -115,12 +117,13 @@ export function TutorClientLayout({ children }: { children: ReactNode }) {
   useEffect(() => {
     syncData();
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'synq_players' || e.key === 'synq_tutor_session_email') {
-        syncData();
-      }
+      if (e.key === 'synq_tutor_session_email') syncData();
+      if (e.key === LEGACY_PLAYERS_STORAGE_KEY || e.key === playersStorageKey("global-hq")) syncData();
     };
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, [syncData]);
 
   const showAd = () => {

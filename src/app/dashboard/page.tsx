@@ -29,6 +29,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { useOperativaSync } from "@/hooks/use-operativa-sync";
+import { readPlayersLocal } from "@/lib/player-storage";
 
 /**
  * Dashboard Maestro - v10.1.0
@@ -56,15 +57,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const loadDashboardOperativa = async () => {
-      const playersRaw = localStorage.getItem("synq_players");
-      const players = (() => {
-        try {
-          const parsed = JSON.parse(playersRaw || "[]");
-          return Array.isArray(parsed) ? parsed : [];
-        } catch {
-          return [] as unknown[];
-        }
-      })();
+      const players = readPlayersLocal(clubScopeId);
 
       const localPlannerRaw = localStorage.getItem(`synq_methodology_session_planner_v1_${clubScopeId}`);
       const localPlanner = (() => {

@@ -52,6 +52,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth-context";
+import { readPlayersLocal } from "@/lib/player-storage";
 import {
   upsertOperativaAttendance,
   upsertOperativaChangeRequest,
@@ -77,7 +78,6 @@ const MONTHS = [
   { id: "jun", label: "JUNIO", weeks: 4 },
 ];
 
-const PLAYER_STORAGE_KEY = "synq_players";
 const TEAMS_STORAGE_PREFIX = "synq_methodology_warehouse_teams_v1";
 const SESSION_PLANNER_STORAGE_PREFIX = "synq_methodology_session_planner_v1";
 const ACADEMY_CATEGORIES_STORAGE_PREFIX = "synq_academy_categories_v1";
@@ -351,15 +351,7 @@ export default function CoachSessionsPage() {
       }
 
       // 4) Roster (local)
-      const playersRaw = localStorage.getItem(PLAYER_STORAGE_KEY);
-      const players = (() => {
-        try {
-          const parsed = JSON.parse(playersRaw || "[]");
-          return Array.isArray(parsed) ? (parsed as PlayerRow[]) : [];
-        } catch {
-          return [] as PlayerRow[];
-        }
-      })();
+      const players = readPlayersLocal(clubScopeId) as PlayerRow[];
 
       if (!selectedTeam) {
         const firstCategory = String(players[0]?.category || "Infantil");

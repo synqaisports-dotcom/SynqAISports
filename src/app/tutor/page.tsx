@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { readPlayersLocal } from "@/lib/player-storage";
 
 const ADMIN_EMAILS = ['munozmartinez.ismael@gmail.com', 'synqaisports@gmail.com'];
 
@@ -40,7 +41,8 @@ export default function TutorLoginPage() {
     setTimeout(() => {
       const emailLower = email.toLowerCase();
       const isRootAdmin = ADMIN_EMAILS.includes(emailLower);
-      const savedPlayers = JSON.parse(localStorage.getItem("synq_players") || "[]");
+      const clubScopeId = "global-hq";
+      const savedPlayers = readPlayersLocal(clubScopeId);
       
       const foundMatch = savedPlayers.some((p: any) => 
         p.tutorEmail?.toLowerCase() === emailLower

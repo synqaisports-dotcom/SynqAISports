@@ -47,6 +47,7 @@ import {
 } from "@/lib/match-score-sync";
 import { synqSync } from "@/lib/sync-service";
 import { upsertOperativaAttendance } from "@/lib/operativa-sync";
+import { readPlayersLocal } from "@/lib/player-storage";
 
 type Incident = {
   id: string;
@@ -97,7 +98,6 @@ const INCIDENTS: Incident[] = [
 ];
 
 const TEAMS_STORAGE_PREFIX = "synq_methodology_warehouse_teams_v1";
-const PLAYER_STORAGE_KEY = "synq_players";
 const MOBILE_ATTENDANCE_STORAGE_PREFIX = "synq_mobile_continuity_attendance_v1";
 const MONTHS = [
   { id: "sept", weeks: 4 },
@@ -130,6 +130,7 @@ function parseTeamName(teamName: string): { category: string; teamSuffix: string
 export default function MobileContinuityPage() {
   const { toast } = useToast();
   const { profile, session } = useAuth();
+  const clubScopeId = profile?.clubId ?? "global-hq";
   const [score, setScore] = useState({ home: 0, guest: 0 });
   const [remainingSec, setRemainingSec] = useState(45 * 60);
   const [running, setRunning] = useState(false);
@@ -146,6 +147,8 @@ export default function MobileContinuityPage() {
   const [attendance, setAttendance] = useState<Record<string, "present" | "absent">>({});
   const lastTimerAppliedRef = useRef(0);
   const lastScoreAppliedRef = useRef(0);
+
+  const players = useMemo(() => readPlayersLocal(clubScopeId), [clubScopeId]);
 
   const watchUrl = useMemo(() => {
     if (typeof window === "undefined") return "";
@@ -211,13 +214,7 @@ export default function MobileContinuityPage() {
       return;
     }
     try {
-      const raw = localStorage.getItem(PLAYER_STORAGE_KEY);
-      if (!raw) {
-        setRoster([]);
-        return;
-      }
-      const parsed = JSON.parse(raw) as PlayerRow[];
-      const all = Array.isArray(parsed) ? parsed : [];
+      const all = readPlayersLocal(clubScopeId) as PlayerRow[];
       const teamParsed = parseTeamName(selectedName);
       const nextRoster = all
         .filter((p) => {
@@ -237,7 +234,7 @@ export default function MobileContinuityPage() {
     } catch {
       setRoster([]);
     }
-  }, [selectedTeam?.name]);
+  }, [clubScopeId, selectedTeam?.name]);
 
   useEffect(() => {
     try {

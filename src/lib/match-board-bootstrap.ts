@@ -61,6 +61,8 @@ export function loadLocalLineupForMatchBoard(source: MatchBoardSource): {
     }
   }
 
+  // En el tablero no conocemos `clubId` de forma fiable; usamos clave global solo como fallback legado.
+  // La plantilla Pro actual se guarda scoping por club en `synq_players_v1_${clubId}` desde /dashboard/players.
   const raw = localStorage.getItem("synq_players");
   if (!raw) return { names: [], fieldType: null };
   try {
