@@ -480,7 +480,7 @@ export default function StaffManagementPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
-      <div className="flex justify-between items-end border-b border-white/5 pb-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-end border-b border-white/5 pb-6">
         <div className="space-y-1">
           <div className="flex items-center gap-3 mb-2">
             <UserCog className="h-5 w-5 animate-pulse text-primary" />
@@ -516,7 +516,7 @@ export default function StaffManagementPage() {
         <Button 
           onClick={handleOpenCreate}
           disabled={allowedCreateRoles.length === 0 || (!isSuperAdmin && !canEditStaffModule)}
-          className="rounded-2xl text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none disabled:opacity-30 bg-primary"
+          className="w-full sm:w-auto rounded-2xl text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none disabled:opacity-30 bg-primary"
         >
           <Plus className="h-4 w-4 mr-2" /> Alta de Trabajador
         </Button>

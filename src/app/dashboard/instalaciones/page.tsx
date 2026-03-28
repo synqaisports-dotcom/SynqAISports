@@ -391,7 +391,7 @@ export default function FacilitiesManagementPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
-      <div className="flex justify-between items-end border-b border-white/5 pb-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-end border-b border-white/5 pb-6">
         <div className="space-y-1">
           <div className="flex items-center gap-3 mb-2">
             <MapPin className="h-5 w-5 text-primary animate-pulse" />
@@ -425,7 +425,7 @@ export default function FacilitiesManagementPage() {
         <Button 
           onClick={handleOpenCreate}
           disabled={!canEditFacilities}
-          className="rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none disabled:opacity-40"
+          className="w-full sm:w-auto rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none disabled:opacity-40"
         >
           <Plus className="h-4 w-4 mr-2" /> Nuevo Activo
         </Button>
@@ -506,11 +506,11 @@ export default function FacilitiesManagementPage() {
                 <span className="text-xs font-black text-primary cyan-text-glow">{f.nextMaintenance}</span>
               </div>
             </CardContent>
-            <CardFooter className="px-6 py-4 bg-black/40 border-t border-white/5 flex justify-between items-center rounded-b-3xl">
+            <CardFooter className="px-6 py-4 bg-black/40 border-t border-white/5 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center rounded-b-3xl">
               <span className="flex items-center gap-2 text-[8px] font-black text-primary/30 uppercase tracking-widest">
                 <CheckCircle2 className="h-3 w-3 text-primary/40" /> Sincronización Estable
               </span>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap justify-end gap-2">
                 <Button
                   variant="ghost"
                   size="icon"
