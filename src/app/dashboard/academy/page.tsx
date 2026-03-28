@@ -909,35 +909,117 @@ export default function AcademyManagementPage() {
                             </div>
                           </div>
                           
-                          <div className="w-full sm:w-auto flex flex-wrap sm:flex-nowrap items-center justify-end gap-1 shrink-0 rounded-xl border border-primary/15 bg-black/30 px-1 py-0.5">
-                            <button onClick={() => handleViewTeam(team, cat.name)} className="p-1.5 hover:bg-primary/20 rounded-lg text-primary transition-all" title="Ver Ficha"><Eye className="h-3.5 w-3.5" /></button>
-                            <Button
-                              asChild
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 p-1.5 hover:bg-emerald-500/20 rounded-lg text-emerald-400 transition-all"
-                              title="Abrir asistencia (próxima sesión)"
-                            >
-                              <Link
-                                href={(() => {
-                                  const ctx = nextSessionContextFromTeam(team);
-                                  const qs = new URLSearchParams({
-                                    team: ctx.team,
-                                    mcc: ctx.mcc,
-                                    session: ctx.session,
-                                  });
-                                  return `/dashboard/sessions?${qs.toString()}`;
-                                })()}
+                          <div className="w-full sm:w-auto shrink-0 rounded-xl border border-primary/15 bg-black/30 px-1 py-0.5">
+                            {/* Móvil/Tablet: 2 acciones + menú overflow (evita desbordamiento) */}
+                            <div className="flex items-center justify-end gap-1 lg:hidden">
+                              <button
+                                onClick={() => handleViewTeam(team, cat.name)}
+                                className="p-1.5 hover:bg-primary/20 rounded-lg text-primary transition-all"
+                                title="Ver Ficha"
                               >
-                                <ClipboardCheck className="h-3.5 w-3.5" />
-                              </Link>
-                            </Button>
-                            <button type="button" disabled={!canEditAcademy} onClick={() => handleDuplicateTeam(cat.id, idx)} className="p-1.5 hover:bg-sky-500/20 rounded-lg text-sky-400 transition-all disabled:opacity-30 disabled:pointer-events-none" title="Duplicar Nodo"><Copy className="h-3.5 w-3.5" /></button>
-                            <button type="button" disabled={!canEditAcademy} onClick={() => handleEditTeam(cat.id, team, idx)} className="p-1.5 hover:bg-primary/20 rounded-lg text-primary transition-all disabled:opacity-30 disabled:pointer-events-none" title="Editar Nodo"><Pencil className="h-3.5 w-3.5" /></button>
-                            <button type="button" disabled={!canEditAcademy} onClick={() => handleToggleTeamStatus(cat.id, idx)} className="p-1.5 hover:bg-amber-500/20 rounded-lg text-amber-500 transition-all disabled:opacity-30 disabled:pointer-events-none" title={team.status === "Paused" ? "Reactivar" : "Pausar"}>
-                              {team.status === "Paused" ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
-                            </button>
-                            <button type="button" disabled={!canDeleteAcademy} onClick={() => handleDeleteTeam(cat.id, idx)} className="p-1.5 hover:bg-rose-500/20 rounded-lg text-rose-500 transition-all disabled:opacity-30 disabled:pointer-events-none" title="Borrar"><Trash2 className="h-3.5 w-3.5" /></button>
+                                <Eye className="h-3.5 w-3.5" />
+                              </button>
+                              <Button
+                                asChild
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 p-1.5 hover:bg-emerald-500/20 rounded-lg text-emerald-400 transition-all"
+                                title="Abrir asistencia (próxima sesión)"
+                              >
+                                <Link
+                                  href={(() => {
+                                    const ctx = nextSessionContextFromTeam(team);
+                                    const qs = new URLSearchParams({
+                                      team: ctx.team,
+                                      mcc: ctx.mcc,
+                                      session: ctx.session,
+                                    });
+                                    return `/dashboard/sessions?${qs.toString()}`;
+                                  })()}
+                                >
+                                  <ClipboardCheck className="h-3.5 w-3.5" />
+                                </Link>
+                              </Button>
+
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <button
+                                    type="button"
+                                    className="p-1.5 hover:bg-primary/20 rounded-lg text-primary transition-all"
+                                    title="Más acciones"
+                                  >
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="bg-[#04070c] border-primary/20 rounded-2xl">
+                                  <DropdownMenuItem
+                                    disabled={!canEditAcademy}
+                                    onClick={() => handleDuplicateTeam(cat.id, idx)}
+                                    className="text-[10px] font-black uppercase tracking-widest focus:bg-primary"
+                                  >
+                                    <Copy className="h-3.5 w-3.5 mr-2" /> Duplicar
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    disabled={!canEditAcademy}
+                                    onClick={() => handleEditTeam(cat.id, team, idx)}
+                                    className="text-[10px] font-black uppercase tracking-widest focus:bg-primary"
+                                  >
+                                    <Pencil className="h-3.5 w-3.5 mr-2" /> Editar
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    disabled={!canEditAcademy}
+                                    onClick={() => handleToggleTeamStatus(cat.id, idx)}
+                                    className="text-[10px] font-black uppercase tracking-widest focus:bg-primary"
+                                  >
+                                    {team.status === "Paused" ? (
+                                      <Play className="h-3.5 w-3.5 mr-2" />
+                                    ) : (
+                                      <Pause className="h-3.5 w-3.5 mr-2" />
+                                    )}
+                                    {team.status === "Paused" ? "Reactivar" : "Pausar"}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    disabled={!canDeleteAcademy}
+                                    onClick={() => handleDeleteTeam(cat.id, idx)}
+                                    className="text-[10px] font-black uppercase tracking-widest focus:bg-rose-500/20 text-rose-400"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5 mr-2" /> Borrar
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+
+                            {/* PC: botonera completa */}
+                            <div className="hidden lg:flex items-center justify-end gap-1">
+                              <button onClick={() => handleViewTeam(team, cat.name)} className="p-1.5 hover:bg-primary/20 rounded-lg text-primary transition-all" title="Ver Ficha"><Eye className="h-3.5 w-3.5" /></button>
+                              <Button
+                                asChild
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 p-1.5 hover:bg-emerald-500/20 rounded-lg text-emerald-400 transition-all"
+                                title="Abrir asistencia (próxima sesión)"
+                              >
+                                <Link
+                                  href={(() => {
+                                    const ctx = nextSessionContextFromTeam(team);
+                                    const qs = new URLSearchParams({
+                                      team: ctx.team,
+                                      mcc: ctx.mcc,
+                                      session: ctx.session,
+                                    });
+                                    return `/dashboard/sessions?${qs.toString()}`;
+                                  })()}
+                                >
+                                  <ClipboardCheck className="h-3.5 w-3.5" />
+                                </Link>
+                              </Button>
+                              <button type="button" disabled={!canEditAcademy} onClick={() => handleDuplicateTeam(cat.id, idx)} className="p-1.5 hover:bg-sky-500/20 rounded-lg text-sky-400 transition-all disabled:opacity-30 disabled:pointer-events-none" title="Duplicar Nodo"><Copy className="h-3.5 w-3.5" /></button>
+                              <button type="button" disabled={!canEditAcademy} onClick={() => handleEditTeam(cat.id, team, idx)} className="p-1.5 hover:bg-primary/20 rounded-lg text-primary transition-all disabled:opacity-30 disabled:pointer-events-none" title="Editar Nodo"><Pencil className="h-3.5 w-3.5" /></button>
+                              <button type="button" disabled={!canEditAcademy} onClick={() => handleToggleTeamStatus(cat.id, idx)} className="p-1.5 hover:bg-amber-500/20 rounded-lg text-amber-500 transition-all disabled:opacity-30 disabled:pointer-events-none" title={team.status === "Paused" ? "Reactivar" : "Pausar"}>
+                                {team.status === "Paused" ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
+                              </button>
+                              <button type="button" disabled={!canDeleteAcademy} onClick={() => handleDeleteTeam(cat.id, idx)} className="p-1.5 hover:bg-rose-500/20 rounded-lg text-rose-500 transition-all disabled:opacity-30 disabled:pointer-events-none" title="Borrar"><Trash2 className="h-3.5 w-3.5" /></button>
+                            </div>
                           </div>
                         </div>
                       ))}
