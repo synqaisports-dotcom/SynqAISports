@@ -550,7 +550,7 @@ export default function FacilitiesManagementPage() {
                     <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-2xl text-primary font-bold uppercase tracking-widest focus:border-primary transition-all">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
+                    <SelectContent className="z-[120] bg-[#04070c] border-primary/20 rounded-2xl">
                       <SelectItem value="Campo Exterior" className="text-[10px] font-black uppercase focus:bg-primary">CAMPO EXTERIOR</SelectItem>
                       <SelectItem value="Pabellón" className="text-[10px] font-black uppercase focus:bg-primary">PABELLÓN CUBIERTO</SelectItem>
                       <SelectItem value="Fitness" className="text-[10px] font-black uppercase focus:bg-primary">GIMNASIO / SALA</SelectItem>
@@ -571,7 +571,7 @@ export default function FacilitiesManagementPage() {
                         <SelectValue placeholder="DEPORTE..." />
                       </div>
                     </SelectTrigger>
-                    <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
+                    <SelectContent className="z-[120] bg-[#04070c] border-primary/20 rounded-2xl">
                       {SPORTS.map(s => (
                         <SelectItem key={s.value} value={s.value} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary">
                           {s.label}
@@ -600,7 +600,7 @@ export default function FacilitiesManagementPage() {
                     <SelectTrigger className="h-12 bg-black/40 border-primary/20 rounded-2xl text-primary font-bold uppercase text-[10px] tracking-widest focus:border-primary">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
+                    <SelectContent className="z-[120] bg-[#04070c] border-primary/20 rounded-2xl">
                       <SelectItem value="1" className="text-[10px] font-black uppercase focus:bg-primary">ESPACIO ÚNICO</SelectItem>
                       <SelectItem value="2" className="text-[10px] font-black uppercase focus:bg-primary">2 MITADES (ZONA A/B)</SelectItem>
                       <SelectItem value="4" className="text-[10px] font-black uppercase focus:bg-primary">4 CUADRANTES (A/B/C/D)</SelectItem>
@@ -744,7 +744,7 @@ export default function FacilitiesManagementPage() {
                     <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-2xl text-primary font-bold uppercase tracking-widest focus:border-primary transition-all">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
+                    <SelectContent className="z-[120] bg-[#04070c] border-primary/20 rounded-2xl">
                       <SelectItem value="Active" className="text-[10px] font-black uppercase text-primary focus:bg-primary focus:text-black">OPERATIVO</SelectItem>
                       <SelectItem value="Maintenance" className="text-[10px] font-black uppercase text-amber-400 focus:bg-amber-500">MANTENIMIENTO</SelectItem>
                       <SelectItem value="Inactive" className="text-[10px] font-black uppercase text-rose-400 focus:bg-rose-500">CERRADO</SelectItem>
