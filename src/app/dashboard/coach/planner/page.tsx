@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { generateTrainingPlan, GenerateTrainingPlanInput, GenerateTrainingPlanOutput } from "@/ai/flows/generate-training-plan";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,11 +24,26 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { BrainCircuit, Loader2, Save, FileText, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/auth-context";
+import { useClubModulePermissions } from "@/hooks/use-club-module-permissions";
+import {
+  aiPlannerKey,
+  readAiPlannerState,
+  writeAiPlannerState,
+  type AiPlannerStateV1,
+} from "@/lib/ai-planner-storage";
 
 export default function AIPlannerPage() {
   const [loading, setLoading] = useState(false);
   const [plan, setPlan] = useState<GenerateTrainingPlanOutput | null>(null);
   const { toast } = useToast();
+  const { profile, user } = useAuth();
+  const clubScopeId = profile?.clubId ?? "global-hq";
+  const storageKey = useMemo(() => aiPlannerKey(clubScopeId, user?.id ?? null), [clubScopeId, user?.id]);
+
+  const plannerPerms = useClubModulePermissions("planner");
+  const isElevated = profile?.role === "superadmin" || profile?.role === "club_admin";
+  const canUsePlanner = isElevated || plannerPerms.canView;
 
   const [formData, setFormData] = useState<GenerateTrainingPlanInput>({
     sportType: "",
@@ -40,12 +55,32 @@ export default function AIPlannerPage() {
     additionalNotes: "",
   });
 
+  const [hasSaved, setHasSaved] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const snap = readAiPlannerState(storageKey);
+    if (!snap) return;
+    if (snap.form) setFormData(snap.form);
+    if (snap.plan) setPlan(snap.plan);
+  }, [storageKey]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canUsePlanner) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes acceso a Neural Planner.",
+      });
+      return;
+    }
     setLoading(true);
     try {
       const result = await generateTrainingPlan(formData);
       setPlan(result);
+      setHasSaved(false);
+      writeAiPlannerState(storageKey, { form: formData, plan: result });
       toast({
         title: "Plan Generado",
         description: "Su programa de entrenamiento táctico está listo.",
@@ -61,6 +96,55 @@ export default function AIPlannerPage() {
     }
   };
 
+  const onSave = () => {
+    if (!canUsePlanner) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes acceso a Neural Planner.",
+      });
+      return;
+    }
+    if (!plan) {
+      toast({
+        variant: "destructive",
+        title: "SIN_PLAN",
+        description: "Genera un plan antes de guardarlo.",
+      });
+      return;
+    }
+    writeAiPlannerState(storageKey, { form: formData, plan });
+    setHasSaved(true);
+    toast({ title: "GUARDADO_LOCAL", description: "Plan guardado en este dispositivo." });
+  };
+
+  const onExportJson = () => {
+    if (!plan) return;
+    try {
+      const payload = {
+        version: 1,
+        clubId: clubScopeId,
+        userId: user?.id ?? null,
+        savedAt: new Date().toISOString(),
+        form: formData,
+        plan,
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `neural-planner_${clubScopeId}_${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast({
+        variant: "destructive",
+        title: "ERROR_EXPORTANDO",
+        description: "No se pudo exportar el JSON.",
+      });
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-2">
@@ -69,6 +153,16 @@ export default function AIPlannerPage() {
         </h1>
         <p className="text-slate-500">Aprovecha GenAI para diseñar ciclos de entrenamiento en segundos.</p>
       </div>
+
+      {!canUsePlanner && (
+        <Card className="glass-panel border-none">
+          <CardContent className="p-6">
+            <p className="text-sm text-white/60">
+              Acceso restringido por permisos del club.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-8">
         <Card className="glass-panel border-none shadow-sm h-fit">
@@ -231,10 +325,28 @@ export default function AIPlannerPage() {
                   </div>
                 </CardContent>
                 <CardFooter className="bg-black/20 p-6 flex justify-end gap-3">
-                  <Button variant="outline" className="rounded-none border-white/10 uppercase text-[10px] tracking-widest">Exportar PDF</Button>
-                  <Button className="bg-primary rounded-none px-6 uppercase text-[10px] tracking-widest">Guardar en Perfil</Button>
+                  <Button
+                    variant="outline"
+                    onClick={onExportJson}
+                    className="rounded-none border-white/10 uppercase text-[10px] tracking-widest"
+                  >
+                    Exportar JSON
+                  </Button>
+                  <Button
+                    onClick={onSave}
+                    className="bg-primary rounded-none px-6 uppercase text-[10px] tracking-widest"
+                  >
+                    Guardar (local)
+                  </Button>
                 </CardFooter>
               </Card>
+              {hasSaved && (
+                <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-300">
+                    Guardado en este dispositivo.
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
