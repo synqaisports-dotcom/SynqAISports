@@ -76,6 +76,7 @@ type MethodologyLibraryEntry = {
   dimension: string;
   title: string;
   authorName: string;
+  videoUrl?: string;
   didacticStrategy?: string;
   objectives?: string;
   conditionalContent?: string;
@@ -257,7 +258,8 @@ export default function ExerciseLibraryPage() {
     equipment: "",
     stage: STAGES[0] ?? "Debutantes",
     dimension: "Táctica",
-    photoUrl: ""
+    photoUrl: "",
+    videoUrl: "",
   });
 
   const [boardElements, setBoardElements] = useState<unknown[]>([]);
@@ -282,6 +284,7 @@ export default function ExerciseLibraryPage() {
         objectives?: string;
         description?: string;
         photoUrl?: string;
+        videoUrl?: string;
         elements?: unknown[];
         board?: {
           fieldType?: string;
@@ -333,6 +336,7 @@ export default function ExerciseLibraryPage() {
         stage: nextStage,
         dimension: parsed.dimension ?? "Táctica",
         photoUrl: parsed.photoUrl ?? "",
+        videoUrl: parsed.videoUrl ?? "",
       });
 
       setIsSheetOpen(true);
@@ -434,6 +438,7 @@ export default function ExerciseLibraryPage() {
         instructions: formData.instructions,
         equipment: materialsJson,
         photoUrl: formData.photoUrl,
+        videoUrl: formData.videoUrl,
         elements: boardElements.length > 0 ? boardElements : undefined,
         boardCoordSpace: boardElements.length > 0 ? "canvas_normalized_v1" : undefined,
         board: {
@@ -475,6 +480,7 @@ export default function ExerciseLibraryPage() {
               instructions: base.instructions,
               equipment: base.equipment,
               photoUrl: base.photoUrl,
+              videoUrl: base.videoUrl,
               elements: base.elements,
               board: base.board,
               boardCoordSpace: base.boardCoordSpace,
@@ -508,6 +514,7 @@ export default function ExerciseLibraryPage() {
               instructions: base.instructions,
               equipment: base.equipment,
               photoUrl: base.photoUrl,
+              videoUrl: base.videoUrl,
               elements: base.elements,
               board: base.board,
               boardCoordSpace: base.boardCoordSpace,
@@ -566,6 +573,7 @@ export default function ExerciseLibraryPage() {
       stage: selectedStageFilter,
       dimension: "Táctica",
       photoUrl: "",
+      videoUrl: "",
     });
     setIsSheetOpen(true);
   };
@@ -596,6 +604,7 @@ export default function ExerciseLibraryPage() {
       stage: entry.stage ?? selectedStageFilter,
       dimension: entry.dimension ?? "Táctica",
       photoUrl: entry.photoUrl ?? "",
+      videoUrl: entry.videoUrl ?? "",
     });
     setIsSheetOpen(true);
   };
@@ -871,6 +880,38 @@ export default function ExerciseLibraryPage() {
                         onChange={handlePhotoUpload}
                       />
                     </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label className="text-[10px] font-black uppercase text-amber-500/60 tracking-widest ml-1 italic">
+                      Vídeo (YouTube/Vimeo)
+                    </Label>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <Input
+                        value={formData.videoUrl}
+                        onChange={(e) =>
+                          setFormData({ ...formData, videoUrl: e.target.value })
+                        }
+                        placeholder="https://www.youtube.com/watch?v=... o https://vimeo.com/..."
+                        className="h-14 bg-black/40 border-amber-500/20 rounded-2xl font-bold text-white/80 placeholder:text-white/10"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={!formData.videoUrl.trim()}
+                        onClick={() => {
+                          const url = formData.videoUrl.trim();
+                          if (!url) return;
+                          window.open(url, "_blank", "noopener,noreferrer");
+                        }}
+                        className="h-14 rounded-2xl border-amber-500/20 text-amber-500 hover:bg-amber-500/10 font-black uppercase text-[10px] tracking-widest px-6 disabled:opacity-40"
+                      >
+                        Ver
+                      </Button>
+                    </div>
+                    <p className="text-[9px] font-bold text-white/25">
+                      Campo opcional. Se valida al guardar en red (solo YouTube/Vimeo).
+                    </p>
                   </div>
 
                   {canModifyPizarra ? (

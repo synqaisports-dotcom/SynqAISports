@@ -6,6 +6,7 @@ import { guardClubModuleOr403 } from '@/lib/club-matrix-api-guard';
 import {
   methodologyEntryToInsert,
   methodologyTaskRowToEntry,
+  validateExerciseVideoUrl,
   type MethodologyLibraryEntryInput,
 } from '@/lib/methodology-library-db';
 
@@ -85,6 +86,14 @@ export async function POST(req: Request) {
 
   if (!body.title?.trim() || !body.stage?.trim()) {
     return NextResponse.json({ error: 'title y stage requeridos' }, { status: 400 });
+  }
+
+  if (body.videoUrl !== undefined) {
+    try {
+      body.videoUrl = validateExerciseVideoUrl(body.videoUrl) ?? undefined;
+    } catch (e: any) {
+      return NextResponse.json({ error: String(e?.message ?? 'videoUrl inválida') }, { status: 400 });
+    }
   }
 
   const isSuper = gate.role === 'superadmin';

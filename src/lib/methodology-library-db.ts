@@ -10,6 +10,8 @@ export type MethodologyLibraryEntryInput = {
   dimension: string;
   title: string;
   authorName: string;
+  /** URL opcional: YouTube o Vimeo (1 vídeo por ejercicio). */
+  videoUrl?: string;
   didacticStrategy?: string;
   objectives?: string;
   conditionalContent?: string;
@@ -45,6 +47,7 @@ export function methodologyTaskRowToEntry(row: MethodologyLibraryTaskRow) {
     dimension: row.dimension,
     title: row.title,
     authorName: row.author_name ?? '',
+    videoUrl: (row as any).video_url ?? undefined,
     didacticStrategy: row.didactic_strategy ?? undefined,
     objectives: row.objectives ?? undefined,
     conditionalContent: row.conditional_content ?? undefined,
@@ -86,6 +89,7 @@ export function methodologyEntryToInsert(
     dimension: input.dimension,
     title: input.title,
     author_name: input.authorName,
+    video_url: input.videoUrl ?? null,
     didactic_strategy: input.didacticStrategy ?? null,
     objectives: input.objectives ?? null,
     conditional_content: input.conditionalContent ?? null,
@@ -123,6 +127,7 @@ export function methodologyEntryToUpdate(
   if (input.dimension !== undefined) u.dimension = input.dimension;
   if (input.title !== undefined) u.title = input.title;
   if (input.authorName !== undefined) u.author_name = input.authorName;
+  if (input.videoUrl !== undefined) u.video_url = input.videoUrl;
   if (input.didacticStrategy !== undefined) u.didactic_strategy = input.didacticStrategy;
   if (input.objectives !== undefined) u.objectives = input.objectives;
   if (input.conditionalContent !== undefined) u.conditional_content = input.conditionalContent;
@@ -147,4 +152,45 @@ export function methodologyEntryToUpdate(
   }
   if (input.boardCoordSpace !== undefined) u.board_coord_space = input.boardCoordSpace;
   return u;
+}
+
+function normalizeUrlLike(input: unknown): string | null {
+  if (typeof input !== "string") return null;
+  const v = input.trim();
+  return v.length ? v : null;
+}
+
+/**
+ * Valida URL opcional de vídeo (1 por ejercicio).
+ * Permitimos YouTube y Vimeo. Devuelve `null` si viene vacío/undefined.
+ */
+export function validateExerciseVideoUrl(input: unknown): string | null {
+  const raw = normalizeUrlLike(input);
+  if (!raw) return null;
+
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    throw new Error("videoUrl inválida: no es una URL válida");
+  }
+
+  const host = url.hostname.toLowerCase();
+  const ok =
+    host === "youtube.com" ||
+    host.endsWith(".youtube.com") ||
+    host === "youtu.be" ||
+    host === "vimeo.com" ||
+    host.endsWith(".vimeo.com");
+
+  if (!ok) {
+    throw new Error("videoUrl inválida: solo se permite YouTube o Vimeo");
+  }
+
+  if (url.protocol !== "https:" && url.protocol !== "http:") {
+    throw new Error("videoUrl inválida: protocolo no permitido");
+  }
+
+  // Normalizamos a string.
+  return url.toString();
 }

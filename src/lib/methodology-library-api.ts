@@ -5,6 +5,21 @@ const headers = (accessToken: string) => ({
   'Content-Type': 'application/json',
 });
 
+export function isAllowedExerciseVideoUrl(raw: string | null | undefined): boolean {
+  const url = String(raw ?? "").trim();
+  if (!url) return true; // opcional
+  try {
+    const u = new URL(url);
+    const host = u.hostname.replace(/^www\./i, "").toLowerCase();
+    if (host === "youtu.be") return true;
+    if (host === "youtube.com" || host.endsWith(".youtube.com")) return true;
+    if (host === "vimeo.com" || host.endsWith(".vimeo.com")) return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 export async function fetchMethodologyLibraryTasks(accessToken: string, status?: 'Draft' | 'Official') {
   const q = status ? `?status=${encodeURIComponent(status)}` : '';
   const res = await fetch(`/api/club/methodology-library${q}`, {
@@ -20,6 +35,9 @@ export async function createMethodologyLibraryTask(
   accessToken: string,
   body: MethodologyLibraryEntryInput,
 ) {
+  if (!isAllowedExerciseVideoUrl((body as any)?.videoUrl)) {
+    throw new Error("videoUrl inválida (solo YouTube/Vimeo)");
+  }
   const res = await fetch('/api/club/methodology-library', {
     method: 'POST',
     headers: headers(accessToken),
@@ -35,6 +53,9 @@ export async function patchMethodologyLibraryTask(
   id: string,
   body: Partial<MethodologyLibraryEntryInput>,
 ) {
+  if (!isAllowedExerciseVideoUrl((body as any)?.videoUrl)) {
+    throw new Error("videoUrl inválida (solo YouTube/Vimeo)");
+  }
   const res = await fetch(`/api/club/methodology-library/${encodeURIComponent(id)}`, {
     method: 'PATCH',
     headers: headers(accessToken),

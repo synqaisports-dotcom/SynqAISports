@@ -7,6 +7,7 @@ import {
   methodologyEntryToUpdate,
   methodologyTaskRowToEntry,
   isUuid,
+  validateExerciseVideoUrl,
   type MethodologyLibraryEntryInput,
 } from '@/lib/methodology-library-db';
 
@@ -18,6 +19,22 @@ function clientForUser(token: string) {
     auth: { persistSession: false, autoRefreshToken: false },
     global: { headers: { Authorization: `Bearer ${token}` } },
   });
+}
+
+function isAllowedVideoUrl(input: string): boolean {
+  try {
+    const url = new URL(input);
+    const host = url.hostname.replace(/^www\./i, '').toLowerCase();
+    return (
+      host === 'youtube.com' ||
+      host === 'm.youtube.com' ||
+      host === 'youtu.be' ||
+      host === 'vimeo.com' ||
+      host === 'player.vimeo.com'
+    );
+  } catch {
+    return false;
+  }
 }
 
 /** PATCH — actualiza tarea. DELETE — borra (RLS). */
@@ -46,6 +63,17 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     body = (await req.json()) as Partial<MethodologyLibraryEntryInput>;
   } catch {
     return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
+  }
+
+  if (body.videoUrl !== undefined) {
+    try {
+      validateExerciseVideoUrl(body.videoUrl);
+    } catch (e: any) {
+      return NextResponse.json(
+        { error: String(e?.message ?? 'videoUrl inválida') },
+        { status: 400 },
+      );
+    }
   }
 
   const patch = methodologyEntryToUpdate(body);

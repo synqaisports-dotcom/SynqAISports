@@ -131,6 +131,7 @@ export interface MethodologyLibraryTaskRow {
   instructions: string | null;
   equipment: string | null;
   photo_url: string | null;
+  video_url: string | null;
   elements: unknown;
   board: Record<string, unknown>;
   board_coord_space: string;
@@ -160,6 +161,7 @@ export type MethodologyLibraryTaskInsert = {
   instructions?: string | null;
   equipment?: string | null;
   photo_url?: string | null;
+  video_url?: string | null;
   elements?: unknown;
   board?: Record<string, unknown>;
   board_coord_space?: string;
@@ -187,6 +189,7 @@ export type MethodologyLibraryTaskUpdateShape = {
   instructions: string | null;
   equipment: string | null;
   photo_url: string | null;
+  video_url: string | null;
   elements: unknown;
   board: Record<string, unknown>;
   board_coord_space: string;
