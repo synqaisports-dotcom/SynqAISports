@@ -452,10 +452,31 @@ export default function CoachSessionsPage() {
     return () => window.removeEventListener("storage", onStorage);
   }, [clubScopeId, canUseSupabase, loadSnapshot]);
 
+  const activePlannerTeamId = useMemo(() => {
+    if (!myTeam) return null;
+    const myName = myTeam.name.trim().toUpperCase();
+    const exact = plannerTeams.find((t) => t.name.trim().toUpperCase() === myName);
+    if (exact) return exact.id;
+    const parsedCurrent = parseTeamName(myTeam.name);
+    const byCategory = plannerTeams.find((t) => {
+      const parsed = parseTeamName(t.name);
+      return (
+        parsed.category.trim().toUpperCase() === parsedCurrent.category.trim().toUpperCase() &&
+        (!parsedCurrent.teamSuffix || parsed.teamSuffix === parsedCurrent.teamSuffix)
+      );
+    });
+    return byCategory?.id ?? null;
+  }, [myTeam, plannerTeams]);
+
+  // Importante: el "teamId operativo" debe coincidir con el que usa Metodología/Planner (Academy-derived),
+  // para que asistencia/solicitudes/asignaciones se crucen correctamente entre pantallas.
+  const operativaTeamId = useMemo(() => {
+    return activePlannerTeamId ?? myTeam?.id ?? "team_unknown";
+  }, [activePlannerTeamId, myTeam?.id]);
+
   const currentAttendanceKey = useMemo(() => {
-    const teamKey = myTeam?.id ?? "team_unknown";
-    return `${teamKey}_${selectedMCC}_S${activeSessionInWeek}`;
-  }, [myTeam, selectedMCC, activeSessionInWeek]);
+    return `${operativaTeamId}_${selectedMCC}_S${activeSessionInWeek}`;
+  }, [operativaTeamId, selectedMCC, activeSessionInWeek]);
 
   // Inicializar asistencia por defecto
   useEffect(() => {
@@ -484,10 +505,10 @@ export default function CoachSessionsPage() {
       ...prev,
       [currentAttendanceKey]: { ...current, [playerId]: nextStatus }
     }));
-    if (canUseSupabase && myTeam?.id && selectedMCC) {
+    if (canUseSupabase && operativaTeamId && selectedMCC) {
       void upsertOperativaAttendance({
         clubId: clubScopeId,
-        teamId: myTeam.id,
+        teamId: operativaTeamId,
         mcc: selectedMCC,
         session: activeSessionInWeek,
         playerId,
@@ -606,22 +627,6 @@ export default function CoachSessionsPage() {
   const currentSessionAttendance = useMemo(() => {
     return attendance[currentAttendanceKey] || {};
   }, [attendance, currentAttendanceKey]);
-
-  const activePlannerTeamId = useMemo(() => {
-    if (!myTeam) return null;
-    const myName = myTeam.name.trim().toUpperCase();
-    const exact = plannerTeams.find((t) => t.name.trim().toUpperCase() === myName);
-    if (exact) return exact.id;
-    const parsedCurrent = parseTeamName(myTeam.name);
-    const byCategory = plannerTeams.find((t) => {
-      const parsed = parseTeamName(t.name);
-      return (
-        parsed.category.trim().toUpperCase() === parsedCurrent.category.trim().toUpperCase() &&
-        (!parsedCurrent.teamSuffix || parsed.teamSuffix === parsedCurrent.teamSuffix)
-      );
-    });
-    return byCategory?.id ?? null;
-  }, [myTeam, plannerTeams]);
 
   const visibleCoachRequests = useMemo(() => {
     const teamId = activePlannerTeamId ?? myTeam?.id;
