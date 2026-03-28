@@ -35,9 +35,7 @@ import {
   SheetHeader, 
   SheetTitle, 
   SheetDescription, 
-  SheetFooter, 
-  SheetClose,
-  SheetTrigger
+  SheetClose
 } from "@/components/ui/sheet";
 import {
   Select,
@@ -653,8 +651,8 @@ export default function StaffManagementPage() {
       </Card>
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-xl border-l border-primary/20 text-white w-full sm:max-w-lg shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
-          <div className="p-10 border-b border-white/5 bg-black/40">
+        <SheetContent side="right" className="z-[70] bg-background/95 bg-grid-pattern backdrop-blur-xl border-l border-primary/20 text-white w-full sm:max-w-lg shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+          <div className="sticky top-0 z-10 p-10 border-b border-white/5 bg-background/80 backdrop-blur-xl">
             <SheetHeader className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="h-2 w-2 rounded-full animate-pulse bg-primary" />
@@ -669,7 +667,7 @@ export default function StaffManagementPage() {
             </SheetHeader>
           </div>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-10">
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-10 bg-background/70">
             {!isFormReady ? (
               <div className="h-full flex flex-col items-center justify-center space-y-4 opacity-20">
                 <Loader2 className="h-8 w-8 animate-spin" />
@@ -772,7 +770,7 @@ export default function StaffManagementPage() {
                         )}>
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
+                        <SelectContent className="z-[120] bg-[#04070c] border-primary/20 rounded-2xl">
                           {roleSelectOptions.map((opt) => (
                             <SelectItem
                               key={opt.value}
@@ -829,23 +827,23 @@ export default function StaffManagementPage() {
                     }
                   </p>
                 </div>
+
+                <div className="pt-2 flex gap-4">
+                  <SheetClose asChild>
+                    <Button variant="ghost" className="flex-1 h-16 border font-black uppercase text-[10px] tracking-widest transition-all rounded-2xl active:scale-95 border-primary/20 text-primary/60 hover:bg-primary/10">
+                      CANCELAR
+                    </Button>
+                  </SheetClose>
+                  <Button
+                    onClick={handleSaveStaff}
+                    disabled={loading || !isFormReady}
+                    className="flex-[2] h-16 text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] transition-all border-none active:scale-95 bg-primary"
+                  >
+                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (editingId ? "SINCRONIZAR_PERFIL" : "VINCULAR_TRABAJADOR")}
+                  </Button>
+                </div>
               </form>
             )}
-          </div>
-
-          <div className="p-10 bg-black/40 border-t border-white/5 flex gap-4">
-            <SheetClose asChild>
-              <Button variant="ghost" className="flex-1 h-16 border font-black uppercase text-[10px] tracking-widest transition-all rounded-2xl active:scale-95 border-primary/20 text-primary/60 hover:bg-primary/10">
-                CANCELAR
-              </Button>
-            </SheetClose>
-            <Button 
-              onClick={handleSaveStaff}
-              disabled={loading || !isFormReady}
-              className="flex-[2] h-16 text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] transition-all border-none active:scale-95 bg-primary"
-            >
-              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (editingId ? "SINCRONIZAR_PERFIL" : "VINCULAR_TRABAJADOR")}
-            </Button>
           </div>
         </SheetContent>
       </Sheet>

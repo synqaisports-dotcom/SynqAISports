@@ -25,7 +25,8 @@ import {
   Trophy, 
   LayoutGrid, 
   Zap,
-  Layers
+  Layers,
+  Copy
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -302,6 +303,32 @@ export default function FacilitiesManagementPage() {
     });
   };
 
+  const handleDuplicate = (facility: any) => {
+    if (!canEditFacilities) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes permiso de edición en Instalaciones.",
+      });
+      return;
+    }
+    const duplicated = {
+      ...facility,
+      id: `f${Date.now()}`,
+      name: `${facility.name} (COPIA)`,
+      nextMaintenance: "Próximamente",
+    };
+    setFacilities((prev) => {
+      const next = [duplicated, ...prev];
+      void persistFacilitiesHybrid(next as any);
+      return next;
+    });
+    toast({
+      title: "ACTIVO_DUPLICADO",
+      description: `Se creó una copia de ${facility.name}.`,
+    });
+  };
+
   const handleSaveFacility = (e: React.FormEvent) => {
     e.preventDefault();
     if (!canEditFacilities) {
@@ -484,6 +511,16 @@ export default function FacilitiesManagementPage() {
                 <CheckCircle2 className="h-3 w-3 text-primary/40" /> Sincronización Estable
               </span>
               <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 text-primary hover:bg-primary/10 border border-primary/10 transition-all rounded-xl active:scale-95"
+                  onClick={() => handleDuplicate(f)}
+                  disabled={!canEditFacilities}
+                  title="Duplicar Activo"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                </Button>
                 <Button 
                   variant="ghost" 
                   size="icon" 
