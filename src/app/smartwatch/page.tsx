@@ -84,13 +84,15 @@ function SmartwatchContent() {
 
   const continuityScope = React.useMemo(() => {
     const mode = searchParamsHook.get("mode") || "";
-    if (mode !== "continuity") return null;
+    if (mode !== "match" && mode !== "training" && mode !== "continuity") return null;
     const teamId = searchParamsHook.get("team") || "";
     const mcc = searchParamsHook.get("mcc") || "";
     const session = searchParamsHook.get("session") || "";
     const clubId = profile?.clubId || "";
     if (!clubId || !teamId || !mcc || !session) return null;
-    return { clubId, teamId, mcc, session, mode: "continuity" as const };
+    // `mode` aquí actúa como "contexto" (partido vs entreno). Para compat, aceptamos legacy `continuity`.
+    const ctx: "match" | "training" = mode === "training" ? "training" : "match";
+    return { clubId, teamId, mcc, session, mode: ctx };
   }, [searchParamsHook, profile?.clubId]);
 
   const timerKey = React.useMemo(

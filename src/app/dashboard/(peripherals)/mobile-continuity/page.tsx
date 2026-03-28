@@ -16,6 +16,7 @@ import {
   QrCode,
   RefreshCcw,
   Share2,
+  Dumbbell,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -145,6 +146,7 @@ export default function MobileContinuityPage() {
   const { profile, session } = useAuth();
   const clubScopeId = profile?.clubId ?? "global-hq";
   const continuityEnv = profile?.clubId && profile.clubId !== "global-hq" ? "elite" : "sandbox";
+  const [mode, setMode] = useState<"match" | "training">("match");
   const [score, setScore] = useState({ home: 0, guest: 0 });
   const [remainingSec, setRemainingSec] = useState(45 * 60);
   const [running, setRunning] = useState(false);
@@ -172,9 +174,9 @@ export default function MobileContinuityPage() {
       teamId: selectedTeamId || "team_unknown",
       mcc: selectedMcc,
       session: selectedSession,
-      mode: "continuity",
+      mode,
     }),
-    [clubScopeId, selectedTeamId, selectedMcc, selectedSession],
+    [clubScopeId, selectedTeamId, selectedMcc, selectedSession, mode],
   );
 
   const timerSyncKey = useMemo(() => matchTimerSyncKey(continuityScope), [continuityScope]);
@@ -182,6 +184,8 @@ export default function MobileContinuityPage() {
 
   const watchPairingCode = useMemo(() => {
     if (typeof window === "undefined") return "";
+    // Mantener “continuity” como bucket de pairing (misma app smartwatch), pero el enlace lleva `mode=match|training`
+    // y las claves de sincronización ya están scopeadas por `mode`.
     return ensureWatchPairingCode({ clubId: clubScopeId, mode: "continuity" });
   }, [clubScopeId]);
 
@@ -190,13 +194,13 @@ export default function MobileContinuityPage() {
     const base = `${window.location.origin}/smartwatch`;
     const params = new URLSearchParams({
       code: watchPairingCode || "",
-      mode: "continuity",
+      mode,
       team: selectedTeamId || "team_unknown",
       mcc: selectedMcc,
       session: selectedSession,
     });
     return `${base}?${params.toString()}`;
-  }, [watchPairingCode, selectedTeamId, selectedMcc, selectedSession]);
+  }, [watchPairingCode, selectedTeamId, selectedMcc, selectedSession, mode]);
 
   const copyText = async (label: string, value: string) => {
     const text = String(value || "").trim();
@@ -526,9 +530,31 @@ export default function MobileContinuityPage() {
             {continuityEnv === "elite" ? "Elite/Pro" : "Sandbox"}
           </Badge>
         </div>
-        <h1 className="text-3xl font-black text-white uppercase italic tracking-tighter">Consola Móvil de Respaldo</h1>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <h1 className="text-3xl font-black text-white uppercase italic tracking-tighter">Consola Móvil de Respaldo</h1>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant={mode === "match" ? "default" : "outline"}
+              className={mode === "match" ? "h-9 bg-primary text-black" : "h-9 border-white/10"}
+              onClick={() => setMode("match")}
+            >
+              <Timer className="h-4 w-4 mr-2" /> Partido
+            </Button>
+            <Button
+              type="button"
+              variant={mode === "training" ? "default" : "outline"}
+              className={mode === "training" ? "h-9 bg-emerald-500 text-black" : "h-9 border-white/10"}
+              onClick={() => setMode("training")}
+            >
+              <Dumbbell className="h-4 w-4 mr-2" /> Entreno
+            </Button>
+          </div>
+        </div>
         <p className="text-[10px] uppercase text-white/40 font-bold">
-          Coexiste con tablet y smartwatch. Si no hay tablet, el móvil mantiene la operativa.
+          {mode === "match"
+            ? "Modo partido: marcador, cronómetro, incidencias y vínculo con reloj."
+            : "Modo entreno: asistencia e incidencias de sesión (separado del partido)."}
         </p>
         <div className="flex items-center gap-2 pt-2">
           <Switch checked={cloudSyncEnabled} onCheckedChange={setCloudSyncEnabled} />
@@ -586,13 +612,21 @@ export default function MobileContinuityPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className="glass-panel border-primary/20 bg-primary/5 lg:col-span-2">
+        <Card className={cn("glass-panel lg:col-span-2", mode === "match" ? "border-primary/20 bg-primary/5" : "border-emerald-500/20 bg-emerald-500/5")}>
           <CardHeader>
             <CardTitle className="text-white uppercase text-sm tracking-widest flex items-center gap-2">
-              <Timer className="h-4 w-4 text-primary" /> Partido en vivo
+              {mode === "match" ? (
+                <>
+                  <Timer className="h-4 w-4 text-primary" /> Partido en vivo
+                </>
+              ) : (
+                <>
+                  <Dumbbell className="h-4 w-4 text-emerald-400" /> Entrenamiento
+                </>
+              )}
             </CardTitle>
             <CardDescription className="text-[10px] uppercase text-white/40">
-              Mando rápido para cronómetro y marcador
+              {mode === "match" ? "Mando rápido para cronómetro y marcador" : "Contexto de sesión (asistencia e incidencias)"}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -613,10 +647,12 @@ export default function MobileContinuityPage() {
                 </Select>
               </div>
               <div className="space-y-1">
-                <Label className="text-[10px] uppercase text-white/50">MCC</Label>
+                <Label className="text-[10px] uppercase text-white/50">
+                  {mode === "match" ? "Jornada/Clave" : "Semana (MCC)"}
+                </Label>
                 <Select value={selectedMcc} onValueChange={setSelectedMcc}>
                   <SelectTrigger className="h-9 border-white/10">
-                    <SelectValue placeholder="MCC" />
+                    <SelectValue placeholder={mode === "match" ? "Clave" : "MCC"} />
                   </SelectTrigger>
                   <SelectContent>
                     {mccOptions.map((mcc) => (
@@ -628,10 +664,12 @@ export default function MobileContinuityPage() {
                 </Select>
               </div>
               <div className="space-y-1">
-                <Label className="text-[10px] uppercase text-white/50">Sesión</Label>
+                <Label className="text-[10px] uppercase text-white/50">
+                  {mode === "match" ? "Bloque" : "Sesión"}
+                </Label>
                 <Select value={selectedSession} onValueChange={setSelectedSession}>
                   <SelectTrigger className="h-9 border-white/10">
-                    <SelectValue placeholder="Sesión" />
+                    <SelectValue placeholder={mode === "match" ? "Bloque" : "Sesión"} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="S1">S1</SelectItem>
@@ -642,38 +680,56 @@ export default function MobileContinuityPage() {
                 </Select>
               </div>
             </div>
-            <div className="flex items-center justify-center gap-3">
-              <Badge variant="outline" className="text-lg font-black px-4 py-2 border-primary/20 text-primary">
-                {formatClock(remainingSec)}
-              </Badge>
-              <Button variant="outline" onClick={toggleTimer} className="border-white/10">
-                {running ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-              </Button>
-              <Button variant="outline" onClick={resetTimer} className="border-white/10">
-                <RotateCcw className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <ScorePad
-                title="Local"
-                value={score.home}
-                onInc={() => changeScore(1, 0)}
-                onDec={() => changeScore(-1, 0)}
-              />
-              <ScorePad
-                title="Visitante"
-                value={score.guest}
-                onInc={() => changeScore(0, 1)}
-                onDec={() => changeScore(0, -1)}
-              />
-            </div>
+            {mode === "match" ? (
+              <>
+                <div className="flex items-center justify-center gap-3">
+                  <Badge variant="outline" className="text-lg font-black px-4 py-2 border-primary/20 text-primary">
+                    {formatClock(remainingSec)}
+                  </Badge>
+                  <Button variant="outline" onClick={toggleTimer} className="border-white/10">
+                    {running ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                  </Button>
+                  <Button variant="outline" onClick={resetTimer} className="border-white/10">
+                    <RotateCcw className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <ScorePad
+                    title="Local"
+                    value={score.home}
+                    onInc={() => changeScore(1, 0)}
+                    onDec={() => changeScore(-1, 0)}
+                  />
+                  <ScorePad
+                    title="Visitante"
+                    value={score.guest}
+                    onInc={() => changeScore(0, 1)}
+                    onDec={() => changeScore(0, -1)}
+                  />
+                </div>
+              </>
+            ) : (
+              <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+                <p className="text-[10px] uppercase text-white/60 font-black tracking-widest">
+                  Entreno: aquí el foco es asistencia + incidencias (sin marcador).
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        <Card className="glass-panel border-amber-500/20 bg-amber-500/5">
+        <Card className={cn("glass-panel", mode === "match" ? "border-amber-500/20 bg-amber-500/5" : "border-emerald-500/20 bg-emerald-500/5")}>
           <CardHeader>
             <CardTitle className="text-white uppercase text-sm tracking-widest flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-amber-400" /> Incidencias
+              {mode === "match" ? (
+                <>
+                  <AlertTriangle className="h-4 w-4 text-amber-400" /> Incidencias (partido)
+                </>
+              ) : (
+                <>
+                  <AlertTriangle className="h-4 w-4 text-emerald-400" /> Incidencias (entreno)
+                </>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -738,47 +794,49 @@ export default function MobileContinuityPage() {
         </CardContent>
       </Card>
 
-      <Card className="glass-panel border-emerald-500/20 bg-emerald-500/5">
-        <CardHeader>
-          <CardTitle className="text-white uppercase text-sm tracking-widest">Pasar lista (móvil)</CardTitle>
-          <CardDescription className="text-[10px] uppercase text-white/40">
-            Offline por defecto. Se guarda en local y solo sincroniza cloud si activas el switch.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {roster.length === 0 ? (
-            <p className="text-[10px] uppercase text-white/40">Sin jugadores para el equipo seleccionado.</p>
-          ) : (
-            roster.map((p) => {
-              const mark = attendance[p.id];
-              return (
-                <div key={p.id} className="rounded-xl border border-white/10 bg-white/[0.02] p-2 flex items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="text-xs font-black text-white truncate">#{p.number} {p.name}</p>
+      {mode === "training" && (
+        <Card className="glass-panel border-emerald-500/20 bg-emerald-500/5">
+          <CardHeader>
+            <CardTitle className="text-white uppercase text-sm tracking-widest">Pasar lista (móvil)</CardTitle>
+            <CardDescription className="text-[10px] uppercase text-white/40">
+              Offline por defecto. Se guarda en local y solo sincroniza cloud si activas el switch.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {roster.length === 0 ? (
+              <p className="text-[10px] uppercase text-white/40">Sin jugadores para el equipo seleccionado.</p>
+            ) : (
+              roster.map((p) => {
+                const mark = attendance[p.id];
+                return (
+                  <div key={p.id} className="rounded-xl border border-white/10 bg-white/[0.02] p-2 flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-xs font-black text-white truncate">#{p.number} {p.name}</p>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className={cn("h-8 border-white/10 text-[10px] uppercase", mark === "absent" && "border-red-500/40 text-red-300")}
+                        onClick={() => void setPlayerAttendance(p.id, "absent")}
+                      >
+                        Aus
+                      </Button>
+                      <Button
+                        size="sm"
+                        className={cn("h-8 text-[10px] uppercase", mark === "present" ? "bg-emerald-500 text-black" : "bg-primary text-black")}
+                        onClick={() => void setPlayerAttendance(p.id, "present")}
+                      >
+                        OK
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex gap-1">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className={cn("h-8 border-white/10 text-[10px] uppercase", mark === "absent" && "border-red-500/40 text-red-300")}
-                      onClick={() => void setPlayerAttendance(p.id, "absent")}
-                    >
-                      Aus
-                    </Button>
-                    <Button
-                      size="sm"
-                      className={cn("h-8 text-[10px] uppercase", mark === "present" ? "bg-emerald-500 text-black" : "bg-primary text-black")}
-                      onClick={() => void setPlayerAttendance(p.id, "present")}
-                    >
-                      OK
-                    </Button>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </CardContent>
-      </Card>
+                );
+              })
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="glass-panel border-white/10 bg-black/20">
         <CardHeader>
