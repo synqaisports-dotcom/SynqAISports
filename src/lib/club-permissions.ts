@@ -11,6 +11,7 @@ export const CLUB_MODULE_IDS = [
   "academy",
   "players",
   "facilities",
+  "peripherals",
   "board",
   "exercises",
   "planner",
@@ -24,6 +25,7 @@ export const CLUB_MODULE_LABELS: Record<ClubModuleId, string> = {
   academy: "Gestión de Cantera",
   players: "Gestión de Jugadores",
   facilities: "Instalaciones",
+  peripherals: "Periféricos (Watch/Continuidad)",
   board: "Pizarras tácticas",
   exercises: "Biblioteca & ejercicios",
   planner: "Planner & operativa",
@@ -38,6 +40,7 @@ export const CLUB_MODULE_DESCRIPTIONS: Record<ClubModuleId, string> = {
   academy: "/dashboard/academy — Cantera, etapas y estructura.",
   players: "/dashboard/players — Plantilla y fichas.",
   facilities: "/dashboard/instalaciones — Espacios e instalaciones.",
+  peripherals: "/dashboard/watch-config y /dashboard/mobile-continuity — Reloj, continuidad y enlace de dispositivos.",
   board: "/dashboard/methodology/board-* y /board — Tableros partido, promo y ejercicios.",
   exercises:
     "/methodology/exercise-library, learning-items, /coach/library — Tareas maestras y biblioteca.",
@@ -64,7 +67,7 @@ export const CLUB_MODULE_UI_SECTIONS: {
     id: "methodology",
     title: "Metodología, pizarra y operativa",
     subtitle: "Biblioteca de ejercicios, planner neural, pizarras y flujo móvil.",
-    modules: ["exercises", "planner", "board"],
+    modules: ["peripherals", "exercises", "planner", "board"],
   },
 ];
 
@@ -120,8 +123,8 @@ const ROUTE_MODULE_PREFIXES_RAW: { prefix: string; module: ClubModuleId }[] = [
   { prefix: "/dashboard/coach/library", module: "exercises" },
   { prefix: "/dashboard/coach/planner", module: "planner" },
   { prefix: "/dashboard/coach/exercises", module: "exercises" },
-  { prefix: "/dashboard/mobile-continuity", module: "planner" },
-  { prefix: "/dashboard/watch-config", module: "planner" },
+  { prefix: "/dashboard/mobile-continuity", module: "peripherals" },
+  { prefix: "/dashboard/watch-config", module: "peripherals" },
   { prefix: "/dashboard/instalaciones", module: "facilities" },
   { prefix: "/dashboard/sessions", module: "planner" },
   { prefix: "/dashboard/academy", module: "academy" },

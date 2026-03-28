@@ -311,6 +311,59 @@ Este documento centraliza el histórico de auditorías técnicas del producto (b
 5. Sustituir `staff` mock por fuente real del club.
 6. Unificar modelo de instalaciones (una sola fuente para instalaciones + almacén).
 
+---
+
+## Auditoría #004 - 2026-03-28
+
+### Alcance
+
+- **Modo Continuidad** (`/dashboard/mobile-continuity`) y **Config. Watch** (`/dashboard/watch-config`).
+- Emparejado `/smartwatch` y pizarra `/board/match` (solo pairing; timer/score scoping solo en continuidad).
+- Matriz de permisos (módulos) + guardas de ruta.
+- Preparación PWA (service worker mínimo).
+
+### Hallazgos registrados
+
+1. **Cronómetro/marcador con claves globales (riesgo de mezcla entre contextos)**
+   - Severidad: 🟠 Alta.
+   - Estado: `cerrado` (para Continuidad).
+   - Referencias:
+     - `src/lib/match-timer-sync.ts`, `src/lib/match-score-sync.ts`
+     - `src/app/dashboard/mobile-continuity/page.tsx`, `src/app/smartwatch/page.tsx`
+   - Nota: se añadió scoping por `clubId+teamId+mcc+session+mode` cuando `mode=continuity`.
+
+2. **Pairing del Watch global (riesgo de colisión entre clubes / sandbox)**
+   - Severidad: 🟠 Alta.
+   - Estado: `cerrado`.
+   - Referencias:
+     - `src/lib/watch-pairing.ts`
+     - `src/app/dashboard/watch-config/page.tsx`, `src/app/dashboard/promo/watch-config/page.tsx`
+     - `src/app/smartwatch/page.tsx`, `src/app/board/match/page.tsx`
+   - Nota: scoping por `clubId+mode` con migración best-effort desde legacy.
+
+3. **Guard de rutas no fail-closed cuando falta matriz**
+   - Severidad: 🔴 Crítica.
+   - Estado: `cerrado`.
+   - Referencia: `src/components/dashboard/ClubRouteGuard.tsx`.
+
+4. **Módulo de permisos demasiado amplio (Watch/Continuidad colgado de planner)**
+   - Severidad: 🟡 Media.
+   - Estado: `cerrado`.
+   - Referencias:
+     - `src/lib/club-permissions.ts`
+     - `src/components/dashboard/Sidebar.tsx`
+     - `src/app/dashboard/admin/page.tsx` (iconos de módulos)
+   - Nota: se creó el módulo **`peripherals`** y se unificaron ahí `watch-config` y `mobile-continuity`.
+
+5. **Service Worker registrado pero ausente**
+   - Severidad: 🟡 Media (degradación PWA/offline; no rompe core web).
+   - Estado: `cerrado`.
+   - Referencia: `src/app/layout.tsx` (registro) + `public/sw.js` (nuevo).
+
+### Decisiones explícitas
+
+- **DEC-004:** Unificar Watch + Continuidad como módulo `peripherals` para permisos finos y evolución hacia micro‑app instalable (PWA) sin separar repositorio.
+
 ### Notas para ejecución
 
 - El nodo ya tiene base sólida de seguridad por matriz/rutas/API.

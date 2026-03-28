@@ -20,6 +20,7 @@ import {
   ChevronRight,
   Info,
   Library,
+  Smartphone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -52,6 +53,7 @@ const MODULE_ICONS: Record<ClubModuleId, typeof Building> = {
   academy: Sprout,
   players: Users,
   facilities: MapPin,
+  peripherals: Smartphone,
   board: Monitor,
   exercises: Dumbbell,
   planner: Activity,
