@@ -52,21 +52,21 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { QRCodeCanvas } from "qrcode.react";
 import { BoardPerformanceSettingsCard } from "@/components/board/BoardPerformanceSettingsCard";
+import { useAuth } from "@/lib/auth-context";
+import { ensureWatchPairingCode } from "@/lib/watch-pairing";
 
 export default function WatchConfigPage() {
   const { toast } = useToast();
+  const { profile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [operationalAlertsActive, setOperationalAlertsActive] = useState(true);
   const [pairingCode, setPairingCode] = useState("");
 
   useEffect(() => {
-    let code = localStorage.getItem("synq_watch_pairing_code");
-    if (!code) {
-      code = Math.floor(100000 + Math.random() * 900000).toString();
-      localStorage.setItem("synq_watch_pairing_code", code);
-    }
+    const clubId = profile?.clubId || "global-hq";
+    const code = ensureWatchPairingCode({ clubId, mode: "elite" });
     setPairingCode(code);
-  }, []);
+  }, [profile?.clubId]);
 
   // ESTADO DE CONFIGURACIÓN DE ALERTAS
   const [config, setConfig] = useState({

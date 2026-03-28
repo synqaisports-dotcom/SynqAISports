@@ -61,6 +61,7 @@ import {
   loadLocalLineupForMatchBoard,
   type MatchBoardSource,
 } from "@/lib/match-board-bootstrap";
+import { ensureWatchPairingCode } from "@/lib/watch-pairing";
 import {
   MATCH_TIMER_SYNC_KEY,
   readMatchTimerSync,
@@ -295,12 +296,7 @@ function MatchBoardInner() {
   }, []);
 
   useEffect(() => {
-    let code = localStorage.getItem("synq_watch_pairing_code");
-    if (!code) {
-      code = Math.floor(100000 + Math.random() * 900000).toString();
-      localStorage.setItem("synq_watch_pairing_code", code);
-    }
-    setPairingCode(code);
+    setPairingCode(ensureWatchPairingCode(null));
   }, []);
 
   useEffect(() => {

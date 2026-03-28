@@ -12,6 +12,33 @@ export const MATCH_TIMER_SYNC_KEY = "synq_match_timer_v1";
  */
 export const MATCH_TIMER_PRESET_MINUTES_KEY = "synq_match_timer_preset_minutes_v1";
 
+export type MatchTimerSyncScope = {
+  clubId: string;
+  teamId: string;
+  mcc: string;
+  session: string;
+  mode: string;
+};
+
+function safeKeyPart(v: string): string {
+  return String(v || "")
+    .trim()
+    .slice(0, 120)
+    .replace(/[^a-zA-Z0-9._-]/g, "_");
+}
+
+export function matchTimerSyncKey(scope?: Partial<MatchTimerSyncScope> | null): string {
+  if (!scope?.clubId || !scope?.teamId || !scope?.mcc || !scope?.session || !scope?.mode) return MATCH_TIMER_SYNC_KEY;
+  return [
+    MATCH_TIMER_SYNC_KEY,
+    safeKeyPart(scope.clubId),
+    safeKeyPart(scope.teamId),
+    safeKeyPart(scope.mcc),
+    safeKeyPart(scope.session),
+    safeKeyPart(scope.mode),
+  ].join("__");
+}
+
 export function readMatchTimerPresetMinutes(defaultMinutes = 45): number {
   if (typeof window === "undefined") return defaultMinutes;
   try {
@@ -39,17 +66,17 @@ export type MatchTimerSyncPayload = {
   origin?: "board" | "watch";
 };
 
-export function writeMatchTimerSync(payload: MatchTimerSyncPayload) {
+export function writeMatchTimerSync(payload: MatchTimerSyncPayload, key: string = MATCH_TIMER_SYNC_KEY) {
   try {
-    localStorage.setItem(MATCH_TIMER_SYNC_KEY, JSON.stringify(payload));
+    localStorage.setItem(key, JSON.stringify(payload));
   } catch {
     /* noop */
   }
 }
 
-export function readMatchTimerSync(): MatchTimerSyncPayload | null {
+export function readMatchTimerSync(key: string = MATCH_TIMER_SYNC_KEY): MatchTimerSyncPayload | null {
   try {
-    const s = localStorage.getItem(MATCH_TIMER_SYNC_KEY);
+    const s = localStorage.getItem(key);
     if (!s) return null;
     return JSON.parse(s) as MatchTimerSyncPayload;
   } catch {

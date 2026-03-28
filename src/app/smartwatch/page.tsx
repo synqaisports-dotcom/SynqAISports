@@ -29,6 +29,7 @@ import { useAuth } from "@/lib/auth-context";
 import { synqSync } from "@/lib/sync-service";
 import {
   MATCH_TIMER_SYNC_KEY,
+  matchTimerSyncKey,
   readMatchTimerSync,
   shouldApplyRemoteTimer,
   writeMatchTimerSync,
@@ -37,10 +38,18 @@ import {
 } from "@/lib/match-timer-sync";
 import {
   MATCH_SCORE_SYNC_KEY,
+  matchScoreSyncKey,
   readMatchScoreSync,
   shouldApplyRemoteScore,
   writeMatchScoreSync,
 } from "@/lib/match-score-sync";
+import {
+  ensureWatchPairingCode,
+  readWatchLinked,
+  writeWatchLinked,
+  writeWatchPairingCode,
+  type WatchPairingScope,
+} from "@/lib/watch-pairing";
 
 function SmartwatchContent() {
   const { loading, profile } = useAuth();
@@ -73,6 +82,33 @@ function SmartwatchContent() {
   const lastTimerSyncAppliedRef = useRef(0);
   const lastScoreSyncAppliedRef = useRef(0);
 
+  const continuityScope = React.useMemo(() => {
+    const mode = searchParamsHook.get("mode") || "";
+    if (mode !== "continuity") return null;
+    const teamId = searchParamsHook.get("team") || "";
+    const mcc = searchParamsHook.get("mcc") || "";
+    const session = searchParamsHook.get("session") || "";
+    const clubId = profile?.clubId || "";
+    if (!clubId || !teamId || !mcc || !session) return null;
+    return { clubId, teamId, mcc, session, mode: "continuity" as const };
+  }, [searchParamsHook, profile?.clubId]);
+
+  const timerKey = React.useMemo(
+    () => matchTimerSyncKey(continuityScope ?? undefined),
+    [continuityScope],
+  );
+  const scoreKey = React.useMemo(
+    () => matchScoreSyncKey(continuityScope ?? undefined),
+    [continuityScope],
+  );
+
+  const watchPairingScope = React.useMemo((): WatchPairingScope | null => {
+    if (continuityScope) return { clubId: continuityScope.clubId, mode: "continuity" };
+    const clubId = profile?.clubId;
+    if (clubId && clubId !== "global-hq") return { clubId, mode: "elite" };
+    return { clubId: "sandbox", mode: "sandbox" };
+  }, [continuityScope, profile?.clubId]);
+
   // DETECCIÓN DE AUTO-LINK (TOKEN EN URL)
   useEffect(() => {
     const codeInUrl = searchParamsHook.get("code") || searchParamsHook.get("token");
@@ -80,18 +116,19 @@ function SmartwatchContent() {
       setAutoLinking(true);
       setTimeout(() => {
         setIsLinked(true);
-        localStorage.setItem("synq_watch_linked", "true");
-        localStorage.setItem("synq_watch_pairing_code", codeInUrl);
+        writeWatchLinked(true, watchPairingScope);
+        writeWatchPairingCode(codeInUrl, watchPairingScope);
         setAutoLinking(false);
       }, 1500);
     }
-  }, [searchParamsHook, isLinked]);
+  }, [searchParamsHook, isLinked, watchPairingScope]);
 
   // CARGA DE ENTORNO Y ROSTER
   useEffect(() => {
-    const linked = localStorage.getItem("synq_watch_linked") === "true";
+    const linked = readWatchLinked(watchPairingScope);
     setIsLinked(linked);
     setIsOnline(navigator.onLine);
+    ensureWatchPairingCode(watchPairingScope);
 
     const handleConnectivity = () => {
       setIsOnline(navigator.onLine);
@@ -157,7 +194,7 @@ function SmartwatchContent() {
   }, []);
 
   useEffect(() => {
-    const p = readMatchTimerSync();
+    const p = readMatchTimerSync(timerKey);
     if (shouldApplyRemoteTimer(p, lastTimerSyncAppliedRef.current) && Date.now() - p.updatedAt < 3 * 60 * 60 * 1000) {
       lastTimerSyncAppliedRef.current = p.updatedAt;
       setTimeLeft(Math.max(0, p.remainingSec));
@@ -165,7 +202,7 @@ function SmartwatchContent() {
     }
 
     const onTimerStorage = (e: StorageEvent) => {
-      if (e.key !== MATCH_TIMER_SYNC_KEY || !e.newValue) return;
+      if (e.key !== timerKey || !e.newValue) return;
       try {
         const remote = JSON.parse(e.newValue) as MatchTimerSyncPayload;
         if (!shouldApplyRemoteTimer(remote, lastTimerSyncAppliedRef.current)) return;
@@ -179,17 +216,17 @@ function SmartwatchContent() {
     };
     window.addEventListener("storage", onTimerStorage);
     return () => window.removeEventListener("storage", onTimerStorage);
-  }, []);
+  }, [timerKey]);
 
   useEffect(() => {
-    const p = readMatchScoreSync();
+    const p = readMatchScoreSync(scoreKey);
     if (shouldApplyRemoteScore(p, lastScoreSyncAppliedRef.current) && Date.now() - p.updatedAt < 3 * 60 * 60 * 1000) {
       lastScoreSyncAppliedRef.current = p.updatedAt;
       setScore({ home: Math.max(0, p.home), guest: Math.max(0, p.guest) });
     }
 
     const onScoreStorage = (e: StorageEvent) => {
-      if (e.key !== MATCH_SCORE_SYNC_KEY || !e.newValue) return;
+      if (e.key !== scoreKey || !e.newValue) return;
       try {
         const remote = JSON.parse(e.newValue) as { home: number; guest: number; updatedAt: number };
         if (!shouldApplyRemoteScore(remote, lastScoreSyncAppliedRef.current)) return;
@@ -203,7 +240,7 @@ function SmartwatchContent() {
 
     window.addEventListener("storage", onScoreStorage);
     return () => window.removeEventListener("storage", onScoreStorage);
-  }, []);
+  }, [scoreKey]);
 
   const updateScore = (updater: (prev: { home: number; guest: number }) => { home: number; guest: number }) => {
     setScore((prev) => {
@@ -211,7 +248,7 @@ function SmartwatchContent() {
       const safe = { home: Math.max(0, next.home), guest: Math.max(0, next.guest) };
       const now = Date.now();
       lastScoreSyncAppliedRef.current = now;
-      writeMatchScoreSync({ ...safe, updatedAt: now, origin: "watch" });
+      writeMatchScoreSync({ ...safe, updatedAt: now, origin: "watch" }, scoreKey);
       return safe;
     });
   };
@@ -224,13 +261,13 @@ function SmartwatchContent() {
           const next = prev <= 0 ? 0 : prev - 1;
           const now = Date.now();
           lastTimerSyncAppliedRef.current = now;
-          writeMatchTimerSync({ remainingSec: next, running: true, updatedAt: now, origin: "watch" });
+          writeMatchTimerSync({ remainingSec: next, running: true, updatedAt: now, origin: "watch" }, timerKey);
           return next;
         });
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [isLinked, isRunning]);
+  }, [isLinked, isRunning, timerKey]);
 
   const triggerHaptic = (pattern: number | number[]) => {
     if (typeof window !== "undefined" && window.navigator.vibrate) {
@@ -239,11 +276,11 @@ function SmartwatchContent() {
   };
 
   const handlePairingSubmit = () => {
-    const masterCode = localStorage.getItem("synq_watch_pairing_code");
+    const masterCode = ensureWatchPairingCode(watchPairingScope);
     if (pairingInput === masterCode || pairingInput === "123456") {
       triggerHaptic([100, 50, 100]);
       setIsLinked(true);
-      localStorage.setItem("synq_watch_linked", "true");
+      writeWatchLinked(true, watchPairingScope);
     } else {
       triggerHaptic(200);
       setPairingError(true);
@@ -281,7 +318,7 @@ function SmartwatchContent() {
           running: next,
           updatedAt: now,
           origin: "watch",
-        });
+        }, timerKey);
       });
       return next;
     });
@@ -375,7 +412,7 @@ function SmartwatchContent() {
           {view === 'main' && (
             <div className={cn("w-full h-full flex flex-col items-center justify-between animate-in fade-in zoom-in-95", isWatchCompact ? "py-1" : "py-2")}>
               <div className={cn("flex items-center justify-center w-full", isWatchCompact ? "gap-2.5" : "gap-4")}>
-              <button onClick={() => { setIsRunning(false); const sec = presetMinutesRef.current * 60; setTimeLeft(sec); timeLeftRef.current = sec; const now = Date.now(); lastTimerSyncAppliedRef.current = now; writeMatchTimerSync({ remainingSec: sec, running: false, updatedAt: now, origin: "watch" }); triggerHaptic(60); }} className={cn("bg-white/5 rounded-full text-white/40 active:bg-rose-500", isWatchCompact ? "p-3" : "p-2.5")}><RotateCcw className={cn(isWatchCompact ? "h-5 w-5" : "h-4 w-4")} /></button>
+              <button onClick={() => { setIsRunning(false); const sec = presetMinutesRef.current * 60; setTimeLeft(sec); timeLeftRef.current = sec; const now = Date.now(); lastTimerSyncAppliedRef.current = now; writeMatchTimerSync({ remainingSec: sec, running: false, updatedAt: now, origin: "watch" }, timerKey); triggerHaptic(60); }} className={cn("bg-white/5 rounded-full text-white/40 active:bg-rose-500", isWatchCompact ? "p-3" : "p-2.5")}><RotateCcw className={cn(isWatchCompact ? "h-5 w-5" : "h-4 w-4")} /></button>
                 <div className="flex flex-col items-center cursor-pointer active:scale-95" onClick={toggleClock}>
                   <span className={cn("font-black font-headline tabular-nums tracking-tighter leading-none", isWatchCompact ? "text-[3.2rem]" : "text-6xl", timeLeft === 0 ? "text-rose-500 animate-pulse" : "text-primary cyan-text-glow")}>{formatTime(timeLeft)}</span>
                   <div className="flex items-center gap-1.5 mt-1 bg-black/40 px-3 py-0.5 rounded-full border border-white/5">

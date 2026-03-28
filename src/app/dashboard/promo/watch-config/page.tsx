@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { ensureWatchPairingCode } from "@/lib/watch-pairing";
 import { 
   Smartphone, 
   Watch, 
@@ -54,12 +55,7 @@ export default function SandboxWatchConfigPage() {
   const [pairingCode, setPairingCode] = useState("");
 
   useEffect(() => {
-    let code = localStorage.getItem("synq_watch_pairing_code");
-    if (!code) {
-      code = Math.floor(100000 + Math.random() * 900000).toString();
-      localStorage.setItem("synq_watch_pairing_code", code);
-    }
-    setPairingCode(code);
+    setPairingCode(ensureWatchPairingCode({ clubId: "sandbox", mode: "sandbox" }));
   }, []);
 
   // ESTADO DE CONFIGURACIÓN LOCAL

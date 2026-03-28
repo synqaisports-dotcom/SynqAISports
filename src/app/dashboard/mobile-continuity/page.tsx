@@ -34,6 +34,7 @@ import { useAuth } from "@/lib/auth-context";
 import { QRCodeCanvas } from "qrcode.react";
 import {
   MATCH_TIMER_SYNC_KEY,
+  matchTimerSyncKey,
   readMatchTimerPresetMinutes,
   readMatchTimerSync,
   shouldApplyRemoteTimer,
@@ -41,6 +42,7 @@ import {
 } from "@/lib/match-timer-sync";
 import {
   MATCH_SCORE_SYNC_KEY,
+  matchScoreSyncKey,
   readMatchScoreSync,
   shouldApplyRemoteScore,
   writeMatchScoreSync,
@@ -150,6 +152,20 @@ export default function MobileContinuityPage() {
 
   const players = useMemo(() => readPlayersLocal(clubScopeId), [clubScopeId]);
 
+  const continuityScope = useMemo(
+    () => ({
+      clubId: clubScopeId,
+      teamId: selectedTeamId || "team_unknown",
+      mcc: selectedMcc,
+      session: selectedSession,
+      mode: "continuity",
+    }),
+    [clubScopeId, selectedTeamId, selectedMcc, selectedSession],
+  );
+
+  const timerSyncKey = useMemo(() => matchTimerSyncKey(continuityScope), [continuityScope]);
+  const scoreSyncKey = useMemo(() => matchScoreSyncKey(continuityScope), [continuityScope]);
+
   const watchUrl = useMemo(() => {
     if (typeof window === "undefined") return "";
     const base = `${window.location.origin}/smartwatch`;
@@ -179,13 +195,13 @@ export default function MobileContinuityPage() {
     setIsOnline(typeof navigator !== "undefined" ? navigator.onLine : true);
     const preset = readMatchTimerPresetMinutes(45);
     setRemainingSec(preset * 60);
-    const remoteTimer = readMatchTimerSync();
+    const remoteTimer = readMatchTimerSync(timerSyncKey);
     if (remoteTimer) {
       setRemainingSec(Math.max(0, remoteTimer.remainingSec));
       setRunning(Boolean(remoteTimer.running));
       lastTimerAppliedRef.current = remoteTimer.updatedAt;
     }
-    const remoteScore = readMatchScoreSync();
+    const remoteScore = readMatchScoreSync(scoreSyncKey);
     if (remoteScore) {
       setScore({ home: Math.max(0, remoteScore.home), guest: Math.max(0, remoteScore.guest) });
       lastScoreAppliedRef.current = remoteScore.updatedAt;
@@ -205,7 +221,7 @@ export default function MobileContinuityPage() {
     } catch {
       // fallback silencioso
     }
-  }, [profile?.clubId]);
+  }, [profile?.clubId, timerSyncKey, scoreSyncKey]);
 
   useEffect(() => {
     const selectedName = selectedTeam?.name;
@@ -264,25 +280,25 @@ export default function MobileContinuityPage() {
         const next = Math.max(0, prev - 1);
         const now = Date.now();
         lastTimerAppliedRef.current = now;
-        writeMatchTimerSync({ remainingSec: next, running: next > 0, updatedAt: now, origin: "watch" });
+        writeMatchTimerSync({ remainingSec: next, running: next > 0, updatedAt: now, origin: "watch" }, timerSyncKey);
         return next;
       });
     }, 1000);
     return () => window.clearInterval(id);
-  }, [running]);
+  }, [running, timerSyncKey]);
 
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
-      if (e.key === MATCH_TIMER_SYNC_KEY || e.key === null) {
-        const remote = readMatchTimerSync();
+      if (e.key === timerSyncKey || e.key === null) {
+        const remote = readMatchTimerSync(timerSyncKey);
         if (shouldApplyRemoteTimer(remote, lastTimerAppliedRef.current)) {
           lastTimerAppliedRef.current = remote.updatedAt;
           setRemainingSec(Math.max(0, remote.remainingSec));
           setRunning(Boolean(remote.running));
         }
       }
-      if (e.key === MATCH_SCORE_SYNC_KEY || e.key === null) {
-        const remote = readMatchScoreSync();
+      if (e.key === scoreSyncKey || e.key === null) {
+        const remote = readMatchScoreSync(scoreSyncKey);
         if (shouldApplyRemoteScore(remote, lastScoreAppliedRef.current)) {
           lastScoreAppliedRef.current = remote.updatedAt;
           setScore({ home: Math.max(0, remote.home), guest: Math.max(0, remote.guest) });
@@ -299,7 +315,7 @@ export default function MobileContinuityPage() {
       window.removeEventListener("online", onOnline);
       window.removeEventListener("offline", onOffline);
     };
-  }, []);
+  }, [timerSyncKey, scoreSyncKey]);
 
   const changeScore = (dh: number, dg: number) => {
     setScore((prev) => {
@@ -309,7 +325,7 @@ export default function MobileContinuityPage() {
       };
       const now = Date.now();
       lastScoreAppliedRef.current = now;
-      writeMatchScoreSync({ ...next, updatedAt: now, origin: "watch" });
+      writeMatchScoreSync({ ...next, updatedAt: now, origin: "watch" }, scoreSyncKey);
       return next;
     });
   };
@@ -319,7 +335,7 @@ export default function MobileContinuityPage() {
       const next = !prev;
       const now = Date.now();
       lastTimerAppliedRef.current = now;
-      writeMatchTimerSync({ remainingSec, running: next, updatedAt: now, origin: "watch" });
+      writeMatchTimerSync({ remainingSec, running: next, updatedAt: now, origin: "watch" }, timerSyncKey);
       return next;
     });
   };
@@ -330,7 +346,7 @@ export default function MobileContinuityPage() {
     setRunning(false);
     const now = Date.now();
     lastTimerAppliedRef.current = now;
-    writeMatchTimerSync({ remainingSec: sec, running: false, updatedAt: now, origin: "watch" });
+    writeMatchTimerSync({ remainingSec: sec, running: false, updatedAt: now, origin: "watch" }, timerSyncKey);
   };
 
   const sendIncident = async (incident: Incident) => {
