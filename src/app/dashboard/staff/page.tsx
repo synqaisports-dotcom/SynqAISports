@@ -54,6 +54,7 @@ import { useClubAccessMatrixOptional } from "@/contexts/club-access-matrix-conte
 import { shouldBypassClubMatrix, type StaffAccessRule } from "@/lib/club-permissions";
 import { useClubModulePermissions } from "@/hooks/use-club-module-permissions";
 import { getRoleDisplayLabel, type SynqRoleRowLike } from "@/lib/role-catalog";
+import { canUseOperativaSupabase } from "@/lib/operativa-sync";
 
 // Matriz de Jerarquía (Rango mayor = más autoridad)
 const ROLE_HIERARCHY: Record<string, number> = {
@@ -93,15 +94,29 @@ const INITIAL_STAFF = [
   { id: "s4", name: "Elena Gómez", email: "e.gomez@club.com", role: "stage_coordinator", phone: "+34 600 000 004", status: "Active", photoUrl: "" },
 ];
 
+type StaffMember = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  phone: string;
+  status: string;
+  photoUrl?: string;
+};
+
 export default function StaffManagementPage() {
   const { profile, session } = useAuth();
   const { canEdit: canEditStaffModule, canDelete: canDeleteStaffModule } = useClubModulePermissions("staff");
   const matrixCtx = useClubAccessMatrixOptional();
+  const clubScopeId = profile?.clubId ?? "global-hq";
+  const staffStorageKey = `synq_staff_members_v1_${clubScopeId}`;
+  const canUseRemote = canUseOperativaSupabase(clubScopeId) && !!session?.access_token;
   const { toast } = useToast();
-  const [staff, setStaff] = useState(INITIAL_STAFF);
+  const [staff, setStaff] = useState<StaffMember[]>(INITIAL_STAFF);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [syncMode, setSyncMode] = useState<"remote" | "local" | "restricted" | "local_error">("local");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isFormReady, setIsFormReady] = useState(false);
   const [staffRule, setStaffRule] = useState<StaffAccessRule | null>(null);
@@ -137,6 +152,104 @@ export default function StaffManagementPage() {
       cancelled = true;
     };
   }, [session?.access_token]);
+
+  const persistStaff = (next: StaffMember[]) => {
+    if (typeof window === "undefined") return;
+    localStorage.setItem(staffStorageKey, JSON.stringify(next));
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    if (typeof window === "undefined") return;
+    const loadStaff = async () => {
+      try {
+        const raw = localStorage.getItem(staffStorageKey);
+        if (!raw) {
+          persistStaff(INITIAL_STAFF as StaffMember[]);
+        } else {
+          const parsed = JSON.parse(raw) as StaffMember[];
+          if (Array.isArray(parsed) && !cancelled) setStaff(parsed);
+        }
+      } catch {
+        // fallback silencioso
+      }
+
+      if (!canUseRemote || !session?.access_token) {
+        if (!cancelled) setSyncMode("local");
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/club/staff", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (res.status === 404) {
+          if (!cancelled) setSyncMode("local");
+          return;
+        }
+        if (res.status === 403) {
+          if (!cancelled) setSyncMode("restricted");
+          return;
+        }
+        if (!res.ok) {
+          if (!cancelled) setSyncMode("local_error");
+          return;
+        }
+        const json = (await res.json()) as { payload?: { staff?: StaffMember[] } };
+        const remoteStaff = Array.isArray(json?.payload?.staff) ? json.payload.staff : [];
+        if (!cancelled) {
+          setStaff(remoteStaff);
+          setSyncMode("remote");
+        }
+        persistStaff(remoteStaff);
+      } catch {
+        if (!cancelled) setSyncMode("local_error");
+      }
+    };
+    void loadStaff();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [staffStorageKey, canUseRemote, session?.access_token]);
+
+  const persistStaffHybrid = async (next: StaffMember[]) => {
+    persistStaff(next);
+    if (!canUseRemote || !session?.access_token) {
+      setSyncMode("local");
+      return;
+    }
+    try {
+      const res = await fetch("/api/club/staff", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ payload: { staff: next } }),
+      });
+      if (res.status === 403) {
+        setSyncMode("restricted");
+        toast({
+          variant: "destructive",
+          title: "PERMISOS_LIMITADOS",
+          description: "Sin permisos para guardar staff en servidor. Se guardó localmente.",
+        });
+        return;
+      }
+      if (res.status === 404) {
+        setSyncMode("local");
+        return;
+      }
+      if (!res.ok) {
+        setSyncMode("local_error");
+        return;
+      }
+      setSyncMode("remote");
+    } catch {
+      setSyncMode("local_error");
+    }
+  };
 
   // OPTIMIZACIÓN: Renderizado Diferido del formulario
   useEffect(() => {
@@ -293,7 +406,11 @@ export default function StaffManagementPage() {
       return;
     }
 
-    setStaff(prev => prev.filter(s => s.id !== id));
+    setStaff((prev) => {
+      const next = prev.filter((s) => s.id !== id);
+      void persistStaffHybrid(next);
+      return next;
+    });
     toast({
       variant: "destructive",
       title: "TRABAJADOR_DESVINCULADO",
@@ -327,11 +444,19 @@ export default function StaffManagementPage() {
 
     setTimeout(() => {
       if (editingId) {
-        setStaff(prev => prev.map(s => s.id === editingId ? { ...s, ...savePayload } : s));
+        setStaff((prev) => {
+          const next = prev.map((s) => (s.id === editingId ? { ...s, ...savePayload } : s));
+          void persistStaffHybrid(next);
+          return next;
+        });
         toast({ title: "PERFIL_ACTUALIZADO", description: "La identidad ha sido resincronizada." });
       } else {
         const newMember = { id: `s${Date.now()}`, ...savePayload };
-        setStaff([newMember, ...staff]);
+        setStaff((prev) => {
+          const next = [newMember, ...prev];
+          void persistStaffHybrid(next);
+          return next;
+        });
         toast({ title: "CREDENCIAL_EMITIDA", description: `${fullName} ya es parte de la red.` });
       }
       setLoading(false);
@@ -368,6 +493,26 @@ export default function StaffManagementPage() {
           <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic cyan-text-glow">
             Staff Técnico
           </h1>
+          <p
+            className={cn(
+              "text-[9px] font-black uppercase tracking-widest mt-1",
+              syncMode === "remote"
+                ? "text-emerald-400/80"
+                : syncMode === "restricted"
+                ? "text-amber-400/80"
+                : syncMode === "local_error"
+                ? "text-rose-400/80"
+                : "text-white/40",
+            )}
+          >
+            {syncMode === "remote"
+              ? "SINCRO_REMOTA_ACTIVA"
+              : syncMode === "restricted"
+              ? "MODO_LOCAL_POR_PERMISOS"
+              : syncMode === "local_error"
+              ? "MODO_LOCAL_POR_ERROR"
+              : "MODO_LOCAL_FALLBACK"}
+          </p>
         </div>
         
         <Button 
