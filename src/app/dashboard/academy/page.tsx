@@ -38,7 +38,8 @@ import {
   Pause,
   Play,
   UserPlus,
-  Hash
+  Hash,
+  Copy
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -581,6 +582,13 @@ export default function AcademyManagementPage() {
       });
       return;
     }
+    const category = categories.find((c) => c.id === catId);
+    const team = category?.teams?.[teamIdx];
+    const teamLabel = `${team?.name ?? "Equipo"} ${team?.suffix ?? ""}`.trim();
+    const accepted = typeof window !== "undefined"
+      ? window.confirm(`¿Eliminar ${teamLabel} de la estructura de cantera?`)
+      : true;
+    if (!accepted) return;
     setCategories(prev => prev.map(c => {
       if (c.id === catId) {
         const newTeams = [...c.teams];
@@ -613,11 +621,71 @@ export default function AcademyManagementPage() {
       });
       return;
     }
+    const accepted = typeof window !== "undefined"
+      ? window.confirm(`¿Eliminar la categoría ${name}? Esta acción no se puede deshacer.`)
+      : true;
+    if (!accepted) return;
     setCategories(prev => prev.filter(c => c.id !== id));
     toast({
       variant: "destructive",
       title: "CATEGORÍA_DESVINCULADA",
       description: `La categoría ${name} ha sido eliminada de la red.`,
+    });
+  };
+
+  const handleDuplicateTeam = (catId: string, teamIdx: number) => {
+    if (!canEditAcademy) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes permiso de edición en Gestión de Cantera.",
+      });
+      return;
+    }
+    setCategories((prev) =>
+      prev.map((c) => {
+        if (c.id !== catId) return c;
+        const src = c.teams[teamIdx];
+        if (!src) return c;
+        const next = [...c.teams, { ...src, suffix: "Z", status: "Paused" }];
+        return { ...c, teams: next };
+      }),
+    );
+    toast({
+      title: "EQUIPO_DUPLICADO",
+      description: "Se creó una copia del equipo en estado PAUSED para revisión.",
+    });
+  };
+
+  const handleDuplicateCategory = (categoryId: string) => {
+    if (!canEditAcademy) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes permiso de edición en Gestión de Cantera.",
+      });
+      return;
+    }
+    const source = categories.find((c) => c.id === categoryId);
+    if (!source) return;
+    if (source.id.startsWith("cat_")) {
+      toast({
+        variant: "destructive",
+        title: "ACCIÓN_BLOQUEADA",
+        description: "No se permite duplicar categorías troncales base.",
+      });
+      return;
+    }
+    const cloned = {
+      ...source,
+      id: `c${Date.now()}`,
+      name: `${source.name} (COPIA)`,
+      teams: source.teams.map((t) => ({ ...t, status: "Paused" })),
+    };
+    setCategories((prev) => [...prev, cloned]);
+    toast({
+      title: "CATEGORÍA_DUPLICADA",
+      description: `Se generó ${cloned.name} para trabajo seguro.`,
     });
   };
 
@@ -858,6 +926,7 @@ export default function AcademyManagementPage() {
                                 <ClipboardCheck className="h-3.5 w-3.5" />
                               </Link>
                             </Button>
+                            <button type="button" disabled={!canEditAcademy} onClick={() => handleDuplicateTeam(cat.id, idx)} className="p-1.5 hover:bg-sky-500/20 rounded-lg text-sky-400 transition-all disabled:opacity-30 disabled:pointer-events-none" title="Duplicar Nodo"><Copy className="h-3.5 w-3.5" /></button>
                             <button type="button" disabled={!canEditAcademy} onClick={() => handleEditTeam(cat.id, team, idx)} className="p-1.5 hover:bg-primary/20 rounded-lg text-primary transition-all disabled:opacity-30 disabled:pointer-events-none" title="Editar Nodo"><Pencil className="h-3.5 w-3.5" /></button>
                             <button type="button" disabled={!canEditAcademy} onClick={() => handleToggleTeamStatus(cat.id, idx)} className="p-1.5 hover:bg-amber-500/20 rounded-lg text-amber-500 transition-all disabled:opacity-30 disabled:pointer-events-none" title={team.status === "Paused" ? "Reactivar" : "Pausar"}>
                               {team.status === "Paused" ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
@@ -878,6 +947,14 @@ export default function AcademyManagementPage() {
                           className="text-[8px] font-black text-primary hover:cyan-text-glow transition-all flex items-center gap-2 uppercase tracking-widest italic disabled:opacity-30 disabled:pointer-events-none"
                         >
                           <Pencil className="h-2.5 w-2.5" /> Editar
+                        </button>
+                        <button
+                          type="button"
+                          disabled={!canEditAcademy}
+                          onClick={() => handleDuplicateCategory(cat.id)}
+                          className="text-[8px] font-black text-sky-400 hover:text-sky-300 transition-all flex items-center gap-2 uppercase tracking-widest italic disabled:opacity-30 disabled:pointer-events-none"
+                        >
+                          <Copy className="h-2.5 w-2.5" /> Duplicar
                         </button>
                         <button 
                           type="button"
@@ -959,6 +1036,9 @@ export default function AcademyManagementPage() {
                   <div className="flex items-center gap-3 border-b border-white/5 pb-4">
                     <Users className="h-4 w-4 text-primary" />
                     <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-primary italic">Roster de Jugadores Sincronizados</h3>
+                    <Badge variant="outline" className="ml-auto text-[8px] font-black uppercase tracking-widest border-amber-500/30 text-amber-400 bg-amber-500/10">
+                      Demo / Mock
+                    </Badge>
                   </div>
                   <div className="grid grid-cols-1 gap-3">
                     {[1, 2, 3, 4, 5].map((i) => (
