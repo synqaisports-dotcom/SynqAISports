@@ -89,7 +89,9 @@ function SmartwatchContent() {
     const teamId = searchParamsHook.get("team") || "";
     const mcc = searchParamsHook.get("mcc") || "";
     const session = searchParamsHook.get("session") || "";
-    const clubId = profile?.clubId || "";
+    // En Sandbox/promo puede no existir clubId real; usamos un valor estable (mismo que en Continuidad móvil)
+    // para que el contexto se resuelva y respete `mode=training`.
+    const clubId = profile?.clubId ?? "global-hq";
     if (!clubId || !teamId || !mcc || !session) return null;
     // `mode` aquí actúa como "contexto" (partido vs entreno). Para compat, aceptamos legacy `continuity`.
     const ctx: "match" | "training" = mode === "training" ? "training" : "match";
