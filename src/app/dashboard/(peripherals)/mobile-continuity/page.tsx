@@ -50,6 +50,7 @@ import {
 import { synqSync } from "@/lib/sync-service";
 import { upsertOperativaAttendance } from "@/lib/operativa-sync";
 import { readPlayersLocal } from "@/lib/player-storage";
+import { ensureWatchPairingCode } from "@/lib/watch-pairing";
 
 type Incident = {
   id: string;
@@ -167,17 +168,23 @@ export default function MobileContinuityPage() {
   const timerSyncKey = useMemo(() => matchTimerSyncKey(continuityScope), [continuityScope]);
   const scoreSyncKey = useMemo(() => matchScoreSyncKey(continuityScope), [continuityScope]);
 
+  const watchPairingCode = useMemo(() => {
+    if (typeof window === "undefined") return "";
+    return ensureWatchPairingCode({ clubId: clubScopeId, mode: "continuity" });
+  }, [clubScopeId]);
+
   const watchUrl = useMemo(() => {
     if (typeof window === "undefined") return "";
     const base = `${window.location.origin}/smartwatch`;
     const params = new URLSearchParams({
+      code: watchPairingCode || "",
       mode: "continuity",
       team: selectedTeamId || "team_unknown",
       mcc: selectedMcc,
       session: selectedSession,
     });
     return `${base}?${params.toString()}`;
-  }, [selectedTeamId, selectedMcc, selectedSession]);
+  }, [watchPairingCode, selectedTeamId, selectedMcc, selectedSession]);
 
   const mccOptions = useMemo(
     () =>
@@ -588,12 +595,20 @@ export default function MobileContinuityPage() {
             <QrCode className="h-4 w-4 text-indigo-300" /> Emparejado móvil - reloj
           </CardTitle>
           <CardDescription className="text-[10px] uppercase text-white/40">
-            Escanea para abrir el smartwatch con el contexto actual
+            Escanea (móvil con cámara) o introduce el código en el reloj
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center gap-3">
           <div className="rounded-xl bg-white p-2">
             <QRCodeCanvas value={watchUrl || "about:blank"} size={180} level="H" fgColor="#000000" bgColor="#ffffff" />
+          </div>
+          <div className="w-full max-w-md rounded-xl border border-white/10 bg-black/30 p-3">
+            <p className="text-[10px] uppercase text-white/50 font-black tracking-widest text-center">
+              Código manual (reloj)
+            </p>
+            <p className="mt-1 text-center text-2xl font-black tracking-[0.35em] text-white">
+              {watchPairingCode || "------"}
+            </p>
           </div>
           <p className="text-[10px] uppercase text-white/50 break-all text-center">{watchUrl}</p>
         </CardContent>
