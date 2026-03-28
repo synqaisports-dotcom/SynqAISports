@@ -71,8 +71,10 @@ export function ClubRouteGuard({ children }: { children: React.ReactNode }) {
     return <AccessDenied />;
   }
 
-  if (!ctx || !normalizedMatrix) {
-    return <>{children}</>;
+  // Fail-closed: si esta ruta pertenece a un módulo, exigimos matriz cargada
+  // para roles no-bypass y no-free. Si no hay matriz, bloqueamos.
+  if (moduleIdEarly && (!ctx || !normalizedMatrix)) {
+    return <AccessDenied />;
   }
 
   const moduleId = resolveClubModuleForPath(pathname);
@@ -80,7 +82,7 @@ export function ClubRouteGuard({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
-  if (!canAccessClubModule(normalizedMatrix, profile?.role, moduleId, "access")) {
+  if (!normalizedMatrix || !canAccessClubModule(normalizedMatrix, profile?.role, moduleId, "access")) {
     return <AccessDenied />;
   }
 

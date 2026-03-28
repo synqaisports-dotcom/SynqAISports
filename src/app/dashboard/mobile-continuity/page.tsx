@@ -133,6 +133,7 @@ export default function MobileContinuityPage() {
   const { toast } = useToast();
   const { profile, session } = useAuth();
   const clubScopeId = profile?.clubId ?? "global-hq";
+  const continuityEnv = profile?.clubId && profile.clubId !== "global-hq" ? "elite" : "sandbox";
   const [score, setScore] = useState({ home: 0, guest: 0 });
   const [remainingSec, setRemainingSec] = useState(45 * 60);
   const [running, setRunning] = useState(false);
@@ -453,6 +454,15 @@ export default function MobileContinuityPage() {
         <div className="flex items-center gap-3">
           <Smartphone className="h-5 w-5 text-primary animate-pulse" />
           <span className="text-[10px] font-black text-primary tracking-[0.4em] uppercase">Modo_Continuidad</span>
+          <Badge
+            variant="outline"
+            className={cn(
+              "ml-auto border-white/15 text-[9px] uppercase font-black tracking-widest",
+              continuityEnv === "elite" ? "text-primary border-primary/20" : "text-blue-400 border-blue-500/20",
+            )}
+          >
+            {continuityEnv === "elite" ? "Elite/Pro" : "Sandbox"}
+          </Badge>
         </div>
         <h1 className="text-3xl font-black text-white uppercase italic tracking-tighter">Consola Móvil de Respaldo</h1>
         <p className="text-[10px] uppercase text-white/40 font-bold">
