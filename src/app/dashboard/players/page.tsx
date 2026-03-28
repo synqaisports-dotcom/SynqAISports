@@ -611,8 +611,8 @@ export default function PlayersManagementPage() {
       </Card>
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
-          <div className="p-10 border-b border-white/5 bg-black/40">
+        <SheetContent side="right" className="z-[70] bg-background/95 bg-grid-pattern backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+          <div className="sticky top-0 z-20 p-10 border-b border-white/5 bg-background/90 backdrop-blur-md">
             <SheetHeader className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
@@ -627,7 +627,7 @@ export default function PlayersManagementPage() {
             </SheetHeader>
           </div>
 
-          <form onSubmit={handleSavePlayer} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10">
+          <form onSubmit={handleSavePlayer} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10 bg-background/70">
             <div className="space-y-4">
               <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Identidad Visual</Label>
               <div className="flex flex-col items-center justify-center p-8 bg-primary/5 rounded-3xl relative overflow-hidden">
@@ -725,11 +725,11 @@ export default function PlayersManagementPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Fecha Nacimiento</Label>
                   <div className="relative">
-                    <Calendar className="absolute left-3 top-3.5 h-4 w-4 text-primary/40" />
+                    <Calendar className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/40" />
                     <Input 
                       required
                       type="date"
@@ -742,7 +742,7 @@ export default function PlayersManagementPage() {
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Fecha Alta Club</Label>
                   <div className="relative">
-                    <Clock className="absolute left-3 top-3.5 h-4 w-4 text-primary/40" />
+                    <Clock className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/40" />
                     <Input 
                       required
                       type="date"
@@ -917,7 +917,7 @@ export default function PlayersManagementPage() {
             </div>
           </form>
 
-          <div className="p-10 bg-black/40 border-t border-white/5 flex gap-4">
+          <div className="pt-2 flex gap-4">
             <SheetClose asChild>
               <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary/60 font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 transition-all active:scale-95 rounded-2xl">
                 CANCELAR

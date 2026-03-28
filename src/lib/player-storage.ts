@@ -15,10 +15,7 @@ export function migrateLegacyPlayersStorageKey(clubScopeId: string) {
   localStorage.setItem(scopedKey, legacy);
 }
 
-export function readPlayersLocal(clubScopeId: string): unknown[] {
-  if (typeof window === "undefined") return [];
-  migrateLegacyPlayersStorageKey(clubScopeId);
-  const raw = localStorage.getItem(playersStorageKey(clubScopeId));
+function safeParsePlayers(raw: string | null): unknown[] {
   try {
     const parsed = JSON.parse(raw ?? "[]");
     return Array.isArray(parsed) ? parsed : [];
@@ -27,9 +24,49 @@ export function readPlayersLocal(clubScopeId: string): unknown[] {
   }
 }
 
+export function readPlayersLocal(clubScopeId: string): unknown[] {
+  if (typeof window === "undefined") return [];
+  migrateLegacyPlayersStorageKey(clubScopeId);
+  const raw = localStorage.getItem(playersStorageKey(clubScopeId));
+  return safeParsePlayers(raw);
+}
+
 export function writePlayersLocal(clubScopeId: string, players: unknown[]) {
   if (typeof window === "undefined") return;
   localStorage.setItem(playersStorageKey(clubScopeId), JSON.stringify(players));
+}
+
+/**
+ * Para micro-app Tutor: no conocemos clubId a priori. Leemos todos los stores locales disponibles.
+ * Incluye legacy `synq_players` + todas las claves `synq_players_v1_*`.
+ */
+export function readPlayersLocalAcrossClubs(): unknown[] {
+  if (typeof window === "undefined") return [];
+  const out: unknown[] = [];
+
+  // Legacy global
+  out.push(...safeParsePlayers(localStorage.getItem(LEGACY_PLAYERS_STORAGE_KEY)));
+
+  // Club-scoped keys
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key || !key.startsWith(`${PLAYERS_STORAGE_PREFIX}_`)) continue;
+    out.push(...safeParsePlayers(localStorage.getItem(key)));
+  }
+  return out;
+}
+
+/**
+ * Suscripción a cambios de jugadores en localStorage (para Tutor y otras vistas).
+ */
+export function subscribePlayersStorageChanges(cb: () => void): () => void {
+  if (typeof window === "undefined") return () => {};
+  const handler = (e: StorageEvent) => {
+    const k = e.key ?? "";
+    if (k === LEGACY_PLAYERS_STORAGE_KEY || k.startsWith(`${PLAYERS_STORAGE_PREFIX}_`)) cb();
+  };
+  window.addEventListener("storage", handler);
+  return () => window.removeEventListener("storage", handler);
 }
 
 /**
