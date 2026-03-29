@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { PwaInstallBanner } from "@/components/pwa/PwaInstallBanner";
 import { SandboxAppClientWrapper } from "./sandbox-app-client-wrapper";
+import { SandboxAppShell } from "./sandbox-app-shell";
 
 export const viewport: Viewport = {
   themeColor: "#00f2ff",
@@ -21,7 +22,9 @@ export default async function SandboxAppLayout(props: { children: React.ReactNod
   return (
     <>
       <PwaInstallBanner appName="Sandbox" storageKeyScope="sandbox" />
-      <SandboxAppClientWrapper>{props.children}</SandboxAppClientWrapper>
+      <SandboxAppClientWrapper>
+        <SandboxAppShell>{props.children}</SandboxAppShell>
+      </SandboxAppClientWrapper>
     </>
   );
 }
