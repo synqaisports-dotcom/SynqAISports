@@ -134,14 +134,12 @@ const navItems: NavItem[] = [
   { title: "Neural Planner", href: "/dashboard/coach/planner", icon: Activity, category: "operational", moduleId: "planner" },
   
   // TERMINALES_ACCESO - NODO SANDBOX (Categoría User)
-  { title: "Mi Equipo Local", href: "/dashboard/promo/team", icon: Users, category: "user" },
-  { title: "Mis Tareas", href: "/dashboard/promo/tasks", icon: Dumbbell, category: "user" },
-  { title: "Agenda Promo", href: "/dashboard/promo/sessions", icon: Calendar, category: "user" },
-  { title: "Mis Partidos", href: "/dashboard/promo/matches", icon: Swords, category: "user" },
-  { title: "Estadísticas", href: "/dashboard/promo/stats", icon: BarChart3, category: "user" },
-  { title: "Pizarra Promo", href: "/board/promo", icon: Zap, category: "user" },
-  { title: "Colaboración", href: "/dashboard/promo/collaboration", icon: MessageSquareQuote, category: "user" },
-  { title: "Config Watch", href: "/dashboard/promo/watch-config", icon: Watch, category: "user" },
+  { title: "Sandbox Home", href: "/sandbox", icon: LayoutGrid, category: "user" },
+  { title: "Mi Equipo Local", href: "/sandbox/team", icon: Users, category: "user" },
+  { title: "Mis Tareas", href: "/sandbox/tasks", icon: Dumbbell, category: "user" },
+  { title: "Pizarra Sandbox", href: "/sandbox/board", icon: Zap, category: "user" },
+  { title: "Config Watch", href: "/dashboard/watch-config", icon: Watch, category: "user" },
+  { title: "Modo Continuidad", href: "/dashboard/mobile-continuity", icon: Smartphone, category: "user" },
   
   // OTROS TERMINALES
   { title: "Tutor Portal", href: "/tutor", icon: UserCircle, category: "user", roles: ["superadmin"] },
@@ -325,7 +323,7 @@ export function DashboardSidebar() {
                   <SidebarLink
                     item={item}
                     isActive={pathname === pathnameFromNavHref(item.href)}
-                    isSandbox={item.href.includes('promo')}
+                    isSandbox={item.href.startsWith("/sandbox") || item.href.includes("/promo")}
                     onNavClick={handleNavClick}
                   />
                 </SidebarMenuItem>
