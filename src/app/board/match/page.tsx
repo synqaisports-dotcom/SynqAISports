@@ -541,7 +541,14 @@ function MatchBoardInner() {
     )} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}>
       
       {/* MARCADOR DE GOLES */}
-      <div className="fixed top-4 left-20 lg:left-32 z-[100] flex items-center gap-3 px-3 py-1.5 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl animate-in slide-in-from-left-4 duration-700 scale-[0.9] origin-top-left md:scale-100 glass-panel">
+      <div
+        className={cn(
+          "fixed top-4 z-[100] flex items-center gap-3 px-3 py-1.5 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl duration-700 md:scale-100 glass-panel",
+          matchSource === "sandbox"
+            ? "left-1/2 -translate-x-1/2 animate-in slide-in-from-top-3 scale-[0.9] origin-top"
+            : "left-20 lg:left-32 animate-in slide-in-from-left-4 scale-[0.9] origin-top-left",
+        )}
+      >
         <Badge
           variant="outline"
           className={cn(
