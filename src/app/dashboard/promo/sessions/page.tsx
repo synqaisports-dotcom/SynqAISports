@@ -52,6 +52,23 @@ import { Input } from "@/components/ui/input";
 
 const MAX_SESSIONS = 4;
 
+function resolveSandboxAppBasePath(): "/sandbox/app" | "/dashboard/promo" {
+  if (typeof window === "undefined") return "/dashboard/promo";
+  const p = window.location.pathname || "";
+  return p.startsWith("/sandbox/app") ? "/sandbox/app" : "/dashboard/promo";
+}
+
+function resolveSandboxBoardHref(kind: "match" | "promo", opts?: { id?: string | number }): string {
+  const base = resolveSandboxAppBasePath();
+  const inApp = base === "/sandbox/app";
+  if (kind === "match") {
+    return inApp ? "/sandbox/app/board/match?source=sandbox" : "/board/match?source=sandbox";
+  }
+  const id = opts?.id != null ? String(opts.id) : "";
+  const q = id ? `?id=${encodeURIComponent(id)}` : "";
+  return inApp ? `/sandbox/app/board/promo${q}` : `/board/promo${q}`;
+}
+
 /**
  * Mi Agenda Promo - v10.0.0
  * PROTOCOLO_SESSION_COMPOSITION: Ahora permite crear sesiones reales vinculando tareas locales.
@@ -167,7 +184,7 @@ export default function PromoSessionsPage() {
                     </CardContent>
                     <CardFooter className="p-6 bg-black/40 border-t border-white/5 flex justify-center print:hidden">
                        <Button variant="ghost" className="text-[9px] font-black text-primary uppercase tracking-widest hover:blue-text-glow" asChild>
-                          <Link href="/board/match?source=sandbox">DIRIGIR EN PARTIDO <ArrowRight className="h-3 w-3 ml-2" /></Link>
+                         <Link href={resolveSandboxBoardHref("match")}>DIRIGIR EN PARTIDO <ArrowRight className="h-3 w-3 ml-2" /></Link>
                        </Button>
                     </CardFooter>
                  </Card>
@@ -232,7 +249,7 @@ export default function PromoSessionsPage() {
                                   </SelectContent>
                                 </Select>
                               ) : (
-                                <Link href="/board/promo" className="flex items-center justify-between p-4 bg-orange-500/5 border border-dashed border-orange-500/20 rounded-xl group hover:border-orange-500/40 transition-all">
+                                <Link href={resolveSandboxBoardHref("promo")} className="flex items-center justify-between p-4 bg-orange-500/5 border border-dashed border-orange-500/20 rounded-xl group hover:border-orange-500/40 transition-all">
                                   <span className="text-[9px] font-bold text-orange-500/40 uppercase tracking-widest">No hay tareas Warmup</span>
                                   <Pencil className="h-3 w-3 text-orange-500/40 group-hover:text-orange-500" />
                                 </Link>
@@ -257,7 +274,7 @@ export default function PromoSessionsPage() {
                                   </SelectContent>
                                 </Select>
                               ) : (
-                                <Link href="/board/promo" className="flex items-center justify-between p-4 bg-amber-500/5 border border-dashed border-amber-500/20 rounded-xl group hover:border-amber-500/40 transition-all">
+                                <Link href={resolveSandboxBoardHref("promo")} className="flex items-center justify-between p-4 bg-amber-500/5 border border-dashed border-amber-500/20 rounded-xl group hover:border-amber-500/40 transition-all">
                                   <span className="text-[9px] font-bold text-amber-500/40 uppercase tracking-widest">No hay tareas Main</span>
                                   <Pencil className="h-3 w-3 text-amber-500/40 group-hover:text-amber-500" />
                                 </Link>
@@ -282,7 +299,7 @@ export default function PromoSessionsPage() {
                                   </SelectContent>
                                 </Select>
                               ) : (
-                                <Link href="/board/promo" className="flex items-center justify-between p-4 bg-blue-500/5 border border-dashed border-blue-500/20 rounded-xl group hover:border-blue-500/40 transition-all">
+                                <Link href={resolveSandboxBoardHref("promo")} className="flex items-center justify-between p-4 bg-blue-500/5 border border-dashed border-blue-500/20 rounded-xl group hover:border-blue-500/40 transition-all">
                                   <span className="text-[9px] font-bold text-blue-500/40 uppercase tracking-widest">No hay tareas Cool</span>
                                   <Pencil className="h-3 w-3 text-blue-500/40 group-hover:text-blue-500" />
                                 </Link>

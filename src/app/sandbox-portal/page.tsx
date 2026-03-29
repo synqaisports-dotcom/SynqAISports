@@ -13,9 +13,9 @@ export default function SandboxPortalPage() {
   useEffect(() => {
     if (loading) return;
 
-    // Si está logueado, entra al Sandbox completo (dashboard/promo).
+    // Si está logueado, entra al Sandbox completo dentro de la micro-app (/sandbox/app).
     if (profile) {
-      const dest = sp.get("dest") || "/dashboard/promo/team";
+      const dest = sp.get("dest") || "/sandbox/app";
       router.replace(dest);
       return;
     }

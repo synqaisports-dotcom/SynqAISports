@@ -45,8 +45,15 @@ import { cn } from "@/lib/utils";
 
 const MAX_MATCHES = 20;
 
+function resolveSandboxBoardBase(): "/sandbox/app/board" | "/board" {
+  if (typeof window === "undefined") return "/board";
+  const p = window.location.pathname || "";
+  return p.startsWith("/sandbox/app") ? "/sandbox/app/board" : "/board";
+}
+
 export default function PromoMatchesPage() {
   const { toast } = useToast();
+  const boardBase = resolveSandboxBoardBase();
   const [vault, setVault] = useState<any>({ exercises: [], sessions: [], matches: [] });
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -154,7 +161,7 @@ export default function PromoMatchesPage() {
                </CardContent>
                <CardFooter className="p-4 bg-black/40 flex justify-center">
                   <Button variant="ghost" className="w-full text-[9px] font-black uppercase text-primary/60 hover:text-primary" asChild>
-                     <Link href="/board/match?source=sandbox">DIRIGIR PARTIDO <ArrowRight className="h-3 w-3 ml-2" /></Link>
+                     <Link href={`${boardBase}/match?source=sandbox`}>DIRIGIR PARTIDO <ArrowRight className="h-3 w-3 ml-2" /></Link>
                   </Button>
                </CardFooter>
             </Card>
