@@ -288,11 +288,14 @@ export default function SandboxAppHomePage() {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-6">
-        <div className="rounded-3xl border border-primary/20 bg-white/[0.02] p-5 sm:p-6 shadow-2xl">
-          <p className="text-[10px] font-black uppercase tracking-[0.35em] text-primary/60">Sandbox (Micro‑app)</p>
-          <h2 className="mt-3 text-2xl sm:text-3xl font-black uppercase tracking-tight">
-            Terminal completa <span className="text-primary">logueada</span>
-          </h2>
+        <div className="rounded-3xl border border-primary/20 bg-black/35 backdrop-blur-sm shadow-[0_12px_40px_rgba(0,0,0,0.35)] overflow-hidden">
+          <div className="px-5 py-4 border-b border-primary/10 bg-gradient-to-r from-primary/10 via-transparent to-transparent">
+            <p className="text-[10px] font-black uppercase tracking-[0.35em] text-primary/70">Sandbox (Micro‑app)</p>
+            <h2 className="mt-2 text-2xl sm:text-3xl font-black uppercase tracking-tight text-white">
+              Terminal completa <span className="text-primary">logueada</span>
+            </h2>
+          </div>
+          <div className="p-4 sm:p-5">
           <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="rounded-2xl border border-white/10 bg-black/30 p-4 flex items-center gap-4">
               <div className="h-12 w-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
@@ -322,11 +325,8 @@ export default function SandboxAppHomePage() {
               </div>
             </div>
           </div>
-          <p className="mt-3 text-sm text-white/70 leading-relaxed">
-            Bienvenido{profile?.name ? `, ${profile.name}` : ""}. Aquí tienes todas las funcionalidades del Sandbox dentro del scope de la micro‑app.
-          </p>
 
-          <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
               <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40">Titulares</p>
               <p className="mt-1 text-xl font-black text-primary">{metrics.starters}</p>
@@ -366,6 +366,7 @@ export default function SandboxAppHomePage() {
                 </Button>
               );
             })}
+          </div>
           </div>
         </div>
 
