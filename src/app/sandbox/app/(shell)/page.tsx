@@ -71,46 +71,46 @@ export default function SandboxAppHomePage() {
   return (
     <main className="min-h-[60dvh] text-white">
       <div className="mx-auto w-full max-w-5xl px-3 sm:px-4 py-5 sm:py-8">
+        <div className="mb-4 sticky top-2 z-20 flex flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-black/70 backdrop-blur-xl p-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-10 rounded-2xl border-white/10 text-white/80 font-black uppercase text-[10px] tracking-widest"
+            onClick={() => {
+              try {
+                router.back();
+              } catch {
+                router.replace("/sandbox/app");
+              }
+            }}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Atrás
+          </Button>
+          <Button
+            asChild
+            variant="outline"
+            className="h-10 rounded-2xl border-white/10 text-white/80 font-black uppercase text-[10px] tracking-widest"
+          >
+            <Link href="/sandbox/app">
+              <Home className="h-4 w-4 mr-2" />
+              Inicio
+            </Link>
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-10 rounded-2xl border-rose-300/20 text-rose-300/80 font-black uppercase text-[10px] tracking-widest ml-auto"
+            onClick={async () => {
+              await logout();
+              router.replace("/sandbox/login?next=/sandbox/app");
+            }}
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Salir
+          </Button>
+        </div>
         <div className="rounded-3xl border border-primary/20 bg-white/[0.02] p-6 sm:p-8 shadow-2xl">
-          <div className="mb-4 sticky top-2 z-20 flex flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-black/70 backdrop-blur-xl p-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="h-10 rounded-2xl border-white/10 text-white/80 font-black uppercase text-[10px] tracking-widest"
-              onClick={() => {
-                try {
-                  router.back();
-                } catch {
-                  router.replace("/sandbox/app");
-                }
-              }}
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Atrás
-            </Button>
-            <Button
-              asChild
-              variant="outline"
-              className="h-10 rounded-2xl border-white/10 text-white/80 font-black uppercase text-[10px] tracking-widest"
-            >
-              <Link href="/sandbox/app">
-                <Home className="h-4 w-4 mr-2" />
-                Inicio
-              </Link>
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="h-10 rounded-2xl border-rose-300/20 text-rose-300/80 font-black uppercase text-[10px] tracking-widest ml-auto"
-              onClick={async () => {
-                await logout();
-                router.replace("/sandbox/login?next=/sandbox/app");
-              }}
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Salir
-            </Button>
-          </div>
           <div className="mb-5 flex items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-primary/5 px-3 py-2">
             <SynqAiSportsLogo compact />
             <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-black/30 px-2.5 py-1.5">
