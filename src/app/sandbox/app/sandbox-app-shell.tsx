@@ -33,12 +33,12 @@ export function SandboxAppShell(props: { children: ReactNode }) {
   const showBack = pathname !== "/sandbox/app";
 
   return (
-    <div className="min-h-[100dvh] bg-black text-white relative overflow-hidden">
+    <div className="min-h-[100dvh] bg-[#040812] text-white relative overflow-hidden">
       <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
       <div className="absolute -top-40 -right-40 h-[520px] w-[520px] rounded-full bg-primary/10 blur-3xl pointer-events-none" />
       <div className="absolute -bottom-40 -left-40 h-[520px] w-[520px] rounded-full bg-primary/10 blur-3xl pointer-events-none" />
 
-      <header className="sticky top-0 z-[80] border-b border-white/5 bg-black/70 backdrop-blur-2xl">
+      <header className="sticky top-0 z-[80] border-b border-primary/10 bg-[#03070f]/85 backdrop-blur-2xl">
         <div className="mx-auto w-full max-w-[1200px] px-4 sm:px-6 py-3">
           <div className="flex flex-wrap items-center gap-2">
             <div className="mr-1 sm:mr-3">
@@ -48,7 +48,7 @@ export function SandboxAppShell(props: { children: ReactNode }) {
               type="button"
               variant="outline"
               className={cn(
-                "h-10 rounded-2xl border-white/10 text-white/80 font-black uppercase text-[10px] tracking-widest",
+                "h-10 rounded-2xl border-white/10 bg-black/30 text-white/80 font-black uppercase text-[10px] tracking-widest hover:border-primary/30 hover:text-primary transition-colors",
                 !showBack && "opacity-50 pointer-events-none",
               )}
               onClick={() => {
@@ -71,7 +71,7 @@ export function SandboxAppShell(props: { children: ReactNode }) {
             <Button
               asChild
               variant="outline"
-              className="h-10 rounded-2xl border-white/10 text-white/80 font-black uppercase text-[10px] tracking-widest"
+              className="h-10 rounded-2xl border-white/10 bg-black/30 text-white/80 font-black uppercase text-[10px] tracking-widest hover:border-primary/30 hover:text-primary transition-colors"
             >
               <Link href="/sandbox/app">
                 <Home className="h-4 w-4 mr-2" />
@@ -81,7 +81,7 @@ export function SandboxAppShell(props: { children: ReactNode }) {
             <Button
               type="button"
               variant="outline"
-              className="h-10 rounded-2xl border-white/10 text-white/80 font-black uppercase text-[10px] tracking-widest"
+              className="h-10 rounded-2xl border-white/10 bg-black/30 text-white/80 font-black uppercase text-[10px] tracking-widest hover:border-rose-300/40 hover:text-rose-200 transition-colors"
               onClick={async () => {
                 await logout();
                 router.replace("/sandbox/login");
@@ -108,7 +108,11 @@ export function SandboxAppShell(props: { children: ReactNode }) {
       </header>
 
       <div className="mx-auto w-full max-w-[1200px] px-3 sm:px-5 lg:px-6">
-        <div className="py-4 sm:py-6">{props.children}</div>
+        <div className="py-4 sm:py-6">
+          <div className="rounded-3xl border border-primary/15 bg-gradient-to-b from-[#0a1222]/90 to-[#050a14]/90 shadow-[0_20px_80px_rgba(0,0,0,0.45)]">
+            {props.children}
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -153,8 +153,8 @@ export default function SandboxAppHomePage() {
                   variant={isPrimary ? "default" : "outline"}
                   className={
                     isPrimary
-                      ? "h-12 rounded-2xl bg-primary text-black font-black uppercase text-[11px] tracking-widest justify-between"
-                      : "h-12 rounded-2xl border-white/10 text-white/80 font-black uppercase text-[11px] tracking-widest justify-between"
+                      ? "h-12 rounded-2xl bg-primary text-black font-black uppercase text-[11px] tracking-widest justify-between shadow-[0_0_24px_rgba(0,242,255,0.28)] hover:brightness-110 active:scale-[0.99]"
+                      : "h-12 rounded-2xl border-primary/25 bg-black/45 text-white/90 font-black uppercase text-[11px] tracking-widest justify-between hover:border-primary/45 hover:bg-primary/10 hover:text-primary active:scale-[0.99]"
                   }
                 >
                   <Link href={item.href}>
