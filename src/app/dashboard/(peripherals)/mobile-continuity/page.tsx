@@ -142,6 +142,15 @@ function parseTeamName(teamName: string): { category: string; teamSuffix: string
   return { category: parts.slice(0, -1).join(" "), teamSuffix: last };
 }
 
+function safeParseJson<T>(raw: string | null, fallback: T): T {
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
 export default function MobileContinuityPage() {
   const { toast } = useToast();
   const { profile, session } = useAuth();
@@ -254,21 +263,29 @@ export default function MobileContinuityPage() {
       setScore({ home: Math.max(0, remoteScore.home), guest: Math.max(0, remoteScore.guest) });
       lastScoreAppliedRef.current = remoteScore.updatedAt;
     }
-    const clubScopeId = profile?.clubId ?? "global";
-    const raw = localStorage.getItem(`${TEAMS_STORAGE_PREFIX}_${clubScopeId}`);
-    if (!raw) return;
-    try {
-      const parsed = JSON.parse(raw) as ContinuityTeam[];
-      const nextTeams = Array.isArray(parsed)
-        ? parsed
-            .filter((t) => t && typeof t.id === "string" && typeof t.name === "string")
-            .map((t) => ({ id: t.id, name: t.name, stage: t.stage }))
-        : [];
-      setTeams(nextTeams);
-      if (nextTeams[0]?.id) setSelectedTeamId(nextTeams[0].id);
-    } catch {
-      // fallback silencioso
+    const teamsClubScopeId = profile?.clubId ?? "global";
+    const raw = localStorage.getItem(`${TEAMS_STORAGE_PREFIX}_${teamsClubScopeId}`);
+    const parsed = safeParseJson<ContinuityTeam[] | null>(raw, null);
+    const nextTeams = Array.isArray(parsed)
+      ? parsed
+          .filter((t) => t && typeof t.id === "string" && typeof t.name === "string")
+          .map((t) => ({ id: t.id, name: t.name, stage: t.stage }))
+      : [];
+
+    // Sandbox: si no hay equipos de metodología, usar el único equipo promo (Mi equipo).
+    if (nextTeams.length === 0 && continuityEnv === "sandbox") {
+      const promo = safeParseJson<any>(localStorage.getItem("synq_promo_team"), null);
+      const promoName = String(promo?.name || "").trim();
+      const promoCategory = String(promo?.category || "").trim();
+      const displayName = promoCategory ? `${promoCategory}` : promoName || "Equipo Sandbox";
+      const fallbackTeam: ContinuityTeam = { id: "promo_team", name: displayName };
+      setTeams([fallbackTeam]);
+      setSelectedTeamId((prev) => prev || fallbackTeam.id);
+      return;
     }
+
+    setTeams(nextTeams);
+    if (nextTeams[0]?.id) setSelectedTeamId((prev) => prev || nextTeams[0].id);
   }, [profile?.clubId, timerSyncKey, scoreSyncKey]);
 
   useEffect(() => {
