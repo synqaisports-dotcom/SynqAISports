@@ -11,6 +11,8 @@ import {
   Gauge,
   ShieldCheck,
   Swords,
+  Trophy,
+  Zap,
   Users,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
@@ -29,6 +31,14 @@ type PromoMatch = {
   date?: string;
   rivalName?: string;
   location?: string; // "Local" | "Visitante"
+  status?: string; // "Scheduled" | "Played" | ...
+  score?: { home?: number; guest?: number };
+};
+
+type HomeMiniStats = {
+  wins: number;
+  goalsFor: number;
+  goalsAgainst: number;
 };
 
 const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT ?? "";
@@ -218,17 +228,29 @@ export default function SandboxAppHomePage() {
     exercises: 0,
     activeField: "F11",
   });
+  const [miniStats, setMiniStats] = useState<HomeMiniStats>({
+    wins: 0,
+    goalsFor: 0,
+    goalsAgainst: 0,
+  });
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     const team = safeParseJson<any>(localStorage.getItem("synq_promo_team"), null);
-    const vault = safeParseJson<any>(localStorage.getItem("synq_promo_vault"), { exercises: [] });
+    const vault = safeParseJson<any>(localStorage.getItem("synq_promo_vault"), { exercises: [], matches: [] });
     const starters = Array.isArray(team?.starters)
       ? team.starters.filter((name: string) => name?.trim?.() !== "").length
       : 0;
     const exercises = Array.isArray(vault?.exercises) ? vault.exercises.length : 0;
     const activeField = String(team?.type || "f11").toUpperCase();
     setMetrics({ starters, exercises, activeField });
+
+    const matches: PromoMatch[] = Array.isArray(vault?.matches) ? vault.matches : [];
+    const played = matches.filter((m) => (m.status || "").toLowerCase() === "played");
+    const wins = played.filter((m) => (m.score?.home || 0) > (m.score?.guest || 0)).length;
+    const goalsFor = played.reduce((acc, m) => acc + (m.score?.home || 0), 0);
+    const goalsAgainst = played.reduce((acc, m) => acc + (m.score?.guest || 0), 0);
+    setMiniStats({ wins, goalsFor, goalsAgainst });
   }, []);
 
   const accessItems = useMemo(
@@ -271,6 +293,35 @@ export default function SandboxAppHomePage() {
           <h2 className="mt-3 text-2xl sm:text-3xl font-black uppercase tracking-tight">
             Terminal completa <span className="text-primary">logueada</span>
           </h2>
+          <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-4 flex items-center gap-4">
+              <div className="h-12 w-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                <Trophy className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.28em] text-white/40">Victorias</p>
+                <p className="mt-1 text-2xl font-black text-primary italic leading-none">{miniStats.wins}</p>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-4 flex items-center gap-4">
+              <div className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+                <Zap className="h-6 w-6 text-white/40" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.28em] text-white/40">Goles a favor</p>
+                <p className="mt-1 text-2xl font-black text-white italic leading-none">{miniStats.goalsFor}</p>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-4 flex items-center gap-4">
+              <div className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+                <Activity className="h-6 w-6 text-white/40" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.28em] text-white/40">Goles en contra</p>
+                <p className="mt-1 text-2xl font-black text-white italic leading-none">{miniStats.goalsAgainst}</p>
+              </div>
+            </div>
+          </div>
           <p className="mt-3 text-sm text-white/70 leading-relaxed">
             Bienvenido{profile?.name ? `, ${profile.name}` : ""}. Aquí tienes todas las funcionalidades del Sandbox dentro del scope de la micro‑app.
           </p>
