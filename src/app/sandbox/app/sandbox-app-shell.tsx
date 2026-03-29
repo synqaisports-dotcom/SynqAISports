@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { ArrowLeft, Home, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { SynqAiSportsLogo } from "@/components/branding/SynqAiSportsLogo";
 
 function titleForPath(pathname: string): string {
   if (pathname === "/sandbox/app") return "Inicio";
@@ -35,9 +36,12 @@ export function SandboxAppShell(props: { children: ReactNode }) {
       <div className="absolute -top-40 -right-40 h-[520px] w-[520px] rounded-full bg-primary/10 blur-3xl pointer-events-none" />
       <div className="absolute -bottom-40 -left-40 h-[520px] w-[520px] rounded-full bg-primary/10 blur-3xl pointer-events-none" />
 
-      <header className="sticky top-0 z-[80] border-b border-white/5 bg-black/60 backdrop-blur-2xl">
-        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 py-3">
-          <div className="flex items-center gap-2">
+      <header className="sticky top-0 z-[80] border-b border-white/5 bg-black/70 backdrop-blur-2xl">
+        <div className="mx-auto w-full max-w-[1200px] px-4 sm:px-6 py-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="mr-1 sm:mr-3">
+              <SynqAiSportsLogo compact />
+            </div>
             <Button
               type="button"
               variant="outline"
@@ -89,7 +93,7 @@ export function SandboxAppShell(props: { children: ReactNode }) {
         </div>
       </header>
 
-      <div className="mx-auto w-full max-w-7xl px-2 sm:px-6">
+      <div className="mx-auto w-full max-w-[1200px] px-3 sm:px-5 lg:px-6">
         <div className="py-4 sm:py-6">{props.children}</div>
       </div>
     </div>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
+import { SynqAiSportsLogo } from "@/components/branding/SynqAiSportsLogo";
 
 export default function SandboxAppHomePage() {
   const { profile } = useAuth();
@@ -10,6 +11,9 @@ export default function SandboxAppHomePage() {
     <main className="min-h-[60dvh] text-white">
       <div className="mx-auto w-full max-w-4xl px-3 sm:px-4 py-6 sm:py-10">
         <div className="rounded-3xl border border-primary/20 bg-white/[0.02] p-6 sm:p-8 shadow-2xl">
+          <div className="mb-5">
+            <SynqAiSportsLogo compact />
+          </div>
           <p className="text-[10px] font-black uppercase tracking-[0.35em] text-primary/60">Sandbox (Micro‑app)</p>
           <h1 className="mt-3 text-2xl sm:text-3xl font-black uppercase tracking-tight">
             Terminal completa <span className="text-primary">logueada</span>
