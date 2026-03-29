@@ -10,7 +10,7 @@ export function SandboxBoardShell(props: { children: ReactNode }) {
   const router = useRouter();
 
   return (
-    <div className="min-h-[100dvh] bg-black text-white relative overflow-hidden">
+    <div className="h-[100dvh] bg-black text-white relative overflow-hidden flex flex-col">
       <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
       <header className="fixed top-0 left-0 right-0 z-[300] border-b border-white/5 bg-black/40 backdrop-blur-2xl">
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 py-3">
@@ -44,7 +44,7 @@ export function SandboxBoardShell(props: { children: ReactNode }) {
         </div>
       </header>
 
-      <div className="pt-[64px]">{props.children}</div>
+      <div className="flex-1 min-h-0 pt-[64px] relative">{props.children}</div>
     </div>
   );
 }
