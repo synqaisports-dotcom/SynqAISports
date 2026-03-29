@@ -38,8 +38,8 @@ export function SandboxAppShell(props: { children: ReactNode }) {
       <div className="absolute -top-40 -right-40 h-[520px] w-[520px] rounded-full bg-primary/10 blur-3xl pointer-events-none" />
       <div className="absolute -bottom-40 -left-40 h-[520px] w-[520px] rounded-full bg-primary/10 blur-3xl pointer-events-none" />
 
-      <header className="sticky top-0 z-[80] border-b border-primary/10 bg-[#03070f]/85 backdrop-blur-2xl">
-        <div className="mx-auto w-full max-w-[1200px] px-4 sm:px-6 py-3">
+      <header className="sticky top-0 z-[80] px-3 sm:px-5 lg:px-6 pt-3">
+        <div className="w-full rounded-2xl border border-primary/20 bg-[#03070f]/85 backdrop-blur-2xl px-3 sm:px-4 py-2.5 shadow-[0_10px_30px_rgba(0,0,0,0.35)]">
           <div className="flex flex-wrap items-center gap-2">
             <div className="mr-1 sm:mr-3">
               <SynqAiSportsLogo compact />
@@ -107,7 +107,7 @@ export function SandboxAppShell(props: { children: ReactNode }) {
         </div>
       </header>
 
-      <div className="mx-auto w-full max-w-[1200px] px-3 sm:px-5 lg:px-6">
+      <div className="w-full px-3 sm:px-5 lg:px-6">
         <div className="py-4 sm:py-6">
           <div className="rounded-3xl border border-primary/15 bg-gradient-to-b from-[#0a1222]/90 to-[#050a14]/90 shadow-[0_20px_80px_rgba(0,0,0,0.45)]">
             {props.children}

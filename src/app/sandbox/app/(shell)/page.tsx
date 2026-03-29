@@ -70,7 +70,7 @@ export default function SandboxAppHomePage() {
 
   return (
     <main className="min-h-[60dvh] text-white">
-      <div className="mx-auto w-full max-w-5xl px-3 sm:px-4 py-5 sm:py-8">
+      <div className="w-full px-3 sm:px-4 lg:px-6 py-5 sm:py-8">
         <div className="mb-4 sticky top-2 z-20 flex flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-black/70 backdrop-blur-xl p-2">
           <Button
             type="button"
