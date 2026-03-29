@@ -134,16 +134,18 @@ const navItems: NavItem[] = [
   { title: "Neural Planner", href: "/dashboard/coach/planner", icon: Activity, category: "operational", moduleId: "planner" },
   
   // TERMINALES_ACCESO - NODO SANDBOX (Categoría User)
+  { title: "Sandbox Portal", href: "/sandbox-portal", icon: ShieldCheck, category: "user" },
   { title: "Sandbox Home", href: "/sandbox", icon: LayoutGrid, category: "user" },
   { title: "Mi Equipo Local", href: "/sandbox/team", icon: Users, category: "user" },
   { title: "Mis Tareas", href: "/sandbox/tasks", icon: Dumbbell, category: "user" },
   { title: "Pizarra Sandbox", href: "/sandbox/board", icon: Zap, category: "user" },
   { title: "Config Watch", href: "/dashboard/watch-config", icon: Watch, category: "user" },
   { title: "Modo Continuidad", href: "/dashboard/mobile-continuity", icon: Smartphone, category: "user" },
+  { title: "Smartwatch Link", href: "/smartwatch", icon: Watch, category: "user" },
   
   // OTROS TERMINALES
   { title: "Tutor Portal", href: "/tutor", icon: UserCircle, category: "user", roles: ["superadmin"] },
-  { title: "Smartwatch Link", href: "/smartwatch", icon: Watch, category: "user", roles: ["superadmin"] },
+  // Smartwatch Link está arriba para que se vea también en modo free
 ];
 
 export function DashboardSidebar() {

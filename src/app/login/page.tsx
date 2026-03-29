@@ -43,6 +43,15 @@ function LoginContent() {
   const { toast } = useToast();
   const router = useRouter();
   const searchParamsHook = useSearchParams();
+  const requestedNextRaw = searchParamsHook.get("next");
+  const requestedNext = (() => {
+    const raw = (requestedNextRaw || "").trim();
+    if (!raw) return null;
+    // Seguridad anti open-redirect: solo permitimos rutas relativas internas.
+    if (!raw.startsWith("/")) return null;
+    if (raw.startsWith("//")) return null;
+    return raw;
+  })();
   
   const [token, setToken] = useState<string | null>(null);
   const [campaignData, setCampaignData] = useState<any>(null);
@@ -54,7 +63,9 @@ function LoginContent() {
 
   useEffect(() => {
     if (profile) {
-      if (profile.role === "superadmin") {
+      if (requestedNext) {
+        router.push(requestedNext);
+      } else if (profile.role === "superadmin") {
         router.push("/admin-global");
       } else if (profile.clubCreated) {
         router.push("/dashboard");
@@ -62,7 +73,7 @@ function LoginContent() {
         router.push("/dashboard/coach/onboarding");
       }
     }
-  }, [profile, router]);
+  }, [profile, router, requestedNext]);
 
   useEffect(() => {
     const t = searchParamsHook.get("token") || searchParamsHook.get("t");
