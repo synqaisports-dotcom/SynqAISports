@@ -3,10 +3,11 @@
 import { useMemo, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ArrowLeft, Home, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Home, LogOut, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { SynqAiSportsLogo } from "@/components/branding/SynqAiSportsLogo";
+import { useAuth } from "@/lib/auth-context";
 
 function titleForPath(pathname: string): string {
   if (pathname === "/sandbox/app") return "Inicio";
@@ -25,6 +26,7 @@ function titleForPath(pathname: string): string {
 
 export function SandboxAppShell(props: { children: ReactNode }) {
   const router = useRouter();
+  const { logout } = useAuth();
   const pathname = usePathname() || "/sandbox/app";
 
   const sectionTitle = useMemo(() => titleForPath(pathname), [pathname]);
@@ -75,6 +77,18 @@ export function SandboxAppShell(props: { children: ReactNode }) {
                 <Home className="h-4 w-4 mr-2" />
                 Inicio
               </Link>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-10 rounded-2xl border-white/10 text-white/80 font-black uppercase text-[10px] tracking-widest"
+              onClick={async () => {
+                await logout();
+                router.replace("/sandbox/login");
+              }}
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Salir
             </Button>
 
             <div className="ml-auto flex items-center gap-2">
