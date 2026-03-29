@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { 
   Users, 
   Save, 
@@ -44,6 +44,12 @@ const POSITIONS: Record<TeamType, string[]> = {
   futsal: ["POR", "FIXO", "ALA", "ALA", "PIVOT"]
 };
 
+function normalizeFixedLength(list: unknown, len: number): string[] {
+  const src = Array.isArray(list) ? list : [];
+  const out = Array.from({ length: len }, (_, i) => String(src[i] ?? ""));
+  return out;
+}
+
 export default function PromoTeamPage() {
   const { toast } = useToast();
   const [teamType, setTeamType] = useState<TeamType>("f11");
@@ -54,28 +60,40 @@ export default function PromoTeamPage() {
   const [starters, setStarters] = useState<string[]>([]);
   const [substitutes, setSubstitutes] = useState<string[]>(["", "", "", ""]);
   const [loading, setLoading] = useState(false);
+  const didHydrateRef = useRef(false);
 
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("synq_promo_team") || "null");
     if (saved) {
-      setTeamType(saved.type || "f11");
+      const savedType = (saved.type || "f11") as TeamType;
+      setTeamType(savedType);
       setTeamName(saved.name || "");
       setCountry(saved.country || "");
       setCity(saved.city || "");
       setCategory(saved.category || "");
-      setStarters(saved.starters || []);
-      setSubstitutes(saved.substitutes || ["", "", "", ""]);
+      setStarters(normalizeFixedLength(saved.starters, POSITIONS[savedType].length));
+      setSubstitutes(normalizeFixedLength(saved.substitutes, 4));
     } else {
       setStarters(Array(POSITIONS[teamType].length).fill(""));
     }
+    didHydrateRef.current = true;
   }, []);
 
   // Efecto para reajustar titulares al cambiar de formato si no hay datos
   useEffect(() => {
+    if (!didHydrateRef.current) return;
     const saved = JSON.parse(localStorage.getItem("synq_promo_team") || "null");
-    if (!saved || saved.type !== teamType) {
+    if (!saved) {
       setStarters(Array(POSITIONS[teamType].length).fill(""));
+      return;
     }
+    // Si el usuario cambia el formato manualmente (no coincide con lo guardado), reiniciar a longitud correcta.
+    if (saved.type !== teamType) {
+      setStarters(Array(POSITIONS[teamType].length).fill(""));
+      return;
+    }
+    // Si coincide con lo guardado, aseguramos longitud para que se vean todos los inputs con valores persistidos.
+    setStarters((prev) => normalizeFixedLength(prev, POSITIONS[teamType].length));
   }, [teamType]);
 
   const handleSaveTeam = (e: React.FormEvent) => {
