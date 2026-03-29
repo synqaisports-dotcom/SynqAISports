@@ -8,7 +8,6 @@ import {
   ChevronRight,
   ClipboardList,
   Gauge,
-  LogOut,
   ShieldCheck,
   Swords,
   Users,
@@ -16,7 +15,6 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { SynqAiSportsLogo } from "@/components/branding/SynqAiSportsLogo";
-import { useRouter } from "next/navigation";
 
 type SandboxMetrics = {
   starters: number;
@@ -34,8 +32,7 @@ function safeParseJson<T>(raw: string | null, fallback: T): T {
 }
 
 export default function SandboxAppHomePage() {
-  const { profile, logout } = useAuth();
-  const router = useRouter();
+  const { profile } = useAuth();
   const [metrics, setMetrics] = useState<SandboxMetrics>({
     starters: 0,
     exercises: 0,
@@ -81,22 +78,10 @@ export default function SandboxAppHomePage() {
             Nodo principal de acceso
           </p>
         </div>
-        <div className="w-full lg:w-auto flex items-center gap-2">
+        <div className="w-full lg:w-auto">
           <div className="rounded-2xl border border-primary/20 bg-primary/5 px-3 py-2 w-fit">
             <SynqAiSportsLogo compact />
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            className="h-10 rounded-2xl border-rose-300/25 bg-rose-500/10 text-rose-200 font-black uppercase text-[10px] tracking-widest hover:bg-rose-500/20"
-            onClick={async () => {
-              await logout();
-              router.replace("/sandbox/login?next=/sandbox/app");
-            }}
-          >
-            <LogOut className="h-4 w-4 mr-2" />
-            Salir
-          </Button>
         </div>
       </div>
 
