@@ -4,10 +4,13 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
   Activity,
+  ArrowLeft,
   CalendarDays,
   ChevronRight,
   ClipboardList,
   Gauge,
+  Home,
+  LogOut,
   ShieldCheck,
   Swords,
   Users,
@@ -15,6 +18,7 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { SynqAiSportsLogo } from "@/components/branding/SynqAiSportsLogo";
+import { useRouter } from "next/navigation";
 
 type SandboxMetrics = {
   starters: number;
@@ -32,7 +36,8 @@ function safeParseJson<T>(raw: string | null, fallback: T): T {
 }
 
 export default function SandboxAppHomePage() {
-  const { profile } = useAuth();
+  const { profile, logout } = useAuth();
+  const router = useRouter();
   const [metrics, setMetrics] = useState<SandboxMetrics>({
     starters: 0,
     exercises: 0,
@@ -67,6 +72,45 @@ export default function SandboxAppHomePage() {
     <main className="min-h-[60dvh] text-white">
       <div className="mx-auto w-full max-w-5xl px-3 sm:px-4 py-5 sm:py-8">
         <div className="rounded-3xl border border-primary/20 bg-white/[0.02] p-6 sm:p-8 shadow-2xl">
+          <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-black/40 p-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-10 rounded-2xl border-white/10 text-white/80 font-black uppercase text-[10px] tracking-widest"
+              onClick={() => {
+                try {
+                  router.back();
+                } catch {
+                  router.replace("/sandbox/app");
+                }
+              }}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Atrás
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              className="h-10 rounded-2xl border-white/10 text-white/80 font-black uppercase text-[10px] tracking-widest"
+            >
+              <Link href="/sandbox/app">
+                <Home className="h-4 w-4 mr-2" />
+                Inicio
+              </Link>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-10 rounded-2xl border-rose-300/20 text-rose-300/80 font-black uppercase text-[10px] tracking-widest ml-auto"
+              onClick={async () => {
+                await logout();
+                router.replace("/sandbox/login?next=/sandbox/app");
+              }}
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Salir
+            </Button>
+          </div>
           <div className="mb-5 flex items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-primary/5 px-3 py-2">
             <SynqAiSportsLogo compact />
             <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-black/30 px-2.5 py-1.5">
