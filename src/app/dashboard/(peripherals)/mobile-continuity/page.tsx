@@ -746,10 +746,10 @@ export default function MobileContinuityPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <div className="space-y-1">
                 <Label className="text-[10px] uppercase text-white/50">Equipo</Label>
-                {continuityEnv === "sandbox" && teams.length <= 1 && selectedTeam ? (
+                {continuityEnv === "sandbox" ? (
                   <div className="h-9 rounded-xl border border-white/10 bg-black/30 px-3 flex items-center">
                     <span className="text-[11px] font-black text-white uppercase tracking-tight truncate">
-                      {selectedTeam.name}
+                      {selectedTeam?.name || "Pendiente de configurar"}
                     </span>
                   </div>
                 ) : (
