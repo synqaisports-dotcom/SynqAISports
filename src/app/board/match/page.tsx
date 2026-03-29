@@ -600,7 +600,14 @@ function MatchBoardInner() {
       </div>
 
       {/* TELEMETRÍA, TIEMPO Y GUARDADO */}
-      <div className="fixed top-4 right-4 z-[100] flex items-center gap-2 animate-in slide-in-from-right-4 duration-700 scale-[0.75] origin-top-right lg:scale-100">
+      <div
+        className={cn(
+          "fixed z-[100] flex items-center gap-2 animate-in slide-in-from-right-4 duration-700 scale-[0.75] origin-top-right lg:scale-100",
+          matchSource === "sandbox"
+            ? "top-14 right-2 sm:top-4 sm:right-4"
+            : "top-4 right-4",
+        )}
+      >
         <Button 
           onClick={handleSaveMatch}
           className="h-10 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-6 rounded-xl shadow-[0_0_20px_rgba(0,242,255,0.2)] hover:scale-105 transition-all border-none hidden sm:flex"
