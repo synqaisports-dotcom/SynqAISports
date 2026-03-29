@@ -1,14 +1,15 @@
 import type { Metadata, Viewport } from "next";
 import { PwaInstallBanner } from "@/components/pwa/PwaInstallBanner";
-import { SandboxAppClientWrapper } from "./sandbox-app-client-wrapper";
+import { SandboxAppClientWrapper } from "../sandbox-app-client-wrapper";
+import { SandboxBoardShell } from "./sandbox-board-shell";
 
 export const viewport: Viewport = {
   themeColor: "#00f2ff",
 };
 
 export const metadata: Metadata = {
-  title: "Sandbox · SynqAi",
-  description: "Sandbox completo (logueado) dentro de la micro-app /sandbox",
+  title: "Sandbox · Pizarras",
+  description: "Pizarras dentro del scope /sandbox (full-screen)",
   manifest: "/sandbox/manifest.json",
   appleWebApp: {
     capable: true,
@@ -17,12 +18,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function SandboxAppLayout(props: { children: React.ReactNode }) {
+export default async function SandboxBoardLayout(props: { children: React.ReactNode }) {
   return (
     <>
       <PwaInstallBanner appName="Sandbox" storageKeyScope="sandbox" />
       <SandboxAppClientWrapper>
-        {props.children}
+        <SandboxBoardShell>{props.children}</SandboxBoardShell>
       </SandboxAppClientWrapper>
     </>
   );

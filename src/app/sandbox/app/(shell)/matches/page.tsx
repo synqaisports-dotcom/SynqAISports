@@ -2,7 +2,7 @@
 
 import PromoMatchesPage from "@/app/dashboard/promo/matches/page";
 
-export default function SandboxAppMatchesPage() {
+export default function SandboxAppMatchesShellPage() {
   return <PromoMatchesPage />;
 }
 
