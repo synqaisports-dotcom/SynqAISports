@@ -1451,16 +1451,13 @@ function PromoBoardContent() {
           variant="ghost"
           size="icon"
           onClick={() => {
-            const go = () => {
-              const target = basePath === "/sandbox" ? "/sandbox/app/tasks" : "/dashboard/promo/tasks";
-              router.replace(target);
-            };
-            try {
-              router.back();
-              window.setTimeout(go, 120);
-            } catch {
-              go();
-            }
+            const p = window.location.pathname || "";
+            const target = p.startsWith("/sandbox/app")
+              ? "/sandbox/app/tasks"
+              : p.startsWith("/sandbox")
+                ? "/sandbox/tasks"
+                : "/dashboard/promo/tasks";
+            router.replace(target);
           }}
           className="h-12 w-12 rounded-2xl bg-black/60 backdrop-blur-2xl border border-white/10 text-white/40 hover:text-primary transition-all shadow-xl"
         >
