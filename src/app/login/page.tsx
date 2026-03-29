@@ -277,7 +277,15 @@ function LoginContent() {
 
       <div className="flex flex-col items-center gap-4">
         <button 
-          onClick={() => { loginAsGuest(); }}
+          onClick={() => {
+            loginAsGuest();
+            // Forzar navegación inmediata (evita quedarse en /login por estado/HMR).
+            if (requestedNext) {
+              router.push(requestedNext);
+            } else {
+              router.push("/admin-global");
+            }
+          }}
           className="text-[9px] font-black text-white/20 hover:text-primary transition-all uppercase tracking-[0.5em] italic flex items-center gap-2 group"
         >
           <Key className="h-3 w-3 group-hover:animate-pulse" /> Terminal de Fundadores
