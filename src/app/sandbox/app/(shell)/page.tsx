@@ -24,6 +24,13 @@ type SandboxMetrics = {
   activeField: string;
 };
 
+type PromoMatch = {
+  id?: number | string;
+  date?: string;
+  rivalName?: string;
+  location?: string; // "Local" | "Visitante"
+};
+
 const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT ?? "";
 const ADSENSE_SLOT_H = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_SLOT_HORIZONTAL ?? "";
 
@@ -125,6 +132,71 @@ function SandboxHomeAdPanel() {
             </div>
           )}
         </div>
+      </div>
+    </section>
+  );
+}
+
+function parseMatchDate(value: string | undefined): number | null {
+  if (!value) return null;
+  const t = Date.parse(value);
+  return Number.isFinite(t) ? t : null;
+}
+
+function UpcomingMatchesPanel() {
+  const [nextMatches, setNextMatches] = useState<PromoMatch[]>([]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const vault = safeParseJson<any>(localStorage.getItem("synq_promo_vault"), { matches: [] });
+    const matchesRaw: PromoMatch[] = Array.isArray(vault?.matches) ? vault.matches : [];
+    const now = Date.now();
+    const normalized = matchesRaw
+      .map((m) => ({ ...m, _t: parseMatchDate(m.date) }))
+      .filter((m: any) => typeof m._t === "number" && m._t >= (now - 24 * 60 * 60 * 1000));
+
+    normalized.sort((a: any, b: any) => (a._t ?? 0) - (b._t ?? 0));
+    setNextMatches(normalized.slice(0, 3).map(({ _t, ...rest }: any) => rest));
+  }, []);
+
+  const rows = Array.from({ length: 3 }).map((_, i) => nextMatches[i] || null);
+
+  return (
+    <section className="rounded-3xl border border-primary/20 bg-black/35 backdrop-blur-sm shadow-[0_12px_40px_rgba(0,0,0,0.35)] overflow-hidden">
+      <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-primary/10 bg-gradient-to-r from-primary/10 via-transparent to-transparent">
+        <p className="text-[10px] font-black uppercase tracking-[0.35em] text-primary/70">Próximos partidos</p>
+        <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40">3 siguientes</span>
+      </div>
+
+      <div className="p-4 sm:p-5 space-y-3">
+        {rows.map((m, idx) => {
+          const isPending = !m || !m.date || !m.rivalName || !m.location;
+          const location = (m?.location || "").toLowerCase().includes("visit") ? "Fuera" : (m?.location ? "Casa" : "Pendiente");
+          const dateLabel = m?.date ? m.date : "Pendiente de configurar";
+          const rivalLabel = m?.rivalName ? m.rivalName : "Pendiente de configurar";
+          return (
+            <div
+              key={idx}
+              className={cn(
+                "rounded-2xl border border-primary/15 bg-black/40 px-4 py-3 flex items-center justify-between gap-4",
+                isPending && "border-dashed",
+              )}
+            >
+              <div className="min-w-0">
+                <p className="text-[9px] font-black uppercase tracking-[0.28em] text-white/35">
+                  {isPending ? "Pendiente" : location}
+                </p>
+                <p className="mt-1 text-sm font-black uppercase tracking-tight text-white truncate">
+                  VS {rivalLabel}
+                </p>
+              </div>
+              <div className="shrink-0 text-right">
+                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-primary/70">Fecha</p>
+                <p className="text-[11px] font-black text-white/70">{dateLabel}</p>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </section>
   );
@@ -248,6 +320,7 @@ export default function SandboxAppHomePage() {
 
         <div className="space-y-6">
           <SandboxHomeAdPanel />
+          <UpcomingMatchesPanel />
         </div>
       </div>
     </main>
