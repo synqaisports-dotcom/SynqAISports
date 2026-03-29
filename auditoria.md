@@ -49,6 +49,27 @@ Este documento centraliza el histórico de auditorías técnicas del producto (b
 
 ---
 
+## Modelo de negocio y decisiones (snapshot 2026-03-29)
+
+Referencia: `MODELO_NEGOCIO_Y_ARQUITECTURA.md`.
+
+### Resumen (alto nivel)
+
+- **SynqAI Sports** se diseña como **plataforma** (no “una app”) de **arbitraje financiero y publicitario** para deporte federado, con escalabilidad masiva y aislamiento estricto por `clubId`.
+- **Pro (Club)**: experiencia **limpia de publicidad** en **Metodología** y **Dashboard Club** (impacta en el bolsillo del club).
+- **Consumer / Terminales de acceso** (entrenador/tutor/jugador/sandbox, etc.): **con publicidad dinámica** y tracking para revenue-share.
+- **Revenue share 60/40**: 60% SynqAI / 40% Club (acumulado como wallet/descuento de factura).
+- **Fee Pro por jugador** ajustado por **PPP**; el club puede fijar su precio al socio (soberanía de precios).
+- **Sandbox**: puerta de entrada para entrenadores (club o colegio) con enfoque **localStorage-first** (coste controlado) y crecimiento “orgánico”; incluso duplicidades de sistemas generan valor vía impresiones.
+- **Evolución multi-deporte**: empezar por fútbol; cuando la pizarra sea “hiper pro”, replicar a deportes minoritarios como herramienta de financiación/tecnología.
+
+### Implicaciones técnicas (recordatorio)
+
+- **Multi-tenant real**: RLS + guards + scoping local/keys por club para evitar “dos verdades” y fugas.
+- **Separación Pro vs Consumer**: ads fail-closed en Pro; ads habilitados y medidos en consumer.
+- **Motor gráfico universal**: coordenadas relativas (%) para reusabilidad multi-deporte.
+- **Offline-first + cola**: sync background con backoff + señales de estado y auditoría (no bloquear UX).
+
 ## Auditoría #00X - 2026-03-28 — Coach: Sessions / Library / Neural Planner
 
 ### Alcance
