@@ -830,13 +830,23 @@ function PromoBoardContent() {
   const redrawAll = useCallback(() => {
     const canvas = canvasRef.current; const ctx = canvas?.getContext('2d'); if (!ctx || !canvas) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const sorted = [...elements].sort((a, b) => {
-      if (a.type === 'text' && b.type !== 'text') return 1; if (a.type !== 'text' && b.type === 'text') return -1;
-      const aMat = isMaterial(a.type); const bMat = isMaterial(b.type); if (aMat && !bMat) return 1; if (!aMat && bMat) return -1; return 0;
-    });
-    sorted.forEach(el => drawElement(ctx, el, selectedIds.includes(el.id)));
+    // Orden de capas:
+    // 1) Dibujos (strokes) abajo
+    // 2) Materiales (jugadores/conos/etc.) siempre encima de los dibujos
+    // 3) Texto arriba del todo
+    const strokes: DrawingElement[] = [];
+    const materials: DrawingElement[] = [];
+    const texts: DrawingElement[] = [];
+    for (const el of elements) {
+      if (el.type === "text") texts.push(el);
+      else if (isMaterial(el.type)) materials.push(el);
+      else strokes.push(el);
+    }
+    strokes.forEach((el) => drawElement(ctx, el, selectedIds.includes(el.id)));
     const draft = draftStrokeRef.current;
     if (draft) drawElement(ctx, draft, false);
+    materials.forEach((el) => drawElement(ctx, el, selectedIds.includes(el.id)));
+    texts.forEach((el) => drawElement(ctx, el, selectedIds.includes(el.id)));
   }, [elements, selectedIds, drawElement]);
 
   const redrawAllRef = useRef(redrawAll);
@@ -871,8 +881,9 @@ function PromoBoardContent() {
       canvasRef.current && canvasRef.current.height > 0
         ? canvasRef.current.width / canvasRef.current.height
         : 1.5;
+    const playerScale = tool === "player" ? 1.18 : 1;
     const defW =
-      tool === "player" ? CANVAS_PLAYER_NORM_WIDTH :
+      tool === "player" ? CANVAS_PLAYER_NORM_WIDTH * playerScale :
       tool === "ladder" ? 0.15 :
       tool === "minigoal" || tool === "cross-arrow" ? 0.1 :
       tool === "barrier" ? 0.12 :
@@ -969,7 +980,8 @@ function PromoBoardContent() {
           local.y >= bounds.minY &&
           local.y <= bounds.maxY;
         const hIdx = handles.findIndex(h => Math.sqrt(Math.pow(local.x - h.x, 2) + Math.pow(local.y - h.y, 2)) < handleThreshold);
-        if (hIdx !== -1) { interactionMode.current = 'resizing'; activeHandleIndex.current = hIdx; return; }
+        // Jugadores: no permitimos redimensionar (solo mover/rotar)
+        if (hIdx !== -1 && el.type !== "player") { interactionMode.current = 'resizing'; activeHandleIndex.current = hIdx; return; }
         if (insideBody) {
           dragSelectionRef.current = [el.id];
           interactionMode.current = 'dragging';
@@ -1034,6 +1046,7 @@ function PromoBoardContent() {
     if (interactionMode.current === 'resizing' && selectedIds.length === 1 && activeHandleIndex.current !== null) {
       setElements(prev => prev.map(el => {
         if (el.id !== selectedIds[0]) return el;
+        if (el.type === "player") return el;
         const sc = isMaterial(el.type) ? materialViewportScale(wPx, hPx) : 1;
         const boundsRaw = getElementBoundsRaw(el, wPx, hPx);
         const local = rotatePoint({ x: point.x * wPx, y: point.y * hPx }, { x: boundsRaw.centerX, y: boundsRaw.centerY }, -el.rotation);
