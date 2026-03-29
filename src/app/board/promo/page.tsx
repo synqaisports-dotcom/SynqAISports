@@ -71,6 +71,12 @@ import {
 import Link from "next/link";
 import Script from "next/script";
 
+function resolveSandboxBasePath(): "/sandbox" | "/dashboard/promo" {
+  if (typeof window === "undefined") return "/dashboard/promo";
+  const p = window.location.pathname || "";
+  return p.startsWith("/sandbox") ? "/sandbox" : "/dashboard/promo";
+}
+
 interface Point {
   x: number;
   y: number;
@@ -282,6 +288,7 @@ function PromoBoardContent() {
   const searchParamsHook = useSearchParams();
   const router = useRouter();
   const exerciseId = searchParamsHook.get("id");
+  const basePath = resolveSandboxBasePath();
 
   const [renderScale, setRenderScale] = useState(1.0);
   const [isLegacyDevice, setIsLegacyDevice] = useState(false);
@@ -1240,7 +1247,9 @@ function PromoBoardContent() {
                     <div className="p-10 text-center space-y-4 border-2 border-dashed border-white/5 rounded-3xl opacity-40">
                       <Users className="h-10 w-10 mx-auto text-white/20" />
                       <p className="text-[9px] font-black uppercase tracking-widest">Sin configuración de equipo</p>
-                      <Button variant="link" className="text-primary text-[10px] font-black uppercase p-0" asChild><Link href="/dashboard/promo/team">Configurar Ahora</Link></Button>
+                      <Button variant="link" className="text-primary text-[10px] font-black uppercase p-0" asChild>
+                        <Link href={`${basePath}/team`}>Configurar Ahora</Link>
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -1300,23 +1309,23 @@ function PromoBoardContent() {
           <div className="flex items-center gap-2">
             <Sheet open={isDrawingSheetOpen} onOpenChange={setIsDrawingSheetOpen}>
               <SheetTrigger asChild>
-                <button className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-500 flex items-center justify-center hover:bg-amber-500 hover:text-black transition-all group relative">
+                <button className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/30 text-primary flex items-center justify-center hover:bg-primary hover:text-black transition-all group relative">
                   <PencilLine className="h-4 w-4 group-hover:animate-pulse" />
                 </button>
               </SheetTrigger>
-              <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-amber-500/20 text-white w-full sm:max-w-xs shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+              <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-xs shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
                 <div className="p-8 border-b border-white/5 bg-black/40">
                   <SheetHeader className="space-y-4">
                     <div className="flex items-center gap-3">
-                      <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500 italic">Drawing_Studio</span>
+                      <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary italic">Drawing_Studio</span>
                     </div>
                     <SheetTitle className="text-2xl font-black italic uppercase tracking-tighter">HERRAMIENTAS</SheetTitle>
                   </SheetHeader>
                 </div>
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
                   <BoardToolbar 
-                    theme="amber" 
+                    theme="cyan" 
                     variant="training" 
                     orientation="vertical" 
                     activeTool={activeTool} 
@@ -1346,33 +1355,33 @@ function PromoBoardContent() {
 
             <Sheet open={isVaultSheetOpen} onOpenChange={setIsVaultSheetOpen}>
               <SheetTrigger asChild>
-                <button className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-500 flex items-center justify-center hover:bg-amber-500 hover:text-black transition-all group relative">
+                <button className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/30 text-primary flex items-center justify-center hover:bg-primary hover:text-black transition-all group relative">
                   <Library className="h-4 w-4 group-hover:animate-pulse" />
-                  <div className="absolute -top-1 -left-1 h-4 w-4 bg-amber-500 rounded-full border-2 border-black flex items-center justify-center">
+                  <div className="absolute -top-1 -left-1 h-4 w-4 bg-primary rounded-full border-2 border-black flex items-center justify-center">
                     <span className="text-[8px] font-black text-black">{vault.exercises?.length || 0}</span>
                   </div>
                 </button>
               </SheetTrigger>
-              <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-amber-500/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+              <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
                 <div className="p-8 border-b border-white/5 bg-black/40">
                   <SheetHeader className="space-y-4">
                     <div className="flex items-center gap-3">
-                      <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500 italic">Vault_Registry_v1.0</span>
+                      <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary italic">Vault_Registry_v1.0</span>
                     </div>
-                    <SheetTitle className="text-3xl font-black italic uppercase tracking-tighter">MIS <span className="text-amber-500">TAREAS</span></SheetTitle>
+                    <SheetTitle className="text-3xl font-black italic uppercase tracking-tighter">MIS <span className="text-primary">TAREAS</span></SheetTitle>
                   </SheetHeader>
                 </div>
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-6">
                   {vault.exercises && vault.exercises.length > 0 ? (
                     <div className="grid grid-cols-1 gap-4">
                       {vault.exercises.map((ex: any) => (
-                        <div key={ex.id} onClick={() => { loadExercise(ex); setIsVaultSheetOpen(false); }} className="p-5 bg-white/[0.02] border border-white/5 rounded-3xl group hover:border-amber-500/40 hover:bg-amber-500/5 cursor-pointer transition-all relative overflow-hidden">
+                        <div key={ex.id} onClick={() => { loadExercise(ex); setIsVaultSheetOpen(false); }} className="p-5 bg-white/[0.02] border border-white/5 rounded-3xl group hover:border-primary/40 hover:bg-primary/5 cursor-pointer transition-all relative overflow-hidden">
                           <div className="flex justify-between items-start mb-2">
-                            <Badge variant="outline" className="text-[7px] border-amber-500/20 text-amber-500 font-black px-2">{ex.block?.toUpperCase() || 'SANDBOX'}</Badge>
+                            <Badge variant="outline" className="text-[7px] border-primary/20 text-primary font-black px-2">{ex.block?.toUpperCase() || 'SANDBOX'}</Badge>
                             <span className="text-[8px] font-black text-white/20 uppercase tracking-widest">{ex.fieldType?.toUpperCase() || 'F11'}</span>
                           </div>
-                          <h4 className="text-sm font-black text-white uppercase italic group-hover:amber-text-glow transition-all">{ex.metadata?.title || `Tarea_${ex.id.toString().slice(-4)}`}</h4>
+                          <h4 className="text-sm font-black text-white uppercase italic group-hover:cyan-text-glow transition-all">{ex.metadata?.title || `Tarea_${ex.id.toString().slice(-4)}`}</h4>
                           <p className="text-[9px] font-bold text-white/30 uppercase mt-1 line-clamp-1">{ex.metadata?.objective || 'Sin objetivo definido'}</p>
                         </div>
                       ))}
@@ -1385,7 +1394,12 @@ function PromoBoardContent() {
                   )}
                 </div>
                 <div className="p-8 bg-black/60 border-t border-white/5">
-                  <Button className="w-full h-14 bg-amber-500 text-black font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-[0_0_20px_rgba(245,158,11,0.2)]" asChild><Link href="/dashboard/promo/tasks">Gestionar Biblioteca</Link></Button>
+                  <Button
+                    className="w-full h-14 bg-primary text-black font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-[0_0_20px_rgba(0,242,255,0.14)]"
+                    asChild
+                  >
+                    <Link href={`${basePath}/tasks`}>Gestionar Biblioteca</Link>
+                  </Button>
                 </div>
               </SheetContent>
             </Sheet>
@@ -1410,7 +1424,12 @@ function PromoBoardContent() {
       </header>
 
       <div className="fixed top-6 left-6 z-[200] lg:block hidden">
-        <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard')} className="h-12 w-12 rounded-2xl bg-black/60 backdrop-blur-2xl border border-white/10 text-white/40 hover:text-primary transition-all shadow-xl">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => router.push(basePath === "/sandbox" ? "/sandbox" : "/dashboard")}
+          className="h-12 w-12 rounded-2xl bg-black/60 backdrop-blur-2xl border border-white/10 text-white/40 hover:text-primary transition-all shadow-xl"
+        >
           <LayoutDashboard className="h-5 w-5" />
         </Button>
       </div>

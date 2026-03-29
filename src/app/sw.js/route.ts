@@ -23,6 +23,7 @@ export async function GET() {
       "/smartwatch/manifest.json",
       "/dashboard/promo/manifest.json",
       "/dashboard/peripherals/manifest.json",
+      "/sandbox/manifest.json",
     ];
 
     self.addEventListener("install", (event) => {
