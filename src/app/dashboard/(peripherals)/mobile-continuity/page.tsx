@@ -75,6 +75,15 @@ type ContinuityTeam = {
   stage?: string;
 };
 
+type PromoMatch = {
+  id?: number | string;
+  date?: string;
+  rivalName?: string;
+  location?: string;
+  status?: string;
+  score?: { home?: number; guest?: number };
+};
+
 type IncidentHistoryItem = {
   id: string;
   team_id: string;
@@ -166,6 +175,8 @@ export default function MobileContinuityPage() {
   const [selectedTeamId, setSelectedTeamId] = useState<string>("");
   const [selectedMcc, setSelectedMcc] = useState<string>("OCT_W1");
   const [selectedSession, setSelectedSession] = useState<string>("S1");
+  const [promoMatches, setPromoMatches] = useState<PromoMatch[]>([]);
+  const [selectedPromoMatchId, setSelectedPromoMatchId] = useState<string>("");
   const [history, setHistory] = useState<IncidentHistoryItem[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [historyAllClub, setHistoryAllClub] = useState(false);
@@ -211,6 +222,48 @@ export default function MobileContinuityPage() {
     });
     return `${base}?${params.toString()}`;
   }, [watchPairingCode, selectedTeamId, selectedMcc, selectedSession, mode]);
+
+  const isSandboxMatchMode = continuityEnv === "sandbox" && mode === "match";
+
+  const promoMatchOptions = useMemo(() => {
+    if (!isSandboxMatchMode) return [];
+    const raw = promoMatches
+      .filter((m) => m && (m.id !== null && m.id !== undefined))
+      .map((m) => {
+        const id = String(m.id);
+        const date = String(m.date || "").trim();
+        const rival = String(m.rivalName || "").trim();
+        const loc = String(m.location || "").trim();
+        const labelParts = [
+          date || "Pendiente fecha",
+          loc || "Pendiente sede",
+          rival ? `vs ${rival}` : "Pendiente rival",
+        ];
+        return { id, label: labelParts.join(" · "), match: m };
+      });
+    // Ordena por fecha si parece ISO YYYY-MM-DD
+    raw.sort((a, b) => {
+      const ta = Date.parse(a.match.date || "");
+      const tb = Date.parse(b.match.date || "");
+      if (Number.isFinite(ta) && Number.isFinite(tb)) return ta - tb;
+      if (Number.isFinite(ta)) return -1;
+      if (Number.isFinite(tb)) return 1;
+      return a.id.localeCompare(b.id);
+    });
+    return raw;
+  }, [isSandboxMatchMode, promoMatches]);
+
+  const applyPromoMatchContext = (matchId: string) => {
+    const id = String(matchId || "").trim();
+    if (!id) return;
+    setSelectedPromoMatchId(id);
+    // Usamos el id del partido como contexto estable para sincronización.
+    setSelectedMcc((prev) => (prev.startsWith("SBX_MATCH_") ? `SBX_MATCH_${id}` : prev));
+    setSelectedSession((prev) => (prev.startsWith("M") || prev.startsWith("SBX_") ? `SBX_${id.slice(-6)}` : prev));
+    // Si el usuario no había cambiado manualmente MCC/Sesión, forzamos contexto sandbox.
+    setSelectedMcc((prev) => (prev && prev !== "OCT_W1" ? prev : `SBX_MATCH_${id}`));
+    setSelectedSession((prev) => (prev && prev !== "S1" ? prev : `SBX_${id.slice(-6)}`));
+  };
 
   // Mantener el “último contexto” actualizado para que el reloj pueda abrir sin parámetros.
   useEffect(() => {
@@ -281,12 +334,42 @@ export default function MobileContinuityPage() {
       const fallbackTeam: ContinuityTeam = { id: "promo_team", name: displayName };
       setTeams([fallbackTeam]);
       setSelectedTeamId((prev) => prev || fallbackTeam.id);
+
+      // También cargar partidos sandbox para poder seleccionarlos en modo partido.
+      const vault = safeParseJson<any>(localStorage.getItem("synq_promo_vault"), { matches: [] });
+      const matches = Array.isArray(vault?.matches) ? (vault.matches as PromoMatch[]) : [];
+      setPromoMatches(matches);
+      if (!selectedPromoMatchId) {
+        const first = matches.find((m) => (m.status || "").toLowerCase() === "scheduled") ?? matches[0];
+        if (first?.id != null) applyPromoMatchContext(String(first.id));
+      }
       return;
     }
 
     setTeams(nextTeams);
     if (nextTeams[0]?.id) setSelectedTeamId((prev) => prev || nextTeams[0].id);
   }, [profile?.clubId, timerSyncKey, scoreSyncKey]);
+
+  // Mantener lista de partidos Sandbox fresca si se modifica el vault en otra pestaña.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!isSandboxMatchMode) return;
+    const load = () => {
+      const vault = safeParseJson<any>(localStorage.getItem("synq_promo_vault"), { matches: [] });
+      const matches = Array.isArray(vault?.matches) ? (vault.matches as PromoMatch[]) : [];
+      setPromoMatches(matches);
+      if (!selectedPromoMatchId) {
+        const first = matches.find((m) => (m.status || "").toLowerCase() === "scheduled") ?? matches[0];
+        if (first?.id != null) applyPromoMatchContext(String(first.id));
+      }
+    };
+    load();
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "synq_promo_vault" || e.key === null) load();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [isSandboxMatchMode, selectedPromoMatchId]);
 
   useEffect(() => {
     const selectedName = selectedTeam?.name;
@@ -676,39 +759,71 @@ export default function MobileContinuityPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1">
-                <Label className="text-[10px] uppercase text-white/50">
-                  {mode === "match" ? "Jornada/Clave" : "Semana (MCC)"}
-                </Label>
-                <Select value={selectedMcc} onValueChange={setSelectedMcc}>
-                  <SelectTrigger className="h-9 border-white/10">
-                    <SelectValue placeholder={mode === "match" ? "Clave" : "MCC"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {mccOptions.map((mcc) => (
-                      <SelectItem key={mcc} value={mcc}>
-                        {mcc}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-[10px] uppercase text-white/50">
-                  {mode === "match" ? "Bloque" : "Sesión"}
-                </Label>
-                <Select value={selectedSession} onValueChange={setSelectedSession}>
-                  <SelectTrigger className="h-9 border-white/10">
-                    <SelectValue placeholder={mode === "match" ? "Bloque" : "Sesión"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="S1">S1</SelectItem>
-                    <SelectItem value="S2">S2</SelectItem>
-                    <SelectItem value="S3">S3</SelectItem>
-                    <SelectItem value="S4">S4</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {isSandboxMatchMode ? (
+                <div className="space-y-1 sm:col-span-2">
+                  <Label className="text-[10px] uppercase text-white/50">Partido (Sandbox)</Label>
+                  <Select
+                    value={selectedPromoMatchId || undefined}
+                    onValueChange={(v) => applyPromoMatchContext(v)}
+                  >
+                    <SelectTrigger className="h-9 border-white/10">
+                      <SelectValue placeholder="Selecciona tu partido" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {promoMatchOptions.length === 0 ? (
+                        <SelectItem value="__none" disabled>
+                          No hay partidos creados (ve a Mis partidos)
+                        </SelectItem>
+                      ) : (
+                        promoMatchOptions.map((m) => (
+                          <SelectItem key={m.id} value={m.id}>
+                            {m.label}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[10px] uppercase text-white/35 font-bold">
+                    Este partido define el contexto de sync con smartwatch (marcador + cronómetro).
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] uppercase text-white/50">
+                      {mode === "match" ? "Jornada/Clave" : "Semana (MCC)"}
+                    </Label>
+                    <Select value={selectedMcc} onValueChange={setSelectedMcc}>
+                      <SelectTrigger className="h-9 border-white/10">
+                        <SelectValue placeholder={mode === "match" ? "Clave" : "MCC"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {mccOptions.map((mcc) => (
+                          <SelectItem key={mcc} value={mcc}>
+                            {mcc}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] uppercase text-white/50">
+                      {mode === "match" ? "Bloque" : "Sesión"}
+                    </Label>
+                    <Select value={selectedSession} onValueChange={setSelectedSession}>
+                      <SelectTrigger className="h-9 border-white/10">
+                        <SelectValue placeholder={mode === "match" ? "Bloque" : "Sesión"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="S1">S1</SelectItem>
+                        <SelectItem value="S2">S2</SelectItem>
+                        <SelectItem value="S3">S3</SelectItem>
+                        <SelectItem value="S4">S4</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
             </div>
             {mode === "match" ? (
               <>
