@@ -10,41 +10,45 @@ export function SandboxBoardShell(props: { children: ReactNode }) {
   const router = useRouter();
 
   return (
-    <div className="h-[100dvh] bg-black text-white relative overflow-hidden flex flex-col">
+    <div className="h-[100dvh] w-full bg-[#020408] overflow-hidden relative">
       <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
-      <header className="fixed top-0 left-0 right-0 z-[300] border-b border-white/5 bg-black/40 backdrop-blur-2xl">
-        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 py-3">
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="h-10 rounded-2xl border-white/10 text-white/80 font-black uppercase text-[10px] tracking-widest"
-              onClick={() => {
-                try {
-                  router.back();
-                } catch {
-                  router.replace("/sandbox/app");
-                }
-              }}
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Atrás
-            </Button>
-            <Button
-              asChild
-              variant="outline"
-              className="h-10 rounded-2xl border-white/10 text-white/80 font-black uppercase text-[10px] tracking-widest"
-            >
-              <Link href="/sandbox/app">
-                <Home className="h-4 w-4 mr-2" />
-                Inicio
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </header>
 
-      <div className="flex-1 min-h-0 pt-[64px] relative">{props.children}</div>
+      {/* Botones flotantes: no empujan layout de la pizarra */}
+      <div className="fixed top-4 left-4 z-[320] flex items-center gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          className="h-10 rounded-2xl border-white/10 bg-black/60 backdrop-blur-2xl text-white/80 font-black uppercase text-[10px] tracking-widest"
+          onClick={() => {
+            try {
+              router.back();
+              window.setTimeout(() => {
+                if ((window.location?.pathname || "").startsWith("/sandbox/app")) return;
+                router.replace("/sandbox/app");
+              }, 250);
+            } catch {
+              router.replace("/sandbox/app");
+            }
+          }}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Atrás
+        </Button>
+        <Button
+          asChild
+          variant="outline"
+          className="h-10 rounded-2xl border-white/10 bg-black/60 backdrop-blur-2xl text-white/80 font-black uppercase text-[10px] tracking-widest"
+        >
+          <Link href="/sandbox/app">
+            <Home className="h-4 w-4 mr-2" />
+            Inicio
+          </Link>
+        </Button>
+      </div>
+
+      <main className="h-full w-full relative z-10 flex flex-col overflow-hidden">
+        {props.children}
+      </main>
     </div>
   );
 }
