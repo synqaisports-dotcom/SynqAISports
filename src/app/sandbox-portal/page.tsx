@@ -67,7 +67,7 @@ export default function SandboxPortalPage() {
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button
                   className="h-12 sm:h-14 px-6 rounded-2xl bg-primary text-black font-black uppercase tracking-[0.18em] text-[11px] sm:text-xs"
-                  onClick={() => router.push(`/login?next=${next}`)}
+                  onClick={() => router.push(`/sandbox/login?next=${next}`)}
                 >
                   Iniciar sesión Sandbox
                   <ArrowRight className="h-4 w-4 ml-2" />

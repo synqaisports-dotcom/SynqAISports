@@ -14,7 +14,7 @@ export function SandboxAppClientWrapper(props: { children: ReactNode }) {
     if (loading) return;
     if (!profile) {
       const next = encodeURIComponent("/sandbox/app");
-      router.replace(`/login?next=${next}`);
+      router.replace(`/sandbox/login?next=${next}`);
     }
   }, [profile, loading, router]);
 
