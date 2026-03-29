@@ -71,10 +71,20 @@ import {
 import Link from "next/link";
 import Script from "next/script";
 
-function resolveSandboxBasePath(): "/sandbox" | "/dashboard/promo" {
+function resolveSandboxBasePath(): "/sandbox" | "/sandbox/app" | "/dashboard/promo" {
   if (typeof window === "undefined") return "/dashboard/promo";
   const p = window.location.pathname || "";
+  if (p.startsWith("/sandbox/app")) return "/sandbox/app";
   return p.startsWith("/sandbox") ? "/sandbox" : "/dashboard/promo";
+}
+
+function safeParseJson<T>(raw: string | null, fallback: T): T {
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
 }
 
 interface Point {
@@ -361,8 +371,8 @@ function PromoBoardContent() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const savedTeam = JSON.parse(localStorage.getItem("synq_promo_team") || "null");
-    const savedVault = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": []}');
+    const savedTeam = safeParseJson<any>(localStorage.getItem("synq_promo_team"), null);
+    const savedVault = safeParseJson<any>(localStorage.getItem("synq_promo_vault"), { exercises: [] });
     setVault(savedVault);
     if (savedTeam) {
       setTeamConfig(savedTeam);
@@ -372,7 +382,7 @@ function PromoBoardContent() {
 
   useEffect(() => {
     if (!exerciseId || typeof window === "undefined") return;
-    const savedVault = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": []}');
+    const savedVault = safeParseJson<any>(localStorage.getItem("synq_promo_vault"), { exercises: [] });
     const target = savedVault.exercises?.find((e: any) => e.id.toString() === exerciseId);
     if (target) {
       setElements(target.elements || []);
@@ -404,7 +414,7 @@ function PromoBoardContent() {
   };
 
   const loadTeamFromSandbox = () => {
-    const savedTeam = JSON.parse(localStorage.getItem("synq_promo_team") || "null");
+    const savedTeam = safeParseJson<any>(localStorage.getItem("synq_promo_team"), null);
     if (!savedTeam) { toast({ variant: "destructive", title: "ERROR_SINCRO", description: "Configure su equipo primero." }); return; }
     setTeamConfig(savedTeam);
     setFieldType(savedTeam.type || "f11");
@@ -1135,7 +1145,7 @@ function PromoBoardContent() {
 
   const handleSaveToBlock = (block: string) => {
     if (!saveFormData.title) { toast({ variant: "destructive", title: "ERROR", description: "Asigne un título antes de guardar." }); return; }
-    const vault = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": []}');
+    const vault = safeParseJson<any>(localStorage.getItem("synq_promo_vault"), { exercises: [] });
     const newExercise = {
       id: Date.now(),
       block,
@@ -1214,7 +1224,7 @@ function PromoBoardContent() {
                     variant="secondary"
                     type="button"
                     onClick={() => {
-                      const raw = JSON.parse(localStorage.getItem("synq_promo_team") || "null");
+                      const raw = safeParseJson<any>(localStorage.getItem("synq_promo_team"), null);
                       if (!raw) {
                         toast({ variant: "destructive", title: "SIN_DATOS", description: "No hay equipo en localStorage." });
                         return;
