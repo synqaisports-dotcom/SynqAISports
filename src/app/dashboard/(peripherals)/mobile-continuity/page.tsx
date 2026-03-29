@@ -330,7 +330,7 @@ export default function MobileContinuityPage() {
       const promo = safeParseJson<any>(localStorage.getItem("synq_promo_team"), null);
       const promoName = String(promo?.name || "").trim();
       const promoCategory = String(promo?.category || "").trim();
-      const displayName = promoCategory ? `${promoCategory}` : promoName || "Equipo Sandbox";
+      const displayName = promoName || promoCategory || "Equipo Sandbox";
       const fallbackTeam: ContinuityTeam = { id: "promo_team", name: displayName };
       setTeams([fallbackTeam]);
       setSelectedTeamId((prev) => prev || fallbackTeam.id);
