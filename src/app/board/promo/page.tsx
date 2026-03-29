@@ -1437,7 +1437,18 @@ function PromoBoardContent() {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => router.push(basePath === "/sandbox" ? "/sandbox" : "/dashboard")}
+          onClick={() => {
+            try {
+              router.back();
+              window.setTimeout(() => {
+                const p = window.location.pathname || "";
+                if (p.startsWith("/sandbox") || p.startsWith("/dashboard")) return;
+                router.replace(basePath === "/sandbox" ? "/sandbox" : "/dashboard");
+              }, 250);
+            } catch {
+              router.replace(basePath === "/sandbox" ? "/sandbox" : "/dashboard");
+            }
+          }}
           className="h-12 w-12 rounded-2xl bg-black/60 backdrop-blur-2xl border border-white/10 text-white/40 hover:text-primary transition-all shadow-xl"
         >
           <LayoutDashboard className="h-5 w-5" />
