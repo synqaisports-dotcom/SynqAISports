@@ -37,6 +37,12 @@ type PromoMatch = {
   score?: { home?: number; guest?: number };
 };
 
+type PromoSession = {
+  id?: number | string;
+  title?: string;
+  createdAt?: string; // YYYY-MM-DD
+};
+
 type HomeMiniStats = {
   wins: number;
   goalsFor: number;
@@ -214,6 +220,64 @@ function UpcomingMatchesPanel() {
   );
 }
 
+function UpcomingAgendaPanel() {
+  const [sessions, setSessions] = useState<PromoSession[]>([]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const vault = safeParseJson<any>(localStorage.getItem("synq_promo_vault"), { sessions: [] });
+    const raw: PromoSession[] = Array.isArray(vault?.sessions) ? vault.sessions : [];
+    const next = [...raw]
+      .filter((s) => s && (s.title || s.createdAt))
+      .sort((a, b) => {
+        const ta = a.createdAt ? new Date(a.createdAt).getTime() : Number.POSITIVE_INFINITY;
+        const tb = b.createdAt ? new Date(b.createdAt).getTime() : Number.POSITIVE_INFINITY;
+        return ta - tb;
+      })
+      .slice(0, 3);
+    setSessions(next);
+  }, []);
+
+  const slots = Array.from({ length: 3 }).map((_, i) => sessions[i] ?? null);
+
+  return (
+    <section className="rounded-3xl border border-primary/20 bg-black/35 backdrop-blur-sm shadow-[0_12px_40px_rgba(0,0,0,0.35)] overflow-hidden">
+      <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-primary/10 bg-gradient-to-r from-primary/10 via-transparent to-transparent">
+        <p className="text-[10px] font-black uppercase tracking-[0.35em] text-primary/70">Agenda</p>
+        <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40">Próximos 3 eventos</span>
+      </div>
+
+      <div className="p-4 sm:p-5 space-y-3">
+        {slots.map((s, idx) => {
+          const isPending = !s;
+          const title = s?.title?.trim() ? s!.title!.toUpperCase() : "PENDIENTE_DE_CONFIGURAR";
+          const dateLabel = s?.createdAt ? s.createdAt : "PENDIENTE";
+          return (
+            <div
+              key={idx}
+              className={cn(
+                "rounded-2xl border border-primary/15 bg-black/40 px-4 py-3 flex items-center justify-between gap-4",
+                isPending && "border-dashed",
+              )}
+            >
+              <div className="min-w-0">
+                <p className="text-[9px] font-black uppercase tracking-[0.28em] text-white/35">
+                  {isPending ? "Pendiente" : `Evento_${String(s?.id ?? "").slice(-4) || `0${idx + 1}`}`}
+                </p>
+                <p className="mt-1 text-sm font-black uppercase tracking-tight text-white truncate">{title}</p>
+              </div>
+              <div className="shrink-0 text-right">
+                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-primary/70">Fecha</p>
+                <p className="text-[11px] font-black text-white/70">{dateLabel}</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function safeParseJson<T>(raw: string | null, fallback: T): T {
   if (!raw) return fallback;
   try {
@@ -240,7 +304,7 @@ export default function SandboxAppHomePage() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const team = safeParseJson<any>(localStorage.getItem("synq_promo_team"), null);
-    const vault = safeParseJson<any>(localStorage.getItem("synq_promo_vault"), { exercises: [], matches: [] });
+    const vault = safeParseJson<any>(localStorage.getItem("synq_promo_vault"), { exercises: [], matches: [], sessions: [] });
     const starters = Array.isArray(team?.starters)
       ? team.starters.filter((name: string) => name?.trim?.() !== "").length
       : 0;
@@ -305,86 +369,90 @@ export default function SandboxAppHomePage() {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-6">
-        <div className="rounded-3xl border border-primary/20 bg-black/35 backdrop-blur-sm shadow-[0_12px_40px_rgba(0,0,0,0.35)] overflow-hidden">
-          <div className="px-5 py-4 border-b border-primary/10 bg-gradient-to-r from-primary/10 via-transparent to-transparent">
-            <p className="text-[10px] font-black uppercase tracking-[0.35em] text-primary/70">Sandbox (Micro‑app)</p>
-            <h2 className="mt-2 text-2xl sm:text-3xl font-black uppercase tracking-tight text-white">
-              Terminal completa <span className="text-primary">logueada</span>
-            </h2>
-          </div>
-          <div className="p-4 sm:p-5">
-          <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="rounded-2xl border border-white/10 bg-black/30 p-4 flex items-center gap-4">
-              <div className="h-12 w-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-                <Trophy className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.28em] text-white/40">Victorias</p>
-                <p className="mt-1 text-2xl font-black text-primary italic leading-none">{miniStats.wins}</p>
-              </div>
+        <div className="space-y-6">
+          <div className="rounded-3xl border border-primary/20 bg-black/35 backdrop-blur-sm shadow-[0_12px_40px_rgba(0,0,0,0.35)] overflow-hidden">
+            <div className="px-5 py-4 border-b border-primary/10 bg-gradient-to-r from-primary/10 via-transparent to-transparent">
+              <p className="text-[10px] font-black uppercase tracking-[0.35em] text-primary/70">Sandbox (Micro‑app)</p>
+              <h2 className="mt-2 text-2xl sm:text-3xl font-black uppercase tracking-tight text-white">
+                Terminal completa <span className="text-primary">logueada</span>
+              </h2>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-black/30 p-4 flex items-center gap-4">
-              <div className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
-                <Zap className="h-6 w-6 text-white/40" />
+            <div className="p-4 sm:p-5">
+              <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="rounded-2xl border border-white/10 bg-black/30 p-4 flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                    <Trophy className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.28em] text-white/40">Victorias</p>
+                    <p className="mt-1 text-2xl font-black text-primary italic leading-none">{miniStats.wins}</p>
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-black/30 p-4 flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+                    <Zap className="h-6 w-6 text-white/40" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.28em] text-white/40">Goles a favor</p>
+                    <p className="mt-1 text-2xl font-black text-white italic leading-none">{miniStats.goalsFor}</p>
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-black/30 p-4 flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+                    <Activity className="h-6 w-6 text-white/40" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.28em] text-white/40">Goles en contra</p>
+                    <p className="mt-1 text-2xl font-black text-white italic leading-none">{miniStats.goalsAgainst}</p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.28em] text-white/40">Goles a favor</p>
-                <p className="mt-1 text-2xl font-black text-white italic leading-none">{miniStats.goalsFor}</p>
+
+              <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
+                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40">Titulares</p>
+                  <p className="mt-1 text-xl font-black text-primary">{metrics.starters}</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
+                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40">Ejercicios</p>
+                  <p className="mt-1 text-xl font-black text-primary">{metrics.exercises}</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
+                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40">Campo activo</p>
+                  <p className="mt-1 text-xl font-black text-primary">{metrics.activeField}</p>
+                </div>
               </div>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-black/30 p-4 flex items-center gap-4">
-              <div className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
-                <Activity className="h-6 w-6 text-white/40" />
-              </div>
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.28em] text-white/40">Goles en contra</p>
-                <p className="mt-1 text-2xl font-black text-white italic leading-none">{miniStats.goalsAgainst}</p>
+
+              <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {accessItems.map((item) => {
+                  const Icon = item.icon;
+                  const isPrimary = item.tone === "primary";
+                  return (
+                    <Button
+                      key={item.href}
+                      asChild
+                      variant={isPrimary ? "default" : "outline"}
+                      className={
+                        isPrimary
+                          ? "h-12 rounded-2xl bg-primary text-black font-black uppercase text-[11px] tracking-widest justify-between shadow-[0_0_24px_rgba(0,242,255,0.28)] hover:brightness-110 active:scale-[0.99]"
+                          : "h-12 rounded-2xl border-primary/25 bg-black/45 text-white/90 font-black uppercase text-[11px] tracking-widest justify-between hover:border-primary/45 hover:bg-primary/10 hover:text-primary active:scale-[0.99]"
+                      }
+                    >
+                      <Link href={item.href}>
+                        <span className="flex items-center gap-2">
+                          <Icon className="h-4 w-4" />
+                          {item.label}
+                        </span>
+                        <ChevronRight className="h-4 w-4 opacity-70" />
+                      </Link>
+                    </Button>
+                  );
+                })}
               </div>
             </div>
           </div>
 
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
-              <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40">Titulares</p>
-              <p className="mt-1 text-xl font-black text-primary">{metrics.starters}</p>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
-              <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40">Ejercicios</p>
-              <p className="mt-1 text-xl font-black text-primary">{metrics.exercises}</p>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
-              <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40">Campo activo</p>
-              <p className="mt-1 text-xl font-black text-primary">{metrics.activeField}</p>
-            </div>
-          </div>
-
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {accessItems.map((item) => {
-              const Icon = item.icon;
-              const isPrimary = item.tone === "primary";
-              return (
-                <Button
-                  key={item.href}
-                  asChild
-                  variant={isPrimary ? "default" : "outline"}
-                  className={
-                    isPrimary
-                      ? "h-12 rounded-2xl bg-primary text-black font-black uppercase text-[11px] tracking-widest justify-between shadow-[0_0_24px_rgba(0,242,255,0.28)] hover:brightness-110 active:scale-[0.99]"
-                      : "h-12 rounded-2xl border-primary/25 bg-black/45 text-white/90 font-black uppercase text-[11px] tracking-widest justify-between hover:border-primary/45 hover:bg-primary/10 hover:text-primary active:scale-[0.99]"
-                  }
-                >
-                  <Link href={item.href}>
-                    <span className="flex items-center gap-2">
-                      <Icon className="h-4 w-4" />
-                      {item.label}
-                    </span>
-                    <ChevronRight className="h-4 w-4 opacity-70" />
-                  </Link>
-                </Button>
-              );
-            })}
-          </div>
-          </div>
+          <UpcomingAgendaPanel />
         </div>
 
         <div className="space-y-6">
