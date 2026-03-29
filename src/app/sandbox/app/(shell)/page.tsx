@@ -72,7 +72,7 @@ export default function SandboxAppHomePage() {
     <main className="min-h-[60dvh] text-white">
       <div className="mx-auto w-full max-w-5xl px-3 sm:px-4 py-5 sm:py-8">
         <div className="rounded-3xl border border-primary/20 bg-white/[0.02] p-6 sm:p-8 shadow-2xl">
-          <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-black/40 p-2">
+          <div className="mb-4 sticky top-2 z-20 flex flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-black/70 backdrop-blur-xl p-2">
             <Button
               type="button"
               variant="outline"
