@@ -231,3 +231,33 @@ export function shouldBypassClubMatrix(role: string | undefined): boolean {
   if (!role) return false;
   return (CLUB_MATRIX_BYPASS_ROLES as readonly string[]).includes(role);
 }
+
+export type TerminalAccessProfile = {
+  role?: string | null;
+  clubId?: string | null;
+};
+
+export function isEliteClubId(clubId: string | null | undefined): boolean {
+  return !!clubId && clubId !== "global-hq";
+}
+
+export function canAccessEliteTerminalAsDev(profile: TerminalAccessProfile | null | undefined): boolean {
+  return profile?.role === "superadmin";
+}
+
+export function resolveTerminalEffectiveClubId(
+  profile: TerminalAccessProfile | null | undefined,
+  requestedClubId: string | null | undefined
+): string {
+  if (isEliteClubId(profile?.clubId)) return String(profile?.clubId);
+  if (canAccessEliteTerminalAsDev(profile)) return String(requestedClubId || "").trim() || "global-hq";
+  return "global-hq";
+}
+
+export function canAccessEliteTerminal(
+  profile: TerminalAccessProfile | null | undefined,
+  requestedClubId: string | null | undefined
+): boolean {
+  if (isEliteClubId(profile?.clubId)) return true;
+  return canAccessEliteTerminalAsDev(profile) && !!String(requestedClubId || "").trim();
+}
