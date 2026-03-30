@@ -182,13 +182,13 @@ export default function LiveFieldsPage() {
     <main className="min-h-[100dvh] bg-[#03060d] text-white overflow-hidden">
       {/* Fondo ligero tipo campo de fútbol (sin imágenes) */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.10),rgba(3,6,13,0.92)_55%,rgba(3,6,13,1)_100%)]" />
-        <div className="absolute inset-0 opacity-[0.18]">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.16),rgba(3,6,13,0.90)_52%,rgba(3,6,13,1)_100%)]" />
+        <div className="absolute inset-0 opacity-[0.28]">
           <svg viewBox="0 0 1000 600" className="h-full w-full" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
             <defs>
               <pattern id="synq-grass" width="20" height="20" patternUnits="userSpaceOnUse">
                 <rect width="20" height="20" fill="transparent" />
-                <path d="M0 0 L20 20 M20 0 L0 20" stroke="rgba(16,185,129,0.10)" strokeWidth="1" />
+                <path d="M0 0 L20 20 M20 0 L0 20" stroke="rgba(16,185,129,0.14)" strokeWidth="1" />
               </pattern>
             </defs>
             <rect x="0" y="0" width="1000" height="600" fill="url(#synq-grass)" />
@@ -213,6 +213,7 @@ export default function LiveFieldsPage() {
           </svg>
         </div>
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#03060d]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(34,211,238,0.08),transparent_60%)] mix-blend-screen" />
       </div>
       <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
       <div className="absolute -top-32 -right-32 h-[420px] w-[420px] rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
@@ -260,7 +261,7 @@ export default function LiveFieldsPage() {
         </div>
       </section>
 
-      <section className="relative z-10 p-4 sm:p-6 lg:p-10">
+      <section className="relative z-10 p-4 sm:p-6 lg:p-10 pb-28">
         {cards.length === 0 ? (
           <div className="rounded-3xl border border-cyan-500/20 bg-black/35 p-8 text-center">
             <p className="text-[10px] font-black uppercase tracking-[0.35em] text-cyan-300/80">{t("live_fields.no_elite_data")}</p>
@@ -303,6 +304,33 @@ export default function LiveFieldsPage() {
           ))}
         </div>
       </section>
+
+      {/* Banda inferior: 2 slots AdMob (placeholder) 50/50 */}
+      <footer className="fixed bottom-0 left-0 right-0 z-20 border-t border-cyan-500/20 bg-black/55 backdrop-blur-xl">
+        <div className="px-4 sm:px-6 lg:px-10 py-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="h-16 rounded-2xl border border-white/10 bg-white/[0.04] flex items-center justify-center">
+              <div className="text-center">
+                <p className="text-[9px] font-black uppercase tracking-[0.35em] text-white/35">AdMob · Slot A</p>
+                <p className="mt-1 text-[10px] font-black uppercase tracking-[0.25em] text-cyan-200/70">
+                  {t("ads.placeholder", "ANUNCIO")}
+                </p>
+              </div>
+            </div>
+            <div className="h-16 rounded-2xl border border-white/10 bg-white/[0.04] flex items-center justify-center">
+              <div className="text-center">
+                <p className="text-[9px] font-black uppercase tracking-[0.35em] text-white/35">AdMob · Slot B</p>
+                <p className="mt-1 text-[10px] font-black uppercase tracking-[0.25em] text-cyan-200/70">
+                  {t("ads.placeholder", "ANUNCIO")}
+                </p>
+              </div>
+            </div>
+          </div>
+          <p className="mt-2 text-[9px] font-black uppercase tracking-[0.25em] text-white/25">
+            {t("ads.split_note", "Reparto 50/50")}
+          </p>
+        </div>
+      </footer>
     </main>
   );
 }
