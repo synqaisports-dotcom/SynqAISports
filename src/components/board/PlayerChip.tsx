@@ -61,7 +61,7 @@ export function PlayerChip({
       </div>
       {label && (
         <span className={cn(
-          "text-[8px] md:text-[8px] lg:text-[9px] font-black uppercase tracking-tighter whitespace-nowrap bg-black/60 px-1.5 py-0.5 rounded-sm transition-opacity duration-300",
+          "text-[7px] md:text-[7px] lg:text-[8px] font-black uppercase tracking-tight whitespace-nowrap bg-black/60 px-1.5 py-0.5 rounded-sm transition-opacity duration-300",
           isDragging ? "opacity-0" : "opacity-100"
         )}>
           {label}

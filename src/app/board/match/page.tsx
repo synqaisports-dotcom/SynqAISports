@@ -458,6 +458,7 @@ function MatchBoardInner() {
   const MAX_SAFE_Y = 92;
   const HOME_KEEPER_X = 10;
   const GUEST_KEEPER_X = 90;
+  const CENTRAL_SEPARATION = 1.25;
 
   const clampToField = useCallback((x: number, y: number) => ({
     x: Math.max(MIN_SAFE_X, Math.min(MAX_SAFE_X, x)),
@@ -472,6 +473,13 @@ function MatchBoardInner() {
       case "atk": return 7;
       default: return 0;
     }
+  }, []);
+
+  const applyCentralSeparation = useCallback((x: number, team: "local" | "visitor") => {
+    if (x >= 47 && x <= 53) {
+      return team === "local" ? x - CENTRAL_SEPARATION : x + CENTRAL_SEPARATION;
+    }
+    return x;
   }, []);
 
   const calculateHomePositions = useCallback(() => {
@@ -492,6 +500,7 @@ function MatchBoardInner() {
       } else {
         finalX = finalX + phaseOffset(homePhase);
         if (homePhase === "def") finalX = Math.min(50, finalX);
+        finalX = applyCentralSeparation(finalX, "local");
         const clamped = clampToField(finalX, finalY);
         finalX = clamped.x;
         finalY = clamped.y;
@@ -508,7 +517,7 @@ function MatchBoardInner() {
     });
 
     setPlayers((prev) => [...nextHome, ...prev.filter((p) => p.team === "visitor")]);
-  }, [isAnyDialogOpen, safeFieldType, homeFormation, homePhase, localHomeNames, phaseOffset, clampToField]);
+  }, [isAnyDialogOpen, safeFieldType, homeFormation, homePhase, localHomeNames, phaseOffset, clampToField, applyCentralSeparation]);
 
   const calculateGuestPositions = useCallback(() => {
     if (isAnyDialogOpen) return;
@@ -528,6 +537,7 @@ function MatchBoardInner() {
       } else {
         finalX = finalX - phaseOffset(guestPhase);
         if (guestPhase === "def") finalX = Math.max(50, finalX);
+        finalX = applyCentralSeparation(finalX, "visitor");
         const clamped = clampToField(finalX, finalY);
         finalX = clamped.x;
         finalY = clamped.y;
@@ -543,7 +553,7 @@ function MatchBoardInner() {
     });
 
     setPlayers((prev) => [...prev.filter((p) => p.team === "local"), ...nextGuest]);
-  }, [isAnyDialogOpen, safeFieldType, guestFormation, guestPhase, phaseOffset, clampToField]);
+  }, [isAnyDialogOpen, safeFieldType, guestFormation, guestPhase, phaseOffset, clampToField, applyCentralSeparation]);
 
   useEffect(() => { calculateHomePositions(); }, [calculateHomePositions]);
   useEffect(() => { calculateGuestPositions(); }, [calculateGuestPositions]);
