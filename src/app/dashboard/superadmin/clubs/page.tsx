@@ -124,7 +124,7 @@ export default function ManageClubsPage() {
             <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
             Sincronizar
           </Button>
-          <Button className="rounded-none bg-primary text-primary-foreground font-black uppercase text-[10px] tracking-widest h-12 px-8 cyan-glow hover:scale-105 transition-all">
+          <Button className="rounded-none bg-primary text-primary-foreground font-black uppercase text-[10px] tracking-widest h-12 px-8 cyan-glow hover:scale-105 transition-[background-color,border-color,color,opacity,transform]">
             <Plus className="h-4 w-4 mr-2" /> Vincular Nuevo Club
           </Button>
         </div>
@@ -169,7 +169,7 @@ export default function ManageClubsPage() {
                   <TableRow key={club.id} className="border-white/5 hover:bg-white/[0.03] transition-colors group">
                     <TableCell>
                       <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 bg-primary/10 border border-primary/20 flex items-center justify-center rotate-45 group-hover:bg-primary/20 transition-all">
+                        <div className="h-10 w-10 bg-primary/10 border border-primary/20 flex items-center justify-center rotate-45 group-hover:bg-primary/20 transition-[background-color,border-color,color,opacity,transform]">
                           <Building2 className="h-4 w-4 text-primary -rotate-45" />
                         </div>
                         <span className="font-black text-white uppercase text-xs tracking-tighter italic group-hover:cyan-text-glow">{club.name}</span>

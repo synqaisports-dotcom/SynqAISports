@@ -42,7 +42,7 @@ export function TacticalField({
       <div 
         ref={containerRef}
         className={cn(
-          "relative w-full h-full transition-all duration-700 pointer-events-auto",
+          "relative w-full h-full transition-[background-color,border-color,color,opacity,transform] duration-700 pointer-events-auto",
           bgClass
         )}
         style={{ overflow: 'hidden' }}
@@ -55,14 +55,14 @@ export function TacticalField({
         )}
         
         {/* LÍNEAS REGLAMENTARIAS (CENTRADO DINÁMICO CON RATIO) */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-700 pointer-events-none"
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-[background-color,border-color,color,opacity,transform] duration-700 pointer-events-none"
              style={{
                width: `min(95vw, calc(95dvh * ${ratio}))`,
                height: `min(95dvh, calc(95vw / ${ratio}))`,
              }}
         >
           <div className={cn(
-            "relative w-full h-full border border-white/20 rounded-sm transition-all duration-700 overflow-hidden",
+            "relative w-full h-full border border-white/20 rounded-sm transition-[background-color,border-color,color,opacity,transform] duration-700 overflow-hidden",
             isHalfField ? "h-[200%] top-0 border-b-0" : ""
           )}>
             

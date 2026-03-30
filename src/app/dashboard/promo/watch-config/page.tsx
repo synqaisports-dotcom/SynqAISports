@@ -101,7 +101,7 @@ export default function SandboxWatchConfigPage() {
         <div className="flex gap-4">
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="outline" className="h-12 border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest px-6 rounded-xl hover:bg-primary/10 transition-all">
+              <Button variant="outline" className="h-12 border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest px-6 rounded-xl hover:bg-primary/10 transition-[background-color,border-color,color,opacity,transform]">
                 <QrCode className="h-4 w-4 mr-2" /> Vínculo Express (QR)
               </Button>
             </SheetTrigger>
@@ -156,7 +156,7 @@ export default function SandboxWatchConfigPage() {
           <Button 
             onClick={handleSaveLocal}
             disabled={loading}
-            className="rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:scale-105 transition-all border-none"
+            className="rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:scale-105 transition-[background-color,border-color,color,opacity,transform] border-none"
           >
             {loading ? "Blindando..." : "Guardar Configuración"} <Save className="h-4 w-4 ml-2" />
           </Button>
@@ -167,7 +167,7 @@ export default function SandboxWatchConfigPage() {
         
         <div className="space-y-8">
           <Card className="glass-panel border-primary/20 bg-primary/5 p-8 relative overflow-hidden group rounded-[2.5rem]">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-all">
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-[background-color,border-color,color,opacity,transform]">
               <Watch className="h-32 w-32 text-primary" />
             </div>
             <div className="flex items-center gap-3 mb-6 relative z-10">
@@ -193,12 +193,12 @@ export default function SandboxWatchConfigPage() {
           <BoardPerformanceSettingsCard />
 
           <Card className="glass-panel border-primary/20 bg-primary/5 p-8 rounded-[2.5rem] relative overflow-hidden group">
-             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-all"><Zap className="h-32 w-32 text-primary" /></div>
+             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-[background-color,border-color,color,opacity,transform]"><Zap className="h-32 w-32 text-primary" /></div>
              <h4 className="text-xl font-black italic uppercase text-white mb-4">VENTAJA_PRO</h4>
              <p className="text-[10px] text-primary/60 font-bold uppercase tracking-widest leading-relaxed mb-8 italic">
                El modo Pro permite la telemetría cardíaca real y el volcado de datos biométricos a la base de datos del club para prevenir lesiones y fatiga crónica.
              </p>
-             <Button className="w-full h-14 bg-primary text-black font-black uppercase text-[10px] tracking-widest rounded-xl blue-glow border-none transition-all" asChild>
+             <Button className="w-full h-14 bg-primary text-black font-black uppercase text-[10px] tracking-widest rounded-xl blue-glow border-none transition-[background-color,border-color,color,opacity,transform]" asChild>
                 <Link href="/login">UPGRADE A ELITE CLUB <ArrowRight className="h-4 w-4 ml-2" /></Link>
              </Button>
           </Card>

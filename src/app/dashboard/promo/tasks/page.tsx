@@ -225,12 +225,12 @@ export default function PromoTasksPage() {
 
         <aside className="space-y-8">
           <Card className="glass-panel border-primary/20 bg-primary/5 p-8 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-all"><Sparkles className="h-32 w-32 text-primary" /></div>
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-[background-color,border-color,color,opacity,transform]"><Sparkles className="h-32 w-32 text-primary" /></div>
             <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white mb-6">REQUISITO_PRO</h3>
             <p className="text-[11px] font-bold text-white/40 uppercase tracking-widest mb-10 leading-loose italic">
               Sincroniza tus tareas con la nube para acceder desde cualquier dispositivo y desbloquea el almacenamiento ilimitado.
             </p>
-            <Button className="w-full h-16 bg-primary text-black font-black uppercase text-[11px] tracking-[0.2em] rounded-2xl hover:scale-[1.02] transition-all shadow-xl border-none" asChild>
+            <Button className="w-full h-16 bg-primary text-black font-black uppercase text-[11px] tracking-[0.2em] rounded-2xl hover:scale-[1.02] transition-[background-color,border-color,color,opacity,transform] shadow-xl border-none" asChild>
               <Link href="/login">Upgrade a Elite Club <ArrowRight className="h-4 w-4 ml-3" /></Link>
             </Button>
           </Card>
@@ -256,7 +256,7 @@ function TaskSlot({ task, onDelete, type }: { task?: any, onDelete: (id: number)
   const basePath = resolveSandboxAppBasePath();
   if (!task) {
     return (
-      <Link href={`${basePath}/board/promo`} className="aspect-video bg-black/40 border-2 border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center gap-3 group hover:border-primary/20 hover:bg-primary/5 transition-all">
+      <Link href={`${basePath}/board/promo`} className="aspect-video bg-black/40 border-2 border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center gap-3 group hover:border-primary/20 hover:bg-primary/5 transition-[background-color,border-color,color,opacity,transform]">
         <Plus className="h-5 w-5 text-white/10 group-hover:text-primary/40 transition-colors" />
         <span className="text-[8px] font-black text-white/10 uppercase tracking-widest group-hover:text-primary/40">Slot Disponible</span>
       </Link>
@@ -272,7 +272,7 @@ function TaskSlot({ task, onDelete, type }: { task?: any, onDelete: (id: number)
       
       <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
 
-      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all z-20">
+      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-[background-color,border-color,color,opacity,transform] z-20">
          <Button variant="ghost" size="icon" className="h-7 w-7 bg-black/60 backdrop-blur-md rounded-lg flex items-center justify-center text-white/40 hover:text-primary" asChild>
             <Link href={`${basePath}/board/promo?id=${task.id}`}><Monitor className="h-3.5 w-3.5" /></Link>
          </Button>
@@ -280,7 +280,7 @@ function TaskSlot({ task, onDelete, type }: { task?: any, onDelete: (id: number)
       </div>
 
       <Link href={`${basePath}/board/promo?id=${task.id}`} className="absolute inset-0 z-10 flex flex-col items-center justify-center p-4">
-         <p className="text-[9px] font-black text-white uppercase text-center truncate w-full px-2 mt-auto group-hover:cyan-text-glow transition-all">EJERCICIO_{task.id.toString().slice(-4)}</p>
+         <p className="text-[9px] font-black text-white uppercase text-center truncate w-full px-2 mt-auto group-hover:cyan-text-glow transition-[background-color,border-color,color,opacity,transform]">EJERCICIO_{task.id.toString().slice(-4)}</p>
       </Link>
 
       <div className="absolute bottom-0 left-0 right-0 p-2 bg-black/60 backdrop-blur-md border-t border-white/5 flex items-center justify-between z-20">

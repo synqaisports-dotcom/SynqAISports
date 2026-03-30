@@ -831,14 +831,14 @@ export default function AcademyManagementPage() {
             variant="outline"
             onClick={() => handleOpenSheet('category')}
             disabled={!canEditAcademy}
-            className="w-full sm:w-auto rounded-2xl border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest h-12 px-6 hover:bg-primary/10 transition-all disabled:opacity-40"
+            className="w-full sm:w-auto rounded-2xl border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest h-12 px-6 hover:bg-primary/10 transition-[background-color,border-color,color,opacity,transform] disabled:opacity-40"
           >
             <FolderPlus className="h-4 w-4 mr-2" /> Nueva Categoría
           </Button>
           <Button 
             onClick={() => handleOpenSheet('team')}
             disabled={!canEditAcademy}
-            className="w-full sm:w-auto rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none disabled:opacity-40"
+            className="w-full sm:w-auto rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-[background-color,border-color,color,opacity,transform] border-none disabled:opacity-40"
           >
             <Plus className="h-4 w-4 mr-2" /> Vincular Equipo
           </Button>
@@ -865,12 +865,12 @@ export default function AcademyManagementPage() {
 
             <div className="space-y-4">
               {categories.filter(c => c.stageId === stage.id).map((cat) => (
-                <Card key={cat.id} className="glass-panel border-none bg-black/40 overflow-hidden group hover:bg-black/60 transition-all cursor-default rounded-3xl">
+                <Card key={cat.id} className="glass-panel border-none bg-black/40 overflow-hidden group hover:bg-black/60 transition-[background-color,border-color,color,opacity,transform] cursor-default rounded-3xl">
                   <div className={cn("h-1 w-full", stage.color.replace('text', 'bg'))} />
                   
                   <CardHeader className="p-6 pb-2">
                     <div className="flex justify-between items-start mb-2">
-                      <CardTitle className="text-lg font-black text-white italic tracking-tighter uppercase group-hover:cyan-text-glow transition-all">
+                      <CardTitle className="text-lg font-black text-white italic tracking-tighter uppercase group-hover:cyan-text-glow transition-[background-color,border-color,color,opacity,transform]">
                         {cat.name} {cat.teams.length > 0 && (
                           <span className="text-primary/20 text-[10px] ml-2 font-black tracking-widest italic">
                             [{cat.teams.map(t => t.suffix).sort().join('')}]
@@ -892,7 +892,7 @@ export default function AcademyManagementPage() {
                         <div
                           key={idx} 
                           className={cn(
-                            "flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between p-2.5 bg-primary/5 rounded-2xl border transition-all group/team cursor-default",
+                            "flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between p-2.5 bg-primary/5 rounded-2xl border transition-[background-color,border-color,color,opacity,transform] group/team cursor-default",
                             team.status === "Paused" ? "border-amber-500/20 opacity-60" : "border-primary/10 hover:border-primary/30"
                           )}
                         >
@@ -914,7 +914,7 @@ export default function AcademyManagementPage() {
                             <div className="flex items-center justify-end gap-1 lg:hidden">
                               <button
                                 onClick={() => handleViewTeam(team, cat.name)}
-                                className="p-1.5 hover:bg-primary/20 rounded-lg text-primary transition-all"
+                                className="p-1.5 hover:bg-primary/20 rounded-lg text-primary transition-[background-color,border-color,color,opacity,transform]"
                                 title="Ver Ficha"
                               >
                                 <Eye className="h-3.5 w-3.5" />
@@ -923,7 +923,7 @@ export default function AcademyManagementPage() {
                                 asChild
                                 variant="ghost"
                                 size="icon"
-                                className="h-7 w-7 p-1.5 hover:bg-emerald-500/20 rounded-lg text-emerald-400 transition-all"
+                                className="h-7 w-7 p-1.5 hover:bg-emerald-500/20 rounded-lg text-emerald-400 transition-[background-color,border-color,color,opacity,transform]"
                                 title="Abrir asistencia (próxima sesión)"
                               >
                                 <Link
@@ -945,7 +945,7 @@ export default function AcademyManagementPage() {
                                 <DropdownMenuTrigger asChild>
                                   <button
                                     type="button"
-                                    className="p-1.5 hover:bg-primary/20 rounded-lg text-primary transition-all"
+                                    className="p-1.5 hover:bg-primary/20 rounded-lg text-primary transition-[background-color,border-color,color,opacity,transform]"
                                     title="Más acciones"
                                   >
                                     <MoreHorizontal className="h-4 w-4" />
@@ -991,12 +991,12 @@ export default function AcademyManagementPage() {
 
                             {/* PC: botonera completa */}
                             <div className="hidden lg:flex items-center justify-end gap-1">
-                              <button onClick={() => handleViewTeam(team, cat.name)} className="p-1.5 hover:bg-primary/20 rounded-lg text-primary transition-all" title="Ver Ficha"><Eye className="h-3.5 w-3.5" /></button>
+                              <button onClick={() => handleViewTeam(team, cat.name)} className="p-1.5 hover:bg-primary/20 rounded-lg text-primary transition-[background-color,border-color,color,opacity,transform]" title="Ver Ficha"><Eye className="h-3.5 w-3.5" /></button>
                               <Button
                                 asChild
                                 variant="ghost"
                                 size="icon"
-                                className="h-7 w-7 p-1.5 hover:bg-emerald-500/20 rounded-lg text-emerald-400 transition-all"
+                                className="h-7 w-7 p-1.5 hover:bg-emerald-500/20 rounded-lg text-emerald-400 transition-[background-color,border-color,color,opacity,transform]"
                                 title="Abrir asistencia (próxima sesión)"
                               >
                                 <Link
@@ -1013,12 +1013,12 @@ export default function AcademyManagementPage() {
                                   <ClipboardCheck className="h-3.5 w-3.5" />
                                 </Link>
                               </Button>
-                              <button type="button" disabled={!canEditAcademy} onClick={() => handleDuplicateTeam(cat.id, idx)} className="p-1.5 hover:bg-sky-500/20 rounded-lg text-sky-400 transition-all disabled:opacity-30 disabled:pointer-events-none" title="Duplicar Nodo"><Copy className="h-3.5 w-3.5" /></button>
-                              <button type="button" disabled={!canEditAcademy} onClick={() => handleEditTeam(cat.id, team, idx)} className="p-1.5 hover:bg-primary/20 rounded-lg text-primary transition-all disabled:opacity-30 disabled:pointer-events-none" title="Editar Nodo"><Pencil className="h-3.5 w-3.5" /></button>
-                              <button type="button" disabled={!canEditAcademy} onClick={() => handleToggleTeamStatus(cat.id, idx)} className="p-1.5 hover:bg-amber-500/20 rounded-lg text-amber-500 transition-all disabled:opacity-30 disabled:pointer-events-none" title={team.status === "Paused" ? "Reactivar" : "Pausar"}>
+                              <button type="button" disabled={!canEditAcademy} onClick={() => handleDuplicateTeam(cat.id, idx)} className="p-1.5 hover:bg-sky-500/20 rounded-lg text-sky-400 transition-[background-color,border-color,color,opacity,transform] disabled:opacity-30 disabled:pointer-events-none" title="Duplicar Nodo"><Copy className="h-3.5 w-3.5" /></button>
+                              <button type="button" disabled={!canEditAcademy} onClick={() => handleEditTeam(cat.id, team, idx)} className="p-1.5 hover:bg-primary/20 rounded-lg text-primary transition-[background-color,border-color,color,opacity,transform] disabled:opacity-30 disabled:pointer-events-none" title="Editar Nodo"><Pencil className="h-3.5 w-3.5" /></button>
+                              <button type="button" disabled={!canEditAcademy} onClick={() => handleToggleTeamStatus(cat.id, idx)} className="p-1.5 hover:bg-amber-500/20 rounded-lg text-amber-500 transition-[background-color,border-color,color,opacity,transform] disabled:opacity-30 disabled:pointer-events-none" title={team.status === "Paused" ? "Reactivar" : "Pausar"}>
                                 {team.status === "Paused" ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
                               </button>
-                              <button type="button" disabled={!canDeleteAcademy} onClick={() => handleDeleteTeam(cat.id, idx)} className="p-1.5 hover:bg-rose-500/20 rounded-lg text-rose-500 transition-all disabled:opacity-30 disabled:pointer-events-none" title="Borrar"><Trash2 className="h-3.5 w-3.5" /></button>
+                              <button type="button" disabled={!canDeleteAcademy} onClick={() => handleDeleteTeam(cat.id, idx)} className="p-1.5 hover:bg-rose-500/20 rounded-lg text-rose-500 transition-[background-color,border-color,color,opacity,transform] disabled:opacity-30 disabled:pointer-events-none" title="Borrar"><Trash2 className="h-3.5 w-3.5" /></button>
                             </div>
                           </div>
                         </div>
@@ -1032,7 +1032,7 @@ export default function AcademyManagementPage() {
                           type="button"
                           disabled={!canEditAcademy}
                           onClick={() => handleEditCategory(cat)}
-                          className="text-[8px] font-black text-primary hover:cyan-text-glow transition-all flex items-center gap-2 uppercase tracking-widest italic disabled:opacity-30 disabled:pointer-events-none"
+                          className="text-[8px] font-black text-primary hover:cyan-text-glow transition-[background-color,border-color,color,opacity,transform] flex items-center gap-2 uppercase tracking-widest italic disabled:opacity-30 disabled:pointer-events-none"
                         >
                           <Pencil className="h-2.5 w-2.5" /> Editar
                         </button>
@@ -1040,7 +1040,7 @@ export default function AcademyManagementPage() {
                           type="button"
                           disabled={!canEditAcademy}
                           onClick={() => handleDuplicateCategory(cat.id)}
-                          className="text-[8px] font-black text-sky-400 hover:text-sky-300 transition-all flex items-center gap-2 uppercase tracking-widest italic disabled:opacity-30 disabled:pointer-events-none"
+                          className="text-[8px] font-black text-sky-400 hover:text-sky-300 transition-[background-color,border-color,color,opacity,transform] flex items-center gap-2 uppercase tracking-widest italic disabled:opacity-30 disabled:pointer-events-none"
                         >
                           <Copy className="h-2.5 w-2.5" /> Duplicar
                         </button>
@@ -1048,7 +1048,7 @@ export default function AcademyManagementPage() {
                           type="button"
                           disabled={!canDeleteAcademy}
                           onClick={() => handleDeleteCategory(cat.id, cat.name)}
-                          className="text-[8px] font-black text-rose-500 hover:text-rose-400 transition-all flex items-center gap-2 uppercase tracking-widest italic disabled:opacity-30 disabled:pointer-events-none"
+                          className="text-[8px] font-black text-rose-500 hover:text-rose-400 transition-[background-color,border-color,color,opacity,transform] flex items-center gap-2 uppercase tracking-widest italic disabled:opacity-30 disabled:pointer-events-none"
                         >
                           <Trash2 className="h-2.5 w-2.5" /> Eliminar
                         </button>
@@ -1130,17 +1130,17 @@ export default function AcademyManagementPage() {
                   </div>
                   <div className="grid grid-cols-1 gap-3">
                     {[1, 2, 3, 4, 5].map((i) => (
-                      <div key={i} className="flex items-center justify-between p-4 bg-primary/5 rounded-[1.5rem] border border-primary/10 hover:border-primary/30 transition-all group">
+                      <div key={i} className="flex items-center justify-between p-4 bg-primary/5 rounded-[1.5rem] border border-primary/10 hover:border-primary/30 transition-[background-color,border-color,color,opacity,transform] group">
                         <div className="flex items-center gap-4">
                           <div className="h-10 w-10 flex items-center justify-center border border-primary/20 rounded-xl bg-black text-primary font-headline font-black italic shadow-lg group-hover:scale-110 transition-transform">
                             {i === 1 ? '1' : i * 2}
                           </div>
                           <div className="flex flex-col">
-                            <span className="text-xs font-black uppercase text-white italic group-hover:cyan-text-glow transition-all">JUGADOR_NODE_0{i}</span>
+                            <span className="text-xs font-black uppercase text-white italic group-hover:cyan-text-glow transition-[background-color,border-color,color,opacity,transform]">JUGADOR_NODE_0{i}</span>
                             <span className="text-[8px] font-bold text-primary/40 uppercase tracking-widest">{i === 1 ? 'POR' : 'ATK'} • Telemetría Activa</span>
                           </div>
                         </div>
-                        <IdCard className="h-4 w-4 text-primary/20 group-hover:text-primary transition-all" />
+                        <IdCard className="h-4 w-4 text-primary/20 group-hover:text-primary transition-[background-color,border-color,color,opacity,transform]" />
                       </div>
                     ))}
                     <div className="p-4 border border-dashed border-primary/20 rounded-2xl text-center">
@@ -1152,13 +1152,13 @@ export default function AcademyManagementPage() {
 
               <div className="p-10 bg-background/80 border-t border-white/5 flex gap-4">
                 <button 
-                  className="flex-1 h-16 bg-primary/5 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 rounded-2xl transition-all"
+                  className="flex-1 h-16 bg-primary/5 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 rounded-2xl transition-[background-color,border-color,color,opacity,transform]"
                   onClick={() => setIsViewSheetOpen(false)}
                 >
                   CERRAR
                 </button>
                 <button 
-                  className="flex-1 h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.2em] rounded-2xl transition-all shadow-[0_0_20px_rgba(0,242,255,0.2)]"
+                  className="flex-1 h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.2em] rounded-2xl transition-[background-color,border-color,color,opacity,transform] shadow-[0_0_20px_rgba(0,242,255,0.2)]"
                   onClick={() => {
                     setIsViewSheetOpen(false);
                     const cat = categories.find(c => c.name === selectedViewTeam.categoryName);
@@ -1382,7 +1382,7 @@ export default function AcademyManagementPage() {
                   CANCELAR
                 </Button>
               </SheetClose>
-              <Button onClick={handleSave} disabled={loading || !canEditAcademy} className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] transition-all active:scale-95 disabled:opacity-40">
+              <Button onClick={handleSave} disabled={loading || !canEditAcademy} className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] transition-[background-color,border-color,color,opacity,transform] active:scale-95 disabled:opacity-40">
                 {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (editingTeamIdx !== null ? "ACTUALIZAR_NODO" : "SINCRONIZAR_NODO")}
               </Button>
             </div>
@@ -1397,7 +1397,7 @@ function AcademyStat({ label, value, icon: Icon, highlight }: any) {
   return (
     <Card className="glass-panel p-5 flex items-center gap-5 relative overflow-hidden group bg-black/20 border border-primary/20 rounded-3xl">
        <div className={cn(
-         "h-12 w-12 flex items-center justify-center border transition-all rotate-3 group-hover:rotate-0 duration-500 rounded-2xl bg-primary/10 border-primary/20",
+         "h-12 w-12 flex items-center justify-center border transition-[background-color,border-color,color,opacity,transform] rotate-3 group-hover:rotate-0 duration-500 rounded-2xl bg-primary/10 border-primary/20",
          highlight ? "border-primary shadow-[0_0_15px_rgba(0,242,255,0.2)]" : ""
        )}>
           <Icon className="h-6 w-6 text-primary" />
@@ -1412,7 +1412,7 @@ function AcademyStat({ label, value, icon: Icon, highlight }: any) {
 
 function StaffDetailItem({ label, value, icon: Icon, highlight }: any) {
   return (
-    <div className="flex items-center justify-between p-4 bg-primary/5 rounded-3xl border border-primary/10 hover:border-primary/30 transition-all">
+    <div className="flex items-center justify-between p-4 bg-primary/5 rounded-3xl border border-primary/10 hover:border-primary/30 transition-[background-color,border-color,color,opacity,transform]">
       <div className="flex items-center gap-4">
         <div className="h-10 w-10 flex items-center justify-center border rounded-2xl bg-primary/10 border-primary/30 text-primary">
           <Icon className="h-5 w-5" />

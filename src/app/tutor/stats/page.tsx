@@ -52,7 +52,7 @@ export default function TutorStats() {
     <div className="flex-1 flex flex-col h-full bg-background">
       <header className="p-8 bg-card/40 backdrop-blur-md border-b border-white/5 space-y-6">
         <div className="flex items-center justify-between">
-          <Link href="/tutor/dashboard" className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center text-white/40 active:scale-95 transition-all">
+          <Link href="/tutor/dashboard" className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center text-white/40 active:scale-95 transition-[background-color,border-color,color,opacity,transform]">
             <ChevronLeft className="h-5 w-5" />
           </Link>
           <div className="text-center">
@@ -69,7 +69,7 @@ export default function TutorStats() {
         {/* COMPROMISO Y NIVEL */}
         <section className="bg-primary/5 border border-primary/20 rounded-[2.5rem] p-8 space-y-6 relative overflow-hidden group shadow-2xl">
           <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
-          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-all">
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-[background-color,border-color,color,opacity,transform]">
             <Award className="h-24 w-24 text-primary" />
           </div>
           <div className="space-y-1 relative z-10">
@@ -80,7 +80,7 @@ export default function TutorStats() {
             </div>
           </div>
           <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden relative z-10">
-            <div className="h-full bg-primary shadow-[0_0_15px_var(--primary)] transition-all duration-1000" style={{ width: '98%' }} />
+            <div className="h-full bg-primary shadow-[0_0_15px_var(--primary)] transition-[background-color,border-color,color,opacity,transform] duration-1000" style={{ width: '98%' }} />
           </div>
           <p className="text-[9px] text-white/40 font-bold uppercase tracking-widest leading-relaxed italic relative z-10">
             {selectedChild.name} mantiene el índice de compromiso más alto de su equipo. Sigue acumulando XP por cada sesión validada.
@@ -99,7 +99,7 @@ export default function TutorStats() {
 
           <div className="grid grid-cols-1 gap-3">
             {realAttendance.map((log, i) => (
-              <div key={i} className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl flex items-center justify-between group hover:bg-white/[0.04] transition-all">
+              <div key={i} className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl flex items-center justify-between group hover:bg-white/[0.04] transition-[background-color,border-color,color,opacity,transform]">
                 <div className="flex items-center gap-4">
                   <div className={cn(
                     "h-10 w-10 rounded-xl border flex items-center justify-center shrink-0",
@@ -149,7 +149,7 @@ export default function TutorStats() {
             <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-white">Feedback Metodológico</h3>
           </div>
           
-          <div className="p-6 bg-white/[0.02] border border-white/5 rounded-[2.5rem] space-y-4 relative overflow-hidden group hover:border-primary/20 transition-all">
+          <div className="p-6 bg-white/[0.02] border border-white/5 rounded-[2.5rem] space-y-4 relative overflow-hidden group hover:border-primary/20 transition-[background-color,border-color,color,opacity,transform]">
             <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="flex items-center gap-3 relative z-10">
               <CheckCircle2 className="h-4 w-4 text-emerald-400" />
@@ -171,13 +171,13 @@ export default function TutorStats() {
 
 function SkillMetric({ label, value, color }: any) {
   return (
-    <div className="p-5 bg-white/[0.02] border border-white/5 rounded-3xl space-y-3 group hover:border-white/10 transition-all">
+    <div className="p-5 bg-white/[0.02] border border-white/5 rounded-3xl space-y-3 group hover:border-white/10 transition-[background-color,border-color,color,opacity,transform]">
       <div className="flex justify-between items-end">
         <span className="text-[10px] font-black text-white uppercase italic tracking-widest group-hover:text-primary transition-colors">{label}</span>
         <span className={cn("text-xs font-black", color)}>{value}%</span>
       </div>
       <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
-         <div className={cn("h-full bg-current transition-all duration-1000", color)} style={{ width: `${value}%` }} />
+         <div className={cn("h-full bg-current transition-[background-color,border-color,color,opacity,transform] duration-1000", color)} style={{ width: `${value}%` }} />
       </div>
     </div>
   );

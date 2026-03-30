@@ -742,7 +742,7 @@ export default function CoachSessionsPage() {
       
       <div className="flex justify-end gap-2 mb-4">
          <Badge variant="outline" className="border-white/5 text-white/20 uppercase text-[8px] font-black mr-4">Preview_Role:</Badge>
-         <button className="px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all bg-primary text-black border-primary">COACH_MODO</button>
+         <button className="px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-[background-color,border-color,color,opacity,transform] bg-primary text-black border-primary">COACH_MODO</button>
       </div>
 
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 border-b border-white/5 pb-8">
@@ -773,7 +773,7 @@ export default function CoachSessionsPage() {
                 </p>
              </div>
           </div>
-          <Button className="h-12 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-6 sm:px-8 rounded-xl cyan-glow hover:scale-105 transition-all border-none w-full sm:w-auto">
+          <Button className="h-12 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-6 sm:px-8 rounded-xl cyan-glow hover:scale-105 transition-[background-color,border-color,color,opacity,transform] border-none w-full sm:w-auto">
             <Download className="h-4 w-4 mr-2" /> Mi Temporada
           </Button>
           <Button
@@ -840,7 +840,7 @@ export default function CoachSessionsPage() {
                           key={i} 
                           onClick={() => handleMccClick(month.id, i + 1)}
                           className={cn(
-                            "p-4 rounded-xl border transition-all cursor-pointer group/mcc relative overflow-hidden",
+                            "p-4 rounded-xl border transition-[background-color,border-color,color,opacity,transform] cursor-pointer group/mcc relative overflow-hidden",
                             selectedMCC === mccId 
                               ? "bg-primary/20 border-primary shadow-[0_0_15px_rgba(242,255,255,0.2)]" 
                               : "bg-white/5 border-white/5 hover:border-primary/40 hover:bg-primary/5"
@@ -935,7 +935,7 @@ export default function CoachSessionsPage() {
                       <Button 
                         onClick={() => setIsAttendanceOpen(true)}
                         disabled={roster.length === 0 || !canEditPlanner}
-                        className="h-10 bg-emerald-500 text-black font-black uppercase text-[9px] tracking-widest px-6 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 transition-all border-none disabled:opacity-40"
+                        className="h-10 bg-emerald-500 text-black font-black uppercase text-[9px] tracking-widest px-6 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 transition-[background-color,border-color,color,opacity,transform] border-none disabled:opacity-40"
                       >
                         <UserCheck className="h-3.5 w-3.5 mr-2" /> Asistencia
                       </Button>
@@ -1020,7 +1020,7 @@ export default function CoachSessionsPage() {
 
               <div className="p-8 bg-black/60 border-t border-white/5">
                 <SheetClose asChild>
-                  <Button variant="ghost" className="h-16 border border-white/10 text-white/40 font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-white/5 transition-all w-full">CERRAR_TERMINAL</Button>
+                  <Button variant="ghost" className="h-16 border border-white/10 text-white/40 font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-white/5 transition-[background-color,border-color,color,opacity,transform] w-full">CERRAR_TERMINAL</Button>
                 </SheetClose>
               </div>
             </>
@@ -1060,7 +1060,7 @@ export default function CoachSessionsPage() {
                     key={player.id}
                     onClick={() => toggleAttendance(player.id)}
                     className={cn(
-                      "p-5 rounded-2xl border transition-all flex items-center justify-between group overflow-hidden relative",
+                      "p-5 rounded-2xl border transition-[background-color,border-color,color,opacity,transform] flex items-center justify-between group overflow-hidden relative",
                       canEditPlanner ? "cursor-pointer" : "cursor-not-allowed opacity-60",
                       status === 'present' ? "bg-emerald-500/5 border-emerald-500/20" :
                       status === 'absent' ? "bg-rose-500/5 border-rose-500/20" :
@@ -1077,7 +1077,7 @@ export default function CoachSessionsPage() {
                           {player.number}
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-[11px] font-black text-white uppercase italic group-hover:emerald-text-glow transition-all">{player.name}</span>
+                          <span className="text-[11px] font-black text-white uppercase italic group-hover:emerald-text-glow transition-[background-color,border-color,color,opacity,transform]">{player.name}</span>
                           <span className={cn(
                             "text-[8px] font-bold uppercase tracking-widest",
                             status === 'present' ? "text-emerald-400/60" :
@@ -1111,7 +1111,7 @@ export default function CoachSessionsPage() {
                 setIsAttendanceOpen(false);
               }}
               disabled={!canEditPlanner}
-              className="flex-1 h-16 bg-emerald-500 text-black font-black uppercase text-[11px] tracking-[0.2em] rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:scale-[1.02] transition-all border-none disabled:opacity-40"
+              className="flex-1 h-16 bg-emerald-500 text-black font-black uppercase text-[11px] tracking-[0.2em] rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:scale-[1.02] transition-[background-color,border-color,color,opacity,transform] border-none disabled:opacity-40"
             >
               CONFIRMAR_ASISTENCIA <ArrowRight className="h-4 w-4 ml-3" />
             </Button>
@@ -1224,7 +1224,7 @@ function CoachSessionBlock({
         )}
       </div>
 
-      <div className="p-6 border-2 rounded-3xl bg-white/[0.02] border-white/5 transition-all relative overflow-hidden">
+      <div className="p-6 border-2 rounded-3xl bg-white/[0.02] border-white/5 transition-[background-color,border-color,color,opacity,transform] relative overflow-hidden">
         <div className="flex items-center justify-between">
            <div className="flex items-center gap-4">
               <div className="h-12 w-12 bg-black/40 border border-white/10 rounded-xl flex items-center justify-center">

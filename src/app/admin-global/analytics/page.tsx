@@ -669,7 +669,7 @@ function AnalyticsMiniCard({
 }) {
   return (
     <Card className="glass-panel p-6 relative group border border-emerald-500/20">
-      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-20 transition-all">
+      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-20 transition-[background-color,border-color,color,opacity,transform]">
         <Icon className="h-8 w-8 text-emerald-500" />
       </div>
       <p className="text-[8px] font-black text-white/30 uppercase tracking-widest mb-1">{label}</p>

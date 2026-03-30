@@ -470,11 +470,11 @@ export default function GlobalExercisesWarehouse() {
                 >
                   <TableCell className="px-8 py-5">
                     <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 bg-emerald-500/5 border border-emerald-500/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-all">
+                      <div className="h-10 w-10 bg-emerald-500/5 border border-emerald-500/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-[background-color,border-color,color,opacity,transform]">
                         <Activity className="h-4 w-4 text-emerald-400" />
                       </div>
                       <div>
-                        <p className="font-black text-white uppercase text-xs italic group-hover:emerald-text-glow transition-all">
+                        <p className="font-black text-white uppercase text-xs italic group-hover:emerald-text-glow transition-[background-color,border-color,color,opacity,transform]">
                           {ex.title}
                         </p>
                         <div className="flex flex-wrap gap-2 mt-1">
@@ -600,7 +600,7 @@ function MetricMini({
 }) {
   return (
     <Card className="glass-panel p-5 border-emerald-500/20 bg-black/20 rounded-3xl relative overflow-hidden group">
-      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-all">
+      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-[background-color,border-color,color,opacity,transform]">
         <Icon className="h-12 w-12 text-emerald-500" />
       </div>
       <p className="text-[9px] font-black text-emerald-400/60 uppercase tracking-widest italic mb-1">

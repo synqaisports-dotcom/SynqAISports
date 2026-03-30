@@ -557,7 +557,7 @@ function SmartwatchContent() {
                   else handleKeypadPress(key);
                 }}
                 className={cn(
-                  "flex items-center justify-center h-full rounded-xl font-black text-sm transition-all active:scale-90",
+                  "flex items-center justify-center h-full rounded-xl font-black text-sm transition-[background-color,border-color,color,opacity,transform] active:scale-90",
                   key === "ok" ? "bg-primary text-black" : key === "back" ? "bg-white/5 text-white/40" : "bg-white/5 text-white hover:bg-white/10"
                 )}
               >
@@ -607,7 +607,7 @@ function SmartwatchContent() {
            </div>
 
            <div className={cn(
-             "flex items-center gap-2 px-2 py-0.5 rounded-lg border transition-all",
+             "flex items-center gap-2 px-2 py-0.5 rounded-lg border transition-[background-color,border-color,color,opacity,transform]",
              isOnline ? "bg-primary/10 border-primary/20" : "bg-rose-500/10 border-rose-500/20"
            )}>
               <CloudSun className={cn("h-3 w-3", isOnline ? "text-primary animate-pulse" : "text-rose-500")} />

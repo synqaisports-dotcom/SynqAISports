@@ -139,7 +139,7 @@
 
 /* PROTOCOLO_PERFORMANCE_OPTIMIZED_BLUR (v26.0.0) */
 .glass-panel {
-  @apply bg-white/[0.03] backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.8)] transition-all duration-500 rounded-[var(--radius)];
+  @apply bg-white/[0.03] backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.8)] transition-[background-color,border-color,color,opacity,transform] duration-500 rounded-[var(--radius)];
   background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
 }
 

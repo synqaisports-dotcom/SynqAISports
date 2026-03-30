@@ -736,14 +736,14 @@ function MatchBoardInner() {
             <div className="flex items-center gap-1.5">
               <button
                 onClick={() => changeScore(-1, 0)}
-                className="h-8 w-8 lg:h-9 lg:w-9 rounded-lg border border-primary/20 bg-primary/10 text-primary/70 hover:text-primary hover:bg-primary/20 text-sm lg:text-base font-black transition-all active:scale-95"
+                className="h-8 w-8 lg:h-9 lg:w-9 rounded-lg border border-primary/20 bg-primary/10 text-primary/70 hover:text-primary hover:bg-primary/20 text-sm lg:text-base font-black transition-[background-color,border-color,color,opacity,transform] active:scale-95"
               >
                 -
               </button>
               <span className="text-xl font-black text-primary cyan-text-glow tabular-nums">{score.home}</span>
               <button
                 onClick={() => changeScore(1, 0)}
-                className="h-8 w-8 lg:h-9 lg:w-9 rounded-lg border border-primary/20 bg-primary/10 text-primary/70 hover:text-primary hover:bg-primary/20 text-sm lg:text-base font-black transition-all active:scale-95"
+                className="h-8 w-8 lg:h-9 lg:w-9 rounded-lg border border-primary/20 bg-primary/10 text-primary/70 hover:text-primary hover:bg-primary/20 text-sm lg:text-base font-black transition-[background-color,border-color,color,opacity,transform] active:scale-95"
               >
                 +
               </button>
@@ -755,14 +755,14 @@ function MatchBoardInner() {
             <div className="flex items-center gap-1.5">
               <button
                 onClick={() => changeScore(0, -1)}
-                className="h-8 w-8 lg:h-9 lg:w-9 rounded-lg border border-rose-500/20 bg-rose-500/10 text-rose-400/70 hover:text-rose-400 hover:bg-rose-500/20 text-sm lg:text-base font-black transition-all active:scale-95"
+                className="h-8 w-8 lg:h-9 lg:w-9 rounded-lg border border-rose-500/20 bg-rose-500/10 text-rose-400/70 hover:text-rose-400 hover:bg-rose-500/20 text-sm lg:text-base font-black transition-[background-color,border-color,color,opacity,transform] active:scale-95"
               >
                 -
               </button>
               <span className="text-xl font-black text-rose-500 rose-text-glow tabular-nums">{score.guest}</span>
               <button
                 onClick={() => changeScore(0, 1)}
-                className="h-8 w-8 lg:h-9 lg:w-9 rounded-lg border border-rose-500/20 bg-rose-500/10 text-rose-400/70 hover:text-rose-400 hover:bg-rose-500/20 text-sm lg:text-base font-black transition-all active:scale-95"
+                className="h-8 w-8 lg:h-9 lg:w-9 rounded-lg border border-rose-500/20 bg-rose-500/10 text-rose-400/70 hover:text-rose-400 hover:bg-rose-500/20 text-sm lg:text-base font-black transition-[background-color,border-color,color,opacity,transform] active:scale-95"
               >
                 +
               </button>
@@ -791,7 +791,7 @@ function MatchBoardInner() {
                 : "/dashboard";
             router.replace(target);
           }}
-          className="h-10 w-10 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all shadow-2xl active:scale-95 glass-panel"
+          className="h-10 w-10 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-[background-color,border-color,color,opacity,transform] shadow-2xl active:scale-95 glass-panel"
           title="Volver"
         >
           <LayoutDashboard className="h-5 w-5" />
@@ -811,7 +811,7 @@ function MatchBoardInner() {
           onClick={handleSaveMatch}
           variant="ghost"
           size="icon"
-          className="h-10 w-10 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all shadow-2xl active:scale-95 glass-panel"
+          className="h-10 w-10 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-[background-color,border-color,color,opacity,transform] shadow-2xl active:scale-95 glass-panel"
           title="Guardar partido"
         >
           <Save className="h-4 w-4" />
@@ -823,7 +823,7 @@ function MatchBoardInner() {
               const base = p.startsWith("/sandbox/app") ? "/sandbox/app/mobile-continuity" : "/dashboard/mobile-continuity";
               router.push(`${base}?mode=match&tab=watch`);
             }}
-            className="h-10 px-3 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all shadow-2xl active:scale-95 glass-panel text-[10px] font-black uppercase tracking-widest"
+            className="h-10 px-3 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-[background-color,border-color,color,opacity,transform] shadow-2xl active:scale-95 glass-panel text-[10px] font-black uppercase tracking-widest"
             title="Ajustes Watch"
             type="button"
           >
@@ -834,7 +834,7 @@ function MatchBoardInner() {
 
         <Dialog onOpenChange={setIsAnyDialogOpen}>
           <DialogTrigger asChild>
-            <button className="h-10 w-10 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all shadow-2xl active:scale-95 group glass-panel">
+            <button className="h-10 w-10 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-[background-color,border-color,color,opacity,transform] shadow-2xl active:scale-95 group glass-panel">
               <Watch className="h-4 w-4 group-hover:animate-pulse" />
             </button>
           </DialogTrigger>
@@ -861,10 +861,10 @@ function MatchBoardInner() {
           </DialogContent>
         </Dialog>
 
-        <div className="flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-xl border border-primary/30 rounded-xl shadow-2xl transition-all glass-panel">
+        <div className="flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-xl border border-primary/30 rounded-xl shadow-2xl transition-[background-color,border-color,color,opacity,transform] glass-panel">
           <div className="flex items-center gap-1 border-r border-white/10 pr-1">
             <Select onValueChange={(v) => handleSetPresetTime(parseInt(v))}>
-              <SelectTrigger className="h-7 w-8 bg-transparent border-none text-primary/40 hover:text-primary transition-all p-0 focus:ring-0">
+              <SelectTrigger className="h-7 w-8 bg-transparent border-none text-primary/40 hover:text-primary transition-[background-color,border-color,color,opacity,transform] p-0 focus:ring-0">
                 <Timer className="h-3.5 w-3.5" />
               </SelectTrigger>
               <SelectContent className="bg-[#0a0f18] border-primary/20">
@@ -875,7 +875,7 @@ function MatchBoardInner() {
             </Select>
           </div>
           <div className="flex flex-col items-center min-w-[60px]">
-            <span className={cn("text-xl font-black font-headline tabular-nums tracking-tighter transition-all duration-500", isRunning ? "text-primary cyan-text-glow" : "text-white/40")}>
+            <span className={cn("text-xl font-black font-headline tabular-nums tracking-tighter transition-[background-color,border-color,color,opacity,transform] duration-500", isRunning ? "text-primary cyan-text-glow" : "text-white/40")}>
               {formatTime(timeLeft)}
             </span>
           </div>
@@ -899,7 +899,7 @@ function MatchBoardInner() {
                 });
               }} 
               className={cn(
-                "h-7 w-7 rounded-lg flex items-center justify-center transition-all duration-300 active:scale-90",
+                "h-7 w-7 rounded-lg flex items-center justify-center transition-[background-color,border-color,color,opacity,transform] duration-300 active:scale-90",
                 isRunning ? "text-amber-400 hover:bg-amber-400/10" : "text-emerald-400 hover:bg-emerald-400/10"
               )}
               title={isRunning ? "Pausar" : "Iniciar"}
@@ -917,7 +917,7 @@ function MatchBoardInner() {
                 lastTimerSyncAppliedRef.current = now;
                 writeMatchTimerSync({ remainingSec: sec, running: false, updatedAt: now, origin: "board" }, timerSyncKey);
               }} 
-              className="h-7 w-7 rounded-lg flex items-center justify-center text-white/20 hover:text-white hover:bg-white/10 transition-all duration-300 active:scale-90"
+              className="h-7 w-7 rounded-lg flex items-center justify-center text-white/20 hover:text-white hover:bg-white/10 transition-[background-color,border-color,color,opacity,transform] duration-300 active:scale-90"
               title="Resetear"
             >
               <RotateCcw className="h-3.5 w-3.5" />
@@ -957,7 +957,7 @@ function MatchBoardInner() {
           
           {/* BLOQUE LOCAL (IZQUIERDA) */}
           <div className="flex items-center gap-1.5 lg:gap-2 pointer-events-auto shrink-0">
-            <div className="bg-black/80 backdrop-blur-xl border border-primary/20 p-1 rounded-xl shadow-xl flex items-center h-10 lg:h-11 transition-all glass-panel">
+            <div className="bg-black/80 backdrop-blur-xl border border-primary/20 p-1 rounded-xl shadow-xl flex items-center h-10 lg:h-11 transition-[background-color,border-color,color,opacity,transform] glass-panel">
               <Select value={homeFormation} onValueChange={setHomeFormation}>
                 <SelectTrigger className="h-8 w-20 lg:w-24 bg-black border-primary/10 text-white font-black uppercase text-[9px] lg:text-[10px] rounded-lg focus:ring-0">
                   <SelectValue />
@@ -975,7 +975,7 @@ function MatchBoardInner() {
                     key={p} 
                     onClick={() => setHomePhase(p.toLowerCase() as TacticalPhase)}
                     className={cn(
-                      "h-8 px-2 lg:px-2.5 rounded-lg text-[8px] lg:text-[9px] font-black uppercase transition-all",
+                      "h-8 px-2 lg:px-2.5 rounded-lg text-[8px] lg:text-[9px] font-black uppercase transition-[background-color,border-color,color,opacity,transform]",
                       homePhase === p.toLowerCase() ? "bg-primary text-black cyan-glow" : "text-white/20 hover:bg-white/5"
                     )}
                   >
@@ -991,9 +991,9 @@ function MatchBoardInner() {
             <div className="flex items-center gap-2 lg:gap-3 px-3 lg:px-4 h-10 lg:h-11 bg-black/80 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl max-w-full overflow-hidden glass-panel">
               <div className="flex items-center gap-1.5 lg:gap-2 pr-2 lg:pr-3 border-r border-white/10 shrink-0">
                 {["#00f2ff", "#f43f5e", "#facc15"].map(c => (
-                  <button key={c} onClick={() => setCurrentColor(c)} className={cn("h-4 w-4 lg:h-5 lg:w-5 rounded-full border-2 transition-all", currentColor === c ? "border-white scale-110 shadow-lg" : "border-transparent opacity-40")} style={{ backgroundColor: c }} />
+                  <button key={c} onClick={() => setCurrentColor(c)} className={cn("h-4 w-4 lg:h-5 lg:w-5 rounded-full border-2 transition-[background-color,border-color,color,opacity,transform]", currentColor === c ? "border-white scale-110 shadow-lg" : "border-transparent opacity-40")} style={{ backgroundColor: c }} />
                 ))}
-                <button onClick={() => setDrawings([])} className="text-rose-500/40 hover:text-rose-500 p-1 lg:p-1.5 transition-all active:scale-90" title="Borrar">
+                <button onClick={() => setDrawings([])} className="text-rose-500/40 hover:text-rose-500 p-1 lg:p-1.5 transition-[background-color,border-color,color,opacity,transform] active:scale-90" title="Borrar">
                   <Trash2 className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
                 </button>
               </div>
@@ -1024,12 +1024,12 @@ function MatchBoardInner() {
                 <button 
                   type="button"
                   onClick={() => setShowLanes(!showLanes)}
-                  className={cn("h-8 px-2 lg:px-3 rounded-lg flex items-center gap-1.5 lg:gap-2 transition-all text-[8px] lg:text-[9px] font-black uppercase", showLanes ? "bg-primary/20 text-primary" : "text-white/20 hover:text-white")}
+                  className={cn("h-8 px-2 lg:px-3 rounded-lg flex items-center gap-1.5 lg:gap-2 transition-[background-color,border-color,color,opacity,transform] text-[8px] lg:text-[9px] font-black uppercase", showLanes ? "bg-primary/20 text-primary" : "text-white/20 hover:text-white")}
                 >
                   <Columns3 className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
                   <span className="hidden md:inline">Carriles</span>
                 </button>
-                <button type="button" onClick={toggleFullscreen} className="h-8 w-8 flex items-center justify-center text-white/40 hover:text-primary transition-all active:scale-90">
+                <button type="button" onClick={toggleFullscreen} className="h-8 w-8 flex items-center justify-center text-white/40 hover:text-primary transition-[background-color,border-color,color,opacity,transform] active:scale-90">
                   {isFullscreen ? <Minimize2 className="h-3.5 w-3.5 lg:h-4 lg:w-4" /> : <Maximize2 className="h-3.5 w-3.5 lg:h-4 lg:w-4" />}
                 </button>
               </div>
@@ -1064,7 +1064,7 @@ function MatchBoardInner() {
                     key={p} 
                     onClick={() => setGuestPhase(p.toLowerCase() as TacticalPhase)}
                     className={cn(
-                      "h-8 px-2 lg:px-2.5 rounded-lg text-[8px] lg:text-[9px] font-black uppercase transition-all",
+                      "h-8 px-2 lg:px-2.5 rounded-lg text-[8px] lg:text-[9px] font-black uppercase transition-[background-color,border-color,color,opacity,transform]",
                       guestPhase === p.toLowerCase() ? "bg-rose-500 text-black rose-glow" : "text-white/20 hover:bg-white/5"
                     )}
                   >
@@ -1080,7 +1080,7 @@ function MatchBoardInner() {
       {/* ROSTER LATERAL */}
       <Sheet onOpenChange={setIsAnyDialogOpen}>
         <SheetTrigger asChild>
-          <button className="fixed bottom-20 right-4 lg:bottom-24 lg:right-6 h-10 w-10 lg:h-12 lg:w-12 rounded-2xl bg-primary text-black flex items-center justify-center shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-110 transition-all duration-300 z-[160] active:scale-95">
+          <button className="fixed bottom-20 right-4 lg:bottom-24 lg:right-6 h-10 w-10 lg:h-12 lg:w-12 rounded-2xl bg-primary text-black flex items-center justify-center shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-110 transition-[background-color,border-color,color,opacity,transform] duration-300 z-[160] active:scale-95">
             <Users className="h-4 w-4 lg:h-5 lg:w-5" />
           </button>
         </SheetTrigger>
@@ -1090,7 +1090,7 @@ function MatchBoardInner() {
           </SheetHeader>
           <div className="p-6 overflow-y-auto h-full space-y-3">
             {players.filter(p => p.team === 'local').map(p => (
-              <div key={p.id} className="p-3 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-between transition-all duration-300 hover:bg-primary/10">
+              <div key={p.id} className="p-3 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-between transition-[background-color,border-color,color,opacity,transform] duration-300 hover:bg-primary/10">
                 <span className="text-[10px] font-black text-white italic">#{p.number} {p.name}</span>
                 <Badge className="bg-primary/10 text-primary text-[7px] font-black uppercase">EN CAMPO</Badge>
               </div>

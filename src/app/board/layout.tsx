@@ -70,7 +70,7 @@ export default function BoardLayout(props: {
           variant="ghost" 
           size="icon" 
           onClick={() => router.push('/dashboard')}
-          className="h-12 w-12 rounded-2xl bg-black/60 backdrop-blur-2xl border border-white/10 text-white/40 hover:text-primary hover:scale-110 transition-all shadow-2xl group"
+          className="h-12 w-12 rounded-2xl bg-black/60 backdrop-blur-2xl border border-white/10 text-white/40 hover:text-primary hover:scale-110 transition-[background-color,border-color,color,opacity,transform] shadow-2xl group"
           title="Volver al Dashboard"
         >
           <LayoutDashboard className="h-5 w-5 group-hover:animate-pulse" />

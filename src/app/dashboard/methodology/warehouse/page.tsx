@@ -704,7 +704,7 @@ export default function WarehouseClubPage() {
                           type="button"
                           onClick={() => setSelectedInstallationId(inst.id)}
                           className={cn(
-                            "w-full text-left rounded-2xl border p-4 transition-all",
+                            "w-full text-left rounded-2xl border p-4 transition-[background-color,border-color,color,opacity,transform]",
                             isActive
                               ? "border-primary/30 bg-primary/5"
                               : "border-white/5 bg-black/20 hover:border-primary/20",
@@ -803,7 +803,7 @@ export default function WarehouseClubPage() {
                     type="button"
                     onClick={openCreateMaterial}
                     disabled={!canMutateWarehouse || !selectedStore}
-                    className="rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none disabled:opacity-40"
+                    className="rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-[background-color,border-color,color,opacity,transform] border-none disabled:opacity-40"
                   >
                     <Plus className="h-4 w-4 mr-2" /> Añadir material
                   </Button>

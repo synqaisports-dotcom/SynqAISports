@@ -364,7 +364,7 @@ export default function DashboardPage() {
 function OperationalMetricCard({ title, value, icon: Icon, desc, trend, highlight }: any) {
   return (
     <Card className={cn(
-      "glass-panel relative overflow-hidden group hover:scale-[1.02] transition-all rounded-3xl border border-primary/20 bg-black/20",
+      "glass-panel relative overflow-hidden group hover:scale-[1.02] transition-[background-color,border-color,color,opacity,transform] rounded-3xl border border-primary/20 bg-black/20",
       highlight && "border-primary/50 bg-primary/5 shadow-[0_0_30px_rgba(0,242,255,0.1)]"
     )}>
       <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -390,7 +390,7 @@ function TrainingItem({ time, category, focus, location, status }: any) {
   return (
     <div className="p-6 hover:bg-primary/[0.03] transition-colors group flex items-center justify-between">
       <div className="flex items-center gap-6">
-        <div className="flex flex-col items-center justify-center min-w-[60px] h-14 bg-primary/5 border border-primary/20 rounded-2xl group-hover:border-primary/40 transition-all">
+        <div className="flex flex-col items-center justify-center min-w-[60px] h-14 bg-primary/5 border border-primary/20 rounded-2xl group-hover:border-primary/40 transition-[background-color,border-color,color,opacity,transform]">
           <Clock className="h-3 w-3 text-primary/60 mb-1" />
           <span className="text-xs font-black text-primary">{time}</span>
         </div>
@@ -405,7 +405,7 @@ function TrainingItem({ time, category, focus, location, status }: any) {
           "h-2 w-2 rounded-full",
           status === 'ready' ? 'bg-primary animate-pulse shadow-[0_0_10px_rgba(0,242,255,0.5)]' : 'bg-white/10'
         )} />
-        <Button variant="ghost" size="icon" className="text-primary/20 hover:text-primary transition-all">
+        <Button variant="ghost" size="icon" className="text-primary/20 hover:text-primary transition-[background-color,border-color,color,opacity,transform]">
           <ChevronRight className="h-5 w-5" />
         </Button>
       </div>
@@ -491,7 +491,7 @@ function OperativaBars({
           </div>
           <div className="h-3 rounded-full bg-white/5 border border-white/10 overflow-hidden">
             <div
-              className={cn("h-full rounded-full transition-all duration-500", item.tone)}
+              className={cn("h-full rounded-full transition-[background-color,border-color,color,opacity,transform] duration-500", item.tone)}
               style={{ width: `${item.value}%` }}
             />
           </div>

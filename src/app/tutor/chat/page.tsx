@@ -35,7 +35,7 @@ export default function TutorChatList() {
     <div className="flex-1 flex flex-col h-full bg-background">
       <header className="p-8 bg-card/40 backdrop-blur-md border-b border-white/5 space-y-6">
         <div className="flex items-center justify-between">
-          <Link href="/tutor/dashboard" className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center text-white/40 active:scale-95 transition-all">
+          <Link href="/tutor/dashboard" className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center text-white/40 active:scale-95 transition-[background-color,border-color,color,opacity,transform]">
             <ChevronLeft className="h-5 w-5" />
           </Link>
           <div className="text-center">
@@ -49,7 +49,7 @@ export default function TutorChatList() {
 
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20" />
-          <Input placeholder="FILTRAR CANALES..." className="h-12 pl-12 bg-white/5 border-white/10 rounded-2xl text-[10px] font-black uppercase focus:border-primary transition-all text-primary placeholder:text-white/10" />
+          <Input placeholder="FILTRAR CANALES..." className="h-12 pl-12 bg-white/5 border-white/10 rounded-2xl text-[10px] font-black uppercase focus:border-primary transition-[background-color,border-color,color,opacity,transform] text-primary placeholder:text-white/10" />
         </div>
       </header>
 
@@ -61,10 +61,10 @@ export default function TutorChatList() {
         
         {MOCK_CHATS.map(chat => (
           <div key={chat.id} onClick={handleOpenChat} className="cursor-pointer">
-            <div className="p-5 bg-white/[0.02] border border-white/5 rounded-[2rem] flex items-center gap-4 group active:bg-white/5 transition-all relative overflow-hidden">
+            <div className="p-5 bg-white/[0.02] border border-white/5 rounded-[2rem] flex items-center gap-4 group active:bg-white/5 transition-[background-color,border-color,color,opacity,transform] relative overflow-hidden">
               <div className="absolute inset-0 bg-primary/5 opacity-0 group-active:opacity-100 transition-opacity" />
               <div className={cn(
-                "h-14 w-14 rounded-2xl flex items-center justify-center border transition-all text-sm font-headline font-black italic relative shrink-0",
+                "h-14 w-14 rounded-2xl flex items-center justify-center border transition-[background-color,border-color,color,opacity,transform] text-sm font-headline font-black italic relative shrink-0",
                 chat.status === 'online' ? 'bg-primary/10 border-primary/30 text-primary shadow-[0_0_15px_rgba(0,242,255,0.1)]' : 'bg-white/5 border-white/10 text-white/40'
               )}>
                 {chat.avatar}

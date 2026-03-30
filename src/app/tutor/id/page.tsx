@@ -21,7 +21,7 @@ export default function AthleteIDPage() {
     <div className="flex-1 flex flex-col h-full bg-background">
       <header className="p-8 bg-card/40 backdrop-blur-md border-b border-white/5 space-y-6">
         <div className="flex items-center justify-between">
-          <Link href="/tutor/dashboard" className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center text-white/40 active:scale-95 transition-all">
+          <Link href="/tutor/dashboard" className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center text-white/40 active:scale-95 transition-[background-color,border-color,color,opacity,transform]">
             <ChevronLeft className="h-5 w-5" />
           </Link>
           <div className="text-center">
@@ -35,9 +35,9 @@ export default function AthleteIDPage() {
       </header>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-10">
-        <div className="relative aspect-[1.6/1] w-full bg-gradient-to-br from-primary/20 via-black to-black border-2 border-primary/30 rounded-[2.5rem] overflow-hidden shadow-2xl group transition-all hover:border-primary/60">
+        <div className="relative aspect-[1.6/1] w-full bg-gradient-to-br from-primary/20 via-black to-black border-2 border-primary/30 rounded-[2.5rem] overflow-hidden shadow-2xl group transition-[background-color,border-color,color,opacity,transform] hover:border-primary/60">
            <div className="absolute inset-0 bg-grid-pattern opacity-20 pointer-events-none" />
-           <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-all"><Zap className="h-32 w-32 text-primary" /></div>
+           <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-[background-color,border-color,color,opacity,transform]"><Zap className="h-32 w-32 text-primary" /></div>
            
            <div className="p-8 relative z-10 h-full flex flex-col justify-between">
               <div className="flex justify-between items-start">
@@ -91,10 +91,10 @@ export default function AthleteIDPage() {
       </div>
 
       <div className="p-8 border-t border-white/5 bg-card/20 flex gap-4">
-         <button className="flex-1 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center gap-3 text-[10px] font-black text-white/40 uppercase tracking-widest hover:text-white transition-all">
+         <button className="flex-1 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center gap-3 text-[10px] font-black text-white/40 uppercase tracking-widest hover:text-white transition-[background-color,border-color,color,opacity,transform]">
             <Share2 className="h-4 w-4" /> Compartir
          </button>
-         <button className="flex-1 h-14 bg-primary text-black rounded-2xl flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest shadow-xl transition-all active:scale-95">
+         <button className="flex-1 h-14 bg-primary text-black rounded-2xl flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest shadow-xl transition-[background-color,border-color,color,opacity,transform] active:scale-95">
             <Shield className="h-4 w-4" /> Añadir Wallet
          </button>
       </div>

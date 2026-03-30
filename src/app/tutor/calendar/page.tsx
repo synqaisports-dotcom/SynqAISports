@@ -32,7 +32,7 @@ export default function TutorCalendar() {
     <div className="flex-1 flex flex-col h-full bg-background">
       <header className="p-8 bg-card/40 backdrop-blur-md border-b border-white/5 space-y-6">
         <div className="flex items-center justify-between">
-          <Link href="/tutor/dashboard" className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center text-white/40 active:scale-95 transition-all">
+          <Link href="/tutor/dashboard" className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center text-white/40 active:scale-95 transition-[background-color,border-color,color,opacity,transform]">
             <ChevronLeft className="h-5 w-5" />
           </Link>
           <div className="text-center">
@@ -54,13 +54,13 @@ export default function TutorCalendar() {
 
           <div className="space-y-4">
             {MOCK_EVENTS.map(event => (
-              <div key={event.id} className="bg-white/[0.02] border border-white/5 rounded-[2.5rem] overflow-hidden group hover:border-primary/20 transition-all">
+              <div key={event.id} className="bg-white/[0.02] border border-white/5 rounded-[2.5rem] overflow-hidden group hover:border-primary/20 transition-[background-color,border-color,color,opacity,transform]">
                 <div className={cn("h-1 w-full", event.type === 'match' ? 'bg-primary' : 'bg-white/10')} />
                 <div className="p-6 space-y-4">
                   <div className="flex justify-between items-start">
                     <div className="space-y-1">
                       <span className="text-[9px] font-black text-primary uppercase tracking-widest">{event.date}</span>
-                      <h4 className="text-lg font-black text-white uppercase italic group-hover:cyan-text-glow transition-all leading-none">{event.title}</h4>
+                      <h4 className="text-lg font-black text-white uppercase italic group-hover:cyan-text-glow transition-[background-color,border-color,color,opacity,transform] leading-none">{event.title}</h4>
                     </div>
                     {event.type === 'match' ? <Trophy className="h-5 w-5 text-primary" /> : <Dumbbell className="h-5 w-5 text-white/20" />}
                   </div>
@@ -78,7 +78,7 @@ export default function TutorCalendar() {
 
                   <div className="pt-4 border-t border-white/5 flex justify-between items-center">
                     <Badge variant="outline" className="border-white/5 text-white/20 text-[7px] font-black tracking-[0.2em]">{event.status}</Badge>
-                    <button className="text-[9px] font-black text-primary flex items-center gap-2 uppercase tracking-widest active:scale-95 transition-all">
+                    <button className="text-[9px] font-black text-primary flex items-center gap-2 uppercase tracking-widest active:scale-95 transition-[background-color,border-color,color,opacity,transform]">
                       Abrir Mapa <ChevronRight className="h-3 w-3" />
                     </button>
                   </div>

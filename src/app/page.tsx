@@ -106,7 +106,7 @@ export default function SynqAiLandingPage() {
             ))}
           </div>
 
-          <Button className="bg-primary/10 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest rounded-none h-10 px-6 hover:bg-primary hover:text-black transition-all" asChild>
+          <Button className="bg-primary/10 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest rounded-none h-10 px-6 hover:bg-primary hover:text-black transition-[background-color,border-color,color,opacity,transform]" asChild>
             <Link href="/login">Acceso Terminal</Link>
           </Button>
         </div>
@@ -135,7 +135,7 @@ export default function SynqAiLandingPage() {
              </p>
 
              <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-8">
-                <Button size="lg" className="bg-primary text-black font-black h-16 px-12 rounded-none cyan-glow hover:scale-105 transition-all border-none uppercase tracking-[0.3em] text-[11px]" asChild>
+                <Button size="lg" className="bg-primary text-black font-black h-16 px-12 rounded-none cyan-glow hover:scale-105 transition-[background-color,border-color,color,opacity,transform] border-none uppercase tracking-[0.3em] text-[11px]" asChild>
                   <Link href="/login">UNIR MI CANTERA A LA RED <ArrowRight className="h-4 w-4 ml-3" /></Link>
                 </Button>
                 <div className="flex items-center gap-4 px-8 py-4 border border-white/5 bg-white/[0.02] backdrop-blur-md">
@@ -153,17 +153,17 @@ export default function SynqAiLandingPage() {
               <Link 
                 key={i} 
                 href={node.href} 
-                className="group flex items-center gap-6 p-6 glass-panel border border-white/5 hover:border-primary/40 transition-all duration-500 rounded-[2rem] relative overflow-hidden"
+                className="group flex items-center gap-6 p-6 glass-panel border border-white/5 hover:border-primary/40 transition-[background-color,border-color,color,opacity,transform] duration-500 rounded-[2rem] relative overflow-hidden"
               >
                 <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="h-14 w-14 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 group-hover:border-primary/40 transition-all shrink-0">
-                  <node.icon className="h-6 w-6 text-white/20 group-hover:text-primary transition-all group-hover:scale-110" />
+                <div className="h-14 w-14 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 group-hover:border-primary/40 transition-[background-color,border-color,color,opacity,transform] shrink-0">
+                  <node.icon className="h-6 w-6 text-white/20 group-hover:text-primary transition-[background-color,border-color,color,opacity,transform] group-hover:scale-110" />
                 </div>
                 <div className="space-y-1">
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white group-hover:cyan-text-glow transition-all">{node.label}</h3>
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white group-hover:cyan-text-glow transition-[background-color,border-color,color,opacity,transform]">{node.label}</h3>
                   <p className="text-[8px] font-bold text-white/20 uppercase tracking-widest italic">{node.desc}</p>
                 </div>
-                <ArrowRight className="h-4 w-4 ml-auto text-white/5 group-hover:text-primary transition-all group-hover:translate-x-1" />
+                <ArrowRight className="h-4 w-4 ml-auto text-white/5 group-hover:text-primary transition-[background-color,border-color,color,opacity,transform] group-hover:translate-x-1" />
               </Link>
             ))}
           </div>
@@ -177,7 +177,7 @@ export default function SynqAiLandingPage() {
                 src="https://picsum.photos/seed/multi-sports/1200/800" 
                 alt="SynqAI Multi-Sport Vision" 
                 fill 
-                className="object-cover opacity-40 group-hover:scale-105 transition-all duration-1000 grayscale group-hover:grayscale-0"
+                className="object-cover opacity-40 group-hover:scale-105 transition-[background-color,border-color,color,opacity,transform] duration-1000 grayscale group-hover:grayscale-0"
                 data-ai-hint="kids sports"
                />
                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
@@ -350,7 +350,7 @@ export default function SynqAiLandingPage() {
                 <Textarea placeholder="CUÉNTANOS SOBRE TU PROYECTO FORMATIVO..." className="min-h-[120px] bg-black/40 border-white/10 rounded-none font-bold uppercase text-[10px] tracking-widest" />
               </div>
 
-              <Button type="submit" className="w-full h-16 bg-primary text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-none cyan-glow hover:scale-[1.02] transition-all">
+              <Button type="submit" className="w-full h-16 bg-primary text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-none cyan-glow hover:scale-[1.02] transition-[background-color,border-color,color,opacity,transform]">
                 SOLICITAR ACCESO AL ECOSISTEMA <Send className="h-4 w-4 ml-2" />
               </Button>
             </form>
@@ -389,7 +389,7 @@ function PricingStep({ step, title, price, desc, featured }: any) {
       "glass-panel p-10 space-y-6 relative overflow-hidden group",
       featured && "border-primary/40 bg-primary/5 shadow-[0_0_30px_rgba(242,255,255,0.05)]"
     )}>
-       <span className="absolute top-8 right-8 text-4xl font-black italic opacity-5 group-hover:opacity-10 transition-all">{step}</span>
+       <span className="absolute top-8 right-8 text-4xl font-black italic opacity-5 group-hover:opacity-10 transition-[background-color,border-color,color,opacity,transform]">{step}</span>
        <div className="space-y-1">
           <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/30">Tarifa</p>
           <h4 className="text-xl font-black uppercase italic tracking-tighter">{title}</h4>
@@ -404,12 +404,12 @@ function PricingStep({ step, title, price, desc, featured }: any) {
 function QRAppCard({ title, desc, url, icon: Icon, highlight, qrColor = "#00f2ff" }: any) {
   return (
     <Card className={cn(
-      "glass-panel p-8 flex flex-col items-center text-center space-y-6 transition-all group overflow-hidden relative",
+      "glass-panel p-8 flex flex-col items-center text-center space-y-6 transition-[background-color,border-color,color,opacity,transform] group overflow-hidden relative",
       highlight ? "border-primary/40 shadow-[0_0_40px_rgba(242,255,255,0.1)]" : "border-white/5"
     )}>
        {highlight && <div className="absolute top-0 left-0 bg-primary text-black text-[7px] font-black px-3 py-1 uppercase tracking-widest">Recomendado_Padres</div>}
        <div className={cn(
-         "h-12 w-12 rounded-2xl flex items-center justify-center border transition-all shadow-lg",
+         "h-12 w-12 rounded-2xl flex items-center justify-center border transition-[background-color,border-color,color,opacity,transform] shadow-lg",
          qrColor === "#3b82f6" ? "bg-blue-500/10 border-blue-500/20 text-blue-400" : (highlight ? "bg-primary/10 border-primary/20 text-primary" : "bg-white/5 border-white/10 text-white/20")
        )}>
           <Icon className="h-6 w-6" />

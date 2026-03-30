@@ -516,7 +516,7 @@ export default function StaffManagementPage() {
         <Button 
           onClick={handleOpenCreate}
           disabled={allowedCreateRoles.length === 0 || (!isSuperAdmin && !canEditStaffModule)}
-          className="w-full sm:w-auto rounded-2xl text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none disabled:opacity-30 bg-primary"
+          className="w-full sm:w-auto rounded-2xl text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-[background-color,border-color,color,opacity,transform] border-none disabled:opacity-30 bg-primary"
         >
           <Plus className="h-4 w-4 mr-2" /> Alta de Trabajador
         </Button>
@@ -553,7 +553,7 @@ export default function StaffManagementPage() {
             <Search className="absolute left-3 top-3.5 h-4 w-4 opacity-50 text-primary" />
             <Input 
               placeholder="BUSCAR POR NOMBRE, MAIL O ROL..." 
-              className="pl-10 h-12 bg-white/5 border rounded-2xl font-bold uppercase text-[10px] tracking-widest transition-all border-primary/20 focus-visible:ring-primary/50 text-primary placeholder:text-primary/20"
+              className="pl-10 h-12 bg-white/5 border rounded-2xl font-bold uppercase text-[10px] tracking-widest transition-[background-color,border-color,color,opacity,transform] border-primary/20 focus-visible:ring-primary/50 text-primary placeholder:text-primary/20"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -581,16 +581,16 @@ export default function StaffManagementPage() {
                   <tr key={member.id} className="group transition-colors hover:bg-primary/[0.02]">
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 bg-white/5 border border-white/10 rounded-full flex items-center justify-center relative overflow-hidden transition-all group-hover:border-primary/40">
+                        <div className="h-12 w-12 bg-white/5 border border-white/10 rounded-full flex items-center justify-center relative overflow-hidden transition-[background-color,border-color,color,opacity,transform] group-hover:border-primary/40">
                            {member.photoUrl ? (
                              <Image src={member.photoUrl} alt={member.name} fill className="object-cover rounded-full" />
                            ) : (
-                             <IdCard className="h-5 w-5 transition-all text-primary/20 group-hover:text-primary" />
+                             <IdCard className="h-5 w-5 transition-[background-color,border-color,color,opacity,transform] text-primary/20 group-hover:text-primary" />
                            )}
                            <div className="absolute inset-0 scan-line opacity-0 group-hover:opacity-100 bg-primary/5" />
                         </div>
                         <div className="space-y-1">
-                          <p className="font-black text-white uppercase text-xs italic transition-all group-hover:cyan-text-glow">{member.name}</p>
+                          <p className="font-black text-white uppercase text-xs italic transition-[background-color,border-color,color,opacity,transform] group-hover:cyan-text-glow">{member.name}</p>
                           <p className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-2 text-primary">
                             <Mail className="h-2 w-2" /> {member.email}
                           </p>
@@ -619,7 +619,7 @@ export default function StaffManagementPage() {
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="h-9 w-9 border border-white/10 transition-all rounded-xl text-primary hover:bg-primary/10"
+                          className="h-9 w-9 border border-white/10 transition-[background-color,border-color,color,opacity,transform] rounded-xl text-primary hover:bg-primary/10"
                           onClick={() => handleEdit(member)}
                           disabled={!isSuperAdmin && !canEditStaffModule}
                           title="Modificar Identidad"
@@ -629,7 +629,7 @@ export default function StaffManagementPage() {
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="h-9 w-9 text-rose-500 hover:bg-rose-500/10 border border-rose-500/10 transition-all rounded-xl"
+                          className="h-9 w-9 text-rose-500 hover:bg-rose-500/10 border border-rose-500/10 transition-[background-color,border-color,color,opacity,transform] rounded-xl"
                           onClick={() => handleDelete(member.id, member.name, member.role)}
                           disabled={!isSuperAdmin && !canDeleteStaffModule}
                           title="Vincular Baja"
@@ -679,7 +679,7 @@ export default function StaffManagementPage() {
                 <div className="space-y-4">
                   <Label className="text-[10px] font-black uppercase tracking-widest ml-1 italic text-primary/60">Identidad Visual Staff</Label>
                   <div className="flex flex-col items-center justify-center p-8 rounded-3xl relative overflow-hidden bg-primary/5">
-                    <div className="relative h-40 w-40 rounded-full border-2 border-dashed group cursor-pointer transition-all flex items-center justify-center bg-black/40 shadow-[0_0_30px_rgba(0,0,0,0.5)] border-primary/30 hover:border-primary/60">
+                    <div className="relative h-40 w-40 rounded-full border-2 border-dashed group cursor-pointer transition-[background-color,border-color,color,opacity,transform] flex items-center justify-center bg-black/40 shadow-[0_0_30px_rgba(0,0,0,0.5)] border-primary/30 hover:border-primary/60">
                       {formData.photoUrl ? (
                         <div className="relative h-full w-full rounded-full overflow-hidden border border-primary/40">
                           <Image src={formData.photoUrl} alt="Preview" fill className="object-cover rounded-full" />
@@ -719,7 +719,7 @@ export default function StaffManagementPage() {
                         onChange={(e) => setFormData({...formData, firstName: e.target.value.toUpperCase()})}
                         placeholder="EJ: JUAN" 
                         className={cn(
-                          "h-14 bg-white/5 border rounded-2xl font-bold uppercase transition-all text-lg",
+                          "h-14 bg-white/5 border rounded-2xl font-bold uppercase transition-[background-color,border-color,color,opacity,transform] text-lg",
                           "border-primary/20 focus:border-primary text-primary placeholder:text-primary/20"
                         )}
                       />
@@ -732,7 +732,7 @@ export default function StaffManagementPage() {
                         onChange={(e) => setFormData({...formData, lastName: e.target.value.toUpperCase()})}
                         placeholder="EJ: PÉREZ" 
                         className={cn(
-                          "h-14 bg-white/5 border rounded-2xl font-bold uppercase transition-all text-lg",
+                          "h-14 bg-white/5 border rounded-2xl font-bold uppercase transition-[background-color,border-color,color,opacity,transform] text-lg",
                           "border-primary/20 focus:border-primary text-primary placeholder:text-primary/20"
                         )}
                       />
@@ -750,7 +750,7 @@ export default function StaffManagementPage() {
                         onChange={(e) => setFormData({...formData, email: e.target.value})}
                         placeholder="USER@CLUB.COM" 
                         className={cn(
-                          "pl-10 h-14 bg-white/5 border rounded-2xl font-bold transition-all",
+                          "pl-10 h-14 bg-white/5 border rounded-2xl font-bold transition-[background-color,border-color,color,opacity,transform]",
                           "border-primary/20 focus:border-primary text-primary placeholder:text-primary/20"
                         )}
                       />
@@ -765,7 +765,7 @@ export default function StaffManagementPage() {
                         onValueChange={(v) => setFormData({...formData, role: v as UserRole})}
                       >
                         <SelectTrigger className={cn(
-                          "h-12 w-full min-w-0 bg-white/5 border rounded-2xl font-bold uppercase tracking-widest transition-all",
+                          "h-12 w-full min-w-0 bg-white/5 border rounded-2xl font-bold uppercase tracking-widest transition-[background-color,border-color,color,opacity,transform]",
                           "border-primary/20 focus:border-primary text-primary"
                         )}>
                           <SelectValue />
@@ -793,7 +793,7 @@ export default function StaffManagementPage() {
                             onChange={(e) => setFormData({...formData, countryPrefix: e.target.value})}
                             placeholder="+34" 
                             className={cn(
-                              "h-12 w-full bg-white/5 border rounded-2xl font-bold text-center transition-all",
+                              "h-12 w-full bg-white/5 border rounded-2xl font-bold text-center transition-[background-color,border-color,color,opacity,transform]",
                               "border-primary/20 focus:border-primary text-primary"
                             )}
                           />
@@ -805,7 +805,7 @@ export default function StaffManagementPage() {
                             onChange={(e) => setFormData({...formData, phone: e.target.value})}
                             placeholder="600 000 000" 
                             className={cn(
-                              "h-12 w-full min-w-0 bg-white/5 border rounded-2xl font-bold transition-all pl-10",
+                              "h-12 w-full min-w-0 bg-white/5 border rounded-2xl font-bold transition-[background-color,border-color,color,opacity,transform] pl-10",
                               "border-primary/20 focus:border-primary text-primary placeholder:text-primary/20"
                             )}
                           />
@@ -830,14 +830,14 @@ export default function StaffManagementPage() {
 
                 <div className="pt-2 flex gap-4">
                   <SheetClose asChild>
-                    <Button variant="ghost" className="flex-1 h-16 border font-black uppercase text-[10px] tracking-widest transition-all rounded-2xl active:scale-95 border-primary/20 text-primary/60 hover:bg-primary/10">
+                    <Button variant="ghost" className="flex-1 h-16 border font-black uppercase text-[10px] tracking-widest transition-[background-color,border-color,color,opacity,transform] rounded-2xl active:scale-95 border-primary/20 text-primary/60 hover:bg-primary/10">
                       CANCELAR
                     </Button>
                   </SheetClose>
                   <Button
                     onClick={handleSaveStaff}
                     disabled={loading || !isFormReady}
-                    className="flex-[2] h-16 text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] transition-all border-none active:scale-95 bg-primary"
+                    className="flex-[2] h-16 text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] transition-[background-color,border-color,color,opacity,transform] border-none active:scale-95 bg-primary"
                   >
                     {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (editingId ? "SINCRONIZAR_PERFIL" : "VINCULAR_TRABAJADOR")}
                   </Button>
@@ -853,8 +853,8 @@ export default function StaffManagementPage() {
 
 function StaffStat({ label, value, icon: Icon, highlight, isSuperAdmin }: any) {
   return (
-    <Card className="glass-panel p-5 flex items-center gap-5 relative overflow-hidden group bg-black/20 border transition-all rounded-3xl border-primary/20 hover:border-primary/40">
-       <div className="h-12 w-12 flex items-center justify-center border transition-all rotate-3 group-hover:rotate-0 duration-500 rounded-2xl bg-white/5 border-primary/20">
+    <Card className="glass-panel p-5 flex items-center gap-5 relative overflow-hidden group bg-black/20 border transition-[background-color,border-color,color,opacity,transform] rounded-3xl border-primary/20 hover:border-primary/40">
+       <div className="h-12 w-12 flex items-center justify-center border transition-[background-color,border-color,color,opacity,transform] rotate-3 group-hover:rotate-0 duration-500 rounded-2xl bg-white/5 border-primary/20">
           <Icon className="h-6 w-6 text-primary" />
        </div>
        <div className="relative z-10">

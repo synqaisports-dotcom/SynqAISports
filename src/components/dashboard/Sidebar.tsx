@@ -225,14 +225,14 @@ export function DashboardSidebar() {
     <Sidebar 
       collapsible="icon" 
       className={cn(
-        "transition-all duration-700",
+        "transition-[background-color,border-color,color,opacity,transform] duration-700",
         isCollapsed 
           ? "bg-transparent border-r border-primary/30" 
           : "bg-[#04070c] border-r border-white/5 shadow-[4px_0_24px_rgba(0,0,0,0.5)]"
       )}
     >
       <SidebarHeader className={cn(
-        "p-8 border-b transition-all duration-700",
+        "p-8 border-b transition-[background-color,border-color,color,opacity,transform] duration-700",
         isCollapsed 
           ? "bg-transparent border-primary/20 p-2" 
           : "bg-black/60 backdrop-blur-md border-white/5"
@@ -240,7 +240,7 @@ export function DashboardSidebar() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className={cn(
-              "p-2.5 rounded-xl shrink-0 transition-all duration-700",
+              "p-2.5 rounded-xl shrink-0 transition-[background-color,border-color,color,opacity,transform] duration-700",
               isSuperAdmin ? "bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]" : "bg-primary shadow-[0_0_15px_rgba(0,242,255,0.3)]",
               isCollapsed && "p-1.5"
             )}>
@@ -258,7 +258,7 @@ export function DashboardSidebar() {
           {!isCollapsed && (
             <button 
               onClick={toggleSidebar}
-              className="h-8 w-8 rounded-xl bg-white/5 flex items-center justify-center text-white/40 hover:text-primary transition-all border border-white/5 lg:hidden"
+              className="h-8 w-8 rounded-xl bg-white/5 flex items-center justify-center text-white/40 hover:text-primary transition-[background-color,border-color,color,opacity,transform] border border-white/5 lg:hidden"
               title="Ocultar Terminal"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -268,7 +268,7 @@ export function DashboardSidebar() {
       </SidebarHeader>
 
       <SidebarContent className={cn(
-        "px-3 py-8 space-y-10 custom-scrollbar overflow-x-hidden transition-all duration-700",
+        "px-3 py-8 space-y-10 custom-scrollbar overflow-x-hidden transition-[background-color,border-color,color,opacity,transform] duration-700",
         isCollapsed && "py-4 space-y-6"
       )}>
         {isSuperAdmin && (
@@ -333,13 +333,13 @@ export function DashboardSidebar() {
       </SidebarContent>
 
       <SidebarFooter className={cn(
-        "border-t transition-all duration-700",
+        "border-t transition-[background-color,border-color,color,opacity,transform] duration-700",
         isCollapsed ? "p-2" : "p-4 space-y-2 bg-[#04070c] border-r border-white/5 shadow-[4px_0_24px_rgba(0,0,0,0.5)]"
       )}>
         {!isCollapsed && (
           <button 
             onClick={toggleFullscreen}
-            className="flex items-center gap-3 px-3 py-2.5 text-white/30 hover:text-primary transition-all font-black text-[9px] uppercase tracking-widest hover:bg-white/5 rounded-xl group overflow-hidden w-full text-left"
+            className="flex items-center gap-3 px-3 py-2.5 text-white/30 hover:text-primary transition-[background-color,border-color,color,opacity,transform] font-black text-[9px] uppercase tracking-widest hover:bg-white/5 rounded-xl group overflow-hidden w-full text-left"
           >
             {isFullscreen ? <Minimize2 className="h-4 w-4 shrink-0" /> : <Maximize2 className="h-4 w-4 shrink-0" />}
             <span className="whitespace-nowrap font-bold animate-in fade-in duration-700">MODO_INMERSIVO</span>
@@ -350,7 +350,7 @@ export function DashboardSidebar() {
           <div className="px-2 py-1 border-b border-white/5 pb-2 mb-1">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center justify-between w-full p-2 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all group">
+                <button className="flex items-center justify-between w-full p-2 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-[background-color,border-color,color,opacity,transform] group">
                   <div className="flex items-center gap-2">
                     <span className="text-sm">{currentLang.flag}</span>
                     <span className="text-[9px] font-black text-white/60 uppercase tracking-widest group-hover:text-white transition-colors">{currentLang.label}</span>
@@ -363,7 +363,7 @@ export function DashboardSidebar() {
                   <DropdownMenuItem 
                     key={lang.code} 
                     onClick={() => setCurrentLang(lang)}
-                    className="flex items-center justify-between p-3 rounded-xl hover:bg-primary/10 hover:text-primary cursor-pointer transition-all"
+                    className="flex items-center justify-between p-3 rounded-xl hover:bg-primary/10 hover:text-primary cursor-pointer transition-[background-color,border-color,color,opacity,transform]"
                   >
                     <div className="flex items-center gap-3">
                       <span>{lang.flag}</span>
@@ -379,7 +379,7 @@ export function DashboardSidebar() {
 
         <button 
           onClick={handleLogout}
-          className="flex items-center gap-3 px-3 py-2.5 text-white/30 hover:text-primary transition-all font-black text-[9px] uppercase tracking-widest hover:bg-white/5 rounded-xl group overflow-hidden w-full text-left"
+          className="flex items-center gap-3 px-3 py-2.5 text-white/30 hover:text-primary transition-[background-color,border-color,color,opacity,transform] font-black text-[9px] uppercase tracking-widest hover:bg-white/5 rounded-xl group overflow-hidden w-full text-left"
         >
           <LogOut className="h-5 w-5 shrink-0 group-hover:translate-x-1 transition-transform" />
           {!isCollapsed && <span className="whitespace-nowrap font-bold animate-in fade-in duration-700">CERRAR_SESIÓN</span>}
@@ -393,7 +393,7 @@ function SidebarGroupWrapper({ children, title, color, isCollapsed }: any) {
   return (
     <SidebarGroup className="p-0">
       {!isCollapsed && (
-        <p className={cn("px-4 mb-4 text-[8px] font-black uppercase tracking-[0.5em] transition-all duration-700 animate-pulse", color)}>
+        <p className={cn("px-4 mb-4 text-[8px] font-black uppercase tracking-[0.5em] transition-[background-color,border-color,color,opacity,transform] duration-700 animate-pulse", color)}>
           {title}
         </p>
       )}
@@ -446,7 +446,7 @@ function SidebarLink({
         href={item.href}
         onClick={onNavClick}
       >
-        <item.icon className={cn("h-5 w-5 shrink-0 transition-all duration-700", iconClass)} />
+        <item.icon className={cn("h-5 w-5 shrink-0 transition-[background-color,border-color,color,opacity,transform] duration-700", iconClass)} />
         <span className="font-bold text-[10px] uppercase tracking-[0.25em] whitespace-nowrap animate-in fade-in duration-700">
           {item.title}
         </span>

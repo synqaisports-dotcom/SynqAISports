@@ -451,7 +451,7 @@ export default function GlobalRolesPage() {
           <Button
             type="button"
             onClick={() => openSheet(null)}
-            className="h-14 rounded-2xl border-none bg-emerald-500 px-10 font-black uppercase text-[10px] tracking-widest text-black shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:scale-105 transition-all"
+            className="h-14 rounded-2xl border-none bg-emerald-500 px-10 font-black uppercase text-[10px] tracking-widest text-black shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:scale-105 transition-[background-color,border-color,color,opacity,transform]"
           >
             <Plus className="mr-2 h-5 w-5" /> Matriz de permisos
           </Button>
@@ -472,7 +472,7 @@ export default function GlobalRolesPage() {
               <Search className="absolute left-4 top-4 h-5 w-5 text-emerald-500 opacity-50" />
               <Input
                 placeholder="FILTRAR POR ROL O DESCRIPCIÓN..."
-                className="h-14 rounded-2xl border-emerald-500/20 bg-white/[0.03] pl-12 font-bold uppercase text-[11px] tracking-widest text-white focus:ring-emerald-500/30 transition-all"
+                className="h-14 rounded-2xl border-emerald-500/20 bg-white/[0.03] pl-12 font-bold uppercase text-[11px] tracking-widest text-white focus:ring-emerald-500/30 transition-[background-color,border-color,color,opacity,transform]"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -502,16 +502,16 @@ export default function GlobalRolesPage() {
                   return (
                     <TableRow
                       key={role.id}
-                      className="border-white/5 transition-all hover:bg-white/[0.03] group"
+                      className="border-white/5 transition-[background-color,border-color,color,opacity,transform] hover:bg-white/[0.03] group"
                     >
                       <TableCell className="py-6 pl-10">
                         <div className="flex items-center gap-5">
-                          <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl border border-emerald-500/20 bg-emerald-500/10 transition-all group-hover:scale-110 group-hover:bg-emerald-500/20">
+                          <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl border border-emerald-500/20 bg-emerald-500/10 transition-[background-color,border-color,color,opacity,transform] group-hover:scale-110 group-hover:bg-emerald-500/20">
                             <Fingerprint className="relative z-10 h-5 w-5 text-emerald-400" />
                             <div className="absolute inset-0 bg-emerald-500/5 scan-line" />
                           </div>
                           <div>
-                            <p className="font-headline text-sm font-black uppercase italic tracking-tighter text-white transition-all group-hover:emerald-text-glow">
+                            <p className="font-headline text-sm font-black uppercase italic tracking-tighter text-white transition-[background-color,border-color,color,opacity,transform] group-hover:emerald-text-glow">
                               {role.label}
                             </p>
                             <p className="mt-1 text-[9px] font-bold uppercase tracking-widest text-white/30">
@@ -550,7 +550,7 @@ export default function GlobalRolesPage() {
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="h-10 w-10 rounded-xl border border-white/5 text-white/20 transition-all hover:border-emerald-500/20 hover:bg-emerald-500/10 hover:text-emerald-400"
+                            className="h-10 w-10 rounded-xl border border-white/5 text-white/20 transition-[background-color,border-color,color,opacity,transform] hover:border-emerald-500/20 hover:bg-emerald-500/10 hover:text-emerald-400"
                             onClick={() => openSheet(role)}
                             title="Ver matriz de permisos (referencia)"
                           >
@@ -583,7 +583,7 @@ export default function GlobalRolesPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 px-8 pb-8">
-              <div className="space-y-2 rounded-2xl border border-white/5 bg-black/60 p-6 transition-all group-hover:border-emerald-500/30">
+              <div className="space-y-2 rounded-2xl border border-white/5 bg-black/60 p-6 transition-[background-color,border-color,color,opacity,transform] group-hover:border-emerald-500/30">
                 <p className="text-[10px] font-black uppercase tracking-widest text-white/40">
                   Perfiles en base
                 </p>
@@ -596,7 +596,7 @@ export default function GlobalRolesPage() {
                   </span>
                 </div>
               </div>
-              <div className="space-y-2 rounded-2xl border border-white/5 bg-black/60 p-6 transition-all group-hover:border-emerald-500/30">
+              <div className="space-y-2 rounded-2xl border border-white/5 bg-black/60 p-6 transition-[background-color,border-color,color,opacity,transform] group-hover:border-emerald-500/30">
                 <p className="text-[10px] font-black uppercase tracking-widest text-white/40">
                   Roles de sistema (bloqueados)
                 </p>
@@ -609,7 +609,7 @@ export default function GlobalRolesPage() {
                   </span>
                 </div>
               </div>
-              <div className="space-y-2 rounded-2xl border border-white/5 bg-black/60 p-6 transition-all group-hover:border-emerald-500/30">
+              <div className="space-y-2 rounded-2xl border border-white/5 bg-black/60 p-6 transition-[background-color,border-color,color,opacity,transform] group-hover:border-emerald-500/30">
                 <p className="text-[10px] font-black uppercase tracking-widest text-white/40">
                   Roles listados
                 </p>
@@ -626,7 +626,7 @@ export default function GlobalRolesPage() {
           </Card>
 
           <div className="group relative space-y-4 overflow-hidden rounded-[2.5rem] border border-white/5 bg-black/40 p-8">
-            <div className="absolute right-0 top-0 p-4 opacity-5 transition-all group-hover:opacity-20">
+            <div className="absolute right-0 top-0 p-4 opacity-5 transition-[background-color,border-color,color,opacity,transform] group-hover:opacity-20">
               <Lock className="h-20 w-20 text-emerald-500" />
             </div>
             <div className="flex items-center gap-3">
@@ -785,7 +785,7 @@ export default function GlobalRolesPage() {
                 value={roleDraftLabel}
                 onChange={(e) => setRoleDraftLabel(e.target.value)}
                 placeholder="EJ: ENTRENADOR_PROMO_CANTERA"
-                className="h-16 rounded-2xl border-emerald-500/20 bg-white/5 text-lg font-bold uppercase transition-all placeholder:text-white/10 focus:border-emerald-500"
+                className="h-16 rounded-2xl border-emerald-500/20 bg-white/5 text-lg font-bold uppercase transition-[background-color,border-color,color,opacity,transform] placeholder:text-white/10 focus:border-emerald-500"
               />
             </div>
 
@@ -804,7 +804,7 @@ export default function GlobalRolesPage() {
                     key={sector.id}
                     value={sector.id}
                     className={cn(
-                      "overflow-hidden rounded-3xl border border-white/5 bg-white/[0.02] shadow-xl transition-all",
+                      "overflow-hidden rounded-3xl border border-white/5 bg-white/[0.02] shadow-xl transition-[background-color,border-color,color,opacity,transform]",
                       activeSectors[sector.id] ? "border-emerald-500/20" : "opacity-40 grayscale",
                     )}
                   >
@@ -865,7 +865,7 @@ export default function GlobalRolesPage() {
                               {module.features.map((feature, fidx) => (
                                 <div
                                   key={`${module.id}-${fidx}-${feature}`}
-                                  className="group/feat flex cursor-pointer items-center justify-between rounded-2xl border border-white/5 bg-white/[0.03] p-4 transition-all hover:border-emerald-500/20"
+                                  className="group/feat flex cursor-pointer items-center justify-between rounded-2xl border border-white/5 bg-white/[0.03] p-4 transition-[background-color,border-color,color,opacity,transform] hover:border-emerald-500/20"
                                 >
                                   <span className="text-[10px] font-bold uppercase tracking-tight text-white/40 transition-colors group-hover/feat:text-white/80">
                                     {feature}
@@ -897,7 +897,7 @@ export default function GlobalRolesPage() {
                 });
                 setIsSheetOpen(false);
               }}
-              className="h-16 w-full rounded-2xl border-none bg-emerald-500 font-black uppercase text-[11px] tracking-[0.3em] text-black shadow-[0_0_40px_rgba(16,185,129,0.2)] transition-all hover:scale-[1.02]"
+              className="h-16 w-full rounded-2xl border-none bg-emerald-500 font-black uppercase text-[11px] tracking-[0.3em] text-black shadow-[0_0_40px_rgba(16,185,129,0.2)] transition-[background-color,border-color,color,opacity,transform] hover:scale-[1.02]"
             >
               CERRAR
             </Button>

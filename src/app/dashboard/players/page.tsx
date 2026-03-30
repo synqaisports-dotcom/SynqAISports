@@ -479,7 +479,7 @@ export default function PlayersManagementPage() {
         <Button 
           onClick={handleOpenCreate}
           disabled={!canEditPlayers}
-          className="w-full sm:w-auto rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 active:scale-95 transition-all border-none disabled:opacity-40"
+          className="w-full sm:w-auto rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 active:scale-95 transition-[background-color,border-color,color,opacity,transform] border-none disabled:opacity-40"
         >
           <UserPlus className="h-4 w-4 mr-2" /> Nueva Inscripción
         </Button>
@@ -498,7 +498,7 @@ export default function PlayersManagementPage() {
             <Search className="absolute left-3 top-3.5 h-4 w-4 text-primary opacity-50" />
             <Input 
               placeholder="BUSCAR POR NOMBRE O CATEGORÍA..." 
-              className="pl-10 h-12 bg-white/5 border-primary/20 rounded-2xl text-primary placeholder:text-primary/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-primary/50 transition-all"
+              className="pl-10 h-12 bg-white/5 border-primary/20 rounded-2xl text-primary placeholder:text-primary/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-primary/50 transition-[background-color,border-color,color,opacity,transform]"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -531,18 +531,18 @@ export default function PlayersManagementPage() {
                     <tr key={player.id} className="group hover:bg-primary/[0.02] transition-colors cursor-default">
                       <td className="px-8 py-5">
                         <div className="flex items-center gap-4">
-                          <div className="h-12 w-12 bg-primary/5 border border-primary/20 rounded-full flex items-center justify-center relative overflow-hidden group-hover:border-primary/40 transition-all">
+                          <div className="h-12 w-12 bg-primary/5 border border-primary/20 rounded-full flex items-center justify-center relative overflow-hidden group-hover:border-primary/40 transition-[background-color,border-color,color,opacity,transform]">
                              {player.photoUrl ? (
                                <Image src={player.photoUrl} alt={player.name} fill className="object-cover rounded-full" />
                              ) : (
-                               <IdCard className="h-5 w-5 text-primary/20 group-hover:text-primary transition-all" />
+                               <IdCard className="h-5 w-5 text-primary/20 group-hover:text-primary transition-[background-color,border-color,color,opacity,transform]" />
                              )}
                              <div className="absolute inset-0 bg-primary/5 scan-line opacity-0 group-hover:opacity-100" />
                           </div>
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
                               <span className="text-[10px] font-black text-primary px-1.5 py-0.5 bg-primary/10 border border-primary/20 rounded-md">#{player.number}</span>
-                              <p className="font-black text-white uppercase text-xs italic transition-all group-hover:cyan-text-glow">
+                              <p className="font-black text-white uppercase text-xs italic transition-[background-color,border-color,color,opacity,transform] group-hover:cyan-text-glow">
                                 {player.name} {player.surname}
                                 {player.nickname && <span className="text-[10px] text-primary/40 ml-2">"{player.nickname}"</span>}
                               </p>
@@ -556,7 +556,7 @@ export default function PlayersManagementPage() {
                       <td className="px-6 py-5">
                         <div className="flex justify-center">
                           <div className={cn(
-                            "inline-flex items-center border rounded-xl divide-x overflow-hidden group-hover:border-opacity-40 transition-all shadow-[0_0_10px_rgba(0,0,0,0.2)]",
+                            "inline-flex items-center border rounded-xl divide-x overflow-hidden group-hover:border-opacity-40 transition-[background-color,border-color,color,opacity,transform] shadow-[0_0_10px_rgba(0,0,0,0.2)]",
                             style.border,
                             style.bg
                           )}>
@@ -599,7 +599,7 @@ export default function PlayersManagementPage() {
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-9 w-9 text-primary hover:bg-primary/10 border border-primary/10 transition-all active:scale-90 rounded-xl"
+                            className="h-9 w-9 text-primary hover:bg-primary/10 border border-primary/10 transition-[background-color,border-color,color,opacity,transform] active:scale-90 rounded-xl"
                             onClick={() => handleEdit(player)}
                             disabled={!canEditPlayers}
                             title="Modificar Atleta"
@@ -609,7 +609,7 @@ export default function PlayersManagementPage() {
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-9 w-9 text-rose-500 hover:bg-rose-500/10 border border-rose-500/10 transition-all active:scale-90 rounded-xl"
+                            className="h-9 w-9 text-rose-500 hover:bg-rose-500/10 border border-rose-500/10 transition-[background-color,border-color,color,opacity,transform] active:scale-90 rounded-xl"
                             onClick={() => handleDelete(player.id, player.name)}
                             disabled={!canDeletePlayers}
                             title="Desvincular Atleta"
@@ -652,7 +652,7 @@ export default function PlayersManagementPage() {
             <div className="space-y-4">
               <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Identidad Visual</Label>
               <div className="flex flex-col items-center justify-center p-8 bg-primary/5 rounded-3xl relative overflow-hidden">
-                <div className="relative h-40 w-40 rounded-full border-2 border-dashed border-primary/30 group cursor-pointer hover:border-primary/60 transition-all flex items-center justify-center bg-black/40 shadow-[0_0_30px_rgba(0,242,255,0.1)]">
+                <div className="relative h-40 w-40 rounded-full border-2 border-dashed border-primary/30 group cursor-pointer hover:border-primary/60 transition-[background-color,border-color,color,opacity,transform] flex items-center justify-center bg-black/40 shadow-[0_0_30px_rgba(0,242,255,0.1)]">
                   {formData.photoUrl ? (
                     <div className="relative h-full w-full rounded-full overflow-hidden border border-primary/40">
                       <Image src={formData.photoUrl} alt="Preview" fill className="object-cover rounded-full" />
@@ -691,7 +691,7 @@ export default function PlayersManagementPage() {
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})}
                     placeholder="EJ: LUCAS" 
-                    className="h-12 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-all placeholder:text-primary/20 text-primary" 
+                    className="h-12 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-[background-color,border-color,color,opacity,transform] placeholder:text-primary/20 text-primary" 
                   />
                 </div>
                 <div className="space-y-2">
@@ -701,7 +701,7 @@ export default function PlayersManagementPage() {
                     value={formData.surname}
                     onChange={(e) => setFormData({...formData, surname: e.target.value.toUpperCase()})}
                     placeholder="EJ: GARCÍA" 
-                    className="h-12 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-all placeholder:text-primary/20 text-primary" 
+                    className="h-12 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-[background-color,border-color,color,opacity,transform] placeholder:text-primary/20 text-primary" 
                   />
                 </div>
               </div>
@@ -716,7 +716,7 @@ export default function PlayersManagementPage() {
                       value={formData.number}
                       onChange={(e) => setFormData({...formData, number: e.target.value})}
                       placeholder="EJ: 10" 
-                      className="pl-10 h-12 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-all placeholder:text-primary/20 text-primary" 
+                      className="pl-10 h-12 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-[background-color,border-color,color,opacity,transform] placeholder:text-primary/20 text-primary" 
                     />
                   </div>
                 </div>
@@ -726,7 +726,7 @@ export default function PlayersManagementPage() {
                     value={formData.nickname}
                     onChange={(e) => setFormData({...formData, nickname: e.target.value.toUpperCase()})}
                     placeholder="EJ: LUKY" 
-                    className="h-12 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-all placeholder:text-primary/20 text-primary" 
+                    className="h-12 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-[background-color,border-color,color,opacity,transform] placeholder:text-primary/20 text-primary" 
                   />
                 </div>
               </div>
@@ -740,7 +740,7 @@ export default function PlayersManagementPage() {
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                     placeholder="ATLETA@MAIL.COM" 
-                    className="pl-12 h-12 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-all text-primary placeholder:text-primary/20" 
+                    className="pl-12 h-12 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-[background-color,border-color,color,opacity,transform] text-primary placeholder:text-primary/20" 
                   />
                 </div>
               </div>
@@ -755,7 +755,7 @@ export default function PlayersManagementPage() {
                       type="date"
                       value={formData.birthDate}
                       onChange={(e) => setFormData({...formData, birthDate: e.target.value})}
-                      className="pl-10 pr-10 h-12 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-all text-primary [color-scheme:dark]" 
+                      className="pl-10 pr-10 h-12 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-[background-color,border-color,color,opacity,transform] text-primary [color-scheme:dark]" 
                     />
                   </div>
                 </div>
@@ -768,7 +768,7 @@ export default function PlayersManagementPage() {
                       type="date"
                       value={formData.joinDate}
                       onChange={(e) => setFormData({...formData, joinDate: e.target.value})}
-                      className="pl-10 pr-10 h-12 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-all text-primary [color-scheme:dark]" 
+                      className="pl-10 pr-10 h-12 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-[background-color,border-color,color,opacity,transform] text-primary [color-scheme:dark]" 
                     />
                   </div>
                 </div>
@@ -781,7 +781,7 @@ export default function PlayersManagementPage() {
                     value={formData.category} 
                     onValueChange={(v) => setFormData({...formData, category: v})}
                   >
-                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-2xl text-primary/80 font-bold uppercase tracking-widest focus:border-primary transition-all">
+                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-2xl text-primary/80 font-bold uppercase tracking-widest focus:border-primary transition-[background-color,border-color,color,opacity,transform]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
@@ -799,7 +799,7 @@ export default function PlayersManagementPage() {
                     value={formData.teamSuffix} 
                     onValueChange={(v) => setFormData({...formData, teamSuffix: v})}
                   >
-                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-2xl text-primary/80 font-bold uppercase tracking-widest focus:border-primary transition-all">
+                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-2xl text-primary/80 font-bold uppercase tracking-widest focus:border-primary transition-[background-color,border-color,color,opacity,transform]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
@@ -822,7 +822,7 @@ export default function PlayersManagementPage() {
                       type="button"
                       onClick={() => togglePosition(pos.id)}
                       className={cn(
-                        "h-10 border font-black text-[10px] transition-all flex items-center justify-center rounded-xl active:scale-95",
+                        "h-10 border font-black text-[10px] transition-[background-color,border-color,color,opacity,transform] flex items-center justify-center rounded-xl active:scale-95",
                         formData.position.includes(pos.id)
                           ? "bg-primary border-primary text-black shadow-[0_0_15px_rgba(0,242,255,0.3)]"
                           : "bg-white/5 border-primary/20 text-primary/40 hover:border-primary/40 hover:text-primary"
@@ -840,7 +840,7 @@ export default function PlayersManagementPage() {
                   value={formData.status} 
                   onValueChange={(v) => setFormData({...formData, status: v})}
                 >
-                  <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-2xl text-primary/80 font-bold uppercase tracking-widest focus:border-primary transition-all">
+                  <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-2xl text-primary/80 font-bold uppercase tracking-widest focus:border-primary transition-[background-color,border-color,color,opacity,transform]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
@@ -868,7 +868,7 @@ export default function PlayersManagementPage() {
                       value={formData.tutorName}
                       onChange={(e) => setFormData({...formData, tutorName: e.target.value.toUpperCase()})}
                       placeholder="EJ: MARÍA" 
-                      className="h-11 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-all text-primary placeholder:text-primary/20" 
+                      className="h-11 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-[background-color,border-color,color,opacity,transform] text-primary placeholder:text-primary/20" 
                     />
                   </div>
                   <div className="space-y-2">
@@ -877,7 +877,7 @@ export default function PlayersManagementPage() {
                       value={formData.tutorSurname}
                       onChange={(e) => setFormData({...formData, tutorSurname: e.target.value.toUpperCase()})}
                       placeholder="EJ: LÓPEZ" 
-                      className="h-11 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-all text-primary placeholder:text-primary/20" 
+                      className="h-11 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-[background-color,border-color,color,opacity,transform] text-primary placeholder:text-primary/20" 
                     />
                   </div>
                 </div>
@@ -891,7 +891,7 @@ export default function PlayersManagementPage() {
                       value={formData.tutorEmail}
                       onChange={(e) => setFormData({...formData, tutorEmail: e.target.value})}
                       placeholder="TUTOR@MAIL.COM" 
-                      className="pl-10 h-11 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-all text-primary placeholder:text-primary/20" 
+                      className="pl-10 h-11 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-[background-color,border-color,color,opacity,transform] text-primary placeholder:text-primary/20" 
                     />
                   </div>
                 </div>
@@ -903,7 +903,7 @@ export default function PlayersManagementPage() {
                       value={formData.tutorPhone}
                       onChange={(e) => setFormData({...formData, tutorPhone: e.target.value})}
                       placeholder="600 000 000" 
-                      className="pl-10 h-11 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-all text-primary placeholder:text-primary/20" 
+                      className="pl-10 h-11 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-[background-color,border-color,color,opacity,transform] text-primary placeholder:text-primary/20" 
                     />
                   </div>
                 </div>
@@ -935,14 +935,14 @@ export default function PlayersManagementPage() {
 
           <div className="pt-2 flex gap-4">
             <SheetClose asChild>
-              <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary/60 font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 transition-all active:scale-95 rounded-2xl">
+              <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary/60 font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 transition-[background-color,border-color,color,opacity,transform] active:scale-95 rounded-2xl">
                 CANCELAR
               </Button>
             </SheetClose>
             <Button 
               onClick={handleSavePlayer}
               disabled={loading || !canEditPlayers}
-              className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] active:scale-95 transition-all border-none"
+              className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] active:scale-95 transition-[background-color,border-color,color,opacity,transform] border-none"
             >
               {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (editingId ? "SINCRONIZAR_FICHA" : "VINCULAR_ATLETA")}
             </Button>
@@ -957,7 +957,7 @@ function PlayerStat({ label, value, icon: Icon, highlight, warning }: any) {
   return (
     <Card className="glass-panel p-5 flex items-center gap-5 relative overflow-hidden group border border-primary/20 bg-black/20 rounded-3xl">
        <div className={cn(
-         "h-12 w-12 flex items-center justify-center border transition-all rotate-3 group-hover:rotate-0 duration-500 rounded-2xl bg-primary/10 border-primary/20",
+         "h-12 w-12 flex items-center justify-center border transition-[background-color,border-color,color,opacity,transform] rotate-3 group-hover:rotate-0 duration-500 rounded-2xl bg-primary/10 border-primary/20",
          warning ? "bg-rose-500/10 border-rose-500/20" : ""
        )}>
           <Icon className={cn("h-6 w-6", warning ? "text-rose-400" : "text-primary")} />

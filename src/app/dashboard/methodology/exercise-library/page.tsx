@@ -688,7 +688,7 @@ export default function ExerciseLibraryPage() {
         <Button 
           onClick={openCreate}
           disabled={!canEditContent}
-          className="rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none"
+          className="rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-[background-color,border-color,color,opacity,transform] border-none"
         >
           <Plus className="h-4 w-4 mr-2" /> Crear Tarea Maestra
         </Button>
@@ -706,7 +706,7 @@ export default function ExerciseLibraryPage() {
             <Search className="absolute left-4 top-4 h-4 w-4 text-primary/70 opacity-70" />
             <Input 
               placeholder="BUSCAR EN EL LIBRO DE ESTILO..." 
-              className="pl-12 h-14 bg-black/40 border-primary/20 rounded-2xl text-primary font-bold uppercase text-[10px] tracking-widest focus-visible:ring-primary/40 transition-all"
+              className="pl-12 h-14 bg-black/40 border-primary/20 rounded-2xl text-primary font-bold uppercase text-[10px] tracking-widest focus-visible:ring-primary/40 transition-[background-color,border-color,color,opacity,transform]"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -747,11 +747,11 @@ export default function ExerciseLibraryPage() {
                 <TableRow key={ex.id} className="border-white/5 hover:bg-primary/[0.03] transition-colors group">
                   <TableCell className="px-8 py-5">
                     <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-center group-hover:rotate-12 transition-all">
+                      <div className="h-10 w-10 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-center group-hover:rotate-12 transition-[background-color,border-color,color,opacity,transform]">
                         <Library className="h-4 w-4 text-primary" />
                       </div>
                       <div>
-                        <p className="font-black text-white uppercase text-xs italic group-hover:cyan-text-glow transition-all">{ex.title}</p>
+                        <p className="font-black text-white uppercase text-xs italic group-hover:cyan-text-glow transition-[background-color,border-color,color,opacity,transform]">{ex.title}</p>
                         <p className="text-[8px] text-primary/40 font-bold uppercase tracking-widest mt-1">Por: {ex.authorName} • {String(ex.savedAt).slice(0, 10)}</p>
                       </div>
                     </div>
@@ -853,7 +853,7 @@ export default function ExerciseLibraryPage() {
 
                   <div className="space-y-4">
                     <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Miniatura / Captura Técnica</Label>
-                    <div className="relative aspect-video rounded-3xl border-2 border-dashed border-primary/20 bg-black/60 group cursor-pointer hover:border-primary/40 transition-all flex flex-col items-center justify-center overflow-hidden">
+                    <div className="relative aspect-video rounded-3xl border-2 border-dashed border-primary/20 bg-black/60 group cursor-pointer hover:border-primary/40 transition-[background-color,border-color,color,opacity,transform] flex flex-col items-center justify-center overflow-hidden">
                       {formData.photoUrl ? (
                         <div className="relative h-full w-full">
                           <Image src={formData.photoUrl} alt="Preview" fill className="object-cover" />
@@ -918,7 +918,7 @@ export default function ExerciseLibraryPage() {
                     <Button
                       type="button"
                       asChild
-                      className="w-full h-16 bg-primary/5 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-primary hover:text-black transition-all flex items-center justify-center gap-3"
+                      className="w-full h-16 bg-primary/5 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-primary hover:text-black transition-[background-color,border-color,color,opacity,transform] flex items-center justify-center gap-3"
                     >
                       <Link
                         href={`/board/training?source=form&editId=${encodeURIComponent(
@@ -944,7 +944,7 @@ export default function ExerciseLibraryPage() {
                   <Button 
                     type="button"
                     asChild
-                    className="w-full h-16 bg-primary/5 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-primary hover:text-black transition-all flex items-center justify-center gap-3"
+                    className="w-full h-16 bg-primary/5 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-primary hover:text-black transition-[background-color,border-color,color,opacity,transform] flex items-center justify-center gap-3"
                   >
                       <Link
                         href={`/board/training?source=form&title=${encodeURIComponent(
@@ -1185,7 +1185,7 @@ export default function ExerciseLibraryPage() {
                         setMaterials((prev) => [next, ...prev]);
                         setMaterialDraft({ item: "", quantity: "", unit: "ud", notes: "" });
                       }}
-                      className="h-12 rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest px-6 hover:scale-[1.01] transition-all"
+                      className="h-12 rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest px-6 hover:scale-[1.01] transition-[background-color,border-color,color,opacity,transform]"
                     >
                       Añadir
                     </Button>
@@ -1239,14 +1239,14 @@ export default function ExerciseLibraryPage() {
 
           <div className="p-10 bg-black/60 border-t border-white/5 flex gap-6">
             <SheetClose asChild>
-              <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary/60 font-black uppercase text-[11px] tracking-widest hover:bg-primary/10 rounded-2xl transition-all">
+              <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary/60 font-black uppercase text-[11px] tracking-widest hover:bg-primary/10 rounded-2xl transition-[background-color,border-color,color,opacity,transform]">
                 CANCELAR
               </Button>
             </SheetClose>
             <Button 
               onClick={handleSaveMasterTask}
               disabled={loading || !canEditContent}
-              className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-2xl cyan-glow hover:scale-[1.02] transition-all border-none"
+              className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-2xl cyan-glow hover:scale-[1.02] transition-[background-color,border-color,color,opacity,transform] border-none"
             >
               {loading ? "BLINDANDO..." : "BLINDAR_TAREA_MAESTRA"} <ArrowRight className="h-4 w-4 ml-3" />
             </Button>
@@ -1260,7 +1260,7 @@ export default function ExerciseLibraryPage() {
 function LibraryStat({ label, value, icon: Icon, highlight }: any) {
   return (
     <Card className="glass-panel p-6 border-primary/20 bg-black/20 rounded-[2rem] relative overflow-hidden group">
-       <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-all">
+       <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-[background-color,border-color,color,opacity,transform]">
           <Icon className="h-16 w-16 text-primary" />
        </div>
        <div className="relative z-10 space-y-1">

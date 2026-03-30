@@ -86,7 +86,7 @@ export default function TutorDashboard() {
           <div className="flex items-center gap-2">
             <button 
               onClick={handleLogout}
-              className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 active:scale-90 transition-all hover:text-rose-500"
+              className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 active:scale-90 transition-[background-color,border-color,color,opacity,transform] hover:text-rose-500"
               title="Cerrar Sesión"
             >
               <LogOut className="h-5 w-5" />
@@ -103,7 +103,7 @@ export default function TutorDashboard() {
                 key={child.id}
                 onClick={() => handleSwitchChild(child)}
                 className={cn(
-                  "w-full flex items-center justify-between p-4 rounded-2xl transition-all",
+                  "w-full flex items-center justify-between p-4 rounded-2xl transition-[background-color,border-color,color,opacity,transform]",
                   selectedChild.id === child.id ? "bg-primary/10 border border-primary/20 shadow-lg" : "hover:bg-white/5 opacity-60 hover:opacity-100"
                 )}
               >
@@ -120,7 +120,7 @@ export default function TutorDashboard() {
 
       {/* PRÓXIMO EVENTO */}
       <div className="px-6 py-4 relative z-20">
-        <Card className="glass-panel border-primary/20 bg-card p-5 rounded-[2rem] shadow-2xl flex items-center justify-between group active:scale-[0.98] transition-all">
+        <Card className="glass-panel border-primary/20 bg-card p-5 rounded-[2rem] shadow-2xl flex items-center justify-between group active:scale-[0.98] transition-[background-color,border-color,color,opacity,transform]">
           <div className="flex items-center gap-4">
             <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 animate-pulse">
               <Clock className="h-5 w-5 text-primary" />
@@ -194,7 +194,7 @@ export default function TutorDashboard() {
           </div>
         </section>
 
-        <div className="p-4 bg-primary/5 border border-dashed border-primary/20 rounded-3xl flex items-center justify-between group cursor-pointer hover:bg-primary/[0.08] transition-all">
+        <div className="p-4 bg-primary/5 border border-dashed border-primary/20 rounded-3xl flex items-center justify-between group cursor-pointer hover:bg-primary/[0.08] transition-[background-color,border-color,color,opacity,transform]">
            <div className="flex items-center gap-4">
               <div className="h-10 w-10 bg-black rounded-xl flex items-center justify-center">
                  <RefreshCw className="h-4 w-4 text-primary/40 animate-spin-slow" />
@@ -204,7 +204,7 @@ export default function TutorDashboard() {
                  <span className="text-[9px] font-bold text-white/40 uppercase">Sponsor: Academia Nike Training</span>
               </div>
            </div>
-           <ChevronRight className="h-4 w-4 text-white/10 group-hover:text-primary transition-all" />
+           <ChevronRight className="h-4 w-4 text-white/10 group-hover:text-primary transition-[background-color,border-color,color,opacity,transform]" />
         </div>
       </div>
     </div>
@@ -213,7 +213,7 @@ export default function TutorDashboard() {
 
 function ModuleButton({ title, desc, icon: Icon, href, color, bg, border, badge }: any) {
   return (
-    <Link href={href} className={cn("p-6 rounded-[2.5rem] border flex flex-col gap-4 relative overflow-hidden transition-all active:scale-95 shadow-xl", bg, border)}>
+    <Link href={href} className={cn("p-6 rounded-[2.5rem] border flex flex-col gap-4 relative overflow-hidden transition-[background-color,border-color,color,opacity,transform] active:scale-95 shadow-xl", bg, border)}>
       {badge && (
         <div className="absolute top-4 right-4 h-5 w-5 bg-rose-500 rounded-full border-2 border-background flex items-center justify-center animate-bounce">
           <span className="text-[8px] font-black text-white">{badge}</span>
@@ -232,7 +232,7 @@ function ModuleButton({ title, desc, icon: Icon, href, color, bg, border, badge 
 
 function ClubNotice({ title, desc, type }: any) {
   return (
-    <div className="p-5 bg-white/[0.02] border border-white/5 rounded-3xl flex items-center gap-4 group active:bg-white/5 transition-all">
+    <div className="p-5 bg-white/[0.02] border border-white/5 rounded-3xl flex items-center gap-4 group active:bg-white/5 transition-[background-color,border-color,color,opacity,transform]">
       <div className={cn(
         "h-10 w-10 rounded-xl flex items-center justify-center shrink-0",
         type === 'match' ? 'bg-primary/10 text-primary' : 'bg-white/5 text-white/40'
@@ -243,7 +243,7 @@ function ClubNotice({ title, desc, type }: any) {
         <p className="text-xs font-black text-white uppercase italic truncate">{title}</p>
         <p className="text-[9px] font-bold text-white/20 uppercase truncate tracking-tight">{desc}</p>
       </div>
-      <ChevronRight className="h-4 w-4 text-white/10 group-active:text-primary transition-all" />
+      <ChevronRight className="h-4 w-4 text-white/10 group-active:text-primary transition-[background-color,border-color,color,opacity,transform]" />
     </div>
   );
 }

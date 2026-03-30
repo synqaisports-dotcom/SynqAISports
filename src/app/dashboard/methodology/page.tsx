@@ -59,12 +59,12 @@ export default function MethodologyDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {visible.map((section, idx) => (
             <Link key={idx} href={section.href}>
-              <Card className="glass-panel h-full relative overflow-hidden group hover:scale-[1.02] transition-all border border-primary/20 bg-black/20 rounded-3xl">
+              <Card className="glass-panel h-full relative overflow-hidden group hover:scale-[1.02] transition-[background-color,border-color,color,opacity,transform] border border-primary/20 bg-black/20 rounded-3xl">
                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                   <section.icon className="h-12 w-12 text-primary/80" />
                 </div>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-black text-white group-hover:cyan-text-glow transition-all italic tracking-widest uppercase">
+                  <CardTitle className="text-sm font-black text-white group-hover:cyan-text-glow transition-[background-color,border-color,color,opacity,transform] italic tracking-widest uppercase">
                     {section.title}
                   </CardTitle>
                   <CardDescription className="text-[9px] font-bold text-primary/45 uppercase tracking-widest mt-2 leading-relaxed">

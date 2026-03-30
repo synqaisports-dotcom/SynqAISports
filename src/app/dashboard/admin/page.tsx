@@ -234,7 +234,7 @@ export default function AdminPermissionsPage() {
         <Button 
           onClick={handleSaveMatrix}
           disabled={loading}
-          className="rounded-none bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none"
+          className="rounded-none bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-[background-color,border-color,color,opacity,transform] border-none"
         >
           {loading ? "Sincronizando..." : "Guardar Cambios Matriz"}
         </Button>
@@ -259,7 +259,7 @@ export default function AdminPermissionsPage() {
                 key={role.id}
                 onClick={() => setSelectedRole(role.id)}
                 className={cn(
-                  "w-full flex items-center justify-between p-5 rounded-2xl border transition-all group relative overflow-hidden",
+                  "w-full flex items-center justify-between p-5 rounded-2xl border transition-[background-color,border-color,color,opacity,transform] group relative overflow-hidden",
                   selectedRole === role.id 
                     ? "bg-primary/10 border-primary/40 text-primary shadow-[0_0_20px_rgba(0,242,255,0.1)]" 
                     : "bg-white/5 border-white/5 text-white/40 hover:border-primary/20 hover:text-white"
@@ -348,8 +348,8 @@ export default function AdminPermissionsPage() {
                           className="p-8 flex flex-col md:flex-row md:items-center justify-between gap-8 group hover:bg-white/[0.01] transition-colors"
                         >
                           <div className="flex items-center gap-6 min-w-[240px]">
-                            <div className="h-14 w-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center group-hover:border-primary/40 transition-all">
-                              <Icon className="h-6 w-6 text-white/20 group-hover:text-primary transition-all" />
+                            <div className="h-14 w-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center group-hover:border-primary/40 transition-[background-color,border-color,color,opacity,transform]">
+                              <Icon className="h-6 w-6 text-white/20 group-hover:text-primary transition-[background-color,border-color,color,opacity,transform]" />
                             </div>
                             <div className="space-y-1 min-w-0">
                               <h4 className="text-sm font-black text-white uppercase italic tracking-widest group-hover:cyan-text-glow">
@@ -471,7 +471,7 @@ function PermissionToggle({
   return (
     <div
       className={cn(
-        "flex flex-col items-center gap-3 p-4 border transition-all cursor-pointer rounded-2xl group/toggle",
+        "flex flex-col items-center gap-3 p-4 border transition-[background-color,border-color,color,opacity,transform] cursor-pointer rounded-2xl group/toggle",
         checked
           ? critical
             ? "bg-rose-500/10 border-rose-500/30"
@@ -490,7 +490,7 @@ function PermissionToggle({
     >
       <div
         className={cn(
-          "h-8 w-8 rounded-xl flex items-center justify-center border transition-all",
+          "h-8 w-8 rounded-xl flex items-center justify-center border transition-[background-color,border-color,color,opacity,transform]",
           checked
             ? critical
               ? "bg-rose-500/20 border-rose-500/40"

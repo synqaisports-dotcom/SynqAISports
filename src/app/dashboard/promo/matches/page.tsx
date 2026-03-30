@@ -176,7 +176,7 @@ export default function PromoMatchesPage() {
            </div>
            <Button 
             onClick={handleOpenCreate}
-            className="h-12 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl blue-glow hover:scale-105 transition-all border-none"
+            className="h-12 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl blue-glow hover:scale-105 transition-[background-color,border-color,color,opacity,transform] border-none"
            >
             <Plus className="h-4 w-4 mr-2" /> Agendar Partido
            </Button>
@@ -186,8 +186,8 @@ export default function PromoMatchesPage() {
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-12">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-max">
           {(vault.matches || []).map((match: any) => (
-            <Card key={match.id} className="glass-panel border-white/5 bg-black/40 rounded-3xl overflow-hidden group hover:border-primary/30 transition-all relative">
-               <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-all z-20">
+            <Card key={match.id} className="glass-panel border-white/5 bg-black/40 rounded-3xl overflow-hidden group hover:border-primary/30 transition-[background-color,border-color,color,opacity,transform] relative">
+               <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-[background-color,border-color,color,opacity,transform] z-20">
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleEditMatch(match)}
@@ -232,7 +232,7 @@ export default function PromoMatchesPage() {
           {totalUsed < MAX_MATCHES && (
             <button 
               onClick={handleOpenCreate}
-              className="h-[280px] border-2 border-dashed border-white/5 rounded-[2rem] flex flex-col items-center justify-center gap-4 bg-white/[0.01] group hover:border-primary/20 hover:bg-primary/[0.02] transition-all"
+              className="h-[280px] border-2 border-dashed border-white/5 rounded-[2rem] flex flex-col items-center justify-center gap-4 bg-white/[0.01] group hover:border-primary/20 hover:bg-primary/[0.02] transition-[background-color,border-color,color,opacity,transform]"
             >
                <div className="h-14 w-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <Plus className="h-6 w-6 text-white/10 group-hover:text-primary/40" />
@@ -244,7 +244,7 @@ export default function PromoMatchesPage() {
 
         <aside className="space-y-8">
           <Card className="glass-panel border-primary/20 bg-primary/5 p-8 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-all"><Zap className="h-32 w-32 text-primary" /></div>
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-[background-color,border-color,color,opacity,transform]"><Zap className="h-32 w-32 text-primary" /></div>
             <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white mb-6">HISTORIAL_SINCRO</h3>
             <p className="text-[11px] font-bold text-white/40 uppercase tracking-widest mb-8 leading-loose italic">
               Al pulsar "Guardar" en la Pizarra de Partido, el marcador se vuelca automáticamente en esta terminal para que lleves el control de tu liga local.
@@ -349,9 +349,9 @@ export default function PromoMatchesPage() {
 
           <div className="p-10 bg-black/40 border-t border-white/5 flex gap-4">
             <SheetClose asChild>
-              <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary/60 font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 rounded-2xl transition-all">CANCELAR</Button>
+              <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary/60 font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 rounded-2xl transition-[background-color,border-color,color,opacity,transform]">CANCELAR</Button>
             </SheetClose>
-            <Button onClick={handleUpsertMatch} className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl blue-glow hover:scale-[1.02] transition-all">
+            <Button onClick={handleUpsertMatch} className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl blue-glow hover:scale-[1.02] transition-[background-color,border-color,color,opacity,transform]">
               {editingMatchId ? "ACTUALIZAR_PARTIDO" : "SINCRO_PARTIDO"}
             </Button>
           </div>

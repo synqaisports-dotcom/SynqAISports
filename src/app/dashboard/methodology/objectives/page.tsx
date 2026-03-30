@@ -490,7 +490,7 @@ export default function ObjectivesPage() {
               key={cat.id}
               onClick={() => setSelectedCat(cat.id)}
               className={cn(
-                "flex items-center gap-4 px-8 py-4 rounded-xl transition-all whitespace-nowrap group relative overflow-hidden flex-1 min-w-[180px]",
+                "flex items-center gap-4 px-8 py-4 rounded-xl transition-[background-color,border-color,color,opacity,transform] whitespace-nowrap group relative overflow-hidden flex-1 min-w-[180px]",
                 selectedCat === cat.id 
                   ? "bg-primary/20 text-white border border-primary/40 shadow-[0_0_24px_rgba(0,242,255,0.32)] z-10" 
                   : "text-primary/80 hover:text-white hover:bg-white/5 border border-white/10 hover:border-primary/40"
@@ -514,7 +514,7 @@ export default function ObjectivesPage() {
           
           <div className="xl:col-span-1 space-y-10">
             <Card className="glass-panel border-primary/20 bg-primary/5 p-10 relative group overflow-hidden shadow-[0_0_50px_rgba(0,242,255,0.06)]">
-              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-all">
+              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-[background-color,border-color,color,opacity,transform]">
                 <BookOpen className="h-32 w-32 text-primary" />
               </div>
               <div className="flex items-center gap-3 mb-6 relative z-10">
@@ -555,7 +555,7 @@ export default function ObjectivesPage() {
               ))}
             </div>
 
-            <div className="p-10 bg-primary/5 border border-primary/20 rounded-[3rem] flex items-center justify-between group hover:border-primary/40 transition-all cursor-pointer">
+            <div className="p-10 bg-primary/5 border border-primary/20 rounded-[3rem] flex items-center justify-between group hover:border-primary/40 transition-[background-color,border-color,color,opacity,transform] cursor-pointer">
                <div className="flex items-center gap-6">
                   <div className="h-14 w-14 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <Sparkles className="h-7 w-7 text-primary" />
@@ -582,7 +582,7 @@ export default function ObjectivesPage() {
 
 function ObjectiveCard({ title, subtitle, icon: Icon, items }: any) {
   return (
-    <Card className="glass-panel border-none bg-black/40 overflow-hidden group hover:bg-black/60 transition-all rounded-3xl">
+    <Card className="glass-panel border-none bg-black/40 overflow-hidden group hover:bg-black/60 transition-[background-color,border-color,color,opacity,transform] rounded-3xl">
       <div className="h-1 w-full bg-primary/40" />
       <CardHeader className="p-8 pb-4">
         <div className="flex items-center gap-4 mb-2">
@@ -590,7 +590,7 @@ function ObjectiveCard({ title, subtitle, icon: Icon, items }: any) {
             <Icon className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <CardTitle className="text-lg font-black text-white italic tracking-tighter uppercase group-hover:cyan-text-glow transition-all">{title}</CardTitle>
+            <CardTitle className="text-lg font-black text-white italic tracking-tighter uppercase group-hover:cyan-text-glow transition-[background-color,border-color,color,opacity,transform]">{title}</CardTitle>
             <CardDescription className="text-[8px] font-black text-primary/40 uppercase tracking-[0.2em] italic">{subtitle}</CardDescription>
           </div>
         </div>
@@ -611,7 +611,7 @@ function ObjectiveCard({ title, subtitle, icon: Icon, items }: any) {
 
 function CoachTip({ text }: { text: string }) {
   return (
-    <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5 group hover:border-primary/20 transition-all">
+    <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5 group hover:border-primary/20 transition-[background-color,border-color,color,opacity,transform]">
       <CheckCircle2 className="h-3 w-3 text-primary/40 group-hover:text-primary transition-colors" />
       <span className="text-[9px] font-black text-white/40 group-hover:text-white uppercase tracking-tight italic">{text}</span>
     </div>

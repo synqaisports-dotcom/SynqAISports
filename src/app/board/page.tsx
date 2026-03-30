@@ -105,7 +105,7 @@ export default function TacticalBoardPage() {
               key={tool.id}
               onClick={() => setActiveTool(tool.id)}
               className={cn(
-                "h-12 w-12 rounded-2xl flex items-center justify-center transition-all group relative",
+                "h-12 w-12 rounded-2xl flex items-center justify-center transition-[background-color,border-color,color,opacity,transform] group relative",
                 activeTool === tool.id 
                   ? "bg-primary text-black shadow-[0_0_20px_rgba(0,242,255,0.3)] scale-110" 
                   : "text-white/20 hover:text-white hover:bg-white/5"
@@ -120,7 +120,7 @@ export default function TacticalBoardPage() {
           ))}
           
           <div className="mt-auto flex flex-col gap-4">
-            <button className="h-12 w-12 rounded-2xl border border-white/10 flex items-center justify-center text-white/20 hover:text-primary transition-all">
+            <button className="h-12 w-12 rounded-2xl border border-white/10 flex items-center justify-center text-white/20 hover:text-primary transition-[background-color,border-color,color,opacity,transform]">
               <Layers className="h-5 w-5" />
             </button>
           </div>
@@ -179,7 +179,7 @@ export default function TacticalBoardPage() {
               <span className="text-[9px] font-black text-primary uppercase tracking-widest">Jugadores / Fichas</span>
               <div className="grid grid-cols-4 gap-4">
                 {[1,2,3,4,5,6,7,8].map(i => (
-                  <div key={i} className="aspect-square bg-primary/10 border border-primary/20 rounded-full flex items-center justify-center text-[10px] font-black text-primary hover:bg-primary hover:text-black cursor-pointer transition-all">
+                  <div key={i} className="aspect-square bg-primary/10 border border-primary/20 rounded-full flex items-center justify-center text-[10px] font-black text-primary hover:bg-primary hover:text-black cursor-pointer transition-[background-color,border-color,color,opacity,transform]">
                     {i}
                   </div>
                 ))}
@@ -190,7 +190,7 @@ export default function TacticalBoardPage() {
               <span className="text-[9px] font-black text-white/40 uppercase tracking-widest">Material de Entrenamiento</span>
               <div className="grid grid-cols-2 gap-3">
                 {['Cono', 'Pica', 'Escalera', 'Aro'].map(item => (
-                  <div key={item} className="h-12 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center text-[8px] font-black text-white/40 uppercase tracking-widest hover:border-primary/40 hover:text-white transition-all cursor-pointer">
+                  <div key={item} className="h-12 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center text-[8px] font-black text-white/40 uppercase tracking-widest hover:border-primary/40 hover:text-white transition-[background-color,border-color,color,opacity,transform] cursor-pointer">
                     {item}
                   </div>
                 ))}

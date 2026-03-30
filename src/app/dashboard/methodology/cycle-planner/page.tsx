@@ -270,7 +270,7 @@ export default function CyclePlannerPage() {
               key={cat.id}
               onClick={() => setSelectedCat(cat.id)}
               className={cn(
-                "flex items-center gap-4 px-8 py-4 rounded-xl transition-all whitespace-nowrap group relative overflow-hidden flex-1 min-w-[180px] border",
+                "flex items-center gap-4 px-8 py-4 rounded-xl transition-[background-color,border-color,color,opacity,transform] whitespace-nowrap group relative overflow-hidden flex-1 min-w-[180px] border",
                 selectedCat === cat.id 
                   ? "bg-primary/20 text-white border-primary/40 shadow-[0_0_24px_rgba(0,242,255,0.32)] z-10" 
                   : "text-primary/80 hover:text-white hover:bg-white/5 border-white/10 hover:border-primary/40"
@@ -312,7 +312,7 @@ export default function CyclePlannerPage() {
               </div>
               <div className="space-y-3">
                 {data.focusPoints.map((point: string, i: number) => (
-                  <div key={i} className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5 group hover:border-primary/20 transition-all">
+                  <div key={i} className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5 group hover:border-primary/20 transition-[background-color,border-color,color,opacity,transform]">
                     <CheckCircle2 className="h-3 w-3 text-primary/50 group-hover:text-primary" />
                     <span className="text-[9px] font-black text-white/40 group-hover:text-white uppercase italic">{point}</span>
                   </div>
@@ -332,10 +332,10 @@ export default function CyclePlannerPage() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {data.monthlyBlocks.map((block: any) => (
-                  <div key={block.id} className="p-6 bg-black/40 border border-white/5 rounded-3xl group hover:border-primary/30 transition-all relative overflow-hidden">
+                  <div key={block.id} className="p-6 bg-black/40 border border-white/5 rounded-3xl group hover:border-primary/30 transition-[background-color,border-color,color,opacity,transform] relative overflow-hidden">
                     <div className="absolute top-0 right-0 px-4 py-2 bg-primary/10 text-[10px] font-black text-primary italic">{block.period}</div>
                     <div className="space-y-1 mb-4">
-                      <h4 className="text-sm font-black text-white uppercase italic group-hover:cyan-text-glow transition-all">{block.title}</h4>
+                      <h4 className="text-sm font-black text-white uppercase italic group-hover:cyan-text-glow transition-[background-color,border-color,color,opacity,transform]">{block.title}</h4>
                       <p className="text-[9px] font-black text-primary/40 uppercase tracking-widest">{block.focus}</p>
                     </div>
                     <p className="text-[10px] font-bold text-white/30 uppercase leading-relaxed">{block.desc}</p>
@@ -357,7 +357,7 @@ export default function CyclePlannerPage() {
                     <div key={i} className={cn("p-5 border rounded-2xl relative group overflow-hidden", day.color)}>
                       <div className="flex justify-between items-center mb-1">
                         <span className="text-[9px] font-black text-white/40 uppercase">{day.day}</span>
-                        <ArrowRight className="h-3 w-3 text-white/10 group-hover:text-primary transition-all" />
+                        <ArrowRight className="h-3 w-3 text-white/10 group-hover:text-primary transition-[background-color,border-color,color,opacity,transform]" />
                       </div>
                       <p className="text-[10px] font-black text-white uppercase italic tracking-widest">{day.label}</p>
                       <p className="text-xs font-black text-white/80 uppercase italic mt-1">{day.focus}</p>
