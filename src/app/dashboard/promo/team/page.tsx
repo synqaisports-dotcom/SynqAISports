@@ -61,10 +61,12 @@ export default function PromoTeamPage() {
   const [substitutes, setSubstitutes] = useState<string[]>(["", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const didHydrateRef = useRef(false);
+  const savedTeamRef = useRef<any>(null);
 
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("synq_promo_team") || "null");
     if (saved) {
+      savedTeamRef.current = saved;
       const savedType = (saved.type || "f11") as TeamType;
       setTeamType(savedType);
       setTeamName(saved.name || "");
@@ -82,18 +84,14 @@ export default function PromoTeamPage() {
   // Efecto para reajustar titulares al cambiar de formato si no hay datos
   useEffect(() => {
     if (!didHydrateRef.current) return;
-    const saved = JSON.parse(localStorage.getItem("synq_promo_team") || "null");
-    if (!saved) {
-      setStarters(Array(POSITIONS[teamType].length).fill(""));
+    const saved = savedTeamRef.current ?? JSON.parse(localStorage.getItem("synq_promo_team") || "null");
+    // Política estable: si hay starters guardados, rehidratar siempre desde storage y normalizar a la longitud del formato actual.
+    if (saved?.starters) {
+      setStarters(normalizeFixedLength(saved.starters, POSITIONS[teamType].length));
       return;
     }
-    // Si el usuario cambia el formato manualmente (no coincide con lo guardado), reiniciar a longitud correcta.
-    if (saved.type !== teamType) {
-      setStarters(Array(POSITIONS[teamType].length).fill(""));
-      return;
-    }
-    // Si coincide con lo guardado, aseguramos longitud para que se vean todos los inputs con valores persistidos.
-    setStarters((prev) => normalizeFixedLength(prev, POSITIONS[teamType].length));
+    // Si no hay starters guardados, solo entonces inicializamos vacío con longitud correcta.
+    setStarters(Array(POSITIONS[teamType].length).fill(""));
   }, [teamType]);
 
   const handleSaveTeam = (e: React.FormEvent) => {
