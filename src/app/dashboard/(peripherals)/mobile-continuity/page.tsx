@@ -63,6 +63,11 @@ import { upsertOperativaAttendance } from "@/lib/operativa-sync";
 import { readPlayersLocal } from "@/lib/player-storage";
 import { ensureWatchPairingCode } from "@/lib/watch-pairing";
 import { writeContinuityContext } from "@/lib/continuity-context";
+import {
+  readWatchAlertsConfig,
+  writeWatchAlertsConfig,
+  type WatchAlertsConfig,
+} from "@/lib/watch-alert-config";
 
 type Incident = {
   id: string;
@@ -166,6 +171,7 @@ export default function MobileContinuityPage() {
   const clubScopeId = profile?.clubId ?? "global-hq";
   const continuityEnv = profile?.clubId && profile.clubId !== "global-hq" ? "elite" : "sandbox";
   const [mode, setMode] = useState<"match" | "training">("match");
+  const [panel, setPanel] = useState<"ops" | "watchSettings">("ops");
   const [score, setScore] = useState({ home: 0, guest: 0 });
   const [remainingSec, setRemainingSec] = useState(45 * 60);
   const [running, setRunning] = useState(false);
@@ -183,6 +189,15 @@ export default function MobileContinuityPage() {
   const [cloudSyncEnabled, setCloudSyncEnabled] = useState(false);
   const [roster, setRoster] = useState<SessionRosterPlayer[]>([]);
   const [attendance, setAttendance] = useState<Record<string, "present" | "absent">>({});
+  const [watchSettings, setWatchSettings] = useState<WatchAlertsConfig>(() =>
+    readWatchAlertsConfig({
+      clubId: clubScopeId,
+      mode,
+      teamId: selectedTeamId || "team_unknown",
+      mcc: selectedMcc,
+      session: selectedSession,
+    }),
+  );
   const lastTimerAppliedRef = useRef(0);
   const lastScoreAppliedRef = useRef(0);
   const lastTickAtRef = useRef<number | null>(null);
@@ -198,6 +213,16 @@ export default function MobileContinuityPage() {
       mode,
     }),
     [clubScopeId, selectedTeamId, selectedMcc, selectedSession, mode],
+  );
+  const watchAlertScope = useMemo(
+    () => ({
+      clubId: clubScopeId,
+      mode,
+      teamId: selectedTeamId || "team_unknown",
+      mcc: selectedMcc,
+      session: selectedSession,
+    }),
+    [clubScopeId, mode, selectedTeamId, selectedMcc, selectedSession],
   );
 
   const timerSyncKey = useMemo(() => matchTimerSyncKey(continuityScope), [continuityScope]);
@@ -276,6 +301,23 @@ export default function MobileContinuityPage() {
       session: selectedSession,
     });
   }, [clubScopeId, mode, selectedTeamId, selectedMcc, selectedSession]);
+
+  useEffect(() => {
+    const preset = readWatchAlertsConfig(watchAlertScope);
+    setWatchSettings(preset);
+  }, [watchAlertScope]);
+
+  useEffect(() => {
+    writeWatchAlertsConfig(watchAlertScope, {
+      enabled: watchSettings.enabled,
+      alertMatchTime: watchSettings.alertMatchTime,
+      changeInterval: watchSettings.changeInterval,
+      vibrateOnPeriod: watchSettings.vibrateOnPeriod,
+      vibrateIntensity: watchSettings.vibrateIntensity,
+      syncSubs: watchSettings.syncSubs,
+      fatigueThreshold: watchSettings.fatigueThreshold,
+    });
+  }, [watchSettings, watchAlertScope]);
 
   const copyText = async (label: string, value: string) => {
     const text = String(value || "").trim();
@@ -675,6 +717,16 @@ export default function MobileContinuityPage() {
             >
               <Dumbbell className="h-4 w-4 mr-2" /> Entreno
             </Button>
+            {continuityEnv === "sandbox" && (
+              <Button
+                type="button"
+                variant={panel === "watchSettings" ? "default" : "outline"}
+                className={panel === "watchSettings" ? "h-9 bg-indigo-500 text-black" : "h-9 border-white/10"}
+                onClick={() => setPanel((p) => (p === "watchSettings" ? "ops" : "watchSettings"))}
+              >
+                <Watch className="h-4 w-4 mr-2" /> Ajustes Watch
+              </Button>
+            )}
           </div>
         </div>
         <p className="text-[10px] uppercase text-white/40 font-bold">
@@ -736,6 +788,83 @@ export default function MobileContinuityPage() {
           </Dialog>
         </div>
       </div>
+
+      {continuityEnv === "sandbox" && panel === "watchSettings" && (
+        <Card className="glass-panel border-indigo-500/20 bg-indigo-500/5">
+          <CardHeader>
+            <CardTitle className="text-white uppercase text-sm tracking-widest flex items-center gap-2">
+              <Watch className="h-4 w-4 text-indigo-300" /> Ajustes smartwatch (sandbox)
+            </CardTitle>
+            <CardDescription className="text-[10px] uppercase text-white/40">
+              Configuración local de avisos por contexto de partido/sesión. No altera el canal de sync de tiempo/marcador.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between rounded-xl border border-white/10 bg-black/30 p-3">
+              <div>
+                <p className="text-[10px] font-black uppercase text-white">Avisos activos</p>
+                <p className="text-[10px] uppercase text-white/40">Master switch de alertas</p>
+              </div>
+              <Switch
+                checked={watchSettings.enabled}
+                onCheckedChange={(v) =>
+                  setWatchSettings((prev: WatchAlertsConfig) => ({ ...prev, enabled: v }))
+                }
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="flex items-center justify-between rounded-xl border border-white/10 bg-black/30 p-3">
+                <p className="text-[10px] font-black uppercase text-white">Aviso de tiempo</p>
+                <Switch
+                  checked={watchSettings.alertMatchTime}
+                  onCheckedChange={(v) =>
+                    setWatchSettings((prev: WatchAlertsConfig) => ({ ...prev, alertMatchTime: v }))
+                  }
+                />
+              </div>
+              <div className="flex items-center justify-between rounded-xl border border-white/10 bg-black/30 p-3">
+                <p className="text-[10px] font-black uppercase text-white">Sugerir cambios</p>
+                <Switch
+                  checked={watchSettings.syncSubs}
+                  onCheckedChange={(v) =>
+                    setWatchSettings((prev: WatchAlertsConfig) => ({ ...prev, syncSubs: v }))
+                  }
+                />
+              </div>
+              <div className="flex items-center justify-between rounded-xl border border-white/10 bg-black/30 p-3">
+                <p className="text-[10px] font-black uppercase text-white">Vibración periodo</p>
+                <Switch
+                  checked={watchSettings.vibrateOnPeriod}
+                  onCheckedChange={(v) =>
+                    setWatchSettings((prev: WatchAlertsConfig) => ({ ...prev, vibrateOnPeriod: v }))
+                  }
+                />
+              </div>
+              <div className="space-y-1 rounded-xl border border-white/10 bg-black/30 p-3">
+                <Label className="text-[10px] uppercase text-white/50">Intervalo cambios</Label>
+                <Select
+                  value={watchSettings.changeInterval}
+                  onValueChange={(v: "5" | "8" | "half") =>
+                    setWatchSettings((prev: WatchAlertsConfig) => ({ ...prev, changeInterval: v }))
+                  }
+                >
+                  <SelectTrigger className="h-9 border-white/10">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">Cada 5 min</SelectItem>
+                    <SelectItem value="8">Cada 8 min</SelectItem>
+                    <SelectItem value="half">Mitad de tiempo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <p className="text-[10px] uppercase text-white/45 break-all">
+              Scope: {watchAlertScope.clubId} · {watchAlertScope.teamId} · {watchAlertScope.mcc} · {watchAlertScope.session} · {watchAlertScope.mode}
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card className={cn("glass-panel lg:col-span-2", mode === "match" ? "border-primary/20 bg-primary/5" : "border-emerald-500/20 bg-emerald-500/5")}>

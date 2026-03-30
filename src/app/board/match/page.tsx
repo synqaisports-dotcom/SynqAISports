@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useRef, memo, useCallback, Suspense, useMemo } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { 
   Trophy, 
   Clock, 
@@ -116,6 +116,7 @@ function MatchBoardInner() {
   const { profile } = useAuth();
   const { toast } = useToast();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const clubScopeId = profile?.clubId ?? "global-hq";
   
   const [mounted, setMounted] = useState(false);
@@ -678,6 +679,17 @@ function MatchBoardInner() {
         >
           <Save className="h-4 w-4 mr-2" /> GUARDAR
         </Button>
+        {matchSource === "sandbox" ? (
+          <button
+            onClick={() => router.push("/dashboard/mobile-continuity?mode=match&tab=watch")}
+            className="h-10 px-3 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all shadow-2xl active:scale-95 glass-panel text-[10px] font-black uppercase tracking-widest"
+            title="Ajustes Watch"
+            type="button"
+          >
+            <Watch className="h-4 w-4 mr-1.5" />
+            Watch
+          </button>
+        ) : null}
 
         <Dialog onOpenChange={setIsAnyDialogOpen}>
           <DialogTrigger asChild>
