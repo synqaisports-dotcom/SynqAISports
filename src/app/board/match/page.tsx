@@ -703,10 +703,11 @@ function MatchBoardInner() {
         )}
       >
         {matchSource === "sandbox" ? (
-          <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 rounded-full border border-primary/20 bg-black/70 px-3 py-1">
-            <span className="text-[8px] font-black uppercase tracking-widest text-primary/80">
-              {activeMatchLabel || "Partido activo"}
-            </span>
+          <div
+            className="h-8 px-3 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary shadow-2xl glass-panel text-[9px] font-black uppercase tracking-widest max-w-[220px] truncate"
+            title={activeMatchLabel || "Partido activo"}
+          >
+            {activeMatchLabel || "Partido activo"}
           </div>
         ) : null}
         <Badge
