@@ -6,6 +6,7 @@ import {
   Swords, 
   Plus, 
   Trash2, 
+  Pencil,
   Trophy, 
   Zap, 
   Calendar, 
@@ -56,6 +57,7 @@ export default function PromoMatchesPage() {
   const boardBase = resolveSandboxBoardBase();
   const [vault, setVault] = useState<any>({ exercises: [], sessions: [], matches: [] });
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [editingMatchId, setEditingMatchId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     rival: "",
     date: new Date().toISOString().split('T')[0],
@@ -71,27 +73,76 @@ export default function PromoMatchesPage() {
   const totalUsed = vault.matches?.length || 0;
   const progressPercent = (totalUsed / MAX_MATCHES) * 100;
 
-  const handleAddMatch = (e: React.FormEvent) => {
+  const handleOpenCreate = () => {
+    setEditingMatchId(null);
+    setFormData({
+      rival: "",
+      date: new Date().toISOString().split('T')[0],
+      location: "Local",
+      status: "Scheduled",
+    });
+    setIsSheetOpen(true);
+  };
+
+  const handleEditMatch = (match: any) => {
+    setEditingMatchId(String(match.id));
+    setFormData({
+      rival: String(match.rivalName || "").trim(),
+      date: String(match.date || new Date().toISOString().split("T")[0]),
+      location: String(match.location || "Local"),
+      status: String(match.status || "Scheduled"),
+    });
+    setIsSheetOpen(true);
+  };
+
+  const handleUpsertMatch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (totalUsed >= MAX_MATCHES) {
+    const rival = String(formData.rival || "").trim();
+    const date = String(formData.date || "").trim();
+    if (!rival || !date) {
+      toast({ variant: "destructive", title: "DATOS_INCOMPLETOS", description: "Rival y fecha son obligatorios." });
+      return;
+    }
+
+    if (!editingMatchId && totalUsed >= MAX_MATCHES) {
       toast({ variant: "destructive", title: "CUOTA_AGOTADA", description: "Has alcanzado el límite de 20 partidos locales." });
       return;
     }
 
-    const newMatch = {
-      id: Date.now(),
-      date: formData.date,
-      rivalName: formData.rival.toUpperCase(),
+    const payload = {
+      date,
+      rivalName: rival.toUpperCase(),
       location: formData.location,
       status: formData.status,
-      score: { home: 0, guest: 0 }
     };
 
-    const nextVault = { ...vault, matches: [newMatch, ...(vault.matches || [])] };
+    const prevMatches = Array.isArray(vault.matches) ? vault.matches : [];
+    const nextMatches = editingMatchId
+      ? prevMatches.map((m: any) =>
+          String(m?.id ?? "") === editingMatchId
+            ? { ...m, ...payload, score: m?.score ?? { home: 0, guest: 0 } }
+            : m,
+        )
+      : [
+          {
+            id: Date.now(),
+            ...payload,
+            score: { home: 0, guest: 0 },
+          },
+          ...prevMatches,
+        ];
+
+    const nextVault = { ...vault, matches: nextMatches };
     setVault(nextVault);
     localStorage.setItem("synq_promo_vault", JSON.stringify(nextVault));
     setIsSheetOpen(false);
-    toast({ title: "PARTIDO_AGENDADO", description: "Encuentro añadido a tu calendario Sandbox." });
+    setEditingMatchId(null);
+    toast({
+      title: editingMatchId ? "PARTIDO_ACTUALIZADO" : "PARTIDO_AGENDADO",
+      description: editingMatchId
+        ? "Los datos del partido han sido actualizados."
+        : "Encuentro añadido a tu calendario Sandbox.",
+    });
   };
 
   const handleDeleteMatch = (id: number) => {
@@ -124,7 +175,7 @@ export default function PromoMatchesPage() {
               <Progress value={progressPercent} className="h-2 bg-white/5" />
            </div>
            <Button 
-            onClick={() => setIsSheetOpen(true)}
+            onClick={handleOpenCreate}
             className="h-12 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl blue-glow hover:scale-105 transition-all border-none"
            >
             <Plus className="h-4 w-4 mr-2" /> Agendar Partido
@@ -137,7 +188,16 @@ export default function PromoMatchesPage() {
           {(vault.matches || []).map((match: any) => (
             <Card key={match.id} className="glass-panel border-white/5 bg-black/40 rounded-3xl overflow-hidden group hover:border-primary/30 transition-all relative">
                <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-all z-20">
-                  <button onClick={() => handleDeleteMatch(match.id)} className="text-rose-500/40 hover:text-rose-500"><Trash2 className="h-4 w-4" /></button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleEditMatch(match)}
+                      className="text-primary/50 hover:text-primary"
+                      title="Modificar partido"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button onClick={() => handleDeleteMatch(match.id)} className="text-rose-500/40 hover:text-rose-500" title="Borrar partido"><Trash2 className="h-4 w-4" /></button>
+                  </div>
                </div>
                <CardHeader className="p-6 border-b border-white/5">
                   <div className="flex items-center justify-between mb-2">
@@ -161,7 +221,9 @@ export default function PromoMatchesPage() {
                </CardContent>
                <CardFooter className="p-4 bg-black/40 flex justify-center">
                   <Button variant="ghost" className="w-full text-[9px] font-black uppercase text-primary/60 hover:text-primary" asChild>
-                     <Link href={`${boardBase}/match?source=sandbox`}>DIRIGIR PARTIDO <ArrowRight className="h-3 w-3 ml-2" /></Link>
+                     <Link href={`${boardBase}/match?source=sandbox&matchId=${encodeURIComponent(String(match.id))}`}>
+                       DIRIGIR PARTIDO <ArrowRight className="h-3 w-3 ml-2" />
+                     </Link>
                   </Button>
                </CardFooter>
             </Card>
@@ -169,7 +231,7 @@ export default function PromoMatchesPage() {
           
           {totalUsed < MAX_MATCHES && (
             <button 
-              onClick={() => setIsSheetOpen(true)}
+              onClick={handleOpenCreate}
               className="h-[280px] border-2 border-dashed border-white/5 rounded-[2rem] flex flex-col items-center justify-center gap-4 bg-white/[0.01] group hover:border-primary/20 hover:bg-primary/[0.02] transition-all"
             >
                <div className="h-14 w-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -216,11 +278,13 @@ export default function PromoMatchesPage() {
                 <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
                 <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary italic">Match_Asset_Deploy</span>
               </div>
-              <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left">AGENDAR PARTIDO</SheetTitle>
+              <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left">
+                {editingMatchId ? "MODIFICAR PARTIDO" : "AGENDAR PARTIDO"}
+              </SheetTitle>
             </SheetHeader>
           </div>
 
-          <form onSubmit={handleAddMatch} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-8">
+          <form onSubmit={handleUpsertMatch} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-8">
             <div className="space-y-6">
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Nombre del Rival</Label>
@@ -287,7 +351,9 @@ export default function PromoMatchesPage() {
             <SheetClose asChild>
               <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary/60 font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 rounded-2xl transition-all">CANCELAR</Button>
             </SheetClose>
-            <Button onClick={handleAddMatch} className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl blue-glow hover:scale-[1.02] transition-all">SINCRO_PARTIDO</Button>
+            <Button onClick={handleUpsertMatch} className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl blue-glow hover:scale-[1.02] transition-all">
+              {editingMatchId ? "ACTUALIZAR_PARTIDO" : "SINCRO_PARTIDO"}
+            </Button>
           </div>
         </SheetContent>
       </Sheet>

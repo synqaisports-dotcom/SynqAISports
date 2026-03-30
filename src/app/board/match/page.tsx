@@ -79,7 +79,11 @@ import {
   shouldApplyRemoteScore,
   writeMatchScoreSync,
 } from "@/lib/match-score-sync";
-import { readContinuityContext, subscribeContinuityContext } from "@/lib/continuity-context";
+import {
+  readContinuityContext,
+  subscribeContinuityContext,
+  writeContinuityContext,
+} from "@/lib/continuity-context";
 import {
   BOARD_HIGH_PERFORMANCE_KEY,
   BOARD_PERF_CHANGE_EVENT,
@@ -249,6 +253,7 @@ function MatchBoardInner() {
 
   useEffect(() => {
     const q = searchParams.get("source");
+    const matchIdParam = String(searchParams.get("matchId") || "").trim();
     const stored = typeof window !== "undefined" ? localStorage.getItem(MATCH_BOARD_SOURCE_KEY) : null;
     const src = resolveMatchBoardSource(q, stored);
     setMatchSource(src);
@@ -260,7 +265,20 @@ function MatchBoardInner() {
     const { names, fieldType: ftBoot } = loadLocalLineupForMatchBoard(src);
     setLocalHomeNames(names);
     if (ftBoot && q === "sandbox") setFieldType(ftBoot);
-  }, [searchParams]);
+
+    // Si llegamos desde "Mis partidos", forzamos contexto de continuidad al partido seleccionado.
+    if (src === "sandbox" && matchIdParam) {
+      const prev = readContinuityContext(clubScopeId);
+      const teamId = prev?.teamId || "promo_team";
+      writeContinuityContext({
+        clubId: clubScopeId,
+        mode: "match",
+        teamId,
+        mcc: `SBX_MATCH_${matchIdParam}`,
+        session: `SBX_${matchIdParam.slice(-6)}`,
+      });
+    }
+  }, [searchParams, clubScopeId]);
 
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
@@ -542,11 +560,50 @@ function MatchBoardInner() {
   };
 
   const handleSaveMatch = () => {
-    const vault = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"matches": []}');
-    const newMatchResult = { id: Date.now(), date: new Date().toLocaleDateString(), score, status: 'Played', rivalName: 'RIVAL_SINCRO' };
-    vault.matches = [newMatchResult, ...(vault.matches || [])];
-    localStorage.setItem("synq_promo_vault", JSON.stringify(vault));
-    toast({ title: "PARTIDO_SINCRO_EXITOSA", description: "Los datos del encuentro han sido blindados." });
+    const raw = localStorage.getItem("synq_promo_vault");
+    const vault = JSON.parse(raw || '{"matches": []}');
+    const fromUrl = String(searchParams.get("matchId") || "").trim();
+    const fromCtx = (() => {
+      const mcc = String(continuityCtx?.mcc || "");
+      return mcc.startsWith("SBX_MATCH_") ? mcc.replace("SBX_MATCH_", "") : "";
+    })();
+    const targetId = fromUrl || fromCtx;
+
+    if (!targetId) {
+      toast({
+        variant: "destructive",
+        title: "PARTIDO_NO_IDENTIFICADO",
+        description: "Abre la pizarra desde Mis partidos para guardar sobre un partido existente.",
+      });
+      return;
+    }
+
+    const current = Array.isArray(vault.matches) ? vault.matches : [];
+    let updated = false;
+    const nextMatches = current.map((m: any) => {
+      if (String(m?.id ?? "") !== targetId) return m;
+      updated = true;
+      return {
+        ...m,
+        score: {
+          home: Math.max(0, Number(score.home) || 0),
+          guest: Math.max(0, Number(score.guest) || 0),
+        },
+        status: "Played",
+      };
+    });
+
+    if (!updated) {
+      toast({
+        variant: "destructive",
+        title: "PARTIDO_NO_ENCONTRADO",
+        description: "No se encontró el partido en Mis partidos. Reabre desde la card correcta.",
+      });
+      return;
+    }
+
+    localStorage.setItem("synq_promo_vault", JSON.stringify({ ...vault, matches: nextMatches }));
+    toast({ title: "PARTIDO_SINCRO_EXITOSA", description: "Marcador guardado en el partido seleccionado." });
   };
 
   const redrawAll = useCallback(() => {
@@ -677,7 +734,7 @@ function MatchBoardInner() {
                 : "/dashboard";
             router.replace(target);
           }}
-          className="h-12 w-12 rounded-2xl bg-black/60 backdrop-blur-2xl border border-white/10 text-white/40 hover:text-primary transition-all shadow-xl"
+          className="h-10 w-10 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all shadow-2xl active:scale-95 glass-panel"
           title="Volver"
         >
           <LayoutDashboard className="h-5 w-5" />
@@ -701,7 +758,11 @@ function MatchBoardInner() {
         </Button>
         {matchSource === "sandbox" ? (
           <button
-            onClick={() => router.push("/dashboard/mobile-continuity?mode=match&tab=watch")}
+            onClick={() => {
+              const p = window.location.pathname || "";
+              const base = p.startsWith("/sandbox/app") ? "/sandbox/app/mobile-continuity" : "/dashboard/mobile-continuity";
+              router.push(`${base}?mode=match&tab=watch`);
+            }}
             className="h-10 px-3 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all shadow-2xl active:scale-95 glass-panel text-[10px] font-black uppercase tracking-widest"
             title="Ajustes Watch"
             type="button"
