@@ -1,0 +1,14 @@
+{
+  "sidebar.fullscreen": "MODO_IMERSIVO",
+  "sidebar.logout": "ENCERRAR_SESSÃO",
+  "sidebar.language": "IDIOMA",
+  "liveFields.accessProtected": "Live Fields · Acesso protegido",
+  "liveFields.redirecting": "Redirecionando para login",
+  "liveFields.validatingSession": "Validando sessão da plataforma...",
+  "liveFields.loginRequired": "Inicie sessão para continuar",
+  "liveFields.loginRequiredDescription": "Este terminal precisa identificar o clube para carregar dados de campos em tempo real.",
+  "liveFields.goLogin": "Ir para login",
+  "liveFields.title": "Estado em tempo real dos campos",
+  "liveFields.noData": "Sem dados elite",
+  "liveFields.noDataDescription": "Crie instalações e equipas no BackOffice para visualizar estado neste terminal."
+}

@@ -1,0 +1,46 @@
+{
+  "common": {
+    "app_name": "SynqAI Sports",
+    "loading": "Caricamento..."
+  },
+  "sidebar": {
+    "immersive_mode": "MODALITÀ_IMMERSIVA",
+    "logout": "DISCONNETTI"
+  },
+  "login": {
+    "title": "ACCESSO SynqAI",
+    "subtitle": "Sincronizzazione identità cantera",
+    "email": "EMAIL_PROFESSIONALE",
+    "password": "CHIAVE_ACCESSO",
+    "submit": "ACCEDI_AL_MIO_NODO",
+    "founders": "Terminale Fondatori"
+  },
+  "live_fields": {
+    "protected": "Live Fields · Accesso protetto",
+    "redirecting": "Reindirizzamento a login",
+    "redirecting_desc": "Validazione sessione piattaforma...",
+    "login_required_title": "Accedi per continuare",
+    "login_required_desc": "Questo terminale richiede l'identificazione del club per caricare dati campi in tempo reale.",
+    "go_login": "Vai a login",
+    "elite_only": "Live Fields · Elite",
+    "elite_only_title": "Terminale solo per dati club",
+    "elite_only_desc": "Questa micro-app usa solo dati Elite (impianti, squadre e contesto operativo per club).",
+    "dev_access": "Accesso sviluppatore",
+    "dev_access_desc": "Inserisci un clubId per caricare dati di quel club:",
+    "load": "Carica",
+    "header": "Stato campi in tempo reale",
+    "club": "Club",
+    "need_club_id": "Inserisci clubId per caricare dati",
+    "pill_tv": "Ottimizzato per TV / monitor / All‑in‑One",
+    "pill_mobile": "Fallback responsive per schermi piccoli",
+    "pill_no_nav": "Senza barra di navigazione",
+    "no_data_title": "Senza dati elite",
+    "no_data_desc": "Crea impianti e squadre nel BackOffice per visualizzare stato in questo terminale.",
+    "activity": "Attività",
+    "state_maintenance": "Manutenzione",
+    "state_in_use": "In uso",
+    "state_free": "Libero",
+    "team_unassigned": "Squadra non assegnata",
+    "slot_inactive": "SENZA SESSIONE ATTIVA"
+  }
+}

@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth-context";
+import { useI18n } from "@/contexts/i18n-context";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -40,6 +41,7 @@ function LoginContent() {
   const [regType, setRegType] = useState<'free' | 'enterprise_scale'>('free');
   
   const { user, session, profile, loginAsGuest, loginWithToken, register, login } = useAuth();
+  const { t } = useI18n();
   const { toast } = useToast();
   const router = useRouter();
   const searchParamsHook = useSearchParams();
@@ -191,20 +193,20 @@ function LoginContent() {
             <TabsContent value="login" className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-500">
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1 italic">EMAIL_PROFESIONAL</label>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1 italic">{t("login_label_email")}</label>
                   <div className="relative">
                     <Mail className="absolute left-4 top-4 h-4 w-4 text-primary/40" />
-                    <Input required type="email" value={loginData.email} onChange={e => setLoginData({...loginData, email: e.target.value})} placeholder="USER@CLUB.COM" className="h-12 pl-12 bg-white/5 border-primary/20 rounded-2xl text-white font-bold" />
+                    <Input required type="email" value={loginData.email} onChange={e => setLoginData({...loginData, email: e.target.value})} placeholder={t("login_placeholder_email")} className="h-12 pl-12 bg-white/5 border-primary/20 rounded-2xl text-white font-bold" />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1 italic">CLAVE_ACCESO</label>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1 italic">{t("login_label_password")}</label>
                   <div className="relative">
                     <LockKeyhole className="absolute left-4 top-4 h-4 w-4 text-primary/40" />
-                    <Input required type="password" value={loginData.pass} onChange={e => setLoginData({...loginData, pass: e.target.value})} placeholder="••••••••" className="h-12 pl-12 bg-white/5 border-primary/20 rounded-2xl text-white font-bold" />
+                    <Input required type="password" value={loginData.pass} onChange={e => setLoginData({...loginData, pass: e.target.value})} placeholder={t("login_placeholder_password")} className="h-12 pl-12 bg-white/5 border-primary/20 rounded-2xl text-white font-bold" />
                   </div>
                 </div>
-                <Button type="submit" disabled={localLoading} className="w-full h-16 bg-primary text-black font-black uppercase tracking-[0.3em] text-xs rounded-2xl cyan-glow border-none transition-[background-color,border-color,color,opacity,transform] active:scale-95">ACCEDER_A_MI_NODO <ArrowRight className="h-4 w-4 ml-2" /></Button>
+                <Button type="submit" disabled={localLoading} className="w-full h-16 bg-primary text-black font-black uppercase tracking-[0.3em] text-xs rounded-2xl cyan-glow border-none transition-[background-color,border-color,color,opacity,transform] active:scale-95">{t("login_submit")} <ArrowRight className="h-4 w-4 ml-2" /></Button>
               </form>
             </TabsContent>
 

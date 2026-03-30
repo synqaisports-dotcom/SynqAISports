@@ -64,6 +64,7 @@ import {
   SidebarGroup
 } from "@/components/ui/sidebar";
 import { AVAILABLE_LOCALES } from "@/lib/i18n-config";
+import { useI18n } from "@/contexts/i18n-context";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -151,7 +152,8 @@ export function DashboardSidebar() {
   const { toggleSidebar, state, setOpenMobile, isMobile } = useSidebar();
   const { profile, logout } = useAuth();
   const { normalizedMatrix, loading: matrixLoading } = useClubAccessMatrix();
-  const [currentLang, setCurrentLang] = useState(AVAILABLE_LOCALES[0]);
+  const { locale, setLocale, t } = useI18n();
+  const currentLang = AVAILABLE_LOCALES.find((l) => l.code === locale) ?? AVAILABLE_LOCALES[0];
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
@@ -259,7 +261,7 @@ export function DashboardSidebar() {
             <button 
               onClick={toggleSidebar}
               className="h-8 w-8 rounded-xl bg-white/5 flex items-center justify-center text-white/40 hover:text-primary transition-[background-color,border-color,color,opacity,transform] border border-white/5 lg:hidden"
-              title="Ocultar Terminal"
+              title={t("sidebar.hide_terminal")}
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
@@ -272,7 +274,7 @@ export function DashboardSidebar() {
         isCollapsed && "py-4 space-y-6"
       )}>
         {isSuperAdmin && (
-          <SidebarGroupWrapper title="Administración" color="text-emerald-400" isCollapsed={isCollapsed}>
+            <SidebarGroupWrapper title={t("sidebar.group_admin")} color="text-emerald-400" isCollapsed={isCollapsed}>
             <SidebarMenu>
               {filteredItems.filter(i => i.category === "global").map((item) => (
                 <SidebarMenuItem key={item.href}>
@@ -284,7 +286,7 @@ export function DashboardSidebar() {
         )}
 
         {!isFree && (
-          <SidebarGroupWrapper title="Metodología" color="text-primary" isCollapsed={isCollapsed}>
+          <SidebarGroupWrapper title={t("sidebar.group_methodology")} color="text-primary" isCollapsed={isCollapsed}>
             <SidebarMenu>
               {filteredItems.filter(i => i.category === "methodology").map((item) => (
                 <SidebarMenuItem key={item.href}>
@@ -296,7 +298,7 @@ export function DashboardSidebar() {
         )}
 
         {!isFree && (
-          <SidebarGroupWrapper title="Dashboard Club" color="text-primary" isCollapsed={isCollapsed}>
+          <SidebarGroupWrapper title={t("sidebar.group_dashboard")} color="text-primary" isCollapsed={isCollapsed}>
             <SidebarMenu>
               {filteredItems.filter(i => i.category === "operational").map((item) => (
                 <SidebarMenuItem key={item.href}>
@@ -308,7 +310,7 @@ export function DashboardSidebar() {
         )}
 
         {(isFree || isSuperAdmin) && (
-          <SidebarGroupWrapper title="Terminales_Acceso" color="text-white/60" isCollapsed={isCollapsed}>
+          <SidebarGroupWrapper title={t("sidebar.group_terminals")} color="text-white/60" isCollapsed={isCollapsed}>
             {!isCollapsed && (
               <div className="px-4 py-2 mb-2 bg-blue-500/5 border border-blue-500/10 rounded-xl">
                 <span className="text-[7px] font-black text-blue-400 uppercase tracking-[0.3em] italic flex items-center gap-2">
@@ -362,7 +364,7 @@ export function DashboardSidebar() {
                 {AVAILABLE_LOCALES.map((lang) => (
                   <DropdownMenuItem 
                     key={lang.code} 
-                    onClick={() => setCurrentLang(lang)}
+                    onClick={() => setLocale(lang.code)}
                     className="flex items-center justify-between p-3 rounded-xl hover:bg-primary/10 hover:text-primary cursor-pointer transition-[background-color,border-color,color,opacity,transform]"
                   >
                     <div className="flex items-center gap-3">

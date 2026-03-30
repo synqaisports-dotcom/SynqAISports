@@ -1,0 +1,23 @@
+{
+  "sidebar": {
+    "immersive_mode": "MODE_IMMERSIF",
+    "logout": "DÉCONNEXION"
+  },
+  "liveFields": {
+    "protected_title": "CONNEXION REQUISE",
+    "protected_subtitle": "Validation de session plateforme...",
+    "title": "État des terrains en temps réel",
+    "no_data_title": "Aucune donnée elite",
+    "no_data_subtitle": "Créez installations et équipes dans le BackOffice.",
+    "status_in_use": "EN ENTRAÎNEMENT",
+    "status_free": "LIBRE",
+    "status_maintenance": "MAINTENANCE",
+    "activity": "ACTIVITÉ",
+    "without_session": "AUCUNE SESSION ACTIVE"
+  },
+  "login": {
+    "title": "ACCÈS SYNQAI",
+    "subtitle": "Connexion d'identité de plateforme",
+    "login_button": "SE CONNECTER"
+  }
+}

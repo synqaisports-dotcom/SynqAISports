@@ -8,6 +8,7 @@ import { readContinuityContext } from "@/lib/continuity-context";
 import { canAccessEliteTerminal, canAccessEliteTerminalAsDev, isEliteClubId, resolveTerminalEffectiveClubId } from "@/lib/club-permissions";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/contexts/i18n-context";
 
 type Facility = {
   id: string;
@@ -50,6 +51,7 @@ export default function LiveFieldsPage() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [continuity, setContinuity] = useState<ContinuityCtx | null>(null);
   const [devClubId, setDevClubId] = useState<string>("");
+  const { t } = useI18n();
 
   const isDevAdmin = canAccessEliteTerminalAsDev(profile);
   const effectiveClubId = resolveTerminalEffectiveClubId(profile, devClubId);
@@ -123,7 +125,7 @@ export default function LiveFieldsPage() {
   if (loading) {
     return (
       <main className="min-h-[100dvh] bg-[#03060d] text-white flex items-center justify-center">
-        <p className="text-[11px] font-black uppercase tracking-[0.35em] text-cyan-300/80">Cargando terminal…</p>
+        <p className="text-[11px] font-black uppercase tracking-[0.35em] text-cyan-300/80">{t("live_fields.loading_terminal")}</p>
       </main>
     );
   }
@@ -133,9 +135,9 @@ export default function LiveFieldsPage() {
     return (
       <main className="min-h-[100dvh] bg-[#03060d] text-white flex items-center justify-center p-6">
         <div className="max-w-xl rounded-3xl border border-cyan-500/20 bg-black/40 p-8 text-center">
-          <p className="text-[10px] font-black uppercase tracking-[0.35em] text-cyan-300/80">Live Fields · Acceso protegido</p>
-          <h1 className="mt-3 text-2xl font-black uppercase">Redirigiendo a login</h1>
-          <p className="mt-3 text-sm text-white/70">Validando sesión de plataforma…</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.35em] text-cyan-300/80">{t("live_fields.protected_access")}</p>
+          <h1 className="mt-3 text-2xl font-black uppercase">{t("live_fields.redirecting_login")}</h1>
+          <p className="mt-3 text-sm text-white/70">{t("live_fields.validating_session")}</p>
         </div>
       </main>
     );
@@ -145,15 +147,15 @@ export default function LiveFieldsPage() {
     return (
       <main className="min-h-[100dvh] bg-[#03060d] text-white flex items-center justify-center p-6">
         <div className="max-w-xl rounded-3xl border border-cyan-500/20 bg-black/40 p-8 text-center">
-          <p className="text-[10px] font-black uppercase tracking-[0.35em] text-cyan-300/80">Live Fields · Elite</p>
-          <h1 className="mt-3 text-2xl font-black uppercase">Terminal solo para datos de club</h1>
+          <p className="text-[10px] font-black uppercase tracking-[0.35em] text-cyan-300/80">{t("live_fields.elite")}</p>
+          <h1 className="mt-3 text-2xl font-black uppercase">{t("live_fields.club_only_terminal")}</h1>
           <p className="mt-3 text-sm text-white/70">
-            Esta micro-app consume únicamente datos Elite (instalaciones, equipos y contexto operativo por club).
+            {t("live_fields.elite_desc")}
           </p>
           {isDevAdmin ? (
             <div className="mt-6 rounded-2xl border border-cyan-500/20 bg-black/35 p-4 text-left">
-              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-cyan-300/80">Acceso desarrollador</p>
-              <p className="mt-2 text-[11px] text-white/65">Introduce un clubId para cargar datos de ese club:</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-cyan-300/80">{t("live_fields.dev_access")}</p>
+              <p className="mt-2 text-[11px] text-white/65">{t("live_fields.enter_club_id")}</p>
               <div className="mt-3 flex gap-2">
                 <input
                   value={devClubId}
@@ -166,7 +168,7 @@ export default function LiveFieldsPage() {
                   className="h-10 bg-primary text-black font-black uppercase text-[10px] tracking-widest"
                   onClick={() => setDevClubId((v) => v.trim())}
                 >
-                  Cargar
+                  {t("common.load")}
                 </Button>
               </div>
             </div>
@@ -187,14 +189,14 @@ export default function LiveFieldsPage() {
           <div>
             <p className="text-[11px] font-black uppercase tracking-[0.38em] text-cyan-300/80">Terminal · Live Fields</p>
             <h1 className="mt-1 text-2xl sm:text-3xl lg:text-4xl font-black uppercase tracking-tight">
-              Estado en tiempo real de campos
+              {t("live_fields.realtime_fields_status")}
             </h1>
             <p className="mt-1 text-[10px] font-black uppercase tracking-[0.25em] text-white/45">
               Club: {effectiveClubId}
             </p>
             {!isEliteClubId(effectiveClubId) && isDevAdmin ? (
               <p className="mt-1 text-[10px] font-black uppercase tracking-[0.2em] text-amber-300/80">
-                Introduce clubId para cargar datos
+                {t("live_fields.enter_club_id_hint")}
               </p>
             ) : null}
           </div>
@@ -213,23 +215,23 @@ export default function LiveFieldsPage() {
               }}
             >
               <LogOut className="h-4 w-4 mr-2" />
-              Salir
+              {t("common.logout")}
             </Button>
           </div>
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
-          <Pill icon={Tv2} text="Optimizado para TV / monitor / All‑in‑One" />
-          <Pill icon={MonitorSmartphone} text="Responsive fallback para pantallas pequeñas" />
-          <Pill icon={Activity} text="Sin barra de navegación" />
+          <Pill icon={Tv2} text={t("live_fields.optimized_tv")} />
+          <Pill icon={MonitorSmartphone} text={t("live_fields.responsive_fallback")} />
+          <Pill icon={Activity} text={t("live_fields.no_navbar")} />
         </div>
       </section>
 
       <section className="relative z-10 p-4 sm:p-6 lg:p-10">
         {cards.length === 0 ? (
           <div className="rounded-3xl border border-cyan-500/20 bg-black/35 p-8 text-center">
-            <p className="text-[10px] font-black uppercase tracking-[0.35em] text-cyan-300/80">Sin datos elite</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.35em] text-cyan-300/80">{t("live_fields.no_elite_data")}</p>
             <p className="mt-2 text-sm text-white/70">
-              Crea instalaciones y equipos en el BackOffice para visualizar estado en esta terminal.
+              {t("live_fields.no_data_desc")}
             </p>
           </div>
         ) : null}
@@ -249,14 +251,14 @@ export default function LiveFieldsPage() {
                       : "border-emerald-400/30 text-emerald-300 bg-emerald-500/10",
                   )}
                 >
-                  {c.state}
+                  {c.state === "Mantenimiento" ? t("live_fields.state_maintenance") : c.state === "En uso" ? t("live_fields.state_in_use") : t("live_fields.state_free")}
                 </span>
               </div>
               <p className="mt-1 text-[11px] uppercase font-black tracking-[0.2em] text-white/45">
                 {c.type} · {c.sport}
               </p>
               <div className="mt-4 rounded-2xl border border-cyan-500/20 bg-cyan-500/5 px-4 py-3">
-                <p className="text-[10px] uppercase font-black tracking-[0.25em] text-cyan-300/70">Actividad</p>
+                <p className="text-[10px] uppercase font-black tracking-[0.25em] text-cyan-300/70">{t("live_fields.activity")}</p>
                 <p className="mt-1 text-sm font-black uppercase">{c.slot}</p>
               </div>
               <div className="mt-4 flex items-center gap-2">
