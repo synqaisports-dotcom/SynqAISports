@@ -182,18 +182,18 @@ export default function LiveFieldsPage() {
     <main className="min-h-[100dvh] bg-[#03060d] text-white overflow-hidden">
       {/* Fondo ligero tipo campo de fútbol (sin imágenes) */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.16),rgba(3,6,13,0.90)_52%,rgba(3,6,13,1)_100%)]" />
-        <div className="absolute inset-0 opacity-[0.28]">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.20),rgba(3,6,13,0.88)_50%,rgba(3,6,13,1)_100%)]" />
+        <div className="absolute inset-0 opacity-[0.34]">
           <svg viewBox="0 0 1000 600" className="h-full w-full" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
             <defs>
               <pattern id="synq-grass" width="20" height="20" patternUnits="userSpaceOnUse">
                 <rect width="20" height="20" fill="transparent" />
-                <path d="M0 0 L20 20 M20 0 L0 20" stroke="rgba(16,185,129,0.14)" strokeWidth="1" />
+                <path d="M0 0 L20 20 M20 0 L0 20" stroke="rgba(16,185,129,0.18)" strokeWidth="1" />
               </pattern>
             </defs>
             <rect x="0" y="0" width="1000" height="600" fill="url(#synq-grass)" />
             {/* Líneas del campo */}
-            <g fill="none" stroke="rgba(34,211,238,0.18)" strokeWidth="2">
+            <g fill="none" stroke="rgba(34,211,238,0.22)" strokeWidth="2">
               <rect x="40" y="40" width="920" height="520" rx="18" />
               <line x1="500" y1="40" x2="500" y2="560" />
               <circle cx="500" cy="300" r="70" />
