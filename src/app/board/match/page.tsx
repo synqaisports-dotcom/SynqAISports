@@ -771,7 +771,14 @@ function MatchBoardInner() {
         </div>
       </div>
 
-      <div className="fixed top-6 left-6 z-[200] lg:block hidden">
+      <div
+        className={cn(
+          "fixed z-[200] block",
+          matchSource === "sandbox"
+            ? "top-14 left-2 sm:top-4 sm:left-4"
+            : "top-4 left-4",
+        )}
+      >
         <Button
           variant="ghost"
           size="icon"
@@ -800,11 +807,14 @@ function MatchBoardInner() {
             : "top-4 right-4",
         )}
       >
-        <Button 
+        <Button
           onClick={handleSaveMatch}
-          className="h-10 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-6 rounded-xl shadow-[0_0_20px_rgba(0,242,255,0.2)] hover:scale-105 transition-all border-none hidden sm:flex"
+          variant="ghost"
+          size="icon"
+          className="h-10 w-10 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all shadow-2xl active:scale-95 glass-panel"
+          title="Guardar partido"
         >
-          <Save className="h-4 w-4 mr-2" /> GUARDAR
+          <Save className="h-4 w-4" />
         </Button>
         {matchSource === "sandbox" ? (
           <button
