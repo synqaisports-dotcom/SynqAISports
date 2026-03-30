@@ -28,6 +28,12 @@ type ContinuityCtx = {
   session: string;
 };
 
+const DEV_ADMIN_EMAILS = new Set([
+  "munozmartinez.ismael@gmail.com",
+  "synqaisports@gmail.com",
+  "admin@synqai.sports",
+]);
+
 function safeParse<T>(raw: string | null, fallback: T): T {
   if (!raw) return fallback;
   try {
@@ -48,6 +54,16 @@ export default function LiveFieldsPage() {
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [continuity, setContinuity] = useState<ContinuityCtx | null>(null);
+  const [devClubId, setDevClubId] = useState<string>("");
+
+  const email = String(profile?.email || "").toLowerCase().trim();
+  const isDevAdmin = profile?.role === "superadmin" || DEV_ADMIN_EMAILS.has(email);
+  const effectiveClubId =
+    profile?.clubId && profile.clubId !== "global-hq"
+      ? profile.clubId
+      : isDevAdmin
+        ? (devClubId.trim() || "global-hq")
+        : "global-hq";
 
   useEffect(() => {
     const tick = window.setInterval(() => setNow(nowLabel()), 1000);
@@ -56,10 +72,10 @@ export default function LiveFieldsPage() {
 
   useEffect(() => {
     if (loading) return;
-    if (!profile?.clubId || profile.clubId === "global-hq") return;
+    if (!effectiveClubId || effectiveClubId === "global-hq") return;
 
     const load = () => {
-      const clubId = String(profile.clubId);
+      const clubId = String(effectiveClubId);
       const facilitiesKey = `synq_methodology_facilities_v1_${clubId}`;
       const teamsKey = `synq_methodology_warehouse_teams_v1_${clubId}`;
 
@@ -76,7 +92,7 @@ export default function LiveFieldsPage() {
       window.removeEventListener("storage", onStorage);
       window.clearInterval(poll);
     };
-  }, [profile?.clubId, loading]);
+  }, [effectiveClubId, loading]);
 
   const cards = useMemo(() => {
     return facilities.map((f, idx) => {
@@ -108,6 +124,7 @@ export default function LiveFieldsPage() {
 
   const isLogged = !!profile;
   const isElite = !!profile?.clubId && profile.clubId !== "global-hq";
+  const canAccess = isElite || (isDevAdmin && !!devClubId.trim());
   if (!isLogged) {
     return (
       <main className="min-h-[100dvh] bg-[#03060d] text-white flex items-center justify-center p-6">
@@ -130,7 +147,7 @@ export default function LiveFieldsPage() {
     );
   }
 
-  if (!isElite) {
+  if (!canAccess) {
     return (
       <main className="min-h-[100dvh] bg-[#03060d] text-white flex items-center justify-center p-6">
         <div className="max-w-xl rounded-3xl border border-cyan-500/20 bg-black/40 p-8 text-center">
@@ -139,6 +156,27 @@ export default function LiveFieldsPage() {
           <p className="mt-3 text-sm text-white/70">
             Esta micro-app consume únicamente datos Elite (instalaciones, equipos y contexto operativo por club).
           </p>
+          {isDevAdmin ? (
+            <div className="mt-6 rounded-2xl border border-cyan-500/20 bg-black/35 p-4 text-left">
+              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-cyan-300/80">Acceso desarrollador</p>
+              <p className="mt-2 text-[11px] text-white/65">Introduce un clubId para cargar datos de ese club:</p>
+              <div className="mt-3 flex gap-2">
+                <input
+                  value={devClubId}
+                  onChange={(e) => setDevClubId(e.target.value)}
+                  placeholder="UUID club_id"
+                  className="h-10 flex-1 rounded-xl border border-cyan-500/25 bg-black/40 px-3 text-xs font-black tracking-wider text-white outline-none"
+                />
+                <Button
+                  type="button"
+                  className="h-10 bg-primary text-black font-black uppercase text-[10px] tracking-widest"
+                  onClick={() => setDevClubId((v) => v.trim())}
+                >
+                  Cargar
+                </Button>
+              </div>
+            </div>
+          ) : null}
         </div>
       </main>
     );
@@ -157,6 +195,9 @@ export default function LiveFieldsPage() {
             <h1 className="mt-1 text-2xl sm:text-3xl lg:text-4xl font-black uppercase tracking-tight">
               Estado en tiempo real de campos
             </h1>
+            <p className="mt-1 text-[10px] font-black uppercase tracking-[0.25em] text-white/45">
+              Club: {effectiveClubId}
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <div className="rounded-2xl border border-cyan-500/25 bg-black/40 px-4 py-2 flex items-center gap-3">
