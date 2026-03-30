@@ -694,9 +694,17 @@ function MatchBoardInner() {
     )} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}>
       
       {matchSource === "sandbox" ? (
-        <div className="fixed top-4 z-[100] left-4 lg:left-[calc(50%-360px)] animate-in slide-in-from-top-3 scale-[0.9] origin-top">
+        <div
+          className={cn(
+            "fixed z-[101] animate-in slide-in-from-top-3 origin-top",
+            // En móvil/tablet lo dejamos encima del marcador para evitar colisiones laterales.
+            "top-14 right-2 sm:top-4 sm:left-4 sm:right-auto",
+            // En desktop se alinea a la izquierda del marcador centrado.
+            "lg:top-4 lg:left-[calc(50%-460px)]",
+          )}
+        >
           <div
-            className="h-8 px-3 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary shadow-2xl glass-panel text-[9px] font-black uppercase tracking-widest max-w-[260px] truncate"
+            className="h-8 px-3 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary shadow-2xl glass-panel text-[9px] font-black uppercase tracking-widest max-w-[220px] sm:max-w-[260px] truncate"
             title={activeMatchLabel || "Partido activo"}
           >
             {activeMatchLabel || "Partido activo"}
@@ -934,8 +942,8 @@ function MatchBoardInner() {
       </main>
 
       {/* CONTROLES TÁCTICOS INFERIORES - OPTIMIZACIÓN v49.0.0 */}
-      <div className="fixed bottom-6 left-0 right-0 px-2 lg:px-4 z-[150] pointer-events-none">
-        <div className="flex items-center justify-between w-full max-w-[1280px] mx-auto gap-1.5 lg:gap-3 lg:scale-100 scale-85 origin-bottom">
+      <div className="fixed bottom-3 sm:bottom-4 lg:bottom-6 left-0 right-0 px-2 lg:px-4 z-[150] pointer-events-none">
+        <div className="flex items-center justify-between w-full max-w-[1280px] mx-auto gap-1 sm:gap-1.5 lg:gap-3 lg:scale-100 sm:scale-[0.9] scale-[0.78] origin-bottom">
           
           {/* BLOQUE LOCAL (IZQUIERDA) */}
           <div className="flex items-center gap-1.5 lg:gap-2 pointer-events-auto shrink-0">
