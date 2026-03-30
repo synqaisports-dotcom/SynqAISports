@@ -59,6 +59,21 @@ import {
   type ContinuityContext,
   type ContinuityMode,
 } from "@/lib/continuity-context";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+type PromoMatch = {
+  id?: string | number;
+  date?: string;
+  rivalName?: string;
+  location?: string;
+  status?: string;
+};
 
 function SmartwatchContent() {
   const { loading, profile } = useAuth();
@@ -84,6 +99,8 @@ function SmartwatchContent() {
   const [activeMode, setActiveMode] = useState<ContinuityMode>("match");
   const [activeCtx, setActiveCtx] = useState<ContinuityContext | null>(null);
   const [screen, setScreen] = useState<"match" | "training" | "settings">("match");
+  const [promoMatches, setPromoMatches] = useState<Array<{ id: string; label: string }>>([]);
+  const [selectedPromoMatchId, setSelectedPromoMatchId] = useState<string>("");
   const touchStartXRef = useRef<number | null>(null);
 
   // ROSTER DINÁMICO
@@ -173,6 +190,45 @@ function SmartwatchContent() {
     return () => unsub();
   }, [clubScopeId]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const loadPromoMatches = () => {
+      try {
+        const raw = localStorage.getItem("synq_promo_vault");
+        const parsed = raw ? (JSON.parse(raw) as { matches?: PromoMatch[] }) : null;
+        const list = Array.isArray(parsed?.matches) ? parsed!.matches! : [];
+        const options = list
+          .filter((m) => m && m.id != null)
+          .map((m) => {
+            const id = String(m.id);
+            const date = String(m.date || "").trim() || "Pendiente fecha";
+            const rival = String(m.rivalName || "").trim();
+            const location = String(m.location || "").trim() || "Pendiente sede";
+            return {
+              id,
+              label: `${date} · ${location}${rival ? ` · vs ${rival}` : ""}`,
+            };
+          });
+        setPromoMatches(options);
+      } catch {
+        setPromoMatches([]);
+      }
+    };
+    loadPromoMatches();
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "synq_promo_vault" || e.key === null) loadPromoMatches();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  useEffect(() => {
+    const mcc = String(activeCtx?.mcc || "");
+    if (mcc.startsWith("SBX_MATCH_")) {
+      setSelectedPromoMatchId(mcc.replace("SBX_MATCH_", ""));
+    }
+  }, [activeCtx?.mcc]);
+
   const setModeOnWatch = (nextMode: ContinuityMode) => {
     setActiveMode(nextMode);
     setScreen(nextMode);
@@ -186,6 +242,22 @@ function SmartwatchContent() {
       });
       setActiveCtx(next);
     }
+  };
+
+  const selectSandboxMatch = (matchId: string) => {
+    const id = String(matchId || "").trim();
+    if (!id || !activeCtx) return;
+    setSelectedPromoMatchId(id);
+    const next = writeContinuityContext({
+      clubId: activeCtx.clubId,
+      mode: "match",
+      teamId: activeCtx.teamId,
+      mcc: `SBX_MATCH_${id}`,
+      session: `SBX_${id.slice(-6)}`,
+    });
+    setActiveCtx(next);
+    setActiveMode("match");
+    setScreen("match");
   };
 
   // DETECCIÓN DE AUTO-LINK (TOKEN EN URL)
@@ -568,6 +640,25 @@ function SmartwatchContent() {
                 >
                   <Dumbbell className="h-4 w-4 inline-block mr-2" /> Entreno
                 </button>
+                {activeMode === "match" && promoMatches.length > 0 ? (
+                  <div className="mt-2 rounded-2xl border border-white/10 bg-white/5 p-2">
+                    <p className="mb-1 text-[8px] font-black uppercase tracking-[0.22em] text-white/50">
+                      Partido sandbox
+                    </p>
+                    <Select value={selectedPromoMatchId} onValueChange={selectSandboxMatch}>
+                      <SelectTrigger className="h-9 rounded-xl border-white/10 bg-black/30 text-[10px] text-white">
+                        <SelectValue placeholder="Seleccionar partido" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#0a0f18] border-primary/20 text-white">
+                        {promoMatches.map((m) => (
+                          <SelectItem key={m.id} value={m.id} className="text-[10px]">
+                            {m.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ) : null}
               </div>
               <p className="text-[8px] uppercase font-bold text-white/30 text-center">
                 Desliza para cambiar de pantalla
