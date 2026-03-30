@@ -784,15 +784,19 @@ function PromoBoardContent() {
       ctx.restore(); ctx.save(); ctx.translate(centerX, centerY); ctx.rotate(element.rotation); ctx.translate(-centerX, -centerY);
       ctx.strokeStyle = '#ffffffaa'; ctx.lineWidth = 2 * renderScale; ctx.setLineDash([6 * renderScale, 4 * renderScale]); const pad = 12 * renderScale * matScSel;
       ctx.strokeRect(minX - pad, minY - pad, width + pad * 2, height + pad * 2);
-      ctx.setLineDash([]); ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#000000'; ctx.lineWidth = 1.5 * renderScale;
-      const handles = [
-        { x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad },
-        { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY },
-        { x: bounds.minX - pad, y: bounds.maxY + pad }, { x: bounds.centerX, y: bounds.maxY + pad }, { x: bounds.maxX + pad, y: bounds.maxY + pad }
-      ];
-      handles.forEach(h => { ctx.beginPath(); ctx.arc(h.x, h.y, 8 * renderScale * matScSel, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
-      const rotY = minY - pad - 45 * renderScale * matScSel; ctx.beginPath(); ctx.moveTo(centerX, minY - pad); ctx.lineTo(centerX, rotY); ctx.stroke();
-      ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(centerX, rotY, 10 * renderScale * matScSel, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.setLineDash([]);
+      // Jugadores: no mostramos handles/puntos de modificación (solo mover/rotar desde el cuerpo).
+      if (element.type !== "player") {
+        ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#000000'; ctx.lineWidth = 1.5 * renderScale;
+        const handles = [
+          { x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad },
+          { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY },
+          { x: bounds.minX - pad, y: bounds.maxY + pad }, { x: bounds.centerX, y: bounds.maxY + pad }, { x: bounds.maxX + pad, y: bounds.maxY + pad }
+        ];
+        handles.forEach(h => { ctx.beginPath(); ctx.arc(h.x, h.y, 8 * renderScale * matScSel, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
+        const rotY = minY - pad - 45 * renderScale * matScSel; ctx.beginPath(); ctx.moveTo(centerX, minY - pad); ctx.lineTo(centerX, rotY); ctx.stroke();
+        ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(centerX, rotY, 10 * renderScale * matScSel, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      }
       if (['arrow', 'double-arrow'].includes(element.type) && element.controlPoint && element.points.length >= 2) {
         const p0a = element.points[0], p1a = element.points[1];
         const P0 = { x: p0a.x * widthPx, y: p0a.y * heightPx };
@@ -881,7 +885,8 @@ function PromoBoardContent() {
       canvasRef.current && canvasRef.current.height > 0
         ? canvasRef.current.width / canvasRef.current.height
         : 1.5;
-    const playerScale = tool === "player" ? 1.18 : 1;
+    // Jugadores: un punto más grandes (alineado visualmente con pizarra de partido).
+    const playerScale = tool === "player" ? 1.32 : 1;
     const defW =
       tool === "player" ? CANVAS_PLAYER_NORM_WIDTH * playerScale :
       tool === "ladder" ? 0.15 :
@@ -989,7 +994,23 @@ function PromoBoardContent() {
         }
       }
     }
-    const clicked = [...elements].reverse().find(el => { const b = getElementBounds(el, wPx, hPx, wPx, hPx); const local = rotatePoint({ x: point.x * wPx, y: point.y * hPx }, { x: b.centerX, y: b.centerY }, -el.rotation); const hitPadding = el.type === 'text' ? (isCoarsePointer ? 35 : 25) : (isCoarsePointer ? 25 : 15); return local.x >= b.minX - hitPadding && local.x <= b.maxX + hitPadding && local.y >= b.minY - hitPadding && local.y <= b.maxY + hitPadding; });
+    // Prioridad de selección: texto > materiales > dibujos. Así los materiales se pueden mover aunque estén “dentro” de un rectángulo.
+    const reversed = [...elements].reverse();
+    const bucketed = {
+      text: reversed.filter((el) => el.type === "text"),
+      materials: reversed.filter((el) => el.type !== "text" && isMaterial(el.type)),
+      strokes: reversed.filter((el) => el.type !== "text" && !isMaterial(el.type)),
+    };
+    const hitTest = (el: DrawingElement) => {
+      const b = getElementBounds(el, wPx, hPx, wPx, hPx);
+      const local = rotatePoint({ x: point.x * wPx, y: point.y * hPx }, { x: b.centerX, y: b.centerY }, -el.rotation);
+      const hitPadding = el.type === 'text' ? (isCoarsePointer ? 35 : 25) : (isCoarsePointer ? 25 : 15);
+      return local.x >= b.minX - hitPadding && local.x <= b.maxX + hitPadding && local.y >= b.minY - hitPadding && local.y <= b.maxY + hitPadding;
+    };
+    const clicked =
+      bucketed.text.find(hitTest) ??
+      bucketed.materials.find(hitTest) ??
+      bucketed.strokes.find(hitTest);
     if (clicked) {
       if (e.shiftKey) {
         setSelectedIds(prev => {
