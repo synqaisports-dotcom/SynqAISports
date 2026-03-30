@@ -93,6 +93,7 @@ function SmartwatchContent() {
   const timeLeftRef = useRef(45 * 60);
   const presetMinutesRef = useRef(45);
   const lastTimerSyncAppliedRef = useRef(0);
+  const lastTickAtRef = useRef<number | null>(null);
   const lastScoreSyncAppliedRef = useRef(0);
 
   const clubScopeId = profile?.clubId ?? "global-hq";
@@ -272,11 +273,14 @@ function SmartwatchContent() {
   }, []);
 
   useEffect(() => {
+    // Si cambia el contexto (timerKey), el estado “last applied” puede pertenecer a otro partido.
+    // Reiniciamos para que el reloj aplique el valor correcto del nuevo scope.
+    lastTimerSyncAppliedRef.current = 0;
     const p = readMatchTimerSync(timerKey);
-    if (shouldApplyRemoteTimer(p, lastTimerSyncAppliedRef.current) && Date.now() - p.updatedAt < 3 * 60 * 60 * 1000) {
+    if (p && shouldApplyRemoteTimer(p, lastTimerSyncAppliedRef.current) && Date.now() - p.updatedAt < 3 * 60 * 60 * 1000) {
       lastTimerSyncAppliedRef.current = p.updatedAt;
       setTimeLeft(Math.max(0, p.remainingSec));
-      setIsRunning(p.running);
+      setIsRunning(Boolean(p.running));
     }
 
     const onTimerStorage = (e: StorageEvent) => {
@@ -334,15 +338,30 @@ function SmartwatchContent() {
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isLinked && isRunning) {
+      lastTickAtRef.current = Date.now();
       interval = setInterval(() => {
+        const now = Date.now();
+        const last = lastTickAtRef.current ?? now;
+        const deltaSec = Math.max(0, Math.floor((now - last) / 1000));
+        if (deltaSec <= 0) return;
+        lastTickAtRef.current = last + deltaSec * 1000;
+
         setTimeLeft((prev) => {
-          const next = prev <= 0 ? 0 : prev - 1;
-          const now = Date.now();
-          lastTimerSyncAppliedRef.current = now;
-          writeMatchTimerSync({ remainingSec: next, running: true, updatedAt: now, origin: "watch" }, timerKey);
+          const next = Math.max(0, prev - deltaSec);
+          const writeAt = Date.now();
+          lastTimerSyncAppliedRef.current = writeAt;
+          const runningNext = next > 0;
+          writeMatchTimerSync(
+            { remainingSec: next, running: runningNext, updatedAt: writeAt, origin: "watch" },
+            timerKey,
+          );
+          // Como `storage` no llega a la misma pestaña, aseguramos el estado local al llegar a 0.
+          if (!runningNext) queueMicrotask(() => setIsRunning(false));
           return next;
         });
       }, 1000);
+    } else {
+      lastTickAtRef.current = null;
     }
     return () => clearInterval(interval);
   }, [isLinked, isRunning, timerKey]);
