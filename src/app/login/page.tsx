@@ -39,7 +39,7 @@ function LoginContent() {
   const [regStep, setRegStep] = useState<'choice' | 'form'>('choice');
   const [regType, setRegType] = useState<'free' | 'enterprise_scale'>('free');
   
-  const { profile, loginAsGuest, loginWithToken, register, login } = useAuth();
+  const { user, session, profile, loginAsGuest, loginWithToken, register, login } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   const searchParamsHook = useSearchParams();
@@ -62,7 +62,8 @@ function LoginContent() {
   const [loginData, setLoginData] = useState({ email: "", pass: "" });
 
   useEffect(() => {
-    if (profile) {
+    const hasRealSession = !!user || !!session;
+    if (profile && hasRealSession) {
       if (requestedNext) {
         router.push(requestedNext);
       } else if (profile.role === "superadmin") {
@@ -73,7 +74,7 @@ function LoginContent() {
         router.push("/dashboard/coach/onboarding");
       }
     }
-  }, [profile, router, requestedNext]);
+  }, [profile, user, session, router, requestedNext]);
 
   useEffect(() => {
     const t = searchParamsHook.get("token") || searchParamsHook.get("t");
