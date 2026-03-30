@@ -28,12 +28,6 @@ type ContinuityCtx = {
   session: string;
 };
 
-const DEV_ADMIN_EMAILS = new Set([
-  "munozmartinez.ismael@gmail.com",
-  "synqaisports@gmail.com",
-  "admin@synqai.sports",
-]);
-
 function safeParse<T>(raw: string | null, fallback: T): T {
   if (!raw) return fallback;
   try {
@@ -56,8 +50,7 @@ export default function LiveFieldsPage() {
   const [continuity, setContinuity] = useState<ContinuityCtx | null>(null);
   const [devClubId, setDevClubId] = useState<string>("");
 
-  const email = String(profile?.email || "").toLowerCase().trim();
-  const isDevAdmin = profile?.role === "superadmin" || DEV_ADMIN_EMAILS.has(email);
+  const isDevAdmin = profile?.role === "superadmin";
   const effectiveClubId =
     profile?.clubId && profile.clubId !== "global-hq"
       ? profile.clubId
