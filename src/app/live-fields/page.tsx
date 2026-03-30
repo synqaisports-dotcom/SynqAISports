@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Activity, Clock3, MonitorSmartphone, Tv2, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth-context";
+import { readContinuityContext } from "@/lib/continuity-context";
 
 type Facility = {
   id: string;
@@ -17,21 +19,11 @@ type Team = {
   name: string;
 };
 
-type SessionItem = {
-  id?: string | number;
-  title?: string;
-  createdAt?: string;
-  warmup?: { title?: string };
-  main?: { title?: string };
-  cooldown?: { title?: string };
-};
-
-type MatchItem = {
-  id?: string | number;
-  date?: string;
-  rivalName?: string;
-  location?: string;
-  status?: string;
+type ContinuityCtx = {
+  mode: "match" | "training";
+  teamId: string;
+  mcc: string;
+  session: string;
 };
 
 function safeParse<T>(raw: string | null, fallback: T): T {
@@ -48,11 +40,11 @@ function nowLabel(): string {
 }
 
 export default function LiveFieldsPage() {
+  const { profile, loading } = useAuth();
   const [now, setNow] = useState(nowLabel());
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
-  const [sessions, setSessions] = useState<SessionItem[]>([]);
-  const [matches, setMatches] = useState<MatchItem[]>([]);
+  const [continuity, setContinuity] = useState<ContinuityCtx | null>(null);
 
   useEffect(() => {
     const tick = window.setInterval(() => setNow(nowLabel()), 1000);
@@ -60,21 +52,17 @@ export default function LiveFieldsPage() {
   }, []);
 
   useEffect(() => {
+    if (loading) return;
+    if (!profile?.clubId || profile.clubId === "global-hq") return;
+
     const load = () => {
-      const profile = safeParse<{ clubId?: string } | null>(localStorage.getItem("synq_profile"), null);
-      const clubId = String(profile?.clubId || "global-hq");
+      const clubId = String(profile.clubId);
       const facilitiesKey = `synq_methodology_facilities_v1_${clubId}`;
       const teamsKey = `synq_methodology_warehouse_teams_v1_${clubId}`;
 
       setFacilities(safeParse<Facility[]>(localStorage.getItem(facilitiesKey), []));
       setTeams(safeParse<Team[]>(localStorage.getItem(teamsKey), []));
-
-      const vault = safeParse<{ sessions?: SessionItem[]; matches?: MatchItem[] }>(
-        localStorage.getItem("synq_promo_vault"),
-        {},
-      );
-      setSessions(Array.isArray(vault.sessions) ? vault.sessions : []);
-      setMatches(Array.isArray(vault.matches) ? vault.matches : []);
+      setContinuity(readContinuityContext(clubId));
     };
 
     load();
@@ -85,38 +73,50 @@ export default function LiveFieldsPage() {
       window.removeEventListener("storage", onStorage);
       window.clearInterval(poll);
     };
-  }, []);
+  }, [profile?.clubId, loading]);
 
   const cards = useMemo(() => {
-    const fallbackFacilities =
-      facilities.length > 0
-        ? facilities
-        : [
-            { id: "f-1", name: "Campo Principal", type: "F11", sport: "Fútbol", status: "Active" },
-            { id: "f-2", name: "Campo Secundario", type: "F7", sport: "Fútbol", status: "Active" },
-            { id: "f-3", name: "Pista cubierta", type: "Indoor", sport: "Multideporte", status: "Active" },
-          ];
-
-    return fallbackFacilities.map((f, idx) => {
-      const team = teams[idx % Math.max(teams.length, 1)];
-      const session = sessions[idx % Math.max(sessions.length, 1)];
-      const match = matches[idx % Math.max(matches.length, 1)];
-      const trainingTitle = session?.title || session?.main?.title || "Entrenamiento libre";
-      const isMatch = String(match?.status || "").toLowerCase() === "scheduled";
+    return facilities.map((f, idx) => {
+      const team = teams.find((t) => t.id === continuity?.teamId) || teams[idx % Math.max(teams.length, 1)];
+      const isActiveField = continuity && idx === 0;
+      const modeLabel = continuity?.mode === "match" ? "PARTIDO" : "ENTRENO";
+      const slotLabel = continuity ? `${modeLabel} · ${continuity.mcc} ${continuity.session}` : "SIN SESIÓN ACTIVA";
+      const maintenance = String(f.status || "").toLowerCase() === "maintenance";
 
       return {
         id: f.id,
         field: f.name || `Campo ${idx + 1}`,
         type: f.type || "Campo",
         sport: f.sport || "Fútbol",
-        team: team?.name || "Equipo sin asignar",
-        slot: isMatch
-          ? `PARTIDO · VS ${String(match?.rivalName || "Rival por definir").toUpperCase()}`
-          : `ENTRENO · ${String(trainingTitle || "").toUpperCase()}`,
-        state: String(f.status || "Active").toLowerCase() === "maintenance" ? "Mantenimiento" : "En uso",
+        team: team?.name || "Equipo no asignado",
+        slot: slotLabel,
+        state: maintenance ? "Mantenimiento" : isActiveField ? "En uso" : "Libre",
       };
     });
-  }, [facilities, teams, sessions, matches]);
+  }, [facilities, teams, continuity]);
+
+  if (loading) {
+    return (
+      <main className="min-h-[100dvh] bg-[#03060d] text-white flex items-center justify-center">
+        <p className="text-[11px] font-black uppercase tracking-[0.35em] text-cyan-300/80">Cargando terminal…</p>
+      </main>
+    );
+  }
+
+  const isElite = !!profile?.clubId && profile.clubId !== "global-hq";
+  if (!isElite) {
+    return (
+      <main className="min-h-[100dvh] bg-[#03060d] text-white flex items-center justify-center p-6">
+        <div className="max-w-xl rounded-3xl border border-cyan-500/20 bg-black/40 p-8 text-center">
+          <p className="text-[10px] font-black uppercase tracking-[0.35em] text-cyan-300/80">Live Fields · Elite</p>
+          <h1 className="mt-3 text-2xl font-black uppercase">Terminal solo para datos de club</h1>
+          <p className="mt-3 text-sm text-white/70">
+            Esta micro-app consume únicamente datos Elite (instalaciones, equipos y contexto operativo por club).
+          </p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-[100dvh] bg-[#03060d] text-white overflow-hidden">
@@ -145,6 +145,14 @@ export default function LiveFieldsPage() {
       </section>
 
       <section className="relative z-10 p-4 sm:p-6 lg:p-10">
+        {cards.length === 0 ? (
+          <div className="rounded-3xl border border-cyan-500/20 bg-black/35 p-8 text-center">
+            <p className="text-[10px] font-black uppercase tracking-[0.35em] text-cyan-300/80">Sin datos elite</p>
+            <p className="mt-2 text-sm text-white/70">
+              Crea instalaciones y equipos en el BackOffice para visualizar estado en esta terminal.
+            </p>
+          </div>
+        ) : null}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
           {cards.map((c) => (
             <article
