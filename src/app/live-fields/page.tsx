@@ -180,6 +180,40 @@ export default function LiveFieldsPage() {
 
   return (
     <main className="min-h-[100dvh] bg-[#03060d] text-white overflow-hidden">
+      {/* Fondo ligero tipo campo de fútbol (sin imágenes) */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.10),rgba(3,6,13,0.92)_55%,rgba(3,6,13,1)_100%)]" />
+        <div className="absolute inset-0 opacity-[0.18]">
+          <svg viewBox="0 0 1000 600" className="h-full w-full" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <defs>
+              <pattern id="synq-grass" width="20" height="20" patternUnits="userSpaceOnUse">
+                <rect width="20" height="20" fill="transparent" />
+                <path d="M0 0 L20 20 M20 0 L0 20" stroke="rgba(16,185,129,0.10)" strokeWidth="1" />
+              </pattern>
+            </defs>
+            <rect x="0" y="0" width="1000" height="600" fill="url(#synq-grass)" />
+            {/* Líneas del campo */}
+            <g fill="none" stroke="rgba(34,211,238,0.18)" strokeWidth="2">
+              <rect x="40" y="40" width="920" height="520" rx="18" />
+              <line x1="500" y1="40" x2="500" y2="560" />
+              <circle cx="500" cy="300" r="70" />
+              <circle cx="500" cy="300" r="6" fill="rgba(34,211,238,0.22)" />
+              {/* Áreas */}
+              <rect x="40" y="160" width="120" height="280" rx="10" />
+              <rect x="840" y="160" width="120" height="280" rx="10" />
+              <rect x="40" y="210" width="55" height="180" rx="10" />
+              <rect x="905" y="210" width="55" height="180" rx="10" />
+              {/* Puntos de penalti */}
+              <circle cx="135" cy="300" r="4" fill="rgba(34,211,238,0.20)" />
+              <circle cx="865" cy="300" r="4" fill="rgba(34,211,238,0.20)" />
+              {/* Arcos */}
+              <path d="M160 300 a55 55 0 0 0 0 0.01" />
+              <path d="M840 300 a55 55 0 0 1 0 0.01" />
+            </g>
+          </svg>
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#03060d]" />
+      </div>
       <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
       <div className="absolute -top-32 -right-32 h-[420px] w-[420px] rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
       <div className="absolute -bottom-32 -left-32 h-[420px] w-[420px] rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
