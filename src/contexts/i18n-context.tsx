@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { AVAILABLE_LOCALES, DEFAULT_LOCALE, type Locale } from "@/lib/i18n-config";
 
 type Dictionary = Record<string, string>;
@@ -45,18 +44,21 @@ async function loadDictionary(locale: string): Promise<Dictionary> {
 }
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, profile, setPreferredLocale } = useAuth();
   const [locale, setLocaleState] = useState<string>(DEFAULT_LOCALE);
   const [dict, setDict] = useState<Dictionary>({});
 
   useEffect(() => {
     const saved = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
-    const userLocale = normalizeLocale((user?.user_metadata as Record<string, unknown> | undefined)?.preferred_locale as string);
+    const profileLocale = normalizeLocale(profile?.preferredLocale);
+    const userLocale = normalizeLocale(
+      (user?.user_metadata as Record<string, unknown> | undefined)?.preferred_locale as string
+    );
     const browserLocale =
       typeof navigator !== "undefined" ? normalizeLocale(navigator.language) : DEFAULT_LOCALE;
-    const initial = normalizeLocale(saved || userLocale || browserLocale);
+    const initial = normalizeLocale(saved || profileLocale || userLocale || browserLocale);
     setLocaleState(initial);
-  }, [user?.id]);
+  }, [user?.id, profile?.preferredLocale]);
 
   useEffect(() => {
     let alive = true;
@@ -80,17 +82,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const setLocale = async (next: string) => {
     const normalized = normalizeLocale(next);
     setLocaleState(normalized);
-    if (isSupabaseConfigured && supabase && user) {
-      try {
-        await supabase.auth.updateUser({
-          data: {
-            preferred_locale: normalized,
-          },
-        });
-      } catch {
-        // fail-soft: la preferencia local ya queda guardada.
-      }
-    }
+    await setPreferredLocale(normalized);
   };
 
   const value = useMemo<I18nContextType>(() => {
