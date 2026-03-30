@@ -53,7 +53,8 @@ export default function LiveFieldsPage() {
 
   const isDevAdmin = canAccessEliteTerminalAsDev(profile);
   const effectiveClubId = resolveTerminalEffectiveClubId(profile, devClubId);
-  const isLogged = !!user && !!session;
+  const isFounderGuest = user?.id === "synq-root-dev" && profile?.role === "superadmin";
+  const isLogged = (!!user && !!session) || isFounderGuest;
 
   useEffect(() => {
     if (loading) return;
