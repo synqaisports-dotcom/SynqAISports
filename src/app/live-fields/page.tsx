@@ -43,7 +43,7 @@ function nowLabel(): string {
 }
 
 export default function LiveFieldsPage() {
-  const { profile, loading, logout } = useAuth();
+  const { user, session, profile, loading, logout } = useAuth();
   const router = useRouter();
   const [now, setNow] = useState(nowLabel());
   const [facilities, setFacilities] = useState<Facility[]>([]);
@@ -111,7 +111,7 @@ export default function LiveFieldsPage() {
     );
   }
 
-  const isLogged = !!profile;
+  const isLogged = !!user || !!session;
   const canAccess = canAccessEliteTerminal(profile, devClubId);
   if (!isLogged) {
     return (
