@@ -3,8 +3,10 @@
 import { useAuth } from "@/lib/auth-context";
 import { Loader2, LayoutDashboard } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, use } from "react";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { useClubAccessMatrixOptional } from "@/contexts/club-access-matrix-context";
+import { canAccessClubModule, shouldBypassClubMatrix } from "@/lib/club-permissions";
 
 /**
  * Layout de Pizarra Inmersiva - v16.4.0
@@ -13,11 +15,12 @@ import { Button } from "@/components/ui/button";
  */
 export default function BoardLayout(props: { 
   children: React.ReactNode;
-  params: Promise<any>;
 }) {
-  const params = use(props.params);
   const children = props.children;
   const { profile, loading } = useAuth();
+  const matrixCtx = useClubAccessMatrixOptional();
+  const matrixLoading = matrixCtx?.loading ?? false;
+  const normalizedMatrix = matrixCtx?.normalizedMatrix;
   const router = useRouter();
 
   useEffect(() => {
@@ -26,7 +29,7 @@ export default function BoardLayout(props: {
     }
   }, [profile, loading, router]);
 
-  if (loading) {
+  if (loading || matrixLoading) {
     return (
       <div className="h-screen w-full flex flex-col items-center justify-center bg-[#04070c]">
         <div className="relative">
@@ -39,6 +42,25 @@ export default function BoardLayout(props: {
   }
 
   if (!profile) return null;
+  if (!shouldBypassClubMatrix(profile.role) && normalizedMatrix) {
+    const canAccessBoard = canAccessClubModule(normalizedMatrix, profile.role, "board", "access");
+    if (!canAccessBoard) {
+      return (
+        <div className="h-screen w-full flex flex-col items-center justify-center bg-[#04070c] p-6 text-center">
+          <p className="text-sm font-black text-white uppercase tracking-wide">Acceso restringido</p>
+          <p className="mt-2 text-[10px] font-bold text-white/50 uppercase tracking-widest max-w-md">
+            Tu rol no tiene acceso a las pizarras tácticas según la matriz del club.
+          </p>
+          <Button
+            onClick={() => router.push("/dashboard")}
+            className="mt-6 h-11 rounded-xl bg-primary text-black font-black uppercase text-[10px] tracking-widest"
+          >
+            Volver al Dashboard
+          </Button>
+        </div>
+      );
+    }
+  }
 
   return (
     <div className="h-[100dvh] w-full bg-[#020408] overflow-hidden relative">

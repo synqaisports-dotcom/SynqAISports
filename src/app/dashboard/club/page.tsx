@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useState } from "react";
-import { 
+import { useEffect, useRef, useState } from "react";
+import {
   Building2, 
   Settings2, 
   Globe, 
@@ -12,7 +12,7 @@ import {
   MapPin, 
   Calendar, 
   Users, 
-  Plus, 
+  Plus,
   Camera, 
   ArrowUpRight,
   ShieldCheck,
@@ -23,7 +23,8 @@ import {
   Trophy,
   ArrowRight,
   Dumbbell,
-  ShieldAlert
+  ShieldAlert,
+  Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -48,9 +49,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/lib/auth-context";
+import { useClubModulePermissions } from "@/hooks/use-club-module-permissions";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { canUseOperativaSupabase } from "@/lib/operativa-sync";
 
 const SPORTS = [
   { value: "Fútbol", label: "Fútbol" },
@@ -61,11 +64,19 @@ const SPORTS = [
 ];
 
 export default function ClubManagementPage() {
-  const { profile } = useAuth();
+  const { profile, session } = useAuth();
   const { toast } = useToast();
+  const { canEdit: canEditClub } = useClubModulePermissions("club");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [sourceMode, setSourceMode] = useState<"remote" | "local" | "local_forbidden" | "local_error">("local");
+  const logoInputRef = useRef<HTMLInputElement | null>(null);
+  const bannerInputRef = useRef<HTMLInputElement | null>(null);
 
   const isSuperAdmin = profile?.role === "superadmin";
+  const clubScopeId = profile?.clubId ?? "global-hq";
+  const canUseRemote = canUseOperativaSupabase(clubScopeId) && !!session?.access_token;
+  const storageKey = `synq_club_identity_v1_${clubScopeId}`;
 
   const [clubData, setClubData] = useState({
     name: profile?.clubName || profile?.clubId || "Nodo de Cantera",
@@ -73,7 +84,12 @@ export default function ClubManagementPage() {
     sport: profile?.sport || "Fútbol",
     foundation: "2024",
     members: "142",
+    address: "AV. DEL DEPORTE 12, MADRID",
+    phone: "+34 900 000 000",
+    mapQuery: "Avenida del Deporte 12, Madrid",
     website: "www.cantera-synqai.com",
+    logoUrl: "https://picsum.photos/seed/clublogo/300/300",
+    bannerUrl: "https://picsum.photos/seed/stadium/1200/400",
     socials: {
       instagram: "@club_academy",
       youtube: "AcademyTV",
@@ -81,19 +97,179 @@ export default function ClubManagementPage() {
     }
   });
 
-  const handleUpdate = (e?: React.FormEvent) => {
+  useEffect(() => {
+    let cancelled = false;
+    const loadIdentity = async () => {
+      if (typeof window === "undefined") return;
+      const localRaw = localStorage.getItem(storageKey);
+      if (localRaw) {
+        try {
+          const parsed = JSON.parse(localRaw) as Partial<typeof clubData>;
+          if (!cancelled && parsed && typeof parsed === "object") {
+            setClubData((prev) => ({
+              ...prev,
+              ...parsed,
+              socials: {
+                ...prev.socials,
+                ...(parsed.socials ?? {}),
+              },
+            }));
+          }
+        } catch {
+          // ignore local parse errors
+        }
+      }
+
+      if (!canUseRemote || !session?.access_token) {
+        if (!cancelled) setSourceMode("local");
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/club/identity", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (res.status === 403) {
+          if (!cancelled) {
+            setSourceMode("local_forbidden");
+            setClubData((prev) => ({
+              ...prev,
+              name: profile?.clubName || prev.name,
+              country: profile?.country || prev.country,
+              sport: profile?.sport || prev.sport,
+            }));
+          }
+          return;
+        }
+        if (!res.ok) {
+          if (!cancelled) setSourceMode("local_error");
+          return;
+        }
+        const json = (await res.json()) as {
+          profile?: { clubName?: string | null; country?: string | null; sport?: string | null };
+          club?: { name?: string | null; country?: string | null; sport?: string | null; logoUrl?: string | null; bannerUrl?: string | null };
+        };
+        if (!cancelled) {
+          setSourceMode("remote");
+          setClubData((prev) => ({
+            ...prev,
+            name: json.club?.name || json.profile?.clubName || prev.name,
+            country: json.club?.country || json.profile?.country || prev.country,
+            sport: json.club?.sport || json.profile?.sport || prev.sport,
+            logoUrl: json.club?.logoUrl || prev.logoUrl,
+            bannerUrl: json.club?.bannerUrl || prev.bannerUrl,
+          }));
+        }
+      } catch {
+        if (!cancelled) setSourceMode("local_error");
+      }
+    };
+    void loadIdentity();
+    return () => {
+      cancelled = true;
+    };
+  }, [canUseRemote, profile?.clubName, profile?.country, profile?.sport, session?.access_token, storageKey]);
+
+  const handleUpdate = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (!canEditClub) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes permiso de edición sobre Identidad de Club.",
+      });
+      return;
+    }
+    setSaving(true);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(storageKey, JSON.stringify(clubData));
+    }
+    if (canUseRemote && session?.access_token) {
+      try {
+        const res = await fetch("/api/club/identity", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            name: clubData.name,
+            country: clubData.country,
+            sport: clubData.sport,
+            logoUrl: clubData.logoUrl,
+            bannerUrl: clubData.bannerUrl,
+          }),
+        });
+        if (res.status === 403) {
+          setSourceMode("local_forbidden");
+          toast({
+            variant: "destructive",
+            title: "PERMISOS_LIMITADOS",
+            description: "No tienes permiso en servidor para editar la identidad del club.",
+          });
+          setSaving(false);
+          return;
+        }
+        if (!res.ok) {
+          setSourceMode("local_error");
+          toast({
+            variant: "destructive",
+            title: "MODO_LOCAL_ACTIVO",
+            description: "No se pudo sincronizar con servidor. Se guardó localmente en este dispositivo.",
+          });
+          setSaving(false);
+          setIsSheetOpen(false);
+          return;
+        }
+        setSourceMode("remote");
+      } catch {
+        setSourceMode("local_error");
+      }
+    } else {
+      setSourceMode("local");
+    }
     toast({
       title: "NODO_ACTUALIZADO",
-      description: `La identidad de "${clubData.name}" ha sido sincronizada en la red.`,
+      description:
+        sourceMode === "remote"
+          ? `La identidad de "${clubData.name}" se guardó en servidor.`
+          : `La identidad de "${clubData.name}" se guardó localmente.`,
     });
     setIsSheetOpen(false);
+    setSaving(false);
+  };
+
+  const mapEmbedSrc = `https://www.google.com/maps?q=${encodeURIComponent(
+    clubData.mapQuery || clubData.address || "Madrid",
+  )}&output=embed`;
+
+  const handleImageUpload = (target: "logoUrl" | "bannerUrl", file?: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast({
+        variant: "destructive",
+        title: "FORMATO_NO_VÁLIDO",
+        description: "Selecciona una imagen válida.",
+      });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const dataUrl = String(reader.result || "");
+      if (!dataUrl) return;
+      setClubData((prev) => ({ ...prev, [target]: dataUrl }));
+      toast({
+        title: target === "logoUrl" ? "ESCUDO_CARGADO" : "PORTADA_CARGADA",
+        description: "Imagen preparada. Pulsa SINCRONIZAR_CAMBIOS para guardarla.",
+      });
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000 pb-24">
       {/* SECCIÓN DE CABECERA Y TÍTULO */}
-      <div className="flex justify-between items-end border-b border-white/5 pb-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-end border-b border-white/5 pb-6">
         <div className="space-y-1">
           <div className="flex items-center gap-3 mb-2">
             <Building2 className="h-5 w-5 text-primary animate-pulse" />
@@ -101,19 +277,43 @@ export default function ClubManagementPage() {
               {isSuperAdmin ? "Global_Audit_Mode" : "Club_Identity_Matrix"}
             </span>
           </div>
-          <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic cyan-text-glow">
+          <h1 className="text-3xl sm:text-4xl font-headline font-black text-white uppercase tracking-tighter italic cyan-text-glow">
             {isSuperAdmin ? "Auditoría de Club" : "Gestión del Club"}
           </h1>
         </div>
+        <Badge
+          variant="outline"
+          className={cn(
+            "font-black uppercase text-[8px] tracking-widest rounded-xl px-3 py-1.5",
+            sourceMode === "remote"
+              ? "border-emerald-500/30 text-emerald-400"
+              : sourceMode === "local"
+              ? "border-amber-500/30 text-amber-400"
+              : sourceMode === "local_forbidden"
+              ? "border-rose-500/30 text-rose-400"
+              : "border-rose-500/30 text-rose-400",
+          )}
+        >
+          {sourceMode === "remote"
+            ? "Fuente: Servidor"
+            : sourceMode === "local"
+            ? "Fuente: Local"
+            : sourceMode === "local_forbidden"
+            ? "Local (permiso servidor denegado)"
+            : "Local (error de sincronización)"}
+        </Badge>
         
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
           <SheetTrigger asChild>
-            <Button className="rounded-none bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none">
+            <Button
+              disabled={!canEditClub}
+              className="w-full sm:w-auto rounded-none bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none disabled:opacity-40"
+            >
               <Settings2 className="h-4 w-4 mr-2" /> Configurar Nodo
             </Button>
           </SheetTrigger>
-          <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
-            <div className="p-10 border-b border-white/5 bg-black/40">
+          <SheetContent side="right" className="z-[70] bg-background/95 bg-grid-pattern backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+            <div className="sticky top-0 z-20 p-10 border-b border-white/5 bg-background/90 backdrop-blur-md">
               <SheetHeader className="space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
@@ -128,7 +328,7 @@ export default function ClubManagementPage() {
               </SheetHeader>
             </div>
 
-            <form onSubmit={handleUpdate} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10">
+            <form onSubmit={handleUpdate} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10 bg-background/70">
               <div className="space-y-8">
                 <div className="space-y-3">
                   <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1">Nombre de la Entidad</Label>
@@ -186,6 +386,41 @@ export default function ClubManagementPage() {
                   />
                 </div>
 
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1">Dirección</Label>
+                  <Input
+                    value={clubData.address}
+                    onChange={(e) => {
+                      const next = e.target.value.toUpperCase();
+                      setClubData({
+                        ...clubData,
+                        address: next,
+                        mapQuery: clubData.mapQuery.trim() ? clubData.mapQuery : next,
+                      });
+                    }}
+                    className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary text-primary placeholder:text-primary/20"
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1">Teléfono de Contacto</Label>
+                  <Input
+                    value={clubData.phone}
+                    onChange={(e) => setClubData({ ...clubData, phone: e.target.value })}
+                    className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary text-primary placeholder:text-primary/20"
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1">Ubicación para Mapa</Label>
+                  <Input
+                    value={clubData.mapQuery}
+                    onChange={(e) => setClubData({ ...clubData, mapQuery: e.target.value })}
+                    placeholder="EJ: Avenida del Deporte 12, Madrid"
+                    className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary text-primary placeholder:text-primary/20"
+                  />
+                </div>
+
                 <div className="space-y-3 pt-6 border-t border-white/5">
                   <Label className="text-[10px] font-black uppercase text-primary tracking-widest ml-1">Instagram (@)</Label>
                   <Input 
@@ -211,21 +446,22 @@ export default function ClubManagementPage() {
                   />
                 </div>
               </div>
-            </form>
 
-            <div className="p-10 bg-black/40 border-t border-white/5 flex gap-6">
-              <SheetClose asChild>
-                <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary/60 font-black uppercase text-[11px] tracking-widest hover:bg-primary/10 rounded-2xl transition-all">
-                  CANCELAR
+              <div className="pt-2 flex flex-col sm:flex-row gap-4">
+                <SheetClose asChild>
+                  <Button variant="ghost" className="w-full sm:flex-1 h-16 border border-primary/20 text-primary/60 font-black uppercase text-[11px] tracking-widest hover:bg-primary/10 rounded-2xl transition-all">
+                    CANCELAR
+                  </Button>
+                </SheetClose>
+                <Button 
+                  onClick={() => handleUpdate()}
+                  disabled={!canEditClub || saving}
+                  className="w-full sm:flex-[2] h-16 bg-primary text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] transition-all border-none disabled:opacity-40"
+                >
+                  {saving ? "GUARDANDO..." : "SINCRONIZAR_CAMBIOS"}
                 </Button>
-              </SheetClose>
-              <Button 
-                onClick={() => handleUpdate()}
-                className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] transition-all border-none"
-              >
-                SINCRONIZAR_CAMBIOS
-              </Button>
-            </div>
+              </div>
+            </form>
           </SheetContent>
         </Sheet>
       </div>
@@ -240,9 +476,9 @@ export default function ClubManagementPage() {
       )}
 
       {/* BANNER VISUAL */}
-      <div className="relative h-80 rounded-[3rem] overflow-hidden border border-primary/10 shadow-2xl">
-        <Image 
-          src="https://picsum.photos/seed/stadium/1200/400" 
+      <div className="relative h-56 sm:h-72 lg:h-80 rounded-[2rem] sm:rounded-[3rem] overflow-hidden border border-primary/10 shadow-2xl">
+        <Image
+          src={clubData.bannerUrl}
           alt="Club Banner" 
           fill 
           className="object-cover opacity-40 grayscale"
@@ -250,41 +486,65 @@ export default function ClubManagementPage() {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#04070c] via-transparent to-transparent" />
         <div className="absolute top-8 right-8">
-           <Button variant="ghost" className="h-10 bg-black/40 backdrop-blur-md border border-primary/20 rounded-xl text-primary/60 hover:text-primary transition-all">
-              <Camera className="h-4 w-4 mr-2" /> Editar Portada
+           <Button
+             variant="ghost"
+             disabled={!canEditClub}
+             onClick={() => bannerInputRef.current?.click()}
+             className="h-10 bg-black/40 backdrop-blur-md border border-primary/20 rounded-xl text-primary/60 hover:text-primary transition-all disabled:opacity-40"
+           >
+              <Upload className="h-4 w-4 mr-2" /> Editar Portada
            </Button>
+           <input
+             ref={bannerInputRef}
+             type="file"
+             accept="image/*"
+             className="hidden"
+             onChange={(e) => handleImageUpload("bannerUrl", e.target.files?.[0] ?? null)}
+           />
         </div>
       </div>
 
       {/* IDENTIDAD DEL CLUB (BLOQUE DE FLUJO CON MARGEN NEGATIVO ELEVADO) */}
-      <div className="px-12 -mt-44 relative z-20 space-y-6 mb-24">
-        <div className="flex flex-col md:flex-row items-end gap-10">
+      <div className="px-4 sm:px-8 lg:px-12 -mt-28 sm:-mt-36 lg:-mt-48 relative z-20 space-y-6 mb-24">
+        <div className="flex flex-col md:flex-row md:items-end gap-8 lg:gap-10">
           <div className="relative group/logo">
              <div className="absolute inset-0 bg-primary/30 blur-3xl rounded-full opacity-0 group-hover/logo:opacity-100 transition-opacity" />
-             <div className="h-56 w-52 bg-black border-2 border-primary/40 rounded-[2rem] flex items-center justify-center relative z-10 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.9)] group-hover/logo:border-primary transition-all duration-500">
-                <Image 
-                  src="https://picsum.photos/seed/clublogo/300/300" 
+             <div className="h-40 w-40 sm:h-48 sm:w-44 lg:h-56 lg:w-52 bg-black/90 border-2 border-primary/50 rounded-[2rem] flex items-center justify-center relative z-10 overflow-hidden shadow-[0_24px_60px_rgba(0,0,0,0.95)] group-hover/logo:border-primary transition-all duration-500 backdrop-blur-sm">
+                <Image
+                  src={clubData.logoUrl}
                   alt="Club Logo" 
                   width={180} 
                   height={180} 
                   className="opacity-90 group-hover/logo:scale-110 transition-transform duration-700"
                   data-ai-hint="sports logo"
                 />
-                <button className="absolute inset-0 bg-black/60 opacity-0 group-hover/logo:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                <button
+                  type="button"
+                  disabled={!canEditClub}
+                  onClick={() => logoInputRef.current?.click()}
+                  className="absolute inset-0 bg-black/60 opacity-0 group-hover/logo:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 disabled:opacity-0 disabled:pointer-events-none"
+                >
                    <Camera className="h-6 w-6 text-primary" />
                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Sincronizar Escudo</span>
                 </button>
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleImageUpload("logoUrl", e.target.files?.[0] ?? null)}
+                />
              </div>
           </div>
           
           <div className="pb-6 space-y-4">
              <div className="space-y-1">
                 <span className="text-[10px] font-black text-primary/60 uppercase tracking-[0.5em] ml-1">Identidad de Nodo</span>
-                <h2 className="text-6xl lg:text-7xl font-headline font-black text-white uppercase italic tracking-tighter leading-[0.85] cyan-text-glow drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)]">
+                <h2 className="text-3xl sm:text-5xl lg:text-7xl font-headline font-black text-white uppercase italic tracking-tighter leading-[0.9] cyan-text-glow drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)]">
                   {clubData.name}
                 </h2>
              </div>
-             <div className="flex items-center gap-4 px-1">
+             <div className="flex flex-wrap items-center gap-3 sm:gap-4 px-1">
                <div className="flex items-center gap-2">
                  <Dumbbell className="h-3.5 w-3.5 text-primary" />
                  <span className="text-[11px] font-black text-primary uppercase tracking-widest">{clubData.sport}</span>
@@ -302,26 +562,26 @@ export default function ClubManagementPage() {
       </div>
 
       {/* MATRIZ DE DATOS Y TERMINALES */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 pt-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-10 pt-8">
         <div className="lg:col-span-2 space-y-10">
            <Card className="glass-panel border-none bg-black/40 overflow-hidden shadow-2xl">
-             <CardHeader className="border-b border-white/5 p-10">
+             <CardHeader className="border-b border-white/5 p-6 sm:p-8 lg:p-10">
                 <CardTitle className="text-xs font-black uppercase tracking-[0.4em] flex items-center gap-4 text-primary/60">
                   <ShieldCheck className="h-5 w-5 text-primary" /> Atributos de la Entidad
                 </CardTitle>
              </CardHeader>
-             <CardContent className="p-10">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
+             <CardContent className="p-6 sm:p-8 lg:p-10">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-16">
                    <DataNode label="Disciplina" value={clubData.sport} icon={Dumbbell} highlight />
                    <DataNode label="Año de Fundación" value={clubData.foundation} icon={Calendar} />
                    <DataNode label="Capacidad Cantera" value={`${clubData.members} Atletas`} icon={Users} />
                 </div>
 
-                <div className="mt-16 p-10 border border-primary/20 bg-primary/5 rounded-[2.5rem] space-y-5 relative overflow-hidden group">
+                <div className="mt-10 lg:mt-16 p-6 sm:p-8 lg:p-10 border border-primary/20 bg-primary/5 rounded-[2rem] sm:rounded-[2.5rem] space-y-5 relative overflow-hidden group">
                    <div className="absolute top-0 right-0 p-4 opacity-10">
                       <Trophy className="h-32 w-32 text-primary" />
                    </div>
-                   <div className="flex items-center justify-between relative z-10">
+                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between relative z-10">
                       <span className="text-[11px] font-black uppercase text-primary tracking-[0.3em]">Protocolo de Plan Activo</span>
                       <Badge className="bg-primary text-black font-black uppercase text-[9px] px-4 py-1.5 tracking-widest rounded-none">
                         {profile?.plan?.replace('_', ' ') || 'Enterprise Scale'}
@@ -334,23 +594,24 @@ export default function ClubManagementPage() {
              </CardContent>
            </Card>
 
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-10">
               <Card className="glass-panel border border-primary/10 bg-black/40 shadow-xl">
-                <CardHeader className="p-10 pb-4">
+                <CardHeader className="p-6 sm:p-8 lg:p-10 pb-4">
                    <CardTitle className="text-[11px] font-black uppercase tracking-[0.4em] text-primary/20">Terminales de Contacto</CardTitle>
                 </CardHeader>
-                <CardContent className="px-10 pb-10 space-y-5">
+                <CardContent className="px-6 sm:px-8 lg:px-10 pb-6 sm:pb-8 lg:pb-10 space-y-5">
                    <ContactLink icon={Globe} label="Portal Web" value={clubData.website} />
+                   <ContactLink icon={MapPin} label="Dirección" value={clubData.address} />
                    <ContactLink icon={Mail} label="Mail Administrativo" value={profile?.email || "admin@club.com"} />
-                   <ContactLink icon={Smartphone} label="Línea Directa" value="+34 900 000 000" />
+                   <ContactLink icon={Smartphone} label="Línea Directa" value={clubData.phone} />
                 </CardContent>
               </Card>
 
               <Card className="glass-panel border border-primary/10 bg-black/40 shadow-xl">
-                <CardHeader className="p-10 pb-4">
+                <CardHeader className="p-6 sm:p-8 lg:p-10 pb-4">
                    <CardTitle className="text-[11px] font-black uppercase tracking-[0.4em] text-primary/20">Nodos Sociales</CardTitle>
                 </CardHeader>
-                <CardContent className="px-10 pb-10 space-y-5">
+                <CardContent className="px-6 sm:px-8 lg:px-10 pb-6 sm:pb-8 lg:pb-10 space-y-5">
                    <ContactLink icon={Instagram} label="Instagram" value={clubData.socials.instagram} />
                    <ContactLink icon={Youtube} label="YouTube" value={clubData.socials.youtube} />
                    <ContactLink icon={Twitter} label="Twitter / X" value={clubData.socials.twitter} />
@@ -360,6 +621,28 @@ export default function ClubManagementPage() {
         </div>
 
         <div className="space-y-10">
+           <Card className="glass-panel border border-primary/10 bg-black/40 overflow-hidden shadow-xl">
+             <CardHeader className="p-6 sm:p-8 lg:p-10 pb-4">
+               <CardTitle className="text-[11px] font-black uppercase tracking-[0.4em] text-primary/20">
+                 Mapa del Club
+               </CardTitle>
+             </CardHeader>
+             <CardContent className="px-6 sm:px-8 lg:px-10 pb-6 sm:pb-8 lg:pb-10 space-y-4">
+               <div className="rounded-2xl overflow-hidden border border-primary/20 bg-black/60">
+                 <iframe
+                   title="Mapa del club"
+                   src={mapEmbedSrc}
+                   loading="lazy"
+                   referrerPolicy="no-referrer-when-downgrade"
+                   className="w-full h-64 md:h-72"
+                 />
+               </div>
+               <p className="text-[10px] font-bold uppercase tracking-widest text-primary/40">
+                 {clubData.address}
+               </p>
+             </CardContent>
+           </Card>
+
            <Card className="glass-panel border-primary/20 bg-primary/5 p-12 relative group overflow-hidden shadow-[0_0_50px_rgba(0,242,255,0.05)]">
               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-all">
                 <Share2 className="h-32 w-32 text-primary" />
@@ -368,7 +651,7 @@ export default function ClubManagementPage() {
               <p className="text-[11px] font-bold text-primary/40 uppercase tracking-widest mb-10 leading-loose">
                 Genere un informe PDF técnico de la estructura del club para patrocinadores, federaciones o redes de formación.
               </p>
-              <Button className="w-full h-16 bg-black/60 border border-primary/30 text-primary font-black uppercase text-[11px] tracking-[0.2em] rounded-2xl hover:bg-primary hover:text-black transition-all shadow-xl">
+              <Button disabled={!canEditClub} className="w-full h-16 bg-black/60 border border-primary/30 text-primary font-black uppercase text-[11px] tracking-[0.2em] rounded-2xl hover:bg-primary hover:text-black transition-all shadow-xl disabled:opacity-40">
                 Generar Informe <ArrowRight className="h-4 w-4 ml-3" />
               </Button>
            </Card>

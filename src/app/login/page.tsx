@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -43,9 +43,19 @@ function LoginContent() {
   const { toast } = useToast();
   const router = useRouter();
   const searchParamsHook = useSearchParams();
+  const requestedNextRaw = searchParamsHook.get("next");
+  const requestedNext = (() => {
+    const raw = (requestedNextRaw || "").trim();
+    if (!raw) return null;
+    // Seguridad anti open-redirect: solo permitimos rutas relativas internas.
+    if (!raw.startsWith("/")) return null;
+    if (raw.startsWith("//")) return null;
+    return raw;
+  })();
   
   const [token, setToken] = useState<string | null>(null);
   const [campaignData, setCampaignData] = useState<any>(null);
+  const trackSentForToken = useRef<string | null>(null);
 
   // Form states
   const [regData, setRegData] = useState({ name: "", email: "", pass: "", club: "" });
@@ -53,7 +63,9 @@ function LoginContent() {
 
   useEffect(() => {
     if (profile) {
-      if (profile.role === "superadmin") {
+      if (requestedNext) {
+        router.push(requestedNext);
+      } else if (profile.role === "superadmin") {
         router.push("/admin-global");
       } else if (profile.clubCreated) {
         router.push("/dashboard");
@@ -61,7 +73,7 @@ function LoginContent() {
         router.push("/dashboard/coach/onboarding");
       }
     }
-  }, [profile, router]);
+  }, [profile, router, requestedNext]);
 
   useEffect(() => {
     const t = searchParamsHook.get("token") || searchParamsHook.get("t");
@@ -69,11 +81,19 @@ function LoginContent() {
       setToken(t);
       setCampaignData({
         plan: "Enterprise Scale",
-        price: "0.70€ / niño",
+        price: "Cuota al club (B2B) — ver condiciones en tu nodo",
         region: "Argentina",
         countryCode: "AR",
         limit: "10 primeros",
       });
+      if (trackSentForToken.current !== t) {
+        trackSentForToken.current = t;
+        void fetch("/api/promo/track", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: t }),
+        }).catch(() => {});
+      }
       toast({
         title: "INVITACIÓN_DETECTADA",
         description: `Sincronizando campaña regional: ${t}`,
@@ -257,7 +277,15 @@ function LoginContent() {
 
       <div className="flex flex-col items-center gap-4">
         <button 
-          onClick={() => { loginAsGuest(); }}
+          onClick={() => {
+            loginAsGuest();
+            // Forzar navegación inmediata (evita quedarse en /login por estado/HMR).
+            if (requestedNext) {
+              router.push(requestedNext);
+            } else {
+              router.push("/admin-global");
+            }
+          }}
           className="text-[9px] font-black text-white/20 hover:text-primary transition-all uppercase tracking-[0.5em] italic flex items-center gap-2 group"
         >
           <Key className="h-3 w-3 group-hover:animate-pulse" /> Terminal de Fundadores

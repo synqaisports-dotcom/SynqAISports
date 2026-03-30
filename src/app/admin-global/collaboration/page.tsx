@@ -1,26 +1,84 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
-import { MessageSquareQuote, Gift, Mail, Calendar, ChevronRight, CheckCircle2, ShieldCheck, Sparkles, Filter, Search, ArrowRight, Activity, Building2 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useMemo, useState, useEffect, useCallback } from "react";
+import { MessageSquareQuote, Gift, Mail, Search, ArrowRight, Activity, Building2, Loader2, RefreshCw, Sparkles, ShieldCheck } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth-context";
+
+type CollabItemRow = {
+  id: string;
+  submissionType: "feedback" | "lead";
+  timestamp: string;
+  desc: string;
+  email: string | null;
+  clubName: string | null;
+  contactPerson: string | null;
+};
 
 export default function InternalCollaborationTerminal() {
-  const [logs, setLogs] = useState<any[]>([]);
-  const [filter, setFilter] = useState("all");
+  const { session } = useAuth();
+  const [items, setItems] = useState<CollabItemRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (!session?.access_token) {
+      setItems([]);
+      setLoading(false);
+      setError("Inicia sesión como superadmin para consultar colaboración.");
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/collaboration", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const j = (await res.json()) as {
+        ok?: boolean;
+        error?: string;
+        items?: CollabItemRow[];
+      };
+      if (!res.ok || !j.ok) {
+        setError(j.error ?? `HTTP ${res.status}`);
+        setItems([]);
+      } else {
+        setItems(j.items ?? []);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error de red");
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [session?.access_token]);
 
   useEffect(() => {
-    const existingLogs = JSON.parse(localStorage.getItem("synq_audit_logs") || "[]");
-    setLogs(existingLogs);
-  }, []);
+    void load();
+  }, [load]);
 
-  const leads = logs.filter(l => l.title === "LEAD_ALIANZA_CLUB");
-  const feedback = logs.filter(l => l.title === "FEEDBACK_RECIBIDO");
+  const filtered = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    if (!q) return items;
+    return items.filter((l) => {
+      return (
+        l.desc.toLowerCase().includes(q) ||
+        (l.email ?? "").toLowerCase().includes(q) ||
+        (l.clubName ?? "").toLowerCase().includes(q) ||
+        (l.contactPerson ?? "").toLowerCase().includes(q)
+      );
+    });
+  }, [items, searchTerm]);
+
+  const leads = filtered.filter((l) => l.submissionType === "lead");
+  const feedback = filtered.filter((l) => l.submissionType === "feedback");
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
@@ -34,19 +92,34 @@ export default function InternalCollaborationTerminal() {
             CENTRO_DE_COLABORACIÓN
           </h1>
         </div>
+        <Button
+          variant="outline"
+          onClick={() => void load()}
+          disabled={loading}
+          className="rounded-2xl border-emerald-500/30 text-emerald-400 inline-flex items-center gap-2"
+        >
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+          Actualizar
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <CollabStat label="Leads Pendientes" value={leads.length.toString()} icon={Gift} color="text-emerald-400" />
         <CollabStat label="Feedback Recibido" value={feedback.length.toString()} icon={MessageSquareQuote} color="text-primary" />
-        <CollabStat label="Tiempo Respuesta" value="< 24h" icon={Activity} color="text-white/40" />
+        <CollabStat label="Registros Totales" value={filtered.length.toString()} icon={Activity} color="text-white/40" />
       </div>
+
+      {error && (
+        <Card className="glass-panel border-amber-500/30 bg-amber-500/5 rounded-2xl">
+          <CardContent className="py-4 text-[10px] font-bold text-amber-100/90 uppercase tracking-wide">{error}</CardContent>
+        </Card>
+      )}
 
       <Tabs defaultValue="all" className="w-full">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
           <TabsList className="bg-black/40 border border-white/10 p-1.5 h-14 rounded-2xl w-full max-w-lg">
             <TabsTrigger value="all" className="rounded-xl font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-emerald-500 data-[state=active]:text-black flex-1">
-              Todos los Registros <Badge className="ml-2 bg-emerald-500/20 text-emerald-400 border-none">{logs.filter(l => l.title === 'LEAD_ALIANZA_CLUB' || l.title === 'FEEDBACK_RECIBIDO').length}</Badge>
+              Todos los Registros <Badge className="ml-2 bg-emerald-500/20 text-emerald-400 border-none">{filtered.length}</Badge>
             </TabsTrigger>
             <TabsTrigger value="leads" className="rounded-xl font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-emerald-500 data-[state=active]:text-black flex-1">
               Alianzas Club <Badge className="ml-2 bg-emerald-500/20 text-emerald-400 border-none">{leads.length}</Badge>
@@ -58,14 +131,21 @@ export default function InternalCollaborationTerminal() {
 
           <div className="relative w-full max-w-sm">
             <Search className="absolute left-4 top-4 h-4 w-4 text-emerald-500/40" />
-            <Input placeholder="FILTRAR POR CLUB O EMAIL..." className="h-14 pl-12 bg-white/5 border-white/10 rounded-2xl text-[10px] font-black uppercase focus:border-emerald-500 transition-all" />
+            <Input
+              placeholder="FILTRAR POR CLUB, EMAIL O TEXTO..."
+              className="h-14 pl-12 bg-white/5 border-white/10 rounded-2xl text-[10px] font-black uppercase focus:border-emerald-500 transition-all"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
         </div>
 
         <TabsContent value="all">
           <div className="grid grid-cols-1 gap-4">
-            {logs.filter(l => l.title === 'LEAD_ALIANZA_CLUB' || l.title === 'FEEDBACK_RECIBIDO').length > 0 ? (
-              logs.filter(l => l.title === 'LEAD_ALIANZA_CLUB' || l.title === 'FEEDBACK_RECIBIDO').map(log => (
+            {loading ? (
+              <LoadingState />
+            ) : filtered.length > 0 ? (
+              filtered.map((log) => (
                 <CollabItem key={log.id} log={log} />
               ))
             ) : (
@@ -76,13 +156,13 @@ export default function InternalCollaborationTerminal() {
 
         <TabsContent value="leads">
           <div className="grid grid-cols-1 gap-4">
-            {leads.length > 0 ? leads.map(log => <CollabItem key={log.id} log={log} />) : <EmptyState />}
+            {loading ? <LoadingState /> : leads.length > 0 ? leads.map(log => <CollabItem key={log.id} log={log} />) : <EmptyState />}
           </div>
         </TabsContent>
 
         <TabsContent value="feedback">
           <div className="grid grid-cols-1 gap-4">
-            {feedback.length > 0 ? feedback.map(log => <CollabItem key={log.id} log={log} />) : <EmptyState />}
+            {loading ? <LoadingState /> : feedback.length > 0 ? feedback.map(log => <CollabItem key={log.id} log={log} />) : <EmptyState />}
           </div>
         </TabsContent>
       </Tabs>
@@ -104,8 +184,8 @@ function CollabStat({ label, value, icon: Icon, color }: any) {
   );
 }
 
-function CollabItem({ log }: any) {
-  const isLead = log.title === "LEAD_ALIANZA_CLUB";
+function CollabItem({ log }: { log: CollabItemRow }) {
+  const isLead = log.submissionType === "lead";
   
   return (
     <Card className={cn(
@@ -131,11 +211,15 @@ function CollabItem({ log }: any) {
             <div className="flex items-center gap-6">
                <div className="flex items-center gap-2">
                   <ShieldCheck className="h-3 w-3 text-emerald-400/40" />
-                  <span className="text-[9px] font-black text-white/40 uppercase">Vínculo: Nodo_Sandbox</span>
+                  <span className="text-[9px] font-black text-white/40 uppercase">
+                    {log.clubName ? `Club: ${log.clubName}` : "Vínculo: Nodo_Sandbox"}
+                  </span>
                </div>
                <div className="flex items-center gap-2">
                   <Mail className="h-3 w-3 text-emerald-400/40" />
-                  <span className="text-[9px] font-black text-white/40 uppercase">ID_RED: 0X{log.id.slice(-6).toUpperCase()}</span>
+                  <span className="text-[9px] font-black text-white/40 uppercase">
+                    {log.email ? log.email : `ID_RED: 0X${log.id.slice(-6).toUpperCase()}`}
+                  </span>
                </div>
             </div>
           </div>
@@ -165,6 +249,15 @@ function EmptyState() {
           <p className="text-[11px] font-black text-white/20 uppercase tracking-[0.5em]">Terminal en espera de flujo de datos</p>
           <p className="text-[9px] font-bold text-white/10 uppercase italic">Los leads del Sandbox aparecerán aquí en tiempo real</p>
        </div>
+    </div>
+  );
+}
+
+function LoadingState() {
+  return (
+    <div className="p-24 text-center space-y-6 border border-dashed border-white/10 bg-white/[0.01] rounded-[3rem]">
+      <Loader2 className="h-10 w-10 text-emerald-500/30 mx-auto animate-spin" />
+      <p className="text-[10px] font-black text-white/25 uppercase tracking-[0.4em]">CARGANDO_COLABORACION</p>
     </div>
   );
 }

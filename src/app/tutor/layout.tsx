@@ -14,9 +14,7 @@ export const metadata: Metadata = {
 
 export default async function TutorLayout(props: { 
   children: React.ReactNode;
-  params: Promise<any>;
 }) {
-  const params = await props.params;
   const children = props.children;
 
   return (

@@ -3,12 +3,13 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/lib/auth-context";
 
+export const themeColor = '#04070c';
+export const viewport = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0';
+
 export const metadata: Metadata = {
   title: 'SynqSports Pro',
   description: 'Tecnología Pro para todo el Deporte Base',
   manifest: '/manifest.json',
-  themeColor: '#04070c',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
   other: {
     'mobile-web-app-capable': 'yes',
     'apple-touch-fullscreen': 'yes',
-  },
+  } as unknown as Metadata['other'],
   icons: {
     apple: [
       { url: 'https://placehold.co/192x192/04070c/00f2ff?text=SynqAi', sizes: '192x192', type: 'image/png' },
@@ -27,9 +28,7 @@ export const metadata: Metadata = {
 
 export default async function RootLayout(props: {
   children: React.ReactNode;
-  params: Promise<any>;
 }) {
-  const params = await props.params;
   const children = props.children;
 
   return (

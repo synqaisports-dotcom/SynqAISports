@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { 
   Zap, 
@@ -17,6 +17,8 @@ import {
   ShieldCheck,
   RotateCcw,
   Settings,
+  Trophy,
+  Dumbbell,
   Clock,
   Check,
   Minus,
@@ -27,6 +29,51 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { synqSync } from "@/lib/sync-service";
+import {
+  MATCH_TIMER_SYNC_KEY,
+  matchTimerSyncKey,
+  readMatchTimerSync,
+  shouldApplyRemoteTimer,
+  writeMatchTimerSync,
+  readMatchTimerPresetMinutes,
+  type MatchTimerSyncPayload,
+} from "@/lib/match-timer-sync";
+import {
+  MATCH_SCORE_SYNC_KEY,
+  matchScoreSyncKey,
+  readMatchScoreSync,
+  shouldApplyRemoteScore,
+  writeMatchScoreSync,
+} from "@/lib/match-score-sync";
+import {
+  ensureWatchPairingCode,
+  readWatchLinked,
+  writeWatchLinked,
+  writeWatchPairingCode,
+  type WatchPairingScope,
+} from "@/lib/watch-pairing";
+import {
+  readContinuityContext,
+  subscribeContinuityContext,
+  writeContinuityContext,
+  type ContinuityContext,
+  type ContinuityMode,
+} from "@/lib/continuity-context";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+type PromoMatch = {
+  id?: string | number;
+  date?: string;
+  rivalName?: string;
+  location?: string;
+  status?: string;
+};
 
 function SmartwatchContent() {
   const { loading, profile } = useAuth();
@@ -42,15 +89,181 @@ function SmartwatchContent() {
 
   // ESTADOS DE JUEGO Y CONFIGURACIÓN
   const [timeLeft, setTimeLeft] = useState(45 * 60);
+  const [presetMinutes, setPresetMinutes] = useState(45);
   const [isRunning, setIsRunning] = useState(false);
   const [score, setScore] = useState({ home: 0, guest: 0 });
   const [view, setView] = useState<'main' | 'subs_out' | 'subs_in' | 'config'>('main');
   const [selectedOut, setSelectedOut] = useState<number | null>(null);
   const [subInterval, setSubInterval] = useState("5");
+  const [isWatchCompact, setIsWatchCompact] = useState(false);
+  const [activeMode, setActiveMode] = useState<ContinuityMode>("match");
+  const [activeCtx, setActiveCtx] = useState<ContinuityContext | null>(null);
+  const [screen, setScreen] = useState<"match" | "training" | "settings">("match");
+  const [promoMatches, setPromoMatches] = useState<Array<{ id: string; label: string }>>([]);
+  const [selectedPromoMatchId, setSelectedPromoMatchId] = useState<string>("");
+  const touchStartXRef = useRef<number | null>(null);
 
   // ROSTER DINÁMICO
   const [starters, setStarters] = useState<number[]>([]);
   const [substitutes, setSubstitutes] = useState<number[]>([]);
+
+  const timeLeftRef = useRef(45 * 60);
+  const presetMinutesRef = useRef(45);
+  const lastTimerSyncAppliedRef = useRef(0);
+  const lastTickAtRef = useRef<number | null>(null);
+  const lastScoreSyncAppliedRef = useRef(0);
+
+  const clubScopeId = profile?.clubId ?? "global-hq";
+
+  const urlCtx = React.useMemo(() => {
+    const modeParam = searchParamsHook.get("mode") || "";
+    const teamId = searchParamsHook.get("team") || "";
+    const mcc = searchParamsHook.get("mcc") || "";
+    const session = searchParamsHook.get("session") || "";
+    if (!teamId || !mcc || !session) return null;
+    const ctx: ContinuityMode =
+      modeParam === "training" ? "training" : modeParam === "match" ? "match" : "match";
+    return {
+      clubId: clubScopeId,
+      mode: ctx,
+      teamId,
+      mcc,
+      session,
+      updatedAt: Date.now(),
+    } satisfies ContinuityContext;
+  }, [searchParamsHook, clubScopeId]);
+
+  const syncScope = React.useMemo(() => {
+    const c = activeCtx;
+    if (!c) return null;
+    return { clubId: c.clubId, teamId: c.teamId, mcc: c.mcc, session: c.session, mode: c.mode };
+  }, [activeCtx]);
+
+  const timerKey = React.useMemo(
+    () => matchTimerSyncKey(syncScope ?? undefined),
+    [syncScope],
+  );
+  const scoreKey = React.useMemo(
+    () => matchScoreSyncKey(syncScope ?? undefined),
+    [syncScope],
+  );
+  const activePromoMatchLabel = React.useMemo(() => {
+    if (!selectedPromoMatchId) return "";
+    const hit = promoMatches.find((m) => m.id === selectedPromoMatchId);
+    return hit?.label || "";
+  }, [promoMatches, selectedPromoMatchId]);
+
+  const watchPairingScope = React.useMemo((): WatchPairingScope | null => {
+    if (syncScope) return { clubId: syncScope.clubId, mode: "continuity" };
+    const clubId = profile?.clubId;
+    if (clubId && clubId !== "global-hq") return { clubId, mode: "elite" };
+    return { clubId: "sandbox", mode: "sandbox" };
+  }, [syncScope, profile?.clubId]);
+
+  // Resolver modo/pantalla inicial: URL > contexto guardado > default
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const modeParam = searchParamsHook.get("mode") || "";
+    const requested: ContinuityMode | null =
+      modeParam === "training" ? "training" : modeParam === "match" ? "match" : null;
+
+    const initial = urlCtx ?? readContinuityContext(clubScopeId);
+    if (initial) {
+      setActiveCtx(initial);
+      setActiveMode(initial.mode);
+      setScreen(initial.mode);
+    } else if (requested) {
+      setActiveMode(requested);
+      setScreen(requested);
+    } else {
+      setActiveMode("match");
+      setScreen("match");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clubScopeId, urlCtx]);
+
+  // Escuchar cambios de contexto (empujados desde el móvil)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const unsub = subscribeContinuityContext(clubScopeId, (next) => {
+      if (!next) return;
+      setActiveCtx(next);
+      setActiveMode(next.mode);
+      // Si el usuario está en settings, no forzar navegación; si está en match/training, sí.
+      setScreen((prev) => (prev === "settings" ? prev : next.mode));
+    });
+    return () => unsub();
+  }, [clubScopeId]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const loadPromoMatches = () => {
+      try {
+        const raw = localStorage.getItem("synq_promo_vault");
+        const parsed = raw ? (JSON.parse(raw) as { matches?: PromoMatch[] }) : null;
+        const list = Array.isArray(parsed?.matches) ? parsed!.matches! : [];
+        const options = list
+          .filter((m) => m && m.id != null)
+          .map((m) => {
+            const id = String(m.id);
+            const date = String(m.date || "").trim() || "Pendiente fecha";
+            const rival = String(m.rivalName || "").trim();
+            const location = String(m.location || "").trim() || "Pendiente sede";
+            return {
+              id,
+              label: `${date} · ${location}${rival ? ` · vs ${rival}` : ""}`,
+            };
+          });
+        setPromoMatches(options);
+      } catch {
+        setPromoMatches([]);
+      }
+    };
+    loadPromoMatches();
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "synq_promo_vault" || e.key === null) loadPromoMatches();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  useEffect(() => {
+    const mcc = String(activeCtx?.mcc || "");
+    if (mcc.startsWith("SBX_MATCH_")) {
+      setSelectedPromoMatchId(mcc.replace("SBX_MATCH_", ""));
+    }
+  }, [activeCtx?.mcc]);
+
+  const setModeOnWatch = (nextMode: ContinuityMode) => {
+    setActiveMode(nextMode);
+    setScreen(nextMode);
+    if (activeCtx) {
+      const next = writeContinuityContext({
+        clubId: activeCtx.clubId,
+        mode: nextMode,
+        teamId: activeCtx.teamId,
+        mcc: activeCtx.mcc,
+        session: activeCtx.session,
+      });
+      setActiveCtx(next);
+    }
+  };
+
+  const selectSandboxMatch = (matchId: string) => {
+    const id = String(matchId || "").trim();
+    if (!id || !activeCtx) return;
+    setSelectedPromoMatchId(id);
+    const next = writeContinuityContext({
+      clubId: activeCtx.clubId,
+      mode: "match",
+      teamId: activeCtx.teamId,
+      mcc: `SBX_MATCH_${id}`,
+      session: `SBX_${id.slice(-6)}`,
+    });
+    setActiveCtx(next);
+    setActiveMode("match");
+    setScreen("match");
+  };
 
   // DETECCIÓN DE AUTO-LINK (TOKEN EN URL)
   useEffect(() => {
@@ -59,23 +272,26 @@ function SmartwatchContent() {
       setAutoLinking(true);
       setTimeout(() => {
         setIsLinked(true);
-        localStorage.setItem("synq_watch_linked", "true");
-        localStorage.setItem("synq_watch_pairing_code", codeInUrl);
+        writeWatchLinked(true, watchPairingScope);
+        writeWatchPairingCode(codeInUrl, watchPairingScope);
         setAutoLinking(false);
       }, 1500);
     }
-  }, [searchParamsHook, isLinked]);
+  }, [searchParamsHook, isLinked, watchPairingScope]);
 
   // CARGA DE ENTORNO Y ROSTER
   useEffect(() => {
-    const linked = localStorage.getItem("synq_watch_linked") === "true";
+    const linked = readWatchLinked(watchPairingScope);
     setIsLinked(linked);
     setIsOnline(navigator.onLine);
+    ensureWatchPairingCode(watchPairingScope);
 
     const handleConnectivity = () => {
       setIsOnline(navigator.onLine);
       if (navigator.onLine) {
-        synqSync.syncNow();
+        void synqSync.syncNow().catch(() => {
+          // Sync best-effort: no bloquear UX del reloj.
+        });
       }
     };
 
@@ -108,14 +324,134 @@ function SmartwatchContent() {
   }, [profile, isLinked]);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const applyWatchCompact = () => {
+      const minSide = Math.min(window.innerWidth || 0, window.innerHeight || 0);
+      setIsWatchCompact(minSide <= 380);
+    };
+    applyWatchCompact();
+    window.addEventListener("resize", applyWatchCompact);
+    return () => window.removeEventListener("resize", applyWatchCompact);
+  }, []);
+
+  useEffect(() => {
+    timeLeftRef.current = timeLeft;
+  }, [timeLeft]);
+
+  // Guardar un preset de minutos para que el botón reset no vuelva siempre a 45.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mins = readMatchTimerPresetMinutes(45);
+    setPresetMinutes(mins);
+    presetMinutesRef.current = mins;
+    const sec = mins * 60;
+    setTimeLeft(sec);
+    timeLeftRef.current = sec;
+  }, []);
+
+  useEffect(() => {
+    // Si cambia el contexto (timerKey), el estado “last applied” puede pertenecer a otro partido.
+    // Reiniciamos para que el reloj aplique el valor correcto del nuevo scope.
+    lastTimerSyncAppliedRef.current = 0;
+    const p = readMatchTimerSync(timerKey);
+    if (p && shouldApplyRemoteTimer(p, lastTimerSyncAppliedRef.current) && Date.now() - p.updatedAt < 3 * 60 * 60 * 1000) {
+      lastTimerSyncAppliedRef.current = p.updatedAt;
+      setTimeLeft(Math.max(0, p.remainingSec));
+      setIsRunning(Boolean(p.running));
+    }
+
+    const onTimerStorage = (e: StorageEvent) => {
+      if (e.key !== timerKey || !e.newValue) return;
+      try {
+        const remote = JSON.parse(e.newValue) as MatchTimerSyncPayload;
+        if (!shouldApplyRemoteTimer(remote, lastTimerSyncAppliedRef.current)) return;
+        if (Date.now() - remote.updatedAt > 3 * 60 * 60 * 1000) return;
+        lastTimerSyncAppliedRef.current = remote.updatedAt;
+        setTimeLeft(Math.max(0, remote.remainingSec));
+        setIsRunning(remote.running);
+      } catch {
+        /* noop */
+      }
+    };
+    window.addEventListener("storage", onTimerStorage);
+    return () => window.removeEventListener("storage", onTimerStorage);
+  }, [timerKey]);
+
+  useEffect(() => {
+    const p = readMatchScoreSync(scoreKey);
+    if (shouldApplyRemoteScore(p, lastScoreSyncAppliedRef.current) && Date.now() - p.updatedAt < 3 * 60 * 60 * 1000) {
+      lastScoreSyncAppliedRef.current = p.updatedAt;
+      setScore({ home: Math.max(0, p.home), guest: Math.max(0, p.guest) });
+    }
+
+    const onScoreStorage = (e: StorageEvent) => {
+      if (e.key !== scoreKey || !e.newValue) return;
+      try {
+        const remote = JSON.parse(e.newValue) as { home: number; guest: number; updatedAt: number };
+        if (!shouldApplyRemoteScore(remote, lastScoreSyncAppliedRef.current)) return;
+        if (Date.now() - remote.updatedAt > 3 * 60 * 60 * 1000) return;
+        lastScoreSyncAppliedRef.current = remote.updatedAt;
+        setScore({ home: Math.max(0, remote.home), guest: Math.max(0, remote.guest) });
+      } catch {
+        /* noop */
+      }
+    };
+
+    window.addEventListener("storage", onScoreStorage);
+    return () => window.removeEventListener("storage", onScoreStorage);
+  }, [scoreKey]);
+
+  const updateScore = (updater: (prev: { home: number; guest: number }) => { home: number; guest: number }) => {
+    setScore((prev) => {
+      const next = updater(prev);
+      const safe = { home: Math.max(0, next.home), guest: Math.max(0, next.guest) };
+      const now = Date.now();
+      lastScoreSyncAppliedRef.current = now;
+      writeMatchScoreSync({ ...safe, updatedAt: now, origin: "watch" }, scoreKey);
+      return safe;
+    });
+  };
+
+  useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (isRunning) {
+    if (isLinked && isRunning) {
+      lastTickAtRef.current = Date.now();
       interval = setInterval(() => {
-        setTimeLeft((prev) => (prev <= 0 ? 0 : prev - 1));
+        const now = Date.now();
+        const last = lastTickAtRef.current ?? now;
+        const deltaSec = Math.max(0, Math.floor((now - last) / 1000));
+        if (deltaSec <= 0) return;
+        lastTickAtRef.current = last + deltaSec * 1000;
+
+        // Si otra app (pizarra/backoffice) está escribiendo el cronómetro, evitamos "decrementar de nuevo"
+        // sobre un valor que ya ha avanzado en esa misma ventana temporal.
+        const remote = readMatchTimerSync(timerKey);
+        if (remote && remote.updatedAt > last && remote.origin !== "watch") {
+          lastTimerSyncAppliedRef.current = remote.updatedAt;
+          setTimeLeft(Math.max(0, remote.remainingSec));
+          setIsRunning(Boolean(remote.running));
+          return;
+        }
+
+        setTimeLeft((prev) => {
+          const next = Math.max(0, prev - deltaSec);
+          const writeAt = Date.now();
+          lastTimerSyncAppliedRef.current = writeAt;
+          const runningNext = next > 0;
+          writeMatchTimerSync(
+            { remainingSec: next, running: runningNext, updatedAt: writeAt, origin: "watch" },
+            timerKey,
+          );
+          // Como `storage` no llega a la misma pestaña, aseguramos el estado local al llegar a 0.
+          if (!runningNext) queueMicrotask(() => setIsRunning(false));
+          return next;
+        });
       }, 1000);
+    } else {
+      lastTickAtRef.current = null;
     }
     return () => clearInterval(interval);
-  }, [isRunning]);
+  }, [isLinked, isRunning, timerKey]);
 
   const triggerHaptic = (pattern: number | number[]) => {
     if (typeof window !== "undefined" && window.navigator.vibrate) {
@@ -124,11 +460,11 @@ function SmartwatchContent() {
   };
 
   const handlePairingSubmit = () => {
-    const masterCode = localStorage.getItem("synq_watch_pairing_code");
+    const masterCode = ensureWatchPairingCode(watchPairingScope);
     if (pairingInput === masterCode || pairingInput === "123456") {
       triggerHaptic([100, 50, 100]);
       setIsLinked(true);
-      localStorage.setItem("synq_watch_linked", "true");
+      writeWatchLinked(true, watchPairingScope);
     } else {
       triggerHaptic(200);
       setPairingError(true);
@@ -146,13 +482,30 @@ function SmartwatchContent() {
     }
   };
 
-  const handleGoal = (team: 'home' | 'guest') => {
-    setScore(prev => ({ ...prev, [team]: prev[team] + 1 }));
-    triggerHaptic([150, 50, 150]);
+  const handleGoal = (team: 'home' | 'guest', delta = 1) => {
+    updateScore((prev) =>
+      team === "home"
+        ? { home: prev.home + delta, guest: prev.guest }
+        : { home: prev.home, guest: prev.guest + delta },
+    );
+    triggerHaptic(delta > 0 ? [150, 50, 150] : 80);
   };
 
   const toggleClock = () => {
-    setIsRunning(!isRunning);
+    setIsRunning((r) => {
+      const next = !r;
+      queueMicrotask(() => {
+        const now = Date.now();
+        lastTimerSyncAppliedRef.current = now;
+        writeMatchTimerSync({
+          remainingSec: timeLeftRef.current,
+          running: next,
+          updatedAt: now,
+          origin: "watch",
+        }, timerKey);
+      });
+      return next;
+    });
     triggerHaptic(60);
   };
 
@@ -218,11 +571,34 @@ function SmartwatchContent() {
   }
 
   return (
-    <div className="fixed inset-0 bg-background flex items-center justify-center overflow-hidden touch-none select-none p-2">
-      <div className="relative aspect-square w-full max-w-[340px] rounded-[clamp(2rem,20%,50%)] border border-primary/30 bg-card overflow-hidden flex flex-col shadow-[0_0_60px_rgba(0,242,255,0.15)]">
+    <div className={cn("fixed inset-0 bg-background flex items-center justify-center overflow-hidden touch-none select-none", isWatchCompact ? "p-1" : "p-2")}>
+      <div
+        className={cn(
+          "relative rounded-[clamp(2rem,22%,50%)] border border-primary/30 bg-card overflow-hidden flex flex-col shadow-[0_0_60px_rgba(0,242,255,0.15)]",
+          isWatchCompact ? "w-[min(96vw,96dvh,360px)] h-[min(96vw,96dvh,360px)]" : "w-[min(92vw,92dvh,340px)] h-[min(92vw,92dvh,340px)]",
+        )}
+        onTouchStart={(e) => {
+          touchStartXRef.current = e.touches?.[0]?.clientX ?? null;
+        }}
+        onTouchEnd={(e) => {
+          const startX = touchStartXRef.current;
+          const endX = e.changedTouches?.[0]?.clientX ?? null;
+          touchStartXRef.current = null;
+          if (startX == null || endX == null) return;
+          const dx = endX - startX;
+          if (Math.abs(dx) < 45) return;
+          const order: Array<"match" | "training" | "settings"> = ["match", "training", "settings"];
+          const idx = order.indexOf(screen);
+          const nextIdx = dx < 0 ? (idx + 1) % order.length : (idx - 1 + order.length) % order.length;
+          const next = order[nextIdx]!;
+          setScreen(next);
+          if (next === "match") setModeOnWatch("match");
+          if (next === "training") setModeOnWatch("training");
+        }}
+      >
         <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
         
-        <div className="h-14 pt-6 px-10 flex items-center justify-between shrink-0 z-20">
+        <div className={cn("flex items-center justify-between shrink-0 z-20", isWatchCompact ? "h-12 pt-4 px-6" : "h-14 pt-6 px-8")}>
            <div className="flex items-center gap-1.5">
               <Zap className={cn("h-3 w-3 animate-pulse", isClubMode ? "text-primary" : "text-white/40")} />
               <span className={cn("text-[8px] font-black uppercase tracking-[0.2em] italic", isClubMode ? "text-primary" : "text-white/60")}>
@@ -239,38 +615,133 @@ function SmartwatchContent() {
            </div>
         </div>
 
-        <div className="flex-1 relative z-10 flex flex-col items-center px-6 overflow-hidden">
-          {view === 'main' && (
-            <div className="w-full h-full flex flex-col items-center justify-between py-2 animate-in fade-in zoom-in-95">
-              <div className="flex items-center justify-center gap-4 w-full">
-                <button onClick={() => { setIsRunning(false); setTimeLeft(45*60); triggerHaptic(60); }} className="p-2.5 bg-white/5 rounded-full text-white/40 active:bg-rose-500"><RotateCcw className="h-4 w-4" /></button>
+        <div className={cn("flex-1 relative z-10 flex flex-col items-center overflow-hidden", isWatchCompact ? "px-4" : "px-6")}>
+          {screen === "settings" ? (
+            <div className="w-full h-full flex flex-col items-center justify-center gap-3 animate-in fade-in zoom-in-95">
+              <div className="text-center space-y-2">
+                <Settings className="h-7 w-7 text-primary mx-auto" />
+                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/60">Ajustes</p>
+              </div>
+              <div className="w-full space-y-2">
+                <button
+                  className={cn(
+                    "w-full h-12 rounded-2xl border-2 font-black uppercase text-[10px] tracking-widest",
+                    activeMode === "match"
+                      ? "bg-primary text-black border-primary/30"
+                      : "bg-white/5 text-white/60 border-white/10",
+                  )}
+                  onClick={() => setModeOnWatch("match")}
+                >
+                  <Trophy className="h-4 w-4 inline-block mr-2" /> Partido
+                </button>
+                <button
+                  className={cn(
+                    "w-full h-12 rounded-2xl border-2 font-black uppercase text-[10px] tracking-widest",
+                    activeMode === "training"
+                      ? "bg-emerald-500 text-black border-emerald-500/30"
+                      : "bg-white/5 text-white/60 border-white/10",
+                  )}
+                  onClick={() => setModeOnWatch("training")}
+                >
+                  <Dumbbell className="h-4 w-4 inline-block mr-2" /> Entreno
+                </button>
+                {activeMode === "match" && promoMatches.length > 0 ? (
+                  <div className="mt-2 rounded-2xl border border-white/10 bg-white/5 p-2">
+                    <p className="mb-1 text-[8px] font-black uppercase tracking-[0.22em] text-white/50">
+                      Partido sandbox
+                    </p>
+                    <Select value={selectedPromoMatchId} onValueChange={selectSandboxMatch}>
+                      <SelectTrigger className="h-9 rounded-xl border-white/10 bg-black/30 text-[10px] text-white">
+                        <SelectValue placeholder="Seleccionar partido" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#0a0f18] border-primary/20 text-white">
+                        {promoMatches.map((m) => (
+                          <SelectItem key={m.id} value={m.id} className="text-[10px]">
+                            {m.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ) : null}
+              </div>
+              <p className="text-[8px] uppercase font-bold text-white/30 text-center">
+                Desliza para cambiar de pantalla
+              </p>
+            </div>
+          ) : view === 'main' && screen === "match" ? (
+            <div className={cn("w-full h-full flex flex-col items-center justify-between animate-in fade-in zoom-in-95", isWatchCompact ? "py-1" : "py-2")}>
+              {activePromoMatchLabel ? (
+                <div className="w-full rounded-xl border border-primary/20 bg-primary/5 px-2 py-1 mb-1">
+                  <p className="text-[7px] font-black uppercase tracking-[0.2em] text-primary/70 text-center">
+                    Partido activo
+                  </p>
+                  <p className="text-[8px] font-bold text-white/85 text-center truncate">
+                    {activePromoMatchLabel}
+                  </p>
+                </div>
+              ) : null}
+              <div className={cn("flex items-center justify-center w-full", isWatchCompact ? "gap-2.5" : "gap-4")}>
+              <button onClick={() => { setIsRunning(false); const sec = presetMinutesRef.current * 60; setTimeLeft(sec); timeLeftRef.current = sec; const now = Date.now(); lastTimerSyncAppliedRef.current = now; writeMatchTimerSync({ remainingSec: sec, running: false, updatedAt: now, origin: "watch" }, timerKey); triggerHaptic(60); }} className={cn("bg-white/5 rounded-full text-white/40 active:bg-rose-500", isWatchCompact ? "p-3" : "p-2.5")}><RotateCcw className={cn(isWatchCompact ? "h-5 w-5" : "h-4 w-4")} /></button>
                 <div className="flex flex-col items-center cursor-pointer active:scale-95" onClick={toggleClock}>
-                  <span className={cn("text-6xl font-black font-headline tabular-nums tracking-tighter leading-none", timeLeft === 0 ? "text-rose-500 animate-pulse" : "text-primary cyan-text-glow")}>{formatTime(timeLeft)}</span>
+                  <span className={cn("font-black font-headline tabular-nums tracking-tighter leading-none", isWatchCompact ? "text-[3.2rem]" : "text-6xl", timeLeft === 0 ? "text-rose-500 animate-pulse" : "text-primary cyan-text-glow")}>{formatTime(timeLeft)}</span>
                   <div className="flex items-center gap-1.5 mt-1 bg-black/40 px-3 py-0.5 rounded-full border border-white/5">
                      {isRunning ? <Pause className="h-3 w-3 text-primary/60" /> : <Play className="h-3 w-3 text-emerald-400" />}
                      <span className="text-[8px] font-black text-white/40 uppercase">P_01</span>
                   </div>
                 </div>
-                <button onClick={() => setView('config')} className="p-2.5 bg-white/5 rounded-full text-white/40 active:bg-primary"><Settings className="h-4 w-4" /></button>
+                <button onClick={() => setView('config')} className={cn("bg-white/5 rounded-full text-white/40 active:bg-primary", isWatchCompact ? "p-3" : "p-2.5")}><Settings className={cn(isWatchCompact ? "h-5 w-5" : "h-4 w-4")} /></button>
               </div>
 
-              <div className="w-full grid grid-cols-2 gap-2 flex-1 items-stretch mt-3">
-                 <button onClick={() => handleGoal('home')} className="relative bg-primary/5 border-2 border-primary/20 rounded-3xl flex flex-col items-center justify-center active:bg-primary active:text-black group overflow-hidden">
+              <div className={cn("w-full grid grid-cols-2 flex-1 items-stretch", isWatchCompact ? "gap-2 mt-1.5" : "gap-2 mt-3")}>
+                 <button onClick={() => handleGoal('home')} className={cn("relative bg-primary/5 border-2 border-primary/20 rounded-3xl flex flex-col items-center justify-center active:bg-primary active:text-black group overflow-hidden", isWatchCompact && "min-h-[96px]")}>
+                    <span
+                      role="button"
+                      aria-label="Decrementar local"
+                      onClick={(e) => { e.stopPropagation(); handleGoal('home', -1); }}
+                      className="absolute top-2 right-2 h-7 w-7 rounded-full border border-primary/30 bg-black/35 flex items-center justify-center text-primary/80 active:scale-95"
+                    >
+                      <Minus className="h-3.5 w-3.5" />
+                    </span>
                     <span className="text-[8px] font-black text-primary/60 uppercase mb-1">LOC</span>
-                    <span className="text-4xl font-black text-white group-active:text-black">{score.home}</span>
+                    <span className={cn("font-black text-white group-active:text-black", isWatchCompact ? "text-4xl" : "text-4xl")}>{score.home}</span>
                  </button>
-                 <button onClick={() => handleGoal('guest')} className="relative bg-rose-500/5 border-2 border-rose-500/20 rounded-3xl flex flex-col items-center justify-center active:bg-rose-500 group overflow-hidden">
+                 <button onClick={() => handleGoal('guest')} className={cn("relative bg-rose-500/5 border-2 border-rose-500/20 rounded-3xl flex flex-col items-center justify-center active:bg-rose-500 group overflow-hidden", isWatchCompact && "min-h-[96px]")}>
+                    <span
+                      role="button"
+                      aria-label="Decrementar visitante"
+                      onClick={(e) => { e.stopPropagation(); handleGoal('guest', -1); }}
+                      className="absolute top-2 right-2 h-7 w-7 rounded-full border border-rose-500/30 bg-black/35 flex items-center justify-center text-rose-300/90 active:scale-95"
+                    >
+                      <Minus className="h-3.5 w-3.5" />
+                    </span>
                     <span className="text-[8px] font-black text-rose-400/60 uppercase mb-1">VIS</span>
-                    <span className="text-4xl font-black text-white group-active:text-white">{score.guest}</span>
+                    <span className={cn("font-black text-white group-active:text-white", isWatchCompact ? "text-4xl" : "text-4xl")}>{score.guest}</span>
                  </button>
               </div>
 
-              <button onClick={() => { setView('subs_out'); triggerHaptic(40); }} className="w-full h-12 mt-2 bg-white/5 border-2 border-white/10 rounded-[2rem] flex items-center justify-center gap-3 active:bg-white/20 shrink-0">
+              <button onClick={() => { setView('subs_out'); triggerHaptic(40); }} className={cn("w-full mt-0 bg-white/5 border-2 border-white/10 rounded-[2rem] flex items-center justify-center gap-2 active:bg-white/20 shrink-0", isWatchCompact ? "h-10 mb-2.5" : "h-12")}>
                 <Users className="h-4 w-4 text-primary" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-white">SUSTITUCIÓN</span>
+                <span className={cn("font-black uppercase tracking-widest text-white", isWatchCompact ? "text-[8px]" : "text-[10px]")}>SUSTITUCIÓN</span>
               </button>
             </div>
-          )}
+          ) : screen === "training" ? (
+            <div className="w-full h-full flex flex-col items-center justify-center animate-in fade-in zoom-in-95">
+              <div className="text-center space-y-2">
+                <Dumbbell className="h-8 w-8 text-emerald-400 mx-auto" />
+                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/60">Entreno</p>
+                <p className="text-[8px] uppercase font-bold text-white/30">
+                  (UI específica se ampliará)\nDesliza para Ajustes
+                </p>
+              </div>
+              <button
+                onClick={() => setView('config')}
+                className="mt-4 h-12 w-full rounded-2xl border-2 border-white/10 bg-white/5 text-white/70 font-black uppercase text-[10px] tracking-widest"
+              >
+                <Settings className="h-4 w-4 inline-block mr-2" /> Config
+              </button>
+            </div>
+          ) : null}
 
           {view === 'subs_out' && (
             <div className="w-full h-full flex flex-col animate-in slide-in-from-bottom-6">
@@ -316,7 +787,7 @@ function SmartwatchContent() {
                   <div className="w-8" />
                </div>
                <div className="flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden space-y-2 pb-10 px-2">
-                  <button onClick={() => { setScore({home:0, guest:0}); setView('main'); triggerHaptic([100,50,100]); }} className="w-full p-4 bg-rose-500/10 border-2 border-rose-500/20 rounded-2xl flex items-center justify-between group active:bg-rose-500">
+                  <button onClick={() => { updateScore(() => ({home:0, guest:0})); setView('main'); triggerHaptic([100,50,100]); }} className="w-full p-4 bg-rose-500/10 border-2 border-rose-500/20 rounded-2xl flex items-center justify-between group active:bg-rose-500">
                      <span className="text-[10px] font-black uppercase italic group-active:text-white">RESET MARCADOR</span>
                      <RotateCcw className="h-4 w-4 text-rose-500 group-active:text-white" />
                   </button>
@@ -332,10 +803,10 @@ function SmartwatchContent() {
           )}
         </div>
 
-        <div className="h-12 pb-6 flex items-center justify-center shrink-0 z-20">
-           <div className="flex items-center gap-2 px-4 py-1 bg-black/40 rounded-full border border-white/5">
+        <div className={cn("flex items-center justify-center shrink-0 z-20", isWatchCompact ? "h-7 pb-1.5" : "h-12 pb-6", isWatchCompact && view === "main" && "hidden")}>
+           <div className={cn("flex items-center gap-2 bg-black/40 rounded-full border border-white/5", isWatchCompact ? "px-2.5 py-0.5" : "px-4 py-1")}>
               <ShieldCheck className={cn("h-2.5 w-2.5 animate-pulse", isOnline ? "text-emerald-400" : "text-rose-500")} />
-              <span className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em]">
+              <span className={cn("font-black text-white/30 uppercase tracking-[0.2em]", isWatchCompact ? "text-[7px]" : "text-[8px]")}>
                 {isOnline ? 'SINCRO_CLOUD' : 'MODO_LOCAL'}
               </span>
            </div>

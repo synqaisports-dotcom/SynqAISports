@@ -32,6 +32,12 @@ const MAX_MAIN = 12;
 const MAX_COOLDOWN = 4;
 const TOTAL_MAX = 20;
 
+function resolveSandboxAppBasePath(): "/sandbox/app" | "/dashboard/promo" {
+  if (typeof window === "undefined") return "/dashboard/promo";
+  const p = window.location.pathname || "";
+  return p.startsWith("/sandbox/app") ? "/sandbox/app" : "/dashboard/promo";
+}
+
 /**
  * Componente de renderizado de miniatura táctica.
  * Replica de forma simplificada la lógica de dibujo de la pizarra.
@@ -247,9 +253,10 @@ export default function PromoTasksPage() {
 }
 
 function TaskSlot({ task, onDelete, type }: { task?: any, onDelete: (id: number) => void, type: string }) {
+  const basePath = resolveSandboxAppBasePath();
   if (!task) {
     return (
-      <Link href="/board/promo" className="aspect-video bg-black/40 border-2 border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center gap-3 group hover:border-primary/20 hover:bg-primary/5 transition-all">
+      <Link href={`${basePath}/board/promo`} className="aspect-video bg-black/40 border-2 border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center gap-3 group hover:border-primary/20 hover:bg-primary/5 transition-all">
         <Plus className="h-5 w-5 text-white/10 group-hover:text-primary/40 transition-colors" />
         <span className="text-[8px] font-black text-white/10 uppercase tracking-widest group-hover:text-primary/40">Slot Disponible</span>
       </Link>
@@ -267,12 +274,12 @@ function TaskSlot({ task, onDelete, type }: { task?: any, onDelete: (id: number)
 
       <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all z-20">
          <Button variant="ghost" size="icon" className="h-7 w-7 bg-black/60 backdrop-blur-md rounded-lg flex items-center justify-center text-white/40 hover:text-primary" asChild>
-            <Link href={`/board/promo?id=${task.id}`}><Monitor className="h-3.5 w-3.5" /></Link>
+            <Link href={`${basePath}/board/promo?id=${task.id}`}><Monitor className="h-3.5 w-3.5" /></Link>
          </Button>
          <button onClick={() => onDelete(task.id)} className="h-7 w-7 bg-black/60 backdrop-blur-md rounded-lg flex items-center justify-center text-rose-500/40 hover:text-rose-500 transition-colors"><Trash2 className="h-3.5 w-3.5" /></button>
       </div>
 
-      <Link href={`/board/promo?id=${task.id}`} className="absolute inset-0 z-10 flex flex-col items-center justify-center p-4">
+      <Link href={`${basePath}/board/promo?id=${task.id}`} className="absolute inset-0 z-10 flex flex-col items-center justify-center p-4">
          <p className="text-[9px] font-black text-white uppercase text-center truncate w-full px-2 mt-auto group-hover:cyan-text-glow transition-all">EJERCICIO_{task.id.toString().slice(-4)}</p>
       </Link>
 

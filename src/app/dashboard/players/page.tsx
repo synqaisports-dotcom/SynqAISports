@@ -53,9 +53,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/lib/auth-context";
+import { useClubModulePermissions } from "@/hooks/use-club-module-permissions";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { canUseOperativaSupabase } from "@/lib/operativa-sync";
 import Image from "next/image";
 
 const CATEGORIES = [
@@ -105,23 +113,137 @@ const INITIAL_PLAYERS = [
 ];
 
 export default function PlayersManagementPage() {
-  const { profile } = useAuth();
+  const { profile, session } = useAuth();
   const { toast } = useToast();
+  const { canEdit: canEditPlayers, canDelete: canDeletePlayers } = useClubModulePermissions("players");
   const [players, setPlayers] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const clubScopeId = profile?.clubId ?? "global-hq";
+  const playersStorageKey = `synq_players_v1_${clubScopeId}`;
+  const canUseRemote = canUseOperativaSupabase(clubScopeId) && !!session?.access_token;
+  const [syncMode, setSyncMode] = useState<"remote" | "local" | "restricted" | "local_error">("local");
 
   useEffect(() => {
-    const saved = localStorage.getItem("synq_players");
-    if (saved) {
-      setPlayers(JSON.parse(saved));
-    } else {
-      setPlayers(INITIAL_PLAYERS);
-      localStorage.setItem("synq_players", JSON.stringify(INITIAL_PLAYERS));
+    let cancelled = false;
+    if (typeof window === "undefined") return;
+
+    const persistLocal = (next: any[]) => {
+      try {
+        localStorage.setItem(playersStorageKey, JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+    };
+
+    const load = async () => {
+      // 1) Load local scoped cache first (and migrate from legacy global key if needed).
+      try {
+        const rawScoped = localStorage.getItem(playersStorageKey);
+        if (rawScoped) {
+          const parsed = JSON.parse(rawScoped);
+          if (Array.isArray(parsed) && !cancelled) setPlayers(parsed);
+        } else {
+          const legacy = localStorage.getItem("synq_players");
+          if (legacy) {
+            const parsedLegacy = JSON.parse(legacy);
+            if (Array.isArray(parsedLegacy)) {
+              if (!cancelled) setPlayers(parsedLegacy);
+              persistLocal(parsedLegacy);
+            }
+          } else {
+            if (!cancelled) setPlayers(INITIAL_PLAYERS);
+            persistLocal(INITIAL_PLAYERS as any);
+          }
+        }
+      } catch {
+        // ignore
+      }
+
+      // 2) Try remote source.
+      if (!canUseRemote || !session?.access_token) {
+        if (!cancelled) setSyncMode("local");
+        return;
+      }
+      try {
+        const res = await fetch("/api/club/players", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (res.status === 403) {
+          if (!cancelled) setSyncMode("restricted");
+          return;
+        }
+        if (res.status === 404) {
+          if (!cancelled) setSyncMode("local");
+          return;
+        }
+        if (!res.ok) {
+          if (!cancelled) setSyncMode("local_error");
+          return;
+        }
+        const json = (await res.json()) as { payload?: { players?: unknown[] } };
+        const remotePlayers = Array.isArray(json?.payload?.players) ? (json.payload!.players as any[]) : [];
+        if (!cancelled) {
+          setPlayers(remotePlayers);
+          setSyncMode("remote");
+        }
+        persistLocal(remotePlayers);
+      } catch {
+        if (!cancelled) setSyncMode("local_error");
+      }
+    };
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playersStorageKey, canUseRemote, session?.access_token]);
+
+  const persistPlayersHybrid = async (next: any[]) => {
+    try {
+      localStorage.setItem(playersStorageKey, JSON.stringify(next));
+    } catch {
+      // ignore
     }
-  }, []);
+
+    if (!canUseRemote || !session?.access_token) {
+      setSyncMode("local");
+      return;
+    }
+    try {
+      const res = await fetch("/api/club/players", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ payload: { players: next } }),
+      });
+      if (res.status === 403) {
+        setSyncMode("restricted");
+        toast({
+          variant: "destructive",
+          title: "PERMISOS_LIMITADOS",
+          description: "Sin permisos para guardar jugadores en servidor. Se guardó localmente.",
+        });
+        return;
+      }
+      if (res.status === 404) {
+        setSyncMode("local");
+        return;
+      }
+      if (!res.ok) {
+        setSyncMode("local_error");
+        return;
+      }
+      setSyncMode("remote");
+    } catch {
+      setSyncMode("local_error");
+    }
+  };
 
   const [formData, setFormData] = useState({
     name: "",
@@ -144,6 +266,14 @@ export default function PlayersManagementPage() {
   });
 
   const handleOpenCreate = () => {
+    if (!canEditPlayers) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes permiso de edición en Gestión de Jugadores.",
+      });
+      return;
+    }
     setEditingId(null);
     setFormData({ 
       name: "", 
@@ -168,6 +298,14 @@ export default function PlayersManagementPage() {
   };
 
   const handleEdit = (player: any) => {
+    if (!canEditPlayers) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes permiso de edición en Gestión de Jugadores.",
+      });
+      return;
+    }
     setEditingId(player.id);
     setFormData({
       name: player.name,
@@ -201,9 +339,17 @@ export default function PlayersManagementPage() {
   };
 
   const handleDelete = (id: string, name: string) => {
+    if (!canDeletePlayers) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes permiso de borrado en Gestión de Jugadores.",
+      });
+      return;
+    }
     const nextPlayers = players.filter(p => p.id !== id);
     setPlayers(nextPlayers);
-    localStorage.setItem("synq_players", JSON.stringify(nextPlayers));
+    void persistPlayersHybrid(nextPlayers);
     toast({
       variant: "destructive",
       title: "ATLETA_DESVINCULADO",
@@ -213,14 +359,44 @@ export default function PlayersManagementPage() {
 
   const handleSavePlayer = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.tutorEmail) {
+
+    if (!canEditPlayers) {
       toast({
         variant: "destructive",
-        title: "ERROR_CEPO_DATOS",
-        description: "El Vínculo de Tutor (Email) es obligatorio para garantizar el inventario de red.",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes permiso de edición en Gestión de Jugadores.",
       });
       return;
+    }
+    
+    if (formData.isMinor) {
+      const missingTutor =
+        !String(formData.tutorEmail || "").trim() ||
+        !String(formData.tutorName || "").trim() ||
+        !String(formData.tutorSurname || "").trim() ||
+        !String(formData.tutorPhone || "").trim();
+      if (missingTutor) {
+        toast({
+          variant: "destructive",
+          title: "ERROR_CEPO_DATOS",
+          description: "Si el atleta es menor, el vínculo de Tutor (nombre, apellidos, teléfono y email) es obligatorio.",
+        });
+        return;
+      }
+    } else {
+      // Si se aporta cualquier campo del tutor, exigimos el email como ancla.
+      const anyTutor =
+        !!String(formData.tutorName || "").trim() ||
+        !!String(formData.tutorSurname || "").trim() ||
+        !!String(formData.tutorPhone || "").trim();
+      if (anyTutor && !String(formData.tutorEmail || "").trim()) {
+        toast({
+          variant: "destructive",
+          title: "TUTOR_EMAIL_REQUERIDO",
+          description: "Si rellenas datos del tutor, el email del tutor es obligatorio.",
+        });
+        return;
+      }
     }
 
     setLoading(true);
@@ -244,7 +420,7 @@ export default function PlayersManagementPage() {
         toast({ title: "ATLETA_REGISTRADO", description: `${formData.name} ya forma parte de la red.` });
       }
       setPlayers(nextPlayers);
-      localStorage.setItem("synq_players", JSON.stringify(nextPlayers));
+      void persistPlayersHybrid(nextPlayers);
       setLoading(false);
       setIsSheetOpen(false);
     }, 1000);
@@ -269,7 +445,7 @@ export default function PlayersManagementPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
-      <div className="flex justify-between items-end border-b border-white/5 pb-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-end border-b border-white/5 pb-6">
         <div className="space-y-1">
           <div className="flex items-center gap-3 mb-2">
             <Users className="h-5 w-5 text-primary animate-pulse" />
@@ -278,11 +454,32 @@ export default function PlayersManagementPage() {
           <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic cyan-text-glow">
             Gestión de Jugadores
           </h1>
+          <p
+            className={cn(
+              "text-[9px] font-black uppercase tracking-widest mt-1",
+              syncMode === "remote"
+                ? "text-emerald-400/80"
+                : syncMode === "restricted"
+                ? "text-amber-400/80"
+                : syncMode === "local_error"
+                ? "text-rose-400/80"
+                : "text-white/40",
+            )}
+          >
+            {syncMode === "remote"
+              ? "SINCRO_REMOTA_ACTIVA"
+              : syncMode === "restricted"
+              ? "MODO_LOCAL_POR_PERMISOS"
+              : syncMode === "local_error"
+              ? "MODO_LOCAL_POR_ERROR"
+              : "MODO_LOCAL_FALLBACK"}
+          </p>
         </div>
         
         <Button 
           onClick={handleOpenCreate}
-          className="rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 active:scale-95 transition-all border-none"
+          disabled={!canEditPlayers}
+          className="w-full sm:w-auto rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 active:scale-95 transition-all border-none disabled:opacity-40"
         >
           <UserPlus className="h-4 w-4 mr-2" /> Nueva Inscripción
         </Button>
@@ -404,6 +601,7 @@ export default function PlayersManagementPage() {
                             size="icon" 
                             className="h-9 w-9 text-primary hover:bg-primary/10 border border-primary/10 transition-all active:scale-90 rounded-xl"
                             onClick={() => handleEdit(player)}
+                            disabled={!canEditPlayers}
                             title="Modificar Atleta"
                           >
                             <Pencil className="h-4 w-4" />
@@ -413,6 +611,7 @@ export default function PlayersManagementPage() {
                             size="icon" 
                             className="h-9 w-9 text-rose-500 hover:bg-rose-500/10 border border-rose-500/10 transition-all active:scale-90 rounded-xl"
                             onClick={() => handleDelete(player.id, player.name)}
+                            disabled={!canDeletePlayers}
                             title="Desvincular Atleta"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -433,8 +632,8 @@ export default function PlayersManagementPage() {
       </Card>
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
-          <div className="p-10 border-b border-white/5 bg-black/40">
+        <SheetContent side="right" className="z-[70] bg-background/95 bg-grid-pattern backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+          <div className="sticky top-0 z-20 p-10 border-b border-white/5 bg-background/90 backdrop-blur-md">
             <SheetHeader className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
@@ -449,7 +648,7 @@ export default function PlayersManagementPage() {
             </SheetHeader>
           </div>
 
-          <form onSubmit={handleSavePlayer} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10">
+          <form onSubmit={handleSavePlayer} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10 bg-background/70">
             <div className="space-y-4">
               <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Identidad Visual</Label>
               <div className="flex flex-col items-center justify-center p-8 bg-primary/5 rounded-3xl relative overflow-hidden">
@@ -537,7 +736,6 @@ export default function PlayersManagementPage() {
                 <div className="relative">
                   <Mail className="absolute left-4 top-3.5 h-4 w-4 text-primary/40" />
                   <Input 
-                    required
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
@@ -547,11 +745,11 @@ export default function PlayersManagementPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Fecha Nacimiento</Label>
                   <div className="relative">
-                    <Calendar className="absolute left-3 top-3.5 h-4 w-4 text-primary/40" />
+                    <Calendar className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/40" />
                     <Input 
                       required
                       type="date"
@@ -564,7 +762,7 @@ export default function PlayersManagementPage() {
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Fecha Alta Club</Label>
                   <div className="relative">
-                    <Clock className="absolute left-3 top-3.5 h-4 w-4 text-primary/40" />
+                    <Clock className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/40" />
                     <Input 
                       required
                       type="date"
@@ -667,7 +865,6 @@ export default function PlayersManagementPage() {
                   <div className="space-y-2">
                     <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Nombre Tutor</Label>
                     <Input 
-                      required
                       value={formData.tutorName}
                       onChange={(e) => setFormData({...formData, tutorName: e.target.value.toUpperCase()})}
                       placeholder="EJ: MARÍA" 
@@ -677,7 +874,6 @@ export default function PlayersManagementPage() {
                   <div className="space-y-2">
                     <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Apellidos Tutor</Label>
                     <Input 
-                      required
                       value={formData.tutorSurname}
                       onChange={(e) => setFormData({...formData, tutorSurname: e.target.value.toUpperCase()})}
                       placeholder="EJ: LÓPEZ" 
@@ -691,7 +887,6 @@ export default function PlayersManagementPage() {
                   <div className="relative">
                     <Mail className="absolute left-3 top-3.5 h-4 w-4 text-primary/40" />
                     <Input 
-                      required
                       type="email"
                       value={formData.tutorEmail}
                       onChange={(e) => setFormData({...formData, tutorEmail: e.target.value})}
@@ -705,7 +900,6 @@ export default function PlayersManagementPage() {
                   <div className="relative">
                     <Phone className="absolute left-3 top-3.5 h-4 w-4 text-primary/40" />
                     <Input 
-                      required
                       value={formData.tutorPhone}
                       onChange={(e) => setFormData({...formData, tutorPhone: e.target.value})}
                       placeholder="600 000 000" 
@@ -739,7 +933,7 @@ export default function PlayersManagementPage() {
             </div>
           </form>
 
-          <div className="p-10 bg-black/40 border-t border-white/5 flex gap-4">
+          <div className="pt-2 flex gap-4">
             <SheetClose asChild>
               <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary/60 font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 transition-all active:scale-95 rounded-2xl">
                 CANCELAR
@@ -747,7 +941,7 @@ export default function PlayersManagementPage() {
             </SheetClose>
             <Button 
               onClick={handleSavePlayer}
-              disabled={loading}
+              disabled={loading || !canEditPlayers}
               className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] active:scale-95 transition-all border-none"
             >
               {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (editingId ? "SINCRONIZAR_FICHA" : "VINCULAR_ATLETA")}

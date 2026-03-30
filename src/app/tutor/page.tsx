@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { readPlayersLocalAcrossClubs } from "@/lib/player-storage";
 
-const ADMIN_EMAILS = ['munozmartinez.ismael@gmail.com', 'synqaisports@gmail.com'];
+const ADMIN_EMAILS = ['munozmartinez.ismael@gmail.com', 'synqaisports@gmail.com', 'admin@synqai.sports'];
 
 /**
  * Pantalla de Acceso Tutor Evolucionada - v2.0.0
@@ -40,7 +41,7 @@ export default function TutorLoginPage() {
     setTimeout(() => {
       const emailLower = email.toLowerCase();
       const isRootAdmin = ADMIN_EMAILS.includes(emailLower);
-      const savedPlayers = JSON.parse(localStorage.getItem("synq_players") || "[]");
+      const savedPlayers = readPlayersLocalAcrossClubs();
       
       const foundMatch = savedPlayers.some((p: any) => 
         p.tutorEmail?.toLowerCase() === emailLower

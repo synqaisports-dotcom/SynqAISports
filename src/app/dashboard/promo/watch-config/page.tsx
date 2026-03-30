@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { ensureWatchPairingCode } from "@/lib/watch-pairing";
 import { 
   Smartphone, 
   Watch, 
@@ -46,6 +47,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { QRCodeCanvas } from "qrcode.react";
+import { BoardPerformanceSettingsCard } from "@/components/board/BoardPerformanceSettingsCard";
 
 export default function SandboxWatchConfigPage() {
   const { toast } = useToast();
@@ -53,12 +55,7 @@ export default function SandboxWatchConfigPage() {
   const [pairingCode, setPairingCode] = useState("");
 
   useEffect(() => {
-    let code = localStorage.getItem("synq_watch_pairing_code");
-    if (!code) {
-      code = Math.floor(100000 + Math.random() * 900000).toString();
-      localStorage.setItem("synq_watch_pairing_code", code);
-    }
-    setPairingCode(code);
+    setPairingCode(ensureWatchPairingCode({ clubId: "sandbox", mode: "sandbox" }));
   }, []);
 
   // ESTADO DE CONFIGURACIÓN LOCAL
@@ -192,6 +189,8 @@ export default function SandboxWatchConfigPage() {
                </div>
             </div>
           </Card>
+
+          <BoardPerformanceSettingsCard />
 
           <Card className="glass-panel border-primary/20 bg-primary/5 p-8 rounded-[2.5rem] relative overflow-hidden group">
              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-all"><Zap className="h-32 w-32 text-primary" /></div>

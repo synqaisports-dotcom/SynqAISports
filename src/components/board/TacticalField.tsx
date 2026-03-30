@@ -144,7 +144,7 @@ export function TacticalField({
           </div>
         )}
 
-        <div className="absolute top-24 left-6 flex items-center gap-2 bg-black/40 border border-white/10 px-3 py-1 rounded-xl z-50 scale-[0.8] origin-top-left">
+        <div className="absolute top-[4.25rem] sm:top-24 md:top-28 left-3 sm:left-6 flex items-center gap-2 bg-black/40 border border-white/10 px-2 sm:px-3 py-1 rounded-xl z-50 scale-[0.85] sm:scale-100 origin-top-left max-w-[min(12rem,calc(100vw-6rem))]">
           <div className={cn("h-1.5 w-1.5 rounded-full animate-pulse", theme === "cyan" ? "bg-primary" : "bg-amber-500")} />
           <span className="text-[8px] font-black text-white/60 uppercase tracking-widest italic">
             {isHalfField ? 'FULL_SCREEN_HALF_FIELD' : `${fieldType.toUpperCase()}_FULL_IMMERSION`}

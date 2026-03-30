@@ -5,8 +5,9 @@ import { DashboardSidebar } from "@/components/dashboard/Sidebar";
 import { Loader2, ChevronsRight, ChevronLeft, ShieldAlert, LogOut, Zap, Menu } from "lucide-react";
 import { SidebarProvider, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { useRouter } from "next/navigation";
-import { useEffect, use } from "react";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { ClubAccessMatrixProvider } from "@/contexts/club-access-matrix-context";
 
 function GlobalMobileHeader() {
   return (
@@ -48,8 +49,7 @@ function GlobalTabTrigger() {
   );
 }
 
-export default function AdminGlobalLayout(props: { children: React.ReactNode; params: Promise<any> }) {
-  const params = use(props.params);
+export default function AdminGlobalLayout(props: { children: React.ReactNode }) {
   const children = props.children;
   const { profile, loading, logout } = useAuth();
   const router = useRouter();
@@ -94,21 +94,23 @@ export default function AdminGlobalLayout(props: { children: React.ReactNode; pa
   }
 
   return (
-    <SidebarProvider defaultOpen={true}>
-      <div className="min-h-screen bg-background flex admin-global-theme w-full relative">
-        <DashboardSidebar />
-        
-        <GlobalTabTrigger />
-        <GlobalMobileHeader />
+    <ClubAccessMatrixProvider>
+      <SidebarProvider defaultOpen={true}>
+        <div className="min-h-screen bg-background flex admin-global-theme w-full relative">
+          <DashboardSidebar />
 
-        <main className="flex-1 p-8 lg:p-12 overflow-y-auto relative custom-scrollbar">
-          <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
-          
-          <div className="max-w-[1600px] mx-auto relative z-10 pt-16 lg:pt-0 animate-in fade-in slide-in-from-bottom-2 duration-700">
-            {children}
-          </div>
-        </main>
-      </div>
-    </SidebarProvider>
+          <GlobalTabTrigger />
+          <GlobalMobileHeader />
+
+          <main className="flex-1 p-8 lg:p-12 overflow-y-auto relative custom-scrollbar">
+            <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
+
+            <div className="max-w-[1600px] mx-auto relative z-10 pt-16 lg:pt-0 animate-in fade-in slide-in-from-bottom-2 duration-700">
+              {children}
+            </div>
+          </main>
+        </div>
+      </SidebarProvider>
+    </ClubAccessMatrixProvider>
   );
 }

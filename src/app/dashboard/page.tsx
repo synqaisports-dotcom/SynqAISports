@@ -28,6 +28,8 @@ import {
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
+import { useOperativaSync } from "@/hooks/use-operativa-sync";
+import { readPlayersLocal } from "@/lib/player-storage";
 
 /**
  * Dashboard Maestro - v10.1.0
@@ -36,24 +38,167 @@ import { useState, useEffect } from "react";
  */
 export default function DashboardPage() {
   const { profile } = useAuth();
+  const clubScopeId = profile?.clubId ?? "global";
+  const { loadSnapshot } = useOperativaSync(clubScopeId);
+  const [kpis, setKpis] = useState({
+    athletes: 0,
+    attendanceRate: 0,
+    pendingRequests: 0,
+    sessionsPlanned: 0,
+  });
+  const [recentSessions, setRecentSessions] = useState<
+    Array<{ id: string; time: string; category: string; focus: string; location: string; status: "ready" | "pending" }>
+  >([]);
+  const [weeklyPulse, setWeeklyPulse] = useState<Array<{ label: string; sessions: number; attendance: number }>>([]);
+  const [isPulseDemo, setIsPulseDemo] = useState(false);
 
   if (!profile) return null;
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const loadDashboardOperativa = async () => {
+      const players = readPlayersLocal(clubScopeId);
+
+      const localPlannerRaw = localStorage.getItem(`synq_methodology_session_planner_v1_${clubScopeId}`);
+      const localPlanner = (() => {
+        try {
+          return JSON.parse(localPlannerRaw || "{}") as {
+            assignments?: Array<{
+              id?: string;
+              teamId?: string;
+              mcc?: string;
+              session?: string;
+              blockKey?: "warmup" | "central" | "cooldown";
+              exerciseTitle?: string;
+              updatedAt?: string;
+            }>;
+            changeRequests?: Array<{ status?: string }>;
+            attendance?: Record<string, Record<string, string>>;
+          };
+        } catch {
+          return {};
+        }
+      })();
+
+      const remote = await loadSnapshot();
+      const assignments =
+        remote.assignments.length > 0
+          ? remote.assignments
+          : Array.isArray(localPlanner.assignments)
+            ? localPlanner.assignments
+            : [];
+      const requests =
+        remote.requests.length > 0
+          ? remote.requests
+          : Array.isArray(localPlanner.changeRequests)
+            ? localPlanner.changeRequests
+            : [];
+      const attendance =
+        Object.keys(remote.attendance).length > 0
+          ? remote.attendance
+          : (localPlanner.attendance ?? {});
+
+      let present = 0;
+      let total = 0;
+      Object.values(attendance).forEach((sessionMap) => {
+        Object.values(sessionMap || {}).forEach((v) => {
+          total += 1;
+          if (String(v).toLowerCase() === "present") present += 1;
+        });
+      });
+      const attendanceRate = total > 0 ? Math.round((present / total) * 100) : 0;
+      const pendingRequests = requests.filter((r) => String(r?.status ?? "").toLowerCase() === "pending").length;
+      const sessionsPlanned = new Set(
+        assignments.map((a) => `${String(a.teamId)}_${String(a.mcc)}_${String(a.session)}`),
+      ).size;
+
+      const top = assignments
+        .slice()
+        .sort((a, b) => String(b.updatedAt ?? "").localeCompare(String(a.updatedAt ?? "")))
+        .slice(0, 3)
+        .map((a, idx) => ({
+          id: String(a.id ?? `item-${idx}`),
+          time: `SES_${String(a.session ?? "1")}`,
+          category: String(a.teamId ?? "Equipo"),
+          focus: String(a.exerciseTitle ?? "Bloque metodológico"),
+          location: String(a.blockKey ?? "central").toUpperCase(),
+          status: String((a as { status?: string }).status ?? "").toLowerCase() === "pending" ? "pending" : "ready",
+        })) as Array<{ id: string; time: string; category: string; focus: string; location: string; status: "ready" | "pending" }>;
+
+      setKpis({
+        athletes: players.length,
+        attendanceRate,
+        pendingRequests,
+        sessionsPlanned,
+      });
+      setRecentSessions(top);
+
+      const attendanceByMcc = new Map<string, { present: number; total: number }>();
+      Object.entries(attendance).forEach(([key, playersMap]) => {
+        const parts = key.split("_");
+        const mcc = parts.length >= 3 ? `${parts[parts.length - 3]}_${parts[parts.length - 2]}` : "MCC";
+        const agg = attendanceByMcc.get(mcc) ?? { present: 0, total: 0 };
+        Object.values(playersMap || {}).forEach((v) => {
+          agg.total += 1;
+          if (String(v).toLowerCase() === "present") agg.present += 1;
+        });
+        attendanceByMcc.set(mcc, agg);
+      });
+
+      const sessionsByMcc = new Map<string, number>();
+      assignments.forEach((a) => {
+        const mcc = String(a.mcc ?? "MCC");
+        sessionsByMcc.set(mcc, (sessionsByMcc.get(mcc) ?? 0) + 1);
+      });
+
+      const allMcc = Array.from(new Set([...sessionsByMcc.keys(), ...attendanceByMcc.keys()]))
+        .sort((a, b) => a.localeCompare(b))
+        .slice(-8);
+
+      const pulse = allMcc.map((mcc) => {
+        const att = attendanceByMcc.get(mcc) ?? { present: 0, total: 0 };
+        const attendancePct = att.total > 0 ? Math.round((att.present / att.total) * 100) : 0;
+        return {
+          label: mcc,
+          sessions: sessionsByMcc.get(mcc) ?? 0,
+          attendance: attendancePct,
+        };
+      });
+      if (pulse.length > 0) {
+        setWeeklyPulse(pulse);
+        setIsPulseDemo(false);
+      } else {
+        setWeeklyPulse([
+          { label: "OCT_W1", sessions: 6, attendance: 78 },
+          { label: "OCT_W2", sessions: 7, attendance: 72 },
+          { label: "OCT_W3", sessions: 5, attendance: 69 },
+          { label: "OCT_W4", sessions: 8, attendance: 81 },
+          { label: "NOV_W1", sessions: 6, attendance: 74 },
+          { label: "NOV_W2", sessions: 9, attendance: 84 },
+        ]);
+        setIsPulseDemo(true);
+      }
+    };
+
+    void loadDashboardOperativa();
+  }, [clubScopeId, loadSnapshot]);
+
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
-      {/* HEADER TÁCTICO LIMPIO */}
+      {/* HEADER DASHBOARD */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-white/5 pb-8">
         <div className="space-y-2">
+          <p className="text-[10px] uppercase font-black tracking-widest text-primary/50">Home</p>
           <div className="flex items-center gap-3">
             <Heart className="h-4 w-4 text-primary animate-pulse" />
             <span className="text-[10px] font-black text-primary tracking-[0.5em] uppercase italic">
               Control de Cantera: {profile.clubName || "MODO_SANDBOX"}
             </span>
           </div>
-          <h1 className="text-5xl font-headline font-black text-white italic tracking-tighter uppercase cyan-text-glow leading-none">
-            ACADEMY_CONTROL
+          <h1 className="text-4xl md:text-5xl font-headline font-black text-white italic tracking-tighter uppercase cyan-text-glow leading-none">
+            Dashboard_Operativa
           </h1>
-          <p className="text-[10px] font-black text-primary/60 tracking-[0.2em] uppercase">Optimización Multideporte y Formación Base</p>
+          <p className="text-[10px] font-black text-primary/60 tracking-[0.2em] uppercase">Vista ejecutiva semanal</p>
         </div>
         
         <div className="flex items-center gap-4">
@@ -67,31 +212,87 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <OperationalMetricCard 
           title="Atletas Totales" 
-          value="142" 
+          value={String(kpis.athletes)} 
           icon={Users} 
           desc="Niños/as en Formación"
-          trend="+12 este mes"
+          trend="Roster operativo"
         />
         <OperationalMetricCard 
-          title="Staff Técnico" 
-          value="12" 
+          title="Solicitudes Pend." 
+          value={String(kpis.pendingRequests)} 
           icon={UserCog} 
-          desc="Monitores y Coordinadores"
+          desc="Pendientes de validación"
         />
         <OperationalMetricCard 
-          title="Sesiones Mes" 
-          value="48" 
+          title="Sesiones Planif." 
+          value={String(kpis.sessionsPlanned)} 
           icon={Calendar} 
-          desc="Entrenamientos Realizados"
-          trend="85% asistencia media"
+          desc="Microciclos activos"
+          trend="Operativa viva"
         />
         <OperationalMetricCard 
-          title="Índice Formativo" 
-          value="+24%" 
+          title="Asistencia Media" 
+          value={`${kpis.attendanceRate}%`} 
           icon={TrendingUp} 
-          desc="Progreso Metodológico"
+          desc="Estado semanal de presencia"
           highlight
         />
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <Card className="glass-panel xl:col-span-2 rounded-3xl border border-primary/20 bg-slate-950/80 overflow-hidden">
+          <CardHeader className="p-6 border-b border-white/5">
+            <CardTitle className="text-sm font-black uppercase tracking-widest text-primary flex items-center gap-2">
+              <Zap className="h-4 w-4 text-primary" /> Rendimiento
+              {isPulseDemo && (
+                <Badge variant="outline" className="border-amber-500/30 text-amber-300 text-[9px] font-black uppercase">
+                  Demo_Local
+                </Badge>
+              )}
+            </CardTitle>
+            <CardDescription className="text-[10px] text-primary/40 uppercase font-bold tracking-widest">
+              Enero - Diciembre · Evolución semanal por MCC
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-6">
+            <OperativaPeaks data={weeklyPulse} />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
+              <MiniStatCard
+                title="Conversión operativa"
+                value={`${Math.max(0, 100 - Math.min(100, kpis.pendingRequests * 8))}%`}
+                tone="text-emerald-300"
+              />
+              <MiniStatCard
+                title="Carga semanal"
+                value={`${kpis.sessionsPlanned}`}
+                tone="text-primary"
+              />
+              <MiniStatCard
+                title="Riesgo asistencia"
+                value={kpis.attendanceRate < 70 ? "ALTO" : "CONTROLADO"}
+                tone={kpis.attendanceRate < 70 ? "text-rose-300" : "text-emerald-300"}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-panel rounded-3xl border border-primary/20 bg-slate-950/80 overflow-hidden">
+          <CardHeader className="p-6 border-b border-white/5">
+            <CardTitle className="text-sm font-black uppercase tracking-widest text-primary flex items-center gap-2">
+              <Activity className="h-4 w-4 text-primary" /> Traffic
+            </CardTitle>
+            <CardDescription className="text-[10px] text-primary/40 uppercase font-bold tracking-widest">
+              Jan 01 - Dec 31 · Snapshot
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-6">
+            <OperativaBars
+              attendanceRate={kpis.attendanceRate}
+              pendingRequests={kpis.pendingRequests}
+              sessionsPlanned={kpis.sessionsPlanned}
+            />
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
@@ -109,27 +310,24 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y divide-white/5">
-              <TrainingItem 
-                time="17:00" 
-                category="Infantil A" 
-                focus="Fundamentos Técnicos" 
-                location="Pista Central"
-                status="ready"
-              />
-              <TrainingItem 
-                time="17:00" 
-                category="Alevín B" 
-                focus="Psicomotricidad" 
-                location="Zona Norte"
-                status="ready"
-              />
-              <TrainingItem 
-                time="18:30" 
-                category="Cadete C" 
-                focus="Lectura Táctica" 
-                location="Sala Táctica"
-                status="pending"
-              />
+              {recentSessions.length === 0 ? (
+                <div className="p-6">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-primary/40">
+                    Sin sesiones recientes todavía en este entorno.
+                  </p>
+                </div>
+              ) : (
+                recentSessions.map((item) => (
+                  <TrainingItem
+                    key={item.id}
+                    time={item.time}
+                    category={item.category}
+                    focus={item.focus}
+                    location={item.location}
+                    status={item.status}
+                  />
+                ))
+              )}
             </div>
           </CardContent>
         </Card>
@@ -141,19 +339,19 @@ export default function DashboardPage() {
           <CardContent className="p-0">
             <div className="p-8 space-y-6">
               <ActivityLog 
-                type="info" 
-                title="Nueva_Inscripción" 
-                desc="Un nuevo atleta se ha unido a la categoría Iniciación." 
+                type="info"
+                title="Operativa_Híbrida"
+                desc="Supabase primero con fallback local activo para pruebas."
               />
               <ActivityLog 
                 type="success" 
-                title="Plan_Sincronizado" 
-                desc="Se han actualizado los ejercicios del bloque táctico." 
+                title="Asistencia_Actualizada"
+                desc={`${kpis.attendanceRate}% de presencia registrada en sesiones.`}
               />
               <ActivityLog 
                 type="warning" 
-                title="Alerta_Asistencia" 
-                desc="Baja asistencia detectada en el grupo Cadete B." 
+                title="Pendientes_MCC"
+                desc={`${kpis.pendingRequests} solicitudes esperan decisión de dirección.`}
               />
             </div>
           </CardContent>
@@ -231,6 +429,253 @@ function ActivityLog({ type, title, desc }: any) {
       <div className="space-y-1 pb-2">
         <p className="text-[10px] font-black uppercase tracking-widest text-primary/80 group-hover:text-primary transition-colors">{title}</p>
         <p className="text-[10px] font-bold text-primary/30 leading-relaxed uppercase">{desc}</p>
+      </div>
+    </div>
+  );
+}
+
+function MiniStatCard({
+  title,
+  value,
+  tone,
+}: {
+  title: string;
+  value: string;
+  tone?: string;
+}) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-black/25 p-3">
+      <p className="text-[9px] font-black uppercase tracking-widest text-white/50">{title}</p>
+      <p className={cn("text-xl font-black italic tracking-tight mt-1", tone ?? "text-white")}>{value}</p>
+    </div>
+  );
+}
+
+function OperativaBars({
+  attendanceRate,
+  pendingRequests,
+  sessionsPlanned,
+}: {
+  attendanceRate: number;
+  pendingRequests: number;
+  sessionsPlanned: number;
+}) {
+  const data = [
+    {
+      label: "Asistencia",
+      value: Math.max(0, Math.min(100, attendanceRate)),
+      text: `${attendanceRate}%`,
+      tone: "bg-emerald-400",
+    },
+    {
+      label: "Sesiones",
+      value: Math.max(0, Math.min(100, sessionsPlanned * 8)),
+      text: String(sessionsPlanned),
+      tone: "bg-primary",
+    },
+    {
+      label: "Pendientes",
+      value: Math.max(0, 100 - Math.min(100, pendingRequests * 12)),
+      text: String(pendingRequests),
+      tone: "bg-amber-400",
+    },
+  ];
+
+  return (
+    <div className="space-y-4">
+      {data.map((item) => (
+        <div key={item.label} className="space-y-1.5">
+          <div className="flex items-center justify-between text-[10px] uppercase font-black tracking-widest">
+            <span className="text-primary/70">{item.label}</span>
+            <span className="text-white">{item.text}</span>
+          </div>
+          <div className="h-3 rounded-full bg-white/5 border border-white/10 overflow-hidden">
+            <div
+              className={cn("h-full rounded-full transition-all duration-500", item.tone)}
+              style={{ width: `${item.value}%` }}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function OperativaPeaks({
+  data,
+}: {
+  data: Array<{ label: string; sessions: number; attendance: number }>;
+}) {
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+  const [hoverPos, setHoverPos] = useState<{ x: number; y: number }>({ x: 12, y: 12 });
+  if (data.length === 0) {
+    return (
+      <p className="text-[10px] uppercase tracking-widest text-primary/40 font-bold">
+        Sin histórico suficiente para pintar picos todavía.
+      </p>
+    );
+  }
+
+  const w = 100;
+  const h = 32;
+  const maxSessions = Math.max(1, ...data.map((d) => d.sessions));
+  const sx = (idx: number) => (data.length === 1 ? 0 : (idx / (data.length - 1)) * w);
+  const sySessions = (v: number) => h - (v / maxSessions) * h;
+  const syAttendance = (v: number) => h - (Math.max(0, Math.min(100, v)) / 100) * h;
+
+  const pathFrom = (getY: (v: number) => number, key: "sessions" | "attendance") =>
+    data
+      .map((d, i) => `${i === 0 ? "M" : "L"} ${sx(i).toFixed(2)} ${getY(d[key]).toFixed(2)}`)
+      .join(" ");
+  const areaFrom = (getY: (v: number) => number, key: "sessions" | "attendance") => {
+    const line = pathFrom(getY, key);
+    const endX = sx(data.length - 1).toFixed(2);
+    return `${line} L ${endX} ${h.toFixed(2)} L 0 ${h.toFixed(2)} Z`;
+  };
+  const attendanceThresholdY = syAttendance(70);
+  const barW = data.length > 0 ? w / data.length : 0;
+  const hovered = hoveredIdx !== null ? data[hoveredIdx] : null;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-4 text-[10px] uppercase font-black tracking-widest">
+        <span className="text-primary">Sesiones</span>
+        <span className="text-emerald-400">Asistencia</span>
+        <span className="text-rose-400">Umbral 70%</span>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <div className="lg:col-span-2 rounded-2xl border border-white/10 bg-slate-950/80 p-3 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/5 to-transparent pointer-events-none" />
+          {hovered && (
+            <div className="absolute top-2 right-2 z-20 rounded-lg border border-white/15 bg-black/70 px-2 py-1">
+              <p className="text-[9px] font-black uppercase text-primary">{hovered.label}</p>
+              <p className="text-[9px] font-bold uppercase text-white/80">
+                Sesiones: {hovered.sessions} · Asistencia: {hovered.attendance}%
+              </p>
+            </div>
+          )}
+          {hovered && (
+            <div
+              className="absolute z-30 rounded-lg border border-white/15 bg-black/80 px-2 py-1 pointer-events-none"
+              style={{
+                left: `${hoverPos.x}px`,
+                top: `${hoverPos.y}px`,
+                transform: "translate(10px, -10px)",
+              }}
+            >
+              <p className="text-[9px] font-black uppercase text-primary">{hovered.label}</p>
+              <p className="text-[9px] font-bold uppercase text-white/80">
+                Sesiones: {hovered.sessions} · Asistencia: {hovered.attendance}%
+              </p>
+            </div>
+          )}
+          <svg
+            viewBox={`0 0 ${w} ${h}`}
+            className="w-full h-40"
+            onMouseLeave={() => setHoveredIdx(null)}
+            onMouseMove={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              setHoverPos({
+                x: Math.max(8, Math.min(rect.width - 120, e.clientX - rect.left)),
+                y: Math.max(8, Math.min(rect.height - 40, e.clientY - rect.top)),
+              });
+            }}
+          >
+            {Array.from({ length: 6 }).map((_, i) => {
+              const y = (h / 5) * i;
+              return (
+                <line
+                  key={`grid-h-${i}`}
+                  x1="0"
+                  y1={y}
+                  x2={w}
+                  y2={y}
+                  stroke="rgb(255 255 255 / 0.06)"
+                  strokeWidth="0.25"
+                />
+              );
+            })}
+            {data.map((_, i) => (
+              <line
+                key={`grid-v-${i}`}
+                x1={sx(i)}
+                y1="0"
+                x2={sx(i)}
+                y2={h}
+                stroke="rgb(255 255 255 / 0.04)"
+                strokeWidth="0.25"
+              />
+            ))}
+            <line
+              x1="0"
+              y1={attendanceThresholdY}
+              x2={w}
+              y2={attendanceThresholdY}
+              stroke="rgb(244 63 94)"
+              strokeWidth="0.45"
+              strokeDasharray="1.6 1.6"
+              opacity="0.75"
+            />
+            <path d={areaFrom(sySessions, "sessions")} fill="rgb(0 242 255 / 0.08)" />
+            <path d={areaFrom(syAttendance, "attendance")} fill="rgb(52 211 153 / 0.10)" />
+            <path d={pathFrom(sySessions, "sessions")} fill="none" stroke="rgb(0 242 255)" strokeWidth="0.72" />
+            <path d={pathFrom(syAttendance, "attendance")} fill="none" stroke="rgb(52 211 153)" strokeWidth="0.72" />
+            {data.map((d, i) => (
+              <g
+                key={`${d.label}-${i}`}
+                onMouseEnter={() => setHoveredIdx(i)}
+              >
+                <circle cx={sx(i)} cy={sySessions(d.sessions)} r="0.75" fill="rgb(0 242 255)">
+                  <title>{`${d.label} · Sesiones: ${d.sessions}`}</title>
+                </circle>
+                <circle
+                  cx={sx(i)}
+                  cy={syAttendance(d.attendance)}
+                  r="0.85"
+                  fill={d.attendance < 70 ? "rgb(244 63 94)" : "rgb(52 211 153)"}
+                >
+                  <title>{`${d.label} · Asistencia: ${d.attendance}%`}</title>
+                </circle>
+              </g>
+            ))}
+          </svg>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-slate-950/80 p-3">
+          <p className="text-[10px] uppercase font-black tracking-widest text-primary/70 mb-2">Barras MCC</p>
+          <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-40">
+            {data.map((d, i) => {
+              const x = i * barW + barW * 0.1;
+              const bw = barW * 0.8;
+              const bh = (Math.max(0, Math.min(100, d.attendance)) / 100) * h;
+              const by = h - bh;
+              return (
+                <rect
+                  key={`bar-${d.label}`}
+                  x={x}
+                  y={by}
+                  width={bw}
+                  height={bh}
+                  rx="0.7"
+                  fill={d.attendance < 70 ? "rgb(244 63 94 / 0.75)" : "rgb(52 211 153 / 0.75)"}
+                />
+              );
+            })}
+          </svg>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-slate-950/80 p-3">
+        <div className="mt-0 grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {data.map((d) => (
+            <div key={d.label} className="rounded-xl border border-white/10 bg-white/[0.02] p-2">
+              <p className="text-[9px] uppercase font-black text-primary/70">{d.label}</p>
+              <p className={cn("text-[10px] uppercase font-bold", d.attendance < 70 ? "text-rose-300" : "text-white/80")}>
+                S:{d.sessions} · A:{d.attendance}%
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

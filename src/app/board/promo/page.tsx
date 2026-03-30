@@ -60,7 +60,32 @@ import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { useSearchParams, useRouter } from "next/navigation";
 import { FORMATIONS_DATA } from "@/lib/formations";
+import { CANVAS_PLAYER_NORM_WIDTH } from "@/lib/board-drawing";
+import {
+  BOARD_HIGH_PERFORMANCE_KEY,
+  BOARD_PERF_CHANGE_EVENT,
+  resolveBoardVisualProfile,
+  createRedrawRaf,
+  type RedrawRafHandle,
+} from "@/lib/board-performance";
 import Link from "next/link";
+import Script from "next/script";
+
+function resolveSandboxBasePath(): "/sandbox" | "/sandbox/app" | "/dashboard/promo" {
+  if (typeof window === "undefined") return "/dashboard/promo";
+  const p = window.location.pathname || "";
+  if (p.startsWith("/sandbox/app")) return "/sandbox/app";
+  return p.startsWith("/sandbox") ? "/sandbox" : "/dashboard/promo";
+}
+
+function safeParseJson<T>(raw: string | null, fallback: T): T {
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
 
 interface Point {
   x: number;
@@ -71,7 +96,8 @@ interface DrawingElement {
   id: string;
   type: DrawingTool;
   points: Point[];
-  controlPoint?: Point; 
+  controlPoint?: Point;
+  controlPoint2?: Point;
   color: string;
   rotation: number;
   lineStyle: 'solid' | 'dashed';
@@ -89,25 +115,175 @@ const COLORS = [
 
 const STAGES = ["Debutantes", "Prebenjamín", "Benjamín", "Alevín", "Infantil", "Cadete", "Juvenil", "Senior"];
 
-const isMaterial = (type: DrawingTool) => 
+const isMaterial = (type: DrawingTool) =>
   ['player', 'ball', 'cone', 'seta', 'ladder', 'hurdle', 'minigoal', 'pica', 'barrier'].includes(type);
 
-const isCircular = (type: DrawingTool) => 
+const isStrokeTool = (type: DrawingTool) =>
+  ['freehand', 'rect', 'circle', 'arrow', 'double-arrow', 'zigzag', 'cross-arrow', 'text'].includes(type);
+
+function buildZigzagPolylinePx(ax: number, ay: number, bx: number, by: number): Point[] {
+  const dx = bx - ax, dy = by - ay;
+  const len = Math.hypot(dx, dy);
+  if (len < 2) return [{ x: ax, y: ay }, { x: bx, y: by }];
+  const nx = -dy / len;
+  const ny = dx / len;
+  const segments = Math.max(18, Math.min(56, Math.floor(len / 6)));
+  const cycles = Math.max(2, Math.min(8, Math.round((len / 420) * 7)));
+  const amp = Math.min(len * 0.13, 22);
+  const pts: Point[] = [];
+  for (let i = 0; i <= segments; i++) {
+    const t = i / segments;
+    const wave = Math.sin(t * Math.PI * 2 * cycles) * amp;
+    pts.push({ x: ax + dx * t + nx * wave, y: ay + dy * t + ny * wave });
+  }
+  return pts;
+}
+
+function createDraftStroke(
+  tool: DrawingTool,
+  color: string,
+  lineStyle: 'solid' | 'dashed',
+  start: Point,
+): DrawingElement {
+  const id = `draft-${Date.now()}`;
+  const base = {
+    id,
+    type: tool,
+    color,
+    rotation: 0,
+    lineStyle,
+    opacity: 1,
+  };
+  if (tool === 'freehand') {
+    return { ...base, points: [{ x: start.x, y: start.y }] };
+  }
+  if (tool === 'text') {
+    return { ...base, points: [{ x: start.x, y: start.y }, { x: start.x, y: start.y }], text: 'TEXTO TÁCTICO' };
+  }
+  return { ...base, points: [{ x: start.x, y: start.y }, { x: start.x, y: start.y }] };
+}
+
+const isCircular = (type: DrawingTool) =>
   ['player', 'ball', 'circle', 'seta'].includes(type);
 
+const FIELD_REF_SHORT_PX = 460;
+
+function materialViewportScale(cssW: number, cssH: number): number {
+  const s = Math.min(cssW, cssH);
+  if (s < 8) return 1;
+  return Math.min(1.32, Math.max(0.82, FIELD_REF_SHORT_PX / s));
+}
+
+type ElementBoundsPx = {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+  width: number;
+  height: number;
+  centerX: number;
+  centerY: number;
+};
+
+function getElementBoundsRaw(element: DrawingElement, widthPx: number, heightPx: number): ElementBoundsPx {
+  const p = element.points.map(pt => ({ x: pt.x * widthPx, y: pt.y * heightPx }));
+  const minX = Math.min(...p.map(pt => pt.x));
+  const minY = Math.min(...p.map(pt => pt.y));
+  const maxX = Math.max(...p.map(pt => pt.x));
+  const maxY = Math.max(...p.map(pt => pt.y));
+  return {
+    minX,
+    minY,
+    maxX,
+    maxY,
+    width: maxX - minX,
+    height: maxY - minY,
+    centerX: (minX + maxX) / 2,
+    centerY: (minY + maxY) / 2,
+  };
+}
+
+function scaleMaterialBoundsAboutCenter(b: ElementBoundsPx, scale: number): ElementBoundsPx {
+  if (Math.abs(scale - 1) < 1e-6) return b;
+  const nw = b.width * scale;
+  const nh = b.height * scale;
+  return {
+    centerX: b.centerX,
+    centerY: b.centerY,
+    width: nw,
+    height: nh,
+    minX: b.centerX - nw / 2,
+    maxX: b.centerX + nw / 2,
+    minY: b.centerY - nh / 2,
+    maxY: b.centerY + nh / 2,
+  };
+}
+
+function getElementBounds(
+  element: DrawingElement,
+  widthPx: number,
+  heightPx: number,
+  cssWidth: number,
+  cssHeight: number,
+): ElementBoundsPx {
+  const base = getElementBoundsRaw(element, widthPx, heightPx);
+  if (!isMaterial(element.type)) return base;
+  const sc = materialViewportScale(cssWidth, cssHeight);
+  return scaleMaterialBoundsAboutCenter(base, sc);
+}
+
+const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT ?? "";
+const ADSENSE_SLOT_H = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_SLOT_HORIZONTAL ?? "";
+
 const AdSlot = memo(({ orientation = 'horizontal' }: { orientation: 'horizontal' | 'vertical' }) => {
+  const pushedRef = useRef(false);
   useEffect(() => {
-    synqSync.trackEvent('ad_impression', { format: orientation, placement: 'promo_board_multiplex', timestamp: new Date().toISOString() });
+    synqSync.trackEvent('ad_impression', { source: "sandbox", format: orientation, placement: 'promo_board_multiplex', timestamp: new Date().toISOString() });
   }, [orientation]);
-  const handleAdClick = () => { synqSync.trackEvent('ad_click', { format: orientation, placement: 'promo_board_multiplex' }); };
+  useEffect(() => {
+    if (!ADSENSE_CLIENT || !ADSENSE_SLOT_H || orientation !== "horizontal" || pushedRef.current) return;
+    let tries = 0;
+    const maxTries = 40;
+    const t = window.setInterval(() => {
+      tries += 1;
+      const w = window as unknown as { adsbygoogle?: unknown[] };
+      if (!w.adsbygoogle) {
+        if (tries >= maxTries) window.clearInterval(t);
+        return;
+      }
+      try {
+        w.adsbygoogle.push({});
+        pushedRef.current = true;
+        window.clearInterval(t);
+      } catch {
+        if (tries >= maxTries) window.clearInterval(t);
+      }
+    }, 150);
+    return () => window.clearInterval(t);
+  }, [orientation]);
+  const handleAdClick = () => { synqSync.trackEvent('ad_click', { source: "sandbox", format: orientation, placement: 'promo_board_multiplex' }); };
+  if (ADSENSE_CLIENT && ADSENSE_SLOT_H && orientation === "horizontal") {
+    return (
+      <div onClick={handleAdClick} className="min-h-16 w-full rounded-2xl overflow-hidden bg-black/30 border border-primary/20 pointer-events-auto">
+        <ins
+          className="adsbygoogle"
+          style={{ display: "block" }}
+          data-ad-client={ADSENSE_CLIENT}
+          data-ad-slot={ADSENSE_SLOT_H}
+          data-ad-format="horizontal"
+          data-full-width-responsive="true"
+        />
+      </div>
+    );
+  }
   return (
     <div onClick={handleAdClick} className={cn("bg-primary/5 border-2 border-dashed border-primary/20 flex flex-col items-center justify-center rounded-2xl overflow-hidden group transition-all hover:bg-primary/[0.08] pointer-events-auto shadow-[0_0_20px_rgba(0,242,255,0.05)] relative cursor-pointer", orientation === 'horizontal' ? "h-16 w-full" : "w-40 h-[600px]")}>
-      <div className="absolute top-0 left-0 bg-primary/20 text-primary text-[6px] font-black px-2 py-0.5 uppercase tracking-widest italic z-20">Multiplex_Ad_Node</div>
+      <div className="absolute top-0 left-0 bg-primary/20 text-primary text-[6px] font-black px-2 py-0.5 uppercase tracking-widest italic z-20">AdMob / AdSense</div>
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent h-1/2 w-full animate-[refresh-scan_3s_linear_infinite] pointer-events-none z-10" />
       <div className="relative z-20 flex flex-col items-center text-center px-4">
         <RefreshCw className="h-4 w-4 text-primary/40 group-hover:text-primary transition-all mb-1 animate-spin-slow" />
-        <span className="text-[7px] font-black text-primary/60 uppercase tracking-[0.2em] italic truncate">Sync_Broadcast</span>
-        <span className="text-[5px] text-white/20 uppercase font-bold tracking-widest">Auto-Refresh: Active</span>
+        <span className="text-[7px] font-black text-primary/60 uppercase tracking-[0.2em] italic truncate">Slot demo (configura .env)</span>
+        <span className="text-[5px] text-white/20 uppercase font-bold tracking-widest">NEXT_PUBLIC_GOOGLE_ADSENSE_*</span>
       </div>
       <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
     </div>
@@ -122,11 +298,19 @@ function PromoBoardContent() {
   const searchParamsHook = useSearchParams();
   const router = useRouter();
   const exerciseId = searchParamsHook.get("id");
+  const basePath = resolveSandboxBasePath();
 
   const [renderScale, setRenderScale] = useState(1.0);
   const [isLegacyDevice, setIsLegacyDevice] = useState(false);
+  const [boardCanvasShadows, setBoardCanvasShadows] = useState(true);
+  const [isCoarsePointer, setIsCoarsePointer] = useState(false);
+  const [dprFactor, setDprFactor] = useState(1);
 
-  const showAds = profile?.plan === 'free' || profile?.role === 'promo_coach' || profile?.role === 'superadmin';
+  const showAds =
+    !profile ||
+    profile.plan === "free" ||
+    profile.role === "promo_coach" ||
+    profile.role === "superadmin";
 
   const [fieldType, setFieldType] = useState<FieldType>("f11");
   const [showLanes, setShowLanes] = useState(false);
@@ -154,34 +338,58 @@ function PromoBoardContent() {
   const isDrawing = useRef(false);
   const startPoint = useRef<Point | null>(null);
   const lastPoint = useRef<Point | null>(null);
-  const interactionMode = useRef<'drawing' | 'resizing' | 'rotating' | 'dragging' | 'curving' | 'none'>('none');
+  const dragSelectionRef = useRef<string[]>([]);
+  const draftStrokeRef = useRef<DrawingElement | null>(null);
+  const curveControlDragging = useRef<1 | 2 | null>(null);
+  const interactionMode = useRef<'drawing' | 'resizing' | 'rotating' | 'dragging' | 'curving' | 'creating' | 'none'>('none');
   const activeHandleIndex = useRef<number | null>(null);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const ua = window.navigator.userAgent;
-      const isT5 = /AGS2/.test(ua);
-      const lowCPU = (window.navigator.hardwareConcurrency || 8) <= 8;
-      if (isT5 || lowCPU) { setIsLegacyDevice(true); setRenderScale(0.75); }
-    }
-    const savedTeam = JSON.parse(localStorage.getItem("synq_promo_team") || "null");
-    const savedVault = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": []}');
+    if (typeof window === "undefined") return;
+    const apply = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      setDprFactor(dpr);
+      const coarse =
+        typeof window.matchMedia === "function" ? window.matchMedia("(pointer: coarse)").matches : false;
+      setIsCoarsePointer(coarse);
+      const p = resolveBoardVisualProfile(dpr);
+      setRenderScale(p.renderScale);
+      setIsLegacyDevice(p.perfLite);
+      setBoardCanvasShadows(p.canvasShadows);
+    };
+    apply();
+    window.addEventListener(BOARD_PERF_CHANGE_EVENT, apply);
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === null || e.key === BOARD_HIGH_PERFORMANCE_KEY) apply();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener(BOARD_PERF_CHANGE_EVENT, apply);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const savedTeam = safeParseJson<any>(localStorage.getItem("synq_promo_team"), null);
+    const savedVault = safeParseJson<any>(localStorage.getItem("synq_promo_vault"), { exercises: [] });
     setVault(savedVault);
-    
-    if (savedTeam) { 
-      setTeamConfig(savedTeam); 
-      if (!exerciseId) setFieldType(savedTeam.type || "f11"); 
+    if (savedTeam) {
+      setTeamConfig(savedTeam);
+      if (!exerciseId) setFieldType(savedTeam.type || "f11");
     }
-    
-    if (exerciseId) {
-      const target = savedVault.exercises?.find((e: any) => e.id.toString() === exerciseId);
-      if (target) { 
-        setElements(target.elements || []); 
-        setFieldType(target.fieldType || "f11"); 
-        setSaveFormData(target.metadata || saveFormData); 
-      }
+  }, [exerciseId]);
+
+  useEffect(() => {
+    if (!exerciseId || typeof window === "undefined") return;
+    const savedVault = safeParseJson<any>(localStorage.getItem("synq_promo_vault"), { exercises: [] });
+    const target = savedVault.exercises?.find((e: any) => e.id.toString() === exerciseId);
+    if (target) {
+      setElements(target.elements || []);
+      setFieldType(target.fieldType || "f11");
+      setSaveFormData((prev) => ({ ...prev, ...(target.metadata || {}) }));
     }
-  }, [exerciseId, saveFormData]);
+  }, [exerciseId]);
 
   useEffect(() => {
     const syncFullscreen = () => setIsFullscreen(!!document.fullscreenElement);
@@ -205,23 +413,14 @@ function PromoBoardContent() {
     return { x: center.x + dx * cos - dy * sin, y: center.y + dx * sin + dy * cos };
   };
 
-  const getElementBounds = (element: DrawingElement, widthPx: number, heightPx: number) => {
-    const p = element.points.map(pt => ({ x: pt.x * widthPx, y: pt.y * heightPx }));
-    const minX = Math.min(...p.map(pt => pt.x)); const minY = Math.min(...p.map(pt => pt.y));
-    const maxX = Math.max(...p.map(pt => pt.x)); const maxY = Math.max(...p.map(pt => pt.y));
-    return { 
-      minX, minY, maxX, maxY, 
-      width: maxX - minX, height: maxY - minY, 
-      centerX: (minX + maxX) / 2, centerY: (minY + maxY) / 2 
-    };
-  };
-
   const loadTeamFromSandbox = () => {
-    const savedTeam = JSON.parse(localStorage.getItem("synq_promo_team") || "null");
+    const savedTeam = safeParseJson<any>(localStorage.getItem("synq_promo_team"), null);
     if (!savedTeam) { toast({ variant: "destructive", title: "ERROR_SINCRO", description: "Configure su equipo primero." }); return; }
+    setTeamConfig(savedTeam);
     setFieldType(savedTeam.type || "f11");
     const canvasRatio = canvasRef.current ? (canvasRef.current.width / canvasRef.current.height) : 1.5;
-    const defW = 0.05; const defH = defW * canvasRatio;
+    const defW = CANVAS_PLAYER_NORM_WIDTH;
+    const defH = defW * canvasRatio;
     const formationsForField = FORMATIONS_DATA[savedTeam.type || "f11"];
     const defaultFormation = savedTeam.type === "futsal" ? "1-2-1" : savedTeam.type === "f7" ? "3-2-1" : "4-3-3";
     const positions = formationsForField[defaultFormation];
@@ -237,8 +436,10 @@ function PromoBoardContent() {
   const drawElement = useCallback((ctx: CanvasRenderingContext2D, element: DrawingElement, isSelected: boolean) => {
     const pRaw = element.points; if (pRaw.length < 1) return;
     const widthPx = ctx.canvas.width; const heightPx = ctx.canvas.height;
+    const cssW = ctx.canvas.clientWidth || widthPx;
+    const cssH = ctx.canvas.clientHeight || heightPx;
     const p = pRaw.map(pt => ({ x: pt.x * widthPx, y: pt.y * heightPx }));
-    const bounds = getElementBounds(element, widthPx, heightPx);
+    const bounds = getElementBounds(element, widthPx, heightPx, cssW, cssH);
     const { centerX, centerY, width, height, minX, minY, maxX, maxY } = bounds;
     ctx.save(); ctx.globalAlpha = element.opacity; ctx.translate(centerX, centerY); ctx.rotate(element.rotation); ctx.translate(-centerX, -centerY);
     ctx.strokeStyle = element.color; ctx.fillStyle = hexToRgba(element.color, 0.15); ctx.lineWidth = 3 * renderScale; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
@@ -248,16 +449,303 @@ function PromoBoardContent() {
       case 'freehand': if (p.length < 3) { ctx.beginPath(); ctx.moveTo(p[0].x, p[0].y); if (p.length === 2) ctx.lineTo(p[1].x, p[1].y); ctx.stroke(); } else { ctx.beginPath(); ctx.moveTo(p[0].x, p[0].y); for (let i = 1; i < p.length - 2; i++) { const xc = (p[i].x + p[i + 1].x) / 2; const yc = (p[i].y + p[i + 1].y) / 2; ctx.quadraticCurveTo(p[i].x, p[i].y, xc, yc); } ctx.quadraticCurveTo(p[p.length - 2].x, p[p.length - 2].y, p[p.length - 1].x, p[p.length - 1].y); ctx.stroke(); } break;
       case 'rect': ctx.beginPath(); ctx.rect(minX, minY, width, height); ctx.fill(); ctx.stroke(); break;
       case 'circle': ctx.beginPath(); const radius = Math.min(width, height) / 2; ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI); ctx.fill(); ctx.stroke(); break;
-      case 'arrow': case 'double-arrow': case 'zigzag': ctx.beginPath(); if (element.controlPoint) { const cp = { x: element.controlPoint.x * widthPx, y: element.controlPoint.y * heightPx }; ctx.moveTo(p[0].x, p[0].y); ctx.quadraticCurveTo(cp.x, cp.y, p[1].x, p[1].y); } else { ctx.moveTo(p[0].x, p[0].y); ctx.lineTo(p[1].x, p[1].y); } ctx.stroke(); const head = 15 * renderScale; let angle = element.controlPoint ? Math.atan2(p[1].y - (element.controlPoint.y * heightPx), p[1].x - (element.controlPoint.x * widthPx)) : Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x); ctx.setLineDash([]); const drawH = (tx: number, ty: number, ang: number) => { ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(tx - head * Math.cos(ang - Math.PI / 6), ty - head * Math.sin(ang - Math.PI / 6)); ctx.moveTo(tx, ty); ctx.lineTo(tx - head * Math.cos(ang + Math.PI / 6), ty - head * Math.sin(ang + Math.PI / 6)); ctx.stroke(); }; drawH(p[1].x, p[1].y, angle); if (element.type === 'double-arrow') { const startAngle = element.controlPoint ? Math.atan2(p[0].y - (element.controlPoint.y * heightPx), p[0].x - (element.controlPoint.x * widthPx)) : angle + Math.PI; drawH(p[0].x, p[0].y, startAngle); } break;
+      case 'zigzag': {
+        ctx.beginPath();
+        if (element.points.length > 2) {
+          ctx.moveTo(p[0].x, p[0].y);
+          for (let zi = 1; zi < p.length; zi++) ctx.lineTo(p[zi].x, p[zi].y);
+        } else if (p.length >= 2) {
+          const wavePx = buildZigzagPolylinePx(p[0].x, p[0].y, p[1].x, p[1].y);
+          ctx.moveTo(wavePx[0].x, wavePx[0].y);
+          for (let zi = 1; zi < wavePx.length; zi++) ctx.lineTo(wavePx[zi].x, wavePx[zi].y);
+        }
+        ctx.stroke();
+        break;
+      }
+      case 'arrow':
+      case 'double-arrow': {
+        const p0 = p[0], p1 = p[p.length - 1] ?? p[1];
+        if (!p1) break;
+        ctx.beginPath();
+        if (element.controlPoint && element.controlPoint2) {
+          const c1 = { x: element.controlPoint.x * widthPx, y: element.controlPoint.y * heightPx };
+          const c2 = { x: element.controlPoint2.x * widthPx, y: element.controlPoint2.y * heightPx };
+          ctx.moveTo(p0.x, p0.y);
+          ctx.bezierCurveTo(c1.x, c1.y, c2.x, c2.y, p1.x, p1.y);
+        } else if (element.controlPoint) {
+          const cp = { x: element.controlPoint.x * widthPx, y: element.controlPoint.y * heightPx };
+          ctx.moveTo(p0.x, p0.y);
+          ctx.quadraticCurveTo(cp.x, cp.y, p1.x, p1.y);
+        } else {
+          ctx.moveTo(p0.x, p0.y);
+          ctx.lineTo(p1.x, p1.y);
+        }
+        ctx.stroke();
+        const head = 15 * renderScale;
+        ctx.setLineDash([]);
+        let angleEnd = Math.atan2(p1.y - p0.y, p1.x - p0.x);
+        if (element.controlPoint && element.controlPoint2) {
+          const c2x = element.controlPoint2.x * widthPx, c2y = element.controlPoint2.y * heightPx;
+          angleEnd = Math.atan2(3 * (p1.y - c2y), 3 * (p1.x - c2x));
+        } else if (element.controlPoint) {
+          const cpx = element.controlPoint.x * widthPx, cpy = element.controlPoint.y * heightPx;
+          angleEnd = Math.atan2(2 * (p1.y - cpy), 2 * (p1.x - cpx));
+        }
+        const drawH = (tx: number, ty: number, ang: number) => {
+          ctx.beginPath();
+          ctx.moveTo(tx, ty);
+          ctx.lineTo(tx - head * Math.cos(ang - Math.PI / 6), ty - head * Math.sin(ang - Math.PI / 6));
+          ctx.moveTo(tx, ty);
+          ctx.lineTo(tx - head * Math.cos(ang + Math.PI / 6), ty - head * Math.sin(ang + Math.PI / 6));
+          ctx.stroke();
+        };
+        drawH(p1.x, p1.y, angleEnd);
+        if (element.type === 'double-arrow') {
+          let startAngle = angleEnd + Math.PI;
+          if (element.controlPoint && element.controlPoint2) {
+            const c1x = element.controlPoint.x * widthPx, c1y = element.controlPoint.y * heightPx;
+            startAngle = Math.atan2(3 * (c1y - p0.y), 3 * (c1x - p0.x)) + Math.PI;
+          } else if (element.controlPoint) {
+            const cpx = element.controlPoint.x * widthPx, cpy = element.controlPoint.y * heightPx;
+            startAngle = Math.atan2(p0.y - cpy, p0.x - cpx) + Math.PI;
+          }
+          drawH(p0.x, p0.y, startAngle);
+        }
+        break;
+      }
       case 'cross-arrow': ctx.save(); ctx.translate(centerX, centerY); const cSize = Math.min(width, height) / 2; const thickness = cSize * 0.35; const arrowHead = cSize * 0.4; const dCB = (isV: boolean) => { ctx.beginPath(); if (isV) { ctx.moveTo(-thickness/2, -cSize + arrowHead); ctx.lineTo(thickness/2, -cSize + arrowHead); ctx.lineTo(thickness/2, cSize - arrowHead); ctx.lineTo(-thickness/2, cSize - arrowHead); } else { ctx.moveTo(-cSize + arrowHead, -thickness/2); ctx.lineTo(cSize - arrowHead, -thickness/2); ctx.lineTo(cSize - arrowHead, thickness/2); ctx.lineTo(-cSize + arrowHead, thickness/2); } ctx.closePath(); const barGrad = ctx.createLinearGradient(isV ? -thickness/2 : -cSize, isV ? -cSize : -thickness/2, isV ? thickness/2 : cSize, isV ? cSize : thickness/2); barGrad.addColorStop(0, element.color); barGrad.addColorStop(0.5, '#ffffff44'); barGrad.addColorStop(1, hexToRgba(element.color, 0.8)); ctx.fillStyle = barGrad; ctx.fill(); ctx.stroke(); }; const dAH = (tx: number, ty: number, rot: number) => { ctx.save(); ctx.translate(tx, ty); ctx.rotate(rot); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-arrowHead, arrowHead); ctx.lineTo(arrowHead, arrowHead); ctx.closePath(); const headGrad = ctx.createLinearGradient(-arrowHead, 0, arrowHead, arrowHead); headGrad.addColorStop(0, element.color); headGrad.addColorStop(0.5, '#ffffff44'); headGrad.addColorStop(1, hexToRgba(element.color, 0.8)); ctx.fillStyle = headGrad; ctx.fill(); ctx.stroke(); ctx.restore(); }; dCB(false); dCB(true); dAH(0, -cSize, 0); dAH(cSize, 0, Math.PI/2); dAH(0, cSize, Math.PI); dAH(-cSize, 0, -Math.PI/2); ctx.restore(); break;
-      case 'player': ctx.save(); ctx.shadowBlur = 20 * renderScale; ctx.shadowColor = hexToRgba(element.color, 0.4); const pRadius = Math.min(width, height) / 2; ctx.beginPath(); ctx.arc(centerX, centerY, pRadius, 0, Math.PI * 2); const pGrad = ctx.createRadialGradient(centerX - pRadius/3, centerY - pRadius/3, 0, centerX, centerY, pRadius); pGrad.addColorStop(0, '#ffffff44'); pGrad.addColorStop(0.5, hexToRgba(element.color, 0.3)); pGrad.addColorStop(1, hexToRgba(element.color, 0.1)); ctx.fillStyle = pGrad; ctx.fill(); ctx.strokeStyle = element.color; ctx.stroke(); ctx.fillStyle = '#fff'; ctx.font = `bold ${Math.floor(pRadius * 0.64)}px Space Grotesk`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText((element.number || 1).toString(), centerX, centerY + (pRadius * 0.04)); if (teamConfig && element.number) { const playerName = teamConfig.starters[element.number - 1]; if (playerName) { ctx.setLineDash([]); ctx.font = `bold ${Math.floor(pRadius * 0.35)}px Space Grotesk`; ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.fillText(playerName, centerX, centerY + pRadius + 12 * renderScale); } } ctx.restore(); break;
-      case 'ball': ctx.save(); ctx.translate(centerX, centerY); const bRadius = Math.min(width, height) / 2; ctx.scale(bRadius/40, bRadius/40); ctx.beginPath(); ctx.arc(0, 5, 40, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fill(); const bG = ctx.createRadialGradient(-15, -15, 0, 0, 0, 40); bG.addColorStop(0, '#ffffff'); bG.addColorStop(1, '#E2E8F0'); ctx.beginPath(); ctx.arc(0, 0, 40, 0, Math.PI * 2); ctx.fillStyle = bG; ctx.fill(); ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 2; ctx.stroke(); ctx.beginPath(); [[50,10,35,25], [50,10,65,25], [50,90,35,75], [50,90,65,75], [10,50,25,35], [10,50,25,65], [90,50,75,35], [90,50,75,65]].forEach(pat => { ctx.moveTo(pat[0]-50, pat[1]-50); ctx.lineTo(pat[2]-50, pat[3]-50); }); ctx.stroke(); ctx.beginPath(); ctx.arc(0, 0, 15, 0, Math.PI * 2); ctx.stroke(); ctx.restore(); break;
-      case 'cone': ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/50, height/50); ctx.beginPath(); ctx.ellipse(0, 15, 25, 10, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fill(); ctx.beginPath(); ctx.ellipse(0, 12, 20, 8, 0, 0, Math.PI * 2); ctx.fillStyle = '#ea580c'; ctx.fill(); const cGrad = ctx.createLinearGradient(-20, 0, 20, 0); cGrad.addColorStop(0, '#ea580c'); cGrad.addColorStop(0.5, '#fb923c'); cGrad.addColorStop(1, '#9a3412'); ctx.beginPath(); ctx.moveTo(-15, 12); ctx.lineTo(15, 12); ctx.lineTo(2, -30); ctx.lineTo(-2, -30); ctx.closePath(); ctx.fillStyle = cGrad; ctx.fill(); ctx.fillStyle = '#ffffff'; ctx.fillRect(-8, -5, 16, 6); ctx.fillRect(-4, -20, 8, 4); ctx.restore(); break;
-      case 'seta': ctx.save(); ctx.translate(centerX, centerY); const sSize = Math.min(width, height); ctx.scale(sSize/44, sSize/20); ctx.beginPath(); ctx.ellipse(0, 5, 22, 10, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fill(); ctx.beginPath(); ctx.ellipse(0, 0, 22, 12, 0, 0, Math.PI * 2); const sG = ctx.createRadialGradient(0, -5, 0, 0, 0, 22); sG.addColorStop(0, '#ffffff'); sG.addColorStop(0.3, element.color); sG.addColorStop(1, hexToRgba(element.color, 0.8)); ctx.fillStyle = sG; ctx.fill(); ctx.restore(); break;
+      case 'player': ctx.save(); if (boardCanvasShadows) { ctx.shadowBlur = 20 * renderScale; ctx.shadowColor = hexToRgba(element.color, 0.4); } else { ctx.shadowBlur = 0; } const pRadius = Math.min(width, height) / 2; ctx.beginPath(); ctx.arc(centerX, centerY, pRadius, 0, Math.PI * 2); const pGrad = ctx.createRadialGradient(centerX - pRadius/3, centerY - pRadius/3, 0, centerX, centerY, pRadius); pGrad.addColorStop(0, '#ffffff44'); pGrad.addColorStop(0.5, hexToRgba(element.color, 0.3)); pGrad.addColorStop(1, hexToRgba(element.color, 0.1)); ctx.fillStyle = pGrad; ctx.fill(); ctx.strokeStyle = element.color; ctx.stroke(); ctx.fillStyle = '#fff'; ctx.font = `bold ${Math.floor(pRadius * 0.64)}px Space Grotesk`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText((element.number || 1).toString(), centerX, centerY + (pRadius * 0.04)); if (teamConfig && element.number) { const playerName = teamConfig.starters?.[element.number - 1]; if (playerName) { ctx.setLineDash([]); ctx.font = `bold ${Math.floor(pRadius * 0.35)}px Space Grotesk`; ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.fillText(playerName, centerX, centerY + pRadius + 12 * renderScale); } } ctx.restore(); break;
+      case 'ball': {
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        const bRadius = Math.min(width, height) / 2;
+        const s = Math.max(0.01, bRadius / 40);
+        ctx.scale(s, s);
+        if (boardCanvasShadows) {
+          ctx.beginPath();
+          ctx.ellipse(0, 6, 40, 10, 0, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(0,0,0,0.22)";
+          ctx.fill();
+        }
+        const bg = ctx.createRadialGradient(-15, -15, 0, 0, 0, 40);
+        bg.addColorStop(0, "#ffffff");
+        bg.addColorStop(0.35, "#f8fafc");
+        bg.addColorStop(1, "#cbd5e1");
+        ctx.beginPath();
+        ctx.arc(0, 0, 40, 0, Math.PI * 2);
+        ctx.fillStyle = bg;
+        ctx.fill();
+        ctx.strokeStyle = "rgba(15,23,42,0.9)";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.strokeStyle = "rgba(15,23,42,0.35)";
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.arc(0, 0, 15, 0, Math.PI * 2);
+        ctx.stroke();
+        [[0, -40, 0, -15], [35, -18, 14, -8], [22, 32, 9, 12], [-22, 32, -9, 12], [-35, -18, -14, -8]].forEach((pat) => {
+          ctx.beginPath();
+          ctx.moveTo(pat[0], pat[1]);
+          ctx.lineTo(pat[2], pat[3]);
+          ctx.stroke();
+        });
+        ctx.fillStyle = hexToRgba(element.color, 0.08);
+        ctx.beginPath();
+        ctx.arc(0, 0, 39, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+        break;
+      }
+      case 'cone': {
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.scale(width / 50, height / 50);
+        ctx.beginPath();
+        ctx.ellipse(0, 14, 26, 10, 0, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(0,0,0,0.30)";
+        ctx.fill();
+        const cGrad = ctx.createLinearGradient(-18, 0, 18, 0);
+        cGrad.addColorStop(0, "#9a3412");
+        cGrad.addColorStop(0.35, "#ea580c");
+        cGrad.addColorStop(0.65, "#fb923c");
+        cGrad.addColorStop(1, "#9a3412");
+        ctx.beginPath();
+        ctx.moveTo(-16, 12);
+        ctx.lineTo(16, 12);
+        ctx.lineTo(3, -30);
+        ctx.lineTo(-3, -30);
+        ctx.closePath();
+        ctx.fillStyle = cGrad;
+        ctx.fill();
+        ctx.strokeStyle = "rgba(15,23,42,0.6)";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(-7, 10);
+        ctx.lineTo(-1, -24);
+        ctx.lineTo(5, 10);
+        ctx.closePath();
+        ctx.fillStyle = "rgba(255,255,255,0.20)";
+        ctx.fill();
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(-10, -2, 20, 6);
+        ctx.fillRect(-7, -18, 14, 4);
+        ctx.beginPath();
+        ctx.ellipse(0, 12, 18, 7, 0, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(0,0,0,0.08)";
+        ctx.fill();
+        ctx.restore();
+        break;
+      }
+      case 'seta': {
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        const sSize = Math.max(18, Math.min(width, height));
+        const rx = sSize * 0.5;
+        const ry = sSize * 0.2;
+        ctx.beginPath();
+        ctx.ellipse(0, ry * 1.45, rx * 0.95, ry * 0.7, 0, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(0,0,0,0.24)";
+        ctx.fill();
+        const discGrad = ctx.createRadialGradient(-rx * 0.35, -ry * 0.7, 0, 0, 0, rx);
+        discGrad.addColorStop(0, "#ffffff");
+        discGrad.addColorStop(0.28, hexToRgba(element.color, 0.95));
+        discGrad.addColorStop(1, hexToRgba(element.color, 0.75));
+        ctx.beginPath();
+        ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
+        ctx.fillStyle = discGrad;
+        ctx.fill();
+        ctx.strokeStyle = "rgba(15,23,42,0.45)";
+        ctx.lineWidth = Math.max(1, 1.6 * renderScale);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.ellipse(0, ry * 0.1, rx * 0.84, ry * 0.45, 0, 0, Math.PI);
+        ctx.strokeStyle = "rgba(255,255,255,0.28)";
+        ctx.lineWidth = Math.max(1, 1.1 * renderScale);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.ellipse(-rx * 0.2, -ry * 0.35, rx * 0.18, ry * 0.18, 0, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255,255,255,0.60)";
+        ctx.fill();
+        ctx.restore();
+        break;
+      }
       case 'ladder': ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/200, height/50); ctx.strokeStyle = '#334155'; ctx.lineWidth = 5 * renderScale; ctx.strokeRect(-100, -25, 200, 50); ctx.lineWidth = 3 * renderScale; ctx.strokeStyle = element.color; for(let x=-100; x<=100; x+=40) { ctx.beginPath(); ctx.moveTo(x, -25); ctx.lineTo(x, 25); ctx.stroke(); } ctx.restore(); break;
-      case 'hurdle': ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/60, height/30); ctx.strokeStyle = element.color; ctx.lineWidth = 6 * renderScale; ctx.beginPath(); ctx.moveTo(-30, 15); ctx.lineTo(-30, -15); ctx.lineTo(30, -15); ctx.lineTo(30, 15); ctx.stroke(); ctx.restore(); break;
-      case 'minigoal': ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/100, height/60); ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(-50, -30, 100, 60); ctx.setLineDash([3 * renderScale, 3 * renderScale]); ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1 * renderScale; for(let i=-50; i<50; i+=10) { ctx.beginPath(); ctx.moveTo(i, -30); ctx.lineTo(i, 30); ctx.stroke(); } for(let j=-30; j<30; j+=10) { ctx.beginPath(); ctx.moveTo(-50, j); ctx.lineTo(50, j); ctx.stroke(); } ctx.setLineDash([]); ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 5 * renderScale; ctx.strokeRect(-50, -30, 100, 60); ctx.restore(); break;
-      case 'pica': ctx.save(); ctx.translate(centerX, centerY); ctx.scale(width/36, height/80); ctx.beginPath(); ctx.arc(0, 30, 18, 0, Math.PI * 2); ctx.fillStyle = '#334155'; ctx.fill(); ctx.fillStyle = element.color; ctx.fillRect(-4, -40, 8, 70); ctx.restore(); break;
+      case 'hurdle': {
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.scale(width / 60, height / 30);
+        ctx.beginPath();
+        ctx.rect(-30, 14, 60, 6);
+        ctx.fillStyle = "rgba(0,0,0,0.18)";
+        ctx.fill();
+        ctx.strokeStyle = hexToRgba(element.color, 0.95);
+        ctx.lineWidth = 6 * renderScale;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(-26, 14);
+        ctx.lineTo(-26, -12);
+        ctx.moveTo(26, 14);
+        ctx.lineTo(26, -12);
+        ctx.stroke();
+        const barY1 = -8;
+        const barY2 = -1;
+        ctx.lineWidth = 7 * renderScale;
+        ctx.strokeStyle = element.color;
+        ctx.beginPath();
+        ctx.moveTo(-24, barY1);
+        ctx.lineTo(24, barY1);
+        ctx.moveTo(-24, barY2);
+        ctx.lineTo(24, barY2);
+        ctx.stroke();
+        ctx.lineWidth = 4 * renderScale;
+        ctx.strokeStyle = "rgba(15,23,42,0.35)";
+        ctx.beginPath();
+        ctx.moveTo(-20, 14);
+        ctx.lineTo(20, 14);
+        ctx.stroke();
+        ctx.restore();
+        break;
+      }
+      case 'minigoal': {
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.scale(width / 110, height / 66);
+        ctx.beginPath();
+        ctx.ellipse(0, 34, 52, 8, 0, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(0,0,0,0.18)";
+        ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,0.08)";
+        ctx.fillRect(-50, -30, 100, 60);
+        ctx.strokeStyle = "rgba(255,255,255,0.28)";
+        ctx.lineWidth = 1.1 * renderScale;
+        for (let i = -40; i <= 40; i += 12) {
+          ctx.beginPath();
+          ctx.moveTo(i, -30);
+          ctx.lineTo(i, 30);
+          ctx.stroke();
+        }
+        for (let j = -24; j <= 24; j += 12) {
+          ctx.beginPath();
+          ctx.moveTo(-50, j);
+          ctx.lineTo(50, j);
+          ctx.stroke();
+        }
+        const frameGrad = ctx.createLinearGradient(-50, 0, 50, 0);
+        frameGrad.addColorStop(0, "#e5e7eb");
+        frameGrad.addColorStop(0.5, "#ffffff");
+        frameGrad.addColorStop(1, "#d1d5db");
+        ctx.strokeStyle = frameGrad;
+        ctx.lineWidth = 6 * renderScale;
+        ctx.strokeRect(-50, -30, 100, 60);
+        ctx.strokeStyle = "rgba(148,163,184,0.8)";
+        ctx.lineWidth = 3 * renderScale;
+        ctx.beginPath();
+        ctx.moveTo(-50, -30);
+        ctx.lineTo(-58, -36);
+        ctx.lineTo(58, -36);
+        ctx.lineTo(50, -30);
+        ctx.stroke();
+        ctx.restore();
+        break;
+      }
+      case 'pica': {
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.scale(width / 44, height / 110);
+        const baseGrad = ctx.createLinearGradient(-18, 24, 18, 38);
+        baseGrad.addColorStop(0, "#0ea5e9");
+        baseGrad.addColorStop(1, "#1e3a8a");
+        ctx.beginPath();
+        ctx.moveTo(-18, 34);
+        ctx.lineTo(18, 34);
+        ctx.lineTo(12, 18);
+        ctx.lineTo(-12, 18);
+        ctx.closePath();
+        ctx.fillStyle = baseGrad;
+        ctx.fill();
+        ctx.strokeStyle = "rgba(15,23,42,0.45)";
+        ctx.lineWidth = 2 * renderScale;
+        ctx.stroke();
+        const poleGrad = ctx.createLinearGradient(-3, -42, 3, 18);
+        poleGrad.addColorStop(0, "#fef08a");
+        poleGrad.addColorStop(0.5, "#fde047");
+        poleGrad.addColorStop(1, "#eab308");
+        ctx.fillStyle = poleGrad;
+        ctx.fillRect(-3, -58, 6, 76);
+        ctx.strokeStyle = "rgba(120,53,15,0.35)";
+        ctx.lineWidth = 1.5 * renderScale;
+        ctx.strokeRect(-3, -58, 6, 76);
+        ctx.beginPath();
+        ctx.moveTo(0, -62);
+        ctx.lineTo(3, -58);
+        ctx.lineTo(-3, -58);
+        ctx.closePath();
+        ctx.fillStyle = "#fef9c3";
+        ctx.fill();
+        ctx.restore();
+        break;
+      }
       case 'barrier': 
         ctx.save(); 
         ctx.translate(centerX, centerY); 
@@ -292,31 +780,85 @@ function PromoBoardContent() {
         break;
     }
     if (isSelected) {
+      const matScSel = isMaterial(element.type) ? materialViewportScale(cssW, cssH) : 1;
       ctx.restore(); ctx.save(); ctx.translate(centerX, centerY); ctx.rotate(element.rotation); ctx.translate(-centerX, -centerY);
-      ctx.strokeStyle = '#ffffffaa'; ctx.lineWidth = 2 * renderScale; ctx.setLineDash([6 * renderScale, 4 * renderScale]); const pad = 12 * renderScale; 
+      ctx.strokeStyle = '#ffffffaa'; ctx.lineWidth = 2 * renderScale; ctx.setLineDash([6 * renderScale, 4 * renderScale]); const pad = 12 * renderScale * matScSel;
       ctx.strokeRect(minX - pad, minY - pad, width + pad * 2, height + pad * 2);
       ctx.setLineDash([]); ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#000000'; ctx.lineWidth = 1.5 * renderScale;
       const handles = [
-        { x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, 
-        { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY }, 
+        { x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad },
+        { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY },
         { x: bounds.minX - pad, y: bounds.maxY + pad }, { x: bounds.centerX, y: bounds.maxY + pad }, { x: bounds.maxX + pad, y: bounds.maxY + pad }
       ];
-      handles.forEach(h => { ctx.beginPath(); ctx.arc(h.x, h.y, 8 * renderScale, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
-      const rotY = minY - pad - 45 * renderScale; ctx.beginPath(); ctx.moveTo(centerX, minY - pad); ctx.lineTo(centerX, rotY); ctx.stroke();
-      ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(centerX, rotY, 10 * renderScale, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-      if (element.controlPoint && ['arrow', 'double-arrow', 'zigzag'].includes(element.type)) { const cp = { x: element.controlPoint.x * widthPx, y: element.controlPoint.y * heightPx }; ctx.restore(); ctx.save(); ctx.setLineDash([4 * renderScale, 4 * renderScale]); ctx.strokeStyle = '#3b82f6aa'; ctx.beginPath(); ctx.moveTo(centerX, centerY); ctx.lineTo(cp.x, cp.y); ctx.stroke(); ctx.fillStyle = '#3b82f6'; ctx.beginPath(); ctx.arc(cp.x, cp.y, 10 * renderScale, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2 * renderScale; ctx.stroke(); }
+      handles.forEach(h => { ctx.beginPath(); ctx.arc(h.x, h.y, 8 * renderScale * matScSel, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
+      const rotY = minY - pad - 45 * renderScale * matScSel; ctx.beginPath(); ctx.moveTo(centerX, minY - pad); ctx.lineTo(centerX, rotY); ctx.stroke();
+      ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(centerX, rotY, 10 * renderScale * matScSel, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      if (['arrow', 'double-arrow'].includes(element.type) && element.controlPoint && element.points.length >= 2) {
+        const p0a = element.points[0], p1a = element.points[1];
+        const P0 = { x: p0a.x * widthPx, y: p0a.y * heightPx };
+        const P1 = { x: p1a.x * widthPx, y: p1a.y * heightPx };
+        const cp1 = { x: element.controlPoint.x * widthPx, y: element.controlPoint.y * heightPx };
+        ctx.setLineDash([4 * renderScale, 4 * renderScale]);
+        ctx.strokeStyle = '#3b82f6aa';
+        ctx.beginPath();
+        ctx.moveTo(P0.x, P0.y);
+        ctx.lineTo(cp1.x, cp1.y);
+        if (element.controlPoint2) {
+          const cp2 = { x: element.controlPoint2.x * widthPx, y: element.controlPoint2.y * heightPx };
+          ctx.moveTo(cp2.x, cp2.y);
+          ctx.lineTo(P1.x, P1.y);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+        const dot = (cx: number, cy: number) => {
+          ctx.fillStyle = '#3b82f6';
+          ctx.beginPath();
+          ctx.arc(cx, cy, 10 * renderScale, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 2 * renderScale;
+          ctx.stroke();
+        };
+        dot(cp1.x, cp1.y);
+        if (element.controlPoint2) {
+          dot(element.controlPoint2.x * widthPx, element.controlPoint2.y * heightPx);
+        }
+      }
     } ctx.restore();
-  }, [hexToRgba, teamConfig, renderScale]);
+  }, [hexToRgba, teamConfig, renderScale, boardCanvasShadows]);
 
   const redrawAll = useCallback(() => {
     const canvas = canvasRef.current; const ctx = canvas?.getContext('2d'); if (!ctx || !canvas) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const sorted = [...elements].sort((a, b) => {
-      if (a.type === 'text' && b.type !== 'text') return 1; if (a.type !== 'text' && b.type === 'text') return -1;
-      const aMat = isMaterial(a.type); const bMat = isMaterial(b.type); if (aMat && !bMat) return 1; if (!aMat && bMat) return -1; return 0;
-    });
-    sorted.forEach(el => drawElement(ctx, el, selectedIds.includes(el.id)));
+    // Orden de capas:
+    // 1) Dibujos (strokes) abajo
+    // 2) Materiales (jugadores/conos/etc.) siempre encima de los dibujos
+    // 3) Texto arriba del todo
+    const strokes: DrawingElement[] = [];
+    const materials: DrawingElement[] = [];
+    const texts: DrawingElement[] = [];
+    for (const el of elements) {
+      if (el.type === "text") texts.push(el);
+      else if (isMaterial(el.type)) materials.push(el);
+      else strokes.push(el);
+    }
+    strokes.forEach((el) => drawElement(ctx, el, selectedIds.includes(el.id)));
+    const draft = draftStrokeRef.current;
+    if (draft) drawElement(ctx, draft, false);
+    materials.forEach((el) => drawElement(ctx, el, selectedIds.includes(el.id)));
+    texts.forEach((el) => drawElement(ctx, el, selectedIds.includes(el.id)));
   }, [elements, selectedIds, drawElement]);
+
+  const redrawAllRef = useRef(redrawAll);
+  redrawAllRef.current = redrawAll;
+  const redrawRafRef = useRef<RedrawRafHandle | null>(null);
+  useEffect(() => {
+    redrawRafRef.current = createRedrawRaf(() => redrawAllRef.current());
+    return () => redrawRafRef.current?.cancel();
+  }, []);
+
+  const scheduleCanvasRedraw = () => redrawRafRef.current?.schedule();
+  const flushCanvasRedraw = () => redrawRafRef.current?.flush();
 
   useEffect(() => {
     const canvas = canvasRef.current; if (!canvas || !canvas.parentElement) return;
@@ -335,10 +877,60 @@ function PromoBoardContent() {
 
   const addElementAtCenter = (tool: DrawingTool) => {
     const pNum = tool === 'player' ? elements.filter(e => e.type === 'player').length + 1 : undefined;
-    const canvasRatio = canvasRef.current ? (canvasRef.current.width / canvasRef.current.height) : 1.5;
-    const defW = tool === 'ladder' ? 0.15 : (tool === 'minigoal' || tool === 'cross-arrow' ? 0.1 : tool === 'barrier' ? 0.12 : tool === 'text' ? 0.3 : 0.05);
-    const defH = isCircular(tool) ? (defW * canvasRatio) : (tool === 'ladder' ? 0.05 : (tool === 'minigoal' || tool === 'cross-arrow' ? 0.08 : tool === 'barrier' ? 0.12 : 0.05));
-    const newEl: DrawingElement = { id: `el-${Date.now()}`, type: tool, points: [{ x: 0.5 - defW/2, y: 0.5 - defH/2 }, { x: 0.5 + defW/2, y: 0.5 + defH/2 }], controlPoint: ['arrow', 'double-arrow', 'zigzag'].includes(tool) ? { x: 0.5, y: 0.45 } : undefined, color: currentColor, rotation: 0, lineStyle: 'solid' as const, number: pNum, opacity: 1.0, text: tool === 'text' ? "CONSIGNA TÁCTICA" : undefined };
+    const canvasRatio =
+      canvasRef.current && canvasRef.current.height > 0
+        ? canvasRef.current.width / canvasRef.current.height
+        : 1.5;
+    const playerScale = tool === "player" ? 1.18 : 1;
+    const defW =
+      tool === "player" ? CANVAS_PLAYER_NORM_WIDTH * playerScale :
+      tool === "ladder" ? 0.15 :
+      tool === "minigoal" || tool === "cross-arrow" ? 0.1 :
+      tool === "barrier" ? 0.12 :
+      tool === "hurdle" ? 0.075 :
+      tool === "pica" ? 0.055 :
+      tool === "cone" ? 0.06 :
+      tool === "ball" ? 0.065 :
+      tool === "seta" ? 0.065 :
+      tool === "text" ? 0.3 :
+      0.05;
+    const defH =
+      isCircular(tool)
+        ? defW * canvasRatio
+        : tool === "ladder"
+          ? 0.05
+          : tool === "minigoal" || tool === "cross-arrow"
+            ? 0.08
+            : tool === "barrier"
+              ? 0.12
+              : tool === "hurdle"
+                ? 0.055
+                : tool === "pica"
+                  ? 0.095
+                  : tool === "cone"
+                    ? 0.06
+                    : 0.05;
+    const p0 = { x: 0.5 - defW / 2, y: 0.5 - defH / 2 };
+    const p1 = { x: 0.5 + defW / 2, y: 0.5 + defH / 2 };
+    let controlPoint: Point | undefined;
+    let controlPoint2: Point | undefined;
+    if (tool === 'arrow' || tool === 'double-arrow') {
+      controlPoint = { x: p0.x + (p1.x - p0.x) * 0.33, y: p0.y + (p1.y - p0.y) * 0.33 };
+      controlPoint2 = { x: p0.x + (p1.x - p0.x) * 0.67, y: p0.y + (p1.y - p0.y) * 0.67 };
+    }
+    const newEl: DrawingElement = {
+      id: `el-${Date.now()}`,
+      type: tool,
+      points: [p0, p1],
+      controlPoint,
+      controlPoint2,
+      color: currentColor,
+      rotation: 0,
+      lineStyle: 'solid' as const,
+      number: pNum,
+      opacity: 1.0,
+      text: tool === 'text' ? "CONSIGNA TÁCTICA" : undefined,
+    };
     setElements(prev => [...prev, newEl]); setSelectedIds([newEl.id]); setActiveTool('select');
   };
 
@@ -349,42 +941,232 @@ function PromoBoardContent() {
     if (selectedIds.length === 1) {
       const el = elements.find(e => e.id === selectedIds[0]);
       if (el) {
-        const bounds = getElementBounds(el, wPx, hPx);
-        if (el.controlPoint) { const cpPx = { x: el.controlPoint.x * wPx, y: el.controlPoint.y * hPx }; if (Math.sqrt(Math.pow(point.x * wPx - cpPx.x, 2) + Math.pow(point.y * hPx - cpPx.y, 2)) < 25) { interactionMode.current = 'curving'; return; } }
-        const rotHandlePx = rotatePoint({ x: bounds.centerX, y: bounds.minY - 45 * renderScale }, { x: bounds.centerX, y: bounds.centerY }, el.rotation);
-        if (Math.sqrt(Math.pow(point.x * wPx - rotHandlePx.x, 2) + Math.pow(point.y * hPx - rotHandlePx.y, 2)) < 25) { interactionMode.current = 'rotating'; return; }
+        const bounds = getElementBounds(el, wPx, hPx, wPx, hPx);
+        const matSc = isMaterial(el.type) ? materialViewportScale(wPx, hPx) : 1;
+        const hitThreshold = isCoarsePointer ? 28 : 20;
+        const handleThreshold = isCoarsePointer ? 16 : 11;
+        if (['arrow', 'double-arrow'].includes(el.type) && el.controlPoint) {
+          const cp1Px = { x: el.controlPoint.x * wPx, y: el.controlPoint.y * hPx };
+          const d1 = Math.hypot(point.x * wPx - cp1Px.x, point.y * hPx - cp1Px.y);
+          let picked: 0 | 1 | 2 = 0;
+          if (el.controlPoint2) {
+            const cp2Px = { x: el.controlPoint2.x * wPx, y: el.controlPoint2.y * hPx };
+            const d2 = Math.hypot(point.x * wPx - cp2Px.x, point.y * hPx - cp2Px.y);
+            if (d2 < hitThreshold && d2 <= d1) picked = 2;
+            else if (d1 < hitThreshold) picked = 1;
+          } else if (d1 < hitThreshold) picked = 1;
+          if (picked) {
+            interactionMode.current = 'curving';
+            curveControlDragging.current = picked as 1 | 2;
+            return;
+          }
+        }
+        const rotHandlePx = rotatePoint(
+          { x: bounds.centerX, y: bounds.minY - (45 * (renderScale / dprFactor)) * matSc },
+          { x: bounds.centerX, y: bounds.centerY },
+          el.rotation
+        );
+        if (Math.sqrt(Math.pow(point.x * wPx - rotHandlePx.x, 2) + Math.pow(point.y * hPx - rotHandlePx.y, 2)) < hitThreshold) { interactionMode.current = 'rotating'; return; }
         const local = rotatePoint({ x: point.x * wPx, y: point.y * hPx }, { x: bounds.centerX, y: bounds.centerY }, -el.rotation);
-        const pad = 12 * renderScale; 
+        const pad = 12 * (renderScale / dprFactor) * matSc;
         const handles = [
-          { x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad }, 
-          { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY }, 
+          { x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad },
+          { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY },
           { x: bounds.minX - pad, y: bounds.maxY + pad }, { x: bounds.centerX, y: bounds.maxY + pad }, { x: bounds.maxX + pad, y: bounds.maxY + pad }
         ];
-        const hIdx = handles.findIndex(h => Math.sqrt(Math.pow(local.x - h.x, 2) + Math.pow(local.y - h.y, 2)) < 20);
-        if (hIdx !== -1) { interactionMode.current = 'resizing'; activeHandleIndex.current = hIdx; return; }
+        const insideBody =
+          local.x >= bounds.minX &&
+          local.x <= bounds.maxX &&
+          local.y >= bounds.minY &&
+          local.y <= bounds.maxY;
+        const hIdx = handles.findIndex(h => Math.sqrt(Math.pow(local.x - h.x, 2) + Math.pow(local.y - h.y, 2)) < handleThreshold);
+        // Jugadores: no permitimos redimensionar (solo mover/rotar)
+        if (hIdx !== -1 && el.type !== "player") { interactionMode.current = 'resizing'; activeHandleIndex.current = hIdx; return; }
+        if (insideBody) {
+          dragSelectionRef.current = [el.id];
+          interactionMode.current = 'dragging';
+          return;
+        }
       }
     }
-    const clicked = [...elements].reverse().find(el => { const b = getElementBounds(el, wPx, hPx); const local = rotatePoint({ x: point.x * wPx, y: point.y * hPx }, { x: b.centerX, y: b.centerY }, -el.rotation); const hitPadding = el.type === 'text' ? 25 : 15; return local.x >= b.minX - hitPadding && local.x <= b.maxX + hitPadding && local.y >= b.minY - hitPadding && local.y <= b.maxY + hitPadding; });
-    if (clicked) { if (e.shiftKey) setSelectedIds(prev => prev.includes(clicked.id) ? prev.filter(id => id !== clicked.id) : [...prev, clicked.id]); else setSelectedIds([clicked.id]); setActiveTool('select'); interactionMode.current = 'dragging'; } else setSelectedIds([]); redrawAll();
+    const clicked = [...elements].reverse().find(el => { const b = getElementBounds(el, wPx, hPx, wPx, hPx); const local = rotatePoint({ x: point.x * wPx, y: point.y * hPx }, { x: b.centerX, y: b.centerY }, -el.rotation); const hitPadding = el.type === 'text' ? (isCoarsePointer ? 35 : 25) : (isCoarsePointer ? 25 : 15); return local.x >= b.minX - hitPadding && local.x <= b.maxX + hitPadding && local.y >= b.minY - hitPadding && local.y <= b.maxY + hitPadding; });
+    if (clicked) {
+      if (e.shiftKey) {
+        setSelectedIds(prev => {
+          const next = prev.includes(clicked.id) ? prev.filter(id => id !== clicked.id) : [...prev, clicked.id];
+          dragSelectionRef.current = next;
+          return next;
+        });
+      } else {
+        setSelectedIds([clicked.id]);
+        dragSelectionRef.current = [clicked.id];
+      }
+      setActiveTool('select');
+      interactionMode.current = 'dragging';
+    } else if (isStrokeTool(activeTool)) {
+      setSelectedIds([]);
+      dragSelectionRef.current = [];
+      interactionMode.current = 'creating';
+      draftStrokeRef.current = createDraftStroke(activeTool, currentColor, isDashed ? 'dashed' : 'solid', point);
+      try {
+        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      } catch { /* noop */ }
+    } else {
+      setSelectedIds([]);
+      dragSelectionRef.current = [];
+    }
+    scheduleCanvasRedraw();
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!isDrawing.current || !canvasRef.current) return; const rect = canvasRef.current.getBoundingClientRect();
     const point = { x: (e.clientX - rect.left) / rect.width, y: (e.clientY - rect.top) / rect.height }; const wPx = rect.width; const hPx = rect.height;
+    if (interactionMode.current === 'creating' && draftStrokeRef.current) {
+      const d = draftStrokeRef.current;
+      if (d.type === 'freehand') {
+        const pts = [...d.points];
+        const last = pts[pts.length - 1];
+        const min = isCoarsePointer ? 0.004 : 0.0025;
+        const dist = Math.hypot(point.x - last.x, point.y - last.y);
+        if (pts.length === 1 && dist < min * 0.4) {
+          draftStrokeRef.current = { ...d, points: [{ x: point.x, y: point.y }] };
+        } else if (dist > min) {
+          pts.push({ x: point.x, y: point.y });
+          draftStrokeRef.current = { ...d, points: pts };
+        } else {
+          pts[pts.length - 1] = { x: point.x, y: point.y };
+          draftStrokeRef.current = { ...d, points: pts };
+        }
+      } else {
+        draftStrokeRef.current = { ...d, points: [{ ...d.points[0] }, { x: point.x, y: point.y }] };
+      }
+      scheduleCanvasRedraw();
+      return;
+    }
     if (interactionMode.current === 'resizing' && selectedIds.length === 1 && activeHandleIndex.current !== null) {
-      setElements(prev => prev.map(el => { if (el.id !== selectedIds[0]) return el; const bounds = getElementBounds(el, wPx, hPx); const local = rotatePoint({ x: point.x * wPx, y: point.y * hPx }, { x: bounds.centerX, y: bounds.centerY }, -el.rotation); const next = [...el.points]; const h = activeHandleIndex.current!; if (isCircular(el.type)) { const dxPx = Math.abs(local.x - bounds.centerX) * 2; const dyPx = dxPx; next[0] = { x: (bounds.centerX - dxPx/2) / wPx, y: (bounds.centerY - dyPx/2) / hPx }; next[1] = { x: (bounds.centerX + dxPx/2) / wPx, y: (bounds.centerY + dyPx/2) / hPx }; } else if (isMaterial(el.type)) { const ratio = bounds.width / bounds.height; const dx = Math.abs(local.x - bounds.centerX) * 2; const dy = dx / ratio; next[0] = { x: (bounds.centerX - dx/2) / wPx, y: (bounds.centerY - dy/2) / hPx }; next[1] = { x: (bounds.centerX + dx/2) / wPx, y: (bounds.centerY + dy/2) / hPx }; } else { const p0Px = { x: next[0].x * wPx, y: next[0].y * hPx }; const p1Px = { x: next[1].x * wPx, y: next[1].y * hPx }; if ([0, 3, 5].includes(h)) p0Px.x = local.x; if ([2, 4, 7].includes(h)) p1Px.x = local.x; if ([0, 1, 2].includes(h)) p0Px.y = local.y; if ([5, 6, 7].includes(h)) p1Px.y = local.y; next[0] = { x: p0Px.x / wPx, y: p0Px.y / hPx }; next[1] = { x: p1Px.x / wPx, y: p1Px.y / hPx }; } return { ...el, points: next }; }));
-    } else if (interactionMode.current === 'curving' && selectedIds.length === 1) setElements(prev => prev.map(el => el.id === selectedIds[0] ? { ...el, controlPoint: point } : el));
-    else if (interactionMode.current === 'rotating' && selectedIds.length === 1) { const el = elements.find(e => e.id === selectedIds[0]); if (el) { const b = getElementBounds(el, wPx, hPx); const angle = Math.atan2(point.y * hPx - b.centerY, point.x * wPx - b.centerX) + Math.PI / 2; setElements(prev => prev.map(e => e.id === selectedIds[0] ? { ...e, rotation: angle } : e)); } } 
-    else if (interactionMode.current === 'dragging' && selectedIds.length > 0 && lastPoint.current) { const dx = point.x - lastPoint.current.x; const dy = point.y - lastPoint.current.y; setElements(prev => prev.map(el => { if (!selectedIds.includes(el.id)) return el; const next = { ...el, points: el.points.map(p => ({ x: p.x + dx, y: p.y + dy })) }; if (el.controlPoint) next.controlPoint = { x: el.controlPoint.x + dx, y: el.controlPoint.y + dy }; return next; })); lastPoint.current = point; } 
-    redrawAll();
+      setElements(prev => prev.map(el => {
+        if (el.id !== selectedIds[0]) return el;
+        if (el.type === "player") return el;
+        const sc = isMaterial(el.type) ? materialViewportScale(wPx, hPx) : 1;
+        const boundsRaw = getElementBoundsRaw(el, wPx, hPx);
+        const local = rotatePoint({ x: point.x * wPx, y: point.y * hPx }, { x: boundsRaw.centerX, y: boundsRaw.centerY }, -el.rotation);
+        const next = [...el.points];
+        const h = activeHandleIndex.current!;
+        if (isCircular(el.type)) {
+          const dxPx = Math.abs(local.x - boundsRaw.centerX) * 2;
+          const rawD = dxPx / sc;
+          next[0] = { x: (boundsRaw.centerX - rawD / 2) / wPx, y: (boundsRaw.centerY - rawD / 2) / hPx };
+          next[1] = { x: (boundsRaw.centerX + rawD / 2) / wPx, y: (boundsRaw.centerY + rawD / 2) / hPx };
+        } else if (isMaterial(el.type)) {
+          const ratio = boundsRaw.width / Math.max(1e-6, boundsRaw.height);
+          const dx = Math.abs(local.x - boundsRaw.centerX) * 2;
+          const rawDx = dx / sc;
+          const rawDy = rawDx / ratio;
+          next[0] = { x: (boundsRaw.centerX - rawDx / 2) / wPx, y: (boundsRaw.centerY - rawDy / 2) / hPx };
+          next[1] = { x: (boundsRaw.centerX + rawDx / 2) / wPx, y: (boundsRaw.centerY + rawDy / 2) / hPx };
+        } else {
+          const p0Px = { x: next[0].x * wPx, y: next[0].y * hPx };
+          const p1Px = { x: next[1].x * wPx, y: next[1].y * hPx };
+          if ([0, 3, 5].includes(h)) p0Px.x = local.x;
+          if ([2, 4, 7].includes(h)) p1Px.x = local.x;
+          if ([0, 1, 2].includes(h)) p0Px.y = local.y;
+          if ([5, 6, 7].includes(h)) p1Px.y = local.y;
+          next[0] = { x: p0Px.x / wPx, y: p0Px.y / hPx };
+          next[1] = { x: p1Px.x / wPx, y: p1Px.y / hPx };
+        }
+        return { ...el, points: next };
+      }));
+    } else if (interactionMode.current === 'curving' && selectedIds.length === 1) {
+      const which = curveControlDragging.current;
+      setElements((prev) =>
+        prev.map((el) => {
+          if (el.id !== selectedIds[0]) return el;
+          if (which === 2) return { ...el, controlPoint2: point };
+          return { ...el, controlPoint: point };
+        }),
+      );
+    }
+    else if (interactionMode.current === 'rotating' && selectedIds.length === 1) { const el = elements.find(e => e.id === selectedIds[0]); if (el) { const b = getElementBounds(el, wPx, hPx, wPx, hPx); const angle = Math.atan2(point.y * hPx - b.centerY, point.x * wPx - b.centerX) + Math.PI / 2; setElements(prev => prev.map(e => e.id === selectedIds[0] ? { ...e, rotation: angle } : e)); } }
+    else if (interactionMode.current === 'dragging' && lastPoint.current) { const idsToMove = dragSelectionRef.current.length ? dragSelectionRef.current : selectedIds; if (idsToMove.length > 0) { const dx = point.x - lastPoint.current.x; const dy = point.y - lastPoint.current.y; setElements(prev => prev.map(el => { if (!idsToMove.includes(el.id)) return el; const next = { ...el, points: el.points.map(p => ({ x: p.x + dx, y: p.y + dy })) }; if (el.controlPoint) next.controlPoint = { x: el.controlPoint.x + dx, y: el.controlPoint.y + dy }; if (el.controlPoint2) next.controlPoint2 = { x: el.controlPoint2.x + dx, y: el.controlPoint2.y + dy }; return next; })); lastPoint.current = point; } }
+    scheduleCanvasRedraw();
   };
 
-  const handlePointerUp = () => { isDrawing.current = false; interactionMode.current = 'none'; activeHandleIndex.current = null; };
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (interactionMode.current === 'creating' && draftStrokeRef.current) {
+      const d = draftStrokeRef.current;
+      draftStrokeRef.current = null;
+      const minLen = 0.006;
+      const id = `el-${Date.now()}-${Math.random().toString(16).slice(2, 7)}`;
+      let finalEl: DrawingElement | null = null;
+      if (d.type === 'freehand') {
+        let pts = [...d.points];
+        if (pts.length === 1) {
+          const a = pts[0];
+          pts = [a, { x: a.x + 0.004, y: a.y + 0.004 }];
+        }
+        if (pts.length >= 2) {
+          finalEl = { ...d, id, points: pts };
+        }
+      } else {
+        const p0 = d.points[0];
+        const p1 = d.points[1];
+        if (Math.hypot(p1.x - p0.x, p1.y - p0.y) >= minLen) {
+          let next: DrawingElement = { ...d, id, points: [{ ...p0 }, { ...p1 }] };
+          if (next.type === 'zigzag') {
+            next = { ...next, controlPoint: undefined, controlPoint2: undefined };
+          } else if (next.type === 'arrow' || next.type === 'double-arrow') {
+            const a = next.points[0], b = next.points[1];
+            next = {
+              ...next,
+              controlPoint: { x: a.x + (b.x - a.x) * 0.33, y: a.y + (b.y - a.y) * 0.33 },
+              controlPoint2: { x: a.x + (b.x - a.x) * 0.67, y: a.y + (b.y - a.y) * 0.67 },
+            };
+          }
+          finalEl = next;
+        }
+      }
+      if (finalEl) {
+        setElements((prev) => [...prev, finalEl!]);
+        setSelectedIds([finalEl!.id]);
+      }
+      try {
+        if (e.currentTarget instanceof HTMLElement) e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch { /* noop */ }
+    }
+    isDrawing.current = false;
+    interactionMode.current = 'none';
+    activeHandleIndex.current = null;
+    curveControlDragging.current = null;
+    dragSelectionRef.current = [];
+    queueMicrotask(() => flushCanvasRedraw());
+  };
+
+  const handlePointerCancel = (e: React.PointerEvent) => {
+    if (interactionMode.current === 'creating') {
+      draftStrokeRef.current = null;
+      try {
+        if (e.currentTarget instanceof HTMLElement) e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch { /* noop */ }
+    }
+    isDrawing.current = false;
+    interactionMode.current = 'none';
+    activeHandleIndex.current = null;
+    curveControlDragging.current = null;
+    dragSelectionRef.current = [];
+    flushCanvasRedraw();
+  };
 
   const handleSaveToBlock = (block: string) => {
     if (!saveFormData.title) { toast({ variant: "destructive", title: "ERROR", description: "Asigne un título antes de guardar." }); return; }
-    const vault = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": []}');
-    const newExercise = { id: Date.now(), block, elements, fieldType, metadata: saveFormData };
+    const vault = safeParseJson<any>(localStorage.getItem("synq_promo_vault"), { exercises: [] });
+    const newExercise = {
+      id: Date.now(),
+      block,
+      elements,
+      fieldType,
+      metadata: saveFormData,
+      savedAt: new Date().toISOString(),
+    };
     vault.exercises = [newExercise, ...(vault.exercises || [])];
     localStorage.setItem("synq_promo_vault", JSON.stringify(vault));
     setVault(vault);
@@ -395,7 +1177,7 @@ function PromoBoardContent() {
   const loadExercise = (ex: any) => {
     setElements(ex.elements || []);
     setFieldType(ex.fieldType || "f11");
-    setSaveFormData(ex.metadata || saveFormData);
+    setSaveFormData((prev) => ({ ...prev, ...(ex.metadata || {}) }));
     toast({ title: "EJERCICIO_CARGADO", description: `Sincronizando: ${ex.metadata?.title || 'SIN_TITULO'}` });
   };
 
@@ -404,7 +1186,15 @@ function PromoBoardContent() {
 
   return (
     <div className={cn("h-full w-full flex flex-col bg-black overflow-hidden relative touch-none select-none", isLegacyDevice && "perf-lite")}>
-      
+      {ADSENSE_CLIENT ? (
+        <Script
+          id="promo-adsense"
+          strategy="afterInteractive"
+          crossOrigin="anonymous"
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${encodeURIComponent(ADSENSE_CLIENT)}`}
+        />
+      ) : null}
+
       {showAds && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[100] w-full max-w-7xl px-6 flex gap-4 pointer-events-none animate-in fade-in duration-1000">
           <div className="flex-1 pointer-events-auto"><AdSlot orientation="horizontal" /></div>
@@ -425,8 +1215,10 @@ function PromoBoardContent() {
               <SheetTrigger asChild>
                 <button className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center transition-all group relative">
                   <Users className="h-4 w-4 group-hover:animate-pulse" />
-                  <div className="absolute -top-1 -right-1 h-3.5 w-3.5 bg-primary rounded-full border border-black flex items-center justify-center">
-                    <span className="text-[7px] font-black text-black">11</span>
+                  <div className="absolute -top-1 -right-1 h-3.5 min-w-3.5 px-0.5 bg-primary rounded-full border border-black flex items-center justify-center">
+                    <span className="text-[7px] font-black text-black tabular-nums">
+                      {teamConfig?.starters?.filter((n: string) => n?.trim?.() !== "").length ?? 0}
+                    </span>
                   </div>
                 </button>
               </SheetTrigger>
@@ -441,6 +1233,23 @@ function PromoBoardContent() {
                   </SheetHeader>
                 </div>
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-4">
+                  <Button
+                    variant="secondary"
+                    type="button"
+                    onClick={() => {
+                      const raw = safeParseJson<any>(localStorage.getItem("synq_promo_team"), null);
+                      if (!raw) {
+                        toast({ variant: "destructive", title: "SIN_DATOS", description: "No hay equipo en localStorage." });
+                        return;
+                      }
+                      setTeamConfig(raw);
+                      if (!exerciseId) setFieldType(raw.type || "f11");
+                      toast({ title: "EQUIPO_ACTUALIZADO", description: "Datos recargados desde el almacén local." });
+                    }}
+                    className="w-full h-12 border border-white/10 bg-white/5 text-white/80 font-black uppercase text-[9px] rounded-2xl hover:bg-white/10 mb-2"
+                  >
+                    Recargar desde localStorage
+                  </Button>
                   <Button variant="outline" onClick={() => { loadTeamFromSandbox(); setIsTeamSheetOpen(false); }} className="w-full h-14 border-primary/20 bg-primary/5 text-primary font-black uppercase text-[10px] rounded-2xl hover:bg-primary hover:text-black transition-all mb-6">
                     <Users className="h-4 w-4 mr-2" /> Volcar Titulares al Campo
                   </Button>
@@ -461,7 +1270,9 @@ function PromoBoardContent() {
                     <div className="p-10 text-center space-y-4 border-2 border-dashed border-white/5 rounded-3xl opacity-40">
                       <Users className="h-10 w-10 mx-auto text-white/20" />
                       <p className="text-[9px] font-black uppercase tracking-widest">Sin configuración de equipo</p>
-                      <Button variant="link" className="text-primary text-[10px] font-black uppercase p-0" asChild><Link href="/dashboard/promo/team">Configurar Ahora</Link></Button>
+                      <Button variant="link" className="text-primary text-[10px] font-black uppercase p-0" asChild>
+                        <Link href={`${basePath}/team`}>Configurar Ahora</Link>
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -521,32 +1332,35 @@ function PromoBoardContent() {
           <div className="flex items-center gap-2">
             <Sheet open={isDrawingSheetOpen} onOpenChange={setIsDrawingSheetOpen}>
               <SheetTrigger asChild>
-                <button className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-500 flex items-center justify-center hover:bg-amber-500 hover:text-black transition-all group relative">
+                <button className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/30 text-primary flex items-center justify-center hover:bg-primary hover:text-black transition-all group relative">
                   <PencilLine className="h-4 w-4 group-hover:animate-pulse" />
                 </button>
               </SheetTrigger>
-              <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-amber-500/20 text-white w-full sm:max-w-xs shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+              <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-xs shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
                 <div className="p-8 border-b border-white/5 bg-black/40">
                   <SheetHeader className="space-y-4">
                     <div className="flex items-center gap-3">
-                      <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500 italic">Drawing_Studio</span>
+                      <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary italic">Drawing_Studio</span>
                     </div>
                     <SheetTitle className="text-2xl font-black italic uppercase tracking-tighter">HERRAMIENTAS</SheetTitle>
                   </SheetHeader>
                 </div>
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
                   <BoardToolbar 
-                    theme="amber" 
+                    theme="cyan" 
                     variant="training" 
                     orientation="vertical" 
                     activeTool={activeTool} 
                     onToolSelect={(t) => { 
-                      if(t === 'select') { 
+                      if (t === 'select') { 
                         setActiveTool('select'); 
                         setSelectedIds([]); 
+                      } else if (isMaterial(t)) {
+                        addElementAtCenter(t);
                       } else {
-                        addElementAtCenter(t); 
+                        setActiveTool(t);
+                        setSelectedIds([]);
                       }
                       setIsDrawingSheetOpen(false); 
                     }} 
@@ -564,33 +1378,33 @@ function PromoBoardContent() {
 
             <Sheet open={isVaultSheetOpen} onOpenChange={setIsVaultSheetOpen}>
               <SheetTrigger asChild>
-                <button className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-500 flex items-center justify-center hover:bg-amber-500 hover:text-black transition-all group relative">
+                <button className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/30 text-primary flex items-center justify-center hover:bg-primary hover:text-black transition-all group relative">
                   <Library className="h-4 w-4 group-hover:animate-pulse" />
-                  <div className="absolute -top-1 -left-1 h-4 w-4 bg-amber-500 rounded-full border-2 border-black flex items-center justify-center">
+                  <div className="absolute -top-1 -left-1 h-4 w-4 bg-primary rounded-full border-2 border-black flex items-center justify-center">
                     <span className="text-[8px] font-black text-black">{vault.exercises?.length || 0}</span>
                   </div>
                 </button>
               </SheetTrigger>
-              <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-amber-500/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+              <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
                 <div className="p-8 border-b border-white/5 bg-black/40">
                   <SheetHeader className="space-y-4">
                     <div className="flex items-center gap-3">
-                      <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500 italic">Vault_Registry_v1.0</span>
+                      <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary italic">Vault_Registry_v1.0</span>
                     </div>
-                    <SheetTitle className="text-3xl font-black italic uppercase tracking-tighter">MIS <span className="text-amber-500">TAREAS</span></SheetTitle>
+                    <SheetTitle className="text-3xl font-black italic uppercase tracking-tighter">MIS <span className="text-primary">TAREAS</span></SheetTitle>
                   </SheetHeader>
                 </div>
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-6">
                   {vault.exercises && vault.exercises.length > 0 ? (
                     <div className="grid grid-cols-1 gap-4">
                       {vault.exercises.map((ex: any) => (
-                        <div key={ex.id} onClick={() => { loadExercise(ex); setIsVaultSheetOpen(false); }} className="p-5 bg-white/[0.02] border border-white/5 rounded-3xl group hover:border-amber-500/40 hover:bg-amber-500/5 cursor-pointer transition-all relative overflow-hidden">
+                        <div key={ex.id} onClick={() => { loadExercise(ex); setIsVaultSheetOpen(false); }} className="p-5 bg-white/[0.02] border border-white/5 rounded-3xl group hover:border-primary/40 hover:bg-primary/5 cursor-pointer transition-all relative overflow-hidden">
                           <div className="flex justify-between items-start mb-2">
-                            <Badge variant="outline" className="text-[7px] border-amber-500/20 text-amber-500 font-black px-2">{ex.block?.toUpperCase() || 'SANDBOX'}</Badge>
+                            <Badge variant="outline" className="text-[7px] border-primary/20 text-primary font-black px-2">{ex.block?.toUpperCase() || 'SANDBOX'}</Badge>
                             <span className="text-[8px] font-black text-white/20 uppercase tracking-widest">{ex.fieldType?.toUpperCase() || 'F11'}</span>
                           </div>
-                          <h4 className="text-sm font-black text-white uppercase italic group-hover:amber-text-glow transition-all">{ex.metadata?.title || `Tarea_${ex.id.toString().slice(-4)}`}</h4>
+                          <h4 className="text-sm font-black text-white uppercase italic group-hover:cyan-text-glow transition-all">{ex.metadata?.title || `Tarea_${ex.id.toString().slice(-4)}`}</h4>
                           <p className="text-[9px] font-bold text-white/30 uppercase mt-1 line-clamp-1">{ex.metadata?.objective || 'Sin objetivo definido'}</p>
                         </div>
                       ))}
@@ -603,7 +1417,12 @@ function PromoBoardContent() {
                   )}
                 </div>
                 <div className="p-8 bg-black/60 border-t border-white/5">
-                  <Button className="w-full h-14 bg-amber-500 text-black font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-[0_0_20px_rgba(245,158,11,0.2)]" asChild><Link href="/dashboard/promo/tasks">Gestionar Biblioteca</Link></Button>
+                  <Button
+                    className="w-full h-14 bg-primary text-black font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-[0_0_20px_rgba(0,242,255,0.14)]"
+                    asChild
+                  >
+                    <Link href={`${basePath}/tasks`}>Gestionar Biblioteca</Link>
+                  </Button>
                 </div>
               </SheetContent>
             </Sheet>
@@ -628,14 +1447,37 @@ function PromoBoardContent() {
       </header>
 
       <div className="fixed top-6 left-6 z-[200] lg:block hidden">
-        <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard')} className="h-12 w-12 rounded-2xl bg-black/60 backdrop-blur-2xl border border-white/10 text-white/40 hover:text-primary transition-all shadow-xl">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            const p = window.location.pathname || "";
+            const target = p.startsWith("/sandbox/app")
+              ? "/sandbox/app/tasks"
+              : p.startsWith("/sandbox")
+                ? "/sandbox/tasks"
+                : "/dashboard/promo/tasks";
+            router.replace(target);
+          }}
+          className="h-12 w-12 rounded-2xl bg-black/60 backdrop-blur-2xl border border-white/10 text-white/40 hover:text-primary transition-all shadow-xl"
+        >
           <LayoutDashboard className="h-5 w-5" />
         </Button>
       </div>
 
       <main className="flex-1 relative flex items-center justify-center overflow-hidden touch-none">
         <TacticalField theme="cyan" fieldType={fieldType} showWatermark showLanes={showLanes} isHalfField={isHalfField}>
-          <canvas ref={canvasRef} className="absolute inset-0 z-30 pointer-events-auto" onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} />
+          <canvas
+            ref={canvasRef}
+            className={cn(
+              "absolute inset-0 z-30 pointer-events-auto touch-none",
+              isStrokeTool(activeTool) ? "cursor-crosshair" : "cursor-default",
+            )}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerCancel}
+          />
         </TacticalField>
       </main>
 

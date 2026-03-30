@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { 
   MapPin, 
   Plus, 
@@ -25,7 +25,8 @@ import {
   Trophy, 
   LayoutGrid, 
   Zap,
-  Layers
+  Layers,
+  Copy
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -48,8 +49,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth-context";
+import { useClubModulePermissions } from "@/hooks/use-club-module-permissions";
+import { canUseOperativaSupabase } from "@/lib/operativa-sync";
 
 const SPORTS = [
   { value: "Fútbol", label: "Fútbol" },
@@ -70,16 +75,23 @@ const WEEK_DAYS = [
 ];
 
 const INITIAL_FACILITIES = [
-  { id: "f1", name: "Campo de Fútbol Principal", type: "Campo Exterior", sport: "Fútbol", status: "Active", capacity: "22 Jugadores", nextMaintenance: "12 Oct", subdivisions: "2", divisionStartTime: "17:00", divisionEndTime: "21:00" },
-  { id: "f2", name: "Pabellón Cubierto A", type: "Pabellón", sport: "Baloncesto", status: "Active", capacity: "40 Atletas", nextMaintenance: "05 Nov", subdivisions: "1" },
-  { id: "f3", name: "Gimnasio de Alto Rendimiento", type: "Fitness", sport: "Multideporte", status: "Maintenance", capacity: "15 Atletas", nextMaintenance: "Hoy", subdivisions: "1" },
+  { id: "f1", name: "Campo de Fútbol Principal", type: "Campo Exterior", sport: "Fútbol", status: "Active", capacity: "22 Jugadores", nextMaintenance: "12 Oct", subdivisions: "2", divisionStartTime: "17:00", divisionEndTime: "21:00", divisionDays: ["L", "M", "X", "J", "V"], isHeadquarters: true },
+  { id: "f2", name: "Pabellón Cubierto A", type: "Pabellón", sport: "Baloncesto", status: "Active", capacity: "40 Atletas", nextMaintenance: "05 Nov", subdivisions: "1", isHeadquarters: false },
+  { id: "f3", name: "Gimnasio de Alto Rendimiento", type: "Fitness", sport: "Multideporte", status: "Maintenance", capacity: "15 Atletas", nextMaintenance: "Hoy", subdivisions: "1", isHeadquarters: false },
 ];
 
 export default function FacilitiesManagementPage() {
+  const { profile, session } = useAuth();
+  const { canEdit: canEditFacilities, canDelete: canDeleteFacilities } = useClubModulePermissions("facilities");
+  const clubScopeId = profile?.clubId ?? "global-hq";
+  const facilitiesStorageKey = `synq_methodology_facilities_v1_${clubScopeId}`;
+  const canUseRemote = canUseOperativaSupabase(clubScopeId) && !!session?.access_token;
+
   const [facilities, setFacilities] = useState(INITIAL_FACILITIES);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [syncMode, setSyncMode] = useState<"remote" | "local" | "restricted" | "local_error">("local");
   const [editingId, setEditingId] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -94,10 +106,126 @@ export default function FacilitiesManagementPage() {
     days: ["L", "M", "X", "J", "V", "S", "D"] as string[],
     subdivisions: "1",
     divisionStartTime: "17:00",
-    divisionEndTime: "21:00"
+    divisionEndTime: "21:00",
+    divisionDays: ["L", "M", "X", "J", "V"] as string[],
+    isHeadquarters: false,
   });
 
+  const persistFacilities = (next: typeof INITIAL_FACILITIES) => {
+    if (typeof window === "undefined") return;
+    localStorage.setItem(facilitiesStorageKey, JSON.stringify(next));
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    if (typeof window === "undefined") return;
+    const loadFacilities = async () => {
+      try {
+        const raw = localStorage.getItem(facilitiesStorageKey);
+        if (!raw) {
+          persistFacilities(INITIAL_FACILITIES as any);
+        } else {
+          const parsed = JSON.parse(raw) as typeof INITIAL_FACILITIES;
+          if (Array.isArray(parsed) && !cancelled) setFacilities(parsed);
+        }
+      } catch {
+        // No bloqueamos si falla el parseo
+      }
+
+      if (!canUseRemote || !session?.access_token) {
+        if (!cancelled) setSyncMode("local");
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/club/facilities", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (res.status === 404) {
+          if (!cancelled) setSyncMode("local");
+          toast({
+            title: "API_FACILITIES_NO_DISPONIBLE",
+            description: "Ruta de servidor no encontrada (404). Operando en modo local.",
+          });
+          return;
+        }
+        if (res.status === 403) {
+          if (!cancelled) setSyncMode("restricted");
+          return;
+        }
+        if (!res.ok) {
+          if (!cancelled) setSyncMode("local_error");
+          return;
+        }
+        const json = (await res.json()) as { payload?: unknown[] };
+        const remoteFacilities = Array.isArray(json.payload) ? (json.payload as typeof INITIAL_FACILITIES) : [];
+        if (!cancelled) {
+          setFacilities(remoteFacilities);
+          setSyncMode("remote");
+        }
+        persistFacilities(remoteFacilities as any);
+      } catch {
+        if (!cancelled) setSyncMode("local_error");
+      }
+    };
+    void loadFacilities();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [facilitiesStorageKey, canUseRemote, session?.access_token]);
+
+  const persistFacilitiesHybrid = async (next: typeof INITIAL_FACILITIES) => {
+    persistFacilities(next);
+    if (!canUseRemote || !session?.access_token) {
+      setSyncMode("local");
+      return;
+    }
+    try {
+      const res = await fetch("/api/club/facilities", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ payload: next }),
+      });
+      if (res.status === 403) {
+        setSyncMode("restricted");
+        toast({
+          variant: "destructive",
+          title: "PERMISOS_LIMITADOS",
+          description: "Sin permisos para guardar instalaciones en servidor. Se guardó localmente.",
+        });
+        return;
+      }
+      if (res.status === 404) {
+        setSyncMode("local");
+        toast({
+          title: "API_FACILITIES_NO_DISPONIBLE",
+          description: "Ruta de servidor no encontrada (404). Se guardó en modo local.",
+        });
+        return;
+      }
+      if (!res.ok) {
+        setSyncMode("local_error");
+        return;
+      }
+      setSyncMode("remote");
+    } catch {
+      setSyncMode("local_error");
+    }
+  };
+
   const handleOpenCreate = () => {
+    if (!canEditFacilities) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes permiso de edición en Instalaciones.",
+      });
+      return;
+    }
     setEditingId(null);
     setFormData({ 
       name: "", 
@@ -110,12 +238,22 @@ export default function FacilitiesManagementPage() {
       days: ["L", "M", "X", "J", "V", "S", "D"],
       subdivisions: "1",
       divisionStartTime: "17:00",
-      divisionEndTime: "21:00"
+      divisionEndTime: "21:00",
+      divisionDays: ["L", "M", "X", "J", "V"],
+      isHeadquarters: false,
     });
     setIsSheetOpen(true);
   };
 
   const handleEdit = (facility: any) => {
+    if (!canEditFacilities) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes permiso de edición en Instalaciones.",
+      });
+      return;
+    }
     setEditingId(facility.id);
     setFormData({
       name: facility.name,
@@ -128,22 +266,36 @@ export default function FacilitiesManagementPage() {
       days: facility.days || ["L", "M", "X", "J", "V", "S", "D"],
       subdivisions: facility.subdivisions || "1",
       divisionStartTime: facility.divisionStartTime || "17:00",
-      divisionEndTime: facility.divisionEndTime || "21:00"
+      divisionEndTime: facility.divisionEndTime || "21:00",
+      divisionDays: facility.divisionDays || ["L", "M", "X", "J", "V"],
+      isHeadquarters: !!facility.isHeadquarters,
     });
     setIsSheetOpen(true);
   };
 
-  const toggleDay = (dayId: string) => {
+  const toggleDay = (dayId: string, key: "days" | "divisionDays" = "days") => {
     setFormData(prev => ({
       ...prev,
-      days: prev.days.includes(dayId) 
-        ? prev.days.filter(d => d !== dayId) 
-        : [...prev.days, dayId]
+      [key]: prev[key].includes(dayId)
+        ? prev[key].filter(d => d !== dayId)
+        : [...prev[key], dayId]
     }));
   };
 
   const handleDelete = (id: string, name: string) => {
-    setFacilities(prev => prev.filter(f => f.id !== id));
+    if (!canDeleteFacilities) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes permiso de borrado en Instalaciones.",
+      });
+      return;
+    }
+    setFacilities((prev) => {
+      const next = prev.filter((f) => f.id !== id);
+      void persistFacilitiesHybrid(next as any);
+      return next;
+    });
     toast({
       variant: "destructive",
       title: "ACTIVO_ELIMINADO",
@@ -151,17 +303,60 @@ export default function FacilitiesManagementPage() {
     });
   };
 
+  const handleDuplicate = (facility: any) => {
+    if (!canEditFacilities) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes permiso de edición en Instalaciones.",
+      });
+      return;
+    }
+    const duplicated = {
+      ...facility,
+      id: `f${Date.now()}`,
+      name: `${facility.name} (COPIA)`,
+      nextMaintenance: "Próximamente",
+    };
+    setFacilities((prev) => {
+      const next = [duplicated, ...prev];
+      void persistFacilitiesHybrid(next as any);
+      return next;
+    });
+    toast({
+      title: "ACTIVO_DUPLICADO",
+      description: `Se creó una copia de ${facility.name}.`,
+    });
+  };
+
   const handleSaveFacility = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canEditFacilities) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes permiso de edición en Instalaciones.",
+      });
+      return;
+    }
+    if (parseInt(formData.subdivisions, 10) > 1 && formData.divisionDays.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "VALIDACIÓN_DIVISIÓN",
+        description: "Selecciona al menos un día para la división activa antes de guardar.",
+      });
+      return;
+    }
     setLoading(true);
-    
+
+    const currentEditingId = editingId;
     setTimeout(() => {
-      if (editingId) {
-        setFacilities(prev => prev.map(f => 
-          f.id === editingId 
-            ? { ...f, ...formData } 
-            : f
-        ));
+      if (currentEditingId) {
+        setFacilities((prev) => {
+          const next = prev.map((f) => (f.id === currentEditingId ? { ...f, ...formData } : f));
+          void persistFacilitiesHybrid(next as any);
+          return next;
+        });
         toast({
           title: "ACTIVO_ACTUALIZADO",
           description: `Los protocolos de ${formData.name} han sido sincronizados.`,
@@ -172,7 +367,11 @@ export default function FacilitiesManagementPage() {
           ...formData,
           nextMaintenance: "Próximamente"
         };
-        setFacilities([newFacility, ...facilities]);
+        setFacilities((prev) => {
+          const next = [newFacility, ...prev];
+          void persistFacilitiesHybrid(next as any);
+          return next;
+        });
         toast({
           title: "INSTALACIÓN_REGISTRADA",
           description: `El nodo ${formData.name} ha sido añadido a la matriz del club.`,
@@ -192,7 +391,7 @@ export default function FacilitiesManagementPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
-      <div className="flex justify-between items-end border-b border-white/5 pb-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-end border-b border-white/5 pb-6">
         <div className="space-y-1">
           <div className="flex items-center gap-3 mb-2">
             <MapPin className="h-5 w-5 text-primary animate-pulse" />
@@ -201,11 +400,32 @@ export default function FacilitiesManagementPage() {
           <h1 className="text-4xl font-headline font-black text-white uppercase tracking-tighter italic cyan-text-glow">
             Instalaciones
           </h1>
+          <p
+            className={cn(
+              "text-[9px] font-black uppercase tracking-widest mt-1",
+              syncMode === "remote"
+                ? "text-emerald-400/80"
+                : syncMode === "restricted"
+                ? "text-amber-400/80"
+                : syncMode === "local_error"
+                ? "text-rose-400/80"
+                : "text-white/40",
+            )}
+          >
+            {syncMode === "remote"
+              ? "SINCRO_REMOTA_ACTIVA"
+              : syncMode === "restricted"
+              ? "MODO_LOCAL_POR_PERMISOS"
+              : syncMode === "local_error"
+              ? "MODO_LOCAL_POR_ERROR"
+              : "MODO_LOCAL_FALLBACK"}
+          </p>
         </div>
         
         <Button 
           onClick={handleOpenCreate}
-          className="rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none"
+          disabled={!canEditFacilities}
+          className="w-full sm:w-auto rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none disabled:opacity-40"
         >
           <Plus className="h-4 w-4 mr-2" /> Nuevo Activo
         </Button>
@@ -264,6 +484,11 @@ export default function FacilitiesManagementPage() {
               <CardDescription className="text-[9px] font-black uppercase tracking-widest text-primary/30 italic">
                 {f.type} • {f.subdivisions === "1" ? "Espacio Único" : `${f.subdivisions} Divisiones`}
               </CardDescription>
+              {f.isHeadquarters && (
+                <Badge className="mt-3 rounded-xl bg-primary/15 text-primary border border-primary/30 text-[8px] font-black uppercase tracking-widest">
+                  Campo Sede de Partidos
+                </Badge>
+              )}
             </CardHeader>
             <CardContent className="px-6 pb-6 space-y-4">
               <div className="flex items-center justify-between p-3 bg-primary/5 rounded-2xl border border-primary/10">
@@ -281,16 +506,27 @@ export default function FacilitiesManagementPage() {
                 <span className="text-xs font-black text-primary cyan-text-glow">{f.nextMaintenance}</span>
               </div>
             </CardContent>
-            <CardFooter className="px-6 py-4 bg-black/40 border-t border-white/5 flex justify-between items-center rounded-b-3xl">
+            <CardFooter className="px-6 py-4 bg-black/40 border-t border-white/5 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center rounded-b-3xl">
               <span className="flex items-center gap-2 text-[8px] font-black text-primary/30 uppercase tracking-widest">
                 <CheckCircle2 className="h-3 w-3 text-primary/40" /> Sincronización Estable
               </span>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap justify-end gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 text-primary hover:bg-primary/10 border border-primary/10 transition-all rounded-xl active:scale-95"
+                  onClick={() => handleDuplicate(f)}
+                  disabled={!canEditFacilities}
+                  title="Duplicar Activo"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                </Button>
                 <Button 
                   variant="ghost" 
                   size="icon" 
                   className="h-9 w-9 text-primary hover:bg-primary/10 border border-primary/10 transition-all rounded-xl active:scale-95"
                   onClick={() => handleEdit(f)}
+                  disabled={!canEditFacilities}
                   title="Modificar Activo"
                 >
                   <Pencil className="h-3.5 w-3.5" />
@@ -300,6 +536,7 @@ export default function FacilitiesManagementPage() {
                   size="icon" 
                   className="h-9 w-9 text-rose-500 hover:bg-rose-500/10 border border-rose-500/10 transition-all rounded-xl active:scale-95"
                   onClick={() => handleDelete(f.id, f.name)}
+                  disabled={!canDeleteFacilities}
                   title="Eliminar Activo"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
@@ -311,8 +548,8 @@ export default function FacilitiesManagementPage() {
       </div>
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-xl shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
-          <div className="p-10 border-b border-white/5 bg-black/40">
+        <SheetContent side="right" className="z-[70] bg-background/95 bg-grid-pattern backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-xl shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
+          <div className="sticky top-0 z-20 p-10 border-b border-white/5 bg-background/90 backdrop-blur-md">
             <SheetHeader className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
@@ -327,7 +564,7 @@ export default function FacilitiesManagementPage() {
             </SheetHeader>
           </div>
 
-          <form onSubmit={handleSaveFacility} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10">
+          <form onSubmit={handleSaveFacility} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10 bg-background/70">
             <div className="space-y-6">
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Nombre de la Instalación</Label>
@@ -350,7 +587,7 @@ export default function FacilitiesManagementPage() {
                     <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-2xl text-primary font-bold uppercase tracking-widest focus:border-primary transition-all">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
+                    <SelectContent className="z-[120] bg-[#04070c] border-primary/20 rounded-2xl">
                       <SelectItem value="Campo Exterior" className="text-[10px] font-black uppercase focus:bg-primary">CAMPO EXTERIOR</SelectItem>
                       <SelectItem value="Pabellón" className="text-[10px] font-black uppercase focus:bg-primary">PABELLÓN CUBIERTO</SelectItem>
                       <SelectItem value="Fitness" className="text-[10px] font-black uppercase focus:bg-primary">GIMNASIO / SALA</SelectItem>
@@ -371,7 +608,7 @@ export default function FacilitiesManagementPage() {
                         <SelectValue placeholder="DEPORTE..." />
                       </div>
                     </SelectTrigger>
-                    <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
+                    <SelectContent className="z-[120] bg-[#04070c] border-primary/20 rounded-2xl">
                       {SPORTS.map(s => (
                         <SelectItem key={s.value} value={s.value} className="text-[10px] font-black uppercase tracking-widest focus:bg-primary">
                           {s.label}
@@ -400,7 +637,7 @@ export default function FacilitiesManagementPage() {
                     <SelectTrigger className="h-12 bg-black/40 border-primary/20 rounded-2xl text-primary font-bold uppercase text-[10px] tracking-widest focus:border-primary">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
+                    <SelectContent className="z-[120] bg-[#04070c] border-primary/20 rounded-2xl">
                       <SelectItem value="1" className="text-[10px] font-black uppercase focus:bg-primary">ESPACIO ÚNICO</SelectItem>
                       <SelectItem value="2" className="text-[10px] font-black uppercase focus:bg-primary">2 MITADES (ZONA A/B)</SelectItem>
                       <SelectItem value="4" className="text-[10px] font-black uppercase focus:bg-primary">4 CUADRANTES (A/B/C/D)</SelectItem>
@@ -437,6 +674,26 @@ export default function FacilitiesManagementPage() {
                     <p className="text-[7px] text-primary/30 uppercase font-bold italic leading-relaxed">
                       Fuera de este horario, el sistema tratará la instalación como un Nodo de Espacio Único.
                     </p>
+                    <div className="space-y-2 pt-2">
+                      <Label className="text-[9px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Días con División Activa</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {WEEK_DAYS.map(day => (
+                          <button
+                            key={`division-${day.id}`}
+                            type="button"
+                            onClick={() => toggleDay(day.id, "divisionDays")}
+                            className={cn(
+                              "h-9 min-w-9 px-2 flex items-center justify-center font-black text-[10px] border transition-all rounded-xl active:scale-95",
+                              formData.divisionDays.includes(day.id)
+                                ? "bg-primary text-black border-primary shadow-[0_0_15px_rgba(0,242,255,0.3)]"
+                                : "bg-white/5 border-primary/20 text-primary/40 hover:border-primary/40"
+                            )}
+                          >
+                            {day.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -524,12 +781,28 @@ export default function FacilitiesManagementPage() {
                     <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-2xl text-primary font-bold uppercase tracking-widest focus:border-primary transition-all">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
+                    <SelectContent className="z-[120] bg-[#04070c] border-primary/20 rounded-2xl">
                       <SelectItem value="Active" className="text-[10px] font-black uppercase text-primary focus:bg-primary focus:text-black">OPERATIVO</SelectItem>
                       <SelectItem value="Maintenance" className="text-[10px] font-black uppercase text-amber-400 focus:bg-amber-500">MANTENIMIENTO</SelectItem>
                       <SelectItem value="Inactive" className="text-[10px] font-black uppercase text-rose-400 focus:bg-rose-500">CERRADO</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+              </div>
+
+              <div className="space-y-3 p-6 border border-primary/20 bg-primary/5 rounded-2xl">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <Label className="text-[10px] font-black uppercase text-primary tracking-widest italic">Campo sede para partidos</Label>
+                    <p className="text-[9px] text-primary/40 font-bold uppercase tracking-tight">
+                      Marca la instalación principal para partidos oficiales.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={formData.isHeadquarters}
+                    onCheckedChange={(checked) => setFormData({ ...formData, isHeadquarters: checked })}
+                    aria-label="Campo sede para partidos"
+                  />
                 </div>
               </div>
             </div>
@@ -543,22 +816,22 @@ export default function FacilitiesManagementPage() {
                 La configuración de subdivisiones permite al motor de planificación de SynQAI gestionar la ocupación de zonas de forma inteligente sin solapar entrenamientos.
               </p>
             </div>
-          </form>
 
-          <div className="p-10 bg-black/40 border-t border-white/5 flex gap-4">
-            <SheetClose asChild>
-              <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 transition-all rounded-2xl active:scale-95">
-                CANCELAR
+            <div className="pt-2 flex gap-4">
+              <SheetClose asChild>
+                <Button type="button" variant="ghost" className="flex-1 h-14 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 transition-all rounded-2xl active:scale-95">
+                  CANCELAR
+                </Button>
+              </SheetClose>
+              <Button
+                type="submit"
+                disabled={loading || !canEditFacilities}
+                className="flex-[2] h-14 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] border-none active:scale-95 disabled:opacity-40"
+              >
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (editingId ? "SINCRONIZAR_CAMBIOS" : "VINCULAR_ACTIVO")}
               </Button>
-            </SheetClose>
-            <Button 
-              onClick={handleSaveFacility}
-              disabled={loading}
-              className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] border-none active:scale-95"
-            >
-              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (editingId ? "SINCRONIZAR_CAMBIOS" : "VINCULAR_ACTIVO")}
-            </Button>
-          </div>
+            </div>
+          </form>
         </SheetContent>
       </Sheet>
     </div>

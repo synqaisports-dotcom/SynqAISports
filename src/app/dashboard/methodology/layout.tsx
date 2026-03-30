@@ -3,13 +3,12 @@
 import { useAuth } from "@/lib/auth-context";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, use } from "react";
+import { useEffect } from "react";
+import { ClubRouteGuard } from "@/components/dashboard/ClubRouteGuard";
 
 export default function MethodologyLayout(props: { 
   children: React.ReactNode;
-  params: Promise<any>;
 }) {
-  const params = use(props.params);
   const children = props.children;
   const { profile, loading } = useAuth();
   const router = useRouter();
@@ -24,10 +23,10 @@ export default function MethodologyLayout(props: {
     return (
       <div className="h-screen w-full flex flex-col items-center justify-center bg-[#04070c]">
         <div className="relative">
-          <Loader2 className="h-12 w-12 text-amber-500 animate-spin mb-4" />
-          <div className="absolute inset-0 bg-amber-500/20 blur-xl rounded-full animate-pulse" />
+          <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
+          <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse" />
         </div>
-        <p className="text-[10px] font-black text-amber-500 tracking-[0.5em] uppercase">Sincronizando_Terminal_Metodologico...</p>
+        <p className="text-[10px] font-black text-primary tracking-[0.5em] uppercase">Sincronizando_Terminal_Metodologico...</p>
       </div>
     );
   }
@@ -36,7 +35,7 @@ export default function MethodologyLayout(props: {
 
   return (
     <div className="methodology-theme min-h-screen">
-      {children}
+      <ClubRouteGuard>{children}</ClubRouteGuard>
     </div>
   );
 }

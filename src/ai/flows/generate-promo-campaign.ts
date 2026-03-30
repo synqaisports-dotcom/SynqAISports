@@ -12,7 +12,20 @@ import {z} from 'genkit';
 
 const GenerateCampaignInputSchema = z.object({
   objective: z.string().describe('El objetivo demográfico y de captación (ej. "Primeros 10 entrenadores de Argentina").'),
-  platform: z.enum(['Facebook', 'Instagram', 'LinkedIn', 'Google Ads', 'YouTube']).describe('La plataforma principal de difusión.'),
+  platform: z
+    .enum([
+      'Facebook',
+      'Instagram',
+      'Instagram Reels',
+      'TikTok',
+      'YouTube',
+      'YouTube Shorts',
+      'LinkedIn',
+      'Google Ads',
+      'Twitter/X',
+      'Otro',
+    ])
+    .describe('Canal principal de difusión (shorts, reels, etc.).'),
   planId: z.string().describe('El identificador del plan de suscripción.'),
   maxUses: z.number().optional().describe('Número máximo de veces que se puede usar el token.'),
   expiryDate: z.string().optional().describe('Fecha de caducidad de la campaña (YYYY-MM-DD).'),
@@ -46,7 +59,7 @@ Plan Vinculado: {{{planId}}}
 Instrucciones Estratégicas:
 1. Generación de Token: Crea un token alfanumérico potente (ej: ARG-PRO-VAL).
 2. Gancho de Escasez: Si hay límite de usos o fecha, la campaña DEBE centrarse en la urgencia.
-3. Si la plataforma es YouTube, genera un guion de 15s.
+3. Si la plataforma es YouTube o YouTube Shorts, genera un guion de 15s; si es Reels o TikTok, adapta el copy a formato vertical y primeros 3s de gancho.
 
 Genera un plan profesional con un lenguaje de élite y altamente persuasivo.
 Idioma: Español.`,
