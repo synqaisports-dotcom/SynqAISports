@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useRef, memo, useCallback, Suspense } from "react";
+import { useState, useEffect, useRef, memo, useCallback, Suspense, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { 
   Trophy, 
@@ -64,6 +64,7 @@ import {
 import { ensureWatchPairingCode } from "@/lib/watch-pairing";
 import {
   MATCH_TIMER_SYNC_KEY,
+  matchTimerSyncKey,
   readMatchTimerSync,
   shouldApplyRemoteTimer,
   writeMatchTimerSync,
@@ -73,10 +74,12 @@ import {
 } from "@/lib/match-timer-sync";
 import {
   MATCH_SCORE_SYNC_KEY,
+  matchScoreSyncKey,
   readMatchScoreSync,
   shouldApplyRemoteScore,
   writeMatchScoreSync,
 } from "@/lib/match-score-sync";
+import { readContinuityContext, subscribeContinuityContext } from "@/lib/continuity-context";
 import {
   BOARD_HIGH_PERFORMANCE_KEY,
   BOARD_PERF_CHANGE_EVENT,
@@ -110,9 +113,10 @@ const MemoizedPlayerChip = memo(PlayerChip);
  * Equipo local: elite → synq_players | sandbox → synq_promo_team. Cronómetro ↔ smartwatch: localStorage (otras pestañas).
  */
 function MatchBoardInner() {
-  useAuth();
+  const { profile } = useAuth();
   const { toast } = useToast();
   const searchParams = useSearchParams();
+  const clubScopeId = profile?.clubId ?? "global-hq";
   
   const [mounted, setMounted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(45 * 60);
@@ -159,7 +163,67 @@ function MatchBoardInner() {
 
   const [matchSource, setMatchSource] = useState<MatchBoardSource>("elite");
   const [localHomeNames, setLocalHomeNames] = useState<string[]>([]);
+  const [timerSyncKey, setTimerSyncKey] = useState<string>(MATCH_TIMER_SYNC_KEY);
+  const [scoreSyncKey, setScoreSyncKey] = useState<string>(MATCH_SCORE_SYNC_KEY);
   const safeFieldType: FieldType = FORMATIONS_DATA[fieldType] ? fieldType : "f11";
+  const continuityCtx = useMemo(() => readContinuityContext(clubScopeId), [clubScopeId]);
+
+  useEffect(() => {
+    const ctx = continuityCtx;
+    if (!ctx) {
+      setTimerSyncKey(MATCH_TIMER_SYNC_KEY);
+      setScoreSyncKey(MATCH_SCORE_SYNC_KEY);
+      return;
+    }
+    setTimerSyncKey(
+      matchTimerSyncKey({
+        clubId: ctx.clubId,
+        teamId: ctx.teamId,
+        mcc: ctx.mcc,
+        session: ctx.session,
+        mode: ctx.mode,
+      }),
+    );
+    setScoreSyncKey(
+      matchScoreSyncKey({
+        clubId: ctx.clubId,
+        teamId: ctx.teamId,
+        mcc: ctx.mcc,
+        session: ctx.session,
+        mode: ctx.mode,
+      }),
+    );
+  }, [continuityCtx]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const unsub = subscribeContinuityContext(clubScopeId, (ctx) => {
+      if (!ctx) {
+        setTimerSyncKey(MATCH_TIMER_SYNC_KEY);
+        setScoreSyncKey(MATCH_SCORE_SYNC_KEY);
+        return;
+      }
+      setTimerSyncKey(
+        matchTimerSyncKey({
+          clubId: ctx.clubId,
+          teamId: ctx.teamId,
+          mcc: ctx.mcc,
+          session: ctx.session,
+          mode: ctx.mode,
+        }),
+      );
+      setScoreSyncKey(
+        matchScoreSyncKey({
+          clubId: ctx.clubId,
+          teamId: ctx.teamId,
+          mcc: ctx.mcc,
+          session: ctx.session,
+          mode: ctx.mode,
+        }),
+      );
+    });
+    return () => unsub();
+  }, [clubScopeId]);
 
   useEffect(() => {
     setMounted(true);
@@ -220,7 +284,7 @@ function MatchBoardInner() {
   }, []);
 
   useEffect(() => {
-    const p = readMatchTimerSync();
+    const p = readMatchTimerSync(timerSyncKey);
     if (shouldApplyRemoteTimer(p, lastTimerSyncAppliedRef.current) && Date.now() - p.updatedAt < 3 * 60 * 60 * 1000) {
       lastTimerSyncAppliedRef.current = p.updatedAt;
       setTimeLeft(Math.max(0, p.remainingSec));
@@ -228,7 +292,7 @@ function MatchBoardInner() {
     }
 
     const onTimerStorage = (e: StorageEvent) => {
-      if (e.key !== MATCH_TIMER_SYNC_KEY || !e.newValue) return;
+      if (e.key !== timerSyncKey || !e.newValue) return;
       try {
         const remote = JSON.parse(e.newValue) as MatchTimerSyncPayload;
         if (!shouldApplyRemoteTimer(remote, lastTimerSyncAppliedRef.current)) return;
@@ -242,17 +306,17 @@ function MatchBoardInner() {
     };
     window.addEventListener("storage", onTimerStorage);
     return () => window.removeEventListener("storage", onTimerStorage);
-  }, []);
+  }, [timerSyncKey]);
 
   useEffect(() => {
-    const p = readMatchScoreSync();
+    const p = readMatchScoreSync(scoreSyncKey);
     if (shouldApplyRemoteScore(p, lastScoreSyncAppliedRef.current) && Date.now() - p.updatedAt < 3 * 60 * 60 * 1000) {
       lastScoreSyncAppliedRef.current = p.updatedAt;
       setScore({ home: Math.max(0, p.home), guest: Math.max(0, p.guest) });
     }
 
     const onScoreStorage = (e: StorageEvent) => {
-      if (e.key !== MATCH_SCORE_SYNC_KEY || !e.newValue) return;
+      if (e.key !== scoreSyncKey || !e.newValue) return;
       try {
         const remote = JSON.parse(e.newValue) as { home: number; guest: number; updatedAt: number };
         if (!shouldApplyRemoteScore(remote, lastScoreSyncAppliedRef.current)) return;
@@ -265,17 +329,17 @@ function MatchBoardInner() {
     };
     window.addEventListener("storage", onScoreStorage);
     return () => window.removeEventListener("storage", onScoreStorage);
-  }, []);
+  }, [scoreSyncKey]);
 
   const changeScore = useCallback((deltaHome: number, deltaGuest: number) => {
     setScore((prev) => {
       const safe = { home: Math.max(0, prev.home + deltaHome), guest: Math.max(0, prev.guest + deltaGuest) };
       const now = Date.now();
       lastScoreSyncAppliedRef.current = now;
-      writeMatchScoreSync({ ...safe, updatedAt: now, origin: "board" });
+      writeMatchScoreSync({ ...safe, updatedAt: now, origin: "board" }, scoreSyncKey);
       return safe;
     });
-  }, []);
+  }, [scoreSyncKey]);
 
   useEffect(() => {
     timeLeftRef.current = timeLeft;
@@ -307,13 +371,13 @@ function MatchBoardInner() {
           const next = prev <= 0 ? 0 : prev - 1;
           const now = Date.now();
           lastTimerSyncAppliedRef.current = now;
-          writeMatchTimerSync({ remainingSec: next, running: true, updatedAt: now, origin: "board" });
+          writeMatchTimerSync({ remainingSec: next, running: true, updatedAt: now, origin: "board" }, timerSyncKey);
           return next;
         });
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [isRunning]);
+  }, [isRunning, timerSyncKey]);
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -331,7 +395,7 @@ function MatchBoardInner() {
     timeLeftRef.current = sec;
     const now = Date.now();
     lastTimerSyncAppliedRef.current = now;
-    writeMatchTimerSync({ remainingSec: sec, running: false, updatedAt: now, origin: "board" });
+    writeMatchTimerSync({ remainingSec: sec, running: false, updatedAt: now, origin: "board" }, timerSyncKey);
     toast({
       title: "TIEMPO_AJUSTADO",
       description: `Cronómetro configurado a ${minutes} minutos.`,
@@ -676,7 +740,7 @@ function MatchBoardInner() {
                       running: next,
                       updatedAt: now,
                       origin: "board",
-                    });
+                    }, timerSyncKey);
                   });
                   return next;
                 });
@@ -698,7 +762,7 @@ function MatchBoardInner() {
                 timeLeftRef.current = sec;
                 const now = Date.now();
                 lastTimerSyncAppliedRef.current = now;
-                writeMatchTimerSync({ remainingSec: sec, running: false, updatedAt: now, origin: "board" });
+                writeMatchTimerSync({ remainingSec: sec, running: false, updatedAt: now, origin: "board" }, timerSyncKey);
               }} 
               className="h-7 w-7 rounded-lg flex items-center justify-center text-white/20 hover:text-white hover:bg-white/10 transition-all duration-300 active:scale-90"
               title="Resetear"
