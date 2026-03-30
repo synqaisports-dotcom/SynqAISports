@@ -58,7 +58,16 @@ export default function LiveFieldsPage() {
   useEffect(() => {
     if (loading) return;
     if (isLogged) return;
-    router.replace("/login?next=/live-fields");
+    const target = "/login?next=/live-fields";
+    router.replace(target);
+    // Fallback robusto para entornos donde el router cliente no completa la navegación.
+    if (typeof window !== "undefined") {
+      window.setTimeout(() => {
+        if (window.location.pathname === "/live-fields") {
+          window.location.replace(target);
+        }
+      }, 120);
+    }
   }, [isLogged, loading, router]);
 
   useEffect(() => {
