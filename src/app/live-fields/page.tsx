@@ -53,6 +53,13 @@ export default function LiveFieldsPage() {
 
   const isDevAdmin = canAccessEliteTerminalAsDev(profile);
   const effectiveClubId = resolveTerminalEffectiveClubId(profile, devClubId);
+  const isLogged = !!user && !!session;
+
+  useEffect(() => {
+    if (loading) return;
+    if (isLogged) return;
+    router.replace("/login?next=/live-fields");
+  }, [isLogged, loading, router]);
 
   useEffect(() => {
     const tick = window.setInterval(() => setNow(nowLabel()), 1000);
@@ -111,25 +118,14 @@ export default function LiveFieldsPage() {
     );
   }
 
-  const isLogged = !!user || !!session;
   const canAccess = canAccessEliteTerminal(profile, devClubId);
   if (!isLogged) {
     return (
       <main className="min-h-[100dvh] bg-[#03060d] text-white flex items-center justify-center p-6">
         <div className="max-w-xl rounded-3xl border border-cyan-500/20 bg-black/40 p-8 text-center">
           <p className="text-[10px] font-black uppercase tracking-[0.35em] text-cyan-300/80">Live Fields · Acceso protegido</p>
-          <h1 className="mt-3 text-2xl font-black uppercase">Inicia sesión para continuar</h1>
-          <p className="mt-3 text-sm text-white/70">
-            Esta terminal requiere identificar el club para cargar datos de campos en tiempo real.
-          </p>
-          <div className="mt-6">
-            <Button
-              className="h-11 rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest px-6"
-              onClick={() => router.push("/login?next=/live-fields")}
-            >
-              Ir a login
-            </Button>
-          </div>
+          <h1 className="mt-3 text-2xl font-black uppercase">Redirigiendo a login</h1>
+          <p className="mt-3 text-sm text-white/70">Validando sesión de plataforma…</p>
         </div>
       </main>
     );
