@@ -664,6 +664,26 @@ function MatchBoardInner() {
         </div>
       </div>
 
+      <div className="fixed top-6 left-6 z-[200] lg:block hidden">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            const p = window.location.pathname || "";
+            const target = p.startsWith("/sandbox/app")
+              ? "/sandbox/app/matches"
+              : p.startsWith("/sandbox")
+                ? "/sandbox"
+                : "/dashboard";
+            router.replace(target);
+          }}
+          className="h-12 w-12 rounded-2xl bg-black/60 backdrop-blur-2xl border border-white/10 text-white/40 hover:text-primary transition-all shadow-xl"
+          title="Volver"
+        >
+          <LayoutDashboard className="h-5 w-5" />
+        </Button>
+      </div>
+
       {/* TELEMETRÍA, TIEMPO Y GUARDADO */}
       <div
         className={cn(
