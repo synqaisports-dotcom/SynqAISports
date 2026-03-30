@@ -693,6 +693,17 @@ function MatchBoardInner() {
       isLegacyDevice && "perf-lite"
     )} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}>
       
+      {matchSource === "sandbox" ? (
+        <div className="fixed top-4 z-[100] left-4 lg:left-[calc(50%-360px)] animate-in slide-in-from-top-3 scale-[0.9] origin-top">
+          <div
+            className="h-8 px-3 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary shadow-2xl glass-panel text-[9px] font-black uppercase tracking-widest max-w-[260px] truncate"
+            title={activeMatchLabel || "Partido activo"}
+          >
+            {activeMatchLabel || "Partido activo"}
+          </div>
+        </div>
+      ) : null}
+
       {/* MARCADOR DE GOLES */}
       <div
         className={cn(
@@ -702,14 +713,6 @@ function MatchBoardInner() {
             : "left-20 lg:left-32 animate-in slide-in-from-left-4 scale-[0.9] origin-top-left",
         )}
       >
-        {matchSource === "sandbox" ? (
-          <div
-            className="h-8 px-3 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary shadow-2xl glass-panel text-[9px] font-black uppercase tracking-widest max-w-[220px] truncate"
-            title={activeMatchLabel || "Partido activo"}
-          >
-            {activeMatchLabel || "Partido activo"}
-          </div>
-        ) : null}
         <Badge
           variant="outline"
           className={cn(
