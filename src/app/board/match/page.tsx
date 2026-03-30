@@ -170,6 +170,32 @@ interface DrawingLine {
 
 const MemoizedPlayerChip = memo(PlayerChip);
 
+type PromoTeamStore = {
+  type?: string;
+  name?: string;
+  starters?: unknown;
+  substitutes?: unknown;
+};
+
+function safeParseJson<T>(raw: string | null, fallback: T): T {
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function normalizeNames(list: unknown, maxLen: number): string[] {
+  const src = Array.isArray(list) ? list : [];
+  const out: string[] = [];
+  for (let i = 0; i < Math.min(src.length, maxLen); i++) {
+    const v = String(src[i] ?? "").trim();
+    if (v) out.push(v.toUpperCase());
+  }
+  return out;
+}
+
 /**
  * MatchBoardPage - v69.0.0
  * PROTOCOL_FIELD_ALIGNMENT: Ajuste de límites para evitar que jugadores salgan del campo.
@@ -231,6 +257,9 @@ function MatchBoardInner() {
   const [matchSource, setMatchSource] = useState<MatchBoardSource>("elite");
   const [activeMatchLabel, setActiveMatchLabel] = useState<string>("");
   const [localHomeNames, setLocalHomeNames] = useState<string[]>([]);
+  const [sandboxTeamName, setSandboxTeamName] = useState<string>("");
+  const [sandboxStarters, setSandboxStarters] = useState<string[]>([]);
+  const [sandboxSubs, setSandboxSubs] = useState<string[]>([]);
   const [timerSyncKey, setTimerSyncKey] = useState<string>(MATCH_TIMER_SYNC_KEY);
   const [scoreSyncKey, setScoreSyncKey] = useState<string>(MATCH_SCORE_SYNC_KEY);
   const safeFieldType: FieldType = FORMATIONS_DATA[fieldType] ? fieldType : "f11";
@@ -332,6 +361,7 @@ function MatchBoardInner() {
     }
     const { names, fieldType: ftBoot } = loadLocalLineupForMatchBoard(src);
     setLocalHomeNames(names);
+    setSandboxStarters(names);
     if (ftBoot && q === "sandbox") setFieldType(ftBoot);
 
     // Si llegamos desde "Mis partidos", forzamos contexto de continuidad al partido seleccionado.
@@ -384,10 +414,32 @@ function MatchBoardInner() {
       const resolved = resolveMatchBoardSource(null, storedSrc);
       const { names } = loadLocalLineupForMatchBoard(resolved);
       setLocalHomeNames(names);
+      if (resolved === "sandbox") {
+        const team = safeParseJson<PromoTeamStore>(localStorage.getItem("synq_promo_team"), {});
+        const nm = String(team?.name || "").trim();
+        setSandboxTeamName(nm ? nm.toUpperCase() : "");
+        setSandboxStarters(normalizeNames(team?.starters, 32));
+        setSandboxSubs(normalizeNames(team?.substitutes, 32));
+      }
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (matchSource !== "sandbox") {
+      setSandboxTeamName("");
+      setSandboxSubs([]);
+      setSandboxStarters([]);
+      return;
+    }
+    const team = safeParseJson<PromoTeamStore>(localStorage.getItem("synq_promo_team"), {});
+    const nm = String(team?.name || "").trim();
+    setSandboxTeamName(nm ? nm.toUpperCase() : "");
+    setSandboxStarters(normalizeNames(team?.starters, 32));
+    setSandboxSubs(normalizeNames(team?.substitutes, 32));
+  }, [matchSource]);
 
   // Mantener un preset de minutos para que `reset` no vuelva siempre a 45.
   useEffect(() => {
@@ -1182,15 +1234,70 @@ function MatchBoardInner() {
         </SheetTrigger>
         <SheetContent className="bg-[#04070c]/98 backdrop-blur-xl border-l border-primary/20 text-white sm:max-w-md">
           <SheetHeader className="p-6 border-b border-white/5">
-            <SheetTitle className="text-2xl font-black italic uppercase tracking-tighter">ROSTER_LIVE</SheetTitle>
+            <SheetTitle className="text-2xl font-black italic uppercase tracking-tighter">
+              {matchSource === "sandbox" && sandboxTeamName ? sandboxTeamName : "ROSTER_LIVE"}
+            </SheetTitle>
+            {matchSource === "sandbox" ? (
+              <p className="mt-2 text-[9px] font-black uppercase tracking-[0.3em] text-primary/60">
+                TITULARES + SUPLENTES
+              </p>
+            ) : null}
           </SheetHeader>
-          <div className="p-6 overflow-y-auto h-full space-y-3">
-            {players.filter(p => p.team === 'local').map(p => (
-              <div key={p.id} className="p-3 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-between transition-[background-color,border-color,color,opacity,transform] duration-300 hover:bg-primary/10">
-                <span className="text-[10px] font-black text-white italic">#{p.number} {p.name}</span>
-                <Badge className="bg-primary/10 text-primary text-[7px] font-black uppercase">EN CAMPO</Badge>
+          <div className="p-6 overflow-y-auto h-full space-y-6">
+            {matchSource === "sandbox" ? (
+              <>
+                <div className="space-y-3">
+                  <p className="text-[9px] font-black uppercase tracking-[0.35em] text-white/40">TITULARES</p>
+                  <div className="space-y-2">
+                    {(sandboxStarters.length ? sandboxStarters : localHomeNames).slice(0, 22).map((nm, idx) => {
+                      const number = idx + 1;
+                      const onField = players.some((p) => p.team === "local" && p.number === number);
+                      return (
+                        <div
+                          key={`st-${idx}-${nm}`}
+                          className="p-3 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-between transition-[background-color,border-color,color,opacity,transform] duration-300 hover:bg-primary/10"
+                        >
+                          <span className="text-[10px] font-black text-white italic">#{number} {nm || `JUGADOR ${number}`}</span>
+                          <Badge className={cn("text-[7px] font-black uppercase", onField ? "bg-primary/10 text-primary" : "bg-white/5 text-white/40")}>
+                            {onField ? "EN CAMPO" : "TITULAR"}
+                          </Badge>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <p className="text-[9px] font-black uppercase tracking-[0.35em] text-white/40">SUPLENTES</p>
+                  {sandboxSubs.length ? (
+                    <div className="space-y-2">
+                      {sandboxSubs.slice(0, 12).map((nm, idx) => (
+                        <div
+                          key={`sb-${idx}-${nm}`}
+                          className="p-3 bg-white/5 border border-white/10 rounded-xl flex items-center justify-between transition-[background-color,border-color,color,opacity,transform] duration-300 hover:bg-white/[0.06]"
+                        >
+                          <span className="text-[10px] font-black text-white/85 italic">{nm}</span>
+                          <Badge className="bg-white/5 text-white/40 text-[7px] font-black uppercase">SUPLENTE</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[10px] text-white/40">
+                      Sin suplentes configurados en <span className="font-black">Mi equipo</span>.
+                    </p>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="space-y-2">
+                {players.filter(p => p.team === 'local').map(p => (
+                  <div key={p.id} className="p-3 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-between transition-[background-color,border-color,color,opacity,transform] duration-300 hover:bg-primary/10">
+                    <span className="text-[10px] font-black text-white italic">#{p.number} {p.name}</span>
+                    <Badge className="bg-primary/10 text-primary text-[7px] font-black uppercase">EN CAMPO</Badge>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
         </SheetContent>
       </Sheet>
