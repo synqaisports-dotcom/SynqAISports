@@ -91,6 +91,68 @@ import {
 } from "@/lib/board-performance";
 
 type TacticalPhase = "def" | "tda" | "sal" | "atk";
+type FieldTuningProfile = {
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+  keeperHomeX: number;
+  keeperGuestX: number;
+  centerSeparation: number;
+  phaseOffset: Record<TacticalPhase, number>;
+  teamHalfClamp: Record<TacticalPhase, { localMaxX: number; guestMinX: number }>;
+};
+
+const FIELD_TUNING: Record<FieldType, FieldTuningProfile> = {
+  f11: {
+    minX: 9,
+    maxX: 91,
+    minY: 8,
+    maxY: 92,
+    keeperHomeX: 10,
+    keeperGuestX: 90,
+    centerSeparation: 1.25,
+    phaseOffset: { def: -10.5, tda: 1.5, sal: 7.5, atk: 10 },
+    teamHalfClamp: {
+      def: { localMaxX: 50, guestMinX: 50 },
+      tda: { localMaxX: 60, guestMinX: 40 },
+      sal: { localMaxX: 72, guestMinX: 28 },
+      atk: { localMaxX: 78, guestMinX: 22 },
+    },
+  },
+  f7: {
+    minX: 10,
+    maxX: 90,
+    minY: 9,
+    maxY: 91,
+    keeperHomeX: 11,
+    keeperGuestX: 89,
+    centerSeparation: 1.6,
+    phaseOffset: { def: -8, tda: 1, sal: 6, atk: 8 },
+    teamHalfClamp: {
+      def: { localMaxX: 50, guestMinX: 50 },
+      tda: { localMaxX: 58, guestMinX: 42 },
+      sal: { localMaxX: 68, guestMinX: 32 },
+      atk: { localMaxX: 74, guestMinX: 26 },
+    },
+  },
+  futsal: {
+    minX: 11,
+    maxX: 89,
+    minY: 10,
+    maxY: 90,
+    keeperHomeX: 12,
+    keeperGuestX: 88,
+    centerSeparation: 1.9,
+    phaseOffset: { def: -6, tda: 1, sal: 4.5, atk: 6.5 },
+    teamHalfClamp: {
+      def: { localMaxX: 50, guestMinX: 50 },
+      tda: { localMaxX: 56, guestMinX: 44 },
+      sal: { localMaxX: 64, guestMinX: 36 },
+      atk: { localMaxX: 69, guestMinX: 31 },
+    },
+  },
+};
 
 interface PlayerPos {
   id: string;
@@ -450,67 +512,6 @@ function MatchBoardInner() {
       title: "TIEMPO_AJUSTADO",
       description: `Cronómetro configurado a ${minutes} minutos.`,
     });
-  };
-
-  const FIELD_TUNING: Record<FieldType, {
-    minX: number;
-    maxX: number;
-    minY: number;
-    maxY: number;
-    keeperHomeX: number;
-    keeperGuestX: number;
-    centerSeparation: number;
-    phaseOffset: Record<TacticalPhase, number>;
-    teamHalfClamp: Record<TacticalPhase, { localMaxX: number; guestMinX: number }>;
-  }> = {
-    f11: {
-      minX: 9,
-      maxX: 91,
-      minY: 8,
-      maxY: 92,
-      keeperHomeX: 10,
-      keeperGuestX: 90,
-      centerSeparation: 1.25,
-      phaseOffset: { def: -10.5, tda: 1.5, sal: 7.5, atk: 10 },
-      teamHalfClamp: {
-        def: { localMaxX: 50, guestMinX: 50 },
-        tda: { localMaxX: 60, guestMinX: 40 },
-        sal: { localMaxX: 72, guestMinX: 28 },
-        atk: { localMaxX: 78, guestMinX: 22 },
-      },
-    },
-    f7: {
-      minX: 10,
-      maxX: 90,
-      minY: 9,
-      maxY: 91,
-      keeperHomeX: 11,
-      keeperGuestX: 89,
-      centerSeparation: 1.6,
-      phaseOffset: { def: -8, tda: 1, sal: 6, atk: 8 },
-      teamHalfClamp: {
-        def: { localMaxX: 50, guestMinX: 50 },
-        tda: { localMaxX: 58, guestMinX: 42 },
-        sal: { localMaxX: 68, guestMinX: 32 },
-        atk: { localMaxX: 74, guestMinX: 26 },
-      },
-    },
-    futsal: {
-      minX: 11,
-      maxX: 89,
-      minY: 10,
-      maxY: 90,
-      keeperHomeX: 12,
-      keeperGuestX: 88,
-      centerSeparation: 1.9,
-      phaseOffset: { def: -6, tda: 1, sal: 4.5, atk: 6.5 },
-      teamHalfClamp: {
-        def: { localMaxX: 50, guestMinX: 50 },
-        tda: { localMaxX: 56, guestMinX: 44 },
-        sal: { localMaxX: 64, guestMinX: 36 },
-        atk: { localMaxX: 69, guestMinX: 31 },
-      },
-    },
   };
 
   const fieldTuning = FIELD_TUNING[safeFieldType] || FIELD_TUNING.f11;
