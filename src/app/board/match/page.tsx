@@ -452,7 +452,29 @@ function MatchBoardInner() {
     });
   };
 
-  const calculatePositions = useCallback(() => {
+  const MIN_SAFE_X = 10;
+  const MAX_SAFE_X = 90;
+  const MIN_SAFE_Y = 8;
+  const MAX_SAFE_Y = 92;
+  const HOME_KEEPER_X = 10;
+  const GUEST_KEEPER_X = 90;
+
+  const clampToField = useCallback((x: number, y: number) => ({
+    x: Math.max(MIN_SAFE_X, Math.min(MAX_SAFE_X, x)),
+    y: Math.max(MIN_SAFE_Y, Math.min(MAX_SAFE_Y, y)),
+  }), []);
+
+  const phaseOffset = useCallback((phase: TacticalPhase) => {
+    switch (phase) {
+      case "def": return -11.5;
+      case "tda": return 2;
+      case "sal": return 10;
+      case "atk": return 7;
+      default: return 0;
+    }
+  }, []);
+
+  const calculateHomePositions = useCallback(() => {
     if (isAnyDialogOpen) return;
     const formationsForField = FORMATIONS_DATA[safeFieldType] || FORMATIONS_DATA.f11;
     const fallbackFormation = Object.keys(formationsForField)[0];
@@ -460,40 +482,19 @@ function MatchBoardInner() {
       homeFormation === "NINGUNA"
         ? []
         : formationsForField[homeFormation] || (fallbackFormation ? formationsForField[fallbackFormation] : []);
-    const guestShape =
-      guestFormation === "NINGUNA"
-        ? []
-        : formationsForField[guestFormation] || (fallbackFormation ? formationsForField[fallbackFormation] : []);
-    const shiftX = (side: "left" | "center" | "right") => {
-      if (side === "left") return -5;
-      if (side === "right") return 5;
-      return 0;
-    };
-    const phaseOffset = (phase: TacticalPhase) => {
-      switch(phase) {
-        case 'def': return -11.5;
-        case 'tda': return 2;  
-        case 'sal': return 10;  
-        case 'atk': return 7;  
-        default: return 0;
-      }
-    };
-    
-    // Márgenes de seguridad más estrictos (10% - 90%) para evitar que se salgan de las líneas
-    const minSafeX = 8;
-    const maxSafeX = 92;
-    const minSafeY = 8;
-    const maxSafeY = 92;
 
-    const hp = homeShape.map((pos, idx) => {
+    const nextHome = homeShape.map((pos, idx) => {
       let finalX = (0.05 + (pos.x * 0.9)) * 100;
       let finalY = pos.y * 100;
-      if (idx === 0) { finalX = 8; finalY = 50; } 
-      else {
+      if (idx === 0) {
+        finalX = HOME_KEEPER_X;
+        finalY = 50;
+      } else {
         finalX = finalX + phaseOffset(homePhase);
-        if (homePhase === 'def') finalX = Math.min(50, finalX);
-        finalX = Math.max(minSafeX, Math.min(maxSafeX, finalX));
-        finalY = Math.max(minSafeY, Math.min(maxSafeY, finalY));
+        if (homePhase === "def") finalX = Math.min(50, finalX);
+        const clamped = clampToField(finalX, finalY);
+        finalX = clamped.x;
+        finalY = clamped.y;
       }
       const nm = localHomeNames[idx]?.trim();
       return {
@@ -505,22 +506,47 @@ function MatchBoardInner() {
         y: finalY,
       };
     });
-    const gp = guestShape.map((pos, idx) => {
+
+    setPlayers((prev) => [...nextHome, ...prev.filter((p) => p.team === "visitor")]);
+  }, [isAnyDialogOpen, safeFieldType, homeFormation, homePhase, localHomeNames, phaseOffset, clampToField]);
+
+  const calculateGuestPositions = useCallback(() => {
+    if (isAnyDialogOpen) return;
+    const formationsForField = FORMATIONS_DATA[safeFieldType] || FORMATIONS_DATA.f11;
+    const fallbackFormation = Object.keys(formationsForField)[0];
+    const guestShape =
+      guestFormation === "NINGUNA"
+        ? []
+        : formationsForField[guestFormation] || (fallbackFormation ? formationsForField[fallbackFormation] : []);
+
+    const nextGuest = guestShape.map((pos, idx) => {
       let finalX = (0.95 - (pos.x * 0.9)) * 100;
       let finalY = (1 - pos.y) * 100;
-      if (idx === 0) { finalX = 92; finalY = 50; }
-      else {
+      if (idx === 0) {
+        finalX = GUEST_KEEPER_X;
+        finalY = 50;
+      } else {
         finalX = finalX - phaseOffset(guestPhase);
-        if (guestPhase === 'def') finalX = Math.max(50, finalX);
-        finalX = Math.max(minSafeX, Math.min(maxSafeX, finalX));
-        finalY = Math.max(minSafeY, Math.min(maxSafeY, finalY));
+        if (guestPhase === "def") finalX = Math.max(50, finalX);
+        const clamped = clampToField(finalX, finalY);
+        finalX = clamped.x;
+        finalY = clamped.y;
       }
-      return { id: `visitor-${idx}`, number: idx + 1, name: `RIVAL ${idx + 1}`, team: "visitor" as const, x: finalX, y: finalY };
+      return {
+        id: `visitor-${idx}`,
+        number: idx + 1,
+        name: `RIVAL ${idx + 1}`,
+        team: "visitor" as const,
+        x: finalX,
+        y: finalY,
+      };
     });
-    setPlayers([...hp, ...gp]);
-  }, [safeFieldType, homeFormation, guestFormation, homePhase, guestPhase, isAnyDialogOpen, localHomeNames]);
 
-  useEffect(() => { calculatePositions(); }, [calculatePositions]);
+    setPlayers((prev) => [...prev.filter((p) => p.team === "local"), ...nextGuest]);
+  }, [isAnyDialogOpen, safeFieldType, guestFormation, guestPhase, phaseOffset, clampToField]);
+
+  useEffect(() => { calculateHomePositions(); }, [calculateHomePositions]);
+  useEffect(() => { calculateGuestPositions(); }, [calculateGuestPositions]);
 
   const handlePointerDownPlayer = (e: React.PointerEvent, id: string) => {
     e.stopPropagation();
@@ -552,7 +578,7 @@ function MatchBoardInner() {
           setPlayers((prev) =>
             prev.map((p) =>
               p.id === id
-                ? { ...p, x: Math.max(0, Math.min(100, pt.x)), y: Math.max(0, Math.min(100, pt.y)) }
+                ? { ...p, ...clampToField(pt.x, pt.y) }
                 : p,
             ),
           );
@@ -574,7 +600,7 @@ function MatchBoardInner() {
       setPlayers((prev) =>
         prev.map((p) =>
           p.id === id
-            ? { ...p, x: Math.max(0, Math.min(100, pt.x)), y: Math.max(0, Math.min(100, pt.y)) }
+            ? { ...p, ...clampToField(pt.x, pt.y) }
             : p,
         ),
       );
