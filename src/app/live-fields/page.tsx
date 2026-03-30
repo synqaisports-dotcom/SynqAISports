@@ -5,6 +5,7 @@ import { Activity, Clock3, LogOut, MonitorSmartphone, Tv2, Users } from "lucide-
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { readContinuityContext } from "@/lib/continuity-context";
+import { canAccessEliteTerminal, canAccessEliteTerminalAsDev, isEliteClubId, resolveTerminalEffectiveClubId } from "@/lib/club-permissions";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
@@ -50,13 +51,8 @@ export default function LiveFieldsPage() {
   const [continuity, setContinuity] = useState<ContinuityCtx | null>(null);
   const [devClubId, setDevClubId] = useState<string>("");
 
-  const isDevAdmin = profile?.role === "superadmin";
-  const effectiveClubId =
-    profile?.clubId && profile.clubId !== "global-hq"
-      ? profile.clubId
-      : isDevAdmin
-        ? (devClubId.trim() || "global-hq")
-        : "global-hq";
+  const isDevAdmin = canAccessEliteTerminalAsDev(profile);
+  const effectiveClubId = resolveTerminalEffectiveClubId(profile, devClubId);
 
   useEffect(() => {
     const tick = window.setInterval(() => setNow(nowLabel()), 1000);
@@ -116,8 +112,7 @@ export default function LiveFieldsPage() {
   }
 
   const isLogged = !!profile;
-  const isElite = !!profile?.clubId && profile.clubId !== "global-hq";
-  const canAccess = isElite || (isDevAdmin && !!devClubId.trim());
+  const canAccess = canAccessEliteTerminal(profile, devClubId);
   if (!isLogged) {
     return (
       <main className="min-h-[100dvh] bg-[#03060d] text-white flex items-center justify-center p-6">
@@ -191,6 +186,11 @@ export default function LiveFieldsPage() {
             <p className="mt-1 text-[10px] font-black uppercase tracking-[0.25em] text-white/45">
               Club: {effectiveClubId}
             </p>
+            {!isEliteClubId(effectiveClubId) && isDevAdmin ? (
+              <p className="mt-1 text-[10px] font-black uppercase tracking-[0.2em] text-amber-300/80">
+                Introduce clubId para cargar datos
+              </p>
+            ) : null}
           </div>
           <div className="flex items-center gap-2">
             <div className="rounded-2xl border border-cyan-500/25 bg-black/40 px-4 py-2 flex items-center gap-3">
