@@ -346,6 +346,16 @@ function SmartwatchContent() {
         if (deltaSec <= 0) return;
         lastTickAtRef.current = last + deltaSec * 1000;
 
+        // Si otra app (pizarra/backoffice) está escribiendo el cronómetro, evitamos "decrementar de nuevo"
+        // sobre un valor que ya ha avanzado en esa misma ventana temporal.
+        const remote = readMatchTimerSync(timerKey);
+        if (remote && remote.updatedAt > last && remote.origin !== "watch") {
+          lastTimerSyncAppliedRef.current = remote.updatedAt;
+          setTimeLeft(Math.max(0, remote.remainingSec));
+          setIsRunning(Boolean(remote.running));
+          return;
+        }
+
         setTimeLeft((prev) => {
           const next = Math.max(0, prev - deltaSec);
           const writeAt = Date.now();
