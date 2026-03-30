@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,15 @@ function resolveSafeNext(raw: string | null): string {
 }
 
 export default function SandboxLoginPage() {
+  // Next.js 15 requiere Suspense para `useSearchParams()` en algunas rutas.
+  return (
+    <Suspense fallback={null}>
+      <SandboxLoginPageInner />
+    </Suspense>
+  );
+}
+
+function SandboxLoginPageInner() {
   const { profile, loading } = useAuth();
   const router = useRouter();
   const sp = useSearchParams();

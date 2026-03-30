@@ -1,6 +1,7 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,15 @@ import { useAuth } from "@/lib/auth-context";
 import { SynqAiSportsLogo } from "@/components/branding/SynqAiSportsLogo";
 
 export default function SandboxPortalPage() {
+  // Next.js 15 requiere Suspense para `useSearchParams()` en algunas rutas.
+  return (
+    <Suspense fallback={null}>
+      <SandboxPortalPageInner />
+    </Suspense>
+  );
+}
+
+function SandboxPortalPageInner() {
   const { profile, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
