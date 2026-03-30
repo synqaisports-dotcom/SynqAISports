@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Activity, Clock3, MonitorSmartphone, Tv2, Users } from "lucide-react";
+import { Activity, Clock3, LogOut, MonitorSmartphone, Tv2, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { readContinuityContext } from "@/lib/continuity-context";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 type Facility = {
   id: string;
@@ -40,7 +42,8 @@ function nowLabel(): string {
 }
 
 export default function LiveFieldsPage() {
-  const { profile, loading } = useAuth();
+  const { profile, loading, logout } = useAuth();
+  const router = useRouter();
   const [now, setNow] = useState(nowLabel());
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
@@ -103,7 +106,30 @@ export default function LiveFieldsPage() {
     );
   }
 
+  const isLogged = !!profile;
   const isElite = !!profile?.clubId && profile.clubId !== "global-hq";
+  if (!isLogged) {
+    return (
+      <main className="min-h-[100dvh] bg-[#03060d] text-white flex items-center justify-center p-6">
+        <div className="max-w-xl rounded-3xl border border-cyan-500/20 bg-black/40 p-8 text-center">
+          <p className="text-[10px] font-black uppercase tracking-[0.35em] text-cyan-300/80">Live Fields · Acceso protegido</p>
+          <h1 className="mt-3 text-2xl font-black uppercase">Inicia sesión para continuar</h1>
+          <p className="mt-3 text-sm text-white/70">
+            Esta terminal requiere identificar el club para cargar datos de campos en tiempo real.
+          </p>
+          <div className="mt-6">
+            <Button
+              className="h-11 rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest px-6"
+              onClick={() => router.push("/login?next=/live-fields")}
+            >
+              Ir a login
+            </Button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   if (!isElite) {
     return (
       <main className="min-h-[100dvh] bg-[#03060d] text-white flex items-center justify-center p-6">
@@ -132,9 +158,23 @@ export default function LiveFieldsPage() {
               Estado en tiempo real de campos
             </h1>
           </div>
-          <div className="rounded-2xl border border-cyan-500/25 bg-black/40 px-4 py-2 flex items-center gap-3">
-            <Clock3 className="h-4 w-4 text-cyan-300" />
-            <span className="text-sm font-black tabular-nums">{now}</span>
+          <div className="flex items-center gap-2">
+            <div className="rounded-2xl border border-cyan-500/25 bg-black/40 px-4 py-2 flex items-center gap-3">
+              <Clock3 className="h-4 w-4 text-cyan-300" />
+              <span className="text-sm font-black tabular-nums">{now}</span>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-10 rounded-xl border-cyan-500/25 bg-black/40 text-cyan-200 hover:text-white hover:bg-cyan-500/10 font-black uppercase text-[10px] tracking-widest"
+              onClick={async () => {
+                await logout();
+                router.replace("/login?next=/live-fields");
+              }}
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Salir
+            </Button>
           </div>
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
