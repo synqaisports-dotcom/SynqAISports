@@ -135,6 +135,7 @@ const navItems: NavItem[] = [
   
   // TERMINALES_ACCESO - NODO SANDBOX (Categoría User)
   { title: "Sandbox", href: "/sandbox-portal?dest=/sandbox/app", icon: ShieldCheck, category: "user" },
+  { title: "Live Fields TV", href: "/live-fields", icon: Monitor, category: "user" },
   { title: "Config Watch", href: "/dashboard/watch-config", icon: Watch, category: "user" },
   { title: "Modo Continuidad", href: "/dashboard/mobile-continuity", icon: Smartphone, category: "user" },
   { title: "Smartwatch Link", href: "/smartwatch", icon: Watch, category: "user" },
