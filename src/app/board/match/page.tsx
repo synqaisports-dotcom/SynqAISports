@@ -235,6 +235,12 @@ function MatchBoardInner() {
   const [scoreSyncKey, setScoreSyncKey] = useState<string>(MATCH_SCORE_SYNC_KEY);
   const safeFieldType: FieldType = FORMATIONS_DATA[fieldType] ? fieldType : "f11";
   const continuityCtx = useMemo(() => readContinuityContext(clubScopeId), [clubScopeId]);
+  const searchParamsKey = searchParams.toString();
+  const sourceParam = useMemo(() => new URLSearchParams(searchParamsKey).get("source"), [searchParamsKey]);
+  const matchIdParam = useMemo(
+    () => String(new URLSearchParams(searchParamsKey).get("matchId") || "").trim(),
+    [searchParamsKey],
+  );
 
   useEffect(() => {
     const ctx = continuityCtx;
@@ -315,8 +321,7 @@ function MatchBoardInner() {
   }, []);
 
   useEffect(() => {
-    const q = searchParams.get("source");
-    const matchIdParam = String(searchParams.get("matchId") || "").trim();
+    const q = sourceParam;
     const stored = typeof window !== "undefined" ? localStorage.getItem(MATCH_BOARD_SOURCE_KEY) : null;
     const src = resolveMatchBoardSource(q, stored);
     setMatchSource(src);
@@ -341,14 +346,13 @@ function MatchBoardInner() {
         session: `SBX_${matchIdParam.slice(-6)}`,
       });
     }
-  }, [searchParams, clubScopeId]);
+  }, [sourceParam, matchIdParam, clubScopeId]);
 
   useEffect(() => {
     if (matchSource !== "sandbox") {
       setActiveMatchLabel("");
       return;
     }
-    const matchIdParam = String(searchParams.get("matchId") || "").trim();
     const fromCtxMcc = String(continuityCtx?.mcc || "");
     const inferredId = fromCtxMcc.startsWith("SBX_MATCH_") ? fromCtxMcc.replace("SBX_MATCH_", "") : "";
     const targetId = matchIdParam || inferredId;
@@ -371,7 +375,7 @@ function MatchBoardInner() {
     } catch {
       setActiveMatchLabel(`Partido #${targetId}`);
     }
-  }, [matchSource, searchParams, continuityCtx?.mcc]);
+  }, [matchSource, matchIdParam, continuityCtx?.mcc]);
 
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
@@ -685,7 +689,7 @@ function MatchBoardInner() {
   const handleSaveMatch = () => {
     const raw = localStorage.getItem("synq_promo_vault");
     const vault = JSON.parse(raw || '{"matches": []}');
-    const fromUrl = String(searchParams.get("matchId") || "").trim();
+    const fromUrl = matchIdParam;
     const fromCtx = (() => {
       const mcc = String(continuityCtx?.mcc || "");
       return mcc.startsWith("SBX_MATCH_") ? mcc.replace("SBX_MATCH_", "") : "";
