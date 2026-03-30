@@ -433,7 +433,12 @@ export default function MobileContinuityPage() {
       setRemainingSec((prev) => {
         const next = Math.max(0, prev - deltaSec);
         lastTimerAppliedRef.current = now;
-        writeMatchTimerSync({ remainingSec: next, running: next > 0, updatedAt: now, origin: "watch" }, timerSyncKey);
+        // La continuidad no es el "watch": escribe para sincronizar el reloj con el hub móvil.
+        // Marcarlo como origin "continuity" evita que el smartwatch lo trate como escritura propia.
+        writeMatchTimerSync(
+          { remainingSec: next, running: next > 0, updatedAt: now, origin: "continuity" as any },
+          timerSyncKey,
+        );
         return next;
       });
     }, 1000);
@@ -489,7 +494,11 @@ export default function MobileContinuityPage() {
       const now = Date.now();
       if (next) lastTickAtRef.current = now;
       lastTimerAppliedRef.current = now;
-      writeMatchTimerSync({ remainingSec, running: next, updatedAt: now, origin: "watch" }, timerSyncKey);
+      // Ver comentario superior: origin "continuity".
+      writeMatchTimerSync(
+        { remainingSec, running: next, updatedAt: now, origin: "continuity" as any },
+        timerSyncKey,
+      );
       return next;
     });
   };
@@ -501,7 +510,11 @@ export default function MobileContinuityPage() {
     lastTickAtRef.current = null;
     const now = Date.now();
     lastTimerAppliedRef.current = now;
-    writeMatchTimerSync({ remainingSec: sec, running: false, updatedAt: now, origin: "watch" }, timerSyncKey);
+    // Ver comentario superior: origin "continuity".
+    writeMatchTimerSync(
+      { remainingSec: sec, running: false, updatedAt: now, origin: "continuity" as any },
+      timerSyncKey,
+    );
   };
 
   const sendIncident = async (incident: Incident) => {

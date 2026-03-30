@@ -63,7 +63,7 @@ export type MatchTimerSyncPayload = {
   remainingSec: number;
   running: boolean;
   updatedAt: number;
-  origin?: "board" | "watch";
+  origin?: "board" | "watch" | "continuity";
 };
 
 export function writeMatchTimerSync(payload: MatchTimerSyncPayload, key: string = MATCH_TIMER_SYNC_KEY) {
