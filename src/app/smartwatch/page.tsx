@@ -147,6 +147,11 @@ function SmartwatchContent() {
     () => matchScoreSyncKey(syncScope ?? undefined),
     [syncScope],
   );
+  const activePromoMatchLabel = React.useMemo(() => {
+    if (!selectedPromoMatchId) return "";
+    const hit = promoMatches.find((m) => m.id === selectedPromoMatchId);
+    return hit?.label || "";
+  }, [promoMatches, selectedPromoMatchId]);
 
   const watchPairingScope = React.useMemo((): WatchPairingScope | null => {
     if (syncScope) return { clubId: syncScope.clubId, mode: "continuity" };
@@ -666,6 +671,16 @@ function SmartwatchContent() {
             </div>
           ) : view === 'main' && screen === "match" ? (
             <div className={cn("w-full h-full flex flex-col items-center justify-between animate-in fade-in zoom-in-95", isWatchCompact ? "py-1" : "py-2")}>
+              {activePromoMatchLabel ? (
+                <div className="w-full rounded-xl border border-primary/20 bg-primary/5 px-2 py-1 mb-1">
+                  <p className="text-[7px] font-black uppercase tracking-[0.2em] text-primary/70 text-center">
+                    Partido activo
+                  </p>
+                  <p className="text-[8px] font-bold text-white/85 text-center truncate">
+                    {activePromoMatchLabel}
+                  </p>
+                </div>
+              ) : null}
               <div className={cn("flex items-center justify-center w-full", isWatchCompact ? "gap-2.5" : "gap-4")}>
               <button onClick={() => { setIsRunning(false); const sec = presetMinutesRef.current * 60; setTimeLeft(sec); timeLeftRef.current = sec; const now = Date.now(); lastTimerSyncAppliedRef.current = now; writeMatchTimerSync({ remainingSec: sec, running: false, updatedAt: now, origin: "watch" }, timerKey); triggerHaptic(60); }} className={cn("bg-white/5 rounded-full text-white/40 active:bg-rose-500", isWatchCompact ? "p-3" : "p-2.5")}><RotateCcw className={cn(isWatchCompact ? "h-5 w-5" : "h-4 w-4")} /></button>
                 <div className="flex flex-col items-center cursor-pointer active:scale-95" onClick={toggleClock}>

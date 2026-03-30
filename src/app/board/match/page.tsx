@@ -167,6 +167,7 @@ function MatchBoardInner() {
   }, []);
 
   const [matchSource, setMatchSource] = useState<MatchBoardSource>("elite");
+  const [activeMatchLabel, setActiveMatchLabel] = useState<string>("");
   const [localHomeNames, setLocalHomeNames] = useState<string[]>([]);
   const [timerSyncKey, setTimerSyncKey] = useState<string>(MATCH_TIMER_SYNC_KEY);
   const [scoreSyncKey, setScoreSyncKey] = useState<string>(MATCH_SCORE_SYNC_KEY);
@@ -279,6 +280,36 @@ function MatchBoardInner() {
       });
     }
   }, [searchParams, clubScopeId]);
+
+  useEffect(() => {
+    if (matchSource !== "sandbox") {
+      setActiveMatchLabel("");
+      return;
+    }
+    const matchIdParam = String(searchParams.get("matchId") || "").trim();
+    const fromCtxMcc = String(continuityCtx?.mcc || "");
+    const inferredId = fromCtxMcc.startsWith("SBX_MATCH_") ? fromCtxMcc.replace("SBX_MATCH_", "") : "";
+    const targetId = matchIdParam || inferredId;
+    if (!targetId) {
+      setActiveMatchLabel("Partido no seleccionado");
+      return;
+    }
+    try {
+      const raw = localStorage.getItem("synq_promo_vault");
+      const vault = raw ? JSON.parse(raw) : null;
+      const list = Array.isArray(vault?.matches) ? vault.matches : [];
+      const match = list.find((m: any) => String(m?.id ?? "") === targetId);
+      if (!match) {
+        setActiveMatchLabel(`Partido #${targetId}`);
+        return;
+      }
+      const date = String(match.date || "").trim() || "Pendiente fecha";
+      const rival = String(match.rivalName || "").trim() || "Rival pendiente";
+      setActiveMatchLabel(`${date} · vs ${rival}`);
+    } catch {
+      setActiveMatchLabel(`Partido #${targetId}`);
+    }
+  }, [matchSource, searchParams, continuityCtx?.mcc]);
 
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
@@ -671,6 +702,13 @@ function MatchBoardInner() {
             : "left-20 lg:left-32 animate-in slide-in-from-left-4 scale-[0.9] origin-top-left",
         )}
       >
+        {matchSource === "sandbox" ? (
+          <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 rounded-full border border-primary/20 bg-black/70 px-3 py-1">
+            <span className="text-[8px] font-black uppercase tracking-widest text-primary/80">
+              {activeMatchLabel || "Partido activo"}
+            </span>
+          </div>
+        ) : null}
         <Badge
           variant="outline"
           className={cn(
