@@ -23,6 +23,18 @@ type Team = {
   name: string;
 };
 
+type MockSlot = {
+  start: string;
+  end: string;
+  teamName: string;
+  coachName: string;
+};
+
+type MockZoneSchedule = {
+  zone: string;
+  slots: MockSlot[];
+};
+
 type ContinuityCtx = {
   mode: "match" | "training";
   teamId: string;
@@ -41,6 +53,16 @@ function safeParse<T>(raw: string | null, fallback: T): T {
 
 function nowLabel(): string {
   return new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+}
+
+function toMinutes(hhmm: string): number {
+  const [h, m] = hhmm.split(":").map((v) => Number(v));
+  return h * 60 + m;
+}
+
+function getCurrentMinutes(): number {
+  const d = new Date();
+  return d.getHours() * 60 + d.getMinutes();
 }
 
 export default function LiveFieldsPage() {
@@ -121,6 +143,68 @@ export default function LiveFieldsPage() {
       };
     });
   }, [facilities, teams, continuity]);
+
+  const mockScheduleCards = useMemo(() => {
+    const fallbackTeams =
+      teams.length > 0
+        ? teams.map((t, idx) => ({ name: t.name, coachName: `Entrenador ${idx + 1}` }))
+        : [
+            { name: "Alevín A", coachName: "David Martín" },
+            { name: "Infantil B", coachName: "Laura Ruiz" },
+            { name: "Cadete A", coachName: "Pablo García" },
+            { name: "Juvenil A", coachName: "Sara López" },
+          ];
+
+    return cards.map((c, idx) => {
+      const base = fallbackTeams[idx % fallbackTeams.length];
+      const altA = fallbackTeams[(idx + 1) % fallbackTeams.length];
+      const altB = fallbackTeams[(idx + 2) % fallbackTeams.length];
+      const facilityName = c.field.toLowerCase();
+      const hasDivision = /(2|4|media|mitad|half)/.test(facilityName) || idx % 2 === 0;
+
+      const zones: MockZoneSchedule[] = hasDivision
+        ? [
+            {
+              zone: "MITAD SUPERIOR",
+              slots: [
+                { start: "17:00", end: "18:00", teamName: base.name, coachName: base.coachName },
+                { start: "18:00", end: "19:00", teamName: altA.name, coachName: altA.coachName },
+                { start: "19:00", end: "20:00", teamName: altB.name, coachName: altB.coachName },
+              ],
+            },
+            {
+              zone: "MITAD INFERIOR",
+              slots: [
+                { start: "17:00", end: "18:00", teamName: altB.name, coachName: altB.coachName },
+                { start: "18:00", end: "19:00", teamName: base.name, coachName: base.coachName },
+                { start: "19:00", end: "20:00", teamName: altA.name, coachName: altA.coachName },
+              ],
+            },
+          ]
+        : [
+            {
+              zone: "CAMPO COMPLETO",
+              slots: [
+                { start: "17:00", end: "18:15", teamName: base.name, coachName: base.coachName },
+                { start: "18:15", end: "19:30", teamName: altA.name, coachName: altA.coachName },
+                { start: "19:30", end: "20:45", teamName: altB.name, coachName: altB.coachName },
+              ],
+            },
+          ];
+
+      const nowMin = getCurrentMinutes();
+      const withCurrent = zones.map((z) => {
+        const currentSlot =
+          z.slots.find((s) => nowMin >= toMinutes(s.start) && nowMin < toMinutes(s.end)) ?? null;
+        return { ...z, currentSlot };
+      });
+
+      return {
+        ...c,
+        zones: withCurrent,
+      };
+    });
+  }, [cards, teams]);
 
   if (loading) {
     return (
@@ -270,8 +354,8 @@ export default function LiveFieldsPage() {
             </p>
           </div>
         ) : null}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
-          {cards.map((c) => (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6">
+          {mockScheduleCards.map((c) => (
             <article
               key={c.id}
               className="rounded-3xl border border-cyan-500/20 bg-black/35 backdrop-blur-sm p-5 shadow-[0_16px_40px_rgba(0,0,0,0.35)]"
@@ -292,13 +376,51 @@ export default function LiveFieldsPage() {
               <p className="mt-1 text-[11px] uppercase font-black tracking-[0.2em] text-white/45">
                 {c.type} · {c.sport}
               </p>
-              <div className="mt-4 rounded-2xl border border-cyan-500/20 bg-cyan-500/5 px-4 py-3">
-                <p className="text-[10px] uppercase font-black tracking-[0.25em] text-cyan-300/70">{t("live_fields.activity")}</p>
-                <p className="mt-1 text-sm font-black uppercase">{c.slot}</p>
+              <div className="mt-4 space-y-3">
+                {c.zones.map((zone) => (
+                  <div key={`${c.id}_${zone.zone}`} className="rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-[10px] uppercase font-black tracking-[0.25em] text-cyan-300/80">{zone.zone}</p>
+                      {zone.currentSlot ? (
+                        <span className="text-[9px] font-black uppercase tracking-[0.2em] px-2 py-1 rounded-md border border-emerald-400/30 text-emerald-300 bg-emerald-500/10">
+                          En curso
+                        </span>
+                      ) : (
+                        <span className="text-[9px] font-black uppercase tracking-[0.2em] px-2 py-1 rounded-md border border-white/15 text-white/70 bg-white/5">
+                          Sin actividad
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-2 space-y-2">
+                      {zone.slots.map((slot, slotIdx) => {
+                        const isCurrent = zone.currentSlot?.start === slot.start && zone.currentSlot?.end === slot.end;
+                        return (
+                          <div
+                            key={`${zone.zone}_${slot.start}_${slotIdx}`}
+                            className={cn(
+                              "rounded-xl border px-3 py-2 transition-[background-color,border-color,color,opacity,transform]",
+                              isCurrent
+                                ? "border-emerald-400/35 bg-emerald-500/10"
+                                : "border-cyan-500/15 bg-black/25",
+                            )}
+                          >
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/90">
+                              {slot.start} - {slot.end}
+                            </p>
+                            <div className="mt-1 flex items-center justify-between gap-2">
+                              <span className="text-[11px] font-black uppercase text-cyan-200">{slot.teamName}</span>
+                              <span className="text-[10px] font-black uppercase text-white/70">{slot.coachName}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="mt-4 flex items-center gap-2">
+              <div className="mt-4 flex items-center gap-2 text-white/65">
                 <Users className="h-4 w-4 text-cyan-300/80" />
-                <span className="text-sm font-black uppercase">{c.team}</span>
+                <span className="text-[11px] font-black uppercase">Mock horario (pendiente BBDD real)</span>
               </div>
             </article>
           ))}
