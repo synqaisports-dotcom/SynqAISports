@@ -1,0 +1,174 @@
+MATRIZ DE VISTAS POR DISPOSITIVO – SYNQAI SPORTS
+Version: v1.0
+Objetivo: definir que se muestra/oculta segun dispositivo para operar en modo local-first con movil como hub y tablet como interfaz principal.
+
+==================================================
+1) PRINCIPIO DE ARQUITECTURA
+==================================================
+- No duplicar logica por app.
+- Mantener un core unico de sesion (continuity-context + event log).
+- Renderizar distintas vistas segun perfil de dispositivo:
+  - tablet-board
+  - mobile-hub
+  - watch-bridge
+
+Contexto minimo compartido:
+- clubId
+- teamId
+- mode (match | training)
+- matchId/sessionId
+- mcc
+- sessionKey (derivada)
+
+==================================================
+2) MATRIZ DE VISTA (QUE SE MUESTRA / QUE SE OCULTA)
+==================================================
+
+A) Perfil: tablet-board
+Uso: pizarra visual y operacion en banquillo/campo.
+
+Mostrar:
+- Canvas tactico completo (jugadores/materiales/dibujos)
+- Marcador y cronometro grande
+- Roster (titulares + suplentes)
+- Accion rapida: Guardar, Watch, Continuidad
+- Estado de sincronizacion (local/remote/restricted)
+- Partido/sesion activa
+
+Ocultar o minimizar:
+- Formularios largos de configuracion
+- Ajustes avanzados no criticos en partido
+
+CTA principal:
+- “Abrir Continuidad” con contexto actual
+
+------------------------------------------
+
+B) Perfil: mobile-hub
+Uso: nucleo de comunicaciones cuando no hay tablet o como respaldo.
+
+Mostrar:
+- Cronometro maestro (start/pause/reset)
+- Eventos rapidos: gol, cambio, incidencia, pausa/reanudar, fin
+- Selector de partido/sesion activo
+- Estado smartwatch (conectado/no conectado)
+- Cola offline (eventos pendientes)
+- Boton “Compartir red / vincular tablet” (informativo/procedimental)
+
+Ocultar:
+- Canvas/pizarra avanzada
+- Paneles densos de analitica visual
+
+CTA principal:
+- “Recuperar sesion activa”
+
+------------------------------------------
+
+C) Perfil: watch-bridge
+Uso: entrada minima de eventos en reloj o modo reloj.
+
+Mostrar:
+- Tiempo restante / estado (running/paused)
+- Botones: Gol, Cambio, Incidencia, Start/Pause
+- Confirmacion visual corta (toast/haptic)
+
+Ocultar:
+- Cualquier formulario complejo
+- Navegacion extensa
+
+CTA principal:
+- “Volver a sesion activa”
+
+==================================================
+3) APLICACION POR MICROAPP
+==================================================
+
+Sandbox App:
+- Puede contener todos los perfiles por view mode.
+- Si se abre en movil -> priorizar mobile-hub.
+- Si se abre en tablet/pc -> priorizar tablet-board.
+
+Continuidad Standalone:
+- Forzar profile = mobile-hub por defecto.
+- Permitir deep-link a watch tab.
+
+Smartwatch:
+- Forzar profile = watch-bridge.
+
+==================================================
+4) REGLAS DE DEEP-LINK (OBLIGATORIAS)
+==================================================
+
+Formato recomendado:
+/mobile-continuity?mode=match&teamId=...&matchId=...&view=hub
+/board/match?source=sandbox&matchId=...&view=tablet
+/smartwatch?mode=match&sessionKey=...&view=watch
+
+Regla:
+- Siempre pasar el contexto minimo para evitar “pantallas vacias”.
+
+==================================================
+5) LOGICA OFFLINE Y DOBLE COMUNICACION
+==================================================
+
+Escenario objetivo:
+- Tablet y movil pueden operar simultaneamente.
+- Movil puede compartir red (hotspot) con tablet.
+- Si no hay internet, ambos siguen en local-first.
+
+Requerido:
+1. Event log append-only con eventId unico.
+2. Outbox local por dispositivo.
+3. Reintentos de sync en background.
+4. Dedupe por eventId al consolidar.
+5. Resolucion de conflictos:
+   - cronometro: lider de sesion (master clock)
+   - marcador/eventos: merge por timestamp + origin
+
+==================================================
+6) LIDERAZGO DE SESION
+==================================================
+
+Por defecto:
+- Mobile-hub = leader
+- Tablet-board = follower visual (puede solicitar control)
+
+Fallback:
+- Si movil cae, tablet puede asumir liderazgo manualmente.
+
+==================================================
+7) UX: MENSAJES CLAROS DE ESTADO
+==================================================
+
+Mostrar siempre:
+- “Sesion activa: Partido X / Entreno Y”
+- “Modo sync: Local / Sincronizado / Restringido”
+- “Eventos pendientes: N”
+- “Dispositivo lider: Movil/Tablet”
+
+==================================================
+8) CHECKLIST DE IMPLEMENTACION
+==================================================
+
+- [ ] Device profile detector (tablet-board, mobile-hub, watch-bridge)
+- [ ] Render condicional por profile
+- [ ] Deep-links con contexto completo
+- [ ] Outbox local + retry + dedupe
+- [ ] Master clock definido
+- [ ] Estado de sesion visible y recuperable
+- [ ] Test manual:
+      - solo movil
+      - solo tablet
+      - movil + tablet con hotspot
+      - sin internet (offline)
+
+==================================================
+9) RECOMENDACION FINAL
+==================================================
+
+No obligar al entrenador a instalar dos apps en primera instancia:
+- App principal recomendada: Sandbox (con continuidad integrada).
+- App opcional avanzada: Continuidad standalone para usuarios que quieran flujo minimalista.
+
+Asi se reduce friccion y se mantiene potencia operativa.
+
