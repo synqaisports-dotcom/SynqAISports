@@ -228,7 +228,7 @@ function getElementBounds(
 ): ElementBoundsPx {
   const base = getElementBoundsRaw(element, widthPx, heightPx);
   if (!isMaterial(element.type)) return base;
-  const sc = materialViewportScale(cssWidth, cssHeight);
+  const sc = materialViewportScale(cssWidth, cssHeight) * (element.type === "player" ? 0.9 : 1);
   return scaleMaterialBoundsAboutCenter(base, sc);
 }
 
@@ -886,7 +886,7 @@ function PromoBoardContent() {
         ? canvasRef.current.width / canvasRef.current.height
         : 1.5;
     // Jugadores: un punto más grandes (alineado visualmente con pizarra de partido).
-    const playerScale = tool === "player" ? 1.32 : 1;
+    const playerScale = tool === "player" ? 1.18 : 1;
     const defW =
       tool === "player" ? CANVAS_PLAYER_NORM_WIDTH * playerScale :
       tool === "ladder" ? 0.15 :
