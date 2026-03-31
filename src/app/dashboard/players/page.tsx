@@ -128,6 +128,28 @@ export default function PlayersManagementPage() {
   const canUseRemote = canUseOperativaSupabase(clubScopeId) && !!session?.access_token;
   const [syncMode, setSyncMode] = useState<"remote" | "local" | "restricted" | "local_error">("local");
   const importFileInputRef = useRef<HTMLInputElement | null>(null);
+  const [importPreviewRows, setImportPreviewRows] = useState<any[]>([]);
+  const [importPreviewHeaders, setImportPreviewHeaders] = useState<string[]>([]);
+  const [importSourceFileName, setImportSourceFileName] = useState("");
+
+  const TEMPLATE_COLUMNS = [
+    "name",
+    "surname",
+    "number",
+    "nickname",
+    "email",
+    "birthDate",
+    "joinDate",
+    "category",
+    "teamSuffix",
+    "position",
+    "status",
+    "isMinor",
+    "tutorName",
+    "tutorSurname",
+    "tutorPhone",
+    "tutorEmail",
+  ];
 
   const parseCsvRow = (line: string, delimiter: string): string[] => {
     const out: string[] = [];
@@ -156,24 +178,7 @@ export default function PlayersManagementPage() {
   };
 
   const handleDownloadTemplate = () => {
-    const header = [
-      "name",
-      "surname",
-      "number",
-      "nickname",
-      "email",
-      "birthDate",
-      "joinDate",
-      "category",
-      "teamSuffix",
-      "position",
-      "status",
-      "isMinor",
-      "tutorName",
-      "tutorSurname",
-      "tutorPhone",
-      "tutorEmail",
-    ];
+    const header = TEMPLATE_COLUMNS;
     const example = [
       "LUCAS",
       "GARCIA",
@@ -294,12 +299,12 @@ export default function PlayersManagementPage() {
         return;
       }
 
-      const nextPlayers = [...imported, ...players];
-      setPlayers(nextPlayers);
-      await persistPlayersHybrid(nextPlayers);
+      setImportPreviewHeaders(headers);
+      setImportPreviewRows(imported);
+      setImportSourceFileName(file.name);
       toast({
-        title: "IMPORTACION_COMPLETADA",
-        description: `${imported.length} jugadores importados correctamente.`,
+        title: "PREVISUALIZACION_LISTA",
+        description: `${imported.length} jugadores listos para importar.`,
       });
     } catch {
       toast({
@@ -310,6 +315,26 @@ export default function PlayersManagementPage() {
     } finally {
       e.target.value = "";
     }
+  };
+
+  const handleConfirmBulkImport = async () => {
+    if (!importPreviewRows.length) return;
+    const nextPlayers = [...importPreviewRows, ...players];
+    setPlayers(nextPlayers);
+    await persistPlayersHybrid(nextPlayers);
+    toast({
+      title: "IMPORTACION_COMPLETADA",
+      description: `${importPreviewRows.length} jugadores importados correctamente.`,
+    });
+    setImportPreviewRows([]);
+    setImportPreviewHeaders([]);
+    setImportSourceFileName("");
+  };
+
+  const handleCancelBulkImport = () => {
+    setImportPreviewRows([]);
+    setImportPreviewHeaders([]);
+    setImportSourceFileName("");
   };
 
   useEffect(() => {
@@ -698,6 +723,83 @@ export default function PlayersManagementPage() {
           />
         </div>
       </div>
+
+      <Card className="glass-panel border border-primary/20 bg-black/30 rounded-2xl">
+        <CardContent className="p-4 space-y-3">
+          <div className="text-[10px] font-black uppercase tracking-widest text-primary/70">
+            Columnas plantilla (CSV)
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {TEMPLATE_COLUMNS.map((col) => (
+              <Badge key={col} className="bg-primary/10 text-primary border border-primary/20 rounded-lg text-[10px] font-mono">
+                {col}
+              </Badge>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {importPreviewRows.length > 0 && (
+        <Card className="glass-panel border border-primary/20 bg-black/30 rounded-2xl overflow-hidden">
+          <CardHeader className="p-4 border-b border-white/5">
+            <CardTitle className="text-sm text-white font-black uppercase tracking-wider">
+              Previsualización de importación por columnas
+            </CardTitle>
+            <CardDescription className="text-primary/70">
+              Archivo: {importSourceFileName} · Registros válidos: {importPreviewRows.length}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-white/[0.02] border-b border-white/5">
+                  <tr>
+                    {TEMPLATE_COLUMNS.map((col) => (
+                      <th key={col} className="px-3 py-2 text-[10px] font-black uppercase tracking-wider text-primary/50 whitespace-nowrap">
+                        {col}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {importPreviewRows.slice(0, 10).map((row, index) => (
+                    <tr key={`${row.id}_${index}`} className="hover:bg-primary/[0.03]">
+                      {TEMPLATE_COLUMNS.map((col) => (
+                        <td key={`${row.id}_${col}`} className="px-3 py-2 text-white/80 whitespace-nowrap">
+                          {String(row[col] ?? "")}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {importPreviewRows.length > 10 && (
+              <div className="px-4 py-2 text-[10px] text-primary/60 border-t border-white/5">
+                Mostrando 10 de {importPreviewRows.length} filas previsualizadas.
+              </div>
+            )}
+          </CardContent>
+          <CardFooter className="p-4 flex gap-2 justify-end border-t border-white/5">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCancelBulkImport}
+              className="rounded-xl border-white/15 text-white/80"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              onClick={handleConfirmBulkImport}
+              disabled={!canEditPlayers}
+              className="rounded-xl bg-primary text-black font-bold disabled:opacity-40"
+            >
+              Confirmar importación
+            </Button>
+          </CardFooter>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <PlayerStat label="Atletas Totales" value={players.length.toString()} icon={Users} />
