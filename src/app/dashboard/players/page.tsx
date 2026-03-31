@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { 
   Users, 
   UserPlus, 
@@ -29,7 +29,9 @@ import {
   X,
   Clock,
   Hash,
-  Database
+  Database,
+  Download,
+  Upload
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -125,6 +127,190 @@ export default function PlayersManagementPage() {
   const playersStorageKey = `synq_players_v1_${clubScopeId}`;
   const canUseRemote = canUseOperativaSupabase(clubScopeId) && !!session?.access_token;
   const [syncMode, setSyncMode] = useState<"remote" | "local" | "restricted" | "local_error">("local");
+  const importFileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const parseCsvRow = (line: string, delimiter: string): string[] => {
+    const out: string[] = [];
+    let cur = "";
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          cur += '"';
+          i += 1;
+        } else {
+          inQuotes = !inQuotes;
+        }
+        continue;
+      }
+      if (ch === delimiter && !inQuotes) {
+        out.push(cur.trim());
+        cur = "";
+        continue;
+      }
+      cur += ch;
+    }
+    out.push(cur.trim());
+    return out.map((v) => v.replace(/^"(.*)"$/, "$1").trim());
+  };
+
+  const handleDownloadTemplate = () => {
+    const header = [
+      "name",
+      "surname",
+      "number",
+      "nickname",
+      "email",
+      "birthDate",
+      "joinDate",
+      "category",
+      "teamSuffix",
+      "position",
+      "status",
+      "isMinor",
+      "tutorName",
+      "tutorSurname",
+      "tutorPhone",
+      "tutorEmail",
+    ];
+    const example = [
+      "LUCAS",
+      "GARCIA",
+      "10",
+      "LUKY",
+      "l.garcia@tutor.com",
+      "2011-05-15",
+      "2023-09-01",
+      "Infantil",
+      "A",
+      "MC|MCO",
+      "Active",
+      "true",
+      "MARIA",
+      "GARCIA",
+      "600000001",
+      "l.garcia@tutor.com",
+    ];
+    const csv = `${header.join(",")}\n${example.join(",")}\n`;
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "plantilla_jugadores_synqai.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleBulkImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!canEditPlayers) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes permiso de edición en Gestión de Jugadores.",
+      });
+      e.target.value = "";
+      return;
+    }
+    try {
+      const raw = await file.text();
+      const lines = raw
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter(Boolean);
+      if (lines.length < 2) {
+        toast({
+          variant: "destructive",
+          title: "ARCHIVO_VACIO",
+          description: "El archivo no contiene filas de jugadores.",
+        });
+        e.target.value = "";
+        return;
+      }
+      const delimiter = lines[0].includes(";") ? ";" : ",";
+      const headers = parseCsvRow(lines[0], delimiter).map((h) => h.toLowerCase());
+      const idx = (k: string) => headers.indexOf(k);
+      const required = ["name", "surname", "number"];
+      const missing = required.filter((k) => idx(k) === -1);
+      if (missing.length > 0) {
+        toast({
+          variant: "destructive",
+          title: "PLANTILLA_INVALIDA",
+          description: `Faltan columnas obligatorias: ${missing.join(", ")}`,
+        });
+        e.target.value = "";
+        return;
+      }
+
+      const imported: any[] = [];
+      for (let i = 1; i < lines.length; i++) {
+        const row = parseCsvRow(lines[i], delimiter);
+        const name = String(row[idx("name")] || "").trim().toUpperCase();
+        const surname = String(row[idx("surname")] || "").trim().toUpperCase();
+        const number = String(row[idx("number")] || "").trim();
+        if (!name || !surname || !number) continue;
+        const categoryRaw = String(row[idx("category")] || "Alevín").trim();
+        const validCategory = CATEGORIES.some((c) => c.value === categoryRaw) ? categoryRaw : "Alevín";
+        const teamSuffixRaw = String(row[idx("teamsuffix")] || "A").trim().toUpperCase();
+        const teamSuffix = TEAM_SUFFIXES.includes(teamSuffixRaw) ? teamSuffixRaw : "A";
+        const statusRaw = String(row[idx("status")] || "Active").trim();
+        const status = ["Active", "Injured", "Away"].includes(statusRaw) ? statusRaw : "Active";
+        const positionRaw = String(row[idx("position")] || "").trim();
+        const normalizedPosition = positionRaw ? positionRaw.replace(/\|/g, ", ").toUpperCase() : "";
+        const isMinorRaw = String(row[idx("isminor")] || "true").trim().toLowerCase();
+        const isMinor = isMinorRaw !== "false" && isMinorRaw !== "0" && isMinorRaw !== "no";
+        imported.push({
+          id: `p${Date.now()}_${i}_${Math.random().toString(36).slice(2, 6)}`,
+          name,
+          surname,
+          number,
+          nickname: String(row[idx("nickname")] || "").trim().toUpperCase(),
+          email: String(row[idx("email")] || "").trim(),
+          photoUrl: "",
+          birthDate: String(row[idx("birthdate")] || "").trim(),
+          joinDate: String(row[idx("joindate")] || "").trim() || new Date().toISOString().split("T")[0],
+          category: validCategory,
+          teamSuffix,
+          position: normalizedPosition,
+          status,
+          attendance: "100%",
+          isMinor,
+          tutorName: String(row[idx("tutorname")] || "").trim().toUpperCase(),
+          tutorSurname: String(row[idx("tutorsurname")] || "").trim().toUpperCase(),
+          tutorPhone: String(row[idx("tutorphone")] || "").trim(),
+          tutorEmail: String(row[idx("tutoremail")] || "").trim(),
+        });
+      }
+
+      if (imported.length === 0) {
+        toast({
+          variant: "destructive",
+          title: "SIN_REGISTROS_VALIDOS",
+          description: "No se pudo importar ningún jugador válido.",
+        });
+        e.target.value = "";
+        return;
+      }
+
+      const nextPlayers = [...imported, ...players];
+      setPlayers(nextPlayers);
+      await persistPlayersHybrid(nextPlayers);
+      toast({
+        title: "IMPORTACION_COMPLETADA",
+        description: `${imported.length} jugadores importados correctamente.`,
+      });
+    } catch {
+      toast({
+        variant: "destructive",
+        title: "ERROR_IMPORTACION",
+        description: "No se pudo leer el archivo CSV.",
+      });
+    } finally {
+      e.target.value = "";
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -483,6 +669,34 @@ export default function PlayersManagementPage() {
         >
           <UserPlus className="h-4 w-4 mr-2" /> Nueva Inscripción
         </Button>
+        <div className="flex w-full sm:w-auto gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleDownloadTemplate}
+            className="rounded-2xl border-primary/30 text-primary font-black uppercase text-[10px] tracking-widest h-12 px-4"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Descargar plantilla
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => importFileInputRef.current?.click()}
+            disabled={!canEditPlayers}
+            className="rounded-2xl border-primary/30 text-primary font-black uppercase text-[10px] tracking-widest h-12 px-4 disabled:opacity-40"
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Subir archivo
+          </Button>
+          <input
+            ref={importFileInputRef}
+            type="file"
+            accept=".csv,text/csv"
+            className="hidden"
+            onChange={handleBulkImport}
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
