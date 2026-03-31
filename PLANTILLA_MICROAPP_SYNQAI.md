@@ -2,6 +2,11 @@
 
 Objetivo: reducir tiempo de creación de nuevas apps terminales (ej. Elite Board, Tutor variantes, nuevas apps deportivas) manteniendo seguridad, rendimiento y coherencia con BackOffice.
 
+> Actualización de criterio operativo:
+> - **BackOffice Club/Metodología**: acceso web tradicional por rutas (gestión).
+> - **Micro-app terminal**: experiencia **fullscreen por dispositivo**, orientada a ejecución, con navegación mínima y foco de tarea (estilo Sandbox).
+> - En terminales, la URL es un detalle técnico, no el modelo de uso del usuario final.
+
 ---
 
 ## 1) Estructura recomendada de rutas
@@ -21,6 +26,17 @@ src/app/<microapp>/manifest.json/route.ts
 Regla:
 - `/(shell)` para formularios/listas (con header y contenedor).
 - `/board` para canvas/pizarra fullscreen (sin restricciones de ancho).
+- `/<microapp>/app` debe abrir en **modo terminal fullscreen** (sin sidebar/backoffice).
+
+### 1.1 Modo terminal fullscreen (obligatorio en micro-apps)
+
+Checklist visual/UX:
+- Sin navegación global de BackOffice.
+- Header mínimo (marca + acción crítica + salir).
+- `min-h-[100dvh]` + `overflow-hidden` en raíz de terminal.
+- Controles compactos para tablet/móvil/TV.
+- Botón de salida/volver bien visible.
+- Si es TV/kiosk: evitar scroll y mantener layout fijo.
 
 ---
 
@@ -33,6 +49,13 @@ Reutilizar patrón de wrapper cliente:
 3. Si autenticado -> render normal.
 
 Esto evita rutas huérfanas y mejora onboarding por QR.
+
+### 2.1 Entrada recomendada para terminal
+
+- Entrada oficial: `/<microapp>` o `/<microapp>-portal`.
+- Tras auth: redirigir a `/<microapp>/app` (modo terminal).
+- En terminal no autenticado: redirect automático a `/login?next=/<microapp>/app`.
+- Evitar dobles pantallas de login para no romper flujo QR.
 
 ---
 
@@ -52,6 +75,12 @@ const key = `synq:${microapp}:${clubId}:${teamId}:${mode}:${sessionId ?? "none"}
 ```
 
 Nunca usar claves globales ambiguas para datos sensibles/operativos.
+
+### 3.1 Regla de separación BackOffice vs Terminal
+
+- BackOffice puede leer/escribir datasets completos y configuraciones.
+- Terminal debe operar sobre contexto activo y payload mínimo.
+- Nunca mezclar estado de UI de BackOffice con estado operativo de terminal.
 
 ---
 
@@ -85,6 +114,9 @@ Checklist mínimo:
 - Cargar componentes pesados con lazy/suspense.
 - Reducir efectos caros en canvas en hardware débil.
 - Evitar payloads grandes y dependencias innecesarias.
+- Priorizar 60fps en interacción táctil (arrastre, timers, HUD).
+- Evitar `transition-all` en controles críticos.
+- Minimizar blur/sombras en elementos interactivos.
 
 ---
 
@@ -106,6 +138,17 @@ Esto acelera decisiones de producto y monetización.
 - BackOffice Pro: sin ads.
 - Terminales consumer/demo: ads permitidos.
 - Terminales pro/operativas de club: según política comercial, preferible sin fricción.
+
+### 8.1 Distribución sin stores (web directa + QR)
+
+Modelo recomendado:
+- Publicidad/promoción desde Promo AI con QR a URL de micro-app.
+- Instalación PWA desde navegador (sin Play/App Store en fase inicial).
+- Landing de app con:
+  - qué hace,
+  - capturas,
+  - botón instalar/abrir,
+  - QR.
 
 ---
 
@@ -133,6 +176,8 @@ Si no están claras, no arrancar código todavía.
 - [ ] API fail-closed con permisos
 - [ ] Offline queue + sync básico
 - [ ] Responsive mobile/tablet/desktop
+- [ ] Terminal fullscreen sin scroll no deseado
+- [ ] Flujo QR -> login -> terminal validado
 - [ ] Typecheck OK
 - [ ] Auditoría/documentación actualizada
 
@@ -149,3 +194,49 @@ Modelo recomendado:
 - **BackOffice Club/Metodología**: configurar plantillas, revisar histórico, informes, permisos.
 
 Así no compiten: se complementan.
+
+---
+
+## 12) Plantilla rápida (rellenable en 10 minutos)
+
+```md
+# Micro-app: <nombre>
+
+## A) Rol y dispositivo principal
+- Usuario principal:
+- Dispositivo principal: (móvil/tablet/TV/reloj)
+- ¿Modo terminal fullscreen?: Sí/No
+
+## B) Acceso
+- URL de entrada promocional:
+- URL interna terminal:
+- ¿Requiere login?: Sí/No
+- Redirect post-login:
+
+## C) Tarea crítica (máx 3)
+1.
+2.
+3.
+
+## D) Datos
+- Contexto mínimo: clubId/teamId/mode/sessionId
+- Lee de:
+- Escribe en:
+- Offline queue: Sí/No
+
+## E) UX terminal
+- Header mínimo:
+- CTA principal:
+- CTA salida:
+- ¿Scroll permitido?: vertical/horizontal/ninguno
+
+## F) Monetización
+- ¿Ads?: Sí/No
+- Ubicaciones:
+- Eventos de medición:
+
+## G) Done
+- [ ] Typecheck
+- [ ] Flujos críticos validados
+- [ ] Sin errores en móvil/tablet/TV
+```
