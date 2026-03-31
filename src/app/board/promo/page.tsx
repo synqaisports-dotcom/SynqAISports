@@ -885,8 +885,8 @@ function PromoBoardContent() {
       canvasRef.current && canvasRef.current.height > 0
         ? canvasRef.current.width / canvasRef.current.height
         : 1.5;
-    // Jugadores: un punto más grandes (alineado visualmente con pizarra de partido).
-    const playerScale = tool === "player" ? 1.18 : 1;
+    // Jugadores: mismo tamaño visual que en pizarra de partido.
+    const playerScale = tool === "player" ? 1 : 1;
     const defW =
       tool === "player" ? CANVAS_PLAYER_NORM_WIDTH * playerScale :
       tool === "ladder" ? 0.15 :
