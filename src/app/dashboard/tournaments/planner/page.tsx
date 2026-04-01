@@ -23,7 +23,8 @@ type PlannerConfig = {
   morningEnd: string;
   afternoonStart: string;
   afternoonEnd: string;
-  matchMinutes: number;
+  halvesCount: 1 | 2;
+  minutesPerHalf: number;
   breakMinutes: number;
   bufferBetweenMatches: number;
 };
@@ -43,7 +44,8 @@ const DEFAULT_CONFIG: PlannerConfig = {
   morningEnd: "14:00",
   afternoonStart: "16:00",
   afternoonEnd: "21:00",
-  matchMinutes: 25,
+  halvesCount: 2,
+  minutesPerHalf: 20,
   breakMinutes: 0,
   bufferBetweenMatches: 10,
 };
@@ -96,7 +98,9 @@ export default function TournamentsPlannerPage() {
         morningEnd: typeof parsed.morningEnd === "string" ? parsed.morningEnd : DEFAULT_CONFIG.morningEnd,
         afternoonStart: typeof parsed.afternoonStart === "string" ? parsed.afternoonStart : DEFAULT_CONFIG.afternoonStart,
         afternoonEnd: typeof parsed.afternoonEnd === "string" ? parsed.afternoonEnd : DEFAULT_CONFIG.afternoonEnd,
-        matchMinutes: Number(parsed.matchMinutes) > 0 ? Number(parsed.matchMinutes) : DEFAULT_CONFIG.matchMinutes,
+        halvesCount: parsed.halvesCount === 1 || parsed.halvesCount === 2 ? parsed.halvesCount : DEFAULT_CONFIG.halvesCount,
+        minutesPerHalf:
+          Number(parsed.minutesPerHalf) > 0 ? Number(parsed.minutesPerHalf) : DEFAULT_CONFIG.minutesPerHalf,
         breakMinutes: Number(parsed.breakMinutes) >= 0 ? Number(parsed.breakMinutes) : DEFAULT_CONFIG.breakMinutes,
         bufferBetweenMatches:
           Number(parsed.bufferBetweenMatches) >= 0 ? Number(parsed.bufferBetweenMatches) : DEFAULT_CONFIG.bufferBetweenMatches,
@@ -138,7 +142,8 @@ export default function TournamentsPlannerPage() {
     return h * 60 + m;
   };
 
-  const slotMinutes = config.matchMinutes + config.breakMinutes + config.bufferBetweenMatches;
+  const matchTotalMinutes = config.halvesCount * config.minutesPerHalf + (config.halvesCount === 2 ? config.breakMinutes : 0);
+  const slotMinutes = matchTotalMinutes + config.bufferBetweenMatches;
   const slotsPerFieldPerDay = useMemo(() => {
     const ranges: Array<{ start: string; end: string }> = [];
     if (config.timeWindow === "morning" || config.timeWindow === "both") {
@@ -182,7 +187,7 @@ export default function TournamentsPlannerPage() {
             day,
             field: firstField,
             start: cur,
-            end: addMinutesToHHMM(cur, config.matchMinutes + config.breakMinutes),
+            end: addMinutesToHHMM(cur, matchTotalMinutes),
           });
           cur = addMinutesToHHMM(cur, slotMinutes);
         }
@@ -197,8 +202,7 @@ export default function TournamentsPlannerPage() {
     config.afternoonEnd,
     config.tournamentDays,
     slotMinutes,
-    config.matchMinutes,
-    config.breakMinutes,
+    matchTotalMinutes,
   ]);
 
   return (
@@ -438,12 +442,25 @@ export default function TournamentsPlannerPage() {
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Duración y buffers</span>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <label className="space-y-1">
-                <span className="text-[10px] font-black uppercase tracking-[0.12em] text-white/70">Partido (min)</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.12em] text-white/70">Nº partes</span>
+                <select
+                  value={config.halvesCount}
+                  onChange={(e) =>
+                    setConfig((prev) => ({ ...prev, halvesCount: Number(e.target.value) === 1 ? 1 : 2 }))
+                  }
+                  className="h-10 w-full rounded-lg border border-primary/25 bg-black/40 px-3 text-white outline-none"
+                >
+                  <option value={1}>1 parte</option>
+                  <option value={2}>2 partes</option>
+                </select>
+              </label>
+              <label className="space-y-1">
+                <span className="text-[10px] font-black uppercase tracking-[0.12em] text-white/70">Min por parte</span>
                 <input
                   type="number"
                   min={5}
-                  value={config.matchMinutes}
-                  onChange={(e) => setConfig((prev) => ({ ...prev, matchMinutes: Number(e.target.value) || 5 }))}
+                  value={config.minutesPerHalf}
+                  onChange={(e) => setConfig((prev) => ({ ...prev, minutesPerHalf: Number(e.target.value) || 5 }))}
                   className="h-10 w-full rounded-lg border border-primary/25 bg-black/40 px-3 text-white outline-none"
                 />
               </label>
@@ -454,6 +471,7 @@ export default function TournamentsPlannerPage() {
                   min={0}
                   value={config.breakMinutes}
                   onChange={(e) => setConfig((prev) => ({ ...prev, breakMinutes: Math.max(0, Number(e.target.value) || 0) }))}
+                  disabled={config.halvesCount === 1}
                   className="h-10 w-full rounded-lg border border-primary/25 bg-black/40 px-3 text-white outline-none"
                 />
               </label>
@@ -470,6 +488,10 @@ export default function TournamentsPlannerPage() {
                 />
               </label>
             </div>
+            <p className="text-[10px] text-white/55">
+              Duración efectiva partido: <span className="text-white font-black">{matchTotalMinutes} min</span> · Slot total:{" "}
+              <span className="text-white font-black">{slotMinutes} min</span>
+            </p>
           </div>
 
           <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 space-y-3">
@@ -513,6 +535,10 @@ export default function TournamentsPlannerPage() {
                       </p>
                       <p className="text-[11px] font-black text-white">
                         {slot.start} - {slot.end}
+                      </p>
+                      <p className="text-[9px] text-white/60">
+                        {config.halvesCount}x{config.minutesPerHalf}
+                        {config.halvesCount === 2 ? ` + desc ${config.breakMinutes}m` : ""}
                       </p>
                     </div>
                   ))
