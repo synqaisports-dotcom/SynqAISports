@@ -19,6 +19,9 @@ type PlannerConfig = {
   morningEnd: string;
   afternoonStart: string;
   afternoonEnd: string;
+  matchMinutes: number;
+  breakMinutes: number;
+  bufferBetweenMatches: number;
 };
 
 const DEFAULT_CONFIG: PlannerConfig = {
@@ -32,6 +35,9 @@ const DEFAULT_CONFIG: PlannerConfig = {
   morningEnd: "14:00",
   afternoonStart: "16:00",
   afternoonEnd: "21:00",
+  matchMinutes: 25,
+  breakMinutes: 0,
+  bufferBetweenMatches: 10,
 };
 
 const CATEGORY_OPTIONS = [
@@ -78,6 +84,10 @@ export default function TournamentsPlannerPage() {
         morningEnd: typeof parsed.morningEnd === "string" ? parsed.morningEnd : DEFAULT_CONFIG.morningEnd,
         afternoonStart: typeof parsed.afternoonStart === "string" ? parsed.afternoonStart : DEFAULT_CONFIG.afternoonStart,
         afternoonEnd: typeof parsed.afternoonEnd === "string" ? parsed.afternoonEnd : DEFAULT_CONFIG.afternoonEnd,
+        matchMinutes: Number(parsed.matchMinutes) > 0 ? Number(parsed.matchMinutes) : DEFAULT_CONFIG.matchMinutes,
+        breakMinutes: Number(parsed.breakMinutes) >= 0 ? Number(parsed.breakMinutes) : DEFAULT_CONFIG.breakMinutes,
+        bufferBetweenMatches:
+          Number(parsed.bufferBetweenMatches) >= 0 ? Number(parsed.bufferBetweenMatches) : DEFAULT_CONFIG.bufferBetweenMatches,
       });
     } catch {
       // ignore
@@ -101,6 +111,82 @@ export default function TournamentsPlannerPage() {
       // ignore
     }
   };
+
+  const addMinutesToHHMM = (hhmm: string, delta: number) => {
+    const [h, m] = hhmm.split(":").map((v) => Number(v));
+    const total = h * 60 + m + delta;
+    const normalized = ((total % (24 * 60)) + (24 * 60)) % (24 * 60);
+    const hh = String(Math.floor(normalized / 60)).padStart(2, "0");
+    const mm = String(normalized % 60).padStart(2, "0");
+    return `${hh}:${mm}`;
+  };
+
+  const toMinutes = (hhmm: string) => {
+    const [h, m] = hhmm.split(":").map((v) => Number(v));
+    return h * 60 + m;
+  };
+
+  const slotMinutes = config.matchMinutes + config.breakMinutes + config.bufferBetweenMatches;
+  const slotsPerFieldPerDay = useMemo(() => {
+    const ranges: Array<{ start: string; end: string }> = [];
+    if (config.timeWindow === "morning" || config.timeWindow === "both") {
+      ranges.push({ start: config.morningStart, end: config.morningEnd });
+    }
+    if (config.timeWindow === "afternoon" || config.timeWindow === "both") {
+      ranges.push({ start: config.afternoonStart, end: config.afternoonEnd });
+    }
+    const total = ranges.reduce((acc, r) => {
+      const diff = Math.max(0, toMinutes(r.end) - toMinutes(r.start));
+      return acc + Math.floor(diff / Math.max(1, slotMinutes));
+    }, 0);
+    return total;
+  }, [
+    config.timeWindow,
+    config.morningStart,
+    config.morningEnd,
+    config.afternoonStart,
+    config.afternoonEnd,
+    slotMinutes,
+  ]);
+
+  const totalSlots = slotsPerFieldPerDay * config.fieldsCount * config.tournamentDays;
+  const estimatedMatches = Math.floor((config.teamsCount * (config.teamsCount - 1)) / 2);
+  const sampleSlots = useMemo(() => {
+    const firstField = "Campo 1";
+    const out: Array<{ day: number; field: string; start: string; end: string }> = [];
+    const ranges: Array<{ start: string; end: string }> = [];
+    if (config.timeWindow === "morning" || config.timeWindow === "both") {
+      ranges.push({ start: config.morningStart, end: config.morningEnd });
+    }
+    if (config.timeWindow === "afternoon" || config.timeWindow === "both") {
+      ranges.push({ start: config.afternoonStart, end: config.afternoonEnd });
+    }
+    for (let day = 1; day <= Math.min(config.tournamentDays, 2); day++) {
+      for (const r of ranges) {
+        let cur = r.start;
+        while (toMinutes(addMinutesToHHMM(cur, slotMinutes)) <= toMinutes(r.end) && out.length < 8) {
+          out.push({
+            day,
+            field: firstField,
+            start: cur,
+            end: addMinutesToHHMM(cur, config.matchMinutes + config.breakMinutes),
+          });
+          cur = addMinutesToHHMM(cur, slotMinutes);
+        }
+      }
+    }
+    return out;
+  }, [
+    config.timeWindow,
+    config.morningStart,
+    config.morningEnd,
+    config.afternoonStart,
+    config.afternoonEnd,
+    config.tournamentDays,
+    slotMinutes,
+    config.matchMinutes,
+    config.breakMinutes,
+  ]);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
@@ -279,6 +365,87 @@ export default function TournamentsPlannerPage() {
                     className="h-10 rounded-lg border border-primary/25 bg-black/40 px-2 text-white outline-none"
                   />
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Duración y buffers</span>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <label className="space-y-1">
+                <span className="text-[10px] font-black uppercase tracking-[0.12em] text-white/70">Partido (min)</span>
+                <input
+                  type="number"
+                  min={5}
+                  value={config.matchMinutes}
+                  onChange={(e) => setConfig((prev) => ({ ...prev, matchMinutes: Number(e.target.value) || 5 }))}
+                  className="h-10 w-full rounded-lg border border-primary/25 bg-black/40 px-3 text-white outline-none"
+                />
+              </label>
+              <label className="space-y-1">
+                <span className="text-[10px] font-black uppercase tracking-[0.12em] text-white/70">Descanso partes (min)</span>
+                <input
+                  type="number"
+                  min={0}
+                  value={config.breakMinutes}
+                  onChange={(e) => setConfig((prev) => ({ ...prev, breakMinutes: Math.max(0, Number(e.target.value) || 0) }))}
+                  className="h-10 w-full rounded-lg border border-primary/25 bg-black/40 px-3 text-white outline-none"
+                />
+              </label>
+              <label className="space-y-1">
+                <span className="text-[10px] font-black uppercase tracking-[0.12em] text-white/70">Buffer partidos (min)</span>
+                <input
+                  type="number"
+                  min={0}
+                  value={config.bufferBetweenMatches}
+                  onChange={(e) =>
+                    setConfig((prev) => ({ ...prev, bufferBetweenMatches: Math.max(0, Number(e.target.value) || 0) }))
+                  }
+                  className="h-10 w-full rounded-lg border border-primary/25 bg-black/40 px-3 text-white outline-none"
+                />
+              </label>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 space-y-3">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/90">
+              Simulación rápida del torneo (preview)
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <div className="rounded-lg border border-white/10 bg-black/25 px-3 py-2">
+                <p className="text-[9px] uppercase text-white/55 font-black">Slots/día/campo</p>
+                <p className="text-sm font-black text-white">{slotsPerFieldPerDay}</p>
+              </div>
+              <div className="rounded-lg border border-white/10 bg-black/25 px-3 py-2">
+                <p className="text-[9px] uppercase text-white/55 font-black">Slots totales</p>
+                <p className="text-sm font-black text-white">{totalSlots}</p>
+              </div>
+              <div className="rounded-lg border border-white/10 bg-black/25 px-3 py-2">
+                <p className="text-[9px] uppercase text-white/55 font-black">Partidos estimados</p>
+                <p className="text-sm font-black text-white">{estimatedMatches}</p>
+              </div>
+              <div className="rounded-lg border border-white/10 bg-black/25 px-3 py-2">
+                <p className="text-[9px] uppercase text-white/55 font-black">Cobertura</p>
+                <p className="text-sm font-black text-white">{totalSlots >= estimatedMatches ? "OK" : "Ajustar"}</p>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/70">Ejemplo de slots (primeros)</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {sampleSlots.length === 0 ? (
+                  <p className="text-[11px] text-white/60">No hay franja válida para generar slots.</p>
+                ) : (
+                  sampleSlots.map((slot, idx) => (
+                    <div key={`${slot.day}_${slot.start}_${idx}`} className="rounded-lg border border-white/10 bg-black/25 px-3 py-2">
+                      <p className="text-[9px] uppercase text-primary/80 font-black">
+                        Día {slot.day} · {slot.field}
+                      </p>
+                      <p className="text-[11px] font-black text-white">
+                        {slot.start} - {slot.end}
+                      </p>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
