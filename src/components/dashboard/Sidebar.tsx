@@ -82,7 +82,7 @@ interface NavItem {
   title: string;
   href: string;
   icon: any;
-  category: "global" | "operational" | "methodology" | "user";
+  category: "global" | "operational" | "methodology" | "tournaments" | "user";
   roles?: string[];
   isSubItem?: boolean;
   /** Módulo de matriz de club (filtro A/V/E/X vía `access`). */
@@ -133,6 +133,11 @@ const navItems: NavItem[] = [
   { title: "Planif. y Sesiones", href: "/dashboard/sessions", icon: CalendarDays, category: "operational", moduleId: "planner" },
   { title: "Biblioteca Táctica", href: "/dashboard/coach/library", icon: Dumbbell, category: "operational", moduleId: "exercises" },
   { title: "Neural Planner", href: "/dashboard/coach/planner", icon: Activity, category: "operational", moduleId: "planner" },
+
+  // TORNEOS (fuera de competición normal)
+  { title: "Resumen Torneos", href: "/dashboard/tournaments", icon: Trophy, category: "tournaments", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
+  { title: "Planificador", href: "/dashboard/tournaments/planner", icon: CalendarDays, category: "tournaments", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
+  { title: "Ingresos", href: "/dashboard/tournaments/income", icon: BarChart3, category: "tournaments", roles: ["superadmin", "club_admin", "academy_director", "methodology_director"] },
   
   // TERMINALES_ACCESO - NODO SANDBOX (Categoría User)
   { title: "Sandbox", href: "/sandbox-portal?dest=/sandbox/app", icon: ShieldCheck, category: "user" },
@@ -159,6 +164,7 @@ export function DashboardSidebar() {
     global: true,
     methodology: true,
     operational: true,
+    tournaments: true,
     user: true,
   });
 
@@ -377,6 +383,26 @@ export function DashboardSidebar() {
               {filteredItems.filter(i => i.category === "operational").map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarLink item={item} isActive={pathname === pathnameFromNavHref(item.href)} onNavClick={handleNavClick} />
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+            )}
+          </SidebarGroupWrapper>
+        )}
+
+        {!isFree && (
+          <SidebarGroupWrapper title="Torneos" color="text-blue-300/90" isCollapsed={isCollapsed}>
+            <GroupToggle category="tournaments" label="Torneos" toneClass="border-blue-500/20 text-blue-200/90" />
+            {openGroups.tournaments && (
+            <SidebarMenu>
+              {filteredItems.filter(i => i.category === "tournaments").map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarLink
+                    item={item}
+                    isActive={pathname === pathnameFromNavHref(item.href)}
+                    isSandbox
+                    onNavClick={handleNavClick}
+                  />
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
