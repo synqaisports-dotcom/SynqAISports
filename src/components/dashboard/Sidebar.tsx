@@ -341,7 +341,7 @@ export function DashboardSidebar() {
       )}>
         {isSuperAdmin && (
           <SidebarGroupWrapper title={t("sidebar.group_admin")} color="text-emerald-400" isCollapsed={isCollapsed}>
-            <GroupToggle category="global" label="Secciones Admin-global" toneClass="border-emerald-500/20 text-emerald-300/90" />
+            <GroupToggle category="global" label="Admin-global" toneClass="border-emerald-500/20 text-emerald-300/90" />
             {openGroups.global && (
             <SidebarMenu>
               {filteredItems.filter(i => i.category === "global").map((item) => (
@@ -356,7 +356,7 @@ export function DashboardSidebar() {
 
         {!isFree && (
           <SidebarGroupWrapper title={t("sidebar.group_methodology")} color="text-primary" isCollapsed={isCollapsed}>
-            <GroupToggle category="methodology" label="Secciones Metodología" toneClass="border-cyan-500/20 text-cyan-200/90" />
+            <GroupToggle category="methodology" label="Metodología" toneClass="border-cyan-500/20 text-cyan-200/90" />
             {openGroups.methodology && (
             <SidebarMenu>
               {filteredItems.filter(i => i.category === "methodology").map((item) => (
@@ -371,7 +371,7 @@ export function DashboardSidebar() {
 
         {!isFree && (
           <SidebarGroupWrapper title={t("sidebar.group_dashboard")} color="text-primary" isCollapsed={isCollapsed}>
-            <GroupToggle category="operational" label="Secciones Dashboard Club" toneClass="border-primary/20 text-primary/90" />
+            <GroupToggle category="operational" label="Dashboard Club" toneClass="border-primary/20 text-primary/90" />
             {openGroups.operational && (
             <SidebarMenu>
               {filteredItems.filter(i => i.category === "operational").map((item) => (
@@ -386,7 +386,7 @@ export function DashboardSidebar() {
 
         {(isFree || isSuperAdmin) && (
           <SidebarGroupWrapper title={t("sidebar.group_terminals")} color="text-white/60" isCollapsed={isCollapsed}>
-            <GroupToggle category="user" label="Secciones Terminales" toneClass="border-blue-500/20 text-blue-300/90" />
+            <GroupToggle category="user" label="Terminales" toneClass="border-blue-500/20 text-blue-300/90" />
             {openGroups.user && !isCollapsed && (
               <div className="px-4 py-2 mb-2 bg-blue-500/5 border border-blue-500/10 rounded-xl">
                 <span className="text-[7px] font-black text-blue-400 uppercase tracking-[0.3em] italic flex items-center gap-2">
