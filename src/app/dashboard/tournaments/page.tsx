@@ -34,7 +34,7 @@ export default function TournamentsHomePage() {
             <CardDescription>Campos, horarios, tiempos y descansos.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/dashboard/tournaments/scheduler" className="text-violet-300 text-sm font-bold">Configurar</Link>
+            <Link href="/dashboard/tournaments/planner" className="text-violet-300 text-sm font-bold">Configurar</Link>
           </CardContent>
         </Card>
 
