@@ -336,8 +336,8 @@ export function DashboardSidebar() {
       </SidebarHeader>
 
       <SidebarContent className={cn(
-        "px-3 py-8 space-y-10 custom-scrollbar overflow-x-hidden transition-[background-color,border-color,color,opacity,transform] duration-700",
-        isCollapsed && "py-4 space-y-6"
+        "px-3 py-6 space-y-6 custom-scrollbar overflow-x-hidden transition-[background-color,border-color,color,opacity,transform] duration-700",
+        isCollapsed && "py-4 space-y-4"
       )}>
         {isSuperAdmin && (
             <SidebarGroupWrapper title={t("sidebar.group_admin", "Administrador")} color="text-emerald-400" isCollapsed={isCollapsed}>
