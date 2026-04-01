@@ -9,6 +9,7 @@ import { canAccessEliteTerminal, canAccessEliteTerminalAsDev, isEliteClubId, res
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/contexts/i18n-context";
+import { canUseOperativaSupabase } from "@/lib/operativa-sync";
 
 type Facility = {
   id: string;
@@ -85,10 +86,12 @@ export default function LiveFieldsPage() {
   const [continuity, setContinuity] = useState<ContinuityCtx | null>(null);
   const [devClubId, setDevClubId] = useState<string>("");
   const [scheduleItems, setScheduleItems] = useState<LiveFieldsScheduleItem[]>([]);
+  const [syncMode, setSyncMode] = useState<"remote" | "local" | "restricted" | "local_error">("local");
   const { t } = useI18n();
 
   const isDevAdmin = canAccessEliteTerminalAsDev(profile);
   const effectiveClubId = resolveTerminalEffectiveClubId(profile, devClubId);
+  const canUseRemote = canUseOperativaSupabase(effectiveClubId) && !!session?.access_token;
   const isFounderGuest = user?.id === "synq-root-dev" && profile?.role === "superadmin";
   const isLogged = (!!user && !!session) || isFounderGuest;
 
@@ -114,27 +117,69 @@ export default function LiveFieldsPage() {
 
   useEffect(() => {
     if (loading) return;
-    const load = () => {
+    let cancelled = false;
+    const load = async () => {
       const clubId = String(effectiveClubId || "global-hq");
       const facilitiesKey = `synq_methodology_facilities_v1_${clubId}`;
       const teamsKey = `synq_methodology_warehouse_teams_v1_${clubId}`;
       const scheduleKey = `synq_live_fields_schedule_v1_${clubId}`;
 
-      setFacilities(safeParse<Facility[]>(localStorage.getItem(facilitiesKey), []));
-      setTeams(safeParse<Team[]>(localStorage.getItem(teamsKey), []));
-      setScheduleItems(safeParse<LiveFieldsScheduleItem[]>(localStorage.getItem(scheduleKey), []));
-      setContinuity(readContinuityContext(clubId));
+      const facilitiesLocal = safeParse<Facility[]>(localStorage.getItem(facilitiesKey), []);
+      const teamsLocal = safeParse<Team[]>(localStorage.getItem(teamsKey), []);
+      const scheduleLocal = safeParse<LiveFieldsScheduleItem[]>(localStorage.getItem(scheduleKey), []);
+
+      if (!cancelled) {
+        setFacilities(facilitiesLocal);
+        setTeams(teamsLocal);
+        setScheduleItems(scheduleLocal);
+        setContinuity(readContinuityContext(clubId));
+      }
+
+      if (!canUseRemote || !session?.access_token) {
+        if (!cancelled) setSyncMode("local");
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/club/live-fields-schedule", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (res.status === 403) {
+          if (!cancelled) setSyncMode("restricted");
+          return;
+        }
+        if (!res.ok) {
+          if (!cancelled) setSyncMode("local_error");
+          return;
+        }
+        const json = (await res.json()) as { payload?: { schedule?: LiveFieldsScheduleItem[] } };
+        const remoteSchedule = Array.isArray(json?.payload?.schedule) ? json.payload!.schedule : [];
+        try {
+          localStorage.setItem(scheduleKey, JSON.stringify(remoteSchedule));
+        } catch {
+          // ignore storage failures
+        }
+        if (!cancelled) {
+          setScheduleItems(remoteSchedule);
+          setSyncMode("remote");
+        }
+      } catch {
+        if (!cancelled) setSyncMode("local_error");
+      }
     };
 
-    load();
-    const onStorage = () => load();
+    void load();
+    const onStorage = () => {
+      void load();
+    };
     window.addEventListener("storage", onStorage);
-    const poll = window.setInterval(load, 15000);
+    const poll = window.setInterval(() => void load(), 15000);
     return () => {
+      cancelled = true;
       window.removeEventListener("storage", onStorage);
       window.clearInterval(poll);
     };
-  }, [effectiveClubId, loading]);
+  }, [effectiveClubId, loading, canUseRemote, session?.access_token]);
 
   const cards = useMemo(() => {
     const scopedFacilities =
@@ -369,6 +414,26 @@ export default function LiveFieldsPage() {
             </h1>
             <p className="mt-1 text-[10px] font-black uppercase tracking-[0.25em] text-white/45">
               Club: {effectiveClubId}
+            </p>
+            <p
+              className={cn(
+                "mt-1 text-[9px] font-black uppercase tracking-[0.2em]",
+                syncMode === "remote"
+                  ? "text-emerald-300/80"
+                  : syncMode === "restricted"
+                    ? "text-amber-300/80"
+                    : syncMode === "local_error"
+                      ? "text-rose-300/80"
+                      : "text-cyan-300/70",
+              )}
+            >
+              {syncMode === "remote"
+                ? "SYNC REMOTA"
+                : syncMode === "restricted"
+                  ? "SYNC RESTRINGIDA"
+                  : syncMode === "local_error"
+                    ? "SYNC LOCAL POR ERROR"
+                    : "SYNC LOCAL"}
             </p>
             {!isEliteClubId(effectiveClubId) && isDevAdmin ? (
               <p className="mt-1 text-[10px] font-black uppercase tracking-[0.2em] text-amber-300/80">
