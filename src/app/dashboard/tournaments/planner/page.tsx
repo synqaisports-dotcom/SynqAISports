@@ -6,12 +6,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth-context";
 
 type TimeWindow = "morning" | "afternoon" | "both";
+type FootballFormat = "f11" | "f7" | "futsal";
 
 type PlannerConfig = {
   teamsCount: number;
   categories: string[];
   tournamentDays: number;
   timeWindow: TimeWindow;
+  fieldsCount: number;
+  footballFormat: FootballFormat;
+  morningStart: string;
+  morningEnd: string;
+  afternoonStart: string;
+  afternoonEnd: string;
 };
 
 const DEFAULT_CONFIG: PlannerConfig = {
@@ -19,6 +26,12 @@ const DEFAULT_CONFIG: PlannerConfig = {
   categories: [],
   tournamentDays: 1,
   timeWindow: "both",
+  fieldsCount: 2,
+  footballFormat: "f11",
+  morningStart: "09:00",
+  morningEnd: "14:00",
+  afternoonStart: "16:00",
+  afternoonEnd: "21:00",
 };
 
 const CATEGORY_OPTIONS = [
@@ -56,6 +69,15 @@ export default function TournamentsPlannerPage() {
           parsed.timeWindow === "morning" || parsed.timeWindow === "afternoon" || parsed.timeWindow === "both"
             ? parsed.timeWindow
             : DEFAULT_CONFIG.timeWindow,
+        fieldsCount: Number(parsed.fieldsCount) > 0 ? Number(parsed.fieldsCount) : DEFAULT_CONFIG.fieldsCount,
+        footballFormat:
+          parsed.footballFormat === "f11" || parsed.footballFormat === "f7" || parsed.footballFormat === "futsal"
+            ? parsed.footballFormat
+            : DEFAULT_CONFIG.footballFormat,
+        morningStart: typeof parsed.morningStart === "string" ? parsed.morningStart : DEFAULT_CONFIG.morningStart,
+        morningEnd: typeof parsed.morningEnd === "string" ? parsed.morningEnd : DEFAULT_CONFIG.morningEnd,
+        afternoonStart: typeof parsed.afternoonStart === "string" ? parsed.afternoonStart : DEFAULT_CONFIG.afternoonStart,
+        afternoonEnd: typeof parsed.afternoonEnd === "string" ? parsed.afternoonEnd : DEFAULT_CONFIG.afternoonEnd,
       });
     } catch {
       // ignore
@@ -134,6 +156,17 @@ export default function TournamentsPlannerPage() {
                 className="h-11 w-full rounded-xl border border-primary/25 bg-black/40 px-3 text-white outline-none"
               />
             </label>
+
+            <label className="space-y-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Nº campos disponibles</span>
+              <input
+                type="number"
+                min={1}
+                value={config.fieldsCount}
+                onChange={(e) => setConfig((prev) => ({ ...prev, fieldsCount: Number(e.target.value) || 1 }))}
+                className="h-11 w-full rounded-xl border border-primary/25 bg-black/40 px-3 text-white outline-none"
+              />
+            </label>
           </div>
 
           <div className="space-y-2">
@@ -180,6 +213,73 @@ export default function TournamentsPlannerPage() {
                   {opt.label}
                 </button>
               ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Formato fútbol (por ahora)</span>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {[
+                { value: "f11", label: "Fútbol 11" },
+                { value: "f7", label: "Fútbol 7" },
+                { value: "futsal", label: "Fútbol Sala" },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setConfig((prev) => ({ ...prev, footballFormat: opt.value as FootballFormat }))}
+                  className={`h-10 rounded-xl border text-[10px] font-black uppercase tracking-[0.16em] ${
+                    config.footballFormat === opt.value
+                      ? "border-primary/40 bg-primary/15 text-primary"
+                      : "border-white/15 bg-white/5 text-white/70"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-white/55">
+              Preparado para evolucionar a multideporte en próximas fases.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Horas por franja</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3 space-y-2">
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/75">Mañana</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="time"
+                    value={config.morningStart}
+                    onChange={(e) => setConfig((prev) => ({ ...prev, morningStart: e.target.value }))}
+                    className="h-10 rounded-lg border border-primary/25 bg-black/40 px-2 text-white outline-none"
+                  />
+                  <input
+                    type="time"
+                    value={config.morningEnd}
+                    onChange={(e) => setConfig((prev) => ({ ...prev, morningEnd: e.target.value }))}
+                    className="h-10 rounded-lg border border-primary/25 bg-black/40 px-2 text-white outline-none"
+                  />
+                </div>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3 space-y-2">
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/75">Tarde</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="time"
+                    value={config.afternoonStart}
+                    onChange={(e) => setConfig((prev) => ({ ...prev, afternoonStart: e.target.value }))}
+                    className="h-10 rounded-lg border border-primary/25 bg-black/40 px-2 text-white outline-none"
+                  />
+                  <input
+                    type="time"
+                    value={config.afternoonEnd}
+                    onChange={(e) => setConfig((prev) => ({ ...prev, afternoonEnd: e.target.value }))}
+                    className="h-10 rounded-lg border border-primary/25 bg-black/40 px-2 text-white outline-none"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
