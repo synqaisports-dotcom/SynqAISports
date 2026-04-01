@@ -33,6 +33,8 @@ type MockSlot = {
 type MockZoneSchedule = {
   zone: string;
   slots: MockSlot[];
+  currentSlot: MockSlot | null;
+  nextSlot: MockSlot | null;
 };
 
 type LiveFieldsScheduleItem = {
@@ -182,7 +184,7 @@ export default function LiveFieldsPage() {
 
       const scheduleFromStorage = scheduleItems.filter((it) => it.facilityId === c.id);
 
-      const zones: MockZoneSchedule[] =
+      const zonesRaw: { zone: string; slots: MockSlot[] }[] =
         scheduleFromStorage.length > 0
           ? Object.values(
               scheduleFromStorage.reduce((acc, item) => {
@@ -232,10 +234,15 @@ export default function LiveFieldsPage() {
               ];
 
       const nowMin = getCurrentMinutes();
-      const withCurrent = zones.map((z) => {
+      const withCurrent = zonesRaw.map((z) => {
         const currentSlot =
           z.slots.find((s) => nowMin >= toMinutes(s.start) && nowMin < toMinutes(s.end)) ?? null;
-        return { ...z, currentSlot };
+        const nextSlot =
+          z.slots.find((s) => toMinutes(s.start) > nowMin) ??
+          (currentSlot
+            ? z.slots.find((s) => s.start !== currentSlot.start || s.end !== currentSlot.end) ?? null
+            : null);
+        return { ...z, currentSlot, nextSlot };
       });
 
       return {
@@ -430,32 +437,42 @@ export default function LiveFieldsPage() {
                         </span>
                       )}
                     </div>
-                    <div className="mt-2 space-y-2">
-                      {zone.slots.map((slot, slotIdx) => {
-                        const isCurrent = zone.currentSlot?.start === slot.start && zone.currentSlot?.end === slot.end;
-                        return (
-                          <div
-                            key={`${zone.zone}_${slot.start}_${slotIdx}`}
-                            className={cn(
-                              "rounded-xl border px-3 py-2 transition-[background-color,border-color,color,opacity,transform]",
-                              isCurrent
-                                ? "border-emerald-400/35 bg-emerald-500/10"
-                                : "border-cyan-500/15 bg-black/25",
-                            )}
-                          >
-                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/90">
-                              {slot.start} - {slot.end}
-                            </p>
-                            <div className="mt-1 flex items-center justify-between gap-2">
-                              <span className="text-[11px] font-black uppercase text-cyan-200">{slot.teamName}</span>
-                              <span className="text-[10px] font-black uppercase text-white/70">{slot.coachName}</span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                    {zone.currentSlot ? (
+                      <div className="mt-2 rounded-xl border px-3 py-2 border-emerald-400/35 bg-emerald-500/10">
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/90">
+                          {zone.currentSlot.start} - {zone.currentSlot.end}
+                        </p>
+                        <div className="mt-1 flex items-center justify-between gap-2">
+                          <span className="text-[11px] font-black uppercase text-cyan-200">{zone.currentSlot.teamName}</span>
+                          <span className="text-[10px] font-black uppercase text-white/70">{zone.currentSlot.coachName}</span>
+                        </div>
+                      </div>
+                    ) : zone.nextSlot ? (
+                      <div className="mt-2 rounded-xl border px-3 py-2 border-cyan-500/20 bg-black/25">
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/90">
+                          {zone.nextSlot.start} - {zone.nextSlot.end}
+                        </p>
+                        <div className="mt-1 flex items-center justify-between gap-2">
+                          <span className="text-[11px] font-black uppercase text-cyan-200">{zone.nextSlot.teamName}</span>
+                          <span className="text-[10px] font-black uppercase text-white/70">{zone.nextSlot.coachName}</span>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 ))}
+              </div>
+              <div className="mt-3 rounded-2xl border border-white/10 bg-black/30 p-3">
+                <p className="text-[10px] uppercase font-black tracking-[0.25em] text-white/65">Siguiente hora</p>
+                <div className="mt-2 space-y-2">
+                  {c.zones.map((zone) => (
+                    <div key={`${c.id}_${zone.zone}_next`} className="flex items-center justify-between gap-2 text-[10px]">
+                      <span className="font-black uppercase text-cyan-300/80">{zone.zone}</span>
+                      <span className="font-black uppercase text-white/75">
+                        {zone.nextSlot ? `${zone.nextSlot.start} - ${zone.nextSlot.end} · ${zone.nextSlot.teamName}` : "Sin siguiente turno"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
               <div className="mt-4 flex items-center gap-2 text-white/65">
                 <Users className="h-4 w-4 text-cyan-300/80" />
