@@ -138,6 +138,7 @@ const navItems: NavItem[] = [
   { title: "Resumen Torneos", href: "/dashboard/tournaments", icon: Trophy, category: "tournaments", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
   { title: "Planificador", href: "/dashboard/tournaments/planner", icon: CalendarDays, category: "tournaments", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
   { title: "Ver Torneos", href: "/dashboard/tournaments/list", icon: BookOpen, category: "tournaments", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
+  { title: "Equipos", href: "/dashboard/tournaments/teams", icon: Users, category: "tournaments", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
   { title: "Ingresos", href: "/dashboard/tournaments/revenue", icon: BarChart3, category: "tournaments", roles: ["superadmin", "club_admin", "academy_director", "methodology_director"] },
   
   // TERMINALES_ACCESO - NODO SANDBOX (Categoría User)
