@@ -155,8 +155,12 @@ export function DashboardSidebar() {
   const { locale, setLocale, t } = useI18n();
   const currentLang = AVAILABLE_LOCALES.find((l) => l.code === locale) ?? AVAILABLE_LOCALES[0];
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isAdminGlobalSectionOpen, setIsAdminGlobalSectionOpen] = useState(true);
-  const isAdminGlobalPath = pathname.startsWith("/admin-global");
+  const [openGroups, setOpenGroups] = useState<Record<NavItem["category"], boolean>>({
+    global: true,
+    methodology: true,
+    operational: true,
+    user: true,
+  });
 
   useEffect(() => {
     const syncFullscreen = () => setIsFullscreen(!!document.fullscreenElement);
@@ -165,24 +169,29 @@ export function DashboardSidebar() {
   }, []);
 
   useEffect(() => {
-    if (!isAdminGlobalPath) return;
     try {
-      const raw = localStorage.getItem("synq_sidebar_admin_global_section_open_v1");
-      if (raw === "0") setIsAdminGlobalSectionOpen(false);
-      if (raw === "1") setIsAdminGlobalSectionOpen(true);
+      const raw = localStorage.getItem("synq_sidebar_group_open_v1");
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as Partial<Record<NavItem["category"], boolean>>;
+      setOpenGroups((prev) => ({ ...prev, ...parsed }));
     } catch {
       // ignore localStorage errors
     }
-  }, [isAdminGlobalPath]);
+  }, []);
 
   useEffect(() => {
-    if (!isAdminGlobalPath) return;
     try {
-      localStorage.setItem("synq_sidebar_admin_global_section_open_v1", isAdminGlobalSectionOpen ? "1" : "0");
+      localStorage.setItem("synq_sidebar_group_open_v1", JSON.stringify(openGroups));
     } catch {
       // ignore localStorage errors
     }
-  }, [isAdminGlobalPath, isAdminGlobalSectionOpen]);
+  }, [openGroups]);
+
+  useEffect(() => {
+    const activeCategory = navItems.find((i) => pathname === pathnameFromNavHref(i.href))?.category;
+    if (!activeCategory) return;
+    setOpenGroups((prev) => (prev[activeCategory] ? prev : { ...prev, [activeCategory]: true }));
+  }, [pathname]);
 
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
@@ -245,6 +254,41 @@ export function DashboardSidebar() {
     return true;
   });
 
+  const toggleGroup = (category: NavItem["category"]) => {
+    setOpenGroups((prev) => ({ ...prev, [category]: !prev[category] }));
+  };
+
+  const GroupToggle = ({
+    category,
+    label,
+    toneClass,
+  }: {
+    category: NavItem["category"];
+    label: string;
+    toneClass: string;
+  }) =>
+    !isCollapsed ? (
+      <button
+        type="button"
+        onClick={() => toggleGroup(category)}
+        className={cn(
+          "w-full mb-2 px-4 py-2 rounded-xl border bg-white/5 hover:bg-white/10 transition-[background-color,border-color,color,opacity,transform] flex items-center justify-between",
+          toneClass,
+        )}
+        aria-expanded={openGroups[category]}
+      >
+        <span className="text-[9px] font-black uppercase tracking-[0.25em]">
+          {label}
+        </span>
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 transition-transform",
+            openGroups[category] ? "rotate-180" : "rotate-0",
+          )}
+        />
+      </button>
+    ) : null;
+
   return (
     <Sidebar 
       collapsible="icon" 
@@ -296,26 +340,9 @@ export function DashboardSidebar() {
         isCollapsed && "py-4 space-y-6"
       )}>
         {isSuperAdmin && (
-            <SidebarGroupWrapper title={t("sidebar.group_admin")} color="text-emerald-400" isCollapsed={isCollapsed}>
-            {!isCollapsed && isAdminGlobalPath && (
-              <button
-                type="button"
-                onClick={() => setIsAdminGlobalSectionOpen((v) => !v)}
-                className="w-full mb-2 px-4 py-2 rounded-xl border border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 transition-[background-color,border-color,color,opacity,transform] flex items-center justify-between"
-                aria-expanded={isAdminGlobalSectionOpen}
-              >
-                <span className="text-[9px] font-black uppercase tracking-[0.25em] text-emerald-300/90">
-                  Secciones Admin-global
-                </span>
-                <ChevronDown
-                  className={cn(
-                    "h-4 w-4 text-emerald-300/80 transition-transform",
-                    isAdminGlobalSectionOpen ? "rotate-180" : "rotate-0",
-                  )}
-                />
-              </button>
-            )}
-            {(isAdminGlobalPath ? isAdminGlobalSectionOpen : true) && (
+          <SidebarGroupWrapper title={t("sidebar.group_admin")} color="text-emerald-400" isCollapsed={isCollapsed}>
+            <GroupToggle category="global" label="Secciones Admin-global" toneClass="border-emerald-500/20 text-emerald-300/90" />
+            {openGroups.global && (
             <SidebarMenu>
               {filteredItems.filter(i => i.category === "global").map((item) => (
                 <SidebarMenuItem key={item.href}>
@@ -329,6 +356,8 @@ export function DashboardSidebar() {
 
         {!isFree && (
           <SidebarGroupWrapper title={t("sidebar.group_methodology")} color="text-primary" isCollapsed={isCollapsed}>
+            <GroupToggle category="methodology" label="Secciones Metodología" toneClass="border-cyan-500/20 text-cyan-200/90" />
+            {openGroups.methodology && (
             <SidebarMenu>
               {filteredItems.filter(i => i.category === "methodology").map((item) => (
                 <SidebarMenuItem key={item.href}>
@@ -336,11 +365,14 @@ export function DashboardSidebar() {
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
+            )}
           </SidebarGroupWrapper>
         )}
 
         {!isFree && (
           <SidebarGroupWrapper title={t("sidebar.group_dashboard")} color="text-primary" isCollapsed={isCollapsed}>
+            <GroupToggle category="operational" label="Secciones Dashboard Club" toneClass="border-primary/20 text-primary/90" />
+            {openGroups.operational && (
             <SidebarMenu>
               {filteredItems.filter(i => i.category === "operational").map((item) => (
                 <SidebarMenuItem key={item.href}>
@@ -348,18 +380,21 @@ export function DashboardSidebar() {
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
+            )}
           </SidebarGroupWrapper>
         )}
 
         {(isFree || isSuperAdmin) && (
           <SidebarGroupWrapper title={t("sidebar.group_terminals")} color="text-white/60" isCollapsed={isCollapsed}>
-            {!isCollapsed && (
+            <GroupToggle category="user" label="Secciones Terminales" toneClass="border-blue-500/20 text-blue-300/90" />
+            {openGroups.user && !isCollapsed && (
               <div className="px-4 py-2 mb-2 bg-blue-500/5 border border-blue-500/10 rounded-xl">
                 <span className="text-[7px] font-black text-blue-400 uppercase tracking-[0.3em] italic flex items-center gap-2">
                   <LayoutGrid className="h-2.5 w-2.5" /> NODO_SANDBOX_ACTIVE
                 </span>
               </div>
             )}
+            {openGroups.user && (
             <SidebarMenu>
               {filteredItems.filter(i => i.category === "user").map((item) => (
                 <SidebarMenuItem key={item.href}>
@@ -372,6 +407,7 @@ export function DashboardSidebar() {
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
+            )}
           </SidebarGroupWrapper>
         )}
       </SidebarContent>
