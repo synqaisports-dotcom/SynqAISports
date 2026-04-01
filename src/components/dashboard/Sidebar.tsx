@@ -155,12 +155,34 @@ export function DashboardSidebar() {
   const { locale, setLocale, t } = useI18n();
   const currentLang = AVAILABLE_LOCALES.find((l) => l.code === locale) ?? AVAILABLE_LOCALES[0];
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isAdminGlobalSectionOpen, setIsAdminGlobalSectionOpen] = useState(true);
+  const isAdminGlobalPath = pathname.startsWith("/admin-global");
 
   useEffect(() => {
     const syncFullscreen = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener("fullscreenchange", syncFullscreen);
     return () => document.removeEventListener("fullscreenchange", syncFullscreen);
   }, []);
+
+  useEffect(() => {
+    if (!isAdminGlobalPath) return;
+    try {
+      const raw = localStorage.getItem("synq_sidebar_admin_global_section_open_v1");
+      if (raw === "0") setIsAdminGlobalSectionOpen(false);
+      if (raw === "1") setIsAdminGlobalSectionOpen(true);
+    } catch {
+      // ignore localStorage errors
+    }
+  }, [isAdminGlobalPath]);
+
+  useEffect(() => {
+    if (!isAdminGlobalPath) return;
+    try {
+      localStorage.setItem("synq_sidebar_admin_global_section_open_v1", isAdminGlobalSectionOpen ? "1" : "0");
+    } catch {
+      // ignore localStorage errors
+    }
+  }, [isAdminGlobalPath, isAdminGlobalSectionOpen]);
 
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
@@ -275,6 +297,25 @@ export function DashboardSidebar() {
       )}>
         {isSuperAdmin && (
             <SidebarGroupWrapper title={t("sidebar.group_admin")} color="text-emerald-400" isCollapsed={isCollapsed}>
+            {!isCollapsed && isAdminGlobalPath && (
+              <button
+                type="button"
+                onClick={() => setIsAdminGlobalSectionOpen((v) => !v)}
+                className="w-full mb-2 px-4 py-2 rounded-xl border border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 transition-[background-color,border-color,color,opacity,transform] flex items-center justify-between"
+                aria-expanded={isAdminGlobalSectionOpen}
+              >
+                <span className="text-[9px] font-black uppercase tracking-[0.25em] text-emerald-300/90">
+                  Secciones Admin-global
+                </span>
+                <ChevronDown
+                  className={cn(
+                    "h-4 w-4 text-emerald-300/80 transition-transform",
+                    isAdminGlobalSectionOpen ? "rotate-180" : "rotate-0",
+                  )}
+                />
+              </button>
+            )}
+            {(isAdminGlobalPath ? isAdminGlobalSectionOpen : true) && (
             <SidebarMenu>
               {filteredItems.filter(i => i.category === "global").map((item) => (
                 <SidebarMenuItem key={item.href}>
@@ -282,6 +323,7 @@ export function DashboardSidebar() {
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
+            )}
           </SidebarGroupWrapper>
         )}
 
