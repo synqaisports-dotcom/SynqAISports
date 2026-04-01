@@ -471,16 +471,16 @@ export default function LiveFieldsPage() {
             ))}
           </div>
 
-          <aside className="rounded-2xl border border-cyan-500/20 bg-black/35 backdrop-blur-sm p-3">
+          <aside className="rounded-2xl border border-cyan-400/35 bg-black/35 backdrop-blur-sm p-3">
             <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-300/80">Siguiente hora</p>
             <div className="mt-2 space-y-2">
               {nextHourCards.length === 0 ? (
-                <div className="rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-[10px] font-black uppercase text-white/60">
+                <div className="rounded-xl border border-cyan-400/30 bg-black/30 px-3 py-2 text-[10px] font-black uppercase text-white/60">
                   Sin siguientes turnos
                 </div>
               ) : (
                 nextHourCards.map((item) => (
-                  <div key={item.id} className="rounded-xl border border-white/10 bg-black/30 px-3 py-2">
+                  <div key={item.id} className="rounded-xl border border-cyan-400/30 bg-black/30 px-3 py-2">
                     <p className="text-[8px] font-black uppercase tracking-[0.16em] text-cyan-300/80">
                       {item.field} · {item.zone}
                     </p>
@@ -499,10 +499,10 @@ export default function LiveFieldsPage() {
       </section>
 
       {/* Banda inferior: 2 slots AdMob (placeholder) 50/50 */}
-      <footer className="relative z-20 border-t border-cyan-500/20 bg-black/55 backdrop-blur-xl shrink-0">
+      <footer className="relative z-20 border-t border-cyan-400/35 bg-black/55 backdrop-blur-xl shrink-0">
         <div className="px-4 sm:px-6 lg:px-8 py-2">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="h-12 rounded-xl border border-white/10 bg-white/[0.04] flex items-center justify-center">
+            <div className="h-12 rounded-xl border border-cyan-400/35 bg-white/[0.04] flex items-center justify-center">
               <div className="text-center">
                 <p className="text-[9px] font-black uppercase tracking-[0.35em] text-white/35">AdMob · Slot A</p>
                 <p className="mt-1 text-[10px] font-black uppercase tracking-[0.25em] text-cyan-200/70">
@@ -510,7 +510,7 @@ export default function LiveFieldsPage() {
                 </p>
               </div>
             </div>
-            <div className="h-12 rounded-xl border border-white/10 bg-white/[0.04] flex items-center justify-center">
+            <div className="h-12 rounded-xl border border-cyan-400/35 bg-white/[0.04] flex items-center justify-center">
               <div className="text-center">
                 <p className="text-[9px] font-black uppercase tracking-[0.35em] text-white/35">AdMob · Slot B</p>
                 <p className="mt-1 text-[10px] font-black uppercase tracking-[0.25em] text-cyan-200/70">
