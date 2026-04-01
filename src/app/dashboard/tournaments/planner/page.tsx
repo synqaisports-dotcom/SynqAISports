@@ -12,6 +12,8 @@ type PlannerConfig = {
   teamsCount: number;
   categories: string[];
   tournamentDays: number;
+  startDate: string;
+  endDate: string;
   groupsCount: number;
   teamsPerGroup: number;
   timeWindow: TimeWindow;
@@ -30,6 +32,8 @@ const DEFAULT_CONFIG: PlannerConfig = {
   teamsCount: 8,
   categories: [],
   tournamentDays: 1,
+  startDate: new Date().toISOString().slice(0, 10),
+  endDate: new Date().toISOString().slice(0, 10),
   groupsCount: 2,
   teamsPerGroup: 4,
   timeWindow: "both",
@@ -75,6 +79,8 @@ export default function TournamentsPlannerPage() {
           ? parsed.categories.filter((c): c is string => typeof c === "string")
           : [],
         tournamentDays: Number(parsed.tournamentDays) > 0 ? Number(parsed.tournamentDays) : DEFAULT_CONFIG.tournamentDays,
+        startDate: typeof parsed.startDate === "string" ? parsed.startDate : DEFAULT_CONFIG.startDate,
+        endDate: typeof parsed.endDate === "string" ? parsed.endDate : DEFAULT_CONFIG.endDate,
         groupsCount: Number(parsed.groupsCount) > 0 ? Number(parsed.groupsCount) : DEFAULT_CONFIG.groupsCount,
         teamsPerGroup: Number(parsed.teamsPerGroup) > 1 ? Number(parsed.teamsPerGroup) : DEFAULT_CONFIG.teamsPerGroup,
         timeWindow:
@@ -247,6 +253,36 @@ export default function TournamentsPlannerPage() {
                 value={config.tournamentDays}
                 onChange={(e) => setConfig((prev) => ({ ...prev, tournamentDays: Number(e.target.value) || 1 }))}
                 className="h-11 w-full rounded-xl border border-primary/25 bg-black/40 px-3 text-white outline-none"
+              />
+            </label>
+
+            <label className="space-y-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Fecha inicio</span>
+              <input
+                type="date"
+                value={config.startDate}
+                onChange={(e) =>
+                  setConfig((prev) => {
+                    const nextStart = e.target.value;
+                    return {
+                      ...prev,
+                      startDate: nextStart,
+                      endDate: prev.endDate < nextStart ? nextStart : prev.endDate,
+                    };
+                  })
+                }
+                className="h-11 w-full rounded-xl border border-primary/25 bg-black/40 px-3 text-white outline-none [color-scheme:dark]"
+              />
+            </label>
+
+            <label className="space-y-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Fecha fin</span>
+              <input
+                type="date"
+                min={config.startDate}
+                value={config.endDate}
+                onChange={(e) => setConfig((prev) => ({ ...prev, endDate: e.target.value || prev.startDate }))}
+                className="h-11 w-full rounded-xl border border-primary/25 bg-black/40 px-3 text-white outline-none [color-scheme:dark]"
               />
             </label>
 
@@ -457,6 +493,12 @@ export default function TournamentsPlannerPage() {
                 <p className="text-[9px] uppercase text-white/55 font-black">Cobertura</p>
                 <p className="text-sm font-black text-white">{totalSlots >= estimatedMatchesGroupStage ? "OK" : "Ajustar"}</p>
               </div>
+            </div>
+            <div className="rounded-lg border border-white/10 bg-black/25 px-3 py-2">
+              <p className="text-[9px] uppercase text-white/55 font-black">Fechas torneo</p>
+              <p className="text-[11px] font-black text-white">
+                {config.startDate} → {config.endDate}
+              </p>
             </div>
             <div className="space-y-2">
               <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/70">Ejemplo de slots (primeros)</p>
