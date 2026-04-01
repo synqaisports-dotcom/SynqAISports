@@ -35,6 +35,15 @@ type MockZoneSchedule = {
   slots: MockSlot[];
 };
 
+type LiveFieldsScheduleItem = {
+  facilityId: string;
+  zone: string;
+  start: string;
+  end: string;
+  teamName: string;
+  coachName: string;
+};
+
 type ContinuityCtx = {
   mode: "match" | "training";
   teamId: string;
@@ -73,6 +82,7 @@ export default function LiveFieldsPage() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [continuity, setContinuity] = useState<ContinuityCtx | null>(null);
   const [devClubId, setDevClubId] = useState<string>("");
+  const [scheduleItems, setScheduleItems] = useState<LiveFieldsScheduleItem[]>([]);
   const { t } = useI18n();
 
   const isDevAdmin = canAccessEliteTerminalAsDev(profile);
@@ -102,15 +112,15 @@ export default function LiveFieldsPage() {
 
   useEffect(() => {
     if (loading) return;
-    if (!effectiveClubId || effectiveClubId === "global-hq") return;
-
     const load = () => {
-      const clubId = String(effectiveClubId);
+      const clubId = String(effectiveClubId || "global-hq");
       const facilitiesKey = `synq_methodology_facilities_v1_${clubId}`;
       const teamsKey = `synq_methodology_warehouse_teams_v1_${clubId}`;
+      const scheduleKey = `synq_live_fields_schedule_v1_${clubId}`;
 
       setFacilities(safeParse<Facility[]>(localStorage.getItem(facilitiesKey), []));
       setTeams(safeParse<Team[]>(localStorage.getItem(teamsKey), []));
+      setScheduleItems(safeParse<LiveFieldsScheduleItem[]>(localStorage.getItem(scheduleKey), []));
       setContinuity(readContinuityContext(clubId));
     };
 
@@ -125,7 +135,15 @@ export default function LiveFieldsPage() {
   }, [effectiveClubId, loading]);
 
   const cards = useMemo(() => {
-    return facilities.map((f, idx) => {
+    const scopedFacilities =
+      facilities.length > 0
+        ? facilities
+        : [
+            { id: "mock_f1", name: "Campo 1 (Dividido 2)", type: "Campo", sport: "Fútbol", status: "active" },
+            { id: "mock_f2", name: "Campo 2", type: "Campo", sport: "Fútbol", status: "active" },
+          ];
+
+    return scopedFacilities.map((f, idx) => {
       const team = teams.find((t) => t.id === continuity?.teamId) || teams[idx % Math.max(teams.length, 1)];
       const isActiveField = continuity && idx === 0;
       const modeLabel = continuity?.mode === "match" ? "PARTIDO" : "ENTRENO";
@@ -160,37 +178,58 @@ export default function LiveFieldsPage() {
       const altA = fallbackTeams[(idx + 1) % fallbackTeams.length];
       const altB = fallbackTeams[(idx + 2) % fallbackTeams.length];
       const facilityName = c.field.toLowerCase();
-      const hasDivision = /(2|4|media|mitad|half)/.test(facilityName) || idx % 2 === 0;
+      const hasDivision = /(2|4|media|mitad|half|dividido)/.test(facilityName) || idx % 2 === 0;
 
-      const zones: MockZoneSchedule[] = hasDivision
-        ? [
-            {
-              zone: "MITAD SUPERIOR",
-              slots: [
-                { start: "17:00", end: "18:00", teamName: base.name, coachName: base.coachName },
-                { start: "18:00", end: "19:00", teamName: altA.name, coachName: altA.coachName },
-                { start: "19:00", end: "20:00", teamName: altB.name, coachName: altB.coachName },
-              ],
-            },
-            {
-              zone: "MITAD INFERIOR",
-              slots: [
-                { start: "17:00", end: "18:00", teamName: altB.name, coachName: altB.coachName },
-                { start: "18:00", end: "19:00", teamName: base.name, coachName: base.coachName },
-                { start: "19:00", end: "20:00", teamName: altA.name, coachName: altA.coachName },
-              ],
-            },
-          ]
-        : [
-            {
-              zone: "CAMPO COMPLETO",
-              slots: [
-                { start: "17:00", end: "18:15", teamName: base.name, coachName: base.coachName },
-                { start: "18:15", end: "19:30", teamName: altA.name, coachName: altA.coachName },
-                { start: "19:30", end: "20:45", teamName: altB.name, coachName: altB.coachName },
-              ],
-            },
-          ];
+      const scheduleFromStorage = scheduleItems.filter((it) => it.facilityId === c.id);
+
+      const zones: MockZoneSchedule[] =
+        scheduleFromStorage.length > 0
+          ? Object.values(
+              scheduleFromStorage.reduce((acc, item) => {
+                const zoneKey = item.zone || "CAMPO COMPLETO";
+                const current = acc[zoneKey] ?? { zone: zoneKey, slots: [] as MockSlot[] };
+                current.slots.push({
+                  start: item.start,
+                  end: item.end,
+                  teamName: item.teamName,
+                  coachName: item.coachName,
+                });
+                acc[zoneKey] = current;
+                return acc;
+              }, {} as Record<string, MockZoneSchedule>),
+            ).map((z) => ({
+              ...z,
+              slots: z.slots.sort((a, b) => toMinutes(a.start) - toMinutes(b.start)),
+            }))
+          : hasDivision
+            ? [
+                {
+                  zone: "MITAD SUPERIOR",
+                  slots: [
+                    { start: "17:00", end: "18:00", teamName: base.name, coachName: base.coachName },
+                    { start: "18:00", end: "19:00", teamName: altA.name, coachName: altA.coachName },
+                    { start: "19:00", end: "20:00", teamName: altB.name, coachName: altB.coachName },
+                  ],
+                },
+                {
+                  zone: "MITAD INFERIOR",
+                  slots: [
+                    { start: "17:00", end: "18:00", teamName: altB.name, coachName: altB.coachName },
+                    { start: "18:00", end: "19:00", teamName: base.name, coachName: base.coachName },
+                    { start: "19:00", end: "20:00", teamName: altA.name, coachName: altA.coachName },
+                  ],
+                },
+              ]
+            : [
+                {
+                  zone: "CAMPO COMPLETO",
+                  slots: [
+                    { start: "17:00", end: "18:15", teamName: base.name, coachName: base.coachName },
+                    { start: "18:15", end: "19:30", teamName: altA.name, coachName: altA.coachName },
+                    { start: "19:30", end: "20:45", teamName: altB.name, coachName: altB.coachName },
+                  ],
+                },
+              ];
 
       const nowMin = getCurrentMinutes();
       const withCurrent = zones.map((z) => {
@@ -204,7 +243,7 @@ export default function LiveFieldsPage() {
         zones: withCurrent,
       };
     });
-  }, [cards, teams]);
+  }, [cards, teams, scheduleItems]);
 
   if (loading) {
     return (
@@ -214,7 +253,7 @@ export default function LiveFieldsPage() {
     );
   }
 
-  const canAccess = canAccessEliteTerminal(profile, devClubId);
+  const canAccess = canAccessEliteTerminal(profile, devClubId) || canAccessEliteTerminalAsDev(profile);
   if (!isLogged) {
     return (
       <main className="min-h-[100dvh] bg-[#03060d] text-white flex items-center justify-center p-6">
