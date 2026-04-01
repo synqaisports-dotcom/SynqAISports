@@ -340,7 +340,7 @@ export function DashboardSidebar() {
         isCollapsed && "py-4 space-y-6"
       )}>
         {isSuperAdmin && (
-          <SidebarGroupWrapper title={t("sidebar.group_admin")} color="text-emerald-400" isCollapsed={isCollapsed}>
+            <SidebarGroupWrapper title={t("sidebar.group_admin", "Administrador")} color="text-emerald-400" isCollapsed={isCollapsed}>
             <GroupToggle category="global" label="Admin-global" toneClass="border-emerald-500/20 text-emerald-300/90" />
             {openGroups.global && (
             <SidebarMenu>
@@ -355,7 +355,7 @@ export function DashboardSidebar() {
         )}
 
         {!isFree && (
-          <SidebarGroupWrapper title={t("sidebar.group_methodology")} color="text-primary" isCollapsed={isCollapsed}>
+          <SidebarGroupWrapper title={t("sidebar.group_methodology", "Metodología")} color="text-primary" isCollapsed={isCollapsed}>
             <GroupToggle category="methodology" label="Metodología" toneClass="border-cyan-500/20 text-cyan-200/90" />
             {openGroups.methodology && (
             <SidebarMenu>
@@ -370,7 +370,7 @@ export function DashboardSidebar() {
         )}
 
         {!isFree && (
-          <SidebarGroupWrapper title={t("sidebar.group_dashboard")} color="text-primary" isCollapsed={isCollapsed}>
+          <SidebarGroupWrapper title={t("sidebar.group_dashboard", "Club")} color="text-primary" isCollapsed={isCollapsed}>
             <GroupToggle category="operational" label="Dashboard Club" toneClass="border-primary/20 text-primary/90" />
             {openGroups.operational && (
             <SidebarMenu>
@@ -385,7 +385,7 @@ export function DashboardSidebar() {
         )}
 
         {(isFree || isSuperAdmin) && (
-          <SidebarGroupWrapper title={t("sidebar.group_terminals")} color="text-white/60" isCollapsed={isCollapsed}>
+          <SidebarGroupWrapper title={t("sidebar.group_terminals", "Terminales")} color="text-white/60" isCollapsed={isCollapsed}>
             <GroupToggle category="user" label="Terminales" toneClass="border-blue-500/20 text-blue-300/90" />
             {openGroups.user && !isCollapsed && (
               <div className="px-4 py-2 mb-2 bg-blue-500/5 border border-blue-500/10 rounded-xl">
