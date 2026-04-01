@@ -12,6 +12,8 @@ type PlannerConfig = {
   teamsCount: number;
   categories: string[];
   tournamentDays: number;
+  groupsCount: number;
+  teamsPerGroup: number;
   timeWindow: TimeWindow;
   fieldsCount: number;
   footballFormat: FootballFormat;
@@ -28,6 +30,8 @@ const DEFAULT_CONFIG: PlannerConfig = {
   teamsCount: 8,
   categories: [],
   tournamentDays: 1,
+  groupsCount: 2,
+  teamsPerGroup: 4,
   timeWindow: "both",
   fieldsCount: 2,
   footballFormat: "f11",
@@ -71,6 +75,8 @@ export default function TournamentsPlannerPage() {
           ? parsed.categories.filter((c): c is string => typeof c === "string")
           : [],
         tournamentDays: Number(parsed.tournamentDays) > 0 ? Number(parsed.tournamentDays) : DEFAULT_CONFIG.tournamentDays,
+        groupsCount: Number(parsed.groupsCount) > 0 ? Number(parsed.groupsCount) : DEFAULT_CONFIG.groupsCount,
+        teamsPerGroup: Number(parsed.teamsPerGroup) > 1 ? Number(parsed.teamsPerGroup) : DEFAULT_CONFIG.teamsPerGroup,
         timeWindow:
           parsed.timeWindow === "morning" || parsed.timeWindow === "afternoon" || parsed.timeWindow === "both"
             ? parsed.timeWindow
@@ -150,7 +156,8 @@ export default function TournamentsPlannerPage() {
   ]);
 
   const totalSlots = slotsPerFieldPerDay * config.fieldsCount * config.tournamentDays;
-  const estimatedMatches = Math.floor((config.teamsCount * (config.teamsCount - 1)) / 2);
+  const inferredTeamsPerGroup = Math.max(2, Math.ceil(config.teamsCount / config.groupsCount));
+  const estimatedMatchesGroupStage = config.groupsCount * Math.floor((inferredTeamsPerGroup * (inferredTeamsPerGroup - 1)) / 2);
   const sampleSlots = useMemo(() => {
     const firstField = "Campo 1";
     const out: Array<{ day: number; field: string; start: string; end: string }> = [];
@@ -422,11 +429,11 @@ export default function TournamentsPlannerPage() {
               </div>
               <div className="rounded-lg border border-white/10 bg-black/25 px-3 py-2">
                 <p className="text-[9px] uppercase text-white/55 font-black">Partidos estimados</p>
-                <p className="text-sm font-black text-white">{estimatedMatches}</p>
+                <p className="text-sm font-black text-white">{estimatedMatchesGroupStage}</p>
               </div>
               <div className="rounded-lg border border-white/10 bg-black/25 px-3 py-2">
                 <p className="text-[9px] uppercase text-white/55 font-black">Cobertura</p>
-                <p className="text-sm font-black text-white">{totalSlots >= estimatedMatches ? "OK" : "Ajustar"}</p>
+                <p className="text-sm font-black text-white">{totalSlots >= estimatedMatchesGroupStage ? "OK" : "Ajustar"}</p>
               </div>
             </div>
             <div className="space-y-2">
