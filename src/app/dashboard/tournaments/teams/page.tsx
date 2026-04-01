@@ -5,6 +5,13 @@ import Link from "next/link";
 import { Plus, Save, Users, ArrowLeft, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth-context";
+import {
+  getActiveTournamentId,
+  loadTournamentConfigById,
+  loadTournamentTeamsById,
+  saveTournamentTeamsById,
+  migrateLegacySingleTournamentIfNeeded,
+} from "@/lib/tournaments-storage";
 
 type TeamRow = {
   id: string;
@@ -12,36 +19,24 @@ type TeamRow = {
   groupIndex?: number; // 0..groupsCount-1
 };
 
-type PlannerConfigLite = {
-  tournamentName?: string;
-  groupsCount?: number;
-};
-
 export default function TournamentsTeamsPage() {
   const { profile } = useAuth();
   const clubScopeId = profile?.clubId ?? "global-hq";
-  const teamsKey = useMemo(() => `synq_tournaments_teams_v1_${clubScopeId}`, [clubScopeId]);
-  const plannerKey = useMemo(() => `synq_tournaments_planner_v1_${clubScopeId}`, [clubScopeId]);
+  const activeTournamentId = useMemo(() => getActiveTournamentId(clubScopeId), [clubScopeId]);
 
-  const [planner, setPlanner] = useState<PlannerConfigLite | null>(null);
+  const [planner, setPlanner] = useState<{ tournamentName?: string; groupsCount?: number } | null>(null);
   const [teams, setTeams] = useState<TeamRow[]>([]);
   const [savedAt, setSavedAt] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      const rawPlanner = localStorage.getItem(plannerKey);
-      setPlanner(rawPlanner ? (JSON.parse(rawPlanner) as PlannerConfigLite) : null);
-    } catch {
-      setPlanner(null);
-    }
-    try {
-      const rawTeams = localStorage.getItem(teamsKey);
-      const parsed = rawTeams ? (JSON.parse(rawTeams) as unknown) : [];
-      setTeams(Array.isArray(parsed) ? (parsed as TeamRow[]) : []);
-    } catch {
-      setTeams([]);
-    }
-  }, [plannerKey, teamsKey]);
+    migrateLegacySingleTournamentIfNeeded({
+      clubId: clubScopeId,
+      legacyPlannerKey: `synq_tournaments_planner_v1_${clubScopeId}`,
+      legacyTeamsKey: `synq_tournaments_teams_v1_${clubScopeId}`,
+    });
+    setPlanner(loadTournamentConfigById(clubScopeId, activeTournamentId));
+    setTeams(loadTournamentTeamsById(clubScopeId, activeTournamentId));
+  }, [activeTournamentId, clubScopeId]);
 
   const groupsCount = Math.max(1, Number(planner?.groupsCount ?? 1));
 
@@ -55,16 +50,12 @@ export default function TournamentsTeamsPage() {
   };
 
   const saveTeams = () => {
-    try {
-      const normalized = teams
-        .map((t) => ({ ...t, name: String(t.name || "").trim() }))
-        .filter((t) => t.name.length > 0);
-      localStorage.setItem(teamsKey, JSON.stringify(normalized));
-      setTeams(normalized);
-      setSavedAt(new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }));
-    } catch {
-      // ignore
-    }
+    const normalized = teams
+      .map((t) => ({ ...t, name: String(t.name || "").trim() }))
+      .filter((t) => t.name.length > 0);
+    saveTournamentTeamsById(clubScopeId, activeTournamentId, normalized);
+    setTeams(normalized);
+    setSavedAt(new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }));
   };
 
   return (

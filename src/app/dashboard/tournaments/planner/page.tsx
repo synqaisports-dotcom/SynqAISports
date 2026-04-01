@@ -4,37 +4,23 @@ import { useEffect, useMemo, useState } from "react";
 import { CalendarClock, Info, Save } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth-context";
+import {
+  type TournamentConfig,
+  migrateLegacyTournamentToV2,
+  getActiveTournamentId,
+  loadTournamentIndex,
+  upsertTournament,
+  setActiveTournamentId,
+} from "@/lib/tournaments-storage";
 
 type TimeWindow = "morning" | "afternoon" | "both";
 type FootballFormat = "f11" | "f7" | "futsal";
 
-type PlannerConfig = {
-  tournamentName: string;
-  teamsCount: number;
-  categories: string[];
-  tournamentDays: number;
-  startDate: string;
-  endDate: string;
-  groupsCount: number;
-  teamsPerGroup: number;
-  timeWindow: TimeWindow;
-  fieldsCount: number;
-  footballFormat: FootballFormat;
-  morningStart: string;
-  morningEnd: string;
-  afternoonStart: string;
-  afternoonEnd: string;
-  halvesCount: 1 | 2;
-  minutesPerHalf: number;
-  breakMinutes: number;
-  bufferBetweenMatches: number;
-  pointsWin: number;
-  pointsDraw: number;
-  pointsLoss: number;
-};
+type PlannerConfig = TournamentConfig;
 
 const DEFAULT_CONFIG: PlannerConfig = {
   tournamentName: "Torneo Primavera",
+  categoryLabel: "Alevín",
   teamsCount: 8,
   categories: [],
   tournamentDays: 1,
@@ -71,54 +57,28 @@ const CATEGORY_OPTIONS = [
 export default function TournamentsPlannerPage() {
   const { profile } = useAuth();
   const clubScopeId = profile?.clubId ?? "global-hq";
-  const storageKey = useMemo(
-    () => `synq_tournaments_planner_v1_${clubScopeId}`,
-    [clubScopeId],
-  );
+  const storageKey = useMemo(() => `synq_tournaments_planner_v1_${clubScopeId}`, [clubScopeId]);
   const [config, setConfig] = useState<PlannerConfig>(DEFAULT_CONFIG);
   const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [activeTournamentId, setActiveTournamentIdState] = useState<string | null>(null);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    // Migración: torneo único (v1) -> multi-torneo (v2)
+    migrateLegacyTournamentToV2(clubScopeId);
+    const index = loadTournamentIndex(clubScopeId);
+    const currentId = getActiveTournamentId(clubScopeId) ?? index[0]?.id ?? null;
+    if (!currentId) return;
+    setActiveTournamentId(clubScopeId, currentId);
+    setActiveTournamentIdState(currentId);
+
+    // Cargar config del torneo activo (si existe), si no mantener defaults.
     try {
-      const raw = localStorage.getItem(storageKey);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as Partial<PlannerConfig>;
-      setConfig({
-        tournamentName: typeof parsed.tournamentName === "string" && parsed.tournamentName.trim().length > 0
-          ? parsed.tournamentName
-          : DEFAULT_CONFIG.tournamentName,
-        teamsCount: Number(parsed.teamsCount) > 0 ? Number(parsed.teamsCount) : DEFAULT_CONFIG.teamsCount,
-        categories: Array.isArray(parsed.categories)
-          ? parsed.categories.filter((c): c is string => typeof c === "string")
-          : [],
-        tournamentDays: Number(parsed.tournamentDays) > 0 ? Number(parsed.tournamentDays) : DEFAULT_CONFIG.tournamentDays,
-        startDate: typeof parsed.startDate === "string" ? parsed.startDate : DEFAULT_CONFIG.startDate,
-        endDate: typeof parsed.endDate === "string" ? parsed.endDate : DEFAULT_CONFIG.endDate,
-        groupsCount: Number(parsed.groupsCount) > 0 ? Number(parsed.groupsCount) : DEFAULT_CONFIG.groupsCount,
-        teamsPerGroup: Number(parsed.teamsPerGroup) > 1 ? Number(parsed.teamsPerGroup) : DEFAULT_CONFIG.teamsPerGroup,
-        timeWindow:
-          parsed.timeWindow === "morning" || parsed.timeWindow === "afternoon" || parsed.timeWindow === "both"
-            ? parsed.timeWindow
-            : DEFAULT_CONFIG.timeWindow,
-        fieldsCount: Number(parsed.fieldsCount) > 0 ? Number(parsed.fieldsCount) : DEFAULT_CONFIG.fieldsCount,
-        footballFormat:
-          parsed.footballFormat === "f11" || parsed.footballFormat === "f7" || parsed.footballFormat === "futsal"
-            ? parsed.footballFormat
-            : DEFAULT_CONFIG.footballFormat,
-        morningStart: typeof parsed.morningStart === "string" ? parsed.morningStart : DEFAULT_CONFIG.morningStart,
-        morningEnd: typeof parsed.morningEnd === "string" ? parsed.morningEnd : DEFAULT_CONFIG.morningEnd,
-        afternoonStart: typeof parsed.afternoonStart === "string" ? parsed.afternoonStart : DEFAULT_CONFIG.afternoonStart,
-        afternoonEnd: typeof parsed.afternoonEnd === "string" ? parsed.afternoonEnd : DEFAULT_CONFIG.afternoonEnd,
-        halvesCount: parsed.halvesCount === 1 || parsed.halvesCount === 2 ? parsed.halvesCount : DEFAULT_CONFIG.halvesCount,
-        minutesPerHalf:
-          Number(parsed.minutesPerHalf) > 0 ? Number(parsed.minutesPerHalf) : DEFAULT_CONFIG.minutesPerHalf,
-        breakMinutes: Number(parsed.breakMinutes) >= 0 ? Number(parsed.breakMinutes) : DEFAULT_CONFIG.breakMinutes,
-        bufferBetweenMatches:
-          Number(parsed.bufferBetweenMatches) >= 0 ? Number(parsed.bufferBetweenMatches) : DEFAULT_CONFIG.bufferBetweenMatches,
-        pointsWin: Number(parsed.pointsWin) >= 0 ? Number(parsed.pointsWin) : DEFAULT_CONFIG.pointsWin,
-        pointsDraw: Number(parsed.pointsDraw) >= 0 ? Number(parsed.pointsDraw) : DEFAULT_CONFIG.pointsDraw,
-        pointsLoss: Number(parsed.pointsLoss) >= 0 ? Number(parsed.pointsLoss) : DEFAULT_CONFIG.pointsLoss,
-      });
+      const rawConfig = localStorage.getItem(`synq_tournament_config_v1_${clubScopeId}_${currentId}`);
+      const parsed = rawConfig ? (JSON.parse(rawConfig) as unknown) : null;
+      if (parsed && typeof parsed === "object") {
+        setConfig((prev) => ({ ...prev, ...(parsed as Partial<TournamentConfig>) }));
+      }
     } catch {
       // ignore
     }
@@ -135,6 +95,9 @@ export default function TournamentsPlannerPage() {
 
   const handleSave = () => {
     try {
+      if (!activeTournamentId) return;
+      upsertTournament({ clubId: clubScopeId, tournamentId: activeTournamentId, config, status: "draft" });
+      // Mantener legacy key durante transición
       localStorage.setItem(storageKey, JSON.stringify(config));
       setSavedAt(new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }));
     } catch {
