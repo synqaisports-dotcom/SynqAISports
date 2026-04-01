@@ -28,6 +28,9 @@ type PlannerConfig = {
   minutesPerHalf: number;
   breakMinutes: number;
   bufferBetweenMatches: number;
+  pointsWin: number;
+  pointsDraw: number;
+  pointsLoss: number;
 };
 
 const DEFAULT_CONFIG: PlannerConfig = {
@@ -50,6 +53,9 @@ const DEFAULT_CONFIG: PlannerConfig = {
   minutesPerHalf: 20,
   breakMinutes: 0,
   bufferBetweenMatches: 10,
+  pointsWin: 3,
+  pointsDraw: 1,
+  pointsLoss: 0,
 };
 
 const CATEGORY_OPTIONS = [
@@ -109,6 +115,9 @@ export default function TournamentsPlannerPage() {
         breakMinutes: Number(parsed.breakMinutes) >= 0 ? Number(parsed.breakMinutes) : DEFAULT_CONFIG.breakMinutes,
         bufferBetweenMatches:
           Number(parsed.bufferBetweenMatches) >= 0 ? Number(parsed.bufferBetweenMatches) : DEFAULT_CONFIG.bufferBetweenMatches,
+        pointsWin: Number(parsed.pointsWin) >= 0 ? Number(parsed.pointsWin) : DEFAULT_CONFIG.pointsWin,
+        pointsDraw: Number(parsed.pointsDraw) >= 0 ? Number(parsed.pointsDraw) : DEFAULT_CONFIG.pointsDraw,
+        pointsLoss: Number(parsed.pointsLoss) >= 0 ? Number(parsed.pointsLoss) : DEFAULT_CONFIG.pointsLoss,
       });
     } catch {
       // ignore
@@ -565,6 +574,45 @@ export default function TournamentsPlannerPage() {
                 )}
               </div>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Puntuación liguilla</span>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <label className="space-y-1">
+                <span className="text-[10px] font-black uppercase tracking-[0.12em] text-white/70">Victoria</span>
+                <input
+                  type="number"
+                  min={0}
+                  value={config.pointsWin}
+                  onChange={(e) => setConfig((prev) => ({ ...prev, pointsWin: Math.max(0, Number(e.target.value) || 0) }))}
+                  className="h-10 w-full rounded-lg border border-primary/25 bg-black/40 px-3 text-white outline-none"
+                />
+              </label>
+              <label className="space-y-1">
+                <span className="text-[10px] font-black uppercase tracking-[0.12em] text-white/70">Empate</span>
+                <input
+                  type="number"
+                  min={0}
+                  value={config.pointsDraw}
+                  onChange={(e) => setConfig((prev) => ({ ...prev, pointsDraw: Math.max(0, Number(e.target.value) || 0) }))}
+                  className="h-10 w-full rounded-lg border border-primary/25 bg-black/40 px-3 text-white outline-none"
+                />
+              </label>
+              <label className="space-y-1">
+                <span className="text-[10px] font-black uppercase tracking-[0.12em] text-white/70">Derrota</span>
+                <input
+                  type="number"
+                  min={0}
+                  value={config.pointsLoss}
+                  onChange={(e) => setConfig((prev) => ({ ...prev, pointsLoss: Math.max(0, Number(e.target.value) || 0) }))}
+                  className="h-10 w-full rounded-lg border border-primary/25 bg-black/40 px-3 text-white outline-none"
+                />
+              </label>
+            </div>
+            <p className="text-[10px] text-white/55">
+              Esta configuración se usará para calcular la clasificación de grupos y los cruces de eliminatoria.
+            </p>
           </div>
 
           <div className="flex items-center justify-between gap-3 pt-2">
