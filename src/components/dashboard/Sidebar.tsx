@@ -473,7 +473,7 @@ function SidebarGroupWrapper({ children, title, color, isCollapsed }: any) {
   return (
     <SidebarGroup className="p-0">
       {!isCollapsed && (
-        <p className={cn("px-4 mb-3 text-[8px] font-black uppercase tracking-[0.5em] transition-[background-color,border-color,color,opacity,transform] duration-700 animate-[pulse_2.8s_ease-in-out_infinite]", color)}>
+        <p className={cn("px-4 mb-3 text-[9px] font-black uppercase tracking-[0.45em] transition-[background-color,border-color,color,opacity,transform] duration-700 animate-[pulse_2.8s_ease-in-out_infinite]", color)}>
           {title}
         </p>
       )}
