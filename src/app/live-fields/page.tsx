@@ -33,7 +33,7 @@ type MockSlot = {
 type MockZoneSchedule = {
   zone: string;
   slots: MockSlot[];
-  currentSlot: MockSlot | null;
+  visibleSlot: MockSlot | null;
   nextSlot: MockSlot | null;
 };
 
@@ -234,15 +234,13 @@ export default function LiveFieldsPage() {
               ];
 
       const nowMin = getCurrentMinutes();
+      const graceMinutes = 5;
       const withCurrent = zonesRaw.map((z) => {
-        const currentSlot =
-          z.slots.find((s) => nowMin >= toMinutes(s.start) && nowMin < toMinutes(s.end)) ?? null;
-        const nextSlot =
-          z.slots.find((s) => toMinutes(s.start) > nowMin) ??
-          (currentSlot
-            ? z.slots.find((s) => s.start !== currentSlot.start || s.end !== currentSlot.end) ?? null
-            : null);
-        return { ...z, currentSlot, nextSlot };
+        // Regla temporal: mantener visible el primer bloque del día y ocultarlo 5 min tras finalizar.
+        const firstNonExpiredIdx = z.slots.findIndex((s) => nowMin <= toMinutes(s.end) + graceMinutes);
+        const visibleSlot = firstNonExpiredIdx >= 0 ? z.slots[firstNonExpiredIdx] : null;
+        const nextSlot = firstNonExpiredIdx >= 0 && firstNonExpiredIdx + 1 < z.slots.length ? z.slots[firstNonExpiredIdx + 1] : null;
+        return { ...z, visibleSlot, nextSlot };
       });
 
       return {
@@ -251,6 +249,19 @@ export default function LiveFieldsPage() {
       };
     });
   }, [cards, teams, scheduleItems]);
+
+  const nextHourCards = useMemo(() => {
+    return mockScheduleCards.flatMap((facility) =>
+      facility.zones
+        .filter((zone) => zone.nextSlot)
+        .map((zone) => ({
+          id: `${facility.id}_${zone.zone}_next`,
+          field: facility.field,
+          zone: zone.zone,
+          slot: zone.nextSlot!,
+        })),
+    );
+  }, [mockScheduleCards]);
 
   if (loading) {
     return (
@@ -400,86 +411,90 @@ export default function LiveFieldsPage() {
             </p>
           </div>
         ) : null}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 h-full content-start">
-          {mockScheduleCards.map((c) => (
-            <article
-              key={c.id}
-              className="rounded-2xl border border-cyan-500/20 bg-black/35 backdrop-blur-sm p-3 shadow-[0_10px_24px_rgba(0,0,0,0.35)] min-h-[220px]"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-sm font-black uppercase tracking-tight">{c.field}</h2>
-                <span
-                  className={cn(
-                    "text-[9px] font-black uppercase tracking-[0.15em] px-2 py-1 rounded-md border",
-                    c.state === "Mantenimiento"
-                      ? "border-amber-400/40 text-amber-300 bg-amber-500/10"
-                      : "border-emerald-400/30 text-emerald-300 bg-emerald-500/10",
-                  )}
-                >
-                  {c.state === "Mantenimiento" ? t("live_fields.state_maintenance") : c.state === "En uso" ? t("live_fields.state_in_use") : t("live_fields.state_free")}
-                </span>
-              </div>
-              <p className="mt-1 text-[9px] uppercase font-black tracking-[0.18em] text-white/45">
-                {c.type} · {c.sport}
-              </p>
-              <div className="mt-2 space-y-2">
-                {c.zones.map((zone) => (
-                  <div key={`${c.id}_${zone.zone}`} className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-2.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-[9px] uppercase font-black tracking-[0.18em] text-cyan-300/80">{zone.zone}</p>
-                      {zone.currentSlot ? (
-                        <span className="text-[8px] font-black uppercase tracking-[0.15em] px-2 py-1 rounded-md border border-emerald-400/30 text-emerald-300 bg-emerald-500/10">
-                          En curso
-                        </span>
-                      ) : (
-                        <span className="text-[8px] font-black uppercase tracking-[0.15em] px-2 py-1 rounded-md border border-white/15 text-white/70 bg-white/5">
-                          Sin actividad
-                        </span>
-                      )}
-                    </div>
-                    {zone.currentSlot ? (
-                      <div className="mt-2 rounded-lg border px-2.5 py-2 border-emerald-400/35 bg-emerald-500/10">
-                        <p className="text-[9px] font-black uppercase tracking-[0.14em] text-white/90">
-                          {zone.currentSlot.start} - {zone.currentSlot.end}
-                        </p>
-                        <div className="mt-1 flex items-center justify-between gap-2">
-                          <span className="text-[10px] font-black uppercase text-cyan-200 truncate">{zone.currentSlot.teamName}</span>
-                          <span className="text-[9px] font-black uppercase text-white/70 truncate">{zone.currentSlot.coachName}</span>
-                        </div>
-                      </div>
-                    ) : zone.nextSlot ? (
-                      <div className="mt-2 rounded-lg border px-2.5 py-2 border-cyan-500/20 bg-black/25">
-                        <p className="text-[9px] font-black uppercase tracking-[0.14em] text-white/90">
-                          {zone.nextSlot.start} - {zone.nextSlot.end}
-                        </p>
-                        <div className="mt-1 flex items-center justify-between gap-2">
-                          <span className="text-[10px] font-black uppercase text-cyan-200 truncate">{zone.nextSlot.teamName}</span>
-                          <span className="text-[9px] font-black uppercase text-white/70 truncate">{zone.nextSlot.coachName}</span>
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-              <div className="mt-2 rounded-xl border border-white/10 bg-black/30 p-2.5">
-                <p className="text-[9px] uppercase font-black tracking-[0.18em] text-white/65">Siguiente hora</p>
-                <div className="mt-1.5 space-y-1.5">
+        <div className="h-full grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 content-start">
+            {mockScheduleCards.map((c) => (
+              <article
+                key={c.id}
+                className="rounded-2xl border border-cyan-500/20 bg-black/35 backdrop-blur-sm p-3 shadow-[0_10px_24px_rgba(0,0,0,0.35)] min-h-[220px]"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="text-sm font-black uppercase tracking-tight">{c.field}</h2>
+                  <span
+                    className={cn(
+                      "text-[9px] font-black uppercase tracking-[0.15em] px-2 py-1 rounded-md border",
+                      c.state === "Mantenimiento"
+                        ? "border-amber-400/40 text-amber-300 bg-amber-500/10"
+                        : "border-emerald-400/30 text-emerald-300 bg-emerald-500/10",
+                    )}
+                  >
+                    {c.state === "Mantenimiento" ? t("live_fields.state_maintenance") : c.state === "En uso" ? t("live_fields.state_in_use") : t("live_fields.state_free")}
+                  </span>
+                </div>
+                <p className="mt-1 text-[9px] uppercase font-black tracking-[0.18em] text-white/45">
+                  {c.type} · {c.sport}
+                </p>
+                <div className="mt-2 space-y-2">
                   {c.zones.map((zone) => (
-                    <div key={`${c.id}_${zone.zone}_next`} className="flex items-center justify-between gap-2 text-[9px]">
-                      <span className="font-black uppercase text-cyan-300/80">{zone.zone}</span>
-                      <span className="font-black uppercase text-white/75 truncate">
-                        {zone.nextSlot ? `${zone.nextSlot.start} - ${zone.nextSlot.end} · ${zone.nextSlot.teamName}` : "Sin siguiente turno"}
-                      </span>
+                    <div key={`${c.id}_${zone.zone}`} className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-[9px] uppercase font-black tracking-[0.18em] text-cyan-300/80">{zone.zone}</p>
+                        {zone.visibleSlot ? (
+                          <span className="text-[8px] font-black uppercase tracking-[0.15em] px-2 py-1 rounded-md border border-emerald-400/30 text-emerald-300 bg-emerald-500/10">
+                            Activo/Próximo
+                          </span>
+                        ) : (
+                          <span className="text-[8px] font-black uppercase tracking-[0.15em] px-2 py-1 rounded-md border border-white/15 text-white/70 bg-white/5">
+                            Sin actividad
+                          </span>
+                        )}
+                      </div>
+                      {zone.visibleSlot ? (
+                        <div className="mt-2 rounded-lg border px-2.5 py-2 border-cyan-500/20 bg-black/25">
+                          <p className="text-[9px] font-black uppercase tracking-[0.14em] text-white/90">
+                            {zone.visibleSlot.start} - {zone.visibleSlot.end}
+                          </p>
+                          <div className="mt-1 flex items-center justify-between gap-2">
+                            <span className="text-[10px] font-black uppercase text-cyan-200 truncate">{zone.visibleSlot.teamName}</span>
+                            <span className="text-[9px] font-black uppercase text-white/70 truncate">{zone.visibleSlot.coachName}</span>
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
                   ))}
                 </div>
-              </div>
-              <div className="mt-2 flex items-center gap-2 text-white/65">
-                <Users className="h-4 w-4 text-cyan-300/80" />
-                <span className="text-[9px] font-black uppercase">Mock horario (pendiente BBDD real)</span>
-              </div>
-            </article>
-          ))}
+                <div className="mt-2 flex items-center gap-2 text-white/65">
+                  <Users className="h-4 w-4 text-cyan-300/80" />
+                  <span className="text-[9px] font-black uppercase">Mock horario (pendiente BBDD real)</span>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <aside className="rounded-2xl border border-cyan-500/20 bg-black/35 backdrop-blur-sm p-3">
+            <p className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-300/80">Siguiente hora</p>
+            <div className="mt-2 space-y-2">
+              {nextHourCards.length === 0 ? (
+                <div className="rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-[10px] font-black uppercase text-white/60">
+                  Sin siguientes turnos
+                </div>
+              ) : (
+                nextHourCards.map((item) => (
+                  <div key={item.id} className="rounded-xl border border-white/10 bg-black/30 px-3 py-2">
+                    <p className="text-[8px] font-black uppercase tracking-[0.16em] text-cyan-300/80">
+                      {item.field} · {item.zone}
+                    </p>
+                    <p className="mt-1 text-[10px] font-black uppercase text-white/90">
+                      {item.slot.start} - {item.slot.end}
+                    </p>
+                    <p className="mt-0.5 text-[9px] font-black uppercase text-white/70 truncate">
+                      {item.slot.teamName} · {item.slot.coachName}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+          </aside>
         </div>
       </section>
 
