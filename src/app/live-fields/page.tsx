@@ -309,21 +309,21 @@ export default function LiveFieldsPage() {
   }
 
   return (
-    <main className="min-h-[100dvh] bg-[#03060d] text-white overflow-hidden">
+    <main className="h-[100dvh] max-h-[100dvh] bg-[#03060d] text-white overflow-hidden flex flex-col">
       {/* Fondo ligero tipo campo de fútbol (sin imágenes) */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.20),rgba(3,6,13,0.88)_50%,rgba(3,6,13,1)_100%)]" />
-        <div className="absolute inset-0 opacity-[0.34]">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.28),rgba(3,6,13,0.84)_48%,rgba(3,6,13,1)_100%)]" />
+        <div className="absolute inset-0 opacity-[0.42]">
           <svg viewBox="0 0 1000 600" className="h-full w-full" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
             <defs>
               <pattern id="synq-grass" width="20" height="20" patternUnits="userSpaceOnUse">
                 <rect width="20" height="20" fill="transparent" />
-                <path d="M0 0 L20 20 M20 0 L0 20" stroke="rgba(16,185,129,0.18)" strokeWidth="1" />
+                <path d="M0 0 L20 20 M20 0 L0 20" stroke="rgba(16,185,129,0.24)" strokeWidth="1" />
               </pattern>
             </defs>
             <rect x="0" y="0" width="1000" height="600" fill="url(#synq-grass)" />
             {/* Líneas del campo */}
-            <g fill="none" stroke="rgba(34,211,238,0.22)" strokeWidth="2">
+            <g fill="none" stroke="rgba(34,211,238,0.30)" strokeWidth="2">
               <rect x="40" y="40" width="920" height="520" rx="18" />
               <line x1="500" y1="40" x2="500" y2="560" />
               <circle cx="500" cy="300" r="70" />
@@ -349,7 +349,7 @@ export default function LiveFieldsPage() {
       <div className="absolute -top-32 -right-32 h-[420px] w-[420px] rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
       <div className="absolute -bottom-32 -left-32 h-[420px] w-[420px] rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
 
-      <section className="relative z-10 px-4 sm:px-6 lg:px-10 pt-6 pb-4 border-b border-cyan-500/20">
+      <section className="relative z-10 px-4 sm:px-6 lg:px-8 pt-4 pb-3 border-b border-cyan-500/20 shrink-0">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-[11px] font-black uppercase tracking-[0.38em] text-cyan-300/80">Terminal · Live Fields</p>
@@ -391,7 +391,7 @@ export default function LiveFieldsPage() {
         </div>
       </section>
 
-      <section className="relative z-10 p-4 sm:p-6 lg:p-10 pb-28">
+      <section className="relative z-10 p-3 sm:p-4 lg:p-5 flex-1 overflow-hidden">
         {cards.length === 0 ? (
           <div className="rounded-3xl border border-cyan-500/20 bg-black/35 p-8 text-center">
             <p className="text-[10px] font-black uppercase tracking-[0.35em] text-cyan-300/80">{t("live_fields.no_elite_data")}</p>
@@ -400,17 +400,17 @@ export default function LiveFieldsPage() {
             </p>
           </div>
         ) : null}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 h-full content-start">
           {mockScheduleCards.map((c) => (
             <article
               key={c.id}
-              className="rounded-3xl border border-cyan-500/20 bg-black/35 backdrop-blur-sm p-5 shadow-[0_16px_40px_rgba(0,0,0,0.35)]"
+              className="rounded-2xl border border-cyan-500/20 bg-black/35 backdrop-blur-sm p-3 shadow-[0_10px_24px_rgba(0,0,0,0.35)] min-h-[220px]"
             >
               <div className="flex items-center justify-between gap-3">
-                <h2 className="text-lg font-black uppercase tracking-tight">{c.field}</h2>
+                <h2 className="text-sm font-black uppercase tracking-tight">{c.field}</h2>
                 <span
                   className={cn(
-                    "text-[10px] font-black uppercase tracking-[0.2em] px-2 py-1 rounded-lg border",
+                    "text-[9px] font-black uppercase tracking-[0.15em] px-2 py-1 rounded-md border",
                     c.state === "Mantenimiento"
                       ? "border-amber-400/40 text-amber-300 bg-amber-500/10"
                       : "border-emerald-400/30 text-emerald-300 bg-emerald-500/10",
@@ -419,64 +419,64 @@ export default function LiveFieldsPage() {
                   {c.state === "Mantenimiento" ? t("live_fields.state_maintenance") : c.state === "En uso" ? t("live_fields.state_in_use") : t("live_fields.state_free")}
                 </span>
               </div>
-              <p className="mt-1 text-[11px] uppercase font-black tracking-[0.2em] text-white/45">
+              <p className="mt-1 text-[9px] uppercase font-black tracking-[0.18em] text-white/45">
                 {c.type} · {c.sport}
               </p>
-              <div className="mt-4 space-y-3">
+              <div className="mt-2 space-y-2">
                 {c.zones.map((zone) => (
-                  <div key={`${c.id}_${zone.zone}`} className="rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-3">
+                  <div key={`${c.id}_${zone.zone}`} className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-2.5">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-[10px] uppercase font-black tracking-[0.25em] text-cyan-300/80">{zone.zone}</p>
+                      <p className="text-[9px] uppercase font-black tracking-[0.18em] text-cyan-300/80">{zone.zone}</p>
                       {zone.currentSlot ? (
-                        <span className="text-[9px] font-black uppercase tracking-[0.2em] px-2 py-1 rounded-md border border-emerald-400/30 text-emerald-300 bg-emerald-500/10">
+                        <span className="text-[8px] font-black uppercase tracking-[0.15em] px-2 py-1 rounded-md border border-emerald-400/30 text-emerald-300 bg-emerald-500/10">
                           En curso
                         </span>
                       ) : (
-                        <span className="text-[9px] font-black uppercase tracking-[0.2em] px-2 py-1 rounded-md border border-white/15 text-white/70 bg-white/5">
+                        <span className="text-[8px] font-black uppercase tracking-[0.15em] px-2 py-1 rounded-md border border-white/15 text-white/70 bg-white/5">
                           Sin actividad
                         </span>
                       )}
                     </div>
                     {zone.currentSlot ? (
-                      <div className="mt-2 rounded-xl border px-3 py-2 border-emerald-400/35 bg-emerald-500/10">
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/90">
+                      <div className="mt-2 rounded-lg border px-2.5 py-2 border-emerald-400/35 bg-emerald-500/10">
+                        <p className="text-[9px] font-black uppercase tracking-[0.14em] text-white/90">
                           {zone.currentSlot.start} - {zone.currentSlot.end}
                         </p>
                         <div className="mt-1 flex items-center justify-between gap-2">
-                          <span className="text-[11px] font-black uppercase text-cyan-200">{zone.currentSlot.teamName}</span>
-                          <span className="text-[10px] font-black uppercase text-white/70">{zone.currentSlot.coachName}</span>
+                          <span className="text-[10px] font-black uppercase text-cyan-200 truncate">{zone.currentSlot.teamName}</span>
+                          <span className="text-[9px] font-black uppercase text-white/70 truncate">{zone.currentSlot.coachName}</span>
                         </div>
                       </div>
                     ) : zone.nextSlot ? (
-                      <div className="mt-2 rounded-xl border px-3 py-2 border-cyan-500/20 bg-black/25">
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/90">
+                      <div className="mt-2 rounded-lg border px-2.5 py-2 border-cyan-500/20 bg-black/25">
+                        <p className="text-[9px] font-black uppercase tracking-[0.14em] text-white/90">
                           {zone.nextSlot.start} - {zone.nextSlot.end}
                         </p>
                         <div className="mt-1 flex items-center justify-between gap-2">
-                          <span className="text-[11px] font-black uppercase text-cyan-200">{zone.nextSlot.teamName}</span>
-                          <span className="text-[10px] font-black uppercase text-white/70">{zone.nextSlot.coachName}</span>
+                          <span className="text-[10px] font-black uppercase text-cyan-200 truncate">{zone.nextSlot.teamName}</span>
+                          <span className="text-[9px] font-black uppercase text-white/70 truncate">{zone.nextSlot.coachName}</span>
                         </div>
                       </div>
                     ) : null}
                   </div>
                 ))}
               </div>
-              <div className="mt-3 rounded-2xl border border-white/10 bg-black/30 p-3">
-                <p className="text-[10px] uppercase font-black tracking-[0.25em] text-white/65">Siguiente hora</p>
-                <div className="mt-2 space-y-2">
+              <div className="mt-2 rounded-xl border border-white/10 bg-black/30 p-2.5">
+                <p className="text-[9px] uppercase font-black tracking-[0.18em] text-white/65">Siguiente hora</p>
+                <div className="mt-1.5 space-y-1.5">
                   {c.zones.map((zone) => (
-                    <div key={`${c.id}_${zone.zone}_next`} className="flex items-center justify-between gap-2 text-[10px]">
+                    <div key={`${c.id}_${zone.zone}_next`} className="flex items-center justify-between gap-2 text-[9px]">
                       <span className="font-black uppercase text-cyan-300/80">{zone.zone}</span>
-                      <span className="font-black uppercase text-white/75">
+                      <span className="font-black uppercase text-white/75 truncate">
                         {zone.nextSlot ? `${zone.nextSlot.start} - ${zone.nextSlot.end} · ${zone.nextSlot.teamName}` : "Sin siguiente turno"}
                       </span>
                     </div>
                   ))}
                 </div>
               </div>
-              <div className="mt-4 flex items-center gap-2 text-white/65">
+              <div className="mt-2 flex items-center gap-2 text-white/65">
                 <Users className="h-4 w-4 text-cyan-300/80" />
-                <span className="text-[11px] font-black uppercase">Mock horario (pendiente BBDD real)</span>
+                <span className="text-[9px] font-black uppercase">Mock horario (pendiente BBDD real)</span>
               </div>
             </article>
           ))}
@@ -484,10 +484,10 @@ export default function LiveFieldsPage() {
       </section>
 
       {/* Banda inferior: 2 slots AdMob (placeholder) 50/50 */}
-      <footer className="fixed bottom-0 left-0 right-0 z-20 border-t border-cyan-500/20 bg-black/55 backdrop-blur-xl">
-        <div className="px-4 sm:px-6 lg:px-10 py-3">
+      <footer className="relative z-20 border-t border-cyan-500/20 bg-black/55 backdrop-blur-xl shrink-0">
+        <div className="px-4 sm:px-6 lg:px-8 py-2">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="h-16 rounded-2xl border border-white/10 bg-white/[0.04] flex items-center justify-center">
+            <div className="h-12 rounded-xl border border-white/10 bg-white/[0.04] flex items-center justify-center">
               <div className="text-center">
                 <p className="text-[9px] font-black uppercase tracking-[0.35em] text-white/35">AdMob · Slot A</p>
                 <p className="mt-1 text-[10px] font-black uppercase tracking-[0.25em] text-cyan-200/70">
@@ -495,7 +495,7 @@ export default function LiveFieldsPage() {
                 </p>
               </div>
             </div>
-            <div className="h-16 rounded-2xl border border-white/10 bg-white/[0.04] flex items-center justify-center">
+            <div className="h-12 rounded-xl border border-white/10 bg-white/[0.04] flex items-center justify-center">
               <div className="text-center">
                 <p className="text-[9px] font-black uppercase tracking-[0.35em] text-white/35">AdMob · Slot B</p>
                 <p className="mt-1 text-[10px] font-black uppercase tracking-[0.25em] text-cyan-200/70">
