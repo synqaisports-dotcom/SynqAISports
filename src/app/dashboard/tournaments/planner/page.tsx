@@ -251,6 +251,28 @@ export default function TournamentsPlannerPage() {
             </label>
 
             <label className="space-y-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Nº grupos</span>
+              <input
+                type="number"
+                min={1}
+                value={config.groupsCount}
+                onChange={(e) => setConfig((prev) => ({ ...prev, groupsCount: Math.max(1, Number(e.target.value) || 1) }))}
+                className="h-11 w-full rounded-xl border border-primary/25 bg-black/40 px-3 text-white outline-none"
+              />
+            </label>
+
+            <label className="space-y-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Equipos por grupo</span>
+              <input
+                type="number"
+                min={0}
+                value={config.teamsPerGroup}
+                onChange={(e) => setConfig((prev) => ({ ...prev, teamsPerGroup: Math.max(0, Number(e.target.value) || 0) }))}
+                className="h-11 w-full rounded-xl border border-primary/25 bg-black/40 px-3 text-white outline-none"
+              />
+            </label>
+
+            <label className="space-y-2">
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Nº campos disponibles</span>
               <input
                 type="number"
