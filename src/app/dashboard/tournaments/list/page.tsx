@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useAuth } from "@/lib/auth-context";
 import {
   ensureTournamentId,
+  getActiveTournamentId,
   loadTournamentIndex,
   migrateLegacySingleTournamentIfNeeded,
   loadTournamentConfigById,
@@ -44,8 +45,9 @@ export default function TournamentsListPage() {
     });
     const list = loadTournamentIndex(clubScopeId);
     setTournaments(list);
-    const first = list[0]?.id ?? "";
-    setActiveId(first);
+    const savedActive = getActiveTournamentId(clubScopeId);
+    const initial = (savedActive && list.some((t) => t.id === savedActive)) ? savedActive : (list[0]?.id ?? "");
+    setActiveId(initial);
   }, [clubScopeId]);
 
   const activeTournament = useMemo(() => tournaments.find((t) => t.id === activeId) ?? null, [tournaments, activeId]);
