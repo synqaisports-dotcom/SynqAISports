@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarClock, Coins, ShieldCheck, Trophy } from "lucide-react";
+import { CalendarClock, Coins, ListChecks, ShieldCheck, Trophy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 export default function TournamentsHomePage() {
@@ -17,7 +17,7 @@ export default function TournamentsHomePage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="border border-violet-400/20 bg-black/30">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2 text-base"><Trophy className="h-4 w-4 text-violet-300" /> Resumen</CardTitle>
@@ -45,6 +45,16 @@ export default function TournamentsHomePage() {
           </CardHeader>
           <CardContent>
             <Link href="/dashboard/tournaments/revenue" className="text-violet-300 text-sm font-bold">Planificar</Link>
+          </CardContent>
+        </Card>
+
+        <Card className="border border-violet-400/20 bg-black/30">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2 text-base"><ListChecks className="h-4 w-4 text-violet-300" /> Ver Torneos</CardTitle>
+            <CardDescription>Listado de torneos creados y su estado operativo.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/dashboard/tournaments/list" className="text-violet-300 text-sm font-bold">Ver listado</Link>
           </CardContent>
         </Card>
       </div>

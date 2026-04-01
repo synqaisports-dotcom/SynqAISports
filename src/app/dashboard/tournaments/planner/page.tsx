@@ -9,6 +9,7 @@ type TimeWindow = "morning" | "afternoon" | "both";
 type FootballFormat = "f11" | "f7" | "futsal";
 
 type PlannerConfig = {
+  tournamentName: string;
   teamsCount: number;
   categories: string[];
   tournamentDays: number;
@@ -30,6 +31,7 @@ type PlannerConfig = {
 };
 
 const DEFAULT_CONFIG: PlannerConfig = {
+  tournamentName: "Torneo Primavera",
   teamsCount: 8,
   categories: [],
   tournamentDays: 1,
@@ -76,6 +78,9 @@ export default function TournamentsPlannerPage() {
       if (!raw) return;
       const parsed = JSON.parse(raw) as Partial<PlannerConfig>;
       setConfig({
+        tournamentName: typeof parsed.tournamentName === "string" && parsed.tournamentName.trim().length > 0
+          ? parsed.tournamentName
+          : DEFAULT_CONFIG.tournamentName,
         teamsCount: Number(parsed.teamsCount) > 0 ? Number(parsed.teamsCount) : DEFAULT_CONFIG.teamsCount,
         categories: Array.isArray(parsed.categories)
           ? parsed.categories.filter((c): c is string => typeof c === "string")
@@ -238,6 +243,17 @@ export default function TournamentsPlannerPage() {
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <label className="space-y-2 md:col-span-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Nombre del torneo</span>
+              <input
+                type="text"
+                value={config.tournamentName}
+                onChange={(e) => setConfig((prev) => ({ ...prev, tournamentName: e.target.value }))}
+                className="h-11 w-full rounded-xl border border-primary/25 bg-black/40 px-3 text-white outline-none"
+                placeholder="Ej: Torneo Verano Ciudad"
+              />
+            </label>
+
             <label className="space-y-2">
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Nº equipos</span>
               <input
@@ -502,6 +518,10 @@ export default function TournamentsPlannerPage() {
               <div className="rounded-lg border border-white/10 bg-black/25 px-3 py-2">
                 <p className="text-[9px] uppercase text-white/55 font-black">Slots/día/campo</p>
                 <p className="text-sm font-black text-white">{slotsPerFieldPerDay}</p>
+              </div>
+              <div className="rounded-lg border border-white/10 bg-black/25 px-3 py-2 md:col-span-2">
+                <p className="text-[9px] uppercase text-white/55 font-black">Torneo</p>
+                <p className="text-sm font-black text-white truncate">{config.tournamentName || "Sin nombre"}</p>
               </div>
               <div className="rounded-lg border border-white/10 bg-black/25 px-3 py-2">
                 <p className="text-[9px] uppercase text-white/55 font-black">Slots totales</p>
