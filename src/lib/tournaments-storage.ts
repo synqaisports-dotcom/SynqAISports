@@ -208,6 +208,11 @@ export function saveTournamentConfigById(clubId: string, tournamentId: string, c
   localStorage.setItem(tournamentConfigKey(clubId, tournamentId), JSON.stringify(config));
 }
 
+export function removeTournamentConfigById(clubId: string, tournamentId: string | null) {
+  if (!tournamentId) return;
+  localStorage.removeItem(tournamentConfigKey(clubId, tournamentId));
+}
+
 export function loadTournamentTeamsById(clubId: string, tournamentId: string | null): any[] {
   if (!tournamentId) return [];
   const parsed = safeJsonParse<unknown>(localStorage.getItem(tournamentTeamsKey(clubId, tournamentId)));
@@ -259,6 +264,81 @@ export function removeTournamentTeamsById(clubId: string, tournamentId: string |
 export function removeTournamentMatchesById(clubId: string, tournamentId: string | null) {
   if (!tournamentId) return;
   localStorage.removeItem(tournamentMatchesKey(clubId, tournamentId));
+}
+
+export function clearActiveTournamentId(clubId: string) {
+  localStorage.removeItem(activeTournamentKey(clubId));
+}
+
+function parseISODateLocal(value?: string): Date | null {
+  if (!value) return null;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!m) return null;
+  const y = Number(m[1]);
+  const mo = Number(m[2]) - 1;
+  const da = Number(m[3]);
+  const d = new Date(y, mo, da);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function addDaysLocal(d: Date, days: number): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() + days);
+}
+
+export function computeTournamentAutoStatus(args: {
+  config: TournamentConfig | null;
+  now?: Date;
+}): TournamentStatus | null {
+  const cfg = args.config;
+  if (!cfg) return null;
+  const start = parseISODateLocal(cfg.startDate);
+  if (!start) return null;
+  const days = Math.max(1, Number(cfg.tournamentDays) || 1);
+  const endDay = addDaysLocal(start, days - 1);
+  const startAt = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 0, 1, 0, 0); // 00:01
+  const endAt = new Date(endDay.getFullYear(), endDay.getMonth(), endDay.getDate(), 23, 59, 0, 0); // 23:59
+  const now = args.now ?? new Date();
+
+  if (now.getTime() < startAt.getTime()) return "draft";
+  if (now.getTime() > endAt.getTime()) return "finished";
+  return "published";
+}
+
+export function applyTournamentAutoStatuses(args: { clubId: string; now?: Date }): { changed: boolean } {
+  const now = args.now ?? new Date();
+  const idx = loadTournamentIndex(args.clubId);
+  if (idx.length === 0) return { changed: false };
+
+  let changed = false;
+  const next = idx.map((t) => {
+    if (t.status === "finished") return t;
+    const cfg = loadTournamentConfigById(args.clubId, t.id);
+    const auto = computeTournamentAutoStatus({ config: cfg, now });
+    if (!auto || auto === t.status) return t;
+    changed = true;
+    return { ...t, status: auto, updatedAt: now.toISOString() };
+  });
+
+  if (changed) saveTournamentIndex(args.clubId, next);
+  return { changed };
+}
+
+export function deleteTournamentById(args: { clubId: string; tournamentId: string }): { nextActiveId: string | null } {
+  const current = loadTournamentIndex(args.clubId);
+  const nextIndex = current.filter((t) => t.id !== args.tournamentId);
+  saveTournamentIndex(args.clubId, nextIndex);
+  removeTournamentConfigById(args.clubId, args.tournamentId);
+  removeTournamentTeamsById(args.clubId, args.tournamentId);
+  removeTournamentMatchesById(args.clubId, args.tournamentId);
+
+  const active = getActiveTournamentId(args.clubId);
+  if (active === args.tournamentId) {
+    const nextActive = nextIndex[0]?.id ?? null;
+    if (nextActive) setActiveTournamentId(args.clubId, nextActive);
+    else clearActiveTournamentId(args.clubId);
+    return { nextActiveId: nextActive };
+  }
+  return { nextActiveId: active };
 }
 
 export function loadTournamentResultsById(clubId: string, tournamentId: string | null): TournamentMatchResultRow[] {

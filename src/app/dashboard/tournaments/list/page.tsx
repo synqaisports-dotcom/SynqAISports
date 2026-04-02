@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { BarChart3, CalendarRange, ListOrdered, Pencil, Search, Swords, Trophy, Users } from "lucide-react";
+import { BarChart3, CalendarRange, ListOrdered, Pencil, Search, Swords, Trophy, Trash2, Users } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
@@ -14,14 +14,12 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import {
   ensureTournamentId,
-  getActiveTournamentId,
   loadTournamentIndex,
   migrateLegacySingleTournamentIfNeeded,
   loadTournamentConfigById,
-  loadTournamentMatchesById,
   loadTournamentTeamsById,
-  removeTournamentMatchesById,
-  removeTournamentTeamsById,
+  deleteTournamentById,
+  applyTournamentAutoStatuses,
   saveTournamentIndex,
   saveTournamentConfigById,
   setActiveTournamentId,
@@ -162,6 +160,20 @@ export default function TournamentsListPage() {
     });
     const list = loadTournamentIndex(clubScopeId);
     setTournaments(list);
+
+    // Auto-estado por fechas (hora local): published mientras esté “activo”, finished después.
+    // Reconciliamos al montar y luego cada 60s para cubrir cambios de día.
+    const tick = () => {
+      try {
+        const { changed } = applyTournamentAutoStatuses({ clubId: clubScopeId });
+        if (changed) setTournaments(loadTournamentIndex(clubScopeId));
+      } catch {
+        // ignore
+      }
+    };
+    tick();
+    const id = window.setInterval(tick, 60_000);
+    return () => window.clearInterval(id);
   }, [clubScopeId]);
 
   const listItems = useMemo<TournamentListItem[]>(() => {
@@ -398,6 +410,19 @@ export default function TournamentsListPage() {
                           title="Activar torneo"
                         >
                           <Trophy className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!confirm(`¿Borrar el torneo \"${t.name}\"? Se eliminarán equipos y resultados.`)) return;
+                            const res = deleteTournamentById({ clubId: clubScopeId, tournamentId: t.id });
+                            if (res.nextActiveId) setActiveTournamentId(clubScopeId, res.nextActiveId);
+                            setTournaments(loadTournamentIndex(clubScopeId));
+                          }}
+                          className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-white/10 bg-black/20 text-white/70 hover:text-red-300 hover:border-red-500/25 hover:bg-red-500/10 transition-[background-color,border-color,color,opacity,transform]"
+                          title="Borrar torneo"
+                        >
+                          <Trash2 className="h-4 w-4" />
                         </button>
                         <Link
                           href={`/dashboard/tournaments/planner?tournamentId=${encodeURIComponent(t.id)}`}
