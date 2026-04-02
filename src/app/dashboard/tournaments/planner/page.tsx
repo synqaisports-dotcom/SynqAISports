@@ -610,47 +610,47 @@ export default function TournamentsPlannerPage() {
           </div>
 
           <div className="space-y-2">
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Duración y buffers</span>
+            <span className={labelClass}>Duración y buffers</span>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <label className="space-y-1">
-                <span className="text-[10px] font-black uppercase tracking-[0.12em] text-white/70">Nº partes</span>
+                <span className={labelClass}>Nº partes</span>
                 <Select
                   value={String(config.halvesCount)}
                   onValueChange={(v) => setConfig((prev) => ({ ...prev, halvesCount: v === "1" ? 1 : 2 }))}
                   disabled={isFinished}
                 >
-                  <SelectTrigger className="h-10 w-full rounded-lg border border-primary/25 bg-black/40 px-3 text-white outline-none focus:ring-0 focus:ring-offset-0">
+                  <SelectTrigger className="h-10 w-full rounded-lg border border-[#00F2FF]/25 bg-[#0F172A]/40 px-3 text-white outline-none hover:border-[#00F2FF]/40 focus-visible:border-[#00F2FF]/50 focus:ring-0 focus:ring-offset-0 transition-[background-color,border-color,color,opacity,transform]">
                     <SelectValue placeholder="Selecciona" />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#0a0f18] border-primary/20 text-white rounded-2xl shadow-2xl">
+                  <SelectContent className="bg-[#0a0f18] border border-[#00F2FF]/20 text-white rounded-2xl shadow-2xl">
                     <SelectItem value="1">1 parte</SelectItem>
                     <SelectItem value="2">2 partes</SelectItem>
                   </SelectContent>
                 </Select>
               </label>
               <label className="space-y-1">
-                <span className="text-[10px] font-black uppercase tracking-[0.12em] text-white/70">Min por parte</span>
+                <span className={labelClass}>Min por parte</span>
                 <input
                   type="number"
                   min={5}
                   value={config.minutesPerHalf}
                   onChange={(e) => setConfig((prev) => ({ ...prev, minutesPerHalf: Number(e.target.value) || 5 }))}
-                  className="h-10 w-full rounded-lg border border-primary/25 bg-black/40 px-3 text-white outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]"
+                  className="h-10 w-full rounded-lg border border-[#00F2FF]/25 bg-[#0F172A]/40 px-3 text-white outline-none hover:border-[#00F2FF]/40 focus-visible:border-[#00F2FF]/50 transition-[background-color,border-color,color,opacity,transform] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]"
                 />
               </label>
               <label className="space-y-1">
-                <span className="text-[10px] font-black uppercase tracking-[0.12em] text-white/70">Descanso partes (min)</span>
+                <span className={labelClass}>Descanso partes (min)</span>
                 <input
                   type="number"
                   min={0}
                   value={config.breakMinutes}
                   onChange={(e) => setConfig((prev) => ({ ...prev, breakMinutes: Math.max(0, Number(e.target.value) || 0) }))}
                   disabled={config.halvesCount === 1}
-                  className="h-10 w-full rounded-lg border border-primary/25 bg-black/40 px-3 text-white outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]"
+                  className="h-10 w-full rounded-lg border border-[#00F2FF]/25 bg-[#0F172A]/40 px-3 text-white outline-none hover:border-[#00F2FF]/40 focus-visible:border-[#00F2FF]/50 disabled:opacity-60 disabled:cursor-not-allowed transition-[background-color,border-color,color,opacity,transform] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]"
                 />
               </label>
               <label className="space-y-1">
-                <span className="text-[10px] font-black uppercase tracking-[0.12em] text-white/70">Buffer partidos (min)</span>
+                <span className={labelClass}>Buffer partidos (min)</span>
                 <input
                   type="number"
                   min={0}
@@ -658,7 +658,7 @@ export default function TournamentsPlannerPage() {
                   onChange={(e) =>
                     setConfig((prev) => ({ ...prev, bufferBetweenMatches: Math.max(0, Number(e.target.value) || 0) }))
                   }
-                  className="h-10 w-full rounded-lg border border-primary/25 bg-black/40 px-3 text-white outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]"
+                  className="h-10 w-full rounded-lg border border-[#00F2FF]/25 bg-[#0F172A]/40 px-3 text-white outline-none hover:border-[#00F2FF]/40 focus-visible:border-[#00F2FF]/50 transition-[background-color,border-color,color,opacity,transform] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]"
                 />
               </label>
             </div>
