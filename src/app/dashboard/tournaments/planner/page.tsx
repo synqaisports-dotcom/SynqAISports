@@ -19,6 +19,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+
+function formatDateLabel(value?: string): string {
+  if (!value) return "Selecciona fecha";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleDateString("es-ES");
+}
+
+function toDate(value?: string): Date | undefined {
+  if (!value) return undefined;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? undefined : d;
+}
+
+function toISODate(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
 
 type TimeWindow = "morning" | "afternoon" | "both";
 type FootballFormat = "f11" | "f7" | "futsal";
@@ -344,32 +363,69 @@ export default function TournamentsPlannerPage() {
 
             <label className="space-y-2">
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Fecha inicio</span>
-              <input
-                type="date"
-                value={config.startDate}
-                onChange={(e) =>
-                  setConfig((prev) => {
-                    const nextStart = e.target.value;
-                    return {
-                      ...prev,
-                      startDate: nextStart,
-                      endDate: prev.endDate < nextStart ? nextStart : prev.endDate,
-                    };
-                  })
-                }
-                className="h-11 w-full rounded-xl border border-primary/25 bg-black/40 px-3 text-white outline-none [color-scheme:dark]"
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="h-11 w-full rounded-xl border border-primary/25 bg-black/40 px-3 text-left text-white outline-none hover:bg-white/[0.03] transition-[background-color,border-color,color,opacity,transform]"
+                  >
+                    <span className="text-[11px] font-black">
+                      {formatDateLabel(config.startDate)}
+                    </span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-auto p-0 bg-[#0a0f18] border-primary/20 rounded-2xl shadow-2xl">
+                  <Calendar
+                    mode="single"
+                    selected={toDate(config.startDate)}
+                    onSelect={(d) => {
+                      if (!d) return;
+                      const nextStart = toISODate(d);
+                      setConfig((prev) => ({
+                        ...prev,
+                        startDate: nextStart,
+                        endDate: prev.endDate < nextStart ? nextStart : prev.endDate,
+                      }));
+                    }}
+                    className="text-white"
+                  />
+                </PopoverContent>
+              </Popover>
             </label>
 
             <label className="space-y-2">
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Fecha fin</span>
-              <input
-                type="date"
-                min={config.startDate}
-                value={config.endDate}
-                onChange={(e) => setConfig((prev) => ({ ...prev, endDate: e.target.value || prev.startDate }))}
-                className="h-11 w-full rounded-xl border border-primary/25 bg-black/40 px-3 text-white outline-none [color-scheme:dark]"
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="h-11 w-full rounded-xl border border-primary/25 bg-black/40 px-3 text-left text-white outline-none hover:bg-white/[0.03] transition-[background-color,border-color,color,opacity,transform]"
+                  >
+                    <span className="text-[11px] font-black">
+                      {formatDateLabel(config.endDate)}
+                    </span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-auto p-0 bg-[#0a0f18] border-primary/20 rounded-2xl shadow-2xl">
+                  <Calendar
+                    mode="single"
+                    selected={toDate(config.endDate)}
+                    disabled={(d) => {
+                      const start = toDate(config.startDate);
+                      if (!start) return false;
+                      const day = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+                      const minDay = new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime();
+                      return day < minDay;
+                    }}
+                    onSelect={(d) => {
+                      if (!d) return;
+                      const nextEnd = toISODate(d);
+                      setConfig((prev) => ({ ...prev, endDate: nextEnd || prev.startDate }));
+                    }}
+                    className="text-white"
+                  />
+                </PopoverContent>
+              </Popover>
             </label>
 
             <label className="space-y-2">
