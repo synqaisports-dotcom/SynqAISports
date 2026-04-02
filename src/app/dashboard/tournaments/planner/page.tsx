@@ -74,6 +74,7 @@ export default function TournamentsPlannerPage() {
     const t = tournaments.find((x) => x.id === activeTournamentId);
     return t?.status === "finished";
   }, [tournaments, activeTournamentId]);
+  const computedTeamsCount = Math.max(2, (Number(config.groupsCount) || 1) * (Number(config.teamsPerGroup) || 0));
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -103,6 +104,14 @@ export default function TournamentsPlannerPage() {
       // ignore
     }
   }, [storageKey]);
+
+  // Mantener consistencia: nº equipos = nº grupos * equipos por grupo
+  useEffect(() => {
+    setConfig((prev) => {
+      const nextCount = Math.max(2, (Number(prev.groupsCount) || 1) * (Number(prev.teamsPerGroup) || 0));
+      return prev.teamsCount === nextCount ? prev : { ...prev, teamsCount: nextCount };
+    });
+  }, [config.groupsCount, config.teamsPerGroup]);
 
   // Default playersPerTeam on footballFormat change (only if unset/invalid)
   useEffect(() => {
@@ -262,10 +271,14 @@ export default function TournamentsPlannerPage() {
               <input
                 type="number"
                 min={2}
-                value={config.teamsCount}
-                onChange={(e) => setConfig((prev) => ({ ...prev, teamsCount: Number(e.target.value) || 2 }))}
-                className="h-11 w-full rounded-xl border border-primary/25 bg-black/40 px-3 text-white outline-none"
+                value={computedTeamsCount}
+                disabled
+                readOnly
+                className="h-11 w-full rounded-xl border border-primary/25 bg-black/30 px-3 text-white/80 outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield] cursor-not-allowed"
               />
+              <span className="text-[10px] text-white/55">
+                Calculado automáticamente: grupos × equipos/grupo.
+              </span>
             </label>
 
             <label className="space-y-2">
