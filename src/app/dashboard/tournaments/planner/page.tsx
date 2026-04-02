@@ -121,6 +121,16 @@ export default function TournamentsPlannerPage() {
   }, [tournaments, activeTournamentId]);
   const computedTeamsCount = Math.max(2, (Number(config.groupsCount) || 1) * (Number(config.teamsPerGroup) || 0));
 
+  const selectAllOnFocus: React.FocusEventHandler<HTMLInputElement> = (e) => {
+    // UX: evita concatenar dígitos (p.ej. 1 -> 14) al editar números/horas en móvil/tablet.
+    // Seleccionamos todo para que al teclear se reemplace el valor completo.
+    try {
+      e.currentTarget.select();
+    } catch {
+      // ignore
+    }
+  };
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     // Migración: torneo único (v1) -> multi-torneo (v2)
