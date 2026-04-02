@@ -5,6 +5,7 @@ import { CalendarClock, Info, Save } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
+import { useSearchParams } from "next/navigation";
 import {
   type TournamentConfig,
   migrateLegacyTournamentToV2,
@@ -270,6 +271,8 @@ const CATEGORY_OPTIONS = [
 export default function TournamentsPlannerPage() {
   const { profile } = useAuth();
   const clubScopeId = profile?.clubId ?? "global-hq";
+  const searchParams = useSearchParams();
+  const tournamentIdFromUrl = searchParams.get("tournamentId");
   const storageKey = useMemo(() => `synq_tournaments_planner_v1_${clubScopeId}`, [clubScopeId]);
   const [tournaments, setTournaments] = useState(() => loadTournamentIndex(clubScopeId));
   const [config, setConfig] = useState<PlannerConfig>(DEFAULT_CONFIG);
@@ -297,7 +300,7 @@ export default function TournamentsPlannerPage() {
     migrateLegacyTournamentToV2(clubScopeId);
     const index = loadTournamentIndex(clubScopeId);
     setTournaments(index);
-    const currentId = getActiveTournamentId(clubScopeId) ?? index[0]?.id ?? null;
+    const currentId = tournamentIdFromUrl ?? getActiveTournamentId(clubScopeId) ?? index[0]?.id ?? null;
     if (!currentId) return;
     setActiveTournamentId(clubScopeId, currentId);
     setActiveTournamentIdState(currentId);
@@ -329,7 +332,7 @@ export default function TournamentsPlannerPage() {
     } catch {
       // ignore
     }
-  }, [storageKey]);
+  }, [clubScopeId, storageKey, tournamentIdFromUrl]);
 
   // Mantener consistencia: nº equipos = nº grupos * equipos por grupo
   useEffect(() => {
