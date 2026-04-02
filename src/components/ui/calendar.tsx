@@ -15,11 +15,23 @@ function Calendar({
   showOutsideDays = true,
   ...props
 }: CalendarProps) {
+  const weekdayLabels = ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"]
   return (
-    <DayPicker
-      showOutsideDays={showOutsideDays}
-      className={cn("p-3", className)}
-      classNames={{
+    <div className={cn("p-3", className)}>
+      <div className="grid grid-cols-7 gap-0 px-0.5 pb-2">
+        {weekdayLabels.map((d) => (
+          <div
+            key={d}
+            className="h-9 flex items-center justify-center text-[0.75rem] font-black text-white/55"
+          >
+            {d}
+          </div>
+        ))}
+      </div>
+      <DayPicker
+        showOutsideDays={showOutsideDays}
+        className={cn("", className)}
+        classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
         caption: "grid grid-cols-3 items-center pt-1",
@@ -32,10 +44,9 @@ function Calendar({
         nav_button_previous: "justify-self-start",
         nav_button_next: "justify-self-end",
         table: "w-full table-fixed border-separate border-spacing-0",
-        head_row: "",
-        head_cell:
-          "p-0 text-[0.75rem] font-black text-white/55 text-center align-middle",
-        row: "",
+        head_row: "hidden",
+        head_cell: "hidden",
+        row: "grid grid-cols-7 w-full mt-2",
         cell: "p-0 text-center text-sm relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
         day: cn(
           buttonVariants({ variant: "ghost" }),
@@ -63,7 +74,8 @@ function Calendar({
         },
       }}
       {...props}
-    />
+      />
+    </div>
   )
 }
 Calendar.displayName = "Calendar"
