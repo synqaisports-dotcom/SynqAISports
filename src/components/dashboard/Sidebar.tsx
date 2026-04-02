@@ -137,7 +137,7 @@ const navItems: NavItem[] = [
   // TORNEOS (fuera de competición normal)
   { title: "Resumen Torneos", href: "/dashboard/tournaments", icon: Trophy, category: "tournaments", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
   { title: "Planificador", href: "/dashboard/tournaments/planner", icon: CalendarDays, category: "tournaments", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
-  { title: "Ver Torneos", href: "/dashboard/tournaments/list", icon: BookOpen, category: "tournaments", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
+  { title: "Torneos", href: "/dashboard/tournaments/list", icon: BookOpen, category: "tournaments", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
   { title: "Clasificación", href: "/dashboard/tournaments/classification", icon: Trophy, category: "tournaments", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
   { title: "Cruces", href: "/dashboard/tournaments/bracket", icon: Swords, category: "tournaments", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
   { title: "Analítica", href: "/dashboard/tournaments/analytics", icon: Activity, category: "tournaments", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },

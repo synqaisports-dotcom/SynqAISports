@@ -28,6 +28,23 @@ import {
   type TournamentIndexItem,
 } from "@/lib/tournaments-storage";
 
+// Clase para la tarjeta de torneo (SynqAI style)
+const tournamentCardClass = `
+  relative overflow-hidden bg-[#0F172A]/60 backdrop-blur-md
+  border border-white/5 hover:border-[#00F2FF]/40
+  p-6 rounded-xl transition-all duration-300 group
+  before:absolute before:left-0 before:top-0 before:h-full before:w-1
+  before:bg-[#00F2FF] before:opacity-0 hover:before:opacity-100
+`;
+
+// Estilo para los bloques de datos (Fechas, Equipos...)
+const dataBlockClass = `
+  flex flex-col gap-1 px-4 border-r border-white/5 last:border-none
+`;
+
+const labelClass = `text-[10px] uppercase tracking-widest text-[#00F2FF]/60 font-bold`;
+const valueClass = `text-sm text-white font-medium`;
+
 function formatDate(value?: string): string {
   if (!value) return "-";
   const d = new Date(value);
@@ -195,7 +212,7 @@ export default function TournamentsListPage() {
     <div className="space-y-8 animate-in fade-in duration-700">
       <div className="border-b border-primary/15 pb-5">
         <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/70">NODO TORNEOS · LISTADO</p>
-        <h1 className="mt-2 text-3xl font-black uppercase tracking-tight text-white">Ver torneos</h1>
+        <h1 className="mt-2 text-3xl font-black uppercase tracking-tight text-white">Torneos</h1>
         <p className="mt-2 text-xs text-white/65">
           Roadmap C por fases: F1 Historial y filtros · F2 Clasificación + cruces · F3 Analítica y exportables.
         </p>
@@ -331,59 +348,88 @@ export default function TournamentsListPage() {
               {filtered.map((item) => {
                 const t = item.record;
                 return (
-                  <div key={t.id} className="rounded-2xl border border-cyan-500/20 bg-black/25 p-4">
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-                      <div className="space-y-2">
-                        <p className="text-[11px] font-black text-white uppercase">{t.name}</p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-2">
-                          <Mini label="Fechas" value={`${formatDate(item.startDate)} - ${formatDate(item.endDate)}`} icon={CalendarRange} />
-                          <Mini label="Categoría" value={item.category} />
-                          <Mini label="Formato" value={formatFootball(item.footballFormat)} />
-                          <Mini label="Equipos cfg" value={String(item.configuredTeams || "-")} />
-                          <Mini label="Equipos cargados" value={String(item.loadedTeams)} />
-                          <Mini label="Estado" value={t.status.toUpperCase()} />
+                  <div key={t.id} className={tournamentCardClass}>
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                      <div className="min-w-0 space-y-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <p className="min-w-0 text-[12px] font-black text-white uppercase tracking-wide truncate">
+                            {t.name}
+                          </p>
+                          <span className="shrink-0 text-[10px] font-black uppercase tracking-[0.18em] text-white/50">
+                            {t.status}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 rounded-xl border border-white/5 bg-black/25 py-3">
+                          <div className={dataBlockClass}>
+                            <p className={labelClass}>Fechas</p>
+                            <p className={valueClass}>
+                              {formatDate(item.startDate)} - {formatDate(item.endDate)}
+                            </p>
+                          </div>
+                          <div className={dataBlockClass}>
+                            <p className={labelClass}>Categoría</p>
+                            <p className={valueClass}>{item.category}</p>
+                          </div>
+                          <div className={dataBlockClass}>
+                            <p className={labelClass}>Formato</p>
+                            <p className={valueClass}>{formatFootball(item.footballFormat)}</p>
+                          </div>
+                          <div className={dataBlockClass}>
+                            <p className={labelClass}>Equipos cfg</p>
+                            <p className={valueClass}>{String(item.configuredTeams || "-")}</p>
+                          </div>
+                          <div className={dataBlockClass}>
+                            <p className={labelClass}>Equipos cargados</p>
+                            <p className={valueClass}>{String(item.loadedTeams)}</p>
+                          </div>
+                          <div className={dataBlockClass}>
+                            <p className={labelClass}>Año</p>
+                            <p className={valueClass}>{item.year}</p>
+                          </div>
                         </div>
                       </div>
+
                       <div className="flex flex-wrap gap-1.5">
                         <button
                           type="button"
                           onClick={() => setActiveTournamentId(clubScopeId, t.id)}
-                          className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-primary/25 bg-primary/10 text-primary"
+                          className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-[#00F2FF]/20 bg-[#00F2FF]/10 text-[#00F2FF] hover:bg-[#00F2FF]/15 transition-[background-color,border-color,color,opacity,transform]"
                           title="Activar torneo"
                         >
                           <Trophy className="h-4 w-4" />
                         </button>
                         <Link
                           href={`/dashboard/tournaments/planner?tournamentId=${encodeURIComponent(t.id)}`}
-                          className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-primary/25 bg-primary/10 text-primary"
+                          className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-[#00F2FF]/20 bg-black/20 text-[#00F2FF] hover:bg-[#00F2FF]/10 transition-[background-color,border-color,color,opacity,transform]"
                           title="Modificar"
                         >
                           <Pencil className="h-4 w-4" />
                         </Link>
                         <Link
                           href={`/dashboard/tournaments/teams?tournamentId=${encodeURIComponent(t.id)}`}
-                          className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-primary/25 bg-primary/10 text-primary"
+                          className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-[#00F2FF]/20 bg-black/20 text-[#00F2FF] hover:bg-[#00F2FF]/10 transition-[background-color,border-color,color,opacity,transform]"
                           title="Asignar equipos"
                         >
                           <Users className="h-4 w-4" />
                         </Link>
                         <Link
                           href={`/dashboard/tournaments/classification?tournamentId=${encodeURIComponent(t.id)}`}
-                          className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-primary/25 bg-primary/10 text-primary"
+                          className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-[#00F2FF]/20 bg-black/20 text-[#00F2FF] hover:bg-[#00F2FF]/10 transition-[background-color,border-color,color,opacity,transform]"
                           title="Ver clasificación"
                         >
                           <ListOrdered className="h-4 w-4" />
                         </Link>
                         <Link
                           href={`/dashboard/tournaments/bracket?tournamentId=${encodeURIComponent(t.id)}`}
-                          className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-primary/25 bg-primary/10 text-primary"
+                          className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-[#00F2FF]/20 bg-black/20 text-[#00F2FF] hover:bg-[#00F2FF]/10 transition-[background-color,border-color,color,opacity,transform]"
                           title="Ver cruces"
                         >
                           <Swords className="h-4 w-4" />
                         </Link>
                         <Link
                           href={`/dashboard/tournaments/analytics?tournamentId=${encodeURIComponent(t.id)}`}
-                          className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-primary/25 bg-primary/10 text-primary"
+                          className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-[#00F2FF]/20 bg-black/20 text-[#00F2FF] hover:bg-[#00F2FF]/10 transition-[background-color,border-color,color,opacity,transform]"
                           title="Analítica"
                         >
                           <BarChart3 className="h-4 w-4" />
