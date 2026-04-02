@@ -4,6 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import { BarChart3, CalendarRange, ListOrdered, Pencil, Search, Swords, Trophy, Users } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAuth } from "@/lib/auth-context";
 import {
   ensureTournamentId,
@@ -79,6 +86,43 @@ function Segmented({
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function PrettySelect({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: Array<{ value: string; label: string }>;
+  onChange: (next: string) => void;
+}) {
+  const current = options.find((o) => o.value === value)?.label ?? "—";
+  return (
+    <div className="h-10 rounded-xl border border-cyan-500/20 bg-black/35 px-2 flex items-center gap-2">
+      <span className="hidden lg:inline text-[9px] font-black uppercase tracking-[0.16em] text-cyan-200/70 px-1.5">
+        {label}
+      </span>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger className="h-9 flex-1 rounded-lg border border-white/10 bg-white/[0.03] px-3 text-[10px] font-black uppercase tracking-[0.12em] text-white/80 focus:ring-0 focus:ring-offset-0">
+          <SelectValue placeholder={current} />
+        </SelectTrigger>
+        <SelectContent className="bg-[#0a0f18] border-cyan-500/20 text-white rounded-2xl shadow-2xl p-1">
+          {options.map((opt) => (
+            <SelectItem
+              key={opt.value}
+              value={opt.value}
+              className="rounded-xl focus:bg-cyan-500/10 focus:text-cyan-200 data-[state=checked]:bg-cyan-500/10"
+            >
+              <span className="text-[10px] font-black uppercase tracking-[0.14em]">{opt.label}</span>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }

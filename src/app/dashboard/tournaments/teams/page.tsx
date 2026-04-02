@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Plus, Save, Users, ArrowLeft, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth-context";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   getActiveTournamentId,
   loadTournamentConfigById,
@@ -139,47 +140,32 @@ export default function TournamentsTeamsPage() {
                     placeholder="Nombre del equipo"
                     className="h-10 flex-1 rounded-lg border border-cyan-500/15 bg-black/40 px-3 text-white outline-none"
                   />
-                  <div className="flex flex-wrap gap-1.5 md:w-[240px] justify-end">
-                    <button
-                      type="button"
+                  <div className="md:w-[240px]">
+                    <Select
+                      value={team.groupIndex == null ? "none" : String(team.groupIndex)}
                       disabled={isFinished}
-                      onClick={() =>
+                      onValueChange={(v) => {
                         setTeams((prev) =>
-                          prev.map((t) => (t.id === team.id ? { ...t, groupIndex: undefined } : t)),
-                        )
-                      }
-                      className={`h-10 px-3 rounded-lg border text-[10px] font-black uppercase tracking-[0.12em] transition-[background-color,border-color,color,opacity,transform] ${
-                        team.groupIndex == null
-                          ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-200"
-                          : "border-white/10 bg-white/[0.03] text-white/70 hover:bg-white/[0.06]"
-                      }`}
-                      title="Sin grupo"
+                          prev.map((t) =>
+                            t.id === team.id
+                              ? { ...t, groupIndex: v === "none" ? undefined : Math.max(0, Math.min(groupsCount - 1, Number(v))) }
+                              : t,
+                          ),
+                        );
+                      }}
                     >
-                      Sin
-                    </button>
-                    {Array.from({ length: groupsCount }).map((_, idx) => {
-                      const active = team.groupIndex === idx;
-                      return (
-                        <button
-                          key={idx}
-                          type="button"
-                          disabled={isFinished}
-                          onClick={() =>
-                            setTeams((prev) =>
-                              prev.map((t) => (t.id === team.id ? { ...t, groupIndex: idx } : t)),
-                            )
-                          }
-                          className={`h-10 px-3 rounded-lg border text-[10px] font-black uppercase tracking-[0.12em] transition-[background-color,border-color,color,opacity,transform] ${
-                            active
-                              ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-200"
-                              : "border-white/10 bg-white/[0.03] text-white/70 hover:bg-white/[0.06]"
-                          }`}
-                          title={`Grupo ${String.fromCharCode(65 + idx)}`}
-                        >
-                          {String.fromCharCode(65 + idx)}
-                        </button>
-                      );
-                    })}
+                      <SelectTrigger className="h-10 rounded-lg border border-cyan-500/15 bg-black/40 text-white outline-none focus:ring-0 focus:ring-offset-0">
+                        <SelectValue placeholder="Grupo" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#0a0f18] border-cyan-500/20 text-white rounded-2xl shadow-2xl">
+                        <SelectItem value="none">Sin grupo</SelectItem>
+                        {Array.from({ length: groupsCount }).map((_, idx) => (
+                          <SelectItem key={idx} value={String(idx)}>
+                            Grupo {String.fromCharCode(65 + idx)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <button
                     type="button"

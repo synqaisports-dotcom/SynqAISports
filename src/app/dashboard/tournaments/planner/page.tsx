@@ -12,6 +12,13 @@ import {
   upsertTournament,
   setActiveTournamentId,
 } from "@/lib/tournaments-storage";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type TimeWindow = "morning" | "afternoon" | "both";
 type FootballFormat = "f11" | "f7" | "futsal";
@@ -62,6 +69,10 @@ export default function TournamentsPlannerPage() {
   const [config, setConfig] = useState<PlannerConfig>(DEFAULT_CONFIG);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [activeTournamentId, setActiveTournamentIdState] = useState<string | null>(null);
+  const isFinished = useMemo(() => {
+    const t = tournaments.find((x) => x.id === activeTournamentId);
+    return t?.status === "finished";
+  }, [tournaments, activeTournamentId]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -435,28 +446,19 @@ export default function TournamentsPlannerPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <label className="space-y-1">
                 <span className="text-[10px] font-black uppercase tracking-[0.12em] text-white/70">Nº partes</span>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { v: 1 as const, label: "1 parte" },
-                    { v: 2 as const, label: "2 partes" },
-                  ].map((opt) => {
-                    const active = config.halvesCount === opt.v;
-                    return (
-                      <button
-                        key={opt.v}
-                        type="button"
-                        onClick={() => setConfig((prev) => ({ ...prev, halvesCount: opt.v }))}
-                        className={`h-10 rounded-lg border text-[10px] font-black uppercase tracking-[0.12em] transition-[background-color,border-color,color,opacity,transform] ${
-                          active
-                            ? "border-primary/40 bg-primary/15 text-primary"
-                            : "border-white/15 bg-white/5 text-white/70 hover:bg-white/10"
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    );
-                  })}
-                </div>
+                <Select
+                  value={String(config.halvesCount)}
+                  onValueChange={(v) => setConfig((prev) => ({ ...prev, halvesCount: v === "1" ? 1 : 2 }))}
+                  disabled={isFinished}
+                >
+                  <SelectTrigger className="h-10 w-full rounded-lg border border-primary/25 bg-black/40 px-3 text-white outline-none focus:ring-0 focus:ring-offset-0">
+                    <SelectValue placeholder="Selecciona" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#0a0f18] border-primary/20 text-white rounded-2xl shadow-2xl">
+                    <SelectItem value="1">1 parte</SelectItem>
+                    <SelectItem value="2">2 partes</SelectItem>
+                  </SelectContent>
+                </Select>
               </label>
               <label className="space-y-1">
                 <span className="text-[10px] font-black uppercase tracking-[0.12em] text-white/70">Min por parte</span>
