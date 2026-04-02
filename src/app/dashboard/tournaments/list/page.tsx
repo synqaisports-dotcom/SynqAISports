@@ -56,11 +56,11 @@ function Segmented({
   onChange: (next: string) => void;
 }) {
   return (
-    <div className="h-10 rounded-xl border border-cyan-500/20 bg-black/35 px-2 flex items-center gap-1">
+    <div className="min-h-10 rounded-xl border border-cyan-500/20 bg-black/35 px-2 py-1 flex items-center gap-1">
       <span className="hidden lg:inline text-[9px] font-black uppercase tracking-[0.16em] text-cyan-200/70 px-1.5">
         {label}
       </span>
-      <div className="flex-1 flex items-center gap-1">
+      <div className="flex-1 flex items-center gap-1 overflow-x-auto overscroll-x-contain pr-1">
         {options.map((opt) => {
           const active = opt.value === value;
           return (
@@ -68,7 +68,7 @@ function Segmented({
               key={opt.value}
               type="button"
               onClick={() => onChange(opt.value)}
-              className={`h-8 px-3 rounded-lg border text-[10px] font-black uppercase tracking-[0.14em] transition-[background-color,border-color,color,opacity,transform] ${
+              className={`shrink-0 whitespace-nowrap h-8 px-2.5 rounded-lg border text-[9px] font-black uppercase tracking-[0.14em] transition-[background-color,border-color,color,opacity,transform] ${
                 active
                   ? "border-cyan-500/35 bg-cyan-500/15 text-cyan-200"
                   : "border-white/10 bg-white/[0.03] text-white/65 hover:text-white/80 hover:bg-white/[0.05]"
@@ -223,7 +223,7 @@ export default function TournamentsListPage() {
               </button>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 lg:grid-cols-5 gap-2">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-2">
                 <label className="lg:col-span-2 h-10 rounded-xl border border-cyan-500/20 bg-black/35 px-3 flex items-center gap-2">
                   <Search className="h-4 w-4 text-cyan-300/80" />
                   <input
@@ -233,7 +233,8 @@ export default function TournamentsListPage() {
                     className="w-full bg-transparent outline-none text-sm text-white placeholder:text-white/40"
                   />
                 </label>
-                <Segmented
+                <div className="lg:col-span-3">
+                  <Segmented
                   label="Estado"
                   value={statusFilter}
                   onChange={(v) => setStatusFilter(v as typeof statusFilter)}
@@ -243,8 +244,10 @@ export default function TournamentsListPage() {
                     { value: "published", label: "Publicado" },
                     { value: "finished", label: "Finalizado" },
                   ]}
-                />
-                <Segmented
+                  />
+                </div>
+                <div className="lg:col-span-3">
+                  <Segmented
                   label="Formato"
                   value={formatFilter}
                   onChange={(v) => setFormatFilter(v as typeof formatFilter)}
@@ -254,23 +257,28 @@ export default function TournamentsListPage() {
                     { value: "f7", label: "F7" },
                     { value: "futsal", label: "Futsal" },
                   ]}
-                />
-                <Segmented
+                  />
+                </div>
+                <div className="lg:col-span-4">
+                  <Segmented
                   label="Año"
                   value={yearFilter}
                   onChange={(v) => setYearFilter(v)}
                   options={[{ value: "all", label: "Todos" }, ...years.map((y) => ({ value: y, label: y }))]}
-                />
+                  />
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
-                <Segmented
-                  label="Categoría"
-                  value={categoryFilter}
-                  onChange={(v) => setCategoryFilter(v)}
-                  options={[{ value: "all", label: "Todas" }, ...categories.map((c) => ({ value: c, label: c }))]}
-                />
-                <div className="lg:col-span-2 h-10 rounded-xl border border-cyan-500/20 bg-cyan-500/5 px-3 flex items-center justify-between text-[10px] font-black uppercase tracking-[0.14em] text-cyan-200/85">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-2">
+                <div className="lg:col-span-6">
+                  <Segmented
+                    label="Categoría"
+                    value={categoryFilter}
+                    onChange={(v) => setCategoryFilter(v)}
+                    options={[{ value: "all", label: "Todas" }, ...categories.map((c) => ({ value: c, label: c }))]}
+                  />
+                </div>
+                <div className="lg:col-span-6 min-h-10 rounded-xl border border-cyan-500/20 bg-cyan-500/5 px-3 flex items-center justify-between text-[10px] font-black uppercase tracking-[0.14em] text-cyan-200/85">
                   <span>Total torneos visibles</span>
                   <span>{filtered.length}</span>
                 </div>
