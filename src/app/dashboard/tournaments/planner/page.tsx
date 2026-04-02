@@ -248,7 +248,7 @@ export default function TournamentsPlannerPage() {
                 min={1}
                 value={config.tournamentDays}
                 onChange={(e) => setConfig((prev) => ({ ...prev, tournamentDays: Number(e.target.value) || 1 }))}
-                className="h-11 w-full rounded-xl border border-primary/25 bg-black/40 px-3 text-white outline-none"
+                className="h-11 w-full rounded-xl border border-primary/25 bg-black/40 px-3 text-white outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]"
               />
             </label>
 
@@ -289,7 +289,7 @@ export default function TournamentsPlannerPage() {
                 min={1}
                 value={config.groupsCount}
                 onChange={(e) => setConfig((prev) => ({ ...prev, groupsCount: Math.max(1, Number(e.target.value) || 1) }))}
-                className="h-11 w-full rounded-xl border border-primary/25 bg-black/40 px-3 text-white outline-none"
+                className="h-11 w-full rounded-xl border border-primary/25 bg-black/40 px-3 text-white outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]"
               />
             </label>
 
@@ -300,7 +300,7 @@ export default function TournamentsPlannerPage() {
                 min={0}
                 value={config.teamsPerGroup}
                 onChange={(e) => setConfig((prev) => ({ ...prev, teamsPerGroup: Math.max(0, Number(e.target.value) || 0) }))}
-                className="h-11 w-full rounded-xl border border-primary/25 bg-black/40 px-3 text-white outline-none"
+                className="h-11 w-full rounded-xl border border-primary/25 bg-black/40 px-3 text-white outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]"
               />
             </label>
 
@@ -311,7 +311,7 @@ export default function TournamentsPlannerPage() {
                 min={1}
                 value={config.fieldsCount}
                 onChange={(e) => setConfig((prev) => ({ ...prev, fieldsCount: Number(e.target.value) || 1 }))}
-                className="h-11 w-full rounded-xl border border-primary/25 bg-black/40 px-3 text-white outline-none"
+                className="h-11 w-full rounded-xl border border-primary/25 bg-black/40 px-3 text-white outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]"
               />
             </label>
           </div>
@@ -435,16 +435,28 @@ export default function TournamentsPlannerPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <label className="space-y-1">
                 <span className="text-[10px] font-black uppercase tracking-[0.12em] text-white/70">Nº partes</span>
-                <select
-                  value={config.halvesCount}
-                  onChange={(e) =>
-                    setConfig((prev) => ({ ...prev, halvesCount: Number(e.target.value) === 1 ? 1 : 2 }))
-                  }
-                  className="h-10 w-full rounded-lg border border-primary/25 bg-black/40 px-3 text-white outline-none"
-                >
-                  <option value={1}>1 parte</option>
-                  <option value={2}>2 partes</option>
-                </select>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { v: 1 as const, label: "1 parte" },
+                    { v: 2 as const, label: "2 partes" },
+                  ].map((opt) => {
+                    const active = config.halvesCount === opt.v;
+                    return (
+                      <button
+                        key={opt.v}
+                        type="button"
+                        onClick={() => setConfig((prev) => ({ ...prev, halvesCount: opt.v }))}
+                        className={`h-10 rounded-lg border text-[10px] font-black uppercase tracking-[0.12em] transition-[background-color,border-color,color,opacity,transform] ${
+                          active
+                            ? "border-primary/40 bg-primary/15 text-primary"
+                            : "border-white/15 bg-white/5 text-white/70 hover:bg-white/10"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
               </label>
               <label className="space-y-1">
                 <span className="text-[10px] font-black uppercase tracking-[0.12em] text-white/70">Min por parte</span>
@@ -453,7 +465,7 @@ export default function TournamentsPlannerPage() {
                   min={5}
                   value={config.minutesPerHalf}
                   onChange={(e) => setConfig((prev) => ({ ...prev, minutesPerHalf: Number(e.target.value) || 5 }))}
-                  className="h-10 w-full rounded-lg border border-primary/25 bg-black/40 px-3 text-white outline-none"
+                  className="h-10 w-full rounded-lg border border-primary/25 bg-black/40 px-3 text-white outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]"
                 />
               </label>
               <label className="space-y-1">
@@ -464,7 +476,7 @@ export default function TournamentsPlannerPage() {
                   value={config.breakMinutes}
                   onChange={(e) => setConfig((prev) => ({ ...prev, breakMinutes: Math.max(0, Number(e.target.value) || 0) }))}
                   disabled={config.halvesCount === 1}
-                  className="h-10 w-full rounded-lg border border-primary/25 bg-black/40 px-3 text-white outline-none"
+                  className="h-10 w-full rounded-lg border border-primary/25 bg-black/40 px-3 text-white outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]"
                 />
               </label>
               <label className="space-y-1">
@@ -476,7 +488,7 @@ export default function TournamentsPlannerPage() {
                   onChange={(e) =>
                     setConfig((prev) => ({ ...prev, bufferBetweenMatches: Math.max(0, Number(e.target.value) || 0) }))
                   }
-                  className="h-10 w-full rounded-lg border border-primary/25 bg-black/40 px-3 text-white outline-none"
+                  className="h-10 w-full rounded-lg border border-primary/25 bg-black/40 px-3 text-white outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]"
                 />
               </label>
             </div>
@@ -553,7 +565,7 @@ export default function TournamentsPlannerPage() {
                   min={0}
                   value={config.pointsWin}
                   onChange={(e) => setConfig((prev) => ({ ...prev, pointsWin: Math.max(0, Number(e.target.value) || 0) }))}
-                  className="h-10 w-full rounded-lg border border-primary/25 bg-black/40 px-3 text-white outline-none"
+                  className="h-10 w-full rounded-lg border border-primary/25 bg-black/40 px-3 text-white outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]"
                 />
               </label>
               <label className="space-y-1">
@@ -563,7 +575,7 @@ export default function TournamentsPlannerPage() {
                   min={0}
                   value={config.pointsDraw}
                   onChange={(e) => setConfig((prev) => ({ ...prev, pointsDraw: Math.max(0, Number(e.target.value) || 0) }))}
-                  className="h-10 w-full rounded-lg border border-primary/25 bg-black/40 px-3 text-white outline-none"
+                  className="h-10 w-full rounded-lg border border-primary/25 bg-black/40 px-3 text-white outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]"
                 />
               </label>
               <label className="space-y-1">
@@ -573,7 +585,7 @@ export default function TournamentsPlannerPage() {
                   min={0}
                   value={config.pointsLoss}
                   onChange={(e) => setConfig((prev) => ({ ...prev, pointsLoss: Math.max(0, Number(e.target.value) || 0) }))}
-                  className="h-10 w-full rounded-lg border border-primary/25 bg-black/40 px-3 text-white outline-none"
+                  className="h-10 w-full rounded-lg border border-primary/25 bg-black/40 px-3 text-white outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]"
                 />
               </label>
             </div>

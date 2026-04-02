@@ -139,28 +139,48 @@ export default function TournamentsTeamsPage() {
                     placeholder="Nombre del equipo"
                     className="h-10 flex-1 rounded-lg border border-cyan-500/15 bg-black/40 px-3 text-white outline-none"
                   />
-                  <select
-                    value={team.groupIndex == null ? "" : String(team.groupIndex)}
-                    disabled={isFinished}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      setTeams((prev) =>
-                        prev.map((t) =>
-                          t.id === team.id
-                            ? { ...t, groupIndex: v === "" ? undefined : Math.max(0, Math.min(groupsCount - 1, Number(v))) }
-                            : t,
-                        ),
+                  <div className="flex flex-wrap gap-1.5 md:w-[240px] justify-end">
+                    <button
+                      type="button"
+                      disabled={isFinished}
+                      onClick={() =>
+                        setTeams((prev) =>
+                          prev.map((t) => (t.id === team.id ? { ...t, groupIndex: undefined } : t)),
+                        )
+                      }
+                      className={`h-10 px-3 rounded-lg border text-[10px] font-black uppercase tracking-[0.12em] transition-[background-color,border-color,color,opacity,transform] ${
+                        team.groupIndex == null
+                          ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-200"
+                          : "border-white/10 bg-white/[0.03] text-white/70 hover:bg-white/[0.06]"
+                      }`}
+                      title="Sin grupo"
+                    >
+                      Sin
+                    </button>
+                    {Array.from({ length: groupsCount }).map((_, idx) => {
+                      const active = team.groupIndex === idx;
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          disabled={isFinished}
+                          onClick={() =>
+                            setTeams((prev) =>
+                              prev.map((t) => (t.id === team.id ? { ...t, groupIndex: idx } : t)),
+                            )
+                          }
+                          className={`h-10 px-3 rounded-lg border text-[10px] font-black uppercase tracking-[0.12em] transition-[background-color,border-color,color,opacity,transform] ${
+                            active
+                              ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-200"
+                              : "border-white/10 bg-white/[0.03] text-white/70 hover:bg-white/[0.06]"
+                          }`}
+                          title={`Grupo ${String.fromCharCode(65 + idx)}`}
+                        >
+                          {String.fromCharCode(65 + idx)}
+                        </button>
                       );
-                    }}
-                    className="h-10 rounded-lg border border-cyan-500/15 bg-black/40 px-3 text-white outline-none md:w-[180px]"
-                  >
-                    <option value="">Sin grupo</option>
-                    {Array.from({ length: groupsCount }).map((_, idx) => (
-                      <option key={idx} value={String(idx)}>
-                        Grupo {String.fromCharCode(65 + idx)}
-                      </option>
-                    ))}
-                  </select>
+                    })}
+                  </div>
                   <button
                     type="button"
                     onClick={() => setTeams((prev) => prev.filter((t) => t.id !== team.id))}

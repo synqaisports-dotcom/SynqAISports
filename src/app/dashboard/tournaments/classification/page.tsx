@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Download, GitBranch, Save, Trophy } from "lucide-react";
@@ -34,6 +34,10 @@ export default function TournamentClassificationPage() {
   const [matches, setMatches] = useState<TournamentMatchResultRow[]>(
     () => loadTournamentMatchesById(clubScopeId, tournamentId),
   );
+
+  useEffect(() => {
+    setMatches(loadTournamentMatchesById(clubScopeId, tournamentId));
+  }, [clubScopeId, tournamentId]);
 
   const downloadCsv = (filename: string, csv: string) => {
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
