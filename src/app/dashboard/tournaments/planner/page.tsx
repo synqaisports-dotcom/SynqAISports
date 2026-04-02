@@ -31,12 +31,25 @@ function formatDateLabel(value?: string): string {
 
 function toDate(value?: string): Date | undefined {
   if (!value) return undefined;
+  // Parse local para evitar desfases por UTC (YYYY-MM-DD se interpreta distinto según navegador/zona).
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (m) {
+    const y = Number(m[1]);
+    const mo = Number(m[2]) - 1;
+    const da = Number(m[3]);
+    const d = new Date(y, mo, da);
+    return Number.isNaN(d.getTime()) ? undefined : d;
+  }
   const d = new Date(value);
   return Number.isNaN(d.getTime()) ? undefined : d;
 }
 
 function toISODate(d: Date): string {
-  return d.toISOString().slice(0, 10);
+  // Formato YYYY-MM-DD en hora local (sin UTC) para que no “baje” un día.
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const da = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${da}`;
 }
 
 type TimeWindow = "morning" | "afternoon" | "both";
@@ -52,8 +65,8 @@ const DEFAULT_CONFIG: PlannerConfig = {
   substitutesPerTeam: 7,
   categories: [],
   tournamentDays: 1,
-  startDate: new Date().toISOString().slice(0, 10),
-  endDate: new Date().toISOString().slice(0, 10),
+  startDate: toISODate(new Date()),
+  endDate: toISODate(new Date()),
   groupsCount: 2,
   teamsPerGroup: 4,
   timeWindow: "both",

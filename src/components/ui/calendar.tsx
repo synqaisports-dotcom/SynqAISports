@@ -46,12 +46,14 @@ function Calendar({ className, selected, onSelect, disabled }: CalendarProps) {
   }, [selected]);
 
   const today = React.useMemo(() => startOfDay(new Date()), []);
-  const firstDow = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay(); // 0=Do ... 6=Sa
+  // 0=Do ... 6=Sa -> queremos semana empezando en lunes
+  const firstDowSunday0 = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
+  const firstDowMonday0 = (firstDowSunday0 + 6) % 7; // 0=Lu ... 6=Do
   const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
-  const blanks = Array.from({ length: firstDow }, (_, i) => i);
+  const blanks = Array.from({ length: firstDowMonday0 }, (_, i) => i);
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
-  const weekdayLabels = ["DO", "LU", "MA", "MI", "JU", "VI", "SA"];
+  const weekdayLabels = ["LU", "MA", "MI", "JU", "VI", "SA", "DO"];
   const monthLabel = formatMonthLabelES(currentMonth);
 
   return (
