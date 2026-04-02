@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { CalendarClock, Info, Save } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth-context";
+import { cn } from "@/lib/utils";
 import {
   type TournamentConfig,
   migrateLegacyTournamentToV2,
@@ -21,6 +22,17 @@ import {
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+
+// Estilo SynqAI (alineado con /dashboard/tournaments/list)
+const labelClass = `text-[10px] uppercase tracking-widest text-[#00F2FF]/60 font-bold`;
+const inputClass =
+  "h-11 w-full rounded-xl border border-white/5 bg-[#0F172A]/40 px-3 text-white outline-none hover:border-[#00F2FF]/25 focus-visible:border-[#00F2FF]/40 transition-[background-color,border-color,color,opacity,transform]";
+const inputDisabledClass =
+  "h-11 w-full rounded-xl border border-white/5 bg-[#0F172A]/30 px-3 text-white/80 outline-none cursor-not-allowed";
+const sectionCardClass =
+  "relative overflow-hidden bg-[#0F172A]/60 backdrop-blur-md border border-white/5 hover:border-[#00F2FF]/30 rounded-2xl transition-all duration-300 group";
+const infoPanelClass =
+  "rounded-xl border border-white/5 bg-black/25 p-3 flex items-start gap-2";
 
 function formatDateLabel(value?: string): string {
   if (!value) return "Selecciona fecha";
@@ -275,17 +287,17 @@ export default function TournamentsPlannerPage() {
         </h1>
       </div>
 
-      <Card className="glass-panel border border-primary/20 bg-black/30 rounded-2xl">
+      <Card className={sectionCardClass}>
         <CardHeader>
           <CardTitle className="text-white font-black uppercase tracking-wider flex items-center gap-2">
-            <CalendarClock className="h-4 w-4 text-primary" />
+            <CalendarClock className="h-4 w-4 text-[#00F2FF]" />
             Motor de planificación (Fase 1)
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-white/75">
           <p>Se añadirá aquí la programación automática por campo/hora con buffers entre partidos.</p>
-          <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 flex items-start gap-2">
-            <Info className="h-4 w-4 text-primary mt-0.5" />
+          <div className={infoPanelClass}>
+            <Info className="h-4 w-4 text-[#00F2FF] mt-0.5" />
             <p className="text-[12px]">
               Reglas previstas: 1xX min o 2xX min, descanso entre partes y 10 min entre partidos (configurable).
             </p>
@@ -293,32 +305,32 @@ export default function TournamentsPlannerPage() {
         </CardContent>
       </Card>
 
-      <Card className="glass-panel border border-primary/20 bg-black/30 rounded-2xl">
+      <Card className={sectionCardClass}>
         <CardHeader>
           <CardTitle className="text-white font-black uppercase tracking-wider">Configuración operativa (MVP)</CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <label className="space-y-2 md:col-span-2">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Nombre del torneo</span>
+              <span className={labelClass}>Nombre del torneo</span>
               <input
                 type="text"
                 value={config.tournamentName}
                 onChange={(e) => setConfig((prev) => ({ ...prev, tournamentName: e.target.value }))}
-                className="h-11 w-full rounded-xl border border-primary/25 bg-black/40 px-3 text-white outline-none"
+                className={inputClass}
                 placeholder="Ej: Torneo Verano Ciudad"
               />
             </label>
 
             <label className="space-y-2">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Nº equipos</span>
+              <span className={labelClass}>Nº equipos</span>
               <input
                 type="number"
                 min={2}
                 value={computedTeamsCount}
                 disabled
                 readOnly
-                className="h-11 w-full rounded-xl border border-primary/25 bg-black/30 px-3 text-white/80 outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield] cursor-not-allowed"
+                className={`${inputDisabledClass} [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]`}
               />
               <span className="text-[10px] text-white/55">
                 Calculado automáticamente: grupos × equipos/grupo.
@@ -326,16 +338,14 @@ export default function TournamentsPlannerPage() {
             </label>
 
             <label className="space-y-2">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">
-                Titulares en campo (por equipo)
-              </span>
+              <span className={labelClass}>Titulares en campo (por equipo)</span>
               <input
                 type="number"
                 min={3}
                 value={config.startersPerTeam ?? 0}
                 disabled
                 readOnly
-                className="h-11 w-full rounded-xl border border-primary/25 bg-black/30 px-3 text-white/80 outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield] cursor-not-allowed"
+                className={`${inputDisabledClass} [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]`}
               />
               <span className="text-[10px] text-white/55">
                 Calculado automáticamente por formato (F11=11, F7=7, Futsal=5).
@@ -343,9 +353,7 @@ export default function TournamentsPlannerPage() {
             </label>
 
             <label className="space-y-2">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">
-                Suplentes (por equipo)
-              </span>
+              <span className={labelClass}>Suplentes (por equipo)</span>
               <input
                 type="number"
                 min={0}
@@ -356,7 +364,7 @@ export default function TournamentsPlannerPage() {
                     substitutesPerTeam: Math.max(0, Number(e.target.value) || 0) || 0,
                   }))
                 }
-                className="h-11 w-full rounded-xl border border-primary/25 bg-black/40 px-3 text-white outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]"
+                className={`${inputClass} [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]`}
               />
               <span className="text-[10px] text-white/55">
                 Número de reservas convocados para el banquillo.
@@ -364,30 +372,30 @@ export default function TournamentsPlannerPage() {
             </label>
 
             <label className="space-y-2">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Nº días torneo</span>
+              <span className={labelClass}>Nº días torneo</span>
               <input
                 type="number"
                 min={1}
                 value={config.tournamentDays}
                 onChange={(e) => setConfig((prev) => ({ ...prev, tournamentDays: Number(e.target.value) || 1 }))}
-                className="h-11 w-full rounded-xl border border-primary/25 bg-black/40 px-3 text-white outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]"
+                className={`${inputClass} [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]`}
               />
             </label>
 
             <label className="space-y-2">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Fecha inicio</span>
+              <span className={labelClass}>Fecha inicio</span>
               <Popover>
                 <PopoverTrigger asChild>
                   <button
                     type="button"
-                    className="h-11 w-full rounded-xl border border-primary/25 bg-black/40 px-3 text-left text-white outline-none hover:bg-white/[0.03] transition-[background-color,border-color,color,opacity,transform]"
+                    className={cn(inputClass, "text-left")}
                   >
                     <span className="text-[11px] font-black">
                       {formatDateLabel(config.startDate)}
                     </span>
                   </button>
                 </PopoverTrigger>
-                <PopoverContent align="start" className="w-auto p-0 bg-[#0a0f18] border-primary/20 rounded-2xl shadow-2xl">
+                <PopoverContent align="start" className="w-auto p-0 bg-[#0a0f18] border border-white/5 rounded-2xl shadow-2xl">
                   <Calendar
                     mode="single"
                     selected={toDate(config.startDate)}
@@ -407,19 +415,19 @@ export default function TournamentsPlannerPage() {
             </label>
 
             <label className="space-y-2">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Fecha fin</span>
+              <span className={labelClass}>Fecha fin</span>
               <Popover>
                 <PopoverTrigger asChild>
                   <button
                     type="button"
-                    className="h-11 w-full rounded-xl border border-primary/25 bg-black/40 px-3 text-left text-white outline-none hover:bg-white/[0.03] transition-[background-color,border-color,color,opacity,transform]"
+                    className={cn(inputClass, "text-left")}
                   >
                     <span className="text-[11px] font-black">
                       {formatDateLabel(config.endDate)}
                     </span>
                   </button>
                 </PopoverTrigger>
-                <PopoverContent align="start" className="w-auto p-0 bg-[#0a0f18] border-primary/20 rounded-2xl shadow-2xl">
+                <PopoverContent align="start" className="w-auto p-0 bg-[#0a0f18] border border-white/5 rounded-2xl shadow-2xl">
                   <Calendar
                     mode="single"
                     selected={toDate(config.endDate)}
@@ -442,41 +450,41 @@ export default function TournamentsPlannerPage() {
             </label>
 
             <label className="space-y-2">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Nº grupos</span>
+              <span className={labelClass}>Nº grupos</span>
               <input
                 type="number"
                 min={1}
                 value={config.groupsCount}
                 onChange={(e) => setConfig((prev) => ({ ...prev, groupsCount: Math.max(1, Number(e.target.value) || 1) }))}
-                className="h-11 w-full rounded-xl border border-primary/25 bg-black/40 px-3 text-white outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]"
+                className={`${inputClass} [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]`}
               />
             </label>
 
             <label className="space-y-2">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Equipos por grupo</span>
+              <span className={labelClass}>Equipos por grupo</span>
               <input
                 type="number"
                 min={0}
                 value={config.teamsPerGroup}
                 onChange={(e) => setConfig((prev) => ({ ...prev, teamsPerGroup: Math.max(0, Number(e.target.value) || 0) }))}
-                className="h-11 w-full rounded-xl border border-primary/25 bg-black/40 px-3 text-white outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]"
+                className={`${inputClass} [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]`}
               />
             </label>
 
             <label className="space-y-2">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Nº campos disponibles</span>
+              <span className={labelClass}>Nº campos disponibles</span>
               <input
                 type="number"
                 min={1}
                 value={config.fieldsCount}
                 onChange={(e) => setConfig((prev) => ({ ...prev, fieldsCount: Number(e.target.value) || 1 }))}
-                className="h-11 w-full rounded-xl border border-primary/25 bg-black/40 px-3 text-white outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]"
+                className={`${inputClass} [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]`}
               />
             </label>
           </div>
 
           <div className="space-y-2">
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Categorías</span>
+            <span className={labelClass}>Categorías</span>
             <div className="flex flex-wrap gap-2">
               {CATEGORY_OPTIONS.map((cat) => {
                 const active = config.categories.includes(cat);
@@ -487,8 +495,8 @@ export default function TournamentsPlannerPage() {
                     onClick={() => toggleCategory(cat)}
                     className={`px-3 py-1.5 rounded-lg border text-[10px] font-black uppercase tracking-wide transition-[background-color,border-color,color,opacity,transform] ${
                       active
-                        ? "border-primary/40 bg-primary/15 text-primary"
-                        : "border-white/15 bg-white/5 text-white/70"
+                        ? "border-[#00F2FF]/35 bg-[#00F2FF]/10 text-[#00F2FF]"
+                        : "border-white/10 bg-white/[0.03] text-white/70 hover:bg-white/[0.05]"
                     }`}
                   >
                     {cat}
@@ -763,7 +771,7 @@ export default function TournamentsPlannerPage() {
             <button
               type="button"
               onClick={handleSave}
-              className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-primary/30 bg-primary/15 text-primary text-[10px] font-black uppercase tracking-[0.16em]"
+              className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-[#00F2FF]/25 bg-[#00F2FF]/10 text-[#00F2FF] text-[10px] font-black uppercase tracking-[0.16em] hover:bg-[#00F2FF]/15 transition-[background-color,border-color,color,opacity,transform]"
             >
               <Save className="h-3.5 w-3.5" />
               Guardar configuración
