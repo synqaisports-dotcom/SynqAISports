@@ -16,7 +16,12 @@ export type TournamentConfig = {
   categoryLabel?: string;
   categories: string[];
   teamsCount: number;
-  /** Nº jugadores por equipo (editable, sugerido por formato). */
+  /** Nº titulares por equipo (en campo). Derivado por formato (F11/F7/Futsal). */
+  startersPerTeam?: number;
+  /**
+   * (Compat) Campo antiguo: nº jugadores por equipo.
+   * Se mantiene para no romper configs ya guardadas.
+   */
   playersPerTeam?: number;
   /** Nº suplentes por equipo (para calcular plantilla total). */
   substitutesPerTeam?: number;

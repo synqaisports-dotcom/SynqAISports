@@ -29,7 +29,8 @@ const DEFAULT_CONFIG: PlannerConfig = {
   tournamentName: "Torneo Primavera",
   categoryLabel: "Alevín",
   teamsCount: 8,
-  playersPerTeam: 11,
+  startersPerTeam: 11,
+  substitutesPerTeam: 7,
   categories: [],
   tournamentDays: 1,
   startDate: new Date().toISOString().slice(0, 10),
@@ -92,13 +93,24 @@ export default function TournamentsPlannerPage() {
       const rawConfig = localStorage.getItem(`synq_tournament_config_v1_${clubScopeId}_${currentId}`);
       const parsed = rawConfig ? (JSON.parse(rawConfig) as unknown) : null;
       if (parsed && typeof parsed === "object") {
-        const next: TournamentConfig = { ...DEFAULT_CONFIG, ...(parsed as Partial<TournamentConfig>) };
-        // Backfill playersPerTeam if missing
-        if (typeof next.playersPerTeam !== "number" || next.playersPerTeam <= 0) {
-          const ff = next.footballFormat;
-          next.playersPerTeam = ff === "f7" ? 7 : ff === "futsal" ? 5 : 11;
-        }
-        setConfig(next);
+        const raw = parsed as Partial<TournamentConfig> & { playersPerTeam?: unknown };
+        const next: TournamentConfig = { ...DEFAULT_CONFIG, ...raw };
+        const ff = next.footballFormat;
+        const startersFromFormat = ff === "f7" ? 7 : ff === "futsal" ? 5 : 11;
+        // Migración: si venía de playersPerTeam, lo tratamos como titulares.
+        const legacyPlayers = typeof raw.playersPerTeam === "number" ? raw.playersPerTeam : undefined;
+        const startersCandidate =
+          typeof next.startersPerTeam === "number" && next.startersPerTeam > 0
+            ? next.startersPerTeam
+            : typeof legacyPlayers === "number" && legacyPlayers > 0
+              ? legacyPlayers
+              : startersFromFormat;
+        setConfig({
+          ...next,
+          startersPerTeam: startersCandidate,
+          substitutesPerTeam:
+            typeof next.substitutesPerTeam === "number" && next.substitutesPerTeam >= 0 ? next.substitutesPerTeam : 7,
+        });
       }
     } catch {
       // ignore
@@ -113,12 +125,12 @@ export default function TournamentsPlannerPage() {
     });
   }, [config.groupsCount, config.teamsPerGroup]);
 
-  // Default playersPerTeam on footballFormat change (only if unset/invalid)
+  // Titulares por equipo: siempre se refresca por formato (no editable).
   useEffect(() => {
     setConfig((prev) => {
-      if (typeof prev.playersPerTeam === "number" && prev.playersPerTeam > 0) return prev;
       const ff = prev.footballFormat;
-      return { ...prev, playersPerTeam: ff === "f7" ? 7 : ff === "futsal" ? 5 : 11 };
+      const starters = ff === "f7" ? 7 : ff === "futsal" ? 5 : 11;
+      return prev.startersPerTeam === starters ? prev : { ...prev, startersPerTeam: starters };
     });
   }, [config.footballFormat]);
 
