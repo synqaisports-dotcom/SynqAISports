@@ -55,6 +55,12 @@ function formatFootball(value?: TournamentIndexItem["footballFormat"]): string {
   return value === "f11" ? "F11" : value === "f7" ? "F7" : "FUTSAL";
 }
 
+function formatStatusLabel(status: TournamentIndexItem["status"]): string {
+  if (status === "published") return "Activo";
+  if (status === "finished") return "Finalizado";
+  return "Pendiente";
+}
+
 type TournamentListItem = {
   record: TournamentIndexItem;
   startDate?: string;
@@ -359,6 +365,8 @@ export default function TournamentsListPage() {
 
               {filtered.map((item) => {
                 const t = item.record;
+                const statusLabel = t.status === "published" ? "Activo" : t.status === "finished" ? "Finalizado" : "Pendiente";
+                const canDelete = t.status !== "finished";
                 return (
                   <div key={t.id} className={tournamentCardClass}>
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -368,7 +376,7 @@ export default function TournamentsListPage() {
                             {t.name}
                           </p>
                           <span className="shrink-0 text-[10px] font-black uppercase tracking-[0.18em] text-white/50">
-                            {t.status}
+                            {statusLabel}
                           </span>
                         </div>
 
@@ -414,13 +422,19 @@ export default function TournamentsListPage() {
                         <button
                           type="button"
                           onClick={() => {
+                            if (!canDelete) return;
                             if (!confirm(`¿Borrar el torneo \"${t.name}\"? Se eliminarán equipos y resultados.`)) return;
                             const res = deleteTournamentById({ clubId: clubScopeId, tournamentId: t.id });
                             if (res.nextActiveId) setActiveTournamentId(clubScopeId, res.nextActiveId);
                             setTournaments(loadTournamentIndex(clubScopeId));
                           }}
-                          className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-white/10 bg-black/20 text-white/70 hover:text-red-300 hover:border-red-500/25 hover:bg-red-500/10 transition-[background-color,border-color,color,opacity,transform]"
-                          title="Borrar torneo"
+                          disabled={!canDelete}
+                          className={`inline-flex items-center justify-center h-10 w-10 rounded-xl border bg-black/20 transition-[background-color,border-color,color,opacity,transform] ${
+                            canDelete
+                              ? "border-white/10 text-white/70 hover:text-red-300 hover:border-red-500/25 hover:bg-red-500/10"
+                              : "border-white/5 text-white/25 cursor-not-allowed opacity-50"
+                          }`}
+                          title={canDelete ? "Borrar torneo" : "No se puede borrar un torneo finalizado"}
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>

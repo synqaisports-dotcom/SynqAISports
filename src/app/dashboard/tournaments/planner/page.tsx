@@ -364,7 +364,8 @@ export default function TournamentsPlannerPage() {
     try {
       if (!activeTournamentId) return;
       const currentStatus = tournaments.find((t) => t.id === activeTournamentId)?.status ?? "draft";
-      if (currentStatus === "finished") return;
+      // Permitimos modificar configuración incluso si está finalizado.
+      // No cambiamos el status aquí: el auto-estado lo gestiona la lista por fechas.
       upsertTournament({ clubId: clubScopeId, tournamentId: activeTournamentId, config, status: currentStatus });
       // Mantener legacy key durante transición
       localStorage.setItem(storageKey, JSON.stringify(config));
