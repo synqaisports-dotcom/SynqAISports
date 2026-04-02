@@ -5,6 +5,16 @@ import { BarChart3, CalendarRange, ListOrdered, Pencil, Search, Swords, Trophy, 
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -159,6 +169,7 @@ export default function TournamentsListPage() {
   const { profile } = useAuth();
   const clubScopeId = profile?.clubId ?? "global-hq";
   const [tournaments, setTournaments] = useState<TournamentIndexItem[]>([]);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | TournamentIndexItem["status"]>("all");
   const [formatFilter, setFormatFilter] = useState<"all" | "f11" | "f7" | "futsal">("all");
@@ -242,6 +253,41 @@ export default function TournamentsListPage() {
           Roadmap C por fases: F1 Historial y filtros · F2 Clasificación + cruces · F3 Analítica y exportables.
         </p>
       </div>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => (open ? null : setDeleteTarget(null))}>
+        <AlertDialogContent className="border border-[#00F2FF]/20 bg-[#0a0f18]/95 backdrop-blur-2xl text-white rounded-2xl shadow-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white font-black uppercase tracking-wide">
+              Borrar torneo
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-white/70">
+              {deleteTarget ? (
+                <>
+                  ¿Borrar el torneo{" "}
+                  <span className="text-white font-black">{deleteTarget.name}</span>? Se eliminarán equipos y resultados.
+                </>
+              ) : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-2">
+            <AlertDialogCancel className="h-10 rounded-xl border border-white/10 bg-black/30 text-white/80 hover:bg-white/[0.05] hover:text-white">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="h-10 rounded-xl border border-red-500/25 bg-red-500/10 text-red-200 hover:bg-red-500/15"
+              onClick={() => {
+                if (!deleteTarget) return;
+                const res = deleteTournamentById({ clubId: clubScopeId, tournamentId: deleteTarget.id });
+                if (res.nextActiveId) setActiveTournamentId(clubScopeId, res.nextActiveId);
+                setTournaments(loadTournamentIndex(clubScopeId));
+                setDeleteTarget(null);
+              }}
+            >
+              Borrar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div className="space-y-4">
         <Card className="glass-panel border border-cyan-500/20 bg-black/30 rounded-2xl">
@@ -432,10 +478,7 @@ export default function TournamentsListPage() {
                           type="button"
                           onClick={() => {
                             if (!canDelete) return;
-                            if (!confirm(`¿Borrar el torneo \"${t.name}\"? Se eliminarán equipos y resultados.`)) return;
-                            const res = deleteTournamentById({ clubId: clubScopeId, tournamentId: t.id });
-                            if (res.nextActiveId) setActiveTournamentId(clubScopeId, res.nextActiveId);
-                            setTournaments(loadTournamentIndex(clubScopeId));
+                            setDeleteTarget({ id: t.id, name: t.name });
                           }}
                           disabled={!canDelete}
                           className={`inline-flex items-center justify-center h-10 w-10 rounded-xl border bg-black/20 transition-[background-color,border-color,color,opacity,transform] ${
