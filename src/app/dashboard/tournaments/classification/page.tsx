@@ -1,14 +1,20 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, GitBranch, Trophy } from "lucide-react";
+import { ArrowLeft, GitBranch, Save, Trophy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth-context";
-import { loadTournamentConfigById, loadTournamentTeamsById } from "@/lib/tournaments-storage";
+import {
+  loadTournamentConfigById,
+  loadTournamentTeamsById,
+  loadTournamentMatchesById,
+  saveTournamentMatchesById,
+  type TournamentMatchResultRow,
+} from "@/lib/tournaments-storage";
 
-type GroupRow = { name: string; pts: number };
+type GroupRow = { name: string; pj: number; g: number; e: number; p: number; gf: number; gc: number; dg: number; pts: number };
 type GroupView = { id: string; name: string; teams: GroupRow[] };
 
 export default function TournamentClassificationPage() {
@@ -25,6 +31,9 @@ export default function TournamentClassificationPage() {
     () => loadTournamentTeamsById(clubScopeId, tournamentId),
     [clubScopeId, tournamentId],
   );
+  const [matches, setMatches] = useState<TournamentMatchResultRow[]>(
+    () => loadTournamentMatchesById(clubScopeId, tournamentId),
+  );
 
   const groups = useMemo<GroupView[]>(() => {
     const groupsCount = Math.max(1, Number(config?.groupsCount ?? 1) || 1);
@@ -37,16 +46,77 @@ export default function TournamentClassificationPage() {
       .filter((v): v is string => v.length > 0);
     const fallback = names.length > 0 ? names : Array.from({ length: Number(config?.teamsCount ?? 0) || 0 }, (_, i) => `Equipo ${i + 1}`);
     const out: GroupView[] = [];
+    const pointsWin = Math.max(0, Number(config?.pointsWin ?? 3) || 0);
+    const pointsDraw = Math.max(0, Number(config?.pointsDraw ?? 1) || 0);
+    const pointsLoss = Math.max(0, Number(config?.pointsLoss ?? 0) || 0);
     for (let g = 0; g < groupsCount; g++) {
       const slice = fallback.slice(g * teamsPerGroup, g * teamsPerGroup + teamsPerGroup);
+      const rows = slice.map((name) => ({ name, pj: 0, g: 0, e: 0, p: 0, gf: 0, gc: 0, dg: 0, pts: 0 }));
+      const rowMap = new Map(rows.map((r) => [r.name, r]));
+      const groupLabel = `Grupo ${String.fromCharCode(65 + g)}`;
+
+      const relevant = matches.filter((m) => m.groupName === groupLabel);
+      for (const m of relevant) {
+        const local = rowMap.get(m.localTeam);
+        const away = rowMap.get(m.awayTeam);
+        if (!local || !away) continue;
+        local.pj += 1;
+        away.pj += 1;
+        local.gf += m.localGoals;
+        local.gc += m.awayGoals;
+        away.gf += m.awayGoals;
+        away.gc += m.localGoals;
+        if (m.localGoals > m.awayGoals) {
+          local.g += 1;
+          away.p += 1;
+          local.pts += pointsWin;
+          away.pts += pointsLoss;
+        } else if (m.localGoals < m.awayGoals) {
+          away.g += 1;
+          local.p += 1;
+          away.pts += pointsWin;
+          local.pts += pointsLoss;
+        } else {
+          local.e += 1;
+          away.e += 1;
+          local.pts += pointsDraw;
+          away.pts += pointsDraw;
+        }
+      }
+      for (const r of rows) r.dg = r.gf - r.gc;
+      rows.sort((a, b) => b.pts - a.pts || b.dg - a.dg || b.gf - a.gf || a.name.localeCompare(b.name));
       out.push({
         id: `G${g + 1}`,
-        name: `Grupo ${String.fromCharCode(65 + g)}`,
-        teams: slice.map((name) => ({ name, pts: 0 })),
+        name: groupLabel,
+        teams: rows,
       });
     }
     return out;
-  }, [config, teams]);
+  }, [config, teams, matches]);
+
+  const editableRows = useMemo(() => {
+    const rows: Array<{ key: string; groupName: string; localTeam: string; awayTeam: string; localGoals: number; awayGoals: number }> = [];
+    for (const g of groups) {
+      for (let i = 0; i < g.teams.length; i++) {
+        for (let j = i + 1; j < g.teams.length; j++) {
+          const localTeam = g.teams[i].name;
+          const awayTeam = g.teams[j].name;
+          const existing = matches.find(
+            (m) => m.groupName === g.name && m.localTeam === localTeam && m.awayTeam === awayTeam,
+          );
+          rows.push({
+            key: `${g.id}_${localTeam}_${awayTeam}`,
+            groupName: g.name,
+            localTeam,
+            awayTeam,
+            localGoals: existing?.localGoals ?? 0,
+            awayGoals: existing?.awayGoals ?? 0,
+          });
+        }
+      }
+    }
+    return rows;
+  }, [groups, matches]);
 
   if (!tournamentId || !config) {
     return (
@@ -79,7 +149,7 @@ export default function TournamentClassificationPage() {
           Volver
         </Link>
         <Link
-          href={`/dashboard/tournaments/brackets?tournamentId=${encodeURIComponent(tournamentId)}`}
+          href={`/dashboard/tournaments/bracket?tournamentId=${encodeURIComponent(tournamentId)}`}
           className="inline-flex items-center gap-2 rounded-xl border border-primary/25 bg-primary/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-primary"
         >
           <GitBranch className="h-4 w-4" />
@@ -90,7 +160,7 @@ export default function TournamentClassificationPage() {
       <Card className="glass-panel border border-primary/20 bg-black/30 rounded-2xl">
         <CardHeader>
           <CardTitle className="text-white font-black uppercase tracking-wider">Clasificación por grupos</CardTitle>
-          <CardDescription>Vista preparada para cálculo dinámico por resultados.</CardDescription>
+          <CardDescription>Calculada automáticamente según resultados registrados.</CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {groups.map((g) => (
@@ -100,9 +170,12 @@ export default function TournamentClassificationPage() {
                 {g.teams.length === 0 ? (
                   <p className="text-[11px] text-white/55">Sin equipos.</p>
                 ) : (
-                  g.teams.map((t) => (
-                    <div key={`${g.id}_${t.name}`} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
-                      <span className="text-[11px] font-black text-white truncate">{t.name}</span>
+                  g.teams.map((t, idx) => (
+                    <div key={`${g.id}_${t.name}`} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 gap-2">
+                      <span className="text-[11px] font-black text-primary/80 w-5">{idx + 1}</span>
+                      <span className="text-[11px] font-black text-white truncate flex-1">{t.name}</span>
+                      <span className="text-[10px] font-black uppercase text-white/70">PJ {t.pj}</span>
+                      <span className="text-[10px] font-black uppercase text-white/70">DG {t.dg}</span>
                       <span className="text-[10px] font-black uppercase text-primary/90">{t.pts} pts</span>
                     </div>
                   ))
@@ -115,16 +188,113 @@ export default function TournamentClassificationPage() {
 
       <Card className="glass-panel border border-primary/20 bg-black/30 rounded-2xl">
         <CardHeader>
+          <CardTitle className="text-white font-black uppercase tracking-wider">Resultados de fase de grupos</CardTitle>
+          <CardDescription>Guarda aquí los marcadores para recalcular la clasificación automáticamente.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {editableRows.length === 0 ? (
+            <p className="text-[11px] text-white/55">No hay cruces de grupo (faltan equipos o grupos).</p>
+          ) : (
+            <>
+              {editableRows.map((row) => (
+                <div key={row.key} className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/80">{row.groupName}</p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="flex-1 text-[11px] font-black text-white truncate">{row.localTeam}</span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={row.localGoals}
+                      onChange={(e) => {
+                        const value = Math.max(0, Number(e.target.value) || 0);
+                        setMatches((prev) => {
+                          const next = [...prev];
+                          const idx = next.findIndex(
+                            (m) =>
+                              m.groupName === row.groupName &&
+                              m.localTeam === row.localTeam &&
+                              m.awayTeam === row.awayTeam,
+                          );
+                          if (idx >= 0) next[idx] = { ...next[idx], localGoals: value };
+                          else
+                            next.push({
+                              id: `m_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+                              groupName: row.groupName,
+                              localTeam: row.localTeam,
+                              awayTeam: row.awayTeam,
+                              localGoals: value,
+                              awayGoals: row.awayGoals,
+                            });
+                          return next;
+                        });
+                      }}
+                      className="h-9 w-16 rounded-lg border border-white/10 bg-black/40 px-2 text-white outline-none"
+                    />
+                    <span className="text-white/70 text-xs font-black">vs</span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={row.awayGoals}
+                      onChange={(e) => {
+                        const value = Math.max(0, Number(e.target.value) || 0);
+                        setMatches((prev) => {
+                          const next = [...prev];
+                          const idx = next.findIndex(
+                            (m) =>
+                              m.groupName === row.groupName &&
+                              m.localTeam === row.localTeam &&
+                              m.awayTeam === row.awayTeam,
+                          );
+                          if (idx >= 0) next[idx] = { ...next[idx], awayGoals: value };
+                          else
+                            next.push({
+                              id: `m_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+                              groupName: row.groupName,
+                              localTeam: row.localTeam,
+                              awayTeam: row.awayTeam,
+                              localGoals: row.localGoals,
+                              awayGoals: value,
+                            });
+                          return next;
+                        });
+                      }}
+                      className="h-9 w-16 rounded-lg border border-white/10 bg-black/40 px-2 text-white outline-none"
+                    />
+                    <span className="flex-1 text-right text-[11px] font-black text-white truncate">{row.awayTeam}</span>
+                  </div>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => saveTournamentMatchesById(clubScopeId, tournamentId, matches)}
+                className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-primary/25 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-[0.16em]"
+              >
+                <Save className="h-3.5 w-3.5" />
+                Guardar resultados
+              </button>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="glass-panel border border-primary/20 bg-black/30 rounded-2xl">
+        <CardHeader>
           <CardTitle className="text-white font-black uppercase tracking-wider flex items-center gap-2">
             <Trophy className="h-4 w-4 text-primary" />
             Cruces (resumen rápido)
           </CardTitle>
-          <CardDescription>Vista previa. Para detalle usa el botón "Ver cruces".</CardDescription>
+          <CardDescription>Generados desde la clasificación actual (1º/2º de grupo).</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <Mini label="Semifinal 1" value="1º Grupo A vs 2º Grupo B" />
-            <Mini label="Semifinal 2" value="1º Grupo B vs 2º Grupo A" />
+            <Mini
+              label="Semifinal 1"
+              value={`${groups[0]?.teams[0]?.name ?? "1º Grupo A"} vs ${groups[1]?.teams[1]?.name ?? "2º Grupo B"}`}
+            />
+            <Mini
+              label="Semifinal 2"
+              value={`${groups[1]?.teams[0]?.name ?? "1º Grupo B"} vs ${groups[0]?.teams[1]?.name ?? "2º Grupo A"}`}
+            />
             <Mini label="Final" value="Ganador SF1 vs Ganador SF2" />
           </div>
         </CardContent>

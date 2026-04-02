@@ -6,18 +6,13 @@ import { ArrowLeft, GitBranch, Trophy } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth-context";
-import { loadTournamentConfigById, loadTournamentTeamsById } from "@/lib/tournaments-storage";
-
-function buildPairings(teams: string[]) {
-  const out: Array<{ left: string; right: string }> = [];
-  for (let i = 0; i < teams.length; i += 2) {
-    out.push({
-      left: teams[i] ?? "TBD",
-      right: teams[i + 1] ?? "TBD",
-    });
-  }
-  return out;
-}
+import {
+  buildTournamentBracketFromResults,
+  computeGroupStandings,
+  loadTournamentConfigById,
+  loadTournamentResultsById,
+  loadTournamentTeamsById,
+} from "@/lib/tournaments-storage";
 
 export default function TournamentBracketPage() {
   const searchParams = useSearchParams();
@@ -36,12 +31,18 @@ export default function TournamentBracketPage() {
       .filter((name): name is string => name.length > 0);
   }, [clubScopeId, tournamentId]);
 
-  const quarter = useMemo(() => buildPairings(teamNames), [teamNames]);
-  const semi = useMemo(
-    () => buildPairings(Array.from({ length: Math.max(2, Math.ceil(quarter.length / 2)) }, (_, i) => `Ganador QF${i + 1}`)),
-    [quarter.length],
+  const results = useMemo(
+    () => loadTournamentResultsById(clubScopeId, tournamentId),
+    [clubScopeId, tournamentId],
   );
-  const finalRound = useMemo(() => [{ left: "Ganador SF1", right: "Ganador SF2" }], []);
+  const standings = useMemo(
+    () => computeGroupStandings({ teams: loadTournamentTeamsById(clubScopeId, tournamentId), results, config }),
+    [clubScopeId, tournamentId, results, config],
+  );
+  const bracket = useMemo(
+    () => buildTournamentBracketFromResults({ standingsByGroup: standings }),
+    [standings],
+  );
 
   return (
     <div className="space-y-6 animate-in fade-in duration-700">
@@ -68,13 +69,19 @@ export default function TournamentBracketPage() {
             Cuadro eliminatorio (fase C base)
           </CardTitle>
           <CardDescription>
-            Vista inicial de cruces por torneo. En siguientes fases se conectará a resultados reales.
+            Cruces automáticos desde clasificación real de fase de grupos.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <RoundCard title="Cuartos / Primera ronda" pairings={quarter} />
-          <RoundCard title="Semifinales" pairings={semi} />
-          <RoundCard title="Final" pairings={finalRound} final />
+          <RoundCard title="Semifinales" pairings={bracket.semiFinals} />
+          <RoundCard title="Final" pairings={bracket.final} final />
+          <div className="rounded-2xl border border-primary/20 bg-black/25 p-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Equipos cargados</p>
+            <p className="mt-2 text-[11px] text-white/75">{teamNames.length}</p>
+            <p className="mt-2 text-[10px] text-white/50">
+              Si faltan cruces, completa resultados en Clasificación para definir 1º/2º por grupo.
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>
