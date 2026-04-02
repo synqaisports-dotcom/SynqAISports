@@ -61,6 +61,13 @@ function formatStatusLabel(status: TournamentIndexItem["status"]): string {
   return "Pendiente";
 }
 
+function statusBadgeClass(status: TournamentIndexItem["status"]): string {
+  // Pendiente: ámbar, Activo: verde, Finalizado: rojo
+  if (status === "published") return "border-emerald-500/25 bg-emerald-500/10 text-emerald-200";
+  if (status === "finished") return "border-red-500/25 bg-red-500/10 text-red-200";
+  return "border-amber-500/25 bg-amber-500/10 text-amber-200";
+}
+
 type TournamentListItem = {
   record: TournamentIndexItem;
   startDate?: string;
@@ -236,72 +243,70 @@ export default function TournamentsListPage() {
         </p>
       </div>
 
-      {tournaments.length === 0 ? (
-        <Card className="glass-panel border border-primary/20 bg-black/30 rounded-2xl">
-          <CardContent className="py-8 text-center text-white/70">
-            No hay torneos guardados todavía. Crea el primero desde el Planificador.
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          <Card className="glass-panel border border-cyan-500/20 bg-black/30 rounded-2xl">
-            <CardHeader className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-              <div>
-                <CardTitle className="text-white font-black uppercase tracking-wider">Torneos</CardTitle>
-                <CardDescription>Histórico del club. Cada torneo es independiente.</CardDescription>
+      <div className="space-y-4">
+        <Card className="glass-panel border border-cyan-500/20 bg-black/30 rounded-2xl">
+          <CardHeader className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+              <CardTitle className="text-white font-black uppercase tracking-wider">Torneos</CardTitle>
+              <CardDescription>Histórico del club. Cada torneo es independiente.</CardDescription>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const id = ensureTournamentId();
+                const now = new Date().toISOString();
+                const next: TournamentIndexItem = {
+                  id,
+                  name: `Nuevo torneo ${tournaments.length + 1}`,
+                  status: "draft",
+                  createdAt: now,
+                  updatedAt: now,
+                };
+                try {
+                  const merged = [...tournaments, next];
+                  saveTournamentIndex(clubScopeId, merged);
+                  saveTournamentConfigById(clubScopeId, id, {
+                    tournamentName: next.name,
+                    categoryLabel: "Alevín",
+                    categories: [],
+                    teamsCount: 8,
+                    tournamentDays: 1,
+                    startDate: new Date().toISOString().slice(0, 10),
+                    endDate: new Date().toISOString().slice(0, 10),
+                    groupsCount: 2,
+                    teamsPerGroup: 4,
+                    timeWindow: "both",
+                    fieldsCount: 2,
+                    footballFormat: "f11",
+                    morningStart: "09:00",
+                    morningEnd: "14:00",
+                    afternoonStart: "16:00",
+                    afternoonEnd: "21:00",
+                    halvesCount: 2,
+                    minutesPerHalf: 20,
+                    breakMinutes: 0,
+                    bufferBetweenMatches: 10,
+                    pointsWin: 3,
+                    pointsDraw: 1,
+                    pointsLoss: 0,
+                  });
+                  setTournaments(merged);
+                  setActiveTournamentId(clubScopeId, id);
+                } catch {
+                  // ignore
+                }
+              }}
+              className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-primary/25 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-[0.16em]"
+            >
+              + Nuevo torneo
+            </button>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {tournaments.length === 0 ? (
+              <div className="rounded-2xl border border-white/5 bg-black/20 p-6 text-center text-white/70">
+                No hay torneos guardados todavía. Crea el primero desde aquí.
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  const id = ensureTournamentId();
-                  const now = new Date().toISOString();
-                  const next: TournamentIndexItem = {
-                    id,
-                    name: `Nuevo torneo ${tournaments.length + 1}`,
-                    status: "draft",
-                    createdAt: now,
-                    updatedAt: now,
-                  };
-                  try {
-                    const merged = [...tournaments, next];
-                    saveTournamentIndex(clubScopeId, merged);
-                    saveTournamentConfigById(clubScopeId, id, {
-                      tournamentName: next.name,
-                      categoryLabel: "Alevín",
-                      categories: [],
-                      teamsCount: 8,
-                      tournamentDays: 1,
-                      startDate: new Date().toISOString().slice(0, 10),
-                      endDate: new Date().toISOString().slice(0, 10),
-                      groupsCount: 2,
-                      teamsPerGroup: 4,
-                      timeWindow: "both",
-                      fieldsCount: 2,
-                      footballFormat: "f11",
-                      morningStart: "09:00",
-                      morningEnd: "14:00",
-                      afternoonStart: "16:00",
-                      afternoonEnd: "21:00",
-                      halvesCount: 2,
-                      minutesPerHalf: 20,
-                      breakMinutes: 0,
-                      bufferBetweenMatches: 10,
-                      pointsWin: 3,
-                      pointsDraw: 1,
-                      pointsLoss: 0,
-                    });
-                    setTournaments(merged);
-                    setActiveTournamentId(clubScopeId, id);
-                  } catch {
-                    // ignore
-                  }
-                }}
-                className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-primary/25 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-[0.16em]"
-              >
-                + Nuevo torneo
-              </button>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            ) : null}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-2">
                 <label className="lg:col-span-2 h-10 rounded-xl border border-cyan-500/20 bg-black/35 px-3 flex items-center gap-2">
                   <Search className="h-4 w-4 text-cyan-300/80" />
@@ -319,8 +324,8 @@ export default function TournamentsListPage() {
                     onChange={(v) => setStatusFilter(v as typeof statusFilter)}
                     options={[
                       { value: "all", label: "Todos" },
-                      { value: "draft", label: "Borrador" },
-                      { value: "published", label: "Publicado" },
+                      { value: "draft", label: "Pendiente" },
+                      { value: "published", label: "Activo" },
                       { value: "finished", label: "Finalizado" },
                     ]}
                   />
@@ -375,7 +380,11 @@ export default function TournamentsListPage() {
                           <p className="min-w-0 text-[12px] font-black text-white uppercase tracking-wide truncate">
                             {t.name}
                           </p>
-                          <span className="shrink-0 text-[10px] font-black uppercase tracking-[0.18em] text-white/50">
+                          <span
+                            className={`shrink-0 text-[10px] font-black uppercase tracking-[0.18em] px-2 py-1 rounded-lg border ${statusBadgeClass(
+                              t.status
+                            )}`}
+                          >
                             {statusLabel}
                           </span>
                         </div>
@@ -486,8 +495,7 @@ export default function TournamentsListPage() {
               ) : null}
             </CardContent>
           </Card>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
