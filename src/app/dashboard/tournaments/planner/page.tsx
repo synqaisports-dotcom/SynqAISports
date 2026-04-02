@@ -58,6 +58,7 @@ export default function TournamentsPlannerPage() {
   const { profile } = useAuth();
   const clubScopeId = profile?.clubId ?? "global-hq";
   const storageKey = useMemo(() => `synq_tournaments_planner_v1_${clubScopeId}`, [clubScopeId]);
+  const [tournaments, setTournaments] = useState(() => loadTournamentIndex(clubScopeId));
   const [config, setConfig] = useState<PlannerConfig>(DEFAULT_CONFIG);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [activeTournamentId, setActiveTournamentIdState] = useState<string | null>(null);
@@ -67,6 +68,7 @@ export default function TournamentsPlannerPage() {
     // Migración: torneo único (v1) -> multi-torneo (v2)
     migrateLegacyTournamentToV2(clubScopeId);
     const index = loadTournamentIndex(clubScopeId);
+    setTournaments(index);
     const currentId = getActiveTournamentId(clubScopeId) ?? index[0]?.id ?? null;
     if (!currentId) return;
     setActiveTournamentId(clubScopeId, currentId);
@@ -96,7 +98,9 @@ export default function TournamentsPlannerPage() {
   const handleSave = () => {
     try {
       if (!activeTournamentId) return;
-      upsertTournament({ clubId: clubScopeId, tournamentId: activeTournamentId, config, status: "draft" });
+      const currentStatus = tournaments.find((t) => t.id === activeTournamentId)?.status ?? "draft";
+      if (currentStatus === "finished") return;
+      upsertTournament({ clubId: clubScopeId, tournamentId: activeTournamentId, config, status: currentStatus });
       // Mantener legacy key durante transición
       localStorage.setItem(storageKey, JSON.stringify(config));
       setSavedAt(new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }));

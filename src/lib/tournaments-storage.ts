@@ -242,6 +242,16 @@ export function saveTournamentMatchesById(clubId: string, tournamentId: string |
   localStorage.setItem(tournamentMatchesKey(clubId, tournamentId), JSON.stringify(matches));
 }
 
+export function removeTournamentTeamsById(clubId: string, tournamentId: string | null) {
+  if (!tournamentId) return;
+  localStorage.removeItem(tournamentTeamsKey(clubId, tournamentId));
+}
+
+export function removeTournamentMatchesById(clubId: string, tournamentId: string | null) {
+  if (!tournamentId) return;
+  localStorage.removeItem(tournamentMatchesKey(clubId, tournamentId));
+}
+
 export function loadTournamentResultsById(clubId: string, tournamentId: string | null): TournamentMatchResultRow[] {
   return loadTournamentMatchesById(clubId, tournamentId);
 }

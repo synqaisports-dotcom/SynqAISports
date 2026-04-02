@@ -11,7 +11,10 @@ import {
   loadTournamentIndex,
   migrateLegacySingleTournamentIfNeeded,
   loadTournamentConfigById,
+  loadTournamentMatchesById,
   loadTournamentTeamsById,
+  removeTournamentMatchesById,
+  removeTournamentTeamsById,
   saveTournamentIndex,
   saveTournamentConfigById,
   setActiveTournamentId,
@@ -284,14 +287,14 @@ export default function TournamentsListPage() {
                           <Users className="h-4 w-4" />
                         </Link>
                         <Link
-                          href={`/dashboard/tournaments/standings?tournamentId=${encodeURIComponent(t.id)}`}
+                          href={`/dashboard/tournaments/classification?tournamentId=${encodeURIComponent(t.id)}`}
                           className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-primary/25 bg-primary/10 text-primary"
                           title="Ver clasificación"
                         >
                           <ListOrdered className="h-4 w-4" />
                         </Link>
                         <Link
-                          href={`/dashboard/tournaments/brackets?tournamentId=${encodeURIComponent(t.id)}`}
+                          href={`/dashboard/tournaments/bracket?tournamentId=${encodeURIComponent(t.id)}`}
                           className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-primary/25 bg-primary/10 text-primary"
                           title="Ver cruces"
                         >

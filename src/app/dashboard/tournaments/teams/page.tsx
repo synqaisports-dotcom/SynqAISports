@@ -11,6 +11,7 @@ import {
   loadTournamentTeamsById,
   saveTournamentTeamsById,
   migrateLegacySingleTournamentIfNeeded,
+  loadTournamentIndex,
 } from "@/lib/tournaments-storage";
 
 type TeamRow = {
@@ -27,6 +28,10 @@ export default function TournamentsTeamsPage() {
   const [planner, setPlanner] = useState<{ tournamentName?: string; groupsCount?: number } | null>(null);
   const [teams, setTeams] = useState<TeamRow[]>([]);
   const [savedAt, setSavedAt] = useState<string | null>(null);
+  const isFinished = useMemo(() => {
+    const t = loadTournamentIndex(clubScopeId).find((x) => x.id === activeTournamentId);
+    return t?.status === "finished";
+  }, [clubScopeId, activeTournamentId]);
 
   useEffect(() => {
     migrateLegacySingleTournamentIfNeeded({
@@ -41,6 +46,7 @@ export default function TournamentsTeamsPage() {
   const groupsCount = Math.max(1, Number(planner?.groupsCount ?? 1));
 
   const addTeam = () => {
+    if (isFinished) return;
     const next: TeamRow = {
       id: `t_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
       name: "",
@@ -50,6 +56,7 @@ export default function TournamentsTeamsPage() {
   };
 
   const saveTeams = () => {
+    if (isFinished) return;
     const normalized = teams
       .map((t) => ({ ...t, name: String(t.name || "").trim() }))
       .filter((t) => t.name.length > 0);
@@ -92,6 +99,7 @@ export default function TournamentsTeamsPage() {
             <button
               type="button"
               onClick={addTeam}
+              disabled={isFinished}
               className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-cyan-500/25 bg-cyan-500/10 text-cyan-200 text-[10px] font-black uppercase tracking-[0.16em]"
             >
               <Plus className="h-4 w-4" />
@@ -100,6 +108,7 @@ export default function TournamentsTeamsPage() {
             <button
               type="button"
               onClick={saveTeams}
+              disabled={isFinished}
               className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-cyan-500/25 bg-black/40 text-cyan-200 text-[10px] font-black uppercase tracking-[0.16em]"
             >
               <Save className="h-4 w-4" />
@@ -108,6 +117,11 @@ export default function TournamentsTeamsPage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
+          {isFinished ? (
+            <div className="rounded-xl border border-amber-400/25 bg-amber-500/5 p-3 text-[11px] text-amber-200/90 font-black">
+              Torneo finalizado: edición bloqueada.
+            </div>
+          ) : null}
           {teams.length === 0 ? (
             <div className="rounded-xl border border-cyan-500/15 bg-black/25 p-4 text-white/70 text-sm">
               Aún no hay equipos. Pulsa “Añadir”.
@@ -118,6 +132,7 @@ export default function TournamentsTeamsPage() {
                 <div key={team.id} className="rounded-xl border border-cyan-500/15 bg-black/25 p-3 flex flex-col md:flex-row gap-3 md:items-center">
                   <input
                     value={team.name}
+                    disabled={isFinished}
                     onChange={(e) =>
                       setTeams((prev) => prev.map((t) => (t.id === team.id ? { ...t, name: e.target.value } : t)))
                     }
@@ -126,6 +141,7 @@ export default function TournamentsTeamsPage() {
                   />
                   <select
                     value={team.groupIndex == null ? "" : String(team.groupIndex)}
+                    disabled={isFinished}
                     onChange={(e) => {
                       const v = e.target.value;
                       setTeams((prev) =>
@@ -148,6 +164,7 @@ export default function TournamentsTeamsPage() {
                   <button
                     type="button"
                     onClick={() => setTeams((prev) => prev.filter((t) => t.id !== team.id))}
+                    disabled={isFinished}
                     className="inline-flex items-center justify-center h-10 w-10 rounded-lg border border-rose-500/20 bg-rose-500/10 text-rose-300"
                     title="Eliminar"
                   >

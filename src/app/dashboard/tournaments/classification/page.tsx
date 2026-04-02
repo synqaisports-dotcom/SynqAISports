@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, GitBranch, Save, Trophy } from "lucide-react";
+import { ArrowLeft, Download, GitBranch, Save, Trophy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth-context";
 import {
@@ -34,6 +34,74 @@ export default function TournamentClassificationPage() {
   const [matches, setMatches] = useState<TournamentMatchResultRow[]>(
     () => loadTournamentMatchesById(clubScopeId, tournamentId),
   );
+
+  const downloadCsv = (filename: string, csv: string) => {
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportStandingsCsv = () => {
+    if (!tournamentId || !config) return;
+    const lines: string[] = [];
+    lines.push(["tournamentId", "tournamentName", "groupName", "pos", "team", "pj", "g", "e", "p", "gf", "gc", "dg", "pts"].join(","));
+    for (const g of groups) {
+      g.teams.forEach((t, idx) => {
+        lines.push(
+          [
+            tournamentId,
+            config.tournamentName ?? "",
+            g.name,
+            String(idx + 1),
+            t.name,
+            String(t.pj),
+            String(t.g),
+            String(t.e),
+            String(t.p),
+            String(t.gf),
+            String(t.gc),
+            String(t.dg),
+            String(t.pts),
+          ]
+            .map((v) => `"${String(v).replaceAll("\"", "\"\"")}"`)
+            .join(","),
+        );
+      });
+    }
+    downloadCsv(`clasificacion_${tournamentId}.csv`, lines.join("\n"));
+  };
+
+  const exportMatchesCsv = () => {
+    if (!tournamentId || !config) return;
+    const lines: string[] = [];
+    lines.push(["tournamentId", "tournamentName", "groupName", "localTeam", "awayTeam", "localGoals", "awayGoals"].join(","));
+    for (const m of matches) {
+      lines.push(
+        [tournamentId, config.tournamentName ?? "", m.groupName, m.localTeam, m.awayTeam, String(m.localGoals), String(m.awayGoals)]
+          .map((v) => `"${String(v).replaceAll("\"", "\"\"")}"`)
+          .join(","),
+      );
+    }
+    downloadCsv(`resultados_grupos_${tournamentId}.csv`, lines.join("\n"));
+  };
+
+  const isFinished = useMemo(() => {
+    // Estado del torneo se guarda en índice, pero para esta fase basta con respetar "finished" si existe en el registro.
+    // Si no se encuentra, no bloqueamos (fail-open UI) para no romper demo.
+    try {
+      const idx = JSON.parse(localStorage.getItem(`synq_tournaments_index_v1_${clubScopeId}`) || "[]") as Array<{ id: string; status?: string }>;
+      const rec = Array.isArray(idx) ? idx.find((x) => x?.id === tournamentId) : null;
+      return rec?.status === "finished";
+    } catch {
+      return false;
+    }
+  }, [clubScopeId, tournamentId]);
 
   const groups = useMemo<GroupView[]>(() => {
     const groupsCount = Math.max(1, Number(config?.groupsCount ?? 1) || 1);
@@ -155,6 +223,24 @@ export default function TournamentClassificationPage() {
           <GitBranch className="h-4 w-4" />
           Ver cruces
         </Link>
+        <button
+          type="button"
+          onClick={exportStandingsCsv}
+          className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-white/80"
+          title="Exportar clasificación CSV"
+        >
+          <Download className="h-4 w-4" />
+          CSV clasificación
+        </button>
+        <button
+          type="button"
+          onClick={exportMatchesCsv}
+          className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-white/80"
+          title="Exportar resultados CSV"
+        >
+          <Download className="h-4 w-4" />
+          CSV resultados
+        </button>
       </div>
 
       <Card className="glass-panel border border-primary/20 bg-black/30 rounded-2xl">
@@ -189,7 +275,10 @@ export default function TournamentClassificationPage() {
       <Card className="glass-panel border border-primary/20 bg-black/30 rounded-2xl">
         <CardHeader>
           <CardTitle className="text-white font-black uppercase tracking-wider">Resultados de fase de grupos</CardTitle>
-          <CardDescription>Guarda aquí los marcadores para recalcular la clasificación automáticamente.</CardDescription>
+          <CardDescription>
+            Guarda aquí los marcadores para recalcular la clasificación automáticamente.
+            {isFinished ? " (Torneo finalizado: edición bloqueada)" : ""}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {editableRows.length === 0 ? (
@@ -204,8 +293,10 @@ export default function TournamentClassificationPage() {
                     <input
                       type="number"
                       min={0}
+                      disabled={isFinished}
                       value={row.localGoals}
                       onChange={(e) => {
+                        if (isFinished) return;
                         const value = Math.max(0, Number(e.target.value) || 0);
                         setMatches((prev) => {
                           const next = [...prev];
@@ -234,8 +325,10 @@ export default function TournamentClassificationPage() {
                     <input
                       type="number"
                       min={0}
+                      disabled={isFinished}
                       value={row.awayGoals}
                       onChange={(e) => {
+                        if (isFinished) return;
                         const value = Math.max(0, Number(e.target.value) || 0);
                         setMatches((prev) => {
                           const next = [...prev];
@@ -266,7 +359,11 @@ export default function TournamentClassificationPage() {
               ))}
               <button
                 type="button"
-                onClick={() => saveTournamentMatchesById(clubScopeId, tournamentId, matches)}
+                disabled={isFinished}
+                onClick={() => {
+                  if (isFinished) return;
+                  saveTournamentMatchesById(clubScopeId, tournamentId, matches);
+                }}
                 className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-primary/25 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-[0.16em]"
               >
                 <Save className="h-3.5 w-3.5" />
