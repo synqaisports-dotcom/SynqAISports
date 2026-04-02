@@ -5,7 +5,7 @@ import { CalendarClock, Info, Save } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   type TournamentConfig,
   migrateLegacyTournamentToV2,
@@ -271,6 +271,7 @@ const CATEGORY_OPTIONS = [
 export default function TournamentsPlannerPage() {
   const { profile } = useAuth();
   const clubScopeId = profile?.clubId ?? "global-hq";
+  const router = useRouter();
   const searchParams = useSearchParams();
   const tournamentIdFromUrl = searchParams.get("tournamentId");
   const storageKey = useMemo(() => `synq_tournaments_planner_v1_${clubScopeId}`, [clubScopeId]);
@@ -357,6 +358,9 @@ export default function TournamentsPlannerPage() {
       categories: prev.categories.includes(category)
         ? prev.categories.filter((c) => c !== category)
         : [...prev.categories, category],
+      // Si no hay categoría principal o está en default, usar la que se marca como referencia.
+      categoryLabel:
+        !prev.categoryLabel || prev.categoryLabel === DEFAULT_CONFIG.categoryLabel ? category : prev.categoryLabel,
     }));
   };
 
@@ -370,6 +374,7 @@ export default function TournamentsPlannerPage() {
       // Mantener legacy key durante transición
       localStorage.setItem(storageKey, JSON.stringify(config));
       setSavedAt(new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }));
+      router.push("/dashboard/tournaments/list");
     } catch {
       // ignore
     }
