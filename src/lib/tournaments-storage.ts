@@ -18,6 +18,8 @@ export type TournamentConfig = {
   teamsCount: number;
   /** Nº jugadores por equipo (editable, sugerido por formato). */
   playersPerTeam?: number;
+  /** Nº suplentes por equipo (para calcular plantilla total). */
+  substitutesPerTeam?: number;
   tournamentDays: number;
   startDate: string;
   endDate: string;

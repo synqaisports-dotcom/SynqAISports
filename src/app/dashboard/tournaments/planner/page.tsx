@@ -282,6 +282,48 @@ export default function TournamentsPlannerPage() {
             </label>
 
             <label className="space-y-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">
+                Titulares en campo (por equipo)
+              </span>
+              <input
+                type="number"
+                min={3}
+                value={config.playersPerTeam ?? 0}
+                onChange={(e) =>
+                  setConfig((prev) => ({
+                    ...prev,
+                    playersPerTeam: Math.max(0, Number(e.target.value) || 0) || undefined,
+                  }))
+                }
+                className="h-11 w-full rounded-xl border border-primary/25 bg-black/40 px-3 text-white outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]"
+              />
+              <span className="text-[10px] text-white/55">
+                Sugerido por formato (F11=11, F7=7, Futsal=5). Editable.
+              </span>
+            </label>
+
+            <label className="space-y-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">
+                Suplentes (por equipo)
+              </span>
+              <input
+                type="number"
+                min={0}
+                value={config.substitutesPerTeam ?? 0}
+                onChange={(e) =>
+                  setConfig((prev) => ({
+                    ...prev,
+                    substitutesPerTeam: Math.max(0, Number(e.target.value) || 0) || 0,
+                  }))
+                }
+                className="h-11 w-full rounded-xl border border-primary/25 bg-black/40 px-3 text-white outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]"
+              />
+              <span className="text-[10px] text-white/55">
+                Número de reservas convocados para el banquillo.
+              </span>
+            </label>
+
+            <label className="space-y-2">
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Nº días torneo</span>
               <input
                 type="number"
