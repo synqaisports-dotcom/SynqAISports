@@ -30,6 +30,7 @@ import {
   loadTournamentTeamsById,
   deleteTournamentById,
   applyTournamentAutoStatuses,
+  isTournamentDeletableWithGrace,
   saveTournamentIndex,
   saveTournamentConfigById,
   setActiveTournamentId,
@@ -417,7 +418,10 @@ export default function TournamentsListPage() {
               {filtered.map((item) => {
                 const t = item.record;
                 const statusLabel = t.status === "published" ? "Activo" : t.status === "finished" ? "Finalizado" : "Pendiente";
-                const canDelete = t.status !== "finished";
+                const canDelete = isTournamentDeletableWithGrace({
+                  config: loadTournamentConfigById(clubScopeId, t.id),
+                  graceHours: 24,
+                });
                 return (
                   <div key={t.id} className={tournamentCardClass}>
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">

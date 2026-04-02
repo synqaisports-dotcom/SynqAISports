@@ -285,6 +285,28 @@ function addDaysLocal(d: Date, days: number): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate() + days);
 }
 
+export function computeTournamentEndAtLocal(args: { config: TournamentConfig | null }): Date | null {
+  const cfg = args.config;
+  if (!cfg) return null;
+  const start = parseISODateLocal(cfg.startDate);
+  if (!start) return null;
+  const days = Math.max(1, Number(cfg.tournamentDays) || 1);
+  const endDay = addDaysLocal(start, days - 1);
+  return new Date(endDay.getFullYear(), endDay.getMonth(), endDay.getDate(), 23, 59, 0, 0); // 23:59
+}
+
+export function isTournamentDeletableWithGrace(args: {
+  config: TournamentConfig | null;
+  now?: Date;
+  graceHours?: number;
+}): boolean {
+  const endAt = computeTournamentEndAtLocal({ config: args.config });
+  if (!endAt) return true; // si no podemos calcularlo, no bloqueamos
+  const graceMs = Math.max(0, Number(args.graceHours ?? 24) || 0) * 60 * 60 * 1000;
+  const now = args.now ?? new Date();
+  return now.getTime() <= endAt.getTime() + graceMs;
+}
+
 export function computeTournamentAutoStatus(args: {
   config: TournamentConfig | null;
   now?: Date;
