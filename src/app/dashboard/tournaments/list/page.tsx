@@ -278,44 +278,44 @@ export default function TournamentsListPage() {
                   />
                 </label>
                 <div className="lg:col-span-3">
-                  <Segmented
-                  label="Estado"
-                  value={statusFilter}
-                  onChange={(v) => setStatusFilter(v as typeof statusFilter)}
-                  options={[
-                    { value: "all", label: "Todos" },
-                    { value: "draft", label: "Borrador" },
-                    { value: "published", label: "Publicado" },
-                    { value: "finished", label: "Finalizado" },
-                  ]}
+                  <PrettySelect
+                    label="Estado"
+                    value={statusFilter}
+                    onChange={(v) => setStatusFilter(v as typeof statusFilter)}
+                    options={[
+                      { value: "all", label: "Todos" },
+                      { value: "draft", label: "Borrador" },
+                      { value: "published", label: "Publicado" },
+                      { value: "finished", label: "Finalizado" },
+                    ]}
                   />
                 </div>
                 <div className="lg:col-span-3">
-                  <Segmented
-                  label="Formato"
-                  value={formatFilter}
-                  onChange={(v) => setFormatFilter(v as typeof formatFilter)}
-                  options={[
-                    { value: "all", label: "Todos" },
-                    { value: "f11", label: "F11" },
-                    { value: "f7", label: "F7" },
-                    { value: "futsal", label: "Futsal" },
-                  ]}
+                  <PrettySelect
+                    label="Formato"
+                    value={formatFilter}
+                    onChange={(v) => setFormatFilter(v as typeof formatFilter)}
+                    options={[
+                      { value: "all", label: "Todos" },
+                      { value: "f11", label: "F11" },
+                      { value: "f7", label: "F7" },
+                      { value: "futsal", label: "Futsal" },
+                    ]}
                   />
                 </div>
                 <div className="lg:col-span-4">
-                  <Segmented
-                  label="Año"
-                  value={yearFilter}
-                  onChange={(v) => setYearFilter(v)}
-                  options={[{ value: "all", label: "Todos" }, ...years.map((y) => ({ value: y, label: y }))]}
+                  <PrettySelect
+                    label="Año"
+                    value={yearFilter}
+                    onChange={(v) => setYearFilter(v)}
+                    options={[{ value: "all", label: "Todos" }, ...years.map((y) => ({ value: y, label: y }))]}
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-2">
                 <div className="lg:col-span-6">
-                  <Segmented
+                  <PrettySelect
                     label="Categoría"
                     value={categoryFilter}
                     onChange={(v) => setCategoryFilter(v)}
