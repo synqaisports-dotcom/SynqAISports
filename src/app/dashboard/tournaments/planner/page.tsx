@@ -34,6 +34,166 @@ const sectionCardClass =
 const infoPanelClass =
   "rounded-xl border border-white/5 bg-black/25 p-3 flex items-start gap-2";
 
+function clampNumber(n: number, min?: number, max?: number) {
+  let out = n;
+  if (typeof min === "number") out = Math.max(min, out);
+  if (typeof max === "number") out = Math.min(max, out);
+  return out;
+}
+
+function NumericInput({
+  value,
+  onCommit,
+  min,
+  max,
+  step,
+  disabled,
+  className,
+}: {
+  value: number;
+  onCommit: (next: number) => void;
+  min?: number;
+  max?: number;
+  step?: number;
+  disabled?: boolean;
+  className?: string;
+}) {
+  const [text, setText] = useState<string>(() => String(value));
+
+  useEffect(() => {
+    // Si el usuario no está editando (o se cambió desde fuera), sincronizar.
+    setText(String(value));
+  }, [value]);
+
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      pattern="[0-9]*"
+      value={text}
+      disabled={disabled}
+      onFocus={(e) => e.currentTarget.select()}
+      onChange={(e) => {
+        const next = e.target.value;
+        // Permitimos vacío para que Backspace/Delete no “reemplace” por 0/1.
+        if (next === "") {
+          setText("");
+          return;
+        }
+        // Solo dígitos
+        if (!/^\d+$/.test(next)) return;
+        setText(next);
+      }}
+      onBlur={() => {
+        if (disabled) return;
+        const trimmed = text.trim();
+        if (trimmed === "") {
+          // Si lo dejan vacío, revertimos al valor actual.
+          setText(String(value));
+          return;
+        }
+        const n = Number(trimmed);
+        if (!Number.isFinite(n)) {
+          setText(String(value));
+          return;
+        }
+        const clamped = clampNumber(n, min, max);
+        onCommit(clamped);
+        setText(String(clamped));
+      }}
+      className={cn(className)}
+      data-step={step ? String(step) : undefined}
+    />
+  );
+}
+
+function TimePicker({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+  disabled?: boolean;
+}) {
+  const [h, m] = (value || "00:00").split(":");
+  const hour = /^\d{2}$/.test(h) ? h : "00";
+  const minute = /^\d{2}$/.test(m) ? m : "00";
+
+  const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
+  const minutes = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, "0")); // pasos de 5'
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          disabled={disabled}
+          className={cn(
+            "h-10 w-full rounded-lg border border-[#00F2FF]/25 bg-[#0F172A]/40 px-3 text-left text-white outline-none hover:border-[#00F2FF]/40 focus-visible:border-[#00F2FF]/50 transition-[background-color,border-color,color,opacity,transform]",
+            disabled && "cursor-not-allowed opacity-60"
+          )}
+        >
+          <span className="text-[11px] font-black tabular-nums">{`${hour}:${minute}`}</span>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        className="w-auto p-3 bg-[#0a0f18] border border-[#00F2FF]/20 rounded-2xl shadow-2xl"
+      >
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1">
+            <p className={labelClass}>Hora</p>
+            <Select
+              value={hour}
+              onValueChange={(v) => onChange(`${v}:${minute}`)}
+              disabled={disabled}
+            >
+              <SelectTrigger className="h-10 w-full rounded-lg border border-[#00F2FF]/25 bg-[#0F172A]/40 px-3 text-white outline-none focus:ring-0 focus:ring-offset-0">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-[#0a0f18] border border-[#00F2FF]/20 text-white rounded-2xl shadow-2xl p-1">
+                {hours.map((hh) => (
+                  <SelectItem
+                    key={hh}
+                    value={hh}
+                    className="rounded-xl focus:bg-[#00F2FF]/10 focus:text-[#00F2FF] data-[state=checked]:bg-[#00F2FF]/10"
+                  >
+                    <span className="text-[10px] font-black uppercase tracking-[0.14em] tabular-nums">{hh}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <p className={labelClass}>Min</p>
+            <Select
+              value={minute}
+              onValueChange={(v) => onChange(`${hour}:${v}`)}
+              disabled={disabled}
+            >
+              <SelectTrigger className="h-10 w-full rounded-lg border border-[#00F2FF]/25 bg-[#0F172A]/40 px-3 text-white outline-none focus:ring-0 focus:ring-offset-0">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-[#0a0f18] border border-[#00F2FF]/20 text-white rounded-2xl shadow-2xl p-1">
+                {minutes.map((mm) => (
+                  <SelectItem
+                    key={mm}
+                    value={mm}
+                    className="rounded-xl focus:bg-[#00F2FF]/10 focus:text-[#00F2FF] data-[state=checked]:bg-[#00F2FF]/10"
+                  >
+                    <span className="text-[10px] font-black uppercase tracking-[0.14em] tabular-nums">{mm}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function formatDateLabel(value?: string): string {
   if (!value) return "Selecciona fecha";
   const d = new Date(value);
