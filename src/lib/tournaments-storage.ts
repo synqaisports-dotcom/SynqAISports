@@ -16,6 +16,8 @@ export type TournamentConfig = {
   categoryLabel?: string;
   categories: string[];
   teamsCount: number;
+  /** Nº jugadores por equipo (editable, sugerido por formato). */
+  playersPerTeam?: number;
   tournamentDays: number;
   startDate: string;
   endDate: string;

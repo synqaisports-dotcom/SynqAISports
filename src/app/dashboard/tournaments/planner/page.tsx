@@ -29,6 +29,7 @@ const DEFAULT_CONFIG: PlannerConfig = {
   tournamentName: "Torneo Primavera",
   categoryLabel: "Alevín",
   teamsCount: 8,
+  playersPerTeam: 11,
   categories: [],
   tournamentDays: 1,
   startDate: new Date().toISOString().slice(0, 10),
@@ -90,12 +91,27 @@ export default function TournamentsPlannerPage() {
       const rawConfig = localStorage.getItem(`synq_tournament_config_v1_${clubScopeId}_${currentId}`);
       const parsed = rawConfig ? (JSON.parse(rawConfig) as unknown) : null;
       if (parsed && typeof parsed === "object") {
-        setConfig((prev) => ({ ...prev, ...(parsed as Partial<TournamentConfig>) }));
+        const next: TournamentConfig = { ...DEFAULT_CONFIG, ...(parsed as Partial<TournamentConfig>) };
+        // Backfill playersPerTeam if missing
+        if (typeof next.playersPerTeam !== "number" || next.playersPerTeam <= 0) {
+          const ff = next.footballFormat;
+          next.playersPerTeam = ff === "f7" ? 7 : ff === "futsal" ? 5 : 11;
+        }
+        setConfig(next);
       }
     } catch {
       // ignore
     }
   }, [storageKey]);
+
+  // Default playersPerTeam on footballFormat change (only if unset/invalid)
+  useEffect(() => {
+    setConfig((prev) => {
+      if (typeof prev.playersPerTeam === "number" && prev.playersPerTeam > 0) return prev;
+      const ff = prev.footballFormat;
+      return { ...prev, playersPerTeam: ff === "f7" ? 7 : ff === "futsal" ? 5 : 11 };
+    });
+  }, [config.footballFormat]);
 
   const toggleCategory = (category: string) => {
     setConfig((prev) => ({
