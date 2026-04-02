@@ -26,9 +26,9 @@ import { Calendar } from "@/components/ui/calendar";
 // Estilo SynqAI (alineado con /dashboard/tournaments/list)
 const labelClass = `text-[10px] uppercase tracking-widest text-[#00F2FF]/60 font-bold`;
 const inputClass =
-  "h-11 w-full rounded-xl border border-white/5 bg-[#0F172A]/40 px-3 text-white outline-none hover:border-[#00F2FF]/25 focus-visible:border-[#00F2FF]/40 transition-[background-color,border-color,color,opacity,transform]";
+  "h-11 w-full rounded-xl border border-[#00F2FF]/20 bg-[#0F172A]/40 px-3 text-white outline-none hover:border-[#00F2FF]/35 focus-visible:border-[#00F2FF]/50 transition-[background-color,border-color,color,opacity,transform]";
 const inputDisabledClass =
-  "h-11 w-full rounded-xl border border-white/5 bg-[#0F172A]/30 px-3 text-white/80 outline-none cursor-not-allowed";
+  "h-11 w-full rounded-xl border border-[#00F2FF]/15 bg-[#0F172A]/30 px-3 text-white/80 outline-none cursor-not-allowed";
 const sectionCardClass =
   "relative overflow-hidden bg-[#0F172A]/60 backdrop-blur-md border border-white/5 hover:border-[#00F2FF]/30 rounded-2xl transition-all duration-300 group";
 const infoPanelClass =
