@@ -18,7 +18,8 @@ function Calendar({
   const weekdayLabels = ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"]
   return (
     <div className={cn("p-3", className)}>
-      <div className="grid grid-cols-7 gap-0 px-0.5 pb-2">
+      <div className="grid grid-cols-[36px_repeat(7,minmax(0,1fr))_36px] items-center gap-0 px-0.5 pb-2">
+        <div aria-hidden className="h-9 w-9" />
         {weekdayLabels.map((d) => (
           <div
             key={d}
@@ -27,6 +28,7 @@ function Calendar({
             {d}
           </div>
         ))}
+        <div aria-hidden className="h-9 w-9" />
       </div>
       <DayPicker
         showOutsideDays={showOutsideDays}
@@ -34,9 +36,9 @@ function Calendar({
         classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
-        caption: "grid grid-cols-3 items-center pt-1",
+        caption: "grid grid-cols-[36px_1fr_36px] items-center pt-1",
         caption_label: "text-sm font-medium text-center",
-        nav: "col-span-3 grid grid-cols-3 items-center",
+        nav: "w-full grid grid-cols-[36px_1fr_36px] items-center",
         nav_button: cn(
           buttonVariants({ variant: "outline" }),
           "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
