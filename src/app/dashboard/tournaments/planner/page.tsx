@@ -726,36 +726,36 @@ export default function TournamentsPlannerPage() {
           </div>
 
           <div className="space-y-2">
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Puntuación liguilla</span>
+            <span className={labelClass}>Puntuación liguilla</span>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <label className="space-y-1">
-                <span className="text-[10px] font-black uppercase tracking-[0.12em] text-white/70">Victoria</span>
+                <span className={labelClass}>Victoria</span>
                 <input
                   type="number"
                   min={0}
                   value={config.pointsWin}
                   onChange={(e) => setConfig((prev) => ({ ...prev, pointsWin: Math.max(0, Number(e.target.value) || 0) }))}
-                  className="h-10 w-full rounded-lg border border-primary/25 bg-black/40 px-3 text-white outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]"
+                  className={cn(inputClass, "h-10 rounded-lg [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]")}
                 />
               </label>
               <label className="space-y-1">
-                <span className="text-[10px] font-black uppercase tracking-[0.12em] text-white/70">Empate</span>
+                <span className={labelClass}>Empate</span>
                 <input
                   type="number"
                   min={0}
                   value={config.pointsDraw}
                   onChange={(e) => setConfig((prev) => ({ ...prev, pointsDraw: Math.max(0, Number(e.target.value) || 0) }))}
-                  className="h-10 w-full rounded-lg border border-primary/25 bg-black/40 px-3 text-white outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]"
+                  className={cn(inputClass, "h-10 rounded-lg [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]")}
                 />
               </label>
               <label className="space-y-1">
-                <span className="text-[10px] font-black uppercase tracking-[0.12em] text-white/70">Derrota</span>
+                <span className={labelClass}>Derrota</span>
                 <input
                   type="number"
                   min={0}
                   value={config.pointsLoss}
                   onChange={(e) => setConfig((prev) => ({ ...prev, pointsLoss: Math.max(0, Number(e.target.value) || 0) }))}
-                  className="h-10 w-full rounded-lg border border-primary/25 bg-black/40 px-3 text-white outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]"
+                  className={cn(inputClass, "h-10 rounded-lg [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]")}
                 />
               </label>
             </div>
@@ -765,7 +765,7 @@ export default function TournamentsPlannerPage() {
           </div>
 
           <div className="flex items-center justify-between gap-3 pt-2">
-            <span className="text-[10px] font-black uppercase tracking-[0.16em] text-white/50">
+            <span className="text-[10px] font-black uppercase tracking-[0.16em] text-[#00F2FF]/50">
               {savedAt ? `Guardado local: ${savedAt}` : "Pendiente de guardar"}
             </span>
             <button
