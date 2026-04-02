@@ -483,37 +483,49 @@ export default function TournamentsPlannerPage() {
           <div className="space-y-2">
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Horas por franja</span>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="rounded-xl border border-white/10 bg-white/5 p-3 space-y-2">
+              <div
+                className={`rounded-xl border bg-white/5 p-3 space-y-2 transition-[background-color,border-color,color,opacity,transform] ${
+                  config.timeWindow === "afternoon" ? "border-white/5 opacity-40" : "border-white/10 opacity-100"
+                }`}
+              >
                 <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/75">Mañana</p>
                 <div className="grid grid-cols-2 gap-2">
                   <input
                     type="time"
                     value={config.morningStart}
                     onChange={(e) => setConfig((prev) => ({ ...prev, morningStart: e.target.value }))}
-                    className="h-10 rounded-lg border border-primary/25 bg-black/40 px-2 text-white outline-none"
+                    disabled={isFinished || config.timeWindow === "afternoon"}
+                    className="h-10 rounded-lg border border-primary/25 bg-black/40 px-2 text-white outline-none disabled:cursor-not-allowed disabled:opacity-60"
                   />
                   <input
                     type="time"
                     value={config.morningEnd}
                     onChange={(e) => setConfig((prev) => ({ ...prev, morningEnd: e.target.value }))}
-                    className="h-10 rounded-lg border border-primary/25 bg-black/40 px-2 text-white outline-none"
+                    disabled={isFinished || config.timeWindow === "afternoon"}
+                    className="h-10 rounded-lg border border-primary/25 bg-black/40 px-2 text-white outline-none disabled:cursor-not-allowed disabled:opacity-60"
                   />
                 </div>
               </div>
-              <div className="rounded-xl border border-white/10 bg-white/5 p-3 space-y-2">
+              <div
+                className={`rounded-xl border bg-white/5 p-3 space-y-2 transition-[background-color,border-color,color,opacity,transform] ${
+                  config.timeWindow === "morning" ? "border-white/5 opacity-40" : "border-white/10 opacity-100"
+                }`}
+              >
                 <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/75">Tarde</p>
                 <div className="grid grid-cols-2 gap-2">
                   <input
                     type="time"
                     value={config.afternoonStart}
                     onChange={(e) => setConfig((prev) => ({ ...prev, afternoonStart: e.target.value }))}
-                    className="h-10 rounded-lg border border-primary/25 bg-black/40 px-2 text-white outline-none"
+                    disabled={isFinished || config.timeWindow === "morning"}
+                    className="h-10 rounded-lg border border-primary/25 bg-black/40 px-2 text-white outline-none disabled:cursor-not-allowed disabled:opacity-60"
                   />
                   <input
                     type="time"
                     value={config.afternoonEnd}
                     onChange={(e) => setConfig((prev) => ({ ...prev, afternoonEnd: e.target.value }))}
-                    className="h-10 rounded-lg border border-primary/25 bg-black/40 px-2 text-white outline-none"
+                    disabled={isFinished || config.timeWindow === "morning"}
+                    className="h-10 rounded-lg border border-primary/25 bg-black/40 px-2 text-white outline-none disabled:cursor-not-allowed disabled:opacity-60"
                   />
                 </div>
               </div>
