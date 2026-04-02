@@ -300,17 +300,13 @@ export default function TournamentsPlannerPage() {
               <input
                 type="number"
                 min={3}
-                value={config.playersPerTeam ?? 0}
-                onChange={(e) =>
-                  setConfig((prev) => ({
-                    ...prev,
-                    playersPerTeam: Math.max(0, Number(e.target.value) || 0) || undefined,
-                  }))
-                }
-                className="h-11 w-full rounded-xl border border-primary/25 bg-black/40 px-3 text-white outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]"
+                value={config.startersPerTeam ?? 0}
+                disabled
+                readOnly
+                className="h-11 w-full rounded-xl border border-primary/25 bg-black/30 px-3 text-white/80 outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield] cursor-not-allowed"
               />
               <span className="text-[10px] text-white/55">
-                Sugerido por formato (F11=11, F7=7, Futsal=5). Editable.
+                Calculado automáticamente por formato (F11=11, F7=7, Futsal=5).
               </span>
             </label>
 
