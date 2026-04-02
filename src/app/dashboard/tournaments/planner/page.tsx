@@ -524,17 +524,11 @@ export default function TournamentsPlannerPage() {
 
             <label className="space-y-2">
               <span className={labelClass}>Suplentes (por equipo)</span>
-              <input
-                type="number"
-                min={0}
+              <NumericInput
                 value={config.substitutesPerTeam ?? 0}
-                onChange={(e) =>
-                  setConfig((prev) => ({
-                    ...prev,
-                    substitutesPerTeam: Math.max(0, Number(e.target.value) || 0) || 0,
-                  }))
-                }
-                className={`${inputClass} [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]`}
+                min={0}
+                onCommit={(n) => setConfig((prev) => ({ ...prev, substitutesPerTeam: Math.max(0, n) }))}
+                className={inputClass}
               />
               <span className="text-[10px] text-white/55">
                 Número de reservas convocados para el banquillo.
@@ -543,12 +537,11 @@ export default function TournamentsPlannerPage() {
 
             <label className="space-y-2">
               <span className={labelClass}>Nº días torneo</span>
-              <input
-                type="number"
-                min={1}
+              <NumericInput
                 value={config.tournamentDays}
-                onChange={(e) => setConfig((prev) => ({ ...prev, tournamentDays: Number(e.target.value) || 1 }))}
-                className={`${inputClass} [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]`}
+                min={1}
+                onCommit={(n) => setConfig((prev) => ({ ...prev, tournamentDays: Math.max(1, n) }))}
+                className={inputClass}
               />
             </label>
 
@@ -621,34 +614,31 @@ export default function TournamentsPlannerPage() {
 
             <label className="space-y-2">
               <span className={labelClass}>Nº grupos</span>
-              <input
-                type="number"
-                min={1}
+              <NumericInput
                 value={config.groupsCount}
-                onChange={(e) => setConfig((prev) => ({ ...prev, groupsCount: Math.max(1, Number(e.target.value) || 1) }))}
-                className={`${inputClass} [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]`}
+                min={1}
+                onCommit={(n) => setConfig((prev) => ({ ...prev, groupsCount: Math.max(1, n) }))}
+                className={inputClass}
               />
             </label>
 
             <label className="space-y-2">
               <span className={labelClass}>Equipos por grupo</span>
-              <input
-                type="number"
-                min={0}
+              <NumericInput
                 value={config.teamsPerGroup}
-                onChange={(e) => setConfig((prev) => ({ ...prev, teamsPerGroup: Math.max(0, Number(e.target.value) || 0) }))}
-                className={`${inputClass} [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]`}
+                min={0}
+                onCommit={(n) => setConfig((prev) => ({ ...prev, teamsPerGroup: Math.max(0, n) }))}
+                className={inputClass}
               />
             </label>
 
             <label className="space-y-2">
               <span className={labelClass}>Nº campos disponibles</span>
-              <input
-                type="number"
-                min={1}
+              <NumericInput
                 value={config.fieldsCount}
-                onChange={(e) => setConfig((prev) => ({ ...prev, fieldsCount: Number(e.target.value) || 1 }))}
-                className={`${inputClass} [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]`}
+                min={1}
+                onCommit={(n) => setConfig((prev) => ({ ...prev, fieldsCount: Math.max(1, n) }))}
+                className={inputClass}
               />
             </label>
           </div>
@@ -737,19 +727,15 @@ export default function TournamentsPlannerPage() {
               >
                 <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/75">Mañana</p>
                 <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="time"
+                  <TimePicker
                     value={config.morningStart}
-                    onChange={(e) => setConfig((prev) => ({ ...prev, morningStart: e.target.value }))}
+                    onChange={(v) => setConfig((prev) => ({ ...prev, morningStart: v }))}
                     disabled={isFinished || config.timeWindow === "afternoon"}
-                    className="h-10 rounded-lg border border-primary/25 bg-black/40 px-2 text-white outline-none disabled:cursor-not-allowed disabled:opacity-60"
                   />
-                  <input
-                    type="time"
+                  <TimePicker
                     value={config.morningEnd}
-                    onChange={(e) => setConfig((prev) => ({ ...prev, morningEnd: e.target.value }))}
+                    onChange={(v) => setConfig((prev) => ({ ...prev, morningEnd: v }))}
                     disabled={isFinished || config.timeWindow === "afternoon"}
-                    className="h-10 rounded-lg border border-primary/25 bg-black/40 px-2 text-white outline-none disabled:cursor-not-allowed disabled:opacity-60"
                   />
                 </div>
               </div>
@@ -760,19 +746,15 @@ export default function TournamentsPlannerPage() {
               >
                 <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/75">Tarde</p>
                 <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="time"
+                  <TimePicker
                     value={config.afternoonStart}
-                    onChange={(e) => setConfig((prev) => ({ ...prev, afternoonStart: e.target.value }))}
+                    onChange={(v) => setConfig((prev) => ({ ...prev, afternoonStart: v }))}
                     disabled={isFinished || config.timeWindow === "morning"}
-                    className="h-10 rounded-lg border border-primary/25 bg-black/40 px-2 text-white outline-none disabled:cursor-not-allowed disabled:opacity-60"
                   />
-                  <input
-                    type="time"
+                  <TimePicker
                     value={config.afternoonEnd}
-                    onChange={(e) => setConfig((prev) => ({ ...prev, afternoonEnd: e.target.value }))}
+                    onChange={(v) => setConfig((prev) => ({ ...prev, afternoonEnd: v }))}
                     disabled={isFinished || config.timeWindow === "morning"}
-                    className="h-10 rounded-lg border border-primary/25 bg-black/40 px-2 text-white outline-none disabled:cursor-not-allowed disabled:opacity-60"
                   />
                 </div>
               </div>
@@ -800,35 +782,30 @@ export default function TournamentsPlannerPage() {
               </label>
               <label className="space-y-1">
                 <span className={labelClass}>Min por parte</span>
-                <input
-                  type="number"
-                  min={5}
+                <NumericInput
                   value={config.minutesPerHalf}
-                  onChange={(e) => setConfig((prev) => ({ ...prev, minutesPerHalf: Number(e.target.value) || 5 }))}
-                  className="h-10 w-full rounded-lg border border-[#00F2FF]/25 bg-[#0F172A]/40 px-3 text-white outline-none hover:border-[#00F2FF]/40 focus-visible:border-[#00F2FF]/50 transition-[background-color,border-color,color,opacity,transform] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]"
+                  min={5}
+                  onCommit={(n) => setConfig((prev) => ({ ...prev, minutesPerHalf: Math.max(5, n || 5) }))}
+                  className="h-10 w-full rounded-lg border border-[#00F2FF]/25 bg-[#0F172A]/40 px-3 text-white outline-none hover:border-[#00F2FF]/40 focus-visible:border-[#00F2FF]/50 transition-[background-color,border-color,color,opacity,transform]"
                 />
               </label>
               <label className="space-y-1">
                 <span className={labelClass}>Descanso partes (min)</span>
-                <input
-                  type="number"
-                  min={0}
+                <NumericInput
                   value={config.breakMinutes}
-                  onChange={(e) => setConfig((prev) => ({ ...prev, breakMinutes: Math.max(0, Number(e.target.value) || 0) }))}
+                  min={0}
                   disabled={config.halvesCount === 1}
-                  className="h-10 w-full rounded-lg border border-[#00F2FF]/25 bg-[#0F172A]/40 px-3 text-white outline-none hover:border-[#00F2FF]/40 focus-visible:border-[#00F2FF]/50 disabled:opacity-60 disabled:cursor-not-allowed transition-[background-color,border-color,color,opacity,transform] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]"
+                  onCommit={(n) => setConfig((prev) => ({ ...prev, breakMinutes: Math.max(0, n) }))}
+                  className="h-10 w-full rounded-lg border border-[#00F2FF]/25 bg-[#0F172A]/40 px-3 text-white outline-none hover:border-[#00F2FF]/40 focus-visible:border-[#00F2FF]/50 disabled:opacity-60 disabled:cursor-not-allowed transition-[background-color,border-color,color,opacity,transform]"
                 />
               </label>
               <label className="space-y-1">
                 <span className={labelClass}>Buffer partidos (min)</span>
-                <input
-                  type="number"
-                  min={0}
+                <NumericInput
                   value={config.bufferBetweenMatches}
-                  onChange={(e) =>
-                    setConfig((prev) => ({ ...prev, bufferBetweenMatches: Math.max(0, Number(e.target.value) || 0) }))
-                  }
-                  className="h-10 w-full rounded-lg border border-[#00F2FF]/25 bg-[#0F172A]/40 px-3 text-white outline-none hover:border-[#00F2FF]/40 focus-visible:border-[#00F2FF]/50 transition-[background-color,border-color,color,opacity,transform] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]"
+                  min={0}
+                  onCommit={(n) => setConfig((prev) => ({ ...prev, bufferBetweenMatches: Math.max(0, n) }))}
+                  className="h-10 w-full rounded-lg border border-[#00F2FF]/25 bg-[#0F172A]/40 px-3 text-white outline-none hover:border-[#00F2FF]/40 focus-visible:border-[#00F2FF]/50 transition-[background-color,border-color,color,opacity,transform]"
                 />
               </label>
             </div>
@@ -900,32 +877,29 @@ export default function TournamentsPlannerPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <label className="space-y-1">
                 <span className={labelClass}>Victoria</span>
-                <input
-                  type="number"
-                  min={0}
+                <NumericInput
                   value={config.pointsWin}
-                  onChange={(e) => setConfig((prev) => ({ ...prev, pointsWin: Math.max(0, Number(e.target.value) || 0) }))}
-                  className={cn(inputClass, "h-10 rounded-lg [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]")}
+                  min={0}
+                  onCommit={(n) => setConfig((prev) => ({ ...prev, pointsWin: Math.max(0, n) }))}
+                  className={cn(inputClass, "h-10 rounded-lg")}
                 />
               </label>
               <label className="space-y-1">
                 <span className={labelClass}>Empate</span>
-                <input
-                  type="number"
-                  min={0}
+                <NumericInput
                   value={config.pointsDraw}
-                  onChange={(e) => setConfig((prev) => ({ ...prev, pointsDraw: Math.max(0, Number(e.target.value) || 0) }))}
-                  className={cn(inputClass, "h-10 rounded-lg [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]")}
+                  min={0}
+                  onCommit={(n) => setConfig((prev) => ({ ...prev, pointsDraw: Math.max(0, n) }))}
+                  className={cn(inputClass, "h-10 rounded-lg")}
                 />
               </label>
               <label className="space-y-1">
                 <span className={labelClass}>Derrota</span>
-                <input
-                  type="number"
-                  min={0}
+                <NumericInput
                   value={config.pointsLoss}
-                  onChange={(e) => setConfig((prev) => ({ ...prev, pointsLoss: Math.max(0, Number(e.target.value) || 0) }))}
-                  className={cn(inputClass, "h-10 rounded-lg [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [appearance:textfield]")}
+                  min={0}
+                  onCommit={(n) => setConfig((prev) => ({ ...prev, pointsLoss: Math.max(0, n) }))}
+                  className={cn(inputClass, "h-10 rounded-lg")}
                 />
               </label>
             </div>
