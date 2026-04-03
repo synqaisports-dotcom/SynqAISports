@@ -246,6 +246,7 @@ const DEFAULT_CONFIG: PlannerConfig = {
   timeWindow: "both",
   fieldsCount: 2,
   scheduleMode: "normal",
+  scheduleStart: "09:00",
   footballFormat: "f11",
   morningStart: "09:00",
   morningEnd: "14:00",
@@ -398,6 +399,7 @@ export default function TournamentsPlannerPage() {
 
   const matchTotalMinutes = config.halvesCount * config.minutesPerHalf + (config.halvesCount === 2 ? config.breakMinutes : 0);
   const slotMinutes = matchTotalMinutes + config.bufferBetweenMatches;
+  const scheduleStart = (config.scheduleStart || config.morningStart || "09:00").slice(0, 5);
   const slotsPerFieldPerDay = useMemo(() => {
     const ranges: Array<{ start: string; end: string }> = [];
     if (config.timeWindow === "morning" || config.timeWindow === "both") {
@@ -423,6 +425,11 @@ export default function TournamentsPlannerPage() {
   const totalSlots = slotsPerFieldPerDay * config.fieldsCount * config.tournamentDays;
   const inferredTeamsPerGroup = Math.max(2, Math.ceil(config.teamsCount / config.groupsCount));
   const estimatedMatchesGroupStage = config.groupsCount * Math.floor((inferredTeamsPerGroup * (inferredTeamsPerGroup - 1)) / 2);
+  const estimatedFinalsMatches = config.groupsCount >= 2 ? 3 : 0; // semis (2) + final (1) en este MVP
+  const estimatedTotalMatches = estimatedMatchesGroupStage + estimatedFinalsMatches;
+  const estimatedSlotsNeeded = Math.ceil(estimatedTotalMatches / Math.max(1, config.fieldsCount));
+  const estimatedTotalMinutes = estimatedSlotsNeeded * Math.max(1, slotMinutes);
+  const estimatedEnd = addMinutesToHHMM(scheduleStart, estimatedTotalMinutes);
   const sampleSlots = useMemo(() => {
     const firstField = "Campo 1";
     const out: Array<{ day: number; field: string; start: string; end: string }> = [];
@@ -435,7 +442,7 @@ export default function TournamentsPlannerPage() {
     }
     for (let day = 1; day <= Math.min(config.tournamentDays, 2); day++) {
       for (const r of ranges) {
-        let cur = r.start;
+        let cur = day === 1 ? scheduleStart : r.start;
         while (toMinutes(addMinutesToHHMM(cur, slotMinutes)) <= toMinutes(r.end) && out.length < 8) {
           out.push({
             day,
@@ -457,6 +464,7 @@ export default function TournamentsPlannerPage() {
     config.tournamentDays,
     slotMinutes,
     matchTotalMinutes,
+    scheduleStart,
   ]);
 
   return (
@@ -685,6 +693,27 @@ export default function TournamentsPlannerPage() {
                 })}
               </div>
             </label>
+
+            <label className="space-y-2">
+              <span className={labelClass}>Inicio de programación</span>
+              <TimePicker
+                value={scheduleStart}
+                disabled={isFinished}
+                onChange={(v) => setConfig((prev) => ({ ...prev, scheduleStart: v }))}
+              />
+              <span className="text-[10px] text-white/55">Primera hora del primer slot (el fin se calcula automáticamente).</span>
+            </label>
+
+            <div className="space-y-2">
+              <span className={labelClass}>Fin estimado</span>
+              <div className={inputDisabledClass + " flex items-center justify-between"}>
+                <span className="text-white/85 font-black">{estimatedEnd}</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.16em] text-white/50">
+                  {estimatedTotalMatches} partidos
+                </span>
+              </div>
+              <span className="text-[10px] text-white/55">Estimado: liguilla + semis/final (si aplica) según duración y buffers.</span>
+            </div>
           </div>
 
           <div className="space-y-2">

@@ -38,6 +38,8 @@ export type TournamentConfig = {
    * - "rounds_by_group": rota por jornadas/grupo; en cada slot pueden jugar varios partidos del MISMO grupo en campos distintos.
    */
   scheduleMode?: "normal" | "rounds_by_group";
+  /** Hora de inicio para la programación (HH:mm). Si no se define, usa la franja configurada. */
+  scheduleStart?: string;
   footballFormat?: "f11" | "f7" | "futsal";
   morningStart: string;
   morningEnd: string;

@@ -103,6 +103,12 @@ function addMinutesToHHMM(hhmm: string, delta: number) {
   return `${hh}:${mm}`;
 }
 
+function clampStartToRange(start: string, range: { start: string; end: string }) {
+  if (toMinutes(start) < toMinutes(range.start)) return range.start;
+  if (toMinutes(start) > toMinutes(range.end)) return range.end;
+  return start;
+}
+
 export default function TournamentClassificationPage() {
   const params = useSearchParams();
   const tournamentId = params.get("tournamentId");
@@ -342,9 +348,13 @@ export default function TournamentClassificationPage() {
     const buildSlotsForTournament = (): ScheduleSlot[] => {
       const out: ScheduleSlot[] = [];
       if (slotMinutes <= 0 || ranges.length === 0) return out;
+      const scheduleStart = String(config?.scheduleStart ?? "").trim();
       for (let day = 1; day <= tournamentDays; day++) {
         for (const r of ranges) {
           let cur = r.start;
+          if (scheduleStart) {
+            cur = clampStartToRange(scheduleStart, r);
+          }
           while (toMinutes(addMinutesToHHMM(cur, matchTotalMinutes)) <= toMinutes(r.end)) {
             out.push({ day, start: cur, end: addMinutesToHHMM(cur, matchTotalMinutes) });
             cur = addMinutesToHHMM(cur, slotMinutes);
