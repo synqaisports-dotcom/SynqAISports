@@ -204,10 +204,21 @@ export default function TournamentClassificationPage() {
     const allNamedTeams: Array<{ name: string; groupIndex: number | undefined }> = (Array.isArray(teams) ? teams : [])
       .map((t) => {
         if (!t || typeof t !== "object") return null;
+        const id = String((t as { id?: unknown }).id ?? "").trim();
         const name = String((t as { name?: unknown }).name ?? "").trim();
         if (!name) return null;
         const groupIndexRaw = (t as { groupIndex?: unknown }).groupIndex;
-        const groupIndex = typeof groupIndexRaw === "number" && Number.isFinite(groupIndexRaw) ? groupIndexRaw : undefined;
+        let groupIndex = typeof groupIndexRaw === "number" && Number.isFinite(groupIndexRaw) ? groupIndexRaw : undefined;
+        if (groupIndex == null && id) {
+          const m = /^slot_(\d+)_\d+$/.exec(id);
+          if (m) {
+            const inferred = Number(m[1]);
+            if (Number.isFinite(inferred)) groupIndex = inferred;
+          }
+        }
+        if (typeof groupIndex === "number" && Number.isFinite(groupIndex)) {
+          groupIndex = Math.max(0, Math.min(groupsCount - 1, groupIndex));
+        }
         return { name, groupIndex };
       })
       .filter((x): x is { name: string; groupIndex: number | undefined } => x !== null);
