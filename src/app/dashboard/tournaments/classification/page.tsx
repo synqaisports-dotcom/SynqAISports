@@ -113,19 +113,39 @@ export default function TournamentClassificationPage() {
       Number(config?.teamsPerGroup ?? 0) > 1
         ? Number(config?.teamsPerGroup)
         : Math.max(2, Math.ceil((Number(config?.teamsCount ?? 0) || 0) / groupsCount));
-    const names = (Array.isArray(teams) ? teams : [])
-      .map((t) => (t && typeof t === "object" ? String((t as { name?: unknown }).name ?? "").trim() : ""))
-      .filter((v): v is string => v.length > 0);
-    const fallback = names.length > 0 ? names : Array.from({ length: Number(config?.teamsCount ?? 0) || 0 }, (_, i) => `Equipo ${i + 1}`);
+    const allNamedTeams: Array<{ name: string; groupIndex: number | undefined }> = (Array.isArray(teams) ? teams : [])
+      .map((t) => {
+        if (!t || typeof t !== "object") return null;
+        const name = String((t as { name?: unknown }).name ?? "").trim();
+        if (!name) return null;
+        const groupIndexRaw = (t as { groupIndex?: unknown }).groupIndex;
+        const groupIndex = typeof groupIndexRaw === "number" && Number.isFinite(groupIndexRaw) ? groupIndexRaw : undefined;
+        return { name, groupIndex };
+      })
+      .filter((x): x is { name: string; groupIndex: number | undefined } => x !== null);
+
+    const hasAnyGroupIndex = allNamedTeams.some((t) => typeof t.groupIndex === "number" && Number.isFinite(t.groupIndex));
+    const fallbackNames =
+      allNamedTeams.length > 0
+        ? allNamedTeams.map((t) => t.name)
+        : Array.from({ length: Number(config?.teamsCount ?? 0) || 0 }, (_, i) => `Equipo ${i + 1}`);
     const out: GroupView[] = [];
     const pointsWin = Math.max(0, Number(config?.pointsWin ?? 3) || 0);
     const pointsDraw = Math.max(0, Number(config?.pointsDraw ?? 1) || 0);
     const pointsLoss = Math.max(0, Number(config?.pointsLoss ?? 0) || 0);
     for (let g = 0; g < groupsCount; g++) {
-      const slice = fallback.slice(g * teamsPerGroup, g * teamsPerGroup + teamsPerGroup);
-      const rows = slice.map((name) => ({ name, pj: 0, g: 0, e: 0, p: 0, gf: 0, gc: 0, dg: 0, pts: 0 }));
-      const rowMap = new Map(rows.map((r) => [r.name, r]));
       const groupLabel = `Grupo ${String.fromCharCode(65 + g)}`;
+      const groupNames = hasAnyGroupIndex
+        ? allNamedTeams
+            .filter((t) => {
+              const gi = typeof t.groupIndex === "number" && Number.isFinite(t.groupIndex) ? t.groupIndex : -1;
+              return gi === g;
+            })
+            .map((t) => t.name)
+        : fallbackNames.slice(g * teamsPerGroup, g * teamsPerGroup + teamsPerGroup);
+
+      const rows = groupNames.map((name) => ({ name, pj: 0, g: 0, e: 0, p: 0, gf: 0, gc: 0, dg: 0, pts: 0 }));
+      const rowMap = new Map(rows.map((r) => [r.name, r]));
 
       const relevant = matches.filter((m) => m.groupName === groupLabel);
       for (const m of relevant) {
