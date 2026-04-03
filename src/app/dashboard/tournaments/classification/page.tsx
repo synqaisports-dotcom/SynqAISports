@@ -302,14 +302,39 @@ export default function TournamentClassificationPage() {
     }
 
     // Asignación secuencial por campo: permite simultaneidad entre campos
+    // Regla extra: un equipo no puede jugar dos partidos a la misma hora (aunque haya varios campos).
+    const occupiedTeamsBySlot = new Map<string, Set<string>>(); // key: "D{day}_{HH:mm}"
+    const slotKey = (s: ScheduleSlot) => `D${s.day}_${s.start}`;
+
     for (const field of byField) {
       const rows = rowsByField.get(field.fieldIndex) ?? [];
       const availableSlots = slots; // cada campo tiene su propia línea de tiempo (misma parrilla de slots)
       const scheduled: ScheduledMatchRow[] = [];
-      const limit = Math.min(rows.length, availableSlots.length);
-      for (let i = 0; i < limit; i++) {
-        const r = rows[i];
-        const s = availableSlots[i];
+
+      const isSlotFreeForTeams = (s: ScheduleSlot, a: string, b: string) => {
+        const key = slotKey(s);
+        const set = occupiedTeamsBySlot.get(key);
+        if (!set) return true;
+        return !set.has(a) && !set.has(b);
+      };
+
+      const markTeams = (s: ScheduleSlot, a: string, b: string) => {
+        const key = slotKey(s);
+        if (!occupiedTeamsBySlot.has(key)) occupiedTeamsBySlot.set(key, new Set<string>());
+        const set = occupiedTeamsBySlot.get(key)!;
+        set.add(a);
+        set.add(b);
+      };
+
+      let cursor = 0;
+      for (const r of rows) {
+        // empezamos intentando en el slot "cursor" para mantener orden; si hay conflicto, buscamos siguiente
+        let idx = cursor;
+        while (idx < availableSlots.length && !isSlotFreeForTeams(availableSlots[idx], r.localTeam, r.awayTeam)) {
+          idx += 1;
+        }
+        if (idx >= availableSlots.length) break; // no caben más en este campo/ventana
+        const s = availableSlots[idx];
         scheduled.push({
           key: `${field.fieldIndex}_${r.key}`,
           fieldIndex: field.fieldIndex,
@@ -323,9 +348,11 @@ export default function TournamentClassificationPage() {
           localGoals: r.localGoals,
           awayGoals: r.awayGoals,
         });
+        markTeams(s, r.localTeam, r.awayTeam);
+        cursor = idx + 1;
       }
       field.matches = scheduled;
-      field.overflow = Math.max(0, rows.length - availableSlots.length);
+      field.overflow = Math.max(0, rows.length - scheduled.length);
     }
 
     return {
