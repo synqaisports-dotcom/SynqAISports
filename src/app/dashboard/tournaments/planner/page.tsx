@@ -227,6 +227,7 @@ function toISODate(d: Date): string {
 
 type TimeWindow = "morning" | "afternoon" | "both";
 type FootballFormat = "f11" | "f7" | "futsal";
+type ScheduleMode = "normal" | "rounds_by_group";
 
 type PlannerConfig = TournamentConfig;
 
@@ -244,6 +245,7 @@ const DEFAULT_CONFIG: PlannerConfig = {
   teamsPerGroup: 4,
   timeWindow: "both",
   fieldsCount: 2,
+  scheduleMode: "normal",
   footballFormat: "f11",
   morningStart: "09:00",
   morningEnd: "14:00",
@@ -649,6 +651,39 @@ export default function TournamentsPlannerPage() {
                 onCommit={(n) => setConfig((prev) => ({ ...prev, fieldsCount: Math.max(1, n) }))}
                 className={inputClass}
               />
+            </label>
+
+            <label className="space-y-2 md:col-span-2">
+              <span className={labelClass}>Modo de programación (campos/horarios)</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {[
+                  {
+                    value: "normal",
+                    label: "Normal (paralelo por campos)",
+                    help: "Cada campo agenda sus partidos en orden. Permite simultaneidad.",
+                  },
+                  {
+                    value: "byGroupRounds",
+                    label: "Por jornadas y grupo",
+                    help: "En cada franja se juegan en paralelo partidos del mismo grupo (si hay ≥2 campos). Siguiente franja: siguiente grupo.",
+                  },
+                ].map((opt) => {
+                  const active = (config.scheduleMode ?? "normal") === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setConfig((prev) => ({ ...prev, scheduleMode: opt.value as ScheduleMode }))}
+                      className={`rounded-xl border px-3 py-2 text-left transition-[background-color,border-color,color,opacity,transform] ${
+                        active ? "border-primary/40 bg-primary/15 text-primary" : "border-white/15 bg-white/5 text-white/75"
+                      }`}
+                    >
+                      <p className="text-[10px] font-black uppercase tracking-[0.16em]">{opt.label}</p>
+                      <p className={`mt-1 text-[11px] ${active ? "text-primary/80" : "text-white/55"}`}>{opt.help}</p>
+                    </button>
+                  );
+                })}
+              </div>
             </label>
           </div>
 

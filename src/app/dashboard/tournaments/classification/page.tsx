@@ -328,6 +328,7 @@ export default function TournamentClassificationPage() {
     const matchTotalMinutes = halvesCount * minutesPerHalf + (halvesCount === 2 ? breakMinutes : 0);
     const slotMinutes = matchTotalMinutes + bufferBetweenMatches;
     const tournamentDays = Math.max(1, Number(config?.tournamentDays ?? 1) || 1);
+    const scheduleMode = config?.scheduleMode === "rounds_by_group" ? "rounds_by_group" : "normal";
 
     const timeWindow = (config?.timeWindow ?? "both") as "morning" | "afternoon" | "both";
     const ranges: Array<{ start: string; end: string }> = [];
@@ -354,11 +355,6 @@ export default function TournamentClassificationPage() {
     };
 
     const slots = buildSlotsForTournament();
-    const groupToFieldIndex = new Map<string, number>();
-    for (let gi = 0; gi < groups.length; gi++) {
-      const g = groups[gi];
-      groupToFieldIndex.set(g.name, gi % fieldsCount);
-    }
 
     const byField: Array<{ fieldIndex: number; fieldLabel: string; groups: string[]; matches: ScheduledMatchRow[]; overflow: number }> =
       Array.from({ length: fieldsCount }).map((_, idx) => ({
@@ -369,44 +365,157 @@ export default function TournamentClassificationPage() {
         overflow: 0,
       }));
 
-    // Agrupar cruces por campo respetando grupo->campo
-    const rowsByField = new Map<number, typeof editableRows>();
-    for (const r of editableRows) {
-      const fi = groupToFieldIndex.get(r.groupName) ?? 0;
-      if (!rowsByField.has(fi)) rowsByField.set(fi, []);
-      rowsByField.get(fi)!.push(r);
-    }
-    for (const [fi, rows] of rowsByField.entries()) {
-      const uniqGroups = Array.from(new Set(rows.map((r) => r.groupName))).sort();
-      byField[fi].groups = uniqGroups;
-    }
-
-    // Asignación secuencial por campo: permite simultaneidad entre campos
-    for (const field of byField) {
-      const rows = rowsByField.get(field.fieldIndex) ?? [];
-      const availableSlots = slots; // cada campo tiene su propia línea de tiempo (misma parrilla de slots)
-      const scheduled: ScheduledMatchRow[] = [];
-      const limit = Math.min(rows.length, availableSlots.length);
-      for (let i = 0; i < limit; i++) {
-        const r = rows[i];
-        const s = availableSlots[i];
-        scheduled.push({
-          key: `${field.fieldIndex}_${r.key}`,
-          fieldIndex: field.fieldIndex,
-          fieldLabel: field.fieldLabel,
-          groupName: r.groupName,
-          round: r.round,
-          day: s.day,
-          start: s.start,
-          end: s.end,
-          localTeam: r.localTeam,
-          awayTeam: r.awayTeam,
-          localGoals: r.localGoals,
-          awayGoals: r.awayGoals,
-        });
+    const assignNormal = () => {
+      // Grupo A -> Campo 1, Grupo B -> Campo 2 ... (wrap)
+      const groupToFieldIndex = new Map<string, number>();
+      for (let gi = 0; gi < groups.length; gi++) {
+        const g = groups[gi];
+        groupToFieldIndex.set(g.name, gi % fieldsCount);
       }
-      field.matches = scheduled;
-      field.overflow = Math.max(0, rows.length - availableSlots.length);
+
+      const rowsByField = new Map<number, typeof editableRows>();
+      for (const r of editableRows) {
+        const fi = groupToFieldIndex.get(r.groupName) ?? 0;
+        if (!rowsByField.has(fi)) rowsByField.set(fi, []);
+        rowsByField.get(fi)!.push(r);
+      }
+
+      for (const field of byField) {
+        const rows = rowsByField.get(field.fieldIndex) ?? [];
+        const availableSlots = slots; // timeline propio por campo
+        const scheduled: ScheduledMatchRow[] = [];
+        const limit = Math.min(rows.length, availableSlots.length);
+        for (let i = 0; i < limit; i++) {
+          const r = rows[i];
+          const s = availableSlots[i];
+          scheduled.push({
+            key: `${field.fieldIndex}_${r.key}`,
+            fieldIndex: field.fieldIndex,
+            fieldLabel: field.fieldLabel,
+            groupName: r.groupName,
+            round: r.round,
+            day: s.day,
+            start: s.start,
+            end: s.end,
+            localTeam: r.localTeam,
+            awayTeam: r.awayTeam,
+            localGoals: r.localGoals,
+            awayGoals: r.awayGoals,
+          });
+        }
+        field.matches = scheduled;
+        field.overflow = Math.max(0, rows.length - availableSlots.length);
+      }
+    };
+
+    const assignRotateGroupsBySlots = () => {
+      // En cada slot (hora), programamos partidos del MISMO grupo en paralelo (hasta fieldsCount).
+      // En el siguiente slot, pasamos al siguiente grupo (rotación), ayudando al descanso.
+      const byGroupRound = new Map<string, Map<number, typeof editableRows>>();
+      const totalsByGroup = new Map<string, number>();
+      for (const r of editableRows) {
+        if (!byGroupRound.has(r.groupName)) byGroupRound.set(r.groupName, new Map());
+        const m = byGroupRound.get(r.groupName)!;
+        if (!m.has(r.round)) m.set(r.round, []);
+        m.get(r.round)!.push(r);
+        totalsByGroup.set(r.groupName, (totalsByGroup.get(r.groupName) ?? 0) + 1);
+      }
+      // Orden estable: por ronda y por nombre
+      for (const [gname, roundsMap] of byGroupRound.entries()) {
+        for (const [round, rows] of roundsMap.entries()) {
+          rows.sort((a, b) => a.localTeam.localeCompare(b.localTeam) || a.awayTeam.localeCompare(b.awayTeam));
+          roundsMap.set(round, rows);
+        }
+        byGroupRound.set(gname, new Map([...roundsMap.entries()].sort((a, b) => a[0] - b[0])));
+      }
+
+      const groupNames = groups.map((g) => g.name);
+      const pointer = new Map<string, { roundIdx: number; matchIdx: number; rounds: number[] }>();
+      for (const gname of groupNames) {
+        const rounds = Array.from(byGroupRound.get(gname)?.keys() ?? []);
+        pointer.set(gname, { roundIdx: 0, matchIdx: 0, rounds });
+      }
+
+      const scheduledCountByGroup = new Map<string, number>();
+      const scheduledPerField: Array<ScheduledMatchRow[]> = Array.from({ length: fieldsCount }).map(() => []);
+
+      const hasRemaining = (gname: string) => (scheduledCountByGroup.get(gname) ?? 0) < (totalsByGroup.get(gname) ?? 0);
+
+      let groupCursor = 0;
+      for (let slotIdx = 0; slotIdx < slots.length; slotIdx++) {
+        // Buscar siguiente grupo con partidos pendientes.
+        let tries = 0;
+        while (tries < groupNames.length && !hasRemaining(groupNames[groupCursor] ?? "")) {
+          groupCursor = (groupCursor + 1) % Math.max(1, groupNames.length);
+          tries += 1;
+        }
+        const currentGroup = groupNames[groupCursor];
+        if (!currentGroup || !hasRemaining(currentGroup)) break; // nada más que programar
+
+        const p = pointer.get(currentGroup)!;
+        const currentRound = p.rounds[p.roundIdx];
+        const roundRows = byGroupRound.get(currentGroup)?.get(currentRound) ?? [];
+        if (roundRows.length === 0) {
+          // sin datos de ronda, saltar
+          groupCursor = (groupCursor + 1) % Math.max(1, groupNames.length);
+          continue;
+        }
+
+        const s = slots[slotIdx];
+        for (let fieldIndex = 0; fieldIndex < fieldsCount; fieldIndex++) {
+          const rr = roundRows[p.matchIdx];
+          if (!rr) break;
+          scheduledPerField[fieldIndex].push({
+            key: `${fieldIndex}_${rr.key}_S${slotIdx}`,
+            fieldIndex,
+            fieldLabel: `Campo ${fieldIndex + 1}`,
+            groupName: rr.groupName,
+            round: rr.round,
+            day: s.day,
+            start: s.start,
+            end: s.end,
+            localTeam: rr.localTeam,
+            awayTeam: rr.awayTeam,
+            localGoals: rr.localGoals,
+            awayGoals: rr.awayGoals,
+          });
+          p.matchIdx += 1;
+          scheduledCountByGroup.set(currentGroup, (scheduledCountByGroup.get(currentGroup) ?? 0) + 1);
+        }
+
+        // Si hemos terminado la ronda, avanzamos a la siguiente y reseteamos matchIdx
+        if (p.matchIdx >= roundRows.length) {
+          p.roundIdx += 1;
+          p.matchIdx = 0;
+        }
+        pointer.set(currentGroup, p);
+
+        // Rotar al siguiente grupo para el siguiente slot
+        groupCursor = (groupCursor + 1) % Math.max(1, groupNames.length);
+      }
+
+      for (let fi = 0; fi < fieldsCount; fi++) {
+        byField[fi].matches = scheduledPerField[fi];
+        byField[fi].groups = Array.from(new Set(scheduledPerField[fi].map((m) => m.groupName))).sort();
+      }
+
+      const totalScheduled = scheduledPerField.reduce((acc: number, arr) => acc + arr.length, 0);
+      const totalRows = editableRows.length;
+      const overflow = Math.max(0, totalRows - totalScheduled);
+      if (overflow > 0) {
+        // repartir overflow como aviso en todos los campos (solo UI)
+        for (const f of byField) f.overflow = overflow;
+      }
+    };
+
+    if (scheduleMode === "rounds_by_group") assignRotateGroupsBySlots();
+    else assignNormal();
+
+    // Completar grupos por campo si faltan (modo normal no los llena todavía)
+    for (const field of byField) {
+      if (field.groups.length === 0 && field.matches.length > 0) {
+        field.groups = Array.from(new Set(field.matches.map((m) => m.groupName))).sort();
+      }
     }
 
     return {

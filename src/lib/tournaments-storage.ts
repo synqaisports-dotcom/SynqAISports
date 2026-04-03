@@ -32,6 +32,12 @@ export type TournamentConfig = {
   teamsPerGroup: number;
   timeWindow: "morning" | "afternoon" | "both";
   fieldsCount: number;
+  /**
+   * Modo de programación para horarios/liguilla:
+   * - "normal": rellena slots por campo en paralelo (como hasta ahora).
+   * - "rounds_by_group": rota por jornadas/grupo; en cada slot pueden jugar varios partidos del MISMO grupo en campos distintos.
+   */
+  scheduleMode?: "normal" | "rounds_by_group";
   footballFormat?: "f11" | "f7" | "futsal";
   morningStart: string;
   morningEnd: string;

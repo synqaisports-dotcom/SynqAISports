@@ -398,6 +398,7 @@ export default function TournamentsListPage() {
                     teamsPerGroup: 4,
                     timeWindow: "both",
                     fieldsCount: 2,
+                    scheduleMode: "normal",
                     footballFormat: "f11",
                     morningStart: "09:00",
                     morningEnd: "14:00",
