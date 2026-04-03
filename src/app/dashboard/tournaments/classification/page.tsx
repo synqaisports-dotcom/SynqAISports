@@ -32,6 +32,24 @@ type ScheduledMatchRow = {
   awayGoals: number;
 };
 
+function canonicalPairKey(a: string, b: string) {
+  const aa = String(a || "").trim();
+  const bb = String(b || "").trim();
+  return [aa, bb].sort((x, y) => x.localeCompare(y)).join("__vs__");
+}
+
+function normalizeSingleLegMatches(matches: TournamentMatchResultRow[]) {
+  // Si por cualquier motivo ya existen ida/vuelta guardados (A vs B y B vs A),
+  // nos quedamos con una sola fila por pareja dentro de cada grupo.
+  // Elegimos "la última" aparición para respetar el último cambio del usuario.
+  const byKey = new Map<string, TournamentMatchResultRow>();
+  for (const m of matches) {
+    const key = `${m.groupName}__${canonicalPairKey(m.localTeam, m.awayTeam)}`;
+    byKey.set(key, m);
+  }
+  return Array.from(byKey.values());
+}
+
 function toMinutes(hhmm: string) {
   const [h, m] = hhmm.split(":").map((v) => Number(v));
   return h * 60 + m;
@@ -67,6 +85,8 @@ export default function TournamentClassificationPage() {
   useEffect(() => {
     setMatches(loadTournamentMatchesById(clubScopeId, tournamentId));
   }, [clubScopeId, tournamentId]);
+
+  const normalizedMatches = useMemo(() => normalizeSingleLegMatches(matches), [matches]);
 
   const downloadCsv = (filename: string, csv: string) => {
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
@@ -114,7 +134,7 @@ export default function TournamentClassificationPage() {
     if (!tournamentId || !config) return;
     const lines: string[] = [];
     lines.push(["tournamentId", "tournamentName", "groupName", "localTeam", "awayTeam", "localGoals", "awayGoals"].join(","));
-    for (const m of matches) {
+    for (const m of normalizedMatches) {
       lines.push(
         [tournamentId, config.tournamentName ?? "", m.groupName, m.localTeam, m.awayTeam, String(m.localGoals), String(m.awayGoals)]
           .map((v) => `"${String(v).replaceAll("\"", "\"\"")}"`)
@@ -176,7 +196,7 @@ export default function TournamentClassificationPage() {
       const rows = groupNames.map((name) => ({ name, pj: 0, g: 0, e: 0, p: 0, gf: 0, gc: 0, dg: 0, pts: 0 }));
       const rowMap = new Map(rows.map((r) => [r.name, r]));
 
-      const relevant = matches.filter((m) => m.groupName === groupLabel);
+      const relevant = normalizedMatches.filter((m) => m.groupName === groupLabel);
       for (const m of relevant) {
         const local = rowMap.get(m.localTeam);
         const away = rowMap.get(m.awayTeam);
@@ -213,7 +233,7 @@ export default function TournamentClassificationPage() {
       });
     }
     return out;
-  }, [config, teams, matches]);
+  }, [config, teams, normalizedMatches]);
 
   const editableRows = useMemo(() => {
     const rows: Array<{ key: string; groupName: string; localTeam: string; awayTeam: string; localGoals: number; awayGoals: number }> = [];
@@ -222,11 +242,10 @@ export default function TournamentClassificationPage() {
         for (let j = i + 1; j < g.teams.length; j++) {
           const localTeam = g.teams[i].name;
           const awayTeam = g.teams[j].name;
-          const existing = matches.find(
-            (m) => m.groupName === g.name && m.localTeam === localTeam && m.awayTeam === awayTeam,
-          );
+          const key = canonicalPairKey(localTeam, awayTeam);
+          const existing = normalizedMatches.find((m) => m.groupName === g.name && canonicalPairKey(m.localTeam, m.awayTeam) === key);
           rows.push({
-            key: `${g.id}_${localTeam}_${awayTeam}`,
+            key: `${g.id}_${key}`,
             groupName: g.name,
             localTeam,
             awayTeam,
@@ -237,7 +256,7 @@ export default function TournamentClassificationPage() {
       }
     }
     return rows;
-  }, [groups, matches]);
+  }, [groups, normalizedMatches]);
 
   const scheduledByField = useMemo(() => {
     const fieldsCount = Math.max(1, Number(config?.fieldsCount ?? 1) || 1);
@@ -302,39 +321,14 @@ export default function TournamentClassificationPage() {
     }
 
     // Asignación secuencial por campo: permite simultaneidad entre campos
-    // Regla extra: un equipo no puede jugar dos partidos a la misma hora (aunque haya varios campos).
-    const occupiedTeamsBySlot = new Map<string, Set<string>>(); // key: "D{day}_{HH:mm}"
-    const slotKey = (s: ScheduleSlot) => `D${s.day}_${s.start}`;
-
     for (const field of byField) {
       const rows = rowsByField.get(field.fieldIndex) ?? [];
       const availableSlots = slots; // cada campo tiene su propia línea de tiempo (misma parrilla de slots)
       const scheduled: ScheduledMatchRow[] = [];
-
-      const isSlotFreeForTeams = (s: ScheduleSlot, a: string, b: string) => {
-        const key = slotKey(s);
-        const set = occupiedTeamsBySlot.get(key);
-        if (!set) return true;
-        return !set.has(a) && !set.has(b);
-      };
-
-      const markTeams = (s: ScheduleSlot, a: string, b: string) => {
-        const key = slotKey(s);
-        if (!occupiedTeamsBySlot.has(key)) occupiedTeamsBySlot.set(key, new Set<string>());
-        const set = occupiedTeamsBySlot.get(key)!;
-        set.add(a);
-        set.add(b);
-      };
-
-      let cursor = 0;
-      for (const r of rows) {
-        // empezamos intentando en el slot "cursor" para mantener orden; si hay conflicto, buscamos siguiente
-        let idx = cursor;
-        while (idx < availableSlots.length && !isSlotFreeForTeams(availableSlots[idx], r.localTeam, r.awayTeam)) {
-          idx += 1;
-        }
-        if (idx >= availableSlots.length) break; // no caben más en este campo/ventana
-        const s = availableSlots[idx];
+      const limit = Math.min(rows.length, availableSlots.length);
+      for (let i = 0; i < limit; i++) {
+        const r = rows[i];
+        const s = availableSlots[i];
         scheduled.push({
           key: `${field.fieldIndex}_${r.key}`,
           fieldIndex: field.fieldIndex,
@@ -348,11 +342,9 @@ export default function TournamentClassificationPage() {
           localGoals: r.localGoals,
           awayGoals: r.awayGoals,
         });
-        markTeams(s, r.localTeam, r.awayTeam);
-        cursor = idx + 1;
       }
       field.matches = scheduled;
-      field.overflow = Math.max(0, rows.length - scheduled.length);
+      field.overflow = Math.max(0, rows.length - availableSlots.length);
     }
 
     return {
@@ -535,22 +527,28 @@ export default function TournamentClassificationPage() {
                         const value = Math.max(0, Number(e.target.value) || 0);
                         setMatches((prev) => {
                           const next = [...prev];
+                          const pairKey = canonicalPairKey(row.localTeam, row.awayTeam);
                           const idx = next.findIndex(
-                            (m) =>
-                              m.groupName === row.groupName &&
-                              m.localTeam === row.localTeam &&
-                              m.awayTeam === row.awayTeam,
+                            (m) => m.groupName === row.groupName && canonicalPairKey(m.localTeam, m.awayTeam) === pairKey,
                           );
-                          if (idx >= 0) next[idx] = { ...next[idx], localGoals: value };
-                          else
-                            next.push({
-                              id: `m_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-                              groupName: row.groupName,
-                              localTeam: row.localTeam,
-                              awayTeam: row.awayTeam,
-                              localGoals: value,
-                              awayGoals: row.awayGoals,
-                            });
+                          const payload: TournamentMatchResultRow = {
+                            id: idx >= 0 ? next[idx].id : `m_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+                            groupName: row.groupName,
+                            // Guardamos SIEMPRE en dirección canónica (alfabética) para evitar ida/vuelta
+                            localTeam: [row.localTeam, row.awayTeam].sort((a, b) => a.localeCompare(b))[0],
+                            awayTeam: [row.localTeam, row.awayTeam].sort((a, b) => a.localeCompare(b))[1],
+                            localGoals: value,
+                            awayGoals: row.awayGoals,
+                          };
+                          // Si el usuario está editando el marcador y el orden mostrado no coincide con el canónico,
+                          // invertimos goles para preservar el significado "local vs visitante" del UI.
+                          if (payload.localTeam !== row.localTeam) {
+                            payload.localGoals = row.awayGoals;
+                            payload.awayGoals = value;
+                          }
+
+                          if (idx >= 0) next[idx] = payload;
+                          else next.push(payload);
                           return next;
                         });
                       }}
@@ -567,22 +565,25 @@ export default function TournamentClassificationPage() {
                         const value = Math.max(0, Number(e.target.value) || 0);
                         setMatches((prev) => {
                           const next = [...prev];
+                          const pairKey = canonicalPairKey(row.localTeam, row.awayTeam);
                           const idx = next.findIndex(
-                            (m) =>
-                              m.groupName === row.groupName &&
-                              m.localTeam === row.localTeam &&
-                              m.awayTeam === row.awayTeam,
+                            (m) => m.groupName === row.groupName && canonicalPairKey(m.localTeam, m.awayTeam) === pairKey,
                           );
-                          if (idx >= 0) next[idx] = { ...next[idx], awayGoals: value };
-                          else
-                            next.push({
-                              id: `m_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-                              groupName: row.groupName,
-                              localTeam: row.localTeam,
-                              awayTeam: row.awayTeam,
-                              localGoals: row.localGoals,
-                              awayGoals: value,
-                            });
+                          const payload: TournamentMatchResultRow = {
+                            id: idx >= 0 ? next[idx].id : `m_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+                            groupName: row.groupName,
+                            localTeam: [row.localTeam, row.awayTeam].sort((a, b) => a.localeCompare(b))[0],
+                            awayTeam: [row.localTeam, row.awayTeam].sort((a, b) => a.localeCompare(b))[1],
+                            localGoals: row.localGoals,
+                            awayGoals: value,
+                          };
+                          if (payload.localTeam !== row.localTeam) {
+                            payload.localGoals = value;
+                            payload.awayGoals = row.localGoals;
+                          }
+
+                          if (idx >= 0) next[idx] = payload;
+                          else next.push(payload);
                           return next;
                         });
                       }}
@@ -597,7 +598,8 @@ export default function TournamentClassificationPage() {
                 disabled={isFinished}
                 onClick={() => {
                   if (isFinished) return;
-                  saveTournamentMatchesById(clubScopeId, tournamentId, matches);
+                  // Persistimos sin ida/vuelta.
+                  saveTournamentMatchesById(clubScopeId, tournamentId, normalizeSingleLegMatches(matches));
                 }}
                 className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-primary/25 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-[0.16em]"
               >
