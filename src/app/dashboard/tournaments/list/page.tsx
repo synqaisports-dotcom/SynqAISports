@@ -24,6 +24,7 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import {
   ensureTournamentId,
+  getActiveTournamentId,
   loadTournamentIndex,
   migrateLegacySingleTournamentIfNeeded,
   loadTournamentConfigById,
@@ -171,6 +172,7 @@ export default function TournamentsListPage() {
   const clubScopeId = profile?.clubId ?? "global-hq";
   const [tournaments, setTournaments] = useState<TournamentIndexItem[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [activeTournamentId, setActiveTournamentIdState] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | TournamentIndexItem["status"]>("all");
   const [formatFilter, setFormatFilter] = useState<"all" | "f11" | "f7" | "futsal">("all");
@@ -185,6 +187,7 @@ export default function TournamentsListPage() {
     });
     const list = loadTournamentIndex(clubScopeId);
     setTournaments(list);
+    setActiveTournamentIdState(getActiveTournamentId(clubScopeId));
 
     // Auto-estado por fechas (hora local): published mientras esté “activo”, finished después.
     // Reconciliamos al montar y luego cada 60s para cubrir cambios de día.
@@ -192,6 +195,8 @@ export default function TournamentsListPage() {
       try {
         const { changed } = applyTournamentAutoStatuses({ clubId: clubScopeId });
         if (changed) setTournaments(loadTournamentIndex(clubScopeId));
+        // Mantener botón de activación sincronizado si el active cambia fuera (raro pero posible).
+        setActiveTournamentIdState(getActiveTournamentId(clubScopeId));
       } catch {
         // ignore
       }
@@ -418,6 +423,7 @@ export default function TournamentsListPage() {
               {filtered.map((item) => {
                 const t = item.record;
                 const statusLabel = t.status === "published" ? "Activo" : t.status === "finished" ? "Finalizado" : "Pendiente";
+                const isActive = activeTournamentId === t.id;
                 const canDelete = isTournamentDeletableWithGrace({
                   config: loadTournamentConfigById(clubScopeId, t.id),
                   graceHours: 24,
@@ -472,9 +478,14 @@ export default function TournamentsListPage() {
                       <div className="flex flex-wrap gap-1.5">
                         <button
                           type="button"
-                          onClick={() => setActiveTournamentId(clubScopeId, t.id)}
-                          className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-[#00F2FF]/20 bg-[#00F2FF]/10 text-[#00F2FF] hover:bg-[#00F2FF]/15 transition-[background-color,border-color,color,opacity,transform]"
-                          title="Activar torneo"
+                          onClick={() => {
+                            setActiveTournamentId(clubScopeId, t.id);
+                            setActiveTournamentIdState(t.id);
+                          }}
+                          className={`inline-flex items-center justify-center h-10 w-10 rounded-xl border transition-[background-color,border-color,color,opacity,transform] ${statusBadgeClass(
+                            t.status
+                          )} ${isActive ? "opacity-100" : "opacity-45 hover:opacity-100"}`}
+                          title={isActive ? "Torneo activo" : "Activar torneo"}
                         >
                           <Trophy className="h-4 w-4" />
                         </button>
