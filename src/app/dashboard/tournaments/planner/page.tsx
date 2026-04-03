@@ -663,7 +663,7 @@ export default function TournamentsPlannerPage() {
                     help: "Cada campo agenda sus partidos en orden. Permite simultaneidad.",
                   },
                   {
-                    value: "byGroupRounds",
+                    value: "rounds_by_group",
                     label: "Por jornadas y grupo",
                     help: "En cada franja se juegan en paralelo partidos del mismo grupo (si hay ≥2 campos). Siguiente franja: siguiente grupo.",
                   },

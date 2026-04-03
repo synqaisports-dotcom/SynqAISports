@@ -441,15 +441,34 @@ export default function TournamentClassificationPage() {
 
       const hasRemaining = (gname: string) => (scheduledCountByGroup.get(gname) ?? 0) < (totalsByGroup.get(gname) ?? 0);
 
-      let groupCursor = 0;
-      for (let slotIdx = 0; slotIdx < slots.length; slotIdx++) {
-        // Buscar siguiente grupo con partidos pendientes.
-        let tries = 0;
-        while (tries < groupNames.length && !hasRemaining(groupNames[groupCursor] ?? "")) {
-          groupCursor = (groupCursor + 1) % Math.max(1, groupNames.length);
-          tries += 1;
+      const totalRoundsByGroup = new Map<string, number>();
+      for (const gname of groupNames) {
+        totalRoundsByGroup.set(gname, (pointer.get(gname)?.rounds?.length ?? 0) || 0);
+      }
+
+      // Elegir el grupo "más retrasado" para balancear finalización cuando hay menos campos que grupos.
+      const pickNextGroupBalanced = () => {
+        let best: string | null = null;
+        let bestScore = Number.POSITIVE_INFINITY;
+        for (const gname of groupNames) {
+          if (!hasRemaining(gname)) continue;
+          const p = pointer.get(gname);
+          if (!p) continue;
+          const totalRounds = Math.max(1, totalRoundsByGroup.get(gname) ?? 1);
+          const progressRounds = Math.min(totalRounds, p.roundIdx + (p.matchIdx > 0 ? 0.5 : 0)); // 0..N aprox
+          const progressMatches = (scheduledCountByGroup.get(gname) ?? 0) / Math.max(1, totalsByGroup.get(gname) ?? 1);
+          // Score menor = más retrasado (prioridad). Mezclamos rounds y % partidos.
+          const score = progressRounds / totalRounds + progressMatches;
+          if (score < bestScore) {
+            bestScore = score;
+            best = gname;
+          }
         }
-        const currentGroup = groupNames[groupCursor];
+        return best;
+      };
+
+      for (let slotIdx = 0; slotIdx < slots.length; slotIdx++) {
+        const currentGroup = pickNextGroupBalanced();
         if (!currentGroup || !hasRemaining(currentGroup)) break; // nada más que programar
 
         const p = pointer.get(currentGroup)!;
@@ -457,7 +476,6 @@ export default function TournamentClassificationPage() {
         const roundRows = byGroupRound.get(currentGroup)?.get(currentRound) ?? [];
         if (roundRows.length === 0) {
           // sin datos de ronda, saltar
-          groupCursor = (groupCursor + 1) % Math.max(1, groupNames.length);
           continue;
         }
 
@@ -489,9 +507,6 @@ export default function TournamentClassificationPage() {
           p.matchIdx = 0;
         }
         pointer.set(currentGroup, p);
-
-        // Rotar al siguiente grupo para el siguiente slot
-        groupCursor = (groupCursor + 1) % Math.max(1, groupNames.length);
       }
 
       for (let fi = 0; fi < fieldsCount; fi++) {
