@@ -553,7 +553,7 @@ export default function TournamentsListPage() {
               ) : null}
             </CardContent>
           </Card>
-      </div>
+        </div>
     </div>
   );
 }
