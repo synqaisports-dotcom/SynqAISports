@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { BarChart3, CalendarRange, ListOrdered, Pencil, Search, Swords, Trophy, Trash2, Users } from "lucide-react";
+import { BarChart3, CalendarRange, Copy, ListOrdered, Pencil, QrCode, Search, Swords, Trophy, Trash2, Users } from "lucide-react";
 import Link from "next/link";
+import { QRCodeCanvas } from "qrcode.react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   AlertDialog,
@@ -37,6 +38,8 @@ import {
   setActiveTournamentId,
   type TournamentIndexItem,
 } from "@/lib/tournaments-storage";
+
+const PARENTS_TOURNAMENTS_PATH = "/tournaments/parents";
 
 // Clase para la tarjeta de torneo (SynqAI style)
 const tournamentCardClass = `
@@ -172,6 +175,7 @@ export default function TournamentsListPage() {
   const clubScopeId = profile?.clubId ?? "global-hq";
   const [tournaments, setTournaments] = useState<TournamentIndexItem[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [qrTarget, setQrTarget] = useState<{ id: string; name: string } | null>(null);
   const [activeTournamentId, setActiveTournamentIdState] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | TournamentIndexItem["status"]>("all");
@@ -250,6 +254,15 @@ export default function TournamentsListPage() {
     });
   }, [categoryFilter, formatFilter, listItems, query, statusFilter, yearFilter]);
 
+  const qrUrl = useMemo(() => {
+    if (!qrTarget) return "";
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const params = new URLSearchParams();
+    params.set("clubId", clubScopeId);
+    params.set("tournamentId", qrTarget.id);
+    return `${origin}${PARENTS_TOURNAMENTS_PATH}?${params.toString()}`;
+  }, [clubScopeId, qrTarget]);
+
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
       <div className="border-b border-primary/15 pb-5">
@@ -292,6 +305,60 @@ export default function TournamentsListPage() {
               Borrar
             </AlertDialogAction>
           </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!qrTarget} onOpenChange={(open) => (open ? null : setQrTarget(null))}>
+        <AlertDialogContent className="border border-[#00F2FF]/20 bg-[#0a0f18]/95 backdrop-blur-2xl text-white rounded-2xl shadow-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white font-black uppercase tracking-wide flex items-center gap-2">
+              <QrCode className="h-4 w-4 text-[#00F2FF]" />
+              QR · App Padres (Torneos)
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-white/70">
+              {qrTarget ? (
+                <>
+                  Enlace del torneo{" "}
+                  <span className="text-white font-black">{qrTarget.name}</span> para la futura micro‑app de padres.
+                </>
+              ) : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-4">
+            <div className="rounded-2xl border border-white/5 bg-black/25 p-4 flex items-center justify-center">
+              {qrUrl ? (
+                <div className="rounded-xl border border-[#00F2FF]/20 bg-[#0F172A]/60 p-3">
+                  <QRCodeCanvas value={qrUrl} size={168} bgColor="#0A0F18" fgColor="#00F2FF" includeMargin />
+                </div>
+              ) : null}
+            </div>
+            <div className="space-y-2">
+              <p className={labelClass}>URL</p>
+              <div className="rounded-xl border border-white/10 bg-black/25 p-3">
+                <p className="text-[12px] font-black text-white break-all">{qrUrl || "—"}</p>
+              </div>
+              <div className="flex flex-wrap gap-2 pt-1">
+                <AlertDialogCancel className="h-10 rounded-xl border border-white/10 bg-black/30 text-white/80 hover:bg-white/[0.05] hover:text-white">
+                  Cerrar
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  className="h-10 rounded-xl border border-[#00F2FF]/25 bg-[#00F2FF]/10 text-[#00F2FF] hover:bg-[#00F2FF]/15"
+                  onClick={() => {
+                    if (!qrUrl) return;
+                    try {
+                      navigator.clipboard.writeText(qrUrl);
+                    } catch {
+                      // ignore
+                    }
+                  }}
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copiar enlace
+                </AlertDialogAction>
+              </div>
+            </div>
+          </div>
         </AlertDialogContent>
       </AlertDialog>
 
@@ -488,6 +555,14 @@ export default function TournamentsListPage() {
                           title={isActive ? "Torneo activo" : "Activar torneo"}
                         >
                           <Trophy className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setQrTarget({ id: t.id, name: t.name })}
+                          className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-[#00F2FF]/20 bg-black/20 text-[#00F2FF] hover:bg-[#00F2FF]/10 transition-[background-color,border-color,color,opacity,transform]"
+                          title="QR App Padres"
+                        >
+                          <QrCode className="h-4 w-4" />
                         </button>
                         <button
                           type="button"
