@@ -23,6 +23,7 @@ type ScheduledMatchRow = {
   fieldIndex: number; // 0..fieldsCount-1
   fieldLabel: string; // "Campo 1"
   groupName: string; // "Grupo A"
+  round: number; // Jornada 1..N
   day: number;
   start: string; // "HH:mm"
   end: string; // "HH:mm"
@@ -36,6 +37,44 @@ function canonicalPairKey(a: string, b: string) {
   const aa = String(a || "").trim();
   const bb = String(b || "").trim();
   return [aa, bb].sort((x, y) => x.localeCompare(y)).join("__vs__");
+}
+
+function buildRoundRobinRounds(teams: string[]): Array<Array<{ home: string; away: string }>> {
+  const names = teams.map((t) => String(t || "").trim()).filter(Boolean);
+  if (names.length < 2) return [];
+
+  // Método del círculo (single round-robin).
+  const list = [...names];
+  const hasBye = list.length % 2 === 1;
+  if (hasBye) list.push("BYE");
+
+  const n = list.length;
+  const rounds: Array<Array<{ home: string; away: string }>> = [];
+  const fixed = list[0];
+  let rot = list.slice(1);
+  const roundsCount = n - 1;
+
+  for (let r = 0; r < roundsCount; r++) {
+    const left = [fixed, ...rot.slice(0, (n / 2) - 1)];
+    const right = rot.slice((n / 2) - 1).slice().reverse();
+    const pairings: Array<{ home: string; away: string }> = [];
+
+    for (let i = 0; i < left.length; i++) {
+      const a = left[i];
+      const b = right[i];
+      if (a === "BYE" || b === "BYE") continue;
+      // Alternamos local/visitante para no sesgar demasiado.
+      const even = r % 2 === 0;
+      pairings.push(even ? { home: a, away: b } : { home: b, away: a });
+    }
+
+    rounds.push(pairings);
+
+    // rotación
+    rot = [rot[rot.length - 1], ...rot.slice(0, rot.length - 1)];
+  }
+
+  return rounds;
 }
 
 function normalizeSingleLegMatches(matches: TournamentMatchResultRow[]) {
@@ -236,19 +275,30 @@ export default function TournamentClassificationPage() {
   }, [config, teams, normalizedMatches]);
 
   const editableRows = useMemo(() => {
-    const rows: Array<{ key: string; groupName: string; localTeam: string; awayTeam: string; localGoals: number; awayGoals: number }> = [];
+    const rows: Array<{
+      key: string;
+      groupName: string;
+      round: number; // Jornada 1..N
+      localTeam: string;
+      awayTeam: string;
+      localGoals: number;
+      awayGoals: number;
+    }> = [];
     for (const g of groups) {
-      for (let i = 0; i < g.teams.length; i++) {
-        for (let j = i + 1; j < g.teams.length; j++) {
-          const localTeam = g.teams[i].name;
-          const awayTeam = g.teams[j].name;
-          const key = canonicalPairKey(localTeam, awayTeam);
-          const existing = normalizedMatches.find((m) => m.groupName === g.name && canonicalPairKey(m.localTeam, m.awayTeam) === key);
+      const teamNames = g.teams.map((t) => t.name).filter((n) => String(n || "").trim().length > 0);
+      const rounds = buildRoundRobinRounds(teamNames);
+      for (let r = 0; r < rounds.length; r++) {
+        for (const p of rounds[r]) {
+          const key = canonicalPairKey(p.home, p.away);
+          const existing = normalizedMatches.find(
+            (m) => m.groupName === g.name && canonicalPairKey(m.localTeam, m.awayTeam) === key,
+          );
           rows.push({
-            key: `${g.id}_${key}`,
+            key: `${g.id}_R${r + 1}_${key}`,
             groupName: g.name,
-            localTeam,
-            awayTeam,
+            round: r + 1,
+            localTeam: p.home,
+            awayTeam: p.away,
             localGoals: existing?.localGoals ?? 0,
             awayGoals: existing?.awayGoals ?? 0,
           });
@@ -334,6 +384,7 @@ export default function TournamentClassificationPage() {
           fieldIndex: field.fieldIndex,
           fieldLabel: field.fieldLabel,
           groupName: r.groupName,
+          round: r.round,
           day: s.day,
           start: s.start,
           end: s.end,
@@ -474,7 +525,7 @@ export default function TournamentClassificationPage() {
                           D{m.day} {m.start}
                         </p>
                         <p className="text-[9px] font-black uppercase tracking-[0.16em] text-white/45">
-                          {m.groupName}
+                          {m.groupName} · J{m.round}
                         </p>
                       </div>
                       <div className="min-w-0 flex-1">
@@ -512,9 +563,32 @@ export default function TournamentClassificationPage() {
             <p className="text-[11px] text-white/55">No hay cruces de grupo (faltan equipos o grupos).</p>
           ) : (
             <>
-              {editableRows.map((row) => (
-                <div key={row.key} className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/80">{row.groupName}</p>
+              {(() => {
+                const byGroup = new Map<string, typeof editableRows>();
+                for (const r of editableRows) {
+                  if (!byGroup.has(r.groupName)) byGroup.set(r.groupName, []);
+                  byGroup.get(r.groupName)!.push(r);
+                }
+                const groupNames = Array.from(byGroup.keys()).sort();
+                return groupNames.map((gn) => {
+                  const rows = byGroup.get(gn) ?? [];
+                  const rounds = Array.from(new Set(rows.map((r) => r.round))).sort((a, b) => a - b);
+                  return (
+                    <div key={gn} className="space-y-3">
+                      <div className="rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-3">
+                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary/80">{gn}</p>
+                        <p className="mt-1 text-[11px] text-white/60">Jornadas: {rounds.length || 0}</p>
+                      </div>
+                      {rounds.map((round) => (
+                        <div key={`${gn}_R${round}`} className="space-y-2">
+                          <p className="text-[9px] font-black uppercase tracking-[0.16em] text-white/55">Jornada {round}</p>
+                          {rows
+                            .filter((r) => r.round === round)
+                            .map((row) => (
+                              <div key={row.key} className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/80">
+                                  {row.groupName} · Jornada {row.round}
+                                </p>
                   <div className="mt-2 flex items-center gap-2">
                     <span className="flex-1 text-[11px] font-black text-white truncate">{row.localTeam}</span>
                     <input
@@ -591,8 +665,14 @@ export default function TournamentClassificationPage() {
                     />
                     <span className="flex-1 text-right text-[11px] font-black text-white truncate">{row.awayTeam}</span>
                   </div>
-                </div>
-              ))}
+                              </div>
+                            ))}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                });
+              })()}
               <button
                 type="button"
                 disabled={isFinished}
