@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useAuth } from "@/lib/auth-context";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useRouter } from "next/navigation";
 import {
   getActiveTournamentId,
   loadTournamentConfigById,
@@ -28,6 +29,22 @@ type TeamRow = {
 
 function safeTeamName(t: unknown): string {
   return t && typeof t === "object" ? String((t as any).name ?? "").trim() : "";
+}
+
+function ensurePlayersSlots(team: TeamRow, desiredCount: number): TeamRow {
+  const count = Math.max(0, Number(desiredCount) || 0);
+  const current = Array.isArray(team.players) ? team.players : [];
+  if (count === 0) return { ...team, players: current };
+  if (current.length >= count) return { ...team, players: current.slice(0, count) };
+  const next = [...current];
+  for (let i = next.length; i < count; i++) {
+    next.push({
+      id: `${team.id}_pl_${i + 1}`,
+      name: "",
+      jerseyNumber: "",
+    });
+  }
+  return { ...team, players: next };
 }
 
 function normalizeTeamsInput(raw: any[]): TeamRow[] {
@@ -82,8 +99,15 @@ export default function TournamentsTeamsPage() {
   const { profile } = useAuth();
   const clubScopeId = profile?.clubId ?? "global-hq";
   const activeTournamentId = useMemo(() => getActiveTournamentId(clubScopeId), [clubScopeId]);
+  const router = useRouter();
 
-  const [planner, setPlanner] = useState<{ tournamentName?: string; groupsCount?: number; teamsPerGroup?: number } | null>(null);
+  const [planner, setPlanner] = useState<{
+    tournamentName?: string;
+    groupsCount?: number;
+    teamsPerGroup?: number;
+    startersPerTeam?: number;
+    substitutesPerTeam?: number;
+  } | null>(null);
   const [teams, setTeams] = useState<TeamRow[]>([]);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [qrTeam, setQrTeam] = useState<{ id: string; name: string } | null>(null);
@@ -106,6 +130,10 @@ export default function TournamentsTeamsPage() {
   const groupsCount = Math.max(1, Number(planner?.groupsCount ?? 1));
   const teamsPerGroup = Math.max(0, Number(planner?.teamsPerGroup ?? 0));
   const slotsCount = Math.max(0, groupsCount * teamsPerGroup);
+  const desiredPlayersPerTeam = Math.max(
+    0,
+    (Number(planner?.startersPerTeam) || 0) + (Number(planner?.substitutesPerTeam) || 0),
+  );
 
   // Precargar plazas según configuración (grupos × equipos/grupo).
   useEffect(() => {
@@ -137,6 +165,13 @@ export default function TournamentsTeamsPage() {
     });
   }, [activeTournamentId, groupsCount, teamsPerGroup, slotsCount]);
 
+  // Precargar jugadores por equipo: titulares + suplentes.
+  useEffect(() => {
+    if (!activeTournamentId) return;
+    if (desiredPlayersPerTeam <= 0) return;
+    setTeams((prev) => prev.map((t) => ensurePlayersSlots(t, desiredPlayersPerTeam)));
+  }, [activeTournamentId, desiredPlayersPerTeam]);
+
   const addTeam = () => {
     if (isFinished) return;
     const next: TeamRow = {
@@ -144,29 +179,32 @@ export default function TournamentsTeamsPage() {
       name: "",
       groupIndex: undefined,
       crestDataUrl: undefined,
-      players: [],
+      players: desiredPlayersPerTeam > 0 ? ensurePlayersSlots({ id: "tmp", name: "" }, desiredPlayersPerTeam).players : [],
     };
     setTeams((prev) => [next, ...prev]);
   };
 
   const saveTeams = () => {
     if (isFinished) return;
-    const normalized = teams.map((t) => ({
-      ...t,
-      name: String(t.name || "").trim(),
-      players: Array.isArray(t.players)
-        ? t.players
-            .map((p) => ({
+    const normalized = teams.map((t) => {
+      const base: TeamRow = {
+        ...t,
+        name: String(t.name || "").trim(),
+        crestDataUrl: typeof t.crestDataUrl === "string" ? t.crestDataUrl : undefined,
+        players: Array.isArray(t.players)
+          ? t.players.map((p) => ({
               ...p,
               name: String(p.name || "").trim(),
               jerseyNumber: String(p.jerseyNumber || "").trim(),
             }))
-            .filter((p) => p.name.length > 0 || p.jerseyNumber.length > 0)
-        : [],
-    }));
+          : [],
+      };
+      return desiredPlayersPerTeam > 0 ? ensurePlayersSlots(base, desiredPlayersPerTeam) : base;
+    });
     saveTournamentTeamsById(clubScopeId, activeTournamentId, normalized as any);
     setTeams(normalized);
     setSavedAt(new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }));
+    router.push("/dashboard/tournaments/list");
   };
 
   const coachTeamUrl = useMemo(() => {
