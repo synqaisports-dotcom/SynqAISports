@@ -17,6 +17,35 @@ import {
 type GroupRow = { name: string; pj: number; g: number; e: number; p: number; gf: number; gc: number; dg: number; pts: number };
 type GroupView = { id: string; name: string; teams: GroupRow[] };
 
+type ScheduleSlot = { day: number; start: string; end: string };
+type ScheduledMatchRow = {
+  key: string;
+  fieldIndex: number; // 0..fieldsCount-1
+  fieldLabel: string; // "Campo 1"
+  groupName: string; // "Grupo A"
+  day: number;
+  start: string; // "HH:mm"
+  end: string; // "HH:mm"
+  localTeam: string;
+  awayTeam: string;
+  localGoals: number;
+  awayGoals: number;
+};
+
+function toMinutes(hhmm: string) {
+  const [h, m] = hhmm.split(":").map((v) => Number(v));
+  return h * 60 + m;
+}
+
+function addMinutesToHHMM(hhmm: string, delta: number) {
+  const [h, m] = hhmm.split(":").map((v) => Number(v));
+  const total = h * 60 + m + delta;
+  const normalized = ((total % (24 * 60)) + (24 * 60)) % (24 * 60);
+  const hh = String(Math.floor(normalized / 60)).padStart(2, "0");
+  const mm = String(normalized % 60).padStart(2, "0");
+  return `${hh}:${mm}`;
+}
+
 export default function TournamentClassificationPage() {
   const params = useSearchParams();
   const tournamentId = params.get("tournamentId");
@@ -210,6 +239,102 @@ export default function TournamentClassificationPage() {
     return rows;
   }, [groups, matches]);
 
+  const scheduledByField = useMemo(() => {
+    const fieldsCount = Math.max(1, Number(config?.fieldsCount ?? 1) || 1);
+    const halvesCount = Number(config?.halvesCount ?? 2) === 1 ? 1 : 2;
+    const minutesPerHalf = Math.max(1, Number(config?.minutesPerHalf ?? 0) || 0);
+    const breakMinutes = Math.max(0, Number(config?.breakMinutes ?? 0) || 0);
+    const bufferBetweenMatches = Math.max(0, Number(config?.bufferBetweenMatches ?? 0) || 0);
+    const matchTotalMinutes = halvesCount * minutesPerHalf + (halvesCount === 2 ? breakMinutes : 0);
+    const slotMinutes = matchTotalMinutes + bufferBetweenMatches;
+    const tournamentDays = Math.max(1, Number(config?.tournamentDays ?? 1) || 1);
+
+    const timeWindow = (config?.timeWindow ?? "both") as "morning" | "afternoon" | "both";
+    const ranges: Array<{ start: string; end: string }> = [];
+    if (timeWindow === "morning" || timeWindow === "both") {
+      ranges.push({ start: String(config?.morningStart ?? "09:00"), end: String(config?.morningEnd ?? "14:00") });
+    }
+    if (timeWindow === "afternoon" || timeWindow === "both") {
+      ranges.push({ start: String(config?.afternoonStart ?? "16:00"), end: String(config?.afternoonEnd ?? "21:00") });
+    }
+
+    const buildSlotsForTournament = (): ScheduleSlot[] => {
+      const out: ScheduleSlot[] = [];
+      if (slotMinutes <= 0 || ranges.length === 0) return out;
+      for (let day = 1; day <= tournamentDays; day++) {
+        for (const r of ranges) {
+          let cur = r.start;
+          while (toMinutes(addMinutesToHHMM(cur, matchTotalMinutes)) <= toMinutes(r.end)) {
+            out.push({ day, start: cur, end: addMinutesToHHMM(cur, matchTotalMinutes) });
+            cur = addMinutesToHHMM(cur, slotMinutes);
+          }
+        }
+      }
+      return out;
+    };
+
+    const slots = buildSlotsForTournament();
+    const groupToFieldIndex = new Map<string, number>();
+    for (let gi = 0; gi < groups.length; gi++) {
+      const g = groups[gi];
+      groupToFieldIndex.set(g.name, gi % fieldsCount);
+    }
+
+    const byField: Array<{ fieldIndex: number; fieldLabel: string; groups: string[]; matches: ScheduledMatchRow[]; overflow: number }> =
+      Array.from({ length: fieldsCount }).map((_, idx) => ({
+        fieldIndex: idx,
+        fieldLabel: `Campo ${idx + 1}`,
+        groups: [],
+        matches: [],
+        overflow: 0,
+      }));
+
+    // Agrupar cruces por campo respetando grupo->campo
+    const rowsByField = new Map<number, typeof editableRows>();
+    for (const r of editableRows) {
+      const fi = groupToFieldIndex.get(r.groupName) ?? 0;
+      if (!rowsByField.has(fi)) rowsByField.set(fi, []);
+      rowsByField.get(fi)!.push(r);
+    }
+    for (const [fi, rows] of rowsByField.entries()) {
+      const uniqGroups = Array.from(new Set(rows.map((r) => r.groupName))).sort();
+      byField[fi].groups = uniqGroups;
+    }
+
+    // Asignación secuencial por campo: permite simultaneidad entre campos
+    for (const field of byField) {
+      const rows = rowsByField.get(field.fieldIndex) ?? [];
+      const availableSlots = slots; // cada campo tiene su propia línea de tiempo (misma parrilla de slots)
+      const scheduled: ScheduledMatchRow[] = [];
+      const limit = Math.min(rows.length, availableSlots.length);
+      for (let i = 0; i < limit; i++) {
+        const r = rows[i];
+        const s = availableSlots[i];
+        scheduled.push({
+          key: `${field.fieldIndex}_${r.key}`,
+          fieldIndex: field.fieldIndex,
+          fieldLabel: field.fieldLabel,
+          groupName: r.groupName,
+          day: s.day,
+          start: s.start,
+          end: s.end,
+          localTeam: r.localTeam,
+          awayTeam: r.awayTeam,
+          localGoals: r.localGoals,
+          awayGoals: r.awayGoals,
+        });
+      }
+      field.matches = scheduled;
+      field.overflow = Math.max(0, rows.length - availableSlots.length);
+    }
+
+    return {
+      matchTotalMinutes,
+      slotMinutes,
+      fields: byField,
+    };
+  }, [config, groups, editableRows]);
+
   if (!tournamentId || !config) {
     return (
       <div className="space-y-6">
@@ -290,6 +415,65 @@ export default function TournamentClassificationPage() {
                     </div>
                   ))
                 )}
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <Card className="glass-panel border border-primary/20 bg-black/30 rounded-2xl">
+        <CardHeader>
+          <CardTitle className="text-white font-black uppercase tracking-wider">Horario por campo</CardTitle>
+          <CardDescription>
+            Cada grupo se asigna a un campo (Grupo A → Campo 1, Grupo B → Campo 2, ...). Si hay varios campos, hay partidos a la misma hora.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {scheduledByField.fields.map((f) => (
+            <div key={f.fieldIndex} className="rounded-2xl border border-primary/20 bg-black/25 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{f.fieldLabel}</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/60">
+                  Slot {scheduledByField.matchTotalMinutes}m + {Math.max(0, scheduledByField.slotMinutes - scheduledByField.matchTotalMinutes)}m
+                </p>
+              </div>
+              <div className="mt-2 rounded-xl border border-white/5 bg-black/20 px-3 py-2">
+                <p className="text-[9px] font-black uppercase tracking-[0.16em] text-white/50">Grupos en este campo</p>
+                <p className="mt-1 text-[11px] font-black text-white/85">{f.groups.length > 0 ? f.groups.join(" · ") : "—"}</p>
+              </div>
+              <div className="mt-3 space-y-2">
+                {f.matches.length === 0 ? (
+                  <p className="text-[11px] text-white/55">Sin partidos asignados.</p>
+                ) : (
+                  f.matches.map((m) => (
+                    <div
+                      key={m.key}
+                      className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 flex items-center gap-3"
+                    >
+                      <div className="w-[92px] shrink-0">
+                        <p className="text-[10px] font-black text-primary/90">
+                          D{m.day} {m.start}
+                        </p>
+                        <p className="text-[9px] font-black uppercase tracking-[0.16em] text-white/45">
+                          {m.groupName}
+                        </p>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[11px] font-black text-white truncate">
+                          {m.localTeam} <span className="text-white/60">vs</span> {m.awayTeam}
+                        </p>
+                      </div>
+                      <div className="shrink-0">
+                        <span className="text-[10px] font-black uppercase text-white/60">{m.end}</span>
+                      </div>
+                    </div>
+                  ))
+                )}
+                {f.overflow > 0 ? (
+                  <div className="rounded-xl border border-amber-400/25 bg-amber-500/5 px-3 py-2 text-[11px] text-amber-200/90 font-black">
+                    Faltan huecos: {f.overflow} partidos no caben en la ventana horaria.
+                  </div>
+                ) : null}
               </div>
             </div>
           ))}
