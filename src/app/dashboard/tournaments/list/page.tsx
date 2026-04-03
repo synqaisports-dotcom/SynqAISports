@@ -215,7 +215,9 @@ export default function TournamentsListPage() {
       .map((t) => {
         const cfg = loadTournamentConfigById(clubScopeId, t.id);
         const teams = loadTournamentTeamsById(clubScopeId, t.id);
-        const loadedTeams = Array.isArray(teams) ? teams.length : 0;
+        const loadedTeams = Array.isArray(teams)
+          ? teams.filter((x) => x && typeof x === "object" && String((x as { name?: unknown }).name ?? "").trim().length > 0).length
+          : 0;
         const startDate = cfg?.startDate;
         const year = startDate?.slice(0, 4) || t.createdAt.slice(0, 4) || "-";
         const category = (cfg?.categoryLabel || cfg?.categories?.[0] || t.primaryCategory || "-").toString();
