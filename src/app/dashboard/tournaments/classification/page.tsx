@@ -85,6 +85,10 @@ function canonicalPairKey(a: string, b: string) {
   return [aa, bb].sort((x, y) => x.localeCompare(y)).join("__vs__");
 }
 
+function matchKey(groupName: string, a: string, b: string) {
+  return `m_${String(groupName || "").trim()}__${canonicalPairKey(a, b)}`;
+}
+
 function buildRoundRobinRounds(teams: string[]): Array<Array<{ home: string; away: string }>> {
   const names = teams.map((t) => String(t || "").trim()).filter(Boolean);
   if (names.length < 2) return [];
@@ -153,6 +157,57 @@ function goalsForDisplayedPair(args: {
     return m.localTeam === home ? { localGoals: m.localGoals, awayGoals: m.awayGoals } : { localGoals: m.awayGoals, awayGoals: m.localGoals };
   }
   return { localGoals: m.localGoals, awayGoals: m.awayGoals };
+}
+
+function getStoredMatchForPair(args: {
+  matches: TournamentMatchResultRow[];
+  groupName: string;
+  home: string;
+  away: string;
+}): TournamentMatchResultRow | undefined {
+  const key = canonicalPairKey(args.home, args.away);
+  const id = matchKey(args.groupName, args.home, args.away);
+  return args.matches.find((m) => m.id === id) ?? args.matches.find((m) => m.groupName === args.groupName && canonicalPairKey(m.localTeam, m.awayTeam) === key);
+}
+
+function buildCanonicalPayloadFromDisplayed(args: {
+  existing: TournamentMatchResultRow | undefined;
+  groupName: string;
+  home: string;
+  away: string;
+  nextHomeGoals?: number;
+  nextAwayGoals?: number;
+}): TournamentMatchResultRow {
+  const home = String(args.home || "").trim();
+  const away = String(args.away || "").trim();
+  const pairSorted = [home, away].sort((a, b) => a.localeCompare(b));
+  const canonLocal = pairSorted[0]!;
+  const canonAway = pairSorted[1]!;
+
+  const currentDisplayed = goalsForDisplayedPair({ stored: args.existing, home, away });
+  const displayHomeGoals = typeof args.nextHomeGoals === "number" ? args.nextHomeGoals : currentDisplayed.localGoals;
+  const displayAwayGoals = typeof args.nextAwayGoals === "number" ? args.nextAwayGoals : currentDisplayed.awayGoals;
+
+  // Mapear goles mostrados (home/away) al orden canónico (canonLocal/canonAway)
+  let canonLocalGoals: number;
+  let canonAwayGoals: number;
+  if (canonLocal === home && canonAway === away) {
+    canonLocalGoals = displayHomeGoals;
+    canonAwayGoals = displayAwayGoals;
+  } else {
+    // invertido
+    canonLocalGoals = displayAwayGoals;
+    canonAwayGoals = displayHomeGoals;
+  }
+
+  return {
+    id: args.existing?.id && args.existing.id.startsWith("m_") ? args.existing.id : matchKey(args.groupName, home, away),
+    groupName: args.groupName,
+    localTeam: canonLocal,
+    awayTeam: canonAway,
+    localGoals: Math.max(0, canonLocalGoals),
+    awayGoals: Math.max(0, canonAwayGoals),
+  };
 }
 
 function toMinutes(hhmm: string) {
