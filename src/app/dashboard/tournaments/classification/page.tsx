@@ -135,6 +135,26 @@ function normalizeSingleLegMatches(matches: TournamentMatchResultRow[]) {
   return Array.from(byKey.values());
 }
 
+function goalsForDisplayedPair(args: {
+  stored: TournamentMatchResultRow | undefined;
+  home: string;
+  away: string;
+}): { localGoals: number; awayGoals: number } {
+  const m = args.stored;
+  if (!m) return { localGoals: 0, awayGoals: 0 };
+  const home = String(args.home || "").trim();
+  const away = String(args.away || "").trim();
+  if (m.localTeam === home && m.awayTeam === away) return { localGoals: m.localGoals, awayGoals: m.awayGoals };
+  if (m.localTeam === away && m.awayTeam === home) return { localGoals: m.awayGoals, awayGoals: m.localGoals };
+  // Fallback: si viene normalizado canónicamente, inferimos por coincidencia de nombres.
+  // Si no coincide, devolvemos tal cual (fail-open).
+  const set = new Set([m.localTeam, m.awayTeam]);
+  if (set.has(home) && set.has(away)) {
+    return m.localTeam === home ? { localGoals: m.localGoals, awayGoals: m.awayGoals } : { localGoals: m.awayGoals, awayGoals: m.localGoals };
+  }
+  return { localGoals: m.localGoals, awayGoals: m.awayGoals };
+}
+
 function toMinutes(hhmm: string) {
   const [h, m] = hhmm.split(":").map((v) => Number(v));
   return h * 60 + m;
@@ -356,14 +376,15 @@ export default function TournamentClassificationPage() {
           const existing = normalizedMatches.find(
             (m) => m.groupName === g.name && canonicalPairKey(m.localTeam, m.awayTeam) === key,
           );
+          const displayedGoals = goalsForDisplayedPair({ stored: existing, home: p.home, away: p.away });
           rows.push({
             key: `${g.id}_R${r + 1}_${key}`,
             groupName: g.name,
             round: r + 1,
             localTeam: p.home,
             awayTeam: p.away,
-            localGoals: existing?.localGoals ?? 0,
-            awayGoals: existing?.awayGoals ?? 0,
+            localGoals: displayedGoals.localGoals,
+            awayGoals: displayedGoals.awayGoals,
           });
         }
       }
