@@ -128,13 +128,22 @@ function buildRoundRobinRounds(teams: string[]): Array<Array<{ home: string; awa
 }
 
 function normalizeSingleLegMatches(matches: TournamentMatchResultRow[]) {
-  // Si por cualquier motivo ya existen ida/vuelta guardados (A vs B y B vs A),
-  // nos quedamos con una sola fila por pareja dentro de cada grupo.
+  // Invariante: 1 partido por pareja en cada grupo (single-leg).
+  // Guardamos/normalizamos con ID estable por partido para evitar duplicados en memoria/localStorage.
   // Elegimos "la última" aparición para respetar el último cambio del usuario.
   const byKey = new Map<string, TournamentMatchResultRow>();
   for (const m of matches) {
-    const key = `${m.groupName}__${canonicalPairKey(m.localTeam, m.awayTeam)}`;
-    byKey.set(key, m);
+    const id = matchKey(m.groupName, m.localTeam, m.awayTeam);
+    const normalized: TournamentMatchResultRow = {
+      ...m,
+      id,
+      groupName: String(m.groupName || "").trim(),
+      localTeam: String(m.localTeam || "").trim(),
+      awayTeam: String(m.awayTeam || "").trim(),
+      localGoals: Math.max(0, Number(m.localGoals) || 0),
+      awayGoals: Math.max(0, Number(m.awayGoals) || 0),
+    };
+    byKey.set(id, normalized);
   }
   return Array.from(byKey.values());
 }
@@ -931,28 +940,27 @@ export default function TournamentClassificationPage() {
                         if (isFinished) return;
                         const value = Math.max(0, Number(e.target.value) || 0);
                         setMatches((prev) => {
-                          const next = [...prev];
-                          const pairKey = canonicalPairKey(row.localTeam, row.awayTeam);
-                          const idx = next.findIndex(
-                            (m) => m.groupName === row.groupName && canonicalPairKey(m.localTeam, m.awayTeam) === pairKey,
-                          );
-                          const existing = idx >= 0 ? next[idx] : undefined;
-                          const shown = goalsForDisplayedPair({ stored: existing, home: row.localTeam, away: row.awayTeam });
-                          const shownNext = { ...shown, localGoals: value };
-                          const [a, b] = [row.localTeam, row.awayTeam].map((t) => String(t || "").trim()).sort((x, y) => x.localeCompare(y));
-                          const payload: TournamentMatchResultRow = {
-                            id: idx >= 0 ? next[idx].id : `m_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+                          const next = Array.isArray(prev) ? [...prev] : [];
+                          const existing = getStoredMatchForPair({
+                            matches: next,
                             groupName: row.groupName,
-                            // Guardamos SIEMPRE en dirección canónica (alfabética) para evitar ida/vuelta
-                            localTeam: a,
-                            awayTeam: b,
-                            localGoals: a === row.localTeam ? shownNext.localGoals : shownNext.awayGoals,
-                            awayGoals: a === row.localTeam ? shownNext.awayGoals : shownNext.localGoals,
-                          };
-
-                          if (idx >= 0) next[idx] = payload;
-                          else next.push(payload);
-                          return next;
+                            home: row.localTeam,
+                            away: row.awayTeam,
+                          });
+                          const payload = buildCanonicalPayloadFromDisplayed({
+                            existing,
+                            groupName: row.groupName,
+                            home: row.localTeam,
+                            away: row.awayTeam,
+                            nextHomeGoals: value,
+                          });
+                          const map = new Map<string, TournamentMatchResultRow>();
+                          for (const m of next) {
+                            const id = matchKey(m.groupName, m.localTeam, m.awayTeam);
+                            map.set(id, { ...m, id });
+                          }
+                          map.set(payload.id, payload);
+                          return Array.from(map.values());
                         });
                       }}
                       className="h-9 w-16 rounded-lg border border-white/10 bg-black/40 px-2 text-white outline-none"
@@ -967,27 +975,27 @@ export default function TournamentClassificationPage() {
                         if (isFinished) return;
                         const value = Math.max(0, Number(e.target.value) || 0);
                         setMatches((prev) => {
-                          const next = [...prev];
-                          const pairKey = canonicalPairKey(row.localTeam, row.awayTeam);
-                          const idx = next.findIndex(
-                            (m) => m.groupName === row.groupName && canonicalPairKey(m.localTeam, m.awayTeam) === pairKey,
-                          );
-                          const existing = idx >= 0 ? next[idx] : undefined;
-                          const shown = goalsForDisplayedPair({ stored: existing, home: row.localTeam, away: row.awayTeam });
-                          const shownNext = { ...shown, awayGoals: value };
-                          const [a, b] = [row.localTeam, row.awayTeam].map((t) => String(t || "").trim()).sort((x, y) => x.localeCompare(y));
-                          const payload: TournamentMatchResultRow = {
-                            id: idx >= 0 ? next[idx].id : `m_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+                          const next = Array.isArray(prev) ? [...prev] : [];
+                          const existing = getStoredMatchForPair({
+                            matches: next,
                             groupName: row.groupName,
-                            localTeam: a,
-                            awayTeam: b,
-                            localGoals: a === row.localTeam ? shownNext.localGoals : shownNext.awayGoals,
-                            awayGoals: a === row.localTeam ? shownNext.awayGoals : shownNext.localGoals,
-                          };
-
-                          if (idx >= 0) next[idx] = payload;
-                          else next.push(payload);
-                          return next;
+                            home: row.localTeam,
+                            away: row.awayTeam,
+                          });
+                          const payload = buildCanonicalPayloadFromDisplayed({
+                            existing,
+                            groupName: row.groupName,
+                            home: row.localTeam,
+                            away: row.awayTeam,
+                            nextAwayGoals: value,
+                          });
+                          const map = new Map<string, TournamentMatchResultRow>();
+                          for (const m of next) {
+                            const id = matchKey(m.groupName, m.localTeam, m.awayTeam);
+                            map.set(id, { ...m, id });
+                          }
+                          map.set(payload.id, payload);
+                          return Array.from(map.values());
                         });
                       }}
                       className="h-9 w-16 rounded-lg border border-white/10 bg-black/40 px-2 text-white outline-none"
