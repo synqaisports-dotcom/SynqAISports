@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Download, GitBranch, Save, Trophy } from "lucide-react";
+import { ArrowLeft, Download, GitBranch, Minus, Plus, Save, Trophy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth-context";
 import {
@@ -32,6 +32,51 @@ type ScheduledMatchRow = {
   localGoals: number;
   awayGoals: number;
 };
+
+function ScoreInput(props: { value: number; disabled?: boolean; onChange: (next: number) => void }) {
+  const v = Math.max(0, Number(props.value) || 0);
+  return (
+    <div className="inline-flex items-center rounded-full border border-white/10 bg-black/40 overflow-hidden">
+      <button
+        type="button"
+        disabled={props.disabled || v <= 0}
+        onClick={() => props.onChange(Math.max(0, v - 1))}
+        className="h-9 w-10 grid place-items-center text-white/80 hover:text-white disabled:opacity-40 disabled:pointer-events-none transition-[background-color,border-color,color,opacity,transform]"
+        title="Restar"
+      >
+        <Minus className="h-4 w-4" />
+      </button>
+      <input
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        value={String(v)}
+        disabled={props.disabled}
+        onFocus={(e) => e.currentTarget.select()}
+        onChange={(e) => {
+          const raw = e.target.value;
+          if (raw === "") {
+            props.onChange(0);
+            return;
+          }
+          if (!/^\d+$/.test(raw)) return;
+          props.onChange(Math.max(0, Number(raw) || 0));
+        }}
+        className="h-9 w-12 bg-transparent text-center text-white font-black outline-none"
+        aria-label="Goles"
+      />
+      <button
+        type="button"
+        disabled={props.disabled}
+        onClick={() => props.onChange(v + 1)}
+        className="h-9 w-10 grid place-items-center text-[#00F2FF] hover:text-[#00F2FF] disabled:opacity-40 disabled:pointer-events-none transition-[background-color,border-color,color,opacity,transform]"
+        title="Sumar"
+      >
+        <Plus className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
 
 function groupLetter(groupName: string): string {
   const m = /^\s*Grupo\s+([A-Z])\s*$/i.exec(String(groupName || "").trim());
@@ -982,14 +1027,11 @@ export default function TournamentClassificationPage() {
                                 </p>
                   <div className="mt-2 flex items-center gap-2">
                     <span className="flex-1 text-[11px] font-black text-white truncate">{row.localTeam}</span>
-                    <input
-                      type="number"
-                      min={0}
+                    <ScoreInput
                       disabled={isFinished}
                       value={row.localGoals}
-                      onChange={(e) => {
+                      onChange={(value) => {
                         if (isFinished) return;
-                        const value = Math.max(0, Number(e.target.value) || 0);
                         setMatches((prev) => {
                           const next = Array.isArray(prev) ? [...prev] : [];
                           const existing = getStoredMatchForPair({
@@ -1014,17 +1056,13 @@ export default function TournamentClassificationPage() {
                           return Array.from(map.values());
                         });
                       }}
-                      className="h-9 w-16 rounded-lg border border-white/10 bg-black/40 px-2 text-white outline-none"
                     />
                     <span className="text-white/70 text-xs font-black">vs</span>
-                    <input
-                      type="number"
-                      min={0}
+                    <ScoreInput
                       disabled={isFinished}
                       value={row.awayGoals}
-                      onChange={(e) => {
+                      onChange={(value) => {
                         if (isFinished) return;
-                        const value = Math.max(0, Number(e.target.value) || 0);
                         setMatches((prev) => {
                           const next = Array.isArray(prev) ? [...prev] : [];
                           const existing = getStoredMatchForPair({
@@ -1049,7 +1087,6 @@ export default function TournamentClassificationPage() {
                           return Array.from(map.values());
                         });
                       }}
-                      className="h-9 w-16 rounded-lg border border-white/10 bg-black/40 px-2 text-white outline-none"
                     />
                     <span className="flex-1 text-right text-[11px] font-black text-white truncate">{row.awayTeam}</span>
                   </div>
