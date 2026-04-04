@@ -881,21 +881,19 @@ export default function TournamentClassificationPage() {
                           const idx = next.findIndex(
                             (m) => m.groupName === row.groupName && canonicalPairKey(m.localTeam, m.awayTeam) === pairKey,
                           );
+                          const existing = idx >= 0 ? next[idx] : undefined;
+                          const shown = goalsForDisplayedPair({ stored: existing, home: row.localTeam, away: row.awayTeam });
+                          const shownNext = { ...shown, localGoals: value };
+                          const [a, b] = [row.localTeam, row.awayTeam].map((t) => String(t || "").trim()).sort((x, y) => x.localeCompare(y));
                           const payload: TournamentMatchResultRow = {
                             id: idx >= 0 ? next[idx].id : `m_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
                             groupName: row.groupName,
                             // Guardamos SIEMPRE en dirección canónica (alfabética) para evitar ida/vuelta
-                            localTeam: [row.localTeam, row.awayTeam].sort((a, b) => a.localeCompare(b))[0],
-                            awayTeam: [row.localTeam, row.awayTeam].sort((a, b) => a.localeCompare(b))[1],
-                            localGoals: value,
-                            awayGoals: row.awayGoals,
+                            localTeam: a,
+                            awayTeam: b,
+                            localGoals: a === row.localTeam ? shownNext.localGoals : shownNext.awayGoals,
+                            awayGoals: a === row.localTeam ? shownNext.awayGoals : shownNext.localGoals,
                           };
-                          // Si el usuario está editando el marcador y el orden mostrado no coincide con el canónico,
-                          // invertimos goles para preservar el significado "local vs visitante" del UI.
-                          if (payload.localTeam !== row.localTeam) {
-                            payload.localGoals = row.awayGoals;
-                            payload.awayGoals = value;
-                          }
 
                           if (idx >= 0) next[idx] = payload;
                           else next.push(payload);
@@ -919,18 +917,18 @@ export default function TournamentClassificationPage() {
                           const idx = next.findIndex(
                             (m) => m.groupName === row.groupName && canonicalPairKey(m.localTeam, m.awayTeam) === pairKey,
                           );
+                          const existing = idx >= 0 ? next[idx] : undefined;
+                          const shown = goalsForDisplayedPair({ stored: existing, home: row.localTeam, away: row.awayTeam });
+                          const shownNext = { ...shown, awayGoals: value };
+                          const [a, b] = [row.localTeam, row.awayTeam].map((t) => String(t || "").trim()).sort((x, y) => x.localeCompare(y));
                           const payload: TournamentMatchResultRow = {
                             id: idx >= 0 ? next[idx].id : `m_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
                             groupName: row.groupName,
-                            localTeam: [row.localTeam, row.awayTeam].sort((a, b) => a.localeCompare(b))[0],
-                            awayTeam: [row.localTeam, row.awayTeam].sort((a, b) => a.localeCompare(b))[1],
-                            localGoals: row.localGoals,
-                            awayGoals: value,
+                            localTeam: a,
+                            awayTeam: b,
+                            localGoals: a === row.localTeam ? shownNext.localGoals : shownNext.awayGoals,
+                            awayGoals: a === row.localTeam ? shownNext.awayGoals : shownNext.localGoals,
                           };
-                          if (payload.localTeam !== row.localTeam) {
-                            payload.localGoals = value;
-                            payload.awayGoals = row.localGoals;
-                          }
 
                           if (idx >= 0) next[idx] = payload;
                           else next.push(payload);
