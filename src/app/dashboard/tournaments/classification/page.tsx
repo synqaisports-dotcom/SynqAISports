@@ -33,6 +33,34 @@ type ScheduledMatchRow = {
   awayGoals: number;
 };
 
+function groupLetter(groupName: string): string {
+  const m = /^\s*Grupo\s+([A-Z])\s*$/i.exec(String(groupName || "").trim());
+  return (m?.[1] ?? "").toUpperCase();
+}
+
+function groupColor(groupName: string): {
+  badge: string;
+  border: string;
+  text: string;
+} {
+  // Paleta consistente con el estilo glass/cyan de la app (alto contraste en oscuro).
+  const letter = groupLetter(groupName);
+  switch (letter) {
+    case "A":
+      return { badge: "bg-[#00F2FF]/10 border-[#00F2FF]/25", border: "border-[#00F2FF]/25", text: "text-[#00F2FF]" };
+    case "B":
+      return { badge: "bg-emerald-400/10 border-emerald-400/25", border: "border-emerald-400/25", text: "text-emerald-300" };
+    case "C":
+      return { badge: "bg-violet-400/10 border-violet-400/25", border: "border-violet-400/25", text: "text-violet-300" };
+    case "D":
+      return { badge: "bg-amber-400/10 border-amber-400/25", border: "border-amber-400/25", text: "text-amber-300" };
+    case "E":
+      return { badge: "bg-rose-400/10 border-rose-400/25", border: "border-rose-400/25", text: "text-rose-300" };
+    default:
+      return { badge: "bg-white/5 border-white/10", border: "border-white/10", text: "text-white/70" };
+  }
+}
+
 function canonicalPairKey(a: string, b: string) {
   const aa = String(a || "").trim();
   const bb = String(b || "").trim();
@@ -634,8 +662,17 @@ export default function TournamentClassificationPage() {
         </CardHeader>
         <CardContent className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {groups.map((g) => (
-            <div key={g.id} className="rounded-2xl border border-primary/20 bg-black/25 p-4">
-              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{g.name}</p>
+            <div key={g.id} className={`rounded-2xl border bg-black/25 p-4 ${groupColor(g.name).border}`}>
+              <div className="flex items-center justify-between gap-2">
+                <p className={`text-[11px] font-black uppercase tracking-[0.18em] ${groupColor(g.name).text}`}>{g.name}</p>
+                {groupLetter(g.name) ? (
+                  <span
+                    className={`inline-flex items-center rounded-lg border px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em] ${groupColor(g.name).badge} ${groupColor(g.name).text}`}
+                  >
+                    Grupo {groupLetter(g.name)}
+                  </span>
+                ) : null}
+              </div>
               <div className="mt-3 space-y-2">
                 {g.teams.length === 0 ? (
                   <p className="text-[11px] text-white/55">Sin equipos.</p>
@@ -674,7 +711,20 @@ export default function TournamentClassificationPage() {
               </div>
               <div className="mt-2 rounded-xl border border-white/5 bg-black/20 px-3 py-2">
                 <p className="text-[9px] font-black uppercase tracking-[0.16em] text-white/50">Grupos en este campo</p>
-                <p className="mt-1 text-[11px] font-black text-white/85">{f.groups.length > 0 ? f.groups.join(" · ") : "—"}</p>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  {f.groups.length > 0 ? (
+                    f.groups.map((gn) => (
+                      <span
+                        key={gn}
+                        className={`inline-flex items-center rounded-lg border px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em] ${groupColor(gn).badge} ${groupColor(gn).text}`}
+                      >
+                        {gn}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-[11px] font-black text-white/85">—</span>
+                  )}
+                </div>
               </div>
               <div className="mt-3 space-y-2">
                 {f.matches.length === 0 ? (
@@ -683,15 +733,17 @@ export default function TournamentClassificationPage() {
                   f.matches.map((m) => (
                     <div
                       key={m.key}
-                      className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 flex items-center gap-3"
+                      className={`rounded-xl border bg-white/[0.03] px-3 py-2 flex items-center gap-3 ${groupColor(m.groupName).border}`}
                     >
                       <div className="w-[92px] shrink-0">
                         <p className="text-[10px] font-black text-primary/90">
                           D{m.day} {m.start}
                         </p>
-                        <p className="text-[9px] font-black uppercase tracking-[0.16em] text-white/45">
+                        <span
+                          className={`mt-1 inline-flex items-center rounded-md border px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.16em] ${groupColor(m.groupName).badge} ${groupColor(m.groupName).text}`}
+                        >
                           {m.groupName} · J{m.round}
-                        </p>
+                        </span>
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-[11px] font-black text-white truncate">
@@ -740,8 +792,15 @@ export default function TournamentClassificationPage() {
                   const rounds = Array.from(new Set(rows.map((r) => r.round))).sort((a, b) => a - b);
                   return (
                     <div key={gn} className="space-y-3">
-                      <div className="rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-3">
-                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary/80">{gn}</p>
+                      <div className={`rounded-2xl border bg-white/[0.02] px-4 py-3 ${groupColor(gn).border}`}>
+                        <div className="flex items-center justify-between gap-2">
+                          <p className={`text-[10px] font-black uppercase tracking-[0.18em] ${groupColor(gn).text}`}>{gn}</p>
+                          <span
+                            className={`inline-flex items-center rounded-lg border px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em] ${groupColor(gn).badge} ${groupColor(gn).text}`}
+                          >
+                            {gn}
+                          </span>
+                        </div>
                         <p className="mt-1 text-[11px] text-white/60">Jornadas: {rounds.length || 0}</p>
                       </div>
                       {rounds.map((round) => (
