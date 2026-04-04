@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, GitBranch, Trophy } from "lucide-react";
 import { useSearchParams } from "next/navigation";
@@ -9,9 +9,11 @@ import { useAuth } from "@/lib/auth-context";
 import {
   buildTournamentBracketFromResults,
   computeGroupStandings,
+  getActiveTournamentId,
   loadTournamentConfigById,
   loadTournamentResultsById,
   loadTournamentTeamsById,
+  setActiveTournamentId,
 } from "@/lib/tournaments-storage";
 
 type BracketRound = {
@@ -131,29 +133,42 @@ function buildFourFinals(args: { standingsByGroup: Record<string, Array<{ team: 
 
 export default function TournamentBracketPage() {
   const searchParams = useSearchParams();
-  const tournamentId = searchParams.get("tournamentId");
+  const tournamentIdFromUrl = searchParams.get("tournamentId");
   const { profile } = useAuth();
   const clubScopeId = profile?.clubId ?? "global-hq";
   const [mode, setMode] = useState<"normal" | "four_finals">("normal");
+  const [resolvedTournamentId, setResolvedTournamentId] = useState<string | null>(tournamentIdFromUrl);
+
+  useEffect(() => {
+    if (!clubScopeId) return;
+    // Si viene por URL, lo fijamos como activo.
+    if (tournamentIdFromUrl) {
+      setActiveTournamentId(clubScopeId, tournamentIdFromUrl);
+      setResolvedTournamentId(tournamentIdFromUrl);
+      return;
+    }
+    // Si no viene, usamos el activo.
+    setResolvedTournamentId(getActiveTournamentId(clubScopeId));
+  }, [clubScopeId, tournamentIdFromUrl]);
 
   const config = useMemo(
-    () => loadTournamentConfigById(clubScopeId, tournamentId),
-    [clubScopeId, tournamentId],
+    () => loadTournamentConfigById(clubScopeId, resolvedTournamentId),
+    [clubScopeId, resolvedTournamentId],
   );
   const teamNames = useMemo(() => {
-    const rows = loadTournamentTeamsById(clubScopeId, tournamentId);
+    const rows = loadTournamentTeamsById(clubScopeId, resolvedTournamentId);
     return rows
       .map((row) => (row && typeof row === "object" ? String((row as { name?: unknown }).name ?? "").trim() : ""))
       .filter((name): name is string => name.length > 0);
-  }, [clubScopeId, tournamentId]);
+  }, [clubScopeId, resolvedTournamentId]);
 
   const results = useMemo(
-    () => loadTournamentResultsById(clubScopeId, tournamentId),
-    [clubScopeId, tournamentId],
+    () => loadTournamentResultsById(clubScopeId, resolvedTournamentId),
+    [clubScopeId, resolvedTournamentId],
   );
   const standings = useMemo(
-    () => computeGroupStandings({ teams: loadTournamentTeamsById(clubScopeId, tournamentId), results, config }),
-    [clubScopeId, tournamentId, results, config],
+    () => computeGroupStandings({ teams: loadTournamentTeamsById(clubScopeId, resolvedTournamentId), results, config }),
+    [clubScopeId, resolvedTournamentId, results, config],
   );
   const bracket = useMemo(
     () => buildTournamentBracketFromResults({ standingsByGroup: standings }),
