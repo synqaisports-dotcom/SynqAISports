@@ -478,45 +478,65 @@ export default function TournamentClassificationPage() {
       };
 
       for (let slotIdx = 0; slotIdx < slots.length; slotIdx++) {
-        const currentGroup = pickNextGroupBalanced();
-        if (!currentGroup || !hasRemaining(currentGroup)) break; // nada más que programar
-
-        const p = pointer.get(currentGroup)!;
-        const currentRound = p.rounds[p.roundIdx];
-        const roundRows = byGroupRound.get(currentGroup)?.get(currentRound) ?? [];
-        if (roundRows.length === 0) {
-          // sin datos de ronda, saltar
-          continue;
-        }
-
+        // En un mismo slot, podemos repartir campos entre varios grupos (si hay campos suficientes).
+        // Ej: 4 campos y grupos con 2 partidos por jornada -> Campo1-2 Grupo A, Campo3-4 Grupo B.
         const s = slots[slotIdx];
-        for (let fieldIndex = 0; fieldIndex < fieldsCount; fieldIndex++) {
-          const rr = roundRows[p.matchIdx];
-          if (!rr) break;
-          scheduledPerField[fieldIndex].push({
-            key: `${fieldIndex}_${rr.key}_S${slotIdx}`,
-            fieldIndex,
-            fieldLabel: `Campo ${fieldIndex + 1}`,
-            groupName: rr.groupName,
-            round: rr.round,
-            day: s.day,
-            start: s.start,
-            end: s.end,
-            localTeam: rr.localTeam,
-            awayTeam: rr.awayTeam,
-            localGoals: rr.localGoals,
-            awayGoals: rr.awayGoals,
-          });
-          p.matchIdx += 1;
-          scheduledCountByGroup.set(currentGroup, (scheduledCountByGroup.get(currentGroup) ?? 0) + 1);
-        }
+        let fieldCursor = 0;
+        let safety = 0;
+        while (fieldCursor < fieldsCount && safety < 50) {
+          safety += 1;
+          const currentGroup = pickNextGroupBalanced();
+          if (!currentGroup || !hasRemaining(currentGroup)) break;
 
-        // Si hemos terminado la ronda, avanzamos a la siguiente y reseteamos matchIdx
-        if (p.matchIdx >= roundRows.length) {
-          p.roundIdx += 1;
-          p.matchIdx = 0;
+          const p = pointer.get(currentGroup)!;
+          const currentRound = p.rounds[p.roundIdx];
+          const roundRows = byGroupRound.get(currentGroup)?.get(currentRound) ?? [];
+          if (roundRows.length === 0) {
+            // sin datos de ronda, saltar a otro grupo
+            // Evita bucles si hay inconsistencias.
+            pointer.set(currentGroup, { ...p, roundIdx: p.roundIdx + 1, matchIdx: 0 });
+            continue;
+          }
+
+          const remainingInRound = Math.max(0, roundRows.length - p.matchIdx);
+          if (remainingInRound === 0) {
+            // avanzar ronda
+            pointer.set(currentGroup, { ...p, roundIdx: p.roundIdx + 1, matchIdx: 0 });
+            continue;
+          }
+
+          const availableFields = fieldsCount - fieldCursor;
+          const take = Math.max(0, Math.min(availableFields, remainingInRound));
+          for (let k = 0; k < take; k++) {
+            const rr = roundRows[p.matchIdx];
+            if (!rr) break;
+            const fieldIndex = fieldCursor + k;
+            scheduledPerField[fieldIndex].push({
+              key: `${fieldIndex}_${rr.key}_S${slotIdx}`,
+              fieldIndex,
+              fieldLabel: `Campo ${fieldIndex + 1}`,
+              groupName: rr.groupName,
+              round: rr.round,
+              day: s.day,
+              start: s.start,
+              end: s.end,
+              localTeam: rr.localTeam,
+              awayTeam: rr.awayTeam,
+              localGoals: rr.localGoals,
+              awayGoals: rr.awayGoals,
+            });
+            p.matchIdx += 1;
+            scheduledCountByGroup.set(currentGroup, (scheduledCountByGroup.get(currentGroup) ?? 0) + 1);
+          }
+
+          // Si hemos terminado la ronda, avanzamos a la siguiente y reseteamos matchIdx
+          if (p.matchIdx >= roundRows.length) {
+            p.roundIdx += 1;
+            p.matchIdx = 0;
+          }
+          pointer.set(currentGroup, p);
+          fieldCursor += take;
         }
-        pointer.set(currentGroup, p);
       }
 
       for (let fi = 0; fi < fieldsCount; fi++) {
