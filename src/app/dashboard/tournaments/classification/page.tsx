@@ -421,6 +421,55 @@ export default function TournamentClassificationPage() {
     return out;
   }, [config, teams, normalizedMatches]);
 
+  const groupSeeds = useMemo(() => {
+    // IMPORTANTE: para generar jornadas y asociar inputs, NO podemos usar el orden de `groups[g].teams`
+    // porque se reordena por puntos/DG y eso hace que los cruces “cambien” mientras editas.
+    // Usamos un orden estable derivado del array `teams` (slots) o del fallback slice.
+    const groupsCount = Math.max(1, Number(config?.groupsCount ?? 1) || 1);
+    const teamsPerGroup =
+      Number(config?.teamsPerGroup ?? 0) > 1
+        ? Number(config?.teamsPerGroup)
+        : Math.max(2, Math.ceil((Number(config?.teamsCount ?? 0) || 0) / groupsCount));
+
+    const namedTeamsWithGroup: Array<{ name: string; groupIndex: number | undefined }> = (Array.isArray(teams) ? teams : [])
+      .map((t) => {
+        if (!t || typeof t !== "object") return null;
+        const name = String((t as { name?: unknown }).name ?? "").trim();
+        if (!name) return null;
+        const groupIndexRaw = (t as { groupIndex?: unknown }).groupIndex;
+        let groupIndex = typeof groupIndexRaw === "number" && Number.isFinite(groupIndexRaw) ? groupIndexRaw : undefined;
+        // Fallback adicional: inferir del id de slot si no existe groupIndex (slot_0_0 -> Grupo A)
+        if (groupIndex == null) {
+          const id = String((t as { id?: unknown }).id ?? "");
+          const m = /^slot_(\d+)_\d+$/i.exec(id.trim());
+          if (m) groupIndex = Math.max(0, Number(m[1]) || 0);
+        }
+        return { name, groupIndex };
+      })
+      .filter((x): x is { name: string; groupIndex: number | undefined } => x !== null);
+
+    const hasAnyGroupIndex = namedTeamsWithGroup.some((t) => typeof t.groupIndex === "number" && Number.isFinite(t.groupIndex));
+    const fallbackNames =
+      namedTeamsWithGroup.length > 0
+        ? namedTeamsWithGroup.map((t) => t.name)
+        : Array.from({ length: Number(config?.teamsCount ?? 0) || 0 }, (_, i) => `Equipo ${i + 1}`);
+
+    const seeds = new Map<string, string[]>();
+    for (let g = 0; g < groupsCount; g++) {
+      const groupLabel = `Grupo ${String.fromCharCode(65 + g)}`;
+      const names = hasAnyGroupIndex
+        ? namedTeamsWithGroup
+            .filter((t) => {
+              const gi = typeof t.groupIndex === "number" && Number.isFinite(t.groupIndex) ? t.groupIndex : -1;
+              return gi === g;
+            })
+            .map((t) => t.name)
+        : fallbackNames.slice(g * teamsPerGroup, g * teamsPerGroup + teamsPerGroup);
+      seeds.set(groupLabel, names);
+    }
+    return seeds;
+  }, [config, teams]);
+
   const editableRows = useMemo(() => {
     const rows: Array<{
       key: string;
@@ -432,7 +481,9 @@ export default function TournamentClassificationPage() {
       awayGoals: number;
     }> = [];
     for (const g of groups) {
-      const teamNames = g.teams.map((t) => t.name).filter((n) => String(n || "").trim().length > 0);
+      const teamNames = (groupSeeds.get(g.name) ?? g.teams.map((t) => t.name))
+        .map((n) => String(n || "").trim())
+        .filter((n) => n.length > 0);
       const rounds = buildRoundRobinRounds(teamNames);
       for (let r = 0; r < rounds.length; r++) {
         for (const p of rounds[r]) {
@@ -454,7 +505,7 @@ export default function TournamentClassificationPage() {
       }
     }
     return rows;
-  }, [groups, normalizedMatches]);
+  }, [groups, groupSeeds, normalizedMatches]);
 
   const scheduledByField = useMemo(() => {
     const fieldsCount = Math.max(1, Number(config?.fieldsCount ?? 1) || 1);
