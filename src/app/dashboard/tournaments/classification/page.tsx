@@ -38,27 +38,45 @@ function groupLetter(groupName: string): string {
   return (m?.[1] ?? "").toUpperCase();
 }
 
-function groupColor(groupName: string): {
-  badge: string;
-  border: string;
-  text: string;
+function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || "").trim());
+  if (!m) return null;
+  const n = parseInt(m[1], 16);
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+}
+
+function mix(a: { r: number; g: number; b: number }, b: { r: number; g: number; b: number }, t: number) {
+  const tt = Math.max(0, Math.min(1, t));
+  return {
+    r: Math.round(a.r + (b.r - a.r) * tt),
+    g: Math.round(a.g + (b.g - a.g) * tt),
+    b: Math.round(a.b + (b.b - a.b) * tt),
+  };
+}
+
+function groupColor(groupName: string, totalGroups?: number): {
+  badgeStyle: React.CSSProperties;
+  borderStyle: React.CSSProperties;
+  textStyle: React.CSSProperties;
 } {
-  // Paleta consistente con el estilo glass/cyan de la app (alto contraste en oscuro).
+  // Paleta SynqAI: colores base con variaciones (claras/oscuras) cuando hay más grupos que la base.
   const letter = groupLetter(groupName);
-  switch (letter) {
-    case "A":
-      return { badge: "bg-[#00F2FF]/10 border-[#00F2FF]/25", border: "border-[#00F2FF]/25", text: "text-[#00F2FF]" };
-    case "B":
-      return { badge: "bg-emerald-400/10 border-emerald-400/25", border: "border-emerald-400/25", text: "text-emerald-300" };
-    case "C":
-      return { badge: "bg-violet-400/10 border-violet-400/25", border: "border-violet-400/25", text: "text-violet-300" };
-    case "D":
-      return { badge: "bg-amber-400/10 border-amber-400/25", border: "border-amber-400/25", text: "text-amber-300" };
-    case "E":
-      return { badge: "bg-rose-400/10 border-rose-400/25", border: "border-rose-400/25", text: "text-rose-300" };
-    default:
-      return { badge: "bg-white/5 border-white/10", border: "border-white/10", text: "text-white/70" };
-  }
+  const idx = letter ? Math.max(0, letter.charCodeAt(0) - 65) : 0; // A=0
+  const base = ["#00F2FF", "#34D399", "#A78BFA", "#FBBF24", "#FB7185", "#60A5FA", "#F472B6", "#22C55E"];
+  const baseColor = hexToRgb(base[idx % base.length] ?? "#00F2FF") ?? { r: 0, g: 242, b: 255 };
+  const cycle = Math.floor(idx / base.length); // 0,1,2...
+  const isLight = cycle % 2 === 0;
+  const white = { r: 255, g: 255, b: 255 };
+  const black = { r: 0, g: 0, b: 0 };
+  const strength = Math.min(0.45, 0.14 + cycle * 0.08); // variación progresiva
+  const accent = isLight ? mix(baseColor, white, strength) : mix(baseColor, black, strength * 0.65);
+
+  const a = `${accent.r} ${accent.g} ${accent.b}`;
+  return {
+    borderStyle: { borderColor: `rgb(${a} / 0.25)` },
+    badgeStyle: { backgroundColor: `rgb(${a} / 0.10)`, borderColor: `rgb(${a} / 0.25)` },
+    textStyle: { color: `rgb(${a} / 0.95)` },
+  };
 }
 
 function canonicalPairKey(a: string, b: string) {
@@ -662,12 +680,19 @@ export default function TournamentClassificationPage() {
         </CardHeader>
         <CardContent className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {groups.map((g) => (
-            <div key={g.id} className={`rounded-2xl border bg-black/25 p-4 ${groupColor(g.name).border}`}>
+            <div
+              key={g.id}
+              className="rounded-2xl border bg-black/25 p-4"
+              style={groupColor(g.name).borderStyle}
+            >
               <div className="flex items-center justify-between gap-2">
-                <p className={`text-[11px] font-black uppercase tracking-[0.18em] ${groupColor(g.name).text}`}>{g.name}</p>
+                <p className="text-[11px] font-black uppercase tracking-[0.18em]" style={groupColor(g.name).textStyle}>
+                  {g.name}
+                </p>
                 {groupLetter(g.name) ? (
                   <span
-                    className={`inline-flex items-center rounded-lg border px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em] ${groupColor(g.name).badge} ${groupColor(g.name).text}`}
+                    className="inline-flex items-center rounded-lg border px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em]"
+                    style={{ ...groupColor(g.name).badgeStyle, ...groupColor(g.name).textStyle }}
                   >
                     Grupo {groupLetter(g.name)}
                   </span>
@@ -716,7 +741,8 @@ export default function TournamentClassificationPage() {
                     f.groups.map((gn) => (
                       <span
                         key={gn}
-                        className={`inline-flex items-center rounded-lg border px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em] ${groupColor(gn).badge} ${groupColor(gn).text}`}
+                        className="inline-flex items-center rounded-lg border px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em]"
+                        style={{ ...groupColor(gn).badgeStyle, ...groupColor(gn).textStyle }}
                       >
                         {gn}
                       </span>
@@ -733,14 +759,16 @@ export default function TournamentClassificationPage() {
                   f.matches.map((m) => (
                     <div
                       key={m.key}
-                      className={`rounded-xl border bg-white/[0.03] px-3 py-2 flex items-center gap-3 ${groupColor(m.groupName).border}`}
+                      className="rounded-xl border bg-white/[0.03] px-3 py-2 flex items-center gap-3"
+                      style={groupColor(m.groupName).borderStyle}
                     >
                       <div className="w-[92px] shrink-0">
                         <p className="text-[10px] font-black text-primary/90">
                           D{m.day} {m.start}
                         </p>
                         <span
-                          className={`mt-1 inline-flex items-center rounded-md border px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.16em] ${groupColor(m.groupName).badge} ${groupColor(m.groupName).text}`}
+                          className="mt-1 inline-flex items-center rounded-md border px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.16em]"
+                          style={{ ...groupColor(m.groupName).badgeStyle, ...groupColor(m.groupName).textStyle }}
                         >
                           {m.groupName} · J{m.round}
                         </span>
@@ -792,11 +820,14 @@ export default function TournamentClassificationPage() {
                   const rounds = Array.from(new Set(rows.map((r) => r.round))).sort((a, b) => a - b);
                   return (
                     <div key={gn} className="space-y-3">
-                      <div className={`rounded-2xl border bg-white/[0.02] px-4 py-3 ${groupColor(gn).border}`}>
+                      <div className="rounded-2xl border bg-white/[0.02] px-4 py-3" style={groupColor(gn).borderStyle}>
                         <div className="flex items-center justify-between gap-2">
-                          <p className={`text-[10px] font-black uppercase tracking-[0.18em] ${groupColor(gn).text}`}>{gn}</p>
+                          <p className="text-[10px] font-black uppercase tracking-[0.18em]" style={groupColor(gn).textStyle}>
+                            {gn}
+                          </p>
                           <span
-                            className={`inline-flex items-center rounded-lg border px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em] ${groupColor(gn).badge} ${groupColor(gn).text}`}
+                            className="inline-flex items-center rounded-lg border px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em]"
+                            style={{ ...groupColor(gn).badgeStyle, ...groupColor(gn).textStyle }}
                           >
                             {gn}
                           </span>
