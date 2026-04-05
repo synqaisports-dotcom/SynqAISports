@@ -26,6 +26,48 @@ type BracketView = {
   rounds: BracketRound[];
 };
 
+function finalsStyle(title: string): { borderClass: string; bgClass: string; textClass: string; badgeClass: string } {
+  const t = String(title || "").toLowerCase();
+  if (t.includes("platino")) {
+    return {
+      borderClass: "border-[#00F2FF]/25",
+      bgClass: "bg-[#00F2FF]/[0.06]",
+      textClass: "text-[#00F2FF]",
+      badgeClass: "bg-[#00F2FF]/10 border-[#00F2FF]/25 text-[#00F2FF]",
+    };
+  }
+  if (t.includes("oro")) {
+    return {
+      borderClass: "border-amber-400/30",
+      bgClass: "bg-amber-500/[0.06]",
+      textClass: "text-amber-200",
+      badgeClass: "bg-amber-500/10 border-amber-400/25 text-amber-200",
+    };
+  }
+  if (t.includes("plata")) {
+    return {
+      borderClass: "border-slate-300/25",
+      bgClass: "bg-slate-300/[0.05]",
+      textClass: "text-slate-200",
+      badgeClass: "bg-slate-300/10 border-slate-300/25 text-slate-200",
+    };
+  }
+  if (t.includes("bronce")) {
+    return {
+      borderClass: "border-orange-400/25",
+      bgClass: "bg-orange-500/[0.06]",
+      textClass: "text-orange-200",
+      badgeClass: "bg-orange-500/10 border-orange-400/25 text-orange-200",
+    };
+  }
+  return {
+    borderClass: "border-primary/20",
+    bgClass: "bg-black/25",
+    textClass: "text-primary/80",
+    badgeClass: "bg-primary/10 border-primary/25 text-primary",
+  };
+}
+
 function buildEliminationRounds(args: { teams: string[]; roundTitlePrefix?: string }): BracketRound[] {
   const names = args.teams.map((t) => String(t || "").trim()).filter(Boolean);
   if (names.length < 2) return [];
