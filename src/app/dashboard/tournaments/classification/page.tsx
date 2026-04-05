@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Download, GitBranch, Minus, Plus, Save, Trophy } from "lucide-react";
@@ -290,6 +290,18 @@ export default function TournamentClassificationPage() {
   const { profile } = useAuth();
   const clubScopeId = profile?.clubId ?? "global-hq";
 
+  const isFinished = useMemo(() => {
+    // Estado del torneo se guarda en índice, pero para esta fase basta con respetar "finished" si existe en el registro.
+    // Si no se encuentra, no bloqueamos (fail-open UI) para no romper demo.
+    try {
+      const idx = JSON.parse(localStorage.getItem(`synq_tournaments_index_v1_${clubScopeId}`) || "[]") as Array<{ id: string; status?: string }>;
+      const rec = Array.isArray(idx) ? idx.find((x) => x?.id === tournamentId) : null;
+      return rec?.status === "finished";
+    } catch {
+      return false;
+    }
+  }, [clubScopeId, tournamentId]);
+
   const config = useMemo(
     () => loadTournamentConfigById(clubScopeId, tournamentId),
     [clubScopeId, tournamentId],
@@ -305,6 +317,51 @@ export default function TournamentClassificationPage() {
   useEffect(() => {
     setMatches(loadTournamentMatchesById(clubScopeId, tournamentId));
   }, [clubScopeId, tournamentId]);
+
+  // Autoguardado: si el usuario vuelve atrás sin pulsar "Guardar resultados",
+  // persistimos igualmente para que Cruces tenga posiciones/resultados.
+  const saveTimerRef = useRef<number | null>(null);
+  const lastSavedJsonRef = useRef<string>("");
+  const isFinishedRef = useRef(false);
+  useEffect(() => {
+    isFinishedRef.current = isFinished;
+  }, [isFinished]);
+
+  const persistMatches = (nextMatches: TournamentMatchResultRow[]) => {
+    if (!tournamentId) return;
+    if (isFinishedRef.current) return;
+    const normalized = normalizeSingleLegMatches(nextMatches);
+    const json = JSON.stringify(normalized);
+    if (json === lastSavedJsonRef.current) return;
+    lastSavedJsonRef.current = json;
+    saveTournamentMatchesById(clubScopeId, tournamentId, normalized);
+  };
+
+  useEffect(() => {
+    if (!tournamentId) return;
+    if (isFinished) return;
+    const normalized = normalizeSingleLegMatches(matches);
+    const json = JSON.stringify(normalized);
+    if (json === lastSavedJsonRef.current) return;
+    if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = window.setTimeout(() => {
+      persistMatches(matches);
+    }, 400);
+    return () => {
+      if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
+    };
+  }, [matches, clubScopeId, tournamentId, isFinished]);
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      persistMatches(matches);
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      persistMatches(matches);
+    };
+  }, [matches]);
 
   const normalizedMatches = useMemo(() => normalizeSingleLegMatches(matches), [matches]);
 
@@ -363,18 +420,6 @@ export default function TournamentClassificationPage() {
     }
     downloadCsv(`resultados_grupos_${tournamentId}.csv`, lines.join("\n"));
   };
-
-  const isFinished = useMemo(() => {
-    // Estado del torneo se guarda en índice, pero para esta fase basta con respetar "finished" si existe en el registro.
-    // Si no se encuentra, no bloqueamos (fail-open UI) para no romper demo.
-    try {
-      const idx = JSON.parse(localStorage.getItem(`synq_tournaments_index_v1_${clubScopeId}`) || "[]") as Array<{ id: string; status?: string }>;
-      const rec = Array.isArray(idx) ? idx.find((x) => x?.id === tournamentId) : null;
-      return rec?.status === "finished";
-    } catch {
-      return false;
-    }
-  }, [clubScopeId, tournamentId]);
 
   const groups = useMemo<GroupView[]>(() => {
     const groupsCount = Math.max(1, Number(config?.groupsCount ?? 1) || 1);
