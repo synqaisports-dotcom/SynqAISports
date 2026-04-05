@@ -402,8 +402,16 @@ export function computeGroupStandings(args: {
   for (const t of teams) {
     const name = t && typeof t === "object" ? String((t as { name?: unknown }).name ?? "").trim() : "";
     if (!name) continue;
-    const gi = t && typeof t === "object" ? Number((t as { groupIndex?: unknown }).groupIndex ?? 0) : 0;
-    const label = `Grupo ${String.fromCharCode(65 + Math.max(0, Number.isFinite(gi) ? gi : 0))}`;
+    const groupIndexRaw = t && typeof t === "object" ? (t as { groupIndex?: unknown }).groupIndex : undefined;
+    let gi = typeof groupIndexRaw === "number" && Number.isFinite(groupIndexRaw) ? groupIndexRaw : NaN;
+    // Si no hay groupIndex (o viene inválido), inferir desde id de slot: "slot_{gi}_{si}"
+    if (!Number.isFinite(gi) && t && typeof t === "object") {
+      const id = String((t as { id?: unknown }).id ?? "").trim();
+      const m = /^slot_(\d+)_\d+$/i.exec(id);
+      if (m) gi = Number(m[1]);
+    }
+    if (!Number.isFinite(gi)) gi = 0;
+    const label = `Grupo ${String.fromCharCode(65 + Math.max(0, gi))}`;
     if (!byGroup.has(label)) byGroup.set(label, []);
     byGroup.get(label)!.push(name);
   }
