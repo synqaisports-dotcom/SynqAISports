@@ -533,12 +533,23 @@ function SplitClassicBracket({
       <div className="min-w-max px-2 py-2 grid grid-cols-[auto_270px_auto] items-start gap-4">
         <ClassicBracket rounds={leftRounds} crestByTeam={crestByTeam} lineClass={lineClass} />
         <div className="relative" style={{ height: `${canvasHeight}px` }}>
+          {/* Watermark premium centrada (look pro, sin estética retro). */}
+          <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+            <div className="relative h-52 w-52">
+              <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgba(0,242,255,0.20)_0%,rgba(0,242,255,0.08)_35%,rgba(251,191,36,0.08)_52%,rgba(0,0,0,0)_72%)] blur-xl" />
+              <div className="absolute inset-[22%] rounded-full border border-cyan-300/20" />
+              <div className="absolute inset-[34%] rounded-full border border-amber-300/20" />
+              <div className="absolute inset-0 grid place-items-center">
+                <Trophy className="h-20 w-20 text-amber-300/20 drop-shadow-[0_0_26px_rgba(251,191,36,0.28)]" />
+              </div>
+            </div>
+          </div>
           <div className="absolute left-0 right-0" style={{ top: `${Math.max(0, finalTop - 30)}px` }}>
             <div className="flex flex-col items-center gap-2">
               <div className="relative">
-                <div className="absolute -inset-4 rounded-full bg-gradient-to-r from-cyan-400/30 via-amber-300/30 to-cyan-400/30 blur-xl" />
-                <div className="relative inline-flex h-14 w-14 items-center justify-center rounded-full border border-cyan-300/45 bg-black/30 shadow-[0_0_28px_rgba(0,242,255,0.45)]">
-                  <Trophy className="h-9 w-9 text-amber-300 drop-shadow-[0_0_14px_rgba(251,191,36,0.85)]" />
+                <div className="absolute -inset-4 rounded-full bg-gradient-to-r from-cyan-400/25 via-amber-300/25 to-cyan-400/25 blur-xl" />
+                <div className="relative inline-flex h-14 w-14 items-center justify-center rounded-full border border-cyan-300/40 bg-black/45 shadow-[0_0_28px_rgba(0,242,255,0.35)]">
+                  <Trophy className="h-9 w-9 text-amber-300/95 drop-shadow-[0_0_14px_rgba(251,191,36,0.75)]" />
                 </div>
               </div>
               <p className={`text-[9px] font-black uppercase tracking-[0.16em] ${textClass}`}>Final</p>
