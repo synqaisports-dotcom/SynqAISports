@@ -148,7 +148,8 @@ function buildNormalBracket(args: { standingsByGroup: Record<string, Array<{ tea
   // Fallback por si no hay 2º: usar los que existan
   const fallback = [...new Set([...firsts, ...seconds].filter(Boolean))];
   const seeded = teams.filter(Boolean);
-  const finalTeams = seeded.length >= 2 ? seeded : fallback;
+  // Tope de cuadro: máximo desde octavos (16 equipos).
+  const finalTeams = (seeded.length >= 2 ? seeded : fallback).slice(0, 16);
 
   return {
     title: "Modo normal · Cuadro único",
@@ -165,12 +166,43 @@ function buildFourFinals(args: { standingsByGroup: Record<string, Array<{ team: 
   ] as const;
 
   return finals.map((f) => {
-    const teams = pickSeededTeams({ standingsByGroup: args.standingsByGroup, place: f.place });
+    // Tope de cuadro por final: máximo octavos (16 equipos).
+    const teams = pickSeededTeams({ standingsByGroup: args.standingsByGroup, place: f.place }).slice(0, 16);
     return {
       title: `${f.title} · ${f.place}º de cada grupo`,
       rounds: buildEliminationRounds({ teams }),
     };
   });
+}
+
+function splitRoundsForDoubleSidedBracket(rounds: BracketRound[]): {
+  leftRounds: BracketRound[];
+  rightRounds: BracketRound[];
+  finalRound: BracketRound | null;
+} | null {
+  if (!Array.isArray(rounds) || rounds.length < 2) return null;
+  const first = rounds[0];
+  const last = rounds[rounds.length - 1];
+  if (!first || !last) return null;
+  const n = first.pairings.length;
+  if (n < 8 || n % 2 !== 0) return null; // activamos desde octavos (8 cruces)
+  if (last.pairings.length !== 1) return null;
+
+  const half = n / 2;
+  const left: BracketRound[] = [];
+  const right: BracketRound[] = [];
+  let leftCount = half;
+  let rightCount = half;
+  for (let i = 0; i < rounds.length - 1; i++) {
+    const r = rounds[i];
+    const leftPairings = r.pairings.slice(0, leftCount);
+    const rightPairings = r.pairings.slice(leftCount, leftCount + rightCount);
+    left.push({ title: r.title, pairings: leftPairings });
+    right.push({ title: r.title, pairings: rightPairings });
+    leftCount = Math.max(1, Math.floor(leftCount / 2));
+    rightCount = Math.max(1, Math.floor(rightCount / 2));
+  }
+  return { leftRounds: left, rightRounds: right, finalRound: last };
 }
 
 function initials(name: string): string {
@@ -396,14 +428,65 @@ function BracketColumns({
   crestByTeam: Map<string, string>;
 }) {
   const tones = finalsStyle(title);
+  const canSplitOctavos =
+    rounds.length >= 4 &&
+    String(rounds[0]?.title || "").toLowerCase().includes("octavos") &&
+    (rounds[0]?.pairings.length ?? 0) >= 8;
   return (
     <div className={`rounded-2xl border p-4 ${tones.borderClass} ${tones.bgClass}`}>
       <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${tones.textClass}`}>{title}</p>
       {rounds.length === 0 ? (
         <p className="mt-3 text-[11px] text-white/55">Sin cruces (faltan posiciones o grupos).</p>
       ) : (
-        <ClassicBracket rounds={rounds} crestByTeam={crestByTeam} lineClass={tones.borderClass.replace("border-", "bg-")} />
+        canSplitOctavos ? (
+          <SplitClassicBracket
+            rounds={rounds}
+            crestByTeam={crestByTeam}
+            lineClass={tones.borderClass.replace("border-", "bg-")}
+            textClass={tones.textClass}
+          />
+        ) : (
+          <ClassicBracket rounds={rounds} crestByTeam={crestByTeam} lineClass={tones.borderClass.replace("border-", "bg-")} />
+        )
       )}
+    </div>
+  );
+}
+
+function SplitClassicBracket({
+  rounds,
+  crestByTeam,
+  lineClass,
+  textClass,
+}: {
+  rounds: BracketRound[];
+  crestByTeam: Map<string, string>;
+  lineClass: string;
+  textClass: string;
+}) {
+  const leftRounds = rounds.slice(0, -1).map((r) => ({ ...r, pairings: r.pairings.slice(0, Math.ceil(r.pairings.length / 2)) }));
+  const rightRounds = rounds.slice(0, -1).map((r) => ({ ...r, pairings: r.pairings.slice(Math.ceil(r.pairings.length / 2)) }));
+  const finalPairing = rounds[rounds.length - 1]?.pairings?.[0];
+  return (
+    <div className="mt-4 overflow-x-auto">
+      <div className="min-w-max px-2 py-2 grid grid-cols-[auto_270px_auto] items-start gap-4">
+        <ClassicBracket rounds={leftRounds} crestByTeam={crestByTeam} lineClass={lineClass} />
+        <div className="pt-10">
+          <p className={`mb-2 text-[9px] font-black uppercase tracking-[0.16em] ${textClass}`}>Final</p>
+          <div className="rounded-xl border border-amber-400/35 bg-amber-500/10 px-3 py-2">
+            {finalPairing ? (
+              <>
+                <TeamBadge name={finalPairing.left} crest={crestByTeam.get(finalPairing.left)} />
+                <p className="text-[9px] text-white/45 uppercase tracking-[0.12em]">vs</p>
+                <TeamBadge name={finalPairing.right} crest={crestByTeam.get(finalPairing.right)} />
+              </>
+            ) : (
+              <p className="text-[11px] text-white/60">Sin final</p>
+            )}
+          </div>
+        </div>
+        <ClassicBracket rounds={rightRounds} crestByTeam={crestByTeam} lineClass={lineClass} />
+      </div>
     </div>
   );
 }
@@ -457,7 +540,7 @@ function ClassicBracket({
   const firstRoundCount = Math.max(1, rounds[0]?.pairings.length ?? 1);
   const canvasHeight = Math.max(nodeHeight, firstRoundCount * leafPitch);
   return (
-    <div className="mt-4 overflow-x-auto">
+    <div>
       <div className="min-w-max px-2 py-2 flex items-start justify-center gap-5">
         {rounds.map((round, roundIndex) => {
           const isLastRound = roundIndex === rounds.length - 1;
@@ -533,10 +616,12 @@ function MatchNode({
       {showRightConnector ? (
         <>
           <span className={`absolute -right-3 top-1/2 h-[2px] w-3 -translate-y-1/2 ${lineBgClass}`} />
-          <span
-            className={`absolute -right-3 w-[2px] ${lineBgClass} ${isEven ? "top-1/2" : "bottom-1/2"}`}
-            style={{ height: `${connectorSpan}px` }}
-          />
+          {isEven ? (
+            <span
+              className={`absolute -right-3 top-1/2 w-[2px] ${lineBgClass}`}
+              style={{ height: `${connectorSpan * 2}px` }}
+            />
+          ) : null}
         </>
       ) : null}
       <div className={`rounded-xl border px-3 py-2 ${final ? "border-amber-400/35 bg-amber-500/10" : "border-white/10 bg-white/[0.03]"}`}>
