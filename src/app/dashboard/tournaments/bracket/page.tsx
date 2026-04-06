@@ -452,15 +452,21 @@ function ClassicBracket({
   lineClass: string;
 }) {
   const lineBgClass = lineClass.startsWith("bg-") ? lineClass : "bg-primary/35";
+  const baseGap = 10; // separación base entre partidos
+  const baseNodeHeight = 78; // altura visual aprox de MatchNode (sin conectores)
   return (
     <div className="mt-4 overflow-x-auto">
-      <div className="min-w-max px-2 py-2 flex items-start justify-center gap-4">
+      <div className="min-w-max px-2 py-2 flex items-start justify-center gap-5">
         {rounds.map((round, roundIndex) => {
           const isLastRound = roundIndex === rounds.length - 1;
+          // Centrado clásico: cada ronda duplica el bloque vertical respecto a la anterior.
+          const roundBlock = Math.pow(2, roundIndex);
+          const verticalGap = baseGap * roundBlock;
+          const topOffset = roundIndex === 0 ? 0 : ((baseNodeHeight + baseGap) * (roundBlock - 1)) / 2;
           return (
-            <div key={round.title} className="w-[250px]">
+            <div key={round.title} className="w-[250px]" style={{ marginTop: `${topOffset}px` }}>
               <p className="mb-2 text-[9px] font-black uppercase tracking-[0.16em] text-white/60">{round.title}</p>
-              <div className="space-y-2">
+              <div className="space-y-2" style={{ rowGap: `${verticalGap}px` }}>
                 {round.pairings.map((p, idx) => (
                   <MatchNode
                     key={`${round.title}_${idx}`}
@@ -503,18 +509,25 @@ function MatchNode({
   final?: boolean;
 }) {
   const isEven = matchIndex % 2 === 0;
+  const connectorSpan = 22;
   return (
     <div className="relative py-1">
       {showLeftConnector ? (
         <>
           <span className={`absolute -left-3 top-1/2 h-[2px] w-3 -translate-y-1/2 ${lineBgClass}`} />
-          <span className={`absolute -left-3 left-auto w-[2px] ${lineBgClass} ${isEven ? "top-1/2 h-6" : "bottom-1/2 h-6"}`} />
+          <span
+            className={`absolute -left-3 left-auto w-[2px] ${lineBgClass} ${isEven ? "top-1/2" : "bottom-1/2"}`}
+            style={{ height: `${connectorSpan}px` }}
+          />
         </>
       ) : null}
       {showRightConnector ? (
         <>
           <span className={`absolute -right-3 top-1/2 h-[2px] w-3 -translate-y-1/2 ${lineBgClass}`} />
-          <span className={`absolute -right-3 w-[2px] ${lineBgClass} ${isEven ? "top-1/2 h-6" : "bottom-1/2 h-6"}`} />
+          <span
+            className={`absolute -right-3 w-[2px] ${lineBgClass} ${isEven ? "top-1/2" : "bottom-1/2"}`}
+            style={{ height: `${connectorSpan}px` }}
+          />
         </>
       ) : null}
       <div className={`rounded-xl border px-3 py-2 ${final ? "border-amber-400/35 bg-amber-500/10" : "border-white/10 bg-white/[0.03]"}`}>
