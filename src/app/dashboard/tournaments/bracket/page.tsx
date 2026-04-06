@@ -846,7 +846,7 @@ function SplitClassicBracket({
                     const meta = scheduledByPair.get(`Final__${canonicalPair(finalPairing.left, finalPairing.right)}`);
                     return (
                       <span className="inline-flex items-center rounded-md border border-cyan-400/25 bg-cyan-400/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.14em] text-cyan-200">
-                        {meta ? `${meta.field} · ${meta.start}` : "Horario pendiente"}
+                        {meta ? `D${meta.day} · ${meta.field} · ${meta.start}` : "Horario pendiente"}
                       </span>
                     );
                   })()}
@@ -1029,7 +1029,7 @@ function MatchNode({
       <div className={`rounded-xl border px-3 py-2 ${final ? "border-amber-400/35 bg-amber-500/10" : "border-white/10 bg-white/[0.03]"}`}>
         <div className="mb-1 flex items-center justify-between gap-2">
           <span className="inline-flex items-center rounded-md border border-cyan-400/25 bg-cyan-400/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.14em] text-cyan-200">
-            {schedule ? `${schedule.field} · ${schedule.start}` : `${phaseTitle} · por definir`}
+            {schedule ? `D${schedule.day} · ${schedule.field} · ${schedule.start}` : `${phaseTitle} · por definir`}
           </span>
           <span className="inline-flex items-center rounded-md border border-white/15 bg-white/[0.04] px-2 py-0.5 text-[9px] font-black text-white/80 tabular-nums">
             — : —
