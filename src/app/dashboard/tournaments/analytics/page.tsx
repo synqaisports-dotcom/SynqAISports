@@ -32,6 +32,39 @@ export default function TournamentAnalyticsPage() {
   const groups = Math.max(1, Number(config?.groupsCount ?? 1) || 1);
   const completion = expectedTeams > 0 ? Math.min(100, Math.round((loadedTeams / expectedTeams) * 100)) : 0;
 
+  const playersPerTeam = Math.max(
+    1,
+    Number(config?.startersPerTeam ?? 0) + Number(config?.substitutesPerTeam ?? 0) || Number(config?.playersPerTeam ?? 0) || 1,
+  );
+  const expectedPlayers = expectedTeams * playersPerTeam;
+  const loadedPlayers = Array.isArray(teams)
+    ? teams.reduce((acc, t) => {
+        const players = t && typeof t === "object" && Array.isArray((t as { players?: unknown }).players)
+          ? (t as { players: Array<{ name?: unknown }> }).players
+          : [];
+        const nonEmpty = players.filter((p) => String(p?.name ?? "").trim().length > 0).length;
+        return acc + nonEmpty;
+      }, 0)
+    : 0;
+
+  const teamsPerGroup =
+    Math.max(2, Number(config?.teamsPerGroup ?? 0) || (expectedTeams > 0 ? Math.ceil(expectedTeams / groups) : 2));
+  const matchesPerGroup = (teamsPerGroup * (teamsPerGroup - 1)) / 2; // liguilla a una vuelta
+  const estimatedGroupMatches = groups * matchesPerGroup;
+
+  // Estimación de cuadro final normal: 2 clasificados por grupo, eliminación directa.
+  const qualifiedToBracket = groups * 2;
+  const estimatedBracketMatches = qualifiedToBracket >= 2 ? qualifiedToBracket - 1 : 0;
+  const estimatedTotalMatches = estimatedGroupMatches + estimatedBracketMatches;
+
+  const fieldsCount = Math.max(1, Number(config?.fieldsCount ?? 1) || 1);
+  const estimatedSlots = Math.ceil(estimatedTotalMatches / fieldsCount);
+
+  // Previsión solicitada: 1,5 acompañantes por jugador.
+  const companionsPerPlayer = 1.5;
+  const estimatedCompanions = expectedPlayers * companionsPerPlayer;
+  const estimatedPeopleTotal = expectedPlayers + estimatedCompanions;
+
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
       <div className="border-b border-primary/15 pb-5">
@@ -46,7 +79,7 @@ export default function TournamentAnalyticsPage() {
         <CardHeader>
           <CardTitle className="text-white">KPIs del torneo (Fase 3 base)</CardTitle>
           <CardDescription>
-            Base de analítica lista para ampliar con goles, minutos jugados, asistencias y rendimiento por equipo.
+            Estadísticas calculadas desde el configurador para preparar operativa e ingresos.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -54,6 +87,28 @@ export default function TournamentAnalyticsPage() {
           <Mini label="Equipos esperados" value={`${expectedTeams}`} />
           <Mini label="Grupos" value={`${groups}`} />
           <Mini label="Completitud roster" value={`${completion}%`} />
+          <Mini label="Jugadores por equipo (cfg)" value={`${playersPerTeam}`} />
+          <Mini label="Jugadores esperados" value={`${expectedPlayers}`} />
+          <Mini label="Jugadores cargados" value={`${loadedPlayers}`} />
+          <Mini label="Partidos liguilla (est.)" value={`${estimatedGroupMatches}`} />
+          <Mini label="Partidos cuadro final (est.)" value={`${estimatedBracketMatches}`} />
+          <Mini label="Partidos totales (est.)" value={`${estimatedTotalMatches}`} />
+          <Mini label={`Slots necesarios (${fieldsCount} campos)`} value={`${estimatedSlots}`} />
+          <Mini label="Acompañantes (1,5 x jugador)" value={estimatedCompanions.toLocaleString("es-ES", { maximumFractionDigits: 0 })} />
+        </CardContent>
+      </Card>
+
+      <Card className="glass-panel border border-primary/20 bg-black/30 rounded-2xl">
+        <CardHeader>
+          <CardTitle className="text-white">Previsión base para ingresos</CardTitle>
+          <CardDescription>
+            Referencia inicial para cálculo económico del torneo (entradas/pases).
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <Mini label="Jugadores previstos" value={expectedPlayers.toLocaleString("es-ES")} />
+          <Mini label="Acompañantes previstos" value={estimatedCompanions.toLocaleString("es-ES", { maximumFractionDigits: 0 })} />
+          <Mini label="Asistentes totales previstos" value={estimatedPeopleTotal.toLocaleString("es-ES", { maximumFractionDigits: 0 })} />
         </CardContent>
       </Card>
 
