@@ -26,6 +26,26 @@ type BracketView = {
   rounds: BracketRound[];
 };
 
+type ScheduledBracketMatch = {
+  phaseTitle: string;
+  matchIndex: number;
+  field: string;
+  day: number;
+  start: string;
+  end: string;
+  left: string;
+  right: string;
+};
+
+function phaseRank(title: string): number {
+  const t = String(title || "").toLowerCase();
+  if (t.includes("octavos")) return 5;
+  if (t.includes("cuartos")) return 4;
+  if (t.includes("semifinal")) return 3;
+  if (t.includes("final")) return 2;
+  return 1;
+}
+
 function finalsStyle(title: string): { borderClass: string; bgClass: string; textClass: string; badgeClass: string } {
   const t = String(title || "").toLowerCase();
   if (t.includes("platino")) {
@@ -112,6 +132,52 @@ function buildEliminationRounds(args: { teams: string[]; roundTitlePrefix?: stri
   }
 
   return rounds;
+}
+
+function toMinutes(hhmm: string): number {
+  const [h, m] = String(hhmm || "00:00").split(":").map((v) => Number(v));
+  return Math.max(0, (Number.isFinite(h) ? h : 0) * 60 + (Number.isFinite(m) ? m : 0));
+}
+
+function toHHMM(totalMinutes: number): string {
+  const minsInDay = 24 * 60;
+  const normalized = ((Math.round(totalMinutes) % minsInDay) + minsInDay) % minsInDay;
+  const hh = String(Math.floor(normalized / 60)).padStart(2, "0");
+  const mm = String(normalized % 60).padStart(2, "0");
+  return `${hh}:${mm}`;
+}
+
+function buildBracketSchedule(args: {
+  rounds: BracketRound[];
+  fieldsCount: number;
+  scheduleStart: string;
+  matchMinutes: number;
+  marginAfterGroups: number;
+}) {
+  const out: Array<{ roundTitle: string; pairings: Array<{ fieldLabel: string; start: string; end: string }> }> = [];
+  let cursor = toMinutes(args.scheduleStart) + Math.max(0, args.marginAfterGroups);
+  const fields = Math.max(1, args.fieldsCount || 1);
+  const duration = Math.max(1, args.matchMinutes || 1);
+  for (const round of args.rounds) {
+    const pairings = Array.isArray(round.pairings) ? round.pairings : [];
+    const activeFields = Math.max(1, Math.min(fields, pairings.length || 1));
+    const slotsNeeded = Math.max(1, Math.ceil((pairings.length || 0) / activeFields));
+    const phaseRows: Array<{ fieldLabel: string; start: string; end: string }> = [];
+    for (let i = 0; i < pairings.length; i++) {
+      const slot = Math.floor(i / activeFields);
+      const fieldIndex = i % activeFields;
+      const start = cursor + slot * duration;
+      const end = start + duration;
+      phaseRows.push({
+        fieldLabel: `Campo ${fieldIndex + 1}`,
+        start: toHHMM(start),
+        end: toHHMM(end),
+      });
+    }
+    out.push({ roundTitle: round.title, pairings: phaseRows });
+    cursor += slotsNeeded * duration;
+  }
+  return out;
 }
 
 function pickSeededTeams(args: { standingsByGroup: Record<string, Array<{ team: string }>>; place: number }): string[] {
