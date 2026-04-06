@@ -528,7 +528,7 @@ function SplitClassicBracket({
             )}
           </div>
         </div>
-        <ClassicBracket rounds={rightRounds} crestByTeam={crestByTeam} lineClass={lineClass} />
+        <ClassicBracket rounds={rightRounds} crestByTeam={crestByTeam} lineClass={lineClass} reverse />
       </div>
     </div>
   );
@@ -572,21 +572,24 @@ function ClassicBracket({
   rounds,
   crestByTeam,
   lineClass,
+  reverse = false,
 }: {
   rounds: BracketRound[];
   crestByTeam: Map<string, string>;
   lineClass: string;
+  reverse?: boolean;
 }) {
   const lineBgClass = lineClass.startsWith("bg-") ? lineClass : "bg-primary/35";
+  const orderedRounds = reverse ? [...rounds].reverse() : rounds;
   const leafPitch = 112; // separación vertical base de la primera ronda
   const nodeHeight = 74;
-  const firstRoundCount = Math.max(1, rounds[0]?.pairings.length ?? 1);
+  const firstRoundCount = Math.max(1, orderedRounds[0]?.pairings.length ?? 1);
   const canvasHeight = Math.max(nodeHeight, firstRoundCount * leafPitch);
   return (
     <div>
       <div className="min-w-max px-2 py-2 flex items-start justify-center gap-5">
-        {rounds.map((round, roundIndex) => {
-          const isLastRound = roundIndex === rounds.length - 1;
+        {orderedRounds.map((round, roundIndex) => {
+          const isLastRound = roundIndex === orderedRounds.length - 1;
           const blockSize = Math.pow(2, roundIndex);
           // Semidistancia al nodo de referencia (centro a centro) para enlazar ramas.
           const connectorSpan = Math.max(12, Math.round(leafPitch * Math.pow(2, roundIndex - 1)));
@@ -604,8 +607,8 @@ function ClassicBracket({
                         left={p.left}
                         right={p.right}
                         crestByTeam={crestByTeam}
-                        showLeftConnector={roundIndex > 0}
-                        showRightConnector={!isLastRound}
+                        showLeftConnector={reverse ? !isLastRound : roundIndex > 0}
+                        showRightConnector={reverse ? roundIndex > 0 : !isLastRound}
                         matchIndex={idx}
                         roundSize={round.pairings.length}
                         connectorSpan={connectorSpan}
@@ -632,6 +635,7 @@ function MatchNode({
   showRightConnector,
   matchIndex,
   roundSize,
+  mirror = false,
   connectorSpan,
   lineBgClass,
   final,
@@ -643,19 +647,22 @@ function MatchNode({
   showRightConnector: boolean;
   matchIndex: number;
   roundSize: number;
+  mirror?: boolean;
   connectorSpan: number;
   lineBgClass: string;
   final?: boolean;
 }) {
   const isEven = matchIndex % 2 === 0;
+  const leftX = mirror ? "-right-3" : "-left-3";
+  const rightX = mirror ? "-left-3" : "-right-3";
   return (
     <div className="relative h-[74px]">
       {showLeftConnector ? (
         <>
-          <span className={`absolute -left-3 top-1/2 h-[2px] w-3 -translate-y-1/2 ${lineBgClass}`} />
+          <span className={`absolute ${leftX} top-1/2 h-[2px] w-3 -translate-y-1/2 ${lineBgClass}`} />
           {roundSize > 1 ? (
             <span
-              className={`absolute -left-3 left-auto w-[2px] ${lineBgClass} ${isEven ? "top-1/2" : "bottom-1/2"}`}
+              className={`absolute ${leftX} left-auto w-[2px] ${lineBgClass} ${isEven ? "top-1/2" : "bottom-1/2"}`}
               style={{ height: `${connectorSpan}px` }}
             />
           ) : null}
@@ -663,10 +670,10 @@ function MatchNode({
       ) : null}
       {showRightConnector ? (
         <>
-          <span className={`absolute -right-3 top-1/2 h-[2px] w-3 -translate-y-1/2 ${lineBgClass}`} />
+          <span className={`absolute ${rightX} top-1/2 h-[2px] w-3 -translate-y-1/2 ${lineBgClass}`} />
           {roundSize <= 1 ? null : isEven ? (
             <span
-              className={`absolute -right-3 top-1/2 w-[2px] ${lineBgClass}`}
+              className={`absolute ${rightX} top-1/2 w-[2px] ${lineBgClass}`}
               style={{ height: `${connectorSpan * 2}px` }}
             />
           ) : null}
