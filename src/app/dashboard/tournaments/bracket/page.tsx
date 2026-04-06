@@ -151,13 +151,34 @@ function toHHMM(totalMinutes: number): string {
   return `${hh}:${mm}`;
 }
 
-function estimateGroupsEndMinutes(config: ReturnType<typeof loadTournamentConfigById> | null): number {
-  const cfg = config;
+function estimateGroupsEndMinutes(args: {
+  config: ReturnType<typeof loadTournamentConfigById> | null;
+  teamsRows: any[];
+}): number {
+  const cfg = args.config;
   const start = String(cfg?.scheduleStart ?? "09:00");
   const startMinutes = toMinutes(start);
-  const groupsCount = Math.max(1, Number(cfg?.groupsCount ?? 1) || 1);
-  const teamsPerGroup = Math.max(2, Number(cfg?.teamsPerGroup ?? 0) || 2);
   const fieldsCount = Math.max(1, Number(cfg?.fieldsCount ?? 1) || 1);
+
+  // Preferimos equipos reales del torneo para evitar subestimar la liguilla.
+  const byGroup = new Map<number, number>();
+  for (const t of Array.isArray(args.teamsRows) ? args.teamsRows : []) {
+    if (!t || typeof t !== "object") continue;
+    const name = String((t as { name?: unknown }).name ?? "").trim();
+    if (!name) continue;
+    const groupIndexRaw = (t as { groupIndex?: unknown }).groupIndex;
+    let gi = typeof groupIndexRaw === "number" && Number.isFinite(groupIndexRaw) ? groupIndexRaw : NaN;
+    if (!Number.isFinite(gi)) {
+      const id = String((t as { id?: unknown }).id ?? "").trim();
+      const m = /^slot_(\d+)_\d+$/i.exec(id);
+      if (m) gi = Number(m[1]);
+    }
+    if (!Number.isFinite(gi)) gi = 0;
+    byGroup.set(gi, (byGroup.get(gi) ?? 0) + 1);
+  }
+  const realGroupSizes = Array.from(byGroup.values()).filter((n) => n > 0);
+  const groupsCount = Math.max(1, realGroupSizes.length || Number(cfg?.groupsCount ?? 1) || 1);
+  const teamsPerGroup = Math.max(2, realGroupSizes.length > 0 ? Math.max(...realGroupSizes) : Number(cfg?.teamsPerGroup ?? 0) || 2);
   const halves = Number(cfg?.halvesCount ?? 2) === 1 ? 1 : 2;
   const minutesPerHalf = Math.max(1, Number(cfg?.minutesPerHalf ?? 20) || 20);
   const breakMinutes = halves === 2 ? Math.max(0, Number(cfg?.breakMinutes ?? 0)) : 0;
@@ -165,8 +186,10 @@ function estimateGroupsEndMinutes(config: ReturnType<typeof loadTournamentConfig
   const matchMinutes = halves * minutesPerHalf + breakMinutes;
   const slotMinutes = Math.max(1, matchMinutes + buffer);
   const groupMatches = (teamsPerGroup * (teamsPerGroup - 1)) / 2;
-  const totalGroupMatches = Math.max(0, Math.round(groupsCount * groupMatches));
-  const slotsForGroups = Math.ceil(totalGroupMatches / fieldsCount);
+  // En modo normal de clasificación, cada grupo se queda en su campo (o campo compartido por varios grupos).
+  // Makespan más realista: nº grupos por campo * partidos por grupo.
+  const maxGroupsPerField = Math.max(1, Math.ceil(groupsCount / fieldsCount));
+  const slotsForGroups = Math.max(1, Math.ceil(maxGroupsPerField * groupMatches));
   return startMinutes + slotsForGroups * slotMinutes;
 }
 
