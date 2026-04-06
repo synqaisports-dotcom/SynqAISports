@@ -173,6 +173,33 @@ function buildFourFinals(args: { standingsByGroup: Record<string, Array<{ team: 
   });
 }
 
+function initials(name: string): string {
+  const n = String(name || "").trim();
+  if (!n) return "?";
+  return n.slice(0, 1).toUpperCase();
+}
+
+function TeamBadge({
+  name,
+  crest,
+}: {
+  name: string;
+  crest?: string;
+}) {
+  return (
+    <div className="flex items-center gap-2 min-w-0">
+      {crest ? (
+        <img src={crest} alt={`Escudo ${name}`} className="h-5 w-5 rounded-full object-cover border border-white/20 shrink-0" />
+      ) : (
+        <span className="h-5 w-5 rounded-full border border-white/20 bg-white/[0.06] text-[10px] font-black text-white/80 grid place-items-center shrink-0">
+          {initials(name)}
+        </span>
+      )}
+      <span className="text-[11px] font-black text-white truncate">{name}</span>
+    </div>
+  );
+}
+
 export default function TournamentBracketPage() {
   const searchParams = useSearchParams();
   const tournamentIdFromUrl = searchParams.get("tournamentId");
@@ -225,6 +252,17 @@ export default function TournamentBracketPage() {
     () => loadTournamentTeamsById(clubScopeId, resolvedTournamentId),
     [clubScopeId, resolvedTournamentId, reloadKey],
   );
+  const crestByTeam = useMemo(() => {
+    const out = new Map<string, string>();
+    for (const t of teamsRows) {
+      if (!t || typeof t !== "object") continue;
+      const name = String((t as { name?: unknown }).name ?? "").trim();
+      const crest = String((t as { crestDataUrl?: unknown }).crestDataUrl ?? "").trim();
+      if (!name || !crest) continue;
+      out.set(name, crest);
+    }
+    return out;
+  }, [teamsRows]);
   const teamNames = useMemo(() => {
     const rows = teamsRows;
     return rows
@@ -332,11 +370,11 @@ export default function TournamentBracketPage() {
           </div>
 
           {mode === "normal" ? (
-            <BracketColumns title={normal.title} rounds={normal.rounds} />
+            <BracketColumns title={normal.title} rounds={normal.rounds} crestByTeam={crestByTeam} />
           ) : (
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
               {fourFinals.map((b) => (
-                <BracketColumns key={b.title} title={b.title} rounds={b.rounds} />
+                <BracketColumns key={b.title} title={b.title} rounds={b.rounds} crestByTeam={crestByTeam} />
               ))}
             </div>
           )}
@@ -352,8 +390,8 @@ export default function TournamentBracketPage() {
               (Compat) Vista base anterior: Semis+Final se mantiene como fallback automático.
             </p>
             <div className="mt-3 grid grid-cols-1 lg:grid-cols-3 gap-2">
-              <RoundCard title="Semifinales (fallback)" pairings={bracket.semiFinals} />
-              <RoundCard title="Final (fallback)" pairings={bracket.final} final />
+              <RoundCard title="Semifinales (fallback)" pairings={bracket.semiFinals} crestByTeam={crestByTeam} />
+              <RoundCard title="Final (fallback)" pairings={bracket.final} final crestByTeam={crestByTeam} />
             </div>
           </div>
         </CardContent>
@@ -362,7 +400,15 @@ export default function TournamentBracketPage() {
   );
 }
 
-function BracketColumns({ title, rounds }: { title: string; rounds: BracketRound[] }) {
+function BracketColumns({
+  title,
+  rounds,
+  crestByTeam,
+}: {
+  title: string;
+  rounds: BracketRound[];
+  crestByTeam: Map<string, string>;
+}) {
   return (
     <div className="rounded-2xl border border-primary/20 bg-black/25 p-4">
       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">{title}</p>
@@ -371,7 +417,7 @@ function BracketColumns({ title, rounds }: { title: string; rounds: BracketRound
       ) : (
         <div className="mt-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
           {rounds.map((r) => (
-            <RoundCard key={r.title} title={r.title} pairings={r.pairings} final={r.title === "Final"} />
+            <RoundCard key={r.title} title={r.title} pairings={r.pairings} final={r.title === "Final"} crestByTeam={crestByTeam} />
           ))}
         </div>
       )}
@@ -383,10 +429,12 @@ function RoundCard({
   title,
   pairings,
   final = false,
+  crestByTeam,
 }: {
   title: string;
   pairings: Array<{ left: string; right: string }>;
   final?: boolean;
+  crestByTeam: Map<string, string>;
 }) {
   return (
     <div className={`rounded-2xl border p-4 ${final ? "border-amber-400/30 bg-amber-500/5" : "border-primary/20 bg-black/25"}`}>
@@ -400,9 +448,9 @@ function RoundCard({
         ) : (
           pairings.map((p, idx) => (
             <div key={`${title}_${idx}`} className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
-              <p className="text-[11px] font-black text-white truncate">{p.left}</p>
+              <TeamBadge name={p.left} crest={crestByTeam.get(p.left)} />
               <p className="text-[9px] text-white/45 uppercase tracking-[0.12em]">vs</p>
-              <p className="text-[11px] font-black text-white truncate">{p.right}</p>
+              <TeamBadge name={p.right} crest={crestByTeam.get(p.right)} />
             </div>
           ))
         )}
