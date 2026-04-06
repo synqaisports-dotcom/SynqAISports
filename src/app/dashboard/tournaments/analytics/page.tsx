@@ -232,6 +232,8 @@ export default function TournamentAnalyticsPage() {
                       borderRadius: 12,
                       color: "#fff",
                     }}
+                    labelStyle={{ color: "rgba(255,255,255,0.75)", fontWeight: 900 }}
+                    itemStyle={{ color: "#00F2FF", fontWeight: 900 }}
                   />
                   <Bar dataKey="goals" radius={[8, 8, 0, 0]}>
                     {goalsByTeam.slice(0, 16).map((entry, idx) => (
@@ -262,6 +264,8 @@ export default function TournamentAnalyticsPage() {
                       borderRadius: 12,
                       color: "#fff",
                     }}
+                    labelStyle={{ color: "rgba(255,255,255,0.75)", fontWeight: 900 }}
+                    itemStyle={{ color: "#00F2FF", fontWeight: 900 }}
                   />
                   <Pie data={progressPie} dataKey="value" nameKey="name" innerRadius={56} outerRadius={84} stroke="rgba(255,255,255,0.08)">
                     {progressPie.map((entry) => (
@@ -284,6 +288,8 @@ export default function TournamentAnalyticsPage() {
                       borderRadius: 12,
                       color: "#fff",
                     }}
+                    labelStyle={{ color: "rgba(255,255,255,0.75)", fontWeight: 900 }}
+                    itemStyle={{ color: "#00F2FF", fontWeight: 900 }}
                   />
                   <Bar dataKey="jugados" fill="#00F2FF" radius={[8, 8, 0, 0]} />
                   <Bar dataKey="estimados" fill="rgba(255,255,255,0.28)" radius={[8, 8, 0, 0]} />

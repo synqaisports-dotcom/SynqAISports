@@ -326,6 +326,8 @@ export default function DashboardPage() {
                         color: "#fff",
                         fontWeight: 800,
                       }}
+                      labelStyle={{ color: "rgba(255,255,255,0.75)", fontWeight: 900 }}
+                      itemStyle={{ color: "#00F2FF", fontWeight: 900 }}
                     />
                     <Bar dataKey="value" radius={[10, 10, 0, 0]}>
                       {trafficBars.map((e) => (
@@ -352,6 +354,8 @@ export default function DashboardPage() {
                         color: "#fff",
                         fontWeight: 800,
                       }}
+                      labelStyle={{ color: "rgba(255,255,255,0.75)", fontWeight: 900 }}
+                      itemStyle={{ color: "#00F2FF", fontWeight: 900 }}
                     />
                   </PieChart>
                 </ResponsiveContainer>

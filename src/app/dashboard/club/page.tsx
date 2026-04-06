@@ -620,6 +620,8 @@ export default function ClubManagementPage() {
                       color: "#fff",
                       fontWeight: 700,
                     }}
+                    labelStyle={{ color: "rgba(255,255,255,0.75)", fontWeight: 900 }}
+                    itemStyle={{ color: "#00F2FF", fontWeight: 900 }}
                   />
                   <Bar dataKey="value" radius={[8, 8, 0, 0]} fill="#00F2FF" />
                 </BarChart>
@@ -645,6 +647,8 @@ export default function ClubManagementPage() {
                       color: "#fff",
                       fontWeight: 700,
                     }}
+                    labelStyle={{ color: "rgba(255,255,255,0.75)", fontWeight: 900 }}
+                    itemStyle={{ color: "#00F2FF", fontWeight: 900 }}
                   />
                 </PieChart>
               </ResponsiveContainer>
