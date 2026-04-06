@@ -986,14 +986,9 @@ export default function TournamentClassificationPage() {
           {scheduledByField.fields.map((f) => (
             <div key={f.fieldIndex} className="rounded-2xl border border-primary/20 bg-black/25 p-4">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{f.fieldLabel}</p>
-                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/60">
-                  Slot {scheduledByField.matchTotalMinutes}m + {Math.max(0, scheduledByField.slotMinutes - scheduledByField.matchTotalMinutes)}m
-                </p>
-              </div>
-              <div className="mt-2 rounded-xl border border-white/5 bg-black/20 px-3 py-2">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-[9px] font-black uppercase tracking-[0.16em] text-white/50">Grupos:</span>
+                <div className="min-w-0 flex items-center gap-1.5 flex-wrap">
+                  <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{f.fieldLabel}</p>
+                  <span className="text-[10px] font-black uppercase tracking-[0.16em] text-white/40">·</span>
                   {f.groups.length > 0 ? (
                     f.groups.map((gn) => (
                       <span
@@ -1005,9 +1000,12 @@ export default function TournamentClassificationPage() {
                       </span>
                     ))
                   ) : (
-                    <span className="text-[11px] font-black text-white/85">—</span>
+                    <span className="text-[11px] font-black text-white/75">Sin grupo</span>
                   )}
                 </div>
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/60">
+                  Slot {scheduledByField.matchTotalMinutes}m + {Math.max(0, scheduledByField.slotMinutes - scheduledByField.matchTotalMinutes)}m
+                </p>
               </div>
               <div className="mt-3 space-y-2">
                 {f.matches.length === 0 ? (
