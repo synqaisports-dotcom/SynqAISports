@@ -11,6 +11,7 @@ import {
   migrateLegacyTournamentToV2,
   getActiveTournamentId,
   loadTournamentIndex,
+  saveTournamentConfigById,
   upsertTournament,
   setActiveTournamentId,
 } from "@/lib/tournaments-storage";
@@ -282,6 +283,7 @@ export default function TournamentsPlannerPage() {
   const [config, setConfig] = useState<PlannerConfig>(DEFAULT_CONFIG);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [activeTournamentId, setActiveTournamentIdState] = useState<string | null>(null);
+  const [hydrated, setHydrated] = useState(false);
   const isFinished = useMemo(() => {
     const t = tournaments.find((x) => x.id === activeTournamentId);
     return t?.status === "finished";
@@ -336,7 +338,22 @@ export default function TournamentsPlannerPage() {
     } catch {
       // ignore
     }
+    setHydrated(true);
   }, [clubScopeId, storageKey, tournamentIdFromUrl]);
+
+  // Autoguardado: evita desalineaciones de horario entre Planificador y Cruces.
+  useEffect(() => {
+    if (!hydrated || !activeTournamentId) return;
+    const id = window.setTimeout(() => {
+      try {
+        saveTournamentConfigById(clubScopeId, activeTournamentId, config);
+        setSavedAt(new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }));
+      } catch {
+        // ignore
+      }
+    }, 350);
+    return () => window.clearTimeout(id);
+  }, [clubScopeId, activeTournamentId, config, hydrated]);
 
   // Mantener consistencia: nº equipos = nº grupos * equipos por grupo
   useEffect(() => {
