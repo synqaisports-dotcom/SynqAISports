@@ -533,19 +533,6 @@ function SplitClassicBracket({
       <div className="min-w-max px-2 py-2 grid grid-cols-[auto_270px_auto] items-start gap-4">
         <ClassicBracket rounds={leftRounds} crestByTeam={crestByTeam} lineClass={lineClass} />
         <div className="relative" style={{ height: `${canvasHeight}px` }}>
-          {/* Hero watermark: copa central + haces SynqAI (sin tapar cruces). */}
-          <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-            <div className="relative h-[420px] w-[420px]">
-              <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgba(0,242,255,0.20)_0%,rgba(0,242,255,0.10)_22%,rgba(251,191,36,0.10)_34%,rgba(0,0,0,0)_72%)] blur-2xl" />
-              <div className="absolute left-1/2 top-[8%] h-[2px] w-[260px] -translate-x-1/2 rotate-[-24deg] bg-cyan-300/18 blur-[1px]" />
-              <div className="absolute left-1/2 top-[16%] h-[2px] w-[290px] -translate-x-1/2 rotate-[18deg] bg-cyan-300/16 blur-[1px]" />
-              <div className="absolute left-1/2 top-[27%] h-[2px] w-[240px] -translate-x-1/2 rotate-[-8deg] bg-cyan-300/14 blur-[1px]" />
-              <div className="absolute left-1/2 top-[34%] h-[2px] w-[220px] -translate-x-1/2 rotate-[12deg] bg-cyan-300/12 blur-[1px]" />
-              <div className="absolute inset-0 grid place-items-center">
-                <Trophy className="h-56 w-56 text-amber-300/14 drop-shadow-[0_0_42px_rgba(0,242,255,0.25)]" />
-              </div>
-            </div>
-          </div>
           <div className="absolute left-0 right-0" style={{ top: `${Math.max(0, finalTop - 8)}px` }}>
             <div className="flex flex-col items-center gap-1">
               <p className={`text-[9px] font-black uppercase tracking-[0.16em] ${textClass}`}>Final</p>
