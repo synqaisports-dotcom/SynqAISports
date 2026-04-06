@@ -373,11 +373,18 @@ function pickSeededTeams(args: { standingsByGroup: Record<string, Array<{ team: 
   return out;
 }
 
+function buildGroupLabelsFromConfig(config: ReturnType<typeof loadTournamentConfigById>): string[] {
+  const groupsCount = Math.max(1, Number(config?.groupsCount ?? 1) || 1);
+  return Array.from({ length: groupsCount }).map((_, i) => `Grupo ${String.fromCharCode(65 + i)}`);
+}
+
 function buildNormalBracket(args: {
   standingsByGroup: Record<string, Array<{ team: string }>>;
   includeThirdFourth?: boolean;
+  config: ReturnType<typeof loadTournamentConfigById>;
 }): BracketView {
   const gnames = Object.keys(args.standingsByGroup).sort();
+  const fallbackGroupNames = gnames.length > 0 ? gnames : buildGroupLabelsFromConfig(args.config);
   const includeThirdFourth = !!args.includeThirdFourth;
   // Clasificación mínima: 1º y 2º por grupo
   const firsts = pickSeededTeams({ standingsByGroup: args.standingsByGroup, place: 1 });
@@ -385,9 +392,9 @@ function buildNormalBracket(args: {
 
   // Seed simple por parejas de grupos: A1 vs B2, B1 vs A2, C1 vs D2, D1 vs C2...
   const teams: string[] = [];
-  for (let i = 0; i < gnames.length; i += 2) {
-    const gA = gnames[i];
-    const gB = gnames[i + 1];
+  for (let i = 0; i < fallbackGroupNames.length; i += 2) {
+    const gA = fallbackGroupNames[i];
+    const gB = fallbackGroupNames[i + 1];
     const a1 = gA ? args.standingsByGroup[gA]?.[0]?.team : undefined;
     const a2 = gA ? args.standingsByGroup[gA]?.[1]?.team : undefined;
     const b1 = gB ? args.standingsByGroup[gB]?.[0]?.team : undefined;
@@ -399,24 +406,38 @@ function buildNormalBracket(args: {
       const b4 = gB ? args.standingsByGroup[gB]?.[3]?.team : undefined;
 
       // Cruces ampliados: 1º vs 4º y 2º vs 3º del grupo siguiente.
-      if (a1 && b4) teams.push(a1, b4);
-      else if (a1) teams.push(a1);
-      if (b1 && a4) teams.push(b1, a4);
-      else if (b1) teams.push(b1);
-      if (a2 && b3) teams.push(a2, b3);
-      else if (a2) teams.push(a2);
-      if (b2 && a3) teams.push(b2, a3);
-      else if (b2) teams.push(b2);
+      const a1p = a1 || (gA ? `1º ${gA}` : "");
+      const a2p = a2 || (gA ? `2º ${gA}` : "");
+      const a3p = a3 || (gA ? `3º ${gA}` : "");
+      const a4p = a4 || (gA ? `4º ${gA}` : "");
+      const b1p = b1 || (gB ? `1º ${gB}` : "");
+      const b2p = b2 || (gB ? `2º ${gB}` : "");
+      const b3p = b3 || (gB ? `3º ${gB}` : "");
+      const b4p = b4 || (gB ? `4º ${gB}` : "");
+
+      if (a1p && b4p) teams.push(a1p, b4p);
+      else if (a1p) teams.push(a1p);
+      if (b1p && a4p) teams.push(b1p, a4p);
+      else if (b1p) teams.push(b1p);
+      if (a2p && b3p) teams.push(a2p, b3p);
+      else if (a2p) teams.push(a2p);
+      if (b2p && a3p) teams.push(b2p, a3p);
+      else if (b2p) teams.push(b2p);
     } else {
-      if (a1 && b2) teams.push(a1, b2);
-      else if (a1) teams.push(a1);
-      if (b1 && a2) teams.push(b1, a2);
-      else if (b1) teams.push(b1);
+      const a1p = a1 || (gA ? `1º ${gA}` : "");
+      const a2p = a2 || (gA ? `2º ${gA}` : "");
+      const b1p = b1 || (gB ? `1º ${gB}` : "");
+      const b2p = b2 || (gB ? `2º ${gB}` : "");
+      if (a1p && b2p) teams.push(a1p, b2p);
+      else if (a1p) teams.push(a1p);
+      if (b1p && a2p) teams.push(b1p, a2p);
+      else if (b1p) teams.push(b1p);
     }
   }
 
   // Fallback por si no hay 2º: usar los que existan
-  const fallback = [...new Set([...firsts, ...seconds].filter(Boolean))];
+  const fallbackPlaceholders = fallbackGroupNames.flatMap((g) => [`1º ${g}`, `2º ${g}`]);
+  const fallback = [...new Set([...firsts, ...seconds, ...fallbackPlaceholders].filter(Boolean))];
   const seeded = teams.filter(Boolean);
   // Tope de cuadro: máximo desde octavos (16 equipos).
   const finalTeams = (seeded.length >= 2 ? seeded : fallback).slice(0, 16);
@@ -427,17 +448,24 @@ function buildNormalBracket(args: {
   };
 }
 
-function buildFourFinals(args: { standingsByGroup: Record<string, Array<{ team: string }>> }): BracketView[] {
+function buildFourFinals(args: {
+  standingsByGroup: Record<string, Array<{ team: string }>>;
+  config: ReturnType<typeof loadTournamentConfigById>;
+}): BracketView[] {
   const finals = [
     { title: "Final Platino", place: 1 },
     { title: "Final Oro", place: 2 },
     { title: "Final Plata", place: 3 },
     { title: "Final Bronce", place: 4 },
   ] as const;
+  const fallbackGroupNames = Object.keys(args.standingsByGroup).sort();
+  const groupNames = fallbackGroupNames.length > 0 ? fallbackGroupNames : buildGroupLabelsFromConfig(args.config);
 
   return finals.map((f) => {
     // Tope de cuadro por final: máximo octavos (16 equipos).
-    const teams = pickSeededTeams({ standingsByGroup: args.standingsByGroup, place: f.place }).slice(0, 16);
+    const seeded = pickSeededTeams({ standingsByGroup: args.standingsByGroup, place: f.place });
+    const placeholders = groupNames.map((g) => `${f.place}º ${g}`);
+    const teams = (seeded.length > 0 ? seeded : placeholders).slice(0, 16);
     return {
       title: `${f.title} · ${f.place}º de cada grupo`,
       rounds: buildEliminationRounds({ teams }),
@@ -615,10 +643,10 @@ export default function TournamentBracketPage() {
     [teamsRows, normalizedResults, config],
   );
   const normal = useMemo(
-    () => buildNormalBracket({ standingsByGroup: standings as any, includeThirdFourth }),
-    [standings, includeThirdFourth],
+    () => buildNormalBracket({ standingsByGroup: standings as any, includeThirdFourth, config }),
+    [standings, includeThirdFourth, config],
   );
-  const fourFinals = useMemo(() => buildFourFinals({ standingsByGroup: standings as any }), [standings]);
+  const fourFinals = useMemo(() => buildFourFinals({ standingsByGroup: standings as any, config }), [standings, config]);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-700">
