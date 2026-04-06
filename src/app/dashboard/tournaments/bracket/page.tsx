@@ -379,21 +379,7 @@ export default function TournamentBracketPage() {
             </div>
           )}
 
-          <div className="rounded-2xl border border-primary/20 bg-black/25 p-4">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Datos</p>
-            <p className="mt-2 text-[11px] text-white/75">Equipos cargados: {teamNames.length}</p>
-            <p className="mt-1 text-[11px] text-white/75">Grupos detectados: {Object.keys(standings).length}</p>
-            <p className="mt-2 text-[10px] text-white/50">
-              Si faltan cruces, completa resultados en Clasificación para definir posiciones por grupo.
-            </p>
-            <p className="mt-2 text-[10px] text-white/50">
-              (Compat) Vista base anterior: Semis+Final se mantiene como fallback automático.
-            </p>
-            <div className="mt-3 grid grid-cols-1 lg:grid-cols-3 gap-2">
-              <BracketPhaseCard title="Semifinales (fallback)" pairings={bracket.semiFinals} crestByTeam={crestByTeam} />
-              <BracketPhaseCard title="Final (fallback)" pairings={bracket.final} isFinal crestByTeam={crestByTeam} />
-            </div>
-          </div>
+          {/* Bloque de datos/fallback ocultado para maximizar espacio visual del cuadro. */}
         </CardContent>
       </Card>
     </div>
@@ -468,13 +454,13 @@ function ClassicBracket({
   const lineBgClass = lineClass.startsWith("bg-") ? lineClass : "bg-primary/35";
   return (
     <div className="mt-4 overflow-x-auto">
-      <div className="min-w-max px-2 py-2 flex items-start justify-center gap-6">
+      <div className="min-w-max px-2 py-2 flex items-start justify-center gap-4">
         {rounds.map((round, roundIndex) => {
           const isLastRound = roundIndex === rounds.length - 1;
           return (
             <div key={round.title} className="w-[250px]">
               <p className="mb-2 text-[9px] font-black uppercase tracking-[0.16em] text-white/60">{round.title}</p>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {round.pairings.map((p, idx) => (
                   <MatchNode
                     key={`${round.title}_${idx}`}
@@ -483,6 +469,7 @@ function ClassicBracket({
                     crestByTeam={crestByTeam}
                     showLeftConnector={roundIndex > 0}
                     showRightConnector={!isLastRound}
+                    matchIndex={idx}
                     lineBgClass={lineBgClass}
                     final={round.title === "Final"}
                   />
@@ -502,6 +489,7 @@ function MatchNode({
   crestByTeam,
   showLeftConnector,
   showRightConnector,
+  matchIndex,
   lineBgClass,
   final,
 }: {
@@ -510,13 +498,25 @@ function MatchNode({
   crestByTeam: Map<string, string>;
   showLeftConnector: boolean;
   showRightConnector: boolean;
+  matchIndex: number;
   lineBgClass: string;
   final?: boolean;
 }) {
+  const isEven = matchIndex % 2 === 0;
   return (
-    <div className="relative">
-      {showLeftConnector ? <span className={`absolute -left-3 top-1/2 h-[2px] w-3 -translate-y-1/2 ${lineBgClass}`} /> : null}
-      {showRightConnector ? <span className={`absolute -right-3 top-1/2 h-[2px] w-3 -translate-y-1/2 ${lineBgClass}`} /> : null}
+    <div className="relative py-1">
+      {showLeftConnector ? (
+        <>
+          <span className={`absolute -left-3 top-1/2 h-[2px] w-3 -translate-y-1/2 ${lineBgClass}`} />
+          <span className={`absolute -left-3 left-auto w-[2px] ${lineBgClass} ${isEven ? "top-1/2 h-6" : "bottom-1/2 h-6"}`} />
+        </>
+      ) : null}
+      {showRightConnector ? (
+        <>
+          <span className={`absolute -right-3 top-1/2 h-[2px] w-3 -translate-y-1/2 ${lineBgClass}`} />
+          <span className={`absolute -right-3 w-[2px] ${lineBgClass} ${isEven ? "top-1/2 h-6" : "bottom-1/2 h-6"}`} />
+        </>
+      ) : null}
       <div className={`rounded-xl border px-3 py-2 ${final ? "border-amber-400/35 bg-amber-500/10" : "border-white/10 bg-white/[0.03]"}`}>
         <TeamBadge name={left} crest={crestByTeam.get(left)} />
         <p className="text-[9px] text-white/45 uppercase tracking-[0.12em]">vs</p>
