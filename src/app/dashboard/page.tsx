@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { useOperativaSync } from "@/hooks/use-operativa-sync";
 import { readPlayersLocal } from "@/lib/player-storage";
+import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 /**
  * Dashboard Maestro - v10.1.0
@@ -51,6 +52,18 @@ export default function DashboardPage() {
   >([]);
   const [weeklyPulse, setWeeklyPulse] = useState<Array<{ label: string; sessions: number; attendance: number }>>([]);
   const [isPulseDemo, setIsPulseDemo] = useState(false);
+
+  const trafficBars = [
+    { label: "Asistencia", value: Math.max(0, Math.min(100, kpis.attendanceRate)), color: "#34D399" },
+    { label: "Sesiones", value: Math.max(0, Math.min(100, kpis.sessionsPlanned * 8)), color: "#00F2FF" },
+    { label: "Pendientes", value: Math.max(0, Math.min(100, kpis.pendingRequests * 12)), color: "#FACC15" },
+  ];
+
+  const performancePie = [
+    { name: "Sesiones", value: Math.max(0, Number(kpis.sessionsPlanned) || 0), color: "#00F2FF" },
+    { name: "Pendientes", value: Math.max(0, Number(kpis.pendingRequests) || 0), color: "#FACC15" },
+    { name: "Roster", value: Math.max(0, Number(kpis.athletes) || 0), color: "rgba(255,255,255,0.22)" },
+  ];
 
   if (!profile) return null;
 
@@ -286,11 +299,64 @@ export default function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-6">
-            <OperativaBars
-              attendanceRate={kpis.attendanceRate}
-              pendingRequests={kpis.pendingRequests}
-              sessionsPlanned={kpis.sessionsPlanned}
-            />
+            <div className="space-y-4">
+              <div className="h-44 rounded-2xl border border-white/10 bg-black/25 p-3">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={trafficBars} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                    <XAxis
+                      dataKey="label"
+                      tick={{ fill: "rgba(255,255,255,0.65)", fontSize: 10, fontWeight: 800 }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      allowDecimals={false}
+                      tick={{ fill: "rgba(255,255,255,0.55)", fontSize: 10, fontWeight: 700 }}
+                      axisLine={false}
+                      tickLine={false}
+                      domain={[0, 100]}
+                    />
+                    <Tooltip
+                      cursor={{ fill: "rgba(0,242,255,0.08)" }}
+                      contentStyle={{
+                        background: "rgba(8,16,28,0.95)",
+                        border: "1px solid rgba(0,242,255,0.25)",
+                        borderRadius: 12,
+                        color: "#fff",
+                        fontWeight: 800,
+                      }}
+                    />
+                    <Bar dataKey="value" radius={[10, 10, 0, 0]}>
+                      {trafficBars.map((e) => (
+                        <Cell key={e.label} fill={e.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="h-44 rounded-2xl border border-white/10 bg-black/25 p-3">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={performancePie} dataKey="value" nameKey="name" innerRadius={46} outerRadius={76} paddingAngle={2}>
+                      {performancePie.map((entry) => (
+                        <Cell key={entry.name} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        background: "rgba(8,16,28,0.95)",
+                        border: "1px solid rgba(0,242,255,0.25)",
+                        borderRadius: 12,
+                        color: "#fff",
+                        fontWeight: 800,
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
