@@ -452,34 +452,42 @@ function ClassicBracket({
   lineClass: string;
 }) {
   const lineBgClass = lineClass.startsWith("bg-") ? lineClass : "bg-primary/35";
-  const baseGap = 10; // separación base entre partidos
-  const baseNodeHeight = 78; // altura visual aprox de MatchNode (sin conectores)
+  const leafPitch = 112; // separación vertical base de la primera ronda
+  const nodeHeight = 74;
+  const firstRoundCount = Math.max(1, rounds[0]?.pairings.length ?? 1);
+  const canvasHeight = Math.max(nodeHeight, firstRoundCount * leafPitch);
   return (
     <div className="mt-4 overflow-x-auto">
       <div className="min-w-max px-2 py-2 flex items-start justify-center gap-5">
         {rounds.map((round, roundIndex) => {
           const isLastRound = roundIndex === rounds.length - 1;
-          // Centrado clásico: cada ronda duplica el bloque vertical respecto a la anterior.
-          const roundBlock = Math.pow(2, roundIndex);
-          const verticalGap = baseGap * roundBlock;
-          const topOffset = roundIndex === 0 ? 0 : ((baseNodeHeight + baseGap) * (roundBlock - 1)) / 2;
+          const blockSize = Math.pow(2, roundIndex);
+          // Semidistancia al nodo de referencia (centro a centro) para enlazar ramas.
+          const connectorSpan = Math.max(12, Math.round(leafPitch * Math.pow(2, roundIndex - 1)));
           return (
-            <div key={round.title} className="w-[250px]" style={{ marginTop: `${topOffset}px` }}>
+            <div key={round.title} className="w-[250px]">
               <p className="mb-2 text-[9px] font-black uppercase tracking-[0.16em] text-white/60">{round.title}</p>
-              <div className="space-y-2" style={{ rowGap: `${verticalGap}px` }}>
-                {round.pairings.map((p, idx) => (
-                  <MatchNode
-                    key={`${round.title}_${idx}`}
-                    left={p.left}
-                    right={p.right}
-                    crestByTeam={crestByTeam}
-                    showLeftConnector={roundIndex > 0}
-                    showRightConnector={!isLastRound}
-                    matchIndex={idx}
-                    lineBgClass={lineBgClass}
-                    final={round.title === "Final"}
-                  />
-                ))}
+              <div className="relative" style={{ height: `${canvasHeight}px` }}>
+                {round.pairings.map((p, idx) => {
+                  // Centro matemático del partido según su bloque de referencia.
+                  const centerY = (idx * blockSize + blockSize / 2) * leafPitch;
+                  const top = Math.max(0, centerY - nodeHeight / 2);
+                  return (
+                    <div key={`${round.title}_${idx}`} className="absolute left-0 right-0" style={{ top: `${top}px` }}>
+                      <MatchNode
+                        left={p.left}
+                        right={p.right}
+                        crestByTeam={crestByTeam}
+                        showLeftConnector={roundIndex > 0}
+                        showRightConnector={!isLastRound}
+                        matchIndex={idx}
+                        connectorSpan={connectorSpan}
+                        lineBgClass={lineBgClass}
+                        final={round.title === "Final"}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             </div>
           );
@@ -496,6 +504,7 @@ function MatchNode({
   showLeftConnector,
   showRightConnector,
   matchIndex,
+  connectorSpan,
   lineBgClass,
   final,
 }: {
@@ -505,13 +514,13 @@ function MatchNode({
   showLeftConnector: boolean;
   showRightConnector: boolean;
   matchIndex: number;
+  connectorSpan: number;
   lineBgClass: string;
   final?: boolean;
 }) {
   const isEven = matchIndex % 2 === 0;
-  const connectorSpan = 22;
   return (
-    <div className="relative py-1">
+    <div className="relative h-[74px]">
       {showLeftConnector ? (
         <>
           <span className={`absolute -left-3 top-1/2 h-[2px] w-3 -translate-y-1/2 ${lineBgClass}`} />
