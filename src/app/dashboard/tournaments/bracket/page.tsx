@@ -37,6 +37,10 @@ type ScheduledBracketMatch = {
   right: string;
 };
 
+function canonicalPair(a: string, b: string): string {
+  return [String(a || "").trim(), String(b || "").trim()].sort((x, y) => x.localeCompare(y)).join("__vs__");
+}
+
 function phaseRank(title: string): number {
   const t = String(title || "").toLowerCase();
   if (t.includes("octavos")) return 5;
@@ -154,7 +158,7 @@ function buildBracketSchedule(args: {
   matchMinutes: number;
   marginAfterGroups: number;
 }) {
-  const out: Array<{ roundTitle: string; pairings: Array<{ fieldLabel: string; start: string; end: string }> }> = [];
+  const out: ScheduledBracketMatch[] = [];
   let cursor = toMinutes(args.scheduleStart) + Math.max(0, args.marginAfterGroups);
   const fields = Math.max(1, args.fieldsCount || 1);
   const duration = Math.max(1, args.matchMinutes || 1);
@@ -162,19 +166,22 @@ function buildBracketSchedule(args: {
     const pairings = Array.isArray(round.pairings) ? round.pairings : [];
     const activeFields = Math.max(1, Math.min(fields, pairings.length || 1));
     const slotsNeeded = Math.max(1, Math.ceil((pairings.length || 0) / activeFields));
-    const phaseRows: Array<{ fieldLabel: string; start: string; end: string }> = [];
     for (let i = 0; i < pairings.length; i++) {
       const slot = Math.floor(i / activeFields);
       const fieldIndex = i % activeFields;
       const start = cursor + slot * duration;
       const end = start + duration;
-      phaseRows.push({
-        fieldLabel: `Campo ${fieldIndex + 1}`,
+      out.push({
+        phaseTitle: round.title,
+        matchIndex: i,
+        field: `Campo ${fieldIndex + 1}`,
+        day: 1,
         start: toHHMM(start),
         end: toHHMM(end),
+        left: pairings[i]?.left ?? "",
+        right: pairings[i]?.right ?? "",
       });
     }
-    out.push({ roundTitle: round.title, pairings: phaseRows });
     cursor += slotsNeeded * duration;
   }
   return out;
@@ -430,11 +437,6 @@ export default function TournamentBracketPage() {
     () => computeGroupStandings({ teams: teamsRows, results: normalizedResults, config }),
     [teamsRows, normalizedResults, config],
   );
-  const bracket = useMemo(
-    () => buildTournamentBracketFromResults({ standingsByGroup: standings }),
-    [standings],
-  );
-
   const normal = useMemo(
     () => buildNormalBracket({ standingsByGroup: standings as any, includeThirdFourth }),
     [standings, includeThirdFourth],
@@ -511,25 +513,15 @@ export default function TournamentBracketPage() {
           ) : null}
 
           <div className="relative">
-            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-              <div className="relative">
-                <div className="absolute -inset-6 rounded-full bg-gradient-to-r from-cyan-400/10 via-amber-300/10 to-cyan-400/10 blur-2xl" />
-                <div className="relative h-44 w-44 rounded-full border border-cyan-300/10 bg-black/15 grid place-items-center">
-                  <Trophy className="h-24 w-24 text-amber-300/20 drop-shadow-[0_0_28px_rgba(0,242,255,0.2)]" />
-                </div>
+            {mode === "normal" ? (
+              <BracketColumns title={normal.title} rounds={normal.rounds} crestByTeam={crestByTeam} config={config} />
+            ) : (
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                {fourFinals.map((b) => (
+                  <BracketColumns key={b.title} title={b.title} rounds={b.rounds} crestByTeam={crestByTeam} config={config} />
+                ))}
               </div>
-            </div>
-            <div className="relative">
-              {mode === "normal" ? (
-                <BracketColumns title={normal.title} rounds={normal.rounds} crestByTeam={crestByTeam} />
-              ) : (
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                  {fourFinals.map((b) => (
-                    <BracketColumns key={b.title} title={b.title} rounds={b.rounds} crestByTeam={crestByTeam} />
-                  ))}
-                </div>
-              )}
-            </div>
+            )}
           </div>
 
           {/* Bloque de datos/fallback ocultado para maximizar espacio visual del cuadro. */}
@@ -543,12 +535,37 @@ function BracketColumns({
   title,
   rounds,
   crestByTeam,
+  config,
 }: {
   title: string;
   rounds: BracketRound[];
   crestByTeam: Map<string, string>;
+  config: ReturnType<typeof loadTournamentConfigById>;
 }) {
   const tones = finalsStyle(title);
+  const matchMinutes = Math.max(
+    1,
+    (Number(config?.halvesCount ?? 2) === 1 ? 1 : 2) * Math.max(1, Number(config?.minutesPerHalf ?? 20))
+      + (Number(config?.halvesCount ?? 2) === 2 ? Math.max(0, Number(config?.breakMinutes ?? 0)) : 0),
+  );
+  const scheduled = useMemo(
+    () =>
+      buildBracketSchedule({
+        rounds,
+        fieldsCount: Math.max(1, Number(config?.fieldsCount ?? 1) || 1),
+        scheduleStart: String(config?.scheduleStart ?? "09:00"),
+        matchMinutes,
+        marginAfterGroups: 15,
+      }),
+    [rounds, config, matchMinutes],
+  );
+  const scheduledByPair = useMemo(() => {
+    const map = new Map<string, ScheduledBracketMatch>();
+    for (const s of scheduled) {
+      map.set(`${s.phaseTitle}__${canonicalPair(s.left, s.right)}`, s);
+    }
+    return map;
+  }, [scheduled]);
   const canSplitOctavos =
     rounds.length >= 4 &&
     String(rounds[0]?.title || "").toLowerCase().includes("octavos") &&
@@ -565,9 +582,15 @@ function BracketColumns({
             crestByTeam={crestByTeam}
             lineClass={tones.borderClass.replace("border-", "bg-")}
             textClass={tones.textClass}
+            scheduledByPair={scheduledByPair}
           />
         ) : (
-          <ClassicBracket rounds={rounds} crestByTeam={crestByTeam} lineClass={tones.borderClass.replace("border-", "bg-")} />
+          <ClassicBracket
+            rounds={rounds}
+            crestByTeam={crestByTeam}
+            lineClass={tones.borderClass.replace("border-", "bg-")}
+            scheduledByPair={scheduledByPair}
+          />
         )
       )}
     </div>
@@ -579,11 +602,13 @@ function SplitClassicBracket({
   crestByTeam,
   lineClass,
   textClass,
+  scheduledByPair,
 }: {
   rounds: BracketRound[];
   crestByTeam: Map<string, string>;
   lineClass: string;
   textClass: string;
+  scheduledByPair: Map<string, ScheduledBracketMatch>;
 }) {
   const leftRounds = rounds.slice(0, -1).map((r) => ({ ...r, pairings: r.pairings.slice(0, Math.ceil(r.pairings.length / 2)) }));
   const rightRounds = rounds.slice(0, -1).map((r) => ({ ...r, pairings: r.pairings.slice(Math.ceil(r.pairings.length / 2)) }));
@@ -597,13 +622,28 @@ function SplitClassicBracket({
   return (
     <div className="mt-4 overflow-x-auto">
       <div className="min-w-max px-2 py-2 grid grid-cols-[auto_270px_auto] items-start gap-4">
-        <ClassicBracket rounds={leftRounds} crestByTeam={crestByTeam} lineClass={lineClass} />
+        <ClassicBracket rounds={leftRounds} crestByTeam={crestByTeam} lineClass={lineClass} scheduledByPair={scheduledByPair} />
         <div className="relative" style={{ height: `${canvasHeight}px` }}>
           <div className="absolute left-0 right-0" style={{ top: `${Math.max(0, finalTop - 8)}px` }}>
             <div className="flex flex-col items-center gap-1">
               <p className={`text-[9px] font-black uppercase tracking-[0.16em] ${textClass}`}>Final</p>
             </div>
             <div className="mt-2 rounded-xl border border-amber-400/35 bg-amber-500/10 px-3 py-2">
+              {finalPairing ? (
+                <div className="mb-1 flex items-center justify-between gap-2">
+                  {(() => {
+                    const meta = scheduledByPair.get(`Final__${canonicalPair(finalPairing.left, finalPairing.right)}`);
+                    return (
+                      <span className="inline-flex items-center rounded-md border border-cyan-400/25 bg-cyan-400/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.14em] text-cyan-200">
+                        {meta ? `${meta.field} · ${meta.start}` : "Horario pendiente"}
+                      </span>
+                    );
+                  })()}
+                  <span className="inline-flex items-center rounded-md border border-white/15 bg-white/[0.04] px-2 py-0.5 text-[9px] font-black text-white/80 tabular-nums">
+                    — : —
+                  </span>
+                </div>
+              ) : null}
               {finalPairing ? (
                 <>
                   <TeamBadge name={finalPairing.left} crest={crestByTeam.get(finalPairing.left)} />
@@ -616,7 +656,7 @@ function SplitClassicBracket({
             </div>
           </div>
         </div>
-        <ClassicBracket rounds={rightRounds} crestByTeam={crestByTeam} lineClass={lineClass} reverse />
+        <ClassicBracket rounds={rightRounds} crestByTeam={crestByTeam} lineClass={lineClass} reverse scheduledByPair={scheduledByPair} />
       </div>
     </div>
   );
@@ -661,11 +701,13 @@ function ClassicBracket({
   crestByTeam,
   lineClass,
   reverse = false,
+  scheduledByPair,
 }: {
   rounds: BracketRound[];
   crestByTeam: Map<string, string>;
   lineClass: string;
   reverse?: boolean;
+  scheduledByPair: Map<string, ScheduledBracketMatch>;
 }) {
   const lineBgClass = lineClass.startsWith("bg-") ? lineClass : "bg-primary/35";
   const leafPitch = 112; // separación vertical base de la primera ronda
@@ -693,6 +735,7 @@ function ClassicBracket({
                       <MatchNode
                         left={p.left}
                         right={p.right}
+                        phaseTitle={round.title}
                         crestByTeam={crestByTeam}
                         showLeftConnector={roundIndex > 0}
                         showRightConnector={!isLastRound}
@@ -701,6 +744,7 @@ function ClassicBracket({
                         mirror={reverse}
                         connectorSpan={connectorSpan}
                         lineBgClass={lineBgClass}
+                        schedule={scheduledByPair.get(`${round.title}__${canonicalPair(p.left, p.right)}`)}
                         final={round.title === "Final"}
                       />
                     </div>
@@ -718,6 +762,7 @@ function ClassicBracket({
 function MatchNode({
   left,
   right,
+  phaseTitle,
   crestByTeam,
   showLeftConnector,
   showRightConnector,
@@ -726,10 +771,12 @@ function MatchNode({
   mirror = false,
   connectorSpan,
   lineBgClass,
+  schedule,
   final,
 }: {
   left: string;
   right: string;
+  phaseTitle: string;
   crestByTeam: Map<string, string>;
   showLeftConnector: boolean;
   showRightConnector: boolean;
@@ -738,6 +785,7 @@ function MatchNode({
   mirror?: boolean;
   connectorSpan: number;
   lineBgClass: string;
+  schedule?: ScheduledBracketMatch;
   final?: boolean;
 }) {
   const isEven = matchIndex % 2 === 0;
@@ -768,6 +816,14 @@ function MatchNode({
         </>
       ) : null}
       <div className={`rounded-xl border px-3 py-2 ${final ? "border-amber-400/35 bg-amber-500/10" : "border-white/10 bg-white/[0.03]"}`}>
+        <div className="mb-1 flex items-center justify-between gap-2">
+          <span className="inline-flex items-center rounded-md border border-cyan-400/25 bg-cyan-400/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.14em] text-cyan-200">
+            {schedule ? `${schedule.field} · ${schedule.start}` : `${phaseTitle} · por definir`}
+          </span>
+          <span className="inline-flex items-center rounded-md border border-white/15 bg-white/[0.04] px-2 py-0.5 text-[9px] font-black text-white/80 tabular-nums">
+            — : —
+          </span>
+        </div>
         <TeamBadge name={left} crest={crestByTeam.get(left)} />
         <p className="text-[9px] text-white/45 uppercase tracking-[0.12em]">vs</p>
         <TeamBadge name={right} crest={crestByTeam.get(right)} />
