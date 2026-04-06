@@ -390,8 +390,8 @@ export default function TournamentBracketPage() {
               (Compat) Vista base anterior: Semis+Final se mantiene como fallback automático.
             </p>
             <div className="mt-3 grid grid-cols-1 lg:grid-cols-3 gap-2">
-              <RoundCard title="Semifinales (fallback)" pairings={bracket.semiFinals} crestByTeam={crestByTeam} />
-              <RoundCard title="Final (fallback)" pairings={bracket.final} final crestByTeam={crestByTeam} />
+              <BracketPhaseCard title="Semifinales (fallback)" pairings={bracket.semiFinals} crestByTeam={crestByTeam} />
+              <BracketPhaseCard title="Final (fallback)" pairings={bracket.final} isFinal crestByTeam={crestByTeam} />
             </div>
           </div>
         </CardContent>
@@ -409,37 +409,34 @@ function BracketColumns({
   rounds: BracketRound[];
   crestByTeam: Map<string, string>;
 }) {
+  const tones = finalsStyle(title);
   return (
-    <div className="rounded-2xl border border-primary/20 bg-black/25 p-4">
-      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">{title}</p>
+    <div className={`rounded-2xl border p-4 ${tones.borderClass} ${tones.bgClass}`}>
+      <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${tones.textClass}`}>{title}</p>
       {rounds.length === 0 ? (
         <p className="mt-3 text-[11px] text-white/55">Sin cruces (faltan posiciones o grupos).</p>
       ) : (
-        <div className="mt-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
-          {rounds.map((r) => (
-            <RoundCard key={r.title} title={r.title} pairings={r.pairings} final={r.title === "Final"} crestByTeam={crestByTeam} />
-          ))}
-        </div>
+        <ClassicBracket rounds={rounds} crestByTeam={crestByTeam} lineClass={tones.borderClass.replace("border-", "bg-")} />
       )}
     </div>
   );
 }
 
-function RoundCard({
+function BracketPhaseCard({
   title,
   pairings,
-  final = false,
   crestByTeam,
+  isFinal = false,
 }: {
   title: string;
   pairings: Array<{ left: string; right: string }>;
-  final?: boolean;
   crestByTeam: Map<string, string>;
+  isFinal?: boolean;
 }) {
   return (
-    <div className={`rounded-2xl border p-4 ${final ? "border-amber-400/30 bg-amber-500/5" : "border-primary/20 bg-black/25"}`}>
+    <div className={`rounded-2xl border p-4 ${isFinal ? "border-amber-400/30 bg-amber-500/5" : "border-primary/20 bg-black/25"}`}>
       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80 flex items-center gap-2">
-        {final ? <Trophy className="h-3.5 w-3.5 text-amber-300" /> : null}
+        {isFinal ? <Trophy className="h-3.5 w-3.5 text-amber-300" /> : null}
         {title}
       </p>
       <div className="mt-3 space-y-2">
@@ -454,6 +451,76 @@ function RoundCard({
             </div>
           ))
         )}
+      </div>
+    </div>
+  );
+}
+
+function ClassicBracket({
+  rounds,
+  crestByTeam,
+  lineClass,
+}: {
+  rounds: BracketRound[];
+  crestByTeam: Map<string, string>;
+  lineClass: string;
+}) {
+  const lineBgClass = lineClass.startsWith("bg-") ? lineClass : "bg-primary/35";
+  return (
+    <div className="mt-4 overflow-x-auto">
+      <div className="min-w-max px-2 py-2 flex items-start justify-center gap-6">
+        {rounds.map((round, roundIndex) => {
+          const isLastRound = roundIndex === rounds.length - 1;
+          return (
+            <div key={round.title} className="w-[250px]">
+              <p className="mb-2 text-[9px] font-black uppercase tracking-[0.16em] text-white/60">{round.title}</p>
+              <div className="space-y-3">
+                {round.pairings.map((p, idx) => (
+                  <MatchNode
+                    key={`${round.title}_${idx}`}
+                    left={p.left}
+                    right={p.right}
+                    crestByTeam={crestByTeam}
+                    showLeftConnector={roundIndex > 0}
+                    showRightConnector={!isLastRound}
+                    lineBgClass={lineBgClass}
+                    final={round.title === "Final"}
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function MatchNode({
+  left,
+  right,
+  crestByTeam,
+  showLeftConnector,
+  showRightConnector,
+  lineBgClass,
+  final,
+}: {
+  left: string;
+  right: string;
+  crestByTeam: Map<string, string>;
+  showLeftConnector: boolean;
+  showRightConnector: boolean;
+  lineBgClass: string;
+  final?: boolean;
+}) {
+  return (
+    <div className="relative">
+      {showLeftConnector ? <span className={`absolute -left-3 top-1/2 h-[2px] w-3 -translate-y-1/2 ${lineBgClass}`} /> : null}
+      {showRightConnector ? <span className={`absolute -right-3 top-1/2 h-[2px] w-3 -translate-y-1/2 ${lineBgClass}`} /> : null}
+      <div className={`rounded-xl border px-3 py-2 ${final ? "border-amber-400/35 bg-amber-500/10" : "border-white/10 bg-white/[0.03]"}`}>
+        <TeamBadge name={left} crest={crestByTeam.get(left)} />
+        <p className="text-[9px] text-white/45 uppercase tracking-[0.12em]">vs</p>
+        <TeamBadge name={right} crest={crestByTeam.get(right)} />
       </div>
     </div>
   );
