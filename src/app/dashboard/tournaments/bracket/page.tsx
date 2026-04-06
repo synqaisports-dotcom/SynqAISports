@@ -39,6 +39,50 @@ type ScheduledBracketMatch = {
   right: string;
 };
 
+function inferGroupIndexFromTeamRow(t: any): number | null {
+  if (!t || typeof t !== "object") return null;
+  const groupIndexRaw = (t as { groupIndex?: unknown }).groupIndex;
+  let gi = typeof groupIndexRaw === "number" && Number.isFinite(groupIndexRaw) ? groupIndexRaw : NaN;
+  if (!Number.isFinite(gi)) {
+    const id = String((t as { id?: unknown }).id ?? "").trim();
+    const m = /^slot_(\d+)_\d+$/i.exec(id);
+    if (m) gi = Number(m[1]);
+  }
+  return Number.isFinite(gi) ? Math.max(0, gi) : null;
+}
+
+function inferGroupIndexFromTeamName(name: string): number | null {
+  const n = String(name || "").trim();
+  if (!n) return null;
+  const m = /grupo\s+([a-z])/i.exec(n);
+  if (!m) return null;
+  const ch = m[1]!.toUpperCase();
+  const code = ch.charCodeAt(0);
+  if (code < 65 || code > 90) return null;
+  return code - 65;
+}
+
+function groupTextColorByIndex(groupIndex: number): string {
+  const palette = [
+    "0 242 255", // cyan SynqAI
+    "56 189 248", // sky
+    "168 85 247", // violet
+    "45 212 191", // teal
+    "250 204 21", // amber
+    "251 146 60", // orange
+    "244 114 182", // pink
+    "34 197 94", // green
+  ];
+  return palette[Math.max(0, groupIndex) % palette.length] ?? "255 255 255";
+}
+
+function teamNameColorStyle(name: string, groupIndexByTeam?: Map<string, number>): { color: string } | undefined {
+  const direct = groupIndexByTeam?.get(String(name || "").trim());
+  const inferred = typeof direct === "number" ? direct : inferGroupIndexFromTeamName(name);
+  if (typeof inferred !== "number") return undefined;
+  return { color: `rgb(${groupTextColorByIndex(inferred)} / 0.95)` };
+}
+
 function canonicalPair(a: string, b: string): string {
   return [String(a || "").trim(), String(b || "").trim()].sort((x, y) => x.localeCompare(y)).join("__vs__");
 }
@@ -570,9 +614,11 @@ function initials(name: string): string {
 function TeamBadge({
   name,
   crest,
+  textStyle,
 }: {
   name: string;
   crest?: string;
+  textStyle?: { color: string };
 }) {
   return (
     <div className="flex items-center gap-2 min-w-0">
@@ -583,7 +629,7 @@ function TeamBadge({
           {initials(name)}
         </span>
       )}
-      <span className="text-[11px] font-black text-white truncate">{name}</span>
+      <span className="text-[11px] font-black truncate" style={textStyle}>{name}</span>
     </div>
   );
 }
@@ -650,6 +696,17 @@ export default function TournamentBracketPage() {
       const crest = String((t as { crestDataUrl?: unknown }).crestDataUrl ?? "").trim();
       if (!name || !crest) continue;
       out.set(name, crest);
+    }
+    return out;
+  }, [teamsRows]);
+  const groupIndexByTeam = useMemo(() => {
+    const out = new Map<string, number>();
+    for (const t of teamsRows) {
+      if (!t || typeof t !== "object") continue;
+      const name = String((t as { name?: unknown }).name ?? "").trim();
+      if (!name) continue;
+      const gi = inferGroupIndexFromTeamRow(t);
+      if (typeof gi === "number") out.set(name, gi);
     }
     return out;
   }, [teamsRows]);
@@ -804,6 +861,7 @@ export default function TournamentBracketPage() {
                     config={config}
                     teamsRows={teamsRows}
                     globalScheduleByViewPair={globalFourFinalsSchedule}
+                    groupIndexByTeam={groupIndexByTeam}
                   />
                 ))}
               </div>
@@ -824,6 +882,7 @@ function BracketColumns({
   config,
   teamsRows,
   globalScheduleByViewPair,
+  groupIndexByTeam,
 }: {
   title: string;
   rounds: BracketRound[];
@@ -831,6 +890,7 @@ function BracketColumns({
   config: ReturnType<typeof loadTournamentConfigById>;
   teamsRows: any[];
   globalScheduleByViewPair?: Map<string, ScheduledBracketMatch>;
+  groupIndexByTeam?: Map<string, number>;
 }) {
   const tones = finalsStyle(title);
   const bracketStartAt = useMemo(() => {
@@ -889,6 +949,7 @@ function BracketColumns({
             lineClass={tones.borderClass.replace("border-", "bg-")}
             textClass={tones.textClass}
             scheduledByPair={scheduledByPair}
+            groupIndexByTeam={groupIndexByTeam}
           />
         ) : (
           <ClassicBracket
@@ -896,6 +957,7 @@ function BracketColumns({
             crestByTeam={crestByTeam}
             lineClass={tones.borderClass.replace("border-", "bg-")}
             scheduledByPair={scheduledByPair}
+            groupIndexByTeam={groupIndexByTeam}
           />
         )
       )}
@@ -909,12 +971,14 @@ function SplitClassicBracket({
   lineClass,
   textClass,
   scheduledByPair,
+  groupIndexByTeam,
 }: {
   rounds: BracketRound[];
   crestByTeam: Map<string, string>;
   lineClass: string;
   textClass: string;
   scheduledByPair: Map<string, ScheduledBracketMatch>;
+  groupIndexByTeam?: Map<string, number>;
 }) {
   const leftRounds = rounds.slice(0, -1).map((r) => ({ ...r, pairings: r.pairings.slice(0, Math.ceil(r.pairings.length / 2)) }));
   const rightRounds = rounds.slice(0, -1).map((r) => ({ ...r, pairings: r.pairings.slice(Math.ceil(r.pairings.length / 2)) }));
@@ -928,7 +992,7 @@ function SplitClassicBracket({
   return (
     <div className="mt-4 overflow-x-auto">
       <div className="min-w-max px-2 py-2 grid grid-cols-[auto_270px_auto] items-start gap-4">
-        <ClassicBracket rounds={leftRounds} crestByTeam={crestByTeam} lineClass={lineClass} scheduledByPair={scheduledByPair} />
+        <ClassicBracket rounds={leftRounds} crestByTeam={crestByTeam} lineClass={lineClass} scheduledByPair={scheduledByPair} groupIndexByTeam={groupIndexByTeam} />
         <div className="relative" style={{ height: `${canvasHeight}px` }}>
           <div className="absolute left-0 right-0" style={{ top: `${Math.max(0, finalTop - 8)}px` }}>
             <div className="flex flex-col items-center gap-1">
@@ -952,9 +1016,17 @@ function SplitClassicBracket({
               ) : null}
               {finalPairing ? (
                 <>
-                  <TeamBadge name={finalPairing.left} crest={crestByTeam.get(finalPairing.left)} />
+                  <TeamBadge
+                    name={finalPairing.left}
+                    crest={crestByTeam.get(finalPairing.left)}
+                    textStyle={teamNameColorStyle(finalPairing.left, groupIndexByTeam)}
+                  />
                   <p className="text-[9px] text-white/45 uppercase tracking-[0.12em]">vs</p>
-                  <TeamBadge name={finalPairing.right} crest={crestByTeam.get(finalPairing.right)} />
+                  <TeamBadge
+                    name={finalPairing.right}
+                    crest={crestByTeam.get(finalPairing.right)}
+                    textStyle={teamNameColorStyle(finalPairing.right, groupIndexByTeam)}
+                  />
                 </>
               ) : (
                 <p className="text-[11px] text-white/60">Sin final</p>
@@ -962,7 +1034,7 @@ function SplitClassicBracket({
             </div>
           </div>
         </div>
-        <ClassicBracket rounds={rightRounds} crestByTeam={crestByTeam} lineClass={lineClass} reverse scheduledByPair={scheduledByPair} />
+        <ClassicBracket rounds={rightRounds} crestByTeam={crestByTeam} lineClass={lineClass} reverse scheduledByPair={scheduledByPair} groupIndexByTeam={groupIndexByTeam} />
       </div>
     </div>
   );
@@ -1008,12 +1080,14 @@ function ClassicBracket({
   lineClass,
   reverse = false,
   scheduledByPair,
+  groupIndexByTeam,
 }: {
   rounds: BracketRound[];
   crestByTeam: Map<string, string>;
   lineClass: string;
   reverse?: boolean;
   scheduledByPair: Map<string, ScheduledBracketMatch>;
+  groupIndexByTeam?: Map<string, number>;
 }) {
   const lineBgClass = lineClass.startsWith("bg-") ? lineClass : "bg-primary/35";
   const leafPitch = 112; // separación vertical base de la primera ronda
@@ -1052,6 +1126,7 @@ function ClassicBracket({
                         lineBgClass={lineBgClass}
                         schedule={scheduledByPair.get(`${round.title}__${canonicalPair(p.left, p.right)}`)}
                         final={round.title === "Final"}
+                        groupIndexByTeam={groupIndexByTeam}
                       />
                     </div>
                   );
@@ -1079,6 +1154,7 @@ function MatchNode({
   lineBgClass,
   schedule,
   final,
+  groupIndexByTeam,
 }: {
   left: string;
   right: string;
@@ -1093,6 +1169,7 @@ function MatchNode({
   lineBgClass: string;
   schedule?: ScheduledBracketMatch;
   final?: boolean;
+  groupIndexByTeam?: Map<string, number>;
 }) {
   const isEven = matchIndex % 2 === 0;
   const leftX = mirror ? "-right-3" : "-left-3";
@@ -1130,9 +1207,9 @@ function MatchNode({
             — : —
           </span>
         </div>
-        <TeamBadge name={left} crest={crestByTeam.get(left)} />
+        <TeamBadge name={left} crest={crestByTeam.get(left)} textStyle={teamNameColorStyle(left, groupIndexByTeam)} />
         <p className="text-[9px] text-white/45 uppercase tracking-[0.12em]">vs</p>
-        <TeamBadge name={right} crest={crestByTeam.get(right)} />
+        <TeamBadge name={right} crest={crestByTeam.get(right)} textStyle={teamNameColorStyle(right, groupIndexByTeam)} />
       </div>
     </div>
   );
