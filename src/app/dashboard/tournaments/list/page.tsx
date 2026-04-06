@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { BarChart3, CalendarRange, Copy, ListOrdered, Pencil, QrCode, Search, Swords, Trophy, Trash2, Users } from "lucide-react";
+import { BarChart3, CalendarRange, Copy, ListOrdered, Pencil, QrCode, Search, Swords, TicketPercent, Trophy, Trash2, Users } from "lucide-react";
 import Link from "next/link";
 import { QRCodeCanvas } from "qrcode.react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -618,6 +618,13 @@ export default function TournamentsListPage() {
                           title="Analítica"
                         >
                           <BarChart3 className="h-4 w-4" />
+                        </Link>
+                        <Link
+                          href={`/dashboard/tournaments/revenue?tournamentId=${encodeURIComponent(t.id)}`}
+                          className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-[#00F2FF]/20 bg-black/20 text-[#00F2FF] hover:bg-[#00F2FF]/10 transition-[background-color,border-color,color,opacity,transform]"
+                          title="Ingresos"
+                        >
+                          <TicketPercent className="h-4 w-4" />
                         </Link>
                       </div>
                     </div>
