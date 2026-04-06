@@ -593,6 +593,66 @@ export default function ClubManagementPage() {
         </div>
       </div>
 
+      <Card className="glass-panel border border-primary/10 bg-black/40 overflow-hidden shadow-xl">
+        <CardHeader className="p-6 sm:p-8 lg:p-10 pb-4">
+          <CardTitle className="text-[11px] font-black uppercase tracking-[0.4em] text-primary/20">
+            Analítica Visual del Club · Nuevo
+          </CardTitle>
+          <CardDescription className="text-[10px] uppercase tracking-widest text-primary/40">
+            Panel rápido con el mismo estilo gráfico de torneos.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="px-6 sm:px-8 lg:px-10 pb-6 sm:pb-8 lg:pb-10 grid grid-cols-1 xl:grid-cols-2 gap-4">
+          <div className="rounded-2xl border border-primary/15 bg-black/30 p-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/70 mb-2">Indicadores base</p>
+            <div className="h-52">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={identityBars} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                  <XAxis dataKey="label" tick={{ fill: "rgba(255,255,255,0.65)", fontSize: 10, fontWeight: 700 }} axisLine={false} tickLine={false} />
+                  <YAxis allowDecimals={false} tick={{ fill: "rgba(255,255,255,0.55)", fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    cursor={{ fill: "rgba(0,242,255,0.08)" }}
+                    contentStyle={{
+                      background: "rgba(8,16,28,0.95)",
+                      border: "1px solid rgba(0,242,255,0.25)",
+                      borderRadius: 12,
+                      color: "#fff",
+                      fontWeight: 700,
+                    }}
+                  />
+                  <Bar dataKey="value" radius={[8, 8, 0, 0]} fill="#00F2FF" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-primary/15 bg-black/30 p-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/70 mb-2">Cobertura redes</p>
+            <div className="h-52">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={socialsPie} dataKey="value" nameKey="name" innerRadius={54} outerRadius={86} paddingAngle={2}>
+                    {socialsPie.map((entry) => (
+                      <Cell key={entry.name} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      background: "rgba(8,16,28,0.95)",
+                      border: "1px solid rgba(0,242,255,0.25)",
+                      borderRadius: 12,
+                      color: "#fff",
+                      fontWeight: 700,
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* MATRIZ DE DATOS Y TERMINALES */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-10 pt-8">
         <div className="lg:col-span-2 space-y-10">
@@ -653,66 +713,6 @@ export default function ClubManagementPage() {
         </div>
 
         <div className="space-y-10">
-           <Card className="glass-panel border border-primary/10 bg-black/40 overflow-hidden shadow-xl">
-             <CardHeader className="p-6 sm:p-8 lg:p-10 pb-4">
-               <CardTitle className="text-[11px] font-black uppercase tracking-[0.4em] text-primary/20">
-                 Analítica Visual del Club · Nuevo
-               </CardTitle>
-               <CardDescription className="text-[10px] uppercase tracking-widest text-primary/40">
-                 Panel rápido con el mismo estilo gráfico de torneos.
-               </CardDescription>
-             </CardHeader>
-             <CardContent className="px-6 sm:px-8 lg:px-10 pb-6 sm:pb-8 lg:pb-10 grid grid-cols-1 gap-4">
-               <div className="rounded-2xl border border-primary/15 bg-black/30 p-4">
-                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/70 mb-2">Indicadores base</p>
-                 <div className="h-44">
-                   <ResponsiveContainer width="100%" height="100%">
-                     <BarChart data={identityBars} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
-                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
-                       <XAxis dataKey="label" tick={{ fill: "rgba(255,255,255,0.65)", fontSize: 10, fontWeight: 700 }} axisLine={false} tickLine={false} />
-                       <YAxis allowDecimals={false} tick={{ fill: "rgba(255,255,255,0.55)", fontSize: 10 }} axisLine={false} tickLine={false} />
-                       <Tooltip
-                         cursor={{ fill: "rgba(0,242,255,0.08)" }}
-                         contentStyle={{
-                           background: "rgba(8,16,28,0.95)",
-                           border: "1px solid rgba(0,242,255,0.25)",
-                           borderRadius: 12,
-                           color: "#fff",
-                           fontWeight: 700,
-                         }}
-                       />
-                       <Bar dataKey="value" radius={[8, 8, 0, 0]} fill="#00F2FF" />
-                     </BarChart>
-                   </ResponsiveContainer>
-                 </div>
-               </div>
-
-               <div className="rounded-2xl border border-primary/15 bg-black/30 p-4">
-                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/70 mb-2">Cobertura redes</p>
-                 <div className="h-44">
-                   <ResponsiveContainer width="100%" height="100%">
-                     <PieChart>
-                       <Pie data={socialsPie} dataKey="value" nameKey="name" innerRadius={46} outerRadius={76} paddingAngle={2}>
-                         {socialsPie.map((entry) => (
-                           <Cell key={entry.name} fill={entry.color} />
-                         ))}
-                       </Pie>
-                       <Tooltip
-                         contentStyle={{
-                           background: "rgba(8,16,28,0.95)",
-                           border: "1px solid rgba(0,242,255,0.25)",
-                           borderRadius: 12,
-                           color: "#fff",
-                           fontWeight: 700,
-                         }}
-                       />
-                     </PieChart>
-                   </ResponsiveContainer>
-                 </div>
-               </div>
-             </CardContent>
-           </Card>
-
            <Card className="glass-panel border border-primary/10 bg-black/40 overflow-hidden shadow-xl">
              <CardHeader className="p-6 sm:p-8 lg:p-10 pb-4">
                <CardTitle className="text-[11px] font-black uppercase tracking-[0.4em] text-primary/20">
