@@ -180,6 +180,7 @@ export default function TournamentBracketPage() {
   const clubScopeId = profile?.clubId ?? "global-hq";
   const [mode, setMode] = useState<"normal" | "four_finals">("normal");
   const [resolvedTournamentId, setResolvedTournamentId] = useState<string | null>(tournamentIdFromUrl);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     if (!clubScopeId) return;
@@ -193,24 +194,83 @@ export default function TournamentBracketPage() {
     setResolvedTournamentId(getActiveTournamentId(clubScopeId));
   }, [clubScopeId, tournamentIdFromUrl]);
 
+  // Releer datos al volver a esta vista/pestaña para reflejar guardados recientes.
+  useEffect(() => {
+    const bump = () => setReloadKey((k) => k + 1);
+    const onStorage = (e: StorageEvent) => {
+      if (!resolvedTournamentId) return;
+      const key = `synq_tournament_matches_v1_${clubScopeId}_${resolvedTournamentId}`;
+      if (e.key === key) bump();
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") bump();
+    };
+    window.addEventListener("focus", bump);
+    window.addEventListener("pageshow", bump);
+    window.addEventListener("storage", onStorage);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("focus", bump);
+      window.removeEventListener("pageshow", bump);
+      window.removeEventListener("storage", onStorage);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [clubScopeId, resolvedTournamentId]);
+
   const config = useMemo(
     () => loadTournamentConfigById(clubScopeId, resolvedTournamentId),
-    [clubScopeId, resolvedTournamentId],
+    [clubScopeId, resolvedTournamentId, reloadKey],
+  );
+  const teamsRows = useMemo(
+    () => loadTournamentTeamsById(clubScopeId, resolvedTournamentId),
+    [clubScopeId, resolvedTournamentId, reloadKey],
   );
   const teamNames = useMemo(() => {
-    const rows = loadTournamentTeamsById(clubScopeId, resolvedTournamentId);
+    const rows = teamsRows;
     return rows
       .map((row) => (row && typeof row === "object" ? String((row as { name?: unknown }).name ?? "").trim() : ""))
       .filter((name): name is string => name.length > 0);
-  }, [clubScopeId, resolvedTournamentId]);
+  }, [teamsRows]);
 
   const results = useMemo(
     () => loadTournamentResultsById(clubScopeId, resolvedTournamentId),
-    [clubScopeId, resolvedTournamentId],
+    [clubScopeId, resolvedTournamentId, reloadKey],
   );
+  const normalizedResults = useMemo(() => {
+    const canonicalPair = (a: string, b: string) => [a, b].sort((x, y) => x.localeCompare(y)).join("__vs__");
+    const groupLabel = (idx: number) => `Grupo ${String.fromCharCode(65 + Math.max(0, idx))}`;
+    const byTeamGroup = new Map<string, number>();
+    for (const t of teamsRows) {
+      if (!t || typeof t !== "object") continue;
+      const name = String((t as { name?: unknown }).name ?? "").trim();
+      if (!name) continue;
+      const groupIndexRaw = (t as { groupIndex?: unknown }).groupIndex;
+      let gi = typeof groupIndexRaw === "number" && Number.isFinite(groupIndexRaw) ? groupIndexRaw : NaN;
+      if (!Number.isFinite(gi)) {
+        const id = String((t as { id?: unknown }).id ?? "").trim();
+        const m = /^slot_(\d+)_\d+$/i.exec(id);
+        if (m) gi = Number(m[1]);
+      }
+      if (Number.isFinite(gi)) byTeamGroup.set(name, Math.max(0, gi));
+    }
+
+    const dedup = new Map<string, (typeof results)[number]>();
+    for (const r of results) {
+      const local = String(r.localTeam || "").trim();
+      const away = String(r.awayTeam || "").trim();
+      if (!local || !away) continue;
+      const gLocal = byTeamGroup.get(local);
+      const gAway = byTeamGroup.get(away);
+      const sameKnownGroup = typeof gLocal === "number" && typeof gAway === "number" && gLocal === gAway;
+      const groupName = sameKnownGroup ? groupLabel(gLocal) : String(r.groupName || "").trim();
+      const id = `${groupName}__${canonicalPair(local, away)}`;
+      dedup.set(id, { ...r, id, groupName, localTeam: local, awayTeam: away });
+    }
+    return Array.from(dedup.values());
+  }, [results, teamsRows]);
   const standings = useMemo(
-    () => computeGroupStandings({ teams: loadTournamentTeamsById(clubScopeId, resolvedTournamentId), results, config }),
-    [clubScopeId, resolvedTournamentId, results, config],
+    () => computeGroupStandings({ teams: teamsRows, results: normalizedResults, config }),
+    [teamsRows, normalizedResults, config],
   );
   const bracket = useMemo(
     () => buildTournamentBracketFromResults({ standingsByGroup: standings }),
