@@ -152,6 +152,41 @@ function toHHMM(totalMinutes: number): string {
   return `${hh}:${mm}`;
 }
 
+function addMinutesToHHMM(hhmm: string, delta: number) {
+  return toHHMM(toMinutes(hhmm) + delta);
+}
+
+function clampStartToRange(start: string, range: { start: string; end: string }) {
+  if (toMinutes(start) < toMinutes(range.start)) return range.start;
+  if (toMinutes(start) > toMinutes(range.end)) return range.end;
+  return start;
+}
+
+function buildRoundRobinRounds(teams: string[]): Array<Array<{ home: string; away: string }>> {
+  const names = teams.map((t) => String(t || "").trim()).filter(Boolean);
+  if (names.length < 2) return [];
+  const list = [...names];
+  if (list.length % 2 === 1) list.push("BYE");
+  const n = list.length;
+  const rounds: Array<Array<{ home: string; away: string }>> = [];
+  const fixed = list[0];
+  let rot = list.slice(1);
+  for (let r = 0; r < n - 1; r++) {
+    const left = [fixed, ...rot.slice(0, n / 2 - 1)];
+    const right = rot.slice(n / 2 - 1).slice().reverse();
+    const pairings: Array<{ home: string; away: string }> = [];
+    for (let i = 0; i < left.length; i++) {
+      const a = left[i];
+      const b = right[i];
+      if (a === "BYE" || b === "BYE") continue;
+      pairings.push(r % 2 === 0 ? { home: a, away: b } : { home: b, away: a });
+    }
+    rounds.push(pairings);
+    rot = [rot[rot.length - 1], ...rot.slice(0, rot.length - 1)];
+  }
+  return rounds;
+}
+
 function estimateGroupsEndMinutes(args: {
   config: ReturnType<typeof loadTournamentConfigById> | null;
   teamsRows: any[];
@@ -160,6 +195,8 @@ function estimateGroupsEndMinutes(args: {
   const start = String(cfg?.scheduleStart ?? "09:00");
   const startMinutes = toMinutes(start);
   const fieldsCount = Math.max(1, Number(cfg?.fieldsCount ?? 1) || 1);
+  const tournamentDays = Math.max(1, Number(cfg?.tournamentDays ?? 1) || 1);
+  const scheduleMode = cfg?.scheduleMode === "rounds_by_group" ? "rounds_by_group" : "normal";
 
   // Preferimos equipos reales del torneo para evitar subestimar la liguilla.
   const byGroup = new Map<number, number>();
@@ -177,21 +214,118 @@ function estimateGroupsEndMinutes(args: {
     if (!Number.isFinite(gi)) gi = 0;
     byGroup.set(gi, (byGroup.get(gi) ?? 0) + 1);
   }
-  const realGroupSizes = Array.from(byGroup.values()).filter((n) => n > 0);
-  const groupsCount = Math.max(1, realGroupSizes.length || Number(cfg?.groupsCount ?? 1) || 1);
-  const teamsPerGroup = Math.max(2, realGroupSizes.length > 0 ? Math.max(...realGroupSizes) : Number(cfg?.teamsPerGroup ?? 0) || 2);
+  const realGroups = Array.from(byGroup.entries())
+    .filter(([, n]) => n > 0)
+    .sort((a, b) => a[0] - b[0]);
+  const fallbackGroupsCount = Math.max(1, Number(cfg?.groupsCount ?? 1) || 1);
+  const fallbackTeamsPerGroup = Math.max(2, Number(cfg?.teamsPerGroup ?? 0) || 2);
+  const groups =
+    realGroups.length > 0
+      ? realGroups.map(([idx, size]) => ({ idx, size }))
+      : Array.from({ length: fallbackGroupsCount }, (_, idx) => ({ idx, size: fallbackTeamsPerGroup }));
   const halves = Number(cfg?.halvesCount ?? 2) === 1 ? 1 : 2;
   const minutesPerHalf = Math.max(1, Number(cfg?.minutesPerHalf ?? 20) || 20);
   const breakMinutes = halves === 2 ? Math.max(0, Number(cfg?.breakMinutes ?? 0)) : 0;
   const buffer = Math.max(0, Number(cfg?.bufferBetweenMatches ?? 0));
   const matchMinutes = halves * minutesPerHalf + breakMinutes;
   const slotMinutes = Math.max(1, matchMinutes + buffer);
-  const groupMatches = (teamsPerGroup * (teamsPerGroup - 1)) / 2;
-  // En modo normal de clasificación, cada grupo se queda en su campo (o campo compartido por varios grupos).
-  // Makespan más realista: nº grupos por campo * partidos por grupo.
-  const maxGroupsPerField = Math.max(1, Math.ceil(groupsCount / fieldsCount));
-  const slotsForGroups = Math.max(1, Math.ceil(maxGroupsPerField * groupMatches));
-  return startMinutes + slotsForGroups * slotMinutes;
+  const timeWindow = (cfg?.timeWindow ?? "both") as "morning" | "afternoon" | "both";
+  const ranges: Array<{ start: string; end: string }> = [];
+  if (timeWindow === "morning" || timeWindow === "both") {
+    ranges.push({ start: String(cfg?.morningStart ?? "09:00"), end: String(cfg?.morningEnd ?? "14:00") });
+  }
+  if (timeWindow === "afternoon" || timeWindow === "both") {
+    ranges.push({ start: String(cfg?.afternoonStart ?? "16:00"), end: String(cfg?.afternoonEnd ?? "21:00") });
+  }
+  const slots: Array<{ day: number; start: string; end: string }> = [];
+  if (slotMinutes > 0 && ranges.length > 0) {
+    for (let day = 1; day <= tournamentDays; day++) {
+      for (const r of ranges) {
+        let cur = r.start;
+        if (start) cur = clampStartToRange(start, r);
+        while (toMinutes(addMinutesToHHMM(cur, matchMinutes)) <= toMinutes(r.end)) {
+          slots.push({ day, start: cur, end: addMinutesToHHMM(cur, matchMinutes) });
+          cur = addMinutesToHHMM(cur, slotMinutes);
+        }
+      }
+    }
+  }
+  if (slots.length === 0) return startMinutes;
+
+  let requiredSlots = 0;
+  if (scheduleMode === "normal") {
+    const matchesPerField = new Map<number, number>();
+    for (let i = 0; i < groups.length; i++) {
+      const size = Math.max(2, groups[i]!.size);
+      const groupMatches = (size * (size - 1)) / 2;
+      const fi = i % fieldsCount;
+      matchesPerField.set(fi, (matchesPerField.get(fi) ?? 0) + groupMatches);
+    }
+    requiredSlots = Math.max(0, ...Array.from(matchesPerField.values()));
+  } else {
+    // Simulación equivalente al modo "por jornadas y grupo" de clasificación (nivel slots).
+    const groupMeta = groups.map((g) => {
+      const names = Array.from({ length: Math.max(2, g.size) }, (_, i) => `G${g.idx}_T${i + 1}`);
+      const rounds = buildRoundRobinRounds(names).map((r) => r.length);
+      return { rounds, roundIdx: 0, matchIdx: 0, scheduled: 0, total: rounds.reduce((a, b) => a + b, 0) };
+    });
+    const hasRemaining = (g: (typeof groupMeta)[number]) => g.scheduled < g.total;
+    const pickNext = () => {
+      let best = -1;
+      let bestScore = Number.POSITIVE_INFINITY;
+      for (let i = 0; i < groupMeta.length; i++) {
+        const g = groupMeta[i]!;
+        if (!hasRemaining(g)) continue;
+        const totalRounds = Math.max(1, g.rounds.length);
+        const progressRounds = Math.min(totalRounds, g.roundIdx + (g.matchIdx > 0 ? 0.5 : 0));
+        const progressMatches = g.scheduled / Math.max(1, g.total);
+        const score = progressRounds / totalRounds + progressMatches;
+        if (score < bestScore) {
+          bestScore = score;
+          best = i;
+        }
+      }
+      return best;
+    };
+    let usedSlots = 0;
+    for (let slotIdx = 0; slotIdx < slots.length; slotIdx++) {
+      let fieldCursor = 0;
+      let safety = 0;
+      let usedThisSlot = false;
+      while (fieldCursor < fieldsCount && safety < 50) {
+        safety += 1;
+        const gi = pickNext();
+        if (gi < 0) break;
+        const g = groupMeta[gi]!;
+        const roundLen = g.rounds[g.roundIdx] ?? 0;
+        const remainingInRound = Math.max(0, roundLen - g.matchIdx);
+        if (remainingInRound === 0) {
+          g.roundIdx += 1;
+          g.matchIdx = 0;
+          continue;
+        }
+        const take = Math.max(0, Math.min(fieldsCount - fieldCursor, remainingInRound));
+        if (take <= 0) break;
+        usedThisSlot = true;
+        g.matchIdx += take;
+        g.scheduled += take;
+        if (g.matchIdx >= roundLen) {
+          g.roundIdx += 1;
+          g.matchIdx = 0;
+        }
+        fieldCursor += take;
+      }
+      if (usedThisSlot) usedSlots = slotIdx + 1;
+    }
+    requiredSlots = usedSlots;
+  }
+
+  const slotIndexEnd = Math.max(0, requiredSlots - 1);
+  if (slotIndexEnd < slots.length) {
+    const endSlot = slots[slotIndexEnd]!;
+    return (endSlot.day - 1) * 24 * 60 + toMinutes(endSlot.end);
+  }
+  return startMinutes + requiredSlots * slotMinutes;
 }
 
 function buildBracketSchedule(args: {
