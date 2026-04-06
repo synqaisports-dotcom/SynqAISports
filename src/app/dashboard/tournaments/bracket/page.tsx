@@ -151,15 +151,33 @@ function toHHMM(totalMinutes: number): string {
   return `${hh}:${mm}`;
 }
 
+function estimateGroupsEndMinutes(config: ReturnType<typeof loadTournamentConfigById> | null): number {
+  const cfg = config;
+  const start = String(cfg?.scheduleStart ?? "09:00");
+  const startMinutes = toMinutes(start);
+  const groupsCount = Math.max(1, Number(cfg?.groupsCount ?? 1) || 1);
+  const teamsPerGroup = Math.max(2, Number(cfg?.teamsPerGroup ?? 0) || 2);
+  const fieldsCount = Math.max(1, Number(cfg?.fieldsCount ?? 1) || 1);
+  const halves = Number(cfg?.halvesCount ?? 2) === 1 ? 1 : 2;
+  const minutesPerHalf = Math.max(1, Number(cfg?.minutesPerHalf ?? 20) || 20);
+  const breakMinutes = halves === 2 ? Math.max(0, Number(cfg?.breakMinutes ?? 0)) : 0;
+  const buffer = Math.max(0, Number(cfg?.bufferBetweenMatches ?? 0));
+  const matchMinutes = halves * minutesPerHalf + breakMinutes;
+  const slotMinutes = Math.max(1, matchMinutes + buffer);
+  const groupMatches = (teamsPerGroup * (teamsPerGroup - 1)) / 2;
+  const totalGroupMatches = Math.max(0, Math.round(groupsCount * groupMatches));
+  const slotsForGroups = Math.ceil(totalGroupMatches / fieldsCount);
+  return startMinutes + slotsForGroups * slotMinutes;
+}
+
 function buildBracketSchedule(args: {
   rounds: BracketRound[];
   fieldsCount: number;
-  scheduleStart: string;
+  startAt: string;
   matchMinutes: number;
-  marginAfterGroups: number;
 }) {
   const out: ScheduledBracketMatch[] = [];
-  let cursor = toMinutes(args.scheduleStart) + Math.max(0, args.marginAfterGroups);
+  let cursor = toMinutes(args.startAt);
   const fields = Math.max(1, args.fieldsCount || 1);
   const duration = Math.max(1, args.matchMinutes || 1);
   for (const round of args.rounds) {
@@ -543,6 +561,21 @@ function BracketColumns({
   config: ReturnType<typeof loadTournamentConfigById>;
 }) {
   const tones = finalsStyle(title);
+  const bracketStartAt = useMemo(() => {
+    const fieldsCount = Math.max(1, Number(config?.fieldsCount ?? 1) || 1);
+    const groupsCount = Math.max(1, Number(config?.groupsCount ?? 1) || 1);
+    const teamsPerGroup = Math.max(2, Number(config?.teamsPerGroup ?? 0) || 2);
+    const groupMatches = groupsCount * ((teamsPerGroup * (teamsPerGroup - 1)) / 2);
+    const groupSlots = Math.ceil(groupMatches / fieldsCount);
+    const halves = Number(config?.halvesCount ?? 2) === 1 ? 1 : 2;
+    const minutesPerHalf = Math.max(1, Number(config?.minutesPerHalf ?? 20) || 20);
+    const breakMinutes = halves === 2 ? Math.max(0, Number(config?.breakMinutes ?? 0) || 0) : 0;
+    const bufferBetweenMatches = Math.max(0, Number(config?.bufferBetweenMatches ?? 0) || 0);
+    const slotMinutes = halves * minutesPerHalf + breakMinutes + bufferBetweenMatches;
+    const scheduleStart = String(config?.scheduleStart ?? "09:00");
+    // Cruces: después de terminar la liguilla + 15 min de margen.
+    return toHHMM(toMinutes(scheduleStart) + groupSlots * slotMinutes + 15);
+  }, [config]);
   const matchMinutes = Math.max(
     1,
     (Number(config?.halvesCount ?? 2) === 1 ? 1 : 2) * Math.max(1, Number(config?.minutesPerHalf ?? 20))
@@ -553,11 +586,10 @@ function BracketColumns({
       buildBracketSchedule({
         rounds,
         fieldsCount: Math.max(1, Number(config?.fieldsCount ?? 1) || 1),
-        scheduleStart: String(config?.scheduleStart ?? "09:00"),
+        startAt: bracketStartAt,
         matchMinutes,
-        marginAfterGroups: 15,
       }),
-    [rounds, config, matchMinutes],
+    [rounds, config, matchMinutes, bracketStartAt],
   );
   const scheduledByPair = useMemo(() => {
     const map = new Map<string, ScheduledBracketMatch>();
