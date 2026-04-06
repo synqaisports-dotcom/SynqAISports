@@ -524,9 +524,9 @@ function SplitClassicBracket({
           <div className="absolute left-0 right-0" style={{ top: `${Math.max(0, finalTop - 30)}px` }}>
             <div className="flex flex-col items-center gap-2">
               <div className="relative">
-                <div className="absolute -inset-2 rounded-full bg-gradient-to-r from-cyan-400/25 via-amber-300/20 to-cyan-400/25 blur-md" />
-                <div className="relative inline-flex h-9 w-9 items-center justify-center rounded-full border border-cyan-300/35 bg-black/35 shadow-[0_0_20px_rgba(0,242,255,0.35)]">
-                  <Trophy className="h-5 w-5 text-amber-300 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
+                <div className="absolute -inset-4 rounded-full bg-gradient-to-r from-cyan-400/30 via-amber-300/30 to-cyan-400/30 blur-xl" />
+                <div className="relative inline-flex h-14 w-14 items-center justify-center rounded-full border border-cyan-300/45 bg-black/30 shadow-[0_0_28px_rgba(0,242,255,0.45)]">
+                  <Trophy className="h-9 w-9 text-amber-300 drop-shadow-[0_0_14px_rgba(251,191,36,0.85)]" />
                 </div>
               </div>
               <p className={`text-[9px] font-black uppercase tracking-[0.16em] ${textClass}`}>Final</p>
