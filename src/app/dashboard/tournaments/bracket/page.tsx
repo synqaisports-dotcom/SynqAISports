@@ -861,6 +861,18 @@ export default function TournamentBracketPage() {
     [standings, includeThirdFourth, config],
   );
   const fourFinals = useMemo(() => buildFourFinals({ standingsByGroup: standings as any, config }), [standings, config]);
+  const resolvedNormalRounds = useMemo(
+    () => resolveRoundsWithWinners({ bracketTitle: normal.title, rounds: normal.rounds, bracketResults }),
+    [normal.title, normal.rounds, bracketResults],
+  );
+  const resolvedFourFinals = useMemo(
+    () =>
+      fourFinals.map((b) => ({
+        ...b,
+        rounds: resolveRoundsWithWinners({ bracketTitle: b.title, rounds: b.rounds, bracketResults }),
+      })),
+    [fourFinals, bracketResults],
+  );
   const globalFourFinalsSchedule = useMemo(() => {
     if (mode !== "four_finals") return new Map<string, ScheduledBracketMatch>();
     const bracketStartAt = toHHMM(estimateGroupsEndMinutes({ config, teamsRows }) + 15);
@@ -870,12 +882,12 @@ export default function TournamentBracketPage() {
         + (Number(config?.halvesCount ?? 2) === 2 ? Math.max(0, Number(config?.breakMinutes ?? 0)) : 0),
     );
     return buildBracketScheduleForViews({
-      views: fourFinals,
+      views: resolvedFourFinals,
       fieldsCount: Math.max(1, Number(config?.fieldsCount ?? 1) || 1),
       startAt: bracketStartAt,
       matchMinutes,
     });
-  }, [mode, fourFinals, config, teamsRows]);
+  }, [mode, resolvedFourFinals, config, teamsRows]);
 
   const upsertBracketResult = (id: string, localTeam: string, awayTeam: string, localGoals: number, awayGoals: number) => {
     const normalizedId = String(id || "").trim();
@@ -888,7 +900,20 @@ export default function TournamentBracketPage() {
         awayTeam: String(awayTeam || "").trim(),
         localGoals: Math.max(0, Number(localGoals) || 0),
         awayGoals: Math.max(0, Number(awayGoals) || 0),
+        status: prev.get(normalizedId)?.status ?? "open",
       });
+      return next;
+    });
+  };
+  const setBracketMatchStatus = (id: string, status: "open" | "closed") => {
+    const normalizedId = String(id || "").trim();
+    if (!normalizedId) return;
+    setBracketResults((prev) => {
+      const current = prev.get(normalizedId);
+      if (!current) return prev;
+      if (status === "closed" && !canCloseMatch(current)) return prev;
+      const next = new Map(prev);
+      next.set(normalizedId, { ...current, status });
       return next;
     });
   };
@@ -966,17 +991,18 @@ export default function TournamentBracketPage() {
             {mode === "normal" ? (
               <BracketColumns
                 title={normal.title}
-                rounds={normal.rounds}
+                rounds={resolvedNormalRounds}
                 crestByTeam={crestByTeam}
                 config={config}
                 teamsRows={teamsRows}
                 groupIndexByTeam={groupIndexByTeam}
                 bracketResults={bracketResults}
                 onUpsertResult={upsertBracketResult}
+                onSetMatchStatus={setBracketMatchStatus}
               />
             ) : (
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                {fourFinals.map((b) => (
+                {resolvedFourFinals.map((b) => (
                   <BracketColumns
                     key={b.title}
                     title={b.title}
@@ -988,6 +1014,7 @@ export default function TournamentBracketPage() {
                     groupIndexByTeam={groupIndexByTeam}
                     bracketResults={bracketResults}
                     onUpsertResult={upsertBracketResult}
+                    onSetMatchStatus={setBracketMatchStatus}
                   />
                 ))}
               </div>
@@ -1011,6 +1038,7 @@ function BracketColumns({
   groupIndexByTeam,
   bracketResults,
   onUpsertResult,
+  onSetMatchStatus,
 }: {
   title: string;
   rounds: BracketRound[];
@@ -1021,6 +1049,7 @@ function BracketColumns({
   groupIndexByTeam?: Map<string, number>;
   bracketResults: Map<string, BracketResultRow>;
   onUpsertResult: (id: string, localTeam: string, awayTeam: string, localGoals: number, awayGoals: number) => void;
+  onSetMatchStatus: (id: string, status: "open" | "closed") => void;
 }) {
   const tones = finalsStyle(title);
   const bracketStartAt = useMemo(() => {
@@ -1083,6 +1112,7 @@ function BracketColumns({
             groupIndexByTeam={groupIndexByTeam}
             bracketResults={bracketResults}
             onUpsertResult={onUpsertResult}
+            onSetMatchStatus={onSetMatchStatus}
           />
         ) : (
           <ClassicBracket
@@ -1094,6 +1124,7 @@ function BracketColumns({
             groupIndexByTeam={groupIndexByTeam}
             bracketResults={bracketResults}
             onUpsertResult={onUpsertResult}
+            onSetMatchStatus={onSetMatchStatus}
           />
         )
       )}
@@ -1111,6 +1142,7 @@ function SplitClassicBracket({
   groupIndexByTeam,
   bracketResults,
   onUpsertResult,
+  onSetMatchStatus,
 }: {
   rounds: BracketRound[];
   bracketTitle: string;
@@ -1121,6 +1153,7 @@ function SplitClassicBracket({
   groupIndexByTeam?: Map<string, number>;
   bracketResults: Map<string, BracketResultRow>;
   onUpsertResult: (id: string, localTeam: string, awayTeam: string, localGoals: number, awayGoals: number) => void;
+  onSetMatchStatus: (id: string, status: "open" | "closed") => void;
 }) {
   const leftRounds = rounds.slice(0, -1).map((r) => ({ ...r, pairings: r.pairings.slice(0, Math.ceil(r.pairings.length / 2)) }));
   const rightRounds = rounds.slice(0, -1).map((r) => ({ ...r, pairings: r.pairings.slice(Math.ceil(r.pairings.length / 2)) }));
@@ -1143,6 +1176,7 @@ function SplitClassicBracket({
           groupIndexByTeam={groupIndexByTeam}
           bracketResults={bracketResults}
           onUpsertResult={onUpsertResult}
+          onSetMatchStatus={onSetMatchStatus}
         />
         <div className="relative" style={{ height: `${canvasHeight}px` }}>
           <div className="absolute left-0 right-0" style={{ top: `${Math.max(0, finalTop - 8)}px` }}>
@@ -1164,12 +1198,14 @@ function SplitClassicBracket({
                     {(() => {
                       const rid = bracketMatchId(bracketTitle, "Final", finalPairing.left, finalPairing.right);
                       const row = bracketResults.get(rid);
+                      const closed = row?.status === "closed";
                       return (
                         <span className="inline-flex items-center gap-1">
                           <input
                             type="number"
                             min={0}
                             value={row?.localGoals ?? 0}
+                            disabled={closed}
                             onChange={(e) =>
                               onUpsertResult(
                                 rid,
@@ -1186,6 +1222,7 @@ function SplitClassicBracket({
                             type="number"
                             min={0}
                             value={row?.awayGoals ?? 0}
+                            disabled={closed}
                             onChange={(e) =>
                               onUpsertResult(
                                 rid,
@@ -1201,6 +1238,47 @@ function SplitClassicBracket({
                       );
                     })()}
                   </span>
+                </div>
+              ) : null}
+              {finalPairing ? (
+                <div className="mb-1 flex items-center justify-between gap-2">
+                  {(() => {
+                    const rid = bracketMatchId(bracketTitle, "Final", finalPairing.left, finalPairing.right);
+                    const row = bracketResults.get(rid);
+                    const closed = row?.status === "closed";
+                    const closable = canCloseMatch(row);
+                    return (
+                      <>
+                        <span
+                          className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.14em] ${
+                            closed
+                              ? "border-emerald-400/35 bg-emerald-400/10 text-emerald-200"
+                              : "border-amber-400/35 bg-amber-400/10 text-amber-200"
+                          }`}
+                        >
+                          {closed ? "Cerrado" : "Abierto"}
+                        </span>
+                        {closed ? (
+                          <button
+                            type="button"
+                            onClick={() => onSetMatchStatus(rid, "open")}
+                            className="inline-flex items-center rounded-md border border-[#00F2FF]/30 bg-[#00F2FF]/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.14em] text-[#00F2FF]"
+                          >
+                            Reabrir
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={!closable}
+                            onClick={() => onSetMatchStatus(rid, "closed")}
+                            className="inline-flex items-center rounded-md border border-[#00F2FF]/30 bg-[#00F2FF]/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.14em] text-[#00F2FF] disabled:opacity-45 disabled:cursor-not-allowed"
+                          >
+                            Cerrar partido
+                          </button>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               ) : null}
               {finalPairing ? (
@@ -1233,6 +1311,7 @@ function SplitClassicBracket({
           groupIndexByTeam={groupIndexByTeam}
           bracketResults={bracketResults}
           onUpsertResult={onUpsertResult}
+          onSetMatchStatus={onSetMatchStatus}
         />
       </div>
     </div>
@@ -1283,6 +1362,7 @@ function ClassicBracket({
   groupIndexByTeam,
   bracketResults,
   onUpsertResult,
+  onSetMatchStatus,
 }: {
   rounds: BracketRound[];
   bracketTitle: string;
@@ -1293,6 +1373,7 @@ function ClassicBracket({
   groupIndexByTeam?: Map<string, number>;
   bracketResults: Map<string, BracketResultRow>;
   onUpsertResult: (id: string, localTeam: string, awayTeam: string, localGoals: number, awayGoals: number) => void;
+  onSetMatchStatus: (id: string, status: "open" | "closed") => void;
 }) {
   const lineBgClass = lineClass.startsWith("bg-") ? lineClass : "bg-primary/35";
   const leafPitch = 112; // separación vertical base de la primera ronda
@@ -1335,6 +1416,7 @@ function ClassicBracket({
                         resultId={bracketMatchId(bracketTitle, round.title, p.left, p.right)}
                         bracketResults={bracketResults}
                         onUpsertResult={onUpsertResult}
+                        onSetMatchStatus={onSetMatchStatus}
                       />
                     </div>
                   );
@@ -1366,6 +1448,7 @@ function MatchNode({
   resultId,
   bracketResults,
   onUpsertResult,
+  onSetMatchStatus,
 }: {
   left: string;
   right: string;
@@ -1384,6 +1467,7 @@ function MatchNode({
   resultId: string;
   bracketResults: Map<string, BracketResultRow>;
   onUpsertResult: (id: string, localTeam: string, awayTeam: string, localGoals: number, awayGoals: number) => void;
+  onSetMatchStatus: (id: string, status: "open" | "closed") => void;
 }) {
   const isEven = matchIndex % 2 === 0;
   const leftX = mirror ? "-right-3" : "-left-3";
@@ -1391,6 +1475,8 @@ function MatchNode({
   const row = bracketResults.get(resultId);
   const localGoals = row?.localGoals ?? 0;
   const awayGoals = row?.awayGoals ?? 0;
+  const closed = row?.status === "closed";
+  const closable = canCloseMatch(row);
   return (
     <div className="relative h-[74px]">
       {showLeftConnector ? (
@@ -1426,6 +1512,7 @@ function MatchNode({
                 type="number"
                 min={0}
                 value={localGoals}
+                disabled={closed}
                 onChange={(e) =>
                   onUpsertResult(resultId, left, right, Math.max(0, Number(e.target.value) || 0), awayGoals)
                 }
@@ -1436,6 +1523,7 @@ function MatchNode({
                 type="number"
                 min={0}
                 value={awayGoals}
+                disabled={closed}
                 onChange={(e) =>
                   onUpsertResult(resultId, left, right, localGoals, Math.max(0, Number(e.target.value) || 0))
                 }
@@ -1443,6 +1531,35 @@ function MatchNode({
               />
             </span>
           </span>
+        </div>
+        <div className="mb-1 flex items-center justify-between gap-2">
+          <span
+            className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.14em] ${
+              closed
+                ? "border-emerald-400/35 bg-emerald-400/10 text-emerald-200"
+                : "border-amber-400/35 bg-amber-400/10 text-amber-200"
+            }`}
+          >
+            {closed ? "Cerrado" : "Abierto"}
+          </span>
+          {closed ? (
+            <button
+              type="button"
+              onClick={() => onSetMatchStatus(resultId, "open")}
+              className="inline-flex items-center rounded-md border border-[#00F2FF]/30 bg-[#00F2FF]/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.14em] text-[#00F2FF]"
+            >
+              Reabrir
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={!closable}
+              onClick={() => onSetMatchStatus(resultId, "closed")}
+              className="inline-flex items-center rounded-md border border-[#00F2FF]/30 bg-[#00F2FF]/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.14em] text-[#00F2FF] disabled:opacity-45 disabled:cursor-not-allowed"
+            >
+              Cerrar partido
+            </button>
+          )}
         </div>
         <TeamBadge name={left} crest={crestByTeam.get(left)} textStyle={teamNameColorStyle(left, groupIndexByTeam)} />
         <p className="text-[9px] text-white/45 uppercase tracking-[0.12em]">vs</p>
