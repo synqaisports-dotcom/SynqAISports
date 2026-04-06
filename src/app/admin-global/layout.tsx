@@ -33,11 +33,11 @@ function GlobalTabTrigger() {
 
   return (
     <div 
-      className={`fixed top-1/2 -translate-y-1/2 z-[100] transition-all duration-700 ease-in-out hidden lg:block ${
+      className={`fixed top-1/2 -translate-y-1/2 z-[100] transition-[background-color,border-color,color,opacity,transform] duration-700 ease-in-out hidden lg:block ${
         isExpanded ? 'left-[16rem]' : 'left-[0rem]'
       }`}
     >
-      <SidebarTrigger className="h-14 w-6 rounded-r-2xl border-y border-r border-emerald-500/30 bg-black/60 backdrop-blur-xl text-emerald-400 hover:w-8 hover:bg-emerald-500 hover:text-black transition-all duration-300 opacity-0 hover:opacity-100 shadow-[0_0_20px_rgba(16,185,129,0.2)] flex items-center justify-center border-l-0 p-0 group overflow-hidden">
+      <SidebarTrigger className="h-14 w-6 rounded-r-2xl border-y border-r border-emerald-500/30 bg-black/60 backdrop-blur-xl text-emerald-400 hover:w-8 hover:bg-emerald-500 hover:text-black transition-[background-color,border-color,color,opacity,transform] duration-300 opacity-0 hover:opacity-100 shadow-[0_0_20px_rgba(16,185,129,0.2)] flex items-center justify-center border-l-0 p-0 group overflow-hidden">
          {isExpanded ? (
            <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
          ) : (

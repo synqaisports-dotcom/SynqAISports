@@ -91,6 +91,68 @@ import {
 } from "@/lib/board-performance";
 
 type TacticalPhase = "def" | "tda" | "sal" | "atk";
+type FieldTuningProfile = {
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+  keeperHomeX: number;
+  keeperGuestX: number;
+  centerSeparation: number;
+  phaseOffset: Record<TacticalPhase, number>;
+  teamHalfClamp: Record<TacticalPhase, { localMaxX: number; guestMinX: number }>;
+};
+
+const FIELD_TUNING: Record<FieldType, FieldTuningProfile> = {
+  f11: {
+    minX: 9,
+    maxX: 91,
+    minY: 8,
+    maxY: 92,
+    keeperHomeX: 10,
+    keeperGuestX: 90,
+    centerSeparation: 1.25,
+    phaseOffset: { def: -10.5, tda: 1.5, sal: 7.5, atk: 10 },
+    teamHalfClamp: {
+      def: { localMaxX: 50, guestMinX: 50 },
+      tda: { localMaxX: 60, guestMinX: 40 },
+      sal: { localMaxX: 72, guestMinX: 28 },
+      atk: { localMaxX: 78, guestMinX: 22 },
+    },
+  },
+  f7: {
+    minX: 10,
+    maxX: 90,
+    minY: 9,
+    maxY: 91,
+    keeperHomeX: 11,
+    keeperGuestX: 89,
+    centerSeparation: 1.6,
+    phaseOffset: { def: -8, tda: 1, sal: 6, atk: 8 },
+    teamHalfClamp: {
+      def: { localMaxX: 50, guestMinX: 50 },
+      tda: { localMaxX: 58, guestMinX: 42 },
+      sal: { localMaxX: 68, guestMinX: 32 },
+      atk: { localMaxX: 74, guestMinX: 26 },
+    },
+  },
+  futsal: {
+    minX: 11,
+    maxX: 89,
+    minY: 10,
+    maxY: 90,
+    keeperHomeX: 12,
+    keeperGuestX: 88,
+    centerSeparation: 1.9,
+    phaseOffset: { def: -6, tda: 1, sal: 4.5, atk: 6.5 },
+    teamHalfClamp: {
+      def: { localMaxX: 50, guestMinX: 50 },
+      tda: { localMaxX: 56, guestMinX: 44 },
+      sal: { localMaxX: 64, guestMinX: 36 },
+      atk: { localMaxX: 69, guestMinX: 31 },
+    },
+  },
+};
 
 interface PlayerPos {
   id: string;
@@ -107,6 +169,32 @@ interface DrawingLine {
 }
 
 const MemoizedPlayerChip = memo(PlayerChip);
+
+type PromoTeamStore = {
+  type?: string;
+  name?: string;
+  starters?: unknown;
+  substitutes?: unknown;
+};
+
+function safeParseJson<T>(raw: string | null, fallback: T): T {
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function normalizeNames(list: unknown, maxLen: number): string[] {
+  const src = Array.isArray(list) ? list : [];
+  const out: string[] = [];
+  for (let i = 0; i < Math.min(src.length, maxLen); i++) {
+    const v = String(src[i] ?? "").trim();
+    if (v) out.push(v.toUpperCase());
+  }
+  return out;
+}
 
 /**
  * MatchBoardPage - v69.0.0
@@ -169,10 +257,19 @@ function MatchBoardInner() {
   const [matchSource, setMatchSource] = useState<MatchBoardSource>("elite");
   const [activeMatchLabel, setActiveMatchLabel] = useState<string>("");
   const [localHomeNames, setLocalHomeNames] = useState<string[]>([]);
+  const [sandboxTeamName, setSandboxTeamName] = useState<string>("");
+  const [sandboxStarters, setSandboxStarters] = useState<string[]>([]);
+  const [sandboxSubs, setSandboxSubs] = useState<string[]>([]);
   const [timerSyncKey, setTimerSyncKey] = useState<string>(MATCH_TIMER_SYNC_KEY);
   const [scoreSyncKey, setScoreSyncKey] = useState<string>(MATCH_SCORE_SYNC_KEY);
   const safeFieldType: FieldType = FORMATIONS_DATA[fieldType] ? fieldType : "f11";
   const continuityCtx = useMemo(() => readContinuityContext(clubScopeId), [clubScopeId]);
+  const searchParamsKey = searchParams.toString();
+  const sourceParam = useMemo(() => new URLSearchParams(searchParamsKey).get("source"), [searchParamsKey]);
+  const matchIdParam = useMemo(
+    () => String(new URLSearchParams(searchParamsKey).get("matchId") || "").trim(),
+    [searchParamsKey],
+  );
 
   useEffect(() => {
     const ctx = continuityCtx;
@@ -253,8 +350,7 @@ function MatchBoardInner() {
   }, []);
 
   useEffect(() => {
-    const q = searchParams.get("source");
-    const matchIdParam = String(searchParams.get("matchId") || "").trim();
+    const q = sourceParam;
     const stored = typeof window !== "undefined" ? localStorage.getItem(MATCH_BOARD_SOURCE_KEY) : null;
     const src = resolveMatchBoardSource(q, stored);
     setMatchSource(src);
@@ -265,6 +361,7 @@ function MatchBoardInner() {
     }
     const { names, fieldType: ftBoot } = loadLocalLineupForMatchBoard(src);
     setLocalHomeNames(names);
+    setSandboxStarters(names);
     if (ftBoot && q === "sandbox") setFieldType(ftBoot);
 
     // Si llegamos desde "Mis partidos", forzamos contexto de continuidad al partido seleccionado.
@@ -279,14 +376,13 @@ function MatchBoardInner() {
         session: `SBX_${matchIdParam.slice(-6)}`,
       });
     }
-  }, [searchParams, clubScopeId]);
+  }, [sourceParam, matchIdParam, clubScopeId]);
 
   useEffect(() => {
     if (matchSource !== "sandbox") {
       setActiveMatchLabel("");
       return;
     }
-    const matchIdParam = String(searchParams.get("matchId") || "").trim();
     const fromCtxMcc = String(continuityCtx?.mcc || "");
     const inferredId = fromCtxMcc.startsWith("SBX_MATCH_") ? fromCtxMcc.replace("SBX_MATCH_", "") : "";
     const targetId = matchIdParam || inferredId;
@@ -309,7 +405,7 @@ function MatchBoardInner() {
     } catch {
       setActiveMatchLabel(`Partido #${targetId}`);
     }
-  }, [matchSource, searchParams, continuityCtx?.mcc]);
+  }, [matchSource, matchIdParam, continuityCtx?.mcc]);
 
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
@@ -318,10 +414,32 @@ function MatchBoardInner() {
       const resolved = resolveMatchBoardSource(null, storedSrc);
       const { names } = loadLocalLineupForMatchBoard(resolved);
       setLocalHomeNames(names);
+      if (resolved === "sandbox") {
+        const team = safeParseJson<PromoTeamStore>(localStorage.getItem("synq_promo_team"), {});
+        const nm = String(team?.name || "").trim();
+        setSandboxTeamName(nm ? nm.toUpperCase() : "");
+        setSandboxStarters(normalizeNames(team?.starters, 32));
+        setSandboxSubs(normalizeNames(team?.substitutes, 32));
+      }
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (matchSource !== "sandbox") {
+      setSandboxTeamName("");
+      setSandboxSubs([]);
+      setSandboxStarters([]);
+      return;
+    }
+    const team = safeParseJson<PromoTeamStore>(localStorage.getItem("synq_promo_team"), {});
+    const nm = String(team?.name || "").trim();
+    setSandboxTeamName(nm ? nm.toUpperCase() : "");
+    setSandboxStarters(normalizeNames(team?.starters, 32));
+    setSandboxSubs(normalizeNames(team?.substitutes, 32));
+  }, [matchSource]);
 
   // Mantener un preset de minutos para que `reset` no vuelva siempre a 45.
   useEffect(() => {
@@ -452,7 +570,31 @@ function MatchBoardInner() {
     });
   };
 
-  const calculatePositions = useCallback(() => {
+  const fieldTuning = FIELD_TUNING[safeFieldType] || FIELD_TUNING.f11;
+
+  const clampToField = useCallback((x: number, y: number) => ({
+    x: Math.max(fieldTuning.minX, Math.min(fieldTuning.maxX, x)),
+    y: Math.max(fieldTuning.minY, Math.min(fieldTuning.maxY, y)),
+  }), [fieldTuning.maxX, fieldTuning.maxY, fieldTuning.minX, fieldTuning.minY]);
+
+  const phaseOffset = useCallback((phase: TacticalPhase) => {
+    return fieldTuning.phaseOffset[phase] ?? 0;
+  }, [fieldTuning.phaseOffset]);
+
+  const applyCentralSeparation = useCallback((x: number, team: "local" | "visitor") => {
+    if (x >= 47 && x <= 53) {
+      return team === "local" ? x - fieldTuning.centerSeparation : x + fieldTuning.centerSeparation;
+    }
+    return x;
+  }, [fieldTuning.centerSeparation]);
+
+  const clampByTeamPhase = useCallback((x: number, team: "local" | "visitor", phase: TacticalPhase) => {
+    const limits = fieldTuning.teamHalfClamp[phase] ?? fieldTuning.teamHalfClamp.def;
+    if (team === "local") return Math.min(limits.localMaxX, x);
+    return Math.max(limits.guestMinX, x);
+  }, [fieldTuning.teamHalfClamp]);
+
+  const calculateHomePositions = useCallback(() => {
     if (isAnyDialogOpen) return;
     const formationsForField = FORMATIONS_DATA[safeFieldType] || FORMATIONS_DATA.f11;
     const fallbackFormation = Object.keys(formationsForField)[0];
@@ -460,40 +602,20 @@ function MatchBoardInner() {
       homeFormation === "NINGUNA"
         ? []
         : formationsForField[homeFormation] || (fallbackFormation ? formationsForField[fallbackFormation] : []);
-    const guestShape =
-      guestFormation === "NINGUNA"
-        ? []
-        : formationsForField[guestFormation] || (fallbackFormation ? formationsForField[fallbackFormation] : []);
-    const shiftX = (side: "left" | "center" | "right") => {
-      if (side === "left") return -5;
-      if (side === "right") return 5;
-      return 0;
-    };
-    const phaseOffset = (phase: TacticalPhase) => {
-      switch(phase) {
-        case 'def': return -11.5;
-        case 'tda': return 2;  
-        case 'sal': return 10;  
-        case 'atk': return 7;  
-        default: return 0;
-      }
-    };
-    
-    // Márgenes de seguridad más estrictos (10% - 90%) para evitar que se salgan de las líneas
-    const minSafeX = 8;
-    const maxSafeX = 92;
-    const minSafeY = 8;
-    const maxSafeY = 92;
 
-    const hp = homeShape.map((pos, idx) => {
+    const nextHome = homeShape.map((pos, idx) => {
       let finalX = (0.05 + (pos.x * 0.9)) * 100;
       let finalY = pos.y * 100;
-      if (idx === 0) { finalX = 8; finalY = 50; } 
-      else {
+      if (idx === 0) {
+        finalX = fieldTuning.keeperHomeX;
+        finalY = 50;
+      } else {
         finalX = finalX + phaseOffset(homePhase);
-        if (homePhase === 'def') finalX = Math.min(50, finalX);
-        finalX = Math.max(minSafeX, Math.min(maxSafeX, finalX));
-        finalY = Math.max(minSafeY, Math.min(maxSafeY, finalY));
+        finalX = clampByTeamPhase(finalX, "local", homePhase);
+        finalX = applyCentralSeparation(finalX, "local");
+        const clamped = clampToField(finalX, finalY);
+        finalX = clamped.x;
+        finalY = clamped.y;
       }
       const nm = localHomeNames[idx]?.trim();
       return {
@@ -505,22 +627,48 @@ function MatchBoardInner() {
         y: finalY,
       };
     });
-    const gp = guestShape.map((pos, idx) => {
+
+    setPlayers((prev) => [...nextHome, ...prev.filter((p) => p.team === "visitor")]);
+  }, [isAnyDialogOpen, safeFieldType, homeFormation, homePhase, localHomeNames, phaseOffset, clampToField, applyCentralSeparation, clampByTeamPhase, fieldTuning.keeperHomeX]);
+
+  const calculateGuestPositions = useCallback(() => {
+    if (isAnyDialogOpen) return;
+    const formationsForField = FORMATIONS_DATA[safeFieldType] || FORMATIONS_DATA.f11;
+    const fallbackFormation = Object.keys(formationsForField)[0];
+    const guestShape =
+      guestFormation === "NINGUNA"
+        ? []
+        : formationsForField[guestFormation] || (fallbackFormation ? formationsForField[fallbackFormation] : []);
+
+    const nextGuest = guestShape.map((pos, idx) => {
       let finalX = (0.95 - (pos.x * 0.9)) * 100;
       let finalY = (1 - pos.y) * 100;
-      if (idx === 0) { finalX = 92; finalY = 50; }
-      else {
+      if (idx === 0) {
+        finalX = fieldTuning.keeperGuestX;
+        finalY = 50;
+      } else {
         finalX = finalX - phaseOffset(guestPhase);
-        if (guestPhase === 'def') finalX = Math.max(50, finalX);
-        finalX = Math.max(minSafeX, Math.min(maxSafeX, finalX));
-        finalY = Math.max(minSafeY, Math.min(maxSafeY, finalY));
+        finalX = clampByTeamPhase(finalX, "visitor", guestPhase);
+        finalX = applyCentralSeparation(finalX, "visitor");
+        const clamped = clampToField(finalX, finalY);
+        finalX = clamped.x;
+        finalY = clamped.y;
       }
-      return { id: `visitor-${idx}`, number: idx + 1, name: `RIVAL ${idx + 1}`, team: "visitor" as const, x: finalX, y: finalY };
+      return {
+        id: `visitor-${idx}`,
+        number: idx + 1,
+        name: `RIVAL ${idx + 1}`,
+        team: "visitor" as const,
+        x: finalX,
+        y: finalY,
+      };
     });
-    setPlayers([...hp, ...gp]);
-  }, [safeFieldType, homeFormation, guestFormation, homePhase, guestPhase, isAnyDialogOpen, localHomeNames]);
 
-  useEffect(() => { calculatePositions(); }, [calculatePositions]);
+    setPlayers((prev) => [...prev.filter((p) => p.team === "local"), ...nextGuest]);
+  }, [isAnyDialogOpen, safeFieldType, guestFormation, guestPhase, phaseOffset, clampToField, applyCentralSeparation, clampByTeamPhase, fieldTuning.keeperGuestX]);
+
+  useEffect(() => { calculateHomePositions(); }, [calculateHomePositions]);
+  useEffect(() => { calculateGuestPositions(); }, [calculateGuestPositions]);
 
   const handlePointerDownPlayer = (e: React.PointerEvent, id: string) => {
     e.stopPropagation();
@@ -552,7 +700,7 @@ function MatchBoardInner() {
           setPlayers((prev) =>
             prev.map((p) =>
               p.id === id
-                ? { ...p, x: Math.max(0, Math.min(100, pt.x)), y: Math.max(0, Math.min(100, pt.y)) }
+                ? { ...p, ...clampToField(pt.x, pt.y) }
                 : p,
             ),
           );
@@ -574,7 +722,7 @@ function MatchBoardInner() {
       setPlayers((prev) =>
         prev.map((p) =>
           p.id === id
-            ? { ...p, x: Math.max(0, Math.min(100, pt.x)), y: Math.max(0, Math.min(100, pt.y)) }
+            ? { ...p, ...clampToField(pt.x, pt.y) }
             : p,
         ),
       );
@@ -593,7 +741,7 @@ function MatchBoardInner() {
   const handleSaveMatch = () => {
     const raw = localStorage.getItem("synq_promo_vault");
     const vault = JSON.parse(raw || '{"matches": []}');
-    const fromUrl = String(searchParams.get("matchId") || "").trim();
+    const fromUrl = matchIdParam;
     const fromCtx = (() => {
       const mcc = String(continuityCtx?.mcc || "");
       return mcc.startsWith("SBX_MATCH_") ? mcc.replace("SBX_MATCH_", "") : "";
@@ -736,14 +884,14 @@ function MatchBoardInner() {
             <div className="flex items-center gap-1.5">
               <button
                 onClick={() => changeScore(-1, 0)}
-                className="h-8 w-8 lg:h-9 lg:w-9 rounded-lg border border-primary/20 bg-primary/10 text-primary/70 hover:text-primary hover:bg-primary/20 text-sm lg:text-base font-black transition-all active:scale-95"
+                className="h-8 w-8 lg:h-9 lg:w-9 rounded-lg border border-primary/20 bg-primary/10 text-primary/70 hover:text-primary hover:bg-primary/20 text-sm lg:text-base font-black transition-[background-color,border-color,color,opacity,transform] active:scale-95"
               >
                 -
               </button>
               <span className="text-xl font-black text-primary cyan-text-glow tabular-nums">{score.home}</span>
               <button
                 onClick={() => changeScore(1, 0)}
-                className="h-8 w-8 lg:h-9 lg:w-9 rounded-lg border border-primary/20 bg-primary/10 text-primary/70 hover:text-primary hover:bg-primary/20 text-sm lg:text-base font-black transition-all active:scale-95"
+                className="h-8 w-8 lg:h-9 lg:w-9 rounded-lg border border-primary/20 bg-primary/10 text-primary/70 hover:text-primary hover:bg-primary/20 text-sm lg:text-base font-black transition-[background-color,border-color,color,opacity,transform] active:scale-95"
               >
                 +
               </button>
@@ -755,14 +903,14 @@ function MatchBoardInner() {
             <div className="flex items-center gap-1.5">
               <button
                 onClick={() => changeScore(0, -1)}
-                className="h-8 w-8 lg:h-9 lg:w-9 rounded-lg border border-rose-500/20 bg-rose-500/10 text-rose-400/70 hover:text-rose-400 hover:bg-rose-500/20 text-sm lg:text-base font-black transition-all active:scale-95"
+                className="h-8 w-8 lg:h-9 lg:w-9 rounded-lg border border-rose-500/20 bg-rose-500/10 text-rose-400/70 hover:text-rose-400 hover:bg-rose-500/20 text-sm lg:text-base font-black transition-[background-color,border-color,color,opacity,transform] active:scale-95"
               >
                 -
               </button>
               <span className="text-xl font-black text-rose-500 rose-text-glow tabular-nums">{score.guest}</span>
               <button
                 onClick={() => changeScore(0, 1)}
-                className="h-8 w-8 lg:h-9 lg:w-9 rounded-lg border border-rose-500/20 bg-rose-500/10 text-rose-400/70 hover:text-rose-400 hover:bg-rose-500/20 text-sm lg:text-base font-black transition-all active:scale-95"
+                className="h-8 w-8 lg:h-9 lg:w-9 rounded-lg border border-rose-500/20 bg-rose-500/10 text-rose-400/70 hover:text-rose-400 hover:bg-rose-500/20 text-sm lg:text-base font-black transition-[background-color,border-color,color,opacity,transform] active:scale-95"
               >
                 +
               </button>
@@ -791,7 +939,7 @@ function MatchBoardInner() {
                 : "/dashboard";
             router.replace(target);
           }}
-          className="h-10 w-10 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all shadow-2xl active:scale-95 glass-panel"
+          className="h-10 w-10 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-[background-color,border-color,color,opacity,transform] shadow-2xl active:scale-95 glass-panel"
           title="Volver"
         >
           <LayoutDashboard className="h-5 w-5" />
@@ -811,7 +959,7 @@ function MatchBoardInner() {
           onClick={handleSaveMatch}
           variant="ghost"
           size="icon"
-          className="h-10 w-10 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all shadow-2xl active:scale-95 glass-panel"
+          className="h-10 w-10 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-[background-color,border-color,color,opacity,transform] shadow-2xl active:scale-95 glass-panel"
           title="Guardar partido"
         >
           <Save className="h-4 w-4" />
@@ -823,7 +971,7 @@ function MatchBoardInner() {
               const base = p.startsWith("/sandbox/app") ? "/sandbox/app/mobile-continuity" : "/dashboard/mobile-continuity";
               router.push(`${base}?mode=match&tab=watch`);
             }}
-            className="h-10 px-3 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all shadow-2xl active:scale-95 glass-panel text-[10px] font-black uppercase tracking-widest"
+            className="h-10 px-3 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-[background-color,border-color,color,opacity,transform] shadow-2xl active:scale-95 glass-panel text-[10px] font-black uppercase tracking-widest"
             title="Ajustes Watch"
             type="button"
           >
@@ -834,7 +982,7 @@ function MatchBoardInner() {
 
         <Dialog onOpenChange={setIsAnyDialogOpen}>
           <DialogTrigger asChild>
-            <button className="h-10 w-10 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all shadow-2xl active:scale-95 group glass-panel">
+            <button className="h-10 w-10 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-[background-color,border-color,color,opacity,transform] shadow-2xl active:scale-95 group glass-panel">
               <Watch className="h-4 w-4 group-hover:animate-pulse" />
             </button>
           </DialogTrigger>
@@ -861,10 +1009,10 @@ function MatchBoardInner() {
           </DialogContent>
         </Dialog>
 
-        <div className="flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-xl border border-primary/30 rounded-xl shadow-2xl transition-all glass-panel">
+        <div className="flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-xl border border-primary/30 rounded-xl shadow-2xl transition-[background-color,border-color,color,opacity,transform] glass-panel">
           <div className="flex items-center gap-1 border-r border-white/10 pr-1">
             <Select onValueChange={(v) => handleSetPresetTime(parseInt(v))}>
-              <SelectTrigger className="h-7 w-8 bg-transparent border-none text-primary/40 hover:text-primary transition-all p-0 focus:ring-0">
+              <SelectTrigger className="h-7 w-8 bg-transparent border-none text-primary/40 hover:text-primary transition-[background-color,border-color,color,opacity,transform] p-0 focus:ring-0">
                 <Timer className="h-3.5 w-3.5" />
               </SelectTrigger>
               <SelectContent className="bg-[#0a0f18] border-primary/20">
@@ -875,7 +1023,7 @@ function MatchBoardInner() {
             </Select>
           </div>
           <div className="flex flex-col items-center min-w-[60px]">
-            <span className={cn("text-xl font-black font-headline tabular-nums tracking-tighter transition-all duration-500", isRunning ? "text-primary cyan-text-glow" : "text-white/40")}>
+            <span className={cn("text-xl font-black font-headline tabular-nums tracking-tighter transition-[background-color,border-color,color,opacity,transform] duration-500", isRunning ? "text-primary cyan-text-glow" : "text-white/40")}>
               {formatTime(timeLeft)}
             </span>
           </div>
@@ -899,7 +1047,7 @@ function MatchBoardInner() {
                 });
               }} 
               className={cn(
-                "h-7 w-7 rounded-lg flex items-center justify-center transition-all duration-300 active:scale-90",
+                "h-7 w-7 rounded-lg flex items-center justify-center transition-[background-color,border-color,color,opacity,transform] duration-300 active:scale-90",
                 isRunning ? "text-amber-400 hover:bg-amber-400/10" : "text-emerald-400 hover:bg-emerald-400/10"
               )}
               title={isRunning ? "Pausar" : "Iniciar"}
@@ -917,7 +1065,7 @@ function MatchBoardInner() {
                 lastTimerSyncAppliedRef.current = now;
                 writeMatchTimerSync({ remainingSec: sec, running: false, updatedAt: now, origin: "board" }, timerSyncKey);
               }} 
-              className="h-7 w-7 rounded-lg flex items-center justify-center text-white/20 hover:text-white hover:bg-white/10 transition-all duration-300 active:scale-90"
+              className="h-7 w-7 rounded-lg flex items-center justify-center text-white/20 hover:text-white hover:bg-white/10 transition-[background-color,border-color,color,opacity,transform] duration-300 active:scale-90"
               title="Resetear"
             >
               <RotateCcw className="h-3.5 w-3.5" />
@@ -957,7 +1105,7 @@ function MatchBoardInner() {
           
           {/* BLOQUE LOCAL (IZQUIERDA) */}
           <div className="flex items-center gap-1.5 lg:gap-2 pointer-events-auto shrink-0">
-            <div className="bg-black/80 backdrop-blur-xl border border-primary/20 p-1 rounded-xl shadow-xl flex items-center h-10 lg:h-11 transition-all glass-panel">
+            <div className="bg-black/80 backdrop-blur-xl border border-primary/20 p-1 rounded-xl shadow-xl flex items-center h-10 lg:h-11 transition-[background-color,border-color,color,opacity,transform] glass-panel">
               <Select value={homeFormation} onValueChange={setHomeFormation}>
                 <SelectTrigger className="h-8 w-20 lg:w-24 bg-black border-primary/10 text-white font-black uppercase text-[9px] lg:text-[10px] rounded-lg focus:ring-0">
                   <SelectValue />
@@ -975,7 +1123,7 @@ function MatchBoardInner() {
                     key={p} 
                     onClick={() => setHomePhase(p.toLowerCase() as TacticalPhase)}
                     className={cn(
-                      "h-8 px-2 lg:px-2.5 rounded-lg text-[8px] lg:text-[9px] font-black uppercase transition-all",
+                      "h-8 px-2 lg:px-2.5 rounded-lg text-[8px] lg:text-[9px] font-black uppercase transition-[background-color,border-color,color,opacity,transform]",
                       homePhase === p.toLowerCase() ? "bg-primary text-black cyan-glow" : "text-white/20 hover:bg-white/5"
                     )}
                   >
@@ -991,9 +1139,9 @@ function MatchBoardInner() {
             <div className="flex items-center gap-2 lg:gap-3 px-3 lg:px-4 h-10 lg:h-11 bg-black/80 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl max-w-full overflow-hidden glass-panel">
               <div className="flex items-center gap-1.5 lg:gap-2 pr-2 lg:pr-3 border-r border-white/10 shrink-0">
                 {["#00f2ff", "#f43f5e", "#facc15"].map(c => (
-                  <button key={c} onClick={() => setCurrentColor(c)} className={cn("h-4 w-4 lg:h-5 lg:w-5 rounded-full border-2 transition-all", currentColor === c ? "border-white scale-110 shadow-lg" : "border-transparent opacity-40")} style={{ backgroundColor: c }} />
+                  <button key={c} onClick={() => setCurrentColor(c)} className={cn("h-4 w-4 lg:h-5 lg:w-5 rounded-full border-2 transition-[background-color,border-color,color,opacity,transform]", currentColor === c ? "border-white scale-110 shadow-lg" : "border-transparent opacity-40")} style={{ backgroundColor: c }} />
                 ))}
-                <button onClick={() => setDrawings([])} className="text-rose-500/40 hover:text-rose-500 p-1 lg:p-1.5 transition-all active:scale-90" title="Borrar">
+                <button onClick={() => setDrawings([])} className="text-rose-500/40 hover:text-rose-500 p-1 lg:p-1.5 transition-[background-color,border-color,color,opacity,transform] active:scale-90" title="Borrar">
                   <Trash2 className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
                 </button>
               </div>
@@ -1024,12 +1172,12 @@ function MatchBoardInner() {
                 <button 
                   type="button"
                   onClick={() => setShowLanes(!showLanes)}
-                  className={cn("h-8 px-2 lg:px-3 rounded-lg flex items-center gap-1.5 lg:gap-2 transition-all text-[8px] lg:text-[9px] font-black uppercase", showLanes ? "bg-primary/20 text-primary" : "text-white/20 hover:text-white")}
+                  className={cn("h-8 px-2 lg:px-3 rounded-lg flex items-center gap-1.5 lg:gap-2 transition-[background-color,border-color,color,opacity,transform] text-[8px] lg:text-[9px] font-black uppercase", showLanes ? "bg-primary/20 text-primary" : "text-white/20 hover:text-white")}
                 >
                   <Columns3 className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
                   <span className="hidden md:inline">Carriles</span>
                 </button>
-                <button type="button" onClick={toggleFullscreen} className="h-8 w-8 flex items-center justify-center text-white/40 hover:text-primary transition-all active:scale-90">
+                <button type="button" onClick={toggleFullscreen} className="h-8 w-8 flex items-center justify-center text-white/40 hover:text-primary transition-[background-color,border-color,color,opacity,transform] active:scale-90">
                   {isFullscreen ? <Minimize2 className="h-3.5 w-3.5 lg:h-4 lg:w-4" /> : <Maximize2 className="h-3.5 w-3.5 lg:h-4 lg:w-4" />}
                 </button>
               </div>
@@ -1064,7 +1212,7 @@ function MatchBoardInner() {
                     key={p} 
                     onClick={() => setGuestPhase(p.toLowerCase() as TacticalPhase)}
                     className={cn(
-                      "h-8 px-2 lg:px-2.5 rounded-lg text-[8px] lg:text-[9px] font-black uppercase transition-all",
+                      "h-8 px-2 lg:px-2.5 rounded-lg text-[8px] lg:text-[9px] font-black uppercase transition-[background-color,border-color,color,opacity,transform]",
                       guestPhase === p.toLowerCase() ? "bg-rose-500 text-black rose-glow" : "text-white/20 hover:bg-white/5"
                     )}
                   >
@@ -1080,21 +1228,76 @@ function MatchBoardInner() {
       {/* ROSTER LATERAL */}
       <Sheet onOpenChange={setIsAnyDialogOpen}>
         <SheetTrigger asChild>
-          <button className="fixed bottom-20 right-4 lg:bottom-24 lg:right-6 h-10 w-10 lg:h-12 lg:w-12 rounded-2xl bg-primary text-black flex items-center justify-center shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-110 transition-all duration-300 z-[160] active:scale-95">
+          <button className="fixed bottom-20 right-4 lg:bottom-24 lg:right-6 h-10 w-10 lg:h-12 lg:w-12 rounded-2xl bg-primary text-black flex items-center justify-center shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-110 transition-[background-color,border-color,color,opacity,transform] duration-300 z-[160] active:scale-95">
             <Users className="h-4 w-4 lg:h-5 lg:w-5" />
           </button>
         </SheetTrigger>
         <SheetContent className="bg-[#04070c]/98 backdrop-blur-xl border-l border-primary/20 text-white sm:max-w-md">
           <SheetHeader className="p-6 border-b border-white/5">
-            <SheetTitle className="text-2xl font-black italic uppercase tracking-tighter">ROSTER_LIVE</SheetTitle>
+            <SheetTitle className="text-2xl font-black italic uppercase tracking-tighter">
+              {matchSource === "sandbox" && sandboxTeamName ? sandboxTeamName : "ROSTER_LIVE"}
+            </SheetTitle>
+            {matchSource === "sandbox" ? (
+              <p className="mt-2 text-[9px] font-black uppercase tracking-[0.3em] text-primary/60">
+                TITULARES + SUPLENTES
+              </p>
+            ) : null}
           </SheetHeader>
-          <div className="p-6 overflow-y-auto h-full space-y-3">
-            {players.filter(p => p.team === 'local').map(p => (
-              <div key={p.id} className="p-3 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-between transition-all duration-300 hover:bg-primary/10">
-                <span className="text-[10px] font-black text-white italic">#{p.number} {p.name}</span>
-                <Badge className="bg-primary/10 text-primary text-[7px] font-black uppercase">EN CAMPO</Badge>
+          <div className="p-6 overflow-y-auto h-full space-y-6">
+            {matchSource === "sandbox" ? (
+              <>
+                <div className="space-y-3">
+                  <p className="text-[9px] font-black uppercase tracking-[0.35em] text-white/40">TITULARES</p>
+                  <div className="space-y-2">
+                    {(sandboxStarters.length ? sandboxStarters : localHomeNames).slice(0, 22).map((nm, idx) => {
+                      const number = idx + 1;
+                      const onField = players.some((p) => p.team === "local" && p.number === number);
+                      return (
+                        <div
+                          key={`st-${idx}-${nm}`}
+                          className="p-3 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-between transition-[background-color,border-color,color,opacity,transform] duration-300 hover:bg-primary/10"
+                        >
+                          <span className="text-[10px] font-black text-white italic">#{number} {nm || `JUGADOR ${number}`}</span>
+                          <Badge className={cn("text-[7px] font-black uppercase", onField ? "bg-primary/10 text-primary" : "bg-white/5 text-white/40")}>
+                            {onField ? "EN CAMPO" : "TITULAR"}
+                          </Badge>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <p className="text-[9px] font-black uppercase tracking-[0.35em] text-white/40">SUPLENTES</p>
+                  {sandboxSubs.length ? (
+                    <div className="space-y-2">
+                      {sandboxSubs.slice(0, 12).map((nm, idx) => (
+                        <div
+                          key={`sb-${idx}-${nm}`}
+                          className="p-3 bg-white/5 border border-white/10 rounded-xl flex items-center justify-between transition-[background-color,border-color,color,opacity,transform] duration-300 hover:bg-white/[0.06]"
+                        >
+                          <span className="text-[10px] font-black text-white/85 italic">{nm}</span>
+                          <Badge className="bg-white/5 text-white/40 text-[7px] font-black uppercase">SUPLENTE</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[10px] text-white/40">
+                      Sin suplentes configurados en <span className="font-black">Mi equipo</span>.
+                    </p>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="space-y-2">
+                {players.filter(p => p.team === 'local').map(p => (
+                  <div key={p.id} className="p-3 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-between transition-[background-color,border-color,color,opacity,transform] duration-300 hover:bg-primary/10">
+                    <span className="text-[10px] font-black text-white italic">#{p.number} {p.name}</span>
+                    <Badge className="bg-primary/10 text-primary text-[7px] font-black uppercase">EN CAMPO</Badge>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
         </SheetContent>
       </Sheet>

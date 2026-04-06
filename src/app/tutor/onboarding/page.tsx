@@ -124,7 +124,7 @@ export default function TutorOnboardingPage() {
                 <button 
                   type="button" 
                   onClick={() => setShowPass(!showPass)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 hover:text-primary transition-all"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 hover:text-primary transition-[background-color,border-color,color,opacity,transform]"
                 >
                   {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -150,7 +150,7 @@ export default function TutorOnboardingPage() {
           <Button 
             type="submit"
             disabled={loading || !password || !confirmPassword}
-            className="w-full h-20 bg-primary text-black font-black uppercase text-xs tracking-[0.4em] rounded-2xl shadow-[0_0_40px_rgba(0,242,255,0.2)] hover:scale-[1.02] transition-all border-none"
+            className="w-full h-20 bg-primary text-black font-black uppercase text-xs tracking-[0.4em] rounded-2xl shadow-[0_0_40px_rgba(0,242,255,0.2)] hover:scale-[1.02] transition-[background-color,border-color,color,opacity,transform] border-none"
           >
             {loading ? <RefreshCw className="h-6 w-6 animate-spin" /> : "ACTIVAR MI CUENTA DE TUTOR"}
           </Button>
@@ -170,7 +170,7 @@ export default function TutorOnboardingPage() {
       <div className="text-center">
         <button 
           onClick={() => { localStorage.removeItem("synq_tutor_pending_email"); router.push("/tutor"); }} 
-          className="text-[10px] font-black text-white/20 hover:text-primary transition-all uppercase tracking-[0.3em] italic"
+          className="text-[10px] font-black text-white/20 hover:text-primary transition-[background-color,border-color,color,opacity,transform] uppercase tracking-[0.3em] italic"
         >
           [ CANCELAR_Y_SALIR ]
         </button>

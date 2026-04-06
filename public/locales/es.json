@@ -1,0 +1,30 @@
+{
+  "common.app_name": "SynqAI Sports",
+  "common.loading": "Cargando...",
+  "common.login": "Ir a login",
+  "common.logout": "Salir",
+
+  "sidebar.language": "Idioma",
+  "sidebar.language.auto": "Automático",
+
+  "login.title": "INICIA SESIÓN PARA CONTINUAR",
+  "login.subtitle": "Esta terminal requiere identificar el club para cargar datos de campos en tiempo real.",
+  "login.redirecting": "REDIRIGIENDO A LOGIN",
+  "login.validating": "Validando sesión de plataforma...",
+
+  "live_fields.protected": "Live Fields · Acceso protegido",
+  "live_fields.title": "Estado en tiempo real de campos",
+  "live_fields.club": "Club",
+  "live_fields.no_data_title": "Sin datos elite",
+  "live_fields.no_data_desc": "Crea instalaciones y equipos en el BackOffice para visualizar estado en esta terminal.",
+  "live_fields.activity": "Actividad",
+  "live_fields.status.free": "Libre",
+  "live_fields.status.occupied": "En uso",
+  "live_fields.status.maintenance": "Mantenimiento",
+  "live_fields.slot.none": "SIN SESIÓN ACTIVA",
+  "live_fields.mode.match": "PARTIDO",
+  "live_fields.mode.training": "ENTRENO",
+  "live_fields.pill.tv": "Optimizado para TV / monitor / All‑in‑One",
+  "live_fields.pill.responsive": "Responsive fallback para pantallas pequeñas",
+  "live_fields.pill.navless": "Sin barra de navegación"
+}

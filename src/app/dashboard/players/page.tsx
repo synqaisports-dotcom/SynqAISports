@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { 
   Users, 
   UserPlus, 
@@ -29,7 +29,9 @@ import {
   X,
   Clock,
   Hash,
-  Database
+  Database,
+  Download,
+  Upload
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -125,6 +127,215 @@ export default function PlayersManagementPage() {
   const playersStorageKey = `synq_players_v1_${clubScopeId}`;
   const canUseRemote = canUseOperativaSupabase(clubScopeId) && !!session?.access_token;
   const [syncMode, setSyncMode] = useState<"remote" | "local" | "restricted" | "local_error">("local");
+  const importFileInputRef = useRef<HTMLInputElement | null>(null);
+  const [importPreviewRows, setImportPreviewRows] = useState<any[]>([]);
+  const [importPreviewHeaders, setImportPreviewHeaders] = useState<string[]>([]);
+  const [importSourceFileName, setImportSourceFileName] = useState("");
+
+  const TEMPLATE_COLUMNS = [
+    "name",
+    "surname",
+    "number",
+    "nickname",
+    "email",
+    "birthDate",
+    "joinDate",
+    "category",
+    "teamSuffix",
+    "position",
+    "status",
+    "isMinor",
+    "tutorName",
+    "tutorSurname",
+    "tutorPhone",
+    "tutorEmail",
+  ];
+
+  const parseCsvRow = (line: string, delimiter: string): string[] => {
+    const out: string[] = [];
+    let cur = "";
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          cur += '"';
+          i += 1;
+        } else {
+          inQuotes = !inQuotes;
+        }
+        continue;
+      }
+      if (ch === delimiter && !inQuotes) {
+        out.push(cur.trim());
+        cur = "";
+        continue;
+      }
+      cur += ch;
+    }
+    out.push(cur.trim());
+    return out.map((v) => v.replace(/^"(.*)"$/, "$1").trim());
+  };
+
+  const handleDownloadTemplate = () => {
+    const header = TEMPLATE_COLUMNS;
+    const example = [
+      "LUCAS",
+      "GARCIA",
+      "10",
+      "LUKY",
+      "l.garcia@tutor.com",
+      "2011-05-15",
+      "2023-09-01",
+      "Infantil",
+      "A",
+      "MC|MCO",
+      "Active",
+      "true",
+      "MARIA",
+      "GARCIA",
+      "600000001",
+      "l.garcia@tutor.com",
+    ];
+    const csv = `${header.join(",")}\n${example.join(",")}\n`;
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "plantilla_jugadores_synqai.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleBulkImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!canEditPlayers) {
+      toast({
+        variant: "destructive",
+        title: "PERMISO_DENEGADO",
+        description: "No tienes permiso de edición en Gestión de Jugadores.",
+      });
+      e.target.value = "";
+      return;
+    }
+    try {
+      const raw = await file.text();
+      const lines = raw
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter(Boolean);
+      if (lines.length < 2) {
+        toast({
+          variant: "destructive",
+          title: "ARCHIVO_VACIO",
+          description: "El archivo no contiene filas de jugadores.",
+        });
+        e.target.value = "";
+        return;
+      }
+      const delimiter = lines[0].includes(";") ? ";" : ",";
+      const headers = parseCsvRow(lines[0], delimiter).map((h) => h.toLowerCase());
+      const idx = (k: string) => headers.indexOf(k);
+      const required = ["name", "surname", "number"];
+      const missing = required.filter((k) => idx(k) === -1);
+      if (missing.length > 0) {
+        toast({
+          variant: "destructive",
+          title: "PLANTILLA_INVALIDA",
+          description: `Faltan columnas obligatorias: ${missing.join(", ")}`,
+        });
+        e.target.value = "";
+        return;
+      }
+
+      const imported: any[] = [];
+      for (let i = 1; i < lines.length; i++) {
+        const row = parseCsvRow(lines[i], delimiter);
+        const name = String(row[idx("name")] || "").trim().toUpperCase();
+        const surname = String(row[idx("surname")] || "").trim().toUpperCase();
+        const number = String(row[idx("number")] || "").trim();
+        if (!name || !surname || !number) continue;
+        const categoryRaw = String(row[idx("category")] || "Alevín").trim();
+        const validCategory = CATEGORIES.some((c) => c.value === categoryRaw) ? categoryRaw : "Alevín";
+        const teamSuffixRaw = String(row[idx("teamsuffix")] || "A").trim().toUpperCase();
+        const teamSuffix = TEAM_SUFFIXES.includes(teamSuffixRaw) ? teamSuffixRaw : "A";
+        const statusRaw = String(row[idx("status")] || "Active").trim();
+        const status = ["Active", "Injured", "Away"].includes(statusRaw) ? statusRaw : "Active";
+        const positionRaw = String(row[idx("position")] || "").trim();
+        const normalizedPosition = positionRaw ? positionRaw.replace(/\|/g, ", ").toUpperCase() : "";
+        const isMinorRaw = String(row[idx("isminor")] || "true").trim().toLowerCase();
+        const isMinor = isMinorRaw !== "false" && isMinorRaw !== "0" && isMinorRaw !== "no";
+        imported.push({
+          id: `p${Date.now()}_${i}_${Math.random().toString(36).slice(2, 6)}`,
+          name,
+          surname,
+          number,
+          nickname: String(row[idx("nickname")] || "").trim().toUpperCase(),
+          email: String(row[idx("email")] || "").trim(),
+          photoUrl: "",
+          birthDate: String(row[idx("birthdate")] || "").trim(),
+          joinDate: String(row[idx("joindate")] || "").trim() || new Date().toISOString().split("T")[0],
+          category: validCategory,
+          teamSuffix,
+          position: normalizedPosition,
+          status,
+          attendance: "100%",
+          isMinor,
+          tutorName: String(row[idx("tutorname")] || "").trim().toUpperCase(),
+          tutorSurname: String(row[idx("tutorsurname")] || "").trim().toUpperCase(),
+          tutorPhone: String(row[idx("tutorphone")] || "").trim(),
+          tutorEmail: String(row[idx("tutoremail")] || "").trim(),
+        });
+      }
+
+      if (imported.length === 0) {
+        toast({
+          variant: "destructive",
+          title: "SIN_REGISTROS_VALIDOS",
+          description: "No se pudo importar ningún jugador válido.",
+        });
+        e.target.value = "";
+        return;
+      }
+
+      setImportPreviewHeaders(headers);
+      setImportPreviewRows(imported);
+      setImportSourceFileName(file.name);
+      toast({
+        title: "PREVISUALIZACION_LISTA",
+        description: `${imported.length} jugadores listos para importar.`,
+      });
+    } catch {
+      toast({
+        variant: "destructive",
+        title: "ERROR_IMPORTACION",
+        description: "No se pudo leer el archivo CSV.",
+      });
+    } finally {
+      e.target.value = "";
+    }
+  };
+
+  const handleConfirmBulkImport = async () => {
+    if (!importPreviewRows.length) return;
+    const nextPlayers = [...importPreviewRows, ...players];
+    setPlayers(nextPlayers);
+    await persistPlayersHybrid(nextPlayers);
+    toast({
+      title: "IMPORTACION_COMPLETADA",
+      description: `${importPreviewRows.length} jugadores importados correctamente.`,
+    });
+    setImportPreviewRows([]);
+    setImportPreviewHeaders([]);
+    setImportSourceFileName("");
+  };
+
+  const handleCancelBulkImport = () => {
+    setImportPreviewRows([]);
+    setImportPreviewHeaders([]);
+    setImportSourceFileName("");
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -479,11 +690,116 @@ export default function PlayersManagementPage() {
         <Button 
           onClick={handleOpenCreate}
           disabled={!canEditPlayers}
-          className="w-full sm:w-auto rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 active:scale-95 transition-all border-none disabled:opacity-40"
+          className="w-full sm:w-auto rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 active:scale-95 transition-[background-color,border-color,color,opacity,transform] border-none disabled:opacity-40"
         >
           <UserPlus className="h-4 w-4 mr-2" /> Nueva Inscripción
         </Button>
+        <div className="flex w-full sm:w-auto gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleDownloadTemplate}
+            className="rounded-2xl border-primary/30 text-primary font-black uppercase text-[10px] tracking-widest h-12 px-4"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Descargar plantilla
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => importFileInputRef.current?.click()}
+            disabled={!canEditPlayers}
+            className="rounded-2xl border-primary/30 text-primary font-black uppercase text-[10px] tracking-widest h-12 px-4 disabled:opacity-40"
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Subir archivo
+          </Button>
+          <input
+            ref={importFileInputRef}
+            type="file"
+            accept=".csv,text/csv"
+            className="hidden"
+            onChange={handleBulkImport}
+          />
+        </div>
       </div>
+
+      <Card className="glass-panel border border-primary/20 bg-black/30 rounded-2xl">
+        <CardContent className="p-4 space-y-3">
+          <div className="text-[10px] font-black uppercase tracking-widest text-primary/70">
+            Columnas plantilla (CSV)
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {TEMPLATE_COLUMNS.map((col) => (
+              <Badge key={col} className="bg-primary/10 text-primary border border-primary/20 rounded-lg text-[10px] font-mono">
+                {col}
+              </Badge>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {importPreviewRows.length > 0 && (
+        <Card className="glass-panel border border-primary/20 bg-black/30 rounded-2xl overflow-hidden">
+          <CardHeader className="p-4 border-b border-white/5">
+            <CardTitle className="text-sm text-white font-black uppercase tracking-wider">
+              Previsualización de importación por columnas
+            </CardTitle>
+            <CardDescription className="text-primary/70">
+              Archivo: {importSourceFileName} · Registros válidos: {importPreviewRows.length}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-white/[0.02] border-b border-white/5">
+                  <tr>
+                    {TEMPLATE_COLUMNS.map((col) => (
+                      <th key={col} className="px-3 py-2 text-[10px] font-black uppercase tracking-wider text-primary/50 whitespace-nowrap">
+                        {col}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {importPreviewRows.slice(0, 10).map((row, index) => (
+                    <tr key={`${row.id}_${index}`} className="hover:bg-primary/[0.03]">
+                      {TEMPLATE_COLUMNS.map((col) => (
+                        <td key={`${row.id}_${col}`} className="px-3 py-2 text-white/80 whitespace-nowrap">
+                          {String(row[col] ?? "")}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {importPreviewRows.length > 10 && (
+              <div className="px-4 py-2 text-[10px] text-primary/60 border-t border-white/5">
+                Mostrando 10 de {importPreviewRows.length} filas previsualizadas.
+              </div>
+            )}
+          </CardContent>
+          <CardFooter className="p-4 flex gap-2 justify-end border-t border-white/5">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCancelBulkImport}
+              className="rounded-xl border-white/15 text-white/80"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              onClick={handleConfirmBulkImport}
+              disabled={!canEditPlayers}
+              className="rounded-xl bg-primary text-black font-bold disabled:opacity-40"
+            >
+              Confirmar importación
+            </Button>
+          </CardFooter>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <PlayerStat label="Atletas Totales" value={players.length.toString()} icon={Users} />
@@ -498,7 +814,7 @@ export default function PlayersManagementPage() {
             <Search className="absolute left-3 top-3.5 h-4 w-4 text-primary opacity-50" />
             <Input 
               placeholder="BUSCAR POR NOMBRE O CATEGORÍA..." 
-              className="pl-10 h-12 bg-white/5 border-primary/20 rounded-2xl text-primary placeholder:text-primary/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-primary/50 transition-all"
+              className="pl-10 h-12 bg-white/5 border-primary/20 rounded-2xl text-primary placeholder:text-primary/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-primary/50 transition-[background-color,border-color,color,opacity,transform]"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -531,18 +847,18 @@ export default function PlayersManagementPage() {
                     <tr key={player.id} className="group hover:bg-primary/[0.02] transition-colors cursor-default">
                       <td className="px-8 py-5">
                         <div className="flex items-center gap-4">
-                          <div className="h-12 w-12 bg-primary/5 border border-primary/20 rounded-full flex items-center justify-center relative overflow-hidden group-hover:border-primary/40 transition-all">
+                          <div className="h-12 w-12 bg-primary/5 border border-primary/20 rounded-full flex items-center justify-center relative overflow-hidden group-hover:border-primary/40 transition-[background-color,border-color,color,opacity,transform]">
                              {player.photoUrl ? (
                                <Image src={player.photoUrl} alt={player.name} fill className="object-cover rounded-full" />
                              ) : (
-                               <IdCard className="h-5 w-5 text-primary/20 group-hover:text-primary transition-all" />
+                               <IdCard className="h-5 w-5 text-primary/20 group-hover:text-primary transition-[background-color,border-color,color,opacity,transform]" />
                              )}
                              <div className="absolute inset-0 bg-primary/5 scan-line opacity-0 group-hover:opacity-100" />
                           </div>
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
                               <span className="text-[10px] font-black text-primary px-1.5 py-0.5 bg-primary/10 border border-primary/20 rounded-md">#{player.number}</span>
-                              <p className="font-black text-white uppercase text-xs italic transition-all group-hover:cyan-text-glow">
+                              <p className="font-black text-white uppercase text-xs italic transition-[background-color,border-color,color,opacity,transform] group-hover:cyan-text-glow">
                                 {player.name} {player.surname}
                                 {player.nickname && <span className="text-[10px] text-primary/40 ml-2">"{player.nickname}"</span>}
                               </p>
@@ -556,7 +872,7 @@ export default function PlayersManagementPage() {
                       <td className="px-6 py-5">
                         <div className="flex justify-center">
                           <div className={cn(
-                            "inline-flex items-center border rounded-xl divide-x overflow-hidden group-hover:border-opacity-40 transition-all shadow-[0_0_10px_rgba(0,0,0,0.2)]",
+                            "inline-flex items-center border rounded-xl divide-x overflow-hidden group-hover:border-opacity-40 transition-[background-color,border-color,color,opacity,transform] shadow-[0_0_10px_rgba(0,0,0,0.2)]",
                             style.border,
                             style.bg
                           )}>
@@ -599,7 +915,7 @@ export default function PlayersManagementPage() {
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-9 w-9 text-primary hover:bg-primary/10 border border-primary/10 transition-all active:scale-90 rounded-xl"
+                            className="h-9 w-9 text-primary hover:bg-primary/10 border border-primary/10 transition-[background-color,border-color,color,opacity,transform] active:scale-90 rounded-xl"
                             onClick={() => handleEdit(player)}
                             disabled={!canEditPlayers}
                             title="Modificar Atleta"
@@ -609,7 +925,7 @@ export default function PlayersManagementPage() {
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-9 w-9 text-rose-500 hover:bg-rose-500/10 border border-rose-500/10 transition-all active:scale-90 rounded-xl"
+                            className="h-9 w-9 text-rose-500 hover:bg-rose-500/10 border border-rose-500/10 transition-[background-color,border-color,color,opacity,transform] active:scale-90 rounded-xl"
                             onClick={() => handleDelete(player.id, player.name)}
                             disabled={!canDeletePlayers}
                             title="Desvincular Atleta"
@@ -652,7 +968,7 @@ export default function PlayersManagementPage() {
             <div className="space-y-4">
               <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Identidad Visual</Label>
               <div className="flex flex-col items-center justify-center p-8 bg-primary/5 rounded-3xl relative overflow-hidden">
-                <div className="relative h-40 w-40 rounded-full border-2 border-dashed border-primary/30 group cursor-pointer hover:border-primary/60 transition-all flex items-center justify-center bg-black/40 shadow-[0_0_30px_rgba(0,242,255,0.1)]">
+                <div className="relative h-40 w-40 rounded-full border-2 border-dashed border-primary/30 group cursor-pointer hover:border-primary/60 transition-[background-color,border-color,color,opacity,transform] flex items-center justify-center bg-black/40 shadow-[0_0_30px_rgba(0,242,255,0.1)]">
                   {formData.photoUrl ? (
                     <div className="relative h-full w-full rounded-full overflow-hidden border border-primary/40">
                       <Image src={formData.photoUrl} alt="Preview" fill className="object-cover rounded-full" />
@@ -691,7 +1007,7 @@ export default function PlayersManagementPage() {
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})}
                     placeholder="EJ: LUCAS" 
-                    className="h-12 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-all placeholder:text-primary/20 text-primary" 
+                    className="h-12 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-[background-color,border-color,color,opacity,transform] placeholder:text-primary/20 text-primary" 
                   />
                 </div>
                 <div className="space-y-2">
@@ -701,7 +1017,7 @@ export default function PlayersManagementPage() {
                     value={formData.surname}
                     onChange={(e) => setFormData({...formData, surname: e.target.value.toUpperCase()})}
                     placeholder="EJ: GARCÍA" 
-                    className="h-12 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-all placeholder:text-primary/20 text-primary" 
+                    className="h-12 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-[background-color,border-color,color,opacity,transform] placeholder:text-primary/20 text-primary" 
                   />
                 </div>
               </div>
@@ -716,7 +1032,7 @@ export default function PlayersManagementPage() {
                       value={formData.number}
                       onChange={(e) => setFormData({...formData, number: e.target.value})}
                       placeholder="EJ: 10" 
-                      className="pl-10 h-12 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-all placeholder:text-primary/20 text-primary" 
+                      className="pl-10 h-12 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-[background-color,border-color,color,opacity,transform] placeholder:text-primary/20 text-primary" 
                     />
                   </div>
                 </div>
@@ -726,7 +1042,7 @@ export default function PlayersManagementPage() {
                     value={formData.nickname}
                     onChange={(e) => setFormData({...formData, nickname: e.target.value.toUpperCase()})}
                     placeholder="EJ: LUKY" 
-                    className="h-12 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-all placeholder:text-primary/20 text-primary" 
+                    className="h-12 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-[background-color,border-color,color,opacity,transform] placeholder:text-primary/20 text-primary" 
                   />
                 </div>
               </div>
@@ -740,7 +1056,7 @@ export default function PlayersManagementPage() {
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                     placeholder="ATLETA@MAIL.COM" 
-                    className="pl-12 h-12 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-all text-primary placeholder:text-primary/20" 
+                    className="pl-12 h-12 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-[background-color,border-color,color,opacity,transform] text-primary placeholder:text-primary/20" 
                   />
                 </div>
               </div>
@@ -755,7 +1071,7 @@ export default function PlayersManagementPage() {
                       type="date"
                       value={formData.birthDate}
                       onChange={(e) => setFormData({...formData, birthDate: e.target.value})}
-                      className="pl-10 pr-10 h-12 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-all text-primary [color-scheme:dark]" 
+                      className="pl-10 pr-10 h-12 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-[background-color,border-color,color,opacity,transform] text-primary [color-scheme:dark]" 
                     />
                   </div>
                 </div>
@@ -768,7 +1084,7 @@ export default function PlayersManagementPage() {
                       type="date"
                       value={formData.joinDate}
                       onChange={(e) => setFormData({...formData, joinDate: e.target.value})}
-                      className="pl-10 pr-10 h-12 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-all text-primary [color-scheme:dark]" 
+                      className="pl-10 pr-10 h-12 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-[background-color,border-color,color,opacity,transform] text-primary [color-scheme:dark]" 
                     />
                   </div>
                 </div>
@@ -781,7 +1097,7 @@ export default function PlayersManagementPage() {
                     value={formData.category} 
                     onValueChange={(v) => setFormData({...formData, category: v})}
                   >
-                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-2xl text-primary/80 font-bold uppercase tracking-widest focus:border-primary transition-all">
+                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-2xl text-primary/80 font-bold uppercase tracking-widest focus:border-primary transition-[background-color,border-color,color,opacity,transform]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
@@ -799,7 +1115,7 @@ export default function PlayersManagementPage() {
                     value={formData.teamSuffix} 
                     onValueChange={(v) => setFormData({...formData, teamSuffix: v})}
                   >
-                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-2xl text-primary/80 font-bold uppercase tracking-widest focus:border-primary transition-all">
+                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-2xl text-primary/80 font-bold uppercase tracking-widest focus:border-primary transition-[background-color,border-color,color,opacity,transform]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
@@ -822,7 +1138,7 @@ export default function PlayersManagementPage() {
                       type="button"
                       onClick={() => togglePosition(pos.id)}
                       className={cn(
-                        "h-10 border font-black text-[10px] transition-all flex items-center justify-center rounded-xl active:scale-95",
+                        "h-10 border font-black text-[10px] transition-[background-color,border-color,color,opacity,transform] flex items-center justify-center rounded-xl active:scale-95",
                         formData.position.includes(pos.id)
                           ? "bg-primary border-primary text-black shadow-[0_0_15px_rgba(0,242,255,0.3)]"
                           : "bg-white/5 border-primary/20 text-primary/40 hover:border-primary/40 hover:text-primary"
@@ -840,7 +1156,7 @@ export default function PlayersManagementPage() {
                   value={formData.status} 
                   onValueChange={(v) => setFormData({...formData, status: v})}
                 >
-                  <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-2xl text-primary/80 font-bold uppercase tracking-widest focus:border-primary transition-all">
+                  <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-2xl text-primary/80 font-bold uppercase tracking-widest focus:border-primary transition-[background-color,border-color,color,opacity,transform]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-[#04070c] border-primary/20 rounded-2xl">
@@ -868,7 +1184,7 @@ export default function PlayersManagementPage() {
                       value={formData.tutorName}
                       onChange={(e) => setFormData({...formData, tutorName: e.target.value.toUpperCase()})}
                       placeholder="EJ: MARÍA" 
-                      className="h-11 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-all text-primary placeholder:text-primary/20" 
+                      className="h-11 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-[background-color,border-color,color,opacity,transform] text-primary placeholder:text-primary/20" 
                     />
                   </div>
                   <div className="space-y-2">
@@ -877,7 +1193,7 @@ export default function PlayersManagementPage() {
                       value={formData.tutorSurname}
                       onChange={(e) => setFormData({...formData, tutorSurname: e.target.value.toUpperCase()})}
                       placeholder="EJ: LÓPEZ" 
-                      className="h-11 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-all text-primary placeholder:text-primary/20" 
+                      className="h-11 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-[background-color,border-color,color,opacity,transform] text-primary placeholder:text-primary/20" 
                     />
                   </div>
                 </div>
@@ -891,7 +1207,7 @@ export default function PlayersManagementPage() {
                       value={formData.tutorEmail}
                       onChange={(e) => setFormData({...formData, tutorEmail: e.target.value})}
                       placeholder="TUTOR@MAIL.COM" 
-                      className="pl-10 h-11 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-all text-primary placeholder:text-primary/20" 
+                      className="pl-10 h-11 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-[background-color,border-color,color,opacity,transform] text-primary placeholder:text-primary/20" 
                     />
                   </div>
                 </div>
@@ -903,7 +1219,7 @@ export default function PlayersManagementPage() {
                       value={formData.tutorPhone}
                       onChange={(e) => setFormData({...formData, tutorPhone: e.target.value})}
                       placeholder="600 000 000" 
-                      className="pl-10 h-11 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-all text-primary placeholder:text-primary/20" 
+                      className="pl-10 h-11 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary transition-[background-color,border-color,color,opacity,transform] text-primary placeholder:text-primary/20" 
                     />
                   </div>
                 </div>
@@ -935,14 +1251,14 @@ export default function PlayersManagementPage() {
 
           <div className="pt-2 flex gap-4">
             <SheetClose asChild>
-              <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary/60 font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 transition-all active:scale-95 rounded-2xl">
+              <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary/60 font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 transition-[background-color,border-color,color,opacity,transform] active:scale-95 rounded-2xl">
                 CANCELAR
               </Button>
             </SheetClose>
             <Button 
               onClick={handleSavePlayer}
               disabled={loading || !canEditPlayers}
-              className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] active:scale-95 transition-all border-none"
+              className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] active:scale-95 transition-[background-color,border-color,color,opacity,transform] border-none"
             >
               {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (editingId ? "SINCRONIZAR_FICHA" : "VINCULAR_ATLETA")}
             </Button>
@@ -957,7 +1273,7 @@ function PlayerStat({ label, value, icon: Icon, highlight, warning }: any) {
   return (
     <Card className="glass-panel p-5 flex items-center gap-5 relative overflow-hidden group border border-primary/20 bg-black/20 rounded-3xl">
        <div className={cn(
-         "h-12 w-12 flex items-center justify-center border transition-all rotate-3 group-hover:rotate-0 duration-500 rounded-2xl bg-primary/10 border-primary/20",
+         "h-12 w-12 flex items-center justify-center border transition-[background-color,border-color,color,opacity,transform] rotate-3 group-hover:rotate-0 duration-500 rounded-2xl bg-primary/10 border-primary/20",
          warning ? "bg-rose-500/10 border-rose-500/20" : ""
        )}>
           <Icon className={cn("h-6 w-6", warning ? "text-rose-400" : "text-primary")} />

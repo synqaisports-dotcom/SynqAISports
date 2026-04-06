@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth-context";
+import { useI18n } from "@/contexts/i18n-context";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -39,7 +40,8 @@ function LoginContent() {
   const [regStep, setRegStep] = useState<'choice' | 'form'>('choice');
   const [regType, setRegType] = useState<'free' | 'enterprise_scale'>('free');
   
-  const { profile, loginAsGuest, loginWithToken, register, login } = useAuth();
+  const { user, session, profile, loginAsGuest, loginWithToken, register, login } = useAuth();
+  const { t } = useI18n();
   const { toast } = useToast();
   const router = useRouter();
   const searchParamsHook = useSearchParams();
@@ -62,7 +64,8 @@ function LoginContent() {
   const [loginData, setLoginData] = useState({ email: "", pass: "" });
 
   useEffect(() => {
-    if (profile) {
+    const hasRealSession = !!user || !!session;
+    if (profile && hasRealSession) {
       if (requestedNext) {
         router.push(requestedNext);
       } else if (profile.role === "superadmin") {
@@ -73,7 +76,7 @@ function LoginContent() {
         router.push("/dashboard/coach/onboarding");
       }
     }
-  }, [profile, router, requestedNext]);
+  }, [profile, user, session, router, requestedNext]);
 
   useEffect(() => {
     const t = searchParamsHook.get("token") || searchParamsHook.get("t");
@@ -154,9 +157,9 @@ function LoginContent() {
               <div className="space-y-2"><label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1 italic">NOMBRE_DEL_ADMINISTRADOR</label><Input required placeholder="SU NOMBRE" className="h-14 bg-white/5 border-primary/20 rounded-2xl text-white font-bold uppercase focus:border-primary" /></div>
               <div className="space-y-2"><label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1 italic">MAIL_ACCESO</label><Input required type="email" placeholder="MAIL@CLUB.COM" className="h-14 bg-white/5 border-primary/20 rounded-2xl text-white font-bold uppercase focus:border-primary" /></div>
             </div>
-            <Button type="submit" disabled={localLoading} className="w-full h-16 bg-primary text-black font-black uppercase tracking-[0.3em] text-xs rounded-2xl cyan-glow hover:scale-[1.01] transition-all border-none">{localLoading ? "CONFIGURANDO_NODO..." : "ACTIVAR_MI_NODO_DE_CLUB"} <ArrowRight className="h-4 w-4 ml-2" /></Button>
+            <Button type="submit" disabled={localLoading} className="w-full h-16 bg-primary text-black font-black uppercase tracking-[0.3em] text-xs rounded-2xl cyan-glow hover:scale-[1.01] transition-[background-color,border-color,color,opacity,transform] border-none">{localLoading ? "CONFIGURANDO_NODO..." : "ACTIVAR_MI_NODO_DE_CLUB"} <ArrowRight className="h-4 w-4 ml-2" /></Button>
           </form>
-          <button onClick={() => setForceStandard(true)} className="text-[9px] text-white/40 hover:text-white transition-all font-black uppercase tracking-[0.3em] flex items-center gap-2 italic mx-auto"><ChevronLeft className="h-3 w-3" /> Ignorar invitación</button>
+          <button onClick={() => setForceStandard(true)} className="text-[9px] text-white/40 hover:text-white transition-[background-color,border-color,color,opacity,transform] font-black uppercase tracking-[0.3em] flex items-center gap-2 italic mx-auto"><ChevronLeft className="h-3 w-3" /> Ignorar invitación</button>
         </CardContent>
       </Card>
     );
@@ -190,20 +193,20 @@ function LoginContent() {
             <TabsContent value="login" className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-500">
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1 italic">EMAIL_PROFESIONAL</label>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1 italic">{t("login_label_email")}</label>
                   <div className="relative">
                     <Mail className="absolute left-4 top-4 h-4 w-4 text-primary/40" />
-                    <Input required type="email" value={loginData.email} onChange={e => setLoginData({...loginData, email: e.target.value})} placeholder="USER@CLUB.COM" className="h-12 pl-12 bg-white/5 border-primary/20 rounded-2xl text-white font-bold" />
+                    <Input required type="email" value={loginData.email} onChange={e => setLoginData({...loginData, email: e.target.value})} placeholder={t("login_placeholder_email")} className="h-12 pl-12 bg-white/5 border-primary/20 rounded-2xl text-white font-bold" />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1 italic">CLAVE_ACCESO</label>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1 italic">{t("login_label_password")}</label>
                   <div className="relative">
                     <LockKeyhole className="absolute left-4 top-4 h-4 w-4 text-primary/40" />
-                    <Input required type="password" value={loginData.pass} onChange={e => setLoginData({...loginData, pass: e.target.value})} placeholder="••••••••" className="h-12 pl-12 bg-white/5 border-primary/20 rounded-2xl text-white font-bold" />
+                    <Input required type="password" value={loginData.pass} onChange={e => setLoginData({...loginData, pass: e.target.value})} placeholder={t("login_placeholder_password")} className="h-12 pl-12 bg-white/5 border-primary/20 rounded-2xl text-white font-bold" />
                   </div>
                 </div>
-                <Button type="submit" disabled={localLoading} className="w-full h-16 bg-primary text-black font-black uppercase tracking-[0.3em] text-xs rounded-2xl cyan-glow border-none transition-all active:scale-95">ACCEDER_A_MI_NODO <ArrowRight className="h-4 w-4 ml-2" /></Button>
+                <Button type="submit" disabled={localLoading} className="w-full h-16 bg-primary text-black font-black uppercase tracking-[0.3em] text-xs rounded-2xl cyan-glow border-none transition-[background-color,border-color,color,opacity,transform] active:scale-95">{t("login_submit")} <ArrowRight className="h-4 w-4 ml-2" /></Button>
               </form>
             </TabsContent>
 
@@ -212,9 +215,9 @@ function LoginContent() {
                 <div className="grid grid-cols-1 gap-4 py-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <button 
                     onClick={() => { setRegType('free'); setRegStep('form'); }}
-                    className="p-8 bg-primary/5 border-2 border-primary/20 rounded-[2rem] group hover:border-primary transition-all text-left relative overflow-hidden"
+                    className="p-8 bg-primary/5 border-2 border-primary/20 rounded-[2rem] group hover:border-primary transition-[background-color,border-color,color,opacity,transform] text-left relative overflow-hidden"
                   >
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-all"><Zap className="h-20 w-20 text-primary" /></div>
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-[background-color,border-color,color,opacity,transform]"><Zap className="h-20 w-20 text-primary" /></div>
                     <div className="flex items-center gap-4 mb-4">
                       <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
                         <Dumbbell className="h-6 w-6 text-primary" />
@@ -229,9 +232,9 @@ function LoginContent() {
 
                   <button 
                     onClick={() => { setRegType('enterprise_scale'); setRegStep('form'); }}
-                    className="p-8 bg-white/5 border-2 border-white/5 rounded-[2rem] group hover:border-primary/40 transition-all text-left relative overflow-hidden"
+                    className="p-8 bg-white/5 border-2 border-white/5 rounded-[2rem] group hover:border-primary/40 transition-[background-color,border-color,color,opacity,transform] text-left relative overflow-hidden"
                   >
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-all"><Building2 className="h-20 w-20 text-white" /></div>
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-[background-color,border-color,color,opacity,transform]"><Building2 className="h-20 w-20 text-white" /></div>
                     <div className="flex items-center gap-4 mb-4">
                       <div className="h-12 w-12 rounded-2xl bg-white/10 flex items-center justify-center border border-white/10">
                         <Users className="h-6 w-6 text-white" />
@@ -247,7 +250,7 @@ function LoginContent() {
               ) : (
                 <form onSubmit={handleRegister} className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-500">
                   <div className="flex items-center gap-3 mb-4">
-                    <button type="button" onClick={() => setRegStep('choice')} className="text-primary/40 hover:text-primary transition-all"><ChevronLeft className="h-5 w-5" /></button>
+                    <button type="button" onClick={() => setRegStep('choice')} className="text-primary/40 hover:text-primary transition-[background-color,border-color,color,opacity,transform]"><ChevronLeft className="h-5 w-5" /></button>
                     <span className="text-[9px] font-black uppercase text-primary tracking-widest italic">
                       {regType === 'free' ? 'MODO_SANDBOX_LIGHT' : 'PROTOCOLO_CLUB_PRO'}
                     </span>
@@ -258,7 +261,7 @@ function LoginContent() {
                   </div>
                   <div className="space-y-2"><label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1 italic">EMAIL_PROFESIONAL_OBLIGATORIO</label><Input required type="email" value={regData.email} onChange={e => setRegData({...regData, email: e.target.value})} placeholder="USER@CLUB.COM" className="h-12 bg-white/5 border-primary/20 rounded-2xl font-bold" /></div>
                   <div className="space-y-2"><label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1 italic">NUEVA_CLAVE</label><Input required type="password" value={regData.pass} onChange={e => setRegData({...regData, pass: e.target.value})} placeholder="••••••••" className="h-12 bg-white/5 border-primary/20 rounded-2xl text-white font-bold" /></div>
-                  <Button type="submit" disabled={localLoading} className="w-full h-16 bg-primary text-black font-black uppercase tracking-[0.3em] text-xs rounded-2xl cyan-glow border-none transition-all active:scale-95">
+                  <Button type="submit" disabled={localLoading} className="w-full h-16 bg-primary text-black font-black uppercase tracking-[0.3em] text-xs rounded-2xl cyan-glow border-none transition-[background-color,border-color,color,opacity,transform] active:scale-95">
                     {regType === 'free' ? 'ACTIVAR_MI_SANDBOX' : 'VINCULAR_MI_CLUB'} <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
                 </form>
@@ -286,7 +289,7 @@ function LoginContent() {
               router.push("/admin-global");
             }
           }}
-          className="text-[9px] font-black text-white/20 hover:text-primary transition-all uppercase tracking-[0.5em] italic flex items-center gap-2 group"
+          className="text-[9px] font-black text-white/20 hover:text-primary transition-[background-color,border-color,color,opacity,transform] uppercase tracking-[0.5em] italic flex items-center gap-2 group"
         >
           <Key className="h-3 w-3 group-hover:animate-pulse" /> Terminal de Fundadores
         </button>

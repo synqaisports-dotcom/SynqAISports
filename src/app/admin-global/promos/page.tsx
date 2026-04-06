@@ -345,7 +345,7 @@ export default function GlobalPromosPage() {
               setResult(null);
               setIsSheetOpen(true);
             }}
-            className="h-12 rounded-2xl border-none bg-emerald-500 px-8 font-black uppercase text-[10px] tracking-widest text-black shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all hover:scale-105 active:scale-95"
+            className="h-12 rounded-2xl border-none bg-emerald-500 px-8 font-black uppercase text-[10px] tracking-widest text-black shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-[background-color,border-color,color,opacity,transform] hover:scale-105 active:scale-95"
           >
             <Plus className="mr-2 h-4 w-4" /> Crear Magic Link / QR
           </Button>
@@ -417,7 +417,7 @@ export default function GlobalPromosPage() {
                     >
                       <TableCell className="py-5 pl-8">
                         <div className="flex flex-col">
-                          <span className="text-xs font-black uppercase italic tracking-tighter text-white transition-all group-hover:emerald-text-glow">
+                          <span className="text-xs font-black uppercase italic tracking-tighter text-white transition-[background-color,border-color,color,opacity,transform] group-hover:emerald-text-glow">
                             {camp.title}
                           </span>
                           <span className="mt-0.5 flex items-center gap-1 text-[8px] font-bold uppercase tracking-widest text-white/30">
@@ -531,7 +531,7 @@ export default function GlobalPromosPage() {
 
               <Button
                 onClick={downloadQR}
-                className="h-14 w-full rounded-2xl border-none bg-emerald-500 font-black uppercase text-[10px] tracking-[0.2em] text-black shadow-[0_0_30px_rgba(16,185,129,0.3)] transition-all hover:scale-[1.02] active:scale-95"
+                className="h-14 w-full rounded-2xl border-none bg-emerald-500 font-black uppercase text-[10px] tracking-[0.2em] text-black shadow-[0_0_30px_rgba(16,185,129,0.3)] transition-[background-color,border-color,color,opacity,transform] hover:scale-[1.02] active:scale-95"
               >
                 <Download className="mr-2 h-4 w-4" /> DESCARGAR QR
               </Button>
@@ -692,7 +692,7 @@ export default function GlobalPromosPage() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="h-20 w-full rounded-2xl border-none bg-emerald-500 text-xs font-black uppercase tracking-[0.4em] text-black transition-all hover:scale-[1.01] active:scale-95"
+                className="h-20 w-full rounded-2xl border-none bg-emerald-500 text-xs font-black uppercase tracking-[0.4em] text-black transition-[background-color,border-color,color,opacity,transform] hover:scale-[1.01] active:scale-95"
               >
                 {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : "GENERAR Y GUARDAR EN BD"}
               </Button>

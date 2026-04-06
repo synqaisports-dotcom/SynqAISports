@@ -153,7 +153,7 @@ export default function PromoSessionsPage() {
            <Badge variant="outline" className="bg-primary/5 border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest px-6 py-2 rounded-2xl print:hidden">
              CUOTA: {vault.sessions?.length || 0} / {MAX_SESSIONS} SESIONES
            </Badge>
-           <Button onClick={handlePrintSession} className="h-12 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl blue-glow hover:scale-105 transition-all border-none print:hidden">
+           <Button onClick={handlePrintSession} className="h-12 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl blue-glow hover:scale-105 transition-[background-color,border-color,color,opacity,transform] border-none print:hidden">
               <Download className="h-4 w-4 mr-2" /> Ficha de Sesión (PDF)
            </Button>
         </div>
@@ -193,7 +193,7 @@ export default function PromoSessionsPage() {
                     <SheetTrigger asChild>
                       <button 
                         disabled={i !== (vault.sessions?.length || 0)}
-                        className="h-[400px] border-2 border-dashed border-white/5 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 bg-white/[0.01] group hover:border-primary/20 hover:bg-primary/[0.02] transition-all print:hidden disabled:opacity-20 disabled:cursor-not-allowed"
+                        className="h-[400px] border-2 border-dashed border-white/5 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 bg-white/[0.01] group hover:border-primary/20 hover:bg-primary/[0.02] transition-[background-color,border-color,color,opacity,transform] print:hidden disabled:opacity-20 disabled:cursor-not-allowed"
                       >
                         <div className="h-14 w-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform">
                             <Plus className="h-6 w-6 text-white/10 group-hover:text-primary/40" />
@@ -249,7 +249,7 @@ export default function PromoSessionsPage() {
                                   </SelectContent>
                                 </Select>
                               ) : (
-                                <Link href={resolveSandboxBoardHref("promo")} className="flex items-center justify-between p-4 bg-orange-500/5 border border-dashed border-orange-500/20 rounded-xl group hover:border-orange-500/40 transition-all">
+                                <Link href={resolveSandboxBoardHref("promo")} className="flex items-center justify-between p-4 bg-orange-500/5 border border-dashed border-orange-500/20 rounded-xl group hover:border-orange-500/40 transition-[background-color,border-color,color,opacity,transform]">
                                   <span className="text-[9px] font-bold text-orange-500/40 uppercase tracking-widest">No hay tareas Warmup</span>
                                   <Pencil className="h-3 w-3 text-orange-500/40 group-hover:text-orange-500" />
                                 </Link>
@@ -274,7 +274,7 @@ export default function PromoSessionsPage() {
                                   </SelectContent>
                                 </Select>
                               ) : (
-                                <Link href={resolveSandboxBoardHref("promo")} className="flex items-center justify-between p-4 bg-amber-500/5 border border-dashed border-amber-500/20 rounded-xl group hover:border-amber-500/40 transition-all">
+                                <Link href={resolveSandboxBoardHref("promo")} className="flex items-center justify-between p-4 bg-amber-500/5 border border-dashed border-amber-500/20 rounded-xl group hover:border-amber-500/40 transition-[background-color,border-color,color,opacity,transform]">
                                   <span className="text-[9px] font-bold text-amber-500/40 uppercase tracking-widest">No hay tareas Main</span>
                                   <Pencil className="h-3 w-3 text-amber-500/40 group-hover:text-amber-500" />
                                 </Link>
@@ -299,7 +299,7 @@ export default function PromoSessionsPage() {
                                   </SelectContent>
                                 </Select>
                               ) : (
-                                <Link href={resolveSandboxBoardHref("promo")} className="flex items-center justify-between p-4 bg-blue-500/5 border border-dashed border-blue-500/20 rounded-xl group hover:border-blue-500/40 transition-all">
+                                <Link href={resolveSandboxBoardHref("promo")} className="flex items-center justify-between p-4 bg-blue-500/5 border border-dashed border-blue-500/20 rounded-xl group hover:border-blue-500/40 transition-[background-color,border-color,color,opacity,transform]">
                                   <span className="text-[9px] font-bold text-blue-500/40 uppercase tracking-widest">No hay tareas Cool</span>
                                   <Pencil className="h-3 w-3 text-blue-500/40 group-hover:text-blue-500" />
                                 </Link>
@@ -323,7 +323,7 @@ export default function PromoSessionsPage() {
                         <SheetClose asChild>
                           <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary/60 font-black uppercase text-[11px] tracking-widest rounded-2xl">CANCELAR</Button>
                         </SheetClose>
-                        <Button onClick={handleCreateSession} className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[11px] tracking-[0.2em] rounded-2xl blue-glow hover:scale-[1.02] transition-all">ENSAMBLAR_PLAN</Button>
+                        <Button onClick={handleCreateSession} className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[11px] tracking-[0.2em] rounded-2xl blue-glow hover:scale-[1.02] transition-[background-color,border-color,color,opacity,transform]">ENSAMBLAR_PLAN</Button>
                       </div>
                     </SheetContent>
                  </Sheet>
@@ -335,7 +335,7 @@ export default function PromoSessionsPage() {
 
       <div className="mt-16 p-12 bg-black/40 border-2 border-primary/20 rounded-[3rem] relative overflow-hidden group print:hidden">
          <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
-         <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-all"><CalendarDays className="h-48 w-48 text-primary" /></div>
+         <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-[background-color,border-color,color,opacity,transform]"><CalendarDays className="h-48 w-48 text-primary" /></div>
          
          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-12 items-center">
             <div className="space-y-6">
@@ -351,7 +351,7 @@ export default function PromoSessionsPage() {
                   Accede al Macrociclo Anual, control de asistencia en tiempo real, histórico de progresión de atletas y sincronización multiplataforma. Deja atrás los slots locales y profesionaliza tu cantera.
                </p>
             </div>
-            <Button className="h-20 bg-primary text-black font-black uppercase text-xs tracking-[0.3em] rounded-3xl blue-glow hover:scale-[1.02] transition-all border-none" asChild>
+            <Button className="h-20 bg-primary text-black font-black uppercase text-xs tracking-[0.3em] rounded-3xl blue-glow hover:scale-[1.02] transition-[background-color,border-color,color,opacity,transform] border-none" asChild>
                <Link href="/login">PASAR A MODO PRO <Zap className="h-5 w-5 ml-3" /></Link>
             </Button>
          </div>
@@ -377,7 +377,7 @@ export default function PromoSessionsPage() {
 function SessionPart({ label, status, active }: { label: string, status: string, active?: boolean }) {
   return (
     <div className={cn(
-      "flex items-center justify-between p-4 bg-black/40 border rounded-2xl group transition-all print:bg-white print:border-black/10",
+      "flex items-center justify-between p-4 bg-black/40 border rounded-2xl group transition-[background-color,border-color,color,opacity,transform] print:bg-white print:border-black/10",
       active ? "border-white/10 hover:border-primary/20" : "border-dashed border-white/5 opacity-40"
     )}>
        <div className="flex flex-col">

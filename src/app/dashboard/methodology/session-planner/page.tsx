@@ -1162,8 +1162,8 @@ export default function SessionPlannerPage() {
                  : "SYNC: SOLO_LOCAL"}
          </Badge>
          <Badge variant="outline" className="border-white/5 text-white/20 uppercase text-[8px] font-black mr-4">Preview_Role:</Badge>
-        <button onClick={() => setViewRole("director")} className={cn("px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all", viewRole === 'director' ? 'bg-primary text-black border-primary shadow-[0_0_20px_rgba(0,242,255,0.25)]' : 'bg-white/5 text-white/40 border-white/5')}>DIRECTOR_MODO</button>
-        <button onClick={() => setViewRole("coach")} className={cn("px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all", viewRole === 'coach' ? 'bg-primary text-black border-primary shadow-[0_0_20px_rgba(0,242,255,0.25)]' : 'bg-white/5 text-white/40 border-white/5')}>COACH_MODO</button>
+        <button onClick={() => setViewRole("director")} className={cn("px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-[background-color,border-color,color,opacity,transform]", viewRole === 'director' ? 'bg-primary text-black border-primary shadow-[0_0_20px_rgba(0,242,255,0.25)]' : 'bg-white/5 text-white/40 border-white/5')}>DIRECTOR_MODO</button>
+        <button onClick={() => setViewRole("coach")} className={cn("px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-[background-color,border-color,color,opacity,transform]", viewRole === 'coach' ? 'bg-primary text-black border-primary shadow-[0_0_20px_rgba(0,242,255,0.25)]' : 'bg-white/5 text-white/40 border-white/5')}>COACH_MODO</button>
       </div>
 
       {/* HEADER DE MANDO */}
@@ -1341,7 +1341,7 @@ export default function SessionPlannerPage() {
             type="button"
             onClick={() => setTvMode((v) => !v)}
             className={cn(
-              "h-12 px-8 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all border-none",
+              "h-12 px-8 rounded-xl font-black uppercase text-[10px] tracking-widest transition-[background-color,border-color,color,opacity,transform] border-none",
               tvMode ? "bg-primary text-black" : "bg-black/40 text-white/60 hover:bg-white/5",
             )}
           >
@@ -1350,7 +1350,7 @@ export default function SessionPlannerPage() {
           <Button
             type="button"
             onClick={handleDownloadSeasonPdf}
-            className="h-12 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl cyan-glow hover:scale-105 transition-all border-none"
+            className="h-12 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl cyan-glow hover:scale-105 transition-[background-color,border-color,color,opacity,transform] border-none"
           >
             <Download className="h-4 w-4 mr-2" /> PDF Temporada
           </Button>
@@ -1454,7 +1454,7 @@ export default function SessionPlannerPage() {
                 <Button
                   onClick={() => setIsAttendanceOpen(true)}
                   disabled={!canEditPlanner}
-                  className="h-9 bg-primary text-black font-black uppercase text-[8px] tracking-widest px-3 rounded-xl shadow-[0_0_18px_rgba(0,242,255,0.25)] hover:scale-105 transition-all border-none disabled:opacity-40"
+                  className="h-9 bg-primary text-black font-black uppercase text-[8px] tracking-widest px-3 rounded-xl shadow-[0_0_18px_rgba(0,242,255,0.25)] hover:scale-105 transition-[background-color,border-color,color,opacity,transform] border-none disabled:opacity-40"
                 >
                   <UserCheck className="h-3.5 w-3.5 mr-1.5" /> Asistencia
                 </Button>
@@ -1661,7 +1661,7 @@ export default function SessionPlannerPage() {
                           key={i} 
                           onClick={() => handleMCCClic(month.id, i + 1)}
                           className={cn(
-                            "p-4 rounded-xl border transition-all cursor-pointer group/mcc relative overflow-hidden",
+                            "p-4 rounded-xl border transition-[background-color,border-color,color,opacity,transform] cursor-pointer group/mcc relative overflow-hidden",
                             selectedMCC === mccId 
                               ? "bg-primary/20 border-primary shadow-[0_0_15px_rgba(0,242,255,0.2)]" 
                               : hasPending 
@@ -1742,7 +1742,7 @@ export default function SessionPlannerPage() {
                       <Button 
                         onClick={() => setIsAttendanceOpen(true)}
                         disabled={!canEditPlanner}
-                        className="h-10 bg-primary text-black font-black uppercase text-[9px] tracking-widest px-6 rounded-xl shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none disabled:opacity-40"
+                        className="h-10 bg-primary text-black font-black uppercase text-[9px] tracking-widest px-6 rounded-xl shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-[background-color,border-color,color,opacity,transform] border-none disabled:opacity-40"
                       >
                         <UserCheck className="h-3.5 w-3.5 mr-2" /> Asistencia
                       </Button>
@@ -1886,13 +1886,13 @@ export default function SessionPlannerPage() {
 
               <div className="p-8 bg-black/60 border-t border-white/5 flex gap-4">
                 <SheetClose asChild>
-                  <Button variant="ghost" className="flex-1 h-16 border border-white/10 text-white/40 font-black uppercase text-[11px] tracking-widest rounded-2xl hover:bg-white/5 transition-all">CERRAR</Button>
+                  <Button variant="ghost" className="flex-1 h-16 border border-white/10 text-white/40 font-black uppercase text-[11px] tracking-widest rounded-2xl hover:bg-white/5 transition-[background-color,border-color,color,opacity,transform]">CERRAR</Button>
                 </SheetClose>
                 {viewRole === 'director' && (
                   <Button
                     onClick={handleSaveConfig}
                     disabled={!canEditPlanner}
-                    className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-2xl cyan-glow hover:scale-[1.02] transition-all disabled:opacity-40"
+                    className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-2xl cyan-glow hover:scale-[1.02] transition-[background-color,border-color,color,opacity,transform] disabled:opacity-40"
                   >
                     SINC_CAMBIOS_MAESTROS
                   </Button>
@@ -1928,7 +1928,7 @@ export default function SessionPlannerPage() {
                     key={player.id}
                     onClick={() => toggleAttendance(player.id)}
                     className={cn(
-                      "p-5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between group overflow-hidden relative",
+                      "p-5 rounded-2xl border transition-[background-color,border-color,color,opacity,transform] cursor-pointer flex items-center justify-between group overflow-hidden relative",
                       status === 'present' ? "bg-emerald-500/5 border-emerald-500/20" :
                       status === 'absent' ? "bg-rose-500/5 border-rose-500/20" :
                       "bg-primary/5 border-primary/20"
@@ -1944,7 +1944,7 @@ export default function SessionPlannerPage() {
                           {player.number}
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-[11px] font-black text-white uppercase italic group-hover:cyan-text-glow transition-all">{player.name}</span>
+                          <span className="text-[11px] font-black text-white uppercase italic group-hover:cyan-text-glow transition-[background-color,border-color,color,opacity,transform]">{player.name}</span>
                           <span className={cn(
                             "text-[8px] font-bold uppercase tracking-widest",
                             status === 'present' ? "text-emerald-400/60" :
@@ -1981,7 +1981,7 @@ export default function SessionPlannerPage() {
                 setIsAttendanceOpen(false);
               }}
               disabled={!canEditPlanner}
-              className="flex-1 h-16 bg-primary text-black font-black uppercase text-[11px] tracking-[0.2em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.3)] hover:scale-[1.02] transition-all border-none w-full disabled:opacity-40"
+              className="flex-1 h-16 bg-primary text-black font-black uppercase text-[11px] tracking-[0.2em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.3)] hover:scale-[1.02] transition-[background-color,border-color,color,opacity,transform] border-none w-full disabled:opacity-40"
             >
               FINALIZAR_REGISTRO <ArrowRight className="h-4 w-4 ml-3" />
             </Button>
@@ -2069,7 +2069,7 @@ function SessionBlock({
 
       <div
         className={cn(
-          "p-6 border-2 rounded-3xl transition-all relative overflow-hidden",
+          "p-6 border-2 rounded-3xl transition-[background-color,border-color,color,opacity,transform] relative overflow-hidden",
           assignedExercise ? "bg-white/[0.02] border-white/5" : "border-dashed border-white/5 text-center",
         )}
       >
@@ -2092,7 +2092,7 @@ function SessionBlock({
                   type="button"
                   disabled={!matrixCanDelete}
                   onClick={() => onClearAssignment?.()}
-                  className="p-2 hover:bg-rose-500/20 rounded-lg text-rose-500 transition-all disabled:opacity-30"
+                  className="p-2 hover:bg-rose-500/20 rounded-lg text-rose-500 transition-[background-color,border-color,color,opacity,transform] disabled:opacity-30"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -2100,7 +2100,7 @@ function SessionBlock({
                   type="button"
                   disabled={!matrixCanEdit}
                   onClick={() => setShowAssign(true)}
-                  className="p-2 hover:bg-primary/15 rounded-lg text-primary transition-all disabled:opacity-30"
+                  className="p-2 hover:bg-primary/15 rounded-lg text-primary transition-[background-color,border-color,color,opacity,transform] disabled:opacity-30"
                 >
                   <Pencil className="h-4 w-4" />
                 </button>

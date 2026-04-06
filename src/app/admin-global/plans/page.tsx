@@ -271,7 +271,7 @@ export default function GlobalPlansPage() {
         
         <Button 
           onClick={handleOpenCreate}
-          className="rounded-2xl bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 transition-all border-none"
+          className="rounded-2xl bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 transition-[background-color,border-color,color,opacity,transform] border-none"
         >
           <Plus className="h-4 w-4 mr-2" /> Nuevo Protocolo
         </Button>
@@ -324,7 +324,7 @@ export default function GlobalPlansPage() {
                     value={newPlan.title}
                     onChange={(e) => setNewPlan({...newPlan, title: e.target.value.toUpperCase()})}
                     placeholder="EJ: VOLUMEN_ESCALADO_800" 
-                    className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-2xl font-bold uppercase focus:border-emerald-500 transition-all placeholder:text-white/10" 
+                    className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-2xl font-bold uppercase focus:border-emerald-500 transition-[background-color,border-color,color,opacity,transform] placeholder:text-white/10" 
                   />
                 </div>
               </div>
@@ -338,7 +338,7 @@ export default function GlobalPlansPage() {
                       value={newPlan.pricePerNode}
                       onChange={(e) => setNewPlan({...newPlan, pricePerNode: e.target.value})}
                       placeholder="0.70" 
-                      className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-2xl font-bold uppercase focus:border-emerald-500 transition-all" 
+                      className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-2xl font-bold uppercase focus:border-emerald-500 transition-[background-color,border-color,color,opacity,transform]" 
                     />
                   </div>
                 </div>
@@ -350,7 +350,7 @@ export default function GlobalPlansPage() {
                       value={newPlan.minNodes}
                       onChange={(e) => setNewPlan({...newPlan, minNodes: e.target.value})}
                       placeholder="800" 
-                      className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-2xl font-bold uppercase focus:border-emerald-500 transition-all" 
+                      className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-2xl font-bold uppercase focus:border-emerald-500 transition-[background-color,border-color,color,opacity,transform]" 
                     />
                   </div>
                 </div>
@@ -363,7 +363,7 @@ export default function GlobalPlansPage() {
                     value={newPlan.defaultRole} 
                     onValueChange={(v) => setNewPlan({...newPlan, defaultRole: v})}
                   >
-                    <SelectTrigger className="h-12 bg-white/5 border-emerald-500/20 rounded-2xl text-white/60 font-bold uppercase tracking-[0.2em] focus:border-emerald-500 transition-all">
+                    <SelectTrigger className="h-12 bg-white/5 border-emerald-500/20 rounded-2xl text-white/60 font-bold uppercase tracking-[0.2em] focus:border-emerald-500 transition-[background-color,border-color,color,opacity,transform]">
                       <div className="flex items-center gap-3">
                         <UserCog className="h-4 w-4 text-emerald-500/40" />
                         <SelectValue placeholder="SELECCIONAR ROL..." />
@@ -409,7 +409,7 @@ export default function GlobalPlansPage() {
                         <div 
                           key={module.id} 
                           className={cn(
-                            "p-4 border transition-all cursor-pointer group flex items-center justify-between rounded-2xl",
+                            "p-4 border transition-[background-color,border-color,color,opacity,transform] cursor-pointer group flex items-center justify-between rounded-2xl",
                             newPlan.access.includes(module.id) ? "bg-emerald-500/10 border-emerald-500/40" : "bg-white/5 border-emerald-500/10 hover:border-emerald-500/20"
                           )}
                           onClick={() => handleToggleAccess(module.id)}
@@ -456,7 +456,7 @@ export default function GlobalPlansPage() {
                       setNewPlan({...newPlan, features: updated});
                     }}
                     placeholder={`ATRIBUTO_0${idx + 1}`} 
-                    className="h-10 bg-white/5 border-emerald-500/20 rounded-xl font-bold uppercase text-xs focus:border-emerald-500 transition-all" 
+                    className="h-10 bg-white/5 border-emerald-500/20 rounded-xl font-bold uppercase text-xs focus:border-emerald-500 transition-[background-color,border-color,color,opacity,transform]" 
                   />
                 ))}
               </div>
@@ -471,7 +471,7 @@ export default function GlobalPlansPage() {
             </SheetClose>
             <Button 
               onClick={handleSincProtocol}
-              className="flex-[2] h-14 bg-emerald-500 text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:scale-[1.02] transition-all border-none"
+              className="flex-[2] h-14 bg-emerald-500 text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:scale-[1.02] transition-[background-color,border-color,color,opacity,transform] border-none"
             >
               {isEditing ? "ACTUALIZAR_NODO" : "SINCRONIZAR_PLAN"}
             </Button>
@@ -526,7 +526,7 @@ function PlanTerminalCard({ plan, onEdit, onToggleActive }: any) {
       </CardContent>
       <CardFooter className="mt-auto p-6 border-t border-white/5 flex gap-3">
         <Button 
-          className="flex-1 h-12 rounded-2xl border border-emerald-500/40 bg-transparent text-emerald-400 font-black uppercase text-[10px] tracking-widest hover:bg-emerald-500 hover:text-black transition-all"
+          className="flex-1 h-12 rounded-2xl border border-emerald-500/40 bg-transparent text-emerald-400 font-black uppercase text-[10px] tracking-widest hover:bg-emerald-500 hover:text-black transition-[background-color,border-color,color,opacity,transform]"
           onClick={() => onEdit(plan)}
         >
           <Pencil className="h-3.5 w-3.5 mr-2" /> Modificar
@@ -534,7 +534,7 @@ function PlanTerminalCard({ plan, onEdit, onToggleActive }: any) {
         <Button 
           variant="ghost" 
           className={cn(
-            "h-12 w-12 rounded-2xl border transition-all",
+            "h-12 w-12 rounded-2xl border transition-[background-color,border-color,color,opacity,transform]",
             isActive 
               ? "border-white/10 text-white/20 hover:text-amber-400 hover:border-amber-500/50 hover:bg-amber-500/10" 
               : "border-emerald-500/30 text-emerald-400 bg-emerald-500/5 hover:bg-emerald-500 hover:text-black"

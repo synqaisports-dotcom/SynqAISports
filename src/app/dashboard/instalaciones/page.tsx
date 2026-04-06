@@ -425,7 +425,7 @@ export default function FacilitiesManagementPage() {
         <Button 
           onClick={handleOpenCreate}
           disabled={!canEditFacilities}
-          className="w-full sm:w-auto rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none disabled:opacity-40"
+          className="w-full sm:w-auto rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-[background-color,border-color,color,opacity,transform] border-none disabled:opacity-40"
         >
           <Plus className="h-4 w-4 mr-2" /> Nuevo Activo
         </Button>
@@ -444,7 +444,7 @@ export default function FacilitiesManagementPage() {
             <Search className="absolute left-3 top-3.5 h-4 w-4 text-primary opacity-50" />
             <Input 
               placeholder="BUSCAR POR NOMBRE O DEPORTE..." 
-              className="pl-10 h-12 bg-white/5 border-primary/20 rounded-2xl text-primary placeholder:text-primary/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-primary/50 transition-all"
+              className="pl-10 h-12 bg-white/5 border-primary/20 rounded-2xl text-primary placeholder:text-primary/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-primary/50 transition-[background-color,border-color,color,opacity,transform]"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -454,14 +454,14 @@ export default function FacilitiesManagementPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {filteredFacilities.map((f) => (
-          <Card key={f.id} className="glass-panel overflow-hidden relative group border border-primary/10 bg-black/40 hover:border-primary/30 transition-all rounded-3xl">
+          <Card key={f.id} className="glass-panel overflow-hidden relative group border border-primary/10 bg-black/40 hover:border-primary/30 transition-[background-color,border-color,color,opacity,transform] rounded-3xl">
             <div className={cn(
               "absolute top-0 left-0 w-full h-[2px]",
               f.status === 'Active' ? 'bg-primary/40' : 'bg-amber-500/40'
             )} />
             <CardHeader className="p-6">
               <div className="flex justify-between items-start mb-4">
-                <div className="h-12 w-12 bg-primary/5 border border-primary/20 rounded-2xl flex items-center justify-center transition-all rotate-3 group-hover:rotate-0 duration-500">
+                <div className="h-12 w-12 bg-primary/5 border border-primary/20 rounded-2xl flex items-center justify-center transition-[background-color,border-color,color,opacity,transform] rotate-3 group-hover:rotate-0 duration-500">
                   <Warehouse className={cn("h-6 w-6", f.status === 'Active' ? "text-primary" : "text-amber-400")} />
                 </div>
                 <div className="flex flex-col items-end">
@@ -474,7 +474,7 @@ export default function FacilitiesManagementPage() {
                   <span className="text-[8px] text-primary/30 font-bold uppercase tracking-widest mt-2">ID: {f.id.toUpperCase()}</span>
                 </div>
               </div>
-              <CardTitle className="text-xl font-black text-white italic tracking-tighter uppercase mb-1 group-hover:cyan-text-glow transition-all">
+              <CardTitle className="text-xl font-black text-white italic tracking-tighter uppercase mb-1 group-hover:cyan-text-glow transition-[background-color,border-color,color,opacity,transform]">
                 {f.name}
               </CardTitle>
               <div className="flex items-center gap-2 mb-1">
@@ -514,7 +514,7 @@ export default function FacilitiesManagementPage() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-9 w-9 text-primary hover:bg-primary/10 border border-primary/10 transition-all rounded-xl active:scale-95"
+                  className="h-9 w-9 text-primary hover:bg-primary/10 border border-primary/10 transition-[background-color,border-color,color,opacity,transform] rounded-xl active:scale-95"
                   onClick={() => handleDuplicate(f)}
                   disabled={!canEditFacilities}
                   title="Duplicar Activo"
@@ -524,7 +524,7 @@ export default function FacilitiesManagementPage() {
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="h-9 w-9 text-primary hover:bg-primary/10 border border-primary/10 transition-all rounded-xl active:scale-95"
+                  className="h-9 w-9 text-primary hover:bg-primary/10 border border-primary/10 transition-[background-color,border-color,color,opacity,transform] rounded-xl active:scale-95"
                   onClick={() => handleEdit(f)}
                   disabled={!canEditFacilities}
                   title="Modificar Activo"
@@ -534,7 +534,7 @@ export default function FacilitiesManagementPage() {
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="h-9 w-9 text-rose-500 hover:bg-rose-500/10 border border-rose-500/10 transition-all rounded-xl active:scale-95"
+                  className="h-9 w-9 text-rose-500 hover:bg-rose-500/10 border border-rose-500/10 transition-[background-color,border-color,color,opacity,transform] rounded-xl active:scale-95"
                   onClick={() => handleDelete(f.id, f.name)}
                   disabled={!canDeleteFacilities}
                   title="Eliminar Activo"
@@ -573,7 +573,7 @@ export default function FacilitiesManagementPage() {
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})}
                   placeholder="EJ: PABELLÓN MUNICIPAL" 
-                  className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-all text-primary placeholder:text-primary/20 text-lg" 
+                  className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-[background-color,border-color,color,opacity,transform] text-primary placeholder:text-primary/20 text-lg" 
                 />
               </div>
 
@@ -584,7 +584,7 @@ export default function FacilitiesManagementPage() {
                     value={formData.type} 
                     onValueChange={(v) => setFormData({...formData, type: v})}
                   >
-                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-2xl text-primary font-bold uppercase tracking-widest focus:border-primary transition-all">
+                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-2xl text-primary font-bold uppercase tracking-widest focus:border-primary transition-[background-color,border-color,color,opacity,transform]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="z-[120] bg-[#04070c] border-primary/20 rounded-2xl">
@@ -602,7 +602,7 @@ export default function FacilitiesManagementPage() {
                     value={formData.sport} 
                     onValueChange={(v) => setFormData({...formData, sport: v})}
                   >
-                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-2xl text-primary font-bold uppercase tracking-widest focus:border-primary transition-all">
+                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-2xl text-primary font-bold uppercase tracking-widest focus:border-primary transition-[background-color,border-color,color,opacity,transform]">
                       <div className="flex items-center gap-3">
                         <Dumbbell className="h-4 w-4 text-primary/40" />
                         <SelectValue placeholder="DEPORTE..." />
@@ -683,7 +683,7 @@ export default function FacilitiesManagementPage() {
                             type="button"
                             onClick={() => toggleDay(day.id, "divisionDays")}
                             className={cn(
-                              "h-9 min-w-9 px-2 flex items-center justify-center font-black text-[10px] border transition-all rounded-xl active:scale-95",
+                              "h-9 min-w-9 px-2 flex items-center justify-center font-black text-[10px] border transition-[background-color,border-color,color,opacity,transform] rounded-xl active:scale-95",
                               formData.divisionDays.includes(day.id)
                                 ? "bg-primary text-black border-primary shadow-[0_0_15px_rgba(0,242,255,0.3)]"
                                 : "bg-white/5 border-primary/20 text-primary/40 hover:border-primary/40"
@@ -720,7 +720,7 @@ export default function FacilitiesManagementPage() {
                           type="button"
                           onClick={() => toggleDay(day.id)}
                           className={cn(
-                            "h-10 w-10 flex items-center justify-center font-black text-[10px] border transition-all rounded-xl active:scale-95",
+                            "h-10 w-10 flex items-center justify-center font-black text-[10px] border transition-[background-color,border-color,color,opacity,transform] rounded-xl active:scale-95",
                             formData.days.includes(day.id)
                               ? "bg-primary text-black border-primary shadow-[0_0_15px_rgba(0,242,255,0.3)]"
                               : "bg-white/5 border-primary/20 text-primary/30 hover:border-primary/40"
@@ -769,7 +769,7 @@ export default function FacilitiesManagementPage() {
                     value={formData.capacity}
                     onChange={(e) => setFormData({...formData, capacity: e.target.value})}
                     placeholder="EJ: 25 ATLETAS" 
-                    className="h-12 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-all text-primary placeholder:text-primary/20" 
+                    className="h-12 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary transition-[background-color,border-color,color,opacity,transform] text-primary placeholder:text-primary/20" 
                   />
                 </div>
                 <div className="space-y-2">
@@ -778,7 +778,7 @@ export default function FacilitiesManagementPage() {
                     value={formData.status} 
                     onValueChange={(v) => setFormData({...formData, status: v})}
                   >
-                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-2xl text-primary font-bold uppercase tracking-widest focus:border-primary transition-all">
+                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-2xl text-primary font-bold uppercase tracking-widest focus:border-primary transition-[background-color,border-color,color,opacity,transform]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="z-[120] bg-[#04070c] border-primary/20 rounded-2xl">
@@ -819,7 +819,7 @@ export default function FacilitiesManagementPage() {
 
             <div className="pt-2 flex gap-4">
               <SheetClose asChild>
-                <Button type="button" variant="ghost" className="flex-1 h-14 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 transition-all rounded-2xl active:scale-95">
+                <Button type="button" variant="ghost" className="flex-1 h-14 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 transition-[background-color,border-color,color,opacity,transform] rounded-2xl active:scale-95">
                   CANCELAR
                 </Button>
               </SheetClose>
@@ -842,7 +842,7 @@ function FacilityStat({ label, value, icon: Icon, highlight, warning }: any) {
   return (
     <Card className="glass-panel p-5 flex items-center gap-5 relative overflow-hidden group border border-primary/20 bg-black/20 rounded-3xl">
        <div className={cn(
-         "h-12 w-12 flex items-center justify-center border transition-all rotate-3 group-hover:rotate-0 duration-500 rounded-2xl bg-primary/10 border-primary/20",
+         "h-12 w-12 flex items-center justify-center border transition-[background-color,border-color,color,opacity,transform] rotate-3 group-hover:rotate-0 duration-500 rounded-2xl bg-primary/10 border-primary/20",
          warning ? "border-rose-500/20 bg-rose-500/10" : ""
        )}>
           <Icon className={cn("h-6 w-6", warning ? "text-rose-400" : "text-primary")} />

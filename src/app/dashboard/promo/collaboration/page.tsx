@@ -114,7 +114,7 @@ export default function CollaborationCenterPage() {
           </div>
 
           <Card className="glass-panel border-white/5 bg-black/40 p-10 rounded-[2.5rem] relative overflow-hidden group">
-             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-all"><Zap className="h-32 w-32 text-primary" /></div>
+             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-[background-color,border-color,color,opacity,transform]"><Zap className="h-32 w-32 text-primary" /></div>
              <form onSubmit={handleSendFeedback} className="space-y-6 relative z-10">
                 <div className="space-y-3">
                    <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1">Tu Sugerencia Táctica</Label>
@@ -125,7 +125,7 @@ export default function CollaborationCenterPage() {
                     className="min-h-[180px] bg-white/5 border-primary/20 rounded-3xl font-bold uppercase text-xs focus:border-primary text-primary placeholder:text-primary/10" 
                    />
                 </div>
-                <Button disabled={feedbackLoading} className="w-full h-16 bg-primary text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-2xl blue-glow border-none transition-all">
+                <Button disabled={feedbackLoading} className="w-full h-16 bg-primary text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-2xl blue-glow border-none transition-[background-color,border-color,color,opacity,transform]">
                    {feedbackLoading ? "ENVIANDO..." : "ENVIAR AL CENTRO DE MANDO"} <Send className="h-4 w-4 ml-3" />
                 </Button>
              </form>
@@ -183,7 +183,7 @@ export default function CollaborationCenterPage() {
                       <Input required type="email" value={clubLead.email} onChange={(e) => setLead({...clubLead, email: e.target.value})} placeholder="DIRECTIVA@CLUB.COM" className="h-12 bg-black/40 border-emerald-500/20 rounded-xl font-bold focus:border-emerald-500 text-emerald-400" />
                    </div>
                 </div>
-                <Button disabled={leadLoading} className="w-full h-16 bg-emerald-500 text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.3)] border-none hover:scale-[1.02] transition-all">
+                <Button disabled={leadLoading} className="w-full h-16 bg-emerald-500 text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.3)] border-none hover:scale-[1.02] transition-[background-color,border-color,color,opacity,transform]">
                    {leadLoading ? "SOLICITANDO..." : "SOLICITAR INFO PARA MI CLUB"} <ArrowRight className="h-4 w-4 ml-3" />
                 </Button>
              </form>

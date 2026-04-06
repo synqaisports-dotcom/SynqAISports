@@ -35,7 +35,7 @@ function NavItem({ icon: Icon, active, href = "#" }: any) {
   return (
     <Link href={href}>
       <button className={cn(
-        "h-12 w-12 rounded-2xl flex items-center justify-center transition-all relative",
+        "h-12 w-12 rounded-2xl flex items-center justify-center transition-[background-color,border-color,color,opacity,transform] relative",
         active ? "bg-primary/10 text-primary shadow-[0_0_15px_rgba(0,242,255,0.1)]" : "text-white/20 hover:text-white"
       )}>
         <Icon className="h-6 w-6" />
@@ -184,7 +184,7 @@ export function TutorClientLayout({ children }: { children: ReactNode }) {
               <div className="w-full aspect-video bg-white/5 border border-white/10 rounded-3xl flex items-center justify-center">
                  <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">Video_Ad_Container</span>
               </div>
-              <button onClick={() => setIsInterstitialVisible(false)} className="w-full h-16 bg-white/5 border border-white/10 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl active:scale-95 transition-all">Continuar a la App</button>
+              <button onClick={() => setIsInterstitialVisible(false)} className="w-full h-16 bg-white/5 border border-white/10 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl active:scale-95 transition-[background-color,border-color,color,opacity,transform]">Continuar a la App</button>
             </div>
           </div>
         )}

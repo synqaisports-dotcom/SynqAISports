@@ -224,11 +224,11 @@ const AdSlot = memo(({ orientation = 'horizontal', source = "sandbox" }: { orien
   }, [orientation, source]);
   const handleAdClick = () => { synqSync.trackEvent('ad_click', { source, format: orientation, placement: 'training_board_multiplex' }); };
   return (
-    <div onClick={handleAdClick} className={cn("bg-amber-500/5 border-2 border-dashed border-amber-500/20 flex flex-col items-center justify-center rounded-2xl overflow-hidden group transition-all hover:bg-amber-500/[0.08] pointer-events-auto shadow-[0_0_20px_rgba(245,158,11,0.05)] relative cursor-pointer", orientation === 'horizontal' ? "h-16 w-full" : "w-40 h-[600px]")}>
+    <div onClick={handleAdClick} className={cn("bg-amber-500/5 border-2 border-dashed border-amber-500/20 flex flex-col items-center justify-center rounded-2xl overflow-hidden group transition-[background-color,border-color,color,opacity,transform] hover:bg-amber-500/[0.08] pointer-events-auto shadow-[0_0_20px_rgba(245,158,11,0.05)] relative cursor-pointer", orientation === 'horizontal' ? "h-16 w-full" : "w-40 h-[600px]")}>
       <div className="absolute top-0 left-0 bg-amber-500/20 text-amber-500 text-[6px] font-black px-2 py-0.5 uppercase tracking-widest italic z-20">Multiplex_Ad_Node</div>
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-amber-500/5 to-transparent h-1/2 w-full animate-[refresh-scan_3s_linear_infinite] pointer-events-none z-10" />
       <div className="relative z-20 flex flex-col items-center text-center px-4">
-        <RefreshCw className="h-4 w-4 text-amber-500/40 group-hover:text-amber-500 transition-all mb-1 animate-spin-slow" />
+        <RefreshCw className="h-4 w-4 text-amber-500/40 group-hover:text-amber-500 transition-[background-color,border-color,color,opacity,transform] mb-1 animate-spin-slow" />
         <span className="text-[7px] font-black text-amber-500/60 uppercase tracking-[0.2em] italic truncate">Sync_Broadcast</span>
         <span className="text-[5px] text-white/20 uppercase font-bold tracking-widest">Auto-Refresh: Active</span>
       </div>
@@ -1457,7 +1457,7 @@ function TrainingBoardContent() {
             <div className="flex flex-wrap items-center justify-center gap-x-1 gap-y-2 md:gap-x-2 md:gap-y-2 min-w-0">
           
           <div className="flex items-center gap-2 sm:gap-3 pr-2 sm:pr-3 border-r border-white/10 shrink-0 max-[380px]:pr-2">
-            <button onClick={toggleFullscreen} className="h-8 w-8 shrink-0 flex items-center justify-center text-amber-500/40 hover:text-amber-500 transition-all active:scale-95" title={isFullscreen ? "Minimizar" : "Pantalla Completa"}>{isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}</button>
+            <button onClick={toggleFullscreen} className="h-8 w-8 shrink-0 flex items-center justify-center text-amber-500/40 hover:text-amber-500 transition-[background-color,border-color,color,opacity,transform] active:scale-95" title={isFullscreen ? "Minimizar" : "Pantalla Completa"}>{isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}</button>
             <div className="flex flex-col min-w-0">
               <div className="hidden sm:flex items-center gap-1.5">
                 <Sparkles className="h-3 w-3 text-amber-500 animate-pulse shrink-0" />
@@ -1474,7 +1474,7 @@ function TrainingBoardContent() {
           <div className="flex items-center gap-1 sm:gap-2 px-0 shrink-0">
             <Sheet open={isMaterialsSheetOpen} onOpenChange={setIsMaterialsSheetOpen}>
               <SheetTrigger asChild>
-                <button className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center transition-all group">
+                <button className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center transition-[background-color,border-color,color,opacity,transform] group">
                   <Boxes className="h-4 w-4 group-hover:animate-pulse" />
                 </button>
               </SheetTrigger>
@@ -1525,7 +1525,7 @@ function TrainingBoardContent() {
               onClick={() => setIsHalfField(!isHalfField)}
               title={isHalfField ? "Ver campo completo" : "Medio campo"}
               className={cn(
-                "h-8 px-1.5 sm:px-2 border border-amber-500/20 text-[7px] font-black uppercase rounded-lg transition-all inline-flex items-center justify-center gap-1 shrink-0",
+                "h-8 px-1.5 sm:px-2 border border-amber-500/20 text-[7px] font-black uppercase rounded-lg transition-[background-color,border-color,color,opacity,transform] inline-flex items-center justify-center gap-1 shrink-0",
                 isHalfField ? "bg-amber-500 text-black" : "text-amber-500/40",
               )}
             >
@@ -1552,7 +1552,7 @@ function TrainingBoardContent() {
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <Sheet open={isDrawingSheetOpen} onOpenChange={setIsDrawingSheetOpen}>
               <SheetTrigger asChild>
-                <button className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center hover:bg-amber-500 hover:text-black transition-all group relative">
+                <button className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center hover:bg-amber-500 hover:text-black transition-[background-color,border-color,color,opacity,transform] group relative">
                   <PencilLine className="h-4 w-4 group-hover:animate-pulse" />
                 </button>
               </SheetTrigger>
@@ -1598,7 +1598,7 @@ function TrainingBoardContent() {
 
             <Sheet open={isVaultSheetOpen} onOpenChange={setIsVaultSheetOpen}>
               <SheetTrigger asChild>
-                <button className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center hover:bg-amber-500 hover:text-black transition-all group relative">
+                <button className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center hover:bg-amber-500 hover:text-black transition-[background-color,border-color,color,opacity,transform] group relative">
                   <Library className="h-4 w-4 group-hover:animate-pulse" />
                 </button>
               </SheetTrigger>

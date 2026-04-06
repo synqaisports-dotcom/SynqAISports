@@ -2,6 +2,7 @@ import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/lib/auth-context";
+import { I18nProvider } from "@/contexts/i18n-context";
 
 export const themeColor = '#04070c';
 export const viewport = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0';
@@ -56,8 +57,10 @@ export default async function RootLayout(props: {
       </head>
       <body className="font-body antialiased selection:bg-accent/30 selection:text-primary">
         <AuthProvider>
-          {children}
-          <Toaster />
+          <I18nProvider>
+            {children}
+            <Toaster />
+          </I18nProvider>
         </AuthProvider>
       </body>
     </html>

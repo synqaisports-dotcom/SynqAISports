@@ -229,7 +229,7 @@ export default function CoachLibraryGrid() {
           <p className="text-[11px] font-black text-primary/30 tracking-[0.3em] uppercase">Gestión de Tareas y Manual de Club</p>
         </div>
         
-        <Button className="rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-14 px-10 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 active:scale-95 transition-all border-none" asChild>
+        <Button className="rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-14 px-10 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 active:scale-95 transition-[background-color,border-color,color,opacity,transform] border-none" asChild>
           <Link href="/board/training">
             <Plus className="h-5 w-5 mr-3" /> Diseñar Nueva Tarea
           </Link>
@@ -280,7 +280,7 @@ export default function CoachLibraryGrid() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="FILTRAR POR TEMA TÁCTICO..."
-              className="h-14 pl-12 bg-white/5 border-white/10 rounded-2xl text-[10px] font-black uppercase focus:border-primary transition-all"
+              className="h-14 pl-12 bg-white/5 border-white/10 rounded-2xl text-[10px] font-black uppercase focus:border-primary transition-[background-color,border-color,color,opacity,transform]"
             />
           </div>
         </div>
@@ -290,7 +290,7 @@ export default function CoachLibraryGrid() {
             {filtered.filter((t) => t.type === "Private").map((task) => (
               <TaskCard key={task.id} task={task} theme="cyan" />
             ))}
-            <Link href="/board/training" className="aspect-video border-2 border-dashed border-primary/10 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 group hover:border-primary/30 transition-all cursor-pointer bg-primary/5">
+            <Link href="/board/training" className="aspect-video border-2 border-dashed border-primary/10 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 group hover:border-primary/30 transition-[background-color,border-color,color,opacity,transform] cursor-pointer bg-primary/5">
                <div className="h-14 w-14 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <Plus className="h-6 w-6 text-primary" />
                </div>
@@ -330,21 +330,21 @@ function TaskCard({ task, theme }: { task: UiTask; theme: "cyan" | "amber" }) {
 
   return (
     <Card className={cn(
-      "glass-panel border-none bg-black/40 overflow-hidden group hover:scale-[1.02] transition-all rounded-[2.5rem] shadow-2xl relative",
+      "glass-panel border-none bg-black/40 overflow-hidden group hover:scale-[1.02] transition-[background-color,border-color,color,opacity,transform] rounded-[2.5rem] shadow-2xl relative",
       theme === 'amber' ? 'hover:bg-amber-500/[0.03]' : 'hover:bg-primary/[0.03]'
     )}>
       <div className={cn("h-1.5 w-full", theme === 'cyan' ? 'bg-primary/40' : 'bg-amber-500/40')} />
       
       <CardHeader className="p-8 pb-4">
         <div className="flex justify-between items-start mb-4">
-          <div className={cn("h-12 w-12 rounded-2xl flex items-center justify-center border transition-all", bg, border)}>
+          <div className={cn("h-12 w-12 rounded-2xl flex items-center justify-center border transition-[background-color,border-color,color,opacity,transform]", bg, border)}>
             <LayoutGrid className={cn("h-6 w-6", accent)} />
           </div>
           <Badge variant="outline" className={cn("rounded-full border-white/10 text-white/40 text-[8px] font-black uppercase px-3")}>
             {task.duration}
           </Badge>
         </div>
-        <CardTitle className="text-xl font-black text-white italic tracking-tighter uppercase group-hover:cyan-text-glow transition-all">
+        <CardTitle className="text-xl font-black text-white italic tracking-tighter uppercase group-hover:cyan-text-glow transition-[background-color,border-color,color,opacity,transform]">
           {task.title}
         </CardTitle>
         <CardDescription className={cn("text-[9px] font-black uppercase tracking-widest pt-1", accent)}>
@@ -353,7 +353,7 @@ function TaskCard({ task, theme }: { task: UiTask; theme: "cyan" | "amber" }) {
       </CardHeader>
 
       <CardContent className="px-8 pb-8">
-        <div className="aspect-[1.6/1] bg-black/60 border border-white/5 rounded-2xl flex items-center justify-center relative overflow-hidden group-hover:border-primary/20 transition-all">
+        <div className="aspect-[1.6/1] bg-black/60 border border-white/5 rounded-2xl flex items-center justify-center relative overflow-hidden group-hover:border-primary/20 transition-[background-color,border-color,color,opacity,transform]">
            <div className="absolute inset-0 bg-grid-pattern opacity-5" />
            <div className="text-center space-y-2 opacity-20 group-hover:opacity-40 transition-opacity">
               <Trophy className={cn("h-8 w-8 mx-auto", accent)} />

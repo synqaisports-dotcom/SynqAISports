@@ -50,7 +50,7 @@ export function PlayerChip({
     >
       <div 
         className={cn(
-          "h-8 w-8 md:h-10 md:w-10 lg:h-11 lg:w-11 rounded-full border-[1.5px] md:border-2 flex items-center justify-center text-[10px] md:text-[10px] lg:text-xs font-black shadow-lg transition-all duration-300",
+          "h-8 w-8 md:h-10 md:w-10 lg:h-11 lg:w-11 rounded-full border-[1.5px] md:border-2 flex items-center justify-center text-[10px] md:text-[10px] lg:text-xs font-black shadow-lg transition-[background-color,border-color,color,opacity,transform] duration-300",
           team === 'local' 
             ? "bg-primary/20 border-primary text-primary shadow-[0_0_15px_rgba(0,242,255,0.3)]" 
             : "bg-rose-500/20 border-rose-500 text-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.3)]",
@@ -61,7 +61,7 @@ export function PlayerChip({
       </div>
       {label && (
         <span className={cn(
-          "text-[8px] md:text-[8px] lg:text-[9px] font-black uppercase tracking-tighter whitespace-nowrap bg-black/60 px-1.5 py-0.5 rounded-sm transition-opacity duration-300",
+          "text-[7px] md:text-[7px] lg:text-[8px] font-black uppercase tracking-tight whitespace-nowrap bg-black/60 px-1.5 py-0.5 rounded-sm transition-opacity duration-300",
           isDragging ? "opacity-0" : "opacity-100"
         )}>
           {label}

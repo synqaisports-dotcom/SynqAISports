@@ -176,7 +176,7 @@ export default function WatchConfigPage() {
           <Button 
             onClick={handleSaveProtocol}
             disabled={loading}
-            className="rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none"
+            className="rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-[background-color,border-color,color,opacity,transform] border-none"
           >
             {loading ? "Sincronizando..." : "Guardar Protocolo"} <Save className="h-4 w-4 ml-2" />
           </Button>
@@ -187,7 +187,7 @@ export default function WatchConfigPage() {
         
         <div className="space-y-8">
           <Card className="glass-panel border-primary/20 bg-primary/5 p-8 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-all">
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-[background-color,border-color,color,opacity,transform]">
               <Watch className="h-32 w-32 text-primary" />
             </div>
             <div className="flex items-center gap-3 mb-6 relative z-10">
@@ -214,7 +214,7 @@ export default function WatchConfigPage() {
           <BoardPerformanceSettingsCard />
 
           <div className="p-8 rounded-3xl border border-white/5 bg-black/40 space-y-4 relative overflow-hidden group">
-             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-20 transition-all">
+             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-20 transition-[background-color,border-color,color,opacity,transform]">
                 <ShieldCheck className="h-20 w-20 text-primary" />
              </div>
              <div className="flex items-center gap-3">
@@ -240,7 +240,7 @@ export default function WatchConfigPage() {
               />
             </CardHeader>
             <CardContent className={cn(
-              "p-8 space-y-10 transition-all duration-500",
+              "p-8 space-y-10 transition-[background-color,border-color,color,opacity,transform] duration-500",
               !operationalAlertsActive && "opacity-30 pointer-events-none grayscale"
             )}>
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 p-6 bg-primary/5 border border-primary/20 rounded-2xl relative overflow-hidden">

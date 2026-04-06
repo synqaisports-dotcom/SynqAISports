@@ -259,5 +259,6 @@ export function canAccessEliteTerminal(
   requestedClubId: string | null | undefined
 ): boolean {
   if (isEliteClubId(profile?.clubId)) return true;
-  return canAccessEliteTerminalAsDev(profile) && !!String(requestedClubId || "").trim();
+  // Superadmin puede acceder aunque no tenga todavía un club objetivo seleccionado.
+  return canAccessEliteTerminalAsDev(profile);
 }

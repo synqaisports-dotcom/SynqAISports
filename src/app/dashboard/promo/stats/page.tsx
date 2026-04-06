@@ -122,14 +122,14 @@ export default function PromoStatsPage() {
               <p className="text-[8px] font-black text-white/20 uppercase tracking-widest print:text-black/40">Efectividad</p>
               <p className="text-2xl font-black text-primary italic tracking-tighter print:text-black">{Math.round(stats.winRate)}%</p>
            </div>
-           <Button onClick={handlePrintPDF} className="h-12 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl blue-glow hover:scale-105 transition-all border-none print:hidden ml-4">
+           <Button onClick={handlePrintPDF} className="h-12 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl blue-glow hover:scale-105 transition-[background-color,border-color,color,opacity,transform] border-none print:hidden ml-4">
             <Download className="h-4 w-4 mr-2" /> Exportar PDF
            </Button>
         </div>
       </div>
 
       {/* BLOQUE DE GAMIFICACIÓN INTEGRADO (v10.1.0) */}
-      <div className="flex items-center gap-6 p-6 bg-primary/5 border border-primary/20 rounded-[2.5rem] shadow-2xl group hover:border-primary/40 transition-all relative overflow-hidden print:hidden">
+      <div className="flex items-center gap-6 p-6 bg-primary/5 border border-primary/20 rounded-[2.5rem] shadow-2xl group hover:border-primary/40 transition-[background-color,border-color,color,opacity,transform] relative overflow-hidden print:hidden">
          <div className="absolute inset-0 bg-primary/5 scan-line opacity-20" />
          <div className="h-16 w-16 rounded-2xl bg-black border-2 border-primary/40 flex items-center justify-center relative overflow-hidden group-hover:scale-110 transition-transform shadow-[0_0_20px_rgba(0,242,255,0.2)]">
             <Award className={cn("h-8 w-8", rank.color)} />
@@ -140,7 +140,7 @@ export default function PromoStatsPage() {
                <span className="text-[11px] font-black text-white italic">LVL {coachLevel}</span>
             </div>
             <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-               <div className="h-full bg-primary shadow-[0_0_10px_var(--primary)] transition-all duration-1000" style={{ width: `${levelProgress}%` }} />
+               <div className="h-full bg-primary shadow-[0_0_10px_var(--primary)] transition-[background-color,border-color,color,opacity,transform] duration-1000" style={{ width: `${levelProgress}%` }} />
             </div>
             <div className="flex justify-between items-center">
               <p className="text-[7px] font-bold text-primary/40 uppercase tracking-widest italic">+{500 - (coachXP % 500)} XP para subir de rango</p>
@@ -190,7 +190,7 @@ export default function PromoStatsPage() {
 
         <aside className="space-y-8 print:hidden">
           <Card className="glass-panel border-primary/30 bg-primary/5 p-8 relative overflow-hidden group rounded-[2.5rem]">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-all"><Swords className="h-32 w-32 text-primary" /></div>
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-[background-color,border-color,color,opacity,transform]"><Swords className="h-32 w-32 text-primary" /></div>
             <div className="flex items-center gap-3 mb-6">
                <Calendar className="h-4 w-4 text-primary animate-pulse" />
                <span className="text-[10px] font-black uppercase text-primary tracking-widest">PRÓXIMO_OBJETIVO</span>
@@ -231,7 +231,7 @@ function StatsMiniCard({ label, value, icon: Icon, highlight, warning }: any) {
   return (
     <Card className="glass-panel p-5 flex items-center gap-5 relative overflow-hidden group border border-white/5 bg-black/20 rounded-3xl print:bg-white print:border-black/10">
        <div className={cn(
-         "h-12 w-12 flex items-center justify-center border transition-all rotate-3 group-hover:rotate-0 duration-500 rounded-2xl bg-white/5 border-white/10 print:bg-black/5 print:border-black/10",
+         "h-12 w-12 flex items-center justify-center border transition-[background-color,border-color,color,opacity,transform] rotate-3 group-hover:rotate-0 duration-500 rounded-2xl bg-white/5 border-white/10 print:bg-black/5 print:border-black/10",
          highlight ? "border-primary/20 bg-primary/5" : "",
          warning ? "border-rose-500/20 bg-rose-500/10" : ""
        )}>
@@ -254,11 +254,11 @@ function StatsMiniCard({ label, value, icon: Icon, highlight, warning }: any) {
 function WeatherWidget({ isOnline }: { isOnline: boolean }) {
   return (
     <Card className={cn(
-      "glass-panel p-5 flex items-center gap-5 relative overflow-hidden group border border-white/5 rounded-3xl transition-all duration-700",
+      "glass-panel p-5 flex items-center gap-5 relative overflow-hidden group border border-white/5 rounded-3xl transition-[background-color,border-color,color,opacity,transform] duration-700",
       isOnline ? "bg-primary/5 border-primary/20" : "bg-white/5 grayscale"
     )}>
        <div className={cn(
-         "h-12 w-12 flex items-center justify-center border transition-all rounded-2xl",
+         "h-12 w-12 flex items-center justify-center border transition-[background-color,border-color,color,opacity,transform] rounded-2xl",
          isOnline ? "bg-primary/10 border-primary/30" : "bg-white/5 border-white/10"
        )}>
           <CloudSun className={cn("h-6 w-6", isOnline ? "text-primary animate-pulse" : "text-white/20")} />

@@ -158,7 +158,7 @@ export default function TutorLoginPage() {
             <Button 
               type="submit"
               disabled={loading || !email}
-              className="w-full h-16 bg-primary text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] transition-all border-none"
+              className="w-full h-16 bg-primary text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] transition-[background-color,border-color,color,opacity,transform] border-none"
             >
               {loading ? <RefreshCw className="h-5 w-5 animate-spin" /> : "ACCEDER AL NODO"} <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
@@ -186,7 +186,7 @@ export default function TutorLoginPage() {
               <button 
                 type="button" 
                 onClick={() => setStep('recovery')}
-                className="text-[9px] font-black text-white/30 hover:text-primary transition-all uppercase tracking-widest ml-1"
+                className="text-[9px] font-black text-white/30 hover:text-primary transition-[background-color,border-color,color,opacity,transform] uppercase tracking-widest ml-1"
               >
                 ¿Has olvidado tu contraseña?
               </button>
@@ -194,7 +194,7 @@ export default function TutorLoginPage() {
             <Button 
               type="submit"
               disabled={loading || !password}
-              className="w-full h-16 bg-primary text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] transition-all border-none"
+              className="w-full h-16 bg-primary text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] transition-[background-color,border-color,color,opacity,transform] border-none"
             >
               {loading ? <RefreshCw className="h-5 w-5 animate-spin" /> : "VALIDAR IDENTIDAD"} <ShieldCheck className="h-4 w-4 ml-2" />
             </Button>
@@ -205,7 +205,7 @@ export default function TutorLoginPage() {
           <form onSubmit={handleRecovery} className="space-y-6 relative z-10 animate-in zoom-in-95">
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <button type="button" onClick={() => setStep('password')} className="text-primary/40 hover:text-primary transition-all"><ChevronLeft className="h-5 w-5" /></button>
+                <button type="button" onClick={() => setStep('password')} className="text-primary/40 hover:text-primary transition-[background-color,border-color,color,opacity,transform]"><ChevronLeft className="h-5 w-5" /></button>
                 <span className="text-[10px] font-black uppercase text-white tracking-widest">Recuperar Acceso</span>
               </div>
               <p className="text-[9px] text-white/40 font-bold uppercase tracking-widest leading-relaxed px-1 italic">
@@ -215,7 +215,7 @@ export default function TutorLoginPage() {
             <Button 
               type="submit"
               disabled={loading}
-              className="w-full h-16 bg-white/5 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-[0.2em] rounded-2xl hover:bg-primary hover:text-black transition-all"
+              className="w-full h-16 bg-white/5 border border-primary/20 text-primary font-black uppercase text-[10px] tracking-[0.2em] rounded-2xl hover:bg-primary hover:text-black transition-[background-color,border-color,color,opacity,transform]"
             >
               {loading ? <RefreshCw className="h-5 w-5 animate-spin" /> : "ENVIAR TOKEN DE RECORDE"}
             </Button>

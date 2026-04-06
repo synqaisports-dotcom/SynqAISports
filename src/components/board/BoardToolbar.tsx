@@ -120,8 +120,8 @@ export function BoardToolbar({
   const isHorizontal = orientation === "horizontal";
 
   const btnClass = showLabels
-    ? "h-11 w-full px-4 rounded-xl flex items-center gap-3 transition-all group relative shrink-0 active:scale-95 text-left"
-    : "h-9 w-9 rounded-xl flex items-center justify-center transition-all group relative shrink-0 active:scale-95";
+    ? "h-11 w-full px-4 rounded-xl flex items-center gap-3 transition-[background-color,border-color,color,opacity,transform] group relative shrink-0 active:scale-95 text-left"
+    : "h-9 w-9 rounded-xl flex items-center justify-center transition-[background-color,border-color,color,opacity,transform] group relative shrink-0 active:scale-95";
 
   if (variant === "match") {
     return (
@@ -139,13 +139,13 @@ export function BoardToolbar({
 
         <div className="w-6 h-[1px] bg-white/10 my-1" />
 
-        <div className={cn("flex flex-col gap-2 transition-all duration-500", isPaintMode ? "opacity-100 scale-100" : "opacity-20 scale-90 pointer-events-none")}>
+        <div className={cn("flex flex-col gap-2 transition-[background-color,border-color,color,opacity,transform] duration-500", isPaintMode ? "opacity-100 scale-100" : "opacity-20 scale-90 pointer-events-none")}>
           {COLORS.map(color => (
             <button
               key={color.id}
               onClick={() => onColorSelect?.(color.value)}
               className={cn(
-                "h-5 w-5 rounded-full border-2 transition-all",
+                "h-5 w-5 rounded-full border-2 transition-[background-color,border-color,color,opacity,transform]",
                 activeColor === color.value ? "border-white scale-110 shadow-lg" : "border-transparent opacity-60"
               )}
               style={{ backgroundColor: color.value }}
@@ -166,7 +166,7 @@ export function BoardToolbar({
 
   return (
     <aside className={cn(
-      "bg-black/60 backdrop-blur-2xl border border-white/10 transition-all duration-500 flex items-center z-50 overflow-hidden shadow-2xl pointer-events-auto",
+      "bg-black/60 backdrop-blur-2xl border border-white/10 transition-[background-color,border-color,color,opacity,transform] duration-500 flex items-center z-50 overflow-hidden shadow-2xl pointer-events-auto",
       theme === "amber" ? "border-amber-500/30 shadow-amber-500/10" : "border-primary/30 shadow-primary/10",
       isHorizontal && !showLabels
         ? "flex-row px-2 rounded-full h-12" 
@@ -181,7 +181,7 @@ export function BoardToolbar({
         <button 
           onClick={() => setIsCollapsed(false)}
           className={cn(
-            "h-9 w-9 flex items-center justify-center text-white/40 hover:text-white transition-all rounded-xl",
+            "h-9 w-9 flex items-center justify-center text-white/40 hover:text-white transition-[background-color,border-color,color,opacity,transform] rounded-xl",
             theme === "amber" ? "hover:bg-amber-500/10 hover:text-amber-500" : "hover:bg-primary/10 hover:text-primary",
             isHorizontal ? "mx-auto" : "my-auto"
           )}
@@ -236,7 +236,7 @@ export function BoardToolbar({
           <button 
             onClick={() => setIsCollapsed(true)} 
             className={cn(
-              showLabels ? btnClass : "h-9 w-9 flex items-center justify-center transition-all rounded-xl",
+              showLabels ? btnClass : "h-9 w-9 flex items-center justify-center transition-[background-color,border-color,color,opacity,transform] rounded-xl",
               "text-white/20 hover:text-white"
             )}
           >

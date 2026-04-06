@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Building2, 
   Settings2, 
@@ -54,6 +54,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { canUseOperativaSupabase } from "@/lib/operativa-sync";
+import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 const SPORTS = [
   { value: "Fútbol", label: "Fútbol" },
@@ -243,6 +244,37 @@ export default function ClubManagementPage() {
     clubData.mapQuery || clubData.address || "Madrid",
   )}&output=embed`;
 
+  const membersCount = Math.max(0, Number(String(clubData.members).replace(/[^\d]/g, "")) || 0);
+  const foundationYear = Math.max(1900, Number(String(clubData.foundation).replace(/[^\d]/g, "")) || new Date().getFullYear());
+  const currentYear = new Date().getFullYear();
+  const clubAge = Math.max(0, currentYear - foundationYear);
+  const activeSocials = [
+    clubData.socials.instagram,
+    clubData.socials.youtube,
+    clubData.socials.twitter,
+  ].filter((x) => String(x || "").trim().length > 0).length;
+  const totalSocials = 3;
+  const contactFields = [clubData.website, clubData.address, clubData.phone, clubData.mapQuery];
+  const contactCompletion = contactFields.filter((x) => String(x || "").trim().length > 0).length;
+
+  const identityBars = useMemo(
+    () => [
+      { label: "Atletas", value: membersCount },
+      { label: "Años", value: clubAge },
+      { label: "Redes", value: activeSocials },
+      { label: "Contacto", value: contactCompletion },
+    ],
+    [membersCount, clubAge, activeSocials, contactCompletion],
+  );
+
+  const socialsPie = useMemo(
+    () => [
+      { name: "Activos", value: activeSocials, color: "#00F2FF" },
+      { name: "Pendientes", value: Math.max(0, totalSocials - activeSocials), color: "rgba(255,255,255,0.22)" },
+    ],
+    [activeSocials],
+  );
+
   const handleImageUpload = (target: "logoUrl" | "bannerUrl", file?: File | null) => {
     if (!file) return;
     if (!file.type.startsWith("image/")) {
@@ -307,7 +339,7 @@ export default function ClubManagementPage() {
           <SheetTrigger asChild>
             <Button
               disabled={!canEditClub}
-              className="w-full sm:w-auto rounded-none bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-all border-none disabled:opacity-40"
+              className="w-full sm:w-auto rounded-none bg-primary text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:scale-105 transition-[background-color,border-color,color,opacity,transform] border-none disabled:opacity-40"
             >
               <Settings2 className="h-4 w-4 mr-2" /> Configurar Nodo
             </Button>
@@ -449,14 +481,14 @@ export default function ClubManagementPage() {
 
               <div className="pt-2 flex flex-col sm:flex-row gap-4">
                 <SheetClose asChild>
-                  <Button variant="ghost" className="w-full sm:flex-1 h-16 border border-primary/20 text-primary/60 font-black uppercase text-[11px] tracking-widest hover:bg-primary/10 rounded-2xl transition-all">
+                  <Button variant="ghost" className="w-full sm:flex-1 h-16 border border-primary/20 text-primary/60 font-black uppercase text-[11px] tracking-widest hover:bg-primary/10 rounded-2xl transition-[background-color,border-color,color,opacity,transform]">
                     CANCELAR
                   </Button>
                 </SheetClose>
                 <Button 
                   onClick={() => handleUpdate()}
                   disabled={!canEditClub || saving}
-                  className="w-full sm:flex-[2] h-16 bg-primary text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] transition-all border-none disabled:opacity-40"
+                  className="w-full sm:flex-[2] h-16 bg-primary text-black font-black uppercase text-[11px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)] hover:scale-[1.02] transition-[background-color,border-color,color,opacity,transform] border-none disabled:opacity-40"
                 >
                   {saving ? "GUARDANDO..." : "SINCRONIZAR_CAMBIOS"}
                 </Button>
@@ -490,7 +522,7 @@ export default function ClubManagementPage() {
              variant="ghost"
              disabled={!canEditClub}
              onClick={() => bannerInputRef.current?.click()}
-             className="h-10 bg-black/40 backdrop-blur-md border border-primary/20 rounded-xl text-primary/60 hover:text-primary transition-all disabled:opacity-40"
+             className="h-10 bg-black/40 backdrop-blur-md border border-primary/20 rounded-xl text-primary/60 hover:text-primary transition-[background-color,border-color,color,opacity,transform] disabled:opacity-40"
            >
               <Upload className="h-4 w-4 mr-2" /> Editar Portada
            </Button>
@@ -509,7 +541,7 @@ export default function ClubManagementPage() {
         <div className="flex flex-col md:flex-row md:items-end gap-8 lg:gap-10">
           <div className="relative group/logo">
              <div className="absolute inset-0 bg-primary/30 blur-3xl rounded-full opacity-0 group-hover/logo:opacity-100 transition-opacity" />
-             <div className="h-40 w-40 sm:h-48 sm:w-44 lg:h-56 lg:w-52 bg-black/90 border-2 border-primary/50 rounded-[2rem] flex items-center justify-center relative z-10 overflow-hidden shadow-[0_24px_60px_rgba(0,0,0,0.95)] group-hover/logo:border-primary transition-all duration-500 backdrop-blur-sm">
+             <div className="h-40 w-40 sm:h-48 sm:w-44 lg:h-56 lg:w-52 bg-black/90 border-2 border-primary/50 rounded-[2rem] flex items-center justify-center relative z-10 overflow-hidden shadow-[0_24px_60px_rgba(0,0,0,0.95)] group-hover/logo:border-primary transition-[background-color,border-color,color,opacity,transform] duration-500 backdrop-blur-sm">
                 <Image
                   src={clubData.logoUrl}
                   alt="Club Logo" 
@@ -560,6 +592,66 @@ export default function ClubManagementPage() {
           </div>
         </div>
       </div>
+
+      <Card className="glass-panel border border-primary/10 bg-black/40 overflow-hidden shadow-xl">
+        <CardHeader className="p-6 sm:p-8 lg:p-10 pb-4">
+          <CardTitle className="text-[11px] font-black uppercase tracking-[0.4em] text-primary/20">
+            Analítica Visual del Club · Nuevo
+          </CardTitle>
+          <CardDescription className="text-[10px] uppercase tracking-widest text-primary/40">
+            Panel rápido con el mismo estilo gráfico de torneos.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="px-6 sm:px-8 lg:px-10 pb-6 sm:pb-8 lg:pb-10 grid grid-cols-1 xl:grid-cols-2 gap-4">
+          <div className="rounded-2xl border border-primary/15 bg-black/30 p-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/70 mb-2">Indicadores base</p>
+            <div className="h-52">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={identityBars} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                  <XAxis dataKey="label" tick={{ fill: "rgba(255,255,255,0.65)", fontSize: 10, fontWeight: 700 }} axisLine={false} tickLine={false} />
+                  <YAxis allowDecimals={false} tick={{ fill: "rgba(255,255,255,0.55)", fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    cursor={{ fill: "rgba(0,242,255,0.08)" }}
+                    contentStyle={{
+                      background: "rgba(8,16,28,0.95)",
+                      border: "1px solid rgba(0,242,255,0.25)",
+                      borderRadius: 12,
+                      color: "#fff",
+                      fontWeight: 700,
+                    }}
+                  />
+                  <Bar dataKey="value" radius={[8, 8, 0, 0]} fill="#00F2FF" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-primary/15 bg-black/30 p-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/70 mb-2">Cobertura redes</p>
+            <div className="h-52">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={socialsPie} dataKey="value" nameKey="name" innerRadius={54} outerRadius={86} paddingAngle={2}>
+                    {socialsPie.map((entry) => (
+                      <Cell key={entry.name} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      background: "rgba(8,16,28,0.95)",
+                      border: "1px solid rgba(0,242,255,0.25)",
+                      borderRadius: 12,
+                      color: "#fff",
+                      fontWeight: 700,
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* MATRIZ DE DATOS Y TERMINALES */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-10 pt-8">
@@ -644,14 +736,14 @@ export default function ClubManagementPage() {
            </Card>
 
            <Card className="glass-panel border-primary/20 bg-primary/5 p-12 relative group overflow-hidden shadow-[0_0_50px_rgba(0,242,255,0.05)]">
-              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-all">
+              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-[background-color,border-color,color,opacity,transform]">
                 <Share2 className="h-32 w-32 text-primary" />
               </div>
               <h3 className="text-2xl font-black italic uppercase tracking-tighter text-primary mb-6 cyan-text-glow">Exportar Perfil</h3>
               <p className="text-[11px] font-bold text-primary/40 uppercase tracking-widest mb-10 leading-loose">
                 Genere un informe PDF técnico de la estructura del club para patrocinadores, federaciones o redes de formación.
               </p>
-              <Button disabled={!canEditClub} className="w-full h-16 bg-black/60 border border-primary/30 text-primary font-black uppercase text-[11px] tracking-[0.2em] rounded-2xl hover:bg-primary hover:text-black transition-all shadow-xl disabled:opacity-40">
+              <Button disabled={!canEditClub} className="w-full h-16 bg-black/60 border border-primary/30 text-primary font-black uppercase text-[11px] tracking-[0.2em] rounded-2xl hover:bg-primary hover:text-black transition-[background-color,border-color,color,opacity,transform] shadow-xl disabled:opacity-40">
                 Generar Informe <ArrowRight className="h-4 w-4 ml-3" />
               </Button>
            </Card>
@@ -689,17 +781,17 @@ function DataNode({ label, value, icon: Icon, highlight }: any) {
 
 function ContactLink({ icon: Icon, label, value }: any) {
   return (
-    <div className="flex items-center justify-between group cursor-pointer p-3 hover:bg-primary/5 rounded-2xl transition-all border border-transparent hover:border-primary/10">
+    <div className="flex items-center justify-between group cursor-pointer p-3 hover:bg-primary/5 rounded-2xl transition-[background-color,border-color,color,opacity,transform] border border-transparent hover:border-primary/10">
        <div className="flex items-center gap-5">
-          <div className="h-11 w-11 bg-primary/5 rounded-xl flex items-center justify-center border border-primary/10 group-hover:border-primary/40 transition-all">
-             <Icon className="h-5 w-5 text-primary/40 group-hover:text-primary transition-all" />
+          <div className="h-11 w-11 bg-primary/5 rounded-xl flex items-center justify-center border border-primary/10 group-hover:border-primary/40 transition-[background-color,border-color,color,opacity,transform]">
+             <Icon className="h-5 w-5 text-primary/40 group-hover:text-primary transition-[background-color,border-color,color,opacity,transform]" />
           </div>
           <div className="flex flex-col">
              <span className="text-[9px] font-black uppercase text-primary/40 tracking-widest">{label}</span>
              <span className="text-[11px] font-bold text-primary/80 group-hover:text-primary transition-colors uppercase tracking-tight">{value}</span>
           </div>
        </div>
-       <ArrowUpRight className="h-4 w-4 text-primary/10 group-hover:text-primary transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+       <ArrowUpRight className="h-4 w-4 text-primary/10 group-hover:text-primary transition-[background-color,border-color,color,opacity,transform] group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
     </div>
   );
 }

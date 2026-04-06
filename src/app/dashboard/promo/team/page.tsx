@@ -61,10 +61,12 @@ export default function PromoTeamPage() {
   const [substitutes, setSubstitutes] = useState<string[]>(["", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const didHydrateRef = useRef(false);
+  const savedTeamRef = useRef<any>(null);
 
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("synq_promo_team") || "null");
     if (saved) {
+      savedTeamRef.current = saved;
       const savedType = (saved.type || "f11") as TeamType;
       setTeamType(savedType);
       setTeamName(saved.name || "");
@@ -82,18 +84,14 @@ export default function PromoTeamPage() {
   // Efecto para reajustar titulares al cambiar de formato si no hay datos
   useEffect(() => {
     if (!didHydrateRef.current) return;
-    const saved = JSON.parse(localStorage.getItem("synq_promo_team") || "null");
-    if (!saved) {
-      setStarters(Array(POSITIONS[teamType].length).fill(""));
+    const saved = savedTeamRef.current ?? JSON.parse(localStorage.getItem("synq_promo_team") || "null");
+    // Política estable: si hay starters guardados, rehidratar siempre desde storage y normalizar a la longitud del formato actual.
+    if (saved?.starters) {
+      setStarters(normalizeFixedLength(saved.starters, POSITIONS[teamType].length));
       return;
     }
-    // Si el usuario cambia el formato manualmente (no coincide con lo guardado), reiniciar a longitud correcta.
-    if (saved.type !== teamType) {
-      setStarters(Array(POSITIONS[teamType].length).fill(""));
-      return;
-    }
-    // Si coincide con lo guardado, aseguramos longitud para que se vean todos los inputs con valores persistidos.
-    setStarters((prev) => normalizeFixedLength(prev, POSITIONS[teamType].length));
+    // Si no hay starters guardados, solo entonces inicializamos vacío con longitud correcta.
+    setStarters(Array(POSITIONS[teamType].length).fill(""));
   }, [teamType]);
 
   const handleSaveTeam = (e: React.FormEvent) => {
@@ -172,7 +170,7 @@ export default function PromoTeamPage() {
            <Button 
             onClick={handleSaveTeam}
             disabled={loading}
-            className="h-12 mt-auto bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl blue-glow hover:scale-105 transition-all border-none"
+            className="h-12 mt-auto bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl blue-glow hover:scale-105 transition-[background-color,border-color,color,opacity,transform] border-none"
            >
             {loading ? "Sincronizando..." : "Guardar Plantilla"} <Save className="h-4 w-4 ml-2" />
            </Button>
@@ -250,7 +248,7 @@ export default function PromoTeamPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {POSITIONS[teamType].map((pos, i) => (
-                <div key={i} className="p-4 bg-black/40 border border-white/5 rounded-2xl flex items-center gap-4 group hover:border-primary/30 transition-all">
+                <div key={i} className="p-4 bg-black/40 border border-white/5 rounded-2xl flex items-center gap-4 group hover:border-primary/30 transition-[background-color,border-color,color,opacity,transform]">
                    <div className="h-10 w-10 bg-primary/10 border border-primary/20 rounded-xl flex items-center justify-center text-[10px] font-black italic text-primary shrink-0 group-hover:scale-110 transition-transform">
                       {pos}
                    </div>
@@ -273,7 +271,7 @@ export default function PromoTeamPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {substitutes.map((name, i) => (
-                <div key={i} className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl flex items-center gap-4 group hover:border-white/20 transition-all opacity-60 hover:opacity-100">
+                <div key={i} className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl flex items-center gap-4 group hover:border-white/20 transition-[background-color,border-color,color,opacity,transform] opacity-60 hover:opacity-100">
                    <div className="h-10 w-10 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center text-[10px] font-black italic text-white/20 shrink-0">
                       SUB
                    </div>
@@ -287,7 +285,7 @@ export default function PromoTeamPage() {
               ))}
               <button 
                 onClick={() => setSubstitutes([...substitutes, ""])}
-                className="p-4 border-2 border-dashed border-white/5 rounded-2xl flex items-center justify-center gap-3 text-white/10 hover:border-primary/20 hover:text-primary/40 transition-all"
+                className="p-4 border-2 border-dashed border-white/5 rounded-2xl flex items-center justify-center gap-3 text-white/10 hover:border-primary/20 hover:text-primary/40 transition-[background-color,border-color,color,opacity,transform]"
               >
                 <Plus className="h-4 w-4" />
                 <span className="text-[10px] font-black uppercase tracking-widest">Añadir Slot</span>
@@ -298,7 +296,7 @@ export default function PromoTeamPage() {
 
         <aside className="space-y-8">
           <Card className="glass-panel border-primary/20 bg-primary/5 p-8 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-all"><Sparkles className="h-32 w-32 text-primary" /></div>
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-[background-color,border-color,color,opacity,transform]"><Sparkles className="h-32 w-32 text-primary" /></div>
             <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white mb-6">SINCRO_PIZARRA</h3>
             <p className="text-[11px] font-bold text-white/40 uppercase tracking-widest mb-10 leading-loose italic">
               Los nombres y atributos configurados aquí aparecerán automáticamente en las fichas de la Pizarra de Partido y el Pocket Master.

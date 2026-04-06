@@ -27,11 +27,11 @@ export default function BoardPromoLauncher() {
          </div>
 
          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="p-8 bg-white/5 border border-white/5 rounded-[2.5rem] space-y-2 group hover:border-primary/20 transition-all">
+            <div className="p-8 bg-white/5 border border-white/5 rounded-[2.5rem] space-y-2 group hover:border-primary/20 transition-[background-color,border-color,color,opacity,transform]">
                <MousePointerClick className="h-6 w-6 text-primary/40 mx-auto group-hover:text-primary transition-colors" />
                <p className="text-[9px] font-black text-white/20 uppercase tracking-widest">Modo Guest</p>
             </div>
-            <div className="p-8 bg-white/5 border border-white/5 rounded-[2.5rem] space-y-2 group hover:border-primary/20 transition-all">
+            <div className="p-8 bg-white/5 border border-white/5 rounded-[2.5rem] space-y-2 group hover:border-primary/20 transition-[background-color,border-color,color,opacity,transform]">
                <Share2 className="h-6 w-6 text-primary/40 mx-auto group-hover:text-primary transition-colors" />
                <p className="text-[9px] font-black text-white/20 uppercase tracking-widest">Link Público</p>
             </div>
@@ -41,7 +41,7 @@ export default function BoardPromoLauncher() {
             </div>
          </div>
 
-         <Button className="h-20 w-full max-w-md bg-primary text-black font-black uppercase text-xs tracking-[0.3em] rounded-3xl cyan-glow hover:scale-[1.02] transition-all border-none" asChild>
+         <Button className="h-20 w-full max-w-md bg-primary text-black font-black uppercase text-xs tracking-[0.3em] rounded-3xl cyan-glow hover:scale-[1.02] transition-[background-color,border-color,color,opacity,transform] border-none" asChild>
             <Link href="/board/promo">
               <Zap className="h-5 w-5 mr-3" /> ABRIR PIZARRA PROMOCIONAL
             </Link>

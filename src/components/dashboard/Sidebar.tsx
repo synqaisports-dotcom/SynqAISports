@@ -64,6 +64,7 @@ import {
   SidebarGroup
 } from "@/components/ui/sidebar";
 import { AVAILABLE_LOCALES } from "@/lib/i18n-config";
+import { useI18n } from "@/contexts/i18n-context";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -81,7 +82,7 @@ interface NavItem {
   title: string;
   href: string;
   icon: any;
-  category: "global" | "operational" | "methodology" | "user";
+  category: "global" | "operational" | "methodology" | "tournaments" | "user";
   roles?: string[];
   isSubItem?: boolean;
   /** Módulo de matriz de club (filtro A/V/E/X vía `access`). */
@@ -132,6 +133,9 @@ const navItems: NavItem[] = [
   { title: "Planif. y Sesiones", href: "/dashboard/sessions", icon: CalendarDays, category: "operational", moduleId: "planner" },
   { title: "Biblioteca Táctica", href: "/dashboard/coach/library", icon: Dumbbell, category: "operational", moduleId: "exercises" },
   { title: "Neural Planner", href: "/dashboard/coach/planner", icon: Activity, category: "operational", moduleId: "planner" },
+
+  // TORNEOS (fuera de competición normal)
+  { title: "Torneos", href: "/dashboard/tournaments/list", icon: BookOpen, category: "tournaments", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
   
   // TERMINALES_ACCESO - NODO SANDBOX (Categoría User)
   { title: "Sandbox", href: "/sandbox-portal?dest=/sandbox/app", icon: ShieldCheck, category: "user" },
@@ -151,14 +155,47 @@ export function DashboardSidebar() {
   const { toggleSidebar, state, setOpenMobile, isMobile } = useSidebar();
   const { profile, logout } = useAuth();
   const { normalizedMatrix, loading: matrixLoading } = useClubAccessMatrix();
-  const [currentLang, setCurrentLang] = useState(AVAILABLE_LOCALES[0]);
+  const { locale, setLocale, t } = useI18n();
+  const currentLang = AVAILABLE_LOCALES.find((l) => l.code === locale) ?? AVAILABLE_LOCALES[0];
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [openGroups, setOpenGroups] = useState<Record<NavItem["category"], boolean>>({
+    global: true,
+    methodology: true,
+    operational: true,
+    tournaments: true,
+    user: true,
+  });
 
   useEffect(() => {
     const syncFullscreen = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener("fullscreenchange", syncFullscreen);
     return () => document.removeEventListener("fullscreenchange", syncFullscreen);
   }, []);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("synq_sidebar_group_open_v1");
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as Partial<Record<NavItem["category"], boolean>>;
+      setOpenGroups((prev) => ({ ...prev, ...parsed }));
+    } catch {
+      // ignore localStorage errors
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("synq_sidebar_group_open_v1", JSON.stringify(openGroups));
+    } catch {
+      // ignore localStorage errors
+    }
+  }, [openGroups]);
+
+  useEffect(() => {
+    const activeCategory = navItems.find((i) => pathname === pathnameFromNavHref(i.href))?.category;
+    if (!activeCategory) return;
+    setOpenGroups((prev) => (prev[activeCategory] ? prev : { ...prev, [activeCategory]: true }));
+  }, [pathname]);
 
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
@@ -221,18 +258,53 @@ export function DashboardSidebar() {
     return true;
   });
 
+  const toggleGroup = (category: NavItem["category"]) => {
+    setOpenGroups((prev) => ({ ...prev, [category]: !prev[category] }));
+  };
+
+  const GroupToggle = ({
+    category,
+    label,
+    toneClass,
+  }: {
+    category: NavItem["category"];
+    label: string;
+    toneClass: string;
+  }) =>
+    !isCollapsed ? (
+      <button
+        type="button"
+        onClick={() => toggleGroup(category)}
+        className={cn(
+          "w-full mb-2 px-4 py-2 rounded-xl border bg-white/5 hover:bg-white/10 transition-[background-color,border-color,color,opacity,transform] flex items-center justify-between",
+          toneClass,
+        )}
+        aria-expanded={openGroups[category]}
+      >
+        <span className="text-[9px] font-black uppercase tracking-[0.25em]">
+          {label}
+        </span>
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 transition-transform",
+            openGroups[category] ? "rotate-180" : "rotate-0",
+          )}
+        />
+      </button>
+    ) : null;
+
   return (
     <Sidebar 
       collapsible="icon" 
       className={cn(
-        "transition-all duration-700",
+        "transition-[background-color,border-color,color,opacity,transform] duration-700",
         isCollapsed 
           ? "bg-transparent border-r border-primary/30" 
           : "bg-[#04070c] border-r border-white/5 shadow-[4px_0_24px_rgba(0,0,0,0.5)]"
       )}
     >
       <SidebarHeader className={cn(
-        "p-8 border-b transition-all duration-700",
+        "p-8 border-b transition-[background-color,border-color,color,opacity,transform] duration-700",
         isCollapsed 
           ? "bg-transparent border-primary/20 p-2" 
           : "bg-black/60 backdrop-blur-md border-white/5"
@@ -240,7 +312,7 @@ export function DashboardSidebar() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className={cn(
-              "p-2.5 rounded-xl shrink-0 transition-all duration-700",
+              "p-2.5 rounded-xl shrink-0 transition-[background-color,border-color,color,opacity,transform] duration-700",
               isSuperAdmin ? "bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]" : "bg-primary shadow-[0_0_15px_rgba(0,242,255,0.3)]",
               isCollapsed && "p-1.5"
             )}>
@@ -258,8 +330,8 @@ export function DashboardSidebar() {
           {!isCollapsed && (
             <button 
               onClick={toggleSidebar}
-              className="h-8 w-8 rounded-xl bg-white/5 flex items-center justify-center text-white/40 hover:text-primary transition-all border border-white/5 lg:hidden"
-              title="Ocultar Terminal"
+              className="h-8 w-8 rounded-xl bg-white/5 flex items-center justify-center text-white/40 hover:text-primary transition-[background-color,border-color,color,opacity,transform] border border-white/5 lg:hidden"
+              title={t("sidebar.hide_terminal")}
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
@@ -268,11 +340,13 @@ export function DashboardSidebar() {
       </SidebarHeader>
 
       <SidebarContent className={cn(
-        "px-3 py-8 space-y-10 custom-scrollbar overflow-x-hidden transition-all duration-700",
-        isCollapsed && "py-4 space-y-6"
+        "px-3 py-6 space-y-5 custom-scrollbar overflow-x-hidden transition-[background-color,border-color,color,opacity,transform] duration-700",
+        isCollapsed && "py-4 space-y-3"
       )}>
         {isSuperAdmin && (
-          <SidebarGroupWrapper title="Administración" color="text-emerald-400" isCollapsed={isCollapsed}>
+            <SidebarGroupWrapper title={t("sidebar.group_admin", "Administrador")} color="text-emerald-400" isCollapsed={isCollapsed}>
+            <GroupToggle category="global" label="Admin-global" toneClass="border-emerald-500/20 text-emerald-300/90" />
+            {openGroups.global && (
             <SidebarMenu>
               {filteredItems.filter(i => i.category === "global").map((item) => (
                 <SidebarMenuItem key={item.href}>
@@ -280,11 +354,14 @@ export function DashboardSidebar() {
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
+            )}
           </SidebarGroupWrapper>
         )}
 
         {!isFree && (
-          <SidebarGroupWrapper title="Metodología" color="text-primary" isCollapsed={isCollapsed}>
+          <SidebarGroupWrapper title={t("sidebar.group_methodology", "Metodología")} color="text-primary" isCollapsed={isCollapsed}>
+            <GroupToggle category="methodology" label="Metodología" toneClass="border-cyan-500/20 text-cyan-200/90" />
+            {openGroups.methodology && (
             <SidebarMenu>
               {filteredItems.filter(i => i.category === "methodology").map((item) => (
                 <SidebarMenuItem key={item.href}>
@@ -292,11 +369,14 @@ export function DashboardSidebar() {
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
+            )}
           </SidebarGroupWrapper>
         )}
 
         {!isFree && (
-          <SidebarGroupWrapper title="Dashboard Club" color="text-primary" isCollapsed={isCollapsed}>
+          <SidebarGroupWrapper title={t("sidebar.group_dashboard", "Club")} color="text-primary" isCollapsed={isCollapsed}>
+            <GroupToggle category="operational" label="Dashboard Club" toneClass="border-primary/20 text-primary/90" />
+            {openGroups.operational && (
             <SidebarMenu>
               {filteredItems.filter(i => i.category === "operational").map((item) => (
                 <SidebarMenuItem key={item.href}>
@@ -304,18 +384,41 @@ export function DashboardSidebar() {
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
+            )}
+          </SidebarGroupWrapper>
+        )}
+
+        {!isFree && (
+          <SidebarGroupWrapper title="Torneos" color="text-blue-300/90" isCollapsed={isCollapsed}>
+            <GroupToggle category="tournaments" label="Torneos" toneClass="border-blue-500/20 text-blue-200/90" />
+            {openGroups.tournaments && (
+            <SidebarMenu>
+              {filteredItems.filter(i => i.category === "tournaments").map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarLink
+                    item={item}
+                    isActive={pathname === pathnameFromNavHref(item.href)}
+                    isSandbox
+                    onNavClick={handleNavClick}
+                  />
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+            )}
           </SidebarGroupWrapper>
         )}
 
         {(isFree || isSuperAdmin) && (
-          <SidebarGroupWrapper title="Terminales_Acceso" color="text-white/60" isCollapsed={isCollapsed}>
-            {!isCollapsed && (
+          <SidebarGroupWrapper title={t("sidebar.group_terminals", "Terminales")} color="text-white/60" isCollapsed={isCollapsed}>
+            <GroupToggle category="user" label="Terminales" toneClass="border-blue-500/20 text-blue-300/90" />
+            {openGroups.user && !isCollapsed && (
               <div className="px-4 py-2 mb-2 bg-blue-500/5 border border-blue-500/10 rounded-xl">
                 <span className="text-[7px] font-black text-blue-400 uppercase tracking-[0.3em] italic flex items-center gap-2">
                   <LayoutGrid className="h-2.5 w-2.5" /> NODO_SANDBOX_ACTIVE
                 </span>
               </div>
             )}
+            {openGroups.user && (
             <SidebarMenu>
               {filteredItems.filter(i => i.category === "user").map((item) => (
                 <SidebarMenuItem key={item.href}>
@@ -328,18 +431,19 @@ export function DashboardSidebar() {
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
+            )}
           </SidebarGroupWrapper>
         )}
       </SidebarContent>
 
       <SidebarFooter className={cn(
-        "border-t transition-all duration-700",
+        "border-t transition-[background-color,border-color,color,opacity,transform] duration-700",
         isCollapsed ? "p-2" : "p-4 space-y-2 bg-[#04070c] border-r border-white/5 shadow-[4px_0_24px_rgba(0,0,0,0.5)]"
       )}>
         {!isCollapsed && (
           <button 
             onClick={toggleFullscreen}
-            className="flex items-center gap-3 px-3 py-2.5 text-white/30 hover:text-primary transition-all font-black text-[9px] uppercase tracking-widest hover:bg-white/5 rounded-xl group overflow-hidden w-full text-left"
+            className="flex items-center gap-3 px-3 py-2.5 text-white/30 hover:text-primary transition-[background-color,border-color,color,opacity,transform] font-black text-[9px] uppercase tracking-widest hover:bg-white/5 rounded-xl group overflow-hidden w-full text-left"
           >
             {isFullscreen ? <Minimize2 className="h-4 w-4 shrink-0" /> : <Maximize2 className="h-4 w-4 shrink-0" />}
             <span className="whitespace-nowrap font-bold animate-in fade-in duration-700">MODO_INMERSIVO</span>
@@ -350,7 +454,7 @@ export function DashboardSidebar() {
           <div className="px-2 py-1 border-b border-white/5 pb-2 mb-1">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center justify-between w-full p-2 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all group">
+                <button className="flex items-center justify-between w-full p-2 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-[background-color,border-color,color,opacity,transform] group">
                   <div className="flex items-center gap-2">
                     <span className="text-sm">{currentLang.flag}</span>
                     <span className="text-[9px] font-black text-white/60 uppercase tracking-widest group-hover:text-white transition-colors">{currentLang.label}</span>
@@ -362,8 +466,8 @@ export function DashboardSidebar() {
                 {AVAILABLE_LOCALES.map((lang) => (
                   <DropdownMenuItem 
                     key={lang.code} 
-                    onClick={() => setCurrentLang(lang)}
-                    className="flex items-center justify-between p-3 rounded-xl hover:bg-primary/10 hover:text-primary cursor-pointer transition-all"
+                    onClick={() => setLocale(lang.code)}
+                    className="flex items-center justify-between p-3 rounded-xl hover:bg-primary/10 hover:text-primary cursor-pointer transition-[background-color,border-color,color,opacity,transform]"
                   >
                     <div className="flex items-center gap-3">
                       <span>{lang.flag}</span>
@@ -379,7 +483,7 @@ export function DashboardSidebar() {
 
         <button 
           onClick={handleLogout}
-          className="flex items-center gap-3 px-3 py-2.5 text-white/30 hover:text-primary transition-all font-black text-[9px] uppercase tracking-widest hover:bg-white/5 rounded-xl group overflow-hidden w-full text-left"
+          className="flex items-center gap-3 px-3 py-2.5 text-white/30 hover:text-primary transition-[background-color,border-color,color,opacity,transform] font-black text-[9px] uppercase tracking-widest hover:bg-white/5 rounded-xl group overflow-hidden w-full text-left"
         >
           <LogOut className="h-5 w-5 shrink-0 group-hover:translate-x-1 transition-transform" />
           {!isCollapsed && <span className="whitespace-nowrap font-bold animate-in fade-in duration-700">CERRAR_SESIÓN</span>}
@@ -393,7 +497,7 @@ function SidebarGroupWrapper({ children, title, color, isCollapsed }: any) {
   return (
     <SidebarGroup className="p-0">
       {!isCollapsed && (
-        <p className={cn("px-4 mb-4 text-[8px] font-black uppercase tracking-[0.5em] transition-all duration-700 animate-pulse", color)}>
+        <p className={cn("px-4 mb-3 text-[9px] font-black uppercase tracking-[0.45em] transition-[background-color,border-color,color,opacity,transform] duration-700 animate-[pulse_2.8s_ease-in-out_infinite]", color)}>
           {title}
         </p>
       )}
@@ -446,7 +550,7 @@ function SidebarLink({
         href={item.href}
         onClick={onNavClick}
       >
-        <item.icon className={cn("h-5 w-5 shrink-0 transition-all duration-700", iconClass)} />
+        <item.icon className={cn("h-5 w-5 shrink-0 transition-[background-color,border-color,color,opacity,transform] duration-700", iconClass)} />
         <span className="font-bold text-[10px] uppercase tracking-[0.25em] whitespace-nowrap animate-in fade-in duration-700">
           {item.title}
         </span>

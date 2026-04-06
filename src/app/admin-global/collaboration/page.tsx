@@ -133,7 +133,7 @@ export default function InternalCollaborationTerminal() {
             <Search className="absolute left-4 top-4 h-4 w-4 text-emerald-500/40" />
             <Input
               placeholder="FILTRAR POR CLUB, EMAIL O TEXTO..."
-              className="h-14 pl-12 bg-white/5 border-white/10 rounded-2xl text-[10px] font-black uppercase focus:border-emerald-500 transition-all"
+              className="h-14 pl-12 bg-white/5 border-white/10 rounded-2xl text-[10px] font-black uppercase focus:border-emerald-500 transition-[background-color,border-color,color,opacity,transform]"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -173,7 +173,7 @@ export default function InternalCollaborationTerminal() {
 function CollabStat({ label, value, icon: Icon, color }: any) {
   return (
     <Card className="glass-panel p-6 border-white/5 bg-black/20 rounded-[2rem] relative overflow-hidden group">
-       <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-all">
+       <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-[background-color,border-color,color,opacity,transform]">
           <Icon className="h-16 w-16 text-emerald-500" />
        </div>
        <div className="relative z-10 space-y-1">
@@ -189,7 +189,7 @@ function CollabItem({ log }: { log: CollabItemRow }) {
   
   return (
     <Card className={cn(
-      "glass-panel border-none bg-black/40 rounded-[2rem] overflow-hidden group transition-all hover:bg-white/[0.02]",
+      "glass-panel border-none bg-black/40 rounded-[2rem] overflow-hidden group transition-[background-color,border-color,color,opacity,transform] hover:bg-white/[0.02]",
       isLead ? "border-l-4 border-l-emerald-500" : "border-l-4 border-l-primary"
     )}>
       <div className="p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">

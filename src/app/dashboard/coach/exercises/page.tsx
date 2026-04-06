@@ -65,7 +65,7 @@ export default function NeuralExercisesPage() {
               <Button 
                 type="submit" 
                 disabled={loading}
-                className="bg-primary text-primary-foreground font-black rounded-none h-14 px-12 cyan-glow transition-all active:scale-95 uppercase tracking-widest"
+                className="bg-primary text-primary-foreground font-black rounded-none h-14 px-12 cyan-glow transition-[background-color,border-color,color,opacity,transform] active:scale-95 uppercase tracking-widest"
               >
                 {loading ? <Loader2 className="animate-spin h-5 w-5" /> : "Sintetizar Ejercicio"}
               </Button>

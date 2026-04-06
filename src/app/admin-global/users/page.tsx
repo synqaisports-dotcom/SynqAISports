@@ -364,7 +364,7 @@ export default function GlobalUsersPage() {
         
         <Button 
           onClick={handleOpenCreate}
-          className="rounded-2xl bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all border-none"
+          className="rounded-2xl bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-[background-color,border-color,color,opacity,transform] border-none"
         >
           <UserPlus className="h-4 w-4 mr-2" /> Nueva Credencial
         </Button>
@@ -382,7 +382,7 @@ export default function GlobalUsersPage() {
             <Search className="absolute left-3 top-3.5 h-4 w-4 text-emerald-500 opacity-50" />
             <Input 
               placeholder="FILTRAR POR IDENTIDAD O MAIL..." 
-              className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-2xl text-emerald-400 placeholder:text-emerald-400/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-emerald-500/50 transition-all"
+              className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-2xl text-emerald-400 placeholder:text-emerald-400/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-emerald-500/50 transition-[background-color,border-color,color,opacity,transform]"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -410,14 +410,14 @@ export default function GlobalUsersPage() {
                   <TableCell className="pl-8">
                     <div className="flex items-center gap-4 py-2">
                       <div className={cn(
-                        "h-10 w-10 border rounded-full flex items-center justify-center relative overflow-hidden transition-all",
+                        "h-10 w-10 border rounded-full flex items-center justify-center relative overflow-hidden transition-[background-color,border-color,color,opacity,transform]",
                         user.role === 'promo_coach' ? "bg-blue-500/5 border-blue-500/20" : "bg-emerald-500/5 border-emerald-500/20"
                       )}>
                         <Activity className={cn("h-4 w-4 opacity-40 group-hover:opacity-100", user.role === 'promo_coach' ? "text-blue-400" : "text-emerald-400")} />
                         <div className="absolute inset-0 bg-white/5 scan-line" />
                       </div>
                       <div>
-                        <p className="font-black text-white uppercase text-xs italic group-hover:emerald-text-glow transition-all">
+                        <p className="font-black text-white uppercase text-xs italic group-hover:emerald-text-glow transition-[background-color,border-color,color,opacity,transform]">
                           {user.name} {user.surname}
                         </p>
                         <p className="text-[8px] text-white/30 font-bold uppercase tracking-widest mt-1">
@@ -444,13 +444,13 @@ export default function GlobalUsersPage() {
                   </TableCell>
                   <TableCell className="text-right pr-8">
                     <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-400/40 hover:text-emerald-400 hover:bg-emerald-500/5 border border-white/5 rounded-xl transition-all" onClick={() => handleEdit(user)}><Pencil className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-400/40 hover:text-emerald-400 hover:bg-emerald-500/5 border border-white/5 rounded-xl transition-[background-color,border-color,color,opacity,transform]" onClick={() => handleEdit(user)}><Pencil className="h-4 w-4" /></Button>
                       {user.status === 'Denied' ? (
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-400/40 hover:text-emerald-400 hover:bg-emerald-500/5 border border-white/5 rounded-xl transition-all" onClick={() => handleStatusChange(user.id, 'Approved')}><UserCheck className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-400/40 hover:text-emerald-400 hover:bg-emerald-500/5 border border-white/5 rounded-xl transition-[background-color,border-color,color,opacity,transform]" onClick={() => handleStatusChange(user.id, 'Approved')}><UserCheck className="h-4 w-4" /></Button>
                       ) : (
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-500/40 hover:text-rose-500 hover:bg-rose-500/5 border border-white/5 rounded-xl transition-all" onClick={() => handleStatusChange(user.id, 'Denied')}><UserX className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-500/40 hover:text-rose-500 hover:bg-rose-500/5 border border-white/5 rounded-xl transition-[background-color,border-color,color,opacity,transform]" onClick={() => handleStatusChange(user.id, 'Denied')}><UserX className="h-4 w-4" /></Button>
                       )}
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-500/20 hover:text-rose-500 border border-white/5 rounded-xl transition-all" onClick={() => handleDelete(user.id, user.name)}><Trash2 className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-500/20 hover:text-rose-500 border border-white/5 rounded-xl transition-[background-color,border-color,color,opacity,transform]" onClick={() => handleDelete(user.id, user.name)}><Trash2 className="h-4 w-4" /></Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -539,7 +539,7 @@ export default function GlobalUsersPage() {
                       value={formData.phonePrefix}
                       onChange={(e) => setFormData({ ...formData, phonePrefix: e.target.value })}
                       placeholder="+34"
-                      className="h-12 w-full bg-white/5 border-emerald-500/20 rounded-2xl font-bold text-center transition-all focus:border-emerald-500 text-emerald-400"
+                      className="h-12 w-full bg-white/5 border-emerald-500/20 rounded-2xl font-bold text-center transition-[background-color,border-color,color,opacity,transform] focus:border-emerald-500 text-emerald-400"
                     />
                   </div>
                   <div className="relative min-w-0 flex-1">

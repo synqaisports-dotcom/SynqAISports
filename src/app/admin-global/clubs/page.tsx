@@ -305,7 +305,7 @@ export default function ManageClubsPage() {
           </Button>
           <Button 
             onClick={handleOpenCreate}
-            className="rounded-2xl bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 transition-all border-none"
+            className="rounded-2xl bg-emerald-500 text-black font-black uppercase text-[10px] tracking-widest h-12 px-8 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 transition-[background-color,border-color,color,opacity,transform] border-none"
           >
             <Plus className="h-4 w-4 mr-2" /> Vincular Nuevo Nodo
           </Button>
@@ -327,7 +327,7 @@ export default function ManageClubsPage() {
             <Search className="absolute left-4 top-4 h-4 w-4 text-emerald-500 opacity-50" />
             <Input 
               placeholder="BUSCAR IDENTIDAD DE CLUB..." 
-              className="pl-12 h-12 bg-white/5 border-emerald-500/20 rounded-xl text-white placeholder:text-white/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-emerald-500/50 transition-all"
+              className="pl-12 h-12 bg-white/5 border-emerald-500/20 rounded-xl text-white placeholder:text-white/20 font-bold uppercase text-[10px] tracking-widest focus-visible:ring-emerald-500/50 transition-[background-color,border-color,color,opacity,transform]"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -376,12 +376,12 @@ export default function ManageClubsPage() {
                     <TableRow key={club.id} className="border-white/5 hover:bg-white/[0.03] transition-colors group">
                       <TableCell className="pl-8">
                         <div className="flex items-center gap-4 py-3">
-                          <div className="h-12 w-12 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl flex items-center justify-center relative overflow-hidden group-hover:bg-emerald-500/10 transition-all rotate-12 group-hover:rotate-0 duration-500">
+                          <div className="h-12 w-12 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl flex items-center justify-center relative overflow-hidden group-hover:bg-emerald-500/10 transition-[background-color,border-color,color,opacity,transform] rotate-12 group-hover:rotate-0 duration-500">
                             <Building2 className="h-5 w-5 text-emerald-500" />
                             <div className="absolute inset-0 bg-emerald-500/5 scan-line opacity-20" />
                           </div>
                           <div>
-                            <p className="font-black text-white uppercase text-xs italic group-hover:emerald-text-glow transition-all tracking-tighter">
+                            <p className="font-black text-white uppercase text-xs italic group-hover:emerald-text-glow transition-[background-color,border-color,color,opacity,transform] tracking-tighter">
                               {club.name}
                             </p>
                             <p className="text-[8px] text-white/30 font-bold uppercase tracking-widest mt-1">
@@ -421,7 +421,7 @@ export default function ManageClubsPage() {
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-10 w-10 rounded-xl border border-white/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 text-white/20 hover:text-emerald-400 transition-all" 
+                            className="h-10 w-10 rounded-xl border border-white/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 text-white/20 hover:text-emerald-400 transition-[background-color,border-color,color,opacity,transform]" 
                             title="Modificar Protocolo"
                             onClick={() => handleEdit(club)}
                           >
@@ -431,7 +431,7 @@ export default function ManageClubsPage() {
                             variant="ghost" 
                             size="icon" 
                             className={cn(
-                              "h-10 w-10 rounded-xl border border-white/5 transition-all",
+                              "h-10 w-10 rounded-xl border border-white/5 transition-[background-color,border-color,color,opacity,transform]",
                               club.status === "Active" 
                                 ? "hover:border-amber-500/50 hover:bg-amber-500/10 text-white/20 hover:text-amber-400" 
                                 : "hover:border-emerald-500/50 hover:bg-emerald-500/10 text-white/20 hover:text-emerald-400"
@@ -441,7 +441,7 @@ export default function ManageClubsPage() {
                           >
                             {club.status === "Active" ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                           </Button>
-                          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl border border-white/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 text-white/20 hover:text-emerald-400 transition-all">
+                          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl border border-white/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 text-white/20 hover:text-emerald-400 transition-[background-color,border-color,color,opacity,transform]">
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </div>
@@ -489,7 +489,7 @@ export default function ManageClubsPage() {
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})}
-                    className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-2xl font-bold uppercase focus:border-emerald-500 transition-all text-emerald-400" 
+                    className="pl-10 h-12 bg-white/5 border-emerald-500/20 rounded-2xl font-bold uppercase focus:border-emerald-500 transition-[background-color,border-color,color,opacity,transform] text-emerald-400" 
                   />
                 </div>
               </div>
@@ -556,7 +556,7 @@ export default function ManageClubsPage() {
             <Button 
               onClick={handleSave}
               disabled={isSaving}
-              className="flex-[2] h-14 bg-emerald-500 text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:scale-[1.02] transition-all border-none disabled:opacity-50"
+              className="flex-[2] h-14 bg-emerald-500 text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:scale-[1.02] transition-[background-color,border-color,color,opacity,transform] border-none disabled:opacity-50"
             >
               {isSaving ? (
                 <>

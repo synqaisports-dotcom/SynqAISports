@@ -187,7 +187,7 @@ export default function OnboardingTunnel() {
 
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-12 items-stretch">
             <div className="glass-panel p-10 flex flex-col justify-center space-y-8 relative overflow-hidden group">
-               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-all">
+               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-[background-color,border-color,color,opacity,transform]">
                   <ShieldCheck className="h-32 w-32 text-primary" />
                </div>
                <div className="space-y-6 relative z-10">
@@ -234,7 +234,7 @@ export default function OnboardingTunnel() {
                       placeholder={isSandbox ? "EJ: RAYO VALLECANO" : "EJ: FC BARCELONA ACADÈMIA"}
                       value={clubName}
                       onChange={(e) => setClubName(e.target.value.toUpperCase())}
-                      className="h-16 bg-white/5 border-primary/20 rounded-2xl pl-12 text-lg font-black italic tracking-tighter focus:border-primary transition-all placeholder:text-white/10"
+                      className="h-16 bg-white/5 border-primary/20 rounded-2xl pl-12 text-lg font-black italic tracking-tighter focus:border-primary transition-[background-color,border-color,color,opacity,transform] placeholder:text-white/10"
                     />
                   </div>
                 </div>
@@ -303,7 +303,7 @@ export default function OnboardingTunnel() {
               <Button 
                 onClick={handleFinish}
                 disabled={loading}
-                className="w-full h-20 bg-primary text-black font-black text-xs uppercase tracking-[0.4em] rounded-2xl cyan-glow hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_30px_rgba(0,242,255,0.2)] border-none"
+                className="w-full h-20 bg-primary text-black font-black text-xs uppercase tracking-[0.4em] rounded-2xl cyan-glow hover:scale-[1.02] active:scale-95 transition-[background-color,border-color,color,opacity,transform] shadow-[0_0_30px_rgba(0,242,255,0.2)] border-none"
               >
                 {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : (isSandbox ? "EMPEZAR_A_ENTRENAR_GRATIS" : "VINCULAR_CANTERA_A_LA_RED")}
               </Button>

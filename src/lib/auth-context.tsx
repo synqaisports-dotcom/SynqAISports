@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { User, Session } from "@supabase/supabase-js";
+import { AVAILABLE_LOCALES, DEFAULT_LOCALE } from "@/lib/i18n-config";
 
 export type UserRole =
                   | "superadmin"
@@ -34,6 +35,7 @@ interface UserProfile {
   clubCreated: boolean;
   clubName?: string;
   claimedToken?: string;
+  preferredLocale?: string;
 }
 
 interface AuthContextType {
@@ -46,6 +48,7 @@ interface AuthContextType {
   register: (email: string, pass: string, name: string, clubName: string, plan?: 'free' | 'enterprise_scale') => Promise<void>;
   login: (email: string, pass: string) => Promise<void>;
   completeOnboarding: (clubData: { name: string; id: string; country: string; sport: string }) => void;
+  setPreferredLocale: (locale: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -59,8 +62,15 @@ const AuthContext = createContext<AuthContextType>({
   register: async () => {},
   login: async () => {},
   completeOnboarding: () => {},
+  setPreferredLocale: async () => {},
   logout: async () => {},
 });
+
+function normalizeLocale(input: string | null | undefined): string {
+  const raw = String(input || "").toLowerCase().trim();
+  const base = raw.split("-")[0] || DEFAULT_LOCALE;
+  return AVAILABLE_LOCALES.some((l) => l.code === base) ? base : DEFAULT_LOCALE;
+}
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -156,7 +166,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         country: profileData.country || 'ES',
         sport: profileData.sport,
         clubCreated: profileData.club_created ?? isAdmin,
-        clubName: profileData.club_name
+        clubName: profileData.club_name,
+        preferredLocale: normalizeLocale(
+          String(
+            profileData.preferred_locale ??
+            (authUser.user_metadata?.preferred_locale as string | undefined) ??
+            ""
+          ),
+        ),
       } : {
         email: authUser.email || '',
         name: authUser.user_metadata?.name || 'Usuario SynqAI',
@@ -165,6 +182,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         plan: isAdmin ? 'enterprise_scale' : 'free',
         country: 'ES',
         clubCreated: isAdmin,
+        preferredLocale: normalizeLocale(authUser.user_metadata?.preferred_locale as string | undefined),
       };
 
       setProfile(userProfile);
@@ -185,6 +203,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       country: "ES",
       sport: "Multideporte",
       clubCreated: true,
+      preferredLocale: DEFAULT_LOCALE,
     };
     
     setUser(guestUser);
@@ -273,7 +292,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       plan: plan.toLowerCase().replace(' ', '_'),
       country: country,
       clubCreated: false,
-      claimedToken: token
+      claimedToken: token,
+      preferredLocale: DEFAULT_LOCALE,
     };
     
     setUser(newUser);
@@ -359,6 +379,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const setPreferredLocale = async (locale: string) => {
+    const normalized = normalizeLocale(locale);
+    setProfile((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev, preferredLocale: normalized };
+      localStorage.setItem("synq_profile", JSON.stringify(next));
+      return next;
+    });
+
+    if (supabase && user && !String(user.id).startsWith("user-")) {
+      try {
+        await supabase.auth.updateUser({
+          data: { preferred_locale: normalized },
+        });
+      } catch {
+        // fail-soft
+      }
+      try {
+        await supabase
+          .from("profiles")
+          .update({ preferred_locale: normalized })
+          .eq("id", user.id);
+      } catch {
+        // fail-soft: en entornos sin columna aún migrada
+      }
+    }
+  };
+
   const logout = async () => {
     if (supabase) {
       await supabase.auth.signOut();
@@ -371,7 +419,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, loading, loginAsGuest, loginWithToken, register, login, completeOnboarding, logout }}>
+    <AuthContext.Provider value={{ user, session, profile, loading, loginAsGuest, loginWithToken, register, login, completeOnboarding, setPreferredLocale, logout }}>
       {children}
     </AuthContext.Provider>
   );

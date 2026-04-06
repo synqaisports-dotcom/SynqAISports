@@ -44,7 +44,7 @@ export function AssetPanel({ theme = "cyan", className, type }: AssetPanelProps)
             <div className="grid grid-cols-2 gap-3">
               {ASSETS.map(asset => (
                 <div key={asset.id} className={cn(
-                  "h-16 bg-white/5 border border-white/5 rounded-2xl flex flex-col items-center justify-center gap-1 cursor-move transition-all group",
+                  "h-16 bg-white/5 border border-white/5 rounded-2xl flex flex-col items-center justify-center gap-1 cursor-move transition-[background-color,border-color,color,opacity,transform] group",
                   theme === "amber" ? "hover:border-amber-500/40" : "hover:border-primary/40"
                 )}>
                   <asset.icon className={cn("h-5 w-5 text-white/20 transition-colors", theme === "amber" ? "group-hover:text-amber-500" : "group-hover:text-primary")} />

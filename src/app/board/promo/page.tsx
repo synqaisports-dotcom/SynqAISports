@@ -228,7 +228,7 @@ function getElementBounds(
 ): ElementBoundsPx {
   const base = getElementBoundsRaw(element, widthPx, heightPx);
   if (!isMaterial(element.type)) return base;
-  const sc = materialViewportScale(cssWidth, cssHeight);
+  const sc = materialViewportScale(cssWidth, cssHeight) * (element.type === "player" ? 0.9 : 1);
   return scaleMaterialBoundsAboutCenter(base, sc);
 }
 
@@ -277,11 +277,11 @@ const AdSlot = memo(({ orientation = 'horizontal' }: { orientation: 'horizontal'
     );
   }
   return (
-    <div onClick={handleAdClick} className={cn("bg-primary/5 border-2 border-dashed border-primary/20 flex flex-col items-center justify-center rounded-2xl overflow-hidden group transition-all hover:bg-primary/[0.08] pointer-events-auto shadow-[0_0_20px_rgba(0,242,255,0.05)] relative cursor-pointer", orientation === 'horizontal' ? "h-16 w-full" : "w-40 h-[600px]")}>
+    <div onClick={handleAdClick} className={cn("bg-primary/5 border-2 border-dashed border-primary/20 flex flex-col items-center justify-center rounded-2xl overflow-hidden group transition-[background-color,border-color,color,opacity,transform] hover:bg-primary/[0.08] pointer-events-auto shadow-[0_0_20px_rgba(0,242,255,0.05)] relative cursor-pointer", orientation === 'horizontal' ? "h-16 w-full" : "w-40 h-[600px]")}>
       <div className="absolute top-0 left-0 bg-primary/20 text-primary text-[6px] font-black px-2 py-0.5 uppercase tracking-widest italic z-20">AdMob / AdSense</div>
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent h-1/2 w-full animate-[refresh-scan_3s_linear_infinite] pointer-events-none z-10" />
       <div className="relative z-20 flex flex-col items-center text-center px-4">
-        <RefreshCw className="h-4 w-4 text-primary/40 group-hover:text-primary transition-all mb-1 animate-spin-slow" />
+        <RefreshCw className="h-4 w-4 text-primary/40 group-hover:text-primary transition-[background-color,border-color,color,opacity,transform] mb-1 animate-spin-slow" />
         <span className="text-[7px] font-black text-primary/60 uppercase tracking-[0.2em] italic truncate">Slot demo (configura .env)</span>
         <span className="text-[5px] text-white/20 uppercase font-bold tracking-widest">NEXT_PUBLIC_GOOGLE_ADSENSE_*</span>
       </div>
@@ -784,15 +784,19 @@ function PromoBoardContent() {
       ctx.restore(); ctx.save(); ctx.translate(centerX, centerY); ctx.rotate(element.rotation); ctx.translate(-centerX, -centerY);
       ctx.strokeStyle = '#ffffffaa'; ctx.lineWidth = 2 * renderScale; ctx.setLineDash([6 * renderScale, 4 * renderScale]); const pad = 12 * renderScale * matScSel;
       ctx.strokeRect(minX - pad, minY - pad, width + pad * 2, height + pad * 2);
-      ctx.setLineDash([]); ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#000000'; ctx.lineWidth = 1.5 * renderScale;
-      const handles = [
-        { x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad },
-        { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY },
-        { x: bounds.minX - pad, y: bounds.maxY + pad }, { x: bounds.centerX, y: bounds.maxY + pad }, { x: bounds.maxX + pad, y: bounds.maxY + pad }
-      ];
-      handles.forEach(h => { ctx.beginPath(); ctx.arc(h.x, h.y, 8 * renderScale * matScSel, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
-      const rotY = minY - pad - 45 * renderScale * matScSel; ctx.beginPath(); ctx.moveTo(centerX, minY - pad); ctx.lineTo(centerX, rotY); ctx.stroke();
-      ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(centerX, rotY, 10 * renderScale * matScSel, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.setLineDash([]);
+      // Jugadores: no mostramos handles/puntos de modificación (solo mover/rotar desde el cuerpo).
+      if (element.type !== "player") {
+        ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#000000'; ctx.lineWidth = 1.5 * renderScale;
+        const handles = [
+          { x: bounds.minX - pad, y: bounds.minY - pad }, { x: bounds.centerX, y: bounds.minY - pad }, { x: bounds.maxX + pad, y: bounds.minY - pad },
+          { x: bounds.minX - pad, y: bounds.centerY }, { x: bounds.maxX + pad, y: bounds.centerY },
+          { x: bounds.minX - pad, y: bounds.maxY + pad }, { x: bounds.centerX, y: bounds.maxY + pad }, { x: bounds.maxX + pad, y: bounds.maxY + pad }
+        ];
+        handles.forEach(h => { ctx.beginPath(); ctx.arc(h.x, h.y, 8 * renderScale * matScSel, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
+        const rotY = minY - pad - 45 * renderScale * matScSel; ctx.beginPath(); ctx.moveTo(centerX, minY - pad); ctx.lineTo(centerX, rotY); ctx.stroke();
+        ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(centerX, rotY, 10 * renderScale * matScSel, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      }
       if (['arrow', 'double-arrow'].includes(element.type) && element.controlPoint && element.points.length >= 2) {
         const p0a = element.points[0], p1a = element.points[1];
         const P0 = { x: p0a.x * widthPx, y: p0a.y * heightPx };
@@ -881,7 +885,8 @@ function PromoBoardContent() {
       canvasRef.current && canvasRef.current.height > 0
         ? canvasRef.current.width / canvasRef.current.height
         : 1.5;
-    const playerScale = tool === "player" ? 1.18 : 1;
+    // Jugadores: mismo tamaño visual que en pizarra de partido.
+    const playerScale = tool === "player" ? 1 : 1;
     const defW =
       tool === "player" ? CANVAS_PLAYER_NORM_WIDTH * playerScale :
       tool === "ladder" ? 0.15 :
@@ -989,7 +994,23 @@ function PromoBoardContent() {
         }
       }
     }
-    const clicked = [...elements].reverse().find(el => { const b = getElementBounds(el, wPx, hPx, wPx, hPx); const local = rotatePoint({ x: point.x * wPx, y: point.y * hPx }, { x: b.centerX, y: b.centerY }, -el.rotation); const hitPadding = el.type === 'text' ? (isCoarsePointer ? 35 : 25) : (isCoarsePointer ? 25 : 15); return local.x >= b.minX - hitPadding && local.x <= b.maxX + hitPadding && local.y >= b.minY - hitPadding && local.y <= b.maxY + hitPadding; });
+    // Prioridad de selección: texto > materiales > dibujos. Así los materiales se pueden mover aunque estén “dentro” de un rectángulo.
+    const reversed = [...elements].reverse();
+    const bucketed = {
+      text: reversed.filter((el) => el.type === "text"),
+      materials: reversed.filter((el) => el.type !== "text" && isMaterial(el.type)),
+      strokes: reversed.filter((el) => el.type !== "text" && !isMaterial(el.type)),
+    };
+    const hitTest = (el: DrawingElement) => {
+      const b = getElementBounds(el, wPx, hPx, wPx, hPx);
+      const local = rotatePoint({ x: point.x * wPx, y: point.y * hPx }, { x: b.centerX, y: b.centerY }, -el.rotation);
+      const hitPadding = el.type === 'text' ? (isCoarsePointer ? 35 : 25) : (isCoarsePointer ? 25 : 15);
+      return local.x >= b.minX - hitPadding && local.x <= b.maxX + hitPadding && local.y >= b.minY - hitPadding && local.y <= b.maxY + hitPadding;
+    };
+    const clicked =
+      bucketed.text.find(hitTest) ??
+      bucketed.materials.find(hitTest) ??
+      bucketed.strokes.find(hitTest);
     if (clicked) {
       if (e.shiftKey) {
         setSelectedIds(prev => {
@@ -1206,14 +1227,14 @@ function PromoBoardContent() {
         <div className="flex items-center gap-2 md:gap-4 px-4 py-2 md:px-6 md:py-3 bg-black/60 backdrop-blur-2xl border border-primary/30 rounded-[2rem] shadow-2xl animate-in slide-in-from-top-2 scale-[0.8] md:scale-90 lg:scale-100 origin-top pointer-events-auto">
           
           <div className="flex items-center gap-3 pr-3 border-r border-white/10 shrink-0">
-            <button onClick={toggleFullscreen} className="h-8 w-8 flex items-center justify-center text-primary/40 hover:text-primary transition-all active:scale-95" title={isFullscreen ? "Minimizar" : "Pantalla Completa"}>{isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}</button>
+            <button onClick={toggleFullscreen} className="h-8 w-8 flex items-center justify-center text-primary/40 hover:text-primary transition-[background-color,border-color,color,opacity,transform] active:scale-95" title={isFullscreen ? "Minimizar" : "Pantalla Completa"}>{isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}</button>
             <div className="flex flex-col"><div className="flex items-center gap-1.5"><Zap className="h-3 w-3 text-primary animate-pulse" /><span className="text-[7px] font-black text-primary tracking-widest uppercase italic">Promo_Mode</span></div><h1 className="text-[10px] font-headline font-black text-white italic uppercase leading-none">{exerciseId ? 'Edición' : 'Sandbox'}</h1></div>
           </div>
 
           <div className="flex items-center gap-2 px-1">
             <Sheet open={isTeamSheetOpen} onOpenChange={setIsTeamSheetOpen}>
               <SheetTrigger asChild>
-                <button className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center transition-all group relative">
+                <button className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center transition-[background-color,border-color,color,opacity,transform] group relative">
                   <Users className="h-4 w-4 group-hover:animate-pulse" />
                   <div className="absolute -top-1 -right-1 h-3.5 min-w-3.5 px-0.5 bg-primary rounded-full border border-black flex items-center justify-center">
                     <span className="text-[7px] font-black text-black tabular-nums">
@@ -1250,17 +1271,17 @@ function PromoBoardContent() {
                   >
                     Recargar desde localStorage
                   </Button>
-                  <Button variant="outline" onClick={() => { loadTeamFromSandbox(); setIsTeamSheetOpen(false); }} className="w-full h-14 border-primary/20 bg-primary/5 text-primary font-black uppercase text-[10px] rounded-2xl hover:bg-primary hover:text-black transition-all mb-6">
+                  <Button variant="outline" onClick={() => { loadTeamFromSandbox(); setIsTeamSheetOpen(false); }} className="w-full h-14 border-primary/20 bg-primary/5 text-primary font-black uppercase text-[10px] rounded-2xl hover:bg-primary hover:text-black transition-[background-color,border-color,color,opacity,transform] mb-6">
                     <Users className="h-4 w-4 mr-2" /> Volcar Titulares al Campo
                   </Button>
                   {teamConfig ? (
                     <div className="space-y-2">
                       <p className="text-[9px] font-black uppercase text-primary/40 tracking-widest ml-1 mb-4 italic">Lista de Jugadores Sincronizada</p>
                       {teamConfig.starters.filter((n: string) => n.trim() !== "").map((name: string, i: number) => (
-                        <div key={i} className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl flex items-center justify-between hover:bg-primary/5 hover:border-primary/20 transition-all group">
+                        <div key={i} className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl flex items-center justify-between hover:bg-primary/5 hover:border-primary/20 transition-[background-color,border-color,color,opacity,transform] group">
                           <div className="flex items-center gap-4">
                             <span className="text-[10px] font-black text-primary/40 group-hover:text-primary transition-colors">#{i+1}</span>
-                            <span className="text-xs font-black text-white uppercase italic group-hover:cyan-text-glow transition-all">{name}</span>
+                            <span className="text-xs font-black text-white uppercase italic group-hover:cyan-text-glow transition-[background-color,border-color,color,opacity,transform]">{name}</span>
                           </div>
                           <Badge variant="outline" className="text-[7px] border-primary/10 text-primary/40">PROMO_NODE</Badge>
                         </div>
@@ -1286,7 +1307,7 @@ function PromoBoardContent() {
 
             <Sheet open={isMaterialsSheetOpen} onOpenChange={setIsMaterialsSheetOpen}>
               <SheetTrigger asChild>
-                <button className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center transition-all group">
+                <button className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center transition-[background-color,border-color,color,opacity,transform] group">
                   <Boxes className="h-4 w-4 group-hover:animate-pulse" />
                 </button>
               </SheetTrigger>
@@ -1323,7 +1344,7 @@ function PromoBoardContent() {
           
           <div className="flex items-center gap-2">
             <Select value={fieldType} onValueChange={(v: FieldType) => setFieldType(v)}><SelectTrigger className="w-[100px] h-8 bg-white/5 border-primary/20 rounded-lg text-[7px] font-black uppercase text-primary focus:ring-0 px-2"><SelectValue /></SelectTrigger><SelectContent className="bg-[#0a0f18] border-primary/20"><SelectItem value="f11" className="text-[8px] font-black">F11</SelectItem><SelectItem value="f7" className="text-[8px] font-black">F7</SelectItem><SelectItem value="futsal" className="text-[8px] font-black">FUTSAL</SelectItem></SelectContent></Select>
-            <button onClick={() => setIsHalfField(!isHalfField)} className={cn("h-8 px-2 border border-primary/20 text-[7px] font-black uppercase rounded-lg transition-all", isHalfField ? "bg-primary text-black" : "text-primary/40")}><Square className="h-3 w-3 mr-1" /> {isHalfField ? 'Campo Total' : 'Medio Campo'}</button>
+            <button onClick={() => setIsHalfField(!isHalfField)} className={cn("h-8 px-2 border border-primary/20 text-[7px] font-black uppercase rounded-lg transition-[background-color,border-color,color,opacity,transform]", isHalfField ? "bg-primary text-black" : "text-primary/40")}><Square className="h-3 w-3 mr-1" /> {isHalfField ? 'Campo Total' : 'Medio Campo'}</button>
             <Button variant="ghost" onClick={() => setShowLanes(!showLanes)} className={cn("h-8 px-2 border border-primary/20 text-[7px] font-black uppercase rounded-lg", showLanes ? "bg-primary text-black" : "text-primary/40")}><Columns3 className="h-3 w-3 mr-1" /> Carriles</Button>
           </div>
 
@@ -1332,7 +1353,7 @@ function PromoBoardContent() {
           <div className="flex items-center gap-2">
             <Sheet open={isDrawingSheetOpen} onOpenChange={setIsDrawingSheetOpen}>
               <SheetTrigger asChild>
-                <button className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/30 text-primary flex items-center justify-center hover:bg-primary hover:text-black transition-all group relative">
+                <button className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/30 text-primary flex items-center justify-center hover:bg-primary hover:text-black transition-[background-color,border-color,color,opacity,transform] group relative">
                   <PencilLine className="h-4 w-4 group-hover:animate-pulse" />
                 </button>
               </SheetTrigger>
@@ -1378,7 +1399,7 @@ function PromoBoardContent() {
 
             <Sheet open={isVaultSheetOpen} onOpenChange={setIsVaultSheetOpen}>
               <SheetTrigger asChild>
-                <button className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/30 text-primary flex items-center justify-center hover:bg-primary hover:text-black transition-all group relative">
+                <button className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/30 text-primary flex items-center justify-center hover:bg-primary hover:text-black transition-[background-color,border-color,color,opacity,transform] group relative">
                   <Library className="h-4 w-4 group-hover:animate-pulse" />
                   <div className="absolute -top-1 -left-1 h-4 w-4 bg-primary rounded-full border-2 border-black flex items-center justify-center">
                     <span className="text-[8px] font-black text-black">{vault.exercises?.length || 0}</span>
@@ -1399,12 +1420,12 @@ function PromoBoardContent() {
                   {vault.exercises && vault.exercises.length > 0 ? (
                     <div className="grid grid-cols-1 gap-4">
                       {vault.exercises.map((ex: any) => (
-                        <div key={ex.id} onClick={() => { loadExercise(ex); setIsVaultSheetOpen(false); }} className="p-5 bg-white/[0.02] border border-white/5 rounded-3xl group hover:border-primary/40 hover:bg-primary/5 cursor-pointer transition-all relative overflow-hidden">
+                        <div key={ex.id} onClick={() => { loadExercise(ex); setIsVaultSheetOpen(false); }} className="p-5 bg-white/[0.02] border border-white/5 rounded-3xl group hover:border-primary/40 hover:bg-primary/5 cursor-pointer transition-[background-color,border-color,color,opacity,transform] relative overflow-hidden">
                           <div className="flex justify-between items-start mb-2">
                             <Badge variant="outline" className="text-[7px] border-primary/20 text-primary font-black px-2">{ex.block?.toUpperCase() || 'SANDBOX'}</Badge>
                             <span className="text-[8px] font-black text-white/20 uppercase tracking-widest">{ex.fieldType?.toUpperCase() || 'F11'}</span>
                           </div>
-                          <h4 className="text-sm font-black text-white uppercase italic group-hover:cyan-text-glow transition-all">{ex.metadata?.title || `Tarea_${ex.id.toString().slice(-4)}`}</h4>
+                          <h4 className="text-sm font-black text-white uppercase italic group-hover:cyan-text-glow transition-[background-color,border-color,color,opacity,transform]">{ex.metadata?.title || `Tarea_${ex.id.toString().slice(-4)}`}</h4>
                           <p className="text-[9px] font-bold text-white/30 uppercase mt-1 line-clamp-1">{ex.metadata?.objective || 'Sin objetivo definido'}</p>
                         </div>
                       ))}
@@ -1459,7 +1480,7 @@ function PromoBoardContent() {
                 : "/dashboard/promo/tasks";
             router.replace(target);
           }}
-          className="h-12 w-12 rounded-2xl bg-black/60 backdrop-blur-2xl border border-white/10 text-white/40 hover:text-primary transition-all shadow-xl"
+          className="h-12 w-12 rounded-2xl bg-black/60 backdrop-blur-2xl border border-white/10 text-white/40 hover:text-primary transition-[background-color,border-color,color,opacity,transform] shadow-xl"
         >
           <LayoutDashboard className="h-5 w-5" />
         </Button>
