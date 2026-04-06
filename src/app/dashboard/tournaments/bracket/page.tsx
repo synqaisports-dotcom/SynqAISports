@@ -444,15 +444,27 @@ export default function TournamentBracketPage() {
             </div>
           ) : null}
 
-          {mode === "normal" ? (
-            <BracketColumns title={normal.title} rounds={normal.rounds} crestByTeam={crestByTeam} />
-          ) : (
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-              {fourFinals.map((b) => (
-                <BracketColumns key={b.title} title={b.title} rounds={b.rounds} crestByTeam={crestByTeam} />
-              ))}
+          <div className="relative">
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+              <div className="relative">
+                <div className="absolute -inset-6 rounded-full bg-gradient-to-r from-cyan-400/10 via-amber-300/10 to-cyan-400/10 blur-2xl" />
+                <div className="relative h-44 w-44 rounded-full border border-cyan-300/10 bg-black/15 grid place-items-center">
+                  <Trophy className="h-24 w-24 text-amber-300/20 drop-shadow-[0_0_28px_rgba(0,242,255,0.2)]" />
+                </div>
+              </div>
             </div>
-          )}
+            <div className="relative">
+              {mode === "normal" ? (
+                <BracketColumns title={normal.title} rounds={normal.rounds} crestByTeam={crestByTeam} />
+              ) : (
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                  {fourFinals.map((b) => (
+                    <BracketColumns key={b.title} title={b.title} rounds={b.rounds} crestByTeam={crestByTeam} />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
 
           {/* Bloque de datos/fallback ocultado para maximizar espacio visual del cuadro. */}
         </CardContent>
