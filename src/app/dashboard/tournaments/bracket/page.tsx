@@ -849,7 +849,14 @@ export default function TournamentBracketPage() {
 
           <div className="relative">
             {mode === "normal" ? (
-              <BracketColumns title={normal.title} rounds={normal.rounds} crestByTeam={crestByTeam} config={config} teamsRows={teamsRows} />
+              <BracketColumns
+                title={normal.title}
+                rounds={normal.rounds}
+                crestByTeam={crestByTeam}
+                config={config}
+                teamsRows={teamsRows}
+                groupIndexByTeam={groupIndexByTeam}
+              />
             ) : (
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                 {fourFinals.map((b) => (
