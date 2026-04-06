@@ -656,29 +656,7 @@ export default function ClubManagementPage() {
            <Card className="glass-panel border border-primary/10 bg-black/40 overflow-hidden shadow-xl">
              <CardHeader className="p-6 sm:p-8 lg:p-10 pb-4">
                <CardTitle className="text-[11px] font-black uppercase tracking-[0.4em] text-primary/20">
-                 Mapa del Club
-               </CardTitle>
-             </CardHeader>
-             <CardContent className="px-6 sm:px-8 lg:px-10 pb-6 sm:pb-8 lg:pb-10 space-y-4">
-               <div className="rounded-2xl overflow-hidden border border-primary/20 bg-black/60">
-                 <iframe
-                   title="Mapa del club"
-                   src={mapEmbedSrc}
-                   loading="lazy"
-                   referrerPolicy="no-referrer-when-downgrade"
-                   className="w-full h-64 md:h-72"
-                 />
-               </div>
-               <p className="text-[10px] font-bold uppercase tracking-widest text-primary/40">
-                 {clubData.address}
-               </p>
-             </CardContent>
-           </Card>
-
-           <Card className="glass-panel border border-primary/10 bg-black/40 overflow-hidden shadow-xl">
-             <CardHeader className="p-6 sm:p-8 lg:p-10 pb-4">
-               <CardTitle className="text-[11px] font-black uppercase tracking-[0.4em] text-primary/20">
-                 Analítica Visual del Club
+                 Analítica Visual del Club · Nuevo
                </CardTitle>
                <CardDescription className="text-[10px] uppercase tracking-widest text-primary/40">
                  Panel rápido con el mismo estilo gráfico de torneos.
@@ -732,6 +710,28 @@ export default function ClubManagementPage() {
                    </ResponsiveContainer>
                  </div>
                </div>
+             </CardContent>
+           </Card>
+
+           <Card className="glass-panel border border-primary/10 bg-black/40 overflow-hidden shadow-xl">
+             <CardHeader className="p-6 sm:p-8 lg:p-10 pb-4">
+               <CardTitle className="text-[11px] font-black uppercase tracking-[0.4em] text-primary/20">
+                 Mapa del Club
+               </CardTitle>
+             </CardHeader>
+             <CardContent className="px-6 sm:px-8 lg:px-10 pb-6 sm:pb-8 lg:pb-10 space-y-4">
+               <div className="rounded-2xl overflow-hidden border border-primary/20 bg-black/60">
+                 <iframe
+                   title="Mapa del club"
+                   src={mapEmbedSrc}
+                   loading="lazy"
+                   referrerPolicy="no-referrer-when-downgrade"
+                   className="w-full h-64 md:h-72"
+                 />
+               </div>
+               <p className="text-[10px] font-bold uppercase tracking-widest text-primary/40">
+                 {clubData.address}
+               </p>
              </CardContent>
            </Card>
 
