@@ -521,9 +521,17 @@ function SplitClassicBracket({
       <div className="min-w-max px-2 py-2 grid grid-cols-[auto_270px_auto] items-start gap-4">
         <ClassicBracket rounds={leftRounds} crestByTeam={crestByTeam} lineClass={lineClass} />
         <div className="relative" style={{ height: `${canvasHeight}px` }}>
-          <div className="absolute left-0 right-0" style={{ top: `${Math.max(0, finalTop - 18)}px` }}>
-            <p className={`mb-2 text-[9px] font-black uppercase tracking-[0.16em] ${textClass}`}>Final</p>
-            <div className="rounded-xl border border-amber-400/35 bg-amber-500/10 px-3 py-2">
+          <div className="absolute left-0 right-0" style={{ top: `${Math.max(0, finalTop - 30)}px` }}>
+            <div className="flex flex-col items-center gap-2">
+              <div className="relative">
+                <div className="absolute -inset-2 rounded-full bg-gradient-to-r from-cyan-400/25 via-amber-300/20 to-cyan-400/25 blur-md" />
+                <div className="relative inline-flex h-9 w-9 items-center justify-center rounded-full border border-cyan-300/35 bg-black/35 shadow-[0_0_20px_rgba(0,242,255,0.35)]">
+                  <Trophy className="h-5 w-5 text-amber-300 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
+                </div>
+              </div>
+              <p className={`text-[9px] font-black uppercase tracking-[0.16em] ${textClass}`}>Final</p>
+            </div>
+            <div className="mt-2 rounded-xl border border-amber-400/35 bg-amber-500/10 px-3 py-2">
               {finalPairing ? (
                 <>
                   <TeamBadge name={finalPairing.left} crest={crestByTeam.get(finalPairing.left)} />
