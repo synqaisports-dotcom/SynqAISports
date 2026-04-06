@@ -14,6 +14,7 @@ import {
   loadTournamentResultsById,
   loadTournamentTeamsById,
   setActiveTournamentId,
+  tournamentConfigKey,
 } from "@/lib/tournaments-storage";
 
 type BracketRound = {
@@ -395,7 +396,8 @@ export default function TournamentBracketPage() {
     const onStorage = (e: StorageEvent) => {
       if (!resolvedTournamentId) return;
       const key = `synq_tournament_matches_v1_${clubScopeId}_${resolvedTournamentId}`;
-      if (e.key === key) bump();
+      const cfgKey = tournamentConfigKey(clubScopeId, resolvedTournamentId);
+      if (e.key === key || e.key === cfgKey) bump();
     };
     const onVisibility = () => {
       if (document.visibilityState === "visible") bump();
@@ -555,11 +557,11 @@ export default function TournamentBracketPage() {
 
           <div className="relative">
             {mode === "normal" ? (
-              <BracketColumns title={normal.title} rounds={normal.rounds} crestByTeam={crestByTeam} config={config} />
+              <BracketColumns title={normal.title} rounds={normal.rounds} crestByTeam={crestByTeam} config={config} teamsRows={teamsRows} />
             ) : (
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                 {fourFinals.map((b) => (
-                  <BracketColumns key={b.title} title={b.title} rounds={b.rounds} crestByTeam={crestByTeam} config={config} />
+                  <BracketColumns key={b.title} title={b.title} rounds={b.rounds} crestByTeam={crestByTeam} config={config} teamsRows={teamsRows} />
                 ))}
               </div>
             )}
@@ -577,28 +579,20 @@ function BracketColumns({
   rounds,
   crestByTeam,
   config,
+  teamsRows,
 }: {
   title: string;
   rounds: BracketRound[];
   crestByTeam: Map<string, string>;
   config: ReturnType<typeof loadTournamentConfigById>;
+  teamsRows: any[];
 }) {
   const tones = finalsStyle(title);
   const bracketStartAt = useMemo(() => {
-    const fieldsCount = Math.max(1, Number(config?.fieldsCount ?? 1) || 1);
-    const groupsCount = Math.max(1, Number(config?.groupsCount ?? 1) || 1);
-    const teamsPerGroup = Math.max(2, Number(config?.teamsPerGroup ?? 0) || 2);
-    const groupMatches = groupsCount * ((teamsPerGroup * (teamsPerGroup - 1)) / 2);
-    const groupSlots = Math.ceil(groupMatches / fieldsCount);
-    const halves = Number(config?.halvesCount ?? 2) === 1 ? 1 : 2;
-    const minutesPerHalf = Math.max(1, Number(config?.minutesPerHalf ?? 20) || 20);
-    const breakMinutes = halves === 2 ? Math.max(0, Number(config?.breakMinutes ?? 0) || 0) : 0;
-    const bufferBetweenMatches = Math.max(0, Number(config?.bufferBetweenMatches ?? 0) || 0);
-    const slotMinutes = halves * minutesPerHalf + breakMinutes + bufferBetweenMatches;
-    const scheduleStart = String(config?.scheduleStart ?? "09:00");
+    const groupsEndMinutes = estimateGroupsEndMinutes({ config, teamsRows });
     // Cruces: después de terminar la liguilla + 15 min de margen.
-    return toHHMM(toMinutes(scheduleStart) + groupSlots * slotMinutes + 15);
-  }, [config]);
+    return toHHMM(groupsEndMinutes + 15);
+  }, [config, teamsRows]);
   const matchMinutes = Math.max(
     1,
     (Number(config?.halvesCount ?? 2) === 1 ? 1 : 2) * Math.max(1, Number(config?.minutesPerHalf ?? 20))
