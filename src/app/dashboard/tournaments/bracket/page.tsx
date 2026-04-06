@@ -28,6 +28,7 @@ type BracketView = {
 };
 
 type ScheduledBracketMatch = {
+  bracketTitle?: string;
   phaseTitle: string;
   matchIndex: number;
   field: string;
@@ -363,6 +364,63 @@ function buildBracketSchedule(args: {
   return out;
 }
 
+function buildBracketScheduleForViews(args: {
+  views: Array<{ title: string; rounds: BracketRound[] }>;
+  fieldsCount: number;
+  startAt: string;
+  matchMinutes: number;
+}) {
+  const out = new Map<string, ScheduledBracketMatch>();
+  let cursor = toMinutes(args.startAt);
+  const fields = Math.max(1, args.fieldsCount || 1);
+  const duration = Math.max(1, args.matchMinutes || 1);
+  const staged = new Map<number, Array<{ viewTitle: string; phaseTitle: string; left: string; right: string }>>();
+
+  for (const v of args.views) {
+    for (const round of v.rounds) {
+      const rank = phaseRank(round.title);
+      if (!staged.has(rank)) staged.set(rank, []);
+      for (const p of round.pairings ?? []) {
+        staged.get(rank)!.push({
+          viewTitle: v.title,
+          phaseTitle: round.title,
+          left: p.left,
+          right: p.right,
+        });
+      }
+    }
+  }
+
+  const ranks = Array.from(staged.keys()).sort((a, b) => b - a);
+  for (const rank of ranks) {
+    const matches = staged.get(rank) ?? [];
+    if (matches.length === 0) continue;
+    const slotsNeeded = Math.max(1, Math.ceil(matches.length / fields));
+    for (let i = 0; i < matches.length; i++) {
+      const slot = Math.floor(i / fields);
+      const fieldIndex = i % fields;
+      const start = cursor + slot * duration;
+      const end = start + duration;
+      const m = matches[i]!;
+      const row: ScheduledBracketMatch = {
+        bracketTitle: m.viewTitle,
+        phaseTitle: m.phaseTitle,
+        matchIndex: i,
+        field: `Campo ${fieldIndex + 1}`,
+        day: 1,
+        start: toHHMM(start),
+        end: toHHMM(end),
+        left: m.left,
+        right: m.right,
+      };
+      out.set(`${m.viewTitle}__${m.phaseTitle}__${canonicalPair(m.left, m.right)}`, row);
+    }
+    cursor += slotsNeeded * duration;
+  }
+
+  return out;
+}
+
 function pickSeededTeams(args: { standingsByGroup: Record<string, Array<{ team: string }>>; place: number }): string[] {
   const groups = Object.keys(args.standingsByGroup).sort(); // Grupo A, Grupo B, ...
   const out: string[] = [];
@@ -647,6 +705,21 @@ export default function TournamentBracketPage() {
     [standings, includeThirdFourth, config],
   );
   const fourFinals = useMemo(() => buildFourFinals({ standingsByGroup: standings as any, config }), [standings, config]);
+  const globalFourFinalsSchedule = useMemo(() => {
+    if (mode !== "four_finals") return new Map<string, ScheduledBracketMatch>();
+    const bracketStartAt = toHHMM(estimateGroupsEndMinutes({ config, teamsRows }) + 15);
+    const matchMinutes = Math.max(
+      1,
+      (Number(config?.halvesCount ?? 2) === 1 ? 1 : 2) * Math.max(1, Number(config?.minutesPerHalf ?? 20))
+        + (Number(config?.halvesCount ?? 2) === 2 ? Math.max(0, Number(config?.breakMinutes ?? 0)) : 0),
+    );
+    return buildBracketScheduleForViews({
+      views: fourFinals,
+      fieldsCount: Math.max(1, Number(config?.fieldsCount ?? 1) || 1),
+      startAt: bracketStartAt,
+      matchMinutes,
+    });
+  }, [mode, fourFinals, config, teamsRows]);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-700">
@@ -723,7 +796,15 @@ export default function TournamentBracketPage() {
             ) : (
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                 {fourFinals.map((b) => (
-                  <BracketColumns key={b.title} title={b.title} rounds={b.rounds} crestByTeam={crestByTeam} config={config} teamsRows={teamsRows} />
+                  <BracketColumns
+                    key={b.title}
+                    title={b.title}
+                    rounds={b.rounds}
+                    crestByTeam={crestByTeam}
+                    config={config}
+                    teamsRows={teamsRows}
+                    globalScheduleByViewPair={globalFourFinalsSchedule}
+                  />
                 ))}
               </div>
             )}
@@ -742,12 +823,14 @@ function BracketColumns({
   crestByTeam,
   config,
   teamsRows,
+  globalScheduleByViewPair,
 }: {
   title: string;
   rounds: BracketRound[];
   crestByTeam: Map<string, string>;
   config: ReturnType<typeof loadTournamentConfigById>;
   teamsRows: any[];
+  globalScheduleByViewPair?: Map<string, ScheduledBracketMatch>;
 }) {
   const tones = finalsStyle(title);
   const bracketStartAt = useMemo(() => {
@@ -770,13 +853,25 @@ function BracketColumns({
       }),
     [rounds, config, matchMinutes, bracketStartAt],
   );
-  const scheduledByPair = useMemo(() => {
+  const localScheduledByPair = useMemo(() => {
     const map = new Map<string, ScheduledBracketMatch>();
     for (const s of scheduled) {
       map.set(`${s.phaseTitle}__${canonicalPair(s.left, s.right)}`, s);
     }
     return map;
   }, [scheduled]);
+  const scheduledByPair = useMemo(() => {
+    if (!globalScheduleByViewPair || globalScheduleByViewPair.size === 0) return localScheduledByPair;
+    const map = new Map<string, ScheduledBracketMatch>();
+    for (const round of rounds) {
+      for (const p of round.pairings ?? []) {
+        const k = `${title}__${round.title}__${canonicalPair(p.left, p.right)}`;
+        const row = globalScheduleByViewPair.get(k);
+        if (row) map.set(`${round.title}__${canonicalPair(p.left, p.right)}`, row);
+      }
+    }
+    return map;
+  }, [globalScheduleByViewPair, localScheduledByPair, rounds, title]);
   const canSplitOctavos =
     rounds.length >= 4 &&
     String(rounds[0]?.title || "").toLowerCase().includes("octavos") &&
