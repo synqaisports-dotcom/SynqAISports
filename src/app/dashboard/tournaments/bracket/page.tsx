@@ -46,6 +46,7 @@ type BracketResultRow = {
   awayTeam: string;
   localGoals: number;
   awayGoals: number;
+  status?: "open" | "closed";
 };
 
 function tournamentBracketResultsKey(clubId: string, tournamentId: string) {
@@ -54,6 +55,44 @@ function tournamentBracketResultsKey(clubId: string, tournamentId: string) {
 
 function bracketMatchId(bracketTitle: string, phaseTitle: string, left: string, right: string) {
   return `${String(bracketTitle || "").trim()}__${String(phaseTitle || "").trim()}__${canonicalPair(left, right)}`;
+}
+
+function resolveRoundsWithWinners(args: {
+  bracketTitle: string;
+  rounds: BracketRound[];
+  bracketResults: Map<string, BracketResultRow>;
+}): BracketRound[] {
+  const resolved = args.rounds.map((r) => ({ title: r.title, pairings: r.pairings.map((p) => ({ ...p })) }));
+  for (let ri = 0; ri < args.rounds.length - 1; ri++) {
+    const baseRound = args.rounds[ri]!;
+    const currentResolvedRound = resolved[ri]!;
+    const nextResolvedRound = resolved[ri + 1]!;
+    for (let mi = 0; mi < baseRound.pairings.length; mi++) {
+      const basePair = baseRound.pairings[mi]!;
+      const resolvedPair = currentResolvedRound.pairings[mi]!;
+      const rid = bracketMatchId(args.bracketTitle, baseRound.title, basePair.left, basePair.right);
+      const row = args.bracketResults.get(rid);
+      if (!row || row.status !== "closed" || row.localGoals === row.awayGoals) continue;
+      const winner = row.localGoals > row.awayGoals ? resolvedPair.left : resolvedPair.right;
+      const token = `Ganador ${basePair.left} vs ${basePair.right}`;
+      for (let ni = 0; ni < nextResolvedRound.pairings.length; ni++) {
+        const n = nextResolvedRound.pairings[ni]!;
+        if (n.left === token) n.left = winner;
+        if (n.right === token) n.right = winner;
+      }
+    }
+  }
+  return resolved;
+}
+
+function canCloseMatch(row: BracketResultRow | undefined): boolean {
+  if (!row) return false;
+  return row.localGoals !== row.awayGoals;
+}
+
+function winnerTeamFromRow(row: BracketResultRow | undefined): string | null {
+  if (!row || row.status !== "closed" || row.localGoals === row.awayGoals) return null;
+  return row.localGoals > row.awayGoals ? row.localTeam : row.awayTeam;
 }
 
 function inferGroupIndexFromTeamRow(t: any): number | null {
