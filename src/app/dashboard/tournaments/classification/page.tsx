@@ -33,6 +33,24 @@ type ScheduledMatchRow = {
   awayGoals: number;
 };
 
+function TeamCrest(props: { teamName: string; crestByTeam: Map<string, string>; sizeClass?: string }) {
+  const name = String(props.teamName || "").trim();
+  const crest = props.crestByTeam.get(name) ?? "";
+  const sizeClass = props.sizeClass ?? "h-6 w-6";
+  if (crest) {
+    return (
+      <span className={`${sizeClass} shrink-0 rounded-full border border-white/15 bg-black/30 overflow-hidden grid place-items-center`}>
+        <img src={crest} alt={`Escudo ${name}`} className="h-full w-full object-contain" />
+      </span>
+    );
+  }
+  return (
+    <span className={`${sizeClass} shrink-0 rounded-full border border-white/10 bg-white/[0.04] grid place-items-center text-[8px] font-black text-white/45`}>
+      ESC
+    </span>
+  );
+}
+
 function ScoreInput(props: { value: number; disabled?: boolean; onChange: (next: number) => void }) {
   const v = Math.max(0, Number(props.value) || 0);
   return (
@@ -364,6 +382,18 @@ export default function TournamentClassificationPage() {
   }, [matches]);
 
   const normalizedMatches = useMemo(() => normalizeSingleLegMatches(matches), [matches]);
+  const crestByTeam = useMemo(() => {
+    const map = new Map<string, string>();
+    const rows = Array.isArray(teams) ? teams : [];
+    for (const t of rows) {
+      if (!t || typeof t !== "object") continue;
+      const name = String((t as { name?: unknown }).name ?? "").trim();
+      const crest = String((t as { crestDataUrl?: unknown }).crestDataUrl ?? "").trim();
+      if (!name || !crest) continue;
+      map.set(name, crest);
+    }
+    return map;
+  }, [teams]);
 
   const downloadCsv = (filename: string, csv: string) => {
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
@@ -931,6 +961,7 @@ export default function TournamentClassificationPage() {
                   g.teams.map((t, idx) => (
                     <div key={`${g.id}_${t.name}`} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 gap-2">
                       <span className="text-[11px] font-black text-primary/80 w-5">{idx + 1}</span>
+                      <TeamCrest teamName={t.name} crestByTeam={crestByTeam} />
                       <span className="text-[11px] font-black text-white truncate flex-1">{t.name}</span>
                       <span className="text-[10px] font-black uppercase text-white/70">PJ {t.pj}</span>
                       <span className="text-[10px] font-black uppercase text-white/70">DG {t.dg}</span>
@@ -1000,9 +1031,13 @@ export default function TournamentClassificationPage() {
                         </span>
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-[11px] font-black text-white truncate">
-                          {m.localTeam} <span className="text-white/60">vs</span> {m.awayTeam}
-                        </p>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <TeamCrest teamName={m.localTeam} crestByTeam={crestByTeam} sizeClass="h-5 w-5" />
+                          <p className="text-[11px] font-black text-white truncate min-w-0">
+                            {m.localTeam} <span className="text-white/60">vs</span> {m.awayTeam}
+                          </p>
+                          <TeamCrest teamName={m.awayTeam} crestByTeam={crestByTeam} sizeClass="h-5 w-5" />
+                        </div>
                       </div>
                       <div className="shrink-0">
                         <span className="text-[10px] font-black uppercase text-white/60">{m.end}</span>
@@ -1071,6 +1106,7 @@ export default function TournamentClassificationPage() {
                                   {row.groupName} · Jornada {row.round}
                                 </p>
                   <div className="mt-2 flex items-center gap-2">
+                    <TeamCrest teamName={row.localTeam} crestByTeam={crestByTeam} />
                     <span className="flex-1 text-[11px] font-black text-white truncate">{row.localTeam}</span>
                     <ScoreInput
                       disabled={isFinished}
@@ -1134,6 +1170,7 @@ export default function TournamentClassificationPage() {
                       }}
                     />
                     <span className="flex-1 text-right text-[11px] font-black text-white truncate">{row.awayTeam}</span>
+                    <TeamCrest teamName={row.awayTeam} crestByTeam={crestByTeam} />
                   </div>
                               </div>
                             ))}
@@ -1174,10 +1211,14 @@ export default function TournamentClassificationPage() {
             <Mini
               label="Semifinal 1"
               value={`${groups[0]?.teams[0]?.name ?? "1º Grupo A"} vs ${groups[1]?.teams[1]?.name ?? "2º Grupo B"}`}
+              crestLeft={crestByTeam.get(groups[0]?.teams[0]?.name ?? "")}
+              crestRight={crestByTeam.get(groups[1]?.teams[1]?.name ?? "")}
             />
             <Mini
               label="Semifinal 2"
               value={`${groups[1]?.teams[0]?.name ?? "1º Grupo B"} vs ${groups[0]?.teams[1]?.name ?? "2º Grupo A"}`}
+              crestLeft={crestByTeam.get(groups[1]?.teams[0]?.name ?? "")}
+              crestRight={crestByTeam.get(groups[0]?.teams[1]?.name ?? "")}
             />
             <Mini label="Final" value="Ganador SF1 vs Ganador SF2" />
           </div>
@@ -1187,11 +1228,23 @@ export default function TournamentClassificationPage() {
   );
 }
 
-function Mini(props: { label: string; value: string }) {
+function Mini(props: { label: string; value: string; crestLeft?: string; crestRight?: string }) {
   return (
     <div className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
       <p className="text-[9px] font-black uppercase tracking-[0.16em] text-white/55">{props.label}</p>
-      <p className="mt-1 text-[11px] font-black text-white">{props.value}</p>
+      <div className="mt-1 flex items-center gap-2">
+        {props.crestLeft ? (
+          <span className="h-5 w-5 rounded-full border border-white/15 bg-black/30 overflow-hidden grid place-items-center">
+            <img src={props.crestLeft} alt="Escudo" className="h-full w-full object-contain" />
+          </span>
+        ) : null}
+        <p className="text-[11px] font-black text-white flex-1">{props.value}</p>
+        {props.crestRight ? (
+          <span className="h-5 w-5 rounded-full border border-white/15 bg-black/30 overflow-hidden grid place-items-center">
+            <img src={props.crestRight} alt="Escudo" className="h-full w-full object-contain" />
+          </span>
+        ) : null}
+      </div>
     </div>
   );
 }
