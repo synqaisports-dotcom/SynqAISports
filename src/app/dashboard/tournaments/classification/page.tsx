@@ -1024,7 +1024,7 @@ export default function TournamentClassificationPage() {
                           D{m.day} {m.start}
                         </p>
                         <span
-                          className="mt-1 inline-flex items-center rounded-md border px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.16em]"
+                          className="mt-1 inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-[9px] leading-none font-black uppercase tracking-[0.16em]"
                           style={{ ...groupColor(m.groupName).badgeStyle, ...groupColor(m.groupName).textStyle }}
                         >
                           {m.groupName} · J{m.round}
