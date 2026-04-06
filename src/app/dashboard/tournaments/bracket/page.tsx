@@ -13,6 +13,7 @@ import {
   loadTournamentConfigById,
   loadTournamentResultsById,
   loadTournamentTeamsById,
+  safeJsonParse,
   setActiveTournamentId,
   tournamentConfigKey,
 } from "@/lib/tournaments-storage";
@@ -38,6 +39,22 @@ type ScheduledBracketMatch = {
   left: string;
   right: string;
 };
+
+type BracketResultRow = {
+  id: string;
+  localTeam: string;
+  awayTeam: string;
+  localGoals: number;
+  awayGoals: number;
+};
+
+function tournamentBracketResultsKey(clubId: string, tournamentId: string) {
+  return `synq_tournament_bracket_results_v1_${clubId}_${tournamentId}`;
+}
+
+function bracketMatchId(bracketTitle: string, phaseTitle: string, left: string, right: string) {
+  return `${String(bracketTitle || "").trim()}__${String(phaseTitle || "").trim()}__${canonicalPair(left, right)}`;
+}
 
 function inferGroupIndexFromTeamRow(t: any): number | null {
   if (!t || typeof t !== "object") return null;
@@ -643,6 +660,7 @@ export default function TournamentBracketPage() {
   const [includeThirdFourth, setIncludeThirdFourth] = useState(false);
   const [resolvedTournamentId, setResolvedTournamentId] = useState<string | null>(tournamentIdFromUrl);
   const [reloadKey, setReloadKey] = useState(0);
+  const [bracketResults, setBracketResults] = useState<Map<string, BracketResultRow>>(new Map());
 
   useEffect(() => {
     if (!clubScopeId) return;
@@ -679,6 +697,48 @@ export default function TournamentBracketPage() {
       document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [clubScopeId, resolvedTournamentId]);
+
+  useEffect(() => {
+    if (!resolvedTournamentId) {
+      setBracketResults(new Map());
+      return;
+    }
+    try {
+      const raw = localStorage.getItem(tournamentBracketResultsKey(clubScopeId, resolvedTournamentId));
+      const parsed = safeJsonParse<unknown>(raw);
+      const rows = Array.isArray(parsed) ? parsed : [];
+      const next = new Map<string, BracketResultRow>();
+      for (const row of rows) {
+        if (!row || typeof row !== "object") continue;
+        const r = row as Partial<BracketResultRow>;
+        const id = String(r.id ?? "").trim();
+        const localTeam = String(r.localTeam ?? "").trim();
+        const awayTeam = String(r.awayTeam ?? "").trim();
+        const localGoals = Math.max(0, Number(r.localGoals ?? 0) || 0);
+        const awayGoals = Math.max(0, Number(r.awayGoals ?? 0) || 0);
+        if (!id || !localTeam || !awayTeam) continue;
+        next.set(id, { id, localTeam, awayTeam, localGoals, awayGoals });
+      }
+      setBracketResults(next);
+    } catch {
+      setBracketResults(new Map());
+    }
+  }, [clubScopeId, resolvedTournamentId, reloadKey]);
+
+  useEffect(() => {
+    if (!resolvedTournamentId) return;
+    const id = window.setTimeout(() => {
+      try {
+        localStorage.setItem(
+          tournamentBracketResultsKey(clubScopeId, resolvedTournamentId),
+          JSON.stringify(Array.from(bracketResults.values())),
+        );
+      } catch {
+        // ignore
+      }
+    }, 250);
+    return () => window.clearTimeout(id);
+  }, [clubScopeId, resolvedTournamentId, bracketResults]);
 
   const config = useMemo(
     () => loadTournamentConfigById(clubScopeId, resolvedTournamentId),
@@ -778,6 +838,22 @@ export default function TournamentBracketPage() {
     });
   }, [mode, fourFinals, config, teamsRows]);
 
+  const upsertBracketResult = (id: string, localTeam: string, awayTeam: string, localGoals: number, awayGoals: number) => {
+    const normalizedId = String(id || "").trim();
+    if (!normalizedId) return;
+    setBracketResults((prev) => {
+      const next = new Map(prev);
+      next.set(normalizedId, {
+        id: normalizedId,
+        localTeam: String(localTeam || "").trim(),
+        awayTeam: String(awayTeam || "").trim(),
+        localGoals: Math.max(0, Number(localGoals) || 0),
+        awayGoals: Math.max(0, Number(awayGoals) || 0),
+      });
+      return next;
+    });
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-700">
       <div className="border-b border-primary/15 pb-5 flex items-center justify-between gap-3">
@@ -856,6 +932,8 @@ export default function TournamentBracketPage() {
                 config={config}
                 teamsRows={teamsRows}
                 groupIndexByTeam={groupIndexByTeam}
+                bracketResults={bracketResults}
+                onUpsertResult={upsertBracketResult}
               />
             ) : (
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
@@ -869,6 +947,8 @@ export default function TournamentBracketPage() {
                     teamsRows={teamsRows}
                     globalScheduleByViewPair={globalFourFinalsSchedule}
                     groupIndexByTeam={groupIndexByTeam}
+                    bracketResults={bracketResults}
+                    onUpsertResult={upsertBracketResult}
                   />
                 ))}
               </div>
@@ -890,6 +970,8 @@ function BracketColumns({
   teamsRows,
   globalScheduleByViewPair,
   groupIndexByTeam,
+  bracketResults,
+  onUpsertResult,
 }: {
   title: string;
   rounds: BracketRound[];
@@ -898,6 +980,8 @@ function BracketColumns({
   teamsRows: any[];
   globalScheduleByViewPair?: Map<string, ScheduledBracketMatch>;
   groupIndexByTeam?: Map<string, number>;
+  bracketResults: Map<string, BracketResultRow>;
+  onUpsertResult: (id: string, localTeam: string, awayTeam: string, localGoals: number, awayGoals: number) => void;
 }) {
   const tones = finalsStyle(title);
   const bracketStartAt = useMemo(() => {
@@ -952,19 +1036,25 @@ function BracketColumns({
         canSplitOctavos ? (
           <SplitClassicBracket
             rounds={rounds}
+            bracketTitle={title}
             crestByTeam={crestByTeam}
             lineClass={tones.borderClass.replace("border-", "bg-")}
             textClass={tones.textClass}
             scheduledByPair={scheduledByPair}
             groupIndexByTeam={groupIndexByTeam}
+            bracketResults={bracketResults}
+            onUpsertResult={onUpsertResult}
           />
         ) : (
           <ClassicBracket
             rounds={rounds}
+            bracketTitle={title}
             crestByTeam={crestByTeam}
             lineClass={tones.borderClass.replace("border-", "bg-")}
             scheduledByPair={scheduledByPair}
             groupIndexByTeam={groupIndexByTeam}
+            bracketResults={bracketResults}
+            onUpsertResult={onUpsertResult}
           />
         )
       )}
@@ -974,18 +1064,24 @@ function BracketColumns({
 
 function SplitClassicBracket({
   rounds,
+  bracketTitle,
   crestByTeam,
   lineClass,
   textClass,
   scheduledByPair,
   groupIndexByTeam,
+  bracketResults,
+  onUpsertResult,
 }: {
   rounds: BracketRound[];
+  bracketTitle: string;
   crestByTeam: Map<string, string>;
   lineClass: string;
   textClass: string;
   scheduledByPair: Map<string, ScheduledBracketMatch>;
   groupIndexByTeam?: Map<string, number>;
+  bracketResults: Map<string, BracketResultRow>;
+  onUpsertResult: (id: string, localTeam: string, awayTeam: string, localGoals: number, awayGoals: number) => void;
 }) {
   const leftRounds = rounds.slice(0, -1).map((r) => ({ ...r, pairings: r.pairings.slice(0, Math.ceil(r.pairings.length / 2)) }));
   const rightRounds = rounds.slice(0, -1).map((r) => ({ ...r, pairings: r.pairings.slice(Math.ceil(r.pairings.length / 2)) }));
@@ -999,7 +1095,16 @@ function SplitClassicBracket({
   return (
     <div className="mt-4 overflow-x-auto">
       <div className="min-w-max px-2 py-2 grid grid-cols-[auto_270px_auto] items-start gap-4">
-        <ClassicBracket rounds={leftRounds} crestByTeam={crestByTeam} lineClass={lineClass} scheduledByPair={scheduledByPair} groupIndexByTeam={groupIndexByTeam} />
+        <ClassicBracket
+          rounds={leftRounds}
+          bracketTitle={bracketTitle}
+          crestByTeam={crestByTeam}
+          lineClass={lineClass}
+          scheduledByPair={scheduledByPair}
+          groupIndexByTeam={groupIndexByTeam}
+          bracketResults={bracketResults}
+          onUpsertResult={onUpsertResult}
+        />
         <div className="relative" style={{ height: `${canvasHeight}px` }}>
           <div className="absolute left-0 right-0" style={{ top: `${Math.max(0, finalTop - 8)}px` }}>
             <div className="flex flex-col items-center gap-1">
@@ -1017,7 +1122,45 @@ function SplitClassicBracket({
                     );
                   })()}
                   <span className="inline-flex items-center rounded-md border border-white/15 bg-white/[0.04] px-2 py-0.5 text-[9px] font-black text-white/80 tabular-nums">
-                    — : —
+                    {(() => {
+                      const rid = bracketMatchId(bracketTitle, "Final", finalPairing.left, finalPairing.right);
+                      const row = bracketResults.get(rid);
+                      return (
+                        <span className="inline-flex items-center gap-1">
+                          <input
+                            type="number"
+                            min={0}
+                            value={row?.localGoals ?? 0}
+                            onChange={(e) =>
+                              onUpsertResult(
+                                rid,
+                                finalPairing.left,
+                                finalPairing.right,
+                                Math.max(0, Number(e.target.value) || 0),
+                                row?.awayGoals ?? 0,
+                              )
+                            }
+                            className="h-5 w-8 rounded border border-white/20 bg-black/25 px-1 text-center text-[9px] font-black text-white outline-none"
+                          />
+                          <span>:</span>
+                          <input
+                            type="number"
+                            min={0}
+                            value={row?.awayGoals ?? 0}
+                            onChange={(e) =>
+                              onUpsertResult(
+                                rid,
+                                finalPairing.left,
+                                finalPairing.right,
+                                row?.localGoals ?? 0,
+                                Math.max(0, Number(e.target.value) || 0),
+                              )
+                            }
+                            className="h-5 w-8 rounded border border-white/20 bg-black/25 px-1 text-center text-[9px] font-black text-white outline-none"
+                          />
+                        </span>
+                      );
+                    })()}
                   </span>
                 </div>
               ) : null}
@@ -1041,7 +1184,17 @@ function SplitClassicBracket({
             </div>
           </div>
         </div>
-        <ClassicBracket rounds={rightRounds} crestByTeam={crestByTeam} lineClass={lineClass} reverse scheduledByPair={scheduledByPair} groupIndexByTeam={groupIndexByTeam} />
+        <ClassicBracket
+          rounds={rightRounds}
+          bracketTitle={bracketTitle}
+          crestByTeam={crestByTeam}
+          lineClass={lineClass}
+          reverse
+          scheduledByPair={scheduledByPair}
+          groupIndexByTeam={groupIndexByTeam}
+          bracketResults={bracketResults}
+          onUpsertResult={onUpsertResult}
+        />
       </div>
     </div>
   );
@@ -1083,18 +1236,24 @@ function BracketPhaseCard({
 
 function ClassicBracket({
   rounds,
+  bracketTitle,
   crestByTeam,
   lineClass,
   reverse = false,
   scheduledByPair,
   groupIndexByTeam,
+  bracketResults,
+  onUpsertResult,
 }: {
   rounds: BracketRound[];
+  bracketTitle: string;
   crestByTeam: Map<string, string>;
   lineClass: string;
   reverse?: boolean;
   scheduledByPair: Map<string, ScheduledBracketMatch>;
   groupIndexByTeam?: Map<string, number>;
+  bracketResults: Map<string, BracketResultRow>;
+  onUpsertResult: (id: string, localTeam: string, awayTeam: string, localGoals: number, awayGoals: number) => void;
 }) {
   const lineBgClass = lineClass.startsWith("bg-") ? lineClass : "bg-primary/35";
   const leafPitch = 112; // separación vertical base de la primera ronda
@@ -1134,6 +1293,9 @@ function ClassicBracket({
                         schedule={scheduledByPair.get(`${round.title}__${canonicalPair(p.left, p.right)}`)}
                         final={round.title === "Final"}
                         groupIndexByTeam={groupIndexByTeam}
+                        resultId={bracketMatchId(bracketTitle, round.title, p.left, p.right)}
+                        bracketResults={bracketResults}
+                        onUpsertResult={onUpsertResult}
                       />
                     </div>
                   );
@@ -1162,6 +1324,9 @@ function MatchNode({
   schedule,
   final,
   groupIndexByTeam,
+  resultId,
+  bracketResults,
+  onUpsertResult,
 }: {
   left: string;
   right: string;
@@ -1177,10 +1342,16 @@ function MatchNode({
   schedule?: ScheduledBracketMatch;
   final?: boolean;
   groupIndexByTeam?: Map<string, number>;
+  resultId: string;
+  bracketResults: Map<string, BracketResultRow>;
+  onUpsertResult: (id: string, localTeam: string, awayTeam: string, localGoals: number, awayGoals: number) => void;
 }) {
   const isEven = matchIndex % 2 === 0;
   const leftX = mirror ? "-right-3" : "-left-3";
   const rightX = mirror ? "-left-3" : "-right-3";
+  const row = bracketResults.get(resultId);
+  const localGoals = row?.localGoals ?? 0;
+  const awayGoals = row?.awayGoals ?? 0;
   return (
     <div className="relative h-[74px]">
       {showLeftConnector ? (
@@ -1211,7 +1382,27 @@ function MatchNode({
             {schedule ? `D${schedule.day} · ${schedule.field} · ${schedule.start}` : `${phaseTitle} · por definir`}
           </span>
           <span className="inline-flex items-center rounded-md border border-white/15 bg-white/[0.04] px-2 py-0.5 text-[9px] font-black text-white/80 tabular-nums">
-            — : —
+            <span className="inline-flex items-center gap-1">
+              <input
+                type="number"
+                min={0}
+                value={localGoals}
+                onChange={(e) =>
+                  onUpsertResult(resultId, left, right, Math.max(0, Number(e.target.value) || 0), awayGoals)
+                }
+                className="h-5 w-8 rounded border border-white/20 bg-black/25 px-1 text-center text-[9px] font-black text-white outline-none"
+              />
+              <span>:</span>
+              <input
+                type="number"
+                min={0}
+                value={awayGoals}
+                onChange={(e) =>
+                  onUpsertResult(resultId, left, right, localGoals, Math.max(0, Number(e.target.value) || 0))
+                }
+                className="h-5 w-8 rounded border border-white/20 bg-black/25 px-1 text-center text-[9px] font-black text-white outline-none"
+              />
+            </span>
           </span>
         </div>
         <TeamBadge name={left} crest={crestByTeam.get(left)} textStyle={teamNameColorStyle(left, groupIndexByTeam)} />
