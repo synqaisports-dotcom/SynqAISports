@@ -124,8 +124,12 @@ function pickSeededTeams(args: { standingsByGroup: Record<string, Array<{ team: 
   return out;
 }
 
-function buildNormalBracket(args: { standingsByGroup: Record<string, Array<{ team: string }>> }): BracketView {
+function buildNormalBracket(args: {
+  standingsByGroup: Record<string, Array<{ team: string }>>;
+  includeThirdFourth?: boolean;
+}): BracketView {
   const gnames = Object.keys(args.standingsByGroup).sort();
+  const includeThirdFourth = !!args.includeThirdFourth;
   // Clasificación mínima: 1º y 2º por grupo
   const firsts = pickSeededTeams({ standingsByGroup: args.standingsByGroup, place: 1 });
   const seconds = pickSeededTeams({ standingsByGroup: args.standingsByGroup, place: 2 });
@@ -139,10 +143,27 @@ function buildNormalBracket(args: { standingsByGroup: Record<string, Array<{ tea
     const a2 = gA ? args.standingsByGroup[gA]?.[1]?.team : undefined;
     const b1 = gB ? args.standingsByGroup[gB]?.[0]?.team : undefined;
     const b2 = gB ? args.standingsByGroup[gB]?.[1]?.team : undefined;
-    if (a1 && b2) teams.push(a1, b2);
-    else if (a1) teams.push(a1);
-    if (b1 && a2) teams.push(b1, a2);
-    else if (b1) teams.push(b1);
+    if (includeThirdFourth) {
+      const a3 = gA ? args.standingsByGroup[gA]?.[2]?.team : undefined;
+      const a4 = gA ? args.standingsByGroup[gA]?.[3]?.team : undefined;
+      const b3 = gB ? args.standingsByGroup[gB]?.[2]?.team : undefined;
+      const b4 = gB ? args.standingsByGroup[gB]?.[3]?.team : undefined;
+
+      // Cruces ampliados: 1º vs 4º y 2º vs 3º del grupo siguiente.
+      if (a1 && b4) teams.push(a1, b4);
+      else if (a1) teams.push(a1);
+      if (b1 && a4) teams.push(b1, a4);
+      else if (b1) teams.push(b1);
+      if (a2 && b3) teams.push(a2, b3);
+      else if (a2) teams.push(a2);
+      if (b2 && a3) teams.push(b2, a3);
+      else if (b2) teams.push(b2);
+    } else {
+      if (a1 && b2) teams.push(a1, b2);
+      else if (a1) teams.push(a1);
+      if (b1 && a2) teams.push(b1, a2);
+      else if (b1) teams.push(b1);
+    }
   }
 
   // Fallback por si no hay 2º: usar los que existan
@@ -152,7 +173,7 @@ function buildNormalBracket(args: { standingsByGroup: Record<string, Array<{ tea
   const finalTeams = (seeded.length >= 2 ? seeded : fallback).slice(0, 16);
 
   return {
-    title: "Modo normal · Cuadro único",
+    title: includeThirdFourth ? "Modo normal · Cuadro ampliado (1º-4º)" : "Modo normal · Cuadro único",
     rounds: buildEliminationRounds({ teams: finalTeams }),
   };
 }
@@ -238,6 +259,7 @@ export default function TournamentBracketPage() {
   const { profile } = useAuth();
   const clubScopeId = profile?.clubId ?? "global-hq";
   const [mode, setMode] = useState<"normal" | "four_finals">("normal");
+  const [includeThirdFourth, setIncludeThirdFourth] = useState(false);
   const [resolvedTournamentId, setResolvedTournamentId] = useState<string | null>(tournamentIdFromUrl);
   const [reloadKey, setReloadKey] = useState(0);
 
@@ -347,7 +369,10 @@ export default function TournamentBracketPage() {
     [standings],
   );
 
-  const normal = useMemo(() => buildNormalBracket({ standingsByGroup: standings as any }), [standings]);
+  const normal = useMemo(
+    () => buildNormalBracket({ standingsByGroup: standings as any, includeThirdFourth }),
+    [standings, includeThirdFourth],
+  );
   const fourFinals = useMemo(() => buildFourFinals({ standingsByGroup: standings as any }), [standings]);
 
   return (
@@ -400,6 +425,24 @@ export default function TournamentBracketPage() {
               );
             })}
           </div>
+          {mode === "normal" ? (
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/70">
+                Incluir 3º y 4º en modo normal
+              </p>
+              <button
+                type="button"
+                onClick={() => setIncludeThirdFourth((v) => !v)}
+                className={`inline-flex items-center h-8 rounded-lg border px-3 text-[10px] font-black uppercase tracking-[0.16em] transition-[background-color,border-color,color,opacity,transform] ${
+                  includeThirdFourth
+                    ? "border-primary/35 bg-primary/10 text-primary"
+                    : "border-white/15 bg-black/25 text-white/70"
+                }`}
+              >
+                {includeThirdFourth ? "Activado" : "Desactivado"}
+              </button>
+            </div>
+          ) : null}
 
           {mode === "normal" ? (
             <BracketColumns title={normal.title} rounds={normal.rounds} crestByTeam={crestByTeam} />
@@ -564,6 +607,7 @@ function ClassicBracket({
                         showLeftConnector={roundIndex > 0}
                         showRightConnector={!isLastRound}
                         matchIndex={idx}
+                        roundSize={round.pairings.length}
                         connectorSpan={connectorSpan}
                         lineBgClass={lineBgClass}
                         final={round.title === "Final"}
@@ -587,6 +631,7 @@ function MatchNode({
   showLeftConnector,
   showRightConnector,
   matchIndex,
+  roundSize,
   connectorSpan,
   lineBgClass,
   final,
@@ -597,6 +642,7 @@ function MatchNode({
   showLeftConnector: boolean;
   showRightConnector: boolean;
   matchIndex: number;
+  roundSize: number;
   connectorSpan: number;
   lineBgClass: string;
   final?: boolean;
@@ -607,16 +653,23 @@ function MatchNode({
       {showLeftConnector ? (
         <>
           <span className={`absolute -left-3 top-1/2 h-[2px] w-3 -translate-y-1/2 ${lineBgClass}`} />
-          <span
-            className={`absolute -left-3 left-auto w-[2px] ${lineBgClass} ${isEven ? "top-1/2" : "bottom-1/2"}`}
-            style={{ height: `${connectorSpan}px` }}
-          />
+          {roundSize <= 1 ? (
+            <span
+              className={`absolute -left-3 left-auto w-[2px] ${lineBgClass}`}
+              style={{ top: `calc(50% - ${connectorSpan}px)`, height: `${connectorSpan * 2}px` }}
+            />
+          ) : (
+            <span
+              className={`absolute -left-3 left-auto w-[2px] ${lineBgClass} ${isEven ? "top-1/2" : "bottom-1/2"}`}
+              style={{ height: `${connectorSpan}px` }}
+            />
+          )}
         </>
       ) : null}
       {showRightConnector ? (
         <>
           <span className={`absolute -right-3 top-1/2 h-[2px] w-3 -translate-y-1/2 ${lineBgClass}`} />
-          {isEven ? (
+          {roundSize <= 1 ? null : isEven ? (
             <span
               className={`absolute -right-3 top-1/2 w-[2px] ${lineBgClass}`}
               style={{ height: `${connectorSpan * 2}px` }}
