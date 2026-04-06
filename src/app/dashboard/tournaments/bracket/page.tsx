@@ -510,22 +510,30 @@ function SplitClassicBracket({
   const leftRounds = rounds.slice(0, -1).map((r) => ({ ...r, pairings: r.pairings.slice(0, Math.ceil(r.pairings.length / 2)) }));
   const rightRounds = rounds.slice(0, -1).map((r) => ({ ...r, pairings: r.pairings.slice(Math.ceil(r.pairings.length / 2)) }));
   const finalPairing = rounds[rounds.length - 1]?.pairings?.[0];
+  // Alineación vertical de la final con el centro del canvas de rondas.
+  const leafPitch = 112;
+  const nodeHeight = 74;
+  const firstRoundCount = Math.max(1, leftRounds[0]?.pairings.length ?? rightRounds[0]?.pairings.length ?? 1);
+  const canvasHeight = Math.max(nodeHeight, firstRoundCount * leafPitch);
+  const finalTop = Math.max(0, canvasHeight / 2 - nodeHeight / 2);
   return (
     <div className="mt-4 overflow-x-auto">
       <div className="min-w-max px-2 py-2 grid grid-cols-[auto_270px_auto] items-start gap-4">
         <ClassicBracket rounds={leftRounds} crestByTeam={crestByTeam} lineClass={lineClass} />
-        <div className="pt-10">
-          <p className={`mb-2 text-[9px] font-black uppercase tracking-[0.16em] ${textClass}`}>Final</p>
-          <div className="rounded-xl border border-amber-400/35 bg-amber-500/10 px-3 py-2">
-            {finalPairing ? (
-              <>
-                <TeamBadge name={finalPairing.left} crest={crestByTeam.get(finalPairing.left)} />
-                <p className="text-[9px] text-white/45 uppercase tracking-[0.12em]">vs</p>
-                <TeamBadge name={finalPairing.right} crest={crestByTeam.get(finalPairing.right)} />
-              </>
-            ) : (
-              <p className="text-[11px] text-white/60">Sin final</p>
-            )}
+        <div className="relative" style={{ height: `${canvasHeight}px` }}>
+          <div className="absolute left-0 right-0" style={{ top: `${Math.max(0, finalTop - 18)}px` }}>
+            <p className={`mb-2 text-[9px] font-black uppercase tracking-[0.16em] ${textClass}`}>Final</p>
+            <div className="rounded-xl border border-amber-400/35 bg-amber-500/10 px-3 py-2">
+              {finalPairing ? (
+                <>
+                  <TeamBadge name={finalPairing.left} crest={crestByTeam.get(finalPairing.left)} />
+                  <p className="text-[9px] text-white/45 uppercase tracking-[0.12em]">vs</p>
+                  <TeamBadge name={finalPairing.right} crest={crestByTeam.get(finalPairing.right)} />
+                </>
+              ) : (
+                <p className="text-[11px] text-white/60">Sin final</p>
+              )}
+            </div>
           </div>
         </div>
         <ClassicBracket rounds={rightRounds} crestByTeam={crestByTeam} lineClass={lineClass} reverse />
