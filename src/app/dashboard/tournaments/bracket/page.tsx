@@ -653,17 +653,12 @@ function MatchNode({
       {showLeftConnector ? (
         <>
           <span className={`absolute -left-3 top-1/2 h-[2px] w-3 -translate-y-1/2 ${lineBgClass}`} />
-          {roundSize <= 1 ? (
-            <span
-              className={`absolute -left-3 left-auto w-[2px] ${lineBgClass}`}
-              style={{ top: `calc(50% - ${connectorSpan}px)`, height: `${connectorSpan * 2}px` }}
-            />
-          ) : (
+          {roundSize > 1 ? (
             <span
               className={`absolute -left-3 left-auto w-[2px] ${lineBgClass} ${isEven ? "top-1/2" : "bottom-1/2"}`}
               style={{ height: `${connectorSpan}px` }}
             />
-          )}
+          ) : null}
         </>
       ) : null}
       {showRightConnector ? (
