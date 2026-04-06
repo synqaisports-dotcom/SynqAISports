@@ -992,8 +992,8 @@ export default function TournamentClassificationPage() {
                 </p>
               </div>
               <div className="mt-2 rounded-xl border border-white/5 bg-black/20 px-3 py-2">
-                <p className="text-[9px] font-black uppercase tracking-[0.16em] text-white/50">Grupos en este campo</p>
-                <div className="mt-1 flex flex-wrap gap-1.5">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[9px] font-black uppercase tracking-[0.16em] text-white/50">Grupos:</span>
                   {f.groups.length > 0 ? (
                     f.groups.map((gn) => (
                       <span
