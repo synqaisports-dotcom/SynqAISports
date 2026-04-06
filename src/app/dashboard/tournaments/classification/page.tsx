@@ -1019,15 +1019,12 @@ export default function TournamentClassificationPage() {
                       className="rounded-xl border bg-white/[0.03] px-3 py-2 flex items-center gap-3"
                       style={groupColor(m.groupName).borderStyle}
                     >
-                      <div className="w-[92px] shrink-0">
-                        <p className="text-[10px] font-black text-primary/90">
-                          D{m.day} {m.start}
-                        </p>
+                      <div className="w-[184px] shrink-0">
                         <span
-                          className="mt-1 inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-[9px] leading-none font-black uppercase tracking-[0.16em]"
+                          className="inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-[9px] leading-none font-black uppercase tracking-[0.16em]"
                           style={{ ...groupColor(m.groupName).badgeStyle, ...groupColor(m.groupName).textStyle }}
                         >
-                          {m.groupName} · J{m.round}
+                          D{m.day} {m.start} · {m.groupName} · J{m.round}
                         </span>
                       </div>
                       <div className="min-w-0 flex-1">
