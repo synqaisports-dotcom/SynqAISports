@@ -6,6 +6,8 @@ import { CheckCircle2, QrCode, Search, ShieldCheck, Users, XCircle, Volume2 } fr
 import { useSearchParams } from "next/navigation";
 import { loadTournamentIndex, loadTournamentTeamsById, safeJsonParse } from "@/lib/tournaments-storage";
 import { PwaInstallBanner } from "@/components/pwa/PwaInstallBanner";
+import { useAuth } from "@/lib/auth-context";
+import { canUseOperativaSupabase } from "@/lib/operativa-sync";
 
 type RegistrationStatus =
   | "draft"
@@ -63,11 +65,28 @@ type ScanLog = {
   teamId: string;
   teamName: string;
   source: "camera" | "manual";
-  action: "select" | "checkin" | "checkout";
+  action: "select" | "checkin" | "checkout" | "queued_sync" | "synced";
+};
+
+type CheckinSyncEvent = {
+  id: string;
+  clubId: string;
+  tournamentId: string;
+  teamId: string;
+  teamName: string;
+  present: boolean;
+  at: string;
+  by: string;
+  note?: string;
+  source: "camera" | "manual";
 };
 
 const inputClass =
   "h-10 w-full rounded-lg border border-[#00F2FF]/25 bg-[#0A1322]/85 px-3 text-sm font-semibold text-white outline-none placeholder:text-white/35 focus:border-[#00F2FF]/55 focus:ring-2 focus:ring-[#00F2FF]/20 transition-[background-color,border-color,color,opacity,transform]";
+
+function syncQueueKey(clubId: string, tournamentId: string) {
+  return `synq_tournament_checkin_sync_queue_v1_${clubId}_${tournamentId}`;
+}
 
 function normalize(text: string) {
   return String(text || "")
@@ -149,6 +168,7 @@ export default function TournamentCheckinPage() {
 
 function Inner() {
   const searchParams = useSearchParams();
+  const { profile, session } = useAuth();
   const clubId = searchParams.get("clubId") ?? "global-hq";
   const tournamentIdFromQr = searchParams.get("tournamentId") ?? "";
   const teamIdFromQr = searchParams.get("teamId") ?? "";
@@ -175,9 +195,13 @@ function Inner() {
   const [onlyPending, setOnlyPending] = useState(true);
   const [compactMode, setCompactMode] = useState(true);
   const [scanLogs, setScanLogs] = useState<ScanLog[]>([]);
+  const [syncStatus, setSyncStatus] = useState<"idle" | "syncing" | "ok" | "offline" | "error">("idle");
+  const [pendingQueue, setPendingQueue] = useState<CheckinSyncEvent[]>([]);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const scanTimerRef = useRef<number | null>(null);
+  const isFlushingRef = useRef(false);
+  const canUseRemote = canUseOperativaSupabase(clubId) && !!session?.access_token;
 
   useEffect(() => {
     const hasCamera = typeof navigator !== "undefined" && !!navigator.mediaDevices?.getUserMedia;
@@ -237,6 +261,32 @@ function Inner() {
     }
     setTeams(normalized);
   }, [clubId, selectedTournamentId]);
+
+  useEffect(() => {
+    if (!selectedTournamentId) return;
+    const key = syncQueueKey(clubId, selectedTournamentId);
+    const existing = safeJsonParse<CheckinSyncEvent[]>(localStorage.getItem(key));
+    const queue = Array.isArray(existing) ? existing : [];
+    setPendingQueue(queue);
+    if (queue.length > 0) {
+      setSyncStatus(canUseRemote ? "idle" : "offline");
+    }
+  }, [clubId, selectedTournamentId, canUseRemote]);
+
+  useEffect(() => {
+    if (!selectedTournamentId) return;
+    void flushPendingQueue();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTournamentId, canUseRemote, session?.access_token]);
+
+  useEffect(() => {
+    const onOnline = () => {
+      void flushPendingQueue();
+    };
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTournamentId, canUseRemote, session?.access_token]);
 
   useEffect(() => {
     return () => {
@@ -319,6 +369,75 @@ function Inner() {
     setScanLogs((prev) => [entry, ...prev].slice(0, 8));
   };
 
+  const enqueueSyncEvent = (event: CheckinSyncEvent) => {
+    if (!selectedTournamentId) return;
+    const key = syncQueueKey(clubId, selectedTournamentId);
+    const existing = safeJsonParse<CheckinSyncEvent[]>(localStorage.getItem(key));
+    const next = Array.isArray(existing) ? [...existing, event] : [event];
+    localStorage.setItem(key, JSON.stringify(next.slice(-300)));
+    setPendingQueue(next.slice(-300));
+    setSyncStatus(canUseRemote ? "idle" : "offline");
+  };
+
+  const flushPendingQueue = async () => {
+    if (!selectedTournamentId) return;
+    if (isFlushingRef.current) return;
+    const key = syncQueueKey(clubId, selectedTournamentId);
+    const existing = safeJsonParse<CheckinSyncEvent[]>(localStorage.getItem(key));
+    const queue = Array.isArray(existing) ? existing : [];
+    if (queue.length === 0) {
+      setPendingQueue([]);
+      setSyncStatus(canUseRemote ? "ok" : "offline");
+      return;
+    }
+    if (!canUseRemote || !session?.access_token) {
+      setPendingQueue(queue);
+      setSyncStatus("offline");
+      return;
+    }
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      setPendingQueue(queue);
+      setSyncStatus("offline");
+      return;
+    }
+    isFlushingRef.current = true;
+    setSyncStatus("syncing");
+    try {
+      const res = await fetch("/api/club/tournament-checkin", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          tournamentId: selectedTournamentId,
+          events: queue,
+        }),
+      });
+      if (res.status === 403) {
+        setPendingQueue(queue);
+        setSyncStatus("error");
+        return;
+      }
+      if (!res.ok) {
+        setPendingQueue(queue);
+        setSyncStatus("error");
+        return;
+      }
+      localStorage.removeItem(key);
+      setPendingQueue([]);
+      setSyncStatus("ok");
+      setScanLogs((prev) =>
+        prev.map((x) => (x.action === "queued_sync" ? { ...x, action: "synced" } : x)),
+      );
+    } catch {
+      setPendingQueue(queue);
+      setSyncStatus("offline");
+    } finally {
+      isFlushingRef.current = false;
+    }
+  };
+
   const beepFeedback = (tone: "ok" | "warn" | "error" = "ok") => {
     try {
       if (typeof navigator !== "undefined" && "vibrate" in navigator) {
@@ -351,6 +470,18 @@ function Inner() {
       by,
       note: note.trim(),
     };
+    const syncEvent: CheckinSyncEvent = {
+      id: `chk_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      clubId,
+      tournamentId: selectedTournamentId,
+      teamId: selectedTeam.id,
+      teamName: selectedTeam.name,
+      present,
+      at,
+      by,
+      note: note.trim(),
+      source,
+    };
     const next = teams.map((t) =>
       t.id !== selectedTeam.id
         ? t
@@ -374,6 +505,19 @@ function Inner() {
       source,
       action: present ? "checkin" : "checkout",
     });
+    enqueueSyncEvent(syncEvent);
+    pushScanLog({
+      at,
+      teamId: selectedTeam.id,
+      teamName: selectedTeam.name,
+      source,
+      action: "queued_sync",
+    });
+    if (canUseRemote && (typeof navigator === "undefined" || navigator.onLine)) {
+      window.setTimeout(() => {
+        void flushPendingQueue();
+      }, 40);
+    }
     return true;
   };
 
@@ -636,6 +780,46 @@ function Inner() {
                 Check-out
               </button>
             </div>
+            <div className="rounded-lg border border-white/10 bg-black/20 px-2 py-2 space-y-1">
+              <p className="text-[9px] font-black uppercase tracking-[0.12em] text-primary/75">Sincronización</p>
+              <div className="flex flex-wrap items-center gap-2 text-[10px] font-black uppercase tracking-[0.12em]">
+                <span
+                  className={`rounded-md border px-2 py-0.5 ${
+                    syncStatus === "ok"
+                      ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-200"
+                      : syncStatus === "syncing"
+                        ? "border-primary/25 bg-primary/10 text-primary"
+                        : syncStatus === "offline"
+                          ? "border-amber-500/25 bg-amber-500/10 text-amber-200"
+                          : syncStatus === "error"
+                            ? "border-rose-500/25 bg-rose-500/10 text-rose-200"
+                            : "border-white/10 bg-white/[0.03] text-white/70"
+                  }`}
+                >
+                  {syncStatus === "ok"
+                    ? "Sincronizado"
+                    : syncStatus === "syncing"
+                      ? "Sincronizando"
+                      : syncStatus === "offline"
+                        ? "Modo offline"
+                        : syncStatus === "error"
+                          ? "Error sync"
+                          : "Idle"}
+                </span>
+                <span className="rounded-md border border-white/10 bg-white/[0.03] px-2 py-0.5 text-white/75">
+                  Cola: {pendingQueue.length}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    void flushPendingQueue();
+                  }}
+                  className="h-7 px-2 rounded-md border border-primary/25 bg-primary/10 text-primary text-[9px] font-black uppercase tracking-[0.12em]"
+                >
+                  Sync ahora
+                </button>
+              </div>
+            </div>
             {message ? (
               <p
                 className={`text-[10px] font-black uppercase tracking-[0.14em] ${
@@ -740,7 +924,19 @@ function Inner() {
                 >
                   <span className="font-black text-primary/80">{new Date(log.at).toLocaleTimeString("es-ES")}</span> ·{" "}
                   <span className="font-black">{log.teamName}</span> ·{" "}
-                  <span className={log.action === "checkin" ? "text-emerald-300 font-black" : log.action === "checkout" ? "text-rose-300 font-black" : "text-cyan-300 font-black"}>
+                  <span
+                    className={
+                      log.action === "checkin"
+                        ? "text-emerald-300 font-black"
+                        : log.action === "checkout"
+                          ? "text-rose-300 font-black"
+                          : log.action === "queued_sync"
+                            ? "text-amber-300 font-black"
+                            : log.action === "synced"
+                              ? "text-primary font-black"
+                              : "text-cyan-300 font-black"
+                    }
+                  >
                     {log.action.toUpperCase()}
                   </span>{" "}
                   · {log.source}
