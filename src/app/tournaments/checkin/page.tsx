@@ -1,10 +1,11 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, QrCode, Search, ShieldCheck, Users, XCircle } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { loadTournamentIndex, loadTournamentTeamsById, safeJsonParse } from "@/lib/tournaments-storage";
+import { PwaInstallBanner } from "@/components/pwa/PwaInstallBanner";
 
 type RegistrationStatus =
   | "draft"
@@ -159,6 +160,19 @@ function Inner() {
   const [note, setNote] = useState("");
   const [message, setMessage] = useState("");
   const [messageTone, setMessageTone] = useState<"ok" | "warn" | "error">("ok");
+  const [scannerSupported, setScannerSupported] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
+  const [scannerError, setScannerError] = useState("");
+  const [lastScanAt, setLastScanAt] = useState("");
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const scanTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const hasCamera = typeof navigator !== "undefined" && !!navigator.mediaDevices?.getUserMedia;
+    const hasBarcodeDetector = typeof window !== "undefined" && "BarcodeDetector" in window;
+    setScannerSupported(hasCamera && hasBarcodeDetector);
+  }, []);
 
   useEffect(() => {
     if (selectedTournamentId) return;
@@ -212,6 +226,16 @@ function Inner() {
     }
     setTeams(normalized);
   }, [clubId, selectedTournamentId]);
+
+  useEffect(() => {
+    return () => {
+      if (scanTimerRef.current !== null) window.clearTimeout(scanTimerRef.current);
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!teamIdFromQr && !teamNameFromQr) return;
@@ -316,8 +340,110 @@ function Inner() {
     writeTeams(next);
   };
 
+  const applyScanPayload = (payload: { tournamentId?: string; teamId?: string; teamName?: string }) => {
+    if (payload.tournamentId) {
+      setSelectedTournamentId(payload.tournamentId);
+    }
+    if (payload.teamId) {
+      setSelectedTeamId(payload.teamId);
+      return;
+    }
+    if (payload.teamName) {
+      const found = teams.find((t) => normalize(t.name) === normalize(payload.teamName ?? ""));
+      if (found) setSelectedTeamId(found.id);
+    }
+  };
+
+  const parseDecodedString = (decoded: string) => {
+    const raw = String(decoded || "").trim();
+    if (!raw) return;
+    try {
+      const url = new URL(raw, window.location.origin);
+      const tid = url.searchParams.get("tournamentId") ?? "";
+      const teamId = url.searchParams.get("teamId") ?? "";
+      const teamName = url.searchParams.get("teamName") ?? "";
+      const cid = url.searchParams.get("clubId") ?? "";
+      if (cid && cid !== clubId) {
+        setMessageTone("warn");
+        setMessage(`QR de otro club (${cid}). Operando con club actual (${clubId}).`);
+      }
+      applyScanPayload({ tournamentId: tid || undefined, teamId: teamId || undefined, teamName: teamName || undefined });
+      setLastScanAt(new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }));
+    } catch {
+      const foundByName = teams.find((t) => normalize(t.name) === normalize(raw));
+      if (foundByName) {
+        setSelectedTeamId(foundByName.id);
+        setLastScanAt(new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }));
+      } else {
+        setMessageTone("error");
+        setMessage("QR inválido o equipo no encontrado.");
+      }
+    }
+  };
+
+  const stopScanning = () => {
+    if (scanTimerRef.current !== null) {
+      window.clearTimeout(scanTimerRef.current);
+      scanTimerRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setIsScanning(false);
+  };
+
+  const startScanning = async () => {
+    if (!scannerSupported || isScanning) return;
+    setScannerError("");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: "environment" } },
+        audio: false,
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+      setIsScanning(true);
+
+      const DetectorCtor = (window as unknown as { BarcodeDetector?: new (args: { formats: string[] }) => any }).BarcodeDetector;
+      if (!DetectorCtor) throw new Error("BarcodeDetector no disponible");
+      const detector = new DetectorCtor({ formats: ["qr_code"] });
+
+      const loop = async () => {
+        if (!videoRef.current || !isScanning) return;
+        try {
+          const codes = await detector.detect(videoRef.current);
+          if (Array.isArray(codes) && codes.length > 0) {
+            const value = String(codes[0]?.rawValue ?? "").trim();
+            if (value) {
+              parseDecodedString(value);
+              stopScanning();
+              setMessageTone("ok");
+              setMessage("QR leído correctamente.");
+              return;
+            }
+          }
+        } catch {
+          // sigue intentando hasta que el operador cancele
+        }
+        scanTimerRef.current = window.setTimeout(loop, 350);
+      };
+      scanTimerRef.current = window.setTimeout(loop, 350);
+    } catch {
+      stopScanning();
+      setScannerError("No se pudo abrir la cámara. Revisa permisos del navegador.");
+    }
+  };
+
   return (
     <div className="min-h-[100dvh] bg-[#040812] text-white relative overflow-hidden">
+      <PwaInstallBanner appName="Check-in Torneo" storageKeyScope="tournaments-checkin" />
       <div className="absolute inset-0 opacity-30 pointer-events-none">
         <div className="absolute -top-24 -left-24 h-80 w-80 rounded-full bg-cyan-500/20 blur-3xl" />
         <div className="absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-cyan-500/10 blur-3xl" />
@@ -364,6 +490,48 @@ function Inner() {
               placeholder="Operador terminal"
               className={inputClass}
             />
+            <div className="rounded-xl border border-[#00F2FF]/20 bg-black/25 p-2 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[#00F2FF]/75">Escáner QR móvil</p>
+                <span className="text-[9px] font-black uppercase tracking-[0.12em] text-white/55">
+                  {lastScanAt ? `Último: ${lastScanAt}` : "Sin lecturas"}
+                </span>
+              </div>
+              <video
+                ref={videoRef}
+                muted
+                playsInline
+                className={`w-full rounded-lg border border-white/10 bg-black/60 ${isScanning ? "block" : "hidden"}`}
+              />
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    void startScanning();
+                  }}
+                  disabled={!scannerSupported || isScanning}
+                  className="h-9 rounded-lg border border-primary/25 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-[0.12em] disabled:opacity-45"
+                >
+                  Escanear
+                </button>
+                <button
+                  type="button"
+                  onClick={stopScanning}
+                  disabled={!isScanning}
+                  className="h-9 rounded-lg border border-white/15 bg-white/[0.04] text-white/75 text-[10px] font-black uppercase tracking-[0.12em] disabled:opacity-45"
+                >
+                  Parar
+                </button>
+              </div>
+              {!scannerSupported ? (
+                <p className="text-[10px] text-amber-300 font-black uppercase tracking-[0.12em]">
+                  Este navegador no soporta escaneo nativo.
+                </p>
+              ) : null}
+              {scannerError ? (
+                <p className="text-[10px] text-rose-300 font-black uppercase tracking-[0.12em]">{scannerError}</p>
+              ) : null}
+            </div>
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
