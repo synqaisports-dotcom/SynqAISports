@@ -896,8 +896,14 @@ export default function TournamentRegistrationPage() {
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <MiniKpi label="Estado operativo" value="Fase 4 desplegada" highlight />
-          <MiniKpi label="Check-in terminal" value="Pendiente Fase 6" />
+          <MiniKpi label="Check-in terminal" value="Fase 6 activa" highlight />
           <MiniKpi label="Mesa control" value="Fase 3 activa" />
+          <Link
+            href={`/tournaments/checkin?clubId=${encodeURIComponent(clubScopeId)}${selectedTournamentId ? `&tournamentId=${encodeURIComponent(selectedTournamentId)}` : ""}`}
+            className="inline-flex items-center justify-center h-10 rounded-xl border border-primary/25 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-[0.14em]"
+          >
+            Abrir terminal check-in
+          </Link>
         </CardContent>
       </Card>
 
