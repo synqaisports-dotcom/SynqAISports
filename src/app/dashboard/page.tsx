@@ -584,25 +584,6 @@ function OperativaPeaks({
     );
   }
 
-  const w = 100;
-  const h = 32;
-  const maxSessions = Math.max(1, ...data.map((d) => d.sessions));
-  const sx = (idx: number) => (data.length === 1 ? 0 : (idx / (data.length - 1)) * w);
-  const sySessions = (v: number) => h - (v / maxSessions) * h;
-  const syAttendance = (v: number) => h - (Math.max(0, Math.min(100, v)) / 100) * h;
-
-  const pathFrom = (getY: (v: number) => number, key: "sessions" | "attendance") =>
-    data
-      .map((d, i) => `${i === 0 ? "M" : "L"} ${sx(i).toFixed(2)} ${getY(d[key]).toFixed(2)}`)
-      .join(" ");
-  const areaFrom = (getY: (v: number) => number, key: "sessions" | "attendance") => {
-    const line = pathFrom(getY, key);
-    const endX = sx(data.length - 1).toFixed(2);
-    return `${line} L ${endX} ${h.toFixed(2)} L 0 ${h.toFixed(2)} Z`;
-  };
-  const attendanceThresholdY = syAttendance(70);
-  const barW = data.length > 0 ? w / data.length : 0;
-  const hovered = hoveredIdx !== null ? data[hoveredIdx] : null;
   const latest = data[data.length - 1];
   const prev = data.length > 1 ? data[data.length - 2] : null;
   const deltaAttendance = prev ? latest.attendance - prev.attendance : 0;
