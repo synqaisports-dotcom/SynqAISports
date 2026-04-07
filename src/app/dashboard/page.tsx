@@ -605,6 +605,12 @@ function OperativaPeaks({
   const attendanceThresholdY = syAttendance(70);
   const barW = data.length > 0 ? w / data.length : 0;
   const hovered = hoveredIdx !== null ? data[hoveredIdx] : null;
+  const latest = data[data.length - 1];
+  const prev = data.length > 1 ? data[data.length - 2] : null;
+  const deltaAttendance = prev ? latest.attendance - prev.attendance : 0;
+  const deltaSessions = prev ? latest.sessions - prev.sessions : 0;
+  const peakAttendance = Math.max(...data.map((d) => d.attendance));
+  const peakSessions = Math.max(...data.map((d) => d.sessions));
 
   return (
     <div className="space-y-4">
@@ -613,28 +619,26 @@ function OperativaPeaks({
         <span className="text-emerald-400">Asistencia</span>
         <span className="text-rose-400">Umbral 70%</span>
       </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <MiniStatCard title="Última asistencia" value={`${latest.attendance}%`} tone={latest.attendance < 70 ? "text-rose-300" : "text-emerald-300"} />
+        <MiniStatCard title="Pico asistencia" value={`${peakAttendance}%`} tone="text-primary" />
+        <MiniStatCard title="Últimas sesiones" value={`${latest.sessions}`} tone="text-white" />
+        <MiniStatCard title="Pico sesiones" value={`${peakSessions}`} tone="text-primary" />
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         <div className="lg:col-span-2 rounded-2xl border border-white/10 bg-slate-950/80 p-3 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/5 to-transparent pointer-events-none" />
           {hovered && (
-            <div className="absolute top-2 right-2 z-20 rounded-lg border border-white/15 bg-black/70 px-2 py-1">
-              <p className="text-[9px] font-black uppercase text-primary">{hovered.label}</p>
-              <p className="text-[9px] font-bold uppercase text-white/80">
-                Sesiones: {hovered.sessions} · Asistencia: {hovered.attendance}%
-              </p>
-            </div>
-          )}
-          {hovered && (
             <div
-              className="absolute z-30 rounded-lg border border-white/15 bg-black/80 px-2 py-1 pointer-events-none"
+              className="absolute z-30 rounded-lg border border-primary/30 bg-[#07111d]/95 px-2.5 py-1.5 pointer-events-none shadow-[0_0_20px_rgba(0,242,255,0.18)]"
               style={{
                 left: `${hoverPos.x}px`,
                 top: `${hoverPos.y}px`,
                 transform: "translate(10px, -10px)",
               }}
             >
-              <p className="text-[9px] font-black uppercase text-primary">{hovered.label}</p>
-              <p className="text-[9px] font-bold uppercase text-white/80">
+              <p className="text-[9px] font-black uppercase text-primary tracking-widest">{hovered.label}</p>
+              <p className="text-[9px] font-bold uppercase text-cyan-200">
                 Sesiones: {hovered.sessions} · Asistencia: {hovered.attendance}%
               </p>
             </div>
@@ -686,6 +690,17 @@ function OperativaPeaks({
               strokeDasharray="1.6 1.6"
               opacity="0.75"
             />
+            {hoveredIdx !== null && (
+              <line
+                x1={sx(hoveredIdx)}
+                y1="0"
+                x2={sx(hoveredIdx)}
+                y2={h}
+                stroke="rgb(0 242 255 / 0.45)"
+                strokeDasharray="1.2 1.2"
+                strokeWidth="0.4"
+              />
+            )}
             <path d={areaFrom(sySessions, "sessions")} fill="rgb(0 242 255 / 0.08)" />
             <path d={areaFrom(syAttendance, "attendance")} fill="rgb(52 211 153 / 0.10)" />
             <path d={pathFrom(sySessions, "sessions")} fill="none" stroke="rgb(0 242 255)" strokeWidth="0.72" />
@@ -735,7 +750,15 @@ function OperativaPeaks({
         </div>
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-slate-950/80 p-3">
+      <div className="rounded-2xl border border-white/10 bg-slate-950/80 p-3 space-y-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="outline" className={cn("text-[9px] font-black uppercase border-white/15", deltaAttendance >= 0 ? "text-emerald-300 border-emerald-400/30" : "text-rose-300 border-rose-400/30")}>
+            Asistencia {deltaAttendance >= 0 ? "+" : ""}{deltaAttendance}%
+          </Badge>
+          <Badge variant="outline" className={cn("text-[9px] font-black uppercase border-white/15", deltaSessions >= 0 ? "text-primary border-primary/30" : "text-amber-300 border-amber-400/30")}>
+            Sesiones {deltaSessions >= 0 ? "+" : ""}{deltaSessions}
+          </Badge>
+        </div>
         <div className="mt-0 grid grid-cols-2 sm:grid-cols-4 gap-2">
           {data.map((d) => (
             <div key={d.label} className="rounded-xl border border-white/10 bg-white/[0.02] p-2">
