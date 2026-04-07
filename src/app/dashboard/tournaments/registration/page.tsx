@@ -45,7 +45,7 @@ type RegistrationsPayload = {
 };
 
 type RegistrationIssue = {
-  code: "missing_contact" | "missing_team_name" | "duplicate_club" | "capacity_exceeded";
+  code: "missing_contact" | "missing_team_name" | "duplicate_team_in_club" | "capacity_exceeded";
   level: "warning" | "error";
   message: string;
 };
@@ -163,12 +163,23 @@ export default function TournamentRegistrationPage() {
   const slotsAvailable = Math.max(0, slotsConfigured - occupiedSlots);
   const registrationIssuesById = useMemo(() => {
     const out = new Map<string, RegistrationIssue[]>();
-    const normalizedClubNames = payload.registrations
-      .map((r) => ({ id: r.id, key: r.clubName.trim().toLowerCase() }))
-      .filter((x) => x.key.length > 0);
-    const duplicateIds = new Set<string>();
-    for (const item of normalizedClubNames) {
-      if (normalizedClubNames.filter((x) => x.key === item.key).length > 1) duplicateIds.add(item.id);
+    // Permitimos varios equipos del mismo club (ej: Benjamín A/B).
+    // Sólo marcamos incidencia si se repite club + equipo + categoría.
+    const duplicateEntryIds = new Set<string>();
+    const seenTeamKey = new Set<string>();
+    for (const r of payload.registrations) {
+      const clubKey = r.clubName.trim().toLowerCase();
+      for (const t of r.teams) {
+        const teamKey = t.teamName.trim().toLowerCase();
+        const categoryKey = t.category.trim().toLowerCase();
+        if (!clubKey || !teamKey) continue;
+        const key = `${clubKey}::${teamKey}::${categoryKey}`;
+        if (seenTeamKey.has(key)) {
+          duplicateEntryIds.add(r.id);
+        } else {
+          seenTeamKey.add(key);
+        }
+      }
     }
 
     let runningSlots = 0;
@@ -188,11 +199,11 @@ export default function TournamentRegistrationPage() {
           message: "Hay equipos sin nombre definido.",
         });
       }
-      if (duplicateIds.has(r.id)) {
+      if (duplicateEntryIds.has(r.id)) {
         issues.push({
-          code: "duplicate_club",
+          code: "duplicate_team_in_club",
           level: "error",
-          message: "Nombre de club duplicado en otra inscripción.",
+          message: "Equipo duplicado dentro del mismo club/categoría.",
         });
       }
       runningSlots += r.teams.length;
