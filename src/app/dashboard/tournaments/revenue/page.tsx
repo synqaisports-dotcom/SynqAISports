@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { BadgeEuro, Megaphone, Plus, TicketPercent, Trash2, Wallet } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { canUseOperativaSupabase } from "@/lib/operativa-sync";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   getActiveTournamentId,
@@ -77,11 +78,13 @@ function num(v: unknown) {
 }
 
 export default function TournamentsRevenuePage() {
-  const { profile } = useAuth();
+  const { profile, session } = useAuth();
   const searchParams = useSearchParams();
   const clubScopeId = profile?.clubId ?? "global-hq";
+  const canUseRemote = canUseOperativaSupabase(clubScopeId) && !!session?.access_token;
   const [revenue, setRevenue] = useState<TournamentRevenueConfig>(DEFAULT_REVENUE);
   const [savedAt, setSavedAt] = useState<string>("");
+  const [syncMode, setSyncMode] = useState<"remote" | "local" | "restricted" | "local_error">("local");
   const [hydrated, setHydrated] = useState(false);
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
@@ -104,24 +107,66 @@ export default function TournamentsRevenuePage() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
     if (!tournamentId) return;
-    const parsed = safeJsonParse<TournamentRevenueConfig>(localStorage.getItem(tournamentRevenueKey(clubScopeId, tournamentId)));
-    if (!parsed || typeof parsed !== "object") {
-      setRevenue(DEFAULT_REVENUE);
-      return;
-    }
-    setRevenue({
-      ticketing: {
-        ...DEFAULT_REVENUE.ticketing,
-        ...(parsed.ticketing ?? {}),
-      },
-      spaces: {
-        ...DEFAULT_REVENUE.spaces,
-        ...(parsed.spaces ?? {}),
-      },
-      sponsors: Array.isArray(parsed.sponsors) ? parsed.sponsors : [],
-    });
-  }, [clubScopeId, tournamentId]);
+
+    const loadRevenue = async () => {
+      const localParsed = safeJsonParse<TournamentRevenueConfig>(localStorage.getItem(tournamentRevenueKey(clubScopeId, tournamentId)));
+      if (localParsed && typeof localParsed === "object" && !cancelled) {
+        setRevenue({
+          ticketing: {
+            ...DEFAULT_REVENUE.ticketing,
+            ...(localParsed.ticketing ?? {}),
+          },
+          spaces: {
+            ...DEFAULT_REVENUE.spaces,
+            ...(localParsed.spaces ?? {}),
+          },
+          sponsors: Array.isArray(localParsed.sponsors) ? localParsed.sponsors : [],
+        });
+      } else if (!cancelled) {
+        setRevenue(DEFAULT_REVENUE);
+      }
+
+      if (!canUseRemote || !session?.access_token) {
+        if (!cancelled) setSyncMode("local");
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/club/tournament-revenue?tournamentId=${encodeURIComponent(tournamentId)}`, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (res.status === 403) {
+          if (!cancelled) setSyncMode("restricted");
+          return;
+        }
+        if (!res.ok) {
+          if (!cancelled) setSyncMode("local_error");
+          return;
+        }
+        const json = (await res.json()) as { payload?: TournamentRevenueConfig };
+        if (json?.payload && !cancelled) {
+          const remote = json.payload;
+          const normalized: TournamentRevenueConfig = {
+            ticketing: { ...DEFAULT_REVENUE.ticketing, ...(remote.ticketing ?? {}) },
+            spaces: { ...DEFAULT_REVENUE.spaces, ...(remote.spaces ?? {}) },
+            sponsors: Array.isArray(remote.sponsors) ? remote.sponsors : [],
+          };
+          setRevenue(normalized);
+          localStorage.setItem(tournamentRevenueKey(clubScopeId, tournamentId), JSON.stringify(normalized));
+        }
+        if (!cancelled) setSyncMode("remote");
+      } catch {
+        if (!cancelled) setSyncMode("local_error");
+      }
+    };
+
+    void loadRevenue();
+    return () => {
+      cancelled = true;
+    };
+  }, [canUseRemote, clubScopeId, session?.access_token, tournamentId]);
 
   useEffect(() => {
     if (!hydrated || !tournamentId) return;
@@ -132,9 +177,38 @@ export default function TournamentsRevenuePage() {
       } catch {
         // ignore
       }
+
+      if (!canUseRemote || !session?.access_token) {
+        setSyncMode("local");
+        return;
+      }
+
+      void (async () => {
+        try {
+          const res = await fetch("/api/club/tournament-revenue", {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ tournamentId, payload: revenue }),
+          });
+          if (res.status === 403) {
+            setSyncMode("restricted");
+            return;
+          }
+          if (!res.ok) {
+            setSyncMode("local_error");
+            return;
+          }
+          setSyncMode("remote");
+        } catch {
+          setSyncMode("local_error");
+        }
+      })();
     }, 280);
     return () => window.clearTimeout(id);
-  }, [hydrated, clubScopeId, tournamentId, revenue]);
+  }, [canUseRemote, clubScopeId, hydrated, revenue, session?.access_token, tournamentId]);
 
   const estimatedPlayers = useMemo(() => {
     const teams = Math.max(0, Number(tournamentConfig?.teamsCount ?? 0) || 0);
@@ -146,13 +220,27 @@ export default function TournamentsRevenuePage() {
   }, [tournamentConfig]);
 
   const estimatedCompanions = Math.round(estimatedPlayers * 1.5);
+  const autoExpectedAdults = estimatedCompanions;
+
+  useEffect(() => {
+    setRevenue((prev) => {
+      if (prev.ticketing.expectedAdults === autoExpectedAdults) return prev;
+      return {
+        ...prev,
+        ticketing: {
+          ...prev.ticketing,
+          expectedAdults: autoExpectedAdults,
+        },
+      };
+    });
+  }, [autoExpectedAdults]);
 
   const ticketingEstimate = useMemo(() => {
     if (!revenue.ticketing.enabled) return 0;
-    const adults = clampInt(revenue.ticketing.expectedAdults);
+    const adults = clampInt(autoExpectedAdults);
     const minors = revenue.ticketing.includeMinors ? clampInt(revenue.ticketing.expectedMinors) : 0;
     return adults * Math.max(0, num(revenue.ticketing.adultPrice)) + minors * Math.max(0, num(revenue.ticketing.minorPrice));
-  }, [revenue.ticketing]);
+  }, [autoExpectedAdults, revenue.ticketing]);
 
   const spacesEstimate = useMemo(() => {
     const stands = revenue.spaces.standsEnabled
@@ -213,7 +301,8 @@ export default function TournamentsRevenuePage() {
           Estimación completa por entradas, espacios comerciales y publicidad de patrocinadores (microapps + estática).
         </p>
         <p className="mt-2 text-[10px] uppercase tracking-[0.18em] font-black text-primary/70">
-          {tournament?.name ?? "Sin torneo seleccionado"} {savedAt ? `· Guardado ${savedAt}` : ""}
+          {tournament?.name ?? "Sin torneo seleccionado"} {savedAt ? `· Guardado ${savedAt}` : ""}{" "}
+          · {syncMode === "remote" ? "Fuente: Servidor" : syncMode === "restricted" ? "Local (permiso servidor denegado)" : syncMode === "local_error" ? "Local (error de sincronización)" : "Fuente: Local"}
         </p>
       </div>
 
@@ -258,9 +347,12 @@ export default function TournamentsRevenuePage() {
             onChange={(v) => setRevenue((p) => ({ ...p, ticketing: { ...p.ticketing, minorPrice: v } }))}
           />
           <NumberInput
-            label="Adultos esperados"
-            value={revenue.ticketing.expectedAdults}
-            onChange={(v) => setRevenue((p) => ({ ...p, ticketing: { ...p.ticketing, expectedAdults: v } }))}
+            label="Adultos esperados (auto)"
+            value={autoExpectedAdults}
+            disabled
+            onChange={() => {
+              // Campo automático: acompaña la previsión de acompañantes (1.5 x jugador).
+            }}
           />
           <NumberInput
             label="Menores esperados"
