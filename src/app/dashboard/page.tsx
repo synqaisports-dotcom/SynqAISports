@@ -300,7 +300,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="p-6">
             <div className="space-y-4">
-              <div className="h-44 rounded-2xl border border-white/10 bg-black/25 p-3">
+              <div className="h-44 rounded-2xl border border-primary/30 bg-black/30 p-3">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={trafficBars} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
@@ -338,7 +338,7 @@ export default function DashboardPage() {
                 </ResponsiveContainer>
               </div>
 
-              <div className="h-44 rounded-2xl border border-white/10 bg-black/25 p-3">
+              <div className="h-44 rounded-2xl border border-primary/30 bg-black/30 p-3">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie data={performancePie} dataKey="value" nameKey="name" innerRadius={46} outerRadius={76} paddingAngle={2}>
