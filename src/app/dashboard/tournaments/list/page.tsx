@@ -5,6 +5,7 @@ import { BarChart3, CalendarRange, Copy, FileText, ListOrdered, Pencil, QrCode, 
 import Link from "next/link";
 import { QRCodeCanvas } from "qrcode.react";
 import jsPDF from "jspdf";
+import QRCode from "qrcode";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   AlertDialog,
@@ -114,6 +115,21 @@ async function loadImageAsDataUrl(src: string): Promise<string | null> {
       reader.onloadend = () => resolve(String(reader.result || ""));
       reader.onerror = () => reject(new Error("No se pudo leer imagen"));
       reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+async function qrDataUrl(value: string): Promise<string | null> {
+  try {
+    return await QRCode.toDataURL(value, {
+      margin: 1,
+      width: 256,
+      color: {
+        dark: "#00F2FF",
+        light: "#0A0F18",
+      },
     });
   } catch {
     return null;
@@ -349,112 +365,144 @@ export default function TournamentsListPage() {
       const doc = new jsPDF({ unit: "mm", format: "a4" });
       const pageW = doc.internal.pageSize.getWidth();
       const pageH = doc.internal.pageSize.getHeight();
-      let y = 14;
+      let y = 0;
+
+      // Portada premium
+      doc.setFillColor(6, 12, 22);
+      doc.rect(0, 0, pageW, pageH, "F");
+      doc.setFillColor(0, 242, 255);
+      doc.rect(0, 0, pageW, 5, "F");
+      doc.setFillColor(10, 18, 30);
+      doc.roundedRect(12, 14, pageW - 24, pageH - 28, 3, 3, "F");
+      y = 24;
 
       if (logoDataUrl) {
         try {
-          doc.addImage(logoDataUrl, imageFormatFromDataUrl(logoDataUrl), 14, y, 18, 18);
+          doc.addImage(logoDataUrl, imageFormatFromDataUrl(logoDataUrl), 18, y, 24, 24);
         } catch {
           doc.setDrawColor(0, 242, 255);
-          doc.rect(14, y, 18, 18);
+          doc.rect(18, y, 24, 24);
         }
       } else {
         doc.setDrawColor(0, 242, 255);
-        doc.rect(14, y, 18, 18);
+        doc.rect(18, y, 24, 24);
       }
 
       doc.setTextColor(0, 242, 255);
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(10);
-      doc.text("DOSSIER DE INVITACIÓN · TORNEO", 36, y + 5);
+      doc.setFontSize(11);
+      doc.text("DOSSIER OFICIAL DE INVITACIÓN", 48, y + 6);
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(18);
-      doc.text(String(cfg?.tournamentName || t.name || "Torneo"), 36, y + 13);
+      doc.setFontSize(22);
+      doc.text(String(cfg?.tournamentName || t.name || "Torneo"), 48, y + 16);
       doc.setFontSize(10);
-      doc.setTextColor(180, 190, 200);
-      doc.text(
-        `${clubName} · ${identity.country || "España"} · ${identity.sport || "Fútbol"} · ${new Date().toLocaleDateString("es-ES")}`,
-        36,
-        y + 19
-      );
+      doc.setTextColor(170, 185, 205);
+      doc.text(`${clubName} · ${identity.country || "España"} · ${identity.sport || "Fútbol"}`, 48, y + 22);
+      doc.text(`Generado: ${new Date().toLocaleDateString("es-ES")}`, 48, y + 27);
+      y += 34;
 
-      y += 26;
       doc.setDrawColor(0, 242, 255);
       doc.setFillColor(8, 16, 28);
-      doc.roundedRect(14, y, pageW - 28, 24, 2, 2, "FD");
+      doc.roundedRect(18, y, pageW - 36, 32, 2, 2, "FD");
       doc.setTextColor(0, 242, 255);
       doc.setFontSize(9);
-      doc.text("RESUMEN OPERATIVO", 18, y + 6);
-      doc.setTextColor(230, 235, 240);
+      doc.text("RESUMEN EJECUTIVO DEL TORNEO", 22, y + 6);
+      doc.setTextColor(235, 240, 245);
       doc.setFontSize(10);
-      doc.text(`Fechas: ${formatDate(cfg?.startDate)} - ${formatDate(cfg?.endDate)}`, 18, y + 12);
-      doc.text(`Formato: ${formatFootball(cfg?.footballFormat)} · Categoría: ${String(cfg?.categoryLabel || cfg?.categories?.[0] || "-")}`, 18, y + 17);
-      doc.text(`Plazas equipos: ${slotsConfigured} · Equipos cargados: ${validTeams.length} · Jugadores/equipo (cfg): ${playersPerTeam}`, 18, y + 22);
-      y += 30;
+      doc.text(`Fechas: ${formatDate(cfg?.startDate)} - ${formatDate(cfg?.endDate)}`, 22, y + 12);
+      doc.text(`Formato: ${formatFootball(cfg?.footballFormat)} · Categoría: ${String(cfg?.categoryLabel || cfg?.categories?.[0] || "-")}`, 22, y + 18);
+      doc.text(`Plazas equipos: ${slotsConfigured} · Equipos cargados: ${validTeams.length} · Jugadores/equipo (cfg): ${playersPerTeam}`, 22, y + 24);
+      doc.text(`Sede / referencia: ${mapQuery}`, 22, y + 30);
+      y += 40;
 
       doc.setTextColor(0, 242, 255);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(10);
-      doc.text("LOCALIZACIÓN DEL EVENTO", 14, y);
+      doc.text("LOCALIZACIÓN DEL EVENTO", 18, y);
       y += 2;
       if (mapDataUrl) {
         try {
-          doc.addImage(mapDataUrl, imageFormatFromDataUrl(mapDataUrl), 14, y + 2, pageW - 28, 44);
-          y += 50;
+          doc.addImage(mapDataUrl, imageFormatFromDataUrl(mapDataUrl), 18, y + 2, pageW - 36, 58);
+          y += 64;
         } catch {
           doc.setTextColor(220, 225, 235);
           doc.setFont("helvetica", "normal");
-          doc.text(`Mapa no disponible automáticamente. Referencia: ${mapQuery}`, 14, y + 8);
+          doc.text(`Mapa no disponible automáticamente. Referencia: ${mapQuery}`, 18, y + 8);
           y += 14;
         }
       } else {
         doc.setTextColor(220, 225, 235);
         doc.setFont("helvetica", "normal");
-        doc.text(`Mapa no disponible automáticamente. Referencia: ${mapQuery}`, 14, y + 8);
+        doc.text(`Mapa no disponible automáticamente. Referencia: ${mapQuery}`, 18, y + 8);
         y += 14;
       }
 
       doc.setTextColor(0, 242, 255);
       doc.setFont("helvetica", "bold");
-      doc.text("INSCRIPCIÓN Y AUTOMATIZACIÓN", 14, y);
+      doc.text("INSCRIPCIÓN CENTRALIZADA", 18, y);
       y += 6;
       doc.setTextColor(235, 240, 245);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
       const textLines = doc.splitTextToSize(
-        "Invitación digital preparada: los clubes pueden preinscribirse por enlace y cada equipo tendrá su acceso QR para cargar plantilla de jugadores. Usa el enlace de padres para difusión y los enlaces por equipo para staff.",
-        pageW - 28
+        "Este torneo integra flujo digital de preinscripción para clubes invitados y gestión de equipos mediante QR dedicados por staff. El objetivo es acelerar confirmaciones y carga de jugadores.",
+        pageW - 36
       );
-      doc.text(textLines, 14, y);
+      doc.text(textLines, 18, y);
       y += textLines.length * 4 + 2;
       doc.setTextColor(120, 230, 255);
-      doc.text(`Enlace torneo (padres/inscripción): ${parentsLink}`, 14, y);
-      y += 8;
+      doc.text(`Enlace general del torneo: ${parentsLink}`, 18, y);
+      y += 10;
 
+      // Página 2: equipos con QR reales embebidos
+      doc.addPage();
+      y = 16;
+      doc.setFillColor(6, 12, 22);
+      doc.rect(0, 0, pageW, pageH, "F");
+      doc.setFillColor(0, 242, 255);
+      doc.rect(0, 0, pageW, 4, "F");
       doc.setTextColor(0, 242, 255);
       doc.setFont("helvetica", "bold");
-      doc.text("SLOTS DE EQUIPOS Y ENLACES QR DE STAFF", 14, y);
-      y += 5;
+      doc.setFontSize(12);
+      doc.text("SLOTS DE EQUIPOS · QR STAFF", 14, y);
+      y += 6;
 
       const rows = Math.max(slotsConfigured, validTeams.length);
       for (let i = 0; i < rows; i++) {
-        if (y > pageH - 16) {
+        if (y > pageH - 30) {
           doc.addPage();
-          y = 16;
+          doc.setFillColor(6, 12, 22);
+          doc.rect(0, 0, pageW, pageH, "F");
+          doc.setFillColor(0, 242, 255);
+          doc.rect(0, 0, pageW, 4, "F");
+          y = 14;
         }
         const team = validTeams[i] as Record<string, unknown> | undefined;
         const teamId = String(team?.id ?? `slot_${i + 1}`);
         const teamName = String(team?.name ?? `Slot ${i + 1} (disponible)`).trim();
         const coachUrl = `${origin}${buildCoachTeamUrl({ clubId: clubScopeId, tournamentId, teamId })}`;
-        doc.setTextColor(235, 240, 245);
+        const qr = await qrDataUrl(coachUrl);
+
+        doc.setDrawColor(0, 242, 255);
+        doc.setFillColor(10, 18, 30);
+        doc.roundedRect(14, y, pageW - 28, 24, 2, 2, "FD");
+        doc.setTextColor(230, 238, 248);
         doc.setFont("helvetica", "bold");
-        doc.text(`${String(i + 1).padStart(2, "0")}. ${teamName}`, 14, y);
-        y += 4;
+        doc.setFontSize(10);
+        doc.text(`${String(i + 1).padStart(2, "0")}. ${teamName}`, 18, y + 7);
         doc.setTextColor(120, 230, 255);
         doc.setFont("helvetica", "normal");
-        const line = doc.splitTextToSize(`QR/Staff: ${coachUrl}`, pageW - 28);
-        doc.text(line, 14, y);
-        y += line.length * 3.8 + 1;
+        doc.setFontSize(8);
+        const line = doc.splitTextToSize(coachUrl, pageW - 58);
+        doc.text(line, 18, y + 13);
+        if (qr) {
+          try {
+            doc.addImage(qr, "PNG", pageW - 34, y + 3, 16, 16);
+          } catch {
+            // ignore
+          }
+        }
+        y += 27;
       }
 
       const filenameBase = String(cfg?.tournamentName || t.name || "torneo")
@@ -465,7 +513,7 @@ export default function TournamentsListPage() {
     } catch (err) {
       setDossierErrorByTournament((prev) => ({
         ...prev,
-        [tournamentId]: "No se pudo generar el dossier. Reintenta en unos segundos.",
+        [tournamentId]: "No se pudo generar el dossier premium. Reintenta en unos segundos.",
       }));
       // eslint-disable-next-line no-console
       console.error("Error generando dossier de invitación", err);
