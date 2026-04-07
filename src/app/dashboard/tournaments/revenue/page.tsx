@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BadgeEuro, Megaphone, Plus, TicketPercent, Trash2, Wallet } from "lucide-react";
+import { BadgeEuro, Download, FileSpreadsheet, FileText, Megaphone, Plus, TicketPercent, Trash2, Wallet } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { canUseOperativaSupabase } from "@/lib/operativa-sync";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import jsPDF from "jspdf";
+import * as XLSX from "xlsx";
 import {
   getActiveTournamentId,
   loadTournamentConfigById,
@@ -38,6 +40,11 @@ type TournamentRevenueConfig = {
     cafeteriaPrice: number;
   };
   sponsors: RevenueSponsor[];
+};
+
+type ClubIdentitySnapshot = {
+  name?: string;
+  logoUrl?: string;
 };
 
 const DEFAULT_REVENUE: TournamentRevenueConfig = {
@@ -86,6 +93,7 @@ export default function TournamentsRevenuePage() {
   const [savedAt, setSavedAt] = useState<string>("");
   const [syncMode, setSyncMode] = useState<"remote" | "local" | "restricted" | "local_error">("local");
   const [hydrated, setHydrated] = useState(false);
+  const [clubIdentity, setClubIdentity] = useState<ClubIdentitySnapshot>({});
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const tournamentId = useMemo(() => {
@@ -105,6 +113,23 @@ export default function TournamentsRevenuePage() {
   useEffect(() => {
     setHydrated(true);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const key = `synq_club_identity_v1_${clubScopeId}`;
+    const parsed = safeJsonParse<unknown>(localStorage.getItem(key));
+    if (!parsed || typeof parsed !== "object") {
+      setClubIdentity({
+        name: profile?.clubName || undefined,
+      });
+      return;
+    }
+    const row = parsed as Record<string, unknown>;
+    setClubIdentity({
+      name: typeof row.name === "string" && row.name.trim().length > 0 ? row.name.trim() : (profile?.clubName || undefined),
+      logoUrl: typeof row.logoUrl === "string" && row.logoUrl.trim().length > 0 ? row.logoUrl.trim() : undefined,
+    });
+  }, [clubScopeId, profile?.clubName]);
 
   useEffect(() => {
     let cancelled = false;
@@ -259,6 +284,8 @@ export default function TournamentsRevenuePage() {
     [revenue.sponsors],
   );
   const totalEstimate = ticketingEstimate + spacesEstimate + adsMicroappsEstimate + adsStaticEstimate;
+  const tournamentLabel = tournament?.name ?? "Sin torneo seleccionado";
+  const clubLabel = clubIdentity.name || profile?.clubName || "Club";
 
   const addSponsor = (type: RevenueSponsor["type"]) => {
     const id = `sp_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
@@ -292,6 +319,120 @@ export default function TournamentsRevenuePage() {
     reader.readAsDataURL(file);
   };
 
+  const exportExcel = () => {
+    if (!tournamentId) return;
+    const wb = XLSX.utils.book_new();
+
+    const resumenRows = [
+      { campo: "Club", valor: clubLabel },
+      { campo: "Torneo", valor: tournamentLabel },
+      { campo: "Fecha exportación", valor: new Date().toLocaleString("es-ES") },
+      { campo: "", valor: "" },
+      { campo: "Jugadores esperados", valor: estimatedPlayers },
+      { campo: "Acompañantes estimados (1.5x)", valor: estimatedCompanions },
+      { campo: "Adultos esperados auto", valor: autoExpectedAdults },
+      { campo: "Menores esperados", valor: revenue.ticketing.includeMinors ? revenue.ticketing.expectedMinors : 0 },
+      { campo: "", valor: "" },
+      { campo: "Ingresos entradas", valor: ticketingEstimate },
+      { campo: "Ingresos espacios", valor: spacesEstimate },
+      { campo: "Publicidad microapps", valor: adsMicroappsEstimate },
+      { campo: "Publicidad estática", valor: adsStaticEstimate },
+      { campo: "TOTAL estimado", valor: totalEstimate },
+    ];
+    const wsResumen = XLSX.utils.json_to_sheet(resumenRows);
+    XLSX.utils.book_append_sheet(wb, wsResumen, "Resumen");
+
+    const detalleSponsor = revenue.sponsors.map((s) => ({
+      nombre: s.name,
+      tipo: s.type === "microapp" ? "MicroApp" : "Estática",
+      importe: Math.max(0, num(s.amount)),
+      tieneImagen: s.assetDataUrl ? "Sí" : "No",
+    }));
+    const wsSponsors = XLSX.utils.json_to_sheet(
+      detalleSponsor.length > 0 ? detalleSponsor : [{ nombre: "-", tipo: "-", importe: 0, tieneImagen: "No" }]
+    );
+    XLSX.utils.book_append_sheet(wb, wsSponsors, "Patrocinadores");
+
+    const filename = `ingresos_${tournamentLabel.replace(/\s+/g, "_").toLowerCase()}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    XLSX.writeFile(wb, filename);
+  };
+
+  const exportPdf = async () => {
+    if (!tournamentId) return;
+    const doc = new jsPDF({ orientation: "p", unit: "mm", format: "a4" });
+    let y = 14;
+
+    if (clubIdentity.logoUrl && clubIdentity.logoUrl.startsWith("data:image/")) {
+      try {
+        const format = clubIdentity.logoUrl.includes("image/png") ? "PNG" : "JPEG";
+        doc.addImage(clubIdentity.logoUrl, format, 14, 10, 18, 18);
+      } catch {
+        // Si falla la imagen, seguimos con texto.
+      }
+    }
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.text(clubLabel, 36, y);
+    y += 6;
+    doc.setFontSize(11);
+    doc.text(`Torneo: ${tournamentLabel}`, 36, y);
+    y += 6;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.text(`Fecha: ${new Date().toLocaleString("es-ES")}`, 36, y);
+    y += 10;
+
+    doc.setDrawColor(0, 242, 255);
+    doc.line(14, y, 196, y);
+    y += 6;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("Estadísticas de previsión", 14, y);
+    y += 6;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    const stats = [
+      `Jugadores esperados: ${estimatedPlayers}`,
+      `Acompañantes estimados (1.5x): ${estimatedCompanions}`,
+      `Adultos esperados (auto): ${autoExpectedAdults}`,
+      `Menores esperados: ${revenue.ticketing.includeMinors ? revenue.ticketing.expectedMinors : 0}`,
+      `Ingresos entradas: ${toMoney(ticketingEstimate)}`,
+      `Ingresos espacios: ${toMoney(spacesEstimate)}`,
+      `Publicidad microapps: ${toMoney(adsMicroappsEstimate)}`,
+      `Publicidad estática: ${toMoney(adsStaticEstimate)}`,
+      `TOTAL estimado: ${toMoney(totalEstimate)}`,
+    ];
+    for (const line of stats) {
+      doc.text(line, 14, y);
+      y += 6;
+    }
+
+    y += 2;
+    doc.setFont("helvetica", "bold");
+    doc.text("Patrocinadores", 14, y);
+    y += 6;
+    doc.setFont("helvetica", "normal");
+
+    if (revenue.sponsors.length === 0) {
+      doc.text("Sin patrocinadores registrados.", 14, y);
+    } else {
+      revenue.sponsors.slice(0, 20).forEach((s, idx) => {
+        if (y > 280) {
+          doc.addPage();
+          y = 16;
+        }
+        const row = `${idx + 1}. ${s.name} · ${s.type === "microapp" ? "MicroApp" : "Estática"} · ${toMoney(Math.max(0, num(s.amount)))}`;
+        doc.text(row, 14, y);
+        y += 5;
+      });
+    }
+
+    const filename = `ingresos_${tournamentLabel.replace(/\s+/g, "_").toLowerCase()}_${new Date().toISOString().slice(0, 10)}.pdf`;
+    doc.save(filename);
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
       <div className="border-b border-primary/15 pb-5">
@@ -304,6 +445,30 @@ export default function TournamentsRevenuePage() {
           {tournament?.name ?? "Sin torneo seleccionado"} {savedAt ? `· Guardado ${savedAt}` : ""}{" "}
           · {syncMode === "remote" ? "Fuente: Servidor" : syncMode === "restricted" ? "Local (permiso servidor denegado)" : syncMode === "local_error" ? "Local (error de sincronización)" : "Fuente: Local"}
         </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              void exportPdf();
+            }}
+            className="inline-flex items-center gap-2 h-10 px-3 rounded-xl border border-primary/25 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-[0.16em]"
+          >
+            <FileText className="h-4 w-4" />
+            Exportar PDF
+          </button>
+          <button
+            type="button"
+            onClick={exportExcel}
+            className="inline-flex items-center gap-2 h-10 px-3 rounded-xl border border-primary/25 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-[0.16em]"
+          >
+            <FileSpreadsheet className="h-4 w-4" />
+            Exportar Excel
+          </button>
+          <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-[0.12em] text-white/55">
+            <Download className="h-3.5 w-3.5 text-primary/80" />
+            Incluye club, torneo y estadísticas
+          </span>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
