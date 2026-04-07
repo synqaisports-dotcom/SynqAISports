@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { BarChart3, CalendarRange, Copy, ListOrdered, Pencil, QrCode, Search, Swords, TicketPercent, Trophy, Trash2, Users } from "lucide-react";
+import { BarChart3, CalendarRange, Copy, FileText, ListOrdered, Pencil, QrCode, Search, Swords, TicketPercent, Trophy, Trash2, Users } from "lucide-react";
 import Link from "next/link";
 import { QRCodeCanvas } from "qrcode.react";
+import jsPDF from "jspdf";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   AlertDialog,
@@ -58,6 +59,16 @@ const dataBlockClass = `
 const labelClass = `text-[10px] uppercase tracking-widest text-[#00F2FF]/60 font-bold`;
 const valueClass = `text-sm text-white font-medium`;
 
+type ClubIdentitySnapshot = {
+  name?: string;
+  country?: string;
+  sport?: string;
+  address?: string;
+  mapQuery?: string;
+  website?: string;
+  logoUrl?: string;
+};
+
 function formatDate(value?: string): string {
   if (!value) return "-";
   const d = new Date(value);
@@ -74,6 +85,31 @@ function formatStatusLabel(status: TournamentIndexItem["status"]): string {
   if (status === "published") return "Activo";
   if (status === "finished") return "Finalizado";
   return "Pendiente";
+}
+
+function buildCoachTeamUrl(args: { clubId: string; tournamentId: string; teamId: string }) {
+  const qs = new URLSearchParams({
+    clubId: args.clubId,
+    tournamentId: args.tournamentId,
+    teamId: args.teamId,
+  });
+  return `/tournaments/coach-team?${qs.toString()}`;
+}
+
+async function loadImageAsDataUrl(src: string): Promise<string | null> {
+  try {
+    const res = await fetch(src);
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(new Error("No se pudo leer imagen"));
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
 }
 
 function statusBadgeClass(status: TournamentIndexItem["status"]): string {
@@ -182,6 +218,7 @@ export default function TournamentsListPage() {
   const [formatFilter, setFormatFilter] = useState<"all" | "f11" | "f7" | "futsal">("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [yearFilter, setYearFilter] = useState<string>("all");
+  const [exportingTournamentId, setExportingTournamentId] = useState<string | null>(null);
 
   useEffect(() => {
     migrateLegacySingleTournamentIfNeeded({
@@ -264,6 +301,152 @@ export default function TournamentsListPage() {
     params.set("tournamentId", qrTarget.id);
     return `${origin}${PARENTS_TOURNAMENTS_PATH}?${params.toString()}`;
   }, [clubScopeId, qrTarget]);
+
+  const exportInvitationDossier = async (tournamentId: string) => {
+    try {
+      setExportingTournamentId(tournamentId);
+      const t = loadTournamentIndex(clubScopeId).find((x) => x.id === tournamentId);
+      if (!t) return;
+      const cfg = loadTournamentConfigById(clubScopeId, tournamentId);
+      const teams = loadTournamentTeamsById(clubScopeId, tournamentId);
+      const validTeams = Array.isArray(teams)
+        ? teams.filter((row) => row && typeof row === "object" && String((row as { name?: unknown }).name ?? "").trim().length > 0)
+        : [];
+
+      const identityRaw = localStorage.getItem(`synq_club_identity_v1_${clubScopeId}`);
+      const identity = (safeJsonParse<ClubIdentitySnapshot>(identityRaw) ?? {}) as ClubIdentitySnapshot;
+      const clubName = String(identity.name || profile?.clubName || clubScopeId || "Club");
+      const mapQuery = String(identity.mapQuery || identity.address || "Madrid, España").trim();
+      const mapUrlGoogle = `https://maps.googleapis.com/maps/api/staticmap?center=${encodeURIComponent(
+        mapQuery
+      )}&zoom=14&size=1200x600&maptype=roadmap&markers=color:cyan|${encodeURIComponent(mapQuery)}`;
+      const mapUrlFallback = `https://staticmap.openstreetmap.de/staticmap.php?center=${encodeURIComponent(
+        mapQuery
+      )}&zoom=14&size=1200x600&markers=${encodeURIComponent(mapQuery)},lightblue1`;
+      const logoDataUrl = identity.logoUrl ? await loadImageAsDataUrl(identity.logoUrl) : null;
+      const mapDataUrl = (await loadImageAsDataUrl(mapUrlGoogle)) ?? (await loadImageAsDataUrl(mapUrlFallback));
+
+      const slotsConfigured = Math.max(0, Number(cfg?.groupsCount ?? 0) * Number(cfg?.teamsPerGroup ?? 0));
+      const playersPerTeam = Math.max(
+        1,
+        Number(cfg?.startersPerTeam ?? 0) + Number(cfg?.substitutesPerTeam ?? 0) || Number(cfg?.playersPerTeam ?? 0) || 1
+      );
+      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      const parentsLink = `${origin}${PARENTS_TOURNAMENTS_PATH}?${new URLSearchParams({
+        clubId: clubScopeId,
+        tournamentId,
+      }).toString()}`;
+
+      const doc = new jsPDF({ unit: "mm", format: "a4" });
+      const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
+      let y = 14;
+
+      if (logoDataUrl) {
+        doc.addImage(logoDataUrl, "PNG", 14, y, 18, 18);
+      } else {
+        doc.setDrawColor(0, 242, 255);
+        doc.rect(14, y, 18, 18);
+      }
+
+      doc.setTextColor(0, 242, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.text("DOSSIER DE INVITACIÓN · TORNEO", 36, y + 5);
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(18);
+      doc.text(String(cfg?.tournamentName || t.name || "Torneo"), 36, y + 13);
+      doc.setFontSize(10);
+      doc.setTextColor(180, 190, 200);
+      doc.text(
+        `${clubName} · ${identity.country || "España"} · ${identity.sport || "Fútbol"} · ${new Date().toLocaleDateString("es-ES")}`,
+        36,
+        y + 19
+      );
+
+      y += 26;
+      doc.setDrawColor(0, 242, 255);
+      doc.setFillColor(8, 16, 28);
+      doc.roundedRect(14, y, pageW - 28, 24, 2, 2, "FD");
+      doc.setTextColor(0, 242, 255);
+      doc.setFontSize(9);
+      doc.text("RESUMEN OPERATIVO", 18, y + 6);
+      doc.setTextColor(230, 235, 240);
+      doc.setFontSize(10);
+      doc.text(`Fechas: ${formatDate(cfg?.startDate)} - ${formatDate(cfg?.endDate)}`, 18, y + 12);
+      doc.text(`Formato: ${formatFootball(cfg?.footballFormat)} · Categoría: ${String(cfg?.categoryLabel || cfg?.categories?.[0] || "-")}`, 18, y + 17);
+      doc.text(`Plazas equipos: ${slotsConfigured} · Equipos cargados: ${validTeams.length} · Jugadores/equipo (cfg): ${playersPerTeam}`, 18, y + 22);
+      y += 30;
+
+      doc.setTextColor(0, 242, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.text("LOCALIZACIÓN DEL EVENTO", 14, y);
+      y += 2;
+      if (mapDataUrl) {
+        doc.addImage(mapDataUrl, "PNG", 14, y + 2, pageW - 28, 44);
+        y += 50;
+      } else {
+        doc.setTextColor(220, 225, 235);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Mapa no disponible automáticamente. Referencia: ${mapQuery}`, 14, y + 8);
+        y += 14;
+      }
+
+      doc.setTextColor(0, 242, 255);
+      doc.setFont("helvetica", "bold");
+      doc.text("INSCRIPCIÓN Y AUTOMATIZACIÓN", 14, y);
+      y += 6;
+      doc.setTextColor(235, 240, 245);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      const textLines = doc.splitTextToSize(
+        "Invitación digital preparada: los clubes pueden preinscribirse por enlace y cada equipo tendrá su acceso QR para cargar plantilla de jugadores. Usa el enlace de padres para difusión y los enlaces por equipo para staff.",
+        pageW - 28
+      );
+      doc.text(textLines, 14, y);
+      y += textLines.length * 4 + 2;
+      doc.setTextColor(120, 230, 255);
+      doc.text(`Enlace torneo (padres/inscripción): ${parentsLink}`, 14, y);
+      y += 8;
+
+      doc.setTextColor(0, 242, 255);
+      doc.setFont("helvetica", "bold");
+      doc.text("SLOTS DE EQUIPOS Y ENLACES QR DE STAFF", 14, y);
+      y += 5;
+
+      const rows = Math.max(slotsConfigured, validTeams.length);
+      for (let i = 0; i < rows; i++) {
+        if (y > pageH - 16) {
+          doc.addPage();
+          y = 16;
+        }
+        const team = validTeams[i] as Record<string, unknown> | undefined;
+        const teamId = String(team?.id ?? `slot_${i + 1}`);
+        const teamName = String(team?.name ?? `Slot ${i + 1} (disponible)`).trim();
+        const coachUrl = `${origin}${buildCoachTeamUrl({ clubId: clubScopeId, tournamentId, teamId })}`;
+        doc.setTextColor(235, 240, 245);
+        doc.setFont("helvetica", "bold");
+        doc.text(`${String(i + 1).padStart(2, "0")}. ${teamName}`, 14, y);
+        y += 4;
+        doc.setTextColor(120, 230, 255);
+        doc.setFont("helvetica", "normal");
+        const line = doc.splitTextToSize(`QR/Staff: ${coachUrl}`, pageW - 28);
+        doc.text(line, 14, y);
+        y += line.length * 3.8 + 1;
+      }
+
+      const filenameBase = String(cfg?.tournamentName || t.name || "torneo")
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9\-]/g, "");
+      doc.save(`dossier-invitacion-${filenameBase || "torneo"}.pdf`);
+    } catch {
+      // ignore
+    } finally {
+      setExportingTournamentId(null);
+    }
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
@@ -626,6 +809,17 @@ export default function TournamentsListPage() {
                         >
                           <TicketPercent className="h-4 w-4" />
                         </Link>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            void exportInvitationDossier(t.id);
+                          }}
+                          disabled={exportingTournamentId === t.id}
+                          className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-[#00F2FF]/20 bg-black/20 text-[#00F2FF] hover:bg-[#00F2FF]/10 transition-[background-color,border-color,color,opacity,transform] disabled:opacity-50"
+                          title="Acciones: generar dossier invitación"
+                        >
+                          <FileText className="h-4 w-4" />
+                        </button>
                       </div>
                     </div>
                   </div>
