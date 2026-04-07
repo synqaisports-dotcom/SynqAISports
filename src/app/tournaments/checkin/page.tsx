@@ -81,6 +81,8 @@ type CheckinSyncEvent = {
   source: "camera" | "manual";
 };
 
+const DUPLICATE_WINDOW_MS = 12_000;
+
 const inputClass =
   "h-10 w-full rounded-lg border border-[#00F2FF]/25 bg-[#0A1322]/85 px-3 text-sm font-semibold text-white outline-none placeholder:text-white/35 focus:border-[#00F2FF]/55 focus:ring-2 focus:ring-[#00F2FF]/20 transition-[background-color,border-color,color,opacity,transform]";
 
@@ -201,6 +203,8 @@ function Inner() {
   const streamRef = useRef<MediaStream | null>(null);
   const scanTimerRef = useRef<number | null>(null);
   const isFlushingRef = useRef(false);
+  const recentScanRef = useRef<Record<string, number>>({});
+  const lastActionRef = useRef<Record<string, { present: boolean; atMs: number }>>({});
   const canUseRemote = canUseOperativaSupabase(clubId) && !!session?.access_token;
 
   useEffect(() => {
@@ -373,7 +377,17 @@ function Inner() {
     if (!selectedTournamentId) return;
     const key = syncQueueKey(clubId, selectedTournamentId);
     const existing = safeJsonParse<CheckinSyncEvent[]>(localStorage.getItem(key));
-    const next = Array.isArray(existing) ? [...existing, event] : [event];
+    const base = Array.isArray(existing) ? existing : [];
+    const eventMs = new Date(event.at).getTime();
+    const duplicate = base.some((e) => {
+      if (!e || typeof e !== "object") return false;
+      if (String(e.teamId ?? "") !== event.teamId) return false;
+      if (Boolean(e.present) !== event.present) return false;
+      const eMs = new Date(String(e.at ?? "")).getTime();
+      return Number.isFinite(eMs) && Number.isFinite(eventMs) && Math.abs(eMs - eventMs) <= 8000;
+    });
+    if (duplicate) return;
+    const next = [...base, event];
     localStorage.setItem(key, JSON.stringify(next.slice(-300)));
     setPendingQueue(next.slice(-300));
     setSyncStatus(canUseRemote ? "idle" : "offline");
@@ -450,6 +464,15 @@ function Inner() {
 
   const markPresence = (present: boolean, source: "camera" | "manual" = "manual") => {
     if (!selectedTeam) return false;
+    const nowMs = Date.now();
+    const actionKey = selectedTeam.id;
+    const prevAction = lastActionRef.current[actionKey];
+    if (prevAction && prevAction.present === present && nowMs - prevAction.atMs <= 8000) {
+      setMessageTone("warn");
+      setMessage("Acción duplicada bloqueada (ventana de seguridad 8s).");
+      beepFeedback("warn");
+      return false;
+    }
     const regStatus = registrationForSelectedTeam?.status;
     if (regStatus && !["aprobado", "completo"].includes(regStatus)) {
       setMessageTone("warn");
@@ -518,6 +541,7 @@ function Inner() {
         void flushPendingQueue();
       }, 40);
     }
+    lastActionRef.current[actionKey] = { present, atMs: nowMs };
     return true;
   };
 
@@ -538,6 +562,17 @@ function Inner() {
   const parseDecodedString = (decoded: string) => {
     const raw = String(decoded || "").trim();
     if (!raw) return;
+    const dedupeKey = normalize(raw);
+    const nowMs = Date.now();
+    if (dedupeKey) {
+      const prevMs = recentScanRef.current[dedupeKey] ?? 0;
+      if (nowMs - prevMs <= 1800) {
+        setMessageTone("warn");
+        setMessage("QR duplicado detectado. Espera 2 segundos para reintentar.");
+        return;
+      }
+      recentScanRef.current[dedupeKey] = nowMs;
+    }
     try {
       const url = new URL(raw, window.location.origin);
       const tid = url.searchParams.get("tournamentId") ?? "";

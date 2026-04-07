@@ -14,6 +14,7 @@ type TeamCheckinPayload = {
       checkedBy?: string;
       note?: string;
       history?: Array<{
+        id?: string;
         at: string;
         action: "checkin" | "checkout";
         by: string;
@@ -22,6 +23,17 @@ type TeamCheckinPayload = {
     }
   >;
   updatedAt?: string;
+};
+
+type CheckinSyncEvent = {
+  id: string;
+  teamId: string;
+  teamName?: string;
+  present: boolean;
+  at: string;
+  by: string;
+  note?: string;
+  source?: "camera" | "manual";
 };
 
 type CheckinContainer = {
@@ -53,6 +65,7 @@ function sanitizeCheckinPayload(input: unknown): TeamCheckinPayload {
       const action = String(y.action ?? "").trim();
       if (action !== "checkin" && action !== "checkout") continue;
       history.push({
+        id: typeof y.id === "string" ? y.id : undefined,
         at: String(y.at ?? new Date().toISOString()),
         action,
         by: String(y.by ?? "terminal"),
@@ -131,7 +144,7 @@ export async function PUT(req: Request) {
   const denied = await guardClubModuleOr403(gate, token, "planner", "edit");
   if (denied) return denied;
 
-  let body: { tournamentId?: string; payload?: unknown } = {};
+  let body: { tournamentId?: string; payload?: unknown; events?: unknown } = {};
   try {
     body = (await req.json()) as { tournamentId?: string; payload?: unknown };
   } catch {
@@ -140,7 +153,73 @@ export async function PUT(req: Request) {
 
   const tournamentId = String(body.tournamentId ?? "").trim();
   if (!tournamentId) return NextResponse.json({ error: "tournamentId requerido" }, { status: 400 });
-  const sanitizedIncoming = sanitizeCheckinPayload(body.payload ?? {});
+
+  let sanitizedIncoming: TeamCheckinPayload;
+  if (Array.isArray(body.events)) {
+    const events: CheckinSyncEvent[] = [];
+    for (const item of body.events) {
+      if (!item || typeof item !== "object") continue;
+      const x = item as Record<string, unknown>;
+      const id = String(x.id ?? "").trim();
+      const teamId = String(x.teamId ?? "").trim();
+      if (!id || !teamId) continue;
+      events.push({
+        id,
+        teamId,
+        teamName: String(x.teamName ?? "").trim(),
+        present: Boolean(x.present),
+        at: String(x.at ?? new Date().toISOString()),
+        by: String(x.by ?? "terminal").trim() || "terminal",
+        note: String(x.note ?? "").trim(),
+        source: x.source === "camera" ? "camera" : "manual",
+      });
+    }
+    const byTeamHistory = new Map<
+      string,
+      Array<{ id?: string; at: string; action: "checkin" | "checkout"; by: string; note?: string }>
+    >();
+    const latestByTeam = new Map<
+      string,
+      { present: boolean; checkedAt: string; checkedBy: string; note?: string }
+    >();
+    const sorted = [...events].sort((a, b) => String(a.at).localeCompare(String(b.at)));
+    for (const ev of sorted) {
+      const action = ev.present ? "checkin" : "checkout";
+      const list = byTeamHistory.get(ev.teamId) ?? [];
+      // Deduplicación por id de evento en servidor
+      if (ev.id && list.some((h) => h.id === ev.id)) continue;
+      list.push({
+        id: ev.id,
+        at: ev.at,
+        action,
+        by: ev.by,
+        note: ev.note,
+      });
+      byTeamHistory.set(ev.teamId, list.slice(-200));
+      latestByTeam.set(ev.teamId, {
+        present: ev.present,
+        checkedAt: ev.at,
+        checkedBy: ev.by,
+        note: ev.note,
+      });
+    }
+    const byTeamId: TeamCheckinPayload["byTeamId"] = {};
+    for (const [teamId, latest] of latestByTeam.entries()) {
+      byTeamId[teamId] = {
+        present: latest.present,
+        checkedAt: latest.checkedAt,
+        checkedBy: latest.checkedBy,
+        note: latest.note,
+        history: byTeamHistory.get(teamId) ?? [],
+      };
+    }
+    sanitizedIncoming = {
+      byTeamId,
+      updatedAt: new Date().toISOString(),
+    };
+  } else {
+    sanitizedIncoming = sanitizeCheckinPayload(body.payload ?? {});
+  }
 
   const userClient = clientForUser(token);
   if (!userClient) return NextResponse.json({ error: "Supabase no configurado" }, { status: 503 });
