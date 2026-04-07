@@ -226,6 +226,7 @@ export default function TournamentsListPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [yearFilter, setYearFilter] = useState<string>("all");
   const [exportingTournamentId, setExportingTournamentId] = useState<string | null>(null);
+  const [dossierErrorByTournament, setDossierErrorByTournament] = useState<Record<string, string>>({});
 
   useEffect(() => {
     migrateLegacySingleTournamentIfNeeded({
@@ -461,9 +462,10 @@ export default function TournamentsListPage() {
         .replace(/[^a-z0-9\-]/g, "");
       doc.save(`dossier-invitacion-${filenameBase || "torneo"}.pdf`);
     } catch (err) {
-      if (typeof window !== "undefined") {
-        window.alert("No se pudo generar el dossier. Revisa consola para más detalle.");
-      }
+      setDossierErrorByTournament((prev) => ({
+        ...prev,
+        [tournamentId]: "No se pudo generar el dossier. Reintenta en unos segundos.",
+      }));
       // eslint-disable-next-line no-console
       console.error("Error generando dossier de invitación", err);
     } finally {
@@ -835,6 +837,7 @@ export default function TournamentsListPage() {
                         <button
                           type="button"
                           onClick={() => {
+                            setDossierErrorByTournament((prev) => ({ ...prev, [t.id]: "" }));
                             void exportInvitationDossier(t.id);
                           }}
                           disabled={exportingTournamentId === t.id}
@@ -845,6 +848,13 @@ export default function TournamentsListPage() {
                         </button>
                       </div>
                     </div>
+                    {dossierErrorByTournament[t.id] ? (
+                      <div className="mt-2 rounded-xl border border-rose-500/25 bg-rose-500/10 px-3 py-2">
+                        <p className="text-[10px] font-black uppercase tracking-[0.14em] text-rose-200">
+                          {dossierErrorByTournament[t.id]}
+                        </p>
+                      </div>
+                    ) : null}
                   </div>
                 );
               })}
