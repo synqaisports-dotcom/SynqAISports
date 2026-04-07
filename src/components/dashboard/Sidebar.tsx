@@ -136,6 +136,7 @@ const navItems: NavItem[] = [
 
   // TORNEOS (fuera de competición normal)
   { title: "Torneos", href: "/dashboard/tournaments/list", icon: BookOpen, category: "tournaments", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
+  { title: "Inscripciones", href: "/dashboard/tournaments/registration", icon: UserPlus, category: "tournaments", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
   
   // TERMINALES_ACCESO - NODO SANDBOX (Categoría User)
   { title: "Sandbox", href: "/sandbox-portal?dest=/sandbox/app", icon: ShieldCheck, category: "user" },
