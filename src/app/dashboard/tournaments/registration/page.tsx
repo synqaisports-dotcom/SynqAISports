@@ -44,6 +44,12 @@ type RegistrationsPayload = {
   registrations: TournamentRegistration[];
 };
 
+type RegistrationIssue = {
+  code: "missing_contact" | "missing_team_name" | "duplicate_club" | "capacity_exceeded";
+  level: "warning" | "error";
+  message: string;
+};
+
 const DEFAULT_PAYLOAD: RegistrationsPayload = { registrations: [] };
 
 function registrationsLocalKey(clubId: string, tournamentId: string) {
@@ -110,6 +116,12 @@ function toPayload(raw: unknown): RegistrationsPayload {
   return { registrations: normalized };
 }
 
+function suggestStatusFromIssues(issues: RegistrationIssue[]): RegistrationStatus {
+  if (issues.some((i) => i.code === "capacity_exceeded")) return "waitlist";
+  if (issues.some((i) => i.level === "error")) return "pendiente_validacion";
+  return "preinscrito";
+}
+
 export default function TournamentRegistrationPage() {
   const { profile, session } = useAuth();
   const searchParams = useSearchParams();
@@ -149,6 +161,56 @@ export default function TournamentRegistrationPage() {
   const slotsConfigured = Math.max(0, Number(config?.groupsCount ?? 0) * Number(config?.teamsPerGroup ?? 0));
   const occupiedSlots = payload.registrations.reduce((acc, r) => acc + r.teams.length, 0);
   const slotsAvailable = Math.max(0, slotsConfigured - occupiedSlots);
+  const registrationIssuesById = useMemo(() => {
+    const out = new Map<string, RegistrationIssue[]>();
+    const normalizedClubNames = payload.registrations
+      .map((r) => ({ id: r.id, key: r.clubName.trim().toLowerCase() }))
+      .filter((x) => x.key.length > 0);
+    const duplicateIds = new Set<string>();
+    for (const item of normalizedClubNames) {
+      if (normalizedClubNames.filter((x) => x.key === item.key).length > 1) duplicateIds.add(item.id);
+    }
+
+    let runningSlots = 0;
+    for (const r of payload.registrations) {
+      const issues: RegistrationIssue[] = [];
+      if (!r.contactName.trim() || (!r.contactEmail.trim() && !r.contactPhone.trim())) {
+        issues.push({
+          code: "missing_contact",
+          level: "warning",
+          message: "Faltan datos de contacto (responsable y email o teléfono).",
+        });
+      }
+      if (r.teams.some((t) => !t.teamName.trim())) {
+        issues.push({
+          code: "missing_team_name",
+          level: "error",
+          message: "Hay equipos sin nombre definido.",
+        });
+      }
+      if (duplicateIds.has(r.id)) {
+        issues.push({
+          code: "duplicate_club",
+          level: "error",
+          message: "Nombre de club duplicado en otra inscripción.",
+        });
+      }
+      runningSlots += r.teams.length;
+      if (slotsConfigured > 0 && runningSlots > slotsConfigured) {
+        issues.push({
+          code: "capacity_exceeded",
+          level: "warning",
+          message: "Supera el cupo de plazas configuradas; debería pasar a lista de espera.",
+        });
+      }
+      out.set(r.id, issues);
+    }
+    return out;
+  }, [payload.registrations, slotsConfigured]);
+  const totalIssues = useMemo(
+    () => Array.from(registrationIssuesById.values()).reduce((acc, list) => acc + list.length, 0),
+    [registrationIssuesById]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -342,6 +404,29 @@ export default function TournamentRegistrationPage() {
       </div>
 
       <Card className="glass-panel border border-primary/20 bg-black/30 rounded-2xl">
+        <CardHeader>
+          <CardTitle className="text-base font-black uppercase text-primary flex items-center gap-2">
+            <Clock3 className="h-4 w-4" />
+            Validación automática (Fase 2)
+          </CardTitle>
+          <CardDescription className="text-white/70">
+            Revisión de plazas, duplicados y campos obligatorios con estado sugerido por inscripción.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <MiniKpi label="Incidencias detectadas" value={`${totalIssues}`} highlight={totalIssues > 0} />
+          <MiniKpi
+            label="Con errores"
+            value={`${Array.from(registrationIssuesById.values()).filter((x) => x.some((i) => i.level === "error")).length}`}
+          />
+          <MiniKpi
+            label="Con warnings"
+            value={`${Array.from(registrationIssuesById.values()).filter((x) => x.some((i) => i.level === "warning")).length}`}
+          />
+        </CardContent>
+      </Card>
+
+      <Card className="glass-panel border border-primary/20 bg-black/30 rounded-2xl">
         <CardHeader className="flex flex-row items-center justify-between gap-3">
           <div>
             <CardTitle className="text-base font-black uppercase text-primary flex items-center gap-2">
@@ -369,6 +454,43 @@ export default function TournamentRegistrationPage() {
 
           {payload.registrations.map((r) => (
             <div key={r.id} className="rounded-xl border border-primary/20 bg-[#0F172A]/50 p-3 space-y-2">
+              {(() => {
+                const issues = registrationIssuesById.get(r.id) ?? [];
+                const suggested = suggestStatusFromIssues(issues);
+                return (
+                  <div className="rounded-lg border border-white/10 bg-black/20 px-2.5 py-2 space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-[9px] font-black uppercase tracking-[0.16em] text-primary/75">Validación automática</p>
+                      <button
+                        type="button"
+                        onClick={() => updateRegistration(r.id, { status: suggested })}
+                        className="h-7 px-2 rounded-lg border border-primary/25 bg-primary/10 text-primary text-[9px] font-black uppercase tracking-[0.14em]"
+                      >
+                        Aplicar estado sugerido: {suggested}
+                      </button>
+                    </div>
+                    {issues.length === 0 ? (
+                      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-emerald-300">
+                        OK · Sin incidencias
+                      </p>
+                    ) : (
+                      <div className="space-y-1">
+                        {issues.map((iss, idx) => (
+                          <p
+                            key={`${r.id}_issue_${idx}`}
+                            className={`text-[10px] font-black uppercase tracking-[0.12em] ${
+                              iss.level === "error" ? "text-rose-300" : "text-amber-300"
+                            }`}
+                          >
+                            {iss.message}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <input
                   value={r.clubName}
