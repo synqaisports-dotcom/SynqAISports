@@ -20,6 +20,9 @@ type TeamRow = {
   players?: TeamPlayer[];
 };
 
+const synqInputClass =
+  "h-10 w-full rounded-lg border border-[#00F2FF]/25 bg-[#0B1220]/80 px-3 text-sm font-bold text-white placeholder:text-white/35 outline-none ring-0 transition-[background-color,border-color,color,opacity,transform] focus:border-[#00F2FF]/55 focus:bg-[#0F172A]/95";
+
 export default function TournamentCoachTeamPage() {
   return (
     <Suspense
@@ -195,7 +198,7 @@ function Inner() {
                 <input
                   value={team.name}
                   onChange={(e) => setTeam((prev) => (prev ? { ...prev, name: e.target.value } : prev))}
-                  className="h-10 w-full rounded-lg border border-[#00F2FF]/25 bg-black/25 px-3 text-sm text-white outline-none"
+                  className={synqInputClass}
                 />
                 <div className="rounded-xl border border-white/10 bg-black/25 p-3 grid place-items-center min-h-[130px]">
                   {team.crestDataUrl ? (
@@ -268,7 +271,7 @@ function Inner() {
                           )
                         }
                         placeholder="Nombre jugador"
-                        className="md:col-span-8 h-10 rounded-lg border border-[#00F2FF]/25 bg-black/25 px-3 text-sm text-white outline-none"
+                        className={`md:col-span-8 ${synqInputClass}`}
                       />
                       <input
                         value={p.jerseyNumber}
@@ -283,7 +286,7 @@ function Inner() {
                           )
                         }
                         placeholder="Dorsal"
-                        className="md:col-span-2 h-10 rounded-lg border border-[#00F2FF]/25 bg-black/25 px-3 text-sm text-white outline-none"
+                        className={`md:col-span-2 ${synqInputClass}`}
                       />
                       <button
                         type="button"

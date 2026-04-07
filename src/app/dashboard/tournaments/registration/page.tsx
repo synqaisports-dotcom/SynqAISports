@@ -66,6 +66,10 @@ type RegistrationIssue = {
 };
 
 const DEFAULT_PAYLOAD: RegistrationsPayload = { registrations: [] };
+const synqInputClass =
+  "h-10 rounded-lg border border-[#00F2FF]/25 bg-[#0A1322]/80 px-3 text-sm font-semibold text-white outline-none placeholder:text-white/35 focus:border-[#00F2FF]/55 focus:ring-2 focus:ring-[#00F2FF]/20 transition-[background-color,border-color,color,opacity,transform]";
+const synqSelectClass =
+  "h-10 rounded-lg border border-[#00F2FF]/25 bg-[#0A1322]/85 px-3 text-[10px] font-black uppercase tracking-[0.14em] text-white appearance-none outline-none focus:border-[#00F2FF]/55 focus:ring-2 focus:ring-[#00F2FF]/20 transition-[background-color,border-color,color,opacity,transform]";
 
 function registrationsLocalKey(clubId: string, tournamentId: string) {
   return `synq_tournament_registrations_v1_${clubId}_${tournamentId}`;
