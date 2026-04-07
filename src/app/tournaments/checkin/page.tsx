@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { CheckCircle2, QrCode, Search, ShieldCheck, Users, XCircle } from "lucide-react";
+import { CheckCircle2, QrCode, Search, ShieldCheck, Users, XCircle, Volume2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { loadTournamentIndex, loadTournamentTeamsById, safeJsonParse } from "@/lib/tournaments-storage";
 import { PwaInstallBanner } from "@/components/pwa/PwaInstallBanner";
@@ -56,6 +56,14 @@ type TeamRow = {
     note?: string;
     history?: TeamCheckinEvent[];
   };
+};
+
+type ScanLog = {
+  at: string;
+  teamId: string;
+  teamName: string;
+  source: "camera" | "manual";
+  action: "select" | "checkin" | "checkout";
 };
 
 const inputClass =
@@ -164,6 +172,9 @@ function Inner() {
   const [isScanning, setIsScanning] = useState(false);
   const [scannerError, setScannerError] = useState("");
   const [lastScanAt, setLastScanAt] = useState("");
+  const [onlyPending, setOnlyPending] = useState(true);
+  const [compactMode, setCompactMode] = useState(true);
+  const [scanLogs, setScanLogs] = useState<ScanLog[]>([]);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const scanTimerRef = useRef<number | null>(null);
@@ -266,11 +277,13 @@ function Inner() {
 
   const filteredTeams = useMemo(() => {
     const key = normalize(search);
-    if (!key) return teams;
-    return teams.filter((t) => normalize(t.name).includes(key));
-  }, [search, teams]);
+    const base = onlyPending ? teams.filter((t) => !t.checkin?.present) : teams;
+    if (!key) return base;
+    return base.filter((t) => normalize(t.name).includes(key));
+  }, [onlyPending, search, teams]);
 
   const presentCount = useMemo(() => teams.filter((t) => t.checkin?.present).length, [teams]);
+  const pendingCount = useMemo(() => Math.max(0, teams.length - presentCount), [presentCount, teams.length]);
 
   const writeTeams = (next: TeamRow[]) => {
     if (!selectedTournamentId) return;
@@ -302,17 +315,33 @@ function Inner() {
     );
   };
 
-  const markPresence = (present: boolean) => {
-    if (!selectedTeam) return;
+  const pushScanLog = (entry: ScanLog) => {
+    setScanLogs((prev) => [entry, ...prev].slice(0, 8));
+  };
+
+  const beepFeedback = (tone: "ok" | "warn" | "error" = "ok") => {
+    try {
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        navigator.vibrate(tone === "ok" ? [40] : tone === "warn" ? [30, 30, 30] : [60, 60, 60, 60]);
+      }
+    } catch {
+      // noop
+    }
+  };
+
+  const markPresence = (present: boolean, source: "camera" | "manual" = "manual") => {
+    if (!selectedTeam) return false;
     const regStatus = registrationForSelectedTeam?.status;
     if (regStatus && !["aprobado", "completo"].includes(regStatus)) {
       setMessageTone("warn");
       setMessage(
         `Equipo con inscripción "${regStatus}". Puedes registrar presencia, pero conviene validarlo en mesa de control.`
       );
+      beepFeedback("warn");
     } else {
       setMessageTone("ok");
       setMessage(present ? "Check-in registrado correctamente." : "Check-out registrado correctamente.");
+      beepFeedback("ok");
     }
     const at = new Date().toISOString();
     const by = operatorName.trim() || "terminal";
@@ -338,6 +367,14 @@ function Inner() {
     );
     setTeams(next);
     writeTeams(next);
+    pushScanLog({
+      at,
+      teamId: selectedTeam.id,
+      teamName: selectedTeam.name,
+      source,
+      action: present ? "checkin" : "checkout",
+    });
+    return true;
   };
 
   const applyScanPayload = (payload: { tournamentId?: string; teamId?: string; teamName?: string }) => {
@@ -369,14 +406,19 @@ function Inner() {
       }
       applyScanPayload({ tournamentId: tid || undefined, teamId: teamId || undefined, teamName: teamName || undefined });
       setLastScanAt(new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }));
+      setMessageTone("ok");
+      setMessage("QR leído correctamente.");
     } catch {
       const foundByName = teams.find((t) => normalize(t.name) === normalize(raw));
       if (foundByName) {
         setSelectedTeamId(foundByName.id);
         setLastScanAt(new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }));
+        setMessageTone("ok");
+        setMessage("Equipo detectado por nombre.");
       } else {
         setMessageTone("error");
         setMessage("QR inválido o equipo no encontrado.");
+        beepFeedback("error");
       }
     }
   };
@@ -438,8 +480,22 @@ function Inner() {
     } catch {
       stopScanning();
       setScannerError("No se pudo abrir la cámara. Revisa permisos del navegador.");
+      beepFeedback("error");
     }
   };
+
+  useEffect(() => {
+    if (!selectedTeam) return;
+    if (!isScanning) return;
+    if (selectedTeam.checkin?.present) return;
+    const ok = markPresence(true, "camera");
+    if (ok) {
+      stopScanning();
+      setMessageTone("ok");
+      setMessage("Check-in automático tras escaneo.");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTeam?.id, isScanning]);
 
   return (
     <div className="min-h-[100dvh] bg-[#040812] text-white relative overflow-hidden">
@@ -448,18 +504,42 @@ function Inner() {
         <div className="absolute -top-24 -left-24 h-80 w-80 rounded-full bg-cyan-500/20 blur-3xl" />
         <div className="absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-cyan-500/10 blur-3xl" />
       </div>
-      <main className="relative z-10 mx-auto w-full max-w-6xl px-4 py-8 space-y-4">
+      <main className={`relative z-10 mx-auto w-full ${compactMode ? "max-w-5xl" : "max-w-6xl"} px-3 sm:px-4 py-5 sm:py-8 space-y-4`}>
         <div className="rounded-2xl border border-[#00F2FF]/20 bg-[#0F172A]/60 backdrop-blur-2xl p-5">
           <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#00F2FF]/60">SYNQAI · TERMINAL CHECK-IN</p>
-          <h1 className="mt-2 text-2xl font-black uppercase tracking-tight">Fase 6 · Control físico de presencia</h1>
+          <h1 className="mt-2 text-xl sm:text-2xl font-black uppercase tracking-tight">Fase 6.1 · Terminal de campo</h1>
           <p className="mt-2 text-sm text-white/70">
             Escanea QR (o abre con parámetros), valida estado y marca presencia de equipos en el día de torneo.
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="rounded-2xl border border-[#00F2FF]/20 bg-[#0F172A]/55 p-4 space-y-3">
+          <div className="rounded-2xl border border-[#00F2FF]/20 bg-[#0F172A]/55 p-3 sm:p-4 space-y-3">
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#00F2FF]/70">Contexto terminal</p>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setOnlyPending((v) => !v)}
+                className={`h-9 rounded-lg border text-[10px] font-black uppercase tracking-[0.12em] ${
+                  onlyPending
+                    ? "border-amber-400/35 bg-amber-400/10 text-amber-200"
+                    : "border-white/15 bg-white/[0.03] text-white/70"
+                }`}
+              >
+                {onlyPending ? "Solo pendientes: ON" : "Solo pendientes: OFF"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setCompactMode((v) => !v)}
+                className={`h-9 rounded-lg border text-[10px] font-black uppercase tracking-[0.12em] ${
+                  compactMode
+                    ? "border-primary/35 bg-primary/10 text-primary"
+                    : "border-white/15 bg-white/[0.03] text-white/70"
+                }`}
+              >
+                {compactMode ? "Modo compacto: ON" : "Modo compacto: OFF"}
+              </button>
+            </div>
             <select
               value={selectedTournamentId}
               onChange={(e) => {
@@ -543,7 +623,7 @@ function Inner() {
                 type="button"
                 onClick={() => markPresence(true)}
                 disabled={!selectedTeam}
-                className="h-10 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-200 text-[10px] font-black uppercase tracking-[0.14em] disabled:opacity-45"
+                className="h-14 rounded-xl border border-emerald-500/35 bg-emerald-500/15 text-emerald-100 text-[12px] font-black uppercase tracking-[0.14em] disabled:opacity-45"
               >
                 Check-in
               </button>
@@ -551,7 +631,7 @@ function Inner() {
                 type="button"
                 onClick={() => markPresence(false)}
                 disabled={!selectedTeam}
-                className="h-10 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-200 text-[10px] font-black uppercase tracking-[0.14em] disabled:opacity-45"
+                className="h-14 rounded-xl border border-rose-500/35 bg-rose-500/15 text-rose-100 text-[12px] font-black uppercase tracking-[0.14em] disabled:opacity-45"
               >
                 Check-out
               </button>
@@ -582,12 +662,12 @@ function Inner() {
                   Presentes {presentCount}
                 </span>
                 <span className="rounded-lg border border-amber-500/25 bg-amber-500/10 px-2 py-1 text-amber-200">
-                  Pendientes {Math.max(0, teams.length - presentCount)}
+                  Pendientes {pendingCount}
                 </span>
               </div>
             </div>
 
-            <div className="max-h-[380px] overflow-auto pr-1 space-y-2">
+            <div className={`${compactMode ? "max-h-[300px]" : "max-h-[380px]"} overflow-auto pr-1 space-y-2`}>
               {filteredTeams.map((t) => {
                 const selected = t.id === selectedTeamId;
                 const present = Boolean(t.checkin?.present);
@@ -597,7 +677,7 @@ function Inner() {
                     key={t.id}
                     type="button"
                     onClick={() => setSelectedTeamId(t.id)}
-                    className={`w-full text-left rounded-xl border px-3 py-2 transition-[background-color,border-color,color,opacity,transform] ${
+                    className={`w-full text-left rounded-xl border ${compactMode ? "px-2 py-2" : "px-3 py-2"} transition-[background-color,border-color,color,opacity,transform] ${
                       selected
                         ? "border-[#00F2FF]/45 bg-[#00F2FF]/10"
                         : present
@@ -615,7 +695,7 @@ function Inner() {
                           </div>
                         )}
                         <div className="min-w-0">
-                          <p className="text-sm font-black truncate">{t.name}</p>
+                          <p className={`${compactMode ? "text-[13px]" : "text-sm"} font-black truncate`}>{t.name}</p>
                           <p className="text-[10px] uppercase tracking-[0.12em] text-white/55">{label}</p>
                         </div>
                       </div>
@@ -638,6 +718,35 @@ function Inner() {
                 </div>
               ) : null}
             </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-[#00F2FF]/20 bg-[#0F172A]/55 p-3">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#00F2FF]/75">Últimos escaneos / acciones</p>
+            <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-[0.12em] text-white/60">
+              <Volume2 className="h-3.5 w-3.5 text-primary/80" />
+              Feedback háptico activo
+            </span>
+          </div>
+          <div className="space-y-1.5 max-h-36 overflow-auto pr-1">
+            {scanLogs.length === 0 ? (
+              <p className="text-[10px] text-white/55">Sin lecturas todavía.</p>
+            ) : (
+              scanLogs.map((log, idx) => (
+                <div
+                  key={`${log.at}_${log.teamId}_${idx}`}
+                  className="rounded-lg border border-white/10 bg-black/25 px-2 py-1.5 text-[10px] text-white/80"
+                >
+                  <span className="font-black text-primary/80">{new Date(log.at).toLocaleTimeString("es-ES")}</span> ·{" "}
+                  <span className="font-black">{log.teamName}</span> ·{" "}
+                  <span className={log.action === "checkin" ? "text-emerald-300 font-black" : log.action === "checkout" ? "text-rose-300 font-black" : "text-cyan-300 font-black"}>
+                    {log.action.toUpperCase()}
+                  </span>{" "}
+                  · {log.source}
+                </div>
+              ))
+            )}
           </div>
         </div>
 
