@@ -56,6 +56,7 @@ function LoginContent() {
   })();
   
   const [token, setToken] = useState<string | null>(null);
+  const isDevEnv = process.env.NODE_ENV !== "production";
   const [campaignData, setCampaignData] = useState<any>(null);
   const trackSentForToken = useRef<string | null>(null);
 
@@ -278,22 +279,24 @@ function LoginContent() {
         </CardContent>
       </Card>
 
-      <div className="flex flex-col items-center gap-4">
-        <button 
-          onClick={() => {
-            loginAsGuest();
-            // Forzar navegación inmediata (evita quedarse en /login por estado/HMR).
-            if (requestedNext) {
-              router.push(requestedNext);
-            } else {
-              router.push("/admin-global");
-            }
-          }}
-          className="text-[9px] font-black text-white/20 hover:text-primary transition-[background-color,border-color,color,opacity,transform] uppercase tracking-[0.5em] italic flex items-center gap-2 group"
-        >
-          <Key className="h-3 w-3 group-hover:animate-pulse" /> Terminal de Fundadores
-        </button>
-      </div>
+      {isDevEnv ? (
+        <div className="flex flex-col items-center gap-4">
+          <button 
+            onClick={() => {
+              loginAsGuest();
+              // Forzar navegación inmediata (evita quedarse en /login por estado/HMR).
+              if (requestedNext) {
+                router.push(requestedNext);
+              } else {
+                router.push("/admin-global");
+              }
+            }}
+            className="text-[9px] font-black text-white/20 hover:text-primary transition-[background-color,border-color,color,opacity,transform] uppercase tracking-[0.5em] italic flex items-center gap-2 group"
+          >
+            <Key className="h-3 w-3 group-hover:animate-pulse" /> Terminal de Fundadores (solo dev)
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
