@@ -112,7 +112,8 @@ function LoginContent() {
       await register(regData.email, regData.pass, regData.name, regData.club, regType);
       toast({ title: "CUENTA_CREADA", description: "Bienvenido a la red SynqAI. Sincronizando terminal..." });
     } catch (err) {
-      toast({ variant: "destructive", title: "FALLO_SINCRO", description: "No se pudo crear el nodo de usuario." });
+      const msg = err instanceof Error ? err.message : "No se pudo crear el nodo de usuario.";
+      toast({ variant: "destructive", title: "FALLO_SINCRO", description: msg });
     } finally {
       setLocalLoading(false);
     }
@@ -125,7 +126,8 @@ function LoginContent() {
       await login(loginData.email, loginData.pass);
       toast({ title: "IDENTIDAD_VALIDADA", description: "Acceso autorizado al núcleo central." });
     } catch (err) {
-      toast({ variant: "destructive", title: "ERROR_AUTH", description: "Credenciales no reconocidas en la red." });
+      const msg = err instanceof Error ? err.message : "Credenciales no reconocidas en la red.";
+      toast({ variant: "destructive", title: "ERROR_AUTH", description: msg });
     } finally {
       setLocalLoading(false);
     }
