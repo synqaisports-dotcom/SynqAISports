@@ -37,6 +37,7 @@ import {
   saveTournamentIndex,
   saveTournamentConfigById,
   setActiveTournamentId,
+  safeJsonParse,
   type TournamentIndexItem,
 } from "@/lib/tournaments-storage";
 
