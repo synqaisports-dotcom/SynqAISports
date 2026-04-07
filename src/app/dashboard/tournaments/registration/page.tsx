@@ -7,7 +7,14 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { canUseOperativaSupabase } from "@/lib/operativa-sync";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getActiveTournamentId, loadTournamentConfigById, loadTournamentIndex, safeJsonParse } from "@/lib/tournaments-storage";
+import {
+  getActiveTournamentId,
+  loadTournamentConfigById,
+  loadTournamentIndex,
+  loadTournamentTeamsById,
+  safeJsonParse,
+  saveTournamentTeamsById,
+} from "@/lib/tournaments-storage";
 
 type RegistrationStatus =
   | "draft"
@@ -424,6 +431,89 @@ export default function TournamentRegistrationPage() {
     }));
   };
 
+  const importApprovedToTournamentTeams = () => {
+    if (!selectedTournamentId) return;
+
+    const approvedTeams = payload.registrations
+      .filter((r) => r.status === "aprobado" || r.status === "completo")
+      .flatMap((r) =>
+        (r.teams ?? [])
+          .map((t) => ({
+            name: String(t.teamName ?? "").trim(),
+            category: String(t.category ?? "").trim(),
+            club: String(r.clubName ?? "").trim(),
+          }))
+          .filter((t) => t.name.length > 0),
+      );
+    if (approvedTeams.length === 0) return;
+
+    const existing = loadTournamentTeamsById(clubScopeId, selectedTournamentId);
+    const normalizedExisting = Array.isArray(existing)
+      ? existing.map((t) => ({
+          ...((t && typeof t === "object" ? t : {}) as Record<string, unknown>),
+          id: String((t as { id?: unknown })?.id ?? `slot_${Math.random().toString(36).slice(2, 8)}`),
+          name: String((t as { name?: unknown })?.name ?? "").trim(),
+          groupIndex:
+            typeof (t as { groupIndex?: unknown })?.groupIndex === "number"
+              ? ((t as { groupIndex: number }).groupIndex ?? 0)
+              : 0,
+        }))
+      : [];
+
+    const filledKeys = new Set(
+      normalizedExisting
+        .filter((t) => String(t.name ?? "").trim().length > 0)
+        .map((t) => String(t.name).trim().toLowerCase()),
+    );
+
+    const capacity = Math.max(0, Number(config?.groupsCount ?? 0) * Number(config?.teamsPerGroup ?? 0));
+    const currentFilled = normalizedExisting.filter((t) => String(t.name ?? "").trim().length > 0).length;
+    const remainingSlots = Math.max(0, capacity - currentFilled);
+    let pending = approvedTeams.filter((t) => !filledKeys.has(t.name.toLowerCase()));
+    if (remainingSlots > 0) pending = pending.slice(0, remainingSlots);
+    if (pending.length === 0) return;
+
+    // 1) Rellenar slots vacíos existentes.
+    for (const entry of pending) {
+      const emptyIdx = normalizedExisting.findIndex((t) => String(t.name ?? "").trim().length === 0);
+      if (emptyIdx >= 0) {
+        normalizedExisting[emptyIdx] = {
+          ...normalizedExisting[emptyIdx],
+          name: entry.name,
+          source: "registration",
+          categoryLabel: entry.category,
+          clubName: entry.club,
+        };
+      } else {
+        break;
+      }
+    }
+
+    // 2) Si no hay suficientes slots precreados, añadimos hasta capacidad.
+    const stillPending = pending.filter(
+      (p) => !normalizedExisting.some((t) => String(t.name ?? "").trim().toLowerCase() === p.name.toLowerCase()),
+    );
+    let appendCounter = 0;
+    for (const entry of stillPending) {
+      if (capacity > 0 && normalizedExisting.filter((t) => String(t.name ?? "").trim().length > 0).length >= capacity) break;
+      const teamIndex = normalizedExisting.length + appendCounter;
+      const teamsPerGroup = Math.max(1, Number(config?.teamsPerGroup ?? 1));
+      const groupIndex = Math.floor(teamIndex / teamsPerGroup);
+      normalizedExisting.push({
+        id: `slot_${groupIndex}_${teamIndex % teamsPerGroup}`,
+        name: entry.name,
+        groupIndex,
+        source: "registration",
+        categoryLabel: entry.category,
+        clubName: entry.club,
+      });
+      appendCounter += 1;
+    }
+
+    saveTournamentTeamsById(clubScopeId, selectedTournamentId, normalizedExisting as any[]);
+    setSavedAt(new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }));
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
       <div className="border-b border-primary/15 pb-5 space-y-3">
@@ -542,6 +632,13 @@ export default function TournamentRegistrationPage() {
               Rechazar pendientes
             </button>
           </div>
+          <button
+            type="button"
+            onClick={importApprovedToTournamentTeams}
+            className="h-10 rounded-xl border border-primary/25 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-[0.14em] w-full md:w-auto px-3"
+          >
+            Volcar aprobados a equipos del torneo
+          </button>
           <p className="text-[10px] font-black uppercase tracking-[0.14em] text-white/55">
             Estas acciones quedan registradas en el historial de cada inscripción.
           </p>
@@ -794,9 +891,9 @@ export default function TournamentRegistrationPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <MiniKpi label="Estado operativo" value="Fase 0/1 desplegada" highlight />
+          <MiniKpi label="Estado operativo" value="Fase 4 desplegada" highlight />
           <MiniKpi label="Check-in terminal" value="Pendiente Fase 6" />
-          <MiniKpi label="Mesa control" value="Pendiente Fase 3" />
+          <MiniKpi label="Mesa control" value="Fase 3 activa" />
         </CardContent>
       </Card>
 
