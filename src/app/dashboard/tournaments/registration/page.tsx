@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Clock3, Plus, QrCode, ShieldCheck, Users } from "lucide-react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { canUseOperativaSupabase } from "@/lib/operativa-sync";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -115,28 +116,46 @@ export default function TournamentRegistrationPage() {
   const clubScopeId = profile?.clubId ?? "global-hq";
   const canUseRemote = canUseOperativaSupabase(clubScopeId) && !!session?.access_token;
 
-  const tournamentId = useMemo(() => {
+  const tournamentIdFromContext = useMemo(() => {
     const fromQuery = searchParams.get("tournamentId");
     return fromQuery || getActiveTournamentId(clubScopeId);
   }, [searchParams, clubScopeId]);
+  const tournaments = useMemo(() => loadTournamentIndex(clubScopeId), [clubScopeId]);
+  const [selectedTournamentId, setSelectedTournamentId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (selectedTournamentId) return;
+    if (tournamentIdFromContext) {
+      setSelectedTournamentId(tournamentIdFromContext);
+      return;
+    }
+    if (tournaments.length > 0) {
+      setSelectedTournamentId(tournaments[0]!.id);
+    }
+  }, [selectedTournamentId, tournamentIdFromContext, tournaments]);
 
   const [payload, setPayload] = useState<RegistrationsPayload>(DEFAULT_PAYLOAD);
   const [syncMode, setSyncMode] = useState<"remote" | "local" | "restricted" | "local_error">("local");
   const [savedAt, setSavedAt] = useState<string>("");
 
   const tournament = useMemo(
-    () => loadTournamentIndex(clubScopeId).find((t) => t.id === tournamentId) ?? null,
-    [clubScopeId, tournamentId],
+    () => tournaments.find((t) => t.id === selectedTournamentId) ?? null,
+    [selectedTournamentId, tournaments],
   );
-  const config = useMemo(() => loadTournamentConfigById(clubScopeId, tournamentId), [clubScopeId, tournamentId]);
+  const config = useMemo(
+    () => loadTournamentConfigById(clubScopeId, selectedTournamentId),
+    [clubScopeId, selectedTournamentId]
+  );
   const slotsConfigured = Math.max(0, Number(config?.groupsCount ?? 0) * Number(config?.teamsPerGroup ?? 0));
   const occupiedSlots = payload.registrations.reduce((acc, r) => acc + r.teams.length, 0);
   const slotsAvailable = Math.max(0, slotsConfigured - occupiedSlots);
 
   useEffect(() => {
     let cancelled = false;
-    if (!tournamentId) return;
-    const local = safeJsonParse<RegistrationsPayload>(localStorage.getItem(registrationsLocalKey(clubScopeId, tournamentId)));
+    if (!selectedTournamentId) return;
+    const local = safeJsonParse<RegistrationsPayload>(
+      localStorage.getItem(registrationsLocalKey(clubScopeId, selectedTournamentId))
+    );
     if (local && !cancelled) setPayload(toPayload(local));
 
     if (!canUseRemote || !session?.access_token) {
@@ -146,7 +165,7 @@ export default function TournamentRegistrationPage() {
 
     void (async () => {
       try {
-        const res = await fetch(`/api/club/tournament-registrations?tournamentId=${encodeURIComponent(tournamentId)}`, {
+        const res = await fetch(`/api/club/tournament-registrations?tournamentId=${encodeURIComponent(selectedTournamentId)}`, {
           headers: { Authorization: `Bearer ${session.access_token}` },
         });
         if (res.status === 403) {
@@ -163,7 +182,7 @@ export default function TournamentRegistrationPage() {
           setPayload(normalized);
           setSyncMode("remote");
         }
-        localStorage.setItem(registrationsLocalKey(clubScopeId, tournamentId), JSON.stringify(normalized));
+        localStorage.setItem(registrationsLocalKey(clubScopeId, selectedTournamentId), JSON.stringify(normalized));
       } catch {
         if (!cancelled) setSyncMode("local_error");
       }
@@ -172,12 +191,12 @@ export default function TournamentRegistrationPage() {
     return () => {
       cancelled = true;
     };
-  }, [canUseRemote, clubScopeId, session?.access_token, tournamentId]);
+  }, [canUseRemote, clubScopeId, selectedTournamentId, session?.access_token]);
 
   useEffect(() => {
-    if (!tournamentId) return;
+    if (!selectedTournamentId) return;
     const id = window.setTimeout(() => {
-      localStorage.setItem(registrationsLocalKey(clubScopeId, tournamentId), JSON.stringify(payload));
+      localStorage.setItem(registrationsLocalKey(clubScopeId, selectedTournamentId), JSON.stringify(payload));
       setSavedAt(new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }));
 
       if (!canUseRemote || !session?.access_token) {
@@ -192,7 +211,7 @@ export default function TournamentRegistrationPage() {
               "Content-Type": "application/json",
               Authorization: `Bearer ${session.access_token}`,
             },
-            body: JSON.stringify({ tournamentId, payload }),
+            body: JSON.stringify({ tournamentId: selectedTournamentId, payload }),
           });
           if (res.status === 403) {
             setSyncMode("restricted");
@@ -209,16 +228,16 @@ export default function TournamentRegistrationPage() {
       })();
     }, 300);
     return () => window.clearTimeout(id);
-  }, [canUseRemote, clubScopeId, payload, session?.access_token, tournamentId]);
+  }, [canUseRemote, clubScopeId, payload, selectedTournamentId, session?.access_token]);
 
   const createRegistration = () => {
-    if (!tournamentId) return;
+    if (!selectedTournamentId) return;
     const idx = payload.registrations.length + 1;
     const regId = `reg_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     const defaultTeamId = `team_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
     const next: TournamentRegistration = {
       id: regId,
-      tournamentId,
+      tournamentId: selectedTournamentId,
       clubName: `Club invitado ${idx}`,
       contactName: "",
       contactEmail: "",
@@ -263,7 +282,7 @@ export default function TournamentRegistrationPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="border-b border-primary/15 pb-5">
+      <div className="border-b border-primary/15 pb-5 space-y-3">
         <p className="text-[10px] font-black uppercase tracking-[0.28em] text-primary/70">TORNEOS / INSCRIPCIÓN CLUBES</p>
         <h1 className="mt-2 text-3xl font-black uppercase tracking-tight text-white">Inscripción Digital</h1>
         <p className="mt-2 text-sm text-white/70">
@@ -279,7 +298,41 @@ export default function TournamentRegistrationPage() {
                 ? "Local (error de sincronización)"
                 : "Fuente: Local"}
         </p>
+        <div className="max-w-md">
+          <label className="text-[9px] font-black uppercase tracking-[0.16em] text-primary/75">Torneo vinculado</label>
+          <select
+            value={selectedTournamentId ?? ""}
+            onChange={(e) => setSelectedTournamentId(e.target.value || null)}
+            className="mt-1 h-10 w-full rounded-lg border border-primary/25 bg-black/25 px-3 text-sm text-white outline-none"
+          >
+            {tournaments.length === 0 ? <option value="">Sin torneos creados</option> : null}
+            {tournaments.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
+
+      {!selectedTournamentId ? (
+        <Card className="glass-panel border border-primary/20 bg-black/30 rounded-2xl">
+          <CardHeader>
+            <CardTitle className="text-base font-black uppercase text-primary">Primero crea un torneo</CardTitle>
+            <CardDescription className="text-white/70">
+              La inscripción debe estar ligada obligatoriamente a un torneo creado.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link
+              href="/dashboard/tournaments/list"
+              className="inline-flex items-center h-10 px-3 rounded-xl border border-primary/25 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-[0.16em]"
+            >
+              Ir a crear torneo
+            </Link>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
         <MiniKpi label="Plazas configuradas" value={`${slotsConfigured}`} />
@@ -300,6 +353,7 @@ export default function TournamentRegistrationPage() {
           <button
             type="button"
             onClick={createRegistration}
+            disabled={!selectedTournamentId}
             className="inline-flex items-center gap-2 h-10 px-3 rounded-xl border border-primary/25 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-[0.16em]"
           >
             <Plus className="h-3.5 w-3.5" />
