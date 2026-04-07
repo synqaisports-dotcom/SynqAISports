@@ -81,6 +81,13 @@ function formatFootball(value?: TournamentIndexItem["footballFormat"]): string {
   return value === "f11" ? "F11" : value === "f7" ? "F7" : "FUTSAL";
 }
 
+function imageFormatFromDataUrl(dataUrl: string): "PNG" | "JPEG" {
+  const m = /^data:image\/([a-zA-Z0-9+.-]+);base64,/.exec(dataUrl);
+  const mime = String(m?.[1] ?? "").toLowerCase();
+  if (mime.includes("jpeg") || mime.includes("jpg") || mime.includes("webp")) return "JPEG";
+  return "PNG";
+}
+
 function formatStatusLabel(status: TournamentIndexItem["status"]): string {
   if (status === "published") return "Activo";
   if (status === "finished") return "Finalizado";
@@ -343,7 +350,12 @@ export default function TournamentsListPage() {
       let y = 14;
 
       if (logoDataUrl) {
-        doc.addImage(logoDataUrl, "PNG", 14, y, 18, 18);
+        try {
+          doc.addImage(logoDataUrl, imageFormatFromDataUrl(logoDataUrl), 14, y, 18, 18);
+        } catch {
+          doc.setDrawColor(0, 242, 255);
+          doc.rect(14, y, 18, 18);
+        }
       } else {
         doc.setDrawColor(0, 242, 255);
         doc.rect(14, y, 18, 18);
@@ -384,8 +396,15 @@ export default function TournamentsListPage() {
       doc.text("LOCALIZACIÓN DEL EVENTO", 14, y);
       y += 2;
       if (mapDataUrl) {
-        doc.addImage(mapDataUrl, "PNG", 14, y + 2, pageW - 28, 44);
-        y += 50;
+        try {
+          doc.addImage(mapDataUrl, imageFormatFromDataUrl(mapDataUrl), 14, y + 2, pageW - 28, 44);
+          y += 50;
+        } catch {
+          doc.setTextColor(220, 225, 235);
+          doc.setFont("helvetica", "normal");
+          doc.text(`Mapa no disponible automáticamente. Referencia: ${mapQuery}`, 14, y + 8);
+          y += 14;
+        }
       } else {
         doc.setTextColor(220, 225, 235);
         doc.setFont("helvetica", "normal");
@@ -441,8 +460,12 @@ export default function TournamentsListPage() {
         .replace(/\s+/g, "-")
         .replace(/[^a-z0-9\-]/g, "");
       doc.save(`dossier-invitacion-${filenameBase || "torneo"}.pdf`);
-    } catch {
-      // ignore
+    } catch (err) {
+      if (typeof window !== "undefined") {
+        window.alert("No se pudo generar el dossier. Revisa consola para más detalle.");
+      }
+      // eslint-disable-next-line no-console
+      console.error("Error generando dossier de invitación", err);
     } finally {
       setExportingTournamentId(null);
     }
