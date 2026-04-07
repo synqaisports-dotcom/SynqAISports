@@ -21,8 +21,10 @@ const ADMIN_EMAILS = ['munozmartinez.ismael@gmail.com', 'synqaisports@gmail.com'
 
 function canUseFounderLoginUnsafeBypass() {
   const explicit = process.env.NEXT_PUBLIC_ENABLE_FOUNDER_LOGIN === "1";
-  const isProd = process.env.NODE_ENV === "production";
-  return explicit && !isProd;
+  const isPreview = process.env.NEXT_PUBLIC_VERCEL_ENV === "preview";
+  const isLocalDev = process.env.NODE_ENV !== "production";
+  // Solo habilitamos bypass en local/preview con flag explícito.
+  return explicit && (isPreview || isLocalDev);
 }
 
 function isUuidLike(value: string | null | undefined): value is string {

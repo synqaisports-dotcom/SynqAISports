@@ -56,7 +56,9 @@ function LoginContent() {
   })();
   
   const [token, setToken] = useState<string | null>(null);
-  const isDevEnv = process.env.NODE_ENV !== "production";
+  const isPreviewEnv = process.env.VERCEL_ENV === "preview";
+  const founderLoginEnabled = process.env.NEXT_PUBLIC_ENABLE_FOUNDER_LOGIN === "1";
+  const canShowFounderTerminal = isPreviewEnv && founderLoginEnabled;
   const [campaignData, setCampaignData] = useState<any>(null);
   const trackSentForToken = useRef<string | null>(null);
 
@@ -281,11 +283,17 @@ function LoginContent() {
         </CardContent>
       </Card>
 
-      {isDevEnv ? (
+      {canShowFounderTerminal ? (
         <div className="flex flex-col items-center gap-4">
           <button 
             onClick={() => {
-              loginAsGuest();
+              try {
+                loginAsGuest();
+              } catch (err) {
+                const msg = err instanceof Error ? err.message : "FOUNDER_LOGIN_DISABLED";
+                toast({ variant: "destructive", title: "FOUNDER_LOGIN_DISABLED", description: msg });
+                return;
+              }
               // Forzar navegación inmediata (evita quedarse en /login por estado/HMR).
               if (requestedNext) {
                 router.push(requestedNext);
