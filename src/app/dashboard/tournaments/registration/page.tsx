@@ -34,6 +34,14 @@ type TournamentRegistration = {
   contactEmail: string;
   contactPhone: string;
   notes?: string;
+  controlComment?: string;
+  statusHistory?: Array<{
+    at: string;
+    from: RegistrationStatus;
+    to: RegistrationStatus;
+    by?: string;
+    comment?: string;
+  }>;
   status: RegistrationStatus;
   createdAt: string;
   updatedAt: string;
@@ -106,6 +114,24 @@ function toPayload(raw: unknown): RegistrationsPayload {
         contactEmail: String(x.contactEmail ?? "").trim(),
         contactPhone: String(x.contactPhone ?? "").trim(),
         notes: String(x.notes ?? "").trim(),
+        controlComment: String(x.controlComment ?? "").trim(),
+        statusHistory: Array.isArray(x.statusHistory)
+          ? (x.statusHistory as Array<Record<string, unknown>>)
+              .map((h) => {
+                const at = String(h.at ?? "").trim() || nowIso();
+                const from = String(h.from ?? "draft").trim() as RegistrationStatus;
+                const to = String(h.to ?? "draft").trim() as RegistrationStatus;
+                if (!from || !to) return null;
+                return {
+                  at,
+                  from,
+                  to,
+                  by: String(h.by ?? "").trim(),
+                  comment: String(h.comment ?? "").trim(),
+                };
+              })
+              .filter((h): h is NonNullable<TournamentRegistration["statusHistory"]>[number] => h !== null)
+          : [],
         status: (String(x.status ?? "preinscrito") as RegistrationStatus),
         createdAt: String(x.createdAt ?? nowIso()),
         updatedAt: String(x.updatedAt ?? nowIso()),
@@ -353,6 +379,51 @@ export default function TournamentRegistrationPage() {
     }));
   };
 
+  const updateRegistrationStatus = (id: string, to: RegistrationStatus, comment?: string) => {
+    setPayload((prev) => ({
+      registrations: prev.registrations.map((r) => {
+        if (r.id !== id) return r;
+        if (r.status === to && !comment) return r;
+        const event = {
+          at: nowIso(),
+          from: r.status,
+          to,
+          by: profile?.email ?? profile?.clubName ?? "operator",
+          comment: String(comment ?? "").trim(),
+        };
+        return {
+          ...r,
+          status: to,
+          controlComment: String(comment ?? r.controlComment ?? "").trim(),
+          statusHistory: [...(r.statusHistory ?? []), event],
+          updatedAt: nowIso(),
+        };
+      }),
+    }));
+  };
+
+  const applyBulkStatus = (from: RegistrationStatus, to: RegistrationStatus, comment: string) => {
+    setPayload((prev) => ({
+      registrations: prev.registrations.map((r) => {
+        if (r.status !== from) return r;
+        const event = {
+          at: nowIso(),
+          from: r.status,
+          to,
+          by: profile?.email ?? profile?.clubName ?? "operator",
+          comment: String(comment).trim(),
+        };
+        return {
+          ...r,
+          status: to,
+          controlComment: String(comment).trim(),
+          statusHistory: [...(r.statusHistory ?? []), event],
+          updatedAt: nowIso(),
+        };
+      }),
+    }));
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
       <div className="border-b border-primary/15 pb-5 space-y-3">
@@ -434,6 +505,46 @@ export default function TournamentRegistrationPage() {
             label="Con warnings"
             value={`${Array.from(registrationIssuesById.values()).filter((x) => x.some((i) => i.level === "warning")).length}`}
           />
+        </CardContent>
+      </Card>
+
+      <Card className="glass-panel border border-primary/20 bg-black/30 rounded-2xl">
+        <CardHeader>
+          <CardTitle className="text-base font-black uppercase text-primary flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4" />
+            Mesa de control (Fase 3)
+          </CardTitle>
+          <CardDescription className="text-white/70">
+            Aprobación/rechazo operativo con trazabilidad de estado y comentarios.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <button
+              type="button"
+              onClick={() => applyBulkStatus("pendiente_validacion", "aprobado", "Aprobación en lote desde mesa de control")}
+              className="h-10 rounded-xl border border-emerald-500/25 bg-emerald-500/10 text-emerald-200 text-[10px] font-black uppercase tracking-[0.14em]"
+            >
+              Aprobar pendientes
+            </button>
+            <button
+              type="button"
+              onClick={() => applyBulkStatus("pendiente_validacion", "waitlist", "Movido a lista de espera por operación")}
+              className="h-10 rounded-xl border border-amber-500/25 bg-amber-500/10 text-amber-200 text-[10px] font-black uppercase tracking-[0.14em]"
+            >
+              Enviar a waitlist
+            </button>
+            <button
+              type="button"
+              onClick={() => applyBulkStatus("pendiente_validacion", "rechazado", "Rechazado por mesa de control")}
+              className="h-10 rounded-xl border border-rose-500/25 bg-rose-500/10 text-rose-200 text-[10px] font-black uppercase tracking-[0.14em]"
+            >
+              Rechazar pendientes
+            </button>
+          </div>
+          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-white/55">
+            Estas acciones quedan registradas en el historial de cada inscripción.
+          </p>
         </CardContent>
       </Card>
 
@@ -544,6 +655,38 @@ export default function TournamentRegistrationPage() {
                 />
               </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                <input
+                  value={r.controlComment ?? ""}
+                  placeholder="Comentario de mesa de control"
+                  onChange={(e) => updateRegistration(r.id, { controlComment: e.target.value })}
+                  className="h-10 rounded-lg border border-primary/25 bg-black/25 px-3 text-sm text-white outline-none md:col-span-2"
+                />
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => updateRegistrationStatus(r.id, "aprobado", r.controlComment)}
+                    className="h-10 rounded-lg border border-emerald-500/25 bg-emerald-500/10 text-emerald-200 text-[9px] font-black uppercase tracking-[0.12em]"
+                  >
+                    Aprobar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateRegistrationStatus(r.id, "waitlist", r.controlComment)}
+                    className="h-10 rounded-lg border border-amber-500/25 bg-amber-500/10 text-amber-200 text-[9px] font-black uppercase tracking-[0.12em]"
+                  >
+                    Waitlist
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateRegistrationStatus(r.id, "rechazado", r.controlComment)}
+                    className="h-10 rounded-lg border border-rose-500/25 bg-rose-500/10 text-rose-200 text-[9px] font-black uppercase tracking-[0.12em]"
+                  >
+                    Rechazar
+                  </button>
+                </div>
+              </div>
+
               <div className="rounded-lg border border-white/10 bg-black/25 p-2 space-y-1">
                 <div className="flex items-center justify-between">
                   <p className="text-[9px] font-black uppercase tracking-[0.16em] text-primary/70">Equipos inscritos</p>
@@ -617,6 +760,23 @@ export default function TournamentRegistrationPage() {
                     </div>
                   </div>
                 ))}
+              </div>
+
+              <div className="rounded-lg border border-white/10 bg-black/25 p-2">
+                <p className="text-[9px] font-black uppercase tracking-[0.16em] text-primary/70 mb-1">Auditoría</p>
+                {Array.isArray(r.statusHistory) && r.statusHistory.length > 0 ? (
+                  <div className="space-y-1 max-h-28 overflow-auto pr-1">
+                    {[...r.statusHistory].slice(-4).reverse().map((e, idx) => (
+                      <div key={`${e.at}_${idx}`} className="text-[10px] text-white/75">
+                        <span className="text-primary/80 font-black">{new Date(e.at).toLocaleString("es-ES")}</span>{" "}
+                        · {e.from} → <span className="font-black">{e.to}</span>
+                        {e.comment ? ` · ${e.comment}` : ""}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[10px] text-white/55">Sin eventos de auditoría todavía.</p>
+                )}
               </div>
             </div>
           ))}
