@@ -605,7 +605,7 @@ function OperativaPeaks({
         <MiniStatCard title="Últimas sesiones" value={`${latest.sessions}`} tone="text-white" />
         <MiniStatCard title="Pico sesiones" value={`${peakSessions}`} tone="text-primary" />
       </div>
-      <div className="rounded-2xl border border-white/10 bg-slate-950/80 p-3 sm:p-4">
+      <div className="rounded-2xl border border-primary/20 bg-black/30 p-3 sm:p-4">
         <div className="h-56">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data} margin={{ top: 8, right: 12, left: 4, bottom: 4 }}>
@@ -682,7 +682,7 @@ function OperativaPeaks({
         </div>
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-slate-950/80 p-3 space-y-2">
+      <div className="rounded-2xl border border-primary/20 bg-black/30 p-3 space-y-2">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline" className={cn("text-[9px] font-black uppercase border-white/15", deltaAttendance >= 0 ? "text-emerald-300 border-emerald-400/30" : "text-rose-300 border-rose-400/30")}>
             Asistencia {deltaAttendance >= 0 ? "+" : ""}{deltaAttendance}%
