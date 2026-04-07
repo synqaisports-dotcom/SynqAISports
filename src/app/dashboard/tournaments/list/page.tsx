@@ -516,7 +516,7 @@ export default function TournamentsListPage() {
                           </span>
                         </div>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 rounded-xl border border-white/5 bg-black/25 py-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 rounded-xl border border-[#00F2FF]/20 bg-[#0F172A]/60 backdrop-blur-sm shadow-[inset_0_1px_0_rgba(0,242,255,0.08)] py-3">
                           <div className={dataBlockClass}>
                             <p className={labelClass}>Fechas</p>
                             <p className={valueClass}>
