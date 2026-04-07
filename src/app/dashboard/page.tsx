@@ -30,7 +30,7 @@ import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { useOperativaSync } from "@/hooks/use-operativa-sync";
 import { readPlayersLocal } from "@/lib/player-storage";
-import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 /**
  * Dashboard Maestro - v10.1.0
@@ -576,8 +576,6 @@ function OperativaPeaks({
 }: {
   data: Array<{ label: string; sessions: number; attendance: number }>;
 }) {
-  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
-  const [hoverPos, setHoverPos] = useState<{ x: number; y: number }>({ x: 12, y: 12 });
   if (data.length === 0) {
     return (
       <p className="text-[10px] uppercase tracking-widest text-primary/40 font-bold">
@@ -611,6 +609,7 @@ function OperativaPeaks({
   const deltaSessions = prev ? latest.sessions - prev.sessions : 0;
   const peakAttendance = Math.max(...data.map((d) => d.attendance));
   const peakSessions = Math.max(...data.map((d) => d.sessions));
+  const sessionsMax = Math.max(1, ...data.map((d) => d.sessions));
 
   return (
     <div className="space-y-4">
@@ -625,128 +624,80 @@ function OperativaPeaks({
         <MiniStatCard title="Últimas sesiones" value={`${latest.sessions}`} tone="text-white" />
         <MiniStatCard title="Pico sesiones" value={`${peakSessions}`} tone="text-primary" />
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-        <div className="lg:col-span-2 rounded-2xl border border-white/10 bg-slate-950/80 p-3 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/5 to-transparent pointer-events-none" />
-          {hovered && (
-            <div
-              className="absolute z-30 rounded-lg border border-primary/30 bg-[#07111d]/95 px-2.5 py-1.5 pointer-events-none shadow-[0_0_20px_rgba(0,242,255,0.18)]"
-              style={{
-                left: `${hoverPos.x}px`,
-                top: `${hoverPos.y}px`,
-                transform: "translate(10px, -10px)",
-              }}
-            >
-              <p className="text-[9px] font-black uppercase text-primary tracking-widest">{hovered.label}</p>
-              <p className="text-[9px] font-bold uppercase text-cyan-200">
-                Sesiones: {hovered.sessions} · Asistencia: {hovered.attendance}%
-              </p>
-            </div>
-          )}
-          <svg
-            viewBox={`0 0 ${w} ${h}`}
-            className="w-full h-40"
-            onMouseLeave={() => setHoveredIdx(null)}
-            onMouseMove={(e) => {
-              const rect = e.currentTarget.getBoundingClientRect();
-              setHoverPos({
-                x: Math.max(8, Math.min(rect.width - 120, e.clientX - rect.left)),
-                y: Math.max(8, Math.min(rect.height - 40, e.clientY - rect.top)),
-              });
-            }}
-          >
-            {Array.from({ length: 6 }).map((_, i) => {
-              const y = (h / 5) * i;
-              return (
-                <line
-                  key={`grid-h-${i}`}
-                  x1="0"
-                  y1={y}
-                  x2={w}
-                  y2={y}
-                  stroke="rgb(255 255 255 / 0.06)"
-                  strokeWidth="0.25"
-                />
-              );
-            })}
-            {data.map((_, i) => (
-              <line
-                key={`grid-v-${i}`}
-                x1={sx(i)}
-                y1="0"
-                x2={sx(i)}
-                y2={h}
-                stroke="rgb(255 255 255 / 0.04)"
-                strokeWidth="0.25"
+      <div className="rounded-2xl border border-white/10 bg-slate-950/80 p-3 sm:p-4">
+        <div className="h-56">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data} margin={{ top: 8, right: 12, left: 4, bottom: 4 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+              <XAxis
+                dataKey="label"
+                tick={{ fill: "rgba(255,255,255,0.7)", fontSize: 10, fontWeight: 800 }}
+                axisLine={false}
+                tickLine={false}
               />
-            ))}
-            <line
-              x1="0"
-              y1={attendanceThresholdY}
-              x2={w}
-              y2={attendanceThresholdY}
-              stroke="rgb(244 63 94)"
-              strokeWidth="0.45"
-              strokeDasharray="1.6 1.6"
-              opacity="0.75"
-            />
-            {hoveredIdx !== null && (
-              <line
-                x1={sx(hoveredIdx)}
-                y1="0"
-                x2={sx(hoveredIdx)}
-                y2={h}
-                stroke="rgb(0 242 255 / 0.45)"
-                strokeDasharray="1.2 1.2"
-                strokeWidth="0.4"
+              <YAxis
+                yAxisId="sessions"
+                allowDecimals={false}
+                domain={[0, sessionsMax]}
+                tick={{ fill: "rgba(0,242,255,0.9)", fontSize: 10, fontWeight: 700 }}
+                axisLine={false}
+                tickLine={false}
               />
-            )}
-            <path d={areaFrom(sySessions, "sessions")} fill="rgb(0 242 255 / 0.08)" />
-            <path d={areaFrom(syAttendance, "attendance")} fill="rgb(52 211 153 / 0.10)" />
-            <path d={pathFrom(sySessions, "sessions")} fill="none" stroke="rgb(0 242 255)" strokeWidth="0.72" />
-            <path d={pathFrom(syAttendance, "attendance")} fill="none" stroke="rgb(52 211 153)" strokeWidth="0.72" />
-            {data.map((d, i) => (
-              <g
-                key={`${d.label}-${i}`}
-                onMouseEnter={() => setHoveredIdx(i)}
-              >
-                <circle cx={sx(i)} cy={sySessions(d.sessions)} r="0.75" fill="rgb(0 242 255)">
-                  <title>{`${d.label} · Sesiones: ${d.sessions}`}</title>
-                </circle>
-                <circle
-                  cx={sx(i)}
-                  cy={syAttendance(d.attendance)}
-                  r="0.85"
-                  fill={d.attendance < 70 ? "rgb(244 63 94)" : "rgb(52 211 153)"}
-                >
-                  <title>{`${d.label} · Asistencia: ${d.attendance}%`}</title>
-                </circle>
-              </g>
-            ))}
-          </svg>
-        </div>
-
-        <div className="rounded-2xl border border-white/10 bg-slate-950/80 p-3">
-          <p className="text-[10px] uppercase font-black tracking-widest text-primary/70 mb-2">Barras MCC</p>
-          <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-40">
-            {data.map((d, i) => {
-              const x = i * barW + barW * 0.1;
-              const bw = barW * 0.8;
-              const bh = (Math.max(0, Math.min(100, d.attendance)) / 100) * h;
-              const by = h - bh;
-              return (
-                <rect
-                  key={`bar-${d.label}`}
-                  x={x}
-                  y={by}
-                  width={bw}
-                  height={bh}
-                  rx="0.7"
-                  fill={d.attendance < 70 ? "rgb(244 63 94 / 0.75)" : "rgb(52 211 153 / 0.75)"}
-                />
-              );
-            })}
-          </svg>
+              <YAxis
+                yAxisId="attendance"
+                orientation="right"
+                allowDecimals={false}
+                domain={[0, 100]}
+                tick={{ fill: "rgba(52,211,153,0.9)", fontSize: 10, fontWeight: 700 }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <Tooltip
+                cursor={{ stroke: "rgba(0,242,255,0.45)", strokeDasharray: "4 4" }}
+                contentStyle={{
+                  background: "rgba(8,16,28,0.95)",
+                  border: "1px solid rgba(0,242,255,0.25)",
+                  borderRadius: 12,
+                  color: "#fff",
+                }}
+                labelStyle={{ color: "rgba(255,255,255,0.75)", fontWeight: 900 }}
+                itemStyle={{ color: "#00F2FF", fontWeight: 900 }}
+                formatter={(value: number | string, name: string) => {
+                  if (name === "Asistencia") return [`${value}%`, name];
+                  return [value, name];
+                }}
+              />
+              <ReferenceLine
+                yAxisId="attendance"
+                y={70}
+                stroke="rgba(244,63,94,0.9)"
+                strokeDasharray="4 4"
+                label={{ value: "Umbral 70%", fill: "rgba(244,63,94,0.95)", fontSize: 10, fontWeight: 800 }}
+              />
+              <Area yAxisId="sessions" type="monotone" dataKey="sessions" fill="rgba(0,242,255,0.10)" stroke="none" />
+              <Area yAxisId="attendance" type="monotone" dataKey="attendance" fill="rgba(52,211,153,0.08)" stroke="none" />
+              <Line
+                yAxisId="sessions"
+                type="monotone"
+                dataKey="sessions"
+                name="Sesiones"
+                stroke="#00F2FF"
+                strokeWidth={2.2}
+                dot={{ r: 3, fill: "#00F2FF", stroke: "#001018", strokeWidth: 1.5 }}
+                activeDot={{ r: 5, fill: "#00F2FF", stroke: "#001018", strokeWidth: 2 }}
+              />
+              <Line
+                yAxisId="attendance"
+                type="monotone"
+                dataKey="attendance"
+                name="Asistencia"
+                stroke="#34D399"
+                strokeWidth={2.2}
+                dot={{ r: 3, fill: "#34D399", stroke: "#001018", strokeWidth: 1.5 }}
+                activeDot={{ r: 5, fill: "#34D399", stroke: "#001018", strokeWidth: 2 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
