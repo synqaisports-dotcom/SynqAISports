@@ -56,9 +56,8 @@ function LoginContent() {
   })();
   
   const [token, setToken] = useState<string | null>(null);
-  const isPreviewEnv = process.env.VERCEL_ENV === "preview";
   const founderLoginEnabled = process.env.NEXT_PUBLIC_ENABLE_FOUNDER_LOGIN === "1";
-  const canShowFounderTerminal = isPreviewEnv && founderLoginEnabled;
+  const canShowFounderTerminal = founderLoginEnabled;
   const [campaignData, setCampaignData] = useState<any>(null);
   const trackSentForToken = useRef<string | null>(null);
 
