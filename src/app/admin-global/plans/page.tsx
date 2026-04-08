@@ -64,6 +64,7 @@ import { useAuth } from "@/lib/auth-context";
 import {
   buildRoleSelectOptions,
   getRoleDisplayLabel,
+  ASSIGNABLE_ROLES,
   type SynqRoleRowLike,
 } from "@/lib/role-catalog";
 
@@ -99,7 +100,13 @@ export default function GlobalPlansPage() {
   const [synqRoleRows, setSynqRoleRows] = useState<SynqRoleRowLike[]>([]);
 
   const roleSelectOptions = useMemo(() => {
-    const base = buildRoleSelectOptions(synqRoleRows, { includeSuperadmin: false });
+    const fallbackRows = ASSIGNABLE_ROLES.map((r) => ({
+      key: r.id,
+      label: r.label,
+      is_system: r.systemLocked,
+    })) as SynqRoleRowLike[];
+    const sourceRows = synqRoleRows.length > 0 ? synqRoleRows : fallbackRows;
+    const base = buildRoleSelectOptions(sourceRows, { includeSuperadmin: false });
     if (newPlan.defaultRole && !base.some((o) => o.value === newPlan.defaultRole)) {
       return [
         ...base,

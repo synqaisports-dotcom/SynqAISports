@@ -63,6 +63,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth-context";
 import {
   buildRoleSelectOptions,
+  getAssignableRoleSelectOptions,
   getRoleDisplayLabel,
   type SynqRoleRowLike,
 } from "@/lib/role-catalog";
@@ -90,7 +91,8 @@ export default function GlobalUsersPage() {
   const [synqRoleRows, setSynqRoleRows] = useState<SynqRoleRowLike[]>([]);
 
   const roleSelectOptions = useMemo(() => {
-    const base = buildRoleSelectOptions(synqRoleRows, { includeSuperadmin: true });
+    const remote = buildRoleSelectOptions(synqRoleRows, { includeSuperadmin: true });
+    const base = remote.length > 0 ? remote : getAssignableRoleSelectOptions();
     if (formData.role && !base.some((o) => o.value === formData.role)) {
       return [
         ...base,

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase";
 import { verifySuperadminFromRequest } from "../verify-superadmin";
+import { ROLE_CATALOG } from "@/lib/role-catalog";
 
 function adminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -19,6 +20,10 @@ async function isValidRoleKey(
   if (!admin) return false;
   const normalized = role.trim().toLowerCase();
   if (!normalized) return false;
+  const systemRoleSet = new Set(ROLE_CATALOG.map((r) => r.id));
+  if (systemRoleSet.has(normalized as (typeof ROLE_CATALOG)[number]["id"])) {
+    return true;
+  }
   const { data, error } = await admin
     .from("synq_roles")
     .select("key")
