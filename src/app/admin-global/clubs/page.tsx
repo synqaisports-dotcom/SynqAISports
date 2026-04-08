@@ -45,6 +45,7 @@ export default function ManageClubsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [lastErrorDetail, setLastErrorDetail] = useState<string>("");
   const [isUsingFallback, setIsUsingFallback] = useState(false);
   const [updatingClubIds, setUpdatingClubIds] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
@@ -63,6 +64,7 @@ export default function ManageClubsPage() {
   const loadClubs = async () => {
     setIsLoading(true);
     setHasError(false);
+    setLastErrorDetail("");
     
     if (!session?.access_token) {
       const savedClubs = JSON.parse(localStorage.getItem("synq_global_clubs") || "[]");
@@ -76,8 +78,16 @@ export default function ManageClubsPage() {
       const res = await fetch("/api/admin/clubs", {
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
-      const j = (await res.json()) as { clubs?: Club[]; error?: string };
+      const rawText = await res.text().catch(() => "");
+      let j: { clubs?: Club[]; error?: string } = {};
+      try {
+        j = rawText ? (JSON.parse(rawText) as typeof j) : {};
+      } catch {
+        j = {};
+      }
       if (!res.ok) {
+        const detail = `${res.status} ${res.statusText}` + (rawText ? ` · ${rawText.slice(0, 600)}` : "");
+        setLastErrorDetail(detail);
         throw new Error(j.error ?? `HTTP ${res.status}`);
       }
       const data = Array.isArray(j.clubs) ? j.clubs : [];

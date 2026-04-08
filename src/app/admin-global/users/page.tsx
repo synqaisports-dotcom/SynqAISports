@@ -618,7 +618,7 @@ export default function GlobalUsersPage() {
                   <SelectTrigger className="h-12 bg-white/5 border-emerald-500/20 rounded-2xl text-emerald-400 font-bold uppercase">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#04070c] border-emerald-500/20 rounded-2xl">
+                  <SelectContent className="z-[200] bg-[#04070c] border-emerald-500/20 rounded-2xl">
                     {roleSelectOptions.map((role) => (
                       <SelectItem key={role.value} value={role.value} className="text-[10px] font-black uppercase tracking-widest focus:bg-emerald-500 focus:text-black">
                         {role.label}
@@ -626,6 +626,31 @@ export default function GlobalUsersPage() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1 italic">Nodo Club (club_id)</Label>
+                <Select
+                  value={formData.clubId || "__none__"}
+                  onValueChange={(v) => setFormData({ ...formData, clubId: v === "__none__" ? "" : v })}
+                >
+                  <SelectTrigger className="h-12 bg-white/5 border-emerald-500/20 rounded-2xl text-emerald-400 font-bold uppercase">
+                    <SelectValue placeholder="SELECCIONAR..." />
+                  </SelectTrigger>
+                  <SelectContent className="z-[200] bg-[#04070c] border-emerald-500/20 rounded-2xl">
+                    <SelectItem value="__none__" className="text-[10px] font-black uppercase tracking-widest focus:bg-emerald-500 focus:text-black">
+                      (SIN CLUB)
+                    </SelectItem>
+                    {clubs.map((c) => (
+                      <SelectItem key={c.id} value={c.id} className="text-[10px] font-black uppercase tracking-widest focus:bg-emerald-500 focus:text-black">
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[9px] font-bold uppercase tracking-widest text-white/30">
+                  Para roles no globales, este campo debe estar asignado.
+                </p>
               </div>
 
               <div className="space-y-2">
