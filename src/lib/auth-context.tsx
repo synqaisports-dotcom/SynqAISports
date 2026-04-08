@@ -166,18 +166,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       let sandboxOnly = false;
       if (profileData) {
+        // Fuente 1 (directa): columna en profiles (operativa simple desde SQL/Admin UI)
+        sandboxOnly = !!(profileData as { sandbox_only?: unknown }).sandbox_only;
         try {
           const { data: memberships } = await supabase
             .from("club_memberships")
             .select("sandbox_scope,status,is_default")
             .eq("user_id", authUser.id)
             .eq("status", "active");
-          sandboxOnly = Array.isArray(memberships)
-            ? memberships.some((m) => !!m.sandbox_scope) &&
-              !memberships.some((m) => !!m.is_default)
-            : false;
+          // Fuente 2 (profesional): memberships => sandbox scope activo y SIN club default activo.
+          const computed =
+            Array.isArray(memberships)
+              ? memberships.some((m) => !!m.sandbox_scope) && !memberships.some((m) => !!m.is_default)
+              : false;
+          sandboxOnly = sandboxOnly || computed;
         } catch {
-          sandboxOnly = false;
+          // fail-soft: mantenemos el valor de profiles.sandbox_only si existe
         }
       }
 
