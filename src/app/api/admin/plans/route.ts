@@ -77,3 +77,25 @@ export async function PATCH(req: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
+
+export async function DELETE(req: Request) {
+  const gate = await verifySuperadminFromRequest(req);
+  if (!gate.ok) return NextResponse.json({ error: gate.message }, { status: gate.status });
+  const admin = adminClient();
+  if (!admin) return NextResponse.json({ error: "Supabase service role no configurada." }, { status: 503 });
+
+  let body: { id?: string };
+  try {
+    body = (await req.json()) as typeof body;
+  } catch {
+    return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
+  }
+
+  if (!body?.id) {
+    return NextResponse.json({ error: "id requerido" }, { status: 400 });
+  }
+
+  const { error } = await admin.from("global_plans").delete().eq("id", body.id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ ok: true });
+}
