@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { 
@@ -226,7 +226,7 @@ export function DashboardSidebar() {
     }
   };
 
-  const filteredItems = navItems.filter(item => {
+  const filteredItems = useMemo(() => navItems.filter(item => {
     if (isSuperAdmin) return true;
     if (item.roles && profile) {
       if (!item.roles.includes(profile.role)) return false;
@@ -258,7 +258,18 @@ export function DashboardSidebar() {
       return false;
     }
     return true;
-  });
+  }), [isSuperAdmin, profile, isFree, matrixLoading, normalizedMatrix]);
+
+  const groupedItems = useMemo(
+    () => ({
+      global: filteredItems.filter((i) => i.category === "global"),
+      methodology: filteredItems.filter((i) => i.category === "methodology"),
+      operational: filteredItems.filter((i) => i.category === "operational"),
+      tournaments: filteredItems.filter((i) => i.category === "tournaments"),
+      user: filteredItems.filter((i) => i.category === "user"),
+    }),
+    [filteredItems],
+  );
 
   const toggleGroup = (category: NavItem["category"]) => {
     setOpenGroups((prev) => ({ ...prev, [category]: !prev[category] }));
@@ -350,7 +361,7 @@ export function DashboardSidebar() {
             <GroupToggle category="global" label="Admin-global" toneClass="border-emerald-500/20 text-emerald-300/90" />
             {openGroups.global && (
             <SidebarMenu>
-              {filteredItems.filter(i => i.category === "global").map((item) => (
+              {groupedItems.global.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarLink item={item} isActive={pathname === pathnameFromNavHref(item.href)} isGlobal onNavClick={handleNavClick} />
                 </SidebarMenuItem>
@@ -365,7 +376,7 @@ export function DashboardSidebar() {
             <GroupToggle category="methodology" label="Metodología" toneClass="border-cyan-500/20 text-cyan-200/90" />
             {openGroups.methodology && (
             <SidebarMenu>
-              {filteredItems.filter(i => i.category === "methodology").map((item) => (
+              {groupedItems.methodology.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarLink item={item} isActive={pathname === pathnameFromNavHref(item.href)} isMethodology onNavClick={handleNavClick} />
                 </SidebarMenuItem>
@@ -380,7 +391,7 @@ export function DashboardSidebar() {
             <GroupToggle category="operational" label="Dashboard Club" toneClass="border-primary/20 text-primary/90" />
             {openGroups.operational && (
             <SidebarMenu>
-              {filteredItems.filter(i => i.category === "operational").map((item) => (
+              {groupedItems.operational.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarLink item={item} isActive={pathname === pathnameFromNavHref(item.href)} onNavClick={handleNavClick} />
                 </SidebarMenuItem>
@@ -395,7 +406,7 @@ export function DashboardSidebar() {
             <GroupToggle category="tournaments" label="Torneos" toneClass="border-blue-500/20 text-blue-200/90" />
             {openGroups.tournaments && (
             <SidebarMenu>
-              {filteredItems.filter(i => i.category === "tournaments").map((item) => (
+              {groupedItems.tournaments.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarLink
                     item={item}
@@ -422,7 +433,7 @@ export function DashboardSidebar() {
             )}
             {openGroups.user && (
             <SidebarMenu>
-              {filteredItems.filter(i => i.category === "user").map((item) => (
+              {groupedItems.user.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarLink
                     item={item}

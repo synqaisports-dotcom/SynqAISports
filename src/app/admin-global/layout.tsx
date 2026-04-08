@@ -102,7 +102,7 @@ export default function AdminGlobalLayout(props: { children: React.ReactNode }) 
           <GlobalTabTrigger />
           <GlobalMobileHeader />
 
-          <main className="flex-1 p-8 lg:p-12 overflow-y-auto relative custom-scrollbar">
+          <main className="flex-1 p-8 lg:p-12 pb-24 overflow-y-auto relative custom-scrollbar">
             <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
 
             <div className="max-w-[1600px] mx-auto relative z-10 pt-16 lg:pt-0 animate-in fade-in slide-in-from-bottom-2 duration-700">

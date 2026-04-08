@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { 
   Shield, 
   TrendingUp, 
@@ -43,20 +43,67 @@ export default function AdminGlobalDashboard() {
     collabFeedback: 0,
   });
 
-  useEffect(() => {
-    const loadLogs = async () => {
-      const existingLogs = JSON.parse(localStorage.getItem("synq_audit_logs") || "[]");
-      setLogs(existingLogs);
-      if (!session?.access_token) return;
-      try {
-        const res = await fetch("/api/admin/audit-logs", {
+  const loadDashboard = useCallback(async () => {
+    const cachedMetricsRaw = localStorage.getItem("synq_admin_global_metrics_cache");
+    const cachedMetrics = cachedMetricsRaw ? JSON.parse(cachedMetricsRaw) as typeof metrics : null;
+    if (cachedMetrics) {
+      setMetrics(cachedMetrics);
+      setLoading(false);
+    }
+
+    const existingLogs = JSON.parse(localStorage.getItem("synq_audit_logs") || "[]");
+    setLogs(existingLogs);
+
+    if (!session?.access_token) {
+      setError("Inicia sesión como superadmin para cargar métricas reales.");
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const [analyticsRes, logsRes] = await Promise.all([
+        fetch("/api/admin/analytics", {
           headers: { Authorization: `Bearer ${session.access_token}` },
-        });
-        if (!res.ok) return;
-        const j = (await res.json()) as { logs?: Array<{ id: string; title: string; description: string; type: string }> };
-        if (Array.isArray(j.logs) && j.logs.length > 0) {
+        }),
+        fetch("/api/admin/audit-logs", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        }),
+      ]);
+
+      const analyticsJson = (await analyticsRes.json()) as {
+        ok?: boolean;
+        error?: string;
+        clubsActive?: number;
+        profilesTotal?: number;
+        promoScans?: number;
+        conversionRate?: number;
+        collabLeads?: number;
+        collabFeedback?: number;
+      };
+
+      if (!analyticsRes.ok || !analyticsJson.ok) {
+        setError(analyticsJson.error ?? `HTTP ${analyticsRes.status}`);
+      } else {
+        const nextMetrics = {
+          clubsActive: analyticsJson.clubsActive ?? 0,
+          profilesTotal: analyticsJson.profilesTotal ?? 0,
+          promoScans: analyticsJson.promoScans ?? 0,
+          conversionRate: analyticsJson.conversionRate ?? 0,
+          collabLeads: analyticsJson.collabLeads ?? 0,
+          collabFeedback: analyticsJson.collabFeedback ?? 0,
+        };
+        setMetrics(nextMetrics);
+        localStorage.setItem("synq_admin_global_metrics_cache", JSON.stringify(nextMetrics));
+      }
+
+      if (logsRes.ok) {
+        const logsJson = (await logsRes.json()) as { logs?: Array<{ id: string; title: string; description: string; type: string }> };
+        if (Array.isArray(logsJson.logs) && logsJson.logs.length > 0) {
           setLogs(
-            j.logs.map((l) => ({
+            logsJson.logs.map((l) => ({
               id: l.id,
               title: l.title,
               desc: l.description,
@@ -64,56 +111,17 @@ export default function AdminGlobalDashboard() {
             })),
           );
         }
-      } catch {
-        // fallback local
       }
-    };
-    void loadLogs();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error cargando métricas");
+    } finally {
+      setLoading(false);
+    }
   }, [session?.access_token]);
 
   useEffect(() => {
-    const loadMetrics = async () => {
-      if (!session?.access_token) {
-        setError("Inicia sesión como superadmin para cargar métricas reales.");
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetch("/api/admin/analytics", {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        });
-        const j = (await res.json()) as {
-          ok?: boolean;
-          error?: string;
-          clubsActive?: number;
-          profilesTotal?: number;
-          promoScans?: number;
-          conversionRate?: number;
-          collabLeads?: number;
-          collabFeedback?: number;
-        };
-        if (!res.ok || !j.ok) {
-          setError(j.error ?? `HTTP ${res.status}`);
-          return;
-        }
-        setMetrics({
-          clubsActive: j.clubsActive ?? 0,
-          profilesTotal: j.profilesTotal ?? 0,
-          promoScans: j.promoScans ?? 0,
-          conversionRate: j.conversionRate ?? 0,
-          collabLeads: j.collabLeads ?? 0,
-          collabFeedback: j.collabFeedback ?? 0,
-        });
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Error cargando métricas");
-      } finally {
-        setLoading(false);
-      }
-    };
-    void loadMetrics();
-  }, [session?.access_token]);
+    void loadDashboard();
+  }, [loadDashboard]);
 
   const allianceLeads = metrics.collabLeads;
   const feedbackCount = metrics.collabFeedback;
