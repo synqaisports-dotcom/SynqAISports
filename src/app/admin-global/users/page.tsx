@@ -294,19 +294,19 @@ export default function GlobalUsersPage() {
     toast({ variant: "destructive", title: "NODO_ELIMINADO", description: "Usuario local eliminado." });
   };
 
-  const handleCreateCredential = (e: React.FormEvent) => {
+  const handleCreateCredential = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     setLoading(true);
-    
-    setTimeout(() => {
-      const fullPhone = `${formData.phonePrefix} ${formData.phone}`.trim();
+    const fullPhone = `${formData.phonePrefix} ${formData.phone}`.trim();
+    try {
       if (editingId) {
         const editedUser = users.find((u) => u.id === editingId);
         setUsers((prev) =>
           prev.map((u) => (u.id === editingId ? { ...u, ...formData, phone: fullPhone } : u)),
         );
         if (editedUser?.source === "remote" && session?.access_token) {
-          void fetch("/api/admin/users", {
+          const res = await fetch("/api/admin/users", {
             method: "PATCH",
             headers: {
               "Content-Type": "application/json",
@@ -321,29 +321,61 @@ export default function GlobalUsersPage() {
               phone: fullPhone,
             }),
           });
+          if (!res.ok) {
+            const j = (await res.json().catch(() => ({}))) as { error?: string };
+            throw new Error(j.error ?? `HTTP ${res.status}`);
+          }
         }
         addAuditLog("MODIFICACIÓN_USUARIO", `Perfil de ${formData.name} actualizado.`, "Info");
         toast({ title: "CREDENCIAL_ACTUALIZADA", description: `Sincronizado: ${formData.name}.` });
       } else {
+        if (!session?.access_token) {
+          throw new Error("Sesión superadmin no disponible para alta remota.");
+        }
+        const res = await fetch("/api/admin/users", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            email: formData.email,
+            role: formData.role,
+            country: formData.country,
+            phone: fullPhone,
+            status: "Approved",
+            lastSeen: "Just now",
+          }),
+        });
+        const j = (await res.json().catch(() => ({}))) as { user?: any; error?: string };
+        if (!res.ok || !j.user?.id) {
+          throw new Error(j.error ?? `HTTP ${res.status}`);
+        }
         const newUser = {
-          id: `u${Date.now()}`,
-          ...formData,
+          id: j.user.id,
+          name: j.user.name ?? formData.name,
+          surname: j.user.surname ?? formData.surname,
+          email: j.user.email ?? formData.email,
+          country: j.user.country ?? formData.country,
           phone: fullPhone,
-          status: "Approved",
-          lastSeen: "Just now"
+          role: j.user.role ?? formData.role,
+          status: j.user.status ?? "Approved",
+          lastSeen: j.user.lastSeen ?? "Just now",
+          source: "remote",
         };
-        setUsers([newUser, ...users]);
-        
-        // Guardar en storage global para persistencia
-        const savedUsers = JSON.parse(localStorage.getItem("synq_global_users") || "[]");
-        localStorage.setItem("synq_global_users", JSON.stringify([...savedUsers, newUser]));
-
+        setUsers((prev) => [newUser, ...prev]);
         addAuditLog("NUEVA_CREDENCIAL", `Identidad emitida para ${formData.name}.`, "Success");
         toast({ title: "CREDENCIAL_EMITIDA", description: `Acceso generado para ${formData.name}.` });
       }
-      setLoading(false);
       setIsSheetOpen(false);
-    }, 1000);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Error desconocido en alta/edición.";
+      console.error("[admin-global/users] handleCreateCredential error:", error);
+      toast({ variant: "destructive", title: "ERROR_SINCRO_USUARIO", description: msg });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const deferredSearchTerm = useDeferredValue(searchTerm);
@@ -487,7 +519,7 @@ export default function GlobalUsersPage() {
             </SheetHeader>
           </div>
 
-          <form onSubmit={handleCreateCredential} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-8">
+          <form id="admin-users-form" onSubmit={handleCreateCredential} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-8">
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -579,8 +611,9 @@ export default function GlobalUsersPage() {
             <SheetClose asChild>
               <Button variant="ghost" className="flex-1 h-16 border border-emerald-500/20 text-emerald-400/40 font-black uppercase text-[10px] tracking-widest rounded-2xl">CANCELAR</Button>
             </SheetClose>
-            <Button 
-              onClick={handleCreateCredential}
+            <Button
+              type="submit"
+              form="admin-users-form"
               disabled={loading}
               className="flex-[2] h-16 bg-emerald-500 text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.2)]"
             >

@@ -526,7 +526,8 @@ export default function GlobalPlansPage() {
               </Button>
             </SheetClose>
             <Button 
-              onClick={handleSincProtocol}
+              type="submit"
+              form="global-plan-form"
               className="flex-[2] h-14 bg-emerald-500 text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:scale-[1.02] transition-[background-color,border-color,color,opacity,transform] border-none"
             >
               {isEditing ? "ACTUALIZAR_NODO" : "SINCRONIZAR_PLAN"}

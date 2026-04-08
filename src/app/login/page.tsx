@@ -34,6 +34,11 @@ import { useI18n } from "@/contexts/i18n-context";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
+type PromoTrackResponse = {
+  ok?: boolean;
+  error?: string;
+};
+
 function LoginContent() {
   const [localLoading, setLocalLoading] = useState(false);
   const [forceStandard, setForceStandard] = useState(false);
@@ -59,6 +64,8 @@ function LoginContent() {
   const founderLoginEnabled = process.env.NEXT_PUBLIC_ENABLE_FOUNDER_LOGIN === "1";
   const canShowFounderTerminal = founderLoginEnabled;
   const [campaignData, setCampaignData] = useState<any>(null);
+  const [tokenValidation, setTokenValidation] = useState<"idle" | "valid" | "invalid">("idle");
+  const [tokenError, setTokenError] = useState<string | null>(null);
   const trackSentForToken = useRef<string | null>(null);
 
   // Form states
@@ -84,6 +91,8 @@ function LoginContent() {
     const t = searchParamsHook.get("token") || searchParamsHook.get("t");
     if (t && !forceStandard) {
       setToken(t);
+        setTokenValidation("idle");
+        setTokenError(null);
       setCampaignData({
         plan: "Enterprise Scale",
         price: "Cuota al club (B2B) — ver condiciones en tu nodo",
@@ -93,11 +102,38 @@ function LoginContent() {
       });
       if (trackSentForToken.current !== t) {
         trackSentForToken.current = t;
-        void fetch("/api/promo/track", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token: t }),
-        }).catch(() => {});
+          void fetch("/api/promo/track", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token: t }),
+          })
+            .then(async (res) => {
+              const payload = (await res.json()) as PromoTrackResponse;
+              if (!res.ok || !payload.ok) {
+                const err = payload.error ?? `HTTP_${res.status}`;
+                console.error("[SynqAI][LOGIN_QR_TOKEN_INVALID]", { token: t, error: err });
+                setTokenValidation("invalid");
+                setTokenError(err);
+                toast({
+                  variant: "destructive",
+                  title: "TOKEN_QR_INVALIDO",
+                  description: `No se puede reclamar esta invitación (${err}).`,
+                });
+                return;
+              }
+              setTokenValidation("valid");
+            })
+            .catch((err) => {
+              const message = err instanceof Error ? err.message : "network_error";
+              console.error("[SynqAI][LOGIN_QR_TRACK_EXCEPTION]", { token: t, error: message });
+              setTokenValidation("invalid");
+              setTokenError(message);
+              toast({
+                variant: "destructive",
+                title: "TOKEN_QR_INVALIDO",
+                description: "Fallo validando el token de invitación.",
+              });
+            });
       }
       toast({
         title: "INVITACIÓN_DETECTADA",
@@ -136,6 +172,16 @@ function LoginContent() {
 
   const handleClaimToken = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!token || tokenValidation !== "valid") {
+      const reason = tokenError ?? "token_no_validado";
+      console.error("[SynqAI][CLAIM_BLOCKED_INVALID_TOKEN]", { token, reason });
+      toast({
+        variant: "destructive",
+        title: "CLAIM_BLOQUEADO",
+        description: `Token QR inválido o expirado (${reason}).`,
+      });
+      return;
+    }
     setLocalLoading(true);
     loginWithToken(token!, campaignData.plan, campaignData.countryCode);
     toast({ title: "VINCULACIÓN_INICIADA", description: "Accediendo al túnel de onboarding del club." });
@@ -157,11 +203,21 @@ function LoginContent() {
             <div className="flex items-center justify-between"><span className="text-[10px] font-black uppercase text-white/40 tracking-widest italic">País Vinculado</span><span className="text-xs font-black text-white uppercase">{campaignData.region}</span></div>
           </div>
           <form onSubmit={handleClaimToken} className="space-y-6">
+            {tokenValidation === "invalid" && (
+              <div className="rounded-2xl border border-rose-500/40 bg-rose-500/10 p-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-rose-300">
+                  TOKEN_INVALIDO · CLAIM_BLOQUEADO
+                </p>
+                <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.12em] text-rose-200/80">
+                  {tokenError ?? "No se pudo validar la invitación QR."}
+                </p>
+              </div>
+            )}
             <div className="space-y-4">
               <div className="space-y-2"><label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1 italic">NOMBRE_DEL_ADMINISTRADOR</label><Input required placeholder="SU NOMBRE" className="h-14 bg-white/5 border-primary/20 rounded-2xl text-white font-bold uppercase focus:border-primary" /></div>
               <div className="space-y-2"><label className="text-[9px] font-black uppercase tracking-widest text-primary ml-1 italic">MAIL_ACCESO</label><Input required type="email" placeholder="MAIL@CLUB.COM" className="h-14 bg-white/5 border-primary/20 rounded-2xl text-white font-bold uppercase focus:border-primary" /></div>
             </div>
-            <Button type="submit" disabled={localLoading} className="w-full h-16 bg-primary text-black font-black uppercase tracking-[0.3em] text-xs rounded-2xl cyan-glow hover:scale-[1.01] transition-[background-color,border-color,color,opacity,transform] border-none">{localLoading ? "CONFIGURANDO_NODO..." : "ACTIVAR_MI_NODO_DE_CLUB"} <ArrowRight className="h-4 w-4 ml-2" /></Button>
+            <Button type="submit" disabled={localLoading || tokenValidation !== "valid"} className="w-full h-16 bg-primary text-black font-black uppercase tracking-[0.3em] text-xs rounded-2xl cyan-glow hover:scale-[1.01] transition-[background-color,border-color,color,opacity,transform] border-none disabled:opacity-50">{localLoading ? "CONFIGURANDO_NODO..." : tokenValidation === "idle" ? "VALIDANDO_TOKEN..." : "ACTIVAR_MI_NODO_DE_CLUB"} <ArrowRight className="h-4 w-4 ml-2" /></Button>
           </form>
           <button onClick={() => setForceStandard(true)} className="text-[9px] text-white/40 hover:text-white transition-[background-color,border-color,color,opacity,transform] font-black uppercase tracking-[0.3em] flex items-center gap-2 italic mx-auto"><ChevronLeft className="h-3 w-3" /> Ignorar invitación</button>
         </CardContent>
