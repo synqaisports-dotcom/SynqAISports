@@ -12,6 +12,26 @@ function adminClient() {
   });
 }
 
+async function isValidRoleKey(
+  admin: ReturnType<typeof adminClient>,
+  role: string,
+): Promise<boolean> {
+  if (!admin) return false;
+  const normalized = role.trim().toLowerCase();
+  if (!normalized) return false;
+  const { data, error } = await admin
+    .from("synq_roles")
+    .select("key")
+    .eq("key", normalized)
+    .limit(1)
+    .maybeSingle();
+  if (error) {
+    console.error("[SynqAI][admin-users][role-validate] error:", error);
+    return false;
+  }
+  return !!data?.key;
+}
+
 export async function GET(req: Request) {
   const gate = await verifySuperadminFromRequest(req);
   if (!gate.ok) {
@@ -74,6 +94,12 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
   }
   if (!body?.id) return NextResponse.json({ error: "id requerido" }, { status: 400 });
+  if (body.role !== undefined) {
+    const roleOk = await isValidRoleKey(admin, body.role);
+    if (!roleOk) {
+      return NextResponse.json({ error: "rol_invalido" }, { status: 400 });
+    }
+  }
   const patch: Record<string, unknown> = {};
   if (body.name !== undefined) patch.name = body.name;
   if (body.email !== undefined) patch.email = body.email;
@@ -129,6 +155,10 @@ export async function POST(req: Request) {
   const role = String(body?.role ?? "promo_coach").trim();
   if (!email || !name) {
     return NextResponse.json({ error: "name y email requeridos" }, { status: 400 });
+  }
+  const roleOk = await isValidRoleKey(admin, role);
+  if (!roleOk) {
+    return NextResponse.json({ error: "rol_invalido" }, { status: 400 });
   }
 
   const { data: existingProfile } = await admin

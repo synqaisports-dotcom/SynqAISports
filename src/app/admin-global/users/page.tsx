@@ -132,19 +132,28 @@ export default function GlobalUsersPage() {
         status: su.status || "Approved",
         lastSeen: su.lastSeen || "Online",
       }));
-      setUsers(normalized);
-      if (!session?.access_token) return;
+
+      if (!session?.access_token) {
+        setUsers(normalized);
+        return;
+      }
       try {
         const res = await fetch("/api/admin/users", {
           headers: { Authorization: `Bearer ${session.access_token}` },
         });
-        if (!res.ok) return;
+        if (!res.ok) {
+          setUsers(normalized);
+          return;
+        }
         const data = (await res.json()) as { users?: any[] };
-        if (Array.isArray(data?.users) && data.users.length > 0) {
+        if (Array.isArray(data?.users)) {
           setUsers(data.users);
+          localStorage.setItem("synq_global_users", JSON.stringify(data.users));
+        } else {
+          setUsers(normalized);
         }
       } catch {
-        // fallback local
+        setUsers(normalized);
       }
     };
     void loadUsers();

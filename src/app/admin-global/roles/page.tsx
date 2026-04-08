@@ -416,6 +416,26 @@ export default function GlobalRolesPage() {
           </div>
         </CardContent>
       </Card>
+      <Card className="glass-panel border-primary/25 bg-primary/[0.05] rounded-3xl">
+        <CardContent className="p-6 space-y-3">
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">
+            FLUJO_CORRECTO_DE_ROLES
+          </p>
+          <div className="grid gap-2 text-[10px] font-bold uppercase tracking-widest text-white/65">
+            <p>
+              1) Crear/editar catálogo en <span className="text-primary">Roles</span> (tabla{" "}
+              <span className="text-emerald-300">synq_roles</span>).
+            </p>
+            <p>
+              2) Asignar rol efectivo en <span className="text-primary">Usuarios</span> (campo{" "}
+              <span className="text-emerald-300">profiles.role</span>).
+            </p>
+            <p>
+              3) Validar acceso en menú/rutas según matriz y guardias de módulo.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="flex flex-col gap-6 border-b border-white/5 pb-8 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-2">

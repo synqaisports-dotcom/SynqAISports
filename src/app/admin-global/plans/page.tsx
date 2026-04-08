@@ -143,7 +143,7 @@ export default function GlobalPlansPage() {
       });
       const j = (await res.json()) as { plans?: any[] };
       const data = Array.isArray(j.plans) ? j.plans : [];
-      if (res.ok && data.length > 0) {
+      if (res.ok) {
         const normalized = data.map((p) => ({
           id: p.id,
           title: p.title,
@@ -155,6 +155,7 @@ export default function GlobalPlansPage() {
           isActive: p.is_active ?? true,
         }));
         setPlans(normalized);
+        localStorage.setItem("synq_global_plans", JSON.stringify(normalized));
       }
     };
     void load();

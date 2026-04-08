@@ -81,24 +81,13 @@ export default function ManageClubsPage() {
         throw new Error(j.error ?? `HTTP ${res.status}`);
       }
       const data = Array.isArray(j.clubs) ? j.clubs : [];
-
-      if (data && data.length > 0) {
-        setClubs(data);
-        setIsUsingFallback(false);
-        toast({
-          title: "SINCRONIZACIÓN_COMPLETA",
-          description: `${data.length} nodos de club cargados desde la red.`,
-        });
-      } else {
-        // Si no hay datos en Supabase, usar únicamente localStorage de trabajo.
-        const savedClubs = JSON.parse(localStorage.getItem("synq_global_clubs") || "[]");
-        setClubs(savedClubs);
-        setIsUsingFallback(true);
-        toast({
-          title: "MODO_OFFLINE",
-          description: "Sin seed de prueba: usando datos locales persistidos.",
-        });
-      }
+      setClubs(data);
+      setIsUsingFallback(false);
+      localStorage.setItem("synq_global_clubs", JSON.stringify(data));
+      toast({
+        title: "SINCRONIZACIÓN_COMPLETA",
+        description: `${data.length} nodos de club cargados desde la red.`,
+      });
     } catch (error) {
       console.error("[SynqAI] Error en loadClubs:", error);
       setHasError(true);
