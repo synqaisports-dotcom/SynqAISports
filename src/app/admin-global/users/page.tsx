@@ -70,6 +70,7 @@ import {
 
 export default function GlobalUsersPage() {
   const [users, setUsers] = useState<any[]>([]);
+  const [clubs, setClubs] = useState<Array<{ id: string; name: string }>>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -85,6 +86,7 @@ export default function GlobalUsersPage() {
     phonePrefix: "+34",
     phone: "",
     role: "promo_coach",
+    clubId: "",
   });
 
   const { session } = useAuth();
@@ -120,6 +122,33 @@ export default function GlobalUsersPage() {
       })
       .catch(() => {
         if (!cancelled) setSynqRoleRows([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.access_token]);
+
+  useEffect(() => {
+    if (!session?.access_token) {
+      setClubs([]);
+      return;
+    }
+    let cancelled = false;
+    void fetch("/api/admin/clubs", {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error("clubs_fetch_failed");
+        const payload = (await res.json()) as { clubs?: Array<{ id?: string; name?: string }> };
+        if (cancelled) return;
+        const parsed = (payload.clubs ?? [])
+          .filter((c) => typeof c.id === "string" && typeof c.name === "string")
+          .map((c) => ({ id: String(c.id), name: String(c.name) }))
+          .sort((a, b) => a.name.localeCompare(b.name, "es"));
+        setClubs(parsed);
+      })
+      .catch(() => {
+        if (!cancelled) setClubs([]);
       });
     return () => {
       cancelled = true;
@@ -247,6 +276,7 @@ export default function GlobalUsersPage() {
       phonePrefix: "+34",
       phone: "",
       role: "promo_coach",
+      clubId: "",
     });
     setIsSheetOpen(true);
   };
@@ -265,6 +295,7 @@ export default function GlobalUsersPage() {
       phonePrefix,
       phone,
       role: user.role,
+      clubId: user.clubId ?? "",
     });
     setIsSheetOpen(true);
   };
@@ -310,6 +341,17 @@ export default function GlobalUsersPage() {
     if (loading) return;
     setLoading(true);
     const fullPhone = `${formData.phonePrefix} ${formData.phone}`.trim();
+    const roleNormalized = String(formData.role || "").trim().toLowerCase();
+    const requiresClub = roleNormalized.length > 0 && roleNormalized !== "superadmin";
+    if (requiresClub && !formData.clubId) {
+      toast({
+        variant: "destructive",
+        title: "CLUB_REQUERIDO",
+        description: "Selecciona un club para ese protocolo de rol.",
+      });
+      setLoading(false);
+      return;
+    }
     try {
       if (editingId) {
         const editedUser = users.find((u) => u.id === editingId);
@@ -330,6 +372,7 @@ export default function GlobalUsersPage() {
               role: formData.role,
               country: formData.country,
               phone: fullPhone,
+              clubId: formData.clubId || null,
             }),
           });
           if (!res.ok) {
@@ -355,6 +398,7 @@ export default function GlobalUsersPage() {
             role: formData.role,
             country: formData.country,
             phone: fullPhone,
+            clubId: formData.clubId || null,
             status: "Approved",
             lastSeen: "Just now",
           }),
@@ -371,6 +415,7 @@ export default function GlobalUsersPage() {
           country: j.user.country ?? formData.country,
           phone: fullPhone,
           role: j.user.role ?? formData.role,
+          clubId: j.user.clubId ?? formData.clubId ?? null,
           status: j.user.status ?? "Approved",
           lastSeen: j.user.lastSeen ?? "Just now",
           source: "remote",
@@ -581,6 +626,37 @@ export default function GlobalUsersPage() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1 italic">
+                  Club vinculado
+                </Label>
+                <Select
+                  value={formData.clubId || "__none__"}
+                  onValueChange={(v) => setFormData({ ...formData, clubId: v === "__none__" ? "" : v })}
+                >
+                  <SelectTrigger className="h-12 bg-white/5 border-emerald-500/20 rounded-2xl text-emerald-400 font-bold uppercase">
+                    <SelectValue placeholder="Seleccionar club" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#04070c] border-emerald-500/20 rounded-2xl">
+                    <SelectItem value="__none__" className="text-[10px] font-black uppercase tracking-widest focus:bg-emerald-500 focus:text-black">
+                      Sin club
+                    </SelectItem>
+                    {clubs.map((club) => (
+                      <SelectItem
+                        key={club.id}
+                        value={club.id}
+                        className="text-[10px] font-black uppercase tracking-widest focus:bg-emerald-500 focus:text-black"
+                      >
+                        {club.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[9px] font-bold uppercase tracking-widest text-emerald-400/40">
+                  Obligatorio para roles no globales.
+                </p>
               </div>
 
               <div className="space-y-2 min-w-0">
