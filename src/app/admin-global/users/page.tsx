@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useDeferredValue } from "react";
 import { 
   UserPlus, 
   Search, 
@@ -72,6 +72,7 @@ export default function GlobalUsersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [updatingUserIds, setUpdatingUserIds] = useState<Record<string, boolean>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -177,8 +178,10 @@ export default function GlobalUsersPage() {
   };
 
   const handleStatusChange = async (id: string, newStatus: string) => {
+    if (updatingUserIds[id]) return;
     const user = users.find(u => u.id === id);
     if (!user) return;
+    setUpdatingUserIds((prev) => ({ ...prev, [id]: true }));
 
     const prevUsers = users;
     const nextUsers = users.map(u => u.id === id ? { ...u, status: newStatus } : u);
@@ -204,6 +207,7 @@ export default function GlobalUsersPage() {
           title: "ERROR_REMOTO",
           description: "No se pudo actualizar el estado en red.",
         });
+        setUpdatingUserIds((prev) => ({ ...prev, [id]: false }));
         return;
       }
     }
@@ -219,6 +223,7 @@ export default function GlobalUsersPage() {
       title: title,
       description: `El nodo de usuario ha cambiado su protocolo a ${newStatus.toUpperCase()}.`,
     });
+    setUpdatingUserIds((prev) => ({ ...prev, [id]: false }));
   };
 
   const handleOpenCreate = () => {
@@ -341,12 +346,16 @@ export default function GlobalUsersPage() {
     }, 1000);
   };
 
-  const filteredUsers = users.filter(u => 
-    u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.surname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.country?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const deferredSearchTerm = useDeferredValue(searchTerm);
+  const filteredUsers = useMemo(() => {
+    const q = deferredSearchTerm.toLowerCase();
+    return users.filter((u) =>
+      u.name.toLowerCase().includes(q) ||
+      u.surname.toLowerCase().includes(q) ||
+      u.email.toLowerCase().includes(q) ||
+      u.country?.toLowerCase().includes(q)
+    );
+  }, [users, deferredSearchTerm]);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
@@ -446,9 +455,9 @@ export default function GlobalUsersPage() {
                     <div className="flex justify-end gap-2">
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-400/40 hover:text-emerald-400 hover:bg-emerald-500/5 border border-white/5 rounded-xl transition-[background-color,border-color,color,opacity,transform]" onClick={() => handleEdit(user)}><Pencil className="h-4 w-4" /></Button>
                       {user.status === 'Denied' ? (
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-400/40 hover:text-emerald-400 hover:bg-emerald-500/5 border border-white/5 rounded-xl transition-[background-color,border-color,color,opacity,transform]" onClick={() => handleStatusChange(user.id, 'Approved')}><UserCheck className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-400/40 hover:text-emerald-400 hover:bg-emerald-500/5 border border-white/5 rounded-xl transition-[background-color,border-color,color,opacity,transform]" onClick={() => handleStatusChange(user.id, 'Approved')} disabled={!!updatingUserIds[user.id]}><UserCheck className="h-4 w-4" /></Button>
                       ) : (
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-500/40 hover:text-rose-500 hover:bg-rose-500/5 border border-white/5 rounded-xl transition-[background-color,border-color,color,opacity,transform]" onClick={() => handleStatusChange(user.id, 'Denied')}><UserX className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-500/40 hover:text-rose-500 hover:bg-rose-500/5 border border-white/5 rounded-xl transition-[background-color,border-color,color,opacity,transform]" onClick={() => handleStatusChange(user.id, 'Denied')} disabled={!!updatingUserIds[user.id]}><UserX className="h-4 w-4" /></Button>
                       )}
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-500/20 hover:text-rose-500 border border-white/5 rounded-xl transition-[background-color,border-color,color,opacity,transform]" onClick={() => handleDelete(user.id, user.name)}><Trash2 className="h-4 w-4" /></Button>
                     </div>

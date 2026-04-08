@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { 
   Shield, 
   TrendingUp, 
@@ -159,7 +159,7 @@ export default function AdminGlobalDashboard() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
          <Link href="/admin-global/collaboration" className="block">
-            <Card className="glass-panel p-8 border-emerald-500/20 bg-emerald-500/5 rounded-[2.5rem] relative overflow-hidden group hover:scale-[1.02] transition-[background-color,border-color,color,opacity,transform]">
+            <Card className="glass-panel p-8 border-emerald-500/20 bg-emerald-500/5 rounded-[2.5rem] relative overflow-hidden group transition-[background-color,border-color,color,opacity,transform] motion-safe:hover:scale-[1.01]">
                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-[background-color,border-color,color,opacity,transform]"><Gift className="h-32 w-32 text-emerald-500" /></div>
                <div className="flex items-center gap-4 mb-6 relative z-10">
                   <div className="h-12 w-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center pulse-glow">
@@ -177,7 +177,7 @@ export default function AdminGlobalDashboard() {
          </Link>
 
          <Link href="/admin-global/collaboration" className="block">
-            <Card className="glass-panel p-8 border-primary/20 bg-primary/5 rounded-[2.5rem] relative overflow-hidden group hover:scale-[1.02] transition-[background-color,border-color,color,opacity,transform]">
+            <Card className="glass-panel p-8 border-primary/20 bg-primary/5 rounded-[2.5rem] relative overflow-hidden group transition-[background-color,border-color,color,opacity,transform] motion-safe:hover:scale-[1.01]">
                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-[background-color,border-color,color,opacity,transform]"><MessageSquareQuote className="h-32 w-32 text-primary" /></div>
                <div className="flex items-center gap-4 mb-6 relative z-10">
                   <div className="h-12 w-12 rounded-2xl bg-primary/20 border border-primary/40 flex items-center justify-center pulse-glow">
@@ -249,8 +249,14 @@ function formatCompact(n: number): string {
 }
 
 function MetricCard({ title, value, icon: Icon, trend }: any) {
+  const cardClassName = useMemo(
+    () =>
+      "glass-panel relative overflow-hidden group transition-[background-color,border-color,color,opacity,transform] border border-emerald-500/20 bg-black/20 rounded-3xl motion-safe:hover:scale-[1.01]",
+    [],
+  );
+
   return (
-    <Card className="glass-panel relative overflow-hidden group hover:scale-[1.02] transition-[background-color,border-color,color,opacity,transform] border border-emerald-500/20 bg-black/20 rounded-3xl">
+    <Card className={cardClassName}>
       <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
         <Icon className="h-12 w-12 text-emerald-500" />
       </div>

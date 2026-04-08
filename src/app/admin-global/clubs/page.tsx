@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useDeferredValue } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   Card, 
@@ -46,6 +46,7 @@ export default function ManageClubsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [isUsingFallback, setIsUsingFallback] = useState(false);
+  const [updatingClubIds, setUpdatingClubIds] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
   
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -116,12 +117,14 @@ export default function ManageClubsPage() {
   }, [session?.access_token]);
 
   const handleToggleStatus = async (id: string) => {
+    if (updatingClubIds[id]) return;
     const club = clubs.find(c => c.id === id);
     if (!club) return;
 
     const isCurrentlyActive = club.status === "Active";
     const newStatus = isCurrentlyActive ? "Inactive" : "Active";
 
+    setUpdatingClubIds((prev) => ({ ...prev, [id]: true }));
     // Actualizar localmente primero
     setClubs(prev => prev.map(c => 
       c.id === id ? { ...c, status: newStatus } : c
@@ -148,6 +151,7 @@ export default function ManageClubsPage() {
           title: "ERROR_SINCRO",
           description: "No se pudo actualizar el estado del nodo.",
         });
+        setUpdatingClubIds((prev) => ({ ...prev, [id]: false }));
         return;
       }
     }
@@ -156,6 +160,7 @@ export default function ManageClubsPage() {
       title: isCurrentlyActive ? "NODO_SUSPENDIDO" : "NODO_ACTIVADO",
       description: `El nodo ${club.name} ha cambiado su protocolo a ${newStatus.toUpperCase()}.`,
     });
+    setUpdatingClubIds((prev) => ({ ...prev, [id]: false }));
   };
 
   const handleOpenCreate = () => {
@@ -269,10 +274,11 @@ export default function ManageClubsPage() {
     }
   };
 
-  const filteredClubs = clubs.filter(c => 
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.id.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const deferredSearchTerm = useDeferredValue(searchTerm);
+  const filteredClubs = useMemo(() => {
+    const q = deferredSearchTerm.toLowerCase();
+    return clubs.filter((c) => c.name.toLowerCase().includes(q) || c.id.toLowerCase().includes(q));
+  }, [clubs, deferredSearchTerm]);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
@@ -438,6 +444,7 @@ export default function ManageClubsPage() {
                             )}
                             title={club.status === "Active" ? "Pausar Nodo" : "Activar Nodo"}
                             onClick={() => handleToggleStatus(club.id)}
+                            disabled={!!updatingClubIds[club.id]}
                           >
                             {club.status === "Active" ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                           </Button>
