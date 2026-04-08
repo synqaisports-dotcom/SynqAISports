@@ -91,6 +91,7 @@ export async function PATCH(req: Request) {
     email?: string;
     role?: string;
     country?: string;
+    sandboxOnly?: boolean;
     clubId?: string | null;
     status?: "Pending" | "Approved" | "Denied";
     lastSeen?: string;
@@ -113,6 +114,7 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "club_id_requerido_para_rol" }, { status: 400 });
   }
   const patch: Record<string, unknown> = {};
+  if (body.sandboxOnly !== undefined) patch.sandbox_only = !!body.sandboxOnly;
   if (body.name !== undefined) patch.name = body.name;
   if (body.email !== undefined) patch.email = body.email;
   if (body.role !== undefined) patch.role = body.role;
@@ -124,6 +126,37 @@ export async function PATCH(req: Request) {
   if (Object.keys(patch).length > 0) {
     const { error } = await admin.from("profiles").update(patch).eq("id", body.id);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+  if (body.role !== undefined || body.clubId !== undefined || body.sandboxOnly !== undefined) {
+    const membershipRows: Array<{
+      user_id: string;
+      club_id: string;
+      role_in_club: string;
+      status: "active" | "pending" | "blocked";
+      is_default: boolean;
+      sandbox_scope: boolean;
+    }> = [];
+    if (body.clubId && (body.role ?? "").trim() && (body.role ?? "").trim() !== "superadmin") {
+      membershipRows.push({
+        user_id: body.id,
+        club_id: body.clubId,
+        role_in_club: String(body.role).trim(),
+        status: "active",
+        is_default: true,
+        sandbox_scope: !!body.sandboxOnly,
+      });
+    }
+    if (membershipRows.length > 0) {
+      const { error: membershipErr } = await admin.from("club_memberships").upsert(membershipRows, {
+        onConflict: "user_id,club_id",
+      });
+      if (membershipErr) return NextResponse.json({ error: membershipErr.message }, { status: 500 });
+      await admin
+        .from("club_memberships")
+        .update({ is_default: false })
+        .eq("user_id", body.id)
+        .neq("club_id", body.clubId ?? "");
+    }
   }
   if (body.status !== undefined || body.lastSeen !== undefined) {
     const { error: stateErr } = await admin.from("admin_user_states").upsert({
@@ -152,6 +185,7 @@ export async function POST(req: Request) {
     email?: string;
     country?: string;
     role?: string;
+    sandboxOnly?: boolean;
     clubId?: string | null;
     status?: "Pending" | "Approved" | "Denied";
     lastSeen?: string;
@@ -171,6 +205,7 @@ export async function POST(req: Request) {
     typeof body?.clubId === "string" && body.clubId.trim().length > 0
       ? body.clubId.trim()
       : null;
+  const sandboxOnly = !!body?.sandboxOnly;
   if (!email || !name) {
     return NextResponse.json({ error: "name y email requeridos" }, { status: 400 });
   }
@@ -216,6 +251,7 @@ export async function POST(req: Request) {
     plan: "free",
     club_id: role === "superadmin" ? null : clubId,
     club_created: false,
+    sandbox_only: sandboxOnly,
   });
   if (profileErr) {
     console.error("[SynqAI][admin-users][POST] upsert profile error:", profileErr);
@@ -231,6 +267,23 @@ export async function POST(req: Request) {
     console.error("[SynqAI][admin-users][POST] upsert state error:", stateErr);
     return NextResponse.json({ error: stateErr.message }, { status: 500 });
   }
+  if (clubId && role !== "superadmin") {
+    const { error: membershipErr } = await admin.from("club_memberships").upsert(
+      {
+        user_id: userId,
+        club_id: clubId,
+        role_in_club: role,
+        status: "active",
+        is_default: true,
+        sandbox_scope: sandboxOnly,
+      },
+      { onConflict: "user_id,club_id" },
+    );
+    if (membershipErr) {
+      console.error("[SynqAI][admin-users][POST] upsert membership error:", membershipErr);
+      return NextResponse.json({ error: membershipErr.message }, { status: 500 });
+    }
+  }
 
   return NextResponse.json({
     ok: true,
@@ -241,6 +294,7 @@ export async function POST(req: Request) {
       email,
       country,
       clubId: role === "superadmin" ? null : clubId,
+      sandboxOnly,
       role,
       status: body?.status ?? "Approved",
       lastSeen: body?.lastSeen ?? "Just now",
