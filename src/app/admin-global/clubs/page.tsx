@@ -475,7 +475,7 @@ export default function ManageClubsPage() {
             </SheetHeader>
           </div>
 
-          <form onSubmit={handleSave} className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-8">
+          <form id="club-config-form" onSubmit={handleSave} className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-8">
             <div className="space-y-6">
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1 italic">Nombre de la Entidad</Label>
