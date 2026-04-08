@@ -34,6 +34,7 @@ interface UserProfile {
   email: string;
   role: UserRole;
   clubId: string | null;
+  sandboxOnly?: boolean;
   name: string;
   plan: 'free' | 'volumen_core' | 'enterprise_scale' | null;
   country: string | null;
@@ -163,11 +164,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const emailLower = authUser.email?.toLowerCase() || '';
       const isAdmin = ADMIN_EMAILS.includes(emailLower);
 
+      let sandboxOnly = false;
+      if (profileData) {
+        // Fuente 1 (directa): columna en profiles (operativa simple desde SQL/Admin UI)
+        sandboxOnly = !!(profileData as { sandbox_only?: unknown }).sandbox_only;
+        try {
+          const { data: memberships } = await supabase
+            .from("club_memberships")
+            .select("sandbox_scope,status,is_default")
+            .eq("user_id", authUser.id)
+            .eq("status", "active");
+          // Fuente 2 (profesional): memberships => sandbox scope activo y SIN club default activo.
+          const computed =
+            Array.isArray(memberships)
+              ? memberships.some((m) => !!m.sandbox_scope) && !memberships.some((m) => !!m.is_default)
+              : false;
+          sandboxOnly = sandboxOnly || computed;
+        } catch {
+          // fail-soft: mantenemos el valor de profiles.sandbox_only si existe
+        }
+      }
+
       const userProfile: UserProfile = profileData ? {
         email: profileData.email || authUser.email || '',
         name: profileData.name || authUser.user_metadata?.name || 'Usuario SynqAI',
         role: (profileData.role || 'promo_coach') as UserRole,
         clubId: profileData.club_id || null,
+        sandboxOnly,
         plan: profileData.plan || 'free',
         country: profileData.country || 'ES',
         sport: profileData.sport,
@@ -185,6 +208,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         name: authUser.user_metadata?.name || 'Usuario SynqAI',
         role: 'promo_coach',
         clubId: null,
+        sandboxOnly: false,
         plan: 'free',
         country: 'ES',
         clubCreated: false,

@@ -82,8 +82,11 @@ export default function AdminGlobalLayout(props: { children: React.ReactNode }) 
         <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-2">ACCESO_DENEGADO</h2>
         <p className="text-white/40 font-bold uppercase text-[10px] tracking-widest mb-8">No tiene privilegios para acceder al Núcleo Global con esta identidad.</p>
         <div className="flex flex-col gap-4">
-          <Button onClick={() => router.push("/dashboard")} className="bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 h-12">
-            Volver a mi Nodo de Club
+          <Button
+            onClick={() => router.push(profile.sandboxOnly ? "/sandbox-portal?dest=/sandbox/app" : "/dashboard")}
+            className="bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 h-12"
+          >
+            {profile.sandboxOnly ? "Ir a Sandbox" : "Volver a mi Nodo de Club"}
           </Button>
           <Button variant="ghost" onClick={() => { logout(); router.push("/login"); }} className="text-rose-400 hover:text-rose-300 font-black uppercase text-[9px] tracking-widest">
             <LogOut className="h-3 w-3 mr-2" /> Cerrar Sesión y Cambiar de Perfil

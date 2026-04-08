@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database, UserRole } from '@/lib/supabase';
 
 export type VerifiedClubSession =
-  | { ok: true; userId: string; clubId: string | null; role: UserRole | string }
+  | { ok: true; userId: string; clubId: string | null; role: UserRole | string; sandboxOnly: boolean }
   | { ok: false; status: number; message: string };
 
 /**
@@ -33,7 +33,7 @@ export async function verifyClubSessionFromRequest(req: Request): Promise<Verifi
 
   const { data: prof, error: profErr } = await userClient
     .from('profiles')
-    .select('club_id, role')
+    .select('club_id, role, sandbox_only')
     .eq('id', userData.user.id)
     .single();
 
@@ -41,10 +41,27 @@ export async function verifyClubSessionFromRequest(req: Request): Promise<Verifi
     return { ok: false, status: 403, message: 'Perfil no encontrado.' };
   }
 
+  const role = prof.role as UserRole | string;
+  let effectiveClubId: string | null = prof.club_id;
+
+  // Opción 1: memberships como fuente principal de ámbito club.
+  const { data: membership } = await userClient
+    .from("club_memberships")
+    .select("club_id,status,is_default")
+    .eq("user_id", userData.user.id)
+    .eq("status", "active")
+    .order("is_default", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (membership?.club_id) {
+    effectiveClubId = membership.club_id;
+  }
+
   return {
     ok: true,
     userId: userData.user.id,
-    clubId: prof.club_id,
-    role: prof.role as UserRole | string,
+    clubId: effectiveClubId,
+    role,
+    sandboxOnly: !!prof.sandbox_only,
   };
 }

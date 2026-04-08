@@ -365,6 +365,33 @@ export interface Database {
         }>;
         Relationships: [];
       };
+      club_memberships: {
+        Row: DbRow<{
+          id: string;
+          user_id: string;
+          club_id: string;
+          role_in_club: string;
+          status: "active" | "pending" | "blocked";
+          is_default: boolean;
+          created_at: string;
+          updated_at: string;
+        }>;
+        Insert: DbInsert<{
+          id?: string;
+          user_id: string;
+          club_id: string;
+          role_in_club: string;
+          status?: "active" | "pending" | "blocked";
+          is_default?: boolean;
+        }>;
+        Update: DbUpdate<{
+          role_in_club: string;
+          status: "active" | "pending" | "blocked";
+          is_default: boolean;
+          updated_at: string;
+        }>;
+        Relationships: [];
+      };
       /** Biblioteca metodología (tarea maestra + pizarra); elements JSON 0–1 canvas campo. */
       methodology_library_tasks: {
         Row: DbRow<MethodologyLibraryTaskRow>;
