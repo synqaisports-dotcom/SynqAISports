@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useDeferredValue } from "react";
 import { 
   UserPlus, 
   Search, 
@@ -63,6 +63,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth-context";
 import {
   buildRoleSelectOptions,
+  getAssignableRoleSelectOptions,
   getRoleDisplayLabel,
   type SynqRoleRowLike,
 } from "@/lib/role-catalog";
@@ -72,6 +73,7 @@ export default function GlobalUsersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [updatingUserIds, setUpdatingUserIds] = useState<Record<string, boolean>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -89,7 +91,8 @@ export default function GlobalUsersPage() {
   const [synqRoleRows, setSynqRoleRows] = useState<SynqRoleRowLike[]>([]);
 
   const roleSelectOptions = useMemo(() => {
-    const base = buildRoleSelectOptions(synqRoleRows, { includeSuperadmin: true });
+    const remote = buildRoleSelectOptions(synqRoleRows, { includeSuperadmin: true });
+    const base = remote.length > 0 ? remote : getAssignableRoleSelectOptions();
     if (formData.role && !base.some((o) => o.value === formData.role)) {
       return [
         ...base,
@@ -131,19 +134,28 @@ export default function GlobalUsersPage() {
         status: su.status || "Approved",
         lastSeen: su.lastSeen || "Online",
       }));
-      setUsers(normalized);
-      if (!session?.access_token) return;
+
+      if (!session?.access_token) {
+        setUsers(normalized);
+        return;
+      }
       try {
         const res = await fetch("/api/admin/users", {
           headers: { Authorization: `Bearer ${session.access_token}` },
         });
-        if (!res.ok) return;
+        if (!res.ok) {
+          setUsers(normalized);
+          return;
+        }
         const data = (await res.json()) as { users?: any[] };
-        if (Array.isArray(data?.users) && data.users.length > 0) {
+        if (Array.isArray(data?.users)) {
           setUsers(data.users);
+          localStorage.setItem("synq_global_users", JSON.stringify(data.users));
+        } else {
+          setUsers(normalized);
         }
       } catch {
-        // fallback local
+        setUsers(normalized);
       }
     };
     void loadUsers();
@@ -177,8 +189,10 @@ export default function GlobalUsersPage() {
   };
 
   const handleStatusChange = async (id: string, newStatus: string) => {
+    if (updatingUserIds[id]) return;
     const user = users.find(u => u.id === id);
     if (!user) return;
+    setUpdatingUserIds((prev) => ({ ...prev, [id]: true }));
 
     const prevUsers = users;
     const nextUsers = users.map(u => u.id === id ? { ...u, status: newStatus } : u);
@@ -204,6 +218,7 @@ export default function GlobalUsersPage() {
           title: "ERROR_REMOTO",
           description: "No se pudo actualizar el estado en red.",
         });
+        setUpdatingUserIds((prev) => ({ ...prev, [id]: false }));
         return;
       }
     }
@@ -219,6 +234,7 @@ export default function GlobalUsersPage() {
       title: title,
       description: `El nodo de usuario ha cambiado su protocolo a ${newStatus.toUpperCase()}.`,
     });
+    setUpdatingUserIds((prev) => ({ ...prev, [id]: false }));
   };
 
   const handleOpenCreate = () => {
@@ -289,19 +305,19 @@ export default function GlobalUsersPage() {
     toast({ variant: "destructive", title: "NODO_ELIMINADO", description: "Usuario local eliminado." });
   };
 
-  const handleCreateCredential = (e: React.FormEvent) => {
+  const handleCreateCredential = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     setLoading(true);
-    
-    setTimeout(() => {
-      const fullPhone = `${formData.phonePrefix} ${formData.phone}`.trim();
+    const fullPhone = `${formData.phonePrefix} ${formData.phone}`.trim();
+    try {
       if (editingId) {
         const editedUser = users.find((u) => u.id === editingId);
         setUsers((prev) =>
           prev.map((u) => (u.id === editingId ? { ...u, ...formData, phone: fullPhone } : u)),
         );
         if (editedUser?.source === "remote" && session?.access_token) {
-          void fetch("/api/admin/users", {
+          const res = await fetch("/api/admin/users", {
             method: "PATCH",
             headers: {
               "Content-Type": "application/json",
@@ -316,37 +332,73 @@ export default function GlobalUsersPage() {
               phone: fullPhone,
             }),
           });
+          if (!res.ok) {
+            const j = (await res.json().catch(() => ({}))) as { error?: string };
+            throw new Error(j.error ?? `HTTP ${res.status}`);
+          }
         }
         addAuditLog("MODIFICACIÓN_USUARIO", `Perfil de ${formData.name} actualizado.`, "Info");
         toast({ title: "CREDENCIAL_ACTUALIZADA", description: `Sincronizado: ${formData.name}.` });
       } else {
+        if (!session?.access_token) {
+          throw new Error("Sesión superadmin no disponible para alta remota.");
+        }
+        const res = await fetch("/api/admin/users", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            email: formData.email,
+            role: formData.role,
+            country: formData.country,
+            phone: fullPhone,
+            status: "Approved",
+            lastSeen: "Just now",
+          }),
+        });
+        const j = (await res.json().catch(() => ({}))) as { user?: any; error?: string };
+        if (!res.ok || !j.user?.id) {
+          throw new Error(j.error ?? `HTTP ${res.status}`);
+        }
         const newUser = {
-          id: `u${Date.now()}`,
-          ...formData,
+          id: j.user.id,
+          name: j.user.name ?? formData.name,
+          surname: j.user.surname ?? formData.surname,
+          email: j.user.email ?? formData.email,
+          country: j.user.country ?? formData.country,
           phone: fullPhone,
-          status: "Approved",
-          lastSeen: "Just now"
+          role: j.user.role ?? formData.role,
+          status: j.user.status ?? "Approved",
+          lastSeen: j.user.lastSeen ?? "Just now",
+          source: "remote",
         };
-        setUsers([newUser, ...users]);
-        
-        // Guardar en storage global para persistencia
-        const savedUsers = JSON.parse(localStorage.getItem("synq_global_users") || "[]");
-        localStorage.setItem("synq_global_users", JSON.stringify([...savedUsers, newUser]));
-
+        setUsers((prev) => [newUser, ...prev]);
         addAuditLog("NUEVA_CREDENCIAL", `Identidad emitida para ${formData.name}.`, "Success");
         toast({ title: "CREDENCIAL_EMITIDA", description: `Acceso generado para ${formData.name}.` });
       }
-      setLoading(false);
       setIsSheetOpen(false);
-    }, 1000);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Error desconocido en alta/edición.";
+      console.error("[admin-global/users] handleCreateCredential error:", error);
+      toast({ variant: "destructive", title: "ERROR_SINCRO_USUARIO", description: msg });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const filteredUsers = users.filter(u => 
-    u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.surname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.country?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const deferredSearchTerm = useDeferredValue(searchTerm);
+  const filteredUsers = useMemo(() => {
+    const q = deferredSearchTerm.toLowerCase();
+    return users.filter((u) =>
+      u.name.toLowerCase().includes(q) ||
+      u.surname.toLowerCase().includes(q) ||
+      u.email.toLowerCase().includes(q) ||
+      u.country?.toLowerCase().includes(q)
+    );
+  }, [users, deferredSearchTerm]);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
@@ -446,9 +498,9 @@ export default function GlobalUsersPage() {
                     <div className="flex justify-end gap-2">
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-400/40 hover:text-emerald-400 hover:bg-emerald-500/5 border border-white/5 rounded-xl transition-[background-color,border-color,color,opacity,transform]" onClick={() => handleEdit(user)}><Pencil className="h-4 w-4" /></Button>
                       {user.status === 'Denied' ? (
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-400/40 hover:text-emerald-400 hover:bg-emerald-500/5 border border-white/5 rounded-xl transition-[background-color,border-color,color,opacity,transform]" onClick={() => handleStatusChange(user.id, 'Approved')}><UserCheck className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-400/40 hover:text-emerald-400 hover:bg-emerald-500/5 border border-white/5 rounded-xl transition-[background-color,border-color,color,opacity,transform]" onClick={() => handleStatusChange(user.id, 'Approved')} disabled={!!updatingUserIds[user.id]}><UserCheck className="h-4 w-4" /></Button>
                       ) : (
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-500/40 hover:text-rose-500 hover:bg-rose-500/5 border border-white/5 rounded-xl transition-[background-color,border-color,color,opacity,transform]" onClick={() => handleStatusChange(user.id, 'Denied')}><UserX className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-500/40 hover:text-rose-500 hover:bg-rose-500/5 border border-white/5 rounded-xl transition-[background-color,border-color,color,opacity,transform]" onClick={() => handleStatusChange(user.id, 'Denied')} disabled={!!updatingUserIds[user.id]}><UserX className="h-4 w-4" /></Button>
                       )}
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-500/20 hover:text-rose-500 border border-white/5 rounded-xl transition-[background-color,border-color,color,opacity,transform]" onClick={() => handleDelete(user.id, user.name)}><Trash2 className="h-4 w-4" /></Button>
                     </div>
@@ -478,7 +530,7 @@ export default function GlobalUsersPage() {
             </SheetHeader>
           </div>
 
-          <form onSubmit={handleCreateCredential} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-8">
+          <form id="admin-users-form" onSubmit={handleCreateCredential} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-8">
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -570,8 +622,9 @@ export default function GlobalUsersPage() {
             <SheetClose asChild>
               <Button variant="ghost" className="flex-1 h-16 border border-emerald-500/20 text-emerald-400/40 font-black uppercase text-[10px] tracking-widest rounded-2xl">CANCELAR</Button>
             </SheetClose>
-            <Button 
-              onClick={handleCreateCredential}
+            <Button
+              type="submit"
+              form="admin-users-form"
               disabled={loading}
               className="flex-[2] h-16 bg-emerald-500 text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.2)]"
             >

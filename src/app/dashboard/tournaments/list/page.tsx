@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { BarChart3, CalendarRange, Copy, ListOrdered, Pencil, QrCode, Search, Swords, TicketPercent, Trophy, Trash2, Users } from "lucide-react";
+import { BarChart3, CalendarRange, Copy, FileText, ListOrdered, Pencil, QrCode, Search, Swords, TicketPercent, Trophy, Trash2, Users } from "lucide-react";
 import Link from "next/link";
 import { QRCodeCanvas } from "qrcode.react";
+import jsPDF from "jspdf";
+import QRCode from "qrcode";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   AlertDialog,
@@ -36,6 +38,7 @@ import {
   saveTournamentIndex,
   saveTournamentConfigById,
   setActiveTournamentId,
+  safeJsonParse,
   type TournamentIndexItem,
 } from "@/lib/tournaments-storage";
 
@@ -58,6 +61,16 @@ const dataBlockClass = `
 const labelClass = `text-[10px] uppercase tracking-widest text-[#00F2FF]/60 font-bold`;
 const valueClass = `text-sm text-white font-medium`;
 
+type ClubIdentitySnapshot = {
+  name?: string;
+  country?: string;
+  sport?: string;
+  address?: string;
+  mapQuery?: string;
+  website?: string;
+  logoUrl?: string;
+};
+
 function formatDate(value?: string): string {
   if (!value) return "-";
   const d = new Date(value);
@@ -70,10 +83,57 @@ function formatFootball(value?: TournamentIndexItem["footballFormat"]): string {
   return value === "f11" ? "F11" : value === "f7" ? "F7" : "FUTSAL";
 }
 
+function imageFormatFromDataUrl(dataUrl: string): "PNG" | "JPEG" {
+  const m = /^data:image\/([a-zA-Z0-9+.-]+);base64,/.exec(dataUrl);
+  const mime = String(m?.[1] ?? "").toLowerCase();
+  if (mime.includes("jpeg") || mime.includes("jpg") || mime.includes("webp")) return "JPEG";
+  return "PNG";
+}
+
 function formatStatusLabel(status: TournamentIndexItem["status"]): string {
   if (status === "published") return "Activo";
   if (status === "finished") return "Finalizado";
   return "Pendiente";
+}
+
+function buildCoachTeamUrl(args: { clubId: string; tournamentId: string; teamId: string }) {
+  const qs = new URLSearchParams({
+    clubId: args.clubId,
+    tournamentId: args.tournamentId,
+    teamId: args.teamId,
+  });
+  return `/tournaments/coach-team?${qs.toString()}`;
+}
+
+async function loadImageAsDataUrl(src: string): Promise<string | null> {
+  try {
+    const res = await fetch(src);
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(new Error("No se pudo leer imagen"));
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+async function qrDataUrl(value: string): Promise<string | null> {
+  try {
+    return await QRCode.toDataURL(value, {
+      margin: 1,
+      width: 256,
+      color: {
+        dark: "#00F2FF",
+        light: "#0A0F18",
+      },
+    });
+  } catch {
+    return null;
+  }
 }
 
 function statusBadgeClass(status: TournamentIndexItem["status"]): string {
@@ -182,6 +242,8 @@ export default function TournamentsListPage() {
   const [formatFilter, setFormatFilter] = useState<"all" | "f11" | "f7" | "futsal">("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [yearFilter, setYearFilter] = useState<string>("all");
+  const [exportingTournamentId, setExportingTournamentId] = useState<string | null>(null);
+  const [dossierErrorByTournament, setDossierErrorByTournament] = useState<Record<string, string>>({});
 
   useEffect(() => {
     migrateLegacySingleTournamentIfNeeded({
@@ -264,6 +326,201 @@ export default function TournamentsListPage() {
     params.set("tournamentId", qrTarget.id);
     return `${origin}${PARENTS_TOURNAMENTS_PATH}?${params.toString()}`;
   }, [clubScopeId, qrTarget]);
+
+  const exportInvitationDossier = async (tournamentId: string) => {
+    try {
+      setExportingTournamentId(tournamentId);
+      const t = loadTournamentIndex(clubScopeId).find((x) => x.id === tournamentId);
+      if (!t) return;
+      const cfg = loadTournamentConfigById(clubScopeId, tournamentId);
+      const teams = loadTournamentTeamsById(clubScopeId, tournamentId);
+      const validTeams = Array.isArray(teams)
+        ? teams.filter((row) => row && typeof row === "object" && String((row as { name?: unknown }).name ?? "").trim().length > 0)
+        : [];
+
+      const identityRaw = localStorage.getItem(`synq_club_identity_v1_${clubScopeId}`);
+      const identity = (safeJsonParse<ClubIdentitySnapshot>(identityRaw) ?? {}) as ClubIdentitySnapshot;
+      const clubName = String(identity.name || profile?.clubName || clubScopeId || "Club");
+      const mapQuery = String(identity.mapQuery || identity.address || "Madrid, España").trim();
+      const mapUrlGoogle = `https://maps.googleapis.com/maps/api/staticmap?center=${encodeURIComponent(
+        mapQuery
+      )}&zoom=14&size=1200x600&maptype=roadmap&markers=color:cyan|${encodeURIComponent(mapQuery)}`;
+      const mapUrlFallback = `https://staticmap.openstreetmap.de/staticmap.php?center=${encodeURIComponent(
+        mapQuery
+      )}&zoom=14&size=1200x600&markers=${encodeURIComponent(mapQuery)},lightblue1`;
+      const logoDataUrl = identity.logoUrl ? await loadImageAsDataUrl(identity.logoUrl) : null;
+      const mapDataUrl = (await loadImageAsDataUrl(mapUrlGoogle)) ?? (await loadImageAsDataUrl(mapUrlFallback));
+
+      const slotsConfigured = Math.max(0, Number(cfg?.groupsCount ?? 0) * Number(cfg?.teamsPerGroup ?? 0));
+      const playersPerTeam = Math.max(
+        1,
+        Number(cfg?.startersPerTeam ?? 0) + Number(cfg?.substitutesPerTeam ?? 0) || Number(cfg?.playersPerTeam ?? 0) || 1
+      );
+      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      const parentsLink = `${origin}${PARENTS_TOURNAMENTS_PATH}?${new URLSearchParams({
+        clubId: clubScopeId,
+        tournamentId,
+      }).toString()}`;
+
+      const doc = new jsPDF({ unit: "mm", format: "a4" });
+      const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
+      let y = 0;
+
+      // Portada premium
+      doc.setFillColor(6, 12, 22);
+      doc.rect(0, 0, pageW, pageH, "F");
+      doc.setFillColor(0, 242, 255);
+      doc.rect(0, 0, pageW, 5, "F");
+      doc.setFillColor(10, 18, 30);
+      doc.roundedRect(12, 14, pageW - 24, pageH - 28, 3, 3, "F");
+      y = 24;
+
+      if (logoDataUrl) {
+        try {
+          doc.addImage(logoDataUrl, imageFormatFromDataUrl(logoDataUrl), 18, y, 24, 24);
+        } catch {
+          doc.setDrawColor(0, 242, 255);
+          doc.rect(18, y, 24, 24);
+        }
+      } else {
+        doc.setDrawColor(0, 242, 255);
+        doc.rect(18, y, 24, 24);
+      }
+
+      doc.setTextColor(0, 242, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.text("DOSSIER OFICIAL DE INVITACIÓN", 48, y + 6);
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(22);
+      doc.text(String(cfg?.tournamentName || t.name || "Torneo"), 48, y + 16);
+      doc.setFontSize(10);
+      doc.setTextColor(170, 185, 205);
+      doc.text(`${clubName} · ${identity.country || "España"} · ${identity.sport || "Fútbol"}`, 48, y + 22);
+      doc.text(`Generado: ${new Date().toLocaleDateString("es-ES")}`, 48, y + 27);
+      y += 34;
+
+      doc.setDrawColor(0, 242, 255);
+      doc.setFillColor(8, 16, 28);
+      doc.roundedRect(18, y, pageW - 36, 32, 2, 2, "FD");
+      doc.setTextColor(0, 242, 255);
+      doc.setFontSize(9);
+      doc.text("RESUMEN EJECUTIVO DEL TORNEO", 22, y + 6);
+      doc.setTextColor(235, 240, 245);
+      doc.setFontSize(10);
+      doc.text(`Fechas: ${formatDate(cfg?.startDate)} - ${formatDate(cfg?.endDate)}`, 22, y + 12);
+      doc.text(`Formato: ${formatFootball(cfg?.footballFormat)} · Categoría: ${String(cfg?.categoryLabel || cfg?.categories?.[0] || "-")}`, 22, y + 18);
+      doc.text(`Plazas equipos: ${slotsConfigured} · Equipos cargados: ${validTeams.length} · Jugadores/equipo (cfg): ${playersPerTeam}`, 22, y + 24);
+      doc.text(`Sede / referencia: ${mapQuery}`, 22, y + 30);
+      y += 40;
+
+      doc.setTextColor(0, 242, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.text("LOCALIZACIÓN DEL EVENTO", 18, y);
+      y += 2;
+      if (mapDataUrl) {
+        try {
+          doc.addImage(mapDataUrl, imageFormatFromDataUrl(mapDataUrl), 18, y + 2, pageW - 36, 58);
+          y += 64;
+        } catch {
+          doc.setTextColor(220, 225, 235);
+          doc.setFont("helvetica", "normal");
+          doc.text(`Mapa no disponible automáticamente. Referencia: ${mapQuery}`, 18, y + 8);
+          y += 14;
+        }
+      } else {
+        doc.setTextColor(220, 225, 235);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Mapa no disponible automáticamente. Referencia: ${mapQuery}`, 18, y + 8);
+        y += 14;
+      }
+
+      doc.setTextColor(0, 242, 255);
+      doc.setFont("helvetica", "bold");
+      doc.text("INSCRIPCIÓN CENTRALIZADA", 18, y);
+      y += 6;
+      doc.setTextColor(235, 240, 245);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      const textLines = doc.splitTextToSize(
+        "Este torneo integra flujo digital de preinscripción para clubes invitados y gestión de equipos mediante QR dedicados por staff. El objetivo es acelerar confirmaciones y carga de jugadores.",
+        pageW - 36
+      );
+      doc.text(textLines, 18, y);
+      y += textLines.length * 4 + 2;
+      doc.setTextColor(120, 230, 255);
+      doc.text(`Enlace general del torneo: ${parentsLink}`, 18, y);
+      y += 10;
+
+      // Página 2: equipos con QR reales embebidos
+      doc.addPage();
+      y = 16;
+      doc.setFillColor(6, 12, 22);
+      doc.rect(0, 0, pageW, pageH, "F");
+      doc.setFillColor(0, 242, 255);
+      doc.rect(0, 0, pageW, 4, "F");
+      doc.setTextColor(0, 242, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.text("SLOTS DE EQUIPOS · QR STAFF", 14, y);
+      y += 6;
+
+      const rows = Math.max(slotsConfigured, validTeams.length);
+      for (let i = 0; i < rows; i++) {
+        if (y > pageH - 30) {
+          doc.addPage();
+          doc.setFillColor(6, 12, 22);
+          doc.rect(0, 0, pageW, pageH, "F");
+          doc.setFillColor(0, 242, 255);
+          doc.rect(0, 0, pageW, 4, "F");
+          y = 14;
+        }
+        const team = validTeams[i] as Record<string, unknown> | undefined;
+        const teamId = String(team?.id ?? `slot_${i + 1}`);
+        const teamName = String(team?.name ?? `Slot ${i + 1} (disponible)`).trim();
+        const coachUrl = `${origin}${buildCoachTeamUrl({ clubId: clubScopeId, tournamentId, teamId })}`;
+        const qr = await qrDataUrl(coachUrl);
+
+        doc.setDrawColor(0, 242, 255);
+        doc.setFillColor(10, 18, 30);
+        doc.roundedRect(14, y, pageW - 28, 24, 2, 2, "FD");
+        doc.setTextColor(230, 238, 248);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.text(`${String(i + 1).padStart(2, "0")}. ${teamName}`, 18, y + 7);
+        doc.setTextColor(120, 230, 255);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        const line = doc.splitTextToSize(coachUrl, pageW - 58);
+        doc.text(line, 18, y + 13);
+        if (qr) {
+          try {
+            doc.addImage(qr, "PNG", pageW - 34, y + 3, 16, 16);
+          } catch {
+            // ignore
+          }
+        }
+        y += 27;
+      }
+
+      const filenameBase = String(cfg?.tournamentName || t.name || "torneo")
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9\-]/g, "");
+      doc.save(`dossier-invitacion-${filenameBase || "torneo"}.pdf`);
+    } catch (err) {
+      setDossierErrorByTournament((prev) => ({
+        ...prev,
+        [tournamentId]: "No se pudo generar el dossier premium. Reintenta en unos segundos.",
+      }));
+      // eslint-disable-next-line no-console
+      console.error("Error generando dossier de invitación", err);
+    } finally {
+      setExportingTournamentId(null);
+    }
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
@@ -516,7 +773,7 @@ export default function TournamentsListPage() {
                           </span>
                         </div>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 rounded-xl border border-white/5 bg-black/25 py-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 rounded-xl border border-[#00F2FF]/20 bg-[#0F172A]/60 backdrop-blur-sm shadow-[inset_0_1px_0_rgba(0,242,255,0.08)] py-3">
                           <div className={dataBlockClass}>
                             <p className={labelClass}>Fechas</p>
                             <p className={valueClass}>
@@ -626,8 +883,27 @@ export default function TournamentsListPage() {
                         >
                           <TicketPercent className="h-4 w-4" />
                         </Link>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDossierErrorByTournament((prev) => ({ ...prev, [t.id]: "" }));
+                            void exportInvitationDossier(t.id);
+                          }}
+                          disabled={exportingTournamentId === t.id}
+                          className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-[#00F2FF]/20 bg-black/20 text-[#00F2FF] hover:bg-[#00F2FF]/10 transition-[background-color,border-color,color,opacity,transform] disabled:opacity-50"
+                          title="Acciones: generar dossier invitación"
+                        >
+                          <FileText className="h-4 w-4" />
+                        </button>
                       </div>
                     </div>
+                    {dossierErrorByTournament[t.id] ? (
+                      <div className="mt-2 rounded-xl border border-rose-500/25 bg-rose-500/10 px-3 py-2">
+                        <p className="text-[10px] font-black uppercase tracking-[0.14em] text-rose-200">
+                          {dossierErrorByTournament[t.id]}
+                        </p>
+                      </div>
+                    ) : null}
                   </div>
                 );
               })}

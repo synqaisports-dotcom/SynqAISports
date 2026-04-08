@@ -24,7 +24,8 @@ import {
   Pause,
   Play,
   TrendingDown,
-  Megaphone
+  Megaphone,
+  Trash2
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -63,6 +64,7 @@ import { useAuth } from "@/lib/auth-context";
 import {
   buildRoleSelectOptions,
   getRoleDisplayLabel,
+  ASSIGNABLE_ROLES,
   type SynqRoleRowLike,
 } from "@/lib/role-catalog";
 
@@ -83,6 +85,7 @@ export default function GlobalPlansPage() {
   const { toast } = useToast();
   const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
   const [plans, setPlans] = useState<any[]>([]);
+  const [isMutating, setIsMutating] = useState(false);
   const canUseSupabase = isSupabaseConfigured && !!supabase && !!session?.access_token;
   
   const [newPlan, setNewPlan] = useState({
@@ -97,7 +100,13 @@ export default function GlobalPlansPage() {
   const [synqRoleRows, setSynqRoleRows] = useState<SynqRoleRowLike[]>([]);
 
   const roleSelectOptions = useMemo(() => {
-    const base = buildRoleSelectOptions(synqRoleRows, { includeSuperadmin: false });
+    const fallbackRows = ASSIGNABLE_ROLES.map((r) => ({
+      key: r.id,
+      label: r.label,
+      is_system: r.systemLocked,
+    })) as SynqRoleRowLike[];
+    const sourceRows = synqRoleRows.length > 0 ? synqRoleRows : fallbackRows;
+    const base = buildRoleSelectOptions(sourceRows, { includeSuperadmin: false });
     if (newPlan.defaultRole && !base.some((o) => o.value === newPlan.defaultRole)) {
       return [
         ...base,
@@ -141,7 +150,7 @@ export default function GlobalPlansPage() {
       });
       const j = (await res.json()) as { plans?: any[] };
       const data = Array.isArray(j.plans) ? j.plans : [];
-      if (res.ok && data.length > 0) {
+      if (res.ok) {
         const normalized = data.map((p) => ({
           id: p.id,
           title: p.title,
@@ -153,6 +162,7 @@ export default function GlobalPlansPage() {
           isActive: p.is_active ?? true,
         }));
         setPlans(normalized);
+        localStorage.setItem("synq_global_plans", JSON.stringify(normalized));
       }
     };
     void load();
@@ -236,6 +246,8 @@ export default function GlobalPlansPage() {
   };
 
   const handleTogglePlanActive = (id: string) => {
+    if (isMutating) return;
+    setIsMutating(true);
     setPlans((prev) => {
       const next = prev.map((p) => (p.id === id ? { ...p, isActive: !(p.isActive ?? true) } : p));
       localStorage.setItem("synq_global_plans", JSON.stringify(next));
@@ -251,8 +263,58 @@ export default function GlobalPlansPage() {
           Authorization: `Bearer ${session?.access_token}`,
         },
         body: JSON.stringify({ id, isActive: nextActive }),
-      });
+      }).finally(() => setIsMutating(false));
+      return;
     }
+    setIsMutating(false);
+  };
+
+  const handleDeletePlan = (id: string, title: string) => {
+    if (isMutating) return;
+    setIsMutating(true);
+    const prevPlans = plans;
+    const nextPlans = prevPlans.filter((p) => p.id !== id);
+    setPlans(nextPlans);
+    localStorage.setItem("synq_global_plans", JSON.stringify(nextPlans));
+
+    const rollback = () => {
+      setPlans(prevPlans);
+      localStorage.setItem("synq_global_plans", JSON.stringify(prevPlans));
+    };
+
+    const finishWithToast = (ok: boolean) => {
+      toast({
+        variant: ok ? "default" : "destructive",
+        title: ok ? "PROTOCOLO_ELIMINADO" : "ERROR_ELIMINANDO_PROTOCOLO",
+        description: ok
+          ? `El plan ${title} fue eliminado del núcleo global.`
+          : `No se pudo eliminar ${title}. Se restauró la configuración local.`,
+      });
+    };
+
+    if (canUseSupabase) {
+      void fetch("/api/admin/plans", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ id }),
+      })
+        .then(async (res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          finishWithToast(true);
+        })
+        .catch(() => {
+          rollback();
+          finishWithToast(false);
+        })
+        .finally(() => setIsMutating(false));
+      return;
+    }
+
+    finishWithToast(true);
+    setIsMutating(false);
   };
 
   return (
@@ -292,6 +354,8 @@ export default function GlobalPlansPage() {
               plan={plan}
               onEdit={handleOpenEdit}
               onToggleActive={handleTogglePlanActive}
+              onDelete={handleDeletePlan}
+              isMutating={isMutating}
             />
           ))
         )}
@@ -314,7 +378,7 @@ export default function GlobalPlansPage() {
             </SheetHeader>
           </div>
 
-          <form onSubmit={handleSincProtocol} className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-8">
+          <form id="global-plan-form" onSubmit={handleSincProtocol} className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-8">
             <div className="space-y-6">
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Identificador_Protocolo</Label>
@@ -470,7 +534,8 @@ export default function GlobalPlansPage() {
               </Button>
             </SheetClose>
             <Button 
-              onClick={handleSincProtocol}
+              type="submit"
+              form="global-plan-form"
               className="flex-[2] h-14 bg-emerald-500 text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:scale-[1.02] transition-[background-color,border-color,color,opacity,transform] border-none"
             >
               {isEditing ? "ACTUALIZAR_NODO" : "SINCRONIZAR_PLAN"}
@@ -482,7 +547,7 @@ export default function GlobalPlansPage() {
   );
 }
 
-function PlanTerminalCard({ plan, onEdit, onToggleActive }: any) {
+function PlanTerminalCard({ plan, onEdit, onToggleActive, onDelete, isMutating }: any) {
   const title = plan.title;
   const price = plan.pricePerNode ? `${plan.pricePerNode}€ / NIÑO` : "SIN TARIFA";
   const users = plan.minNodes ? `DESDE ${plan.minNodes}` : "SIN UMBRAL";
@@ -528,6 +593,7 @@ function PlanTerminalCard({ plan, onEdit, onToggleActive }: any) {
         <Button 
           className="flex-1 h-12 rounded-2xl border border-emerald-500/40 bg-transparent text-emerald-400 font-black uppercase text-[10px] tracking-widest hover:bg-emerald-500 hover:text-black transition-[background-color,border-color,color,opacity,transform]"
           onClick={() => onEdit(plan)}
+          disabled={isMutating}
         >
           <Pencil className="h-3.5 w-3.5 mr-2" /> Modificar
         </Button>
@@ -540,9 +606,19 @@ function PlanTerminalCard({ plan, onEdit, onToggleActive }: any) {
               : "border-emerald-500/30 text-emerald-400 bg-emerald-500/5 hover:bg-emerald-500 hover:text-black"
           )}
           onClick={() => onToggleActive(plan.id)}
+          disabled={isMutating}
           title={isActive ? "Pausar Protocolo" : "Activar Protocolo"}
         >
           {isActive ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+        </Button>
+        <Button
+          variant="ghost"
+          className="h-12 w-12 rounded-2xl border border-white/10 text-rose-300/70 hover:text-rose-300 hover:border-rose-400/50 hover:bg-rose-500/10 transition-colors"
+          onClick={() => onDelete(plan.id, plan.title)}
+          disabled={isMutating}
+          title="Eliminar Protocolo"
+        >
+          <Trash2 className="h-4 w-4" />
         </Button>
       </CardFooter>
     </Card>

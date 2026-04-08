@@ -186,6 +186,7 @@ function CollabStat({ label, value, icon: Icon, color }: any) {
 
 function CollabItem({ log }: { log: CollabItemRow }) {
   const isLead = log.submissionType === "lead";
+  const mailHref = log.email ? `mailto:${log.email}` : null;
   
   return (
     <Card className={cn(
@@ -226,13 +227,31 @@ function CollabItem({ log }: { log: CollabItemRow }) {
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
-           <Button variant="ghost" className="h-12 border border-white/5 text-white/40 font-black uppercase text-[9px] tracking-widest rounded-xl hover:text-emerald-400 hover:bg-emerald-500/5">
+           <Button
+             variant="ghost"
+             className="h-12 border border-white/5 text-white/40 font-black uppercase text-[9px] tracking-widest rounded-xl hover:text-emerald-400 hover:bg-emerald-500/5"
+             onClick={() => {
+               if (mailHref) {
+                 window.location.href = mailHref;
+                 return;
+               }
+               navigator.clipboard.writeText(log.desc).catch(() => {});
+             }}
+             title={mailHref ? "Contactar por email" : "Sin email: copia rápida del resumen"}
+           >
               Contactar Atleta
            </Button>
-           <Button className={cn(
-             "h-12 text-black font-black uppercase text-[9px] tracking-widest px-6 rounded-xl border-none shadow-xl",
-             isLead ? "bg-emerald-500 emerald-glow" : "bg-primary cyan-glow"
-           )}>
+           <Button
+             className={cn(
+               "h-12 text-black font-black uppercase text-[9px] tracking-widest px-6 rounded-xl border-none shadow-xl",
+               isLead ? "bg-emerald-500 emerald-glow" : "bg-primary cyan-glow"
+             )}
+             onClick={() => {
+               const text = `[${isLead ? "LEAD" : "FEEDBACK"}] ${log.desc} | ${log.clubName ?? "SIN_CLUB"} | ${log.email ?? "SIN_EMAIL"}`;
+               navigator.clipboard.writeText(text).catch(() => {});
+             }}
+             title="Copiar resumen para gestión manual"
+           >
               Gestionar Lead <ArrowRight className="h-3 w-3 ml-2" />
            </Button>
         </div>

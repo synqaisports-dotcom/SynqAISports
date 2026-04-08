@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useDeferredValue } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   Card, 
@@ -46,6 +46,7 @@ export default function ManageClubsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [isUsingFallback, setIsUsingFallback] = useState(false);
+  const [updatingClubIds, setUpdatingClubIds] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
   
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -80,24 +81,13 @@ export default function ManageClubsPage() {
         throw new Error(j.error ?? `HTTP ${res.status}`);
       }
       const data = Array.isArray(j.clubs) ? j.clubs : [];
-
-      if (data && data.length > 0) {
-        setClubs(data);
-        setIsUsingFallback(false);
-        toast({
-          title: "SINCRONIZACIÓN_COMPLETA",
-          description: `${data.length} nodos de club cargados desde la red.`,
-        });
-      } else {
-        // Si no hay datos en Supabase, usar únicamente localStorage de trabajo.
-        const savedClubs = JSON.parse(localStorage.getItem("synq_global_clubs") || "[]");
-        setClubs(savedClubs);
-        setIsUsingFallback(true);
-        toast({
-          title: "MODO_OFFLINE",
-          description: "Sin seed de prueba: usando datos locales persistidos.",
-        });
-      }
+      setClubs(data);
+      setIsUsingFallback(false);
+      localStorage.setItem("synq_global_clubs", JSON.stringify(data));
+      toast({
+        title: "SINCRONIZACIÓN_COMPLETA",
+        description: `${data.length} nodos de club cargados desde la red.`,
+      });
     } catch (error) {
       console.error("[SynqAI] Error en loadClubs:", error);
       setHasError(true);
@@ -116,12 +106,14 @@ export default function ManageClubsPage() {
   }, [session?.access_token]);
 
   const handleToggleStatus = async (id: string) => {
+    if (updatingClubIds[id]) return;
     const club = clubs.find(c => c.id === id);
     if (!club) return;
 
     const isCurrentlyActive = club.status === "Active";
     const newStatus = isCurrentlyActive ? "Inactive" : "Active";
 
+    setUpdatingClubIds((prev) => ({ ...prev, [id]: true }));
     // Actualizar localmente primero
     setClubs(prev => prev.map(c => 
       c.id === id ? { ...c, status: newStatus } : c
@@ -148,6 +140,7 @@ export default function ManageClubsPage() {
           title: "ERROR_SINCRO",
           description: "No se pudo actualizar el estado del nodo.",
         });
+        setUpdatingClubIds((prev) => ({ ...prev, [id]: false }));
         return;
       }
     }
@@ -156,6 +149,7 @@ export default function ManageClubsPage() {
       title: isCurrentlyActive ? "NODO_SUSPENDIDO" : "NODO_ACTIVADO",
       description: `El nodo ${club.name} ha cambiado su protocolo a ${newStatus.toUpperCase()}.`,
     });
+    setUpdatingClubIds((prev) => ({ ...prev, [id]: false }));
   };
 
   const handleOpenCreate = () => {
@@ -269,10 +263,11 @@ export default function ManageClubsPage() {
     }
   };
 
-  const filteredClubs = clubs.filter(c => 
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.id.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const deferredSearchTerm = useDeferredValue(searchTerm);
+  const filteredClubs = useMemo(() => {
+    const q = deferredSearchTerm.toLowerCase();
+    return clubs.filter((c) => c.name.toLowerCase().includes(q) || c.id.toLowerCase().includes(q));
+  }, [clubs, deferredSearchTerm]);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
@@ -438,6 +433,7 @@ export default function ManageClubsPage() {
                             )}
                             title={club.status === "Active" ? "Pausar Nodo" : "Activar Nodo"}
                             onClick={() => handleToggleStatus(club.id)}
+                            disabled={!!updatingClubIds[club.id]}
                           >
                             {club.status === "Active" ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                           </Button>
@@ -479,7 +475,7 @@ export default function ManageClubsPage() {
             </SheetHeader>
           </div>
 
-          <form onSubmit={handleSave} className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-8">
+          <form id="club-config-form" onSubmit={handleSave} className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-8">
             <div className="space-y-6">
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1 italic">Nombre de la Entidad</Label>
@@ -553,8 +549,9 @@ export default function ManageClubsPage() {
                 CANCELAR
               </Button>
             </SheetClose>
-            <Button 
-              onClick={handleSave}
+            <Button
+              type="submit"
+              form="club-config-form"
               disabled={isSaving}
               className="flex-[2] h-14 bg-emerald-500 text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:scale-[1.02] transition-[background-color,border-color,color,opacity,transform] border-none disabled:opacity-50"
             >

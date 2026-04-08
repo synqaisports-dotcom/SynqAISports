@@ -19,6 +19,12 @@ export type UserRole =
 
 const ADMIN_EMAILS = ['munozmartinez.ismael@gmail.com', 'synqaisports@gmail.com', 'admin@synqai.sports'];
 
+function canUseFounderLoginUnsafeBypass() {
+  const explicit = process.env.NEXT_PUBLIC_ENABLE_FOUNDER_LOGIN === "1";
+  // Reactivación bajo control explícito por variable de entorno.
+  return explicit;
+}
+
 function isUuidLike(value: string | null | undefined): value is string {
   if (!value) return false;
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
@@ -160,12 +166,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const userProfile: UserProfile = profileData ? {
         email: profileData.email || authUser.email || '',
         name: profileData.name || authUser.user_metadata?.name || 'Usuario SynqAI',
-        role: (profileData.role || (isAdmin ? 'superadmin' : 'promo_coach')) as UserRole,
-        clubId: profileData.club_id || (isAdmin ? 'global-hq' : null),
-        plan: profileData.plan || (isAdmin ? 'enterprise_scale' : 'free'),
+        role: (profileData.role || 'promo_coach') as UserRole,
+        clubId: profileData.club_id || null,
+        plan: profileData.plan || 'free',
         country: profileData.country || 'ES',
         sport: profileData.sport,
-        clubCreated: profileData.club_created ?? isAdmin,
+        clubCreated: profileData.club_created ?? false,
         clubName: profileData.club_name,
         preferredLocale: normalizeLocale(
           String(
@@ -177,11 +183,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } : {
         email: authUser.email || '',
         name: authUser.user_metadata?.name || 'Usuario SynqAI',
-        role: isAdmin ? 'superadmin' : 'promo_coach',
-        clubId: isAdmin ? 'global-hq' : null,
-        plan: isAdmin ? 'enterprise_scale' : 'free',
+        role: 'promo_coach',
+        clubId: null,
+        plan: 'free',
         country: 'ES',
-        clubCreated: isAdmin,
+        clubCreated: false,
         preferredLocale: normalizeLocale(authUser.user_metadata?.preferred_locale as string | undefined),
       };
 
@@ -193,6 +199,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const loginAsGuest = () => {
+    if (!canUseFounderLoginUnsafeBypass()) {
+      throw new Error("FOUNDER_LOGIN_DISABLED");
+    }
     const guestUser = { id: "synq-root-dev", email: "admin@synqai.sports" } as User;
     const guestProfile: UserProfile = {
       email: "admin@synqai.sports",
@@ -236,9 +245,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     if (data.user) {
-      const emailLower = email.toLowerCase();
-      const isAdmin = ADMIN_EMAILS.includes(emailLower);
-
       // Crear perfil en la tabla profiles
       const { error: profileError } = await supabase
         .from('profiles')
@@ -246,11 +252,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           id: data.user.id,
           email,
           name,
-          role: isAdmin ? 'superadmin' : (plan === 'free' ? 'promo_coach' : 'club_admin'),
-          club_id: isAdmin ? 'global-hq' : null,
-          plan: isAdmin ? 'enterprise_scale' : plan,
+          role: plan === 'free' ? 'promo_coach' : 'club_admin',
+          club_id: null,
+          plan,
           country: 'ES',
-          club_created: isAdmin,
+          club_created: false,
           club_name: clubName
         });
 

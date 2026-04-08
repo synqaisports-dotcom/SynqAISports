@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase";
 import { verifySuperadminFromRequest } from "../verify-superadmin";
+import { ROLE_CATALOG } from "@/lib/role-catalog";
 
 function adminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -10,6 +11,30 @@ function adminClient() {
   return createClient<Database>(url, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
+}
+
+async function isValidRoleKey(
+  admin: ReturnType<typeof adminClient>,
+  role: string,
+): Promise<boolean> {
+  if (!admin) return false;
+  const normalized = role.trim().toLowerCase();
+  if (!normalized) return false;
+  const systemRoleSet = new Set(ROLE_CATALOG.map((r) => r.id));
+  if (systemRoleSet.has(normalized as (typeof ROLE_CATALOG)[number]["id"])) {
+    return true;
+  }
+  const { data, error } = await admin
+    .from("synq_roles")
+    .select("key")
+    .eq("key", normalized)
+    .limit(1)
+    .maybeSingle();
+  if (error) {
+    console.error("[SynqAI][admin-users][role-validate] error:", error);
+    return false;
+  }
+  return !!data?.key;
 }
 
 export async function GET(req: Request) {
@@ -74,6 +99,12 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
   }
   if (!body?.id) return NextResponse.json({ error: "id requerido" }, { status: 400 });
+  if (body.role !== undefined) {
+    const roleOk = await isValidRoleKey(admin, body.role);
+    if (!roleOk) {
+      return NextResponse.json({ error: "rol_invalido" }, { status: 400 });
+    }
+  }
   const patch: Record<string, unknown> = {};
   if (body.name !== undefined) patch.name = body.name;
   if (body.email !== undefined) patch.email = body.email;
@@ -95,4 +126,108 @@ export async function PATCH(req: Request) {
     if (stateErr) return NextResponse.json({ error: stateErr.message }, { status: 500 });
   }
   return NextResponse.json({ ok: true });
+}
+
+export async function POST(req: Request) {
+  const gate = await verifySuperadminFromRequest(req);
+  if (!gate.ok) {
+    return NextResponse.json({ error: gate.message }, { status: gate.status });
+  }
+  const admin = adminClient();
+  if (!admin) {
+    return NextResponse.json({ error: "Supabase service role no configurada." }, { status: 503 });
+  }
+
+  let body: {
+    name?: string;
+    surname?: string;
+    email?: string;
+    country?: string;
+    role?: string;
+    status?: "Pending" | "Approved" | "Denied";
+    lastSeen?: string;
+  };
+  try {
+    body = (await req.json()) as typeof body;
+  } catch {
+    return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
+  }
+
+  const email = String(body?.email ?? "").trim().toLowerCase();
+  const name = String(body?.name ?? "").trim();
+  const surname = String(body?.surname ?? "").trim();
+  const country = String(body?.country ?? "España").trim();
+  const role = String(body?.role ?? "promo_coach").trim();
+  if (!email || !name) {
+    return NextResponse.json({ error: "name y email requeridos" }, { status: 400 });
+  }
+  const roleOk = await isValidRoleKey(admin, role);
+  if (!roleOk) {
+    return NextResponse.json({ error: "rol_invalido" }, { status: 400 });
+  }
+
+  const { data: existingProfile } = await admin
+    .from("profiles")
+    .select("id")
+    .eq("email", email)
+    .maybeSingle();
+  if (existingProfile?.id) {
+    return NextResponse.json({ error: "email_ya_registrado" }, { status: 409 });
+  }
+
+  const tempPassword = `Synq#${Math.random().toString(36).slice(-10)}A1`;
+  const createRes = await admin.auth.admin.createUser({
+    email,
+    password: tempPassword,
+    email_confirm: true,
+    user_metadata: {
+      name: [name, surname].filter(Boolean).join(" "),
+      role,
+    },
+  });
+  if (createRes.error || !createRes.data.user?.id) {
+    console.error("[SynqAI][admin-users][POST] createUser error:", createRes.error);
+    return NextResponse.json({ error: createRes.error?.message ?? "create_user_failed" }, { status: 500 });
+  }
+  const userId = createRes.data.user.id;
+
+  const { error: profileErr } = await admin.from("profiles").upsert({
+    id: userId,
+    email,
+    name: [name, surname].filter(Boolean).join(" "),
+    role,
+    country,
+    plan: "free",
+    club_id: null,
+    club_created: false,
+  });
+  if (profileErr) {
+    console.error("[SynqAI][admin-users][POST] upsert profile error:", profileErr);
+    return NextResponse.json({ error: profileErr.message }, { status: 500 });
+  }
+
+  const { error: stateErr } = await admin.from("admin_user_states").upsert({
+    profile_id: userId,
+    status: body?.status ?? "Approved",
+    last_seen: body?.lastSeen ?? "Just now",
+  });
+  if (stateErr) {
+    console.error("[SynqAI][admin-users][POST] upsert state error:", stateErr);
+    return NextResponse.json({ error: stateErr.message }, { status: 500 });
+  }
+
+  return NextResponse.json({
+    ok: true,
+    user: {
+      id: userId,
+      name: [name, surname].filter(Boolean).join(" "),
+      surname,
+      email,
+      country,
+      role,
+      status: body?.status ?? "Approved",
+      lastSeen: body?.lastSeen ?? "Just now",
+      source: "remote",
+    },
+  });
 }

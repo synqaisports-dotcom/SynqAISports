@@ -603,7 +603,7 @@ export default function ClubManagementPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="px-6 sm:px-8 lg:px-10 pb-6 sm:pb-8 lg:pb-10 grid grid-cols-1 xl:grid-cols-2 gap-4">
-          <div className="rounded-2xl border border-primary/15 bg-black/30 p-4">
+          <div className="rounded-2xl border border-cyan-400/40 bg-black/30 p-4 shadow-[inset_0_0_0_1px_rgba(0,242,255,0.12)]">
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/70 mb-2">Indicadores base</p>
             <div className="h-52">
               <ResponsiveContainer width="100%" height="100%">
@@ -620,6 +620,8 @@ export default function ClubManagementPage() {
                       color: "#fff",
                       fontWeight: 700,
                     }}
+                    labelStyle={{ color: "rgba(255,255,255,0.75)", fontWeight: 900 }}
+                    itemStyle={{ color: "#00F2FF", fontWeight: 900 }}
                   />
                   <Bar dataKey="value" radius={[8, 8, 0, 0]} fill="#00F2FF" />
                 </BarChart>
@@ -627,7 +629,7 @@ export default function ClubManagementPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-primary/15 bg-black/30 p-4">
+          <div className="rounded-2xl border border-cyan-400/40 bg-black/30 p-4 shadow-[inset_0_0_0_1px_rgba(0,242,255,0.12)]">
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/70 mb-2">Cobertura redes</p>
             <div className="h-52">
               <ResponsiveContainer width="100%" height="100%">
@@ -645,6 +647,8 @@ export default function ClubManagementPage() {
                       color: "#fff",
                       fontWeight: 700,
                     }}
+                    labelStyle={{ color: "rgba(255,255,255,0.75)", fontWeight: 900 }}
+                    itemStyle={{ color: "#00F2FF", fontWeight: 900 }}
                   />
                 </PieChart>
               </ResponsiveContainer>
