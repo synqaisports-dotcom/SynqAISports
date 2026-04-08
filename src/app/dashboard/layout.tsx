@@ -57,6 +57,10 @@ export default function DashboardLayout(props: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!loading && profile) {
+      if (profile.sandboxOnly) {
+        router.push("/sandbox-portal?dest=/sandbox/app");
+        return;
+      }
       if ((profile.role === "club_admin" || profile.role === "coach" || profile.role === "promo_coach") && 
           !profile.clubCreated && 
           pathname !== "/dashboard/coach/onboarding") {
