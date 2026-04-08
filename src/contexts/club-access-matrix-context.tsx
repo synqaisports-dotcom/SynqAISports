@@ -58,25 +58,20 @@ export function ClubAccessMatrixProvider({ children }: { children: React.ReactNo
             if (payload && typeof payload === "object") {
               const normalized = normalizeStaffAccessMatrix(payload, buildDefaultMatrix);
               setRawMatrix(normalized);
-              try {
-                localStorage.setItem(storageKey, JSON.stringify(normalized));
-              } catch {
-                /* ignore */
-              }
-              setLoading(false);
               return;
             }
           }
         } catch {
-          /* fallback local */
+          // si falla remoto, no degradamos a localStorage cuando hay sesión/club válido
         }
+        setRawMatrix({});
+        return;
       }
 
       const raw = localStorage.getItem(storageKey);
       if (!raw) {
         // Seguridad: si no hay matriz disponible, no abrimos permisos por defecto.
         setRawMatrix({});
-        setLoading(false);
         return;
       }
       const parsed = JSON.parse(raw) as StaffAccessMatrix;

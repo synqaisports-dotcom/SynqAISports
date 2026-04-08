@@ -382,16 +382,19 @@ export default function AcademyManagementPage() {
         }
       }
 
-      try {
-        const raw = localStorage.getItem(categoriesStorageKey);
-        if (!raw) return;
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) {
-          setCategories(parsed);
-          if (!cancelled) setSyncMode("local");
+      // Fallback local solo si no hay sesión/token o Supabase no está habilitado.
+      if (!canUseAcademySupabase || !accessToken) {
+        try {
+          const raw = localStorage.getItem(categoriesStorageKey);
+          if (!raw) return;
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            setCategories(parsed);
+            if (!cancelled) setSyncMode("local");
+          }
+        } catch {
+          // ignore (fallback a INITIAL_CATEGORIES)
         }
-      } catch {
-        // ignore (fallback a INITIAL_CATEGORIES)
       }
     };
 

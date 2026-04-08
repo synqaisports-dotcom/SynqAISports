@@ -48,7 +48,7 @@ export async function GET(req: Request) {
   }
   const { data, error } = await admin
     .from("profiles")
-    .select("id,email,name,role,country")
+    .select("id,email,name,role,country,club_id")
     .order("updated_at", { ascending: false })
     .limit(2000);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -67,6 +67,7 @@ export async function GET(req: Request) {
     surname: "",
     email: u.email ?? "",
     country: u.country ?? "España",
+    clubId: u.club_id ?? null,
     role: u.role ?? "coach",
     status: stateMap.get(u.id)?.status ?? "Approved",
     lastSeen: stateMap.get(u.id)?.last_seen ?? "Online",
@@ -90,6 +91,7 @@ export async function PATCH(req: Request) {
     email?: string;
     role?: string;
     country?: string;
+    clubId?: string | null;
     status?: "Pending" | "Approved" | "Denied";
     lastSeen?: string;
   };
@@ -105,11 +107,17 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: "rol_invalido" }, { status: 400 });
     }
   }
+  const effectiveRole = String(body.role ?? "").trim();
+  const needsClub = effectiveRole.length > 0 && effectiveRole !== "superadmin";
+  if (body.role !== undefined && needsClub && !body.clubId) {
+    return NextResponse.json({ error: "club_id_requerido_para_rol" }, { status: 400 });
+  }
   const patch: Record<string, unknown> = {};
   if (body.name !== undefined) patch.name = body.name;
   if (body.email !== undefined) patch.email = body.email;
   if (body.role !== undefined) patch.role = body.role;
   if (body.country !== undefined) patch.country = body.country;
+  if (body.clubId !== undefined) patch.club_id = body.clubId;
   if (Object.keys(patch).length === 0 && body.status === undefined && body.lastSeen === undefined) {
     return NextResponse.json({ error: "Nada que actualizar" }, { status: 400 });
   }
@@ -144,6 +152,7 @@ export async function POST(req: Request) {
     email?: string;
     country?: string;
     role?: string;
+    clubId?: string | null;
     status?: "Pending" | "Approved" | "Denied";
     lastSeen?: string;
   };
@@ -158,12 +167,19 @@ export async function POST(req: Request) {
   const surname = String(body?.surname ?? "").trim();
   const country = String(body?.country ?? "España").trim();
   const role = String(body?.role ?? "promo_coach").trim();
+  const clubId =
+    typeof body?.clubId === "string" && body.clubId.trim().length > 0
+      ? body.clubId.trim()
+      : null;
   if (!email || !name) {
     return NextResponse.json({ error: "name y email requeridos" }, { status: 400 });
   }
   const roleOk = await isValidRoleKey(admin, role);
   if (!roleOk) {
     return NextResponse.json({ error: "rol_invalido" }, { status: 400 });
+  }
+  if (role !== "superadmin" && !clubId) {
+    return NextResponse.json({ error: "club_id_requerido_para_rol" }, { status: 400 });
   }
 
   const { data: existingProfile } = await admin
@@ -198,7 +214,7 @@ export async function POST(req: Request) {
     role,
     country,
     plan: "free",
-    club_id: null,
+    club_id: role === "superadmin" ? null : clubId,
     club_created: false,
   });
   if (profileErr) {
@@ -224,6 +240,7 @@ export async function POST(req: Request) {
       surname,
       email,
       country,
+      clubId: role === "superadmin" ? null : clubId,
       role,
       status: body?.status ?? "Approved",
       lastSeen: body?.lastSeen ?? "Just now",

@@ -259,8 +259,8 @@ export default function WarehouseClubPage() {
 
       const key = storageKey(clubScopeId);
 
-      // Fuente de verdad (híbrido): si hay Supabase, cargamos el estado remoto; si no, localStorage.
-      let loaded = safeParseState(localStorage.getItem(key));
+      // Fuente de verdad: remoto por club_id. Solo fallback local ante error/red.
+      let loaded: WarehouseState = { installations: [], stores: [], materials: [] };
       let remoteTeams: WarehouseTeam[] | null = null;
 
       if (canUseWarehouseSupabase && remoteAccessToken) {
@@ -283,13 +283,16 @@ export default function WarehouseClubPage() {
             }
           } else {
             setSyncMode("local");
+            loaded = safeParseState(localStorage.getItem(key));
           }
         } catch {
           // fallback => localStorage
           setSyncMode("local");
+          loaded = safeParseState(localStorage.getItem(key));
         }
       } else {
         setSyncMode("local");
+        loaded = safeParseState(localStorage.getItem(key));
       }
 
       const facilityIds = new Set(installationsFromFacilities.map((i) => i.id));
