@@ -37,6 +37,7 @@ import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
 import { QRCodeCanvas } from "qrcode.react";
 import { useEffect, useState, useCallback } from "react";
+import { STORE_PRODUCTS } from "@/lib/store-catalog";
 
 export default function SynqAiLandingPage() {
   const { toast } = useToast();
@@ -64,7 +65,7 @@ export default function SynqAiLandingPage() {
   }, []);
 
   const externalAccessNodes = [
-    { label: "Terminal Sandbox", icon: LayoutGrid, href: "/dashboard/promo/team", desc: "Nodo personal gratis" },
+    { label: "SANDBOX COACH", icon: LayoutGrid, href: "/sandbox/coach", desc: "App abierta para entrenadores" },
     { label: "Portal Tutores", icon: UserCircle, href: "/tutor", desc: "Acceso familias" },
     { label: "Smartwatch Link", icon: Watch, href: "/smartwatch", desc: "Telemetría en vivo" },
     { label: "SynqAI Store", icon: Download, href: "/store", desc: "Catálogo de micro-apps" },
@@ -149,7 +150,7 @@ export default function SynqAiLandingPage() {
 
         {/* ACCESOS RÁPIDOS EXTERNOS */}
         <section className="py-12 px-6 max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
             {externalAccessNodes.map((node, i) => (
               <Link 
                 key={i} 
@@ -167,6 +168,53 @@ export default function SynqAiLandingPage() {
                 <ArrowRight className="h-4 w-4 ml-auto text-white/5 group-hover:text-primary transition-[background-color,border-color,color,opacity,transform] group-hover:translate-x-1" />
               </Link>
             ))}
+          </div>
+        </section>
+
+        {/* APPS POR SECCIÓN (INDEX) */}
+        <section className="py-12 px-6 max-w-7xl mx-auto">
+          <div className="space-y-8">
+            <div className="space-y-2">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.45em] text-primary/70">Secciones de Apps</h3>
+              <h2 className="text-3xl md:text-4xl font-headline font-black italic uppercase tracking-tighter">
+                ELIGE TU APP POR TIPO DE ACCESO
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {[
+                { key: "open", title: "Apps abiertas (sin login)" },
+                { key: "optional_login", title: "Apps mixtas (login opcional)" },
+                { key: "login_required", title: "Apps seguras (login requerido)" },
+              ].map((section) => {
+                const items = STORE_PRODUCTS.filter((p) => p.accessMode === section.key);
+                return (
+                  <div key={section.key} className="glass-panel border border-white/10 rounded-3xl p-5 space-y-4">
+                    <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/60">{section.title}</p>
+                    <div className="space-y-3">
+                      {items.map((app) => (
+                        <Link
+                          key={app.slug}
+                          href={app.href}
+                          className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/30 p-3 hover:border-primary/40 transition-[background-color,border-color,color,opacity,transform]"
+                        >
+                          <div>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-white">{app.name}</p>
+                            <p className="text-[8px] font-bold uppercase tracking-wide text-white/35">{app.shortDescription}</p>
+                          </div>
+                          <ArrowRight className="h-4 w-4 text-primary/80" />
+                        </Link>
+                      ))}
+                      {items.length === 0 && (
+                        <p className="text-[8px] font-bold uppercase tracking-widest text-white/30">
+                          Próximamente
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </section>
 
@@ -238,9 +286,9 @@ export default function SynqAiLandingPage() {
 
              <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
                 <QRAppCard 
-                  title="SynqAi Sandbox" 
+                  title="Sandbox Coach" 
                   desc="Tu equipo local. Pizarras, sesiones y partidos sin cuotas." 
-                  url={baseUrl ? `${baseUrl}/dashboard/promo/team` : ""} 
+                  url={baseUrl ? `${baseUrl}/sandbox/coach` : ""} 
                   icon={LayoutGrid}
                   qrColor="#3b82f6"
                 />
