@@ -65,8 +65,8 @@ export default function SynqAiLandingPage() {
           <article className="rounded-2xl border border-white/10 bg-[#0F172A]/80 p-5 backdrop-blur-2xl shadow-[0_0_20px_rgba(0,242,255,0.15)] lg:col-span-2">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-300 drop-shadow-[0_0_8px_rgba(0,242,255,0.5)]">Canvas táctico</p>
-                <h2 className="mt-2 text-3xl font-black uppercase italic tracking-tight">CANVAS T1</h2>
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-300 drop-shadow-[0_0_8px_rgba(0,242,255,0.5)]">Sandbox Coach</p>
+                <h2 className="mt-2 text-3xl font-black uppercase italic tracking-tight">SANDBOX COACH</h2>
               </div>
               <Button asChild className="bg-cyan-500 hover:bg-cyan-400 text-black font-black uppercase text-[10px] tracking-widest shadow-lg shadow-cyan-500/50">
                 <Link href="/sandbox/app">
