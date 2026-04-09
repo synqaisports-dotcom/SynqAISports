@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { SynqAiSportsLogo } from "@/components/branding/SynqAiSportsLogo";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { synqSync } from "@/lib/sync-service";
 
 type SandboxMetrics = {
   starters: number;
@@ -62,6 +63,12 @@ function SandboxHomeAdPanel() {
     if (!w.adsbygoogle) return;
     try {
       w.adsbygoogle.push({});
+      synqSync.trackEvent("ad_impression", {
+        app_slug: "sandbox-coach",
+        source: "sandbox",
+        placement: "sandbox_home_horizontal",
+        format: "horizontal",
+      });
     } catch {
       // noop
     }
@@ -134,7 +141,17 @@ function SandboxHomeAdPanel() {
           )}
         >
           {isConfigured ? (
-            <div ref={adRef}>
+            <div
+              ref={adRef}
+              onClick={() =>
+                synqSync.trackEvent("ad_click", {
+                  app_slug: "sandbox-coach",
+                  source: "sandbox",
+                  placement: "sandbox_home_horizontal",
+                  format: "horizontal",
+                })
+              }
+            >
               <ins
                 className="adsbygoogle"
                 style={{ display: "block" }}

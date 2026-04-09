@@ -56,6 +56,10 @@ type AnalyticsPayload = {
   geo?: GeoRow[];
   topPromos?: TopPromo[];
   conversionRate?: number;
+  sandboxCoachOpens?: number;
+  sandboxCoachAdImpressions?: number;
+  sandboxCoachAdClicks?: number;
+  sandboxCoachEstimatedRevenue?: number;
 };
 
 function formatNum(n: number): string {
@@ -196,6 +200,10 @@ export default function GlobalAnalyticsPage() {
   const scansPerCampaign = (d?.promoCampaigns ?? 0) > 0 ? Math.round(promoScans / (d?.promoCampaigns ?? 1)) : 0;
   const leadsPer1000Profiles = profiles > 0 ? Math.round(((d?.collabLeads ?? 0) / profiles) * 1000) : 0;
   const feedbackPer1000Profiles = profiles > 0 ? Math.round(((d?.collabFeedback ?? 0) / profiles) * 1000) : 0;
+  const sandboxCoachOpens = d?.sandboxCoachOpens ?? 0;
+  const sandboxCoachAdImpressions = d?.sandboxCoachAdImpressions ?? 0;
+  const sandboxCoachAdClicks = d?.sandboxCoachAdClicks ?? 0;
+  const sandboxCoachEstimatedRevenue = d?.sandboxCoachEstimatedRevenue ?? 0;
   const globalPulse = (topPromos.slice(0, 8).length > 0
     ? topPromos.slice(0, 8).map((p, idx) => ({
         label: `P${idx + 1}`,
@@ -315,6 +323,39 @@ export default function GlobalAnalyticsPage() {
             value={loading ? "—" : String(d?.exercisesTotal ?? 0)}
             note="Volumen de ejercicios creados"
             tone={(d?.exercisesTotal ?? 0) >= 500 ? "good" : (d?.exercisesTotal ?? 0) >= 100 ? "warn" : "bad"}
+          />
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <div className="flex items-center gap-3 px-2">
+          <Zap className="h-5 w-5 text-emerald-400" />
+          <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-white">SANDBOX_COACH_FUNNEL</h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <AnalyticsMiniCard
+            label="Aperturas app"
+            value={loading ? "—" : formatNum(sandboxCoachOpens)}
+            trend="session_save/app_open"
+            icon={Users}
+          />
+          <AnalyticsMiniCard
+            label="Impresiones Ads"
+            value={loading ? "—" : formatNum(sandboxCoachAdImpressions)}
+            trend="ad_impression"
+            icon={Activity}
+          />
+          <AnalyticsMiniCard
+            label="Clics Ads"
+            value={loading ? "—" : formatNum(sandboxCoachAdClicks)}
+            trend="ad_click"
+            icon={Target}
+          />
+          <AnalyticsMiniCard
+            label="Revenue estimado (€)"
+            value={loading ? "—" : String(sandboxCoachEstimatedRevenue.toFixed(2))}
+            trend="CPM/CPC configurable"
+            icon={TrendingUp}
           />
         </div>
       </section>

@@ -13,15 +13,15 @@ export type StoreProduct = {
 
 export const STORE_PRODUCTS: StoreProduct[] = [
   {
-    slug: "sandbox",
-    name: "SynqAI Sandbox",
-    shortDescription: "Micro-app de captación y operación rápida.",
+    slug: "sandbox-coach",
+    name: "SANDBOX COACH",
+    shortDescription: "Pizarra ligera multideporte para entrenadores (sin login).",
     longDescription:
-      "App ligera para entrenadores y pruebas en campo. Puede operar en local-first y escalar a cuenta conectada cuando se requiera sincronización cloud.",
-    href: "/sandbox-portal?dest=/sandbox/app",
+      "Micro-app abierta de entrada para entrenadores. Incluye pizarra táctica, equipo, tareas limitadas, agenda y partidos en modo local-first con cola de anuncios offline, soporte multiidioma y conexión con Smartwatch Link para diferenciación operativa.",
+    href: "/sandbox/coach",
     category: "terminal",
-    accessMode: "optional_login",
-    tags: ["local-first", "captación", "pizarra"],
+    accessMode: "open",
+    tags: ["multideporte", "sin-login", "publicidad", "watch-link", "local-first"],
   },
   {
     slug: "tutor",

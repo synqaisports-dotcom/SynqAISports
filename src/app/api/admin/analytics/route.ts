@@ -137,6 +137,36 @@ export async function GET(req: Request) {
     const conversionRate =
       profilesTotal > 0 ? Math.round((collabLeads / profilesTotal) * 10000) / 100 : 0;
 
+    // Funnel SANDBOX COACH (si no existe tabla/migración, cae a 0 sin romper analytics).
+    let sandboxCoachOpens = 0;
+    let sandboxCoachAdImpressions = 0;
+    let sandboxCoachAdClicks = 0;
+    try {
+      const eventsRes = await admin
+        .from("ad_events_queue" as any)
+        .select("event_type,metadata")
+        .limit(5000);
+      if (!eventsRes.error && Array.isArray(eventsRes.data)) {
+        for (const ev of eventsRes.data as Array<{ event_type?: string; metadata?: Record<string, unknown> }>) {
+          const appSlug = String(ev.metadata?.app_slug ?? "");
+          const source = String(ev.metadata?.source ?? "");
+          const isSandboxCoach = appSlug === "sandbox-coach" || source === "sandbox";
+          if (!isSandboxCoach) continue;
+          const type = String(ev.event_type ?? "");
+          if (type === "session_save" && String(ev.metadata?.event_name ?? "") === "app_open") sandboxCoachOpens += 1;
+          if (type === "ad_impression") sandboxCoachAdImpressions += 1;
+          if (type === "ad_click") sandboxCoachAdClicks += 1;
+        }
+      }
+    } catch {
+      // noop
+    }
+
+    const adCpm = Number(process.env.SANDBOX_AD_ESTIMATED_CPM_EUR ?? "1.2");
+    const adCpc = Number(process.env.SANDBOX_AD_ESTIMATED_CPC_EUR ?? "0.05");
+    const sandboxCoachEstimatedRevenue =
+      Math.round(((sandboxCoachAdImpressions / 1000) * adCpm + sandboxCoachAdClicks * adCpc) * 100) / 100;
+
     return NextResponse.json({
       ok: true,
       profilesTotal,
@@ -151,6 +181,10 @@ export async function GET(req: Request) {
       geo: geoWithPercent,
       topPromos,
       conversionRate,
+      sandboxCoachOpens,
+      sandboxCoachAdImpressions,
+      sandboxCoachAdClicks,
+      sandboxCoachEstimatedRevenue,
     });
   } catch (e) {
     console.error('[SynqAI] admin analytics:', e);
