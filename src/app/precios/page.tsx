@@ -8,7 +8,7 @@ const PLANS = [
 
 export default function PreciosPage() {
   return (
-    <div className="min-h-screen bg-[#1b1f27] text-white">
+    <div className="min-h-screen public-shell-bg text-white">
       <SiteNav />
       <main className="mx-auto max-w-7xl px-6 py-16">
         <header className="max-w-3xl space-y-3">
@@ -19,7 +19,7 @@ export default function PreciosPage() {
 
         <section className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-3">
           {PLANS.map((plan) => (
-            <article key={plan.name} className="rounded-3xl border border-white/10 bg-[#222833] p-6">
+            <article key={plan.name} className="surface-card p-6">
               <h2 className="text-xl font-black uppercase italic tracking-tight">{plan.name}</h2>
               <p className="mt-3 text-4xl font-black text-primary">{plan.price}</p>
               <p className="mt-2 text-sm text-white/70">{plan.detail}</p>

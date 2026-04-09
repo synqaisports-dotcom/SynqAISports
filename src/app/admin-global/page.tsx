@@ -143,7 +143,7 @@ export default function AdminGlobalDashboard() {
       </div>
 
       {error && (
-        <Card className="glass-panel border-amber-500/30 bg-amber-500/5 rounded-2xl">
+        <Card className="surface-card border-amber-500/30 bg-amber-500/5">
           <CardContent className="py-4 text-[10px] font-bold text-amber-100/90 uppercase tracking-wide">
             {error}
           </CardContent>
@@ -159,7 +159,7 @@ export default function AdminGlobalDashboard() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
          <Link href="/admin-global/collaboration" className="block">
-            <Card className="glass-panel p-8 border-emerald-500/20 bg-emerald-500/5 rounded-[2.5rem] relative overflow-hidden group transition-[background-color,border-color,color,opacity,transform] motion-safe:hover:scale-[1.01]">
+            <Card className="surface-card p-8 border-emerald-500/25 bg-emerald-500/5 relative overflow-hidden group transition-[background-color,border-color,color,opacity,transform] motion-safe:hover:scale-[1.01]">
                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-[background-color,border-color,color,opacity,transform]"><Gift className="h-32 w-32 text-emerald-500" /></div>
                <div className="flex items-center gap-4 mb-6 relative z-10">
                   <div className="h-12 w-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center pulse-glow">
@@ -177,7 +177,7 @@ export default function AdminGlobalDashboard() {
          </Link>
 
          <Link href="/admin-global/collaboration" className="block">
-            <Card className="glass-panel p-8 border-primary/20 bg-primary/5 rounded-[2.5rem] relative overflow-hidden group transition-[background-color,border-color,color,opacity,transform] motion-safe:hover:scale-[1.01]">
+            <Card className="surface-card p-8 border-primary/25 bg-primary/5 relative overflow-hidden group transition-[background-color,border-color,color,opacity,transform] motion-safe:hover:scale-[1.01]">
                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-[background-color,border-color,color,opacity,transform]"><MessageSquareQuote className="h-32 w-32 text-primary" /></div>
                <div className="flex items-center gap-4 mb-6 relative z-10">
                   <div className="h-12 w-12 rounded-2xl bg-primary/20 border border-primary/40 flex items-center justify-center pulse-glow">
@@ -196,7 +196,7 @@ export default function AdminGlobalDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <Card className="glass-panel lg:col-span-2 overflow-hidden relative group border border-emerald-500/20">
+        <Card className="surface-card lg:col-span-2 overflow-hidden relative group border-emerald-500/20">
           <div className="absolute top-0 right-0 p-1 bg-emerald-500/20 text-[8px] font-black px-2 uppercase tracking-widest text-emerald-400">Live_Network_Traffic</div>
           <CardHeader>
             <CardTitle className="text-sm uppercase tracking-widest font-black flex items-center gap-2 text-emerald-400">
@@ -216,7 +216,7 @@ export default function AdminGlobalDashboard() {
           </CardContent>
         </Card>
         
-        <Card className="glass-panel border border-emerald-500/20 bg-black/40 flex flex-col">
+        <Card className="surface-card border-emerald-500/20 bg-black/40 flex flex-col">
           <CardHeader className="border-b border-white/5 bg-white/[0.01]">
             <CardTitle className="text-sm uppercase tracking-widest font-black text-emerald-400">Registros de Seguridad</CardTitle>
           </CardHeader>

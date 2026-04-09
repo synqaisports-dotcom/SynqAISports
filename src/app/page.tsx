@@ -7,8 +7,7 @@ import { HomeAppCarousel } from "@/components/marketing/home-app-carousel";
 
 export default function SynqAiLandingPage() {
   return (
-    <div className="min-h-screen bg-[#1b1f27] text-white selection:bg-primary/30">
-      <div className="fixed inset-0 pointer-events-none bg-[radial-gradient(circle_at_10%_0%,rgba(0,242,255,0.14),transparent_34%),radial-gradient(circle_at_95%_8%,rgba(255,255,255,0.08),transparent_30%)]" />
+    <div className="min-h-screen public-shell-bg text-white selection:bg-primary/30">
       <SiteNav />
 
       <main className="relative z-10">

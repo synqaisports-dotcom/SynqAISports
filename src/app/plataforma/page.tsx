@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/button";
 
 export default function PlataformaPage() {
   return (
-    <div className="min-h-screen bg-[#1b1f27] text-white">
-      <div className="fixed inset-0 pointer-events-none bg-[radial-gradient(circle_at_15%_0%,rgba(0,242,255,0.12),transparent_35%)]" />
+    <div className="min-h-screen public-shell-bg text-white">
       <SiteNav />
 
       <main className="relative z-10 mx-auto max-w-7xl space-y-8 px-6 py-16">
@@ -38,7 +37,7 @@ export default function PlataformaPage() {
           />
         </section>
 
-        <section className="rounded-3xl border border-white/10 bg-[#222833] p-7">
+        <section className="surface-card p-7">
           <h2 className="text-sm font-black uppercase tracking-[0.25em] text-primary/85">Entrada recomendada</h2>
           <p className="mt-3 max-w-3xl text-white/70">
             Para entrenadores que llegan por primera vez: SANDBOX COACH. Para operación estructurada: apps de club.
@@ -67,7 +66,7 @@ function InfoCard({
   icon: ComponentType<{ className?: string }>;
 }) {
   return (
-    <article className="rounded-3xl border border-white/10 bg-[#222833] p-6">
+    <article className="surface-card p-6">
       <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-primary/30 bg-primary/10">
         <Icon className="h-5 w-5 text-primary" />
       </div>

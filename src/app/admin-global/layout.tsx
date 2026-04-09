@@ -99,7 +99,7 @@ export default function AdminGlobalLayout(props: { children: React.ReactNode }) 
   return (
     <ClubAccessMatrixProvider>
       <SidebarProvider defaultOpen={true}>
-        <div className="min-h-screen bg-background flex admin-global-theme w-full relative">
+        <div className="min-h-screen backoffice-shell-bg flex admin-global-theme w-full relative">
           <DashboardSidebar />
 
           <GlobalTabTrigger />

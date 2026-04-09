@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 
 export default function ContactoPage() {
   return (
-    <div className="min-h-screen bg-[#1b1f27] text-white">
+    <div className="min-h-screen public-shell-bg text-white">
       <SiteNav />
       <main className="mx-auto max-w-7xl px-6 py-16">
         <header className="max-w-3xl space-y-3">
@@ -15,7 +15,7 @@ export default function ContactoPage() {
         </header>
 
         <section className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
-          <article className="rounded-3xl border border-white/10 bg-[#222833] p-6">
+          <article className="surface-card p-6">
             <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-primary/30 bg-primary/10">
               <Mail className="h-5 w-5 text-primary" />
             </div>
@@ -26,7 +26,7 @@ export default function ContactoPage() {
             </Button>
           </article>
 
-          <article className="rounded-3xl border border-white/10 bg-[#222833] p-6">
+          <article className="surface-card p-6">
             <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-primary/30 bg-primary/10">
               <Building2 className="h-5 w-5 text-primary" />
             </div>

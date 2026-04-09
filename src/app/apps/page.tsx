@@ -33,7 +33,7 @@ export default function AppsPage() {
   const secureApps = STORE_PRODUCTS.filter((p) => p.accessMode === "login_required");
 
   return (
-    <div className="min-h-screen bg-[#1b1f27] text-white">
+    <div className="min-h-screen public-shell-bg text-white">
       <SiteNav />
       <main className="mx-auto max-w-7xl space-y-8 px-6 py-16">
         <header className="space-y-3">
@@ -56,11 +56,11 @@ export default function AppsPage() {
     items: typeof STORE_PRODUCTS;
   }) {
     return (
-      <section className="rounded-3xl border border-white/10 bg-[#222833] p-6">
+      <section className="surface-card p-6">
         <h2 className="text-sm font-black uppercase tracking-[0.25em] text-primary/85">{title}</h2>
         <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {items.map((app) => (
-            <article key={app.slug} className="rounded-2xl border border-white/10 bg-[#2a313d] p-5">
+            <article key={app.slug} className="surface-muted p-5">
               <div className="flex items-start justify-between gap-3">
                 <h3 className="text-lg font-black uppercase italic tracking-tight">{app.name}</h3>
                 <AccessBadge mode={app.accessMode} />

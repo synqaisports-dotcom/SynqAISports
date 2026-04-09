@@ -368,7 +368,7 @@ function LoginContent() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-6 relative overflow-hidden font-body">
+    <div className="min-h-screen flex items-center justify-center public-shell-bg px-6 relative overflow-hidden font-body">
       <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
       <Suspense fallback={<div className="text-primary font-black uppercase tracking-[1em] animate-pulse italic">Sincronizando_Nodo...</div>}><LoginContent /></Suspense>
     </div>

@@ -99,7 +99,7 @@ export default function DashboardLayout(props: { children: React.ReactNode }) {
   return (
     <ClubAccessMatrixProvider>
       <SidebarProvider defaultOpen={true}>
-        <div className="min-h-screen bg-background flex w-full relative">
+        <div className="min-h-screen app-shell-bg flex w-full relative">
           <DashboardSidebar />
 
           <OperationalTabTrigger />
