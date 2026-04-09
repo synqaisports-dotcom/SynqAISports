@@ -387,7 +387,7 @@ export default function SandboxAppHomePage() {
 
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-6">
         <div className="space-y-6">
-          <div className="rounded-3xl border border-primary/20 bg-black/35 backdrop-blur-sm shadow-[0_12px_40px_rgba(0,0,0,0.35)] overflow-hidden">
+          <div className="rounded-3xl border border-white/10 bg-slate-900/40 backdrop-blur-xl shadow-[0_12px_40px_rgba(0,0,0,0.35)] overflow-hidden">
             <div className="px-5 py-4 border-b border-primary/10 bg-gradient-to-r from-primary/10 via-transparent to-transparent">
               <p className="text-[10px] font-black uppercase tracking-[0.35em] text-primary/70">Sandbox (Micro‑app)</p>
               <h2 className="mt-2 text-2xl sm:text-3xl font-black uppercase tracking-tight text-white">
@@ -396,47 +396,59 @@ export default function SandboxAppHomePage() {
             </div>
             <div className="p-4 sm:p-5">
               <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="rounded-2xl border border-white/10 bg-black/30 p-4 flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                <div className="rounded-2xl border border-white/10 bg-slate-900/40 backdrop-blur-xl p-4 flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-2xl bg-cyan-500/10 border border-white/10 flex items-center justify-center">
                     <Trophy className="h-6 w-6 text-primary" />
                   </div>
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-[0.28em] text-white/40">Victorias</p>
-                    <p className="mt-1 text-2xl font-black text-primary italic leading-none">{miniStats.wins}</p>
+                    <p className="mt-1 text-2xl font-black text-cyan-400 italic leading-none drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]">
+                      {miniStats.wins}
+                    </p>
                   </div>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-black/30 p-4 flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+                <div className="rounded-2xl border border-white/10 bg-slate-900/40 backdrop-blur-xl p-4 flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-2xl bg-cyan-500/10 border border-white/10 flex items-center justify-center">
                     <Zap className="h-6 w-6 text-white/40" />
                   </div>
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-[0.28em] text-white/40">Goles a favor</p>
-                    <p className="mt-1 text-2xl font-black text-white italic leading-none">{miniStats.goalsFor}</p>
+                    <p className="mt-1 text-2xl font-black text-cyan-400 italic leading-none drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]">
+                      {miniStats.goalsFor}
+                    </p>
                   </div>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-black/30 p-4 flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+                <div className="rounded-2xl border border-white/10 bg-slate-900/40 backdrop-blur-xl p-4 flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-2xl bg-cyan-500/10 border border-white/10 flex items-center justify-center">
                     <Activity className="h-6 w-6 text-white/40" />
                   </div>
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-[0.28em] text-white/40">Goles en contra</p>
-                    <p className="mt-1 text-2xl font-black text-white italic leading-none">{miniStats.goalsAgainst}</p>
+                    <p className="mt-1 text-2xl font-black text-cyan-400 italic leading-none drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]">
+                      {miniStats.goalsAgainst}
+                    </p>
                   </div>
                 </div>
               </div>
 
               <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
+                <div className="rounded-2xl border border-white/10 bg-slate-900/40 backdrop-blur-xl p-3">
                   <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40">Titulares</p>
-                  <p className="mt-1 text-xl font-black text-primary">{metrics.starters}</p>
+                  <p className="mt-1 text-xl font-black text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]">
+                    {metrics.starters}
+                  </p>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
+                <div className="rounded-2xl border border-white/10 bg-slate-900/40 backdrop-blur-xl p-3">
                   <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40">Ejercicios</p>
-                  <p className="mt-1 text-xl font-black text-primary">{metrics.exercises}</p>
+                  <p className="mt-1 text-xl font-black text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]">
+                    {metrics.exercises}
+                  </p>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
+                <div className="rounded-2xl border border-white/10 bg-slate-900/40 backdrop-blur-xl p-3">
                   <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40">Campo activo</p>
-                  <p className="mt-1 text-xl font-black text-primary">{metrics.activeField}</p>
+                  <p className="mt-1 text-xl font-black text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]">
+                    {metrics.activeField}
+                  </p>
                 </div>
               </div>
 

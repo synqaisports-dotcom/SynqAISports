@@ -31,7 +31,7 @@ export function SandboxAppShell(props: { children: ReactNode }) {
   const showBack = pathname !== "/sandbox/app";
 
   return (
-    <div className="min-h-[100dvh] bg-[#040812] text-white relative overflow-hidden">
+    <div className="min-h-[100dvh] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1e293b] via-[#020617] to-black text-white relative overflow-hidden">
       <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
       <div className="absolute -top-40 -right-40 h-[520px] w-[520px] rounded-full bg-primary/10 blur-3xl pointer-events-none" />
       <div className="absolute -bottom-40 -left-40 h-[520px] w-[520px] rounded-full bg-primary/10 blur-3xl pointer-events-none" />
