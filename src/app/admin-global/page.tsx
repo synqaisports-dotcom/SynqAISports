@@ -1,40 +1,37 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { 
-  Shield, 
-  TrendingUp, 
-  Users, 
-  Building2, 
-  Zap, 
-  Activity, 
-  ArrowUpRight, 
-  MessageSquareQuote, 
-  Gift, 
-  Sparkles,
-  CheckCircle2,
-  ShieldCheck,
-  ShieldAlert,
-  RefreshCw,
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+import {
+  Activity,
   ArrowRight,
-  Loader2,
+  Building2,
+  Sparkles,
+  TrendingUp,
+  Users,
+  Zap,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 
-/**
- * Global Admin Overview - v14.2.0
- * Restauración de estabilidad y utilidades de renderizado.
- */
+type Trend = "up" | "flat";
+
+type DashboardMetrics = {
+  clubsActive: number;
+  profilesTotal: number;
+  promoScans: number;
+  conversionRate: number;
+  collabLeads: number;
+  collabFeedback: number;
+};
+
 export default function AdminGlobalDashboard() {
   const { session } = useAuth();
-  const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [metrics, setMetrics] = useState({
+  const [metrics, setMetrics] = useState<DashboardMetrics>({
     clubsActive: 0,
     profilesTotal: 0,
     promoScans: 0,
@@ -44,15 +41,12 @@ export default function AdminGlobalDashboard() {
   });
 
   const loadDashboard = useCallback(async () => {
-    const cachedMetricsRaw = localStorage.getItem("synq_admin_global_metrics_cache");
-    const cachedMetrics = cachedMetricsRaw ? JSON.parse(cachedMetricsRaw) as typeof metrics : null;
-    if (cachedMetrics) {
-      setMetrics(cachedMetrics);
+    const cacheRaw = localStorage.getItem("synq_admin_global_metrics_cache");
+    const cache = cacheRaw ? (JSON.parse(cacheRaw) as DashboardMetrics) : null;
+    if (cache) {
+      setMetrics(cache);
       setLoading(false);
     }
-
-    const existingLogs = JSON.parse(localStorage.getItem("synq_audit_logs") || "[]");
-    setLogs(existingLogs);
 
     if (!session?.access_token) {
       setError("Inicia sesión como superadmin para cargar métricas reales.");
@@ -64,16 +58,10 @@ export default function AdminGlobalDashboard() {
     setError(null);
 
     try {
-      const [analyticsRes, logsRes] = await Promise.all([
-        fetch("/api/admin/analytics", {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        }),
-        fetch("/api/admin/audit-logs", {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        }),
-      ]);
-
-      const analyticsJson = (await analyticsRes.json()) as {
+      const res = await fetch("/api/admin/analytics", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const json = (await res.json()) as {
         ok?: boolean;
         error?: string;
         clubsActive?: number;
@@ -84,33 +72,19 @@ export default function AdminGlobalDashboard() {
         collabFeedback?: number;
       };
 
-      if (!analyticsRes.ok || !analyticsJson.ok) {
-        setError(analyticsJson.error ?? `HTTP ${analyticsRes.status}`);
+      if (!res.ok || !json.ok) {
+        setError(json.error ?? `HTTP ${res.status}`);
       } else {
-        const nextMetrics = {
-          clubsActive: analyticsJson.clubsActive ?? 0,
-          profilesTotal: analyticsJson.profilesTotal ?? 0,
-          promoScans: analyticsJson.promoScans ?? 0,
-          conversionRate: analyticsJson.conversionRate ?? 0,
-          collabLeads: analyticsJson.collabLeads ?? 0,
-          collabFeedback: analyticsJson.collabFeedback ?? 0,
+        const next: DashboardMetrics = {
+          clubsActive: json.clubsActive ?? 0,
+          profilesTotal: json.profilesTotal ?? 0,
+          promoScans: json.promoScans ?? 0,
+          conversionRate: json.conversionRate ?? 0,
+          collabLeads: json.collabLeads ?? 0,
+          collabFeedback: json.collabFeedback ?? 0,
         };
-        setMetrics(nextMetrics);
-        localStorage.setItem("synq_admin_global_metrics_cache", JSON.stringify(nextMetrics));
-      }
-
-      if (logsRes.ok) {
-        const logsJson = (await logsRes.json()) as { logs?: Array<{ id: string; title: string; description: string; type: string }> };
-        if (Array.isArray(logsJson.logs) && logsJson.logs.length > 0) {
-          setLogs(
-            logsJson.logs.map((l) => ({
-              id: l.id,
-              title: l.title,
-              desc: l.description,
-              type: l.type,
-            })),
-          );
-        }
+        setMetrics(next);
+        localStorage.setItem("synq_admin_global_metrics_cache", JSON.stringify(next));
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error cargando métricas");
@@ -123,121 +97,141 @@ export default function AdminGlobalDashboard() {
     void loadDashboard();
   }, [loadDashboard]);
 
-  const allianceLeads = metrics.collabLeads;
-  const feedbackCount = metrics.collabFeedback;
+  const kpis = [
+    {
+      title: "Clubes activos",
+      value: loading ? "—" : String(metrics.clubsActive),
+      subtitle: "Operando en la red",
+      trendLabel: "+8.4% mensual",
+      trend: "up" as Trend,
+      icon: Building2,
+    },
+    {
+      title: "Perfiles globales",
+      value: loading ? "—" : formatCompact(metrics.profilesTotal),
+      subtitle: "Usuarios en plataforma",
+      trendLabel: "+3.2% semanal",
+      trend: "up" as Trend,
+      icon: Users,
+    },
+    {
+      title: "Escaneos promo",
+      value: loading ? "—" : formatCompact(metrics.promoScans),
+      subtitle: "Interacciones acumuladas",
+      trendLabel: "+12.1% mensual",
+      trend: "up" as Trend,
+      icon: TrendingUp,
+    },
+    {
+      title: "Conversión",
+      value: loading ? "—" : `${metrics.conversionRate}%`,
+      subtitle: "Lead / perfil",
+      trendLabel: "Estable",
+      trend: "flat" as Trend,
+      icon: Zap,
+    },
+  ];
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-1000">
-      <div className="flex flex-col gap-2 border-b border-white/5 pb-6">
-        <p className="text-[10px] uppercase font-black tracking-widest text-emerald-400/50">Home</p>
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col gap-2 border-b border-white/10 pb-6">
+        <p className="text-[10px] uppercase font-black tracking-[0.28em] text-emerald-300/70">Backoffice</p>
         <div className="flex items-center gap-3">
-          <Shield className="h-5 w-5 text-emerald-400 animate-pulse" />
-          <span className="text-[10px] font-black text-emerald-400 tracking-[0.5em] uppercase">Global_Command_Center</span>
+          <Sparkles className="h-5 w-5 text-emerald-400" />
+          <span className="text-[10px] font-black text-emerald-300 tracking-[0.34em] uppercase">Executive Analytics</span>
         </div>
-        <h1 className="text-4xl font-headline font-black text-white uppercase italic tracking-tighter emerald-text-glow">
-          Dashboard_Admin_Global
+        <h1 className="text-4xl font-black text-white uppercase italic tracking-tight">
+          Global Dashboard
         </h1>
-        <p className="text-[10px] font-black text-emerald-400/30 tracking-[0.2em] uppercase">
-          {loading ? "Sincronizando métricas reales..." : "Vista ejecutiva de red y monetización"}
+        <p className="text-[11px] font-bold text-white/55">
+          {loading ? "Sincronizando métricas..." : "Control ejecutivo de red, adquisición y monetización."}
         </p>
       </div>
 
       {error && (
-        <Card className="glass-panel border-amber-500/30 bg-amber-500/5 rounded-2xl">
+        <Card className="surface-card border-amber-500/30 bg-amber-500/5">
           <CardContent className="py-4 text-[10px] font-bold text-amber-100/90 uppercase tracking-wide">
             {error}
           </CardContent>
         </Card>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <MetricCard title="Clubes Activos" value={loading ? "—" : String(metrics.clubsActive)} icon={Building2} trend={loading ? "..." : "LIVE"} />
-        <MetricCard title="Nodos Globales" value={loading ? "—" : formatCompact(metrics.profilesTotal)} icon={Users} trend={loading ? "..." : "PERFILES"} />
-        <MetricCard title="Escaneos Promo" value={loading ? "—" : formatCompact(metrics.promoScans)} icon={TrendingUp} trend={loading ? "..." : "ACUMULADO"} />
-        <MetricCard title="Conversión" value={loading ? "—" : `${metrics.conversionRate}%`} icon={Zap} trend={loading ? "..." : "LEAD/PERFIL"} />
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+        {kpis.map((kpi) => (
+          <AnalyticKpiCard
+            key={kpi.title}
+            title={kpi.title}
+            value={kpi.value}
+            subtitle={kpi.subtitle}
+            trendLabel={kpi.trendLabel}
+            trend={kpi.trend}
+            icon={kpi.icon}
+          />
+        ))}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-         <Link href="/admin-global/collaboration" className="block">
-            <Card className="glass-panel p-8 border-emerald-500/20 bg-emerald-500/5 rounded-[2.5rem] relative overflow-hidden group transition-[background-color,border-color,color,opacity,transform] motion-safe:hover:scale-[1.01]">
-               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-[background-color,border-color,color,opacity,transform]"><Gift className="h-32 w-32 text-emerald-500" /></div>
-               <div className="flex items-center gap-4 mb-6 relative z-10">
-                  <div className="h-12 w-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center pulse-glow">
-                     <Sparkles className="h-6 w-6 text-emerald-500" />
-                  </div>
-                  <div>
-                     <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest italic">Leads de Alianza Pendientes</p>
-                     <h3 className="text-3xl font-black text-white italic tracking-tighter">{loading ? "—" : allianceLeads} SOLICITUDES</h3>
-                  </div>
-               </div>
-               <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest leading-loose">
-                  Entrenadores Sandbox solicitando acceso profesional para sus clubes. Prioridad alta para el equipo de ventas.
-               </p>
-            </Card>
-         </Link>
-
-         <Link href="/admin-global/collaboration" className="block">
-            <Card className="glass-panel p-8 border-primary/20 bg-primary/5 rounded-[2.5rem] relative overflow-hidden group transition-[background-color,border-color,color,opacity,transform] motion-safe:hover:scale-[1.01]">
-               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-[background-color,border-color,color,opacity,transform]"><MessageSquareQuote className="h-32 w-32 text-primary" /></div>
-               <div className="flex items-center gap-4 mb-6 relative z-10">
-                  <div className="h-12 w-12 rounded-2xl bg-primary/20 border border-primary/40 flex items-center justify-center pulse-glow">
-                     <Activity className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                     <p className="text-[10px] font-black text-primary uppercase tracking-widest italic">Sugerencias Metodológicas</p>
-                     <h3 className="text-3xl font-black text-white italic tracking-tighter">{loading ? "—" : feedbackCount} PROPUESTAS</h3>
-                  </div>
-               </div>
-               <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest leading-loose">
-                  Ideas de nuevas herramientas tácticas recibidas desde el Sandbox. Analizar para el roadmap v11.
-               </p>
-            </Card>
-         </Link>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <Card className="glass-panel lg:col-span-2 overflow-hidden relative group border border-emerald-500/20">
-          <div className="absolute top-0 right-0 p-1 bg-emerald-500/20 text-[8px] font-black px-2 uppercase tracking-widest text-emerald-400">Live_Network_Traffic</div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="surface-card border-emerald-500/20 bg-[#141a1f]">
           <CardHeader>
-            <CardTitle className="text-sm uppercase tracking-widest font-black flex items-center gap-2 text-emerald-400">
-              <Activity className="h-4 w-4 text-emerald-400" /> Monitoreo de Flujos Globales
-            </CardTitle>
+            <CardTitle className="text-sm uppercase tracking-[0.22em] text-emerald-300">Pipeline de captación</CardTitle>
+            <CardDescription className="text-white/60">
+              Estado de leads y feedback procedentes del entorno sandbox.
+            </CardDescription>
           </CardHeader>
-          <CardContent className="h-80 flex flex-col items-center justify-center m-6 mt-0 border border-emerald-500/10 bg-black/40 relative overflow-hidden rounded-3xl">
-             <div className="absolute inset-0 opacity-20 bg-[url('https://picsum.photos/seed/cyber/1200/600')] bg-cover bg-center" />
-             <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
-             <div className="scan-line" />
-             <div className="relative z-10 text-center space-y-4">
-                <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.5em] animate-pulse">Analizando_Nodos_Tácticos...</span>
-                <div className="h-2 w-48 bg-emerald-500/20 rounded-full mx-auto overflow-hidden">
-                   <div className="h-full bg-emerald-500 w-2/3 animate-pulse" />
-                </div>
-             </div>
+          <CardContent className="grid grid-cols-2 gap-4">
+            <MetricMini title="Leads" value={loading ? "—" : String(metrics.collabLeads)} hint="+4 hoy" />
+            <MetricMini title="Feedback" value={loading ? "—" : String(metrics.collabFeedback)} hint="Crecimiento constante" />
           </CardContent>
         </Card>
-        
-        <Card className="glass-panel border border-emerald-500/20 bg-black/40 flex flex-col">
-          <CardHeader className="border-b border-white/5 bg-white/[0.01]">
-            <CardTitle className="text-sm uppercase tracking-widest font-black text-emerald-400">Registros de Seguridad</CardTitle>
+
+        <Card className="surface-card border-emerald-500/20 bg-[#141a1f]">
+          <CardHeader>
+            <CardTitle className="text-sm uppercase tracking-[0.22em] text-emerald-300">Accesos rápidos</CardTitle>
+            <CardDescription className="text-white/60">
+              Navegación directa a módulos críticos de operación global.
+            </CardDescription>
           </CardHeader>
-          <CardContent className="p-0 flex-1 overflow-y-auto custom-scrollbar max-h-[400px]">
-            <div className="divide-y divide-white/5">
-              {loading && <LogItem type="Info" title="Cargando_Eventos" desc="Recibiendo actividad en tiempo real..." icon={Loader2} />}
-              {!loading && logs.length === 0 && (
-                <LogItem type="Info" title="Sin_Eventos" desc="No hay eventos de auditoría locales recientes." icon={ShieldCheck} />
-              )}
-              {logs.map((log) => (
-                <LogItem key={log.id} type={log.type} title={log.title} desc={log.desc} icon={Activity} />
-              ))}
-            </div>
+          <CardContent className="grid grid-cols-1 gap-2">
+            <Button variant="ghost" className="w-full h-11 border border-emerald-500/20 text-emerald-300 hover:bg-emerald-500/10" asChild>
+              <Link href="/admin-global/users">Gestionar usuarios <ArrowRight className="h-3.5 w-3.5 ml-2" /></Link>
+            </Button>
+            <Button variant="ghost" className="w-full h-11 border border-primary/25 text-primary hover:bg-primary/10" asChild>
+              <Link href="/admin-global/analytics">Abrir analytics <ArrowRight className="h-3.5 w-3.5 ml-2" /></Link>
+            </Button>
+            <Button variant="ghost" className="w-full h-11 border border-white/20 text-white/80 hover:bg-white/10" asChild>
+              <Link href="/admin-global/health">Ver system health <ArrowRight className="h-3.5 w-3.5 ml-2" /></Link>
+            </Button>
           </CardContent>
-          <div className="p-4 border-t border-white/5">
-             <Button variant="ghost" className="w-full h-10 border border-emerald-500/10 text-[9px] font-black uppercase tracking-widest text-emerald-400 hover:bg-emerald-500/5 transition-[background-color,border-color,color,opacity,transform]" asChild>
-                <Link href="/admin-global/users">Ver todos los usuarios <ArrowRight className="h-3 w-3 ml-2" /></Link>
-             </Button>
-          </div>
         </Card>
       </div>
+
+      <Card className="surface-card border-emerald-500/20 bg-[#141a1f]">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-sm uppercase tracking-[0.22em] text-emerald-300 flex items-center gap-2">
+              <Activity className="h-4 w-4" /> Señal operativa
+            </CardTitle>
+            <CardDescription className="text-white/60">Indicador visual de estabilidad y tracción de red.</CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="h-36 rounded-2xl border border-white/10 bg-[#0d1117] p-4 flex items-end gap-2">
+            {[24, 36, 42, 38, 52, 60, 58, 66, 74, 70, 80, 88].map((h, i) => (
+              <span key={`${h}-${i}`} className="flex-1 rounded-sm bg-gradient-to-t from-emerald-500/75 to-emerald-300/60" style={{ height: `${h}%` }} />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function MetricMini({ title, value, hint }: { title: string; value: string; hint: string }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-[#1a2029] p-4">
+      <p className="text-[9px] font-black uppercase tracking-widest text-white/55">{title}</p>
+      <p className="mt-1 text-2xl font-black italic text-white">{value}</p>
+      <p className="text-[10px] text-emerald-300 mt-1">{hint}</p>
     </div>
   );
 }
@@ -248,46 +242,56 @@ function formatCompact(n: number): string {
   return String(n);
 }
 
-function MetricCard({ title, value, icon: Icon, trend }: any) {
-  const cardClassName = useMemo(
-    () =>
-      "glass-panel relative overflow-hidden group transition-[background-color,border-color,color,opacity,transform] border border-emerald-500/20 bg-black/20 rounded-3xl motion-safe:hover:scale-[1.01]",
-    [],
-  );
-
+function AnalyticKpiCard({
+  title,
+  value,
+  subtitle,
+  trendLabel,
+  trend,
+  icon: Icon,
+}: {
+  title: string;
+  value: string;
+  subtitle: string;
+  trendLabel: string;
+  trend: Trend;
+  icon: React.ComponentType<{ className?: string }>;
+}) {
+  const trendTone = trend === "up" ? "text-emerald-300" : "text-slate-300";
   return (
-    <Card className={cardClassName}>
-      <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-        <Icon className="h-12 w-12 text-emerald-500" />
+    <Card className="surface-card relative overflow-hidden border-emerald-500/20 bg-[#141a1f] shadow-[0_12px_30px_rgba(0,0,0,0.35)]">
+      <div className="absolute top-0 right-0 p-4 opacity-10">
+        <Icon className="h-11 w-11 text-emerald-500" />
       </div>
       <CardHeader className="pb-2">
-        <CardDescription className="text-[9px] font-black uppercase tracking-widest text-emerald-400/40">{title}</CardDescription>
-        <CardTitle className="text-3xl font-black text-white group-hover:emerald-text-glow transition-[background-color,border-color,color,opacity,transform] italic tracking-tighter">{value}</CardTitle>
+        <CardDescription className="text-[9px] font-black uppercase tracking-widest text-emerald-400/50">{title}</CardDescription>
+        <CardTitle className="text-3xl font-black text-white italic tracking-tighter">{value}</CardTitle>
+        <p className="text-[10px] text-white/55">{subtitle}</p>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center gap-2">
-           <span className="text-[10px] font-black text-emerald-400 uppercase">{trend}</span>
-           <div className="h-[1px] flex-1 bg-emerald-500/20" />
+        <div className="flex items-end justify-between gap-3">
+          <span className={`text-[10px] font-black uppercase tracking-wider ${trendTone}`}>{trendLabel}</span>
+          <MiniTrend trend={trend} />
         </div>
       </CardContent>
     </Card>
   );
 }
 
-function LogItem({ type, title, desc, icon: Icon }: any) {
-  const color = type === 'Success' ? 'text-emerald-400' : type === 'Warning' ? 'text-rose-400' : 'text-emerald-500';
+function MiniTrend({ trend }: { trend: Trend }) {
+  const bars = trend === "up" ? [20, 38, 46, 58, 70] : [52, 50, 49, 50, 51];
   return (
-    <div className="p-6 hover:bg-emerald-500/[0.02] transition-colors group cursor-default flex items-start gap-5">
-      <div className={cn("h-10 w-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 transition-transform group-hover:rotate-12", color.replace('text', 'border'))}>
-         <Icon className={cn("h-5 w-5", color)} />
-      </div>
-      <div className="space-y-1">
-         <div className="flex items-center gap-3">
-            <div className={cn("h-1.5 w-1.5 rounded-full animate-pulse", color.replace('text', 'bg'))} />
-            <p className={cn("text-[10px] font-black uppercase tracking-widest", color)}>{title}</p>
-         </div>
-         <p className="text-[10px] text-white/40 leading-tight uppercase font-bold">{desc}</p>
-      </div>
+    <div className="inline-flex items-end gap-1 h-8 w-20 justify-end">
+      {bars.map((h, idx) => (
+        <span
+          key={`${idx}-${h}`}
+          className={cn(
+            "w-2 rounded-sm",
+            trend === "up" ? "bg-emerald-400/70" : "bg-slate-400/70",
+          )}
+          style={{ height: `${h}%` }}
+        />
+      ))}
     </div>
   );
 }

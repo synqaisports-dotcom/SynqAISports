@@ -323,6 +323,35 @@ export interface Database {
         Update: DbUpdate<{ submission_type: 'feedback' | 'lead' }>;
         Relationships: [];
       };
+      ad_events_queue: {
+        Row: DbRow<{
+          id: string;
+          event_id: string;
+          event_type: string;
+          event_ts: string;
+          metadata: Record<string, unknown>;
+          app: string;
+          ingested_at: string;
+        }>;
+        Insert: DbInsert<{
+          id?: string;
+          event_id: string;
+          event_type: string;
+          event_ts: string;
+          metadata?: Record<string, unknown>;
+          app?: string;
+          ingested_at?: string;
+        }>;
+        Update: DbUpdate<{
+          event_id: string;
+          event_type: string;
+          event_ts: string;
+          metadata: Record<string, unknown>;
+          app: string;
+          ingested_at: string;
+        }>;
+        Relationships: [];
+      };
       synq_roles: {
         Row: DbRow<{
           key: string;
