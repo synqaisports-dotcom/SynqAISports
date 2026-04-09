@@ -148,7 +148,7 @@
   background:
     radial-gradient(circle at 8% 0%, rgba(0, 242, 255, 0.12), transparent 34%),
     radial-gradient(circle at 95% 10%, rgba(255, 255, 255, 0.06), transparent 30%),
-    #1b1f27;
+    linear-gradient(to bottom right, #030712 0%, #000000 52%, #030712 100%);
 }
 
 .backoffice-shell-bg {

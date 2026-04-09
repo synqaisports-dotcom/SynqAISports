@@ -1,17 +1,23 @@
 import Link from "next/link";
-import { ArrowRight, CirclePlay, LayoutGrid, Layers, Mail, WalletCards } from "lucide-react";
+import {
+  Activity,
+  ArrowRight,
+  CirclePlay,
+  LayoutGrid,
+  ShieldCheck,
+  Watch,
+} from "lucide-react";
 import type { ComponentType } from "react";
 import { Button } from "@/components/ui/button";
 import { SiteNav } from "@/components/marketing/site-nav";
-import { HomeAppCarousel } from "@/components/marketing/home-app-carousel";
 
 export default function SynqAiLandingPage() {
   return (
-    <div className="min-h-screen public-shell-bg text-white selection:bg-primary/30">
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-black to-gray-950 text-white selection:bg-primary/30">
       <SiteNav />
 
       <main className="relative z-10">
-        <section className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-8 px-6 pb-16 pt-20 lg:grid-cols-2 md:pt-28">
+        <section className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-8 px-6 pb-14 pt-20 lg:grid-cols-2 md:pt-28">
           <div className="max-w-2xl space-y-6">
             <p className="text-[11px] font-black uppercase tracking-[0.3em] text-primary/85">Enterprise landing</p>
             <h1 className="text-5xl font-black uppercase italic tracking-tight leading-[0.95] md:text-7xl">
@@ -23,7 +29,7 @@ export default function SynqAiLandingPage() {
               de campo multideporte con enfoque profesional.
             </p>
             <div className="flex flex-wrap gap-3">
-              <Button asChild className="bg-primary text-black font-black uppercase tracking-widest text-[10px]">
+              <Button asChild className="bg-primary text-black font-black uppercase tracking-widest text-[10px] drop-shadow-[0_0_14px_rgba(34,211,238,0.6)]">
                 <Link href="/apps">
                   Explorar apps <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                 </Link>
@@ -33,8 +39,8 @@ export default function SynqAiLandingPage() {
               </Button>
             </div>
           </div>
-          <div className="surface-card p-4">
-            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#0f131a] aspect-video">
+          <div className="rounded-2xl border border-white/10 bg-black/30 p-4 backdrop-blur-md shadow-[0_18px_42px_rgba(6,182,212,0.22)] shadow-cyan-500/20">
+            <div className="relative aspect-video overflow-hidden rounded-2xl border border-white/10 bg-[#0f131a]">
               <video
                 className="h-full w-full object-cover"
                 controls
@@ -54,7 +60,49 @@ export default function SynqAiLandingPage() {
           </div>
         </section>
 
-        <HomeAppCarousel />
+        <section className="mx-auto grid max-w-7xl grid-cols-1 gap-5 px-6 pb-20 lg:grid-cols-3">
+          <article className="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800 to-slate-950 p-5 backdrop-blur-md lg:col-span-2">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/80">Canvas táctico</p>
+                <h2 className="mt-2 text-3xl font-black uppercase italic tracking-tight">CANVAS T1</h2>
+              </div>
+              <Button asChild className="bg-primary text-black font-black uppercase text-[10px] tracking-widest drop-shadow-[0_0_14px_rgba(34,211,238,0.6)]">
+                <Link href="/sandbox/board">
+                  Abrir Canvas <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                </Link>
+              </Button>
+            </div>
+            <div className="mt-5 overflow-hidden rounded-2xl border border-white/10">
+              <img
+                src="/canvas-slide-1.svg"
+                alt="Canvas táctico SynqAI"
+                className="h-[260px] w-full object-cover md:h-[360px]"
+              />
+            </div>
+          </article>
+
+          <div className="grid grid-cols-1 gap-5">
+            <MiniHubCard
+              href="/sandbox-portal?dest=/sandbox/app"
+              title="Sandbox Coach"
+              desc="Entrada abierta para entrenadores."
+              icon={ShieldCheck}
+            />
+            <MiniHubCard
+              href="/smartwatch"
+              title="Watch Link"
+              desc="Conexión y telemetría en tiempo real."
+              icon={Watch}
+            />
+            <MiniHubCard
+              href="/admin-global/analytics"
+              title="Analytics"
+              desc="Métricas y comportamiento de red."
+              icon={Activity}
+            />
+          </div>
+        </section>
 
         <section className="mx-auto grid max-w-7xl grid-cols-1 gap-5 px-6 pb-20 md:grid-cols-2 xl:grid-cols-4">
           <LandingTile
@@ -69,18 +117,8 @@ export default function SynqAiLandingPage() {
             desc="Catálogo por tipo de acceso."
             icon={LayoutGrid}
           />
-          <LandingTile
-            href="/precios"
-            title="Precios"
-            desc="Modelo comercial y planes."
-            icon={WalletCards}
-          />
-          <LandingTile
-            href="/contacto"
-            title="Contacto"
-            desc="Canal comercial y partnership."
-            icon={Mail}
-          />
+          <LandingTile href="/precios" title="Precios" desc="Modelo comercial y planes." icon={LayoutGrid} />
+          <LandingTile href="/contacto" title="Contacto" desc="Canal comercial y partnership." icon={LayoutGrid} />
         </section>
       </main>
     </div>
@@ -99,15 +137,37 @@ function LandingTile({
   icon: ComponentType<{ className?: string }>;
 }) {
   return (
-    <Link href={href} className="surface-card group p-6 transition-colors hover:border-primary/35">
+    <Link href={href} className="group rounded-2xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur-md transition-colors hover:border-primary/35">
       <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-primary/25 bg-primary/10">
-        <Icon className="h-5 w-5 text-primary" />
+        <Icon className="h-5 w-5 text-primary drop-shadow-[0_0_10px_rgba(34,211,238,0.55)]" />
       </div>
       <h2 className="mt-4 text-xl font-black uppercase italic tracking-tight text-white">{title}</h2>
       <p className="mt-2 text-sm text-white/65">{desc}</p>
       <span className="mt-4 inline-flex items-center text-[11px] font-black uppercase tracking-widest text-primary">
         Abrir <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
       </span>
+    </Link>
+  );
+}
+
+function MiniHubCard({
+  href,
+  title,
+  desc,
+  icon: Icon,
+}: {
+  href: string;
+  title: string;
+  desc: string;
+  icon: ComponentType<{ className?: string }>;
+}) {
+  return (
+    <Link href={href} className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-md transition-colors hover:border-primary/35">
+      <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-primary/25 bg-primary/10">
+        <Icon className="h-4.5 w-4.5 text-primary drop-shadow-[0_0_10px_rgba(34,211,238,0.55)]" />
+      </div>
+      <h3 className="mt-3 text-lg font-black uppercase italic tracking-tight">{title}</h3>
+      <p className="mt-1 text-sm text-white/65">{desc}</p>
     </Link>
   );
 }
