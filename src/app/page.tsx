@@ -66,7 +66,7 @@ export default function SynqAiLandingPage() {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-300 drop-shadow-[0_0_8px_rgba(0,242,255,0.5)]">Sandbox Coach</p>
-                <h2 className="mt-2 text-3xl font-black uppercase italic tracking-tight">SANDBOX COACH</h2>
+                <h2 className="mt-2 text-3xl font-black uppercase italic tracking-tight">CONTINUIDAD</h2>
               </div>
               <Button asChild className="bg-cyan-500 hover:bg-cyan-400 text-black font-black uppercase text-[10px] tracking-widest shadow-lg shadow-cyan-500/50">
                 <Link href="/sandbox/app">
