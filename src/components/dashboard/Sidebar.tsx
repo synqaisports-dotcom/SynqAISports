@@ -102,6 +102,7 @@ const navItems: NavItem[] = [
   { title: "Gestión Planes", href: "/admin-global/plans", icon: TicketPercent, category: "global" },
   { title: "Gestión Roles", href: "/admin-global/roles", icon: Fingerprint, category: "global" },
   { title: "Gen. Usuarios", href: "/admin-global/users", icon: UserPlus, category: "global" },
+  { title: "System Health", href: "/admin-global/health", icon: Activity, category: "global" },
   { title: "Analytics Global", href: "/admin-global/analytics", icon: BarChart3, category: "global" },
   { title: "Cuadro Matriz Club", href: "/admin-global/club-access-matrix", icon: LayoutGrid, category: "global" },
   
