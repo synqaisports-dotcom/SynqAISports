@@ -126,34 +126,32 @@ export default function SynqAiLandingPage() {
 
         <section
           id="plataforma"
-          className="w-full bg-gradient-to-br from-[#020617] via-[#0F172A] to-black py-24"
+          className="w-full py-24 px-6 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#0F172A] via-[#020617] to-black"
         >
-          <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-6 lg:grid-cols-2">
-            <div>
-              <p className="text-cyan-400 font-bold tracking-widest text-sm">
-                OPERACIONES DE ELITE A CUALQUIER ESCALA
+          <div className="mx-auto flex max-w-7xl flex-col items-center justify-center gap-12 lg:flex-row lg:gap-16">
+            <div className="w-full lg:w-1/2">
+              <p className="text-cyan-400 text-sm font-bold tracking-[0.2em] mb-4">
+                OPERACIONES DE ÉLITE A CUALQUIER ESCALA
               </p>
-              <h2 className="mt-4 text-5xl font-extrabold leading-tight text-white">
+              <h2 className="text-5xl font-extrabold text-white leading-tight mb-6">
                 SYNQAI SPORTS GLOBAL PLATFORM: EL ESTÁNDAR DE LA PROFESIONALIZACIÓN
               </h2>
-              <p className="text-slate-300 text-lg mt-6">
-                Centralice la captación, la metodología de cantera, el backoffice del club y el control global en una
-                única infraestructura. SynqAI Sports proporciona a los clubes de todo el mundo —desde academias
-                locales hasta canteras de primer nivel— las herramientas de software que definen a la élite europea.
+              <p className="text-slate-300 text-lg max-w-xl mb-8">
+                Centralice la captación, la metodología de cantera, el backoffice del club y el control global en una única infraestructura. SynqAI Sports proporciona a los clubes de todo el mundo las herramientas de software que definen a la élite europea.
               </p>
               <Button
                 asChild
-                className="mt-8 bg-cyan-500 shadow-cyan-500/50 shadow-lg text-black font-bold py-4 px-8 rounded-xl hover:bg-cyan-400"
+                className="bg-cyan-500 text-black font-bold py-4 px-10 rounded-xl shadow-[0_0_20px_rgba(6,182,212,0.5)] hover:scale-105 transition-all"
               >
                 <Link href="/dashboard">PROFESIONALICE SU CLUB</Link>
               </Button>
             </div>
 
-            <div className="mx-auto w-full max-w-2xl">
+            <div className="w-full lg:w-1/2 flex justify-center">
               <img
                 src="/images/imagensandbox.png"
-                alt="Terminal Sandbox operativa"
-                className="w-full h-auto shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+                alt="SynqAI Terminal Sandbox"
+                className="w-full h-auto max-w-2xl drop-shadow-[0_35px_35px_rgba(0,0,0,0.6)]"
               />
             </div>
           </div>
