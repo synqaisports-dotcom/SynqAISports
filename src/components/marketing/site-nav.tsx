@@ -17,11 +17,11 @@ export function SiteNav() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#171b22]/90 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-black/40 backdrop-blur-xl">
       <div className="mx-auto flex h-20 w-full max-w-7xl items-center justify-between px-6">
         <Link href="/" className="inline-flex items-center gap-3">
           <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-black">
-            <Zap className="h-5 w-5" />
+            <Zap className="h-5 w-5 drop-shadow-[0_0_10px_rgba(34,211,238,0.6)]" />
           </span>
           <span className="text-2xl font-black uppercase italic tracking-tight">
             Synq<span className="text-primary">AI</span>
@@ -47,10 +47,10 @@ export function SiteNav() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <Button asChild variant="outline" className="border-white/15 bg-[#262d38] text-white hover:bg-[#313948]">
+          <Button asChild variant="outline" className="border-white/15 bg-white/[0.04] text-white hover:bg-white/[0.09]">
             <Link href="/store">Store</Link>
           </Button>
-          <Button asChild className="bg-primary text-black font-black uppercase tracking-widest text-[10px]">
+          <Button asChild className="bg-primary text-black font-black uppercase tracking-widest text-[10px] shadow-[0_0_24px_rgba(34,211,238,0.45)] drop-shadow-[0_0_10px_rgba(34,211,238,0.55)] hover:brightness-110">
             <Link href="/login">Acceso</Link>
           </Button>
         </div>
