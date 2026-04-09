@@ -123,6 +123,57 @@ export default function SynqAiLandingPage() {
           <LandingTile href="/precios" title="Precios" desc="Modelo comercial y planes." icon={LayoutGrid} />
           <LandingTile href="/contacto" title="Contacto" desc="Canal comercial y partnership." icon={LayoutGrid} />
         </section>
+
+        <section
+          id="plataforma"
+          className="mx-auto mt-2 max-w-7xl rounded-3xl border border-white/10 bg-gradient-to-br from-[#020617] via-[#0b1120] to-black px-6 py-12 shadow-[0_0_40px_rgba(0,0,0,0.35)]"
+        >
+          <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
+            <div className="space-y-6">
+              <p className="text-sm font-black uppercase tracking-[0.22em] text-cyan-400 drop-shadow-[0_0_8px_rgba(0,242,255,0.5)]">
+                OPERACIONES DE ELITE A CUALQUIER ESCALA
+              </p>
+              <h2 className="text-4xl font-extrabold tracking-tight text-white md:text-5xl">
+                SYNQAI SPORTS GLOBAL PLATFORM: EL ESTÁNDAR DE LA PROFESIONALIZACIÓN
+              </h2>
+              <p className="text-base leading-relaxed text-slate-300">
+                Centralice la captación, la metodología de cantera, el backoffice del club y el control global en una
+                única infraestructura. SynqAI Sports proporciona a los clubes de todo el mundo —desde academias
+                locales hasta canteras de primer nivel— las herramientas de software que definen a la élite europea.
+                Estandarice su ADN deportivo, proteja sus activos y profesionalice cada operación con tecnología
+                diseñada para ganar.
+              </p>
+              <Button
+                asChild
+                className="bg-cyan-500 hover:bg-cyan-400 text-black font-black uppercase tracking-widest text-[10px] shadow-lg shadow-cyan-500/50"
+              >
+                <Link href="/dashboard">
+                  PROFESIONALICE SU CLUB <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                </Link>
+              </Button>
+            </div>
+
+            <div className="relative mx-auto w-full max-w-xl">
+              <div className="rounded-[2.5rem] border border-white/10 bg-[#0F172A]/80 p-4 backdrop-blur-xl shadow-xl shadow-cyan-900/40">
+                <div className="rounded-[2.1rem] border border-white/10 bg-gradient-to-b from-slate-700/35 to-slate-900/45 p-3">
+                  <div className="mb-2 flex justify-center">
+                    <span className="h-1.5 w-12 rounded-full bg-white/30" />
+                  </div>
+                  <div className="relative overflow-hidden rounded-[1.5rem] border border-white/10 bg-black/30">
+                    <iframe
+                      title="Terminal Sandbox operativa"
+                      src="https://synq-ai-sports-git-cursor-03a5cb-synqaisports-dotcoms-projects.vercel.app/sandbox/app"
+                      className="h-[380px] w-full"
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-white/10 via-transparent to-transparent opacity-45" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
     </div>
   );
@@ -165,7 +216,7 @@ function MiniHubCard({
   icon: ComponentType<{ className?: string }>;
 }) {
   return (
-    <Link href={href} className="rounded-2xl border border-white/10 bg-[#0F172A]/80 p-5 backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.5)] transition-colors hover:border-primary/35">
+    <Link href={href} className="rounded-2xl border border-white/10 bg-[#0F172A]/80 p-5 backdrop-blur-xl shadow-xl shadow-cyan-900/40 transition-colors hover:border-primary/35">
       <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-cyan-400/35 bg-cyan-500/10">
         <Icon className="h-4.5 w-4.5 text-cyan-300 drop-shadow-[0_0_8px_rgba(0,242,255,0.5)]" />
       </div>
