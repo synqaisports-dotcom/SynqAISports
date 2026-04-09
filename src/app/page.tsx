@@ -74,11 +74,13 @@ export default function SynqAiLandingPage() {
                 </Link>
               </Button>
             </div>
-            <div className="mt-5 overflow-hidden rounded-2xl border border-white/10">
-              <img
-                src="/canvas-slide-1.svg"
-                alt="Canvas táctico SynqAI"
-                className="h-[260px] w-full object-cover md:h-[360px]"
+            <div className="mt-5 overflow-hidden rounded-2xl border border-white/10 bg-black/30">
+              <iframe
+                title="Canvas táctico T1 en vivo"
+                src="https://synq-ai-sports-git-cursor-03a5cb-synqaisports-dotcoms-projects.vercel.app/sandbox/app/board/match?source=sandbox&matchId=1775739556877"
+                className="h-[260px] w-full md:h-[360px]"
+                loading="lazy"
+                referrerPolicy="no-referrer"
               />
             </div>
           </article>
