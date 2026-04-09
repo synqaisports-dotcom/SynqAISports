@@ -4,6 +4,7 @@ import {
   ArrowRight,
   CirclePlay,
   LayoutGrid,
+  Layers,
   ShieldCheck,
   Watch,
 } from "lucide-react";
