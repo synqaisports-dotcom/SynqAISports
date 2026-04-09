@@ -160,12 +160,10 @@ export default function SynqAiLandingPage() {
                     <span className="h-1.5 w-12 rounded-full bg-white/30" />
                   </div>
                   <div className="relative overflow-hidden rounded-[1.5rem] border border-white/10 bg-black/30">
-                    <iframe
-                      title="Terminal Sandbox operativa"
-                      src="https://synq-ai-sports-git-cursor-03a5cb-synqaisports-dotcoms-projects.vercel.app/sandbox/app"
-                      className="h-[380px] w-full"
-                      loading="lazy"
-                      referrerPolicy="no-referrer"
+                    <img
+                      src="/canvas-slide-1.svg"
+                      alt="Terminal Sandbox operativa"
+                      className="h-[380px] w-full object-cover"
                     />
                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-white/10 via-transparent to-transparent opacity-45" />
                   </div>
