@@ -14,7 +14,7 @@ import { SiteNav } from "@/components/marketing/site-nav";
 
 export default function SynqAiLandingPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#020617] via-black to-gray-950 text-white selection:bg-primary/30">
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1e293b] via-[#020617] to-black text-white selection:bg-primary/30">
       <SiteNav />
 
       <main className="relative z-10">
@@ -40,8 +40,8 @@ export default function SynqAiLandingPage() {
               </Button>
             </div>
           </div>
-          <div className="rounded-2xl border border-white/20 bg-[#0F172A]/80 p-4 backdrop-blur-md shadow-[0_0_15px_rgba(0,0,0,0.5)]">
-            <div className="relative aspect-video overflow-hidden rounded-2xl border border-white/20 bg-[#0F172A]/80">
+          <div className="rounded-2xl border border-white/10 bg-[#0F172A]/80 p-4 backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.5)]">
+            <div className="relative aspect-video overflow-hidden rounded-2xl border border-white/10 bg-[#0F172A]/80 backdrop-blur-2xl">
               <video
                 className="h-full w-full object-cover"
                 controls
@@ -62,19 +62,19 @@ export default function SynqAiLandingPage() {
         </section>
 
         <section className="mx-auto grid max-w-7xl grid-cols-1 gap-5 px-6 pb-20 lg:grid-cols-3">
-          <article className="rounded-2xl border border-white/20 bg-[#0F172A]/80 p-5 backdrop-blur-md shadow-[0_0_20px_rgba(0,242,255,0.15)] lg:col-span-2">
+          <article className="rounded-2xl border border-white/10 bg-[#0F172A]/80 p-5 backdrop-blur-2xl shadow-[0_0_20px_rgba(0,242,255,0.15)] lg:col-span-2">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-300 drop-shadow-[0_0_8px_rgba(0,242,255,0.5)]">Canvas táctico</p>
                 <h2 className="mt-2 text-3xl font-black uppercase italic tracking-tight">CANVAS T1</h2>
               </div>
               <Button asChild className="bg-cyan-500 hover:bg-cyan-400 text-black font-black uppercase text-[10px] tracking-widest shadow-lg shadow-cyan-500/50">
-                <Link href="/sandbox/board">
-                  Abrir Canvas <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                <Link href="/sandbox/app">
+                  Ir a Sandbox Coach <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                 </Link>
               </Button>
             </div>
-            <div className="mt-5 overflow-hidden rounded-2xl border border-white/20 bg-[#0F172A]/80 backdrop-blur-md shadow-[0_0_20px_rgba(0,242,255,0.15)]">
+            <div className="mt-5 overflow-hidden rounded-2xl border border-white/10 bg-[#0F172A]/80 backdrop-blur-2xl shadow-[0_0_20px_rgba(0,242,255,0.15)]">
               <iframe
                 title="Canvas táctico T1 en vivo"
                 src="https://synq-ai-sports-git-cursor-03a5cb-synqaisports-dotcoms-projects.vercel.app/sandbox/app/board/match?source=sandbox&matchId=1775739556877"
@@ -140,7 +140,7 @@ function LandingTile({
   icon: ComponentType<{ className?: string }>;
 }) {
   return (
-    <Link href={href} className="group rounded-2xl border border-white/20 bg-[#0F172A]/80 p-6 backdrop-blur-md shadow-[0_0_15px_rgba(0,0,0,0.5)] transition-colors hover:border-primary/35">
+    <Link href={href} className="group rounded-2xl border border-white/10 bg-[#0F172A]/80 p-6 backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.5)] transition-colors hover:border-primary/35">
       <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-cyan-400/35 bg-cyan-500/10">
         <Icon className="h-5 w-5 text-cyan-300 drop-shadow-[0_0_8px_rgba(0,242,255,0.5)]" />
       </div>
@@ -165,7 +165,7 @@ function MiniHubCard({
   icon: ComponentType<{ className?: string }>;
 }) {
   return (
-    <Link href={href} className="rounded-2xl border border-white/20 bg-[#0F172A]/80 p-5 backdrop-blur-md shadow-[0_0_15px_rgba(0,0,0,0.5)] transition-colors hover:border-primary/35">
+    <Link href={href} className="rounded-2xl border border-white/10 bg-[#0F172A]/80 p-5 backdrop-blur-2xl shadow-[0_0_15px_rgba(0,0,0,0.5)] transition-colors hover:border-primary/35">
       <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-cyan-400/35 bg-cyan-500/10">
         <Icon className="h-4.5 w-4.5 text-cyan-300 drop-shadow-[0_0_8px_rgba(0,242,255,0.5)]" />
       </div>
