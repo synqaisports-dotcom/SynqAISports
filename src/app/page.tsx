@@ -3,6 +3,7 @@ import { ArrowRight, LayoutGrid, Layers, Mail, WalletCards } from "lucide-react"
 import type { ComponentType } from "react";
 import { Button } from "@/components/ui/button";
 import { SiteNav } from "@/components/marketing/site-nav";
+import { HomeAppCarousel } from "@/components/marketing/home-app-carousel";
 
 export default function SynqAiLandingPage() {
   return (
@@ -34,6 +35,8 @@ export default function SynqAiLandingPage() {
             </div>
           </div>
         </section>
+
+        <HomeAppCarousel />
 
         <section className="mx-auto grid max-w-7xl grid-cols-1 gap-5 px-6 pb-20 md:grid-cols-2 xl:grid-cols-4">
           <LandingTile
