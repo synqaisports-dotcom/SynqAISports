@@ -18,7 +18,7 @@ export const STORE_PRODUCTS: StoreProduct[] = [
     shortDescription: "Pizarra ligera multideporte para entrenadores (sin login).",
     longDescription:
       "Micro-app abierta de entrada para entrenadores. Incluye pizarra táctica, equipo, tareas limitadas, agenda y partidos en modo local-first con cola de anuncios offline, soporte multiidioma y conexión con Smartwatch Link para diferenciación operativa.",
-    href: "/sandbox/coach",
+    href: "/sandbox-portal?dest=/sandbox/app",
     category: "terminal",
     accessMode: "open",
     tags: ["multideporte", "sin-login", "publicidad", "watch-link", "local-first"],

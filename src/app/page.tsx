@@ -65,7 +65,7 @@ export default function SynqAiLandingPage() {
   }, []);
 
   const externalAccessNodes = [
-    { label: "SANDBOX COACH", icon: LayoutGrid, href: "/sandbox/coach", desc: "App abierta para entrenadores" },
+    { label: "SANDBOX COACH", icon: LayoutGrid, href: "/sandbox-portal?dest=/sandbox/app", desc: "App abierta para entrenadores" },
     { label: "Portal Tutores", icon: UserCircle, href: "/tutor", desc: "Acceso familias" },
     { label: "Smartwatch Link", icon: Watch, href: "/smartwatch", desc: "Telemetría en vivo" },
     { label: "SynqAI Store", icon: Download, href: "/store", desc: "Catálogo de micro-apps" },
@@ -288,7 +288,7 @@ export default function SynqAiLandingPage() {
                 <QRAppCard 
                   title="Sandbox Coach" 
                   desc="Tu equipo local. Pizarras, sesiones y partidos sin cuotas." 
-                  url={baseUrl ? `${baseUrl}/sandbox/coach` : ""} 
+                  url={baseUrl ? `${baseUrl}/sandbox-portal?dest=/sandbox/app` : ""} 
                   icon={LayoutGrid}
                   qrColor="#3b82f6"
                 />

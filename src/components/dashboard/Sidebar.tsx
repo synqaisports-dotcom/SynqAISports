@@ -138,7 +138,7 @@ const navItems: NavItem[] = [
   { title: "Mesa Control", href: "/dashboard/tournaments/control", icon: ShieldCheck, category: "tournaments", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
   
   // TERMINALES_ACCESO - NODO SANDBOX (Categoría User)
-  { title: "Sandbox Coach", href: "/sandbox/coach", icon: ShieldCheck, category: "user" },
+  { title: "Sandbox", href: "/sandbox-portal?dest=/sandbox/app", icon: ShieldCheck, category: "user" },
   { title: "Live Fields TV", href: "/live-fields", icon: Monitor, category: "user" },
   { title: "Config Watch", href: "/dashboard/watch-config", icon: Watch, category: "user" },
   { title: "Modo Continuidad", href: "/dashboard/mobile-continuity", icon: Smartphone, category: "user" },
