@@ -67,6 +67,7 @@ export default function SynqAiLandingPage() {
     { label: "Terminal Sandbox", icon: LayoutGrid, href: "/dashboard/promo/team", desc: "Nodo personal gratis" },
     { label: "Portal Tutores", icon: UserCircle, href: "/tutor", desc: "Acceso familias" },
     { label: "Smartwatch Link", icon: Watch, href: "/smartwatch", desc: "Telemetría en vivo" },
+    { label: "SynqAI Store", icon: Download, href: "/store", desc: "Catálogo de micro-apps" },
   ];
 
   const menuItems = [
