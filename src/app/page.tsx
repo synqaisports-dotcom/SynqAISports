@@ -133,7 +133,7 @@ export default function SynqAiLandingPage() {
               <p className="text-sm font-black uppercase tracking-[0.22em] text-cyan-400 drop-shadow-[0_0_8px_rgba(0,242,255,0.5)]">
                 OPERACIONES DE ELITE A CUALQUIER ESCALA
               </p>
-              <h2 className="text-4xl font-extrabold tracking-tight text-white md:text-5xl">
+              <h2 className="text-4xl font-extrabold tracking-tight text-cyan-300 drop-shadow-[0_0_8px_rgba(0,242,255,0.5)] md:text-5xl">
                 SYNQAI SPORTS GLOBAL PLATFORM: EL ESTÁNDAR DE LA PROFESIONALIZACIÓN
               </h2>
               <p className="text-base leading-relaxed text-slate-300">
@@ -161,7 +161,7 @@ export default function SynqAiLandingPage() {
                   </div>
                   <div className="relative overflow-hidden rounded-[1.5rem] border border-white/10 bg-black/30">
                     <img
-                      src="/canvas-slide-1.svg"
+                      src="/images/imagensandbox.png"
                       alt="Terminal Sandbox operativa"
                       className="h-[380px] w-full object-cover"
                     />
