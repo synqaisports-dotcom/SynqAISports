@@ -9,9 +9,9 @@ import { STORE_PRODUCTS } from "@/lib/store-catalog";
 
 export default function StorePage() {
   return (
-    <main className="min-h-screen bg-background text-white p-6 md:p-10">
+    <main className="min-h-screen public-shell-bg text-white p-6 md:p-10">
       <div className="max-w-7xl mx-auto space-y-8">
-        <header className="border-b border-white/5 pb-6">
+        <header className="border-b border-white/10 pb-6">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/20 bg-primary/5">
             <Sparkles className="h-3.5 w-3.5 text-primary" />
             <span className="text-[10px] font-black uppercase tracking-[0.35em] text-primary">SynqAI Store</span>
@@ -29,7 +29,7 @@ export default function StorePage() {
             const requiresLogin = app.accessMode === "login_required";
             const optionalLogin = app.accessMode === "optional_login";
             return (
-              <Card key={app.slug} className="glass-panel border-primary/20 bg-black/30 rounded-3xl overflow-hidden">
+              <Card key={app.slug} className="surface-card border-primary/25 bg-[#222a35] rounded-3xl overflow-hidden shadow-[0_12px_30px_rgba(0,0,0,0.35)]">
                 <CardHeader className="space-y-4">
                   <div className="flex items-center justify-between gap-3">
                     <CardTitle className="text-xl font-black italic uppercase tracking-tight">{app.name}</CardTitle>
@@ -68,7 +68,7 @@ export default function StorePage() {
                     <Button
                       asChild
                       variant="outline"
-                      className="h-11 rounded-2xl border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest bg-black/30"
+                      className="h-11 rounded-2xl border-white/15 text-white font-black uppercase text-[10px] tracking-widest bg-[#2b3342] hover:bg-[#353f52]"
                     >
                       <Link href={app.href}>
                         Abrir <ArrowRight className="h-3.5 w-3.5 ml-1" />
