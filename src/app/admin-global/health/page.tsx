@@ -23,6 +23,8 @@ import { useAuth } from "@/lib/auth-context";
 
 type HealthJson = {
   ok?: boolean;
+  error?: string;
+  status?: number;
   checks?: Array<{
     id: string;
     label: string;
@@ -88,7 +90,28 @@ export default function AdminGlobalHealthPage() {
       const res = await fetch("/api/admin/health", { headers: { Authorization: `Bearer ${session.access_token}` } });
       const j = (await res.json().catch(() => ({}))) as HealthJson & { error?: string };
       if (!res.ok) {
+        // Mostramos error pero seguimos pintando checks si vienen (fail-soft UX).
         setError(j?.error ?? `HTTP ${res.status}`);
+      }
+      // Si por cualquier motivo la API no trae checks, generamos un check único
+      // para evitar el estado infinito de "Cargando checks…".
+      if (!Array.isArray(j.checks) || j.checks.length === 0) {
+        setJson({
+          ok: false,
+          error: j.error ?? undefined,
+          status: (j as any).status ?? res.status,
+          checks: [
+            {
+              id: "health_payload_invalid",
+              label: "Payload Health",
+              ok: false,
+              severity: "crit",
+              detail: "La API no devolvió `checks[]`.",
+              hint: "Revisa /api/admin/health en servidor (deploy/env).",
+            },
+          ],
+        });
+        return;
       }
       setJson(j);
     } catch (e) {
