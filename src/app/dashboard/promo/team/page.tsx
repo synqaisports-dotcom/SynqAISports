@@ -1,20 +1,17 @@
 "use client";
 
 import { useState, useEffect, useRef, type ReactNode } from "react";
+import Script from "next/script";
 import {
   Users,
   Save,
   LayoutGrid,
-  ArrowRight,
-  Info,
   Sparkles,
-  Zap,
   Plus,
   Dumbbell,
   Globe,
   MapPin,
   Trophy,
-  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,8 +25,11 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
 import { FORMATIONS_DATA } from "@/lib/formations";
+import { synqSync } from "@/lib/sync-service";
+
+const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT ?? "";
+const ADSENSE_SLOT_H = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_SLOT_HORIZONTAL ?? "";
 
 type TeamType = "f11" | "f7" | "futsal";
 
@@ -103,6 +103,119 @@ function safeParseJson<T>(raw: string | null, fallback: T): T {
   } catch {
     return fallback;
   }
+}
+
+function TeamPageAdsPanel() {
+  const adRef = useRef<HTMLDivElement | null>(null);
+  const refreshIntervalRef = useRef<number | null>(null);
+
+  const pushAd = () => {
+    if (!ADSENSE_CLIENT || !ADSENSE_SLOT_H) return;
+    const w = window as unknown as { adsbygoogle?: unknown[] };
+    if (!w.adsbygoogle) return;
+    try {
+      w.adsbygoogle.push({});
+      synqSync.trackEvent("ad_impression", {
+        app_slug: "sandbox-coach",
+        source: "sandbox",
+        placement: "sandbox_team_page_horizontal",
+        format: "horizontal",
+      });
+    } catch {
+      /* noop */
+    }
+  };
+
+  useEffect(() => {
+    if (!ADSENSE_CLIENT || !ADSENSE_SLOT_H) return;
+    if (!adRef.current) return;
+
+    let tries = 0;
+    const maxTries = 40;
+    const t = window.setInterval(() => {
+      tries += 1;
+      const w = window as unknown as { adsbygoogle?: unknown[] };
+      if (!w.adsbygoogle) {
+        if (tries >= maxTries) window.clearInterval(t);
+        return;
+      }
+      pushAd();
+      window.clearInterval(t);
+    }, 150);
+
+    refreshIntervalRef.current = window.setInterval(() => {
+      if (!adRef.current) return;
+      adRef.current.innerHTML = "";
+      const ins = document.createElement("ins");
+      ins.className = "adsbygoogle";
+      ins.style.display = "block";
+      ins.setAttribute("data-ad-client", ADSENSE_CLIENT);
+      ins.setAttribute("data-ad-slot", ADSENSE_SLOT_H);
+      ins.setAttribute("data-ad-format", "horizontal");
+      ins.setAttribute("data-full-width-responsive", "true");
+      adRef.current.appendChild(ins);
+      pushAd();
+    }, 25000);
+
+    return () => {
+      window.clearInterval(t);
+      if (refreshIntervalRef.current) window.clearInterval(refreshIntervalRef.current);
+    };
+  }, []);
+
+  const isConfigured = !!(ADSENSE_CLIENT && ADSENSE_SLOT_H);
+
+  return (
+    <HubPanel>
+      <SectionBar
+        title="Monetización"
+        right={<Sparkles className="h-4 w-4 text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.55)]" />}
+      />
+      <div className="p-4">
+        {isConfigured ? (
+          <Script
+            id="sandbox-team-page-adsense"
+            strategy="afterInteractive"
+            crossOrigin="anonymous"
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${encodeURIComponent(ADSENSE_CLIENT)}`}
+          />
+        ) : null}
+        <div
+          className={cn(
+            "min-h-[120px] w-full overflow-hidden border border-white/10 bg-black/35",
+            !isConfigured && "border-dashed",
+          )}
+        >
+          {isConfigured ? (
+            <div
+              ref={adRef}
+              onClick={() =>
+                synqSync.trackEvent("ad_click", {
+                  app_slug: "sandbox-coach",
+                  source: "sandbox",
+                  placement: "sandbox_team_page_horizontal",
+                  format: "horizontal",
+                })
+              }
+            >
+              <ins
+                className="adsbygoogle"
+                style={{ display: "block" }}
+                data-ad-client={ADSENSE_CLIENT}
+                data-ad-slot={ADSENSE_SLOT_H}
+                data-ad-format="horizontal"
+                data-full-width-responsive="true"
+              />
+            </div>
+          ) : (
+            <div className="min-h-[120px] w-full flex items-center justify-center px-4 text-center text-[9px] font-black uppercase tracking-[0.2em] text-cyan-200/70">
+              Slot demo Adsense · NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT / SLOT
+            </div>
+          )}
+        </div>
+      </div>
+    </HubPanel>
+  );
 }
 
 export default function PromoTeamPage() {
@@ -277,8 +390,8 @@ export default function PromoTeamPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 lg:gap-8">
-        <div className="xl:col-span-8 space-y-8">
+      <div className="space-y-8 max-w-5xl">
+        <div className="space-y-8">
           <HubPanel>
             <SectionBar title="Datos del equipo" />
             <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -332,6 +445,8 @@ export default function PromoTeamPage() {
               </div>
             </div>
           </HubPanel>
+
+          <TeamPageAdsPanel />
 
           <HubPanel>
             <SectionBar title="Once titular" />
@@ -411,66 +526,6 @@ export default function PromoTeamPage() {
             </div>
           </HubPanel>
         </div>
-
-        <aside className="xl:col-span-4 space-y-6">
-          {/* SINCRO PIZARRA — estilo monetización */}
-          <div
-            className={cn(
-              "rounded-none border border-white/10 bg-slate-900/60 backdrop-blur-md overflow-hidden",
-              PANEL_OUTER,
-            )}
-          >
-            <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-white/10 bg-gradient-to-r from-cyan-500/10 via-transparent to-transparent">
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-200/85">Sincro pizarra</p>
-              <RefreshCw className="h-4 w-4 text-cyan-400 animate-spin drop-shadow-[0_0_12px_rgba(34,211,238,0.85)] [animation-duration:2.8s]" />
-            </div>
-            <div className="p-5 space-y-4">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
-                Los nombres y atributos de este nodo se reflejan en la pizarra de partido y en el flujo táctico del sandbox.
-              </p>
-              <div className="p-4 rounded-none border border-white/10 bg-black/35 backdrop-blur-md space-y-3">
-                <div className="flex items-center gap-2">
-                  <Info className="h-4 w-4 text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]" />
-                  <span className="text-[9px] font-black uppercase tracking-widest text-cyan-200/90">Cepo local</span>
-                </div>
-                <p className="text-[9px] text-slate-500 uppercase font-bold leading-relaxed">
-                  Persistencia en navegador. Sin envío a servidor en modo sandbox promocional.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* VENTAJA ELITE */}
-          <div
-            className={cn(
-              "rounded-none border border-white/10 bg-slate-900/60 backdrop-blur-md overflow-hidden",
-              PANEL_OUTER,
-            )}
-          >
-            <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-white/10 bg-gradient-to-r from-cyan-500/10 via-transparent to-transparent">
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-200/85">Ventaja élite club</p>
-              <Sparkles className="h-4 w-4 text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.6)]" />
-            </div>
-            <div className="p-5 space-y-5">
-              <div className="flex items-center gap-2">
-                <Zap className="h-5 w-5 text-cyan-400 animate-pulse drop-shadow-[0_0_12px_rgba(34,211,238,0.7)]" />
-                <h4 className="text-xs font-black uppercase tracking-tight text-white">Escala profesional</h4>
-              </div>
-              <p className="text-[10px] text-cyan-200/55 font-bold uppercase tracking-widest leading-relaxed">
-                Importación masiva, historial y telemetría en planes club. Operación unificada fuera del sandbox.
-              </p>
-              <Button
-                className="w-full h-12 rounded-none bg-cyan-500 text-black font-black uppercase text-[10px] tracking-widest border-0 shadow-[0_0_28px_rgba(6,182,212,0.65)] hover:bg-cyan-400"
-                asChild
-              >
-                <Link href="/login">
-                  Actualizar a pro
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </aside>
       </div>
 
       <input type="hidden" name="sportType" value="football" />
