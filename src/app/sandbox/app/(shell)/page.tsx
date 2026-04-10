@@ -8,6 +8,7 @@ import {
   CalendarDays,
   ChevronRight,
   ClipboardList,
+  Download,
   Gauge,
   LayoutDashboard,
   LogOut,
@@ -33,6 +34,12 @@ import { SynqAiSportsLogo } from "@/components/branding/SynqAiSportsLogo";
 import { cn } from "@/lib/utils";
 import { usePathname, useRouter } from "next/navigation";
 import { synqSync } from "@/lib/sync-service";
+import { useToast } from "@/hooks/use-toast";
+
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+};
 
 type SandboxMetrics = {
   starters: number;
@@ -238,6 +245,18 @@ function AnalysisBarsChart({ exercises, starters }: { exercises: number; starter
 }
 
 function OperativeBoardPanel({ matchId }: { matchId: string }) {
+  const { toast } = useToast();
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+
+  useEffect(() => {
+    const onBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e as BeforeInstallPromptEvent);
+    };
+    window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+    return () => window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+  }, []);
+
   const src = useMemo(() => {
     const q = new URLSearchParams({ source: "sandbox", embed: "1" });
     if (matchId) q.set("matchId", matchId);
@@ -262,17 +281,43 @@ function OperativeBoardPanel({ matchId }: { matchId: string }) {
           <p className="text-[8px] font-black uppercase tracking-[0.28em] text-white/45">
             Misma pizarra que /board/match · embed
           </p>
-          <Button
-            asChild
-            variant="outline"
-            className="h-8 rounded-none border-white/15 bg-slate-900/60 text-[9px] font-black uppercase tracking-widest text-cyan-200 hover:border-cyan-400/35"
-          >
-            <Link
-              href={`/sandbox/app/board/match?source=sandbox${matchId ? `&matchId=${encodeURIComponent(matchId)}` : ""}`}
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <Button
+              type="button"
+              className="h-8 rounded-none bg-cyan-500 text-black text-[9px] font-black uppercase tracking-widest shadow-[0_0_18px_rgba(6,182,212,0.65)] hover:bg-cyan-400"
+              onClick={async () => {
+                if (!installPrompt) {
+                  toast({
+                    title: "Instalar la app",
+                    description:
+                      "En móvil: menú del navegador → Añadir a la pantalla de inicio. En escritorio: icono de instalación en la barra de direcciones si el navegador lo ofrece.",
+                  });
+                  return;
+                }
+                try {
+                  await installPrompt.prompt();
+                  await installPrompt.userChoice;
+                } catch {
+                  /* noop */
+                }
+                setInstallPrompt(null);
+              }}
             >
-              Pantalla completa
-            </Link>
-          </Button>
+              <Download className="h-3.5 w-3.5 mr-1.5" />
+              Instalar app
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              className="h-8 rounded-none border-white/15 bg-slate-900/60 text-[9px] font-black uppercase tracking-widest text-cyan-200 hover:border-cyan-400/35"
+            >
+              <Link
+                href={`/sandbox/app/board/match?source=sandbox${matchId ? `&matchId=${encodeURIComponent(matchId)}` : ""}`}
+              >
+                Abrir pizarra
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
     </SurfaceCard>
@@ -694,6 +739,7 @@ export default function SandboxAppHomePage() {
           <div className="relative grid grid-cols-1 xl:grid-cols-12 gap-4 lg:gap-6">
             <div className="xl:col-span-7 space-y-4 lg:space-y-6">
               <PlayerDataChart {...miniStats} />
+              <SandboxHomeAdPanel />
             </div>
             <div className="xl:col-span-5 space-y-4 lg:space-y-6">
               <AnalysisBarsChart exercises={metrics.exercises} starters={metrics.starters} />
@@ -713,8 +759,7 @@ export default function SandboxAppHomePage() {
                   </div>
                 </div>
               </SurfaceCard>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6">
-                <SandboxHomeAdPanel />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
                 <UpcomingAgendaPanel />
                 <UpcomingMatchesPanel />
               </div>
