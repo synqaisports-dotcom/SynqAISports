@@ -29,13 +29,15 @@ export function SandboxAppShell(props: { children: ReactNode }) {
 
   const sectionTitle = useMemo(() => titleForPath(pathname), [pathname]);
   const showBack = pathname !== "/sandbox/app";
+  const isCommandHubHome = pathname === "/sandbox/app";
 
   return (
-    <div className="min-h-[100dvh] bg-[#020617] text-white relative overflow-hidden">
-      <div className="absolute inset-0 bg-grid-pattern opacity-[0.06] pointer-events-none" />
+    <div className="min-h-[100dvh] bg-[#050812] text-white relative overflow-hidden">
+      <div className="absolute inset-0 bg-grid-pattern opacity-[0.07] pointer-events-none" />
 
+      {!isCommandHubHome ? (
       <header className="sticky top-0 z-[80] px-3 sm:px-5 lg:px-6 pt-3">
-        <div className="w-full rounded-none border border-white/10 bg-slate-900/60 backdrop-blur-2xl px-3 sm:px-4 py-2.5 shadow-[0_10px_30px_rgba(0,0,0,0.45)]">
+        <div className="w-full rounded-none border border-white/10 bg-slate-900/60 backdrop-blur-2xl px-3 sm:px-4 py-2.5 shadow-[0_0_15px_rgba(6,182,212,0.1),0_10px_30px_rgba(0,0,0,0.45)]">
           <div className="flex flex-wrap items-center gap-2">
             <div className="mr-1 sm:mr-3">
               <SynqAiSportsLogo compact />
@@ -89,10 +91,16 @@ export function SandboxAppShell(props: { children: ReactNode }) {
           </div>
         </div>
       </header>
+      ) : null}
 
-      <div className="w-full px-3 sm:px-5 lg:px-6">
-        <div className="py-4 sm:py-6">
-          <div className="rounded-none border border-white/10 bg-gradient-to-b from-[#020617]/95 to-[#020617]/90 shadow-[0_20px_80px_rgba(0,0,0,0.55)] backdrop-blur-sm">
+      <div className={cn("w-full", !isCommandHubHome && "px-3 sm:px-5 lg:px-6")}>
+        <div className={cn(!isCommandHubHome && "py-4 sm:py-6")}>
+          <div
+            className={cn(
+              !isCommandHubHome &&
+                "rounded-none border border-white/10 bg-gradient-to-b from-[#050812]/98 to-[#050812]/95 shadow-[0_0_15px_rgba(6,182,212,0.08),0_20px_80px_rgba(0,0,0,0.55)] backdrop-blur-sm",
+            )}
+          >
             {props.children}
           </div>
         </div>

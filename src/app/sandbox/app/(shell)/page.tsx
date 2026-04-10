@@ -9,6 +9,7 @@ import {
   ChevronRight,
   ClipboardList,
   Gauge,
+  LayoutDashboard,
   LogOut,
   Sparkles,
   Swords,
@@ -30,7 +31,7 @@ import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { SynqAiSportsLogo } from "@/components/branding/SynqAiSportsLogo";
 import { cn } from "@/lib/utils";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { synqSync } from "@/lib/sync-service";
 
 type SandboxMetrics = {
@@ -63,11 +64,16 @@ type HomeMiniStats = {
 const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT ?? "";
 const ADSENSE_SLOT_H = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_SLOT_HORIZONTAL ?? "";
 
+/** Sombra exterior cian sutil: paneles flotando sobre el campo */
+const PANEL_OUTER =
+  "drop-shadow-[0_0_15px_rgba(6,182,212,0.1)] shadow-[0_18px_60px_rgba(0,0,0,0.5)]";
+
 function SurfaceCard({ className, children }: { className?: string; children: ReactNode }) {
   return (
     <section
       className={cn(
-        "rounded-none border border-white/10 bg-slate-900/60 backdrop-blur-2xl shadow-[0_18px_60px_rgba(0,0,0,0.5)] overflow-hidden",
+        "rounded-none border border-white/10 bg-slate-900/60 backdrop-blur-2xl overflow-hidden",
+        PANEL_OUTER,
         className,
       )}
     >
@@ -86,7 +92,7 @@ function SurfaceHeader({
   right?: ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-white/10 bg-gradient-to-r from-cyan-500/10 via-transparent to-transparent">
+    <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-white/10 bg-gradient-to-r from-cyan-500/10 via-transparent to-transparent drop-shadow-[0_0_15px_rgba(6,182,212,0.08)]">
       <div className="min-w-0">
         <p className="text-[10px] font-black uppercase tracking-[0.35em] text-cyan-300/80 truncate">{title}</p>
         {subtitle ? (
@@ -231,38 +237,74 @@ function AnalysisBarsChart({ exercises, starters }: { exercises: number; starter
   );
 }
 
+/** Posiciones tipo image_4: local (azul/cian) izquierda, visitante (rojo) derecha — números 2,3,5,6,7 y 2,3,4,6,7 */
+const BOARD_PLAYERS: { num: number; side: "home" | "away"; x: number; y: number }[] = [
+  { num: 2, side: "home", x: 16, y: 58 },
+  { num: 3, side: "home", x: 26, y: 32 },
+  { num: 5, side: "home", x: 34, y: 48 },
+  { num: 6, side: "home", x: 40, y: 72 },
+  { num: 7, side: "home", x: 28, y: 86 },
+  { num: 2, side: "away", x: 84, y: 58 },
+  { num: 3, side: "away", x: 74, y: 32 },
+  { num: 4, side: "away", x: 66, y: 48 },
+  { num: 6, side: "away", x: 60, y: 72 },
+  { num: 7, side: "away", x: 72, y: 86 },
+];
+
+function PlayerChip({ num, side, x, y }: { num: number; side: "home" | "away"; x: number; y: number }) {
+  const home = side === "home";
+  return (
+    <div
+      className={cn(
+        "absolute flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-none border font-technic text-xs font-bold tabular-nums",
+        home
+          ? "border-cyan-300/40 bg-sky-700/95 text-white shadow-[0_0_14px_rgba(34,211,238,0.5)]"
+          : "border-red-300/40 bg-red-700/95 text-white shadow-[0_0_14px_rgba(239,68,68,0.5)]",
+      )}
+      style={{ left: `${x}%`, top: `${y}%`, transform: "translate(-50%, -50%)" }}
+    >
+      {num}
+    </div>
+  );
+}
+
 function TacticalBoardFrame() {
   return (
     <SurfaceCard className="relative flex flex-col min-h-[320px] xl:min-h-[520px] h-full">
       <DigitalGrain />
-      <SurfaceHeader title="TACTICAL BOARD" subtitle="Vista previa · operación en vivo" />
-      <div className="relative flex-1 p-4 flex flex-col">
-        <div className="relative flex-1 min-h-[260px] border border-white/10 bg-slate-950/40 overflow-hidden shadow-[inset_0_0_60px_rgba(0,0,0,0.45)]">
+      <SurfaceHeader title="CONTROL TÁCTICO" subtitle="Pizarra · vista operativa" />
+      <div className="relative flex-1 p-3 sm:p-4 flex flex-col gap-3">
+        <div className="relative flex-1 min-h-[240px] sm:min-h-[280px] border border-white/10 bg-slate-950/50 overflow-hidden shadow-[inset_0_0_60px_rgba(0,0,0,0.5)]">
+          {/* Césped image_9 + grid cian fino */}
           <div
             className="absolute inset-0"
             style={{
-              backgroundColor: "#052e16",
+              backgroundColor: "#063a1f",
               backgroundImage: `
-                linear-gradient(rgba(255,255,255,0.07) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.07) 1px, transparent 1px),
-                radial-gradient(ellipse at center, rgba(34,197,94,0.25) 0%, transparent 65%)
+                linear-gradient(rgba(34,211,238,0.14) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(34,211,238,0.14) 1px, transparent 1px),
+                radial-gradient(ellipse 80% 70% at 50% 45%, rgba(16,185,129,0.35) 0%, transparent 72%),
+                linear-gradient(180deg, rgba(5,56,32,0.9) 0%, rgba(4,46,24,0.95) 100%)
               `,
-              backgroundSize: "14px 14px, 14px 14px, 100% 100%",
+              backgroundSize: "12px 12px, 12px 12px, 100% 100%, 100% 100%",
             }}
           />
-          <div className="absolute inset-4 border border-cyan-400/25 rounded-none shadow-[0_0_40px_rgba(34,211,238,0.12)]" />
-          <div className="absolute left-1/2 top-4 bottom-4 w-px bg-white/15 -translate-x-1/2" />
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-16 w-16 border border-white/25 bg-emerald-950/50 rotate-45 shadow-[0_0_24px_rgba(16,185,129,0.25)]" />
-          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-px bg-white/10" />
-          <p className="absolute bottom-3 left-4 text-[9px] font-black uppercase tracking-[0.35em] text-emerald-200/70">
-            Grid fino · césped neón
+          <div className="absolute inset-3 sm:inset-4 border border-cyan-400/30 rounded-none shadow-[0_0_28px_rgba(34,211,238,0.15)]" />
+          <div className="absolute left-1/2 top-3 bottom-3 w-px bg-cyan-200/20 -translate-x-1/2" />
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-14 w-14 sm:h-16 sm:w-16 border border-cyan-200/25 bg-emerald-950/40 rotate-45 shadow-[0_0_20px_rgba(34,211,238,0.2)]" />
+          <div className="absolute inset-x-3 sm:inset-x-4 top-1/2 -translate-y-1/2 h-px bg-cyan-200/15" />
+          {BOARD_PLAYERS.map((p, i) => (
+            <PlayerChip key={`${p.side}-${p.num}-${i}`} num={p.num} side={p.side} x={p.x} y={p.y} />
+          ))}
+          <p className="absolute bottom-2 left-3 text-[8px] font-black uppercase tracking-[0.3em] text-cyan-200/60">
+            Grid cian · césped neón
           </p>
         </div>
         <Button
           asChild
-          className="mt-4 h-14 rounded-none bg-cyan-500 text-black font-black uppercase text-xs tracking-widest shadow-[0_0_25px_rgba(6,182,212,0.8)] hover:bg-cyan-400"
+          className="h-12 sm:h-14 rounded-none bg-cyan-500 text-black font-black uppercase text-[10px] sm:text-xs tracking-widest shadow-[0_0_25px_rgba(6,182,212,0.8)] hover:bg-cyan-400"
         >
-          <Link href="/sandbox/app/board/match?source=sandbox">Entrar a la pizarra</Link>
+          <Link href="/sandbox/app/board/match?source=sandbox">Abrir pizarra completa</Link>
         </Button>
       </div>
     </SurfaceCard>
@@ -278,38 +320,51 @@ function FloatingMetric({
 }) {
   return (
     <SurfaceCard className="relative">
-      <div className="relative px-4 py-4">
-        <p className="text-[9px] font-black uppercase tracking-[0.32em] text-white/45">{label}</p>
-        <p className="mt-2 font-technic text-4xl sm:text-5xl font-bold tabular-nums text-cyan-400 leading-none drop-shadow-[0_0_14px_rgba(34,211,238,0.75)]">
-          {value}
-        </p>
+      <div className="relative px-3 py-3 sm:px-4 sm:py-4 min-h-[5.5rem]">
+        <div className="pointer-events-none absolute inset-0 bg-cyan-400/[0.07]" aria-hidden />
+        <div className="relative">
+          <p className="text-[8px] sm:text-[9px] font-black uppercase tracking-[0.28em] text-white/50">{label}</p>
+          <p className="mt-2 font-technic text-3xl sm:text-4xl lg:text-5xl font-bold tabular-nums text-cyan-400 leading-none drop-shadow-[0_0_18px_rgba(34,211,238,0.85)]">
+            {value}
+          </p>
+        </div>
       </div>
     </SurfaceCard>
   );
 }
 
-function NeonActionButton({
+function ImmersionNavLink({
   href,
   label,
   icon: Icon,
+  active,
 }: {
   href: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
+  active: boolean;
 }) {
   return (
-    <Button
-      asChild
-      className="h-16 w-full rounded-none bg-cyan-500 text-black font-black uppercase text-[11px] tracking-widest shadow-[0_0_25px_rgba(6,182,212,0.8)] hover:bg-cyan-400 justify-between px-5"
+    <Link
+      href={href}
+      className={cn(
+        "group flex items-center gap-3 px-3 py-3 border border-white/10 bg-slate-900/50 backdrop-blur-xl transition-all",
+        "drop-shadow-[0_0_15px_rgba(6,182,212,0.1)] shadow-[0_8px_30px_rgba(0,0,0,0.35)]",
+        "hover:bg-slate-900/70 hover:border-white/15",
+        active && "border-cyan-400/20 bg-slate-900/65 text-cyan-100",
+      )}
     >
-      <Link href={href}>
-        <span className="flex items-center gap-3">
-          <Icon className="h-5 w-5" />
-          {label}
-        </span>
-        <ChevronRight className="h-5 w-5 opacity-80" />
-      </Link>
-    </Button>
+      <Icon className={cn("h-4 w-4 shrink-0", active ? "text-cyan-300 drop-shadow-[0_0_10px_rgba(34,211,238,0.55)]" : "text-cyan-200/70")} />
+      <span
+        className={cn(
+          "text-[9px] font-black uppercase tracking-[0.22em] leading-tight",
+          active ? "text-cyan-100" : "text-white/75 group-hover:text-cyan-100/90",
+        )}
+      >
+        {label}
+      </span>
+      <ChevronRight className={cn("ml-auto h-4 w-4 shrink-0 opacity-40", active && "text-cyan-300 opacity-70")} />
+    </Link>
   );
 }
 
@@ -548,6 +603,7 @@ function safeParseJson<T>(raw: string | null, fallback: T): T {
 export default function SandboxAppHomePage() {
   const { profile, logout } = useAuth();
   const router = useRouter();
+  const pathname = usePathname() || "/sandbox/app";
   const [metrics, setMetrics] = useState<SandboxMetrics>({
     starters: 0,
     exercises: 0,
@@ -558,6 +614,7 @@ export default function SandboxAppHomePage() {
     goalsFor: 0,
     goalsAgainst: 0,
   });
+  const [playedCount, setPlayedCount] = useState(0);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -572,94 +629,134 @@ export default function SandboxAppHomePage() {
 
     const matches: PromoMatch[] = Array.isArray(vault?.matches) ? vault.matches : [];
     const played = matches.filter((m) => (m.status || "").toLowerCase() === "played");
+    setPlayedCount(played.length);
     const wins = played.filter((m) => (m.score?.home || 0) > (m.score?.guest || 0)).length;
     const goalsFor = played.reduce((acc, m) => acc + (m.score?.home || 0), 0);
     const goalsAgainst = played.reduce((acc, m) => acc + (m.score?.guest || 0), 0);
     setMiniStats({ wins, goalsFor, goalsAgainst });
   }, []);
 
-  const accessItems = useMemo(
+  const winRatePct = useMemo(() => {
+    if (playedCount <= 0) return 0;
+    return Math.round((miniStats.wins / playedCount) * 100);
+  }, [miniStats.wins, playedCount]);
+
+  const navItems = useMemo(
     () => [
+      { href: "/sandbox/app", label: "Command hub", icon: LayoutDashboard },
       { href: "/sandbox/app/team", label: "Mi equipo", icon: Users },
       { href: "/sandbox/app/tasks", label: "Mis tareas", icon: ClipboardList },
       { href: "/sandbox/app/sessions", label: "Agenda", icon: CalendarDays },
       { href: "/sandbox/app/matches", label: "Mis partidos", icon: Swords },
       { href: "/sandbox/app/stats", label: "Estadísticas", icon: BarChart3 },
-      { href: "/sandbox/app/mobile-continuity", label: "Modo continuidad", icon: Gauge },
+      { href: "/sandbox/app/mobile-continuity", label: "Continuidad", icon: Gauge },
     ],
     [],
   );
 
   return (
-    <main className="relative animate-in fade-in duration-700 p-4 sm:p-6 lg:p-8 text-white bg-[#020617]">
+    <main className="relative animate-in fade-in duration-700 min-h-[100dvh] text-white bg-[#050812] p-0">
       <DigitalGrain />
-      <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-6 pb-4 lg:pb-6 border-b border-white/10">
-        <div className="space-y-2">
-          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-cyan-300/90">SANDBOX COACH · PANEL</p>
-          <h1 className="text-2xl sm:text-3xl font-headline font-black tracking-tight text-white">
-            Control táctico <span className="text-cyan-400 drop-shadow-[0_0_12px_rgba(34,211,238,0.55)]">operativo</span>
-          </h1>
-          <p className="text-sm text-slate-400 max-w-xl">
-            Réplica de estilo tablet · datos reales desde almacenamiento local{profile?.email ? ` · ${profile.email}` : ""}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="rounded-none border border-white/10 bg-slate-900/60 backdrop-blur-2xl px-3 py-2">
-            <SynqAiSportsLogo compact />
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            className="h-11 rounded-none border-white/10 bg-slate-900/50 text-white/90 font-black uppercase text-[10px] tracking-widest hover:border-cyan-400/40 hover:text-cyan-200"
-            onClick={async () => {
-              await logout();
-              router.replace("/sandbox/login?next=/sandbox/app");
-            }}
-          >
-            <LogOut className="h-4 w-4 mr-2 text-cyan-400" />
-            Salir
-          </Button>
-        </div>
-      </div>
+      <div className="relative flex flex-col lg:flex-row">
+        {/* Menú lateral inmersivo — sin borde cian duro, misma sombra que paneles */}
+        <aside className="w-full lg:w-[220px] shrink-0 border-b lg:border-b-0 lg:border-r border-white/10 bg-[#050812]/90 backdrop-blur-2xl p-3 lg:p-4 space-y-2 lg:min-h-[100dvh] lg:sticky lg:top-0 lg:self-start drop-shadow-[0_0_15px_rgba(6,182,212,0.08)]">
+          <p className="px-1 pb-2 text-[9px] font-black uppercase tracking-[0.35em] text-cyan-300/70">Navegación</p>
+          {navItems.map((item) => {
+            const active =
+              item.href === "/sandbox/app"
+                ? pathname === "/sandbox/app"
+                : pathname === item.href || pathname.startsWith(`${item.href}/`);
+            return (
+              <ImmersionNavLink key={item.href} href={item.href} label={item.label} icon={item.icon} active={active} />
+            );
+          })}
+        </aside>
 
-      <div className="relative mt-4 lg:mt-6 grid grid-cols-1 xl:grid-cols-12 gap-4 lg:gap-6">
-        <div className="xl:col-span-7 space-y-4 lg:space-y-6">
-          <PlayerDataChart {...miniStats} />
-        </div>
-        <div className="xl:col-span-5 space-y-4 lg:space-y-6">
-          <AnalysisBarsChart exercises={metrics.exercises} starters={metrics.starters} />
-        </div>
+        <div className="flex-1 min-w-0 p-3 sm:p-4 lg:p-6">
+          <SurfaceCard className="mb-4 lg:mb-6">
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 lg:gap-6 px-4 py-4 lg:px-6 lg:py-5">
+              <div className="space-y-2 min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-[0.38em] text-cyan-300/90">SANDBOX COACH · COMMAND HUB</p>
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-headline font-black tracking-tight text-white uppercase">
+                  Control táctico{" "}
+                  <span className="text-cyan-300 drop-shadow-[0_0_28px_rgba(34,211,238,0.95)]">operativo</span>
+                </h1>
+                <p className="text-sm text-slate-400 max-w-2xl leading-relaxed">
+                  Réplica de estilo tablet · datos reales desde almacenamiento local
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 xl:shrink-0">
+                <div className="rounded-none border border-white/10 bg-slate-900/60 backdrop-blur-2xl px-4 py-3 min-w-0 drop-shadow-[0_0_15px_rgba(6,182,212,0.1)]">
+                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/45">Perfil</p>
+                  <p className="mt-1 text-xs font-semibold text-cyan-100/95 truncate max-w-[240px]">
+                    {profile?.email ?? "Sesión activa"}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="rounded-none border border-white/10 bg-slate-900/60 backdrop-blur-2xl px-3 py-2 drop-shadow-[0_0_15px_rgba(6,182,212,0.1)]">
+                    <SynqAiSportsLogo compact />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-11 rounded-none border-white/10 bg-slate-900/50 text-white/90 font-black uppercase text-[10px] tracking-widest hover:border-cyan-400/30 hover:text-cyan-100 drop-shadow-[0_0_12px_rgba(6,182,212,0.12)]"
+                    onClick={async () => {
+                      await logout();
+                      router.replace("/sandbox/login?next=/sandbox/app");
+                    }}
+                  >
+                    <LogOut className="h-4 w-4 mr-2 text-cyan-400" />
+                    Salir
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </SurfaceCard>
 
-        <div className="xl:col-span-7 space-y-4 lg:space-y-6 xl:row-start-2">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6">
-            <FloatingMetric label="Victorias" value={miniStats.wins} />
-            <FloatingMetric label="Goles +" value={miniStats.goalsFor} />
-            <FloatingMetric label="Goles −" value={miniStats.goalsAgainst} />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6">
-            <FloatingMetric label="Titulares" value={metrics.starters} />
-            <FloatingMetric label="Ejercicios" value={metrics.exercises} />
-            <FloatingMetric label="Campo" value={<span className="text-3xl sm:text-4xl">{metrics.activeField}</span>} />
-          </div>
-          <SandboxHomeAdPanel />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
-            <UpcomingAgendaPanel />
-            <UpcomingMatchesPanel />
-          </div>
-        </div>
+          <div className="relative grid grid-cols-1 xl:grid-cols-12 gap-4 lg:gap-6">
+            <div className="xl:col-span-7 space-y-4 lg:space-y-6">
+              <PlayerDataChart {...miniStats} />
+            </div>
+            <div className="xl:col-span-5 space-y-4 lg:space-y-6">
+              <AnalysisBarsChart exercises={metrics.exercises} starters={metrics.starters} />
+            </div>
 
-        <div className="xl:col-span-5 xl:row-start-2 xl:row-span-2 flex">
-          <div className="flex-1 min-w-0 w-full max-w-full xl:max-w-[40vw] xl:ml-auto">
-            <TacticalBoardFrame />
-          </div>
-        </div>
+            <div className="xl:col-span-7 space-y-4 lg:space-y-6 xl:row-start-2">
+              <SurfaceCard>
+                <SurfaceHeader title="DASHBOARD GRID" subtitle="Métricas · 3 columnas × 3 filas" />
+                <div className="p-4 space-y-4 lg:space-y-6">
+                  <div className="grid grid-cols-3 gap-4 lg:gap-6">
+                    <FloatingMetric label="Victorias" value={miniStats.wins} />
+                    <FloatingMetric label="Goles a favor" value={miniStats.goalsFor} />
+                    <FloatingMetric label="Goles encajados" value={miniStats.goalsAgainst} />
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 lg:gap-6">
+                    <FloatingMetric label="Titulares" value={metrics.starters} />
+                    <FloatingMetric label="Ejercicios" value={metrics.exercises} />
+                    <FloatingMetric label="Campo" value={<span className="text-2xl sm:text-3xl lg:text-4xl">{metrics.activeField}</span>} />
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 lg:gap-6">
+                    <FloatingMetric label="Partidos jugados" value={playedCount} />
+                    <FloatingMetric label="Win rate" value={<span className="text-2xl sm:text-3xl lg:text-4xl">{winRatePct}%</span>} />
+                    <FloatingMetric
+                      label="Diff gol"
+                      value={miniStats.goalsFor - miniStats.goalsAgainst}
+                    />
+                  </div>
+                </div>
+              </SurfaceCard>
+              <SandboxHomeAdPanel />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+                <UpcomingAgendaPanel />
+                <UpcomingMatchesPanel />
+              </div>
+            </div>
 
-        <div className="xl:col-span-12 xl:row-start-4 space-y-4 lg:space-y-6">
-          <p className="text-[10px] font-black uppercase tracking-[0.35em] text-cyan-300/80">Acciones</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-            {accessItems.map((item) => (
-              <NeonActionButton key={item.href} href={item.href} label={item.label} icon={item.icon} />
-            ))}
+            <div className="xl:col-span-5 xl:row-start-2 xl:row-span-2 flex">
+              <div className="flex-1 min-w-0 w-full max-w-full xl:max-w-[40vw] xl:ml-auto">
+                <TacticalBoardFrame />
+              </div>
+            </div>
           </div>
         </div>
       </div>

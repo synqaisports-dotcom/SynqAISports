@@ -1,10 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { PwaInstallBanner } from "@/components/pwa/PwaInstallBanner";
-import { SandboxAppClientWrapper } from "../sandbox-app-client-wrapper";
-import { SandboxAppShell } from "../sandbox-app-shell";
+import { SandboxShellWithOptionalInstallBanner } from "../sandbox-shell-with-banner";
 
 export const viewport: Viewport = {
-  themeColor: "#00f2ff",
+  themeColor: "#050812",
 };
 
 export const metadata: Metadata = {
@@ -19,13 +17,6 @@ export const metadata: Metadata = {
 };
 
 export default async function SandboxAppShellLayout(props: { children: React.ReactNode }) {
-  return (
-    <>
-      <PwaInstallBanner appName="Sandbox" storageKeyScope="sandbox" />
-      <SandboxAppClientWrapper>
-        <SandboxAppShell>{props.children}</SandboxAppShell>
-      </SandboxAppClientWrapper>
-    </>
-  );
+  return <SandboxShellWithOptionalInstallBanner>{props.children}</SandboxShellWithOptionalInstallBanner>;
 }
 
