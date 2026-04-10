@@ -5,12 +5,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Script from "next/script";
 import {
   Activity,
+  BarChart3,
   CalendarDays,
   ChevronRight,
   ClipboardList,
   Gauge,
   ShieldCheck,
   LogOut,
+  Sparkles,
   Swords,
   Trophy,
   Zap,
@@ -52,6 +54,164 @@ type HomeMiniStats = {
 
 const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT ?? "";
 const ADSENSE_SLOT_H = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_SLOT_HORIZONTAL ?? "";
+
+function SurfaceCard({
+  className,
+  children,
+}: {
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section
+      className={cn(
+        "rounded-3xl border border-white/10 bg-slate-900/40 backdrop-blur-2xl shadow-[0_18px_60px_rgba(0,0,0,0.45)] overflow-hidden",
+        className,
+      )}
+    >
+      {children}
+    </section>
+  );
+}
+
+function SurfaceHeader({
+  title,
+  subtitle,
+  right,
+}: {
+  title: string;
+  subtitle?: string;
+  right?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-white/10 bg-gradient-to-r from-cyan-500/10 via-transparent to-transparent">
+      <div className="min-w-0">
+        <p className="text-[10px] font-black uppercase tracking-[0.35em] text-cyan-200/70 truncate">{title}</p>
+        {subtitle ? (
+          <p className="mt-1 text-[10px] font-black uppercase tracking-[0.25em] text-white/35 truncate">{subtitle}</p>
+        ) : null}
+      </div>
+      {right ? <div className="shrink-0">{right}</div> : null}
+    </div>
+  );
+}
+
+function MiniBars({ values }: { values: number[] }) {
+  const max = Math.max(1, ...values.map((v) => (Number.isFinite(v) ? v : 0)));
+  return (
+    <div className="flex items-end gap-1 h-8">
+      {values.map((v, idx) => {
+        const pct = Math.max(8, Math.min(100, Math.round((Math.max(0, v) / max) * 100)));
+        return (
+          <div
+            key={idx}
+            className="w-2 rounded-full bg-white/10 overflow-hidden border border-white/10"
+            aria-hidden="true"
+            title={`${v}`}
+          >
+            <div className="w-full rounded-full bg-cyan-400/70 drop-shadow-[0_0_8px_rgba(34,211,238,0.55)]" style={{ height: `${pct}%` }} />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function KpiCard({
+  label,
+  value,
+  helper,
+  icon: Icon,
+  bars,
+}: {
+  label: string;
+  value: React.ReactNode;
+  helper?: string;
+  icon: React.ComponentType<{ className?: string }>;
+  bars?: number[];
+}) {
+  return (
+    <div className="rounded-3xl border border-white/10 bg-slate-900/40 backdrop-blur-2xl p-4 sm:p-5 shadow-[0_14px_50px_rgba(0,0,0,0.45)]">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 truncate">{label}</p>
+          <div className="mt-2 flex items-end gap-3">
+            <p className="text-3xl sm:text-4xl font-black text-cyan-400 italic leading-none drop-shadow-[0_0_10px_rgba(34,211,238,0.65)]">
+              {value}
+            </p>
+            {helper ? (
+              <span className="pb-1 text-[10px] font-black uppercase tracking-[0.25em] text-white/35">{helper}</span>
+            ) : null}
+          </div>
+        </div>
+        <div className="h-12 w-12 rounded-2xl bg-cyan-500/10 border border-white/10 flex items-center justify-center">
+          <Icon className="h-6 w-6 text-cyan-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]" />
+        </div>
+      </div>
+      {bars && bars.length ? (
+        <div className="mt-4 flex items-center justify-between gap-3">
+          <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white/30">Tendencia</span>
+          <MiniBars values={bars} />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function ActionTile({
+  href,
+  label,
+  description,
+  icon: Icon,
+  tone,
+}: {
+  href: string;
+  label: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+  tone: "primary" | "dark";
+}) {
+  const primary = tone === "primary";
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "group rounded-3xl border border-white/10 bg-slate-900/40 backdrop-blur-2xl p-5 shadow-[0_14px_50px_rgba(0,0,0,0.45)] transition-all",
+        "hover:border-cyan-300/30 hover:bg-slate-900/55 hover:shadow-[0_20px_70px_rgba(0,0,0,0.55)]",
+        primary && "border-cyan-300/25 bg-gradient-to-br from-cyan-500/12 via-slate-900/45 to-slate-950/55",
+      )}
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-[11px] font-black uppercase tracking-[0.28em] text-white/40">Acceso rápido</p>
+          <p className="mt-2 text-lg sm:text-xl font-black uppercase tracking-tight text-white group-hover:text-cyan-200 transition-colors">
+            {label}
+          </p>
+          <p className="mt-2 text-sm text-gray-300/90 leading-relaxed">{description}</p>
+        </div>
+        <div
+          className={cn(
+            "h-12 w-12 rounded-2xl border border-white/10 flex items-center justify-center",
+            primary ? "bg-cyan-500/15" : "bg-white/5",
+          )}
+        >
+          <Icon
+            className={cn(
+              "h-6 w-6 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]",
+              primary ? "text-cyan-200" : "text-cyan-300/80",
+            )}
+          />
+        </div>
+      </div>
+      <div className="mt-5 flex items-center justify-between gap-3">
+        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-200/60">
+          Abrir módulo
+        </span>
+        <ChevronRight className="h-5 w-5 text-white/50 group-hover:text-cyan-200 transition-colors" />
+      </div>
+    </Link>
+  );
+}
 
 function SandboxHomeAdPanel() {
   const adRef = useRef<HTMLDivElement | null>(null);
@@ -116,7 +276,7 @@ function SandboxHomeAdPanel() {
   const isConfigured = !!(ADSENSE_CLIENT && ADSENSE_SLOT_H);
 
   return (
-    <section className="rounded-3xl border border-primary/20 bg-black/35 backdrop-blur-sm shadow-[0_12px_40px_rgba(0,0,0,0.35)] overflow-hidden">
+    <SurfaceCard>
       {isConfigured ? (
         <Script
           id="sandbox-home-adsense"
@@ -126,17 +286,16 @@ function SandboxHomeAdPanel() {
         />
       ) : null}
 
-      <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-primary/10 bg-gradient-to-r from-primary/10 via-transparent to-transparent">
-        <p className="text-[10px] font-black uppercase tracking-[0.35em] text-primary/70">AdMob / Ads</p>
-        <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40">
-          {isConfigured ? "Panel activo" : "Demo (configura .env)"}
-        </span>
-      </div>
+      <SurfaceHeader
+        title="Ads / Monetización"
+        subtitle={isConfigured ? "Panel activo" : "Demo (configura .env)"}
+        right={<Sparkles className="h-4 w-4 text-cyan-200/70 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]" />}
+      />
 
       <div className="p-4 sm:p-5">
         <div
           className={cn(
-            "min-h-16 w-full rounded-2xl overflow-hidden border border-primary/20 bg-black/40",
+            "min-h-16 w-full rounded-2xl overflow-hidden border border-white/10 bg-black/30",
             !isConfigured && "border-dashed",
           )}
         >
@@ -162,13 +321,13 @@ function SandboxHomeAdPanel() {
               />
             </div>
           ) : (
-            <div className="h-16 w-full flex items-center justify-center text-[10px] font-black uppercase tracking-[0.2em] text-primary/70">
+            <div className="h-16 w-full flex items-center justify-center text-[10px] font-black uppercase tracking-[0.2em] text-cyan-200/70">
               Slot demo (NEXT_PUBLIC_GOOGLE_ADSENSE_*)
             </div>
           )}
         </div>
       </div>
-    </section>
+    </SurfaceCard>
   );
 }
 
@@ -197,11 +356,8 @@ function UpcomingMatchesPanel() {
   const rows = Array.from({ length: 3 }).map((_, i) => nextMatches[i] || null);
 
   return (
-    <section className="rounded-3xl border border-primary/20 bg-black/35 backdrop-blur-sm shadow-[0_12px_40px_rgba(0,0,0,0.35)] overflow-hidden">
-      <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-primary/10 bg-gradient-to-r from-primary/10 via-transparent to-transparent">
-        <p className="text-[10px] font-black uppercase tracking-[0.35em] text-primary/70">Próximos partidos</p>
-        <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40">3 siguientes</span>
-      </div>
+    <SurfaceCard>
+      <SurfaceHeader title="Próximos partidos" subtitle="3 siguientes" right={<Swords className="h-4 w-4 text-cyan-200/70 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]" />} />
 
       <div className="p-4 sm:p-5 space-y-3">
         {rows.map((m, idx) => {
@@ -213,7 +369,7 @@ function UpcomingMatchesPanel() {
             <div
               key={idx}
               className={cn(
-                "rounded-2xl border border-primary/15 bg-black/40 px-4 py-3 flex items-center justify-between gap-4",
+                "rounded-2xl border border-white/10 bg-black/25 px-4 py-3 flex items-center justify-between gap-4",
                 isPending && "border-dashed",
               )}
             >
@@ -233,7 +389,7 @@ function UpcomingMatchesPanel() {
           );
         })}
       </div>
-    </section>
+    </SurfaceCard>
   );
 }
 
@@ -258,11 +414,8 @@ function UpcomingAgendaPanel() {
   const slots = Array.from({ length: 3 }).map((_, i) => sessions[i] ?? null);
 
   return (
-    <section className="rounded-3xl border border-primary/20 bg-black/35 backdrop-blur-sm shadow-[0_12px_40px_rgba(0,0,0,0.35)] overflow-hidden">
-      <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-primary/10 bg-gradient-to-r from-primary/10 via-transparent to-transparent">
-        <p className="text-[10px] font-black uppercase tracking-[0.35em] text-primary/70">Agenda</p>
-        <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40">Próximos 3 eventos</span>
-      </div>
+    <SurfaceCard>
+      <SurfaceHeader title="Agenda" subtitle="Próximos 3 eventos" right={<CalendarDays className="h-4 w-4 text-cyan-200/70 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]" />} />
 
       <div className="p-4 sm:p-5 space-y-3">
         {slots.map((s, idx) => {
@@ -273,7 +426,7 @@ function UpcomingAgendaPanel() {
             <div
               key={idx}
               className={cn(
-                "rounded-2xl border border-primary/15 bg-black/40 px-4 py-3 flex items-center justify-between gap-4",
+                "rounded-2xl border border-white/10 bg-black/25 px-4 py-3 flex items-center justify-between gap-4",
                 isPending && "border-dashed",
               )}
             >
@@ -291,7 +444,7 @@ function UpcomingAgendaPanel() {
           );
         })}
       </div>
-    </section>
+    </SurfaceCard>
   );
 }
 
@@ -339,46 +492,90 @@ export default function SandboxAppHomePage() {
 
   const accessItems = useMemo(
     () => [
-      { href: "/sandbox/app/team", label: "Mi equipo", icon: Users, tone: "primary" as const },
-      { href: "/sandbox/app/tasks", label: "Mis tareas", icon: ClipboardList, tone: "dark" as const },
-      { href: "/sandbox/app/sessions", label: "Agenda", icon: CalendarDays, tone: "dark" as const },
-      { href: "/sandbox/app/matches", label: "Mis partidos", icon: Swords, tone: "dark" as const },
-      { href: "/sandbox/app/stats", label: "Estadísticas", icon: Activity, tone: "dark" as const },
-      { href: "/sandbox/app/mobile-continuity", label: "Modo continuidad", icon: Gauge, tone: "dark" as const },
+      {
+        href: "/sandbox/app/team",
+        label: "Mi equipo",
+        description: "Jugadores, roles y titulares. Configure su base en segundos.",
+        icon: Users,
+        tone: "primary" as const,
+      },
+      {
+        href: "/sandbox/app/tasks",
+        label: "Mis tareas",
+        description: "Asignaciones rápidas y control diario de ejecución.",
+        icon: ClipboardList,
+        tone: "dark" as const,
+      },
+      {
+        href: "/sandbox/app/sessions",
+        label: "Agenda",
+        description: "Sesiones y eventos. Planificación simple y directa.",
+        icon: CalendarDays,
+        tone: "dark" as const,
+      },
+      {
+        href: "/sandbox/app/matches",
+        label: "Mis partidos",
+        description: "Partidos, resultados y preparación táctica.",
+        icon: Swords,
+        tone: "dark" as const,
+      },
+      {
+        href: "/sandbox/app/stats",
+        label: "Estadísticas",
+        description: "KPIs base y lectura rápida del rendimiento.",
+        icon: BarChart3,
+        tone: "dark" as const,
+      },
+      {
+        href: "/sandbox/app/mobile-continuity",
+        label: "Modo continuidad",
+        description: "Flujo rápido para móvil y uso en campo.",
+        icon: Gauge,
+        tone: "dark" as const,
+      },
     ],
     [],
   );
 
   return (
     <main className="space-y-8 animate-in fade-in duration-700 p-6 sm:p-8 lg:p-10 text-white">
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-5 border-b border-primary/10 pb-6">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <ShieldCheck className="h-5 w-5 text-primary animate-pulse" />
-            <span className="text-[10px] font-black text-primary tracking-[0.45em] uppercase italic">Sandbox_Home_v1.0</span>
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+        <div className="space-y-3">
+          <div className="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-black/25 px-4 py-3 backdrop-blur-xl">
+            <div className="h-10 w-10 rounded-2xl bg-cyan-500/10 border border-white/10 flex items-center justify-center">
+              <ShieldCheck className="h-5 w-5 text-cyan-200 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-black uppercase tracking-[0.35em] text-cyan-200/75">SANDBOX COACH</p>
+              <p className="mt-1 text-xs text-gray-300/80">
+                Sesión activa{profile?.email ? ` · ${profile.email}` : ""}
+              </p>
+            </div>
           </div>
-          <h1 className="text-4xl sm:text-5xl font-headline font-black text-white uppercase italic tracking-tighter leading-none">
-            TERMINAL_<span className="text-primary">SANDBOX</span>
+          <h1 className="text-4xl sm:text-5xl font-headline font-black text-white tracking-tight leading-none">
+            Centro de mando <span className="text-cyan-200 drop-shadow-[0_0_10px_rgba(34,211,238,0.55)]">operativo</span>
           </h1>
-          <p className="text-[11px] font-black text-primary/40 tracking-[0.28em] uppercase">
-            Nodo principal de acceso
+          <p className="text-gray-300/90 max-w-2xl">
+            Acceso directo a equipo, planificación y rendimiento. Diseño rápido para operar en campo sin fricción.
           </p>
         </div>
+
         <div className="w-full lg:w-auto">
           <div className="flex items-center gap-2">
-            <div className="rounded-2xl border border-primary/20 bg-primary/5 px-3 py-2 w-fit">
+            <div className="rounded-2xl border border-white/10 bg-black/25 px-3 py-2 w-fit backdrop-blur-xl">
               <SynqAiSportsLogo compact />
             </div>
             <Button
               type="button"
               variant="outline"
-              className="h-11 rounded-2xl border-rose-300/20 bg-black/30 text-rose-200/90 font-black uppercase text-[10px] tracking-widest hover:border-rose-300/40 hover:text-rose-100 transition-colors"
+              className="h-11 rounded-2xl border-white/15 bg-black/30 text-white/85 font-black uppercase text-[10px] tracking-widest hover:border-cyan-300/35 hover:bg-cyan-500/10 hover:text-cyan-100 transition-colors"
               onClick={async () => {
                 await logout();
                 router.replace("/sandbox/login?next=/sandbox/app");
               }}
             >
-              <LogOut className="h-4 w-4 mr-2" />
+              <LogOut className="h-4 w-4 mr-2 text-cyan-200/80 drop-shadow-[0_0_8px_rgba(34,211,238,0.55)]" />
               Salir
             </Button>
           </div>
@@ -387,99 +584,70 @@ export default function SandboxAppHomePage() {
 
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-6">
         <div className="space-y-6">
-          <div className="rounded-3xl border border-white/10 bg-slate-900/40 backdrop-blur-xl shadow-[0_12px_40px_rgba(0,0,0,0.35)] overflow-hidden">
-            <div className="px-5 py-4 border-b border-primary/10 bg-gradient-to-r from-primary/10 via-transparent to-transparent">
-              <p className="text-[10px] font-black uppercase tracking-[0.35em] text-primary/70">Sandbox (Micro‑app)</p>
-              <h2 className="mt-2 text-2xl sm:text-3xl font-black uppercase tracking-tight text-white">
-                Terminal completa <span className="text-primary">logueada</span>
-              </h2>
-            </div>
+          <SurfaceCard>
+            <SurfaceHeader
+              title="Resumen operativo"
+              subtitle="KPIs y accesos rápidos"
+              right={<Zap className="h-4 w-4 text-cyan-200/70 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]" />}
+            />
             <div className="p-4 sm:p-5">
-              <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="rounded-2xl border border-white/10 bg-slate-900/40 backdrop-blur-xl p-4 flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-2xl bg-cyan-500/10 border border-white/10 flex items-center justify-center">
-                    <Trophy className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.28em] text-white/40">Victorias</p>
-                    <p className="mt-1 text-2xl font-black text-cyan-400 italic leading-none drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]">
-                      {miniStats.wins}
-                    </p>
-                  </div>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-slate-900/40 backdrop-blur-xl p-4 flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-2xl bg-cyan-500/10 border border-white/10 flex items-center justify-center">
-                    <Zap className="h-6 w-6 text-white/40" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.28em] text-white/40">Goles a favor</p>
-                    <p className="mt-1 text-2xl font-black text-cyan-400 italic leading-none drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]">
-                      {miniStats.goalsFor}
-                    </p>
-                  </div>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-slate-900/40 backdrop-blur-xl p-4 flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-2xl bg-cyan-500/10 border border-white/10 flex items-center justify-center">
-                    <Activity className="h-6 w-6 text-white/40" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.28em] text-white/40">Goles en contra</p>
-                    <p className="mt-1 text-2xl font-black text-cyan-400 italic leading-none drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]">
-                      {miniStats.goalsAgainst}
-                    </p>
-                  </div>
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+                <KpiCard label="Victorias" value={miniStats.wins} helper="partidos jugados" icon={Trophy} bars={[1, 2, 3, 3, 4]} />
+                <KpiCard label="Goles a favor" value={miniStats.goalsFor} helper="acumulado" icon={Zap} bars={[1, 2, 2, 3, 5]} />
+                <KpiCard label="Goles en contra" value={miniStats.goalsAgainst} helper="acumulado" icon={Activity} bars={[1, 1, 2, 2, 3]} />
+                <KpiCard
+                  label="Base de trabajo"
+                  value={metrics.exercises}
+                  helper={`titulares ${metrics.starters} · ${metrics.activeField}`}
+                  icon={BarChart3}
+                  bars={[1, 2, 2, 4, Math.max(1, metrics.exercises)]}
+                />
               </div>
 
-              <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="rounded-2xl border border-white/10 bg-slate-900/40 backdrop-blur-xl p-3">
-                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40">Titulares</p>
-                  <p className="mt-1 text-xl font-black text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]">
-                    {metrics.starters}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-slate-900/40 backdrop-blur-xl p-3">
-                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40">Ejercicios</p>
-                  <p className="mt-1 text-xl font-black text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]">
-                    {metrics.exercises}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-slate-900/40 backdrop-blur-xl p-3">
-                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40">Campo activo</p>
-                  <p className="mt-1 text-xl font-black text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]">
-                    {metrics.activeField}
-                  </p>
-                </div>
+              <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-3">
+                {accessItems.slice(0, 2).map((item) => (
+                  <ActionTile
+                    key={item.href}
+                    href={item.href}
+                    label={item.label}
+                    description={item.description}
+                    icon={item.icon}
+                    tone={item.tone}
+                  />
+                ))}
               </div>
 
-              <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {accessItems.map((item) => {
-                  const Icon = item.icon;
-                  const isPrimary = item.tone === "primary";
-                  return (
-                    <Button
-                      key={item.href}
-                      asChild
-                      variant={isPrimary ? "default" : "outline"}
-                      className={
-                        isPrimary
-                          ? "h-12 rounded-2xl bg-primary text-black font-black uppercase text-[11px] tracking-widest justify-between shadow-[0_0_24px_rgba(0,242,255,0.28)] hover:brightness-110 active:scale-[0.99]"
-                          : "h-12 rounded-2xl border-primary/25 bg-black/45 text-white/90 font-black uppercase text-[11px] tracking-widest justify-between hover:border-primary/45 hover:bg-primary/10 hover:text-primary active:scale-[0.99]"
-                      }
-                    >
-                      <Link href={item.href}>
-                        <span className="flex items-center gap-2">
-                          <Icon className="h-4 w-4" />
-                          {item.label}
-                        </span>
-                        <ChevronRight className="h-4 w-4 opacity-70" />
-                      </Link>
-                    </Button>
-                  );
-                })}
+              <div className="mt-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+                {accessItems.slice(2).map((item) => (
+                  <ActionTile
+                    key={item.href}
+                    href={item.href}
+                    label={item.label}
+                    description={item.description}
+                    icon={item.icon}
+                    tone={item.tone}
+                  />
+                ))}
+              </div>
+
+              <div className="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                <div className="rounded-3xl border border-white/10 bg-black/25 backdrop-blur-xl px-4 py-3">
+                  <p className="text-[10px] font-black uppercase tracking-[0.35em] text-white/40">Modo</p>
+                  <p className="mt-1 text-sm font-black uppercase tracking-tight text-cyan-200 drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]">
+                    Operativo · rápido
+                  </p>
+                </div>
+                <Button
+                  asChild
+                  className="h-12 rounded-2xl bg-cyan-300 text-black font-black uppercase text-[11px] tracking-widest justify-center shadow-[0_0_24px_rgba(0,242,255,0.28)] hover:brightness-110 active:scale-[0.99]"
+                >
+                  <Link href="/sandbox/app/board/match?source=sandbox">
+                    Abrir pizarra de partido
+                  </Link>
+                </Button>
               </div>
             </div>
-          </div>
+          </SurfaceCard>
 
           <UpcomingAgendaPanel />
         </div>
