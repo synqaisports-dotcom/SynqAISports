@@ -6,14 +6,11 @@ import {
   Save,
   LayoutGrid,
   ArrowRight,
-  ShieldCheck,
   Info,
   Sparkles,
   Zap,
   Plus,
-  Activity,
   Dumbbell,
-  Building2,
   Globe,
   MapPin,
   Trophy,
@@ -71,30 +68,17 @@ const inputProClass =
 
 const iconCyan = "h-4 w-4 text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.55)]";
 
-function HubSection({
-  title,
-  icon: Icon,
-  children,
-}: {
-  title: string;
-  icon: React.ComponentType<{ className?: string }>;
-  children: ReactNode;
-}) {
+/** Panel cristal sin fila extra de icono+título (el título va solo en SectionBar). */
+function HubPanel({ children }: { children: ReactNode }) {
   return (
-    <section className="space-y-4">
-      <div className="flex items-center gap-3 px-1">
-        <Icon className={cn(iconCyan, "h-5 w-5")} />
-        <h3 className="text-[10px] font-black uppercase tracking-[0.35em] text-white">{title}</h3>
-      </div>
-      <div
-        className={cn(
-          "rounded-none border border-white/10 bg-slate-900/60 backdrop-blur-md overflow-hidden",
-          PANEL_OUTER,
-        )}
-      >
-        {children}
-      </div>
-    </section>
+    <div
+      className={cn(
+        "rounded-none border border-white/10 bg-slate-900/60 backdrop-blur-md overflow-hidden",
+        PANEL_OUTER,
+      )}
+    >
+      {children}
+    </div>
   );
 }
 
@@ -295,8 +279,7 @@ export default function PromoTeamPage() {
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 lg:gap-8">
         <div className="xl:col-span-8 space-y-8">
-          {/* ATRIBUTOS DEL NODO */}
-          <HubSection title="Datos del equipo" icon={Building2}>
+          <HubPanel>
             <SectionBar title="Datos del equipo" />
             <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
@@ -348,10 +331,9 @@ export default function PromoTeamPage() {
                 </div>
               </div>
             </div>
-          </HubSection>
+          </HubPanel>
 
-          {/* ONCE TITULAR */}
-          <HubSection title="Once titular" icon={ShieldCheck}>
+          <HubPanel>
             <SectionBar title="Once titular" />
             <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
               {positionList.map((pos, i) => {
@@ -394,10 +376,9 @@ export default function PromoTeamPage() {
                 );
               })}
             </div>
-          </HubSection>
+          </HubPanel>
 
-          {/* SUPLENTES */}
-          <HubSection title="Suplentes / rotación" icon={Activity}>
+          <HubPanel>
             <SectionBar title="Suplentes / rotación" />
             <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
               {safeSubstitutes.map((name, i) => (
@@ -428,7 +409,7 @@ export default function PromoTeamPage() {
                 <span className="text-[9px] font-black uppercase tracking-widest">Añadir slot</span>
               </button>
             </div>
-          </HubSection>
+          </HubPanel>
         </div>
 
         <aside className="xl:col-span-4 space-y-6">
