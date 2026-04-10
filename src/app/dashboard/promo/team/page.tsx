@@ -246,8 +246,8 @@ export default function PromoTeamPage() {
         </div>
       </div>
 
-      <div className="space-y-8 max-w-5xl">
-        <div className="space-y-8">
+      <div className="space-y-8 w-full min-w-0">
+        <div className="space-y-8 w-full min-w-0">
           <HubPanel>
             <SectionBar title="Datos del equipo" />
             <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
