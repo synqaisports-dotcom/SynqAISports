@@ -637,21 +637,23 @@ export default function SandboxAppHomePage() {
           </div>
         </div>
 
-        <div className="xl:col-span-7 space-y-4 lg:space-y-6">
-          <SurfaceCard>
-            <SurfaceHeader title="DASHBOARD GRID" subtitle="Métricas · 2 columnas × 2 filas" />
-            <div className="p-4 space-y-4 lg:space-y-6">
-              <div className="grid grid-cols-2 gap-4 lg:gap-6">
-                <FloatingMetric label="Victorias" value={miniStats.wins} />
-                <FloatingMetric label="Goles" value={miniStats.goalsFor} />
+        <div className="xl:col-span-12 grid grid-cols-1 xl:grid-cols-12 gap-4 lg:gap-6 xl:items-stretch">
+          <div className="xl:col-span-7 min-w-0">
+            <SurfaceCard>
+              <SurfaceHeader title="DASHBOARD GRID" subtitle="Métricas · 2 columnas × 2 filas" />
+              <div className="p-4 space-y-4 lg:space-y-6">
+                <div className="grid grid-cols-2 gap-4 lg:gap-6">
+                  <FloatingMetric label="Victorias" value={miniStats.wins} />
+                  <FloatingMetric label="Goles" value={miniStats.goalsFor} />
+                </div>
+                <div className="grid grid-cols-2 gap-4 lg:gap-6">
+                  <FloatingMetric label="Titulares" value={metrics.starters} />
+                  <FloatingMetric label="Ejercicios" value={metrics.exercises} />
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-4 lg:gap-6">
-                <FloatingMetric label="Titulares" value={metrics.starters} />
-                <FloatingMetric label="Ejercicios" value={metrics.exercises} />
-              </div>
-            </div>
-          </SurfaceCard>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
+            </SurfaceCard>
+          </div>
+          <div className="xl:col-span-5 flex flex-col gap-4 lg:gap-6 min-w-0">
             <UpcomingAgendaPanel />
             <UpcomingMatchesPanel />
           </div>
