@@ -41,6 +41,15 @@ const POSITIONS: Record<TeamType, string[]> = {
   futsal: ["POR", "FIXO", "ALA", "ALA", "PIVOT"],
 };
 
+/** Evita crash si localStorage tiene type inválido ("F11", vacío, etc.): POSITIONS[teamType] sería undefined. */
+function coerceTeamType(raw: unknown): TeamType {
+  const s = String(raw ?? "")
+    .trim()
+    .toLowerCase();
+  if (s === "f11" || s === "f7" || s === "futsal") return s;
+  return "f11";
+}
+
 const PANEL_OUTER =
   "drop-shadow-[0_0_15px_rgba(6,182,212,0.1)] shadow-[0_18px_60px_rgba(0,0,0,0.45)]";
 
@@ -118,7 +127,7 @@ export default function PromoTeamPage() {
     const saved = safeParseJson<Record<string, unknown> | null>(localStorage.getItem("synq_promo_team"), null);
     if (saved) {
       savedTeamRef.current = saved;
-      const savedType = (saved.type || "f11") as TeamType;
+      const savedType = coerceTeamType(saved.type);
       setTeamType(savedType);
       setTeamName(saved.name || "");
       setCountry(saved.country || "");
@@ -136,10 +145,11 @@ export default function PromoTeamPage() {
     if (!didHydrateRef.current) return;
     const saved = savedTeamRef.current ?? safeParseJson<Record<string, unknown> | null>(localStorage.getItem("synq_promo_team"), null);
     if (saved?.starters) {
-      setStarters(normalizeFixedLength(saved.starters, POSITIONS[teamType].length));
+      const t = coerceTeamType(teamType);
+      setStarters(normalizeFixedLength(saved.starters, POSITIONS[t].length));
       return;
     }
-    setStarters(Array(POSITIONS[teamType].length).fill(""));
+    setStarters(Array(POSITIONS[coerceTeamType(teamType)].length).fill(""));
   }, [teamType]);
 
   const handleSaveTeam = (e: React.FormEvent) => {
@@ -148,7 +158,7 @@ export default function PromoTeamPage() {
 
     window.setTimeout(() => {
       const teamData = {
-        type: teamType,
+        type: coerceTeamType(teamType),
         name: teamName.toUpperCase(),
         country: country.toUpperCase(),
         city: city.toUpperCase(),
@@ -187,6 +197,10 @@ export default function PromoTeamPage() {
     setSubstitutes(next);
   };
 
+  const resolvedType = coerceTeamType(teamType);
+  const positionList = POSITIONS[resolvedType];
+  const safeSubstitutes = Array.isArray(substitutes) ? substitutes : [];
+
   return (
     <form onSubmit={handleSaveTeam} className="space-y-6 lg:space-y-8 animate-in fade-in duration-700">
       {/* Barra operativa: formato + guardar (estilo tablet) */}
@@ -206,7 +220,10 @@ export default function PromoTeamPage() {
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <div className="space-y-1">
             <span className="text-[8px] font-black text-white/40 uppercase tracking-widest block">Formato</span>
-            <Select value={teamType} onValueChange={(v: TeamType) => setTeamType(v)}>
+            <Select
+              value={resolvedType}
+              onValueChange={(v) => setTeamType(coerceTeamType(v))}
+            >
               <SelectTrigger
                 className={cn(
                   "w-full sm:w-[200px] h-11 rounded-none border-white/10 bg-slate-950/50 backdrop-blur-md text-cyan-200 font-black uppercase text-[10px] tracking-widest",
@@ -303,7 +320,7 @@ export default function PromoTeamPage() {
           <HubSection title="Once titular" icon={ShieldCheck}>
             <SectionBar title="Fichas tácticas · roster en vivo" />
             <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-              {POSITIONS[teamType].map((pos, i) => {
+              {positionList.map((pos, i) => {
                 const filled = Boolean((starters[i] || "").trim());
                 return (
                   <div
@@ -349,7 +366,7 @@ export default function PromoTeamPage() {
           <HubSection title="Suplentes / rotación" icon={Activity}>
             <SectionBar title="Banco táctico" />
             <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-              {substitutes.map((name, i) => (
+              {safeSubstitutes.map((name, i) => (
                 <div
                   key={i}
                   className="flex items-center gap-3 p-3 sm:p-4 rounded-none border border-dashed border-white/15 bg-slate-950/30 backdrop-blur-md"
@@ -370,7 +387,7 @@ export default function PromoTeamPage() {
               ))}
               <button
                 type="button"
-                onClick={() => setSubstitutes([...substitutes, ""])}
+                onClick={() => setSubstitutes([...safeSubstitutes, ""])}
                 className="p-4 rounded-none border border-dashed border-white/15 bg-slate-950/20 flex items-center justify-center gap-2 text-white/35 hover:border-cyan-400/30 hover:text-cyan-200/80 transition-colors min-h-[3.25rem]"
               >
                 <Plus className="h-4 w-4 text-cyan-400/70" />
