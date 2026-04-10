@@ -272,6 +272,10 @@ function MatchBoardInner() {
   );
   const embedParam = useMemo(() => String(new URLSearchParams(searchParamsKey).get("embed") || "").toLowerCase(), [searchParamsKey]);
   const embedMode = embedParam === "1" || embedParam === "true" || embedParam === "home";
+  const fullscreenLaunchParam = useMemo(
+    () => String(new URLSearchParams(searchParamsKey).get("fullscreen") || "").toLowerCase(),
+    [searchParamsKey],
+  );
 
   useEffect(() => {
     const ctx = continuityCtx;
@@ -350,6 +354,28 @@ function MatchBoardInner() {
       window.removeEventListener("storage", onStorage);
     };
   }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    if (fullscreenLaunchParam !== "1" && fullscreenLaunchParam !== "true") return;
+    const root = document.documentElement;
+    const go = () => {
+      const req = root.requestFullscreen?.bind(root);
+      if (!req) return;
+      void req().catch(() => {
+        /* usuario denegó o no disponible */
+      });
+    };
+    const t = window.setTimeout(go, 200);
+    try {
+      const u = new URL(window.location.href);
+      u.searchParams.delete("fullscreen");
+      window.history.replaceState({}, "", `${u.pathname}${u.search}${u.hash}`);
+    } catch {
+      /* noop */
+    }
+    return () => window.clearTimeout(t);
+  }, [mounted, fullscreenLaunchParam]);
 
   useEffect(() => {
     const q = sourceParam;

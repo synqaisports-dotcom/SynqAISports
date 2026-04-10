@@ -6,15 +6,10 @@ import Script from "next/script";
 import {
   BarChart3,
   CalendarDays,
-  ChevronRight,
   ClipboardList,
   Download,
-  Gauge,
-  LayoutDashboard,
-  LogOut,
   Sparkles,
   Swords,
-  Users,
 } from "lucide-react";
 import {
   Area,
@@ -28,11 +23,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
-import { SynqAiSportsLogo } from "@/components/branding/SynqAiSportsLogo";
 import { cn } from "@/lib/utils";
-import { usePathname, useRouter } from "next/navigation";
 import { synqSync } from "@/lib/sync-service";
 import { useToast } from "@/hooks/use-toast";
 
@@ -264,17 +256,17 @@ function OperativeBoardPanel({ matchId }: { matchId: string }) {
   }, [matchId]);
 
   return (
-    <SurfaceCard className="relative flex flex-col min-h-[380px] xl:min-h-[560px] h-full">
+    <SurfaceCard className="relative flex flex-col min-h-[320px] xl:min-h-[420px] h-full xl:flex-1">
       <DigitalGrain />
       <SurfaceHeader
         title="PIZARRA OPERATIVA"
         subtitle={matchId ? `Partido #${matchId} · instancia real` : "Selecciona un partido en Mis partidos"}
       />
-      <div className="relative flex-1 flex flex-col border-t border-white/5 bg-[#020408] min-h-[300px]">
+      <div className="relative flex-1 flex flex-col border-t border-white/5 bg-[#020408] min-h-[240px] xl:min-h-0">
         <iframe
           title="Pizarra táctica operativa"
           src={src}
-          className="w-full flex-1 min-h-[280px] xl:min-h-[480px] border-0 bg-[#020408]"
+          className="w-full flex-1 min-h-[220px] xl:min-h-0 border-0 bg-[#020408]"
           sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-popups"
         />
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 px-3 py-2 bg-slate-950/80">
@@ -312,7 +304,7 @@ function OperativeBoardPanel({ matchId }: { matchId: string }) {
               className="h-8 rounded-none border-white/15 bg-slate-900/60 text-[9px] font-black uppercase tracking-widest text-cyan-200 hover:border-cyan-400/35"
             >
               <Link
-                href={`/sandbox/app/board/match?source=sandbox${matchId ? `&matchId=${encodeURIComponent(matchId)}` : ""}`}
+                href={`/sandbox/app/board/match?source=sandbox&fullscreen=1${matchId ? `&matchId=${encodeURIComponent(matchId)}` : ""}`}
               >
                 Abrir pizarra
               </Link>
@@ -343,41 +335,6 @@ function FloatingMetric({
         </div>
       </div>
     </SurfaceCard>
-  );
-}
-
-function ImmersionNavLink({
-  href,
-  label,
-  icon: Icon,
-  active,
-}: {
-  href: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  active: boolean;
-}) {
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "group flex items-center gap-3 px-3 py-3 border border-white/10 bg-slate-900/50 backdrop-blur-xl transition-all",
-        "drop-shadow-[0_0_15px_rgba(6,182,212,0.1)] shadow-[0_8px_30px_rgba(0,0,0,0.35)]",
-        "hover:bg-slate-900/70 hover:border-white/15",
-        active && "border-cyan-400/20 bg-slate-900/65 text-cyan-100",
-      )}
-    >
-      <Icon className={cn("h-4 w-4 shrink-0", active ? "text-cyan-300 drop-shadow-[0_0_10px_rgba(34,211,238,0.55)]" : "text-cyan-200/70")} />
-      <span
-        className={cn(
-          "text-[9px] font-black uppercase tracking-[0.22em] leading-tight",
-          active ? "text-cyan-100" : "text-white/75 group-hover:text-cyan-100/90",
-        )}
-      >
-        {label}
-      </span>
-      <ChevronRight className={cn("ml-auto h-4 w-4 shrink-0 opacity-40", active && "text-cyan-300 opacity-70")} />
-    </Link>
   );
 }
 
@@ -442,7 +399,7 @@ function SandboxHomeAdPanel() {
   const isConfigured = !!(ADSENSE_CLIENT && ADSENSE_SLOT_H);
 
   return (
-    <SurfaceCard className="relative">
+    <SurfaceCard className="relative flex flex-col flex-1 min-h-0 h-full">
       {isConfigured ? (
         <Script
           id="sandbox-home-adsense"
@@ -458,10 +415,10 @@ function SandboxHomeAdPanel() {
         right={<Sparkles className="h-4 w-4 text-cyan-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]" />}
       />
 
-      <div className="p-4">
+      <div className="p-4 flex-1 flex flex-col min-h-[200px] xl:min-h-0">
         <div
           className={cn(
-            "min-h-14 w-full overflow-hidden border border-white/10 bg-black/35",
+            "flex-1 min-h-[180px] w-full overflow-hidden border border-white/10 bg-black/35",
             !isConfigured && "border-dashed",
           )}
         >
@@ -629,9 +586,6 @@ function safeParseJson<T>(raw: string | null, fallback: T): T {
 }
 
 export default function SandboxAppHomePage() {
-  const { profile, logout } = useAuth();
-  const router = useRouter();
-  const pathname = usePathname() || "/sandbox/app";
   const [metrics, setMetrics] = useState<SandboxMetrics>({
     starters: 0,
     exercises: 0,
@@ -664,115 +618,45 @@ export default function SandboxAppHomePage() {
     setMiniStats({ wins, goalsFor, goalsAgainst });
   }, []);
 
-  const navItems = useMemo(
-    () => [
-      { href: "/sandbox/app", label: "Command hub", icon: LayoutDashboard },
-      { href: "/sandbox/app/team", label: "Mi equipo", icon: Users },
-      { href: "/sandbox/app/tasks", label: "Mis tareas", icon: ClipboardList },
-      { href: "/sandbox/app/sessions", label: "Agenda", icon: CalendarDays },
-      { href: "/sandbox/app/matches", label: "Mis partidos", icon: Swords },
-      { href: "/sandbox/app/stats", label: "Estadísticas", icon: BarChart3 },
-      { href: "/sandbox/app/mobile-continuity", label: "Continuidad", icon: Gauge },
-    ],
-    [],
-  );
-
   return (
-    <main className="relative animate-in fade-in duration-700 min-h-[100dvh] text-white bg-[#050812] p-0">
-      <DigitalGrain />
-      <div className="relative flex flex-col lg:flex-row">
-        {/* Menú lateral inmersivo — sin borde cian duro, misma sombra que paneles */}
-        <aside className="w-full lg:w-[220px] shrink-0 border-b lg:border-b-0 lg:border-r border-white/10 bg-[#050812]/90 backdrop-blur-2xl p-3 lg:p-4 space-y-2 lg:min-h-[100dvh] lg:sticky lg:top-0 lg:self-start drop-shadow-[0_0_15px_rgba(6,182,212,0.08)]">
-          <p className="px-1 pb-2 text-[9px] font-black uppercase tracking-[0.35em] text-cyan-300/70">Navegación</p>
-          {navItems.map((item) => {
-            const active =
-              item.href === "/sandbox/app"
-                ? pathname === "/sandbox/app"
-                : pathname === item.href || pathname.startsWith(`${item.href}/`);
-            return (
-              <ImmersionNavLink key={item.href} href={item.href} label={item.label} icon={item.icon} active={active} />
-            );
-          })}
-        </aside>
+    <div className="relative animate-in fade-in duration-700 space-y-4 lg:space-y-6">
+      <div className="relative grid grid-cols-1 xl:grid-cols-12 gap-4 lg:gap-6">
+        <div className="xl:col-span-7">
+          <PlayerDataChart {...miniStats} />
+        </div>
+        <div className="xl:col-span-5">
+          <AnalysisBarsChart exercises={metrics.exercises} starters={metrics.starters} />
+        </div>
 
-        <div className="flex-1 min-w-0 p-3 sm:p-4 lg:p-6">
-          <SurfaceCard className="mb-4 lg:mb-6">
-            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 lg:gap-6 px-4 py-4 lg:px-6 lg:py-5">
-              <div className="space-y-2 min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-[0.38em] text-cyan-300/90">TERMINAL SANDBOX</p>
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-headline font-black tracking-tight text-white uppercase">
-                  Control táctico{" "}
-                  <span className="text-cyan-300 drop-shadow-[0_0_32px_rgba(34,211,238,1)]">operativo</span>
-                </h1>
-                <p className="text-sm text-slate-400 max-w-2xl leading-relaxed">
-                  Réplica de estilo tablet · datos reales desde almacenamiento local
-                </p>
+        <div className="xl:col-span-12 grid grid-cols-1 xl:grid-cols-12 gap-4 lg:gap-6 xl:items-stretch">
+          <div className="xl:col-span-7 min-h-0 flex flex-col">
+            <SandboxHomeAdPanel />
+          </div>
+          <div className="xl:col-span-5 min-h-0 flex flex-col">
+            <OperativeBoardPanel matchId={boardMatchId} />
+          </div>
+        </div>
+
+        <div className="xl:col-span-7 space-y-4 lg:space-y-6">
+          <SurfaceCard>
+            <SurfaceHeader title="DASHBOARD GRID" subtitle="Métricas · 2 columnas × 2 filas" />
+            <div className="p-4 space-y-4 lg:space-y-6">
+              <div className="grid grid-cols-2 gap-4 lg:gap-6">
+                <FloatingMetric label="Victorias" value={miniStats.wins} />
+                <FloatingMetric label="Goles" value={miniStats.goalsFor} />
               </div>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3 xl:shrink-0">
-                <div className="rounded-none border border-white/10 bg-slate-900/60 backdrop-blur-2xl px-4 py-3 min-w-0 drop-shadow-[0_0_15px_rgba(6,182,212,0.1)]">
-                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/45">Perfil</p>
-                  <p className="mt-1 text-xs font-semibold text-cyan-100/95 truncate max-w-[240px]">
-                    {profile?.email ?? "Sesión activa"}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="rounded-none border border-white/10 bg-slate-900/60 backdrop-blur-2xl px-3 py-2 drop-shadow-[0_0_15px_rgba(6,182,212,0.1)]">
-                    <SynqAiSportsLogo compact />
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="h-11 rounded-none border-white/10 bg-slate-900/50 text-white/90 font-black uppercase text-[10px] tracking-widest hover:border-cyan-400/30 hover:text-cyan-100 drop-shadow-[0_0_12px_rgba(6,182,212,0.12)]"
-                    onClick={async () => {
-                      await logout();
-                      router.replace("/sandbox/login?next=/sandbox/app");
-                    }}
-                  >
-                    <LogOut className="h-4 w-4 mr-2 text-cyan-400" />
-                    Salir
-                  </Button>
-                </div>
+              <div className="grid grid-cols-2 gap-4 lg:gap-6">
+                <FloatingMetric label="Titulares" value={metrics.starters} />
+                <FloatingMetric label="Ejercicios" value={metrics.exercises} />
               </div>
             </div>
           </SurfaceCard>
-
-          <div className="relative grid grid-cols-1 xl:grid-cols-12 gap-4 lg:gap-6">
-            <div className="xl:col-span-7 space-y-4 lg:space-y-6">
-              <PlayerDataChart {...miniStats} />
-              <SandboxHomeAdPanel />
-            </div>
-            <div className="xl:col-span-5 space-y-4 lg:space-y-6">
-              <AnalysisBarsChart exercises={metrics.exercises} starters={metrics.starters} />
-            </div>
-
-            <div className="xl:col-span-7 space-y-4 lg:space-y-6 xl:row-start-2">
-              <SurfaceCard>
-                <SurfaceHeader title="DASHBOARD GRID" subtitle="Métricas · 2 columnas × 2 filas" />
-                <div className="p-4 space-y-4 lg:space-y-6">
-                  <div className="grid grid-cols-2 gap-4 lg:gap-6">
-                    <FloatingMetric label="Victorias" value={miniStats.wins} />
-                    <FloatingMetric label="Goles" value={miniStats.goalsFor} />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 lg:gap-6">
-                    <FloatingMetric label="Titulares" value={metrics.starters} />
-                    <FloatingMetric label="Ejercicios" value={metrics.exercises} />
-                  </div>
-                </div>
-              </SurfaceCard>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
-                <UpcomingAgendaPanel />
-                <UpcomingMatchesPanel />
-              </div>
-            </div>
-
-            <div className="xl:col-span-5 xl:row-start-2 xl:row-span-2 flex">
-              <div className="flex-1 min-w-0 w-full max-w-full xl:max-w-[40vw] xl:ml-auto">
-                <OperativeBoardPanel matchId={boardMatchId} />
-              </div>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
+            <UpcomingAgendaPanel />
+            <UpcomingMatchesPanel />
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }
