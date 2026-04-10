@@ -14,7 +14,7 @@ export async function GET() {
      * Note: keep it simple to avoid breaking app updates.
      */
 
-    const CACHE_NAME = "synqai-sw-v1";
+    const CACHE_NAME = "synqai-sw-v2";
 
     const CORE_ASSETS = [
       "/",
@@ -24,6 +24,7 @@ export async function GET() {
       "/dashboard/promo/manifest.json",
       "/dashboard/peripherals/manifest.json",
       "/sandbox/manifest.json",
+      "/sandbox/app",
     ];
 
     self.addEventListener("install", (event) => {
