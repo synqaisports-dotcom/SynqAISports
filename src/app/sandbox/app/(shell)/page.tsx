@@ -653,7 +653,7 @@ export default function SandboxAppHomePage() {
               </div>
             </SurfaceCard>
           </div>
-          <div className="xl:col-span-5 flex flex-col gap-4 lg:gap-6 min-w-0">
+          <div className="xl:col-span-5 grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6 min-w-0 xl:items-stretch">
             <UpcomingAgendaPanel />
             <UpcomingMatchesPanel />
           </div>
