@@ -32,6 +32,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { FORMATIONS_DATA } from "@/lib/formations";
 
 type TeamType = "f11" | "f7" | "futsal";
 
@@ -48,6 +49,16 @@ function coerceTeamType(raw: unknown): TeamType {
     .toLowerCase();
   if (s === "f11" || s === "f7" || s === "futsal") return s;
   return "f11";
+}
+
+function formationKeysFor(t: TeamType): string[] {
+  const block = FORMATIONS_DATA[t];
+  return block ? Object.keys(block) : [];
+}
+
+function defaultFormationFor(t: TeamType): string {
+  const keys = formationKeysFor(t);
+  return keys[0] ?? "4-3-3";
 }
 
 const PANEL_OUTER =
@@ -119,6 +130,7 @@ export default function PromoTeamPage() {
   const [category, setCategory] = useState("");
   const [starters, setStarters] = useState<string[]>([]);
   const [substitutes, setSubstitutes] = useState<string[]>(["", "", "", ""]);
+  const [formationKey, setFormationKey] = useState<string>(() => defaultFormationFor("f11"));
   const [loading, setLoading] = useState(false);
   const didHydrateRef = useRef(false);
   const savedTeamRef = useRef<Record<string, unknown> | null>(null);
@@ -135,6 +147,9 @@ export default function PromoTeamPage() {
       setCategory(saved.category || "");
       setStarters(normalizeFixedLength(saved.starters, POSITIONS[savedType].length));
       setSubstitutes(normalizeFixedLength(saved.substitutes, 4));
+      const fk = formationKeysFor(savedType);
+      const savedForm = String(saved.formation ?? "").trim();
+      setFormationKey(fk.includes(savedForm) ? savedForm : defaultFormationFor(savedType));
     } else {
       setStarters(Array(POSITIONS[teamType].length).fill(""));
     }
@@ -152,6 +167,12 @@ export default function PromoTeamPage() {
     setStarters(Array(POSITIONS[coerceTeamType(teamType)].length).fill(""));
   }, [teamType]);
 
+  useEffect(() => {
+    const t = coerceTeamType(teamType);
+    const keys = formationKeysFor(t);
+    setFormationKey((prev) => (keys.includes(prev) ? prev : defaultFormationFor(t)));
+  }, [teamType]);
+
   const handleSaveTeam = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -159,6 +180,7 @@ export default function PromoTeamPage() {
     window.setTimeout(() => {
       const teamData = {
         type: coerceTeamType(teamType),
+        formation: formationKey,
         name: teamName.toUpperCase(),
         country: country.toUpperCase(),
         city: city.toUpperCase(),
@@ -200,6 +222,7 @@ export default function PromoTeamPage() {
   const resolvedType = coerceTeamType(teamType);
   const positionList = POSITIONS[resolvedType];
   const safeSubstitutes = Array.isArray(substitutes) ? substitutes : [];
+  const formationOptions = formationKeysFor(resolvedType);
 
   return (
     <form onSubmit={handleSaveTeam} className="space-y-6 lg:space-y-8 animate-in fade-in duration-700">
@@ -217,37 +240,48 @@ export default function PromoTeamPage() {
             <p className="text-sm font-black uppercase tracking-tight text-white truncate">Plantilla local · sandbox</p>
           </div>
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <div className="space-y-1">
-            <span className="text-[8px] font-black text-white/40 uppercase tracking-widest block">Formato</span>
-            <Select
-              value={resolvedType}
-              onValueChange={(v) => setTeamType(coerceTeamType(v))}
+        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 sm:justify-end">
+          <Select value={formationKey} onValueChange={setFormationKey}>
+            <SelectTrigger
+              className={cn(
+                "w-full sm:w-[200px] h-11 rounded-none border-white/10 bg-slate-950/50 backdrop-blur-md text-cyan-200 font-black uppercase text-[10px] tracking-widest",
+                "focus:ring-2 focus:ring-cyan-400/40 focus:border-cyan-400",
+              )}
             >
-              <SelectTrigger
-                className={cn(
-                  "w-full sm:w-[200px] h-11 rounded-none border-white/10 bg-slate-950/50 backdrop-blur-md text-cyan-200 font-black uppercase text-[10px] tracking-widest",
-                  "focus:ring-2 focus:ring-cyan-400/40 focus:border-cyan-400",
-                )}
-              >
-                <div className="flex items-center gap-2">
-                  <LayoutGrid className="h-4 w-4 text-cyan-400 drop-shadow-[0_0_6px_rgba(34,211,238,0.5)]" />
-                  <SelectValue />
-                </div>
-              </SelectTrigger>
-              <SelectContent className="rounded-none border-white/10 bg-[#0a1220] backdrop-blur-xl">
-                <SelectItem value="f11" className="text-[10px] font-black uppercase">
-                  Fútbol 11
+              <SelectValue placeholder="Formación" />
+            </SelectTrigger>
+            <SelectContent className="rounded-none border-white/10 bg-[#0a1220] backdrop-blur-xl max-h-72">
+              {formationOptions.map((k) => (
+                <SelectItem key={k} value={k} className="text-[10px] font-black uppercase">
+                  {k}
                 </SelectItem>
-                <SelectItem value="f7" className="text-[10px] font-black uppercase">
-                  Fútbol 7
-                </SelectItem>
-                <SelectItem value="futsal" className="text-[10px] font-black uppercase">
-                  Fútbol Sala
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={resolvedType} onValueChange={(v) => setTeamType(coerceTeamType(v))}>
+            <SelectTrigger
+              className={cn(
+                "w-full sm:w-[200px] h-11 rounded-none border-white/10 bg-slate-950/50 backdrop-blur-md text-cyan-200 font-black uppercase text-[10px] tracking-widest",
+                "focus:ring-2 focus:ring-cyan-400/40 focus:border-cyan-400",
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <LayoutGrid className="h-4 w-4 text-cyan-400 drop-shadow-[0_0_6px_rgba(34,211,238,0.5)]" />
+                <SelectValue />
+              </div>
+            </SelectTrigger>
+            <SelectContent className="rounded-none border-white/10 bg-[#0a1220] backdrop-blur-xl">
+              <SelectItem value="f11" className="text-[10px] font-black uppercase">
+                Fútbol 11
+              </SelectItem>
+              <SelectItem value="f7" className="text-[10px] font-black uppercase">
+                Fútbol 7
+              </SelectItem>
+              <SelectItem value="futsal" className="text-[10px] font-black uppercase">
+                Fútbol Sala
+              </SelectItem>
+            </SelectContent>
+          </Select>
           <Button
             type="submit"
             disabled={loading}
@@ -262,8 +296,8 @@ export default function PromoTeamPage() {
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 lg:gap-8">
         <div className="xl:col-span-8 space-y-8">
           {/* ATRIBUTOS DEL NODO */}
-          <HubSection title="Atributos del nodo" icon={Building2}>
-            <SectionBar title="Identidad · geolocalización" />
+          <HubSection title="Datos del equipo" icon={Building2}>
+            <SectionBar title="Datos del equipo" />
             <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label className="text-[9px] font-black uppercase text-cyan-200/70 tracking-widest">Nombre del equipo</Label>
@@ -318,7 +352,7 @@ export default function PromoTeamPage() {
 
           {/* ONCE TITULAR */}
           <HubSection title="Once titular" icon={ShieldCheck}>
-            <SectionBar title="Fichas tácticas · roster en vivo" />
+            <SectionBar title="Once titular" />
             <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
               {positionList.map((pos, i) => {
                 const filled = Boolean((starters[i] || "").trim());
@@ -364,7 +398,7 @@ export default function PromoTeamPage() {
 
           {/* SUPLENTES */}
           <HubSection title="Suplentes / rotación" icon={Activity}>
-            <SectionBar title="Banco táctico" />
+            <SectionBar title="Suplentes / rotación" />
             <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
               {safeSubstitutes.map((name, i) => (
                 <div
