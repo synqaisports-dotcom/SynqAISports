@@ -11,11 +11,9 @@ export function SandboxShellWithOptionalInstallBanner(props: { children: ReactNo
   const hidePwaBanner = pathname === "/sandbox/app" || pathname.startsWith("/sandbox/app/board/");
 
   return (
-    <>
+    <SandboxAppClientWrapper>
       {!hidePwaBanner ? <PwaInstallBanner appName="Sandbox" storageKeyScope="sandbox" /> : null}
-      <SandboxAppClientWrapper>
-        <SandboxCommandHubShell>{props.children}</SandboxCommandHubShell>
-      </SandboxAppClientWrapper>
-    </>
+      <SandboxCommandHubShell>{props.children}</SandboxCommandHubShell>
+    </SandboxAppClientWrapper>
   );
 }

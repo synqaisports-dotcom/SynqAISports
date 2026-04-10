@@ -92,6 +92,15 @@ function normalizeFixedLength(list: unknown, len: number): string[] {
   return Array.from({ length: len }, (_, i) => String(src[i] ?? ""));
 }
 
+function safeParseJson<T>(raw: string | null, fallback: T): T {
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
 export default function PromoTeamPage() {
   const { toast } = useToast();
   const [teamType, setTeamType] = useState<TeamType>("f11");
@@ -106,7 +115,7 @@ export default function PromoTeamPage() {
   const savedTeamRef = useRef<Record<string, unknown> | null>(null);
 
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("synq_promo_team") || "null");
+    const saved = safeParseJson<Record<string, unknown> | null>(localStorage.getItem("synq_promo_team"), null);
     if (saved) {
       savedTeamRef.current = saved;
       const savedType = (saved.type || "f11") as TeamType;
@@ -125,7 +134,7 @@ export default function PromoTeamPage() {
 
   useEffect(() => {
     if (!didHydrateRef.current) return;
-    const saved = savedTeamRef.current ?? JSON.parse(localStorage.getItem("synq_promo_team") || "null");
+    const saved = savedTeamRef.current ?? safeParseJson<Record<string, unknown> | null>(localStorage.getItem("synq_promo_team"), null);
     if (saved?.starters) {
       setStarters(normalizeFixedLength(saved.starters, POSITIONS[teamType].length));
       return;
@@ -152,8 +161,9 @@ export default function PromoTeamPage() {
 
       localStorage.setItem("synq_promo_team", JSON.stringify(teamData));
 
-      const vault = JSON.parse(
-        localStorage.getItem("synq_promo_vault") || '{"exercises": [], "sessions": [], "matches": []}',
+      const vault = safeParseJson<Record<string, unknown>>(
+        localStorage.getItem("synq_promo_vault"),
+        { exercises: [], sessions: [], matches: [] },
       );
       localStorage.setItem("synq_promo_vault", JSON.stringify({ ...vault, team: teamData }));
 
