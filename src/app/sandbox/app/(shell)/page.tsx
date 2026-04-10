@@ -237,75 +237,43 @@ function AnalysisBarsChart({ exercises, starters }: { exercises: number; starter
   );
 }
 
-/** Posiciones tipo image_4: local (azul/cian) izquierda, visitante (rojo) derecha — números 2,3,5,6,7 y 2,3,4,6,7 */
-const BOARD_PLAYERS: { num: number; side: "home" | "away"; x: number; y: number }[] = [
-  { num: 2, side: "home", x: 16, y: 58 },
-  { num: 3, side: "home", x: 26, y: 32 },
-  { num: 5, side: "home", x: 34, y: 48 },
-  { num: 6, side: "home", x: 40, y: 72 },
-  { num: 7, side: "home", x: 28, y: 86 },
-  { num: 2, side: "away", x: 84, y: 58 },
-  { num: 3, side: "away", x: 74, y: 32 },
-  { num: 4, side: "away", x: 66, y: 48 },
-  { num: 6, side: "away", x: 60, y: 72 },
-  { num: 7, side: "away", x: 72, y: 86 },
-];
+function OperativeBoardPanel({ matchId }: { matchId: string }) {
+  const src = useMemo(() => {
+    const q = new URLSearchParams({ source: "sandbox", embed: "1" });
+    if (matchId) q.set("matchId", matchId);
+    return `/sandbox/app/board/match?${q.toString()}`;
+  }, [matchId]);
 
-function PlayerChip({ num, side, x, y }: { num: number; side: "home" | "away"; x: number; y: number }) {
-  const home = side === "home";
   return (
-    <div
-      className={cn(
-        "absolute flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-none border font-technic text-xs font-bold tabular-nums",
-        home
-          ? "border-cyan-300/40 bg-sky-700/95 text-white shadow-[0_0_14px_rgba(34,211,238,0.5)]"
-          : "border-red-300/40 bg-red-700/95 text-white shadow-[0_0_14px_rgba(239,68,68,0.5)]",
-      )}
-      style={{ left: `${x}%`, top: `${y}%`, transform: "translate(-50%, -50%)" }}
-    >
-      {num}
-    </div>
-  );
-}
-
-function TacticalBoardFrame() {
-  return (
-    <SurfaceCard className="relative flex flex-col min-h-[320px] xl:min-h-[520px] h-full">
+    <SurfaceCard className="relative flex flex-col min-h-[380px] xl:min-h-[560px] h-full">
       <DigitalGrain />
-      <SurfaceHeader title="CONTROL TÁCTICO" subtitle="Pizarra · vista operativa" />
-      <div className="relative flex-1 p-3 sm:p-4 flex flex-col gap-3">
-        <div className="relative flex-1 min-h-[240px] sm:min-h-[280px] border border-white/10 bg-slate-950/50 overflow-hidden shadow-[inset_0_0_60px_rgba(0,0,0,0.5)]">
-          {/* Césped image_9 + grid cian fino */}
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundColor: "#063a1f",
-              backgroundImage: `
-                linear-gradient(rgba(34,211,238,0.14) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(34,211,238,0.14) 1px, transparent 1px),
-                radial-gradient(ellipse 80% 70% at 50% 45%, rgba(16,185,129,0.35) 0%, transparent 72%),
-                linear-gradient(180deg, rgba(5,56,32,0.9) 0%, rgba(4,46,24,0.95) 100%)
-              `,
-              backgroundSize: "12px 12px, 12px 12px, 100% 100%, 100% 100%",
-            }}
-          />
-          <div className="absolute inset-3 sm:inset-4 border border-cyan-400/30 rounded-none shadow-[0_0_28px_rgba(34,211,238,0.15)]" />
-          <div className="absolute left-1/2 top-3 bottom-3 w-px bg-cyan-200/20 -translate-x-1/2" />
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-14 w-14 sm:h-16 sm:w-16 border border-cyan-200/25 bg-emerald-950/40 rotate-45 shadow-[0_0_20px_rgba(34,211,238,0.2)]" />
-          <div className="absolute inset-x-3 sm:inset-x-4 top-1/2 -translate-y-1/2 h-px bg-cyan-200/15" />
-          {BOARD_PLAYERS.map((p, i) => (
-            <PlayerChip key={`${p.side}-${p.num}-${i}`} num={p.num} side={p.side} x={p.x} y={p.y} />
-          ))}
-          <p className="absolute bottom-2 left-3 text-[8px] font-black uppercase tracking-[0.3em] text-cyan-200/60">
-            Grid cian · césped neón
+      <SurfaceHeader
+        title="PIZARRA OPERATIVA"
+        subtitle={matchId ? `Partido #${matchId} · instancia real` : "Selecciona un partido en Mis partidos"}
+      />
+      <div className="relative flex-1 flex flex-col border-t border-white/5 bg-[#020408] min-h-[300px]">
+        <iframe
+          title="Pizarra táctica operativa"
+          src={src}
+          className="w-full flex-1 min-h-[280px] xl:min-h-[480px] border-0 bg-[#020408]"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-popups"
+        />
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 px-3 py-2 bg-slate-950/80">
+          <p className="text-[8px] font-black uppercase tracking-[0.28em] text-white/45">
+            Misma pizarra que /board/match · embed
           </p>
+          <Button
+            asChild
+            variant="outline"
+            className="h-8 rounded-none border-white/15 bg-slate-900/60 text-[9px] font-black uppercase tracking-widest text-cyan-200 hover:border-cyan-400/35"
+          >
+            <Link
+              href={`/sandbox/app/board/match?source=sandbox${matchId ? `&matchId=${encodeURIComponent(matchId)}` : ""}`}
+            >
+              Pantalla completa
+            </Link>
+          </Button>
         </div>
-        <Button
-          asChild
-          className="h-12 sm:h-14 rounded-none bg-cyan-500 text-black font-black uppercase text-[10px] sm:text-xs tracking-widest shadow-[0_0_25px_rgba(6,182,212,0.8)] hover:bg-cyan-400"
-        >
-          <Link href="/sandbox/app/board/match?source=sandbox">Abrir pizarra completa</Link>
-        </Button>
       </div>
     </SurfaceCard>
   );
@@ -441,7 +409,7 @@ function SandboxHomeAdPanel() {
 
       <SurfaceHeader
         title="MONETIZACIÓN"
-        subtitle={isConfigured ? "Panel activo" : "Demo (configura .env)"}
+        subtitle={isConfigured ? "Panel activo" : "Slot demo · configura Adsense en .env"}
         right={<Sparkles className="h-4 w-4 text-cyan-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]" />}
       />
 
@@ -475,7 +443,7 @@ function SandboxHomeAdPanel() {
             </div>
           ) : (
             <div className="h-14 w-full flex items-center justify-center text-[9px] font-black uppercase tracking-[0.2em] text-cyan-200/70">
-              NEXT_PUBLIC_GOOGLE_ADSENSE_*
+              Slot demo · NEXT_PUBLIC_GOOGLE_ADSENSE_*
             </div>
           )}
         </div>
@@ -488,6 +456,21 @@ function parseMatchDate(value: string | undefined): number | null {
   if (!value) return null;
   const t = Date.parse(value);
   return Number.isFinite(t) ? t : null;
+}
+
+/** Próximo partido programado → último jugado → primer registro del vault (misma lógica que “siguiente partido”). */
+function pickBoardMatchId(matches: PromoMatch[]): string {
+  if (!matches.length) return "";
+  const ts = (m: PromoMatch) => parseMatchDate(m.date) ?? 0;
+  const scheduled = matches
+    .filter((m) => (m.status || "").toLowerCase() !== "played")
+    .sort((a, b) => ts(a) - ts(b));
+  if (scheduled.length) return String(scheduled[0]?.id ?? "");
+  const played = matches
+    .filter((m) => (m.status || "").toLowerCase() === "played")
+    .sort((a, b) => ts(b) - ts(a));
+  if (played.length) return String(played[0]?.id ?? "");
+  return String(matches[0]?.id ?? "");
 }
 
 function UpcomingMatchesPanel() {
@@ -614,7 +597,7 @@ export default function SandboxAppHomePage() {
     goalsFor: 0,
     goalsAgainst: 0,
   });
-  const [playedCount, setPlayedCount] = useState(0);
+  const [boardMatchId, setBoardMatchId] = useState("");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -628,18 +611,13 @@ export default function SandboxAppHomePage() {
     setMetrics({ starters, exercises, activeField });
 
     const matches: PromoMatch[] = Array.isArray(vault?.matches) ? vault.matches : [];
+    setBoardMatchId(pickBoardMatchId(matches));
     const played = matches.filter((m) => (m.status || "").toLowerCase() === "played");
-    setPlayedCount(played.length);
     const wins = played.filter((m) => (m.score?.home || 0) > (m.score?.guest || 0)).length;
     const goalsFor = played.reduce((acc, m) => acc + (m.score?.home || 0), 0);
     const goalsAgainst = played.reduce((acc, m) => acc + (m.score?.guest || 0), 0);
     setMiniStats({ wins, goalsFor, goalsAgainst });
   }, []);
-
-  const winRatePct = useMemo(() => {
-    if (playedCount <= 0) return 0;
-    return Math.round((miniStats.wins / playedCount) * 100);
-  }, [miniStats.wins, playedCount]);
 
   const navItems = useMemo(
     () => [
@@ -676,10 +654,10 @@ export default function SandboxAppHomePage() {
           <SurfaceCard className="mb-4 lg:mb-6">
             <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 lg:gap-6 px-4 py-4 lg:px-6 lg:py-5">
               <div className="space-y-2 min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-[0.38em] text-cyan-300/90">SANDBOX COACH · COMMAND HUB</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.38em] text-cyan-300/90">TERMINAL SANDBOX</p>
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl font-headline font-black tracking-tight text-white uppercase">
                   Control táctico{" "}
-                  <span className="text-cyan-300 drop-shadow-[0_0_28px_rgba(34,211,238,0.95)]">operativo</span>
+                  <span className="text-cyan-300 drop-shadow-[0_0_32px_rgba(34,211,238,1)]">operativo</span>
                 </h1>
                 <p className="text-sm text-slate-400 max-w-2xl leading-relaxed">
                   Réplica de estilo tablet · datos reales desde almacenamiento local
@@ -723,30 +701,20 @@ export default function SandboxAppHomePage() {
 
             <div className="xl:col-span-7 space-y-4 lg:space-y-6 xl:row-start-2">
               <SurfaceCard>
-                <SurfaceHeader title="DASHBOARD GRID" subtitle="Métricas · 3 columnas × 3 filas" />
+                <SurfaceHeader title="DASHBOARD GRID" subtitle="Métricas · 2 columnas × 2 filas" />
                 <div className="p-4 space-y-4 lg:space-y-6">
-                  <div className="grid grid-cols-3 gap-4 lg:gap-6">
+                  <div className="grid grid-cols-2 gap-4 lg:gap-6">
                     <FloatingMetric label="Victorias" value={miniStats.wins} />
-                    <FloatingMetric label="Goles a favor" value={miniStats.goalsFor} />
-                    <FloatingMetric label="Goles encajados" value={miniStats.goalsAgainst} />
+                    <FloatingMetric label="Goles" value={miniStats.goalsFor} />
                   </div>
-                  <div className="grid grid-cols-3 gap-4 lg:gap-6">
+                  <div className="grid grid-cols-2 gap-4 lg:gap-6">
                     <FloatingMetric label="Titulares" value={metrics.starters} />
                     <FloatingMetric label="Ejercicios" value={metrics.exercises} />
-                    <FloatingMetric label="Campo" value={<span className="text-2xl sm:text-3xl lg:text-4xl">{metrics.activeField}</span>} />
-                  </div>
-                  <div className="grid grid-cols-3 gap-4 lg:gap-6">
-                    <FloatingMetric label="Partidos jugados" value={playedCount} />
-                    <FloatingMetric label="Win rate" value={<span className="text-2xl sm:text-3xl lg:text-4xl">{winRatePct}%</span>} />
-                    <FloatingMetric
-                      label="Diff gol"
-                      value={miniStats.goalsFor - miniStats.goalsAgainst}
-                    />
                   </div>
                 </div>
               </SurfaceCard>
-              <SandboxHomeAdPanel />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6">
+                <SandboxHomeAdPanel />
                 <UpcomingAgendaPanel />
                 <UpcomingMatchesPanel />
               </div>
@@ -754,7 +722,7 @@ export default function SandboxAppHomePage() {
 
             <div className="xl:col-span-5 xl:row-start-2 xl:row-span-2 flex">
               <div className="flex-1 min-w-0 w-full max-w-full xl:max-w-[40vw] xl:ml-auto">
-                <TacticalBoardFrame />
+                <OperativeBoardPanel matchId={boardMatchId} />
               </div>
             </div>
           </div>

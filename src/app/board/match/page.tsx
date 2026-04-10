@@ -270,6 +270,8 @@ function MatchBoardInner() {
     () => String(new URLSearchParams(searchParamsKey).get("matchId") || "").trim(),
     [searchParamsKey],
   );
+  const embedParam = useMemo(() => String(new URLSearchParams(searchParamsKey).get("embed") || "").toLowerCase(), [searchParamsKey]);
+  const embedMode = embedParam === "1" || embedParam === "true" || embedParam === "home";
 
   useEffect(() => {
     const ctx = continuityCtx;
@@ -919,32 +921,34 @@ function MatchBoardInner() {
         </div>
       </div>
 
-      <div
-        className={cn(
-          "fixed z-[200] block",
-          matchSource === "sandbox"
-            ? "top-14 left-2 sm:top-4 sm:left-4"
-            : "top-4 left-4",
-        )}
-      >
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => {
-            const p = window.location.pathname || "";
-            const target = p.startsWith("/sandbox/app")
-              ? "/sandbox/app/matches"
-              : p.startsWith("/sandbox")
-                ? "/sandbox"
-                : "/dashboard";
-            router.replace(target);
-          }}
-          className="h-10 w-10 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-[background-color,border-color,color,opacity,transform] shadow-2xl active:scale-95 glass-panel"
-          title="Volver"
+      {!embedMode ? (
+        <div
+          className={cn(
+            "fixed z-[200] block",
+            matchSource === "sandbox"
+              ? "top-14 left-2 sm:top-4 sm:left-4"
+              : "top-4 left-4",
+          )}
         >
-          <LayoutDashboard className="h-5 w-5" />
-        </Button>
-      </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              const p = window.location.pathname || "";
+              const target = p.startsWith("/sandbox/app")
+                ? "/sandbox/app/matches"
+                : p.startsWith("/sandbox")
+                  ? "/sandbox"
+                  : "/dashboard";
+              router.replace(target);
+            }}
+            className="h-10 w-10 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-[background-color,border-color,color,opacity,transform] shadow-2xl active:scale-95 glass-panel"
+            title="Volver"
+          >
+            <LayoutDashboard className="h-5 w-5" />
+          </Button>
+        </div>
+      ) : null}
 
       {/* TELEMETRÍA, TIEMPO Y GUARDADO */}
       <div
