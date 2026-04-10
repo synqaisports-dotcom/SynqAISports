@@ -31,13 +31,11 @@ export function SandboxAppShell(props: { children: ReactNode }) {
   const showBack = pathname !== "/sandbox/app";
 
   return (
-    <div className="min-h-[100dvh] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1e293b] via-[#020617] to-black text-white relative overflow-hidden">
-      <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
-      <div className="absolute -top-40 -right-40 h-[520px] w-[520px] rounded-full bg-primary/10 blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-40 -left-40 h-[520px] w-[520px] rounded-full bg-primary/10 blur-3xl pointer-events-none" />
+    <div className="min-h-[100dvh] bg-[#020617] text-white relative overflow-hidden">
+      <div className="absolute inset-0 bg-grid-pattern opacity-[0.06] pointer-events-none" />
 
       <header className="sticky top-0 z-[80] px-3 sm:px-5 lg:px-6 pt-3">
-        <div className="w-full rounded-2xl border border-primary/20 bg-[#03070f]/85 backdrop-blur-2xl px-3 sm:px-4 py-2.5 shadow-[0_10px_30px_rgba(0,0,0,0.35)]">
+        <div className="w-full rounded-none border border-white/10 bg-slate-900/60 backdrop-blur-2xl px-3 sm:px-4 py-2.5 shadow-[0_10px_30px_rgba(0,0,0,0.45)]">
           <div className="flex flex-wrap items-center gap-2">
             <div className="mr-1 sm:mr-3">
               <SynqAiSportsLogo compact />
@@ -46,7 +44,7 @@ export function SandboxAppShell(props: { children: ReactNode }) {
               type="button"
               variant="outline"
               className={cn(
-                "h-10 rounded-2xl border-white/10 bg-black/30 text-white/80 font-black uppercase text-[10px] tracking-widest hover:border-primary/30 hover:text-primary transition-colors",
+                "h-10 rounded-none border-white/10 bg-slate-900/50 text-white/80 font-black uppercase text-[10px] tracking-widest hover:border-cyan-400/30 hover:text-cyan-200 transition-colors",
                 !showBack && "opacity-50 pointer-events-none",
               )}
               onClick={() => {
@@ -69,7 +67,7 @@ export function SandboxAppShell(props: { children: ReactNode }) {
             <Button
               asChild
               variant="outline"
-              className="h-10 rounded-2xl border-white/10 bg-black/30 text-white/80 font-black uppercase text-[10px] tracking-widest hover:border-primary/30 hover:text-primary transition-colors"
+              className="h-10 rounded-none border-white/10 bg-slate-900/50 text-white/80 font-black uppercase text-[10px] tracking-widest hover:border-cyan-400/30 hover:text-cyan-200 transition-colors"
             >
               <Link href="/sandbox/app">
                 <Home className="h-4 w-4 mr-2" />
@@ -77,9 +75,9 @@ export function SandboxAppShell(props: { children: ReactNode }) {
               </Link>
             </Button>
             <div className="ml-auto flex items-center gap-2">
-              <div className="hidden sm:flex items-center gap-2 rounded-2xl border border-primary/20 bg-primary/5 px-3 py-2">
-                <ShieldCheck className="h-4 w-4 text-primary" />
-                <span className="text-[10px] font-black uppercase tracking-[0.35em] text-primary/70">
+              <div className="hidden sm:flex items-center gap-2 rounded-none border border-white/10 bg-slate-900/40 px-3 py-2">
+                <ShieldCheck className="h-4 w-4 text-cyan-400" />
+                <span className="text-[10px] font-black uppercase tracking-[0.35em] text-cyan-200/80">
                   Sandbox
                 </span>
               </div>
@@ -94,7 +92,7 @@ export function SandboxAppShell(props: { children: ReactNode }) {
 
       <div className="w-full px-3 sm:px-5 lg:px-6">
         <div className="py-4 sm:py-6">
-          <div className="rounded-3xl border border-primary/15 bg-gradient-to-b from-[#0a1222]/90 to-[#050a14]/90 shadow-[0_20px_80px_rgba(0,0,0,0.45)]">
+          <div className="rounded-none border border-white/10 bg-gradient-to-b from-[#020617]/95 to-[#020617]/90 shadow-[0_20px_80px_rgba(0,0,0,0.55)] backdrop-blur-sm">
             {props.children}
           </div>
         </div>

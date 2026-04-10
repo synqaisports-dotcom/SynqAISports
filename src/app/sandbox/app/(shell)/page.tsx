@@ -1,23 +1,31 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Script from "next/script";
 import {
-  Activity,
   BarChart3,
   CalendarDays,
   ChevronRight,
   ClipboardList,
   Gauge,
-  ShieldCheck,
   LogOut,
   Sparkles,
   Swords,
-  Trophy,
-  Zap,
   Users,
 } from "lucide-react";
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { SynqAiSportsLogo } from "@/components/branding/SynqAiSportsLogo";
@@ -35,15 +43,15 @@ type PromoMatch = {
   id?: number | string;
   date?: string;
   rivalName?: string;
-  location?: string; // "Local" | "Visitante"
-  status?: string; // "Scheduled" | "Played" | ...
+  location?: string;
+  status?: string;
   score?: { home?: number; guest?: number };
 };
 
 type PromoSession = {
   id?: number | string;
   title?: string;
-  createdAt?: string; // YYYY-MM-DD
+  createdAt?: string;
 };
 
 type HomeMiniStats = {
@@ -55,17 +63,11 @@ type HomeMiniStats = {
 const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT ?? "";
 const ADSENSE_SLOT_H = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_SLOT_HORIZONTAL ?? "";
 
-function SurfaceCard({
-  className,
-  children,
-}: {
-  className?: string;
-  children: React.ReactNode;
-}) {
+function SurfaceCard({ className, children }: { className?: string; children: ReactNode }) {
   return (
     <section
       className={cn(
-        "rounded-3xl border border-white/10 bg-slate-900/40 backdrop-blur-2xl shadow-[0_18px_60px_rgba(0,0,0,0.45)] overflow-hidden",
+        "rounded-none border border-white/10 bg-slate-900/60 backdrop-blur-2xl shadow-[0_18px_60px_rgba(0,0,0,0.5)] overflow-hidden",
         className,
       )}
     >
@@ -81,14 +83,14 @@ function SurfaceHeader({
 }: {
   title: string;
   subtitle?: string;
-  right?: React.ReactNode;
+  right?: ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-white/10 bg-gradient-to-r from-cyan-500/10 via-transparent to-transparent">
+    <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-white/10 bg-gradient-to-r from-cyan-500/10 via-transparent to-transparent">
       <div className="min-w-0">
-        <p className="text-[10px] font-black uppercase tracking-[0.35em] text-cyan-200/70 truncate">{title}</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.35em] text-cyan-300/80 truncate">{title}</p>
         {subtitle ? (
-          <p className="mt-1 text-[10px] font-black uppercase tracking-[0.25em] text-white/35 truncate">{subtitle}</p>
+          <p className="mt-1 text-[10px] font-black uppercase tracking-[0.25em] text-white/40 truncate">{subtitle}</p>
         ) : null}
       </div>
       {right ? <div className="shrink-0">{right}</div> : null}
@@ -96,120 +98,218 @@ function SurfaceHeader({
   );
 }
 
-function MiniBars({ values }: { values: number[] }) {
-  const max = Math.max(1, ...values.map((v) => (Number.isFinite(v) ? v : 0)));
+function DigitalGrain() {
   return (
-    <div className="flex items-end gap-1 h-8">
-      {values.map((v, idx) => {
-        const pct = Math.max(8, Math.min(100, Math.round((Math.max(0, v) / max) * 100)));
-        return (
-          <div
-            key={idx}
-            className="w-2 rounded-full bg-white/10 overflow-hidden border border-white/10"
-            aria-hidden="true"
-            title={`${v}`}
-          >
-            <div className="w-full rounded-full bg-cyan-400/70 drop-shadow-[0_0_8px_rgba(34,211,238,0.55)]" style={{ height: `${pct}%` }} />
-          </div>
-        );
-      })}
-    </div>
+    <div
+      className="pointer-events-none absolute inset-0 opacity-[0.07] mix-blend-overlay"
+      style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+      }}
+      aria-hidden
+    />
   );
 }
 
-function KpiCard({
+function PlayerDataChart({ wins, goalsFor, goalsAgainst }: HomeMiniStats) {
+  const data = useMemo(() => {
+    const base = Math.max(1, wins + goalsFor + goalsAgainst);
+    return Array.from({ length: 14 }).map((_, i) => {
+      const t = i;
+      const waveA = Math.sin(t / 2.1) * 18 + (goalsFor / Math.max(1, base)) * 40;
+      const waveB = Math.cos(t / 1.7) * 14 + (goalsAgainst / Math.max(1, base)) * 35;
+      const waveC = Math.sin(t / 3 + 1) * 22 + wins * 6;
+      return {
+        t: String(t).padStart(2, "0"),
+        a: Math.max(4, 40 + waveA + i * 1.2),
+        b: Math.max(4, 35 + waveB - i * 0.6),
+        c: Math.max(4, 32 + waveC * 0.35 + (i % 4) * 3),
+      };
+    });
+  }, [wins, goalsFor, goalsAgainst]);
+
+  return (
+    <SurfaceCard className="relative min-h-[220px]">
+      <DigitalGrain />
+      <SurfaceHeader title="PLAYER DATA" subtitle="Señales compuestas · tiempo de sesión" />
+      <div className="relative p-3 sm:p-4 h-[240px] sm:h-[260px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+            <defs>
+              <linearGradient id="pdA" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#22d3ee" stopOpacity={0.45} />
+                <stop offset="100%" stopColor="#22d3ee" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id="pdB" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.35} />
+                <stop offset="100%" stopColor="#38bdf8" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id="pdC" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#0ea5e9" stopOpacity={0.3} />
+                <stop offset="100%" stopColor="#0ea5e9" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 6" stroke="rgba(255,255,255,0.06)" vertical={false} />
+            <XAxis dataKey="t" tick={{ fill: "rgba(148,163,184,0.65)", fontSize: 9 }} axisLine={false} tickLine={false} />
+            <YAxis hide domain={["dataMin - 8", "dataMax + 12"]} />
+            <Tooltip
+              contentStyle={{
+                background: "rgba(15,23,42,0.92)",
+                border: "1px solid rgba(255,255,255,0.12)",
+                borderRadius: 0,
+                fontSize: 11,
+                fontFamily: "JetBrains Mono, ui-monospace, monospace",
+              }}
+              labelStyle={{ color: "#94a3b8" }}
+            />
+            <Area type="monotone" dataKey="a" stroke="#22d3ee" strokeWidth={1.6} fill="url(#pdA)" dot={false} isAnimationActive={false} />
+            <Area type="monotone" dataKey="b" stroke="#38bdf8" strokeWidth={1.4} fill="url(#pdB)" dot={false} isAnimationActive={false} />
+            <Area type="monotone" dataKey="c" stroke="#0ea5e9" strokeWidth={1.2} fill="url(#pdC)" dot={false} isAnimationActive={false} />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+    </SurfaceCard>
+  );
+}
+
+function AnalysisBarsChart({ exercises, starters }: { exercises: number; starters: number }) {
+  const data = useMemo(() => {
+    const e = Math.max(1, exercises);
+    const s = Math.max(1, starters);
+    return [
+      { name: "E1", v: Math.min(100, 22 + (e % 7) * 9) },
+      { name: "E2", v: Math.min(100, 35 + (s % 5) * 11) },
+      { name: "E3", v: Math.min(100, 48 + (e % 4) * 8) },
+      { name: "E4", v: Math.min(100, 30 + (s % 6) * 7) },
+      { name: "E5", v: Math.min(100, 55 + (e % 3) * 10) },
+      { name: "E6", v: Math.min(100, 40 + (s % 4) * 9) },
+      { name: "E7", v: Math.min(100, 62 + (e % 5) * 6) },
+    ];
+  }, [exercises, starters]);
+
+  return (
+    <SurfaceCard className="relative min-h-[220px]">
+      <DigitalGrain />
+      <SurfaceHeader title="ANALYSIS" subtitle="Distribución vertical · brillo en punta" />
+      <div className="relative p-3 sm:p-4 h-[240px] sm:h-[260px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data} margin={{ top: 12, right: 8, left: -24, bottom: 0 }} barCategoryGap="28%">
+            <defs>
+              <filter id="barGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="3" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
+            <CartesianGrid strokeDasharray="3 6" stroke="rgba(255,255,255,0.06)" vertical={false} />
+            <XAxis dataKey="name" tick={{ fill: "rgba(148,163,184,0.55)", fontSize: 9 }} axisLine={false} tickLine={false} />
+            <YAxis hide domain={[0, 100]} />
+            <Tooltip
+              cursor={{ fill: "rgba(34,211,238,0.06)" }}
+              contentStyle={{
+                background: "rgba(15,23,42,0.92)",
+                border: "1px solid rgba(255,255,255,0.12)",
+                borderRadius: 0,
+                fontSize: 11,
+                fontFamily: "JetBrains Mono, ui-monospace, monospace",
+              }}
+            />
+            <Bar dataKey="v" radius={[0, 0, 0, 0]} barSize={8} filter="url(#barGlow)">
+              {data.map((_, i) => (
+                <Cell
+                  key={i}
+                  fill={i % 2 === 0 ? "#22d3ee" : "#38bdf8"}
+                  style={{ filter: "drop-shadow(0 -6px 10px rgba(34,211,238,0.85))" }}
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </SurfaceCard>
+  );
+}
+
+function TacticalBoardFrame() {
+  return (
+    <SurfaceCard className="relative flex flex-col min-h-[320px] xl:min-h-[520px] h-full">
+      <DigitalGrain />
+      <SurfaceHeader title="TACTICAL BOARD" subtitle="Vista previa · operación en vivo" />
+      <div className="relative flex-1 p-4 flex flex-col">
+        <div className="relative flex-1 min-h-[260px] border border-white/10 bg-slate-950/40 overflow-hidden shadow-[inset_0_0_60px_rgba(0,0,0,0.45)]">
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundColor: "#052e16",
+              backgroundImage: `
+                linear-gradient(rgba(255,255,255,0.07) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.07) 1px, transparent 1px),
+                radial-gradient(ellipse at center, rgba(34,197,94,0.25) 0%, transparent 65%)
+              `,
+              backgroundSize: "14px 14px, 14px 14px, 100% 100%",
+            }}
+          />
+          <div className="absolute inset-4 border border-cyan-400/25 rounded-none shadow-[0_0_40px_rgba(34,211,238,0.12)]" />
+          <div className="absolute left-1/2 top-4 bottom-4 w-px bg-white/15 -translate-x-1/2" />
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-16 w-16 border border-white/25 bg-emerald-950/50 rotate-45 shadow-[0_0_24px_rgba(16,185,129,0.25)]" />
+          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-px bg-white/10" />
+          <p className="absolute bottom-3 left-4 text-[9px] font-black uppercase tracking-[0.35em] text-emerald-200/70">
+            Grid fino · césped neón
+          </p>
+        </div>
+        <Button
+          asChild
+          className="mt-4 h-14 rounded-none bg-cyan-500 text-black font-black uppercase text-xs tracking-widest shadow-[0_0_25px_rgba(6,182,212,0.8)] hover:bg-cyan-400"
+        >
+          <Link href="/sandbox/app/board/match?source=sandbox">Entrar a la pizarra</Link>
+        </Button>
+      </div>
+    </SurfaceCard>
+  );
+}
+
+function FloatingMetric({
   label,
   value,
-  helper,
-  icon: Icon,
-  bars,
 }: {
   label: string;
-  value: React.ReactNode;
-  helper?: string;
-  icon: React.ComponentType<{ className?: string }>;
-  bars?: number[];
+  value: ReactNode;
 }) {
   return (
-    <div className="rounded-3xl border border-white/10 bg-slate-900/40 backdrop-blur-2xl p-4 sm:p-5 shadow-[0_14px_50px_rgba(0,0,0,0.45)]">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 truncate">{label}</p>
-          <div className="mt-2 flex items-end gap-3">
-            <p className="text-3xl sm:text-4xl font-black text-cyan-400 italic leading-none drop-shadow-[0_0_10px_rgba(34,211,238,0.65)]">
-              {value}
-            </p>
-            {helper ? (
-              <span className="pb-1 text-[10px] font-black uppercase tracking-[0.25em] text-white/35">{helper}</span>
-            ) : null}
-          </div>
-        </div>
-        <div className="h-12 w-12 rounded-2xl bg-cyan-500/10 border border-white/10 flex items-center justify-center">
-          <Icon className="h-6 w-6 text-cyan-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]" />
-        </div>
+    <SurfaceCard className="relative">
+      <div className="relative px-4 py-4">
+        <p className="text-[9px] font-black uppercase tracking-[0.32em] text-white/45">{label}</p>
+        <p className="mt-2 font-technic text-4xl sm:text-5xl font-bold tabular-nums text-cyan-400 leading-none drop-shadow-[0_0_14px_rgba(34,211,238,0.75)]">
+          {value}
+        </p>
       </div>
-      {bars && bars.length ? (
-        <div className="mt-4 flex items-center justify-between gap-3">
-          <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white/30">Tendencia</span>
-          <MiniBars values={bars} />
-        </div>
-      ) : null}
-    </div>
+    </SurfaceCard>
   );
 }
 
-function ActionTile({
+function NeonActionButton({
   href,
   label,
-  description,
   icon: Icon,
-  tone,
 }: {
   href: string;
   label: string;
-  description: string;
   icon: React.ComponentType<{ className?: string }>;
-  tone: "primary" | "dark";
 }) {
-  const primary = tone === "primary";
   return (
-    <Link
-      href={href}
-      className={cn(
-        "group rounded-3xl border border-white/10 bg-slate-900/40 backdrop-blur-2xl p-5 shadow-[0_14px_50px_rgba(0,0,0,0.45)] transition-all",
-        "hover:border-cyan-300/30 hover:bg-slate-900/55 hover:shadow-[0_20px_70px_rgba(0,0,0,0.55)]",
-        primary && "border-cyan-300/25 bg-gradient-to-br from-cyan-500/12 via-slate-900/45 to-slate-950/55",
-      )}
+    <Button
+      asChild
+      className="h-16 w-full rounded-none bg-cyan-500 text-black font-black uppercase text-[11px] tracking-widest shadow-[0_0_25px_rgba(6,182,212,0.8)] hover:bg-cyan-400 justify-between px-5"
     >
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <p className="text-[11px] font-black uppercase tracking-[0.28em] text-white/40">Acceso rápido</p>
-          <p className="mt-2 text-lg sm:text-xl font-black uppercase tracking-tight text-white group-hover:text-cyan-200 transition-colors">
-            {label}
-          </p>
-          <p className="mt-2 text-sm text-gray-300/90 leading-relaxed">{description}</p>
-        </div>
-        <div
-          className={cn(
-            "h-12 w-12 rounded-2xl border border-white/10 flex items-center justify-center",
-            primary ? "bg-cyan-500/15" : "bg-white/5",
-          )}
-        >
-          <Icon
-            className={cn(
-              "h-6 w-6 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]",
-              primary ? "text-cyan-200" : "text-cyan-300/80",
-            )}
-          />
-        </div>
-      </div>
-      <div className="mt-5 flex items-center justify-between gap-3">
-        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-200/60">
-          Abrir módulo
+      <Link href={href}>
+        <span className="flex items-center gap-3">
+          <Icon className="h-5 w-5" />
+          {label}
         </span>
-        <ChevronRight className="h-5 w-5 text-white/50 group-hover:text-cyan-200 transition-colors" />
-      </div>
-    </Link>
+        <ChevronRight className="h-5 w-5 opacity-80" />
+      </Link>
+    </Button>
   );
 }
 
@@ -238,7 +338,6 @@ function SandboxHomeAdPanel() {
     if (!ADSENSE_CLIENT || !ADSENSE_SLOT_H) return;
     if (!adRef.current) return;
 
-    // First push (wait a bit for script)
     let tries = 0;
     const maxTries = 40;
     const t = window.setInterval(() => {
@@ -252,7 +351,6 @@ function SandboxHomeAdPanel() {
       window.clearInterval(t);
     }, 150);
 
-    // Auto-refresh: recreate <ins> and push again.
     refreshIntervalRef.current = window.setInterval(() => {
       if (!adRef.current) return;
       adRef.current.innerHTML = "";
@@ -276,7 +374,7 @@ function SandboxHomeAdPanel() {
   const isConfigured = !!(ADSENSE_CLIENT && ADSENSE_SLOT_H);
 
   return (
-    <SurfaceCard>
+    <SurfaceCard className="relative">
       {isConfigured ? (
         <Script
           id="sandbox-home-adsense"
@@ -287,15 +385,15 @@ function SandboxHomeAdPanel() {
       ) : null}
 
       <SurfaceHeader
-        title="Ads / Monetización"
+        title="MONETIZACIÓN"
         subtitle={isConfigured ? "Panel activo" : "Demo (configura .env)"}
-        right={<Sparkles className="h-4 w-4 text-cyan-200/70 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]" />}
+        right={<Sparkles className="h-4 w-4 text-cyan-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]" />}
       />
 
-      <div className="p-4 sm:p-5">
+      <div className="p-4">
         <div
           className={cn(
-            "min-h-16 w-full rounded-2xl overflow-hidden border border-white/10 bg-black/30",
+            "min-h-14 w-full overflow-hidden border border-white/10 bg-black/35",
             !isConfigured && "border-dashed",
           )}
         >
@@ -321,8 +419,8 @@ function SandboxHomeAdPanel() {
               />
             </div>
           ) : (
-            <div className="h-16 w-full flex items-center justify-center text-[10px] font-black uppercase tracking-[0.2em] text-cyan-200/70">
-              Slot demo (NEXT_PUBLIC_GOOGLE_ADSENSE_*)
+            <div className="h-14 w-full flex items-center justify-center text-[9px] font-black uppercase tracking-[0.2em] text-cyan-200/70">
+              NEXT_PUBLIC_GOOGLE_ADSENSE_*
             </div>
           )}
         </div>
@@ -357,34 +455,27 @@ function UpcomingMatchesPanel() {
 
   return (
     <SurfaceCard>
-      <SurfaceHeader title="Próximos partidos" subtitle="3 siguientes" right={<Swords className="h-4 w-4 text-cyan-200/70 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]" />} />
+      <SurfaceHeader title="PRÓXIMOS PARTIDOS" subtitle="3 siguientes" right={<Swords className="h-4 w-4 text-cyan-300" />} />
 
-      <div className="p-4 sm:p-5 space-y-3">
+      <div className="p-4 space-y-3">
         {rows.map((m, idx) => {
           const isPending = !m || !m.date || !m.rivalName || !m.location;
-          const location = (m?.location || "").toLowerCase().includes("visit") ? "Fuera" : (m?.location ? "Casa" : "Pendiente");
-          const dateLabel = m?.date ? m.date : "Pendiente de configurar";
-          const rivalLabel = m?.rivalName ? m.rivalName : "Pendiente de configurar";
+          const location = (m?.location || "").toLowerCase().includes("visit") ? "Fuera" : m?.location ? "Casa" : "Pendiente";
+          const dateLabel = m?.date ? m.date : "—";
+          const rivalLabel = m?.rivalName ? m.rivalName : "Configurar";
           return (
             <div
               key={idx}
               className={cn(
-                "rounded-2xl border border-white/10 bg-black/25 px-4 py-3 flex items-center justify-between gap-4",
-                isPending && "border-dashed",
+                "rounded-none border border-white/10 bg-black/30 px-3 py-2.5 flex items-center justify-between gap-3",
+                isPending && "border-dashed border-white/20",
               )}
             >
               <div className="min-w-0">
-                <p className="text-[9px] font-black uppercase tracking-[0.28em] text-white/35">
-                  {isPending ? "Pendiente" : location}
-                </p>
-                <p className="mt-1 text-sm font-black uppercase tracking-tight text-white truncate">
-                  VS {rivalLabel}
-                </p>
+                <p className="text-[8px] font-black uppercase tracking-[0.28em] text-white/40">{isPending ? "Pendiente" : location}</p>
+                <p className="mt-1 text-xs font-black uppercase tracking-tight text-white truncate">VS {rivalLabel}</p>
               </div>
-              <div className="shrink-0 text-right">
-                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-primary/70">Fecha</p>
-                <p className="text-[11px] font-black text-white/70">{dateLabel}</p>
-              </div>
+              <div className="shrink-0 text-right font-technic text-[11px] text-cyan-200/90">{dateLabel}</div>
             </div>
           );
         })}
@@ -415,31 +506,28 @@ function UpcomingAgendaPanel() {
 
   return (
     <SurfaceCard>
-      <SurfaceHeader title="Agenda" subtitle="Próximos 3 eventos" right={<CalendarDays className="h-4 w-4 text-cyan-200/70 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]" />} />
+      <SurfaceHeader title="AGENDA" subtitle="Próximos 3" right={<CalendarDays className="h-4 w-4 text-cyan-300" />} />
 
-      <div className="p-4 sm:p-5 space-y-3">
+      <div className="p-4 space-y-3">
         {slots.map((s, idx) => {
           const isPending = !s;
-          const title = s?.title?.trim() ? s!.title!.toUpperCase() : "PENDIENTE_DE_CONFIGURAR";
-          const dateLabel = s?.createdAt ? s.createdAt : "PENDIENTE";
+          const title = s?.title?.trim() ? s!.title!.toUpperCase() : "SIN EVENTO";
+          const dateLabel = s?.createdAt ? s.createdAt : "—";
           return (
             <div
               key={idx}
               className={cn(
-                "rounded-2xl border border-white/10 bg-black/25 px-4 py-3 flex items-center justify-between gap-4",
-                isPending && "border-dashed",
+                "rounded-none border border-white/10 bg-black/30 px-3 py-2.5 flex items-center justify-between gap-3",
+                isPending && "border-dashed border-white/20",
               )}
             >
               <div className="min-w-0">
-                <p className="text-[9px] font-black uppercase tracking-[0.28em] text-white/35">
-                  {isPending ? "Pendiente" : `Evento_${String(s?.id ?? "").slice(-4) || `0${idx + 1}`}`}
+                <p className="text-[8px] font-black uppercase tracking-[0.28em] text-white/40">
+                  {isPending ? "Pendiente" : "EVENTO"}
                 </p>
-                <p className="mt-1 text-sm font-black uppercase tracking-tight text-white truncate">{title}</p>
+                <p className="mt-1 text-xs font-black uppercase tracking-tight text-white truncate">{title}</p>
               </div>
-              <div className="shrink-0 text-right">
-                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-primary/70">Fecha</p>
-                <p className="text-[11px] font-black text-white/70">{dateLabel}</p>
-              </div>
+              <div className="shrink-0 text-right font-technic text-[11px] text-cyan-200/90">{dateLabel}</div>
             </div>
           );
         })}
@@ -492,172 +580,89 @@ export default function SandboxAppHomePage() {
 
   const accessItems = useMemo(
     () => [
-      {
-        href: "/sandbox/app/team",
-        label: "Mi equipo",
-        description: "Jugadores, roles y titulares. Configure su base en segundos.",
-        icon: Users,
-        tone: "primary" as const,
-      },
-      {
-        href: "/sandbox/app/tasks",
-        label: "Mis tareas",
-        description: "Asignaciones rápidas y control diario de ejecución.",
-        icon: ClipboardList,
-        tone: "dark" as const,
-      },
-      {
-        href: "/sandbox/app/sessions",
-        label: "Agenda",
-        description: "Sesiones y eventos. Planificación simple y directa.",
-        icon: CalendarDays,
-        tone: "dark" as const,
-      },
-      {
-        href: "/sandbox/app/matches",
-        label: "Mis partidos",
-        description: "Partidos, resultados y preparación táctica.",
-        icon: Swords,
-        tone: "dark" as const,
-      },
-      {
-        href: "/sandbox/app/stats",
-        label: "Estadísticas",
-        description: "KPIs base y lectura rápida del rendimiento.",
-        icon: BarChart3,
-        tone: "dark" as const,
-      },
-      {
-        href: "/sandbox/app/mobile-continuity",
-        label: "Modo continuidad",
-        description: "Flujo rápido para móvil y uso en campo.",
-        icon: Gauge,
-        tone: "dark" as const,
-      },
+      { href: "/sandbox/app/team", label: "Mi equipo", icon: Users },
+      { href: "/sandbox/app/tasks", label: "Mis tareas", icon: ClipboardList },
+      { href: "/sandbox/app/sessions", label: "Agenda", icon: CalendarDays },
+      { href: "/sandbox/app/matches", label: "Mis partidos", icon: Swords },
+      { href: "/sandbox/app/stats", label: "Estadísticas", icon: BarChart3 },
+      { href: "/sandbox/app/mobile-continuity", label: "Modo continuidad", icon: Gauge },
     ],
     [],
   );
 
   return (
-    <main className="space-y-8 animate-in fade-in duration-700 p-6 sm:p-8 lg:p-10 text-white">
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-        <div className="space-y-3">
-          <div className="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-black/25 px-4 py-3 backdrop-blur-xl">
-            <div className="h-10 w-10 rounded-2xl bg-cyan-500/10 border border-white/10 flex items-center justify-center">
-              <ShieldCheck className="h-5 w-5 text-cyan-200 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-[0.35em] text-cyan-200/75">SANDBOX COACH</p>
-              <p className="mt-1 text-xs text-gray-300/80">
-                Sesión activa{profile?.email ? ` · ${profile.email}` : ""}
-              </p>
-            </div>
-          </div>
-          <h1 className="text-4xl sm:text-5xl font-headline font-black text-white tracking-tight leading-none">
-            Centro de mando <span className="text-cyan-200 drop-shadow-[0_0_10px_rgba(34,211,238,0.55)]">operativo</span>
+    <main className="relative animate-in fade-in duration-700 p-4 sm:p-6 lg:p-8 text-white bg-[#020617]">
+      <DigitalGrain />
+      <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-6 pb-4 lg:pb-6 border-b border-white/10">
+        <div className="space-y-2">
+          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-cyan-300/90">SANDBOX COACH · PANEL</p>
+          <h1 className="text-2xl sm:text-3xl font-headline font-black tracking-tight text-white">
+            Control táctico <span className="text-cyan-400 drop-shadow-[0_0_12px_rgba(34,211,238,0.55)]">operativo</span>
           </h1>
-          <p className="text-gray-300/90 max-w-2xl">
-            Acceso directo a equipo, planificación y rendimiento. Diseño rápido para operar en campo sin fricción.
+          <p className="text-sm text-slate-400 max-w-xl">
+            Réplica de estilo tablet · datos reales desde almacenamiento local{profile?.email ? ` · ${profile.email}` : ""}
           </p>
         </div>
-
-        <div className="w-full lg:w-auto">
-          <div className="flex items-center gap-2">
-            <div className="rounded-2xl border border-white/10 bg-black/25 px-3 py-2 w-fit backdrop-blur-xl">
-              <SynqAiSportsLogo compact />
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              className="h-11 rounded-2xl border-white/15 bg-black/30 text-white/85 font-black uppercase text-[10px] tracking-widest hover:border-cyan-300/35 hover:bg-cyan-500/10 hover:text-cyan-100 transition-colors"
-              onClick={async () => {
-                await logout();
-                router.replace("/sandbox/login?next=/sandbox/app");
-              }}
-            >
-              <LogOut className="h-4 w-4 mr-2 text-cyan-200/80 drop-shadow-[0_0_8px_rgba(34,211,238,0.55)]" />
-              Salir
-            </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="rounded-none border border-white/10 bg-slate-900/60 backdrop-blur-2xl px-3 py-2">
+            <SynqAiSportsLogo compact />
           </div>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11 rounded-none border-white/10 bg-slate-900/50 text-white/90 font-black uppercase text-[10px] tracking-widest hover:border-cyan-400/40 hover:text-cyan-200"
+            onClick={async () => {
+              await logout();
+              router.replace("/sandbox/login?next=/sandbox/app");
+            }}
+          >
+            <LogOut className="h-4 w-4 mr-2 text-cyan-400" />
+            Salir
+          </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-6">
-        <div className="space-y-6">
-          <SurfaceCard>
-            <SurfaceHeader
-              title="Resumen operativo"
-              subtitle="KPIs y accesos rápidos"
-              right={<Zap className="h-4 w-4 text-cyan-200/70 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]" />}
-            />
-            <div className="p-4 sm:p-5">
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
-                <KpiCard label="Victorias" value={miniStats.wins} helper="partidos jugados" icon={Trophy} bars={[1, 2, 3, 3, 4]} />
-                <KpiCard label="Goles a favor" value={miniStats.goalsFor} helper="acumulado" icon={Zap} bars={[1, 2, 2, 3, 5]} />
-                <KpiCard label="Goles en contra" value={miniStats.goalsAgainst} helper="acumulado" icon={Activity} bars={[1, 1, 2, 2, 3]} />
-                <KpiCard
-                  label="Base de trabajo"
-                  value={metrics.exercises}
-                  helper={`titulares ${metrics.starters} · ${metrics.activeField}`}
-                  icon={BarChart3}
-                  bars={[1, 2, 2, 4, Math.max(1, metrics.exercises)]}
-                />
-              </div>
-
-              <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-3">
-                {accessItems.slice(0, 2).map((item) => (
-                  <ActionTile
-                    key={item.href}
-                    href={item.href}
-                    label={item.label}
-                    description={item.description}
-                    icon={item.icon}
-                    tone={item.tone}
-                  />
-                ))}
-              </div>
-
-              <div className="mt-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
-                {accessItems.slice(2).map((item) => (
-                  <ActionTile
-                    key={item.href}
-                    href={item.href}
-                    label={item.label}
-                    description={item.description}
-                    icon={item.icon}
-                    tone={item.tone}
-                  />
-                ))}
-              </div>
-
-              <div className="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                <div className="rounded-3xl border border-white/10 bg-black/25 backdrop-blur-xl px-4 py-3">
-                  <p className="text-[10px] font-black uppercase tracking-[0.35em] text-white/40">Modo</p>
-                  <p className="mt-1 text-sm font-black uppercase tracking-tight text-cyan-200 drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]">
-                    Operativo · rápido
-                  </p>
-                </div>
-                <Button
-                  asChild
-                  className="h-12 rounded-2xl bg-cyan-300 text-black font-black uppercase text-[11px] tracking-widest justify-center shadow-[0_0_24px_rgba(0,242,255,0.28)] hover:brightness-110 active:scale-[0.99]"
-                >
-                  <Link href="/sandbox/app/board/match?source=sandbox">
-                    Abrir pizarra de partido
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </SurfaceCard>
-
-          <UpcomingAgendaPanel />
+      <div className="relative mt-4 lg:mt-6 grid grid-cols-1 xl:grid-cols-12 gap-4 lg:gap-6">
+        <div className="xl:col-span-7 space-y-4 lg:space-y-6">
+          <PlayerDataChart {...miniStats} />
+        </div>
+        <div className="xl:col-span-5 space-y-4 lg:space-y-6">
+          <AnalysisBarsChart exercises={metrics.exercises} starters={metrics.starters} />
         </div>
 
-        <div className="space-y-6">
+        <div className="xl:col-span-7 space-y-4 lg:space-y-6 xl:row-start-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6">
+            <FloatingMetric label="Victorias" value={miniStats.wins} />
+            <FloatingMetric label="Goles +" value={miniStats.goalsFor} />
+            <FloatingMetric label="Goles −" value={miniStats.goalsAgainst} />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6">
+            <FloatingMetric label="Titulares" value={metrics.starters} />
+            <FloatingMetric label="Ejercicios" value={metrics.exercises} />
+            <FloatingMetric label="Campo" value={<span className="text-3xl sm:text-4xl">{metrics.activeField}</span>} />
+          </div>
           <SandboxHomeAdPanel />
-          <UpcomingMatchesPanel />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+            <UpcomingAgendaPanel />
+            <UpcomingMatchesPanel />
+          </div>
+        </div>
+
+        <div className="xl:col-span-5 xl:row-start-2 xl:row-span-2 flex">
+          <div className="flex-1 min-w-0 w-full max-w-full xl:max-w-[40vw] xl:ml-auto">
+            <TacticalBoardFrame />
+          </div>
+        </div>
+
+        <div className="xl:col-span-12 xl:row-start-4 space-y-4 lg:space-y-6">
+          <p className="text-[10px] font-black uppercase tracking-[0.35em] text-cyan-300/80">Acciones</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+            {accessItems.map((item) => (
+              <NeonActionButton key={item.href} href={item.href} label={item.label} icon={item.icon} />
+            ))}
+          </div>
         </div>
       </div>
     </main>
   );
 }
-
