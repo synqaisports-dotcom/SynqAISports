@@ -3,13 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 
-/** Orden: preferir captura del usuario; si falla 404, caer a slide del repo. */
-const PREVIEW_SOURCES = [
-  "/images/Captura.jpg",
-  "/images/captura.jpg",
-  "/images/Captura.svg",
-  "/canvas-slide-1.svg",
-] as const;
+/** Home marketing: foto en `public/images/Captura.jpg`. Fallback si falta en deploy. */
+const PREVIEW_SOURCES = ["/images/Captura.jpg", "/images/captura.jpg", "/images/Captura.svg", "/canvas-slide-1.svg"] as const;
 
 export function ContinuityPreviewBlock() {
   const [index, setIndex] = useState(0);

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Script from "next/script";
 import {
@@ -238,9 +237,6 @@ function AnalysisBarsChart({ exercises, starters }: { exercises: number; starter
   );
 }
 
-/** Vista estática en repo: `public/images/Captura.svg` (sustituye por tu `Captura.jpg` si quieres foto real). */
-const SANDBOX_BOARD_HERO_IMAGE = "/images/Captura.svg";
-
 function OperativeBoardPanel({ matchId }: { matchId: string }) {
   const { toast } = useToast();
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
@@ -254,27 +250,31 @@ function OperativeBoardPanel({ matchId }: { matchId: string }) {
     return () => window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
   }, []);
 
+  const iframeSrc = useMemo(() => {
+    return sandboxBoardMatchHref({
+      source: "sandbox",
+      embed: "1",
+      matchId: matchId || undefined,
+    });
+  }, [matchId]);
+
   return (
     <SurfaceCard className="relative flex flex-col min-h-[320px] xl:min-h-[420px] h-full xl:flex-1">
       <DigitalGrain />
       <SurfaceHeader
         title="PIZARRA OPERATIVA"
-        subtitle={matchId ? `Partido #${matchId} · abre la pizarra para operar` : "Vista previa · abre la pizarra en vivo"}
+        subtitle={matchId ? `Partido #${matchId} · instancia real` : "Selecciona un partido en Mis partidos"}
       />
       <div className="relative flex-1 flex flex-col border-t border-white/5 bg-[#020408] min-h-[240px] xl:min-h-0">
-        <div className="relative flex-1 w-full min-h-[240px] max-h-[min(52vh,560px)] xl:min-h-[320px] xl:max-h-none">
-          <Image
-            src={SANDBOX_BOARD_HERO_IMAGE}
-            alt="Pizarra táctica operativa — vista de referencia"
-            fill
-            className="object-contain object-center bg-[#020408]"
-            sizes="(max-width: 1280px) 100vw, 45vw"
-            priority
-          />
-        </div>
+        <iframe
+          title="Pizarra táctica operativa"
+          src={iframeSrc}
+          className="w-full flex-1 min-h-[220px] xl:min-h-0 border-0 bg-[#020408]"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-popups"
+        />
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 px-3 py-2 bg-slate-950/80">
           <p className="text-[8px] font-black uppercase tracking-[0.28em] text-white/45">
-            Vista estática · pizarra interactiva al abrir
+            Misma pizarra que /board/match · embed
           </p>
           <div className="flex flex-wrap items-center justify-end gap-2">
             <Button
