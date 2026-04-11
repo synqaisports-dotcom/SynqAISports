@@ -76,7 +76,7 @@ Límites típicos en código: 20 ejercicios totales; 4 sesiones; 20 partidos; sl
 ## UI compartida
 
 - Shell: `SandboxCommandHubShell`, estética Command Hub.
-- Paneles promo: `src/app/dashboard/promo/command-hub-ui.tsx` (`HubPanel`, `SectionBar`, `PromoAdsPanel`).
+- Paneles promo: `src/components/shared/command-hub-ui.tsx` (`HubPanel`, `SectionBar`, `PromoAdsPanel`). Reexport legacy: `src/app/dashboard/promo/command-hub-ui.tsx`.
 
 ## Archivos de referencia
 

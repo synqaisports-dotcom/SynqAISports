@@ -1,14 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import Script from "next/script";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   BarChart3,
   CalendarDays,
   ClipboardList,
   Download,
-  Sparkles,
   Swords,
 } from "lucide-react";
 import {
@@ -25,9 +23,9 @@ import {
 } from "recharts";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { synqSync } from "@/lib/sync-service";
 import { useToast } from "@/hooks/use-toast";
 import { sandboxBoardMatchHref } from "@/lib/sandbox-routes";
+import { PromoAdsPanel } from "@/components/shared/command-hub-ui";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -60,9 +58,6 @@ type HomeMiniStats = {
   goalsFor: number;
   goalsAgainst: number;
 };
-
-const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT ?? "";
-const ADSENSE_SLOT_H = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_SLOT_HORIZONTAL ?? "";
 
 /** Sombra exterior cian sutil: paneles flotando sobre el campo */
 const PANEL_OUTER =
@@ -345,122 +340,6 @@ function FloatingMetric({
   );
 }
 
-function SandboxHomeAdPanel() {
-  const adRef = useRef<HTMLDivElement | null>(null);
-  const refreshIntervalRef = useRef<number | null>(null);
-
-  const pushAd = () => {
-    if (!ADSENSE_CLIENT || !ADSENSE_SLOT_H) return;
-    const w = window as unknown as { adsbygoogle?: unknown[] };
-    if (!w.adsbygoogle) return;
-    try {
-      w.adsbygoogle.push({});
-      synqSync.trackEvent("ad_impression", {
-        app_slug: "sandbox-coach",
-        source: "sandbox",
-        placement: "sandbox_home_horizontal",
-        format: "horizontal",
-      });
-    } catch {
-      // noop
-    }
-  };
-
-  useEffect(() => {
-    if (!ADSENSE_CLIENT || !ADSENSE_SLOT_H) return;
-    if (!adRef.current) return;
-
-    let tries = 0;
-    const maxTries = 40;
-    const t = window.setInterval(() => {
-      tries += 1;
-      const w = window as unknown as { adsbygoogle?: unknown[] };
-      if (!w.adsbygoogle) {
-        if (tries >= maxTries) window.clearInterval(t);
-        return;
-      }
-      pushAd();
-      window.clearInterval(t);
-    }, 150);
-
-    refreshIntervalRef.current = window.setInterval(() => {
-      if (!adRef.current) return;
-      adRef.current.innerHTML = "";
-      const ins = document.createElement("ins");
-      ins.className = "adsbygoogle";
-      ins.style.display = "block";
-      ins.setAttribute("data-ad-client", ADSENSE_CLIENT);
-      ins.setAttribute("data-ad-slot", ADSENSE_SLOT_H);
-      ins.setAttribute("data-ad-format", "horizontal");
-      ins.setAttribute("data-full-width-responsive", "true");
-      adRef.current.appendChild(ins);
-      pushAd();
-    }, 25000);
-
-    return () => {
-      window.clearInterval(t);
-      if (refreshIntervalRef.current) window.clearInterval(refreshIntervalRef.current);
-    };
-  }, []);
-
-  const isConfigured = !!(ADSENSE_CLIENT && ADSENSE_SLOT_H);
-
-  return (
-    <SurfaceCard className="relative flex flex-col flex-1 min-h-0 h-full">
-      {isConfigured ? (
-        <Script
-          id="sandbox-home-adsense"
-          strategy="afterInteractive"
-          crossOrigin="anonymous"
-          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${encodeURIComponent(ADSENSE_CLIENT)}`}
-        />
-      ) : null}
-
-      <SurfaceHeader
-        title="MONETIZACIÓN"
-        subtitle={isConfigured ? "Panel activo" : "Slot demo · configura Adsense en .env"}
-        right={<Sparkles className="h-4 w-4 text-cyan-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]" />}
-      />
-
-      <div className="p-4 flex-1 flex flex-col min-h-[200px] xl:min-h-0">
-        <div
-          className={cn(
-            "flex-1 min-h-[180px] w-full overflow-hidden border border-white/10 bg-black/35",
-            !isConfigured && "border-dashed",
-          )}
-        >
-          {isConfigured ? (
-            <div
-              ref={adRef}
-              onClick={() =>
-                synqSync.trackEvent("ad_click", {
-                  app_slug: "sandbox-coach",
-                  source: "sandbox",
-                  placement: "sandbox_home_horizontal",
-                  format: "horizontal",
-                })
-              }
-            >
-              <ins
-                className="adsbygoogle"
-                style={{ display: "block" }}
-                data-ad-client={ADSENSE_CLIENT}
-                data-ad-slot={ADSENSE_SLOT_H}
-                data-ad-format="horizontal"
-                data-full-width-responsive="true"
-              />
-            </div>
-          ) : (
-            <div className="h-14 w-full flex items-center justify-center text-[9px] font-black uppercase tracking-[0.2em] text-cyan-200/70">
-              Slot demo · NEXT_PUBLIC_GOOGLE_ADSENSE_*
-            </div>
-          )}
-        </div>
-      </div>
-    </SurfaceCard>
-  );
-}
-
 function parseMatchDate(value: string | undefined): number | null {
   if (!value) return null;
   const t = Date.parse(value);
@@ -637,7 +516,9 @@ export default function SandboxAppHomePage() {
 
         <div className="xl:col-span-12 grid grid-cols-1 xl:grid-cols-12 gap-4 lg:gap-6 xl:items-stretch">
           <div className="xl:col-span-7 min-h-0 flex flex-col">
-            <SandboxHomeAdPanel />
+            <div className="flex flex-col flex-1 min-h-0 h-full [&>div]:flex-1 [&>div]:min-h-0 [&>div]:h-full">
+              <PromoAdsPanel placement="sandbox_home_horizontal" sectionTitle="MONETIZACIÓN" />
+            </div>
           </div>
           <div className="xl:col-span-5 min-h-0 flex flex-col">
             <OperativeBoardPanel matchId={boardMatchId} />

@@ -12,7 +12,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { SANDBOX_APP_ROOT } from "@/lib/sandbox-routes";
-import { inputProClass } from "@/app/dashboard/promo/command-hub-ui";
+import { inputProClass } from "@/components/shared/command-hub-ui";
 
 const DEEP_NIGHT = "#0F172A";
 const ELECTRIC_CYAN = "#00F2FF";
