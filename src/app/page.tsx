@@ -11,6 +11,7 @@ import {
 import type { ComponentType } from "react";
 import { Button } from "@/components/ui/button";
 import { SiteNav } from "@/components/marketing/site-nav";
+import { ContinuityPreviewBlock } from "@/components/marketing/continuity-preview-block";
 
 export default function SynqAiLandingPage() {
   return (
@@ -74,25 +75,7 @@ export default function SynqAiLandingPage() {
                 </Link>
               </Button>
             </div>
-            <div className="mt-5 overflow-hidden rounded-2xl border border-white/10 bg-[#020408] backdrop-blur-2xl shadow-[0_0_20px_rgba(0,242,255,0.15)]">
-              <div className="relative flex h-[260px] w-full items-center justify-center md:h-[360px]">
-                <img
-                  src="/images/Captura.svg"
-                  alt="Sandbox Coach — vista táctica de referencia"
-                  className="h-full w-full object-contain object-center"
-                  loading="lazy"
-                />
-              </div>
-              <div className="flex items-center justify-center gap-3 border-t border-white/10 bg-[#0F172A]/90 px-4 py-2.5">
-                <p className="text-[9px] font-bold uppercase tracking-widest text-white/40">Vista estática</p>
-                <Link
-                  href="/sandbox/app"
-                  className="text-[10px] font-black uppercase tracking-widest text-cyan-400 drop-shadow-[0_0_8px_rgba(0,242,255,0.45)] hover:text-cyan-300"
-                >
-                  Abrir pizarra en vivo →
-                </Link>
-              </div>
-            </div>
+            <ContinuityPreviewBlock />
           </article>
 
           <div className="grid grid-cols-1 gap-5">
