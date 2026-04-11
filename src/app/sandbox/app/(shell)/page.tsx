@@ -1,27 +1,39 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Script from "next/script";
 import {
-  Activity,
+  BarChart3,
   CalendarDays,
-  ChevronRight,
   ClipboardList,
-  Gauge,
-  ShieldCheck,
-  LogOut,
+  Download,
+  Sparkles,
   Swords,
-  Trophy,
-  Zap,
-  Users,
 } from "lucide-react";
-import { useAuth } from "@/lib/auth-context";
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { Button } from "@/components/ui/button";
-import { SynqAiSportsLogo } from "@/components/branding/SynqAiSportsLogo";
 import { cn } from "@/lib/utils";
-import { useRouter } from "next/navigation";
 import { synqSync } from "@/lib/sync-service";
+import { useToast } from "@/hooks/use-toast";
+import { sandboxBoardMatchHref } from "@/lib/sandbox-routes";
+
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+};
 
 type SandboxMetrics = {
   starters: number;
@@ -33,15 +45,15 @@ type PromoMatch = {
   id?: number | string;
   date?: string;
   rivalName?: string;
-  location?: string; // "Local" | "Visitante"
-  status?: string; // "Scheduled" | "Played" | ...
+  location?: string;
+  status?: string;
   score?: { home?: number; guest?: number };
 };
 
 type PromoSession = {
   id?: number | string;
   title?: string;
-  createdAt?: string; // YYYY-MM-DD
+  createdAt?: string;
 };
 
 type HomeMiniStats = {
@@ -52,6 +64,286 @@ type HomeMiniStats = {
 
 const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT ?? "";
 const ADSENSE_SLOT_H = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_SLOT_HORIZONTAL ?? "";
+
+/** Sombra exterior cian sutil: paneles flotando sobre el campo */
+const PANEL_OUTER =
+  "drop-shadow-[0_0_15px_rgba(6,182,212,0.1)] shadow-[0_18px_60px_rgba(0,0,0,0.5)]";
+
+function SurfaceCard({ className, children }: { className?: string; children: ReactNode }) {
+  return (
+    <section
+      className={cn(
+        "rounded-none border border-white/10 bg-slate-900/60 backdrop-blur-2xl overflow-hidden",
+        PANEL_OUTER,
+        className,
+      )}
+    >
+      {children}
+    </section>
+  );
+}
+
+function SurfaceHeader({
+  title,
+  subtitle,
+  right,
+}: {
+  title: string;
+  subtitle?: string;
+  right?: ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-white/10 bg-gradient-to-r from-cyan-500/10 via-transparent to-transparent drop-shadow-[0_0_15px_rgba(6,182,212,0.08)]">
+      <div className="min-w-0">
+        <p className="text-[10px] font-black uppercase tracking-[0.35em] text-cyan-300/80 truncate">{title}</p>
+        {subtitle ? (
+          <p className="mt-1 text-[10px] font-black uppercase tracking-[0.25em] text-white/40 truncate">{subtitle}</p>
+        ) : null}
+      </div>
+      {right ? <div className="shrink-0">{right}</div> : null}
+    </div>
+  );
+}
+
+function DigitalGrain() {
+  return (
+    <div
+      className="pointer-events-none absolute inset-0 opacity-[0.07] mix-blend-overlay"
+      style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+      }}
+      aria-hidden
+    />
+  );
+}
+
+function PlayerDataChart({ wins, goalsFor, goalsAgainst }: HomeMiniStats) {
+  const data = useMemo(() => {
+    const base = Math.max(1, wins + goalsFor + goalsAgainst);
+    return Array.from({ length: 14 }).map((_, i) => {
+      const t = i;
+      const waveA = Math.sin(t / 2.1) * 18 + (goalsFor / Math.max(1, base)) * 40;
+      const waveB = Math.cos(t / 1.7) * 14 + (goalsAgainst / Math.max(1, base)) * 35;
+      const waveC = Math.sin(t / 3 + 1) * 22 + wins * 6;
+      return {
+        t: String(t).padStart(2, "0"),
+        a: Math.max(4, 40 + waveA + i * 1.2),
+        b: Math.max(4, 35 + waveB - i * 0.6),
+        c: Math.max(4, 32 + waveC * 0.35 + (i % 4) * 3),
+      };
+    });
+  }, [wins, goalsFor, goalsAgainst]);
+
+  return (
+    <SurfaceCard className="relative min-h-[220px]">
+      <DigitalGrain />
+      <SurfaceHeader title="PLAYER DATA" subtitle="Señales compuestas · tiempo de sesión" />
+      <div className="relative p-3 sm:p-4 h-[240px] sm:h-[260px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+            <defs>
+              <linearGradient id="pdA" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#22d3ee" stopOpacity={0.45} />
+                <stop offset="100%" stopColor="#22d3ee" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id="pdB" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.35} />
+                <stop offset="100%" stopColor="#38bdf8" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id="pdC" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#0ea5e9" stopOpacity={0.3} />
+                <stop offset="100%" stopColor="#0ea5e9" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 6" stroke="rgba(255,255,255,0.06)" vertical={false} />
+            <XAxis dataKey="t" tick={{ fill: "rgba(148,163,184,0.65)", fontSize: 9 }} axisLine={false} tickLine={false} />
+            <YAxis hide domain={["dataMin - 8", "dataMax + 12"]} />
+            <Tooltip
+              contentStyle={{
+                background: "rgba(15,23,42,0.92)",
+                border: "1px solid rgba(255,255,255,0.12)",
+                borderRadius: 0,
+                fontSize: 11,
+                fontFamily: "JetBrains Mono, ui-monospace, monospace",
+              }}
+              labelStyle={{ color: "#94a3b8" }}
+            />
+            <Area type="monotone" dataKey="a" stroke="#22d3ee" strokeWidth={1.6} fill="url(#pdA)" dot={false} isAnimationActive={false} />
+            <Area type="monotone" dataKey="b" stroke="#38bdf8" strokeWidth={1.4} fill="url(#pdB)" dot={false} isAnimationActive={false} />
+            <Area type="monotone" dataKey="c" stroke="#0ea5e9" strokeWidth={1.2} fill="url(#pdC)" dot={false} isAnimationActive={false} />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+    </SurfaceCard>
+  );
+}
+
+function AnalysisBarsChart({ exercises, starters }: { exercises: number; starters: number }) {
+  const data = useMemo(() => {
+    const e = Math.max(1, exercises);
+    const s = Math.max(1, starters);
+    return [
+      { name: "E1", v: Math.min(100, 22 + (e % 7) * 9) },
+      { name: "E2", v: Math.min(100, 35 + (s % 5) * 11) },
+      { name: "E3", v: Math.min(100, 48 + (e % 4) * 8) },
+      { name: "E4", v: Math.min(100, 30 + (s % 6) * 7) },
+      { name: "E5", v: Math.min(100, 55 + (e % 3) * 10) },
+      { name: "E6", v: Math.min(100, 40 + (s % 4) * 9) },
+      { name: "E7", v: Math.min(100, 62 + (e % 5) * 6) },
+    ];
+  }, [exercises, starters]);
+
+  return (
+    <SurfaceCard className="relative min-h-[220px]">
+      <DigitalGrain />
+      <SurfaceHeader title="ANALYSIS" subtitle="Distribución vertical · brillo en punta" />
+      <div className="relative p-3 sm:p-4 h-[240px] sm:h-[260px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data} margin={{ top: 12, right: 8, left: -24, bottom: 0 }} barCategoryGap="28%">
+            <defs>
+              <filter id="barGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="3" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
+            <CartesianGrid strokeDasharray="3 6" stroke="rgba(255,255,255,0.06)" vertical={false} />
+            <XAxis dataKey="name" tick={{ fill: "rgba(148,163,184,0.55)", fontSize: 9 }} axisLine={false} tickLine={false} />
+            <YAxis hide domain={[0, 100]} />
+            <Tooltip
+              cursor={{ fill: "rgba(34,211,238,0.06)" }}
+              contentStyle={{
+                background: "rgba(15,23,42,0.92)",
+                border: "1px solid rgba(255,255,255,0.12)",
+                borderRadius: 0,
+                fontSize: 11,
+                fontFamily: "JetBrains Mono, ui-monospace, monospace",
+              }}
+            />
+            <Bar dataKey="v" radius={[0, 0, 0, 0]} barSize={8} filter="url(#barGlow)">
+              {data.map((_, i) => (
+                <Cell
+                  key={i}
+                  fill={i % 2 === 0 ? "#22d3ee" : "#38bdf8"}
+                  style={{ filter: "drop-shadow(0 -6px 10px rgba(34,211,238,0.85))" }}
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </SurfaceCard>
+  );
+}
+
+/** Vista estática en repo: `public/images/Captura.svg` (sustituye por tu `Captura.jpg` si quieres foto real). */
+const SANDBOX_BOARD_HERO_IMAGE = "/images/Captura.svg";
+
+function OperativeBoardPanel({ matchId }: { matchId: string }) {
+  const { toast } = useToast();
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+
+  useEffect(() => {
+    const onBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e as BeforeInstallPromptEvent);
+    };
+    window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+    return () => window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+  }, []);
+
+  return (
+    <SurfaceCard className="relative flex flex-col min-h-[320px] xl:min-h-[420px] h-full xl:flex-1">
+      <DigitalGrain />
+      <SurfaceHeader
+        title="PIZARRA OPERATIVA"
+        subtitle={matchId ? `Partido #${matchId} · abre la pizarra para operar` : "Vista previa · abre la pizarra en vivo"}
+      />
+      <div className="relative flex-1 flex flex-col border-t border-white/5 bg-[#020408] min-h-[240px] xl:min-h-0">
+        <div className="relative flex-1 w-full min-h-[240px] max-h-[min(52vh,560px)] xl:min-h-[320px] xl:max-h-none">
+          <Image
+            src={SANDBOX_BOARD_HERO_IMAGE}
+            alt="Pizarra táctica operativa — vista de referencia"
+            fill
+            className="object-contain object-center bg-[#020408]"
+            sizes="(max-width: 1280px) 100vw, 45vw"
+            priority
+          />
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 px-3 py-2 bg-slate-950/80">
+          <p className="text-[8px] font-black uppercase tracking-[0.28em] text-white/45">
+            Vista estática · pizarra interactiva al abrir
+          </p>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <Button
+              type="button"
+              className="h-8 rounded-none bg-cyan-500 text-black text-[9px] font-black uppercase tracking-widest shadow-[0_0_18px_rgba(6,182,212,0.65)] hover:bg-cyan-400"
+              onClick={async () => {
+                if (!installPrompt) {
+                  toast({
+                    title: "Instalar la app",
+                    description:
+                      "En móvil: menú del navegador → Añadir a la pantalla de inicio. En escritorio: icono de instalación en la barra de direcciones si el navegador lo ofrece.",
+                  });
+                  return;
+                }
+                try {
+                  await installPrompt.prompt();
+                  await installPrompt.userChoice;
+                } catch {
+                  /* noop */
+                }
+                setInstallPrompt(null);
+              }}
+            >
+              <Download className="h-3.5 w-3.5 mr-1.5" />
+              Instalar app
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              className="h-8 rounded-none border-white/15 bg-slate-900/60 text-[9px] font-black uppercase tracking-widest text-cyan-200 hover:border-cyan-400/35"
+            >
+              <Link
+                href={sandboxBoardMatchHref({
+                  source: "sandbox",
+                  fullscreen: "1",
+                  matchId: matchId || undefined,
+                })}
+              >
+                Abrir pizarra
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    </SurfaceCard>
+  );
+}
+
+function FloatingMetric({
+  label,
+  value,
+}: {
+  label: string;
+  value: ReactNode;
+}) {
+  return (
+    <SurfaceCard className="relative">
+      <div className="relative px-3 py-3 sm:px-4 sm:py-4 min-h-[5.5rem]">
+        <div className="pointer-events-none absolute inset-0 bg-cyan-400/[0.07]" aria-hidden />
+        <div className="relative">
+          <p className="text-[8px] sm:text-[9px] font-black uppercase tracking-[0.28em] text-white/50">{label}</p>
+          <p className="mt-2 font-technic text-3xl sm:text-4xl lg:text-5xl font-bold tabular-nums text-cyan-400 leading-none drop-shadow-[0_0_18px_rgba(34,211,238,0.85)]">
+            {value}
+          </p>
+        </div>
+      </div>
+    </SurfaceCard>
+  );
+}
 
 function SandboxHomeAdPanel() {
   const adRef = useRef<HTMLDivElement | null>(null);
@@ -78,7 +370,6 @@ function SandboxHomeAdPanel() {
     if (!ADSENSE_CLIENT || !ADSENSE_SLOT_H) return;
     if (!adRef.current) return;
 
-    // First push (wait a bit for script)
     let tries = 0;
     const maxTries = 40;
     const t = window.setInterval(() => {
@@ -92,7 +383,6 @@ function SandboxHomeAdPanel() {
       window.clearInterval(t);
     }, 150);
 
-    // Auto-refresh: recreate <ins> and push again.
     refreshIntervalRef.current = window.setInterval(() => {
       if (!adRef.current) return;
       adRef.current.innerHTML = "";
@@ -116,7 +406,7 @@ function SandboxHomeAdPanel() {
   const isConfigured = !!(ADSENSE_CLIENT && ADSENSE_SLOT_H);
 
   return (
-    <section className="rounded-3xl border border-primary/20 bg-black/35 backdrop-blur-sm shadow-[0_12px_40px_rgba(0,0,0,0.35)] overflow-hidden">
+    <SurfaceCard className="relative flex flex-col flex-1 min-h-0 h-full">
       {isConfigured ? (
         <Script
           id="sandbox-home-adsense"
@@ -126,17 +416,16 @@ function SandboxHomeAdPanel() {
         />
       ) : null}
 
-      <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-primary/10 bg-gradient-to-r from-primary/10 via-transparent to-transparent">
-        <p className="text-[10px] font-black uppercase tracking-[0.35em] text-primary/70">AdMob / Ads</p>
-        <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40">
-          {isConfigured ? "Panel activo" : "Demo (configura .env)"}
-        </span>
-      </div>
+      <SurfaceHeader
+        title="MONETIZACIÓN"
+        subtitle={isConfigured ? "Panel activo" : "Slot demo · configura Adsense en .env"}
+        right={<Sparkles className="h-4 w-4 text-cyan-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]" />}
+      />
 
-      <div className="p-4 sm:p-5">
+      <div className="p-4 flex-1 flex flex-col min-h-[200px] xl:min-h-0">
         <div
           className={cn(
-            "min-h-16 w-full rounded-2xl overflow-hidden border border-primary/20 bg-black/40",
+            "flex-1 min-h-[180px] w-full overflow-hidden border border-white/10 bg-black/35",
             !isConfigured && "border-dashed",
           )}
         >
@@ -162,13 +451,13 @@ function SandboxHomeAdPanel() {
               />
             </div>
           ) : (
-            <div className="h-16 w-full flex items-center justify-center text-[10px] font-black uppercase tracking-[0.2em] text-primary/70">
-              Slot demo (NEXT_PUBLIC_GOOGLE_ADSENSE_*)
+            <div className="h-14 w-full flex items-center justify-center text-[9px] font-black uppercase tracking-[0.2em] text-cyan-200/70">
+              Slot demo · NEXT_PUBLIC_GOOGLE_ADSENSE_*
             </div>
           )}
         </div>
       </div>
-    </section>
+    </SurfaceCard>
   );
 }
 
@@ -176,6 +465,21 @@ function parseMatchDate(value: string | undefined): number | null {
   if (!value) return null;
   const t = Date.parse(value);
   return Number.isFinite(t) ? t : null;
+}
+
+/** Próximo partido programado → último jugado → primer registro del vault (misma lógica que “siguiente partido”). */
+function pickBoardMatchId(matches: PromoMatch[]): string {
+  if (!matches.length) return "";
+  const ts = (m: PromoMatch) => parseMatchDate(m.date) ?? 0;
+  const scheduled = matches
+    .filter((m) => (m.status || "").toLowerCase() !== "played")
+    .sort((a, b) => ts(a) - ts(b));
+  if (scheduled.length) return String(scheduled[0]?.id ?? "");
+  const played = matches
+    .filter((m) => (m.status || "").toLowerCase() === "played")
+    .sort((a, b) => ts(b) - ts(a));
+  if (played.length) return String(played[0]?.id ?? "");
+  return String(matches[0]?.id ?? "");
 }
 
 function UpcomingMatchesPanel() {
@@ -197,43 +501,33 @@ function UpcomingMatchesPanel() {
   const rows = Array.from({ length: 3 }).map((_, i) => nextMatches[i] || null);
 
   return (
-    <section className="rounded-3xl border border-primary/20 bg-black/35 backdrop-blur-sm shadow-[0_12px_40px_rgba(0,0,0,0.35)] overflow-hidden">
-      <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-primary/10 bg-gradient-to-r from-primary/10 via-transparent to-transparent">
-        <p className="text-[10px] font-black uppercase tracking-[0.35em] text-primary/70">Próximos partidos</p>
-        <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40">3 siguientes</span>
-      </div>
+    <SurfaceCard>
+      <SurfaceHeader title="PRÓXIMOS PARTIDOS" subtitle="3 siguientes" right={<Swords className="h-4 w-4 text-cyan-300" />} />
 
-      <div className="p-4 sm:p-5 space-y-3">
+      <div className="p-4 space-y-3">
         {rows.map((m, idx) => {
           const isPending = !m || !m.date || !m.rivalName || !m.location;
-          const location = (m?.location || "").toLowerCase().includes("visit") ? "Fuera" : (m?.location ? "Casa" : "Pendiente");
-          const dateLabel = m?.date ? m.date : "Pendiente de configurar";
-          const rivalLabel = m?.rivalName ? m.rivalName : "Pendiente de configurar";
+          const location = (m?.location || "").toLowerCase().includes("visit") ? "Fuera" : m?.location ? "Casa" : "Pendiente";
+          const dateLabel = m?.date ? m.date : "—";
+          const rivalLabel = m?.rivalName ? m.rivalName : "Configurar";
           return (
             <div
               key={idx}
               className={cn(
-                "rounded-2xl border border-primary/15 bg-black/40 px-4 py-3 flex items-center justify-between gap-4",
-                isPending && "border-dashed",
+                "rounded-none border border-white/10 bg-black/30 px-3 py-2.5 flex items-center justify-between gap-3",
+                isPending && "border-dashed border-white/20",
               )}
             >
               <div className="min-w-0">
-                <p className="text-[9px] font-black uppercase tracking-[0.28em] text-white/35">
-                  {isPending ? "Pendiente" : location}
-                </p>
-                <p className="mt-1 text-sm font-black uppercase tracking-tight text-white truncate">
-                  VS {rivalLabel}
-                </p>
+                <p className="text-[8px] font-black uppercase tracking-[0.28em] text-white/40">{isPending ? "Pendiente" : location}</p>
+                <p className="mt-1 text-xs font-black uppercase tracking-tight text-white truncate">VS {rivalLabel}</p>
               </div>
-              <div className="shrink-0 text-right">
-                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-primary/70">Fecha</p>
-                <p className="text-[11px] font-black text-white/70">{dateLabel}</p>
-              </div>
+              <div className="shrink-0 text-right font-technic text-[11px] text-cyan-200/90">{dateLabel}</div>
             </div>
           );
         })}
       </div>
-    </section>
+    </SurfaceCard>
   );
 }
 
@@ -258,40 +552,34 @@ function UpcomingAgendaPanel() {
   const slots = Array.from({ length: 3 }).map((_, i) => sessions[i] ?? null);
 
   return (
-    <section className="rounded-3xl border border-primary/20 bg-black/35 backdrop-blur-sm shadow-[0_12px_40px_rgba(0,0,0,0.35)] overflow-hidden">
-      <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-primary/10 bg-gradient-to-r from-primary/10 via-transparent to-transparent">
-        <p className="text-[10px] font-black uppercase tracking-[0.35em] text-primary/70">Agenda</p>
-        <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40">Próximos 3 eventos</span>
-      </div>
+    <SurfaceCard>
+      <SurfaceHeader title="AGENDA" subtitle="Próximos 3" right={<CalendarDays className="h-4 w-4 text-cyan-300" />} />
 
-      <div className="p-4 sm:p-5 space-y-3">
+      <div className="p-4 space-y-3">
         {slots.map((s, idx) => {
           const isPending = !s;
-          const title = s?.title?.trim() ? s!.title!.toUpperCase() : "PENDIENTE_DE_CONFIGURAR";
-          const dateLabel = s?.createdAt ? s.createdAt : "PENDIENTE";
+          const title = s?.title?.trim() ? s!.title!.toUpperCase() : "SIN EVENTO";
+          const dateLabel = s?.createdAt ? s.createdAt : "—";
           return (
             <div
               key={idx}
               className={cn(
-                "rounded-2xl border border-primary/15 bg-black/40 px-4 py-3 flex items-center justify-between gap-4",
-                isPending && "border-dashed",
+                "rounded-none border border-white/10 bg-black/30 px-3 py-2.5 flex items-center justify-between gap-3",
+                isPending && "border-dashed border-white/20",
               )}
             >
               <div className="min-w-0">
-                <p className="text-[9px] font-black uppercase tracking-[0.28em] text-white/35">
-                  {isPending ? "Pendiente" : `Evento_${String(s?.id ?? "").slice(-4) || `0${idx + 1}`}`}
+                <p className="text-[8px] font-black uppercase tracking-[0.28em] text-white/40">
+                  {isPending ? "Pendiente" : "EVENTO"}
                 </p>
-                <p className="mt-1 text-sm font-black uppercase tracking-tight text-white truncate">{title}</p>
+                <p className="mt-1 text-xs font-black uppercase tracking-tight text-white truncate">{title}</p>
               </div>
-              <div className="shrink-0 text-right">
-                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-primary/70">Fecha</p>
-                <p className="text-[11px] font-black text-white/70">{dateLabel}</p>
-              </div>
+              <div className="shrink-0 text-right font-technic text-[11px] text-cyan-200/90">{dateLabel}</div>
             </div>
           );
         })}
       </div>
-    </section>
+    </SurfaceCard>
   );
 }
 
@@ -305,8 +593,6 @@ function safeParseJson<T>(raw: string | null, fallback: T): T {
 }
 
 export default function SandboxAppHomePage() {
-  const { profile, logout } = useAuth();
-  const router = useRouter();
   const [metrics, setMetrics] = useState<SandboxMetrics>({
     starters: 0,
     exercises: 0,
@@ -317,6 +603,7 @@ export default function SandboxAppHomePage() {
     goalsFor: 0,
     goalsAgainst: 0,
   });
+  const [boardMatchId, setBoardMatchId] = useState("");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -330,6 +617,7 @@ export default function SandboxAppHomePage() {
     setMetrics({ starters, exercises, activeField });
 
     const matches: PromoMatch[] = Array.isArray(vault?.matches) ? vault.matches : [];
+    setBoardMatchId(pickBoardMatchId(matches));
     const played = matches.filter((m) => (m.status || "").toLowerCase() === "played");
     const wins = played.filter((m) => (m.score?.home || 0) > (m.score?.guest || 0)).length;
     const goalsFor = played.reduce((acc, m) => acc + (m.score?.home || 0), 0);
@@ -337,147 +625,47 @@ export default function SandboxAppHomePage() {
     setMiniStats({ wins, goalsFor, goalsAgainst });
   }, []);
 
-  const accessItems = useMemo(
-    () => [
-      { href: "/sandbox/app/team", label: "Mi equipo", icon: Users, tone: "primary" as const },
-      { href: "/sandbox/app/tasks", label: "Mis tareas", icon: ClipboardList, tone: "dark" as const },
-      { href: "/sandbox/app/sessions", label: "Agenda", icon: CalendarDays, tone: "dark" as const },
-      { href: "/sandbox/app/matches", label: "Mis partidos", icon: Swords, tone: "dark" as const },
-      { href: "/sandbox/app/stats", label: "Estadísticas", icon: Activity, tone: "dark" as const },
-      { href: "/sandbox/app/mobile-continuity", label: "Modo continuidad", icon: Gauge, tone: "dark" as const },
-    ],
-    [],
-  );
-
   return (
-    <main className="space-y-8 animate-in fade-in duration-700 p-6 sm:p-8 lg:p-10 text-white">
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-5 border-b border-primary/10 pb-6">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <ShieldCheck className="h-5 w-5 text-primary animate-pulse" />
-            <span className="text-[10px] font-black text-primary tracking-[0.45em] uppercase italic">Sandbox_Home_v1.0</span>
-          </div>
-          <h1 className="text-4xl sm:text-5xl font-headline font-black text-white uppercase italic tracking-tighter leading-none">
-            TERMINAL_<span className="text-primary">SANDBOX</span>
-          </h1>
-          <p className="text-[11px] font-black text-primary/40 tracking-[0.28em] uppercase">
-            Nodo principal de acceso
-          </p>
+    <div className="relative animate-in fade-in duration-700 space-y-4 lg:space-y-6">
+      <div className="relative grid grid-cols-1 xl:grid-cols-12 gap-4 lg:gap-6">
+        <div className="xl:col-span-7">
+          <PlayerDataChart {...miniStats} />
         </div>
-        <div className="w-full lg:w-auto">
-          <div className="flex items-center gap-2">
-            <div className="rounded-2xl border border-primary/20 bg-primary/5 px-3 py-2 w-fit">
-              <SynqAiSportsLogo compact />
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              className="h-11 rounded-2xl border-rose-300/20 bg-black/30 text-rose-200/90 font-black uppercase text-[10px] tracking-widest hover:border-rose-300/40 hover:text-rose-100 transition-colors"
-              onClick={async () => {
-                await logout();
-                router.replace("/sandbox/login?next=/sandbox/app");
-              }}
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Salir
-            </Button>
+        <div className="xl:col-span-5">
+          <AnalysisBarsChart exercises={metrics.exercises} starters={metrics.starters} />
+        </div>
+
+        <div className="xl:col-span-12 grid grid-cols-1 xl:grid-cols-12 gap-4 lg:gap-6 xl:items-stretch">
+          <div className="xl:col-span-7 min-h-0 flex flex-col">
+            <SandboxHomeAdPanel />
+          </div>
+          <div className="xl:col-span-5 min-h-0 flex flex-col">
+            <OperativeBoardPanel matchId={boardMatchId} />
+          </div>
+        </div>
+
+        <div className="xl:col-span-12 grid grid-cols-1 xl:grid-cols-12 gap-4 lg:gap-6 xl:items-stretch">
+          <div className="xl:col-span-7 min-w-0">
+            <SurfaceCard>
+              <SurfaceHeader title="DASHBOARD GRID" subtitle="Métricas · 2 columnas × 2 filas" />
+              <div className="p-4 space-y-4 lg:space-y-6">
+                <div className="grid grid-cols-2 gap-4 lg:gap-6">
+                  <FloatingMetric label="Victorias" value={miniStats.wins} />
+                  <FloatingMetric label="Goles" value={miniStats.goalsFor} />
+                </div>
+                <div className="grid grid-cols-2 gap-4 lg:gap-6">
+                  <FloatingMetric label="Titulares" value={metrics.starters} />
+                  <FloatingMetric label="Ejercicios" value={metrics.exercises} />
+                </div>
+              </div>
+            </SurfaceCard>
+          </div>
+          <div className="xl:col-span-5 grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6 min-w-0 xl:items-stretch">
+            <UpcomingAgendaPanel />
+            <UpcomingMatchesPanel />
           </div>
         </div>
       </div>
-
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-6">
-        <div className="space-y-6">
-          <div className="rounded-3xl border border-primary/20 bg-black/35 backdrop-blur-sm shadow-[0_12px_40px_rgba(0,0,0,0.35)] overflow-hidden">
-            <div className="px-5 py-4 border-b border-primary/10 bg-gradient-to-r from-primary/10 via-transparent to-transparent">
-              <p className="text-[10px] font-black uppercase tracking-[0.35em] text-primary/70">Sandbox (Micro‑app)</p>
-              <h2 className="mt-2 text-2xl sm:text-3xl font-black uppercase tracking-tight text-white">
-                Terminal completa <span className="text-primary">logueada</span>
-              </h2>
-            </div>
-            <div className="p-4 sm:p-5">
-              <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="rounded-2xl border border-white/10 bg-black/30 p-4 flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-                    <Trophy className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.28em] text-white/40">Victorias</p>
-                    <p className="mt-1 text-2xl font-black text-primary italic leading-none">{miniStats.wins}</p>
-                  </div>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-black/30 p-4 flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
-                    <Zap className="h-6 w-6 text-white/40" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.28em] text-white/40">Goles a favor</p>
-                    <p className="mt-1 text-2xl font-black text-white italic leading-none">{miniStats.goalsFor}</p>
-                  </div>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-black/30 p-4 flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
-                    <Activity className="h-6 w-6 text-white/40" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.28em] text-white/40">Goles en contra</p>
-                    <p className="mt-1 text-2xl font-black text-white italic leading-none">{miniStats.goalsAgainst}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
-                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40">Titulares</p>
-                  <p className="mt-1 text-xl font-black text-primary">{metrics.starters}</p>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
-                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40">Ejercicios</p>
-                  <p className="mt-1 text-xl font-black text-primary">{metrics.exercises}</p>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
-                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40">Campo activo</p>
-                  <p className="mt-1 text-xl font-black text-primary">{metrics.activeField}</p>
-                </div>
-              </div>
-
-              <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {accessItems.map((item) => {
-                  const Icon = item.icon;
-                  const isPrimary = item.tone === "primary";
-                  return (
-                    <Button
-                      key={item.href}
-                      asChild
-                      variant={isPrimary ? "default" : "outline"}
-                      className={
-                        isPrimary
-                          ? "h-12 rounded-2xl bg-primary text-black font-black uppercase text-[11px] tracking-widest justify-between shadow-[0_0_24px_rgba(0,242,255,0.28)] hover:brightness-110 active:scale-[0.99]"
-                          : "h-12 rounded-2xl border-primary/25 bg-black/45 text-white/90 font-black uppercase text-[11px] tracking-widest justify-between hover:border-primary/45 hover:bg-primary/10 hover:text-primary active:scale-[0.99]"
-                      }
-                    >
-                      <Link href={item.href}>
-                        <span className="flex items-center gap-2">
-                          <Icon className="h-4 w-4" />
-                          {item.label}
-                        </span>
-                        <ChevronRight className="h-4 w-4 opacity-70" />
-                      </Link>
-                    </Button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          <UpcomingAgendaPanel />
-        </div>
-
-        <div className="space-y-6">
-          <SandboxHomeAdPanel />
-          <UpcomingMatchesPanel />
-        </div>
-      </div>
-    </main>
+    </div>
   );
 }
-

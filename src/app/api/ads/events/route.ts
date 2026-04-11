@@ -47,16 +47,37 @@ export async function POST(req: Request) {
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !serviceKey) {
-    return NextResponse.json({ ok: false, error: "supabase_unconfigured" }, { status: 503 });
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url) {
+    return NextResponse.json(
+      { ok: true, accepted: normalized.length, skipped: true, reason: "no_supabase_url" },
+      { status: 200 },
+    );
   }
 
-  const admin = createClient(url, serviceKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  // Preferencia: service role (backoffice / producción). Fallback: anon + RLS insert (previews sin SERVICE_ROLE).
+  let error: { message: string } | null = null;
 
-  // Tabla esperada en Supabase: ad_events_queue
-  const { error } = await admin.from("ad_events_queue").insert(normalized);
+  if (serviceKey) {
+    const admin = createClient(url, serviceKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const res = await admin.from("ad_events_queue").insert(normalized);
+    error = res.error;
+  } else if (anonKey) {
+    const pub = createClient(url, anonKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const res = await pub.from("ad_events_queue").insert(normalized);
+    error = res.error;
+  } else {
+    return NextResponse.json(
+      { ok: true, accepted: normalized.length, skipped: true, reason: "no_supabase_keys" },
+      { status: 200 },
+    );
+  }
+
   if (error) {
     return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   }

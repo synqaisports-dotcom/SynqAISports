@@ -1,9 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { PwaInstallBanner } from "@/components/pwa/PwaInstallBanner";
-import { SandboxAppClientWrapper } from "./sandbox-app-client-wrapper";
 
 export const viewport: Viewport = {
-  themeColor: "#00f2ff",
+  themeColor: "#050812",
 };
 
 export const metadata: Metadata = {
@@ -17,14 +15,8 @@ export const metadata: Metadata = {
   },
 };
 
+/** Segment layouts bajo `(shell)` y `board/` aportan auth, banner y shell. Evitar doble `SandboxAppClientWrapper` aquí. */
 export default async function SandboxAppLayout(props: { children: React.ReactNode }) {
-  return (
-    <>
-      <PwaInstallBanner appName="Sandbox" storageKeyScope="sandbox" />
-      <SandboxAppClientWrapper>
-        {props.children}
-      </SandboxAppClientWrapper>
-    </>
-  );
+  return props.children;
 }
 

@@ -126,49 +126,33 @@ export default function SynqAiLandingPage() {
 
         <section
           id="plataforma"
-          className="mx-auto mt-2 max-w-7xl rounded-3xl border border-white/10 bg-gradient-to-br from-[#020617] via-[#0b1120] to-black px-6 py-12 shadow-[0_0_40px_rgba(0,0,0,0.35)]"
+          className="w-full py-24 px-6 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#0F172A] via-[#020617] to-black"
         >
-          <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
-            <div className="space-y-6">
-              <p className="text-sm font-black uppercase tracking-[0.22em] text-cyan-400 drop-shadow-[0_0_8px_rgba(0,242,255,0.5)]">
-                OPERACIONES DE ELITE A CUALQUIER ESCALA
+          <div className="mx-auto flex max-w-7xl flex-col items-center justify-center gap-12 lg:flex-row lg:gap-16">
+            <div className="w-full lg:w-1/2">
+              <p className="text-cyan-400 text-sm font-bold tracking-[0.2em] mb-4">
+                OPERACIONES DE ÉLITE A CUALQUIER ESCALA
               </p>
-              <h2 className="text-4xl font-extrabold tracking-tight text-white md:text-5xl">
+              <h2 className="text-5xl font-extrabold text-white leading-tight mb-6">
                 SYNQAI SPORTS GLOBAL PLATFORM: EL ESTÁNDAR DE LA PROFESIONALIZACIÓN
               </h2>
-              <p className="text-base leading-relaxed text-slate-300">
-                Centralice la captación, la metodología de cantera, el backoffice del club y el control global en una
-                única infraestructura. SynqAI Sports proporciona a los clubes de todo el mundo —desde academias
-                locales hasta canteras de primer nivel— las herramientas de software que definen a la élite europea.
-                Estandarice su ADN deportivo, proteja sus activos y profesionalice cada operación con tecnología
-                diseñada para ganar.
+              <p className="text-slate-300 text-lg max-w-xl mb-8">
+                Centralice la captación, la metodología de cantera, el backoffice del club y el control global en una única infraestructura. SynqAI Sports proporciona a los clubes de todo el mundo las herramientas de software que definen a la élite europea.
               </p>
               <Button
                 asChild
-                className="bg-cyan-500 hover:bg-cyan-400 text-black font-black uppercase tracking-widest text-[10px] shadow-lg shadow-cyan-500/50"
+                className="bg-cyan-500 text-black font-bold py-4 px-10 rounded-xl shadow-[0_0_20px_rgba(6,182,212,0.5)] hover:scale-105 transition-all"
               >
-                <Link href="/dashboard">
-                  PROFESIONALICE SU CLUB <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-                </Link>
+                <Link href="/dashboard">PROFESIONALICE SU CLUB</Link>
               </Button>
             </div>
 
-            <div className="relative mx-auto w-full max-w-xl">
-              <div className="rounded-[2.5rem] border border-white/10 bg-[#0F172A]/80 p-4 backdrop-blur-xl shadow-xl shadow-cyan-900/40">
-                <div className="rounded-[2.1rem] border border-white/10 bg-gradient-to-b from-slate-700/35 to-slate-900/45 p-3">
-                  <div className="mb-2 flex justify-center">
-                    <span className="h-1.5 w-12 rounded-full bg-white/30" />
-                  </div>
-                  <div className="relative overflow-hidden rounded-[1.5rem] border border-white/10 bg-black/30">
-                    <img
-                      src="/canvas-slide-1.svg"
-                      alt="Terminal Sandbox operativa"
-                      className="h-[380px] w-full object-cover"
-                    />
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-white/10 via-transparent to-transparent opacity-45" />
-                  </div>
-                </div>
-              </div>
+            <div className="w-full lg:w-1/2 flex justify-center">
+              <img
+                src="/images/imagensandbox.png"
+                alt="SynqAI Terminal Sandbox"
+                className="w-full h-auto max-w-2xl drop-shadow-[0_35px_35px_rgba(0,0,0,0.6)]"
+              />
             </div>
           </div>
         </section>

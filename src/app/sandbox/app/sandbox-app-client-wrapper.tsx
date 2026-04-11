@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { SynqAiSportsLogo } from "@/components/branding/SynqAiSportsLogo";
+import { SANDBOX_APP_ROOT, sandboxLoginHref } from "@/lib/sandbox-routes";
 
 export function SandboxAppClientWrapper(props: { children: ReactNode }) {
   const { profile, loading } = useAuth();
@@ -13,8 +14,7 @@ export function SandboxAppClientWrapper(props: { children: ReactNode }) {
   useEffect(() => {
     if (loading) return;
     if (!profile) {
-      const next = encodeURIComponent("/sandbox/app");
-      router.replace(`/sandbox/login?next=${next}`);
+      router.replace(sandboxLoginHref(SANDBOX_APP_ROOT));
     }
   }, [profile, loading, router]);
 

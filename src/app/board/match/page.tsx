@@ -270,6 +270,12 @@ function MatchBoardInner() {
     () => String(new URLSearchParams(searchParamsKey).get("matchId") || "").trim(),
     [searchParamsKey],
   );
+  const embedParam = useMemo(() => String(new URLSearchParams(searchParamsKey).get("embed") || "").toLowerCase(), [searchParamsKey]);
+  const embedMode = embedParam === "1" || embedParam === "true" || embedParam === "home";
+  const fullscreenLaunchParam = useMemo(
+    () => String(new URLSearchParams(searchParamsKey).get("fullscreen") || "").toLowerCase(),
+    [searchParamsKey],
+  );
 
   useEffect(() => {
     const ctx = continuityCtx;
@@ -348,6 +354,28 @@ function MatchBoardInner() {
       window.removeEventListener("storage", onStorage);
     };
   }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    if (fullscreenLaunchParam !== "1" && fullscreenLaunchParam !== "true") return;
+    const root = document.documentElement;
+    const go = () => {
+      const req = root.requestFullscreen?.bind(root);
+      if (!req) return;
+      void req().catch(() => {
+        /* usuario denegó o no disponible */
+      });
+    };
+    const t = window.setTimeout(go, 200);
+    try {
+      const u = new URL(window.location.href);
+      u.searchParams.delete("fullscreen");
+      window.history.replaceState({}, "", `${u.pathname}${u.search}${u.hash}`);
+    } catch {
+      /* noop */
+    }
+    return () => window.clearTimeout(t);
+  }, [mounted, fullscreenLaunchParam]);
 
   useEffect(() => {
     const q = sourceParam;
@@ -919,32 +947,34 @@ function MatchBoardInner() {
         </div>
       </div>
 
-      <div
-        className={cn(
-          "fixed z-[200] block",
-          matchSource === "sandbox"
-            ? "top-14 left-2 sm:top-4 sm:left-4"
-            : "top-4 left-4",
-        )}
-      >
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => {
-            const p = window.location.pathname || "";
-            const target = p.startsWith("/sandbox/app")
-              ? "/sandbox/app/matches"
-              : p.startsWith("/sandbox")
-                ? "/sandbox"
-                : "/dashboard";
-            router.replace(target);
-          }}
-          className="h-10 w-10 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-[background-color,border-color,color,opacity,transform] shadow-2xl active:scale-95 glass-panel"
-          title="Volver"
+      {!embedMode ? (
+        <div
+          className={cn(
+            "fixed z-[200] block",
+            matchSource === "sandbox"
+              ? "top-14 left-2 sm:top-4 sm:left-4"
+              : "top-4 left-4",
+          )}
         >
-          <LayoutDashboard className="h-5 w-5" />
-        </Button>
-      </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              const p = window.location.pathname || "";
+              const target = p.startsWith("/sandbox/app")
+                ? "/sandbox/app/matches"
+                : p.startsWith("/sandbox")
+                  ? "/sandbox"
+                  : "/dashboard";
+              router.replace(target);
+            }}
+            className="h-10 w-10 rounded-xl bg-black/60 backdrop-blur-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-[background-color,border-color,color,opacity,transform] shadow-2xl active:scale-95 glass-panel"
+            title="Volver"
+          >
+            <LayoutDashboard className="h-5 w-5" />
+          </Button>
+        </div>
+      ) : null}
 
       {/* TELEMETRÍA, TIEMPO Y GUARDADO */}
       <div
@@ -1107,7 +1137,7 @@ function MatchBoardInner() {
           <div className="flex items-center gap-1.5 lg:gap-2 pointer-events-auto shrink-0">
             <div className="bg-black/80 backdrop-blur-xl border border-primary/20 p-1 rounded-xl shadow-xl flex items-center h-10 lg:h-11 transition-[background-color,border-color,color,opacity,transform] glass-panel">
               <Select value={homeFormation} onValueChange={setHomeFormation}>
-                <SelectTrigger className="h-8 w-20 lg:w-24 bg-black border-primary/10 text-white font-black uppercase text-[9px] lg:text-[10px] rounded-lg focus:ring-0">
+                <SelectTrigger className="h-8 w-20 lg:w-24 bg-black/50 border-white/10 text-primary font-black uppercase text-[9px] lg:text-[10px] rounded-lg focus:ring-0 backdrop-blur-sm px-1.5">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[#0a0f18] border-primary/20">
@@ -1196,7 +1226,7 @@ function MatchBoardInner() {
           <div className="flex items-center gap-1.5 lg:gap-2 pointer-events-auto shrink-0">
             <div className="bg-black/80 backdrop-blur-xl border border-rose-500/20 p-1 rounded-xl shadow-xl flex items-center h-10 lg:h-11 glass-panel">
               <Select value={guestFormation} onValueChange={setGuestFormation}>
-                <SelectTrigger className="h-8 w-20 lg:w-24 bg-black border-rose-500/10 text-white font-black uppercase text-[9px] lg:text-[10px] rounded-lg focus:ring-0">
+                <SelectTrigger className="h-8 w-20 lg:w-24 bg-black/50 border-white/10 text-rose-300 font-black uppercase text-[9px] lg:text-[10px] rounded-lg focus:ring-0 backdrop-blur-sm px-1.5">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[#0a0f18] border-rose-500/20">

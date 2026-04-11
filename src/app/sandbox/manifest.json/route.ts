@@ -7,11 +7,12 @@ export const dynamic = "force-static";
 
 export async function GET() {
   const manifest = {
-    name: "Sandbox by SynqAi",
-    short_name: "SynqSandbox",
-    description: "Demo local-first (pizarras, equipo y biblioteca) para coaches.",
-    id: "com.synqai.sandbox.guest.v1",
-    start_url: "/sandbox",
+    name: "SynqAI Sandbox Coach",
+    short_name: "Sandbox Coach",
+    description: "Command hub, equipo, agenda y pizarra táctica (micro-app /sandbox/app).",
+    // Nuevo id para que el navegador no reutilice una PWA antigua con start_url incorrecto.
+    id: "com.synqai.sandbox.coach.v2",
+    start_url: "/sandbox/app",
     scope: "/sandbox",
     display: "standalone",
     background_color: "#04070c",
