@@ -238,8 +238,8 @@ function AnalysisBarsChart({ exercises, starters }: { exercises: number; starter
   );
 }
 
-/** Captura estática del hub; archivo: `public/images/Captura.jpg` → `/images/Captura.jpg` */
-const SANDBOX_BOARD_HERO_IMAGE = "/images/Captura.jpg";
+/** Vista estática en repo: `public/images/Captura.svg` (sustituye por tu `Captura.jpg` si quieres foto real). */
+const SANDBOX_BOARD_HERO_IMAGE = "/images/Captura.svg";
 
 function OperativeBoardPanel({ matchId }: { matchId: string }) {
   const { toast } = useToast();
