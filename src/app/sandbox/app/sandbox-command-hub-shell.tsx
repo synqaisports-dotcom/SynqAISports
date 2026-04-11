@@ -18,15 +18,21 @@ import { Button } from "@/components/ui/button";
 import { SynqAiSportsLogo } from "@/components/branding/SynqAiSportsLogo";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
+import {
+  SANDBOX_APP_BOARD_ROOT,
+  SANDBOX_APP_ROOT,
+  sandboxAppHref,
+  sandboxLoginHref,
+} from "@/lib/sandbox-routes";
 
 const NAV = [
-  { href: "/sandbox/app", label: "Command hub", icon: LayoutDashboard },
-  { href: "/sandbox/app/team", label: "Mi equipo", icon: Users },
-  { href: "/sandbox/app/tasks", label: "Mis tareas", icon: ClipboardList },
-  { href: "/sandbox/app/sessions", label: "Agenda", icon: CalendarDays },
-  { href: "/sandbox/app/matches", label: "Mis partidos", icon: Swords },
-  { href: "/sandbox/app/stats", label: "Estadísticas", icon: BarChart3 },
-  { href: "/sandbox/app/mobile-continuity", label: "Continuidad", icon: Gauge },
+  { href: sandboxAppHref(""), label: "Command hub", icon: LayoutDashboard },
+  { href: sandboxAppHref("/team"), label: "Mi equipo", icon: Users },
+  { href: sandboxAppHref("/tasks"), label: "Mis tareas", icon: ClipboardList },
+  { href: sandboxAppHref("/sessions"), label: "Agenda", icon: CalendarDays },
+  { href: sandboxAppHref("/matches"), label: "Mis partidos", icon: Swords },
+  { href: sandboxAppHref("/stats"), label: "Estadísticas", icon: BarChart3 },
+  { href: sandboxAppHref("/mobile-continuity"), label: "Continuidad", icon: Gauge },
 ] as const;
 
 function DigitalGrain() {
@@ -82,41 +88,41 @@ function ImmersionNavLink({
 }
 
 function sectionHeading(pathname: string): { kicker: string; title: string; subtitle: string } {
-  if (pathname === "/sandbox/app") {
+  if (pathname === SANDBOX_APP_ROOT) {
     return {
       kicker: "TERMINAL SANDBOX",
       title: "Control táctico operativo",
       subtitle: "Réplica de estilo tablet · datos reales desde almacenamiento local",
     };
   }
-  if (pathname.startsWith("/sandbox/app/team")) {
+  if (pathname.startsWith(sandboxAppHref("/team"))) {
     return { kicker: "TERMINAL SANDBOX", title: "Mi equipo", subtitle: "Titulares, suplentes y configuración de campo." };
   }
-  if (pathname.startsWith("/sandbox/app/tasks")) {
+  if (pathname.startsWith(sandboxAppHref("/tasks"))) {
     return { kicker: "TERMINAL SANDBOX", title: "Mis tareas", subtitle: "Seguimiento operativo del día a día." };
   }
-  if (pathname.startsWith("/sandbox/app/sessions")) {
+  if (pathname.startsWith(sandboxAppHref("/sessions"))) {
     return { kicker: "TERMINAL SANDBOX", title: "Agenda", subtitle: "Sesiones y eventos planificados." };
   }
-  if (pathname.startsWith("/sandbox/app/matches")) {
+  if (pathname.startsWith(sandboxAppHref("/matches"))) {
     return { kicker: "TERMINAL SANDBOX", title: "Mis partidos", subtitle: "Calendario y preparación táctica." };
   }
-  if (pathname.startsWith("/sandbox/app/stats")) {
+  if (pathname.startsWith(sandboxAppHref("/stats"))) {
     return { kicker: "TERMINAL SANDBOX", title: "Estadísticas", subtitle: "Lectura rápida de rendimiento." };
   }
-  if (pathname.startsWith("/sandbox/app/mobile-continuity")) {
+  if (pathname.startsWith(sandboxAppHref("/mobile-continuity"))) {
     return { kicker: "TERMINAL SANDBOX", title: "Modo continuidad", subtitle: "Flujo móvil y uso en campo." };
   }
-  if (pathname.startsWith("/sandbox/app/watch-config")) {
+  if (pathname.startsWith(sandboxAppHref("/watch-config"))) {
     return { kicker: "TERMINAL SANDBOX", title: "Config Watch", subtitle: "Emparejamiento y ajustes del reloj." };
   }
-  if (pathname.startsWith("/sandbox/app/collaboration")) {
+  if (pathname.startsWith(sandboxAppHref("/collaboration"))) {
     return { kicker: "TERMINAL SANDBOX", title: "Colaboración", subtitle: "Trabajo compartido en sandbox." };
   }
-  if (pathname.startsWith("/sandbox/app/board/promo")) {
+  if (pathname.startsWith(`${SANDBOX_APP_BOARD_ROOT}/promo`)) {
     return { kicker: "TERMINAL SANDBOX", title: "Pizarra promo", subtitle: "Tablero táctico de promoción." };
   }
-  if (pathname.startsWith("/sandbox/app/board/match")) {
+  if (pathname.startsWith(`${SANDBOX_APP_BOARD_ROOT}/match`)) {
     return { kicker: "TERMINAL SANDBOX", title: "Pizarra partido", subtitle: "Operación en vivo del encuentro." };
   }
   return { kicker: "TERMINAL SANDBOX", title: "Sandbox", subtitle: "Micro-app operativa." };
@@ -125,11 +131,11 @@ function sectionHeading(pathname: string): { kicker: string; title: string; subt
 const PANEL_OUTER = "drop-shadow-[0_0_15px_rgba(6,182,212,0.1)] shadow-[0_18px_60px_rgba(0,0,0,0.5)]";
 
 export function SandboxCommandHubShell(props: { children: ReactNode }) {
-  const pathname = usePathname() || "/sandbox/app";
+  const pathname = usePathname() || SANDBOX_APP_ROOT;
   const router = useRouter();
   const { profile, logout } = useAuth();
 
-  const isBoardFullscreen = pathname.startsWith("/sandbox/app/board/");
+  const isBoardFullscreen = pathname.startsWith(`${SANDBOX_APP_BOARD_ROOT}/`);
   const heading = useMemo(() => sectionHeading(pathname), [pathname]);
 
   if (isBoardFullscreen) {
@@ -146,8 +152,8 @@ export function SandboxCommandHubShell(props: { children: ReactNode }) {
           <p className="px-1 pb-2 text-[9px] font-black uppercase tracking-[0.35em] text-cyan-300/70">Navegación</p>
           {NAV.map((item) => {
             const active =
-              item.href === "/sandbox/app"
-                ? pathname === "/sandbox/app"
+              item.href === SANDBOX_APP_ROOT
+                ? pathname === SANDBOX_APP_ROOT
                 : pathname === item.href || pathname.startsWith(`${item.href}/`);
             return <ImmersionNavLink key={item.href} {...item} active={active} />;
           })}
@@ -164,7 +170,7 @@ export function SandboxCommandHubShell(props: { children: ReactNode }) {
               <div className="space-y-2 min-w-0">
                 <p className="text-[10px] font-black uppercase tracking-[0.38em] text-cyan-300/90">{heading.kicker}</p>
                 <h1 className="text-2xl sm:text-3xl font-headline font-black tracking-tight text-white uppercase">
-                  {pathname === "/sandbox/app" ? (
+                  {pathname === SANDBOX_APP_ROOT ? (
                     <>
                       Control táctico{" "}
                       <span className="text-cyan-300 drop-shadow-[0_0_32px_rgba(34,211,238,1)]">operativo</span>
@@ -192,7 +198,7 @@ export function SandboxCommandHubShell(props: { children: ReactNode }) {
                     className="h-11 rounded-none border-white/10 bg-slate-900/50 text-white/90 font-black uppercase text-[10px] tracking-widest hover:border-cyan-400/30 hover:text-cyan-100 drop-shadow-[0_0_12px_rgba(6,182,212,0.12)]"
                     onClick={async () => {
                       await logout();
-                      router.replace("/sandbox/login?next=/sandbox/app");
+                      router.replace(sandboxLoginHref(SANDBOX_APP_ROOT));
                     }}
                   >
                     <LogOut className="h-4 w-4 mr-2 text-cyan-400" />

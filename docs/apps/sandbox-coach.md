@@ -11,12 +11,22 @@ Micro-app **tablet-first** para entrenadores: Command Hub operativo, equipo, tar
 - **accessMode (catálogo):** `open`  
   **Importante:** la ruta `/sandbox/app` exige sesión vía `SandboxAppClientWrapper` → redirección a `/sandbox/login` si no hay perfil. El modo “open” del Store no elimina este guard; alinear catálogo o código si se quiere acceso sin login.
 
+## Base path (app independiente)
+
+- Variable opcional: `NEXT_PUBLIC_SANDBOX_BASE_PATH` (por defecto `/sandbox`).  
+- Rutas internas del Command Hub y login deben usar `src/lib/sandbox-routes.ts` (`sandboxAppHref`, `sandboxLoginHref`, `SANDBOX_APP_ROOT`, etc.).
+
+## Captura de lead en login
+
+- `/sandbox/login`: formulario (club, país, ciudad, dirección, email) → `POST /api/sandbox/lead` (Supabase tabla `sandbox_terminal_leads` si existe migración + `SUPABASE_SERVICE_ROLE_KEY`).  
+- Copia local en `localStorage` `synq_sandbox_terminal_lead_v1` si el envío falla o no hay backend.
+
 ## Rutas principales
 
 | Ruta | Función |
 |------|---------|
 | `/sandbox-portal` | Portal: si hay sesión, redirige a `dest` (default `/sandbox/app`); si no, pantalla + login |
-| `/sandbox/login` | Login dedicado; query `next` seguro |
+| `/sandbox/login` | Terminal: lead capture + enlace a OAuth global `/login?next=…` |
 | `/sandbox/app` | Command Hub (KPIs, gráficas, monetización, iframe pizarra partido, PWA install) |
 | `/sandbox/app/team` | Mi equipo (formación, titulares, suplentes) |
 | `/sandbox/app/tasks` | Mis tareas (slots por bloque, enlace a pizarra promo) |

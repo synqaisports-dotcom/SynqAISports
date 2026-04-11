@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { synqSync } from "@/lib/sync-service";
 import { useToast } from "@/hooks/use-toast";
+import { sandboxBoardMatchHref } from "@/lib/sandbox-routes";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -250,9 +251,11 @@ function OperativeBoardPanel({ matchId }: { matchId: string }) {
   }, []);
 
   const src = useMemo(() => {
-    const q = new URLSearchParams({ source: "sandbox", embed: "1" });
-    if (matchId) q.set("matchId", matchId);
-    return `/sandbox/app/board/match?${q.toString()}`;
+    return sandboxBoardMatchHref({
+      source: "sandbox",
+      embed: "1",
+      matchId: matchId || undefined,
+    });
   }, [matchId]);
 
   return (
@@ -304,7 +307,11 @@ function OperativeBoardPanel({ matchId }: { matchId: string }) {
               className="h-8 rounded-none border-white/15 bg-slate-900/60 text-[9px] font-black uppercase tracking-widest text-cyan-200 hover:border-cyan-400/35"
             >
               <Link
-                href={`/sandbox/app/board/match?source=sandbox&fullscreen=1${matchId ? `&matchId=${encodeURIComponent(matchId)}` : ""}`}
+                href={sandboxBoardMatchHref({
+                  source: "sandbox",
+                  fullscreen: "1",
+                  matchId: matchId || undefined,
+                })}
               >
                 Abrir pizarra
               </Link>
