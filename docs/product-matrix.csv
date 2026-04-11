@@ -1,0 +1,22 @@
+Producto logico;URL base (entrada / prefijo);Login;Estado de datos;Manifest PWA;Iframe embed;Prioridad;Accion recomendada
+Shell web + marketing;"/, /apps, /plataforma, /precios, /contacto";Sin login;Estatico / N/A;/manifest.json;No;P1;Mantener; unificar tokens con Store/Sandbox
+Galeria Store;"/store, /store/[slug]";Sin login;Codigo store-catalog;/manifest.json (root);No;P0;Mantener; alinear slugs con APKs y deep links
+Login plataforma (club/board);/login;N/A es login;Supabase Auth global;/manifest.json (root);No;P0;Mantener; documentar redirect y cookies
+Sandbox portal y captacion;"/sandbox-portal, /sandbox/login";Mixto portal y sesion;Lead API/Supabase + Auth;/sandbox/manifest.json;No;P0;Mantener; primera deep link APK Sandbox
+Sandbox Coach app logueada Command Hub;"/sandbox/app, /sandbox/app/*";Obligatorio;Hibrido localStorage + API + Supabase;/sandbox/manifest.json;Si hub embebe board;P0;Primera envoltura Android recomendada
+Sandbox demo rutas legacy;"/sandbox, /sandbox/board, /sandbox/tasks, /sandbox/team";Parcial sin login demo;localStorage;/sandbox/manifest.json;Segun pagina;P1;Fusionar o redirigir a sandbox-portal o sandbox/app
+Pizarra club inmersiva;"/board, /board/match, /board/promo, /board/training";Obligatorio;Supabase + estado pizarra;Hereda root;Posible embed desde Sandbox;P0;Mantener nucleo; misma URL embebida y fullscreen
+Club operativa dashboard;"/dashboard, /dashboard/club, /dashboard/players, /dashboard/staff, /dashboard/sessions, /dashboard/instalaciones, /dashboard/academy, /dashboard/admin, /dashboard/access-matrix";Obligatorio;Supabase + contexto club;Hereda root;No salvo puntual;P0;Mantener; futuro segundo APK Club o TWA
+Metodologia dashboard;/dashboard/methodology/*;Obligatorio;Supabase almacenes;Hereda root;Posible embed;P1;Mantener; revisar duplicacion con board
+Torneos backoffice club;/dashboard/tournaments/*;Obligatorio;Supabase;Hereda root;No;P1;Mantener modulo club
+Torneos superficies publicas o rol;"/tournaments/coach, /tournaments/coach-team, /tournaments/parents";Revisar por pagina;Segun modulo;Hereda root;No;P1;Auditar auth; unificar opcional vs obligatorio
+Check-in torneos terminal;/tournaments/checkin;Revisar flujo operativo;Local + sync;/tournaments/checkin/manifest.json;No;P1;Candidato APK terminal eventos
+Live Fields TV;/live-fields;Obligatorio en pagina;Supabase operativa;/live-fields/manifest.json;No;P1;Mantener; candidato TWA fullscreen
+Tutor familias;"/tutor, /tutor/dashboard, /tutor/calendar, /tutor/chat, /tutor/stats, /tutor/id, /tutor/onboarding";Flujo propio localStorage;localStorage + datos club;/tutor/manifest.json;No;P1;Desacoplar medio plazo a Supabase Auth alineado
+Smartwatch Link;/smartwatch;Opcional;Local sync segun modulo;/smartwatch/manifest.json;No;P1;Mantener PWA; nativo si BLE background duro
+Promo dashboard reutilizado Sandbox;/dashboard/promo/*;Obligatorio bajo dashboard;localStorage promo;/dashboard/promo/manifest.json;No;P0;Mantener implementacion compartida con sandbox/app
+Perifericos club continuidad reloj;"/dashboard/mobile-continuity, /dashboard/watch-config";Obligatorio;Local + API;/dashboard/peripherals/manifest.json;No;P1;Mantener; alinear gateway movil fase nativa
+Perifericos dentro Sandbox logueado;"/sandbox/app/mobile-continuity, /sandbox/app/watch-config, /sandbox/app/collaboration";Obligatorio;Igual Sandbox app;/sandbox/manifest.json;No;P0;Mantener UX Command Hub; evitar duplicar logica con dashboard
+Superadmin Backoffice Pro;/admin-global/*;Obligatorio + rol superadmin;Supabase;Hereda root;No;P0;Mantener; nunca en APK publica
+Superadmin legacy dashboard;/dashboard/superadmin/clubs;Obligatorio;Supabase;Hereda root;No;P2;Fusionar o deprecar a favor admin-global
+Capa API;/api/*;Segun endpoint;Supabase colas;N/A;No;P0;Mantener; versionar contratos web y APK
