@@ -3,8 +3,14 @@
 import Link from "next/link";
 import { useState } from "react";
 
-/** Home marketing: foto en `public/images/Captura.jpg`. Fallback si falta en deploy. */
-const PREVIEW_SOURCES = ["/images/Captura.jpg", "/images/captura.jpg", "/images/Captura.svg", "/canvas-slide-1.svg"] as const;
+/** Home marketing: `public/images/Captura.jpg` (minúsculas; Linux/Vercel distingue de .JPG). */
+const PREVIEW_SOURCES = [
+  "/images/Captura.jpg",
+  "/images/Captura.JPG",
+  "/images/captura.jpg",
+  "/images/Captura.svg",
+  "/canvas-slide-1.svg",
+] as const;
 
 export function ContinuityPreviewBlock() {
   const [index, setIndex] = useState(0);
