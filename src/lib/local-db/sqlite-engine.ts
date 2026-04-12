@@ -45,6 +45,11 @@ export async function getLocalSqliteDb(): Promise<Database | null> {
           db = new SQL.Database();
         }
         db.run(LOCAL_SQLITE_SCHEMA);
+        try {
+          db.run(`ALTER TABLE sync_outbox ADD COLUMN last_attempt_at TEXT`);
+        } catch {
+          /* columna ya existe en DBs antiguas tras migración previa */
+        }
         persistDb(db);
         return db;
       } catch (e) {

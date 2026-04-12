@@ -42,7 +42,8 @@ CREATE TABLE IF NOT EXISTS sync_outbox (
   payload TEXT NOT NULL,
   created_at TEXT NOT NULL,
   attempts INTEGER NOT NULL DEFAULT 0,
-  last_error TEXT
+  last_error TEXT,
+  last_attempt_at TEXT
 );
 
 CREATE INDEX IF NOT EXISTS sync_outbox_pending_idx ON sync_outbox (created_at);

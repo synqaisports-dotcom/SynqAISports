@@ -64,3 +64,23 @@
 - **`tsc --noEmit`** sigue fallando por errores **previos** en torneos (`qrcode` types, registration page); el proyecto usa `ignoreBuildErrors` en Next.
 - Outbox hoy **ingesta** en `sandbox_device_snapshots` (telemetría/backup); no reemplaza aún inserciones en `operativa_mobile_incidents` sin Bearer de club.
 - Credenciales Tutor **solo** en `localStorage`; no se replican a SQLite por política de seguridad en este paso (solo sesión email en documento `session/current` si hay DB).
+
+---
+
+## 2026-04-11 — Bloque: Fase 4 (motor sync outbox)
+
+### Tareas completadas
+
+- `sync_outbox`: columna **`last_attempt_at`** (esquema + `ALTER` en init para DBs ya persistidas).
+- **Backoff exponencial** (2s → máx 120s) antes de reintentar un lote fallido; **`MAX_SYNC_ATTEMPTS` = 12** y descarte con log.
+- Lotes de **50** jobs por flush; **intervalo 30s** si hay pendientes y hay red.
+- **Métricas** en `localStorage` (`synq_outbox_metrics_v1`) + evento **`synq:outbox-metrics-updated`**; API `getOutboxPendingCount` / `getOutboxSyncMetrics`.
+- Fallback LS: **`synq_outbox_fallback_last_fail_v1`** para no spamear el API en error repetido (~8s).
+- Doc **`docs/OUTBOX_SYNC.md`**; roadmap Fase **3** y **4** marcadas **Completadas** (dejando explícito el siguiente paso “ingest con Bearer”).
+
+### GUÍA DE TEST (Fase 4)
+
+1. Forzar fallo (URL API incorrecta o Supabase sin migración): jobs deben quedarse en cola, `attempts` subir, reenvío solo tras el backoff (ver tiempo entre `POST /api/sync/outbox` en Network).
+2. Tras 12 fallos, el job debe desaparecer de `sync_outbox` y aparecer aviso en consola.
+3. Con éxito: `synq_outbox_metrics_v1` con `lastFlushOk: true`, `lastAccepted` > 0.
+4. `window.addEventListener('synq:outbox-metrics-updated', console.log)` y guardar en Sandbox: debe dispararse al flush.
