@@ -5,11 +5,11 @@ Plan maestro por fases (1–6+). Los estados se actualizan en este documento con
 | Fase | Nombre | Estado | Criterio de aceptación |
 |------|--------|--------|-------------------------|
 | **1** | Limpieza y clasificación | **Completado** | Política central de AdSense (`ads-policy` + `useAdsAllowed`); componentes promo compartidos en `src/components/shared`; layouts WEB-ONLY sin scripts de anuncios añadidos; duplicación del panel de home Sandbox eliminada (usa `PromoAdsPanel`); documentación `PLAN_MAESTRO`, READMEs de segmentos, `REPORT_LOG`. |
-| **2** | Documentación de arquitectura | Pendiente | Manuales técnicos: diagrama de datos, flujos auth, límites web vs nativo, convenciones de rutas; actualización de `docs/apps/*` alineada al plan. |
+| **2** | Documentación de arquitectura | **Completado** | `docs/ARCHITECTURE_OVERVIEW.md` (stack, auth, datos, flujos); `docs/I18N_AND_GLOBAL.md` (multi-idioma actual, roadmap 50+ países, checklist locales); referencias cruzadas en `PLAN_MAESTRO.md` y `docs/apps/README.md`. |
 | **3** | Infraestructura offline-first | **Completado** | SQLite en cliente (`sql.js` + `public/sql-wasm.wasm`); tablas `documents`, `match_events`, `incidents`, `sync_outbox`; `database-service` + migración lectura/escritura Sandbox promo; Tutor `session/current`; Continuidad `insertIncident` local. |
 | **4** | Motor de sincronización | **Completado** | Outbox con `last_attempt_at`; backoff exponencial por job; tope de reintentos y descarte; lotes de 50; flush periódico 30s + online/visibility; métricas en `localStorage` y evento `synq:outbox-metrics-updated`; fallback LS con espaciado de reintento. API `POST /api/sync/outbox` → `sandbox_device_snapshots`. Ver `docs/OUTBOX_SYNC.md`. |
 | **5** | Cáscara Android (Capacitor) | **Completado** | Proyecto `android/`; `capacitor.config.ts` con `server.url` producción (`https://synqai.net`) o `CAPACITOR_SERVER_URL`; icono + splash Deep Night / Electric Cyan; `docs/CAPACITOR_ANDROID.md`. |
-| **6** | Ingest operativo autenticado (outbox → club) | Pendiente | Tras la cola anónima/telemetría (`sandbox_device_snapshots`), exponer **API con Bearer** que materialice jobs en tablas operativas: p. ej. `op: incident` / `continuity` → `operativa_mobile_incidents` con `club_id` validado contra `verifyClubSessionFromRequest` y RLS existente. **Idempotencia** por `outbox_job_id` o hash en payload para no duplicar filas. **Documentar** en `docs/OUTBOX_SYNC.md` (flujo dual: snapshot vs operativo). Opcional: job/worker server-side que lea snapshots y promueva a operativa solo con `service_role` + reglas estrictas. |
+| **6** | Ingest operativo autenticado (continuidad → club) | **Completado** | `POST /api/sync/promote-continuity` + columna **`sync_key`** única en `operativa_mobile_incidents`; cola `synq_continuity_pending_incidents_v1`; integración en `mobile-continuity`; doc en `OUTBOX_SYNC.md`. *Extensión futura:* promover otros `op` desde outbox snapshot vía worker. |
 
 ## Notas de gobernanza
 
@@ -25,3 +25,5 @@ Plan maestro por fases (1–6+). Los estados se actualizan en este documento con
 | 2026-04-11 | 4 | Completado: outbox backoff, métricas, intervalo flush, OUTBOX_SYNC.md. |
 | 2026-04-11 | 5 | Completado: Capacitor Android + assets + doc CAPACITOR_ANDROID. |
 | 2026-04-12 | 6 | Creada fase: ingest operativo autenticado (outbox → tablas club). |
+| 2026-04-12 | 2 | Completado: ARCHITECTURE_OVERVIEW + I18N_AND_GLOBAL. |
+| 2026-04-12 | 6 | Completado: promote-continuity + sync_key + cola local. |

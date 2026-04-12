@@ -87,11 +87,27 @@
 
 ---
 
-## 2026-04-12 — Roadmap: Fase 6 creada
+## 2026-04-12 — Fase 2 (docs) + Fase 6 (ingest continuidad)
 
-- **`docs/DELIVERABLES_ROADMAP.md`**: nueva **Fase 6 — Ingest operativo autenticado (outbox → club)** (Pendiente), criterios de aceptación e idempotencia.
-- **`docs/OUTBOX_SYNC.md`**: referencia a Fase 6; eliminado “próximo paso” suelto en favor del roadmap.
-- **`docs/PLAN_MAESTRO.md`**: nota breve Fase 6.
+### Fase 2
+
+- **`docs/ARCHITECTURE_OVERVIEW.md`**: stack, auth, datos, flujos, diagrama mermaid.
+- **`docs/I18N_AND_GLOBAL.md`**: estado `i18n-config` + `public/locales`, resolución de locale, roadmap 50 países (país vs idioma), checklist al añadir idioma.
+
+### Fase 6
+
+- Migración **`20260412140000_operativa_incidents_sync_key.sql`**: columna `sync_key` + índice único parcial.
+- **`POST /api/sync/promote-continuity`**: Bearer + `verifyClubSessionFromRequest`; insert con idempotencia; opcional service role + pre-check duplicado.
+- **`src/lib/continuity-incident-sync.ts`**: cola `synq_continuity_pending_incidents_v1`, flush en online / al activar sync.
+- **`mobile-continuity`**: usa `insertIncident` id → `syncKey`, promoción y cola.
+- Tipos **`operativa_mobile_incidents.sync_key`** en `supabase.ts`; `OUTBOX_SYNC.md` y `DELIVERABLES_ROADMAP` actualizados.
+
+### GUÍA DE TEST
+
+1. Aplicar migración `sync_key` en Supabase.
+2. Continuidad con club real, SYNC ON, token válido: registrar incidencia → fila en `operativa_mobile_incidents` con `sync_key` tipo `continuity:inc_...`.
+3. Repetir misma acción (mismo id local imposible); duplicar manualmente mismo `sync_key` → API responde `duplicate: true` o error único.
+4. Sin red: incidencia queda en cola LS; recuperar red → `flush` y fila creada.
 
 ---
 

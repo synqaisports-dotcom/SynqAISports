@@ -712,6 +712,7 @@ export interface Database {
           score_guest: number;
           remaining_sec: number;
           source: string;
+          sync_key: string | null;
           created_at: string;
         }>;
         Insert: DbInsert<{
@@ -726,6 +727,7 @@ export interface Database {
           score_guest?: number;
           remaining_sec?: number;
           source?: string;
+          sync_key?: string | null;
         }>;
         Update: DbUpdate<{
           score_home: number;

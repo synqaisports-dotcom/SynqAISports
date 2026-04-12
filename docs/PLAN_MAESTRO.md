@@ -14,7 +14,9 @@ Implementación: `src/lib/ads-policy.ts`, hook `src/hooks/use-ads-allowed.ts`, c
 
 **Datos locales (Fase 3–4):** SQLite en navegador vía `sql.js` (`src/lib/local-db/`), outbox con backoff y métricas → `POST /api/sync/outbox` → `sandbox_device_snapshots`. Ver `docs/OUTBOX_SYNC.md` y `REPORT_LOG.md`.
 
-**Fase 6 (plan):** promoción de jobs outbox a tablas operativas con **sesión club** (Bearer), sin sustituir el ingest anónimo de telemetría. Ver `docs/DELIVERABLES_ROADMAP.md`.
+**Fase 6 (hecho):** incidencias continuidad → **`/api/sync/promote-continuity`** + `sync_key` en `operativa_mobile_incidents`. Ver `docs/OUTBOX_SYNC.md`.
+
+**Fase 2 (hecho):** arquitectura consolidada en `docs/ARCHITECTURE_OVERVIEW.md`; i18n / global en `docs/I18N_AND_GLOBAL.md`.
 
 ---
 

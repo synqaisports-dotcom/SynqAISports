@@ -28,6 +28,16 @@
 |----------|-----|
 | `NEXT_PUBLIC_OUTBOX_SYNC_ENDPOINT` | Override del endpoint (default `/api/sync/outbox`) |
 
-## Fase 6 (roadmap)
+## Fase 6 (implementado — continuidad)
 
-Materializar en tablas operativas (**Bearer / club**) lo que hoy solo queda en **`sandbox_device_snapshots`**. Criterios y alcance: **`docs/DELIVERABLES_ROADMAP.md`** (Fase 6).
+**Incidencias** con sesión club:
+
+1. Cliente (`mobile-continuity`): al registrar incidencia se genera `sync_key = continuity:{id_local}` (`id` devuelto por `insertIncident`).
+2. Cola local: `localStorage` `synq_continuity_pending_incidents_v1` si el POST falla o no hay red.
+3. **`POST /api/sync/promote-continuity`** con **Bearer**: valida club con `verifyClubSessionFromRequest`; inserta en **`operativa_mobile_incidents`** con `sync_key` (único por club, índice parcial).
+4. Si existe **`SUPABASE_SERVICE_ROLE_KEY`**, la API usa **service role** para insert (evita límites RLS en edge cases) tras comprobar duplicado por `sync_key` + `club_id`.
+5. Al activar **SYNC cloud** o al evento **`online`**, se ejecuta **`flushContinuityIncidentQueue`**.
+
+Migración: **`supabase/migrations/20260412140000_operativa_incidents_sync_key.sql`**.
+
+El ingest anónimo **`/api/sync/outbox` → `sandbox_device_snapshots`** sigue siendo el canal de telemetría genérica; **no** sustituye a esta vía autenticada para incidencias operativas.
