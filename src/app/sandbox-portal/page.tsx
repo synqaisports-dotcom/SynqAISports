@@ -7,6 +7,7 @@ import { ArrowRight, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { SynqAiSportsLogo } from "@/components/branding/SynqAiSportsLogo";
+import { SANDBOX_APP_ROOT, sandboxLoginHref } from "@/lib/sandbox-routes";
 
 export default function SandboxPortalPage() {
   // Next.js 15 requiere Suspense para `useSearchParams()` en algunas rutas.
@@ -28,14 +29,14 @@ function SandboxPortalPageInner() {
 
     // Si está logueado, entra al Sandbox completo dentro de la micro-app (/sandbox/app).
     if (profile) {
-      const dest = sp.get("dest") || "/sandbox/app";
+      const dest = sp.get("dest") || SANDBOX_APP_ROOT;
       router.replace(dest);
       return;
     }
 
   }, [loading, profile, router, pathname, sp]);
 
-  const next = encodeURIComponent(pathname + (sp?.toString() ? `?${sp.toString()}` : ""));
+  const loginTarget = sp.get("dest") || SANDBOX_APP_ROOT;
 
   if (loading) {
     return (
@@ -77,7 +78,7 @@ function SandboxPortalPageInner() {
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button
                   className="h-12 sm:h-14 px-6 rounded-2xl bg-primary text-black font-black uppercase tracking-[0.18em] text-[11px] sm:text-xs"
-                  onClick={() => router.push(`/sandbox/login?next=${next}`)}
+                  onClick={() => router.push(sandboxLoginHref(loginTarget))}
                 >
                   Iniciar sesión Sandbox
                   <ArrowRight className="h-4 w-4 ml-2" />

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { upsertDocument } from "@/lib/local-db/database-service";
 import { cn } from "@/lib/utils";
 
 /**
@@ -63,6 +64,7 @@ export default function TutorOnboardingPage() {
       
       // Iniciar sesión
       localStorage.setItem("synq_tutor_session_email", email);
+      void upsertDocument("tutor", "session", "current", { email });
       localStorage.removeItem("synq_tutor_pending_email");
 
       toast({

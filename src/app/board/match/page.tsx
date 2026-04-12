@@ -32,6 +32,7 @@ import { PlayerChip } from "@/components/board/PlayerChip";
 import { FORMATIONS_DATA } from "@/lib/formations";
 import { useAuth } from "@/lib/auth-context";
 import { synqSync } from "@/lib/sync-service";
+import { upsertDocument } from "@/lib/local-db/database-service";
 import { 
   Select, 
   SelectContent, 
@@ -809,7 +810,9 @@ function MatchBoardInner() {
       return;
     }
 
-    localStorage.setItem("synq_promo_vault", JSON.stringify({ ...vault, matches: nextMatches }));
+    const nextVault = { ...vault, matches: nextMatches };
+    localStorage.setItem("synq_promo_vault", JSON.stringify(nextVault));
+    void upsertDocument("sandbox-coach", "vault", "promo_vault", nextVault);
     toast({ title: "PARTIDO_SINCRO_EXITOSA", description: "Marcador guardado en el partido seleccionado." });
   };
 
@@ -1137,7 +1140,7 @@ function MatchBoardInner() {
           <div className="flex items-center gap-1.5 lg:gap-2 pointer-events-auto shrink-0">
             <div className="bg-black/80 backdrop-blur-xl border border-primary/20 p-1 rounded-xl shadow-xl flex items-center h-10 lg:h-11 transition-[background-color,border-color,color,opacity,transform] glass-panel">
               <Select value={homeFormation} onValueChange={setHomeFormation}>
-                <SelectTrigger className="h-8 w-20 lg:w-24 bg-black border-primary/10 text-white font-black uppercase text-[9px] lg:text-[10px] rounded-lg focus:ring-0">
+                <SelectTrigger className="h-8 w-20 lg:w-24 bg-black/50 border-white/10 text-primary font-black uppercase text-[9px] lg:text-[10px] rounded-lg focus:ring-0 backdrop-blur-sm px-1.5">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[#0a0f18] border-primary/20">
@@ -1226,7 +1229,7 @@ function MatchBoardInner() {
           <div className="flex items-center gap-1.5 lg:gap-2 pointer-events-auto shrink-0">
             <div className="bg-black/80 backdrop-blur-xl border border-rose-500/20 p-1 rounded-xl shadow-xl flex items-center h-10 lg:h-11 glass-panel">
               <Select value={guestFormation} onValueChange={setGuestFormation}>
-                <SelectTrigger className="h-8 w-20 lg:w-24 bg-black border-rose-500/10 text-white font-black uppercase text-[9px] lg:text-[10px] rounded-lg focus:ring-0">
+                <SelectTrigger className="h-8 w-20 lg:w-24 bg-black/50 border-white/10 text-rose-300 font-black uppercase text-[9px] lg:text-[10px] rounded-lg focus:ring-0 backdrop-blur-sm px-1.5">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[#0a0f18] border-rose-500/20">

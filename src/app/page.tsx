@@ -11,6 +11,7 @@ import {
 import type { ComponentType } from "react";
 import { Button } from "@/components/ui/button";
 import { SiteNav } from "@/components/marketing/site-nav";
+import { ContinuityPreviewBlock } from "@/components/marketing/continuity-preview-block";
 
 export default function SynqAiLandingPage() {
   return (
@@ -74,15 +75,7 @@ export default function SynqAiLandingPage() {
                 </Link>
               </Button>
             </div>
-            <div className="mt-5 overflow-hidden rounded-2xl border border-white/10 bg-[#0F172A]/80 backdrop-blur-2xl shadow-[0_0_20px_rgba(0,242,255,0.15)]">
-              <iframe
-                title="Canvas táctico T1 en vivo"
-                src="https://synq-ai-sports-git-cursor-03a5cb-synqaisports-dotcoms-projects.vercel.app/sandbox/app/board/match?source=sandbox&matchId=1775739556877"
-                className="h-[260px] w-full md:h-[360px]"
-                loading="lazy"
-                referrerPolicy="no-referrer"
-              />
-            </div>
+            <ContinuityPreviewBlock />
           </article>
 
           <div className="grid grid-cols-1 gap-5">

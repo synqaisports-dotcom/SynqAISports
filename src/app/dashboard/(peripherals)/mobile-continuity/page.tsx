@@ -18,7 +18,6 @@ import {
   Share2,
   Dumbbell,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -42,7 +41,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { QRCodeCanvas } from "qrcode.react";
-import { Copy, ExternalLink, HelpCircle } from "lucide-react";
+import { Copy } from "lucide-react";
 import {
   MATCH_TIMER_SYNC_KEY,
   matchTimerSyncKey,
@@ -59,6 +58,13 @@ import {
   writeMatchScoreSync,
 } from "@/lib/match-score-sync";
 import { synqSync } from "@/lib/sync-service";
+import { insertIncident } from "@/lib/local-db/database-service";
+import {
+  enqueueContinuityIncidentSync,
+  flushContinuityIncidentQueue,
+  promoteContinuityIncident,
+  removeContinuityIncidentFromQueue,
+} from "@/lib/continuity-incident-sync";
 import { upsertOperativaAttendance } from "@/lib/operativa-sync";
 import { readPlayersLocal } from "@/lib/player-storage";
 import { ensureWatchPairingCode } from "@/lib/watch-pairing";
@@ -68,6 +74,19 @@ import {
   writeWatchAlertsConfig,
   type WatchAlertsConfig,
 } from "@/lib/watch-alert-config";
+import {
+  HubPanel,
+  SectionBar,
+  PromoAdsPanel,
+  PANEL_OUTER,
+  iconCyan,
+} from "@/app/dashboard/promo/command-hub-ui";
+
+const selectTriggerHub =
+  "h-9 rounded-none border-white/10 bg-slate-950/50 backdrop-blur-md text-[10px] font-black uppercase text-cyan-100 " +
+  "focus:ring-2 focus:ring-cyan-400/40 focus:border-cyan-400";
+
+const selectContentHub = "rounded-none border-white/10 bg-[#0a1220] backdrop-blur-xl z-[200]";
 
 type Incident = {
   id: string;
@@ -560,6 +579,31 @@ export default function MobileContinuityPage() {
   };
 
   const sendIncident = async (incident: Incident) => {
+    const localIncidentId = await insertIncident("continuity", "mobile_continuity", {
+      incidentId: incident.id,
+      incidentLabel: incident.label,
+      teamId: selectedTeamId || "team_unknown",
+      mcc: selectedMcc,
+      session: selectedSession,
+      score,
+      remainingSec,
+      cloudSyncEnabled,
+    });
+    const syncKey = `continuity:${localIncidentId}`;
+
+    const pending = {
+      syncKey,
+      teamId: selectedTeamId || "team_unknown",
+      mcc: selectedMcc,
+      session: selectedSession,
+      incidentId: incident.id,
+      incidentLabel: incident.label,
+      score: { home: score.home, guest: score.guest },
+      remainingSec,
+      source: "mobile_continuity",
+    };
+    enqueueContinuityIncidentSync(pending);
+
     synqSync.trackEvent("session_save", {
       source: "mobile_continuity",
       kind: "incident",
@@ -574,25 +618,12 @@ export default function MobileContinuityPage() {
 
     if (cloudSyncEnabled && session?.access_token) {
       try {
-        await fetch("/api/operativa/incidents", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
-            teamId: selectedTeamId || "team_unknown",
-            mcc: selectedMcc,
-            session: selectedSession,
-            incidentId: incident.id,
-            incidentLabel: incident.label,
-            score,
-            remainingSec,
-            source: "mobile_continuity",
-          }),
-        });
+        const promoted = await promoteContinuityIncident(session.access_token, pending);
+        if (promoted.ok) {
+          removeContinuityIncidentFromQueue(syncKey);
+        }
       } catch {
-        // Si falla remoto, la cola offline ya lo retiene.
+        /* cola local synq_continuity_pending_incidents_v1 */
       }
     }
 
@@ -658,6 +689,21 @@ export default function MobileContinuityPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.access_token, selectedTeamId, selectedMcc, selectedSession, historyAllClub]);
 
+  useEffect(() => {
+    if (!cloudSyncEnabled || !session?.access_token) return;
+    void flushContinuityIncidentQueue(session.access_token).then(() => void fetchIncidentHistory());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cloudSyncEnabled, session?.access_token]);
+
+  useEffect(() => {
+    if (!cloudSyncEnabled || !session?.access_token) return;
+    const onOnline = () => {
+      void flushContinuityIncidentQueue(session.access_token).then(() => void fetchIncidentHistory());
+    };
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+  }, [cloudSyncEnabled, session?.access_token]);
+
   const setPlayerAttendance = async (playerId: string, status: "present" | "absent") => {
     setAttendance((prev) => ({ ...prev, [playerId]: status }));
     synqSync.trackEvent("session_save", {
@@ -683,137 +729,157 @@ export default function MobileContinuityPage() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 p-4 sm:p-6 lg:p-10">
-      <div className="flex flex-col gap-2 border-b border-white/5 pb-4">
-        <div className="flex items-center gap-3">
-          <Smartphone className="h-5 w-5 text-primary animate-pulse" />
-          <span className="text-[10px] font-black text-primary tracking-[0.4em] uppercase">Modo_Continuidad</span>
+    <div className="space-y-6 lg:space-y-8 animate-in fade-in duration-700">
+      <div
+        className={cn(
+          "flex flex-col gap-4 p-4 border border-white/10 bg-slate-900/60 backdrop-blur-md rounded-none",
+          PANEL_OUTER,
+        )}
+      >
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div className="flex items-start gap-3 min-w-0">
+            <Smartphone className={cn(iconCyan, "h-6 w-6 shrink-0 mt-0.5")} />
+            <div className="min-w-0 space-y-1">
+              <p className="text-[9px] font-black uppercase tracking-[0.35em] text-cyan-300/80">Terminal de continuidad</p>
+              <h1 className="text-lg sm:text-xl font-black text-white uppercase tracking-tight">Consola móvil de respaldo</h1>
+              <p className="text-[10px] uppercase text-slate-500 font-bold leading-relaxed max-w-xl">
+                {mode === "match"
+                  ? "Partido: marcador, cronómetro, incidencias y enlace con reloj."
+                  : "Entreno: asistencia e incidencias de sesión."}
+              </p>
+            </div>
+          </div>
           <Badge
             variant="outline"
             className={cn(
-              "ml-auto border-white/15 text-[9px] uppercase font-black tracking-widest",
-              continuityEnv === "elite" ? "text-primary border-primary/20" : "text-blue-400 border-blue-500/20",
+              "shrink-0 rounded-none border text-[9px] uppercase font-black tracking-widest self-start sm:self-center",
+              continuityEnv === "elite"
+                ? "border-cyan-400/30 text-cyan-200 bg-cyan-500/10"
+                : "border-sky-500/30 text-sky-300 bg-sky-500/5",
             )}
           >
-            {continuityEnv === "elite" ? "Elite/Pro" : "Sandbox"}
+            {continuityEnv === "elite" ? "Elite / Pro" : "Sandbox"}
           </Badge>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <h1 className="text-3xl font-black text-white uppercase italic tracking-tighter">Consola Móvil de Respaldo</h1>
-          <div className="flex gap-2">
+
+        <div className="flex flex-col lg:flex-row flex-wrap gap-3 lg:items-center lg:justify-between">
+          <div className="flex flex-wrap gap-2">
             <Button
               type="button"
-              variant={mode === "match" ? "default" : "outline"}
-              className={mode === "match" ? "h-9 bg-primary text-black" : "h-9 border-white/10"}
+              variant="outline"
+              className={cn(
+                "h-9 rounded-none font-black uppercase text-[10px] tracking-widest border",
+                mode === "match"
+                  ? "border-cyan-400/40 bg-cyan-500 text-black shadow-[0_0_18px_rgba(6,182,212,0.45)] hover:bg-cyan-400"
+                  : "border-white/10 bg-slate-950/40 text-white/80 hover:border-cyan-400/25",
+              )}
               onClick={() => setMode("match")}
             >
               <Timer className="h-4 w-4 mr-2" /> Partido
             </Button>
             <Button
               type="button"
-              variant={mode === "training" ? "default" : "outline"}
-              className={mode === "training" ? "h-9 bg-emerald-500 text-black" : "h-9 border-white/10"}
+              variant="outline"
+              className={cn(
+                "h-9 rounded-none font-black uppercase text-[10px] tracking-widest border",
+                mode === "training"
+                  ? "border-emerald-400/40 bg-emerald-500 text-black shadow-[0_0_14px_rgba(16,185,129,0.35)] hover:bg-emerald-400"
+                  : "border-white/10 bg-slate-950/40 text-white/80 hover:border-emerald-400/25",
+              )}
               onClick={() => setMode("training")}
             >
               <Dumbbell className="h-4 w-4 mr-2" /> Entreno
             </Button>
-            {continuityEnv === "sandbox" && (
+            {continuityEnv === "sandbox" ? (
               <Button
                 type="button"
-                variant={panel === "watchSettings" ? "default" : "outline"}
-                className={panel === "watchSettings" ? "h-9 bg-indigo-500 text-black" : "h-9 border-white/10"}
+                variant="outline"
+                className={cn(
+                  "h-9 rounded-none font-black uppercase text-[10px] tracking-widest border",
+                  panel === "watchSettings"
+                    ? "border-violet-400/40 bg-violet-500 text-black hover:bg-violet-400"
+                    : "border-white/10 bg-slate-950/40 text-white/80 hover:border-violet-400/30",
+                )}
                 onClick={() => setPanel((p) => (p === "watchSettings" ? "ops" : "watchSettings"))}
               >
-                <Watch className="h-4 w-4 mr-2" /> Ajustes Watch
+                <Watch className="h-4 w-4 mr-2" /> Ajustes watch
               </Button>
-            )}
+            ) : null}
           </div>
-        </div>
-        <p className="text-[10px] uppercase text-white/40 font-bold">
-          {mode === "match"
-            ? "Modo partido: marcador, cronómetro, incidencias y vínculo con reloj."
-            : "Modo entreno: asistencia e incidencias de sesión (separado del partido)."}
-        </p>
-        <div className="flex items-center gap-2 pt-2">
-          <Switch checked={cloudSyncEnabled} onCheckedChange={setCloudSyncEnabled} />
-          <span className="text-[10px] uppercase text-white/60 font-black">
-            Sync cloud (Supabase): {cloudSyncEnabled ? "ON" : "OFF"}
-          </span>
-          <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
-            <DialogTrigger asChild>
-              <Button
-                size="sm"
-                variant="outline"
-                className="ml-auto h-8 border-white/10 text-white/70 font-black uppercase text-[10px] tracking-widest"
-              >
-                Ayuda
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="bg-[#04070c]/98 backdrop-blur-xl border-primary/20 text-white max-w-lg rounded-3xl">
-              <DialogHeader>
-                <DialogTitle className="text-white uppercase font-black tracking-widest text-sm">
-                  Guía rápida · Modo Continuidad
-                </DialogTitle>
-                <DialogDescription className="text-[10px] uppercase text-white/40 font-bold leading-relaxed">
-                  Respaldo móvil para seguir operando sin tablet. Todo se guarda en local y, si activas Sync cloud,
-                  también en Supabase.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 text-[10px] uppercase font-bold text-white/60">
-                <div className="rounded-2xl border border-white/10 bg-black/40 p-4 space-y-2">
-                  <p className="text-white/80 font-black tracking-widest">¿Qué es MCC?</p>
-                  <p className="text-white/50 leading-relaxed">
-                    Es tu “código de semana/bloque” (ej. <span className="text-white/80">OCT_W1</span>) para ordenar
-                    incidencias y asistencia por periodos.
-                  </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Switch checked={cloudSyncEnabled} onCheckedChange={setCloudSyncEnabled} />
+              <span className="text-[9px] uppercase text-slate-500 font-black tracking-wide">
+                Sync cloud: <span className="text-cyan-200/90">{cloudSyncEnabled ? "ON" : "OFF"}</span>
+              </span>
+            </div>
+            <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-9 rounded-none border-white/10 text-cyan-200/80 font-black uppercase text-[10px] tracking-widest hover:border-cyan-400/30"
+                >
+                  Ayuda
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="rounded-none bg-[#050812]/98 backdrop-blur-2xl border border-white/10 text-white max-w-lg z-[200]">
+                <DialogHeader>
+                  <DialogTitle className="text-white uppercase font-black tracking-widest text-sm">Guía rápida</DialogTitle>
+                  <DialogDescription className="text-[10px] uppercase text-slate-500 font-bold leading-relaxed text-left">
+                    Respaldo móvil sin tablet. Local siempre; con Sync cloud también en Supabase.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-3 text-[10px] uppercase font-bold text-slate-500">
+                  <div className="rounded-none border border-white/10 bg-slate-950/50 p-4 space-y-2">
+                    <p className="text-cyan-200/90 font-black tracking-widest">¿Qué es MCC?</p>
+                    <p className="leading-relaxed normal-case text-slate-400">
+                      Código de semana/bloque (ej. OCT_W1) para ordenar incidencias y asistencia.
+                    </p>
+                  </div>
+                  <div className="rounded-none border border-white/10 bg-slate-950/50 p-4 space-y-2">
+                    <p className="text-cyan-200/90 font-black tracking-widest">Incidencias</p>
+                    <p className="leading-relaxed normal-case text-slate-400">
+                      Cola local offline; con Sync ON se envían a /api/operativa/incidents (operativa_mobile_incidents).
+                    </p>
+                  </div>
+                  <div className="rounded-none border border-white/10 bg-slate-950/50 p-4 space-y-2">
+                    <p className="text-cyan-200/90 font-black tracking-widest">Reloj sin cámara</p>
+                    <p className="leading-relaxed normal-case text-slate-400">
+                      Usa el código manual en el reloj; el QR es para móvil con cámara.
+                    </p>
+                  </div>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-black/40 p-4 space-y-2">
-                  <p className="text-white/80 font-black tracking-widest">¿Dónde se anotan las incidencias?</p>
-                  <p className="text-white/50 leading-relaxed">
-                    - Siempre: se encolan en la cola local (para no perderlas offline).<br />
-                    - Con Sync cloud ON: se envían a <span className="text-white/80">Supabase</span> vía{" "}
-                    <span className="text-white/80">/api/operativa/incidents</span> y quedan en la tabla{" "}
-                    <span className="text-white/80">operativa_mobile_incidents</span> (por club).
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-black/40 p-4 space-y-2">
-                  <p className="text-white/80 font-black tracking-widest">Reloj sin cámara</p>
-                  <p className="text-white/50 leading-relaxed">
-                    Usa el <span className="text-white/80">código manual</span> en el reloj (pantalla de pairing). El QR
-                    es para escanearlo con un móvil con cámara.
-                  </p>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       </div>
 
+      <PromoAdsPanel placement="sandbox_continuity_page_horizontal" />
+
       {continuityEnv === "sandbox" && panel === "watchSettings" && (
-        <Card className="glass-panel border-indigo-500/20 bg-indigo-500/5">
-          <CardHeader>
-            <CardTitle className="text-white uppercase text-sm tracking-widest flex items-center gap-2">
-              <Watch className="h-4 w-4 text-indigo-300" /> Ajustes smartwatch (sandbox)
-            </CardTitle>
-            <CardDescription className="text-[10px] uppercase text-white/40">
-              Configuración local de avisos por contexto de partido/sesión. No altera el canal de sync de tiempo/marcador.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between rounded-xl border border-white/10 bg-black/30 p-3">
+        <HubPanel>
+          <SectionBar
+            title="Ajustes smartwatch (sandbox)"
+            right={<Watch className="h-4 w-4 text-violet-400 drop-shadow-[0_0_8px_rgba(167,139,250,0.45)]" />}
+          />
+          <div className="p-4 sm:p-5 space-y-4">
+            <p className="text-[10px] uppercase text-slate-500 font-bold leading-relaxed">
+              Avisos locales por contexto. No altera el canal de sync de cronómetro/marcador.
+            </p>
+            <div className="flex items-center justify-between rounded-none border border-white/10 bg-slate-950/40 p-3">
               <div>
                 <p className="text-[10px] font-black uppercase text-white">Avisos activos</p>
-                <p className="text-[10px] uppercase text-white/40">Master switch de alertas</p>
+                <p className="text-[9px] uppercase text-slate-500">Master switch</p>
               </div>
               <Switch
                 checked={watchSettings.enabled}
-                onCheckedChange={(v) =>
-                  setWatchSettings((prev: WatchAlertsConfig) => ({ ...prev, enabled: v }))
-                }
+                onCheckedChange={(v) => setWatchSettings((prev: WatchAlertsConfig) => ({ ...prev, enabled: v }))}
               />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="flex items-center justify-between rounded-xl border border-white/10 bg-black/30 p-3">
+              <div className="flex items-center justify-between rounded-none border border-white/10 bg-slate-950/40 p-3">
                 <p className="text-[10px] font-black uppercase text-white">Aviso de tiempo</p>
                 <Switch
                   checked={watchSettings.alertMatchTime}
@@ -822,16 +888,14 @@ export default function MobileContinuityPage() {
                   }
                 />
               </div>
-              <div className="flex items-center justify-between rounded-xl border border-white/10 bg-black/30 p-3">
+              <div className="flex items-center justify-between rounded-none border border-white/10 bg-slate-950/40 p-3">
                 <p className="text-[10px] font-black uppercase text-white">Sugerir cambios</p>
                 <Switch
                   checked={watchSettings.syncSubs}
-                  onCheckedChange={(v) =>
-                    setWatchSettings((prev: WatchAlertsConfig) => ({ ...prev, syncSubs: v }))
-                  }
+                  onCheckedChange={(v) => setWatchSettings((prev: WatchAlertsConfig) => ({ ...prev, syncSubs: v }))}
                 />
               </div>
-              <div className="flex items-center justify-between rounded-xl border border-white/10 bg-black/30 p-3">
+              <div className="flex items-center justify-between rounded-none border border-white/10 bg-slate-950/40 p-3">
                 <p className="text-[10px] font-black uppercase text-white">Vibración periodo</p>
                 <Switch
                   checked={watchSettings.vibrateOnPeriod}
@@ -840,68 +904,72 @@ export default function MobileContinuityPage() {
                   }
                 />
               </div>
-              <div className="space-y-1 rounded-xl border border-white/10 bg-black/30 p-3">
-                <Label className="text-[10px] uppercase text-white/50">Intervalo cambios</Label>
+              <div className="space-y-2 rounded-none border border-white/10 bg-slate-950/40 p-3">
+                <Label className="text-[9px] font-black uppercase text-cyan-200/70 tracking-widest">Intervalo cambios</Label>
                 <Select
                   value={watchSettings.changeInterval}
                   onValueChange={(v: "5" | "8" | "half") =>
                     setWatchSettings((prev: WatchAlertsConfig) => ({ ...prev, changeInterval: v }))
                   }
                 >
-                  <SelectTrigger className="h-9 border-white/10">
+                  <SelectTrigger className={selectTriggerHub}>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="5">Cada 5 min</SelectItem>
-                    <SelectItem value="8">Cada 8 min</SelectItem>
-                    <SelectItem value="half">Mitad de tiempo</SelectItem>
+                  <SelectContent className={selectContentHub}>
+                    <SelectItem value="5" className="rounded-none text-[10px] font-black uppercase">
+                      Cada 5 min
+                    </SelectItem>
+                    <SelectItem value="8" className="rounded-none text-[10px] font-black uppercase">
+                      Cada 8 min
+                    </SelectItem>
+                    <SelectItem value="half" className="rounded-none text-[10px] font-black uppercase">
+                      Mitad de tiempo
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
-            <p className="text-[10px] uppercase text-white/45 break-all">
-              Scope: {watchAlertScope.clubId} · {watchAlertScope.teamId} · {watchAlertScope.mcc} · {watchAlertScope.session} · {watchAlertScope.mode}
+            <p className="text-[9px] uppercase text-slate-600 font-mono break-all">
+              Scope: {watchAlertScope.clubId} · {watchAlertScope.teamId} · {watchAlertScope.mcc} · {watchAlertScope.session} ·{" "}
+              {watchAlertScope.mode}
             </p>
-          </CardContent>
-        </Card>
+          </div>
+        </HubPanel>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className={cn("glass-panel lg:col-span-2", mode === "match" ? "border-primary/20 bg-primary/5" : "border-emerald-500/20 bg-emerald-500/5")}>
-          <CardHeader>
-            <CardTitle className="text-white uppercase text-sm tracking-widest flex items-center gap-2">
-              {mode === "match" ? (
-                <>
-                  <Timer className="h-4 w-4 text-primary" /> Partido en vivo
-                </>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+        <HubPanel>
+          <SectionBar
+            title={mode === "match" ? "Partido en vivo" : "Entrenamiento"}
+            right={
+              mode === "match" ? (
+                <Timer className={iconCyan} />
               ) : (
-                <>
-                  <Dumbbell className="h-4 w-4 text-emerald-400" /> Entrenamiento
-                </>
-              )}
-            </CardTitle>
-            <CardDescription className="text-[10px] uppercase text-white/40">
-              {mode === "match" ? "Mando rápido para cronómetro y marcador" : "Contexto de sesión (asistencia e incidencias)"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <div className="space-y-1">
-                <Label className="text-[10px] uppercase text-white/50">Equipo</Label>
+                <Dumbbell className="h-4 w-4 text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.4)]" />
+              )
+            }
+          />
+          <div className="p-4 sm:p-5 space-y-5">
+            <p className="text-[10px] uppercase text-slate-500 font-bold">
+              {mode === "match" ? "Cronómetro y marcador" : "Contexto de sesión (asistencia e incidencias)"}
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="space-y-2">
+                <Label className="text-[9px] font-black uppercase text-cyan-200/70 tracking-widest">Equipo</Label>
                 {continuityEnv === "sandbox" ? (
-                  <div className="h-9 rounded-xl border border-white/10 bg-black/30 px-3 flex items-center">
+                  <div className="h-9 rounded-none border border-white/10 bg-slate-950/45 px-3 flex items-center backdrop-blur-md">
                     <span className="text-[11px] font-black text-white uppercase tracking-tight truncate">
                       {selectedTeam?.name || "Pendiente de configurar"}
                     </span>
                   </div>
                 ) : (
                   <Select value={selectedTeamId || undefined} onValueChange={setSelectedTeamId}>
-                    <SelectTrigger className="h-9 border-white/10">
+                    <SelectTrigger className={selectTriggerHub}>
                       <SelectValue placeholder="Selecciona equipo" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className={selectContentHub}>
                       {teams.map((team) => (
-                        <SelectItem key={team.id} value={team.id}>
+                        <SelectItem key={team.id} value={team.id} className="rounded-none text-[10px] font-black uppercase">
                           {team.name}
                         </SelectItem>
                       ))}
@@ -910,65 +978,68 @@ export default function MobileContinuityPage() {
                 )}
               </div>
               {isSandboxMatchMode ? (
-                <div className="space-y-1 sm:col-span-2">
-                  <Label className="text-[10px] uppercase text-white/50">Partido (Sandbox)</Label>
-                  <Select
-                    value={selectedPromoMatchId || undefined}
-                    onValueChange={(v) => applyPromoMatchContext(v)}
-                  >
-                    <SelectTrigger className="h-9 border-white/10">
+                <div className="space-y-2 sm:col-span-2">
+                  <Label className="text-[9px] font-black uppercase text-cyan-200/70 tracking-widest">Partido (sandbox)</Label>
+                  <Select value={selectedPromoMatchId || undefined} onValueChange={(v) => applyPromoMatchContext(v)}>
+                    <SelectTrigger className={selectTriggerHub}>
                       <SelectValue placeholder="Selecciona tu partido" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className={selectContentHub}>
                       {promoMatchOptions.length === 0 ? (
-                        <SelectItem value="__none" disabled>
-                          No hay partidos creados (ve a Mis partidos)
+                        <SelectItem value="__none" disabled className="rounded-none text-[10px]">
+                          No hay partidos (Mis partidos)
                         </SelectItem>
                       ) : (
                         promoMatchOptions.map((m) => (
-                          <SelectItem key={m.id} value={m.id}>
+                          <SelectItem key={m.id} value={m.id} className="rounded-none text-[10px] font-black uppercase">
                             {m.label}
                           </SelectItem>
                         ))
                       )}
                     </SelectContent>
                   </Select>
-                  <p className="text-[10px] uppercase text-white/35 font-bold">
-                    Este partido define el contexto de sync con smartwatch (marcador + cronómetro).
-                  </p>
+                  <p className="text-[9px] uppercase text-slate-600 font-bold">Contexto de sync con smartwatch.</p>
                 </div>
               ) : (
                 <>
-                  <div className="space-y-1">
-                    <Label className="text-[10px] uppercase text-white/50">
-                      {mode === "match" ? "Jornada/Clave" : "Semana (MCC)"}
+                  <div className="space-y-2">
+                    <Label className="text-[9px] font-black uppercase text-cyan-200/70 tracking-widest">
+                      {mode === "match" ? "Jornada / clave" : "Semana (MCC)"}
                     </Label>
                     <Select value={selectedMcc} onValueChange={setSelectedMcc}>
-                      <SelectTrigger className="h-9 border-white/10">
+                      <SelectTrigger className={selectTriggerHub}>
                         <SelectValue placeholder={mode === "match" ? "Clave" : "MCC"} />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className={selectContentHub}>
                         {mccOptions.map((mcc) => (
-                          <SelectItem key={mcc} value={mcc}>
+                          <SelectItem key={mcc} value={mcc} className="rounded-none text-[10px] font-black uppercase">
                             {mcc}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-[10px] uppercase text-white/50">
+                  <div className="space-y-2">
+                    <Label className="text-[9px] font-black uppercase text-cyan-200/70 tracking-widest">
                       {mode === "match" ? "Bloque" : "Sesión"}
                     </Label>
                     <Select value={selectedSession} onValueChange={setSelectedSession}>
-                      <SelectTrigger className="h-9 border-white/10">
+                      <SelectTrigger className={selectTriggerHub}>
                         <SelectValue placeholder={mode === "match" ? "Bloque" : "Sesión"} />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="S1">S1</SelectItem>
-                        <SelectItem value="S2">S2</SelectItem>
-                        <SelectItem value="S3">S3</SelectItem>
-                        <SelectItem value="S4">S4</SelectItem>
+                      <SelectContent className={selectContentHub}>
+                        <SelectItem value="S1" className="rounded-none text-[10px] font-black uppercase">
+                          S1
+                        </SelectItem>
+                        <SelectItem value="S2" className="rounded-none text-[10px] font-black uppercase">
+                          S2
+                        </SelectItem>
+                        <SelectItem value="S3" className="rounded-none text-[10px] font-black uppercase">
+                          S3
+                        </SelectItem>
+                        <SelectItem value="S4" className="rounded-none text-[10px] font-black uppercase">
+                          S4
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -977,14 +1048,25 @@ export default function MobileContinuityPage() {
             </div>
             {mode === "match" ? (
               <>
-                <div className="flex items-center justify-center gap-3">
-                  <Badge variant="outline" className="text-lg font-black px-4 py-2 border-primary/20 text-primary">
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  <Badge
+                    variant="outline"
+                    className="rounded-none font-mono text-lg font-black px-4 py-2 border-cyan-400/30 text-cyan-300 bg-slate-950/50 shadow-[0_0_14px_rgba(34,211,238,0.25)]"
+                  >
                     {formatClock(remainingSec)}
                   </Badge>
-                  <Button variant="outline" onClick={toggleTimer} className="border-white/10">
+                  <Button
+                    variant="outline"
+                    onClick={toggleTimer}
+                    className="rounded-none border-white/10 bg-slate-950/40 h-10 w-10 p-0 hover:border-cyan-400/35"
+                  >
                     {running ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                   </Button>
-                  <Button variant="outline" onClick={resetTimer} className="border-white/10">
+                  <Button
+                    variant="outline"
+                    onClick={resetTimer}
+                    className="rounded-none border-white/10 bg-slate-950/40 h-10 w-10 p-0 hover:border-cyan-400/35"
+                  >
                     <RotateCcw className="h-4 w-4" />
                   </Button>
                 </div>
@@ -1004,80 +1086,82 @@ export default function MobileContinuityPage() {
                 </div>
               </>
             ) : (
-              <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4">
-                <p className="text-[10px] uppercase text-white/60 font-black tracking-widest">
-                  Entreno: aquí el foco es asistencia + incidencias (sin marcador).
+              <div className="rounded-none border border-emerald-500/25 bg-emerald-500/5 p-4">
+                <p className="text-[10px] uppercase text-slate-500 font-black tracking-widest">
+                  Foco: asistencia + incidencias (sin marcador).
                 </p>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </HubPanel>
 
-        <Card className={cn("glass-panel", mode === "match" ? "border-amber-500/20 bg-amber-500/5" : "border-emerald-500/20 bg-emerald-500/5")}>
-          <CardHeader>
-            <CardTitle className="text-white uppercase text-sm tracking-widest flex items-center gap-2">
-              {mode === "match" ? (
-                <>
-                  <AlertTriangle className="h-4 w-4 text-amber-400" /> Incidencias (partido)
-                </>
-              ) : (
-                <>
-                  <AlertTriangle className="h-4 w-4 text-emerald-400" /> Incidencias (entreno)
-                </>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
+        <HubPanel>
+          <SectionBar
+            title={mode === "match" ? "Incidencias · partido" : "Incidencias · entreno"}
+            right={<AlertTriangle className="h-4 w-4 text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.35)]" />}
+          />
+          <div className="p-4 sm:p-5 space-y-2">
             {INCIDENTS.map((i) => (
               <Button
                 key={i.id}
                 variant="outline"
-                className="w-full justify-start text-[10px] uppercase font-black border-white/10"
+                className="w-full justify-start rounded-none text-[10px] uppercase font-black border-white/10 bg-slate-950/35 hover:border-cyan-400/30 hover:bg-cyan-500/5"
                 onClick={() => sendIncident(i)}
               >
                 {i.label}
               </Button>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </HubPanel>
       </div>
 
-      <Card className="glass-panel border-indigo-500/20 bg-indigo-500/5">
-        <CardHeader>
-          <CardTitle className="text-white uppercase text-sm tracking-widest flex items-center gap-2">
-            <QrCode className="h-4 w-4 text-indigo-300" /> Emparejado móvil - reloj
-          </CardTitle>
-          <CardDescription className="text-[10px] uppercase text-white/40">
-            Escanea (móvil con cámara) o introduce el código en el reloj
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col items-center gap-3">
-          <div className="rounded-xl bg-white p-2">
+      <HubPanel>
+        <SectionBar
+          title="Emparejado móvil · reloj"
+          right={<QrCode className="h-4 w-4 text-violet-400 drop-shadow-[0_0_8px_rgba(167,139,250,0.4)]" />}
+        />
+        <div className="p-4 sm:p-6 flex flex-col items-center gap-4">
+          <p className="text-[10px] uppercase text-slate-500 font-bold text-center max-w-md">
+            Escanea con cámara o introduce el código manual en el reloj.
+          </p>
+          <div className="rounded-none border border-white/10 bg-white p-2 shadow-[0_0_20px_rgba(6,182,212,0.12)]">
             <QRCodeCanvas value={watchUrl || "about:blank"} size={180} level="H" fgColor="#000000" bgColor="#ffffff" />
           </div>
           <div className="flex flex-wrap items-center justify-center gap-2">
-            <Button size="sm" className="h-9 bg-primary text-black border-none" onClick={() => window.open(watchUrl, "_blank", "noopener,noreferrer")}>
-              <Watch className="h-4 w-4 mr-2" /> Abrir smartwatch (móvil)
+            <Button
+              size="sm"
+              className="h-9 rounded-none bg-cyan-500 text-black font-black uppercase text-[10px] tracking-widest border-0 shadow-[0_0_20px_rgba(6,182,212,0.45)] hover:bg-cyan-400"
+              onClick={() => window.open(watchUrl, "_blank", "noopener,noreferrer")}
+            >
+              <Watch className="h-4 w-4 mr-2" /> Abrir smartwatch
             </Button>
-            <Button size="sm" variant="outline" className="h-9 border-white/10 text-white/70" onClick={handleShareToWatch}>
-              <Share2 className="h-4 w-4 mr-2" /> Enviar al reloj
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-9 rounded-none border-white/10 bg-slate-950/40 text-cyan-100/90 font-black uppercase text-[10px]"
+              onClick={handleShareToWatch}
+            >
+              <Share2 className="h-4 w-4 mr-2" /> Enviar
             </Button>
-            <Button size="sm" variant="outline" className="h-9 border-white/10 text-white/70" onClick={() => void handleCopy(watchUrl, "Enlace")}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-9 rounded-none border-white/10 bg-slate-950/40 text-cyan-100/90 font-black uppercase text-[10px]"
+              onClick={() => void handleCopy(watchUrl, "Enlace")}
+            >
               <Copy className="h-4 w-4 mr-2" /> Copiar enlace
             </Button>
           </div>
-          <div className="w-full max-w-md rounded-xl border border-white/10 bg-black/30 p-3">
-            <p className="text-[10px] uppercase text-white/50 font-black tracking-widest text-center">
-              Código manual (reloj)
-            </p>
-            <p className="mt-1 text-center text-2xl font-black tracking-[0.35em] text-white">
+          <div className="w-full max-w-md rounded-none border border-white/10 bg-slate-950/45 backdrop-blur-md p-4">
+            <p className="text-[9px] uppercase text-slate-500 font-black tracking-widest text-center">Código manual (reloj)</p>
+            <p className="mt-2 text-center font-mono text-2xl font-black tracking-[0.25em] text-cyan-200 drop-shadow-[0_0_12px_rgba(34,211,238,0.35)]">
               {watchPairingCode || "------"}
             </p>
-            <div className="mt-3 flex justify-center">
+            <div className="mt-4 flex justify-center">
               <Button
                 size="sm"
                 variant="outline"
-                className="h-9 border-white/10 text-white/70"
+                className="h-9 rounded-none border-white/10 font-black uppercase text-[10px]"
                 onClick={() => void handleCopy(watchPairingCode || "", "Código")}
                 disabled={!watchPairingCode}
               >
@@ -1085,41 +1169,52 @@ export default function MobileContinuityPage() {
               </Button>
             </div>
           </div>
-          <p className="text-[10px] uppercase text-white/50 break-all text-center">{watchUrl}</p>
-        </CardContent>
-      </Card>
+          <p className="text-[9px] uppercase text-slate-600 break-all text-center font-mono max-w-full">{watchUrl}</p>
+        </div>
+      </HubPanel>
 
       {mode === "training" && (
-        <Card className="glass-panel border-emerald-500/20 bg-emerald-500/5">
-          <CardHeader>
-            <CardTitle className="text-white uppercase text-sm tracking-widest">Pasar lista (móvil)</CardTitle>
-            <CardDescription className="text-[10px] uppercase text-white/40">
-              Offline por defecto. Se guarda en local y solo sincroniza cloud si activas el switch.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
+        <HubPanel>
+          <SectionBar title="Pasar lista (móvil)" right={<CheckCircle2 className="h-4 w-4 text-emerald-400" />} />
+          <div className="p-4 sm:p-5 space-y-2">
+            <p className="text-[10px] uppercase text-slate-500 font-bold pb-2">
+              Local por defecto; cloud si activas Sync.
+            </p>
             {roster.length === 0 ? (
-              <p className="text-[10px] uppercase text-white/40">Sin jugadores para el equipo seleccionado.</p>
+              <p className="text-[10px] uppercase text-slate-600">Sin jugadores para el equipo seleccionado.</p>
             ) : (
               roster.map((p) => {
                 const mark = attendance[p.id];
                 return (
-                  <div key={p.id} className="rounded-xl border border-white/10 bg-white/[0.02] p-2 flex items-center justify-between gap-2">
+                  <div
+                    key={p.id}
+                    className="rounded-none border border-white/10 bg-slate-950/35 backdrop-blur-md p-3 flex items-center justify-between gap-2"
+                  >
                     <div className="min-w-0">
-                      <p className="text-xs font-black text-white truncate">#{p.number} {p.name}</p>
+                      <p className="text-xs font-black text-white truncate uppercase">
+                        #{p.number} {p.name}
+                      </p>
                     </div>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 shrink-0">
                       <Button
                         size="sm"
                         variant="outline"
-                        className={cn("h-8 border-white/10 text-[10px] uppercase", mark === "absent" && "border-red-500/40 text-red-300")}
+                        className={cn(
+                          "h-8 rounded-none text-[10px] font-black uppercase border-white/10",
+                          mark === "absent" && "border-rose-500/40 text-rose-300 bg-rose-500/10",
+                        )}
                         onClick={() => void setPlayerAttendance(p.id, "absent")}
                       >
                         Aus
                       </Button>
                       <Button
                         size="sm"
-                        className={cn("h-8 text-[10px] uppercase", mark === "present" ? "bg-emerald-500 text-black" : "bg-primary text-black")}
+                        className={cn(
+                          "h-8 rounded-none text-[10px] font-black uppercase border-0",
+                          mark === "present"
+                            ? "bg-emerald-500 text-black shadow-[0_0_12px_rgba(16,185,129,0.35)]"
+                            : "bg-cyan-500 text-black shadow-[0_0_12px_rgba(6,182,212,0.35)]",
+                        )}
                         onClick={() => void setPlayerAttendance(p.id, "present")}
                       >
                         OK
@@ -1129,21 +1224,21 @@ export default function MobileContinuityPage() {
                 );
               })
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </HubPanel>
       )}
 
-      <Card className="glass-panel border-white/10 bg-black/20">
-        <CardHeader>
-          <CardTitle className="text-white uppercase text-sm tracking-widest flex items-center justify-between gap-2">
-            <span>Histórico incidencias</span>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase text-white/50">Todo club</span>
+      <HubPanel>
+        <SectionBar
+          title="Histórico incidencias"
+          right={
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-[9px] uppercase text-slate-500 font-black hidden sm:inline">Todo club</span>
               <Switch checked={historyAllClub} onCheckedChange={setHistoryAllClub} />
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 border-white/10 text-[10px] uppercase"
+                className="h-8 rounded-none border-white/10 text-[10px] font-black uppercase"
                 onClick={() => void fetchIncidentHistory()}
                 disabled={loadingHistory}
               >
@@ -1151,56 +1246,67 @@ export default function MobileContinuityPage() {
                 Refrescar
               </Button>
             </div>
-          </CardTitle>
-          <CardDescription className="text-[10px] uppercase text-white/40">
+          }
+        />
+        <div className="px-4 py-2 border-b border-white/10">
+          <p className="text-[9px] uppercase text-slate-600 font-bold">
             {historyAllClub
               ? "Vista global club"
-              : `Filtro activo: ${selectedTeamId || "equipo"} · ${selectedMcc} · ${selectedSession}`}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-2">
+              : `Filtro: ${selectedTeamId || "equipo"} · ${selectedMcc} · ${selectedSession}`}
+          </p>
+        </div>
+        <div className="p-4 sm:p-5 space-y-2">
           {!session?.access_token ? (
-            <p className="text-[10px] uppercase text-white/40">Inicia sesión para ver histórico en Supabase.</p>
+            <p className="text-[10px] uppercase text-slate-600">Inicia sesión para ver histórico en Supabase.</p>
           ) : history.length === 0 ? (
-            <p className="text-[10px] uppercase text-white/40">Sin incidencias en este filtro.</p>
+            <p className="text-[10px] uppercase text-slate-600">Sin incidencias en este filtro.</p>
           ) : (
             history.map((item) => (
-              <div key={item.id} className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
+              <div key={item.id} className="rounded-none border border-white/10 bg-slate-950/35 p-3">
                 <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase">
-                  <Badge variant="outline" className="border-amber-500/30 text-amber-300">
+                  <Badge variant="outline" className="rounded-none border-amber-500/35 text-amber-300 bg-amber-500/5">
                     {item.incident_label}
                   </Badge>
-                  <Badge variant="outline" className="border-white/15 text-white/60">
+                  <Badge variant="outline" className="rounded-none border-white/15 text-slate-400">
                     {item.mcc} {item.session}
                   </Badge>
-                  <Badge variant="outline" className="border-white/15 text-white/60">
+                  <Badge variant="outline" className="rounded-none border-white/15 text-slate-500 font-mono">
                     {item.team_id}
                   </Badge>
                 </div>
-                <p className="mt-2 text-[10px] uppercase text-white/50">
-                  Marcador {item.score_home}-{item.score_guest} · Tiempo {formatClock(item.remaining_sec)} ·{" "}
+                <p className="mt-2 text-[10px] uppercase text-slate-500 font-mono">
+                  Marcador {item.score_home}-{item.score_guest} · {formatClock(item.remaining_sec)} ·{" "}
                   {new Date(item.created_at).toLocaleString("es-ES")}
                 </p>
               </div>
             ))
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </HubPanel>
 
-      <Card className="glass-panel border-white/10 bg-black/30">
-        <CardContent className="pt-6 flex flex-wrap items-center gap-3 text-[10px] uppercase font-black">
-          <Badge variant="outline" className={cn("border-white/15", isOnline ? "text-emerald-400" : "text-amber-400")}>
-            {isOnline ? <CheckCircle2 className="h-3 w-3 mr-1" /> : <WifiOff className="h-3 w-3 mr-1" />}
-            {isOnline ? "Online" : "Offline"}
-          </Badge>
-          <Badge variant="outline" className="border-primary/20 text-primary">
-            Cola eventos: {pendingEvents}
-          </Badge>
-          <Badge variant="outline" className="border-white/15 text-white/60">
-            <Watch className="h-3 w-3 mr-1" /> Coexistencia tablet + móvil activa
-          </Badge>
-        </CardContent>
-      </Card>
+      <div
+        className={cn(
+          "flex flex-wrap items-center gap-3 p-4 border border-white/10 bg-slate-900/60 backdrop-blur-md rounded-none",
+          PANEL_OUTER,
+        )}
+      >
+        <Badge
+          variant="outline"
+          className={cn(
+            "rounded-none border-white/15 font-black uppercase text-[10px]",
+            isOnline ? "text-emerald-400 border-emerald-500/30" : "text-amber-400 border-amber-500/30",
+          )}
+        >
+          {isOnline ? <CheckCircle2 className="h-3 w-3 mr-1 inline" /> : <WifiOff className="h-3 w-3 mr-1 inline" />}
+          {isOnline ? "Online" : "Offline"}
+        </Badge>
+        <Badge variant="outline" className="rounded-none border-cyan-400/30 text-cyan-200 font-black uppercase text-[10px]">
+          Cola: {pendingEvents}
+        </Badge>
+        <Badge variant="outline" className="rounded-none border-white/15 text-slate-400 font-black uppercase text-[10px]">
+          <Watch className="h-3 w-3 mr-1 inline text-cyan-400" /> Tablet + móvil
+        </Badge>
+      </div>
     </div>
   );
 }
@@ -1217,14 +1323,23 @@ function ScorePad({
   onDec: () => void;
 }) {
   return (
-    <div className="rounded-2xl border border-white/10 p-4 bg-white/[0.02] space-y-3">
-      <p className="text-[10px] uppercase font-black text-white/50">{title}</p>
-      <p className="text-4xl font-black text-white italic tracking-tighter">{value}</p>
+    <div className="rounded-none border border-white/10 p-4 bg-slate-950/40 backdrop-blur-md space-y-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+      <p className="text-[9px] uppercase font-black text-slate-500 tracking-widest">{title}</p>
+      <p className="font-mono text-4xl font-black text-cyan-300 tabular-nums drop-shadow-[0_0_14px_rgba(34,211,238,0.45)]">
+        {value}
+      </p>
       <div className="flex gap-2">
-        <Button variant="outline" className="flex-1 border-white/10" onClick={onDec}>
+        <Button
+          variant="outline"
+          className="flex-1 rounded-none border-white/10 bg-slate-950/50 h-10 hover:border-cyan-400/30"
+          onClick={onDec}
+        >
           <Minus className="h-4 w-4" />
         </Button>
-        <Button className="flex-1 bg-primary text-black border-none" onClick={onInc}>
+        <Button
+          className="flex-1 rounded-none bg-cyan-500 text-black font-black border-0 h-10 shadow-[0_0_18px_rgba(6,182,212,0.5)] hover:bg-cyan-400"
+          onClick={onInc}
+        >
           <Plus className="h-4 w-4" />
         </Button>
       </div>

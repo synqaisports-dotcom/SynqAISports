@@ -1,50 +1,43 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
-import { 
-  Swords, 
-  Plus, 
-  Trash2, 
-  Pencil,
-  Trophy, 
-  Zap, 
-  Calendar, 
-  MapPin, 
-  CheckCircle2, 
-  Megaphone,
-  ShieldCheck,
-  ArrowRight,
-  Monitor,
-  Lock
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Swords, Plus, Trash2, Pencil, Zap, ShieldCheck, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetHeader, 
-  SheetTitle, 
-  SheetDescription,
-  SheetFooter, 
-  SheetClose
-} from "@/components/ui/sheet";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { getDocumentJson, upsertDocument } from "@/lib/local-db/database-service";
+import {
+  HubPanel,
+  SectionBar,
+  PromoAdsPanel,
+  PANEL_OUTER,
+  inputProClass,
+  iconCyan,
+} from "@/app/dashboard/promo/command-hub-ui";
 
 const MAX_MATCHES = 20;
+
+type PromoMatch = {
+  id: number;
+  date?: string;
+  rivalName?: string;
+  location?: string;
+  status?: string;
+  score?: { home?: number; guest?: number };
+};
+
+type PromoVault = {
+  exercises?: unknown[];
+  sessions?: unknown[];
+  matches?: PromoMatch[];
+};
 
 function resolveSandboxBoardBase(): "/sandbox/app/board" | "/board" {
   if (typeof window === "undefined") return "/board";
@@ -52,39 +45,59 @@ function resolveSandboxBoardBase(): "/sandbox/app/board" | "/board" {
   return p.startsWith("/sandbox/app") ? "/sandbox/app/board" : "/board";
 }
 
+const selectTriggerHub =
+  "h-12 rounded-none border-white/10 bg-slate-950/50 backdrop-blur-md text-[10px] font-black uppercase text-cyan-100 " +
+  "focus:ring-2 focus:ring-cyan-400/40 focus:border-cyan-400";
+
+const selectContentHub = "rounded-none border-white/10 bg-[#0a1220] backdrop-blur-xl z-[200]";
+
 export default function PromoMatchesPage() {
   const { toast } = useToast();
   const boardBase = resolveSandboxBoardBase();
-  const [vault, setVault] = useState<any>({ exercises: [], sessions: [], matches: [] });
+  const [vault, setVault] = useState<PromoVault>({ exercises: [], sessions: [], matches: [] });
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingMatchId, setEditingMatchId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     rival: "",
-    date: new Date().toISOString().split('T')[0],
+    date: new Date().toISOString().split("T")[0],
     location: "Local",
-    status: "Scheduled"
+    status: "Scheduled",
   });
 
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": [], "sessions": [], "matches": []}');
-    setVault(saved);
+    void (async () => {
+      try {
+        const fromDb = await getDocumentJson<PromoVault | null>("sandbox-coach", "vault", "promo_vault", null);
+        const saved =
+          fromDb ??
+          (JSON.parse(localStorage.getItem("synq_promo_vault") || "{}") as PromoVault);
+        setVault({
+          exercises: Array.isArray(saved.exercises) ? saved.exercises : [],
+          sessions: Array.isArray(saved.sessions) ? saved.sessions : [],
+          matches: Array.isArray(saved.matches) ? saved.matches : [],
+        });
+      } catch {
+        setVault({ exercises: [], sessions: [], matches: [] });
+      }
+    })();
   }, []);
 
-  const totalUsed = vault.matches?.length || 0;
+  const matches = Array.isArray(vault.matches) ? vault.matches : [];
+  const totalUsed = matches.length;
   const progressPercent = (totalUsed / MAX_MATCHES) * 100;
 
   const handleOpenCreate = () => {
     setEditingMatchId(null);
     setFormData({
       rival: "",
-      date: new Date().toISOString().split('T')[0],
+      date: new Date().toISOString().split("T")[0],
       location: "Local",
       status: "Scheduled",
     });
     setIsSheetOpen(true);
   };
 
-  const handleEditMatch = (match: any) => {
+  const handleEditMatch = (match: PromoMatch) => {
     setEditingMatchId(String(match.id));
     setFormData({
       rival: String(match.rivalName || "").trim(),
@@ -100,12 +113,12 @@ export default function PromoMatchesPage() {
     const rival = String(formData.rival || "").trim();
     const date = String(formData.date || "").trim();
     if (!rival || !date) {
-      toast({ variant: "destructive", title: "DATOS_INCOMPLETOS", description: "Rival y fecha son obligatorios." });
+      toast({ variant: "destructive", title: "Datos incompletos", description: "Rival y fecha son obligatorios." });
       return;
     }
 
     if (!editingMatchId && totalUsed >= MAX_MATCHES) {
-      toast({ variant: "destructive", title: "CUOTA_AGOTADA", description: "Has alcanzado el límite de 20 partidos locales." });
+      toast({ variant: "destructive", title: "Cuota agotada", description: "Límite de 20 partidos locales." });
       return;
     }
 
@@ -116,11 +129,10 @@ export default function PromoMatchesPage() {
       status: formData.status,
     };
 
-    const prevMatches = Array.isArray(vault.matches) ? vault.matches : [];
     const nextMatches = editingMatchId
-      ? prevMatches.map((m: any) =>
-          String(m?.id ?? "") === editingMatchId
-            ? { ...m, ...payload, score: m?.score ?? { home: 0, guest: 0 } }
+      ? matches.map((m) =>
+          String(m.id) === editingMatchId
+            ? { ...m, ...payload, score: m.score ?? { home: 0, guest: 0 } }
             : m,
         )
       : [
@@ -129,230 +141,283 @@ export default function PromoMatchesPage() {
             ...payload,
             score: { home: 0, guest: 0 },
           },
-          ...prevMatches,
+          ...matches,
         ];
 
     const nextVault = { ...vault, matches: nextMatches };
     setVault(nextVault);
-    localStorage.setItem("synq_promo_vault", JSON.stringify(nextVault));
+    void upsertDocument("sandbox-coach", "vault", "promo_vault", nextVault);
     setIsSheetOpen(false);
     setEditingMatchId(null);
     toast({
-      title: editingMatchId ? "PARTIDO_ACTUALIZADO" : "PARTIDO_AGENDADO",
-      description: editingMatchId
-        ? "Los datos del partido han sido actualizados."
-        : "Encuentro añadido a tu calendario Sandbox.",
+      title: editingMatchId ? "Partido actualizado" : "Partido agendado",
+      description: editingMatchId ? "Datos guardados en el nodo local." : "Encuentro añadido al calendario sandbox.",
     });
   };
 
   const handleDeleteMatch = (id: number) => {
-    const nextVault = { ...vault, matches: vault.matches.filter((m: any) => m.id !== id) };
+    const nextVault = { ...vault, matches: matches.filter((m) => m.id !== id) };
     setVault(nextVault);
-    localStorage.setItem("synq_promo_vault", JSON.stringify(nextVault));
-    toast({ title: "SLOT_LIBERADO", description: "Partido eliminado del historial local." });
+    void upsertDocument("sandbox-coach", "vault", "promo_vault", nextVault);
+    toast({ title: "Slot liberado", description: "Partido eliminado del historial local." });
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-1000 p-8 lg:p-12">
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 border-b border-white/5 pb-8">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <Swords className="h-5 w-5 text-primary animate-pulse" />
-            <span className="text-[10px] font-black text-primary tracking-[0.5em] uppercase italic">Local_Competition_Manager_v1.0</span>
+    <div className="space-y-6 lg:space-y-8 animate-in fade-in duration-700">
+      <div
+        className={cn(
+          "flex flex-col lg:flex-row flex-wrap items-stretch lg:items-center justify-between gap-4 p-4 border border-white/10 bg-slate-900/60 backdrop-blur-md rounded-none",
+          PANEL_OUTER,
+        )}
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <Swords className={cn(iconCyan, "h-6 w-6 shrink-0")} />
+          <div className="min-w-0">
+            <p className="text-[9px] font-black uppercase tracking-[0.35em] text-cyan-300/80">Terminal de partidos</p>
+            <p className="text-sm font-black uppercase tracking-tight text-white truncate">Calendario local · sandbox</p>
           </div>
-          <h1 className="text-5xl font-headline font-black text-white uppercase italic tracking-tighter blue-text-glow leading-none">
-            MIS_PARTIDOS
-          </h1>
-          <p className="text-[11px] font-black text-primary/30 tracking-[0.3em] uppercase">Calendario y Resultados Sandbox</p>
         </div>
-
-        <div className="flex gap-6 items-center">
-           <div className="w-48 space-y-2">
-              <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest text-primary/60">
-                 <span>Slots Partidos</span>
-                 <span>{totalUsed} / {MAX_MATCHES}</span>
-              </div>
-              <Progress value={progressPercent} className="h-2 bg-white/5" />
-           </div>
-           <Button 
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 lg:justify-end">
+          <div className="w-full sm:w-48 space-y-2">
+            <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest text-cyan-200/70">
+              <span>Slots</span>
+              <span className="font-mono tabular-nums text-cyan-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.45)]">
+                {totalUsed} / {MAX_MATCHES}
+              </span>
+            </div>
+            <Progress
+              value={progressPercent}
+              className="h-2 rounded-none border border-white/10 bg-slate-950/50 [&>div]:bg-cyan-500 [&>div]:shadow-[0_0_12px_rgba(34,211,238,0.5)]"
+            />
+          </div>
+          <Button
+            type="button"
             onClick={handleOpenCreate}
-            className="h-12 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl blue-glow hover:scale-105 transition-[background-color,border-color,color,opacity,transform] border-none"
-           >
-            <Plus className="h-4 w-4 mr-2" /> Agendar Partido
-           </Button>
+            className="h-11 rounded-none bg-cyan-500 text-black font-black uppercase text-[10px] tracking-widest px-6 border-0 shadow-[0_0_24px_rgba(6,182,212,0.55)] hover:bg-cyan-400 shrink-0"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Agendar partido
+          </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-max">
-          {(vault.matches || []).map((match: any) => (
-            <Card key={match.id} className="glass-panel border-white/5 bg-black/40 rounded-3xl overflow-hidden group hover:border-primary/30 transition-[background-color,border-color,color,opacity,transform] relative">
-               <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-[background-color,border-color,color,opacity,transform] z-20">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleEditMatch(match)}
-                      className="text-primary/50 hover:text-primary"
-                      title="Modificar partido"
+      <PromoAdsPanel placement="sandbox_matches_page_horizontal" />
+
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-5 auto-rows-max min-w-0">
+          {matches.map((match) => (
+            <div key={match.id} className="group min-w-0">
+            <HubPanel>
+              <div className="flex items-start justify-between gap-2 px-4 py-3 border-b border-white/10 bg-gradient-to-r from-cyan-500/10 via-transparent to-transparent">
+                <div className="min-w-0 space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className="rounded-none border-cyan-400/25 text-[8px] font-black text-cyan-200/90 bg-slate-950/40"
                     >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button onClick={() => handleDeleteMatch(match.id)} className="text-rose-500/40 hover:text-rose-500" title="Borrar partido"><Trash2 className="h-4 w-4" /></button>
+                      {match.date}
+                    </Badge>
+                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{match.location}</span>
                   </div>
-               </div>
-               <CardHeader className="p-6 border-b border-white/5">
-                  <div className="flex items-center justify-between mb-2">
-                     <Badge variant="outline" className="text-[8px] font-black border-primary/20 text-primary">{match.date}</Badge>
-                     <span className="text-[8px] font-black text-white/20 uppercase tracking-widest">{match.location}</span>
+                  <p className="text-sm font-black text-white uppercase tracking-tight truncate">vs {match.rivalName}</p>
+                </div>
+                <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity md:opacity-100">
+                  <button
+                    type="button"
+                    onClick={() => handleEditMatch(match)}
+                    className="p-2 rounded-none border border-white/10 bg-slate-950/50 text-cyan-400/70 hover:text-cyan-300"
+                    title="Modificar"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteMatch(match.id)}
+                    className="p-2 rounded-none border border-white/10 bg-slate-950/50 text-rose-400/60 hover:text-rose-400"
+                    title="Eliminar"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+              <div className="p-4">
+                <div className="flex items-center justify-center gap-6 py-4 rounded-none border border-white/10 bg-slate-950/40">
+                  <div className="text-center">
+                    <p className="text-[8px] font-black text-slate-500 uppercase mb-1">Local</p>
+                    <p className="font-mono text-3xl font-black text-cyan-300 drop-shadow-[0_0_14px_rgba(34,211,238,0.45)]">
+                      {match.score?.home ?? 0}
+                    </p>
                   </div>
-                  <CardTitle className="text-lg font-black text-white uppercase italic truncate">vs {match.rivalName}</CardTitle>
-               </CardHeader>
-               <CardContent className="p-6">
-                  <div className="flex items-center justify-center gap-6 py-4 bg-primary/5 rounded-2xl border border-primary/10">
-                     <div className="text-center">
-                        <p className="text-[8px] font-black text-white/20 uppercase mb-1">LOCAL</p>
-                        <p className="text-3xl font-black text-white">{match.score?.home || 0}</p>
-                     </div>
-                     <div className="text-2xl font-black text-primary/20 italic">-</div>
-                     <div className="text-center">
-                        <p className="text-[8px] font-black text-white/20 uppercase mb-1">RIVAL</p>
-                        <p className="text-3xl font-black text-white">{match.score?.guest || 0}</p>
-                     </div>
+                  <div className="text-xl font-black text-cyan-500/30">—</div>
+                  <div className="text-center">
+                    <p className="text-[8px] font-black text-slate-500 uppercase mb-1">Rival</p>
+                    <p className="font-mono text-3xl font-black text-white">{match.score?.guest ?? 0}</p>
                   </div>
-               </CardContent>
-               <CardFooter className="p-4 bg-black/40 flex justify-center">
-                  <Button variant="ghost" className="w-full text-[9px] font-black uppercase text-primary/60 hover:text-primary" asChild>
-                     <Link href={`${boardBase}/match?source=sandbox&matchId=${encodeURIComponent(String(match.id))}`}>
-                       DIRIGIR PARTIDO <ArrowRight className="h-3 w-3 ml-2" />
-                     </Link>
-                  </Button>
-               </CardFooter>
-            </Card>
+                </div>
+              </div>
+              <div className="px-4 pb-4">
+                <Button
+                  variant="ghost"
+                  className="w-full h-10 rounded-none border border-white/10 text-[9px] font-black uppercase text-cyan-300 tracking-widest hover:bg-cyan-500/10 hover:border-cyan-400/30"
+                  asChild
+                >
+                  <Link href={`${boardBase}/match?source=sandbox&matchId=${encodeURIComponent(String(match.id))}`}>
+                    Dirigir partido
+                    <ArrowRight className="h-3 w-3 ml-2" />
+                  </Link>
+                </Button>
+              </div>
+            </HubPanel>
+            </div>
           ))}
-          
-          {totalUsed < MAX_MATCHES && (
-            <button 
+
+          {totalUsed < MAX_MATCHES ? (
+            <button
+              type="button"
               onClick={handleOpenCreate}
-              className="h-[280px] border-2 border-dashed border-white/5 rounded-[2rem] flex flex-col items-center justify-center gap-4 bg-white/[0.01] group hover:border-primary/20 hover:bg-primary/[0.02] transition-[background-color,border-color,color,opacity,transform]"
+              className={cn(
+                "group min-h-[240px] rounded-none border border-dashed border-white/15 bg-slate-950/25 backdrop-blur-md",
+                "flex flex-col items-center justify-center gap-3 hover:border-cyan-400/35 hover:bg-cyan-500/[0.04] transition-colors",
+                PANEL_OUTER,
+              )}
             >
-               <div className="h-14 w-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Plus className="h-6 w-6 text-white/10 group-hover:text-primary/40" />
-               </div>
-               <span className="text-[10px] font-black text-white/10 uppercase tracking-widest group-hover:text-primary/40">Añadir Slot de Temporada</span>
+              <div className="h-12 w-12 rounded-none border border-white/10 bg-slate-900/50 flex items-center justify-center group-hover:scale-[1.02] transition-transform">
+                <Plus className="h-6 w-6 text-white/25 group-hover:text-cyan-400" />
+              </div>
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-cyan-200/90">
+                Añadir slot de temporada
+              </span>
             </button>
-          )}
+          ) : null}
         </div>
 
-        <aside className="space-y-8">
-          <Card className="glass-panel border-primary/20 bg-primary/5 p-8 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-[background-color,border-color,color,opacity,transform]"><Zap className="h-32 w-32 text-primary" /></div>
-            <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white mb-6">HISTORIAL_SINCRO</h3>
-            <p className="text-[11px] font-bold text-white/40 uppercase tracking-widest mb-8 leading-loose italic">
-              Al pulsar "Guardar" en la Pizarra de Partido, el marcador se vuelca automáticamente en esta terminal para que lleves el control de tu liga local.
-            </p>
-            <div className="p-6 bg-black/40 border border-white/10 rounded-2xl space-y-4">
-               <div className="flex items-center gap-3">
-                  <ShieldCheck className="h-4 w-4 text-primary" />
-                  <span className="text-[10px] font-black uppercase text-primary">Ventaja Pro</span>
-               </div>
-               <p className="text-[9px] text-white/20 uppercase font-bold leading-relaxed italic">
-                 El modo Elite Club sincroniza los goles con las apps de los padres y genera analíticas de rendimiento por jugador automáticamente.
-               </p>
-               <Button className="w-full h-12 bg-primary text-black font-black uppercase text-[9px] tracking-widest rounded-xl blue-glow border-none" asChild>
-                  <Link href="/login">UPGRADE A PRO</Link>
-               </Button>
+        <div className="space-y-6">
+          <HubPanel>
+            <SectionBar title="Marcador y pizarra" right={<Zap className={iconCyan} />} />
+            <div className="p-4 sm:p-5 space-y-4">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
+                Al guardar en la pizarra de partido, el marcador se refleja aquí en tu calendario local.
+              </p>
+              <div className="p-4 rounded-none border border-cyan-400/20 bg-cyan-500/5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="h-3.5 w-3.5 text-cyan-400" />
+                  <span className="text-[9px] font-black uppercase text-cyan-200/80 tracking-widest">Modo club</span>
+                </div>
+                <p className="text-[9px] text-slate-500 leading-relaxed font-bold uppercase">
+                  En élite: sincronización con familias y analíticas por jugador.
+                </p>
+                <Button
+                  className="w-full h-11 rounded-none bg-cyan-500 text-black font-black uppercase text-[9px] tracking-widest border-0 shadow-[0_0_22px_rgba(6,182,212,0.5)] hover:bg-cyan-400"
+                  asChild
+                >
+                  <Link href="/login">Upgrade a pro</Link>
+                </Button>
+              </div>
             </div>
-          </Card>
+          </HubPanel>
 
-          <div className="aspect-square bg-white/5 border border-dashed border-white/10 rounded-[2.5rem] flex flex-col items-center justify-center p-8 text-center group">
-             <Megaphone className="h-10 w-10 text-white/10 mb-4 group-hover:text-primary/20 transition-colors" />
-             <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em]">Google_Ad_Slot_Vertical_Competition</p>
-          </div>
-        </aside>
+          <PromoAdsPanel placement="sandbox_matches_sidebar_horizontal" sectionTitle="Espacio publicitario" />
+        </div>
       </div>
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
-          <div className="p-10 border-b border-white/5 bg-black/40">
-            <SheetHeader className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary italic">Match_Asset_Deploy</span>
-              </div>
-              <SheetTitle className="text-4xl font-black italic tracking-tighter text-white uppercase text-left">
-                {editingMatchId ? "MODIFICAR PARTIDO" : "AGENDAR PARTIDO"}
+        <SheetContent
+          side="right"
+          className="rounded-none bg-[#050812]/98 backdrop-blur-2xl border-l border-white/10 text-white w-full sm:max-w-md p-0 overflow-hidden flex flex-col z-[200]"
+        >
+          <div className="p-6 border-b border-white/10 bg-slate-900/40">
+            <SheetHeader className="space-y-2 text-left">
+              <p className="text-[9px] font-black uppercase tracking-[0.35em] text-cyan-300/80">Despliegue de partido</p>
+              <SheetTitle className="text-2xl font-black uppercase tracking-tight text-white">
+                {editingMatchId ? "Modificar partido" : "Agendar partido"}
               </SheetTitle>
             </SheetHeader>
           </div>
 
-          <form onSubmit={handleUpsertMatch} className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-8">
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Nombre del Rival</Label>
-                <Input 
-                  required
-                  value={formData.rival}
-                  onChange={(e) => setFormData({...formData, rival: e.target.value})}
-                  placeholder="EJ: CLUB DEPORTIVO CIUDAD" 
-                  className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary text-primary" 
-                />
-              </div>
+          <form id="promo-match-upsert" onSubmit={handleUpsertMatch} className="flex-1 overflow-y-auto p-6 space-y-6">
+            <div className="space-y-2">
+              <Label className="text-[9px] font-black uppercase text-cyan-200/70 tracking-widest">Nombre del rival</Label>
+              <Input
+                required
+                value={formData.rival}
+                onChange={(e) => setFormData({ ...formData, rival: e.target.value })}
+                placeholder="EJ: CLUB CIUDAD"
+                className={cn(inputProClass, "h-12")}
+              />
+            </div>
 
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Fecha del Encuentro</Label>
-                <Input 
-                  required
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) => setFormData({...formData, date: e.target.value})}
-                  className="h-14 bg-white/5 border-primary/20 rounded-2xl font-bold focus:border-primary text-primary [color-scheme:dark]" 
-                />
-              </div>
+            <div className="space-y-2">
+              <Label className="text-[9px] font-black uppercase text-cyan-200/70 tracking-widest">Fecha</Label>
+              <Input
+                required
+                type="date"
+                value={formData.date}
+                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                className={cn(inputProClass, "h-12 [color-scheme:dark]")}
+              />
+            </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Ubicación</Label>
-                  <Select value={formData.location} onValueChange={(v) => setFormData({...formData, location: v})}>
-                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-xl text-white font-bold uppercase text-[10px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#0a0f18] border-primary/20">
-                      <SelectItem value="Local" className="text-[10px] font-black uppercase">EN CASA</SelectItem>
-                      <SelectItem value="Visitante" className="text-[10px] font-black uppercase">FUERA</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Estado</Label>
-                  <Select value={formData.status} onValueChange={(v) => setFormData({...formData, status: v})}>
-                    <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-xl text-white font-bold uppercase text-[10px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#0a0f18] border-primary/20">
-                      <SelectItem value="Scheduled" className="text-[10px] font-black uppercase">PROGRAMADO</SelectItem>
-                      <SelectItem value="Played" className="text-[10px] font-black uppercase">FINALIZADO</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-[9px] font-black uppercase text-cyan-200/70 tracking-widest">Ubicación</Label>
+                <Select value={formData.location} onValueChange={(v) => setFormData({ ...formData, location: v })}>
+                  <SelectTrigger className={selectTriggerHub}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className={selectContentHub}>
+                    <SelectItem value="Local" className="text-[10px] font-black uppercase rounded-none">
+                      En casa
+                    </SelectItem>
+                    <SelectItem value="Visitante" className="text-[10px] font-black uppercase rounded-none">
+                      Fuera
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[9px] font-black uppercase text-cyan-200/70 tracking-widest">Estado</Label>
+                <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v })}>
+                  <SelectTrigger className={selectTriggerHub}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className={selectContentHub}>
+                    <SelectItem value="Scheduled" className="text-[10px] font-black uppercase rounded-none">
+                      Programado
+                    </SelectItem>
+                    <SelectItem value="Played" className="text-[10px] font-black uppercase rounded-none">
+                      Finalizado
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
-            <div className="p-6 bg-primary/5 border border-primary/20 rounded-3xl space-y-3">
+            <div className="p-4 rounded-none border border-cyan-400/20 bg-cyan-500/5 space-y-2">
               <div className="flex items-center gap-2">
-                <ShieldCheck className="h-3 w-3 text-primary" />
-                <span className="text-[9px] font-black uppercase text-primary tracking-widest italic">Aviso de Slot Local</span>
+                <ShieldCheck className="h-3.5 w-3.5 text-cyan-400" />
+                <span className="text-[9px] font-black uppercase text-cyan-200/80 tracking-widest">Slot local</span>
               </div>
-              <p className="text-[9px] text-primary/40 leading-relaxed font-bold uppercase italic">
-                La creación de este slot permite vincular los datos del cronómetro y marcador en tiempo real durante el partido.
+              <p className="text-[9px] text-slate-500 leading-relaxed font-bold uppercase">
+                Este slot vincula cronómetro y marcador durante el partido en la pizarra.
               </p>
             </div>
           </form>
 
-          <div className="p-10 bg-black/40 border-t border-white/5 flex gap-4">
+          <div className="p-6 border-t border-white/10 bg-slate-950/50 flex gap-3">
             <SheetClose asChild>
-              <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary/60 font-black uppercase text-[10px] tracking-widest hover:bg-primary/10 rounded-2xl transition-[background-color,border-color,color,opacity,transform]">CANCELAR</Button>
+              <Button
+                variant="ghost"
+                className="flex-1 h-12 rounded-none border border-white/10 text-cyan-200/70 font-black uppercase text-[10px] tracking-widest hover:bg-white/5"
+              >
+                Cancelar
+              </Button>
             </SheetClose>
-            <Button onClick={handleUpsertMatch} className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl blue-glow hover:scale-[1.02] transition-[background-color,border-color,color,opacity,transform]">
-              {editingMatchId ? "ACTUALIZAR_PARTIDO" : "SINCRO_PARTIDO"}
+            <Button
+              type="submit"
+              form="promo-match-upsert"
+              className="flex-[2] h-12 rounded-none bg-cyan-500 text-black font-black uppercase text-[10px] tracking-widest border-0 shadow-[0_0_28px_rgba(6,182,212,0.55)] hover:bg-cyan-400"
+            >
+              {editingMatchId ? "Actualizar" : "Guardar partido"}
             </Button>
           </div>
         </SheetContent>

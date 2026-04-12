@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { readPlayersLocalAcrossClubs } from "@/lib/player-storage";
+import { upsertDocument } from "@/lib/local-db/database-service";
 
 const ADMIN_EMAILS = ['munozmartinez.ismael@gmail.com', 'synqaisports@gmail.com', 'admin@synqai.sports'];
 
@@ -83,6 +84,7 @@ export default function TutorLoginPage() {
 
       if (authStore[emailLower] === password || (isRootAdmin && password === "admin123")) {
         localStorage.setItem("synq_tutor_session_email", emailLower);
+        void upsertDocument("tutor", "session", "current", { email: emailLower });
         toast({
           title: isRootAdmin ? "PROTOCOLO_ELITE_ACTIVADO" : "IDENTIDAD_VALIDADA",
           description: "Acceso autorizado al nodo de familia.",

@@ -38,6 +38,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { TacticalField, FieldType } from "@/components/board/TacticalField";
 import { BoardToolbar, DrawingTool } from "@/components/board/BoardToolbar";
 import { synqSync } from "@/lib/sync-service";
+import { upsertDocument } from "@/lib/local-db/database-service";
 import { 
   Select, 
   SelectContent, 
@@ -70,6 +71,7 @@ import {
 } from "@/lib/board-performance";
 import Link from "next/link";
 import Script from "next/script";
+import { useAdsAllowed } from "@/hooks/use-ads-allowed";
 
 function resolveSandboxBasePath(): "/sandbox" | "/sandbox/app" | "/dashboard/promo" {
   if (typeof window === "undefined") return "/dashboard/promo";
@@ -236,11 +238,14 @@ const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT ?? "";
 const ADSENSE_SLOT_H = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_SLOT_HORIZONTAL ?? "";
 
 const AdSlot = memo(({ orientation = 'horizontal' }: { orientation: 'horizontal' | 'vertical' }) => {
+  const adsAllowed = useAdsAllowed();
   const pushedRef = useRef(false);
   useEffect(() => {
+    if (!adsAllowed) return;
     synqSync.trackEvent('ad_impression', { source: "sandbox", format: orientation, placement: 'promo_board_multiplex', timestamp: new Date().toISOString() });
-  }, [orientation]);
+  }, [orientation, adsAllowed]);
   useEffect(() => {
+    if (!adsAllowed) return;
     if (!ADSENSE_CLIENT || !ADSENSE_SLOT_H || orientation !== "horizontal" || pushedRef.current) return;
     let tries = 0;
     const maxTries = 40;
@@ -260,9 +265,12 @@ const AdSlot = memo(({ orientation = 'horizontal' }: { orientation: 'horizontal'
       }
     }, 150);
     return () => window.clearInterval(t);
-  }, [orientation]);
-  const handleAdClick = () => { synqSync.trackEvent('ad_click', { source: "sandbox", format: orientation, placement: 'promo_board_multiplex' }); };
-  if (ADSENSE_CLIENT && ADSENSE_SLOT_H && orientation === "horizontal") {
+  }, [orientation, adsAllowed]);
+  const handleAdClick = () => {
+    if (!adsAllowed) return;
+    synqSync.trackEvent('ad_click', { source: "sandbox", format: orientation, placement: 'promo_board_multiplex' });
+  };
+  if (adsAllowed && ADSENSE_CLIENT && ADSENSE_SLOT_H && orientation === "horizontal") {
     return (
       <div onClick={handleAdClick} className="min-h-16 w-full rounded-2xl overflow-hidden bg-black/30 border border-primary/20 pointer-events-auto">
         <ins
@@ -306,11 +314,13 @@ function PromoBoardContent() {
   const [isCoarsePointer, setIsCoarsePointer] = useState(false);
   const [dprFactor, setDprFactor] = useState(1);
 
+  const adsAllowed = useAdsAllowed();
   const showAds =
     !profile ||
     profile.plan === "free" ||
     profile.role === "promo_coach" ||
     profile.role === "superadmin";
+  const showAdsWeb = showAds && adsAllowed;
 
   const [fieldType, setFieldType] = useState<FieldType>("f11");
   const [showLanes, setShowLanes] = useState(false);
@@ -1190,6 +1200,7 @@ function PromoBoardContent() {
     };
     vault.exercises = [newExercise, ...(vault.exercises || [])];
     localStorage.setItem("synq_promo_vault", JSON.stringify(vault));
+    void upsertDocument("sandbox-coach", "vault", "promo_vault", vault);
     setVault(vault);
     toast({ title: "SINCRO_LOCAL", description: `Ejercicio blindado en slot ${block.toUpperCase()}.` });
     setIsSaveSheetOpen(false);
@@ -1207,7 +1218,7 @@ function PromoBoardContent() {
 
   return (
     <div className={cn("h-full w-full flex flex-col bg-black overflow-hidden relative touch-none select-none", isLegacyDevice && "perf-lite")}>
-      {ADSENSE_CLIENT ? (
+      {ADSENSE_CLIENT && showAdsWeb ? (
         <Script
           id="promo-adsense"
           strategy="afterInteractive"
@@ -1216,7 +1227,7 @@ function PromoBoardContent() {
         />
       ) : null}
 
-      {showAds && (
+      {showAdsWeb && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[100] w-full max-w-7xl px-6 flex gap-4 pointer-events-none animate-in fade-in duration-1000">
           <div className="flex-1 pointer-events-auto"><AdSlot orientation="horizontal" /></div>
           <div className="flex-1 pointer-events-auto"><AdSlot orientation="horizontal" /></div>

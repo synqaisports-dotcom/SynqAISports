@@ -1,54 +1,50 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
-import { 
-  Calendar, 
-  Plus, 
-  Trash2, 
-  Lock, 
-  Zap, 
-  Clock, 
-  LayoutGrid, 
+import {
+  Calendar,
+  Plus,
+  Trash2,
+  Zap,
+  Clock,
   CheckCircle2,
-  Info,
   ArrowRight,
   CalendarDays,
   ShieldCheck,
   Smartphone,
-  Megaphone,
   Download,
   ClipboardList,
   Flame,
   Dumbbell,
   Wind,
-  Pencil
+  Pencil,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetHeader, 
-  SheetTitle, 
-  SheetDescription,
-  SheetFooter, 
-  SheetClose,
-  SheetTrigger
-} from "@/components/ui/sheet";
+import { getDocumentJson, upsertDocument } from "@/lib/local-db/database-service";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetClose,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import {
+  HubPanel,
+  SectionBar,
+  PromoAdsPanel,
+  PANEL_OUTER,
+  inputProClass,
+  iconCyan,
+} from "@/app/dashboard/promo/command-hub-ui";
 
 const MAX_SESSIONS = 4;
 
@@ -69,329 +65,426 @@ function resolveSandboxBoardHref(kind: "match" | "promo", opts?: { id?: string |
   return inApp ? `/sandbox/app/board/promo${q}` : `/board/promo${q}`;
 }
 
-/**
- * Mi Agenda Promo - v10.0.0
- * PROTOCOLO_SESSION_COMPOSITION: Ahora permite crear sesiones reales vinculando tareas locales.
- */
+const selectTriggerHub =
+  "h-12 rounded-none border-white/10 bg-slate-950/50 backdrop-blur-md text-[10px] font-black uppercase text-cyan-100 " +
+  "focus:ring-2 focus:ring-cyan-400/40 focus:border-cyan-400";
+
+const selectContentHub = "rounded-none border-white/10 bg-[#0a1220] backdrop-blur-xl z-[200]";
+
 export default function PromoSessionsPage() {
   const { toast } = useToast();
-  const [vault, setVault] = useState<any>({ exercises: [], sessions: [] });
+  const [vault, setVault] = useState<{ exercises: unknown[]; sessions: unknown[] }>({ exercises: [], sessions: [] });
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     title: "",
     warmupId: "",
     mainId: "",
-    cooldownId: ""
+    cooldownId: "",
   });
 
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": [], "sessions": []}');
-    setVault(saved);
+    void (async () => {
+      try {
+        const fromDb = await getDocumentJson<{ exercises?: unknown[]; sessions?: unknown[] } | null>(
+          "sandbox-coach",
+          "vault",
+          "promo_vault",
+          null,
+        );
+        const saved =
+          fromDb ??
+          JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": [], "sessions": []}');
+        setVault(saved);
+      } catch {
+        setVault({ exercises: [], sessions: [] });
+      }
+    })();
   }, []);
 
-  const warmupTasks = vault.exercises?.filter((e: any) => e.block === 'warmup') || [];
-  const mainTasks = vault.exercises?.filter((e: any) => e.block === 'main') || [];
-  const cooldownTasks = vault.exercises?.filter((e: any) => e.block === 'cooldown') || [];
+  const exercises = (vault.exercises || []) as Array<Record<string, unknown>>;
+  const sessions = (vault.sessions || []) as Array<Record<string, unknown>>;
+  const warmupTasks = exercises.filter((e) => e.block === "warmup");
+  const mainTasks = exercises.filter((e) => e.block === "main");
+  const cooldownTasks = exercises.filter((e) => e.block === "cooldown");
 
   const handleDeleteSession = (id: number) => {
-    const nextVault = { ...vault, sessions: vault.sessions.filter((s: any) => s.id !== id) };
+    const nextVault = { ...vault, sessions: sessions.filter((s) => Number(s.id) !== id) };
     setVault(nextVault);
-    localStorage.setItem("synq_promo_vault", JSON.stringify(nextVault));
-    toast({ title: "SESIÓN_LIBERADA", description: "Plan diario eliminado del Sandbox." });
+    void upsertDocument("sandbox-coach", "vault", "promo_vault", nextVault);
+    toast({ title: "Sesión liberada", description: "Plan eliminado de la agenda local." });
   };
 
   const handleCreateSession = (e: React.FormEvent) => {
     e.preventDefault();
-    if (vault.sessions.length >= MAX_SESSIONS) {
-      toast({ variant: "destructive", title: "CUOTA_AGOTADA", description: "Límite de 4 sesiones alcanzado." });
+    if (sessions.length >= MAX_SESSIONS) {
+      toast({ variant: "destructive", title: "Cuota agotada", description: "Límite de 4 sesiones alcanzado." });
       return;
     }
 
     const newSession = {
       id: Date.now(),
-      title: formData.title.toUpperCase() || `SESIÓN_${vault.sessions.length + 1}`,
-      createdAt: new Date().toISOString().split('T')[0],
-      warmup: warmupTasks.find((t: any) => t.id.toString() === formData.warmupId),
-      main: mainTasks.find((t: any) => t.id.toString() === formData.mainId),
-      cooldown: cooldownTasks.find((t: any) => t.id.toString() === formData.cooldownId)
+      title: formData.title.toUpperCase() || `SESIÓN_${sessions.length + 1}`,
+      createdAt: new Date().toISOString().split("T")[0],
+      warmup: warmupTasks.find((t) => String(t.id) === formData.warmupId),
+      main: mainTasks.find((t) => String(t.id) === formData.mainId),
+      cooldown: cooldownTasks.find((t) => String(t.id) === formData.cooldownId),
     };
 
-    const nextVault = { ...vault, sessions: [newSession, ...(vault.sessions || [])] };
+    const nextVault = { ...vault, sessions: [newSession, ...sessions] };
     setVault(nextVault);
-    localStorage.setItem("synq_promo_vault", JSON.stringify(nextVault));
+    void upsertDocument("sandbox-coach", "vault", "promo_vault", nextVault);
     setIsSheetOpen(false);
     setFormData({ title: "", warmupId: "", mainId: "", cooldownId: "" });
-    toast({ title: "SESIÓN_PLANIFICADA", description: "Plan diario añadido a tu agenda Sandbox." });
+    toast({ title: "Sesión planificada", description: "Plan añadido a tu agenda sandbox." });
   };
 
   const handlePrintSession = () => {
     toast({
-      title: "GENERANDO_FICHA_DE_CAMPO",
-      description: "Preparando documento optimizado con los 3 bloques de la sesión.",
+      title: "Generando ficha",
+      description: "Preparando documento con los tres bloques.",
     });
-    setTimeout(() => {
+    window.setTimeout(() => {
       window.print();
-    }, 1000);
+    }, 600);
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-1000 p-8 lg:p-12 print:p-0 print:bg-white">
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 border-b border-white/5 pb-8 print:border-black/10">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3 print:hidden">
-            <Calendar className="h-5 w-5 text-primary animate-pulse" />
-            <span className="text-[10px] font-black text-primary tracking-[0.5em] uppercase italic">Sandbox_Agenda_v1.0</span>
+    <div className="space-y-6 lg:space-y-8 animate-in fade-in duration-700 print:p-0 print:bg-white">
+      <div
+        className={cn(
+          "flex flex-col lg:flex-row flex-wrap items-stretch lg:items-center justify-between gap-4 p-4 border border-white/10 bg-slate-900/60 backdrop-blur-md rounded-none print:border-black/10",
+          PANEL_OUTER,
+        )}
+      >
+        <div className="flex items-center gap-3 min-w-0 print:hidden">
+          <Calendar className={cn(iconCyan, "h-6 w-6 shrink-0")} />
+          <div className="min-w-0">
+            <p className="text-[9px] font-black uppercase tracking-[0.35em] text-cyan-300/80">Terminal de agenda</p>
+            <p className="text-sm font-black uppercase tracking-tight text-white truncate">Planificación local · sandbox</p>
           </div>
-          <h1 className="text-5xl font-headline font-black text-white uppercase italic tracking-tighter blue-text-glow leading-none print:text-black print:text-glow-none">
-            MI_AGENDA_PROMO
-          </h1>
-          <p className="text-[11px] font-black text-primary/30 tracking-[0.3em] uppercase print:text-black/40">Planificación Diaria Simplificada</p>
         </div>
 
-        <div className="flex items-center gap-4">
-           <Badge variant="outline" className="bg-primary/5 border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest px-6 py-2 rounded-2xl print:hidden">
-             CUOTA: {vault.sessions?.length || 0} / {MAX_SESSIONS} SESIONES
-           </Badge>
-           <Button onClick={handlePrintSession} className="h-12 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-8 rounded-xl blue-glow hover:scale-105 transition-[background-color,border-color,color,opacity,transform] border-none print:hidden">
-              <Download className="h-4 w-4 mr-2" /> Ficha de Sesión (PDF)
-           </Button>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 print:hidden">
+          <Badge
+            variant="outline"
+            className="rounded-none border-cyan-400/25 text-cyan-200 font-black uppercase text-[9px] tracking-widest px-4 py-2 justify-center bg-slate-950/40"
+          >
+            Cuota:{" "}
+            <span className="font-mono tabular-nums text-cyan-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.45)] ml-1">
+              {sessions.length} / {MAX_SESSIONS}
+            </span>
+          </Badge>
+          <Button
+            onClick={handlePrintSession}
+            className="h-11 rounded-none bg-cyan-500 text-black font-black uppercase text-[10px] tracking-widest px-6 border-0 shadow-[0_0_24px_rgba(6,182,212,0.55)] hover:bg-cyan-400"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Ficha de sesión
+          </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 print:grid-cols-1">
+      <PromoAdsPanel placement="sandbox_sessions_page_horizontal" />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 print:grid-cols-1">
         {Array.from({ length: MAX_SESSIONS }).map((_, i) => {
-          const session = vault.sessions?.[i];
+          const session = sessions[i] as
+            | {
+                id: number;
+                title: string;
+                warmup?: unknown;
+                main?: unknown;
+                cooldown?: unknown;
+              }
+            | undefined;
           return (
-            <div key={i} className="space-y-4 print:mb-8">
-               <div className="flex items-center justify-between px-2 print:hidden">
-                  <span className="text-[10px] font-black text-white/40 uppercase tracking-widest italic">Slot_0{i+1}</span>
-                  {session && (
-                    <button onClick={() => handleDeleteSession(session.id)} className="text-rose-500/40 hover:text-rose-500 transition-colors"><Trash2 className="h-3.5 w-3.5" /></button>
-                  )}
-               </div>
-               
-               {session ? (
-                 <Card className="glass-panel border-primary/30 bg-primary/5 rounded-[2.5rem] overflow-hidden relative group print:bg-white print:border-black/10">
-                    <CardHeader className="p-8 border-b border-white/5 bg-black/40 print:bg-black/5 print:border-black/10">
-                       <CardTitle className="text-xl font-black text-white italic tracking-tighter uppercase leading-none print:text-black truncate">{session.title}</CardTitle>
-                       <CardDescription className="text-[8px] font-bold text-primary uppercase tracking-[0.2em] mt-2 print:text-black/40">Protocolo de Entrenamiento • ID: {session.id.toString().slice(-4)}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-8 space-y-6">
-                       <SessionPart label="Activación" status={session.warmup ? "SINCRO_OK" : "PENDIENTE"} active={!!session.warmup} />
-                       <SessionPart label="Parte Principal" status={session.main ? "SINCRO_OK" : "PENDIENTE"} active={!!session.main} />
-                       <SessionPart label="Vuelta a la Calma" status={session.cooldown ? "SINCRO_OK" : "PENDIENTE"} active={!!session.cooldown} />
-                    </CardContent>
-                    <CardFooter className="p-6 bg-black/40 border-t border-white/5 flex justify-center print:hidden">
-                       <Button variant="ghost" className="text-[9px] font-black text-primary uppercase tracking-widest hover:blue-text-glow" asChild>
-                         <Link href={resolveSandboxBoardHref("match")}>DIRIGIR EN PARTIDO <ArrowRight className="h-3 w-3 ml-2" /></Link>
-                       </Button>
-                    </CardFooter>
-                 </Card>
-               ) : (
-                 <Sheet open={isSheetOpen && i === vault.sessions?.length} onOpenChange={setIsSheetOpen}>
-                    <SheetTrigger asChild>
-                      <button 
-                        disabled={i !== (vault.sessions?.length || 0)}
-                        className="h-[400px] border-2 border-dashed border-white/5 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 bg-white/[0.01] group hover:border-primary/20 hover:bg-primary/[0.02] transition-[background-color,border-color,color,opacity,transform] print:hidden disabled:opacity-20 disabled:cursor-not-allowed"
+            <div key={i} className="space-y-3 print:mb-8">
+              <div className="flex items-center justify-between px-1 print:hidden">
+                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Slot 0{i + 1}</span>
+                {session ? (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteSession(session.id)}
+                    className="text-rose-400/50 hover:text-rose-400 transition-colors p-1"
+                    aria-label="Eliminar sesión"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                ) : null}
+              </div>
+
+              {session ? (
+                <HubPanel>
+                  <SectionBar
+                    title={session.title}
+                    right={<Clock className={cn(iconCyan, "h-4 w-4 opacity-80")} />}
+                  />
+                  <div className="p-4 sm:p-5 space-y-3 print:bg-white">
+                    <p className="text-[8px] font-bold text-cyan-300/60 uppercase tracking-[0.2em] print:text-black/50">
+                      ID {String(session.id).slice(-4)}
+                    </p>
+                    <SessionPart label="Activación" status={session.warmup ? "Sincronizado" : "Pendiente"} active={!!session.warmup} />
+                    <SessionPart label="Parte principal" status={session.main ? "Sincronizado" : "Pendiente"} active={!!session.main} />
+                    <SessionPart label="Vuelta a la calma" status={session.cooldown ? "Sincronizado" : "Pendiente"} active={!!session.cooldown} />
+                    <div className="pt-2 print:hidden">
+                      <Button
+                        variant="ghost"
+                        className="w-full h-10 rounded-none border border-white/10 text-[9px] font-black text-cyan-300 uppercase tracking-widest hover:bg-cyan-500/10 hover:border-cyan-400/30"
+                        asChild
                       >
-                        <div className="h-14 w-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                            <Plus className="h-6 w-6 text-white/10 group-hover:text-primary/40" />
+                        <Link href={resolveSandboxBoardHref("match")}>
+                          Dirigir en partido
+                          <ArrowRight className="h-3 w-3 ml-2" />
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                </HubPanel>
+              ) : (
+                <Sheet open={isSheetOpen && i === sessions.length} onOpenChange={setIsSheetOpen}>
+                  <SheetTrigger asChild>
+                    <button
+                      type="button"
+                      disabled={i !== sessions.length}
+                      className={cn(
+                        "group min-h-[320px] lg:min-h-[380px] w-full rounded-none border border-dashed border-white/15",
+                        "bg-slate-950/25 backdrop-blur-md flex flex-col items-center justify-center gap-3",
+                        "hover:border-cyan-400/35 hover:bg-cyan-500/[0.04] transition-colors print:hidden",
+                        "disabled:opacity-25 disabled:cursor-not-allowed disabled:hover:border-white/15",
+                        PANEL_OUTER,
+                      )}
+                    >
+                      <div className="h-12 w-12 rounded-none border border-white/10 bg-slate-900/50 flex items-center justify-center group-hover:scale-[1.02] transition-transform">
+                        <Plus className="h-6 w-6 text-white/20 group-hover:text-cyan-400" />
+                      </div>
+                      <div className="text-center space-y-1 px-4">
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-cyan-200/90">
+                          Crear plan diario
+                        </p>
+                        <p className="text-[8px] font-bold text-slate-600 uppercase tracking-widest">Slot disponible</p>
+                      </div>
+                    </button>
+                  </SheetTrigger>
+                  <SheetContent
+                    side="right"
+                    className="rounded-none bg-[#050812]/98 backdrop-blur-2xl border-l border-white/10 text-white w-full sm:max-w-md p-0 overflow-hidden flex flex-col z-[200]"
+                  >
+                    <div className="p-6 border-b border-white/10 bg-slate-900/40">
+                      <SheetHeader className="space-y-3 text-left">
+                        <div className="flex items-center gap-2">
+                          <ClipboardList className={cn(iconCyan, "h-5 w-5")} />
+                          <span className="text-[9px] font-black uppercase tracking-[0.35em] text-cyan-300/80">Arquitecto de sesión</span>
                         </div>
-                        <div className="text-center space-y-1">
-                            <p className="text-[10px] font-black text-white/10 uppercase tracking-widest group-hover:text-primary/40">Crear Plan Diario</p>
-                            <p className="text-[8px] font-bold text-white/5 uppercase tracking-widest italic group-hover:text-primary/20">Slot Disponible</p>
-                        </div>
-                      </button>
-                    </SheetTrigger>
-                    <SheetContent side="right" className="bg-[#04070c]/98 backdrop-blur-3xl border-l border-primary/20 text-white w-full sm:max-w-md shadow-[-20px_0_60px_rgba(0,0,0,0.8)] p-0 overflow-hidden flex flex-col">
-                      <div className="p-8 border-b border-white/5 bg-black/40">
-                        <SheetHeader className="space-y-4">
-                          <div className="flex items-center gap-3">
-                            <ClipboardList className="h-5 w-5 text-primary animate-pulse" />
-                            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary italic">Architect_Session_v1.0</span>
-                          </div>
-                          <SheetTitle className="text-3xl font-black italic uppercase tracking-tighter text-white">PLANIFICAR <span className="text-primary">DÍA</span></SheetTitle>
-                          <SheetDescription className="text-[10px] uppercase font-bold text-white/30 tracking-widest text-left italic">
-                            Ensamble su sesión vinculando tareas del almacén local.
-                          </SheetDescription>
-                        </SheetHeader>
+                        <SheetTitle className="text-2xl font-black uppercase tracking-tight text-white">
+                          Planificar <span className="text-cyan-300 drop-shadow-[0_0_20px_rgba(34,211,238,0.5)]">día</span>
+                        </SheetTitle>
+                        <SheetDescription className="text-[10px] uppercase font-bold text-slate-500 tracking-widest text-left">
+                          Vincula tareas del almacén local a esta sesión.
+                        </SheetDescription>
+                      </SheetHeader>
+                    </div>
+
+                    <form onSubmit={handleCreateSession} className="flex-1 overflow-y-auto p-6 space-y-8">
+                      <div className="space-y-2">
+                        <Label className="text-[9px] font-black uppercase text-cyan-200/70 tracking-widest">Identificador</Label>
+                        <Input
+                          value={formData.title}
+                          onChange={(e) => setFormData({ ...formData, title: e.target.value.toUpperCase() })}
+                          placeholder="EJ: MICROCICLO_01"
+                          className={cn(inputProClass, "h-12 text-sm")}
+                        />
                       </div>
 
-                      <form onSubmit={handleCreateSession} className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-10">
-                        <div className="space-y-6">
-                          <div className="space-y-3">
-                            <Label className="text-[10px] font-black uppercase text-primary/60 tracking-widest ml-1 italic">Identificador de Sesión</Label>
-                            <Input 
-                              value={formData.title} 
-                              onChange={(e) => setFormData({...formData, title: e.target.value.toUpperCase()})} 
-                              placeholder="EJ: MICROCICLO_AJUSTE_01" 
-                              className="h-14 bg-black/40 border-primary/20 rounded-2xl font-bold uppercase focus:border-primary text-primary text-lg" 
-                            />
-                          </div>
-
-                          <div className="space-y-8 pt-4">
-                            {/* BLOQUE 1: CALENTAMIENTO */}
-                            <div className="space-y-4">
-                              <div className="flex items-center gap-3">
-                                <Flame className="h-4 w-4 text-orange-500" />
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-white">1. Activación (Warmup)</Label>
-                              </div>
-                              {warmupTasks.length > 0 ? (
-                                <Select value={formData.warmupId} onValueChange={(v) => setFormData({...formData, warmupId: v})}>
-                                  <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-xl text-[10px] font-black uppercase">
-                                    <SelectValue placeholder="SELECCIONAR TAREA..." />
-                                  </SelectTrigger>
-                                  <SelectContent className="bg-[#0a0f18] border-primary/20">
-                                    {warmupTasks.map((t: any) => (
-                                      <SelectItem key={t.id} value={t.id.toString()} className="text-[10px] font-black uppercase">{t.metadata?.title || `Tarea_${t.id.toString().slice(-4)}`}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              ) : (
-                                <Link href={resolveSandboxBoardHref("promo")} className="flex items-center justify-between p-4 bg-orange-500/5 border border-dashed border-orange-500/20 rounded-xl group hover:border-orange-500/40 transition-[background-color,border-color,color,opacity,transform]">
-                                  <span className="text-[9px] font-bold text-orange-500/40 uppercase tracking-widest">No hay tareas Warmup</span>
-                                  <Pencil className="h-3 w-3 text-orange-500/40 group-hover:text-orange-500" />
-                                </Link>
-                              )}
-                            </div>
-
-                            {/* BLOQUE 2: PARTE PRINCIPAL */}
-                            <div className="space-y-4">
-                              <div className="flex items-center gap-3">
-                                <Dumbbell className="h-4 w-4 text-amber-500" />
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-white">2. Parte Principal (Main)</Label>
-                              </div>
-                              {mainTasks.length > 0 ? (
-                                <Select value={formData.mainId} onValueChange={(v) => setFormData({...formData, mainId: v})}>
-                                  <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-xl text-[10px] font-black uppercase">
-                                    <SelectValue placeholder="SELECCIONAR TAREA..." />
-                                  </SelectTrigger>
-                                  <SelectContent className="bg-[#0a0f18] border-primary/20">
-                                    {mainTasks.map((t: any) => (
-                                      <SelectItem key={t.id} value={t.id.toString()} className="text-[10px] font-black uppercase">{t.metadata?.title || `Tarea_${t.id.toString().slice(-4)}`}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              ) : (
-                                <Link href={resolveSandboxBoardHref("promo")} className="flex items-center justify-between p-4 bg-amber-500/5 border border-dashed border-amber-500/20 rounded-xl group hover:border-amber-500/40 transition-[background-color,border-color,color,opacity,transform]">
-                                  <span className="text-[9px] font-bold text-amber-500/40 uppercase tracking-widest">No hay tareas Main</span>
-                                  <Pencil className="h-3 w-3 text-amber-500/40 group-hover:text-amber-500" />
-                                </Link>
-                              )}
-                            </div>
-
-                            {/* BLOQUE 3: VUELTA A LA CALMA */}
-                            <div className="space-y-4">
-                              <div className="flex items-center gap-3">
-                                <Wind className="h-4 w-4 text-blue-400" />
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-white">3. Vuelta a la Calma (Cool)</Label>
-                              </div>
-                              {cooldownTasks.length > 0 ? (
-                                <Select value={formData.cooldownId} onValueChange={(v) => setFormData({...formData, cooldownId: v})}>
-                                  <SelectTrigger className="h-12 bg-white/5 border-primary/20 rounded-xl text-[10px] font-black uppercase">
-                                    <SelectValue placeholder="SELECCIONAR TAREA..." />
-                                  </SelectTrigger>
-                                  <SelectContent className="bg-[#0a0f18] border-primary/20">
-                                    {cooldownTasks.map((t: any) => (
-                                      <SelectItem key={t.id} value={t.id.toString()} className="text-[10px] font-black uppercase">{t.metadata?.title || `Tarea_${t.id.toString().slice(-4)}`}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              ) : (
-                                <Link href={resolveSandboxBoardHref("promo")} className="flex items-center justify-between p-4 bg-blue-500/5 border border-dashed border-blue-500/20 rounded-xl group hover:border-blue-500/40 transition-[background-color,border-color,color,opacity,transform]">
-                                  <span className="text-[9px] font-bold text-blue-500/40 uppercase tracking-widest">No hay tareas Cool</span>
-                                  <Pencil className="h-3 w-3 text-blue-500/40 group-hover:text-blue-500" />
-                                </Link>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="p-6 bg-primary/5 border border-primary/20 rounded-3xl space-y-3">
+                      <div className="space-y-6">
+                        <div className="space-y-3">
                           <div className="flex items-center gap-2">
-                            <ShieldCheck className="h-3 w-3 text-primary" />
-                            <span className="text-[9px] font-black uppercase text-primary tracking-widest italic">Aviso de Composición</span>
+                            <Flame className="h-4 w-4 text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.35)]" />
+                            <Label className="text-[9px] font-black uppercase tracking-widest text-white">1. Activación</Label>
                           </div>
-                          <p className="text-[9px] text-primary/40 leading-relaxed font-bold uppercase italic">
-                            Vincule al menos una tarea para activar el protocolo de sesión. Las tareas no asignadas aparecerán como "PENDIENTES" en la agenda.
-                          </p>
+                          {warmupTasks.length > 0 ? (
+                            <Select value={formData.warmupId} onValueChange={(v) => setFormData({ ...formData, warmupId: v })}>
+                              <SelectTrigger className={selectTriggerHub}>
+                                <SelectValue placeholder="Seleccionar tarea…" />
+                              </SelectTrigger>
+                              <SelectContent className={selectContentHub}>
+                                {warmupTasks.map((t) => (
+                                  <SelectItem key={String(t.id)} value={String(t.id)} className="text-[10px] font-black uppercase rounded-none">
+                                    {(t.metadata as { title?: string } | undefined)?.title || `Tarea_${String(t.id).slice(-4)}`}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <Link
+                              href={resolveSandboxBoardHref("promo")}
+                              className="flex items-center justify-between p-3 rounded-none border border-dashed border-orange-400/25 bg-orange-500/5 hover:border-orange-400/45 transition-colors"
+                            >
+                              <span className="text-[9px] font-bold text-orange-300/70 uppercase tracking-widest">Sin tareas warmup</span>
+                              <Pencil className="h-3 w-3 text-orange-400/60" />
+                            </Link>
+                          )}
                         </div>
-                      </form>
 
-                      <div className="p-8 bg-black/60 border-t border-white/5 flex gap-4">
-                        <SheetClose asChild>
-                          <Button variant="ghost" className="flex-1 h-16 border border-primary/20 text-primary/60 font-black uppercase text-[11px] tracking-widest rounded-2xl">CANCELAR</Button>
-                        </SheetClose>
-                        <Button onClick={handleCreateSession} className="flex-[2] h-16 bg-primary text-black font-black uppercase text-[11px] tracking-[0.2em] rounded-2xl blue-glow hover:scale-[1.02] transition-[background-color,border-color,color,opacity,transform]">ENSAMBLAR_PLAN</Button>
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <Dumbbell className="h-4 w-4 text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.35)]" />
+                            <Label className="text-[9px] font-black uppercase tracking-widest text-white">2. Parte principal</Label>
+                          </div>
+                          {mainTasks.length > 0 ? (
+                            <Select value={formData.mainId} onValueChange={(v) => setFormData({ ...formData, mainId: v })}>
+                              <SelectTrigger className={selectTriggerHub}>
+                                <SelectValue placeholder="Seleccionar tarea…" />
+                              </SelectTrigger>
+                              <SelectContent className={selectContentHub}>
+                                {mainTasks.map((t) => (
+                                  <SelectItem key={String(t.id)} value={String(t.id)} className="text-[10px] font-black uppercase rounded-none">
+                                    {(t.metadata as { title?: string } | undefined)?.title || `Tarea_${String(t.id).slice(-4)}`}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <Link
+                              href={resolveSandboxBoardHref("promo")}
+                              className="flex items-center justify-between p-3 rounded-none border border-dashed border-amber-400/25 bg-amber-500/5 hover:border-amber-400/45 transition-colors"
+                            >
+                              <span className="text-[9px] font-bold text-amber-300/70 uppercase tracking-widest">Sin tareas main</span>
+                              <Pencil className="h-3 w-3 text-amber-400/60" />
+                            </Link>
+                          )}
+                        </div>
+
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <Wind className="h-4 w-4 text-sky-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.35)]" />
+                            <Label className="text-[9px] font-black uppercase tracking-widest text-white">3. Vuelta a la calma</Label>
+                          </div>
+                          {cooldownTasks.length > 0 ? (
+                            <Select value={formData.cooldownId} onValueChange={(v) => setFormData({ ...formData, cooldownId: v })}>
+                              <SelectTrigger className={selectTriggerHub}>
+                                <SelectValue placeholder="Seleccionar tarea…" />
+                              </SelectTrigger>
+                              <SelectContent className={selectContentHub}>
+                                {cooldownTasks.map((t) => (
+                                  <SelectItem key={String(t.id)} value={String(t.id)} className="text-[10px] font-black uppercase rounded-none">
+                                    {(t.metadata as { title?: string } | undefined)?.title || `Tarea_${String(t.id).slice(-4)}`}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <Link
+                              href={resolveSandboxBoardHref("promo")}
+                              className="flex items-center justify-between p-3 rounded-none border border-dashed border-sky-400/25 bg-sky-500/5 hover:border-sky-400/45 transition-colors"
+                            >
+                              <span className="text-[9px] font-bold text-sky-300/70 uppercase tracking-widest">Sin tareas cool</span>
+                              <Pencil className="h-3 w-3 text-sky-400/60" />
+                            </Link>
+                          )}
+                        </div>
                       </div>
-                    </SheetContent>
-                 </Sheet>
-               )}
+
+                      <div className="p-4 rounded-none border border-cyan-400/20 bg-cyan-500/5 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <ShieldCheck className="h-3.5 w-3.5 text-cyan-400" />
+                          <span className="text-[9px] font-black uppercase text-cyan-200/80 tracking-widest">Composición</span>
+                        </div>
+                        <p className="text-[9px] text-slate-500 leading-relaxed font-bold uppercase">
+                          Las tareas no asignadas aparecerán como pendientes en la tarjeta de sesión.
+                        </p>
+                      </div>
+                    </form>
+
+                    <div className="p-6 border-t border-white/10 bg-slate-950/50 flex gap-3">
+                      <SheetClose asChild>
+                        <Button
+                          variant="ghost"
+                          className="flex-1 h-12 rounded-none border border-white/10 text-cyan-200/70 font-black uppercase text-[10px] tracking-widest hover:bg-white/5"
+                        >
+                          Cancelar
+                        </Button>
+                      </SheetClose>
+                      <Button
+                        type="button"
+                        onClick={handleCreateSession}
+                        className="flex-[2] h-12 rounded-none bg-cyan-500 text-black font-black uppercase text-[10px] tracking-widest border-0 shadow-[0_0_28px_rgba(6,182,212,0.55)] hover:bg-cyan-400"
+                      >
+                        Ensamblar plan
+                      </Button>
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              )}
             </div>
           );
         })}
       </div>
 
-      <div className="mt-16 p-12 bg-black/40 border-2 border-primary/20 rounded-[3rem] relative overflow-hidden group print:hidden">
-         <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
-         <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-[background-color,border-color,color,opacity,transform]"><CalendarDays className="h-48 w-48 text-primary" /></div>
-         
-         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-12 items-center">
-            <div className="space-y-6">
-               <div className="flex items-center gap-3">
-                  <ShieldCheck className="h-6 w-6 text-primary" />
-                  <span className="text-[11px] font-black uppercase tracking-[0.5em] text-primary">Upgrade_To_Elite_Methodology</span>
-               </div>
-               <h2 className="text-4xl font-headline font-black text-white italic tracking-tighter uppercase leading-tight">
-                  PLANIFICACIÓN SIN LÍMITES <br />
-                  <span className="text-primary">PARA TU CLUB</span>
-               </h2>
-               <p className="text-white/40 font-bold uppercase text-[11px] tracking-[0.3em] leading-loose max-w-2xl">
-                  Accede al Macrociclo Anual, control de asistencia en tiempo real, histórico de progresión de atletas y sincronización multiplataforma. Deja atrás los slots locales y profesionaliza tu cantera.
-               </p>
+      <HubPanel>
+        <SectionBar title="Profesionalización del club" right={<Zap className={iconCyan} />} />
+        <div className="p-5 sm:p-6 relative overflow-hidden print:hidden">
+          <div className="absolute inset-0 bg-grid-pattern opacity-[0.06] pointer-events-none" />
+          <div className="absolute top-2 right-2 opacity-[0.06] pointer-events-none">
+            <CalendarDays className="h-32 w-32 text-cyan-400" />
+          </div>
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-6 items-center">
+            <div className="space-y-3">
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-300/75">Macrociclo y metodología</p>
+              <h2 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight leading-tight">
+                Planificación sin límites <span className="text-cyan-300 drop-shadow-[0_0_16px_rgba(34,211,238,0.45)]">para tu club</span>
+              </h2>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-relaxed max-w-xl">
+                Histórico, asistencia y sincronización multiplataforma fuera del modo promo sandbox.
+              </p>
             </div>
-            <Button className="h-20 bg-primary text-black font-black uppercase text-xs tracking-[0.3em] rounded-3xl blue-glow hover:scale-[1.02] transition-[background-color,border-color,color,opacity,transform] border-none" asChild>
-               <Link href="/login">PASAR A MODO PRO <Zap className="h-5 w-5 ml-3" /></Link>
+            <Button
+              className="h-12 px-8 rounded-none bg-cyan-500 text-black font-black uppercase text-[10px] tracking-widest border-0 shadow-[0_0_28px_rgba(6,182,212,0.55)] hover:bg-cyan-400 shrink-0"
+              asChild
+            >
+              <Link href="/login">
+                Modo pro
+                <Zap className="h-4 w-4 ml-2" />
+              </Link>
             </Button>
-         </div>
-      </div>
+          </div>
+        </div>
+      </HubPanel>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8 print:hidden">
-         <div className="p-8 glass-panel border-white/5 rounded-[2.5rem] flex items-center gap-6">
-            <Smartphone className="h-10 w-10 text-primary/40" />
-            <div>
-               <p className="text-xs font-black text-white uppercase italic tracking-widest">Sincronización Watch</p>
-               <p className="text-[9px] font-bold text-white/20 uppercase tracking-widest mt-1">El modo promo permite cronómetro y marcador en el reloj.</p>
-            </div>
-         </div>
-         <div className="p-8 bg-white/5 border border-dashed border-white/10 rounded-[2.5rem] flex items-center justify-center group overflow-hidden">
-            <Megaphone className="h-5 w-5 text-white/10 mr-4 group-hover:text-primary transition-colors" />
-            <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.5em]">Google_Ad_Slot_Leaderboard_Sessions</span>
-         </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:hidden">
+        <HubPanel>
+          <SectionBar title="Watch link" right={<Smartphone className={cn(iconCyan, "opacity-80")} />} />
+          <div className="p-4 sm:p-5">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
+              En promo puedes usar cronómetro y marcador en el reloj cuando esté disponible.
+            </p>
+          </div>
+        </HubPanel>
+        <PromoAdsPanel placement="sandbox_sessions_footer_horizontal" sectionTitle="Espacio publicitario" />
       </div>
     </div>
   );
 }
 
-function SessionPart({ label, status, active }: { label: string, status: string, active?: boolean }) {
+function SessionPart({ label, status, active }: { label: string; status: string; active?: boolean }) {
   return (
-    <div className={cn(
-      "flex items-center justify-between p-4 bg-black/40 border rounded-2xl group transition-[background-color,border-color,color,opacity,transform] print:bg-white print:border-black/10",
-      active ? "border-white/10 hover:border-primary/20" : "border-dashed border-white/5 opacity-40"
-    )}>
-       <div className="flex flex-col">
-          <span className="text-[9px] font-black text-white/40 uppercase tracking-widest print:text-black/40">{label}</span>
-          <span className={cn(
-            "text-[10px] font-black uppercase italic mt-0.5 print:text-black",
-            active ? "text-white" : "text-white/20"
-          )}>{status}</span>
-       </div>
-       {active ? (
-         <CheckCircle2 className="h-4 w-4 text-emerald-500/40 group-hover:text-emerald-500 transition-colors print:text-emerald-600" />
-       ) : (
-         <Lock className="h-4 w-4 text-white/10" />
-       )}
+    <div
+      className={cn(
+        "flex items-center justify-between p-3 rounded-none border bg-slate-950/40 backdrop-blur-md transition-colors print:bg-white print:border-black/10",
+        active ? "border-white/10 hover:border-cyan-400/25" : "border-dashed border-white/10 opacity-50",
+      )}
+    >
+      <div className="flex flex-col min-w-0">
+        <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest print:text-black/45">{label}</span>
+        <span className={cn("text-[10px] font-black uppercase mt-0.5 truncate print:text-black", active ? "text-white" : "text-slate-600")}>
+          {status}
+        </span>
+      </div>
+      {active ? (
+        <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.45)] print:text-emerald-600" />
+      ) : (
+        <Clock className="h-4 w-4 shrink-0 text-slate-600" />
+      )}
     </div>
   );
 }
