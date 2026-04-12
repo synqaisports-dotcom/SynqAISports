@@ -1,4 +1,4 @@
-# Motor de sincronización (Fase 4)
+# Motor de sincronización (Fase 4) e ingest operativo (Fase 6)
 
 ## Flujo
 
@@ -28,6 +28,6 @@
 |----------|-----|
 | `NEXT_PUBLIC_OUTBOX_SYNC_ENDPOINT` | Override del endpoint (default `/api/sync/outbox`) |
 
-## Próximo paso (fuera de esta fase)
+## Fase 6 (roadmap)
 
-Mapear jobs con sesión Supabase a tablas operativas (`operativa_mobile_incidents`, etc.) sin duplicar ingestas anónimas.
+Materializar en tablas operativas (**Bearer / club**) lo que hoy solo queda en **`sandbox_device_snapshots`**. Criterios y alcance: **`docs/DELIVERABLES_ROADMAP.md`** (Fase 6).
