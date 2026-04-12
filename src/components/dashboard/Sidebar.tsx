@@ -210,7 +210,9 @@ export function DashboardSidebar() {
   if (pathname === "/dashboard/coach/onboarding") return null;
 
   const isSuperAdmin = profile?.role === "superadmin";
-  const isFree = profile?.plan === "free" || profile?.role === "promo_coach";
+  /** El rol superadmin nunca se trata como “plan free” en navegación (evita sidebar vacío en /admin-global). */
+  const isFree =
+    !isSuperAdmin && (profile?.plan === "free" || profile?.role === "promo_coach");
   const isCollapsed = state === "collapsed";
 
   const handleLogout = () => {
