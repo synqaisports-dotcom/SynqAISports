@@ -38,6 +38,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { TacticalField, FieldType } from "@/components/board/TacticalField";
 import { BoardToolbar, DrawingTool } from "@/components/board/BoardToolbar";
 import { synqSync } from "@/lib/sync-service";
+import { upsertDocument } from "@/lib/local-db/database-service";
 import { 
   Select, 
   SelectContent, 
@@ -1199,6 +1200,7 @@ function PromoBoardContent() {
     };
     vault.exercises = [newExercise, ...(vault.exercises || [])];
     localStorage.setItem("synq_promo_vault", JSON.stringify(vault));
+    void upsertDocument("sandbox-coach", "vault", "promo_vault", vault);
     setVault(vault);
     toast({ title: "SINCRO_LOCAL", description: `Ejercicio blindado en slot ${block.toUpperCase()}.` });
     setIsSaveSheetOpen(false);

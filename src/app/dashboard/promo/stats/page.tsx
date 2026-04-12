@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { synqSync } from "@/lib/sync-service";
+import { getDocumentJson } from "@/lib/local-db/database-service";
 import {
   HubPanel,
   SectionBar,
@@ -53,21 +54,27 @@ export default function PromoStatsPage() {
   const [coachXP, setCoachXP] = useState(0);
 
   useEffect(() => {
-    let saved: PromoVault = { exercises: [], sessions: [], matches: [] };
-    try {
-      saved = JSON.parse(localStorage.getItem("synq_promo_vault") || "{}") as PromoVault;
-    } catch {
-      /* noop */
-    }
-    const exercises = Array.isArray(saved.exercises) ? saved.exercises : [];
-    const matches = Array.isArray(saved.matches) ? saved.matches : [];
-    setVault({ ...saved, exercises, sessions: Array.isArray(saved.sessions) ? saved.sessions : [], matches });
-    setIsOnline(typeof navigator !== "undefined" && navigator.onLine);
+    void (async () => {
+      let saved: PromoVault = { exercises: [], sessions: [], matches: [] };
+      try {
+        const fromDb = await getDocumentJson<PromoVault | null>("sandbox-coach", "vault", "promo_vault", null);
+        saved =
+          fromDb ?? (JSON.parse(localStorage.getItem("synq_promo_vault") || "{}") as PromoVault);
+      } catch {
+        /* noop */
+      }
+      const exercises = Array.isArray(saved.exercises) ? saved.exercises : [];
+      const matches = Array.isArray(saved.matches) ? saved.matches : [];
+      setVault({ ...saved, exercises, sessions: Array.isArray(saved.sessions) ? saved.sessions : [], matches });
+      setIsOnline(typeof navigator !== "undefined" && navigator.onLine);
 
-    const exercisesCount = exercises.length;
-    const matchesCount = matches.length;
-    setCoachXP(exercisesCount * 50 + matchesCount * 100);
+      const exercisesCount = exercises.length;
+      const matchesCount = matches.length;
+      setCoachXP(exercisesCount * 50 + matchesCount * 100);
+    })();
+  }, []);
 
+  useEffect(() => {
     const handleOnlineStatus = () => {
       setIsOnline(navigator.onLine);
       if (navigator.onLine) {

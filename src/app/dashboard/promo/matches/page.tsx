@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { getDocumentJson, upsertDocument } from "@/lib/local-db/database-service";
 import {
   HubPanel,
   SectionBar,
@@ -64,16 +65,21 @@ export default function PromoMatchesPage() {
   });
 
   useEffect(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem("synq_promo_vault") || "{}") as PromoVault;
-      setVault({
-        exercises: Array.isArray(saved.exercises) ? saved.exercises : [],
-        sessions: Array.isArray(saved.sessions) ? saved.sessions : [],
-        matches: Array.isArray(saved.matches) ? saved.matches : [],
-      });
-    } catch {
-      setVault({ exercises: [], sessions: [], matches: [] });
-    }
+    void (async () => {
+      try {
+        const fromDb = await getDocumentJson<PromoVault | null>("sandbox-coach", "vault", "promo_vault", null);
+        const saved =
+          fromDb ??
+          (JSON.parse(localStorage.getItem("synq_promo_vault") || "{}") as PromoVault);
+        setVault({
+          exercises: Array.isArray(saved.exercises) ? saved.exercises : [],
+          sessions: Array.isArray(saved.sessions) ? saved.sessions : [],
+          matches: Array.isArray(saved.matches) ? saved.matches : [],
+        });
+      } catch {
+        setVault({ exercises: [], sessions: [], matches: [] });
+      }
+    })();
   }, []);
 
   const matches = Array.isArray(vault.matches) ? vault.matches : [];
@@ -140,7 +146,7 @@ export default function PromoMatchesPage() {
 
     const nextVault = { ...vault, matches: nextMatches };
     setVault(nextVault);
-    localStorage.setItem("synq_promo_vault", JSON.stringify(nextVault));
+    void upsertDocument("sandbox-coach", "vault", "promo_vault", nextVault);
     setIsSheetOpen(false);
     setEditingMatchId(null);
     toast({
@@ -152,7 +158,7 @@ export default function PromoMatchesPage() {
   const handleDeleteMatch = (id: number) => {
     const nextVault = { ...vault, matches: matches.filter((m) => m.id !== id) };
     setVault(nextVault);
-    localStorage.setItem("synq_promo_vault", JSON.stringify(nextVault));
+    void upsertDocument("sandbox-coach", "vault", "promo_vault", nextVault);
     toast({ title: "Slot liberado", description: "Partido eliminado del historial local." });
   };
 

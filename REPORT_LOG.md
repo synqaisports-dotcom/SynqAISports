@@ -29,4 +29,38 @@
 
 ### Bloqueos técnicos
 
-- Ninguno para Fase 1. **SQLite en navegador** (Fases 3–4) requerirá elección concreta (sql.js, wa-sqlite, Capacitor SQLite, etc.) y no se ha implementado en este bloque.
+- Ninguno para Fase 1.
+
+---
+
+## 2026-04-11 — Bloque: Fase 3–4 (SQLite + outbox + API)
+
+### Tareas completadas (roadmap)
+
+- **Fase 3** marcada **En proceso** en `docs/DELIVERABLES_ROADMAP.md`; **Fase 4** también en proceso (outbox + endpoint).
+- Dependencia **`sql.js`** + **`public/sql-wasm.wasm`**; `next.config.ts` con `webpack.resolve.fallback` (`fs`, `path`, `crypto`) para bundle cliente.
+- Esquema: `src/lib/local-db/schema-sql.ts`; motor `sqlite-engine.ts`; servicio `database-service.ts` (`upsertDocument`, `getDocumentJson`, `insertMatchEvent`, `insertIncident`); outbox `outbox-sync.ts` + `LocalDataBootstrap` en `src/app/layout.tsx`.
+- Migración one-shot LS→SQLite: `migrateLegacyPromoLocalStorageOnce` (flag `synq_sqlite_migrated_from_ls_v1`).
+- API **`POST /api/sync/outbox`** → tabla **`sandbox_device_snapshots`** (migración SQL + tipos en `supabase.ts` + política insert `anon` para preview sin service role).
+- **Sandbox promo** escribe/lee vault y team vía `database-service` en: `team`, `matches`, `tasks`, `sessions`, `stats`, `board/match` (guardar marcador), `board/promo` (guardar ejercicio). Mantiene `synq_promo_*` en LS para compatibilidad con pizarra y otros listeners.
+- **Tutor:** `upsertDocument("tutor", "session", "current", { email })` en login/onboarding (no se suben contraseñas al outbox).
+- **Continuidad:** `insertIncident("continuity", ...)` al pulsar incidencia (además de `synqSync` y API club si aplica).
+
+### Archivos nuevos / tocados (principal)
+
+- Nuevos: `src/lib/local-db/*`, `src/app/api/sync/outbox/route.ts`, `src/components/local-data/LocalDataBootstrap.tsx`, `supabase/migrations/20260411180000_sandbox_device_snapshots.sql`, `public/sql-wasm.wasm`.
+- Modificados: `package.json`, `next.config.ts`, `src/app/layout.tsx`, `src/lib/supabase.ts`, páginas promo y board citadas arriba, `mobile-continuity`, `tutor` login/onboarding, `docs/DELIVERABLES_ROADMAP.md`.
+
+### GUÍA DE TEST
+
+1. **Aplicar migración** en Supabase: `sandbox_device_snapshots` (producción/preview según entorno).
+2. Abrir `/sandbox/app/team`, editar y guardar: en DevTools → Application → Local Storage debe seguir existiendo `synq_promo_team`; en la misma pestaña, clave `synq_sqlite_db_v1` (array JSON) debe crecer tras guardar si WASM carga.
+3. Red: al estar online, Network debe mostrar `POST /api/sync/outbox` tras guardados (si Supabase configurado). Respuesta `ok: true` y filas nuevas en `sandbox_device_snapshots`.
+4. Offline: desconectar red, guardar partido en promo matches; reconectar; debe dispararse flush y vaciar cola (o `synq_outbox_fallback_queue` si WASM no disponible).
+5. `npm run build` debe completar (verificado con fallback webpack).
+
+### Bloqueos / deuda
+
+- **`tsc --noEmit`** sigue fallando por errores **previos** en torneos (`qrcode` types, registration page); el proyecto usa `ignoreBuildErrors` en Next.
+- Outbox hoy **ingesta** en `sandbox_device_snapshots` (telemetría/backup); no reemplaza aún inserciones en `operativa_mobile_incidents` sin Bearer de club.
+- Credenciales Tutor **solo** en `localStorage`; no se replican a SQLite por política de seguridad en este paso (solo sesión email en documento `session/current` si hay DB).

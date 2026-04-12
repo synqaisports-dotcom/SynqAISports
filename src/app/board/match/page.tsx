@@ -32,6 +32,7 @@ import { PlayerChip } from "@/components/board/PlayerChip";
 import { FORMATIONS_DATA } from "@/lib/formations";
 import { useAuth } from "@/lib/auth-context";
 import { synqSync } from "@/lib/sync-service";
+import { upsertDocument } from "@/lib/local-db/database-service";
 import { 
   Select, 
   SelectContent, 
@@ -809,7 +810,9 @@ function MatchBoardInner() {
       return;
     }
 
-    localStorage.setItem("synq_promo_vault", JSON.stringify({ ...vault, matches: nextMatches }));
+    const nextVault = { ...vault, matches: nextMatches };
+    localStorage.setItem("synq_promo_vault", JSON.stringify(nextVault));
+    void upsertDocument("sandbox-coach", "vault", "promo_vault", nextVault);
     toast({ title: "PARTIDO_SINCRO_EXITOSA", description: "Marcador guardado en el partido seleccionado." });
   };
 

@@ -12,6 +12,8 @@ Clasificación operativa para separar **plataforma web** y **ecosistema nativo**
 
 Implementación: `src/lib/ads-policy.ts`, hook `src/hooks/use-ads-allowed.ts`, componente `PromoAdsPanel` en `src/components/shared/command-hub-ui.tsx`.
 
+**Datos locales (Fase 3):** SQLite en navegador vía `sql.js` (`src/lib/local-db/`), outbox → `POST /api/sync/outbox` → `sandbox_device_snapshots`. Ver `REPORT_LOG.md`.
+
 ---
 
 ## WEB-ONLY (sin AdSense web)

@@ -58,6 +58,7 @@ import {
   writeMatchScoreSync,
 } from "@/lib/match-score-sync";
 import { synqSync } from "@/lib/sync-service";
+import { insertIncident } from "@/lib/local-db/database-service";
 import { upsertOperativaAttendance } from "@/lib/operativa-sync";
 import { readPlayersLocal } from "@/lib/player-storage";
 import { ensureWatchPairingCode } from "@/lib/watch-pairing";
@@ -572,6 +573,16 @@ export default function MobileContinuityPage() {
   };
 
   const sendIncident = async (incident: Incident) => {
+    void insertIncident("continuity", "mobile_continuity", {
+      incidentId: incident.id,
+      incidentLabel: incident.label,
+      teamId: selectedTeamId || "team_unknown",
+      mcc: selectedMcc,
+      session: selectedSession,
+      score,
+      remainingSec,
+      cloudSyncEnabled,
+    });
     synqSync.trackEvent("session_save", {
       source: "mobile_continuity",
       kind: "incident",

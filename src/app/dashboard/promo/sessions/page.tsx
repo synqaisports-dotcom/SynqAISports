@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { getDocumentJson, upsertDocument } from "@/lib/local-db/database-service";
 import {
   Sheet,
   SheetContent,
@@ -83,12 +84,22 @@ export default function PromoSessionsPage() {
   });
 
   useEffect(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": [], "sessions": []}');
-      setVault(saved);
-    } catch {
-      setVault({ exercises: [], sessions: [] });
-    }
+    void (async () => {
+      try {
+        const fromDb = await getDocumentJson<{ exercises?: unknown[]; sessions?: unknown[] } | null>(
+          "sandbox-coach",
+          "vault",
+          "promo_vault",
+          null,
+        );
+        const saved =
+          fromDb ??
+          JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": [], "sessions": []}');
+        setVault(saved);
+      } catch {
+        setVault({ exercises: [], sessions: [] });
+      }
+    })();
   }, []);
 
   const exercises = (vault.exercises || []) as Array<Record<string, unknown>>;
@@ -100,7 +111,7 @@ export default function PromoSessionsPage() {
   const handleDeleteSession = (id: number) => {
     const nextVault = { ...vault, sessions: sessions.filter((s) => Number(s.id) !== id) };
     setVault(nextVault);
-    localStorage.setItem("synq_promo_vault", JSON.stringify(nextVault));
+    void upsertDocument("sandbox-coach", "vault", "promo_vault", nextVault);
     toast({ title: "Sesión liberada", description: "Plan eliminado de la agenda local." });
   };
 
@@ -122,7 +133,7 @@ export default function PromoSessionsPage() {
 
     const nextVault = { ...vault, sessions: [newSession, ...sessions] };
     setVault(nextVault);
-    localStorage.setItem("synq_promo_vault", JSON.stringify(nextVault));
+    void upsertDocument("sandbox-coach", "vault", "promo_vault", nextVault);
     setIsSheetOpen(false);
     setFormData({ title: "", warmupId: "", mainId: "", cooldownId: "" });
     toast({ title: "Sesión planificada", description: "Plan añadido a tu agenda sandbox." });

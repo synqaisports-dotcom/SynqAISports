@@ -21,6 +21,7 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { getDocumentJson, upsertDocument } from "@/lib/local-db/database-service";
 import {
   HubPanel,
   SectionBar,
@@ -121,14 +122,24 @@ export default function PromoTasksPage() {
   const [vault, setVault] = useState<{ exercises: unknown[]; sessions: unknown[] }>({ exercises: [], sessions: [] });
 
   useEffect(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": [], "sessions": []}');
-      if (saved && Array.isArray(saved.exercises)) {
-        setVault(saved);
+    void (async () => {
+      try {
+        const fromDb = await getDocumentJson<{ exercises?: unknown[]; sessions?: unknown[] } | null>(
+          "sandbox-coach",
+          "vault",
+          "promo_vault",
+          null,
+        );
+        const saved =
+          fromDb ??
+          JSON.parse(localStorage.getItem("synq_promo_vault") || '{"exercises": [], "sessions": []}');
+        if (saved && Array.isArray(saved.exercises)) {
+          setVault(saved);
+        }
+      } catch (e) {
+        console.error("Vault Sync Error:", e);
       }
-    } catch (e) {
-      console.error("Vault Sync Error:", e);
-    }
+    })();
   }, []);
 
   const exercises = (vault.exercises || []) as Array<Record<string, unknown>>;
@@ -142,7 +153,7 @@ export default function PromoTasksPage() {
   const handleDelete = (id: number) => {
     const nextVault = { ...vault, exercises: exercises.filter((e) => Number(e.id) !== id) };
     setVault(nextVault);
-    localStorage.setItem("synq_promo_vault", JSON.stringify(nextVault));
+    void upsertDocument("sandbox-coach", "vault", "promo_vault", nextVault);
     toast({ title: "Slot liberado", description: "Ejercicio eliminado del almacén local." });
   };
 
