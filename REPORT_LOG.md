@@ -84,3 +84,16 @@
 2. Tras 12 fallos, el job debe desaparecer de `sync_outbox` y aparecer aviso en consola.
 3. Con éxito: `synq_outbox_metrics_v1` con `lastFlushOk: true`, `lastAccepted` > 0.
 4. `window.addEventListener('synq:outbox-metrics-updated', console.log)` y guardar en Sandbox: debe dispararse al flush.
+
+---
+
+## 2026-04-11 — Bloque: Cáscara Android (Capacitor)
+
+### Entregado
+
+- Capacitor **7** (`@capacitor/core`, `cli`, `android`, `splash-screen`).
+- **`capacitor.config.ts`**: `server.url` → `https://synqai.net` o `CAPACITOR_SERVER_URL`; `cleartext` si `http://`.
+- Carpeta **`android/`** (`npx cap add android`).
+- **`www/index.html`** placeholder; **`assets/icon.png`** + **`assets/splash.png`** (cyan `#22d3ee` / fondo `#050812`); **`npm run cap:assets`**.
+- **`AndroidManifest`**: `usesCleartextTraffic` para dev HTTP.
+- **`docs/CAPACITOR_ANDROID.md`**; scripts `cap:assets`, `cap:sync`, `cap:open`.

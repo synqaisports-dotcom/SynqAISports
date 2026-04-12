@@ -8,6 +8,7 @@ Plan maestro en cuatro fases. Los estados se actualizan en este documento confor
 | **2** | Documentación de arquitectura | Pendiente | Manuales técnicos: diagrama de datos, flujos auth, límites web vs nativo, convenciones de rutas; actualización de `docs/apps/*` alineada al plan. |
 | **3** | Infraestructura offline-first | **Completado** | SQLite en cliente (`sql.js` + `public/sql-wasm.wasm`); tablas `documents`, `match_events`, `incidents`, `sync_outbox`; `database-service` + migración lectura/escritura Sandbox promo; Tutor `session/current`; Continuidad `insertIncident` local. |
 | **4** | Motor de sincronización | **Completado** | Outbox con `last_attempt_at`; backoff exponencial por job; tope de reintentos y descarte; lotes de 50; flush periódico 30s + online/visibility; métricas en `localStorage` y evento `synq:outbox-metrics-updated`; fallback LS con espaciado de reintento. API `POST /api/sync/outbox` → `sandbox_device_snapshots`. **Pendiente roadmap:** ingest con Bearer a tablas operativas (sin duplicar). Ver `docs/OUTBOX_SYNC.md`. |
+| **5** | Cáscara Android (Capacitor) | **Completado** | Proyecto `android/`; `capacitor.config.ts` con `server.url` producción (`https://synqai.net`) o `CAPACITOR_SERVER_URL`; icono + splash Deep Night / Electric Cyan; `docs/CAPACITOR_ANDROID.md`. |
 
 ## Notas de gobernanza
 
@@ -21,3 +22,4 @@ Plan maestro en cuatro fases. Los estados se actualizan en este documento confor
 | 2026-04-11 | 1 | Completado: blindaje ads, shared UI, docs base. |
 | 2026-04-11 | 3 | Completado: SQLite local + promo migrado + bootstrap. |
 | 2026-04-11 | 4 | Completado: outbox backoff, métricas, intervalo flush, OUTBOX_SYNC.md. |
+| 2026-04-11 | 5 | Completado: Capacitor Android + assets + doc CAPACITOR_ANDROID. |
