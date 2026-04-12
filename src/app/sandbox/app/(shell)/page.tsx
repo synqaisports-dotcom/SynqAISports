@@ -1,15 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import Script from "next/script";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   BarChart3,
   CalendarDays,
   ClipboardList,
   Download,
-  Sparkles,
   Swords,
 } from "lucide-react";
 import {
@@ -26,9 +23,9 @@ import {
 } from "recharts";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { synqSync } from "@/lib/sync-service";
 import { useToast } from "@/hooks/use-toast";
 import { sandboxBoardMatchHref } from "@/lib/sandbox-routes";
+import { PromoAdsPanel } from "@/components/shared/command-hub-ui";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -61,9 +58,6 @@ type HomeMiniStats = {
   goalsFor: number;
   goalsAgainst: number;
 };
-
-const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT ?? "";
-const ADSENSE_SLOT_H = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_SLOT_HORIZONTAL ?? "";
 
 /** Sombra exterior cian sutil: paneles flotando sobre el campo */
 const PANEL_OUTER =
@@ -238,9 +232,6 @@ function AnalysisBarsChart({ exercises, starters }: { exercises: number; starter
   );
 }
 
-/** Vista estática en repo: `public/images/Captura.svg` (sustituye por tu `Captura.jpg` si quieres foto real). */
-const SANDBOX_BOARD_HERO_IMAGE = "/images/Captura.svg";
-
 function OperativeBoardPanel({ matchId }: { matchId: string }) {
   const { toast } = useToast();
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
@@ -254,27 +245,31 @@ function OperativeBoardPanel({ matchId }: { matchId: string }) {
     return () => window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
   }, []);
 
+  const iframeSrc = useMemo(() => {
+    return sandboxBoardMatchHref({
+      source: "sandbox",
+      embed: "1",
+      matchId: matchId || undefined,
+    });
+  }, [matchId]);
+
   return (
     <SurfaceCard className="relative flex flex-col min-h-[320px] xl:min-h-[420px] h-full xl:flex-1">
       <DigitalGrain />
       <SurfaceHeader
         title="PIZARRA OPERATIVA"
-        subtitle={matchId ? `Partido #${matchId} · abre la pizarra para operar` : "Vista previa · abre la pizarra en vivo"}
+        subtitle={matchId ? `Partido #${matchId} · instancia real` : "Selecciona un partido en Mis partidos"}
       />
       <div className="relative flex-1 flex flex-col border-t border-white/5 bg-[#020408] min-h-[240px] xl:min-h-0">
-        <div className="relative flex-1 w-full min-h-[240px] max-h-[min(52vh,560px)] xl:min-h-[320px] xl:max-h-none">
-          <Image
-            src={SANDBOX_BOARD_HERO_IMAGE}
-            alt="Pizarra táctica operativa — vista de referencia"
-            fill
-            className="object-contain object-center bg-[#020408]"
-            sizes="(max-width: 1280px) 100vw, 45vw"
-            priority
-          />
-        </div>
+        <iframe
+          title="Pizarra táctica operativa"
+          src={iframeSrc}
+          className="w-full flex-1 min-h-[220px] xl:min-h-0 border-0 bg-[#020408]"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-popups"
+        />
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 px-3 py-2 bg-slate-950/80">
           <p className="text-[8px] font-black uppercase tracking-[0.28em] text-white/45">
-            Vista estática · pizarra interactiva al abrir
+            Misma pizarra que /board/match · embed
           </p>
           <div className="flex flex-wrap items-center justify-end gap-2">
             <Button
@@ -339,122 +334,6 @@ function FloatingMetric({
           <p className="mt-2 font-technic text-3xl sm:text-4xl lg:text-5xl font-bold tabular-nums text-cyan-400 leading-none drop-shadow-[0_0_18px_rgba(34,211,238,0.85)]">
             {value}
           </p>
-        </div>
-      </div>
-    </SurfaceCard>
-  );
-}
-
-function SandboxHomeAdPanel() {
-  const adRef = useRef<HTMLDivElement | null>(null);
-  const refreshIntervalRef = useRef<number | null>(null);
-
-  const pushAd = () => {
-    if (!ADSENSE_CLIENT || !ADSENSE_SLOT_H) return;
-    const w = window as unknown as { adsbygoogle?: unknown[] };
-    if (!w.adsbygoogle) return;
-    try {
-      w.adsbygoogle.push({});
-      synqSync.trackEvent("ad_impression", {
-        app_slug: "sandbox-coach",
-        source: "sandbox",
-        placement: "sandbox_home_horizontal",
-        format: "horizontal",
-      });
-    } catch {
-      // noop
-    }
-  };
-
-  useEffect(() => {
-    if (!ADSENSE_CLIENT || !ADSENSE_SLOT_H) return;
-    if (!adRef.current) return;
-
-    let tries = 0;
-    const maxTries = 40;
-    const t = window.setInterval(() => {
-      tries += 1;
-      const w = window as unknown as { adsbygoogle?: unknown[] };
-      if (!w.adsbygoogle) {
-        if (tries >= maxTries) window.clearInterval(t);
-        return;
-      }
-      pushAd();
-      window.clearInterval(t);
-    }, 150);
-
-    refreshIntervalRef.current = window.setInterval(() => {
-      if (!adRef.current) return;
-      adRef.current.innerHTML = "";
-      const ins = document.createElement("ins");
-      ins.className = "adsbygoogle";
-      ins.style.display = "block";
-      ins.setAttribute("data-ad-client", ADSENSE_CLIENT);
-      ins.setAttribute("data-ad-slot", ADSENSE_SLOT_H);
-      ins.setAttribute("data-ad-format", "horizontal");
-      ins.setAttribute("data-full-width-responsive", "true");
-      adRef.current.appendChild(ins);
-      pushAd();
-    }, 25000);
-
-    return () => {
-      window.clearInterval(t);
-      if (refreshIntervalRef.current) window.clearInterval(refreshIntervalRef.current);
-    };
-  }, []);
-
-  const isConfigured = !!(ADSENSE_CLIENT && ADSENSE_SLOT_H);
-
-  return (
-    <SurfaceCard className="relative flex flex-col flex-1 min-h-0 h-full">
-      {isConfigured ? (
-        <Script
-          id="sandbox-home-adsense"
-          strategy="afterInteractive"
-          crossOrigin="anonymous"
-          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${encodeURIComponent(ADSENSE_CLIENT)}`}
-        />
-      ) : null}
-
-      <SurfaceHeader
-        title="MONETIZACIÓN"
-        subtitle={isConfigured ? "Panel activo" : "Slot demo · configura Adsense en .env"}
-        right={<Sparkles className="h-4 w-4 text-cyan-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]" />}
-      />
-
-      <div className="p-4 flex-1 flex flex-col min-h-[200px] xl:min-h-0">
-        <div
-          className={cn(
-            "flex-1 min-h-[180px] w-full overflow-hidden border border-white/10 bg-black/35",
-            !isConfigured && "border-dashed",
-          )}
-        >
-          {isConfigured ? (
-            <div
-              ref={adRef}
-              onClick={() =>
-                synqSync.trackEvent("ad_click", {
-                  app_slug: "sandbox-coach",
-                  source: "sandbox",
-                  placement: "sandbox_home_horizontal",
-                  format: "horizontal",
-                })
-              }
-            >
-              <ins
-                className="adsbygoogle"
-                style={{ display: "block" }}
-                data-ad-client={ADSENSE_CLIENT}
-                data-ad-slot={ADSENSE_SLOT_H}
-                data-ad-format="horizontal"
-                data-full-width-responsive="true"
-              />
-            </div>
-          ) : (
-            <div className="h-14 w-full flex items-center justify-center text-[9px] font-black uppercase tracking-[0.2em] text-cyan-200/70">
-              Slot demo · NEXT_PUBLIC_GOOGLE_ADSENSE_*
-            </div>
-          )}
         </div>
       </div>
     </SurfaceCard>
@@ -637,7 +516,9 @@ export default function SandboxAppHomePage() {
 
         <div className="xl:col-span-12 grid grid-cols-1 xl:grid-cols-12 gap-4 lg:gap-6 xl:items-stretch">
           <div className="xl:col-span-7 min-h-0 flex flex-col">
-            <SandboxHomeAdPanel />
+            <div className="flex flex-col flex-1 min-h-0 h-full [&>div]:flex-1 [&>div]:min-h-0 [&>div]:h-full">
+              <PromoAdsPanel placement="sandbox_home_horizontal" sectionTitle="MONETIZACIÓN" />
+            </div>
           </div>
           <div className="xl:col-span-5 min-h-0 flex flex-col">
             <OperativeBoardPanel matchId={boardMatchId} />

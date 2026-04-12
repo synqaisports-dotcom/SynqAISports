@@ -24,6 +24,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { FORMATIONS_DATA } from "@/lib/formations";
+import { getDocumentJson, upsertDocument } from "@/lib/local-db/database-service";
 import {
   HubPanel,
   SectionBar,
@@ -89,24 +90,34 @@ export default function PromoTeamPage() {
   const savedTeamRef = useRef<Record<string, unknown> | null>(null);
 
   useEffect(() => {
-    const saved = safeParseJson<Record<string, unknown> | null>(localStorage.getItem("synq_promo_team"), null);
-    if (saved) {
-      savedTeamRef.current = saved;
-      const savedType = coerceTeamType(saved.type);
-      setTeamType(savedType);
-      setTeamName(String(saved.name ?? ""));
-      setCountry(String(saved.country ?? ""));
-      setCity(String(saved.city ?? ""));
-      setCategory(String(saved.category ?? ""));
-      setStarters(normalizeFixedLength(saved.starters, POSITIONS[savedType].length));
-      setSubstitutes(normalizeFixedLength(saved.substitutes, 4));
-      const fk = formationKeysFor(savedType);
-      const savedForm = String(saved.formation ?? "").trim();
-      setFormationKey(fk.includes(savedForm) ? savedForm : defaultFormationFor(savedType));
-    } else {
-      setStarters(Array(POSITIONS[teamType].length).fill(""));
-    }
-    didHydrateRef.current = true;
+    void (async () => {
+      const fromDb = await getDocumentJson<Record<string, unknown> | null>(
+        "sandbox-coach",
+        "team",
+        "promo_team",
+        null,
+      );
+      const saved =
+        fromDb ??
+        safeParseJson<Record<string, unknown> | null>(localStorage.getItem("synq_promo_team"), null);
+      if (saved) {
+        savedTeamRef.current = saved;
+        const savedType = coerceTeamType(saved.type);
+        setTeamType(savedType);
+        setTeamName(String(saved.name ?? ""));
+        setCountry(String(saved.country ?? ""));
+        setCity(String(saved.city ?? ""));
+        setCategory(String(saved.category ?? ""));
+        setStarters(normalizeFixedLength(saved.starters, POSITIONS[savedType].length));
+        setSubstitutes(normalizeFixedLength(saved.substitutes, 4));
+        const fk = formationKeysFor(savedType);
+        const savedForm = String(saved.formation ?? "").trim();
+        setFormationKey(fk.includes(savedForm) ? savedForm : defaultFormationFor(savedType));
+      } else {
+        setStarters(Array(POSITIONS[teamType].length).fill(""));
+      }
+      didHydrateRef.current = true;
+    })();
   }, []);
 
   useEffect(() => {
@@ -144,13 +155,8 @@ export default function PromoTeamPage() {
         updatedAt: new Date().toISOString(),
       };
 
-      localStorage.setItem("synq_promo_team", JSON.stringify(teamData));
-
-      const vault = safeParseJson<Record<string, unknown>>(
-        localStorage.getItem("synq_promo_vault"),
-        { exercises: [], sessions: [], matches: [] },
-      );
-      localStorage.setItem("synq_promo_vault", JSON.stringify({ ...vault, team: teamData }));
+      savedTeamRef.current = teamData as Record<string, unknown>;
+      void upsertDocument("sandbox-coach", "team", "promo_team", teamData);
 
       setLoading(false);
       toast({

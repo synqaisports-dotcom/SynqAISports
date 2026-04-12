@@ -21,6 +21,7 @@ import {
   Info,
   Library,
   Smartphone,
+  Trophy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -57,6 +58,7 @@ const MODULE_ICONS: Record<ClubModuleId, typeof Building> = {
   board: Monitor,
   exercises: Dumbbell,
   planner: Activity,
+  tournaments: Trophy,
 };
 
 export default function AdminPermissionsPage() {

@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/lib/auth-context";
 import { I18nProvider } from "@/contexts/i18n-context";
+import { LocalDataBootstrap } from "@/components/local-data/LocalDataBootstrap";
 
 export const themeColor = '#04070c';
 export const viewport = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0';
@@ -58,6 +59,7 @@ export default async function RootLayout(props: {
       <body className="font-body antialiased selection:bg-accent/30 selection:text-primary">
         <AuthProvider>
           <I18nProvider>
+            <LocalDataBootstrap />
             {children}
             <Toaster />
           </I18nProvider>

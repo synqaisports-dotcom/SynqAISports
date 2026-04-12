@@ -2,6 +2,8 @@
 
 Cada archivo describe una **aplicación** del ecosistema SynqAI Sports: rutas, acceso, datos y puntos de integración según el código actual.
 
+**Arquitectura global (Fase 2):** [ARCHITECTURE_OVERVIEW.md](../ARCHITECTURE_OVERVIEW.md) · **i18n / 50 países:** [I18N_AND_GLOBAL.md](../I18N_AND_GLOBAL.md) · **Roadmap:** [DELIVERABLES_ROADMAP.md](../DELIVERABLES_ROADMAP.md).
+
 | App | Documento |
 |-----|-----------|
 | Store (galería) | [store.md](./store.md) |

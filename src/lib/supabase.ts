@@ -352,6 +352,29 @@ export interface Database {
         }>;
         Relationships: [];
       };
+      sandbox_device_snapshots: {
+        Row: DbRow<{
+          id: string;
+          device_id: string;
+          app_scope: string;
+          snapshot: Record<string, unknown>;
+          created_at: string;
+        }>;
+        Insert: DbInsert<{
+          id?: string;
+          device_id: string;
+          app_scope?: string;
+          snapshot: Record<string, unknown>;
+          created_at?: string;
+        }>;
+        Update: DbUpdate<{
+          device_id: string;
+          app_scope: string;
+          snapshot: Record<string, unknown>;
+          created_at: string;
+        }>;
+        Relationships: [];
+      };
       synq_roles: {
         Row: DbRow<{
           key: string;
@@ -689,6 +712,7 @@ export interface Database {
           score_guest: number;
           remaining_sec: number;
           source: string;
+          sync_key: string | null;
           created_at: string;
         }>;
         Insert: DbInsert<{
@@ -703,6 +727,7 @@ export interface Database {
           score_guest?: number;
           remaining_sec?: number;
           source?: string;
+          sync_key?: string | null;
         }>;
         Update: DbUpdate<{
           score_home: number;

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">SynqAI Sports</string>
+    <string name="title_activity_main">SynqAI Sports</string>
+    <string name="package_name">com.synqai.sports</string>
+    <string name="custom_url_scheme">com.synqai.sports</string>
+</resources>

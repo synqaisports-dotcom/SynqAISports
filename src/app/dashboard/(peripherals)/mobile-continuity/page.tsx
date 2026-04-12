@@ -58,6 +58,13 @@ import {
   writeMatchScoreSync,
 } from "@/lib/match-score-sync";
 import { synqSync } from "@/lib/sync-service";
+import { insertIncident } from "@/lib/local-db/database-service";
+import {
+  enqueueContinuityIncidentSync,
+  flushContinuityIncidentQueue,
+  promoteContinuityIncident,
+  removeContinuityIncidentFromQueue,
+} from "@/lib/continuity-incident-sync";
 import { upsertOperativaAttendance } from "@/lib/operativa-sync";
 import { readPlayersLocal } from "@/lib/player-storage";
 import { ensureWatchPairingCode } from "@/lib/watch-pairing";
@@ -572,6 +579,31 @@ export default function MobileContinuityPage() {
   };
 
   const sendIncident = async (incident: Incident) => {
+    const localIncidentId = await insertIncident("continuity", "mobile_continuity", {
+      incidentId: incident.id,
+      incidentLabel: incident.label,
+      teamId: selectedTeamId || "team_unknown",
+      mcc: selectedMcc,
+      session: selectedSession,
+      score,
+      remainingSec,
+      cloudSyncEnabled,
+    });
+    const syncKey = `continuity:${localIncidentId}`;
+
+    const pending = {
+      syncKey,
+      teamId: selectedTeamId || "team_unknown",
+      mcc: selectedMcc,
+      session: selectedSession,
+      incidentId: incident.id,
+      incidentLabel: incident.label,
+      score: { home: score.home, guest: score.guest },
+      remainingSec,
+      source: "mobile_continuity",
+    };
+    enqueueContinuityIncidentSync(pending);
+
     synqSync.trackEvent("session_save", {
       source: "mobile_continuity",
       kind: "incident",
@@ -586,25 +618,12 @@ export default function MobileContinuityPage() {
 
     if (cloudSyncEnabled && session?.access_token) {
       try {
-        await fetch("/api/operativa/incidents", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
-            teamId: selectedTeamId || "team_unknown",
-            mcc: selectedMcc,
-            session: selectedSession,
-            incidentId: incident.id,
-            incidentLabel: incident.label,
-            score,
-            remainingSec,
-            source: "mobile_continuity",
-          }),
-        });
+        const promoted = await promoteContinuityIncident(session.access_token, pending);
+        if (promoted.ok) {
+          removeContinuityIncidentFromQueue(syncKey);
+        }
       } catch {
-        // Si falla remoto, la cola offline ya lo retiene.
+        /* cola local synq_continuity_pending_incidents_v1 */
       }
     }
 
@@ -669,6 +688,21 @@ export default function MobileContinuityPage() {
     void fetchIncidentHistory();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.access_token, selectedTeamId, selectedMcc, selectedSession, historyAllClub]);
+
+  useEffect(() => {
+    if (!cloudSyncEnabled || !session?.access_token) return;
+    void flushContinuityIncidentQueue(session.access_token).then(() => void fetchIncidentHistory());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cloudSyncEnabled, session?.access_token]);
+
+  useEffect(() => {
+    if (!cloudSyncEnabled || !session?.access_token) return;
+    const onOnline = () => {
+      void flushContinuityIncidentQueue(session.access_token).then(() => void fetchIncidentHistory());
+    };
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+  }, [cloudSyncEnabled, session?.access_token]);
 
   const setPlayerAttendance = async (playerId: string, status: "present" | "absent") => {
     setAttendance((prev) => ({ ...prev, [playerId]: status }));
