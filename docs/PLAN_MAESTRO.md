@@ -14,6 +14,8 @@ Implementación: `src/lib/ads-policy.ts`, hook `src/hooks/use-ads-allowed.ts`, c
 
 **Datos locales (Fase 3–4):** SQLite en navegador vía `sql.js` (`src/lib/local-db/`), outbox con backoff y métricas → `POST /api/sync/outbox` → `sandbox_device_snapshots`. Ver `docs/OUTBOX_SYNC.md` y `REPORT_LOG.md`.
 
+**Fase 6 (plan):** promoción de jobs outbox a tablas operativas con **sesión club** (Bearer), sin sustituir el ingest anónimo de telemetría. Ver `docs/DELIVERABLES_ROADMAP.md`.
+
 ---
 
 ## WEB-ONLY (sin AdSense web)

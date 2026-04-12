@@ -87,6 +87,14 @@
 
 ---
 
+## 2026-04-12 — Roadmap: Fase 6 creada
+
+- **`docs/DELIVERABLES_ROADMAP.md`**: nueva **Fase 6 — Ingest operativo autenticado (outbox → club)** (Pendiente), criterios de aceptación e idempotencia.
+- **`docs/OUTBOX_SYNC.md`**: referencia a Fase 6; eliminado “próximo paso” suelto en favor del roadmap.
+- **`docs/PLAN_MAESTRO.md`**: nota breve Fase 6.
+
+---
+
 ## 2026-04-11 — Bloque: Cáscara Android (Capacitor)
 
 ### Entregado
