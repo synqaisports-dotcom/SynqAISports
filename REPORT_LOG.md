@@ -87,6 +87,16 @@
 
 ---
 
+## 2026-04-12 — Limpieza nav admin-global + torneos + deprecación superadmin/clubs
+
+- **Sidebar**: en rutas `/admin-global/*` el superadmin solo ve el bloque **Admin-global** (sin club, metodología, torneos ni terminales).
+- **Torneos**: nueva página **`/dashboard/tournaments/control`** (Mesa control); enlaces del sidebar ya válidos.
+- **Matriz**: módulo **`tournaments`** en `club-permissions` + prefijo `/dashboard/tournaments`; ítems Torneos con `moduleId: "tournaments"`; `MODULE_ICONS` en admin permisos.
+- **`/dashboard/superadmin/clubs`**: `redirect` → **`/admin-global/clubs`**.
+- Descripción **planner** en `CLUB_MODULE_DESCRIPTIONS` corregida (continuidad = periféricos).
+
+---
+
 ## 2026-04-12 — Fase 2 (docs) + Fase 6 (ingest continuidad)
 
 ### Fase 2

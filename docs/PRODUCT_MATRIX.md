@@ -28,5 +28,5 @@ Fuente de verdad para planificación **web + PWA + APK**. Exportable a Excel des
 
 ## Notas
 
-- **`/sandbox/*` (demo)** y **`/dashboard/superadmin/*`**: candidatos a redirección o fusión para reducir confusión operativa.
+- **`/dashboard/superadmin/clubs`**: redirige a **`/admin-global/clubs`**. **`/sandbox/*` (demo)**: candidato a unificar con portal Sandbox.
 - **Tutor**: flujo de auth propio hoy; alinear con Supabase Auth es trabajo P1 de plataforma, no cosmético.

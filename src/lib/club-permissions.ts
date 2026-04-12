@@ -15,6 +15,7 @@ export const CLUB_MODULE_IDS = [
   "board",
   "exercises",
   "planner",
+  "tournaments",
 ] as const;
 
 export type ClubModuleId = (typeof CLUB_MODULE_IDS)[number];
@@ -29,6 +30,7 @@ export const CLUB_MODULE_LABELS: Record<ClubModuleId, string> = {
   board: "Pizarras tácticas",
   exercises: "Biblioteca & ejercicios",
   planner: "Planner & operativa",
+  tournaments: "Torneos (no oficiales)",
 };
 
 /**
@@ -45,7 +47,8 @@ export const CLUB_MODULE_DESCRIPTIONS: Record<ClubModuleId, string> = {
   exercises:
     "/methodology/exercise-library, learning-items, /coach/library — Tareas maestras y biblioteca.",
   planner:
-    "/methodology/session-planner, calendar, warehouse, cycle-planner, mobile-continuity, sessions — Planificación y continuidad.",
+    "/methodology/session-planner, calendar, warehouse, cycle-planner, sessions — Planificación y operativa (sin continuidad; continuidad = periféricos).",
+  tournaments: "/dashboard/tournaments/* — Mesa control, listado, inscripciones, cuadros e ingresos.",
 };
 
 /**
@@ -67,7 +70,7 @@ export const CLUB_MODULE_UI_SECTIONS: {
     id: "methodology",
     title: "Metodología, pizarra y operativa",
     subtitle: "Biblioteca de ejercicios, planner neural, pizarras y flujo móvil.",
-    modules: ["peripherals", "exercises", "planner", "board"],
+    modules: ["peripherals", "exercises", "planner", "board", "tournaments"],
   },
 ];
 
@@ -110,6 +113,7 @@ export const CLUB_MATRIX_BYPASS_ROLES = ["superadmin", "club_admin"] as const;
  * Prefijos más largos primero (índice construido en runtime).
  */
 const ROUTE_MODULE_PREFIXES_RAW: { prefix: string; module: ClubModuleId }[] = [
+  { prefix: "/dashboard/tournaments", module: "tournaments" },
   { prefix: "/dashboard/methodology/exercise-library", module: "exercises" },
   { prefix: "/dashboard/methodology/session-planner", module: "planner" },
   { prefix: "/dashboard/methodology/cycle-planner", module: "planner" },

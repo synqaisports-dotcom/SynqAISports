@@ -133,9 +133,9 @@ const navItems: NavItem[] = [
   { title: "Neural Planner", href: "/dashboard/coach/planner", icon: Activity, category: "operational", moduleId: "planner" },
 
   // TORNEOS (fuera de competición normal)
-  { title: "Torneos", href: "/dashboard/tournaments/list", icon: BookOpen, category: "tournaments", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
-  { title: "Inscripciones", href: "/dashboard/tournaments/registration", icon: UserPlus, category: "tournaments", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
-  { title: "Mesa Control", href: "/dashboard/tournaments/control", icon: ShieldCheck, category: "tournaments", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"] },
+  { title: "Torneos", href: "/dashboard/tournaments/list", icon: BookOpen, category: "tournaments", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"], moduleId: "tournaments" },
+  { title: "Inscripciones", href: "/dashboard/tournaments/registration", icon: UserPlus, category: "tournaments", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"], moduleId: "tournaments" },
+  { title: "Mesa Control", href: "/dashboard/tournaments/control", icon: ShieldCheck, category: "tournaments", roles: ["superadmin", "club_admin", "academy_director", "methodology_director", "coach"], moduleId: "tournaments" },
   
   // TERMINALES_ACCESO - NODO SANDBOX (Categoría User)
   { title: "Sandbox", href: "/sandbox-portal?dest=/sandbox/app", icon: ShieldCheck, category: "user" },
@@ -224,8 +224,11 @@ export function DashboardSidebar() {
     }
   };
 
+  const isAdminGlobalShell = isSuperAdmin && pathname.startsWith("/admin-global");
+
   const filteredItems = useMemo(() => navItems.filter(item => {
-    if (isSuperAdmin) return true;
+    if (isAdminGlobalShell && item.category !== "global") return false;
+    if (isSuperAdmin && !isAdminGlobalShell) return true;
     if (item.roles && profile) {
       if (!item.roles.includes(profile.role)) return false;
     }
@@ -256,7 +259,7 @@ export function DashboardSidebar() {
       return false;
     }
     return true;
-  }), [isSuperAdmin, profile, isFree, matrixLoading, normalizedMatrix]);
+  }), [isSuperAdmin, isAdminGlobalShell, profile, isFree, matrixLoading, normalizedMatrix]);
 
   const groupedItems = useMemo(
     () => ({
@@ -369,7 +372,7 @@ export function DashboardSidebar() {
           </SidebarGroupWrapper>
         )}
 
-        {!isFree && (
+        {!isFree && groupedItems.methodology.length > 0 && (
           <SidebarGroupWrapper title={t("sidebar.group_methodology", "Metodología")} color="text-primary" isCollapsed={isCollapsed}>
             <GroupToggle category="methodology" label="Metodología" toneClass="border-cyan-500/20 text-cyan-200/90" />
             {openGroups.methodology && (
@@ -384,7 +387,7 @@ export function DashboardSidebar() {
           </SidebarGroupWrapper>
         )}
 
-        {!isFree && (
+        {!isFree && groupedItems.operational.length > 0 && (
           <SidebarGroupWrapper title={t("sidebar.group_dashboard", "Club")} color="text-primary" isCollapsed={isCollapsed}>
             <GroupToggle category="operational" label="Dashboard Club" toneClass="border-primary/20 text-primary/90" />
             {openGroups.operational && (
@@ -399,7 +402,7 @@ export function DashboardSidebar() {
           </SidebarGroupWrapper>
         )}
 
-        {!isFree && (
+        {!isFree && groupedItems.tournaments.length > 0 && (
           <SidebarGroupWrapper title="Torneos" color="text-blue-300/90" isCollapsed={isCollapsed}>
             <GroupToggle category="tournaments" label="Torneos" toneClass="border-blue-500/20 text-blue-200/90" />
             {openGroups.tournaments && (
@@ -419,7 +422,7 @@ export function DashboardSidebar() {
           </SidebarGroupWrapper>
         )}
 
-        {(isFree || isSuperAdmin) && (
+        {(isFree || (isSuperAdmin && !isAdminGlobalShell)) && groupedItems.user.length > 0 && (
           <SidebarGroupWrapper title={t("sidebar.group_terminals", "Terminales")} color="text-white/60" isCollapsed={isCollapsed}>
             <GroupToggle category="user" label="Terminales" toneClass="border-blue-500/20 text-blue-300/90" />
             {openGroups.user && !isCollapsed && (

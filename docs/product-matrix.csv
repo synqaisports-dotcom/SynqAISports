@@ -18,5 +18,5 @@ Promo dashboard reutilizado Sandbox;/dashboard/promo/*;Obligatorio bajo dashboar
 Perifericos club continuidad reloj;"/dashboard/mobile-continuity, /dashboard/watch-config";Obligatorio;Local + API;/dashboard/peripherals/manifest.json;No;P1;Mantener; alinear gateway movil fase nativa
 Perifericos dentro Sandbox logueado;"/sandbox/app/mobile-continuity, /sandbox/app/watch-config, /sandbox/app/collaboration";Obligatorio;Igual Sandbox app;/sandbox/manifest.json;No;P0;Mantener UX Command Hub; evitar duplicar logica con dashboard
 Superadmin Backoffice Pro;/admin-global/*;Obligatorio + rol superadmin;Supabase;Hereda root;No;P0;Mantener; nunca en APK publica
-Superadmin legacy dashboard;/dashboard/superadmin/clubs;Obligatorio;Supabase;Hereda root;No;P2;Fusionar o deprecar a favor admin-global
+Superadmin legacy dashboard;/dashboard/superadmin/clubs;Obligatorio;Supabase;Hereda root;No;P0;Redirige a /admin-global/clubs
 Capa API;/api/*;Segun endpoint;Supabase colas;N/A;No;P0;Mantener; versionar contratos web y APK
