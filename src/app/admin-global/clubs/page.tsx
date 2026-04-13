@@ -507,7 +507,7 @@ export default function ManageClubsPage() {
                     <SelectTrigger className="h-12 bg-white/5 border-emerald-500/20 rounded-2xl text-emerald-400 font-bold uppercase focus:border-emerald-500">
                       <SelectValue />
                     </SelectTrigger>
-                  <SelectContent className="z-[200] bg-[#0a0f18] border-emerald-500/20 text-white">
+                  <SelectContent className="border-emerald-500/20 bg-[#0a0f18] text-white">
                       <SelectItem value="Enterprise" className="text-[10px] font-black uppercase text-white focus:bg-emerald-500 focus:text-black">ENTERPRISE</SelectItem>
                       <SelectItem value="Pro" className="text-[10px] font-black uppercase text-white focus:bg-emerald-500 focus:text-black">PRO</SelectItem>
                       <SelectItem value="Basic" className="text-[10px] font-black uppercase text-white focus:bg-emerald-500 focus:text-black">BASIC</SelectItem>
@@ -533,7 +533,7 @@ export default function ManageClubsPage() {
                   <SelectTrigger className="h-12 bg-white/5 border-emerald-500/20 rounded-2xl text-emerald-400 font-bold uppercase focus:border-emerald-500">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="z-[200] bg-[#0a0f18] border-emerald-500/20 text-white">
+                  <SelectContent className="border-emerald-500/20 bg-[#0a0f18] text-white">
                     <SelectItem value="Active" className="text-[10px] font-black uppercase text-white focus:bg-emerald-500 focus:text-black">ACTIVO</SelectItem>
                     <SelectItem value="Inactive" className="text-[10px] font-black uppercase text-rose-300 focus:bg-rose-500/20 focus:text-rose-100">INACTIVO</SelectItem>
                     <SelectItem value="Overdue" className="text-[10px] font-black uppercase text-amber-300 focus:bg-amber-500/20 focus:text-amber-100">PAGO_PENDIENTE</SelectItem>

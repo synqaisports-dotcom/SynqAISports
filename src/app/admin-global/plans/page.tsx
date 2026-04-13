@@ -433,7 +433,7 @@ export default function GlobalPlansPage() {
                         <SelectValue placeholder="SELECCIONAR ROL..." />
                       </div>
                     </SelectTrigger>
-                    <SelectContent className="z-[200] bg-[#04070c] border-emerald-500/20 rounded-2xl text-white">
+                    <SelectContent className="rounded-2xl border-emerald-500/20 bg-[#04070c] text-white">
                       {roleSelectOptions.map((role) => (
                         <SelectItem key={role.value} value={role.value} className="text-[10px] font-black uppercase tracking-widest text-white focus:bg-emerald-500 focus:text-black">
                           {role.label}

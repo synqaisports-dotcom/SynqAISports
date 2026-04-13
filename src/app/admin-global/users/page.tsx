@@ -618,7 +618,7 @@ export default function GlobalUsersPage() {
                   <SelectTrigger className="h-12 bg-white/5 border-emerald-500/20 rounded-2xl text-emerald-400 font-bold uppercase">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="z-[200] bg-[#04070c] border-emerald-500/20 rounded-2xl text-white">
+                  <SelectContent className="rounded-2xl border-emerald-500/20 bg-[#04070c] text-white">
                     {roleSelectOptions.map((role) => (
                       <SelectItem key={role.value} value={role.value} className="text-[10px] font-black uppercase tracking-widest text-white focus:bg-emerald-500 focus:text-black">
                         {role.label}
@@ -639,7 +639,7 @@ export default function GlobalUsersPage() {
                   <SelectTrigger className="h-12 bg-white/5 border-emerald-500/20 rounded-2xl text-emerald-400 font-bold uppercase">
                     <SelectValue placeholder="Seleccionar club" />
                   </SelectTrigger>
-                  <SelectContent className="z-[200] bg-[#04070c] border-emerald-500/20 rounded-2xl text-white">
+                  <SelectContent className="rounded-2xl border-emerald-500/20 bg-[#04070c] text-white">
                     <SelectItem value="__none__" className="text-[10px] font-black uppercase tracking-widest text-white focus:bg-emerald-500 focus:text-black">
                       Sin club
                     </SelectItem>

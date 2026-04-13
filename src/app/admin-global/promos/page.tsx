@@ -587,7 +587,7 @@ export default function GlobalPromosPage() {
                   <SelectTrigger className="h-14 rounded-2xl border-emerald-500/20 bg-white/5 font-bold uppercase">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="z-[260] rounded-xl border-emerald-500/20 bg-[#04070c] text-white">
+                  <SelectContent className="rounded-xl border-emerald-500/20 bg-[#04070c] text-white">
                     {COUNTRY_OPTIONS.map((c) => (
                       <SelectItem key={c.code} value={c.code} className="text-[10px] font-black uppercase text-white focus:bg-emerald-500 focus:text-black">
                         {c.label} ({c.code})
@@ -606,7 +606,7 @@ export default function GlobalPromosPage() {
                     <SelectTrigger className="h-16 rounded-2xl border-emerald-500/20 bg-white/5 text-xs font-bold uppercase">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="z-[260] rounded-xl border-emerald-500/20 bg-[#04070c] text-white">
+                    <SelectContent className="rounded-xl border-emerald-500/20 bg-[#04070c] text-white">
                       {AVAILABLE_PLANS.map((plan) => (
                         <SelectItem key={plan.id} value={plan.id} className="text-[10px] font-black uppercase text-white focus:bg-emerald-500 focus:text-black">
                           {plan.name}
@@ -629,7 +629,7 @@ export default function GlobalPromosPage() {
                     <SelectTrigger className="h-16 rounded-2xl border-emerald-500/20 bg-white/5 text-xs font-bold uppercase">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="z-[260] rounded-xl border-emerald-500/20 bg-[#04070c] text-white">
+                    <SelectContent className="rounded-xl border-emerald-500/20 bg-[#04070c] text-white">
                       {CHANNEL_OPTIONS.map((ch) => (
                         <SelectItem key={ch.value} value={ch.value} className="text-[10px] font-black uppercase text-white focus:bg-emerald-500 focus:text-black">
                           {ch.label}
@@ -670,7 +670,7 @@ export default function GlobalPromosPage() {
                       <SelectTrigger className="h-12 rounded-2xl border-emerald-500/20 bg-white/5 pl-10 font-bold text-emerald-400">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="z-[260] rounded-xl border-emerald-500/20 bg-[#04070c] text-white">
+                      <SelectContent className="rounded-xl border-emerald-500/20 bg-[#04070c] text-white">
                         <SelectItem value="1_month" className="text-[10px] font-black uppercase text-white focus:bg-emerald-500 focus:text-black">
                           1 MES
                         </SelectItem>
