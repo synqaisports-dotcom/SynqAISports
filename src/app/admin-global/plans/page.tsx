@@ -459,7 +459,7 @@ export default function GlobalPlansPage() {
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="bg-[#04070c]/98 border-emerald-500/20 text-white max-w-lg rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.9)]">
+                  <DialogContent className="max-h-[85vh] max-w-xl overflow-y-auto rounded-3xl border-emerald-500/20 bg-[#04070c]/98 text-white shadow-[0_0_50px_rgba(0,0,0,0.9)]">
                     <DialogHeader className="space-y-4">
                       <div className="flex items-center gap-2">
                         <ShieldAlert className="h-4 w-4 text-emerald-400" />
@@ -487,7 +487,7 @@ export default function GlobalPlansPage() {
                             </div>
                             <div className="flex flex-col">
                               <span className={cn("text-xs font-black uppercase tracking-widest", newPlan.access.includes(module.id) ? "text-white" : "text-white/40")}>{module.label}</span>
-                              <span className="text-[8px] font-bold text-white/20 uppercase tracking-widest mt-0.5">{module.description}</span>
+                              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{module.description}</span>
                             </div>
                           </div>
                           <Checkbox 
