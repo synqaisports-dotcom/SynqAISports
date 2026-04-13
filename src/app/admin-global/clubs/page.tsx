@@ -16,7 +16,7 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, MoreHorizontal, Building2, Globe2, Activity, Pencil, Pause, Play, ShieldCheck, Globe, Loader2, AlertCircle, RefreshCw } from "lucide-react";
+import { Plus, Search, Building2, Globe2, Activity, Pencil, Pause, Play, ShieldCheck, Globe, Loader2, AlertCircle, RefreshCw, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -38,6 +38,16 @@ import {
 } from "@/components/ui/select";
 import type { Club } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function ManageClubsPage() {
   const { session } = useAuth();
@@ -48,6 +58,8 @@ export default function ManageClubsPage() {
   const [lastErrorDetail, setLastErrorDetail] = useState<string>("");
   const [isUsingFallback, setIsUsingFallback] = useState(false);
   const [updatingClubIds, setUpdatingClubIds] = useState<Record<string, boolean>>({});
+  const [deletingClubId, setDeletingClubId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const { toast } = useToast();
   
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -114,6 +126,53 @@ export default function ManageClubsPage() {
   useEffect(() => {
     void loadClubs();
   }, [session?.access_token]);
+
+  const handleDeleteClub = async () => {
+    if (!deleteTarget || deletingClubId) return;
+    const { id, name } = deleteTarget;
+    if (isUsingFallback || !session?.access_token) {
+      toast({
+        variant: "destructive",
+        title: "BORRADO_NO_DISPONIBLE",
+        description: "Conecta con Supabase (sin modo local) para eliminar el club en base de datos.",
+      });
+      setDeleteTarget(null);
+      return;
+    }
+    setDeletingClubId(id);
+    const prev = clubs;
+    try {
+      const res = await fetch("/api/admin/clubs", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ id }),
+      });
+      const j = (await res.json().catch(() => ({}))) as { error?: string; hint?: string };
+      if (!res.ok) {
+        throw new Error(j.hint ?? j.error ?? `HTTP ${res.status}`);
+      }
+      setClubs((c) => c.filter((x) => x.id !== id));
+      const saved = JSON.parse(localStorage.getItem("synq_global_clubs") || "[]") as Club[];
+      localStorage.setItem("synq_global_clubs", JSON.stringify(saved.filter((x) => x.id !== id)));
+      toast({
+        title: "CLUB_ELIMINADO",
+        description: `Nodo ${name} eliminado de la red.`,
+      });
+    } catch (e) {
+      setClubs(prev);
+      toast({
+        variant: "destructive",
+        title: "ERROR_AL_BORRAR",
+        description: e instanceof Error ? e.message : "No se pudo eliminar el club.",
+      });
+    } finally {
+      setDeletingClubId(null);
+      setDeleteTarget(null);
+    }
+  };
 
   const handleToggleStatus = async (id: string) => {
     if (updatingClubIds[id]) return;
@@ -447,8 +506,15 @@ export default function ManageClubsPage() {
                           >
                             {club.status === "Active" ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                           </Button>
-                          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl border border-white/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 text-white/20 hover:text-emerald-400 transition-[background-color,border-color,color,opacity,transform]">
-                            <MoreHorizontal className="h-4 w-4" />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-10 w-10 rounded-xl border border-white/5 text-rose-400/50 hover:border-rose-500/40 hover:bg-rose-500/10 hover:text-rose-300 transition-[background-color,border-color,color,opacity,transform]"
+                            title="Eliminar club"
+                            onClick={() => setDeleteTarget({ id: club.id, name: club.name })}
+                            disabled={!!updatingClubIds[club.id] || deletingClubId === club.id}
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>
@@ -577,6 +643,36 @@ export default function ManageClubsPage() {
           </div>
         </SheetContent>
       </Sheet>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent className="border-rose-500/30 bg-[#0a0f18] text-white sm:rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-black uppercase tracking-tight text-rose-200">
+              Eliminar club
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+              Vas a borrar <span className="text-white">{deleteTarget?.name}</span> (
+              <span className="font-mono text-rose-300/80">{deleteTarget?.id?.slice(0, 8)}…</span>). Esta acción no se puede deshacer. Si hay perfiles u otras tablas con FK al club, Supabase puede rechazar el borrado.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-0">
+            <AlertDialogCancel className="border-white/10 bg-black/40 text-white hover:bg-white/10">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-rose-600 text-white hover:bg-rose-500"
+              onClick={(e) => {
+                e.preventDefault();
+                void handleDeleteClub();
+              }}
+              disabled={!!deletingClubId}
+            >
+              {deletingClubId ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Eliminar definitivamente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

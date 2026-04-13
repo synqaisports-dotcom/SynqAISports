@@ -106,6 +106,8 @@ const navItems: NavItem[] = [
   { title: "System Health", href: "/admin-global/health", icon: Activity, category: "global" },
   { title: "Analytics Global", href: "/admin-global/analytics", icon: BarChart3, category: "global" },
   { title: "Campañas & QR", href: "/admin-global/promos", icon: QrCode, category: "global" },
+  { title: "Colaboración", href: "/admin-global/collaboration", icon: MessageSquareQuote, category: "global" },
+  { title: "Almacén neural", href: "/admin-global/exercises", icon: Database, category: "global" },
   { title: "Cuadro Matriz Club", href: "/admin-global/club-access-matrix", icon: LayoutGrid, category: "global" },
   
   // ESTRATEGIA_METODOLÓGICA - AMBER THEME
