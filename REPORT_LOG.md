@@ -1,5 +1,11 @@
 # Reporte de trabajo autónomo — SynqAI
 
+## 2026-04-13 — Android: cap:build-release, deep links, splash #0F172A
+
+- `npm run cap:build-release` → `scripts/cap-build-release.mjs` (cap sync + `gradlew assembleRelease`).
+- Deep links `/sandbox/app`: `MainActivity` + `AndroidManifest`; `synqai-sports://open/...`; `BuildConfig.DEEPLINK_REMOTE_ORIGIN` desde `CAPACITOR_SERVER_URL` al compilar.
+- Splash Capacitor + assets: fondo **#0F172A**.
+- Docs: `docs/CAPACITOR_ANDROID.md`, `docs/apps/sandbox-coach.md`, `docs/android-assetlinks-template.json`.
 ## 2026-04-13 — Admin Global: pack comercial, roles (referencia) y dashboard con series
 
 ### Tareas completadas
