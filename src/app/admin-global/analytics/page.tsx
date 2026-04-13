@@ -38,6 +38,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { synqSync } from "@/lib/sync-service";
 import { cn } from "@/lib/utils";
+import { WorldHeatMap } from "@/components/admin/WorldHeatMap";
 
 const SYNQ_PENDING_STORAGE_KEY = "synq_event_queue_pending";
 /** Mínimo entre refrescos al volver a la pestaña (evita martillar la API). */
@@ -578,7 +579,10 @@ export default function GlobalAnalyticsPage() {
               Aún no hay telemetría con país. Los usuarios deben guardar país en Sandbox → Mi equipo y abrir la app (pulso cada ~6h).
             </p>
           ) : (
-            <GlobalHeatMap points={sandboxWorldHeat} accent="cyan" />
+            <div className="space-y-4">
+              <WorldHeatMap points={sandboxWorldHeat} accent="cyan" heightClass="min-h-[380px] h-[420px]" />
+              <GlobalHeatMap points={sandboxWorldHeat} accent="cyan" />
+            </div>
           )}
           {sandboxWorldByCountry.length > 0 && (
             <div className="max-h-48 overflow-y-auto rounded-2xl border border-white/10">
@@ -760,7 +764,13 @@ export default function GlobalAnalyticsPage() {
               Sin coordenadas globales disponibles todavía.
             </p>
           ) : (
-            <GlobalHeatMap points={geoHeat} accent="emerald" />
+            <div className="space-y-4">
+              <WorldHeatMap points={geoHeat} accent="emerald" heightClass="min-h-[380px] h-[420px]" />
+              <p className="text-[9px] font-bold uppercase tracking-widest text-slate-500">
+                Vista resumen (sin teselas) debajo
+              </p>
+              <GlobalHeatMap points={geoHeat} accent="emerald" />
+            </div>
           )}
         </CardContent>
       </Card>

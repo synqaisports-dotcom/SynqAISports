@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
+import Link from "next/link";
 import {
   Zap,
   Plus,
@@ -339,6 +340,9 @@ export default function GlobalPromosPage() {
           >
             {listLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
             Refrescar
+          </Button>
+          <Button asChild variant="outline" className="h-12 rounded-2xl border-emerald-500/30 font-black uppercase text-[10px] tracking-widest text-emerald-300 hover:bg-emerald-500/10">
+            <Link href="/admin-global/analytics">Analytics global</Link>
           </Button>
           <Button
             onClick={() => {
