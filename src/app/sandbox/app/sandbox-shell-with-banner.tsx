@@ -6,6 +6,7 @@ import { PwaInstallBanner } from "@/components/pwa/PwaInstallBanner";
 import { SANDBOX_APP_BOARD_ROOT, SANDBOX_APP_ROOT } from "@/lib/sandbox-routes";
 import { SandboxAppClientWrapper } from "./sandbox-app-client-wrapper";
 import { SandboxCommandHubShell } from "./sandbox-command-hub-shell";
+import { SandboxTelemetryBeacon } from "@/components/sandbox/sandbox-telemetry-beacon";
 
 export function SandboxShellWithOptionalInstallBanner(props: { children: ReactNode }) {
   const pathname = usePathname() || "";
@@ -14,6 +15,7 @@ export function SandboxShellWithOptionalInstallBanner(props: { children: ReactNo
 
   return (
     <SandboxAppClientWrapper>
+      <SandboxTelemetryBeacon />
       {!hidePwaBanner ? <PwaInstallBanner appName="Sandbox" storageKeyScope="sandbox" /> : null}
       <SandboxCommandHubShell>{props.children}</SandboxCommandHubShell>
     </SandboxAppClientWrapper>

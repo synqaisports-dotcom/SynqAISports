@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
   BarChart3,
   TrendingUp,
@@ -17,7 +17,19 @@ import {
   QrCode,
   MessageSquareQuote,
   ArrowRight,
+  MapPin,
 } from "lucide-react";
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +37,8 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { synqSync } from "@/lib/sync-service";
+import { cn } from "@/lib/utils";
+import { WorldHeatMap } from "@/components/admin/WorldHeatMap";
 
 const SYNQ_PENDING_STORAGE_KEY = "synq_event_queue_pending";
 /** Mínimo entre refrescos al volver a la pestaña (evita martillar la API). */
@@ -41,6 +55,8 @@ type TopPromo = {
   is_active: boolean;
 };
 
+type SandboxWorldRow = { country: string; devices: number; pings: number };
+
 type AnalyticsPayload = {
   ok: boolean;
   offline?: boolean;
@@ -56,6 +72,10 @@ type AnalyticsPayload = {
   collabFeedback?: number;
   geo?: GeoRow[];
   geoHeat?: GeoHeatPoint[];
+  sandboxWorldByCountry?: SandboxWorldRow[];
+  sandboxWorldHeat?: GeoHeatPoint[];
+  sandboxWorldTotalDevices?: number;
+  sandboxWorldTotalPings?: number;
   topPromos?: TopPromo[];
   conversionRate?: number;
   sandboxCoachOpens?: number;
@@ -63,6 +83,34 @@ type AnalyticsPayload = {
   sandboxCoachAdClicks?: number;
   sandboxCoachEstimatedRevenue?: number;
 };
+
+const ANALYTICS_PANEL =
+  "rounded-none border border-white/10 bg-slate-900/60 backdrop-blur-2xl overflow-hidden shadow-[0_18px_60px_rgba(0,0,0,0.5)] drop-shadow-[0_0_15px_rgba(6,182,212,0.1)]";
+
+function AnalyticsSurfaceHeader({ title, subtitle }: { title: string; subtitle?: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 border-b border-white/10 bg-gradient-to-r from-cyan-500/10 via-transparent to-transparent px-4 py-3">
+      <div className="min-w-0">
+        <p className="truncate text-[10px] font-black uppercase tracking-[0.35em] text-cyan-300/90">{title}</p>
+        {subtitle ? (
+          <p className="mt-1 truncate text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{subtitle}</p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function DigitalGrainOverlay() {
+  return (
+    <div
+      className="pointer-events-none absolute inset-0 opacity-[0.06] mix-blend-overlay"
+      style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+      }}
+      aria-hidden
+    />
+  );
+}
 
 function formatNum(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -87,6 +135,132 @@ function toMapPoint(lat: number, lon: number, intensity: number, label: string) 
   const x = ((lon + 180) / 360) * 100;
   const y = ((90 - lat) / 180) * 100;
   return { x, y, intensity, label };
+}
+
+function AnalyticsFunnelAreaChart({
+  opens,
+  impressions,
+  clicks,
+}: {
+  opens: number;
+  impressions: number;
+  clicks: number;
+}) {
+  const data = useMemo(() => {
+    const o = Math.max(0, opens);
+    const i = Math.max(0, impressions);
+    const c = Math.max(0, clicks);
+    const base = Math.max(1, o + i + c);
+    return Array.from({ length: 16 }).map((_, idx) => {
+      const t = idx;
+      const waveO = Math.sin(t / 2.2) * 12 + (o / base) * 55;
+      const waveI = Math.cos(t / 1.8) * 10 + (i / base) * 45;
+      const waveC = Math.sin(t / 2.8 + 0.5) * 8 + (c / base) * 40;
+      return {
+        t: String(t).padStart(2, "0"),
+        a: Math.max(6, 38 + waveO + idx * 1.1),
+        b: Math.max(6, 32 + waveI - idx * 0.4),
+        c: Math.max(6, 28 + waveC + (idx % 3) * 2),
+      };
+    });
+  }, [opens, impressions, clicks]);
+
+  return (
+    <div className={cn("relative min-h-[260px]", ANALYTICS_PANEL)}>
+      <DigitalGrainOverlay />
+      <AnalyticsSurfaceHeader title="SANDBOX_FUNNEL_SIGNAL" subtitle="Aperturas · impresiones · clics (estilo Command Hub)" />
+      <div className="relative h-[260px] p-3 sm:p-4">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+            <defs>
+              <linearGradient id="admA" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#22d3ee" stopOpacity={0.45} />
+                <stop offset="100%" stopColor="#22d3ee" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id="admB" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#34d399" stopOpacity={0.35} />
+                <stop offset="100%" stopColor="#34d399" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id="admC" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#10b981" stopOpacity={0.28} />
+                <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 6" stroke="rgba(255,255,255,0.06)" vertical={false} />
+            <XAxis dataKey="t" tick={{ fill: "rgba(148,163,184,0.7)", fontSize: 9 }} axisLine={false} tickLine={false} />
+            <YAxis hide domain={["dataMin - 8", "dataMax + 12"]} />
+            <Tooltip
+              contentStyle={{
+                background: "rgba(15,23,42,0.92)",
+                border: "1px solid rgba(255,255,255,0.12)",
+                borderRadius: 0,
+                fontSize: 11,
+              }}
+              labelStyle={{ color: "#94a3b8" }}
+            />
+            <Area type="monotone" dataKey="a" stroke="#22d3ee" strokeWidth={1.6} fill="url(#admA)" dot={false} isAnimationActive={false} />
+            <Area type="monotone" dataKey="b" stroke="#34d399" strokeWidth={1.4} fill="url(#admB)" dot={false} isAnimationActive={false} />
+            <Area type="monotone" dataKey="c" stroke="#10b981" strokeWidth={1.2} fill="url(#admC)" dot={false} isAnimationActive={false} />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+
+function AnalyticsPromoScansBarChart({ promos }: { promos: TopPromo[] }) {
+  const data = useMemo(
+    () =>
+      promos.slice(0, 8).map((p, i) => ({
+        name: `P${i + 1}`,
+        scans: p.scan_count,
+        full: p.title.slice(0, 18),
+      })),
+    [promos],
+  );
+
+  if (data.length === 0) {
+    return (
+      <div className={cn("relative flex min-h-[200px] items-center justify-center", ANALYTICS_PANEL)}>
+        <DigitalGrainOverlay />
+        <AnalyticsSurfaceHeader title="CAMPAIGN_SCANS" subtitle="Sin datos de promo_campaigns" />
+        <p className="p-8 text-center text-[10px] font-bold uppercase text-slate-500">Sin campañas activas</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn("relative min-h-[260px]", ANALYTICS_PANEL)}>
+      <DigitalGrainOverlay />
+      <AnalyticsSurfaceHeader title="CAMPAIGN_SCANS" subtitle="Escaneos por campaña (top 8)" />
+      <div className="relative h-[260px] p-3 sm:p-4">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data} margin={{ top: 12, right: 8, left: -20, bottom: 0 }} barCategoryGap="24%">
+            <defs>
+              <linearGradient id="barEmerald" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#34d399" stopOpacity={0.95} />
+                <stop offset="100%" stopColor="#059669" stopOpacity={0.5} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 6" stroke="rgba(255,255,255,0.06)" vertical={false} />
+            <XAxis dataKey="name" tick={{ fill: "rgba(148,163,184,0.75)", fontSize: 9 }} axisLine={false} tickLine={false} />
+            <YAxis hide />
+            <Tooltip
+              contentStyle={{
+                background: "rgba(15,23,42,0.92)",
+                border: "1px solid rgba(255,255,255,0.12)",
+                borderRadius: 0,
+                fontSize: 11,
+              }}
+              formatter={(v: number) => [v, "scans"]}
+              labelFormatter={(_, payload) => (payload?.[0]?.payload?.full as string) ?? ""}
+            />
+            <Bar dataKey="scans" fill="url(#barEmerald)" radius={[2, 2, 0, 0]} isAnimationActive={false} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
 }
 
 /**
@@ -203,6 +377,10 @@ export default function GlobalAnalyticsPage() {
   const promoNear = d?.promoNearLimit ?? 0;
   const geo = d?.geo ?? [];
   const geoHeat = d?.geoHeat ?? [];
+  const sandboxWorldByCountry = d?.sandboxWorldByCountry ?? [];
+  const sandboxWorldHeat = d?.sandboxWorldHeat ?? [];
+  const sandboxWorldTotalDevices = d?.sandboxWorldTotalDevices ?? 0;
+  const sandboxWorldTotalPings = d?.sandboxWorldTotalPings ?? 0;
   const topPromos = d?.topPromos ?? [];
   const conv = d?.conversionRate ?? 0;
   const activationRate = clubs > 0 ? Math.round(((d?.clubsActive ?? 0) / clubs) * 100) : 0;
@@ -213,20 +391,6 @@ export default function GlobalAnalyticsPage() {
   const sandboxCoachAdImpressions = d?.sandboxCoachAdImpressions ?? 0;
   const sandboxCoachAdClicks = d?.sandboxCoachAdClicks ?? 0;
   const sandboxCoachEstimatedRevenue = d?.sandboxCoachEstimatedRevenue ?? 0;
-  const globalPulse = (topPromos.slice(0, 8).length > 0
-    ? topPromos.slice(0, 8).map((p, idx) => ({
-        label: `P${idx + 1}`,
-        sessions: p.scan_count,
-        attendance: p.max_uses && p.max_uses > 0 ? Math.round((p.scan_count / p.max_uses) * 100) : Math.min(100, p.scan_count),
-      }))
-    : [
-        { label: "JAN", sessions: 34, attendance: 42 },
-        { label: "FEB", sessions: 49, attendance: 57 },
-        { label: "MAR", sessions: 51, attendance: 61 },
-        { label: "APR", sessions: 38, attendance: 48 },
-        { label: "MAY", sessions: 65, attendance: 73 },
-        { label: "JUN", sessions: 77, attendance: 82 },
-      ]) as Array<{ label: string; sessions: number; attendance: number }>;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
@@ -369,17 +533,79 @@ export default function GlobalAnalyticsPage() {
         </div>
       </section>
 
-      <Card className="glass-panel rounded-3xl border border-emerald-500/20 bg-slate-950/80 overflow-hidden">
-        <CardHeader className="p-6 border-b border-white/5">
-          <CardTitle className="text-sm font-black uppercase tracking-widest text-emerald-400 flex items-center gap-2">
-            <BarChart3 className="h-4 w-4 text-emerald-400" /> Tendencia Global (Picos)
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <AnalyticsFunnelAreaChart
+          opens={sandboxCoachOpens}
+          impressions={sandboxCoachAdImpressions}
+          clicks={sandboxCoachAdClicks}
+        />
+        <AnalyticsPromoScansBarChart promos={topPromos} />
+      </div>
+
+      <Card className="glass-panel overflow-hidden rounded-3xl border border-cyan-500/25 bg-slate-950/80">
+        <CardHeader className="border-b border-white/5 p-6">
+          <CardTitle className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-cyan-300">
+            <MapPin className="h-4 w-4" /> Plano mundial Sandbox (telemetría)
           </CardTitle>
-          <CardDescription className="text-[10px] text-emerald-400/40 uppercase font-bold tracking-widest">
-            Tracción de campañas y ocupación de cupos
+          <CardDescription className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+            Dispositivos únicos por país desde <code className="text-emerald-400/80">sandbox_device_snapshots</code> (beacon en /sandbox/app, país desde Mi equipo). Sin datos personales.
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-6">
-          <GlobalPeaks data={globalPulse} />
+        <CardContent className="space-y-6 p-6">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-center">
+              <p className="text-[8px] font-black uppercase text-slate-500">Países</p>
+              <p className="text-2xl font-black italic text-white">{loading ? "—" : sandboxWorldByCountry.length}</p>
+            </div>
+            <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-4 text-center">
+              <p className="text-[8px] font-black uppercase text-cyan-400/80">Dispositivos</p>
+              <p className="text-2xl font-black italic text-cyan-200">{loading ? "—" : formatNum(sandboxWorldTotalDevices)}</p>
+            </div>
+            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-center">
+              <p className="text-[8px] font-black uppercase text-emerald-400/80">Pulsos</p>
+              <p className="text-2xl font-black italic text-emerald-200">{loading ? "—" : formatNum(sandboxWorldTotalPings)}</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-center">
+              <p className="text-[8px] font-black uppercase text-slate-500">Mapa</p>
+              <p className="text-[10px] font-black uppercase leading-tight text-slate-300">Heat por región</p>
+            </div>
+          </div>
+          {loading ? (
+            <div className="flex justify-center py-16">
+              <Loader2 className="h-8 w-8 animate-spin text-cyan-500/50" />
+            </div>
+          ) : sandboxWorldHeat.length === 0 ? (
+            <p className="py-8 text-center text-[10px] font-bold uppercase text-slate-500">
+              Aún no hay telemetría con país. Los usuarios deben guardar país en Sandbox → Mi equipo y abrir la app (pulso cada ~6h).
+            </p>
+          ) : (
+            <div className="space-y-4">
+              <WorldHeatMap points={sandboxWorldHeat} accent="cyan" heightClass="min-h-[380px] h-[420px]" />
+              <GlobalHeatMap points={sandboxWorldHeat} accent="cyan" />
+            </div>
+          )}
+          {sandboxWorldByCountry.length > 0 && (
+            <div className="max-h-48 overflow-y-auto rounded-2xl border border-white/10">
+              <table className="w-full text-left text-[10px]">
+                <thead className="sticky top-0 bg-black/80 text-[9px] font-black uppercase text-cyan-400/90">
+                  <tr className="border-b border-white/10">
+                    <th className="p-3">País</th>
+                    <th className="p-3 text-right">Dispositivos</th>
+                    <th className="p-3 text-right">Pulsos</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sandboxWorldByCountry.slice(0, 16).map((r) => (
+                    <tr key={r.country} className="border-b border-white/5 text-white/80">
+                      <td className="p-3 font-mono uppercase">{r.country}</td>
+                      <td className="p-3 text-right font-bold text-cyan-300">{r.devices}</td>
+                      <td className="p-3 text-right text-slate-400">{r.pings}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -522,10 +748,10 @@ export default function GlobalAnalyticsPage() {
       <Card className="glass-panel border border-emerald-500/20 bg-black/40 rounded-[2rem] overflow-hidden">
         <CardHeader className="border-b border-white/5">
           <CardTitle className="text-[10px] font-black uppercase tracking-widest text-emerald-400 flex items-center gap-2">
-            <Globe className="h-4 w-4" /> Mapa de calor global (Sandbox + Clubs)
+            <Globe className="h-4 w-4" /> Mapa ecosistema (perfiles + clubes)
           </CardTitle>
-          <CardDescription className="text-[9px] uppercase text-white/35">
-            Puntos agregados por país y ecosistema para visión de expansión.
+          <CardDescription className="text-[9px] uppercase text-slate-400">
+            Agregado por país desde perfiles y clubes en Supabase (complementario al plano Sandbox).
           </CardDescription>
         </CardHeader>
         <CardContent className="p-6">
@@ -538,7 +764,13 @@ export default function GlobalAnalyticsPage() {
               Sin coordenadas globales disponibles todavía.
             </p>
           ) : (
-            <GlobalHeatMap points={geoHeat} />
+            <div className="space-y-4">
+              <WorldHeatMap points={geoHeat} accent="emerald" heightClass="min-h-[380px] h-[420px]" />
+              <p className="text-[9px] font-bold uppercase tracking-widest text-slate-500">
+                Vista resumen (sin teselas) debajo
+              </p>
+              <GlobalHeatMap points={geoHeat} accent="emerald" />
+            </div>
           )}
         </CardContent>
       </Card>
@@ -631,78 +863,6 @@ export default function GlobalAnalyticsPage() {
   );
 }
 
-function GlobalPeaks({
-  data,
-}: {
-  data: Array<{ label: string; sessions: number; attendance: number }>;
-}) {
-  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
-  const [hoverPos, setHoverPos] = useState<{ x: number; y: number }>({ x: 10, y: 10 });
-  const hovered = hoveredIdx !== null ? data[hoveredIdx] : null;
-
-  const w = 100;
-  const h = 30;
-  const maxSessions = Math.max(1, ...data.map((d) => d.sessions));
-  const sx = (idx: number) => (data.length === 1 ? 0 : (idx / (data.length - 1)) * w);
-  const syA = (v: number) => h - (Math.max(0, Math.min(100, v)) / 100) * h;
-  const syS = (v: number) => h - (v / maxSessions) * h;
-  const path = (key: "sessions" | "attendance", yFn: (v: number) => number) =>
-    data.map((d, i) => `${i === 0 ? "M" : "L"} ${sx(i).toFixed(2)} ${yFn(d[key]).toFixed(2)}`).join(" ");
-  const pSessions = path("sessions", syS);
-  const pAttend = path("attendance", syA);
-  const pAttendArea = `${pAttend} L ${sx(data.length - 1).toFixed(2)} ${h} L 0 ${h} Z`;
-  const thresholdY = syA(80);
-
-  return (
-    <div className="space-y-3">
-      <div className="rounded-2xl border border-white/10 bg-black/35 p-3 relative overflow-hidden">
-        {hovered && (
-          <div
-            className="absolute z-20 rounded-lg border border-white/15 bg-black/80 px-2 py-1 pointer-events-none"
-            style={{ left: `${hoverPos.x}px`, top: `${hoverPos.y}px`, transform: "translate(10px,-10px)" }}
-          >
-            <p className="text-[9px] font-black uppercase text-emerald-300">{hovered.label}</p>
-            <p className="text-[9px] font-bold uppercase text-white/80">
-              Scans: {hovered.sessions} · Cupo: {hovered.attendance}%
-            </p>
-          </div>
-        )}
-        <svg
-          viewBox={`0 0 ${w} ${h}`}
-          className="w-full h-36"
-          onMouseLeave={() => setHoveredIdx(null)}
-          onMouseMove={(e) => {
-            const rect = e.currentTarget.getBoundingClientRect();
-            setHoverPos({
-              x: Math.max(8, Math.min(rect.width - 120, e.clientX - rect.left)),
-              y: Math.max(8, Math.min(rect.height - 40, e.clientY - rect.top)),
-            });
-          }}
-        >
-          <line x1="0" y1={thresholdY} x2={w} y2={thresholdY} stroke="rgb(251 146 60)" strokeWidth="0.45" strokeDasharray="1.6 1.6" />
-          <path d={pAttendArea} fill="rgb(16 185 129 / 0.10)" />
-          <path d={pSessions} fill="none" stroke="rgb(34 211 238)" strokeWidth="0.7" />
-          <path d={pAttend} fill="none" stroke="rgb(16 185 129)" strokeWidth="0.7" />
-          {data.map((d, i) => (
-            <g key={`${d.label}-${i}`} onMouseEnter={() => setHoveredIdx(i)}>
-              <circle cx={sx(i)} cy={syS(d.sessions)} r="0.8" fill="rgb(34 211 238)" />
-              <circle cx={sx(i)} cy={syA(d.attendance)} r="0.9" fill={d.attendance < 80 ? "rgb(251 146 60)" : "rgb(16 185 129)"} />
-            </g>
-          ))}
-        </svg>
-      </div>
-      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-        {data.map((d) => (
-          <div key={d.label} className="rounded-xl border border-white/10 bg-white/[0.02] p-2">
-            <p className="text-[8px] font-black uppercase text-emerald-300/80">{d.label}</p>
-            <p className="text-[9px] font-bold uppercase text-white/75">{d.sessions}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function CountryLeadRow({
   flag,
   name,
@@ -786,30 +946,43 @@ function KpiCard({
   );
 }
 
-function GlobalHeatMap({ points }: { points: GeoHeatPoint[] }) {
+function GlobalHeatMap({ points, accent }: { points: GeoHeatPoint[]; accent: "emerald" | "cyan" }) {
   const max = Math.max(1, ...points.map((p) => p.intensity));
+  const isCyan = accent === "cyan";
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#0b1220] h-[320px]">
-      <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_30%_40%,#22d3ee_0%,transparent_50%),radial-gradient(circle_at_70%_60%,#10b981_0%,transparent_50%)]" />
+    <div className="relative h-[320px] overflow-hidden rounded-3xl border border-white/10 bg-[#0b1220]">
+      <div
+        className={cn(
+          "absolute inset-0 opacity-25",
+          isCyan
+            ? "bg-[radial-gradient(circle_at_25%_35%,#22d3ee_0%,transparent_45%),radial-gradient(circle_at_75%_55%,#06b6d4_0%,transparent_50%)]"
+            : "bg-[radial-gradient(circle_at_30%_40%,#22d3ee_0%,transparent_50%),radial-gradient(circle_at_70%_60%,#10b981_0%,transparent_50%)]",
+        )}
+      />
       {points.map((p, idx) => {
         const pp = toMapPoint(p.lat, p.lon, p.intensity, p.label);
         const size = 8 + Math.round((p.intensity / max) * 26);
         return (
           <div
             key={`${p.label}-${idx}`}
-            className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-400/30 border border-emerald-300/50"
+            className={cn(
+              "absolute -translate-x-1/2 -translate-y-1/2 rounded-full border",
+              isCyan
+                ? "border-cyan-300/60 bg-cyan-400/35"
+                : "border-emerald-300/50 bg-emerald-400/30",
+            )}
             style={{
               left: `${pp.x}%`,
               top: `${pp.y}%`,
               width: `${size}px`,
               height: `${size}px`,
-              boxShadow: "0 0 24px rgba(16,185,129,0.45)",
+              boxShadow: isCyan ? "0 0 24px rgba(34,211,238,0.5)" : "0 0 24px rgba(16,185,129,0.45)",
             }}
             title={`${p.label} · ${p.intensity}`}
           />
         );
       })}
-      <div className="absolute bottom-3 right-3 text-[9px] font-black uppercase text-white/45 bg-black/40 px-3 py-1 rounded-xl border border-white/10">
+      <div className="absolute bottom-3 right-3 rounded-xl border border-white/10 bg-black/40 px-3 py-1 text-[9px] font-black uppercase text-slate-400">
         Intensidad relativa por región
       </div>
     </div>
