@@ -22,11 +22,23 @@ La app Android es un **WebView** que carga la web desplegada (por defecto **prod
 
 `AndroidManifest.xml` incluye **`usesCleartextTraffic="true"`** para poder usar `http://` en desarrollo.
 
-## Icono y splash (Deep Night + Electric Cyan)
+## Icono y splash (identidad visual)
 
-- Fuentes generadas: **`assets/icon.png`** (1024), **`assets/splash.png`** (2732).
-- Script: **`scripts/generate-capacitor-assets.mjs`** (colores `#050812` / `#22d3ee`).
+- Fondo del splash alineado con **slate** `#0F172A` (`capacitor.config.ts` → `SplashScreen.backgroundColor`; drawable regenerado con `cap:assets`).
+- Icono y detalle cian: **`assets/icon.png`** (1024), **`assets/splash.png`** (2732).
+- Script: **`scripts/generate-capacitor-assets.mjs`** (Deep Night `#050812` + Electric Cyan `#22d3ee` sobre base `#0F172A`).
 - Regenerar recursos Android: **`npm run cap:assets`** (sharp + `@capacitor/assets`).
+
+## Release desde terminal (sin abrir Android Studio)
+
+| Script | Descripción |
+|--------|-------------|
+| `npm run cap:build-release` | `npx cap sync android` + `./android/gradlew assembleRelease` |
+
+**Requisitos:** `ANDROID_HOME` o `ANDROID_SDK_ROOT`, JDK 17+. El APK por defecto suele quedar en  
+`android/app/build/outputs/apk/release/app-release-unsigned.apk` hasta que configures **signing** en `android/app/build.gradle` o firmes en Android Studio (**Build → Generate Signed Bundle / APK**).
+
+**Origen de deep links al compilar:** si defines `CAPACITOR_SERVER_URL` al ejecutar Gradle (misma variable que en `cap sync`), `MainActivity` inyecta `BuildConfig.DEEPLINK_REMOTE_ORIGIN` para resolver `synqai-sports://open/sandbox/app/...` hacia ese host. Por defecto: `https://synqai.net`.
 
 ## Comandos útiles
 
@@ -36,7 +48,14 @@ La app Android es un **WebView** que carga la web desplegada (por defecto **prod
 | `npm run cap:sync` | `npx cap sync android` |
 | `npm run cap:open` | Abre el proyecto en Android Studio |
 
+## Deep links → `/sandbox/app`
+
+- **App Links (HTTPS):** `https://synqai.net/sandbox/app` y rutas bajo ese prefijo. El `AndroidManifest` declara el intent con `android:autoVerify="true"`.
+- **Verificación de dominio:** publica en **`https://synqai.net/.well-known/assetlinks.json`** el JSON con el fingerprint SHA-256 del certificado **release**. Plantilla: `docs/android-assetlinks-template.json`.
+- **Esquema custom (sin asset links):** `synqai-sports://open/sandbox/app` (útil para QR o enlaces internos). Se traduce a `DEEPLINK_REMOTE_ORIGIN + path + query`.
+- **Implementación:** `MainActivity` carga la URL en el WebView en cold start y en `onNewIntent`.
+
 ## Notas
 
-- **Deep link / Sandbox**: la entrada puede ser `https://synqai.net/sandbox-portal?dest=/sandbox/app` (configurable en marketing / Play Console).
-- Para **TWA** o **APK con dominio fijo**, revisa políticas de Google Play y `assetlinks.json` cuando toque.
+- Entrada marketing alternativa: `https://synqai.net/sandbox-portal?dest=/sandbox/app`.
+- Políticas **Google Play** y dominio fijo: revisar cuando publiques el listing.

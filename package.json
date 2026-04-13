@@ -16,7 +16,8 @@
     "test": "tsx --test src/**/*.test.ts",
     "cap:assets": "node scripts/generate-capacitor-assets.mjs && npx @capacitor/assets generate --android",
     "cap:sync": "npx cap sync android",
-    "cap:open": "npx cap open android"
+    "cap:open": "npx cap open android",
+    "cap:build-release": "node scripts/cap-build-release.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^7.6.1",

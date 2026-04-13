@@ -19,6 +19,20 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- App Links: https://synqai.net/sandbox/app → abre la app (ver assetlinks.json en servidor) -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="synqai.net" android:pathPrefix="/sandbox/app" />
+            </intent-filter>
+            <!-- Fallback sin Digital Asset Links: enlace interno o QR -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="synqai-sports" android:host="open" android:pathPrefix="/sandbox/app" />
+            </intent-filter>
         </activity>
 
         <provider
