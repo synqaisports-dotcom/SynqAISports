@@ -177,6 +177,166 @@ function tallyCountries(rows: { country: string | null }[]) {
     .map(([country, count]) => ({ country, count }));
 }
 
+const TS_PAGE = 1000;
+const TS_MAX_ROWS = 80_000;
+
+function utcDayKey(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toISOString().slice(0, 10);
+}
+
+function lastNDaysUtcKeys(n: number): string[] {
+  const keys: string[] = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setUTCHours(0, 0, 0, 0);
+    d.setUTCDate(d.getUTCDate() - i);
+    keys.push(d.toISOString().slice(0, 10));
+  }
+  return keys;
+}
+
+function buildDailyCounts(dayKeys: string[], timestamps: string[]): number[] {
+  const m = new Map<string, number>();
+  for (const k of dayKeys) m.set(k, 0);
+  for (const iso of timestamps) {
+    const k = utcDayKey(iso);
+    if (!k || !m.has(k)) continue;
+    m.set(k, (m.get(k) ?? 0) + 1);
+  }
+  return dayKeys.map((k) => m.get(k) ?? 0);
+}
+
+type TrendKind = 'up' | 'flat';
+
+function trendVsPriorWeek(series: number[]): { label: string; trend: TrendKind } {
+  if (series.length < 14) {
+    return { label: 'Serie incompleta', trend: 'flat' };
+  }
+  const prev = series.slice(0, 7).reduce((a, b) => a + b, 0);
+  const cur = series.slice(7, 14).reduce((a, b) => a + b, 0);
+  if (prev === 0 && cur === 0) return { label: 'Sin altas este período', trend: 'flat' };
+  if (prev === 0) return { label: `+${cur} vs semana anterior`, trend: 'up' };
+  const pct = Math.round(((cur - prev) / prev) * 1000) / 10;
+  if (Math.abs(pct) < 2) return { label: 'Estable vs semana anterior', trend: 'flat' };
+  return {
+    label: `${pct > 0 ? '+' : ''}${pct}% vs semana anterior`,
+    trend: pct > 0 ? 'up' : 'flat',
+  };
+}
+
+async function pullCreatedAtColumn(
+  admin: ReturnType<typeof createClient<Database>>,
+  table: 'profiles' | 'clubs',
+  sinceIso: string,
+): Promise<string[]> {
+  const out: string[] = [];
+  let from = 0;
+  for (let page = 0; page < 200; page++) {
+    const { data, error } = await admin
+      .from(table)
+      .select('created_at')
+      .gte('created_at', sinceIso)
+      .order('created_at', { ascending: true })
+      .range(from, from + TS_PAGE - 1);
+    if (error) throw error;
+    const chunk = (data ?? []) as { created_at?: string | null }[];
+    for (const row of chunk) {
+      if (row.created_at) out.push(row.created_at);
+    }
+    if (chunk.length < TS_PAGE) break;
+    from += TS_PAGE;
+    if (out.length >= TS_MAX_ROWS) break;
+  }
+  return out;
+}
+
+async function pullPromoScanTimes(
+  admin: ReturnType<typeof createClient<Database>>,
+  sinceIso: string,
+): Promise<string[]> {
+  const out: string[] = [];
+  let from = 0;
+  for (let page = 0; page < 200; page++) {
+    const { data, error } = await admin
+      .from('promo_campaign_events')
+      .select('created_at')
+      .eq('kind', 'scan')
+      .gte('created_at', sinceIso)
+      .order('created_at', { ascending: true })
+      .range(from, from + TS_PAGE - 1);
+    if (error) {
+      console.warn('[SynqAI] analytics promo_campaign_events timeseries:', error.message);
+      return out;
+    }
+    const chunk = (data ?? []) as { created_at?: string | null }[];
+    for (const row of chunk) {
+      if (row.created_at) out.push(row.created_at);
+    }
+    if (chunk.length < TS_PAGE) break;
+    from += TS_PAGE;
+    if (out.length >= TS_MAX_ROWS) break;
+  }
+  return out;
+}
+
+async function pullCollabTimes(
+  admin: ReturnType<typeof createClient<Database>>,
+  sinceIso: string,
+  submissionType: 'lead' | 'feedback',
+): Promise<string[]> {
+  const out: string[] = [];
+  let from = 0;
+  for (let page = 0; page < 200; page++) {
+    const { data, error } = await admin
+      .from('sandbox_collaboration_submissions')
+      .select('created_at')
+      .eq('submission_type', submissionType)
+      .gte('created_at', sinceIso)
+      .order('created_at', { ascending: true })
+      .range(from, from + TS_PAGE - 1);
+    if (error) {
+      console.warn('[SynqAI] analytics collab timeseries:', error.message);
+      return out;
+    }
+    const chunk = (data ?? []) as { created_at?: string | null }[];
+    for (const row of chunk) {
+      if (row.created_at) out.push(row.created_at);
+    }
+    if (chunk.length < TS_PAGE) break;
+    from += TS_PAGE;
+    if (out.length >= TS_MAX_ROWS) break;
+  }
+  return out;
+}
+
+async function pullActiveClubSnapshots(
+  admin: ReturnType<typeof createClient<Database>>,
+  sinceIso: string,
+): Promise<string[]> {
+  const out: string[] = [];
+  let from = 0;
+  for (let page = 0; page < 200; page++) {
+    const { data, error } = await admin
+      .from('clubs')
+      .select('created_at')
+      .eq('status', 'Active')
+      .gte('created_at', sinceIso)
+      .order('created_at', { ascending: true })
+      .range(from, from + TS_PAGE - 1);
+    if (error) throw error;
+    const chunk = (data ?? []) as { created_at?: string | null }[];
+    for (const row of chunk) {
+      if (row.created_at) out.push(row.created_at);
+    }
+    if (chunk.length < TS_PAGE) break;
+    from += TS_PAGE;
+    if (out.length >= TS_MAX_ROWS) break;
+  }
+  return out;
+}
+
 export async function GET(req: Request) {
   const gate = await verifySuperadminFromRequest(req);
   if (!gate.ok) {
@@ -283,6 +443,70 @@ export async function GET(req: Request) {
     const conversionRate =
       profilesTotal > 0 ? Math.round((collabLeads / profilesTotal) * 10000) / 100 : 0;
 
+    const dashboardDayKeys = lastNDaysUtcKeys(30);
+    const since30 = new Date();
+    since30.setUTCHours(0, 0, 0, 0);
+    since30.setUTCDate(since30.getUTCDate() - 29);
+    const since30Iso = since30.toISOString();
+
+    let profilesDaily: number[] = dashboardDayKeys.map(() => 0);
+    let clubsActiveDaily: number[] = dashboardDayKeys.map(() => 0);
+    let promoScansDaily: number[] = dashboardDayKeys.map(() => 0);
+    let collabLeadsDaily: number[] = dashboardDayKeys.map(() => 0);
+    let collabFeedbackDaily: number[] = dashboardDayKeys.map(() => 0);
+
+    try {
+      const [profileTs, activeClubTs, promoTs, leadTs, feedbackTs] = await Promise.all([
+        pullCreatedAtColumn(admin, 'profiles', since30Iso),
+        pullActiveClubSnapshots(admin, since30Iso),
+        pullPromoScanTimes(admin, since30Iso),
+        pullCollabTimes(admin, since30Iso, 'lead'),
+        pullCollabTimes(admin, since30Iso, 'feedback'),
+      ]);
+      profilesDaily = buildDailyCounts(dashboardDayKeys, profileTs);
+      clubsActiveDaily = buildDailyCounts(dashboardDayKeys, activeClubTs);
+      promoScansDaily = buildDailyCounts(dashboardDayKeys, promoTs);
+      collabLeadsDaily = buildDailyCounts(dashboardDayKeys, leadTs);
+      collabFeedbackDaily = buildDailyCounts(dashboardDayKeys, feedbackTs);
+    } catch (e) {
+      console.warn('[SynqAI] analytics dashboard timeseries:', e);
+    }
+
+    const last14 = (arr: number[]) => arr.slice(-14);
+    const clubsTrend = trendVsPriorWeek(last14(clubsActiveDaily));
+    const profilesTrend = trendVsPriorWeek(last14(profilesDaily));
+    const promoTrend = trendVsPriorWeek(last14(promoScansDaily));
+
+    const leads14 = last14(collabLeadsDaily);
+    const prof14 = last14(profilesDaily);
+    const convPrev =
+      prof14.slice(0, 7).reduce((a, b) => a + b, 0) > 0
+        ? (leads14.slice(0, 7).reduce((a, b) => a + b, 0) /
+            prof14.slice(0, 7).reduce((a, b) => a + b, 0)) *
+          100
+        : 0;
+    const convCur =
+      prof14.slice(7, 14).reduce((a, b) => a + b, 0) > 0
+        ? (leads14.slice(7, 14).reduce((a, b) => a + b, 0) /
+            prof14.slice(7, 14).reduce((a, b) => a + b, 0)) *
+          100
+        : 0;
+    let conversionTrendLabel = 'Estable vs semana anterior';
+    let conversionTrend: TrendKind = 'flat';
+    const deltaConv = Math.round((convCur - convPrev) * 10) / 10;
+    if (Math.abs(deltaConv) < 0.05 && convPrev === 0 && convCur === 0) {
+      conversionTrendLabel = 'Sin leads en ventana';
+      conversionTrend = 'flat';
+    } else if (Math.abs(deltaConv) < 0.05) {
+      conversionTrendLabel = 'Estable vs semana anterior';
+      conversionTrend = 'flat';
+    } else {
+      conversionTrendLabel = `${deltaConv > 0 ? '+' : ''}${deltaConv} pp vs semana anterior`;
+      conversionTrend = deltaConv > 0 ? 'up' : 'flat';
+    }
+
+    const signalBarsMax = Math.max(1, ...profilesDaily.map((n, i) => n + promoScansDaily[i]));
+
     // Funnel SANDBOX COACH (si no existe tabla/migración, cae a 0 sin romper analytics).
     let sandboxCoachOpens = 0;
     let sandboxCoachAdImpressions = 0;
@@ -351,6 +575,19 @@ export async function GET(req: Request) {
       sandboxCoachAdImpressions,
       sandboxCoachAdClicks,
       sandboxCoachEstimatedRevenue,
+      dashboardDays: dashboardDayKeys,
+      profilesDaily,
+      clubsActiveDaily,
+      promoScansDaily,
+      collabLeadsDaily,
+      collabFeedbackDaily,
+      signalBarsMax,
+      dashboardTrends: {
+        clubsActive: clubsTrend,
+        profiles: profilesTrend,
+        promoScans: promoTrend,
+        conversion: { label: conversionTrendLabel, trend: conversionTrend },
+      },
     });
   } catch (e) {
     console.error('[SynqAI] admin analytics:', e);

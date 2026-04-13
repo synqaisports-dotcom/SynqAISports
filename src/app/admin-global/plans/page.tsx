@@ -445,7 +445,13 @@ export default function GlobalPlansPage() {
               </div>
 
               <div className="space-y-4 pt-4">
-                <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">Configuración_Accesos_Publicitarios</Label>
+                <Label className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest ml-1">
+                  Pack comercial (catálogo)
+                </Label>
+                <p className="text-[9px] font-semibold normal-case tracking-normal text-white/45 leading-relaxed -mt-2 ml-1">
+                  Módulos incluidos en el plan comercial (marketing). La matriz real de permisos por club está en{" "}
+                  <span className="text-emerald-400/90">Cuadro Matriz Club</span>.
+                </p>
                 <Dialog open={isAccessDialogOpen} onOpenChange={setIsAccessDialogOpen}>
                   <DialogTrigger asChild>
                     <Button 
@@ -454,7 +460,7 @@ export default function GlobalPlansPage() {
                     >
                       <span className="flex items-center gap-3">
                         <Lock className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                        Matriz de Sectores Operativos
+                        Editar pack comercial
                       </span>
                       <ChevronRight className="h-4 w-4" />
                     </Button>
@@ -463,9 +469,9 @@ export default function GlobalPlansPage() {
                     <DialogHeader className="space-y-4">
                       <div className="flex items-center gap-2">
                         <ShieldAlert className="h-4 w-4 text-emerald-400" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400">Access_Matrix_V2</span>
+                        <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400">Commercial_Pack_V2</span>
                       </div>
-                      <DialogTitle className="text-2xl font-black italic tracking-tighter uppercase">CONFIGURAR ACCESOS</DialogTitle>
+                      <DialogTitle className="text-2xl font-black italic tracking-tighter uppercase">PACK COMERCIAL</DialogTitle>
                     </DialogHeader>
                     
                     <div className="space-y-4 py-8">

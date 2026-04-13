@@ -9,18 +9,14 @@ import {
   Shield,
   Search,
   Activity,
-  Pencil,
-  Globe,
-  Cpu,
-  Monitor,
-  Target,
+  Info,
   Lock,
   Loader2,
   RefreshCw,
-  Info,
   Users,
   ExternalLink,
   Trash2,
+  BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,21 +30,14 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Switch } from "@/components/ui/switch";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
@@ -57,140 +46,11 @@ import type { Database } from "@/lib/supabase";
 
 type SynqRoleRow = Database["public"]["Tables"]["synq_roles"]["Row"];
 
-const SECTOR_PERMISSIONS = [
-  {
-    id: "global",
-    label: "Control Global (Emerald)",
-    icon: Globe,
-    color: "text-emerald-400",
-    modules: [
-      {
-        id: "clubs",
-        label: "Red de Clubes",
-        features: ["Ver Nodos", "Vincular Club", "Modificar Protocolo", "Suspender"],
-      },
-      {
-        id: "plans",
-        label: "Gestión de Planes",
-        features: ["Ver Tarifas", "Editar Precios", "Protocolos de Escalado"],
-      },
-      {
-        id: "promos",
-        label: "Promociones IA",
-        features: ["Generar Magic Links", "Analítica de Conversión", "Gestión de Tokens"],
-      },
-      {
-        id: "users_admin",
-        label: "Usuarios Sistema",
-        features: ["Emitir Credenciales", "Resetear Claves", "Bajas de Red"],
-      },
-      {
-        id: "warehouse",
-        label: "Almacén Neural",
-        features: ["Acceso Global Ejercicios", "Exportar para Gemini"],
-      },
-    ],
-  },
-  {
-    id: "methodology",
-    label: "Estrategia Metodológica (Amber)",
-    icon: Target,
-    color: "text-amber-500",
-    modules: [
-      {
-        id: "identity",
-        label: "Hoja de Ruta",
-        features: ["Items Aprendizaje", "Objetivos Tácticos"],
-      },
-      {
-        id: "cyclic",
-        label: "Planificación",
-        features: ["Ciclo-Planner", "Planificador de Sesiones"],
-      },
-      {
-        id: "boards_master",
-        label: "Pizarras Tácticas",
-        features: ["Estudio de Diseño (Pro)", "Terminal Partido", "Modo Promo (Restringido)"],
-      },
-      {
-        id: "library_master",
-        label: "Libro de Estilo",
-        features: ["Validar Tareas Maestras", "Gestionar Biblioteca Club"],
-      },
-    ],
-  },
-  {
-    id: "operational",
-    label: "Operativa Élite (Cyan)",
-    icon: Cpu,
-    color: "text-primary",
-    modules: [
-      {
-        id: "coach_hub",
-        label: "Coach Hub",
-        features: ["Dashboard Personal", "Mis Sesiones", "Calendario"],
-      },
-      {
-        id: "academy_ops",
-        label: "Gestión Formativa",
-        features: ["Equipos/Categorías", "Fichas Jugadores", "Control Asistencia"],
-      },
-      {
-        id: "facilities_ops",
-        label: "Logística",
-        features: ["Instalaciones", "Subdivisiones/Zonas"],
-      },
-      {
-        id: "tech_ops",
-        label: "Tecnología Aplicada",
-        features: ["Neural Planner (AI)", "Configuración Watch", "Métricas en Vivo"],
-      },
-    ],
-  },
-  {
-    id: "terminals",
-    label: "Terminales de Acceso (White)",
-    icon: Monitor,
-    color: "text-white/60",
-    modules: [
-      {
-        id: "sandbox_node",
-        label: "Terminal Sandbox",
-        features: ["Acceso Equipo Local", "Tareas Sandbox", "Slots Partidos (20)", "Analítica Local"],
-      },
-      {
-        id: "tutor_portal",
-        label: "Portal Tutores",
-        features: ["Ver Ficha Hijo", "Mensajería", "Pagos"],
-      },
-      {
-        id: "watch_link",
-        label: "Smartwatch Link",
-        features: ["Sincronización Periférico", "Control de Partido"],
-      },
-    ],
-  },
-];
-
-function dotColorClass(sectorColor: string): string {
-  if (sectorColor.includes("emerald")) return "bg-emerald-400";
-  if (sectorColor.includes("amber")) return "bg-amber-500";
-  if (sectorColor.includes("white")) return "bg-white/60";
-  return "bg-primary";
-}
-
 export default function GlobalRolesPage() {
   const { session } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [editingRole, setEditingRole] = useState<RoleCatalogEntry | null>(null);
-  const [roleDraftLabel, setRoleDraftLabel] = useState("");
-  const [activeSectors, setActiveSectors] = useState<Record<string, boolean>>({
-    global: true,
-    methodology: true,
-    operational: true,
-    terminals: true,
-  });
+  const [refDialogOpen, setRefDialogOpen] = useState(false);
+  const [refRole, setRefRole] = useState<RoleCatalogEntry | null>(null);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [profilesTotal, setProfilesTotal] = useState<number | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
@@ -293,19 +153,9 @@ export default function GlobalRolesPage() {
     void loadSynqAdmin();
   }, [loadSynqAdmin]);
 
-  useEffect(() => {
-    if (isSheetOpen) {
-      setRoleDraftLabel(editingRole?.label ?? "");
-    }
-  }, [isSheetOpen, editingRole]);
-
-  const openSheet = (role: RoleCatalogEntry | null = null) => {
-    setEditingRole(role);
-    setIsSheetOpen(true);
-  };
-
-  const toggleSector = (sectorId: string) => {
-    setActiveSectors((prev) => ({ ...prev, [sectorId]: !prev[sectorId] }));
+  const openRefDialog = (role: RoleCatalogEntry | null = null) => {
+    setRefRole(role);
+    setRefDialogOpen(true);
   };
 
   const rows = useMemo(() => {
@@ -470,10 +320,10 @@ export default function GlobalRolesPage() {
           </Button>
           <Button
             type="button"
-            onClick={() => openSheet(null)}
+            onClick={() => openRefDialog(null)}
             className="h-14 rounded-2xl border-none bg-emerald-500 px-10 font-black uppercase text-[10px] tracking-widest text-black shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:scale-105 transition-[background-color,border-color,color,opacity,transform]"
           >
-            <Plus className="mr-2 h-5 w-5" /> Matriz de permisos
+            <BookOpen className="mr-2 h-5 w-5" /> Guía de referencia
           </Button>
         </div>
       </div>
@@ -571,10 +421,10 @@ export default function GlobalRolesPage() {
                             variant="ghost"
                             size="icon"
                             className="h-10 w-10 rounded-xl border border-white/5 text-white/20 transition-[background-color,border-color,color,opacity,transform] hover:border-emerald-500/20 hover:bg-emerald-500/10 hover:text-emerald-400"
-                            onClick={() => openSheet(role)}
-                            title="Ver matriz de permisos (referencia)"
+                            onClick={() => openRefDialog(role)}
+                            title="Referencia de rol (enlaces)"
                           >
-                            <Pencil className="h-4 w-4" />
+                            <BookOpen className="h-4 w-4" />
                           </Button>
                           <Button
                             type="button"
@@ -773,157 +623,60 @@ export default function GlobalRolesPage() {
         </CardContent>
       </Card>
 
-      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent
-          side="right"
-          className="flex w-full flex-col border-l border-emerald-500/20 bg-[#04070c]/98 p-0 text-white shadow-[-20px_0_60px_rgba(0,0,0,0.8)] backdrop-blur-3xl sm:max-w-2xl lg:max-w-3xl"
-        >
-          <div className="border-b border-white/5 bg-black/40 p-10 pb-6">
-            <SheetHeader className="space-y-4 text-left">
-              <div className="flex items-center gap-3">
-                <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400">
-                  Matriz_Reference_UI
-                </span>
-              </div>
-              <SheetTitle className="font-headline text-left text-4xl font-black uppercase italic tracking-tighter text-white">
-                {editingRole ? `ROL: ${editingRole.label}` : "MATRIZ DE PERMISOS"}
-              </SheetTitle>
-              <SheetDescription className="text-left text-[10px] font-bold uppercase italic tracking-widest text-white/30">
-                Referencia visual de módulos Synq. No persiste en base de datos. Asignación real:{" "}
-                <span className="text-emerald-400/80">Usuarios → campo role</span>.
-              </SheetDescription>
-            </SheetHeader>
-          </div>
-
-          <div className="custom-scrollbar flex-1 space-y-10 overflow-y-auto p-10">
-            <div className="space-y-4">
-              <label className="ml-1 text-[10px] font-black uppercase tracking-widest text-emerald-400/60">
-                Etiqueta (solo borrador local)
-              </label>
-              <Input
-                value={roleDraftLabel}
-                onChange={(e) => setRoleDraftLabel(e.target.value)}
-                placeholder="EJ: ENTRENADOR_PROMO_CANTERA"
-                className="h-16 rounded-2xl border-emerald-500/20 bg-white/5 text-lg font-bold uppercase transition-[background-color,border-color,color,opacity,transform] placeholder:text-white/10 focus:border-emerald-500"
-              />
+      <Dialog open={refDialogOpen} onOpenChange={setRefDialogOpen}>
+        <DialogContent className="max-w-md rounded-3xl border-emerald-500/25 bg-[#04070c] text-white shadow-[0_0_50px_rgba(0,0,0,0.85)]">
+          <DialogHeader className="space-y-3 text-left">
+            <DialogTitle className="font-headline text-xl font-black uppercase italic tracking-tight text-white">
+              {refRole ? `Referencia · ${refRole.label}` : "Guía de referencia de roles"}
+            </DialogTitle>
+            <DialogDescription className="text-left text-[11px] font-semibold normal-case tracking-normal text-white/65 leading-relaxed">
+              Esta vista no persiste permisos. El rol efectivo está en{" "}
+              <span className="text-emerald-400">profiles.role</span>; la matriz operativa por club se edita en Cuadro
+              Matriz Club. Inventario CTO: archivo{" "}
+              <code className="rounded bg-white/10 px-1.5 py-0.5 text-emerald-200/90">docs/ADMIN_GLOBAL_SECTIONS.md</code>.
+            </DialogDescription>
+          </DialogHeader>
+          {refRole && (
+            <div className="rounded-2xl border border-white/10 bg-black/50 p-4 text-[10px] text-white/55">
+              <p className="font-black uppercase tracking-widest text-emerald-400/80">ID</p>
+              <p className="mt-1 font-mono text-emerald-200/90">{refRole.id}</p>
+              <p className="mt-3 font-black uppercase tracking-widest text-emerald-400/80">Descripción</p>
+              <p className="mt-1 normal-case font-semibold leading-relaxed">{refRole.description}</p>
             </div>
-
-            <div className="space-y-6">
-              <label className="ml-1 block text-[10px] font-black uppercase tracking-widest text-emerald-400/60">
-                Sectores y módulos (documentación)
-              </label>
-
-              <Accordion
-                type="multiple"
-                defaultValue={["global", "operational", "methodology", "terminals"]}
-                className="space-y-4"
-              >
-                {SECTOR_PERMISSIONS.map((sector) => (
-                  <AccordionItem
-                    key={sector.id}
-                    value={sector.id}
-                    className={cn(
-                      "overflow-hidden rounded-3xl border border-white/5 bg-white/[0.02] shadow-xl transition-[background-color,border-color,color,opacity,transform]",
-                      activeSectors[sector.id] ? "border-emerald-500/20" : "opacity-40 grayscale",
-                    )}
-                  >
-                    <div className="flex items-center justify-between bg-black/40 px-6 py-5">
-                      <div className="flex items-center gap-4">
-                        <div
-                          className={cn(
-                            "flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5",
-                            sector.color,
-                          )}
-                        >
-                          <sector.icon className="h-6 w-6" />
-                        </div>
-                        <div>
-                          <span className="text-sm font-black uppercase tracking-widest text-white">
-                            {sector.label}
-                          </span>
-                          <p className="mt-0.5 text-[8px] font-bold uppercase tracking-widest text-white/30">
-                            Interruptor de sector (UI)
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-6">
-                        <Switch
-                          checked={activeSectors[sector.id]}
-                          onCheckedChange={() => toggleSector(sector.id)}
-                          className="data-[state=checked]:bg-emerald-500"
-                        />
-                        <AccordionTrigger className="h-10 w-10 justify-center rounded-full p-0 hover:bg-white/5 hover:no-underline" />
-                      </div>
-                    </div>
-
-                    <AccordionContent className="space-y-6 bg-black/20 p-6">
-                      <div className="grid grid-cols-1 gap-4">
-                        {sector.modules.map((module) => (
-                          <div
-                            key={module.id}
-                            className="space-y-6 rounded-[2rem] border border-white/5 bg-black/60 p-6"
-                          >
-                            <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                              <div className="flex items-center gap-3">
-                                <div
-                                  className={cn("h-2 w-2 rounded-full", dotColorClass(sector.color))}
-                                />
-                                <span className="text-xs font-black uppercase tracking-widest text-white">
-                                  {module.label}
-                                </span>
-                              </div>
-                              <Badge
-                                variant="outline"
-                                className="border-white/10 text-[8px] text-white/20"
-                              >
-                                REF_DOC
-                              </Badge>
-                            </div>
-
-                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                              {module.features.map((feature, fidx) => (
-                                <div
-                                  key={`${module.id}-${fidx}-${feature}`}
-                                  className="group/feat flex cursor-pointer items-center justify-between rounded-2xl border border-white/5 bg-white/[0.03] p-4 transition-[background-color,border-color,color,opacity,transform] hover:border-emerald-500/20"
-                                >
-                                  <span className="text-[10px] font-bold uppercase tracking-tight text-white/40 transition-colors group-hover/feat:text-white/80">
-                                    {feature}
-                                  </span>
-                                  <Checkbox
-                                    className="h-4 w-4 rounded-md border-white/20 data-[state=checked]:bg-emerald-500 data-[state=checked]:text-black"
-                                    defaultChecked
-                                  />
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            </div>
-          </div>
-
-          <div className="border-t border-white/5 bg-black/40 p-10 pt-6">
+          )}
+          <DialogFooter className="flex-col gap-2 sm:flex-col">
             <Button
               type="button"
-              onClick={() => {
-                toast({
-                  title: "REFERENCIA_CERRADA",
-                  description: "La matriz es solo guía de producto; los cambios de rol se hacen en Usuarios.",
-                });
-                setIsSheetOpen(false);
-              }}
-              className="h-16 w-full rounded-2xl border-none bg-emerald-500 font-black uppercase text-[11px] tracking-[0.3em] text-black shadow-[0_0_40px_rgba(16,185,129,0.2)] transition-[background-color,border-color,color,opacity,transform] hover:scale-[1.02]"
+              className="h-12 w-full rounded-2xl bg-emerald-500 font-black uppercase text-[10px] tracking-widest text-black"
+              asChild
             >
-              CERRAR
+              <Link href="/admin-global/users" className="gap-2">
+                <Users className="h-4 w-4" />
+                Asignar rol en usuarios
+              </Link>
             </Button>
-          </div>
-        </SheetContent>
-      </Sheet>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-12 w-full rounded-2xl border-emerald-500/35 font-black uppercase text-[10px] tracking-widest text-emerald-200"
+              asChild
+            >
+              <Link href="/admin-global/club-access-matrix" className="gap-2">
+                <Shield className="h-4 w-4" />
+                Cuadro matriz club
+              </Link>
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-11 w-full rounded-2xl font-black uppercase text-[9px] tracking-widest text-white/50 hover:text-white"
+              onClick={() => setRefDialogOpen(false)}
+            >
+              Cerrar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

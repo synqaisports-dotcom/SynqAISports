@@ -1,5 +1,32 @@
 # Reporte de trabajo autónomo — SynqAI
 
+## 2026-04-13 — Admin Global: pack comercial, roles (referencia) y dashboard con series
+
+### Tareas completadas
+
+- **API** `GET /api/admin/analytics`: series diarias 30 días UTC (`profilesDaily`, `clubsActiveDaily`, `promoScansDaily`, `collabLeadsDaily`, `collabFeedbackDaily`), `signalBarsMax`, `dashboardTrends` (comparativa semana actual vs anterior).
+- **Dashboard** `/admin-global`: KPIs con tendencias reales; gráfico “Señal operativa” con datos de API (no barras fijas); hints de pipeline con sumatorio 7 días en leads/feedback.
+- **Planes**: UI renombrada a **pack comercial** y texto que separa catálogo comercial de **Cuadro Matriz Club**.
+- **Roles**: eliminado sheet largo tipo matriz; **Guía de referencia** (diálogo) con enlaces a Usuarios, Cuadro matriz y doc interna.
+- **Docs**: `docs/ADMIN_GLOBAL_SECTIONS.md`, `src/app/admin-global/README.md` alineados con lo implementado.
+
+### Archivos tocados
+
+- `src/app/api/admin/analytics/route.ts`, `src/app/admin-global/page.tsx`, `src/app/admin-global/plans/page.tsx`, `src/app/admin-global/roles/page.tsx`, `docs/ADMIN_GLOBAL_SECTIONS.md`, `src/app/admin-global/README.md`, `REPORT_LOG.md`.
+
+### GUÍA DE TEST
+
+1. Superadmin: abrir `/admin-global` con `SUPABASE_SERVICE_ROLE_KEY` en servidor. Las tarjetas deben mostrar textos de tendencia distintos de porcentajes fijos (+8.4%, etc.) cuando haya datos en ventana 14 días.
+2. Misma página: el bloque “Señal operativa” debe mostrar barras proporcionales (no siempre la misma silueta); con API 501/offline puede quedar mensaje vacío o cache previa.
+3. `/admin-global/plans` → Nuevo protocolo → botón **Editar pack comercial** y título del diálogo **PACK COMERCIAL**.
+4. `/admin-global/roles` → **Guía de referencia** y icono libro en fila: diálogo corto con enlaces; sin acordeón largo.
+
+### Bloqueos
+
+- `tsc --noEmit` sigue fallando por deuda previa (torneos, qrcode, etc.); no introducido por este bloque.
+
+---
+
 ## 2026-04-11 — Bloque: Fase 1 (Roadmap + clasificación + blindaje ads + shared UI)
 
 ### Tareas completadas (roadmap)
