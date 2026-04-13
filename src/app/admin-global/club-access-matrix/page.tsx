@@ -181,9 +181,9 @@ export default function AdminGlobalClubAccessMatrixPage() {
               <SelectTrigger className="max-w-md bg-white/5 border-emerald-500/20 text-white">
                 <SelectValue placeholder="Elegir club…" />
               </SelectTrigger>
-              <SelectContent className="bg-[#0a0f18] border-emerald-500/30">
+              <SelectContent className="border-emerald-500/30 bg-[#04070c] text-white">
                 {clubs.map((c) => (
-                  <SelectItem key={c.id} value={c.id} className="text-[10px] font-mono uppercase">
+                  <SelectItem key={c.id} value={c.id} className="text-[10px] font-mono uppercase text-white focus:bg-emerald-500 focus:text-black">
                     {(c.name || "Sin nombre").slice(0, 40)} — {c.id.slice(0, 8)}…
                   </SelectItem>
                 ))}

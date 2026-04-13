@@ -3,6 +3,73 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/supabase';
 import { verifySuperadminFromRequest } from '../verify-superadmin';
 
+type GeoHeatPoint = { lat: number; lon: number; intensity: number; label: string };
+
+const COUNTRY_COORDINATES: Record<string, { lat: number; lon: number }> = {
+  ES: { lat: 40.4168, lon: -3.7038 },
+  SPAIN: { lat: 40.4168, lon: -3.7038 },
+  ESPAÑA: { lat: 40.4168, lon: -3.7038 },
+  AR: { lat: -34.6037, lon: -58.3816 },
+  ARGENTINA: { lat: -34.6037, lon: -58.3816 },
+  BR: { lat: -15.7939, lon: -47.8828 },
+  BRASIL: { lat: -15.7939, lon: -47.8828 },
+  BRAZIL: { lat: -15.7939, lon: -47.8828 },
+  MX: { lat: 19.4326, lon: -99.1332 },
+  MEXICO: { lat: 19.4326, lon: -99.1332 },
+  MÉXICO: { lat: 19.4326, lon: -99.1332 },
+  CO: { lat: 4.711, lon: -74.0721 },
+  COLOMBIA: { lat: 4.711, lon: -74.0721 },
+  CL: { lat: -33.4489, lon: -70.6693 },
+  CHILE: { lat: -33.4489, lon: -70.6693 },
+  US: { lat: 38.9072, lon: -77.0369 },
+  USA: { lat: 38.9072, lon: -77.0369 },
+  "UNITED STATES": { lat: 38.9072, lon: -77.0369 },
+  FR: { lat: 48.8566, lon: 2.3522 },
+  FRANCE: { lat: 48.8566, lon: 2.3522 },
+  DE: { lat: 52.52, lon: 13.405 },
+  GERMANY: { lat: 52.52, lon: 13.405 },
+  IT: { lat: 41.9028, lon: 12.4964 },
+  ITALY: { lat: 41.9028, lon: 12.4964 },
+  PT: { lat: 38.7223, lon: -9.1393 },
+  PORTUGAL: { lat: 38.7223, lon: -9.1393 },
+  UK: { lat: 51.5074, lon: -0.1278 },
+  "UNITED KINGDOM": { lat: 51.5074, lon: -0.1278 },
+};
+
+function normalizeCountryKey(country: string): string {
+  return country.trim().toUpperCase();
+}
+
+function buildGeoHeat(
+  geoProfiles: Array<{ country: string; count: number }>,
+  geoClubs: Array<{ country: string; count: number }>,
+  sandboxOpens: number,
+): GeoHeatPoint[] {
+  const byCountry = new Map<string, number>();
+  for (const row of geoProfiles) {
+    byCountry.set(row.country, (byCountry.get(row.country) ?? 0) + row.count);
+  }
+  for (const row of geoClubs) {
+    byCountry.set(row.country, (byCountry.get(row.country) ?? 0) + row.count * 2);
+  }
+  if (sandboxOpens > 0 && byCountry.has("Sin país")) {
+    byCountry.set("Sin país", (byCountry.get("Sin país") ?? 0) + sandboxOpens);
+  }
+  const points: GeoHeatPoint[] = [];
+  for (const [country, intensity] of byCountry.entries()) {
+    const key = normalizeCountryKey(country);
+    const coords = COUNTRY_COORDINATES[key];
+    if (!coords) continue;
+    points.push({
+      lat: coords.lat,
+      lon: coords.lon,
+      intensity,
+      label: country,
+    });
+  }
+  return points.sort((a, b) => b.intensity - a.intensity).slice(0, 24);
+}
+
 const PAGE = 1000;
 const MAX_PAGES = 100;
 
@@ -121,11 +188,18 @@ export async function GET(req: Request) {
     }
 
     let profileCountries: { country: string; count: number }[] = [];
+    let clubCountries: { country: string; count: number }[] = [];
     try {
       const rows = await fetchAllCountries(admin, 'profiles');
       profileCountries = tallyCountries(rows).slice(0, 8);
     } catch (e) {
       console.warn('[SynqAI] analytics profile countries:', e);
+    }
+    try {
+      const rows = await fetchAllCountries(admin, 'clubs');
+      clubCountries = tallyCountries(rows).slice(0, 8);
+    } catch (e) {
+      console.warn('[SynqAI] analytics club countries:', e);
     }
 
     const totalProfileCountry = profileCountries.reduce((s, x) => s + x.count, 0) || 1;
@@ -166,6 +240,7 @@ export async function GET(req: Request) {
     const adCpc = Number(process.env.SANDBOX_AD_ESTIMATED_CPC_EUR ?? "0.05");
     const sandboxCoachEstimatedRevenue =
       Math.round(((sandboxCoachAdImpressions / 1000) * adCpm + sandboxCoachAdClicks * adCpc) * 100) / 100;
+    const geoHeat = buildGeoHeat(profileCountries, clubCountries, sandboxCoachOpens);
 
     return NextResponse.json({
       ok: true,
@@ -179,6 +254,7 @@ export async function GET(req: Request) {
       collabLeads,
       collabFeedback,
       geo: geoWithPercent,
+      geoHeat,
       topPromos,
       conversionRate,
       sandboxCoachOpens,

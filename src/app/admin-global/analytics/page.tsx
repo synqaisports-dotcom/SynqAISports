@@ -31,6 +31,7 @@ const SYNQ_PENDING_STORAGE_KEY = "synq_event_queue_pending";
 const VISIBILITY_REFRESH_MS = 30_000;
 
 type GeoRow = { country: string; count: number; percent: number };
+type GeoHeatPoint = { lat: number; lon: number; intensity: number; label: string };
 type TopPromo = {
   id: string;
   title: string;
@@ -54,6 +55,7 @@ type AnalyticsPayload = {
   collabLeads?: number;
   collabFeedback?: number;
   geo?: GeoRow[];
+  geoHeat?: GeoHeatPoint[];
   topPromos?: TopPromo[];
   conversionRate?: number;
   sandboxCoachOpens?: number;
@@ -79,6 +81,12 @@ function flagForCountry(name: string): string {
   if (u === "US" || u.includes("USA") || u.includes("UNITED STATES")) return "🇺🇸";
   if (u.includes("SIN PAÍS")) return "🌐";
   return "🌐";
+}
+
+function toMapPoint(lat: number, lon: number, intensity: number, label: string) {
+  const x = ((lon + 180) / 360) * 100;
+  const y = ((90 - lat) / 180) * 100;
+  return { x, y, intensity, label };
 }
 
 /**
@@ -194,6 +202,7 @@ export default function GlobalAnalyticsPage() {
   const promoScans = d?.promoScans ?? 0;
   const promoNear = d?.promoNearLimit ?? 0;
   const geo = d?.geo ?? [];
+  const geoHeat = d?.geoHeat ?? [];
   const topPromos = d?.topPromos ?? [];
   const conv = d?.conversionRate ?? 0;
   const activationRate = clubs > 0 ? Math.round(((d?.clubsActive ?? 0) / clubs) * 100) : 0;
@@ -510,6 +519,30 @@ export default function GlobalAnalyticsPage() {
         </div>
       </section>
 
+      <Card className="glass-panel border border-emerald-500/20 bg-black/40 rounded-[2rem] overflow-hidden">
+        <CardHeader className="border-b border-white/5">
+          <CardTitle className="text-[10px] font-black uppercase tracking-widest text-emerald-400 flex items-center gap-2">
+            <Globe className="h-4 w-4" /> Mapa de calor global (Sandbox + Clubs)
+          </CardTitle>
+          <CardDescription className="text-[9px] uppercase text-white/35">
+            Puntos agregados por país y ecosistema para visión de expansión.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-6">
+          {loading ? (
+            <div className="flex justify-center py-16">
+              <Loader2 className="h-8 w-8 animate-spin text-emerald-500/40" />
+            </div>
+          ) : geoHeat.length === 0 ? (
+            <p className="text-[10px] text-white/35 uppercase font-bold text-center py-10">
+              Sin coordenadas globales disponibles todavía.
+            </p>
+          ) : (
+            <GlobalHeatMap points={geoHeat} />
+          )}
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="glass-panel min-h-[320px] flex flex-col border border-emerald-500/20 overflow-hidden">
           <CardHeader className="border-b border-white/5">
@@ -750,5 +783,35 @@ function KpiCard({
         <p className="text-[9px] text-white/35 uppercase font-bold pt-1">{note}</p>
       </div>
     </Card>
+  );
+}
+
+function GlobalHeatMap({ points }: { points: GeoHeatPoint[] }) {
+  const max = Math.max(1, ...points.map((p) => p.intensity));
+  return (
+    <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#0b1220] h-[320px]">
+      <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_30%_40%,#22d3ee_0%,transparent_50%),radial-gradient(circle_at_70%_60%,#10b981_0%,transparent_50%)]" />
+      {points.map((p, idx) => {
+        const pp = toMapPoint(p.lat, p.lon, p.intensity, p.label);
+        const size = 8 + Math.round((p.intensity / max) * 26);
+        return (
+          <div
+            key={`${p.label}-${idx}`}
+            className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-400/30 border border-emerald-300/50"
+            style={{
+              left: `${pp.x}%`,
+              top: `${pp.y}%`,
+              width: `${size}px`,
+              height: `${size}px`,
+              boxShadow: "0 0 24px rgba(16,185,129,0.45)",
+            }}
+            title={`${p.label} · ${p.intensity}`}
+          />
+        );
+      })}
+      <div className="absolute bottom-3 right-3 text-[9px] font-black uppercase text-white/45 bg-black/40 px-3 py-1 rounded-xl border border-white/10">
+        Intensidad relativa por región
+      </div>
+    </div>
   );
 }
