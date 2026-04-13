@@ -587,9 +587,9 @@ export default function GlobalPromosPage() {
                   <SelectTrigger className="h-14 rounded-2xl border-emerald-500/20 bg-white/5 font-bold uppercase">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="rounded-xl border-emerald-500/20 bg-[#04070c]">
+                  <SelectContent className="z-[260] rounded-xl border-emerald-500/20 bg-[#04070c] text-white">
                     {COUNTRY_OPTIONS.map((c) => (
-                      <SelectItem key={c.code} value={c.code} className="text-[10px] font-black uppercase">
+                      <SelectItem key={c.code} value={c.code} className="text-[10px] font-black uppercase text-white focus:bg-emerald-500 focus:text-black">
                         {c.label} ({c.code})
                       </SelectItem>
                     ))}
@@ -606,9 +606,9 @@ export default function GlobalPromosPage() {
                     <SelectTrigger className="h-16 rounded-2xl border-emerald-500/20 bg-white/5 text-xs font-bold uppercase">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="rounded-xl border-emerald-500/20 bg-[#04070c]">
+                    <SelectContent className="z-[260] rounded-xl border-emerald-500/20 bg-[#04070c] text-white">
                       {AVAILABLE_PLANS.map((plan) => (
-                        <SelectItem key={plan.id} value={plan.id} className="text-[10px] font-black uppercase">
+                        <SelectItem key={plan.id} value={plan.id} className="text-[10px] font-black uppercase text-white focus:bg-emerald-500 focus:text-black">
                           {plan.name}
                         </SelectItem>
                       ))}
@@ -629,9 +629,9 @@ export default function GlobalPromosPage() {
                     <SelectTrigger className="h-16 rounded-2xl border-emerald-500/20 bg-white/5 text-xs font-bold uppercase">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="rounded-xl border-emerald-500/20 bg-[#04070c]">
+                    <SelectContent className="z-[260] rounded-xl border-emerald-500/20 bg-[#04070c] text-white">
                       {CHANNEL_OPTIONS.map((ch) => (
-                        <SelectItem key={ch.value} value={ch.value} className="text-[10px] font-black uppercase">
+                        <SelectItem key={ch.value} value={ch.value} className="text-[10px] font-black uppercase text-white focus:bg-emerald-500 focus:text-black">
                           {ch.label}
                         </SelectItem>
                       ))}
@@ -670,17 +670,17 @@ export default function GlobalPromosPage() {
                       <SelectTrigger className="h-12 rounded-2xl border-emerald-500/20 bg-white/5 pl-10 font-bold text-emerald-400">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="rounded-xl border-emerald-500/20 bg-[#04070c]">
-                        <SelectItem value="1_month" className="text-[10px] font-black uppercase">
+                      <SelectContent className="z-[260] rounded-xl border-emerald-500/20 bg-[#04070c] text-white">
+                        <SelectItem value="1_month" className="text-[10px] font-black uppercase text-white focus:bg-emerald-500 focus:text-black">
                           1 MES
                         </SelectItem>
-                        <SelectItem value="3_months" className="text-[10px] font-black uppercase">
+                        <SelectItem value="3_months" className="text-[10px] font-black uppercase text-white focus:bg-emerald-500 focus:text-black">
                           3 MESES
                         </SelectItem>
-                        <SelectItem value="6_months" className="text-[10px] font-black uppercase">
+                        <SelectItem value="6_months" className="text-[10px] font-black uppercase text-white focus:bg-emerald-500 focus:text-black">
                           MEDIO AÑO
                         </SelectItem>
-                        <SelectItem value="1_year" className="text-[10px] font-black uppercase">
+                        <SelectItem value="1_year" className="text-[10px] font-black uppercase text-white focus:bg-emerald-500 focus:text-black">
                           1 AÑO
                         </SelectItem>
                       </SelectContent>

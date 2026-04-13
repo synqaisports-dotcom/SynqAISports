@@ -618,9 +618,9 @@ export default function GlobalUsersPage() {
                   <SelectTrigger className="h-12 bg-white/5 border-emerald-500/20 rounded-2xl text-emerald-400 font-bold uppercase">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="z-[200] bg-[#04070c] border-emerald-500/20 rounded-2xl">
+                  <SelectContent className="z-[200] bg-[#04070c] border-emerald-500/20 rounded-2xl text-white">
                     {roleSelectOptions.map((role) => (
-                      <SelectItem key={role.value} value={role.value} className="text-[10px] font-black uppercase tracking-widest focus:bg-emerald-500 focus:text-black">
+                      <SelectItem key={role.value} value={role.value} className="text-[10px] font-black uppercase tracking-widest text-white focus:bg-emerald-500 focus:text-black">
                         {role.label}
                       </SelectItem>
                     ))}
