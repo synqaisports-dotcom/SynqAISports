@@ -3,6 +3,145 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/supabase';
 import { verifySuperadminFromRequest } from '../verify-superadmin';
 
+type GeoHeatPoint = { lat: number; lon: number; intensity: number; label: string };
+
+const COUNTRY_COORDINATES: Record<string, { lat: number; lon: number }> = {
+  ES: { lat: 40.4168, lon: -3.7038 },
+  SPAIN: { lat: 40.4168, lon: -3.7038 },
+  ESPAÑA: { lat: 40.4168, lon: -3.7038 },
+  AR: { lat: -34.6037, lon: -58.3816 },
+  ARGENTINA: { lat: -34.6037, lon: -58.3816 },
+  BR: { lat: -15.7939, lon: -47.8828 },
+  BRASIL: { lat: -15.7939, lon: -47.8828 },
+  BRAZIL: { lat: -15.7939, lon: -47.8828 },
+  MX: { lat: 19.4326, lon: -99.1332 },
+  MEXICO: { lat: 19.4326, lon: -99.1332 },
+  MÉXICO: { lat: 19.4326, lon: -99.1332 },
+  CO: { lat: 4.711, lon: -74.0721 },
+  COLOMBIA: { lat: 4.711, lon: -74.0721 },
+  CL: { lat: -33.4489, lon: -70.6693 },
+  CHILE: { lat: -33.4489, lon: -70.6693 },
+  US: { lat: 38.9072, lon: -77.0369 },
+  USA: { lat: 38.9072, lon: -77.0369 },
+  "UNITED STATES": { lat: 38.9072, lon: -77.0369 },
+  FR: { lat: 48.8566, lon: 2.3522 },
+  FRANCE: { lat: 48.8566, lon: 2.3522 },
+  DE: { lat: 52.52, lon: 13.405 },
+  GERMANY: { lat: 52.52, lon: 13.405 },
+  IT: { lat: 41.9028, lon: 12.4964 },
+  ITALY: { lat: 41.9028, lon: 12.4964 },
+  PT: { lat: 38.7223, lon: -9.1393 },
+  PORTUGAL: { lat: 38.7223, lon: -9.1393 },
+  UK: { lat: 51.5074, lon: -0.1278 },
+  "UNITED KINGDOM": { lat: 51.5074, lon: -0.1278 },
+};
+
+function normalizeCountryKey(country: string): string {
+  return country.trim().toUpperCase();
+}
+
+function buildGeoHeat(
+  geoProfiles: Array<{ country: string; count: number }>,
+  geoClubs: Array<{ country: string; count: number }>,
+  sandboxOpens: number,
+): GeoHeatPoint[] {
+  const byCountry = new Map<string, number>();
+  for (const row of geoProfiles) {
+    byCountry.set(row.country, (byCountry.get(row.country) ?? 0) + row.count);
+  }
+  for (const row of geoClubs) {
+    byCountry.set(row.country, (byCountry.get(row.country) ?? 0) + row.count * 2);
+  }
+  if (sandboxOpens > 0 && byCountry.has("Sin país")) {
+    byCountry.set("Sin país", (byCountry.get("Sin país") ?? 0) + sandboxOpens);
+  }
+  const points: GeoHeatPoint[] = [];
+  for (const [country, intensity] of byCountry.entries()) {
+    const key = normalizeCountryKey(country);
+    const coords = COUNTRY_COORDINATES[key];
+    if (!coords) continue;
+    points.push({
+      lat: coords.lat,
+      lon: coords.lon,
+      intensity,
+      label: country,
+    });
+  }
+  return points.sort((a, b) => b.intensity - a.intensity).slice(0, 24);
+}
+
+type SandboxWorldAgg = { country: string; devices: number; pings: number };
+
+async function aggregateSandboxWorldFromSnapshots(
+  admin: ReturnType<typeof createClient<Database>>,
+): Promise<{ rows: SandboxWorldAgg[]; heat: GeoHeatPoint[]; totalDevices: number; totalPings: number }> {
+  const byCountry = new Map<string, { devices: Set<string>; pings: number }>();
+  const PAGE = 500;
+  const MAX_PAGES = 40;
+
+  for (let page = 0; page < MAX_PAGES; page++) {
+    const from = page * PAGE;
+    const { data, error } = await admin
+      .from('sandbox_device_snapshots')
+      .select('device_id,snapshot')
+      .order('created_at', { ascending: false })
+      .range(from, from + PAGE - 1);
+
+    if (error) {
+      console.warn('[SynqAI] analytics sandbox_device_snapshots:', error.message);
+      break;
+    }
+    const chunk = data ?? [];
+    for (const row of chunk as Array<{ device_id?: string; snapshot?: Record<string, unknown> }>) {
+      const snap = row.snapshot;
+      if (!snap || typeof snap !== 'object') continue;
+      const op = String(snap.op ?? '');
+      if (op !== 'sandbox_telemetry') continue;
+      const payload = snap.payload as Record<string, unknown> | undefined;
+      if (!payload || String(payload.kind ?? '') !== 'sandbox_session') continue;
+      const rawCc = String(payload.countryCode ?? '').trim();
+      if (rawCc.length < 2) continue;
+      const cc = normalizeCountryKey(rawCc);
+      const deviceId = String(row.device_id ?? '').trim();
+      let cur = byCountry.get(cc);
+      if (!cur) {
+        cur = { devices: new Set<string>(), pings: 0 };
+        byCountry.set(cc, cur);
+      }
+      cur.pings += 1;
+      if (deviceId) cur.devices.add(deviceId);
+    }
+    if (chunk.length < PAGE) break;
+  }
+
+  const rows: SandboxWorldAgg[] = [...byCountry.entries()]
+    .map(([country, v]) => ({
+      country,
+      devices: v.devices.size,
+      pings: v.pings,
+    }))
+    .sort((a, b) => b.devices - a.devices || b.pings - a.pings)
+    .slice(0, 32);
+
+  const heat: GeoHeatPoint[] = [];
+  for (const r of rows) {
+    const coords = COUNTRY_COORDINATES[r.country];
+    if (!coords) continue;
+    heat.push({
+      lat: coords.lat,
+      lon: coords.lon,
+      intensity: r.devices * 3 + r.pings,
+      label: r.country,
+    });
+  }
+  heat.sort((a, b) => b.intensity - a.intensity);
+
+  const totalDevices = [...byCountry.values()].reduce((s, v) => s + v.devices.size, 0);
+  const totalPings = [...byCountry.values()].reduce((s, v) => s + v.pings, 0);
+
+  return { rows, heat, totalDevices, totalPings };
+}
+
 const PAGE = 1000;
 const MAX_PAGES = 100;
 
@@ -121,11 +260,18 @@ export async function GET(req: Request) {
     }
 
     let profileCountries: { country: string; count: number }[] = [];
+    let clubCountries: { country: string; count: number }[] = [];
     try {
       const rows = await fetchAllCountries(admin, 'profiles');
       profileCountries = tallyCountries(rows).slice(0, 8);
     } catch (e) {
       console.warn('[SynqAI] analytics profile countries:', e);
+    }
+    try {
+      const rows = await fetchAllCountries(admin, 'clubs');
+      clubCountries = tallyCountries(rows).slice(0, 8);
+    } catch (e) {
+      console.warn('[SynqAI] analytics club countries:', e);
     }
 
     const totalProfileCountry = profileCountries.reduce((s, x) => s + x.count, 0) || 1;
@@ -166,6 +312,21 @@ export async function GET(req: Request) {
     const adCpc = Number(process.env.SANDBOX_AD_ESTIMATED_CPC_EUR ?? "0.05");
     const sandboxCoachEstimatedRevenue =
       Math.round(((sandboxCoachAdImpressions / 1000) * adCpm + sandboxCoachAdClicks * adCpc) * 100) / 100;
+    const geoHeat = buildGeoHeat(profileCountries, clubCountries, sandboxCoachOpens);
+
+    let sandboxWorldByCountry: SandboxWorldAgg[] = [];
+    let sandboxWorldHeat: GeoHeatPoint[] = [];
+    let sandboxWorldTotalDevices = 0;
+    let sandboxWorldTotalPings = 0;
+    try {
+      const sw = await aggregateSandboxWorldFromSnapshots(admin);
+      sandboxWorldByCountry = sw.rows;
+      sandboxWorldHeat = sw.heat;
+      sandboxWorldTotalDevices = sw.totalDevices;
+      sandboxWorldTotalPings = sw.totalPings;
+    } catch (e) {
+      console.warn('[SynqAI] analytics sandbox world:', e);
+    }
 
     return NextResponse.json({
       ok: true,
@@ -179,6 +340,11 @@ export async function GET(req: Request) {
       collabLeads,
       collabFeedback,
       geo: geoWithPercent,
+      geoHeat,
+      sandboxWorldByCountry,
+      sandboxWorldHeat,
+      sandboxWorldTotalDevices,
+      sandboxWorldTotalPings,
       topPromos,
       conversionRate,
       sandboxCoachOpens,

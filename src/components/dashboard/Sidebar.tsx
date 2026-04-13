@@ -14,6 +14,7 @@ import {
   Watch,
   UserCircle,
   BarChart3,
+  QrCode,
   TicketPercent,
   LogOut,
   ShieldCheck,
@@ -104,6 +105,9 @@ const navItems: NavItem[] = [
   { title: "Gen. Usuarios", href: "/admin-global/users", icon: UserPlus, category: "global" },
   { title: "System Health", href: "/admin-global/health", icon: Activity, category: "global" },
   { title: "Analytics Global", href: "/admin-global/analytics", icon: BarChart3, category: "global" },
+  { title: "Campañas & QR", href: "/admin-global/promos", icon: QrCode, category: "global" },
+  { title: "Colaboración", href: "/admin-global/collaboration", icon: MessageSquareQuote, category: "global" },
+  { title: "Almacén neural", href: "/admin-global/exercises", icon: Database, category: "global" },
   { title: "Cuadro Matriz Club", href: "/admin-global/club-access-matrix", icon: LayoutGrid, category: "global" },
   
   // ESTRATEGIA_METODOLÓGICA - AMBER THEME
@@ -339,7 +343,7 @@ export function DashboardSidebar() {
                 <span className="font-headline font-black text-2xl tracking-tighter text-white uppercase italic">
                   Synq<span className="text-primary">AI</span>
                 </span>
-                <span className="text-[9px] font-black text-white/30 tracking-[0.4em] uppercase">SPORTS_PRO</span>
+                <span className="text-[9px] font-black text-white/70 tracking-[0.4em] uppercase">SPORTS_PRO</span>
               </div>
             )}
           </div>
@@ -459,7 +463,7 @@ export function DashboardSidebar() {
         {!isCollapsed && (
           <button 
             onClick={toggleFullscreen}
-            className="flex items-center gap-3 px-3 py-2.5 text-white/30 hover:text-primary transition-[background-color,border-color,color,opacity,transform] font-black text-[9px] uppercase tracking-widest hover:bg-white/5 rounded-xl group overflow-hidden w-full text-left"
+            className="flex items-center gap-3 px-3 py-2.5 text-white/80 hover:text-primary transition-[background-color,border-color,color,opacity,transform] font-black text-[9px] uppercase tracking-widest hover:bg-white/5 rounded-xl group overflow-hidden w-full text-left"
           >
             {isFullscreen ? <Minimize2 className="h-4 w-4 shrink-0" /> : <Maximize2 className="h-4 w-4 shrink-0" />}
             <span className="whitespace-nowrap font-bold animate-in fade-in duration-700">MODO_INMERSIVO</span>
@@ -473,7 +477,7 @@ export function DashboardSidebar() {
                 <button className="flex items-center justify-between w-full p-2 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-[background-color,border-color,color,opacity,transform] group">
                   <div className="flex items-center gap-2">
                     <span className="text-sm">{currentLang.flag}</span>
-                    <span className="text-[9px] font-black text-white/60 uppercase tracking-widest group-hover:text-white transition-colors">{currentLang.label}</span>
+                    <span className="text-[9px] font-black text-white/85 uppercase tracking-widest group-hover:text-white transition-colors">{currentLang.label}</span>
                   </div>
                   <ChevronDown className="h-3 w-3 text-white/20 group-hover:text-primary" />
                 </button>
@@ -499,7 +503,7 @@ export function DashboardSidebar() {
 
         <button 
           onClick={handleLogout}
-          className="flex items-center gap-3 px-3 py-2.5 text-white/30 hover:text-primary transition-[background-color,border-color,color,opacity,transform] font-black text-[9px] uppercase tracking-widest hover:bg-white/5 rounded-xl group overflow-hidden w-full text-left"
+          className="flex items-center gap-3 px-3 py-2.5 text-white/80 hover:text-primary transition-[background-color,border-color,color,opacity,transform] font-black text-[9px] uppercase tracking-widest hover:bg-white/5 rounded-xl group overflow-hidden w-full text-left"
         >
           <LogOut className="h-5 w-5 shrink-0 group-hover:translate-x-1 transition-transform" />
           {!isCollapsed && <span className="whitespace-nowrap font-bold animate-in fade-in duration-700">CERRAR_SESIÓN</span>}
@@ -559,7 +563,7 @@ function SidebarLink({
       isActive={isActive}
       className={cn(
         "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
-        isActive ? activeClass : "text-white/40 hover:text-white hover:bg-white/[0.04]"
+        isActive ? activeClass : "text-white/80 hover:text-white hover:bg-white/[0.08]"
       )}
     >
       <Link 
