@@ -17,6 +17,9 @@ importers:
       '@capacitor/core':
         specifier: ^7.6.1
         version: 7.6.1
+      '@capacitor/filesystem':
+        specifier: ^7.1.8
+        version: 7.1.8(@capacitor/core@7.6.1)
       '@capacitor/splash-screen':
         specifier: ^7.0.5
         version: 7.0.5(@capacitor/core@7.6.1)
@@ -301,10 +304,18 @@ packages:
   '@capacitor/core@7.6.1':
     resolution: {integrity: sha512-nsNouCMxgYenyemy20sZwZYMtFi93LSZVWm2KqHTYIPIDgwx24+PzwHIdRQBZdK7hpvD5jQEhWuo/QyLLnAyBQ==}
 
+  '@capacitor/filesystem@7.1.8':
+    resolution: {integrity: sha512-Qpw/2SE4/CzqAUvGgSM9hw/uXQ5qoOaF4wxbToXwpAaKPS+tzletS1h5ti3jjLmGcqizTs2sEXMtcsARW/Ceew==}
+    peerDependencies:
+      '@capacitor/core': '>=7.0.0'
+
   '@capacitor/splash-screen@7.0.5':
     resolution: {integrity: sha512-bPG2SamFL7VT5I3XsgsGgJhkiyxq3OXCOVKEDupSieVdtEiG7j2vLbSD0xL+91zteF/qLuxsjbugGy5LD8mS2A==}
     peerDependencies:
       '@capacitor/core': '>=7.0.0'
+
+  '@capacitor/synapse@1.0.4':
+    resolution: {integrity: sha512-/C1FUo8/OkKuAT4nCIu/34ny9siNHr9qtFezu4kxm6GY1wNFxrCFWjfYx5C1tUhVGz3fxBABegupkpjXvjCHrw==}
 
   '@cfworker/json-schema@4.1.1':
     resolution: {integrity: sha512-gAmrUZSGtKc3AiBL71iNWxDsyUC5uMaKKGdvzYsBoTW/xi42JQHl7eKV2OYzCUqvc+D2RCcf7EXY2iCyFIk6og==}
@@ -6844,9 +6855,16 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
+  '@capacitor/filesystem@7.1.8(@capacitor/core@7.6.1)':
+    dependencies:
+      '@capacitor/core': 7.6.1
+      '@capacitor/synapse': 1.0.4
+
   '@capacitor/splash-screen@7.0.5(@capacitor/core@7.6.1)':
     dependencies:
       '@capacitor/core': 7.6.1
+
+  '@capacitor/synapse@1.0.4': {}
 
   '@cfworker/json-schema@4.1.1':
     optional: true

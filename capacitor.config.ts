@@ -10,16 +10,21 @@ import type { CapacitorConfig } from "@capacitor/cli";
 const defaultProdUrl = "https://synqai.net";
 const serverUrl = (process.env.CAPACITOR_SERVER_URL || defaultProdUrl).replace(/\/$/, "");
 const isCleartext = serverUrl.startsWith("http://");
+const embedLocalWww = process.env.CAPACITOR_EMBED_LOCAL === "1";
 
 const config: CapacitorConfig = {
   appId: "com.synqai.sports",
   appName: "SynqAI Sports",
   webDir: "www",
-  server: {
-    url: serverUrl,
-    cleartext: isCleartext,
-    androidScheme: "https",
-  },
+  ...(!embedLocalWww
+    ? {
+        server: {
+          url: serverUrl,
+          cleartext: isCleartext,
+          androidScheme: "https",
+        },
+      }
+    : {}),
   android: {
     allowMixedContent: true,
     captureInput: true,
@@ -28,7 +33,7 @@ const config: CapacitorConfig = {
     SplashScreen: {
       launchShowDuration: 2000,
       launchAutoHide: true,
-      backgroundColor: "#050812",
+      backgroundColor: "#0F172A",
       androidScaleType: "CENTER_CROP",
       showSpinner: false,
       androidSpinnerStyle: "small",

@@ -1,6 +1,6 @@
 /**
  * Genera icon.png (1024) y splash.png (2732) para @capacitor/assets
- * Identidad: Deep Night #050812 + Electric Cyan #22d3ee
+ * Identidad: Deep Night #050812 + Electric Cyan #22d3ee; splash base slate #0F172A (alineado con Capacitor SplashScreen).
  */
 import fs from "fs";
 import path from "path";
@@ -22,15 +22,18 @@ const iconSvg = `<?xml version="1.0" encoding="UTF-8"?>
   <text x="512" y="580" text-anchor="middle" font-family="system-ui,Segoe UI,sans-serif" font-size="420" font-weight="800" fill="${cyan}" letter-spacing="-0.05em">S</text>
 </svg>`;
 
+const splashBase = "#0F172A";
+
 const splashSvg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="2732" height="2732" viewBox="0 0 2732 2732">
   <defs>
     <radialGradient id="g" cx="50%" cy="40%" r="70%">
-      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="0%" stop-color="${splashBase}"/>
       <stop offset="100%" stop-color="${deepNight}"/>
     </radialGradient>
   </defs>
-  <rect width="2732" height="2732" fill="url(#g)"/>
+  <rect width="2732" height="2732" fill="${splashBase}"/>
+  <rect width="2732" height="2732" fill="url(#g)" opacity="0.92"/>
   <circle cx="1366" cy="1180" r="520" fill="none" stroke="${cyan}" stroke-width="24" opacity="0.25"/>
   <circle cx="1366" cy="1180" r="400" fill="none" stroke="${cyan}" stroke-width="6" opacity="0.9"/>
   <text x="1366" y="1280" text-anchor="middle" font-family="system-ui,Segoe UI,sans-serif" font-size="520" font-weight="800" fill="${cyan}">S</text>

@@ -1,14 +1,31 @@
 apply plugin: 'com.android.application'
 
+def deepLinkRemoteOrigin = System.getenv("CAPACITOR_SERVER_URL")
+if (deepLinkRemoteOrigin == null || deepLinkRemoteOrigin.trim().isEmpty()) {
+    deepLinkRemoteOrigin = "https://synqai.net"
+}
+deepLinkRemoteOrigin = deepLinkRemoteOrigin.replaceAll(/\/$/, "")
+
+def releaseStoreFile = System.getenv("ANDROID_KEYSTORE_PATH")
+def releaseStorePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+def releaseKeyAlias = System.getenv("ANDROID_KEY_ALIAS")
+def releaseKeyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+def canSignRelease =
+        releaseStoreFile != null && releaseStorePassword != null && releaseKeyAlias != null && releaseKeyPassword != null
+
 android {
     namespace "com.synqai.sports"
     compileSdk rootProject.ext.compileSdkVersion
+    buildFeatures {
+        buildConfig true
+    }
     defaultConfig {
         applicationId "com.synqai.sports"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+        buildConfigField "String", "DEEPLINK_REMOTE_ORIGIN", "\"${deepLinkRemoteOrigin}\""
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -20,6 +37,19 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            if (canSignRelease) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+    signingConfigs {
+        release {
+            if (canSignRelease) {
+                storeFile file(releaseStoreFile)
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
         }
     }
 }

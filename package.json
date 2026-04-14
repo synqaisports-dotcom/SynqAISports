@@ -9,6 +9,7 @@
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
     "clean": "node -e \"try{require('fs').rmSync('.next',{recursive:true,force:true});console.log('Carpeta .next eliminada.');}catch(e){console.error(e.message);process.exit(1);}\"",
     "build": "next build",
+    "build:capacitor-static": "node scripts/build-capacitor-static.mjs",
     "rebuild": "npm run clean && npm run build",
     "start": "next start",
     "lint": "next lint",
@@ -16,12 +17,15 @@
     "test": "tsx --test src/**/*.test.ts",
     "cap:assets": "node scripts/generate-capacitor-assets.mjs && npx @capacitor/assets generate --android",
     "cap:sync": "npx cap sync android",
-    "cap:open": "npx cap open android"
+    "cap:open": "npx cap open android",
+    "cap:build-release": "node scripts/cap-build-release.mjs",
+    "push-and-build": "node scripts/push-and-build.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^7.6.1",
     "@capacitor/cli": "^7.6.1",
     "@capacitor/core": "^7.6.1",
+    "@capacitor/filesystem": "^7.1.8",
     "@capacitor/splash-screen": "^7.0.5",
     "@genkit-ai/google-genai": "^1.28.0",
     "@hookform/resolvers": "^4.1.3",

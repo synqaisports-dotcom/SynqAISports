@@ -1,25 +1,27 @@
-"use client";
-
 import Link from "next/link";
-import { useMemo } from "react";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, CheckCircle2, Download, Lock, ShieldCheck, Smartphone } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getStoreProductBySlug } from "@/lib/store-catalog";
+import { getStoreProductBySlug, STORE_PRODUCTS } from "@/lib/store-catalog";
 
 type Props = { params: { slug: string } };
+
+export function generateStaticParams() {
+  return STORE_PRODUCTS.map((p) => ({ slug: p.slug }));
+}
 
 export default function StoreAppDetailPage({ params }: Props) {
   const app = getStoreProductBySlug(params.slug);
   if (!app) return notFound();
 
-  const securityLabel = useMemo(() => {
-    if (app.accessMode === "open") return "Sin login inicial";
-    if (app.accessMode === "optional_login") return "Login opcional";
-    return "Login requerido";
-  }, [app.accessMode]);
+  const securityLabel =
+    app.accessMode === "open"
+      ? "Sin login inicial"
+      : app.accessMode === "optional_login"
+        ? "Login opcional"
+        : "Login requerido";
 
   return (
     <div className="min-h-screen bg-background text-white">
