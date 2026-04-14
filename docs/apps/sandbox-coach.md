@@ -67,6 +67,35 @@ Límites típicos en código: 20 ejercicios totales; 4 sesiones; 20 partidos; sl
 - Service worker: `/sw.js` (versión de caché en código).
 - Banner instalación según ruta (`sandbox-shell-with-banner`, layout board).
 
+## APK Android (Capacitor — cáscara WebView)
+
+La **UI sigue siendo la web** desplegada en el servidor configurado en `capacitor.config.ts` (`server.url`, típicamente `https://synqai.net`). El APK no incluye el build de Next.js.
+
+| Paso | Comando / acción |
+|------|------------------|
+| Regenerar icono + splash (fondo **#0F172A** + identidad cian) | `npm run cap:assets` |
+| Sincronizar webDir + plugins | `npm run cap:sync` |
+| **Release desde terminal** (equiv. a compilar en Android Studio sin abrir la UI) | `npm run cap:build-release` → `cap sync` + `gradlew assembleRelease` |
+| Firmar / Play Store | Android Studio → *Build → Generate Signed Bundle / APK*, o `signingConfig` en `android/app/build.gradle` |
+
+Documentación detallada: **`docs/CAPACITOR_ANDROID.md`** (SDK, variables, `CAPACITOR_SERVER_URL`, plantilla `docs/android-assetlinks-template.json` para **App Links**).
+
+### Deep links → abrir la app en `/sandbox/app`
+
+- **HTTPS (App Links):** enlaces como `https://synqai.net/sandbox/app` (y subrutas) deben abrir la app si el dominio está verificado con **`/.well-known/assetlinks.json`** (fingerprint del keystore release).
+- **Esquema interno:** `synqai-sports://open/sandbox/app/...` se resuelve al mismo origen que el servidor remoto (`CAPACITOR_SERVER_URL` al compilar Android, por defecto producción).
+- **Implementación nativa:** `android/.../MainActivity.java` + `AndroidManifest.xml`.
+
+### Telemetría (mapa mundial / Fase 6)
+
+En el shell logueado (`SandboxShellWithOptionalInstallBanner`) se monta **`SandboxTelemetryBeacon`** (`src/components/sandbox/sandbox-telemetry-beacon.tsx`):
+
+- Se activa en rutas bajo **`/sandbox/app`**.
+- Envía como máximo cada **6 h** un `POST` anónimo a **`/api/sync/telemetry`** con `deviceId` (SQLite/local), `kind: sandbox_session`, país aproximado desde `synq_promo_team.country` si existe, `locale`, `timeZone` y `path`.
+- Los datos alimentan agregados en **Admin Global → Analytics** (snapshots `sandbox_device_snapshots`).
+
+En la **APK** el comportamiento es el mismo: al cargar la web remota dentro del WebView, el beacon se ejecuta en el cliente.
+
 ## Monetización y analítica
 
 - AdSense opcional (`NEXT_PUBLIC_GOOGLE_ADSENSE_*`).
@@ -80,6 +109,9 @@ Límites típicos en código: 20 ejercicios totales; 4 sesiones; 20 partidos; sl
 
 ## Archivos de referencia
 
+- Release Android: `scripts/cap-build-release.mjs`, `npm run cap:build-release`
+- Deep links nativos: `android/app/src/main/java/com/synqai/sports/MainActivity.java`, `android/app/src/main/AndroidManifest.xml`
+- Beacon telemetría: `src/components/sandbox/sandbox-telemetry-beacon.tsx`, API `src/app/api/sync/telemetry/route.ts`
 - Catálogo: `src/lib/store-catalog.ts`
 - Portal: `src/app/sandbox-portal/page.tsx`
 - Login: `src/app/sandbox/login/page.tsx`
