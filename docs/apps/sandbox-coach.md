@@ -75,8 +75,9 @@ La **UI sigue siendo la web** desplegada en el servidor configurado en `capacito
 |------|------------------|
 | Regenerar icono + splash (fondo **#0F172A** + identidad cian) | `npm run cap:assets` |
 | Sincronizar webDir + plugins | `npm run cap:sync` |
-| **Release desde terminal** (equiv. a compilar en Android Studio sin abrir la UI) | `npm run cap:build-release` → `cap sync` + `gradlew assembleRelease` |
-| Firmar / Play Store | Android Studio → *Build → Generate Signed Bundle / APK*, o `signingConfig` en `android/app/build.gradle` |
+| Export estático Sandbox (sin `app/api` en export) | `npm run build:capacitor-static` |
+| **Release firmado desde terminal** (sin Android Studio) | `npm run cap:build-release` |
+| Flujo completo CI local (push + APK) | `npm run push-and-build` |
 
 Documentación detallada: **`docs/CAPACITOR_ANDROID.md`** (SDK, variables, `CAPACITOR_SERVER_URL`, plantilla `docs/android-assetlinks-template.json` para **App Links**).
 
@@ -95,6 +96,12 @@ En el shell logueado (`SandboxShellWithOptionalInstallBanner`) se monta **`Sandb
 - Los datos alimentan agregados en **Admin Global → Analytics** (snapshots `sandbox_device_snapshots`).
 
 En la **APK** el comportamiento es el mismo: al cargar la web remota dentro del WebView, el beacon se ejecuta en el cliente.
+
+### Persistencia SQLite en Android (inmortal a actualizaciones)
+
+- En navegador puro: fallback `localStorage`.
+- En runtime Capacitor nativo Android: el snapshot SQLite (`sql.js`) se guarda en `Directory.Data` mediante `@capacitor/filesystem` (`src/lib/local-db/sqlite-engine.ts`, ruta `synq-local/sqlite.bin.b64`).
+- Esta ubicación persiste entre actualizaciones de app (salvo desinstalación o limpieza manual de datos).
 
 ## Monetización y analítica
 

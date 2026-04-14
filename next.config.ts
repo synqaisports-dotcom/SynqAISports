@@ -1,7 +1,9 @@
 import type {NextConfig} from 'next';
 
+const isCapacitorStaticExport = process.env.CAPACITOR_STATIC_EXPORT === "1";
+
 const nextConfig: NextConfig = {
-  /* config options here */
+  ...(isCapacitorStaticExport ? { output: "export" as const } : {}),
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {

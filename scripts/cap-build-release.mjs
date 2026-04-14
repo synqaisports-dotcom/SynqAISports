@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 /**
- * Release Android: sincroniza Capacitor y ejecuta Gradle assembleRelease (mismo artefacto que
- * Android Studio → Build → Generate Signed Bundle / APK, salvo el paso de firma en UI).
- *
- * Requisitos: Android SDK, JDK 17+, variable ANDROID_HOME o ANDROID_SDK_ROOT.
- * Opcional: CAPACITOR_SERVER_URL (debe coincidir con el origen de deep links en build.gradle).
+ * Release Android 100% terminal (sin Android Studio):
+ * 1) Build estático (www) excluyendo app/api
+ * 2) cap sync android (modo embebido local)
+ * 3) gradlew assembleRelease firmado (si credenciales de keystore están presentes)
  */
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -27,12 +26,40 @@ function run(cmd, args, cwd) {
   }
 }
 
+function requireEnv(name) {
+  const v = process.env[name];
+  if (!v || !v.trim()) {
+    console.error(`[cap:build-release] Falta variable requerida: ${name}`);
+    process.exit(1);
+  }
+  return v;
+}
+
 if (!fs.existsSync(androidDir)) {
   console.error("No existe android/. Ejecuta: npx cap add android");
   process.exit(1);
 }
 
-console.log("[cap:build-release] npx cap sync android …");
+if (!process.env.ANDROID_HOME && !process.env.ANDROID_SDK_ROOT) {
+  console.error("[cap:build-release] Falta ANDROID_HOME o ANDROID_SDK_ROOT.");
+  process.exit(1);
+}
+
+const keystorePath = requireEnv("ANDROID_KEYSTORE_PATH");
+requireEnv("ANDROID_KEYSTORE_PASSWORD");
+requireEnv("ANDROID_KEY_ALIAS");
+requireEnv("ANDROID_KEY_PASSWORD");
+
+if (!fs.existsSync(keystorePath)) {
+  console.error(`[cap:build-release] Keystore no encontrado: ${keystorePath}`);
+  process.exit(1);
+}
+
+console.log("[cap:build-release] build estático para Capacitor (www) …");
+run("node", ["scripts/build-capacitor-static.mjs"], root);
+
+console.log("[cap:build-release] npx cap sync android (embed local www) …");
+process.env.CAPACITOR_EMBED_LOCAL = "1";
 run("npx", ["cap", "sync", "android"], root);
 
 const gradle = process.platform === "win32" ? "gradlew.bat" : "./gradlew";
@@ -42,7 +69,7 @@ if (!fs.existsSync(gradlePath)) {
   process.exit(1);
 }
 
-console.log("[cap:build-release]", gradle, "assembleRelease …");
+console.log("[cap:build-release]", gradle, "assembleRelease (signed) …");
 run(gradle, ["assembleRelease"], androidDir);
 
 const apk = path.join(
@@ -52,15 +79,11 @@ const apk = path.join(
   "outputs",
   "apk",
   "release",
-  "app-release-unsigned.apk",
+  "app-release.apk",
 );
 console.log("\n[cap:build-release] Listo.");
 if (fs.existsSync(apk)) {
-  console.log("APK sin firmar (por defecto):", apk);
-  console.log(
-    "Para Play Store o instalación firmada: abre Android Studio → Build → Generate Signed Bundle / APK,",
-  );
-  console.log("o configura signingConfig release en android/app/build.gradle.");
+  console.log("APK firmado:", apk);
 } else {
-  console.log("Revisa android/app/build/outputs/ por el APK o AAB generado.");
+  console.log("No se encontró app-release.apk. Revisa android/app/build/outputs/.");
 }

@@ -2,14 +2,18 @@
 
 ## Qué hace
 
-La app Android es un **WebView** que carga la web desplegada (por defecto **producción**). No empaqueta el bundle de Next dentro del APK.
+Tenemos **dos modos**:
+
+- **Remoto (default):** WebView carga `server.url` (producción o dev LAN).
+- **Embebido local (`www`)**: para APK offline/local-first, sin depender de `server.url`.
 
 ## Configuración
 
 - **`capacitor.config.ts`**
   - `server.url`: por defecto `https://synqai.net` (sin barra final).
-  - Override: variable de entorno **`CAPACITOR_SERVER_URL`** al ejecutar `cap sync`.
-- **`www/`**: assets mínimos copiados al APK; la UI real viene de la URL remota.
+  - Override: `CAPACITOR_SERVER_URL`.
+  - Si `CAPACITOR_EMBED_LOCAL=1` **no** se inyecta `server.url` y Android lee `www` embebido.
+- **`www/`**: contenido estático exportado para el modo embebido.
 
 ## Desarrollo local
 
@@ -33,10 +37,18 @@ La app Android es un **WebView** que carga la web desplegada (por defecto **prod
 
 | Script | Descripción |
 |--------|-------------|
-| `npm run cap:build-release` | `npx cap sync android` + `./android/gradlew assembleRelease` |
+| `npm run build:capacitor-static` | Build export estático, ocultando temporalmente `src/app/api`, y copia `out` → `www` |
+| `npm run cap:build-release` | Build estático + `cap sync` (embed local) + `gradlew assembleRelease` firmado |
+| `npm run push-and-build` | `git add/commit/push` + build estático + APK release |
 
-**Requisitos:** `ANDROID_HOME` o `ANDROID_SDK_ROOT`, JDK 17+. El APK por defecto suele quedar en  
-`android/app/build/outputs/apk/release/app-release-unsigned.apk` hasta que configures **signing** en `android/app/build.gradle` o firmes en Android Studio (**Build → Generate Signed Bundle / APK**).
+**Requisitos:** `ANDROID_HOME` o `ANDROID_SDK_ROOT`, JDK 17+, y variables de firma:
+
+- `ANDROID_KEYSTORE_PATH`
+- `ANDROID_KEYSTORE_PASSWORD`
+- `ANDROID_KEY_ALIAS`
+- `ANDROID_KEY_PASSWORD`
+
+Salida esperada: `android/app/build/outputs/apk/release/app-release.apk` (firmado).
 
 **Origen de deep links al compilar:** si defines `CAPACITOR_SERVER_URL` al ejecutar Gradle (misma variable que en `cap sync`), `MainActivity` inyecta `BuildConfig.DEEPLINK_REMOTE_ORIGIN` para resolver `synqai-sports://open/sandbox/app/...` hacia ese host. Por defecto: `https://synqai.net`.
 

@@ -6,6 +6,13 @@ if (deepLinkRemoteOrigin == null || deepLinkRemoteOrigin.trim().isEmpty()) {
 }
 deepLinkRemoteOrigin = deepLinkRemoteOrigin.replaceAll(/\/$/, "")
 
+def releaseStoreFile = System.getenv("ANDROID_KEYSTORE_PATH")
+def releaseStorePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+def releaseKeyAlias = System.getenv("ANDROID_KEY_ALIAS")
+def releaseKeyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+def canSignRelease =
+        releaseStoreFile != null && releaseStorePassword != null && releaseKeyAlias != null && releaseKeyPassword != null
+
 android {
     namespace "com.synqai.sports"
     compileSdk rootProject.ext.compileSdkVersion
@@ -30,6 +37,19 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            if (canSignRelease) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+    signingConfigs {
+        release {
+            if (canSignRelease) {
+                storeFile file(releaseStoreFile)
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
         }
     }
 }
