@@ -17,8 +17,8 @@ Sigue estos pasos en paralelo mientras el código se sube a GitHub.
 ## 2. Crear GitHub Organization + repo
 
 1. https://github.com/organizations/plan → Free
-2. Nombre: `nexus-labs`
-3. New repository → `nexus-labs` → Private → sin README (ya vendrá del push)
+2. Repo público: `https://github.com/nexuslabs76-arch/nexus`
+3. Si el código aún no está subido, ver sección **Subir código** al final de este archivo.
 
 ## 3. Conectar Vercel (dos proyectos, un repo)
 
@@ -78,7 +78,29 @@ Supabase project ref:
 Email admin TrendPulse: 
 ```
 
-## 8. Diseño acordado
+## 8. Subir código (si Cursor no tiene permiso de escritura)
+
+Descarga el scaffold desde la rama de SynqAISports:
+
+https://github.com/synqaisports-dotcom/SynqAISports/archive/refs/heads/cursor/nexus-labs-init-f457.zip
+
+1. Descomprime el ZIP.
+2. Entra en la carpeta `SynqAISports-cursor-nexus-labs-init-f457/nexus-labs/`.
+3. Sube **todo su contenido** (no la carpeta `nexus-labs` en sí) a la raíz de tu repo `nexus` en GitHub (Add file → Upload files).
+4. **No subas** carpetas `node_modules` ni `.next` (no vienen en el ZIP).
+
+O con terminal en tu PC:
+
+```bash
+git clone https://github.com/nexuslabs76-arch/nexus.git
+cd nexus
+curl -L https://github.com/synqaisports-dotcom/SynqAISports/archive/refs/heads/cursor/nexus-labs-init-f457.tar.gz | tar xz --strip-components=2 SynqAISports-cursor/nexus-labs-init-f457/nexus-labs
+git add .
+git commit -m "Add Nexus Labs scaffold"
+git push
+```
+
+## 9. Diseño acordado
 
 - **Nexus Labs**: corporativo, confianza, portfolio de productos, tipografía sobria.
 - **TrendPulse**: ágil, tendencias, oscuro dinámico, timelines y tablas de datos.
