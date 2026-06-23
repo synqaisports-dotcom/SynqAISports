@@ -1,0 +1,22 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Instrument+Serif:ital@0;1&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --nexus-navy: #0c1222;
+  --nexus-slate: #1a2332;
+  --nexus-accent: #3b6fd9;
+  --nexus-muted: #8b9cb3;
+}
+
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: var(--nexus-navy);
+  color: #e8edf4;
+}
+
+.font-serif-display {
+  font-family: 'Instrument Serif', Georgia, serif;
+}

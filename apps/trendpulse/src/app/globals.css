@@ -1,0 +1,23 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --tp-night: #0a0e17;
+  --tp-panel: #111827;
+  --tp-cyan: #22d3ee;
+  --tp-green: #34d399;
+  --tp-amber: #fbbf24;
+}
+
+body {
+  font-family: 'Outfit', system-ui, sans-serif;
+  background: var(--tp-night);
+  color: #e2e8f0;
+}
+
+.font-mono-data {
+  font-family: 'JetBrains Mono', monospace;
+}
