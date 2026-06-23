@@ -1,6 +1,8 @@
 # Nexus Labs — Guía de cuentas y conexión
 
-Repositorio GitLab: **https://gitlab.com/nexuslabs76-group/nexuslabs76-project**
+> **¿Solo quieres verlo ya?** → [VER_RAPIDO.md](./VER_RAPIDO.md) (Vercel + GitHub SynqAISports, sin repo nuevo).
+
+Repositorio GitLab (opcional): **https://gitlab.com/nexuslabs76-group/nexuslabs76-project**
 
 ## 1. Qué debes crear tú
 

@@ -14,4 +14,5 @@ cd apps/nexus && npm install && npm run dev
 cd apps/trendpulse && npm install && npm run dev
 ```
 
-Guía completa de cuentas y Vercel: [SETUP.md](./SETUP.md)
+**Ver el producto en vivo (10 min):** [VER_RAPIDO.md](./VER_RAPIDO.md)  
+Guía completa de cuentas: [SETUP.md](./SETUP.md)
