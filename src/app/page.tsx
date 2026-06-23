@@ -5,30 +5,7 @@ import { buildCursorReport } from '@/lib/cursor-report';
 import { WAVE_PROFILE_LABELS, type HistoricalDnaRow } from '@/lib/types';
 import { CopyReportButton } from '@/components/CopyReportButton';
 
-const DEMO_ROWS: HistoricalDnaRow[] = [
-  {
-    id: 'demo-1',
-    canonical_name: 'Labubu Blind Box',
-    slug: 'labubu',
-    product_line: 'kids_collectibles_vending',
-    wave_profile: 'micro_viral_playground',
-    origin_region: 'asia',
-    origin_signal_start: '2024-07-01',
-    origin_peak_date: '2024-09-10',
-    target_market: 'ES',
-    target_signal_start: '2024-10-01',
-    target_peak_date: '2024-10-25',
-    delay_days_to_target: 45,
-    plateau_days: 21,
-    decline_start_date: '2024-12-15',
-    decline_days: 51,
-    peak_search_volume: 85000,
-    success_rate: 0.91,
-    reference_urls: [],
-    notes: 'Conecta Supabase para datos reales.',
-    dna_features: {},
-  },
-];
+import { DEMO_SEED } from '@/lib/demo-seed';
 
 function formatDate(d: string | null) {
   if (!d) return '—';
@@ -42,7 +19,7 @@ function formatDate(d: string | null) {
 export default async function TrendPulseHomePage() {
   const fromDb = await fetchHistoricalDna();
   const supabaseConnected = fromDb.length > 0;
-  const rows = supabaseConnected ? fromDb : DEMO_ROWS;
+  const rows = supabaseConnected ? fromDb : DEMO_SEED;
   const report = buildCursorReport(rows, supabaseConnected);
 
   const avgDelay =
@@ -73,8 +50,8 @@ export default async function TrendPulseHomePage() {
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
         {!supabaseConnected && (
           <div className="mb-6 rounded-xl border border-tp-amber/30 bg-tp-amber/5 px-4 py-3 text-sm text-tp-amber">
-            Modo demo: configura Supabase en Vercel y ejecuta la migración SQL. Ver{' '}
-            <code className="font-mono-data text-xs">SETUP.md</code>
+            Modo demo ({DEMO_SEED.length} casos). Conecta Supabase para los 25. Ver{' '}
+            <code className="font-mono-data text-xs">SUPABASE_RAPIDO.md</code>
           </div>
         )}
 

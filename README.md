@@ -13,4 +13,5 @@ Monorepo del sello **Nexus Labs**.
 
 **Nexus:** segundo proyecto → Root Directory: `apps/nexus`
 
-Guía paso a paso: [COPIA_ESTO_EN_VERCEL.md](./COPIA_ESTO_EN_VERCEL.md)
+Guía paso a paso: [COPIA_ESTO_EN_VERCEL.md](./COPIA_ESTO_EN_VERCEL.md)  
+Conectar datos reales: [SUPABASE_RAPIDO.md](./SUPABASE_RAPIDO.md)
