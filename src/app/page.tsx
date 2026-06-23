@@ -50,7 +50,7 @@ export default async function TrendPulseHomePage() {
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
         {!supabaseConnected && (
           <div className="mb-6 rounded-xl border border-tp-amber/30 bg-tp-amber/5 px-4 py-3 text-sm text-tp-amber">
-            Modo demo ({DEMO_SEED.length} casos). Conecta Supabase para los 25. Ver{' '}
+            Modo demo ({DEMO_SEED.length} casos). Conecta Supabase para persistencia y Fase 2. Ver{' '}
             <code className="font-mono-data text-xs">SUPABASE_RAPIDO.md</code>
           </div>
         )}

@@ -1,5 +1,28 @@
 import type { HistoricalDnaRow } from './types';
 import { WAVE_PROFILE_LABELS } from './types';
+import { DEMO_SEED_COUNT } from './demo-seed';
+
+function nextSteps(supabaseConnected: boolean, caseCount: number): string[] {
+  if (!supabaseConnected) {
+    return [
+      'Conectar Supabase (ver SUPABASE_RAPIDO.md en el repo)',
+      'Validar fechas de Labubu, Pokémon y FIFA 2022 contigo',
+      'Diseñar timelines visuales por caso',
+    ];
+  }
+  if (caseCount < 25) {
+    return [
+      'Ejecutar migración seed 25 casos en Supabase si faltan filas',
+      'Validar fechas de 3 casos con fuentes públicas',
+      'Diseñar timelines visuales por caso',
+    ];
+  }
+  return [
+    'Validar fechas de Labubu, Pokémon y FIFA 2022 contigo',
+    'Diseñar timelines visuales por caso',
+    'Planificar Fase 2: ingesta automática cada 48h',
+  ];
+}
 
 export function buildCursorReport(rows: HistoricalDnaRow[], supabaseConnected: boolean): string {
   const lines: string[] = [
@@ -7,7 +30,7 @@ export function buildCursorReport(rows: HistoricalDnaRow[], supabaseConnected: b
     `Fecha: ${new Date().toISOString()}`,
     `Fase: 1 — ADN histórico`,
     `Supabase: ${supabaseConnected ? 'conectado' : 'sin conectar (datos demo)'}`,
-    `Casos cargados: ${rows.length}`,
+    `Casos cargados: ${rows.length}${!supabaseConnected ? ` (demo offline, máx. ${DEMO_SEED_COUNT})` : ''}`,
     '',
     '## Resumen por perfil de ola',
   ];
@@ -40,7 +63,10 @@ export function buildCursorReport(rows: HistoricalDnaRow[], supabaseConnected: b
     );
   }
 
-  lines.push('', '## Próximo paso sugerido', '- Validar fechas de 3 casos con fuentes públicas', '- Ampliar seed a 25 casos', '- Activar cron Fase 2 (ingesta 48h)');
+  lines.push('', '## Próximo paso sugerido');
+  for (const step of nextSteps(supabaseConnected, rows.length)) {
+    lines.push(`- ${step}`);
+  }
 
   return lines.join('\n');
 }
