@@ -2,12 +2,30 @@ import type { HistoricalDnaRow } from './types';
 import { WAVE_PROFILE_LABELS } from './types';
 import { DEMO_SEED_COUNT } from './demo-seed';
 
-function nextSteps(supabaseConnected: boolean, caseCount: number): string[] {
+function supabaseStatusLabel(connected: boolean, configured: boolean, error: string | null): string {
+  if (connected) return 'conectado';
+  if (!configured) return 'sin conectar (faltan variables en Vercel o sin redeploy)';
+  if (error) return `error de lectura: ${error}`;
+  return 'conectado pero tabla vacía (ejecuta SQL en Supabase)';
+}
+
+function nextSteps(
+  supabaseConnected: boolean,
+  configured: boolean,
+  caseCount: number
+): string[] {
+  if (!configured) {
+    return [
+      'Añadir NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY en Vercel',
+      'Redeploy obligatorio tras guardar variables',
+      'Ejecutar los 2 SQL en Supabase SQL Editor',
+    ];
+  }
   if (!supabaseConnected) {
     return [
-      'Conectar Supabase (ver SUPABASE_RAPIDO.md en el repo)',
+      'Ejecutar migraciones SQL en Supabase si la tabla está vacía',
+      'Redeploy en Vercel si acabas de añadir variables',
       'Validar fechas de Labubu, Pokémon y FIFA 2022 contigo',
-      'Diseñar timelines visuales por caso',
     ];
   }
   if (caseCount < 25) {
@@ -24,12 +42,17 @@ function nextSteps(supabaseConnected: boolean, caseCount: number): string[] {
   ];
 }
 
-export function buildCursorReport(rows: HistoricalDnaRow[], supabaseConnected: boolean): string {
+export function buildCursorReport(
+  rows: HistoricalDnaRow[],
+  supabaseConnected: boolean,
+  configured = false,
+  error: string | null = null
+): string {
   const lines: string[] = [
     '# TrendPulse — Informe para Cursor',
     `Fecha: ${new Date().toISOString()}`,
     `Fase: 1 — ADN histórico`,
-    `Supabase: ${supabaseConnected ? 'conectado' : 'sin conectar (datos demo)'}`,
+    `Supabase: ${supabaseStatusLabel(supabaseConnected, configured, error)}`,
     `Casos cargados: ${rows.length}${!supabaseConnected ? ` (demo offline, máx. ${DEMO_SEED_COUNT})` : ''}`,
     '',
     '## Resumen por perfil de ola',
@@ -64,7 +87,7 @@ export function buildCursorReport(rows: HistoricalDnaRow[], supabaseConnected: b
   }
 
   lines.push('', '## Próximo paso sugerido');
-  for (const step of nextSteps(supabaseConnected, rows.length)) {
+  for (const step of nextSteps(supabaseConnected, configured, rows.length)) {
     lines.push(`- ${step}`);
   }
 

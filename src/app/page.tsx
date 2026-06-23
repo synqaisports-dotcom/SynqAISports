@@ -7,6 +7,8 @@ import { CopyReportButton } from '@/components/CopyReportButton';
 
 import { DEMO_SEED } from '@/lib/demo-seed';
 
+export const dynamic = 'force-dynamic';
+
 function formatDate(d: string | null) {
   if (!d) return '—';
   return new Date(d).toLocaleDateString('es-ES', {
@@ -17,10 +19,10 @@ function formatDate(d: string | null) {
 }
 
 export default async function TrendPulseHomePage() {
-  const fromDb = await fetchHistoricalDna();
-  const supabaseConnected = fromDb.length > 0;
+  const { rows: fromDb, configured, error } = await fetchHistoricalDna();
+  const supabaseConnected = configured && fromDb.length > 0 && !error;
   const rows = supabaseConnected ? fromDb : DEMO_SEED;
-  const report = buildCursorReport(rows, supabaseConnected);
+  const report = buildCursorReport(rows, supabaseConnected, configured, error);
 
   const avgDelay =
     rows.filter((r) => r.delay_days_to_target != null).length > 0
@@ -50,8 +52,26 @@ export default async function TrendPulseHomePage() {
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
         {!supabaseConnected && (
           <div className="mb-6 rounded-xl border border-tp-amber/30 bg-tp-amber/5 px-4 py-3 text-sm text-tp-amber">
-            Modo demo ({DEMO_SEED.length} casos). Conecta Supabase para persistencia y Fase 2. Ver{' '}
-            <code className="font-mono-data text-xs">SUPABASE_RAPIDO.md</code>
+            {!configured && (
+              <>
+                Modo demo ({DEMO_SEED.length} casos). Faltan variables en Vercel:{' '}
+                <code className="font-mono-data text-xs">NEXT_PUBLIC_SUPABASE_URL</code> y{' '}
+                <code className="font-mono-data text-xs">NEXT_PUBLIC_SUPABASE_ANON_KEY</code>
+                . Luego <strong>Redeploy</strong>. Ver <code className="font-mono-data text-xs">SUPABASE_RAPIDO.md</code>
+              </>
+            )}
+            {configured && error && (
+              <>
+                Supabase configurado pero error de lectura: <code className="font-mono-data text-xs">{error}</code>
+                . ¿Ejecutaste los 2 SQL en el SQL Editor?
+              </>
+            )}
+            {configured && !error && fromDb.length === 0 && (
+              <>
+                Supabase conectado pero la tabla está vacía. Ejecuta los 2 SQL en Supabase → SQL Editor
+                (ver <code className="font-mono-data text-xs">SUPABASE_RAPIDO.md</code>).
+              </>
+            )}
           </div>
         )}
 
