@@ -1,17 +1,16 @@
-# Nexus Labs
+# Nexus Labs — TrendPulse
 
 Monorepo del sello **Nexus Labs**.
 
-| App | Carpeta | Puerto dev | Estilo |
-|-----|---------|------------|--------|
-| Nexus (corporativo) | `apps/nexus` | 9100 | Sobrio, confianza |
-| TrendPulse | `apps/trendpulse` | 9101 | Ágil, datos, tendencias |
+| App | Dónde está | Vercel Root Directory |
+|-----|------------|----------------------|
+| **TrendPulse** (panel) | Raíz del repo (`/`) | *(vacío — no tocar)* |
+| **Nexus** (corporativo) | `apps/nexus` | `apps/nexus` |
 
-## Inicio rápido
+## Desplegar en Vercel
 
-```bash
-cd apps/nexus && npm install && npm run dev
-cd apps/trendpulse && npm install && npm run dev
-```
+**TrendPulse:** importa el repo y dale a Deploy. No cambies Root Directory.
 
-**Desplegar en Vercel (3 min):** [COPIA_ESTO_EN_VERCEL.md](./COPIA_ESTO_EN_VERCEL.md)
+**Nexus:** segundo proyecto → Root Directory: `apps/nexus`
+
+Guía paso a paso: [COPIA_ESTO_EN_VERCEL.md](./COPIA_ESTO_EN_VERCEL.md)

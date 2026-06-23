@@ -1,52 +1,45 @@
-# Copia esto en Vercel (3 minutos)
-
-El repo **solo tiene Nexus Labs** — nada del proyecto antiguo.
+# Copia esto en Vercel (2 minutos)
 
 ---
 
-## TrendPulse (el panel — empieza por este)
+## TrendPulse (empieza por este)
 
-1. Abre https://vercel.com/new
-2. Elige el repo **SynqAISports** → **Import**
-3. Donde pone **Root Directory** → clic en **Edit**
-4. **Copia y pega exactamente esto:**
+1. https://vercel.com/new → **SynqAISports** → **Import**
+2. **Root Directory:** déjalo **vacío** (no toques nada)
+3. Rama: `main`
+4. **Deploy**
 
-```
-apps/trendpulse
-```
-
-5. Rama: `main` (por defecto, no tocar)
-6. Clic en **Deploy**
-7. Espera 2 minutos → abre la URL
-
-**Deberías ver:** fondo oscuro, título "TrendPulse", tabla con Labubu, botón "Copiar informe para Cursor".
+**Deberías ver:** fondo oscuro, "TrendPulse", tabla con Labubu.
 
 ---
 
-## Nexus (web corporativa — opcional hoy)
+## Si te sale error de Next.js
 
-Crea **otro proyecto nuevo** en Vercel y pega:
+Significa que en **Root Directory** hay algo escrito (ruta vieja).
+
+1. **Settings** → **General** → **Root Directory**
+2. Bórralo todo o pon solo `./`
+3. **Save** → **Deployments** → **Redeploy**
+
+Rutas que **ya no existen** (no uses):
+- `nexus-labs/apps/trendpulse`
+- `apps/trendpulse`
+
+---
+
+## Nexus (opcional, otro proyecto)
+
+Root Directory:
 
 ```
 apps/nexus
 ```
 
-**Deberías ver:** "Nexus Labs", lista de productos.
-
 ---
 
-## Si sigues viendo la web vieja
-
-Tu proyecto Vercel tiene la **carpeta antigua** guardada en caché.
-
-1. **Settings** → **Root Directory** → pega `apps/trendpulse`
-2. **Deployments** → **Redeploy** (marca "Use existing Build Cache" desactivado si aparece)
-
----
-
-## Pégame esto cuando funcione
+## Pégame esto
 
 ```
 URL TrendPulse: 
-¿Ves Labubu en la tabla?: sí/no
+¿Ves Labubu?: sí/no
 ```

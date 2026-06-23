@@ -74,7 +74,7 @@ export default async function TrendPulseHomePage() {
         {!supabaseConnected && (
           <div className="mb-6 rounded-xl border border-tp-amber/30 bg-tp-amber/5 px-4 py-3 text-sm text-tp-amber">
             Modo demo: configura Supabase en Vercel y ejecuta la migración SQL. Ver{' '}
-            <code className="font-mono-data text-xs">nexus-labs/SETUP.md</code>
+            <code className="font-mono-data text-xs">SETUP.md</code>
           </div>
         )}
 
