@@ -24,10 +24,14 @@ export interface MarketplaceCandidate {
   estimated_window_es: string | null;
   source_type: string;
   notes: string | null;
-  /** Fase 2c — estimación llegada ES */
+  /** Fase 2c / 3 */
   estimated_arrival_es?: string | null;
   summer_fit?: boolean;
   weighted_score?: number;
+  /** Fase 3 — predicción desde titulares, no catálogo */
+  is_predicted?: boolean;
+  prediction_score?: number;
+  evidence_urls?: string[];
 }
 
 export interface TrendCycleRow {

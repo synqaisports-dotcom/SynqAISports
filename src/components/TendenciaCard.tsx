@@ -36,6 +36,11 @@ export function TendenciaCard({
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
+              {candidate.is_predicted && (
+                <span className="mb-1 mr-2 inline-flex rounded bg-violet-500/20 px-1.5 py-0.5 text-[10px] font-mono-data uppercase text-violet-300">
+                  Predicción
+                </span>
+              )}
               {candidate.summer_fit && (
                 <span className="mb-1 inline-flex items-center gap-1 rounded bg-amber-400/20 px-1.5 py-0.5 text-[10px] font-mono-data uppercase text-amber-300">
                   <Sun className="h-3 w-3" /> Verano · antes de sept
@@ -72,6 +77,17 @@ export function TendenciaCard({
               Llegada est. {candidate.estimated_arrival_es}
               {candidate.dna_match_slug && ` · patrón ${candidate.dna_match_slug}`}
             </p>
+          )}
+
+          {candidate.evidence_urls && candidate.evidence_urls.length > 0 && (
+            <Link
+              href={candidate.evidence_urls[0]}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[10px] text-slate-500 hover:text-tp-cyan"
+            >
+              Fuente predicción →
+            </Link>
           )}
 
           <div className="flex flex-wrap gap-3 pt-1">

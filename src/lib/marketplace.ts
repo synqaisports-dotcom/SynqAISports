@@ -1,6 +1,10 @@
 import { getSupabaseServiceRole, getSupabaseAdmin, isSupabaseConfigured } from './supabase';
 import type { MarketplaceCandidate } from './cycle-types';
-import type { MarketplaceIngestResult } from './ingest/run-marketplace-ingest';
+
+type IngestPayload = {
+  scraped_at: string;
+  candidates: MarketplaceCandidate[];
+};
 
 type CandidateRow = MarketplaceCandidate & {
   estimated_arrival_es?: string | null;
@@ -11,7 +15,7 @@ type CandidateRow = MarketplaceCandidate & {
 };
 
 export async function persistMarketplaceCandidates(
-  result: MarketplaceIngestResult
+  result: IngestPayload
 ): Promise<{ ok: boolean; reason?: string }> {
   const supabase = getSupabaseServiceRole();
   if (!supabase) return { ok: false, reason: 'missing_SUPABASE_SECRET_KEY' };
@@ -92,7 +96,9 @@ export async function fetchMarketplaceCandidates(): Promise<{
     notes: r.notes,
     estimated_arrival_es: r.estimated_arrival_es,
     summer_fit: r.summer_fit ?? false,
-    weighted_score: Number(r.weighted_score ?? 0),
+    is_predicted: r.source_type === 'prediction',
+    prediction_score: Number(r.weighted_score ?? 0),
+    evidence_urls: [],
   }));
 
   return { rows, fromDb: rows.length > 0, error: null };

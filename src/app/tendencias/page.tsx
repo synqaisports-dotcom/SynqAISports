@@ -1,39 +1,38 @@
 import Link from 'next/link';
-import { ArrowRight, Sun } from 'lucide-react';
+import { ArrowRight, Sun, Sparkles } from 'lucide-react';
 import { TendenciaCard } from '@/components/TendenciaCard';
 import { TrendPulseShell } from '@/components/TrendPulseShell';
-import { loadMarketplaceData } from '@/lib/cycle-data';
+import { loadPredictionData } from '@/lib/cycle-data';
 import { formatTrendDate } from '@/lib/trendpulse-data';
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 3600;
+export const maxDuration = 120;
 
 export default async function TendenciasPage() {
-  const market = await loadMarketplaceData();
-  const patio = market.candidates.filter((c) => c.world === 'playground');
-  const summer = patio.filter((c) => c.summer_fit);
-  const watch = patio.filter((c) => !c.summer_fit && c.signal_es <= 1);
+  const market = await loadPredictionData();
+  const predictions = market.candidates.filter((c) => !c.canonical_name.startsWith('[Eco ES]'));
+  const summer = predictions.filter((c) => c.summer_fit);
+  const ecoEs = market.candidates.filter((c) => c.canonical_name.startsWith('[Eco ES]'));
 
   return (
     <TrendPulseShell
-      title="Tendencias patio"
+      title="Predicciones patio"
       subtitle={`Verano 2026 · ${market.days_until_september} días hasta septiembre`}
     >
-      <div className="mb-6 rounded-xl border border-amber-400/30 bg-amber-400/5 px-4 py-4">
+      <div className="mb-6 rounded-xl border border-violet-500/30 bg-violet-500/5 px-4 py-4">
         <div className="flex items-start gap-3">
-          <Sun className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
+          <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-violet-300" />
           <div className="text-sm text-slate-300">
-            <p className="font-medium text-white">Descubrimiento — productos nuevos</p>
+            <p className="font-medium text-white">Fase 3 — Predicción (no catálogo fijo)</p>
             <p className="mt-1 text-xs leading-relaxed text-slate-400">
-              <strong className="text-white">No son</strong> los casos del ADN histórico (Labubu,
-              Pop It, Pokémon SV…). Son candidatos nuevos detectados por señales News+Reddit. El
-              «patrón ola» solo indica un reloj parecido (ej. reloj corto tipo Pop It), no que el
-              producto ya haya pasado por España.
+              Cada predicción sale de <strong className="text-white">titulares reales</strong> donde
+              hay más señal en origen (US/CN/LATAM) que en España. No son productos que ya tenemos en
+              ADN ni en una lista manual — son oportunidades inferidas ahora. El enlace de compra es
+              una búsqueda sugerida, no un SKU concreto.
             </p>
             {market.scraped_at && (
               <p className="mt-2 font-mono-data text-[10px] text-slate-500">
-                Último scan: {formatTrendDate(market.scraped_at.slice(0, 10))}
-                {market.isLive ? ' · en vivo' : ''}
+                Scan: {formatTrendDate(market.scraped_at.slice(0, 10))}
               </p>
             )}
           </div>
@@ -42,12 +41,10 @@ export default async function TendenciasPage() {
 
       {summer.length > 0 && (
         <section className="mb-10">
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-amber-300">
-            Comprar este verano ({summer.length})
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-widest text-amber-300">
+            <Sun className="h-4 w-4" />
+            Predicción verano — comprar y probar ({summer.length})
           </h2>
-          <p className="mb-4 text-xs text-slate-500">
-            Oportunidad de llegar antes de septiembre según ADN y señales actuales.
-          </p>
           <div className="grid gap-4">
             {summer.map((c, i) => (
               <TendenciaCard key={c.slug} candidate={c} rank={i + 1} />
@@ -58,25 +55,28 @@ export default async function TendenciasPage() {
 
       <section className="mb-10">
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-tp-cyan">
-          Todas las tendencias patio ({patio.length})
+          Todas las predicciones ({predictions.length})
         </h2>
-        <div className="grid gap-4">
-          {patio.map((c, i) => (
-            <TendenciaCard key={c.slug} candidate={c} rank={i + 1} />
-          ))}
-        </div>
+        {predictions.length === 0 ? (
+          <p className="text-sm text-slate-500">
+            Sin predicciones en este scan — vuelve en unas horas o ejecuta el cron marketplace.
+          </p>
+        ) : (
+          <div className="grid gap-4">
+            {predictions.map((c, i) => (
+              <TendenciaCard key={c.slug} candidate={c} rank={i + 1} />
+            ))}
+          </div>
+        )}
       </section>
 
-      {watch.length > 0 && (
+      {ecoEs.length > 0 && (
         <section className="mb-8">
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-violet-300">
-            Solo observar ({watch.length})
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-slate-400">
+            Ya hay eco en España — solo observar ({ecoEs.length})
           </h2>
-          <p className="mb-4 text-xs text-slate-500">
-            Señal interesante pero sin ventana verano clara — aprender sin comprar.
-          </p>
           <div className="grid gap-4">
-            {watch.slice(0, 5).map((c, i) => (
+            {ecoEs.map((c, i) => (
               <TendenciaCard key={c.slug} candidate={c} rank={i + 1} />
             ))}
           </div>
@@ -84,14 +84,8 @@ export default async function TendenciasPage() {
       )}
 
       <div className="flex flex-wrap gap-4 border-t border-white/5 pt-6">
-        <Link
-          href="/ciclo"
-          className="flex items-center gap-1 text-sm text-tp-cyan hover:underline"
-        >
+        <Link href="/ciclo" className="flex items-center gap-1 text-sm text-tp-cyan hover:underline">
           Ciclo 3 actuar + 3 observar <ArrowRight className="h-4 w-4" />
-        </Link>
-        <Link href="/radar" className="text-sm text-slate-400 hover:text-white">
-          Radar pilotos
         </Link>
       </div>
     </TrendPulseShell>

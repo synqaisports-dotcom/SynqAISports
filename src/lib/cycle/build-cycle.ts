@@ -1,15 +1,9 @@
 import type { LiveSignalRow } from '../radar-types';
 import type { CycleSlotMode, CycleSlotRow, MarketplaceCandidate, TrendCycleRow } from '../cycle-types';
-import { DEMO_MARKETPLACE } from '../demo-marketplace';
-import { isExcludedAdnCase } from '../ingest/marketplace-catalog';
 
 const MAX_ACT_PRICE_EUR = 8;
 const ACT_COUNT = 3;
 const OBSERVE_COUNT = 3;
-
-function isPilotDna(slug: string): boolean {
-  return isExcludedAdnCase(slug);
-}
 
 function weekSlug(d = new Date()): string {
   const start = new Date(d);
@@ -21,57 +15,24 @@ function weekSlug(d = new Date()): string {
   return `${y}-w${String(week).padStart(2, '0')}`;
 }
 
-function radarToCandidate(s: LiveSignalRow): MarketplaceCandidate | null {
-  const b = s.source_breakdown;
-  if (!b) return null;
-  const weighted = b.weighted ?? 0;
-  if (weighted <= 0 && (b.cn ?? 0) + (b.us ?? 0) === 0) return null;
-
-  const priceGuess =
-    s.dna_match_slug === 'labubu' ? 12.9 : s.dna_match_slug === 'fifa-stickers-2022' ? 4.5 : 4.0;
-
-  return {
-    slug: `radar-${s.slug}`,
-    canonical_name: s.canonical_name,
-    world:
-      s.dna_match_slug === 'fifa-stickers-2022' || s.dna_match_slug === 'pokemon-tcg-sv'
-        ? 'collector'
-        : s.dna_match_slug === 'labubu'
-          ? 'adult'
-          : 'playground',
-    image_url: `https://placehold.co/400x400/1a1f2e/22d3ee?text=${encodeURIComponent(s.canonical_name.slice(0, 12))}`,
-    origin_price_eur: priceGuess,
-    origin_marketplace: 'Radar TrendPulse',
-    purchase_url: s.reference_urls[0] ?? `/radar/${s.slug}`,
-    units_sold_label: s.signal_source ?? null,
-    signal_cn: b.cn ?? 0,
-    signal_us: b.us ?? 0,
-    signal_es: b.es ?? 0,
-    dna_match_slug: s.dna_match_slug,
-    estimated_window_es: s.predicted_es_peak_date
-      ? `Pico estimado ${s.predicted_es_peak_date}`
-      : s.predicted_delay_days
-        ? `~${s.predicted_delay_days}d desde origen`
-        : null,
-    source_type: 'radar',
-    notes: s.notes,
-  };
+function isEcoEs(c: MarketplaceCandidate): boolean {
+  return c.canonical_name.startsWith('[Eco ES]') || (c.signal_es >= 2 && c.signal_es > c.signal_us + c.signal_cn);
 }
 
 function scoreAct(c: MarketplaceCandidate): number {
+  if (isEcoEs(c)) return -1;
+  const pred = c.prediction_score ?? c.weighted_score ?? 0;
   const originSignal = c.signal_cn * 1.5 + c.signal_us * 1.3;
   const esQuiet = Math.max(0, 3 - c.signal_es);
-  const priceOk = c.origin_price_eur <= MAX_ACT_PRICE_EUR ? 4 : 0;
-  const patioBonus = c.world === 'playground' ? 2 : 0;
-  const summerBonus = c.summer_fit ? 5 : 0;
-  const liveBonus = c.source_type === 'marketplace_2c' ? 1 : 0;
-  return originSignal + esQuiet + priceOk + patioBonus + summerBonus + liveBonus;
+  const summerBonus = c.summer_fit ? 6 : 0;
+  const predBonus = c.is_predicted ? pred * 2 : 0;
+  return predBonus + originSignal + esQuiet + summerBonus;
 }
 
 function scoreObserve(c: MarketplaceCandidate): number {
-  const originSignal = c.signal_cn + c.signal_us;
-  const interesting = c.world !== 'playground' || c.origin_price_eur > MAX_ACT_PRICE_EUR ? 2 : 0;
-  return originSignal + interesting + (c.signal_es <= 1 ? 1 : 0);
+  if (isEcoEs(c)) return 100 + (c.prediction_score ?? 0);
+  const pred = c.prediction_score ?? 0;
+  return pred + c.signal_es + c.signal_cn + c.signal_us;
 }
 
 function dedupe(candidates: MarketplaceCandidate[]): MarketplaceCandidate[] {
@@ -84,7 +45,7 @@ function dedupe(candidates: MarketplaceCandidate[]): MarketplaceCandidate[] {
 }
 
 export function buildDemoCycle(
-  radarSignals: LiveSignalRow[] = [],
+  _radarSignals: LiveSignalRow[] = [],
   marketplaceCandidates: MarketplaceCandidate[] = []
 ): { cycle: TrendCycleRow; slots: CycleSlotRow[] } {
   const slug = weekSlug();
@@ -99,26 +60,17 @@ export function buildDemoCycle(
     starts_at: now.toISOString().slice(0, 10),
     ends_at: ends.toISOString().slice(0, 10),
     status: 'active',
-    notes:
-      '3 actuar (≤8€, señal origen) + 3 observar. Fuentes: marketplace 2c + radar.',
+    notes: '3 actuar + 3 observar · predicciones desde señales (no catálogo fijo).',
   };
 
-  const fromRadar = radarSignals
-    .map(radarToCandidate)
-    .filter((c): c is MarketplaceCandidate => c != null)
-    .filter((c) => !c.dna_match_slug || !isPilotDna(c.dna_match_slug));
-
-  const pool = dedupe([
-    ...marketplaceCandidates,
-    ...fromRadar,
-    ...(marketplaceCandidates.length === 0 ? DEMO_MARKETPLACE.filter((d) => !isPilotDna(d.dna_match_slug ?? '')) : []),
-  ]);
+  const pool = dedupe([...marketplaceCandidates]);
 
   const actPool = [...pool].sort((a, b) => scoreAct(b) - scoreAct(a));
   const actSlugs = new Set<string>();
   const act: MarketplaceCandidate[] = [];
   for (const c of actPool) {
     if (act.length >= ACT_COUNT) break;
+    if (scoreAct(c) < 0) continue;
     if (c.origin_price_eur > MAX_ACT_PRICE_EUR) continue;
     act.push(c);
     actSlugs.add(c.slug);
@@ -138,10 +90,11 @@ export function buildDemoCycle(
     feedback: null,
   });
 
-  const slots: CycleSlotRow[] = [
-    ...act.map((c, i) => toSlot(c, 'act', i)),
-    ...observe.map((c, i) => toSlot(c, 'observe', ACT_COUNT + i)),
-  ];
-
-  return { cycle, slots };
+  return {
+    cycle,
+    slots: [
+      ...act.map((c, i) => toSlot(c, 'act', i)),
+      ...observe.map((c, i) => toSlot(c, 'observe', ACT_COUNT + i)),
+    ],
+  };
 }

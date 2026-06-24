@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import { runMarketplaceIngest } from '@/lib/ingest/run-marketplace-ingest';
+import { runPredictionIngest } from '@/lib/ingest/run-prediction-ingest';
 import { persistMarketplaceCandidates } from '@/lib/marketplace';
 import { hasSupabaseServiceRole } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 120;
 
-/** Cron Fase 2c — señales marketplace por producto (News + Reddit). */
+/** Cron Fase 3 — predicciones desde titulares (no catálogo). */
 export async function GET(request: Request) {
   const auth = request.headers.get('authorization');
   const secret = process.env.CRON_SECRET;
@@ -15,37 +15,33 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const result = await runMarketplaceIngest();
+  const result = await runPredictionIngest();
   let persisted = false;
   let persistReason: string | undefined;
 
   if (hasSupabaseServiceRole()) {
-    const p = await persistMarketplaceCandidates(result);
+    const p = await persistMarketplaceCandidates({
+      scraped_at: result.scraped_at,
+      candidates: result.predictions,
+    });
     persisted = p.ok;
     if (!p.ok) persistReason = p.reason;
   } else {
     persistReason = 'missing_SUPABASE_SECRET_KEY';
   }
 
-  const summer = result.candidates.filter((c) => c.summer_fit);
-
   return NextResponse.json({
     ok: true,
     phase: result.phase,
     scraped_at: result.scraped_at,
-    days_until_september: result.days_until_september,
-    candidates: result.candidates.length,
-    summer_fit_count: summer.length,
+    predictions: result.predictions.length,
+    summer_fit: result.predictions.filter((p) => p.summer_fit).length,
     persisted,
     persist_reason: persistReason,
-    errors: result.errors.slice(0, 20),
-    top: result.candidates.slice(0, 6).map((c) => ({
-      slug: c.slug,
-      name: c.canonical_name,
-      summer_fit: c.summer_fit,
-      weighted: c.weighted_score,
-      signals: `CN${c.signal_cn} US${c.signal_us} ES${c.signal_es}`,
-      arrival: c.estimated_arrival_es,
+    top: result.predictions.slice(0, 5).map((p) => ({
+      name: p.canonical_name,
+      score: p.prediction_score,
+      summer: p.summer_fit,
     })),
   });
 }

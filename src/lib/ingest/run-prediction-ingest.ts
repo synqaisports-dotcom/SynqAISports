@@ -1,0 +1,196 @@
+import type { MarketplaceCandidate } from '../cycle-types';
+import type { ScrapedHit } from './scraper-types';
+import {
+  DISCOVERY_QUERIES,
+  EXCLUDED_HEADLINE_TERMS,
+  addDaysIso,
+  daysUntilSeptember,
+  schoolYearStart,
+  type DiscoveryQuery,
+} from './discovery-queries';
+import { scrapeGoogleNewsLocale } from './scrapers/google-news';
+import { scrapeReddit } from './scrapers/reddit';
+
+export type PredictionIngestResult = {
+  phase: '3-prediction';
+  scraped_at: string;
+  predictions: MarketplaceCandidate[];
+  errors: string[];
+  days_until_september: number;
+};
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 48);
+}
+
+function cleanTitle(raw: string): string {
+  return raw
+    .replace(/\s*[-–|]\s*[^-–|]+$/, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 72);
+}
+
+function isExcludedTitle(title: string): boolean {
+  const t = title.toLowerCase();
+  return EXCLUDED_HEADLINE_TERMS.some((term) => t.includes(term));
+}
+
+function searchKeywords(title: string): string {
+  const words = title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')
+    .split(/\s+/)
+    .filter((w) => w.length > 3 && !['trend', 'viral', 'kids', 'toy', 'toys', 'nuevo', 'nueva'].includes(w));
+  return words.slice(0, 4).join(' ') || title.slice(0, 30);
+}
+
+function predictionFromHit(
+  hit: ScrapedHit,
+  dq: DiscoveryQuery,
+  sig: { cn: number; us: number; es: number; lat: number },
+  now: Date
+): MarketplaceCandidate | null {
+  const title = cleanTitle(hit.title);
+  if (title.length < 12 || isExcludedTitle(title)) return null;
+
+  const origin = sig.cn + sig.us + sig.lat;
+  if (origin < 1) return null;
+  if (sig.es >= origin) return null;
+
+  const slug = `pred-${dq.id}-${slugify(title)}`;
+  const keywords = searchKeywords(title);
+  const delay = dq.adn_delay_days;
+  const arrival = addDaysIso(now, Math.round(delay * 0.35));
+  const sept = schoolYearStart(now);
+  const arrivalDate = new Date(arrival);
+  const prediction_score = origin * 1.2 - sig.es * 0.8;
+
+  const summer_fit =
+    arrivalDate <= sept && sig.es <= 1 && prediction_score >= 1.5;
+
+  return {
+    slug,
+    canonical_name: title,
+    world: 'playground',
+    image_url: `https://placehold.co/400x400/1a1f2e/22d3ee?text=${encodeURIComponent(title.slice(0, 14))}`,
+    origin_price_eur: 4.0,
+    origin_marketplace: 'Predicción · buscar en',
+    purchase_url: `https://www.aliexpress.com/w/wholesale-${encodeURIComponent(keywords)}.html`,
+    units_sold_label: `Predicción · CN${sig.cn} US${sig.us} ES${sig.es}`,
+    signal_cn: sig.cn,
+    signal_us: sig.us,
+    signal_es: sig.es,
+    signal_latam: sig.lat,
+    dna_match_slug: dq.wave_pattern_slug,
+    estimated_window_es: summer_fit
+      ? `Predicción verano: origen activo, ES quieto — ventana ~${arrival}`
+      : `Predicción: origen ${origin} vs ES ${sig.es} — llegada est. ${arrival}`,
+    estimated_arrival_es: arrival,
+    summer_fit,
+    weighted_score: prediction_score,
+    source_type: 'prediction',
+    is_predicted: true,
+    prediction_score,
+    evidence_urls: [hit.link].filter(Boolean),
+    notes: `Generado desde titular ${hit.channel}. No es producto del catálogo ADN.`,
+  };
+}
+
+async function signalsForQuery(dq: DiscoveryQuery) {
+  const errors: string[] = [];
+  const [cn, us, es, lat, rd] = await Promise.all([
+    scrapeGoogleNewsLocale(dq.news_query, 'cn', 21).catch((e) => {
+      errors.push(`${dq.id}:cn`);
+      return [];
+    }),
+    scrapeGoogleNewsLocale(dq.news_query, 'us', 21).catch(() => []),
+    scrapeGoogleNewsLocale(dq.news_query, 'es', 21).catch(() => []),
+    scrapeGoogleNewsLocale(dq.news_query, 'latam', 21).catch(() => []),
+    scrapeReddit(dq.reddit_query, 8).catch(() => []),
+  ]);
+  return {
+    cn,
+    us,
+    es,
+    lat,
+    reddit: rd,
+    counts: { cn: cn.length, us: us.length, es: es.length, lat: lat.length, reddit: rd.length },
+    errors,
+  };
+}
+
+export async function runPredictionIngest(): Promise<PredictionIngestResult> {
+  const now = new Date();
+  const errors: string[] = [];
+  const predictions: MarketplaceCandidate[] = [];
+  const seenSlugs = new Set<string>();
+
+  const batch = await Promise.all(DISCOVERY_QUERIES.map((dq) => signalsForQuery(dq)));
+
+  for (let i = 0; i < DISCOVERY_QUERIES.length; i++) {
+    const dq = DISCOVERY_QUERIES[i];
+    const { cn, us, es, lat, reddit, counts, errors: eq } = batch[i];
+    errors.push(...eq);
+
+    const originHits = [...us, ...cn, ...lat, ...reddit].sort(
+      (a, b) => (b.publishedAt?.getTime() ?? 0) - (a.publishedAt?.getTime() ?? 0)
+    );
+
+    for (const hit of originHits.slice(0, 3)) {
+      const p = predictionFromHit(hit, dq, counts, now);
+      if (!p || seenSlugs.has(p.slug)) continue;
+      seenSlugs.add(p.slug);
+      predictions.push(p);
+    }
+
+    if (counts.es > 0 && counts.us + counts.cn <= counts.es) continue;
+
+    for (const hit of es.slice(0, 1)) {
+      const title = cleanTitle(hit.title);
+      if (title.length < 12) continue;
+      const slug = `pred-es-echo-${slugify(title)}`;
+      if (seenSlugs.has(slug)) continue;
+      seenSlugs.add(slug);
+      predictions.push({
+        slug,
+        canonical_name: `[Eco ES] ${title}`,
+        world: 'playground',
+        image_url: `https://placehold.co/400x400/1a1f2e/94a3b8?text=Eco+ES`,
+        origin_price_eur: 5,
+        origin_marketplace: 'Observar · ya en ES',
+        purchase_url: `https://www.amazon.es/s?k=${encodeURIComponent(searchKeywords(title))}`,
+        units_sold_label: `Eco ES ${counts.es} menciones`,
+        signal_cn: counts.cn,
+        signal_us: counts.us,
+        signal_es: counts.es,
+        dna_match_slug: dq.wave_pattern_slug,
+        estimated_window_es: 'Ya hay menciones en España — solo observar, no comprar temprano',
+        estimated_arrival_es: null,
+        summer_fit: false,
+        weighted_score: counts.es,
+        source_type: 'prediction',
+        is_predicted: true,
+        prediction_score: counts.es,
+        evidence_urls: [hit.link],
+        notes: 'Predicción tardía o confirmación — no actuar para primer lote.',
+      });
+    }
+  }
+
+  predictions.sort((a, b) => (b.prediction_score ?? 0) - (a.prediction_score ?? 0));
+
+  return {
+    phase: '3-prediction',
+    scraped_at: now.toISOString(),
+    predictions,
+    errors,
+    days_until_september: daysUntilSeptember(now),
+  };
+}
