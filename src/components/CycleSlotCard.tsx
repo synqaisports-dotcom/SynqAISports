@@ -30,6 +30,11 @@ export function CycleSlotCard({ slot }: { slot: CycleSlotRow }) {
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
+              {slot.summer_fit && (
+                <span className="mb-1 mr-2 inline-flex rounded bg-amber-400/20 px-1.5 py-0.5 text-[10px] font-mono-data uppercase text-amber-300">
+                  Verano · antes sept
+                </span>
+              )}
               <span
                 className={`rounded px-1.5 py-0.5 text-[10px] font-mono-data uppercase ${
                   isAct ? 'bg-tp-green/20 text-tp-green' : 'bg-violet-500/20 text-violet-300'
@@ -60,6 +65,12 @@ export function CycleSlotCard({ slot }: { slot: CycleSlotRow }) {
             <p className="text-[11px] text-slate-400">{slot.estimated_window_es}</p>
           )}
 
+          {slot.estimated_arrival_es && (
+            <p className="text-[10px] font-mono-data text-slate-500">
+              Llegada est. {slot.estimated_arrival_es}
+            </p>
+          )}
+
           {slot.dna_match_slug && (
             <p className="text-[10px] text-tp-cyan/80">ADN ref. · {slot.dna_match_slug}</p>
           )}
@@ -72,8 +83,9 @@ export function CycleSlotCard({ slot }: { slot: CycleSlotRow }) {
 
           <div className="flex flex-wrap items-center gap-3 pt-1">
             <Link
-              href={slot.purchase_url.startsWith('http') ? slot.purchase_url : slot.purchase_url}
+              href={slot.purchase_url}
               target={slot.purchase_url.startsWith('http') ? '_blank' : undefined}
+              rel={slot.purchase_url.startsWith('http') ? 'noopener noreferrer' : undefined}
               className="inline-flex items-center gap-1 text-xs text-tp-cyan hover:underline"
             >
               Dónde comprar <ExternalLink className="h-3 w-3" />

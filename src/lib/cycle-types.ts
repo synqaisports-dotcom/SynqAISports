@@ -18,10 +18,16 @@ export interface MarketplaceCandidate {
   signal_cn: number;
   signal_us: number;
   signal_es: number;
+  signal_latam?: number;
+  signal_reddit?: number;
   dna_match_slug: string | null;
   estimated_window_es: string | null;
   source_type: string;
   notes: string | null;
+  /** Fase 2c — estimación llegada ES */
+  estimated_arrival_es?: string | null;
+  summer_fit?: boolean;
+  weighted_score?: number;
 }
 
 export interface TrendCycleRow {

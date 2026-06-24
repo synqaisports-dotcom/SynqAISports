@@ -58,7 +58,9 @@ function scoreAct(c: MarketplaceCandidate): number {
   const esQuiet = Math.max(0, 3 - c.signal_es);
   const priceOk = c.origin_price_eur <= MAX_ACT_PRICE_EUR ? 4 : 0;
   const patioBonus = c.world === 'playground' ? 2 : 0;
-  return originSignal + esQuiet + priceOk + patioBonus;
+  const summerBonus = c.summer_fit ? 5 : 0;
+  const liveBonus = c.source_type === 'marketplace_2c' ? 1 : 0;
+  return originSignal + esQuiet + priceOk + patioBonus + summerBonus + liveBonus;
 }
 
 function scoreObserve(c: MarketplaceCandidate): number {
@@ -77,7 +79,8 @@ function dedupe(candidates: MarketplaceCandidate[]): MarketplaceCandidate[] {
 }
 
 export function buildDemoCycle(
-  radarSignals: LiveSignalRow[] = []
+  radarSignals: LiveSignalRow[] = [],
+  marketplaceCandidates: MarketplaceCandidate[] = []
 ): { cycle: TrendCycleRow; slots: CycleSlotRow[] } {
   const slug = weekSlug();
   const now = new Date();
@@ -91,14 +94,19 @@ export function buildDemoCycle(
     starts_at: now.toISOString().slice(0, 10),
     ends_at: ends.toISOString().slice(0, 10),
     status: 'active',
-    notes: 'Generado automáticamente: 3 actuar (precio ≤8€, señal origen) + 3 observar.',
+    notes:
+      '3 actuar (≤8€, señal origen) + 3 observar. Fuentes: marketplace 2c + radar.',
   };
 
   const fromRadar = radarSignals
     .map(radarToCandidate)
     .filter((c): c is MarketplaceCandidate => c != null);
 
-  const pool = dedupe([...DEMO_MARKETPLACE, ...fromRadar]);
+  const pool = dedupe([
+    ...marketplaceCandidates,
+    ...fromRadar,
+    ...(marketplaceCandidates.length === 0 ? DEMO_MARKETPLACE : []),
+  ]);
 
   const actPool = [...pool].sort((a, b) => scoreAct(b) - scoreAct(a));
   const actSlugs = new Set<string>();

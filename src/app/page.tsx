@@ -51,6 +51,27 @@ export default async function DashboardPage() {
       <section className="mb-8">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <div>
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-amber-300">
+              Tendencias patio · verano
+            </h2>
+            <p className="text-xs text-slate-500">Comprar y probar antes de septiembre</p>
+          </div>
+          <Link
+            href="/tendencias"
+            className="flex items-center gap-1 text-xs text-amber-300 hover:underline"
+          >
+            Ver tendencias <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+        <div className="rounded-xl border border-amber-400/20 bg-amber-400/5 px-4 py-3 text-sm text-slate-300">
+          Señales reales por producto (News + Reddit). Enlaces para comprar en AliExpress, Amazon
+          o Five Below.
+        </div>
+      </section>
+
+      <section className="mb-8">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <div>
             <h2 className="text-sm font-semibold uppercase tracking-widest text-tp-cyan">
               Ciclo patio
             </h2>
