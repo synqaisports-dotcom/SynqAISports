@@ -27,6 +27,7 @@ export default async function RadarPage() {
           supabaseConnected: data.supabaseConnected,
           radarIsDemo: data.radarIsDemo,
           hasScrapeData: data.hasScrapeData,
+          radarError: data.radarError,
         }}
       />
 

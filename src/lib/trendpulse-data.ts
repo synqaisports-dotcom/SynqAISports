@@ -1,3 +1,4 @@
+import { buildCursorReport } from './cursor-report';
 import { fetchCorridorDelays, fetchHistoricalDna } from './supabase';
 import { fetchLiveSignals, refreshRadarFromScrape } from './radar';
 import { DEMO_SEED } from './demo-seed';
@@ -14,7 +15,6 @@ function sortPilotRadarSignals(signals: LiveSignalRow[]): LiveSignalRow[] {
     .filter((s): s is LiveSignalRow => s != null);
   return pilot.length > 0 ? pilot : signals.slice(0, 5);
 }
-import { buildCursorReport } from './cursor-report';
 
 export type TrendPulseData = {
   rows: HistoricalDnaRow[];
@@ -24,6 +24,7 @@ export type TrendPulseData = {
   radarSignals: LiveSignalRow[];
   radarIsDemo: boolean;
   hasScrapeData: boolean;
+  radarError: string | null;
   supabaseConnected: boolean;
   configured: boolean;
   error: string | null;
@@ -47,11 +48,11 @@ export async function loadTrendPulseData(options?: {
     await refreshRadarFromScrape();
   }
 
-  const { rows: radarFromDb } = await fetchLiveSignals();
+  const { rows: radarFromDb, error: radarError } = await fetchLiveSignals();
   const rawRadar = radarFromDb.length > 0 ? radarFromDb : DEMO_RADAR;
   const radarSignals = sortPilotRadarSignals(rawRadar);
   const radarIsDemo = radarFromDb.length === 0;
-  const hasScrapeData = radarFromDb.some((r) => r.signal_source?.includes('scrape'));
+  const hasScrapeData = radarFromDb.some((r) => r.signal_source?.startsWith('scrape:'));
 
   const pilotRows = PILOT_DNA_SLUGS.map((slug) => rows.find((r) => r.slug === slug)).filter(
     (r): r is HistoricalDnaRow => r != null
@@ -73,6 +74,7 @@ export async function loadTrendPulseData(options?: {
     radarSignals,
     radarIsDemo,
     hasScrapeData,
+    radarError,
     supabaseConnected,
     configured,
     error,

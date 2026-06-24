@@ -2,15 +2,18 @@ type RadarSetupStatus = {
   supabaseConnected: boolean;
   radarIsDemo: boolean;
   hasScrapeData: boolean;
+  radarError?: string | null;
 };
 
 export function RadarSetupBanner({ status }: { status: RadarSetupStatus }) {
   if (!status.supabaseConnected) return null;
 
   const needsRadarSql = status.radarIsDemo;
-  const needsSecretKey = !status.hasScrapeData;
+  const needsSecretKey = !status.hasScrapeData && !status.radarIsDemo;
+  const needsRedeploy = needsSecretKey;
+  const needsScrapeSql = Boolean(status.radarError?.includes('last_scraped_at'));
 
-  if (!needsRadarSql && !needsSecretKey) return null;
+  if (!needsRadarSql && !needsSecretKey && !needsScrapeSql && !status.radarError) return null;
 
   return (
     <div className="mb-6 space-y-3 rounded-xl border border-tp-amber/30 bg-tp-amber/5 px-4 py-4 text-sm text-slate-200">
@@ -18,33 +21,44 @@ export function RadarSetupBanner({ status }: { status: RadarSetupStatus }) {
       <ol className="list-decimal space-y-2 pl-5 text-slate-300">
         {needsRadarSql && (
           <li>
-            <strong className="text-white">Crear tabla radar en Supabase</strong> — ejecuta en SQL
-            Editor los archivos{' '}
-            <code className="font-mono-data text-xs text-tp-cyan">
-              20260624140000_trendpulse_phase2_radar.sql
-            </code>
-            , luego{' '}
+            <strong className="text-white">Tabla radar vacía o no legible</strong> — en Supabase
+            ejecuta{' '}
             <code className="font-mono-data text-xs text-tp-cyan">
               20260625140000_trendpulse_radar_5_pilots.sql
             </code>
-            . Hasta entonces verás la etiqueta &quot;Sin datos radar&quot;.
+            . Comprueba:{' '}
+            <code className="font-mono-data text-xs">SELECT count(*) FROM trend_live_signals;</code>{' '}
+            → 5.
+          </li>
+        )}
+        {needsScrapeSql && (
+          <li>
+            <strong className="text-white">Columnas de scrape</strong> — ejecuta también{' '}
+            <code className="font-mono-data text-xs text-tp-cyan">
+              20260624160000_trendpulse_scrape_columns.sql
+            </code>
+            .
           </li>
         )}
         {needsSecretKey && (
           <li>
-            <strong className="text-white">Guardar scrape en Vercel</strong> — añade{' '}
+            <strong className="text-white">Secret key en Vercel</strong> — variable{' '}
             <code className="font-mono-data text-xs text-tp-cyan">SUPABASE_SECRET_KEY</code>{' '}
-            (Supabase → Settings → API → Secret key{' '}
-            <code className="font-mono-data text-xs">sb_secret_...</code>) y haz{' '}
-            <strong>Redeploy</strong>.
+            (<code className="font-mono-data text-xs">sb_secret_...</code>).
+          </li>
+        )}
+        {needsRedeploy && (
+          <li>
+            <strong className="text-white">Redeploy obligatorio</strong> — Vercel → Deployments →
+            Redeploy. Sin redeploy la clave nueva no se aplica.
           </li>
         )}
       </ol>
-      <p className="text-xs text-slate-500">
-        Comprobar en Supabase:{' '}
-        <code className="font-mono-data">SELECT count(*) FROM trend_live_signals;</code> → debe dar{' '}
-        <strong>5</strong>.
-      </p>
+      {status.radarError && (
+        <p className="text-xs text-red-300/90">
+          Error lectura radar: <code className="font-mono-data">{status.radarError}</code>
+        </p>
+      )}
     </div>
   );
 }

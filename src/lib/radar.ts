@@ -13,13 +13,9 @@ export async function fetchLiveSignals(): Promise<{
     .from('trend_live_signals')
     .select('*')
     .eq('is_active', true)
-    .order('last_scraped_at', { ascending: false, nullsFirst: false })
     .order('detected_at', { ascending: false });
 
   if (error) {
-    if (error.message.includes('does not exist')) {
-      return { rows: [], error: 'tabla_pendiente' };
-    }
     return { rows: [], error: error.message };
   }
 
