@@ -46,23 +46,43 @@ function toRow(signal: IngestSignal) {
   };
 }
 
+function isRealScrapeSource(source: string | null | undefined): boolean {
+  return source?.startsWith('scrape:') ?? false;
+}
+
 export async function persistIngestSignals(signals: IngestSignal[], errors: string[]) {
   const supabase = getSupabaseServiceRole();
   if (!supabase) {
-    return { ok: false, reason: 'missing_service_role_key' };
+    return { ok: false, reason: 'missing_service_role_key' as const };
   }
 
+  let saved = 0;
   for (const signal of signals) {
-    await supabase.from('trend_live_signals').upsert(toRow(signal), { onConflict: 'slug' });
+    const { error } = await supabase
+      .from('trend_live_signals')
+      .upsert(toRow(signal), { onConflict: 'slug' });
+    if (error) {
+      errors.push(`upsert:${signal.slug}:${error.message}`);
+    } else {
+      saved += 1;
+    }
   }
 
-  await supabase.from('trend_ingest_runs').insert({
-    signals_count: signals.length,
+  if (saved === 0) {
+    return { ok: false, reason: 'upsert_failed' as const };
+  }
+
+  const { error: logError } = await supabase.from('trend_ingest_runs').insert({
+    signals_count: saved,
     errors,
     log: { signals: signals.map((s) => ({ slug: s.slug, hits: s.scrape_hits })) },
   });
 
-  return { ok: true, count: signals.length };
+  if (logError) {
+    errors.push(`ingest_log:${logError.message}`);
+  }
+
+  return { ok: true, count: saved };
 }
 
 /** Ejecuta scraping y guarda si hay service role; si no, solo devuelve preview. */
@@ -72,11 +92,10 @@ export async function refreshRadarFromScrape(): Promise<{
   persisted?: boolean;
 }> {
   const age = await getLastIngestAgeHours();
-  const hasScrapeRows = (await fetchLiveSignals()).rows.some((r) =>
-    r.signal_source?.includes('scrape')
-  );
+  const live = await fetchLiveSignals();
+  const hasRealScrape = live.rows.some((r) => isRealScrapeSource(r.signal_source));
 
-  if (age != null && age < 48 && hasScrapeRows) {
+  if (age != null && age < 48 && hasRealScrape) {
     return { ran: false };
   }
 

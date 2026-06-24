@@ -59,11 +59,10 @@ export function getSupabaseServiceRole(): SupabaseClient | null {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY;
   if (!url || !key) return null;
 
-  const options = isNewFormatKey(key)
-    ? { auth: { persistSession: false, autoRefreshToken: false }, global: { fetch: createPublishableFetch(key) } }
-    : { auth: { persistSession: false, autoRefreshToken: false } };
-
-  return createClient(url, key, options);
+  // sb_secret_ y legacy eyJ necesitan Authorization estándar para escribir
+  return createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
 }
 
 export type FetchDnaResult = {

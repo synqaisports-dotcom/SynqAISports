@@ -27,6 +27,7 @@ export default async function RadarPage() {
           supabaseConnected: data.supabaseConnected,
           radarIsDemo: data.radarIsDemo,
           hasScrapeData: data.hasScrapeData,
+          secretKeyConfigured: data.secretKeyConfigured,
           radarError: data.radarError,
         }}
       />
@@ -40,8 +41,9 @@ export default async function RadarPage() {
       {data.supabaseConnected && (
         <p className="mt-4 text-center font-mono-data text-[10px] text-slate-600">
           radar DB: {data.radarIsDemo ? '0' : data.radarSignals.length} filas
-          {data.radarError ? ` · error: ${data.radarError}` : ''}
+          {data.secretKeyConfigured ? ' · secret OK' : ' · secret NO detectada'}
           {data.hasScrapeData ? ' · scrape OK' : ' · scrape pendiente'}
+          {data.radarError ? ` · ${data.radarError}` : ''}
         </p>
       )}
     </TrendPulseShell>

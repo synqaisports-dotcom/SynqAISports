@@ -2,6 +2,7 @@ type RadarSetupStatus = {
   supabaseConnected: boolean;
   radarIsDemo: boolean;
   hasScrapeData: boolean;
+  secretKeyConfigured?: boolean;
   radarError?: string | null;
 };
 
@@ -9,11 +10,13 @@ export function RadarSetupBanner({ status }: { status: RadarSetupStatus }) {
   if (!status.supabaseConnected) return null;
 
   const needsRadarSql = status.radarIsDemo;
-  const needsSecretKey = !status.hasScrapeData && !status.radarIsDemo;
-  const needsRedeploy = needsSecretKey;
-  const needsScrapeSql = Boolean(status.radarError?.includes('last_scraped_at'));
+  const needsSecretKey = !status.secretKeyConfigured;
+  const needsScrapeRun = status.secretKeyConfigured && !status.hasScrapeData && !status.radarIsDemo;
+  const needsScrapeSql = Boolean(status.radarError?.includes('scrape_hits'));
 
-  if (!needsRadarSql && !needsSecretKey && !needsScrapeSql && !status.radarError) return null;
+  if (!needsRadarSql && !needsSecretKey && !needsScrapeRun && !needsScrapeSql && !status.radarError) {
+    return null;
+  }
 
   return (
     <div className="mb-6 space-y-3 rounded-xl border border-tp-amber/30 bg-tp-amber/5 px-4 py-4 text-sm text-slate-200">
@@ -33,24 +36,26 @@ export function RadarSetupBanner({ status }: { status: RadarSetupStatus }) {
         )}
         {needsScrapeSql && (
           <li>
-            <strong className="text-white">Columnas de scrape</strong> — ejecuta también{' '}
+            <strong className="text-white">Columnas de scrape</strong> — ejecuta{' '}
             <code className="font-mono-data text-xs text-tp-cyan">
               20260624160000_trendpulse_scrape_columns.sql
-            </code>
-            .
+            </code>{' '}
+            en Supabase (añade <code className="font-mono-data text-xs">scrape_hits</code> y{' '}
+            <code className="font-mono-data text-xs">last_scraped_at</code>).
           </li>
         )}
         {needsSecretKey && (
           <li>
-            <strong className="text-white">Secret key en Vercel</strong> — variable{' '}
+            <strong className="text-white">Secret key en Vercel Production</strong> — variable{' '}
             <code className="font-mono-data text-xs text-tp-cyan">SUPABASE_SECRET_KEY</code>{' '}
-            (<code className="font-mono-data text-xs">sb_secret_...</code>).
+            y <strong>Redeploy</strong>.
           </li>
         )}
-        {needsRedeploy && (
+        {needsScrapeRun && (
           <li>
-            <strong className="text-white">Redeploy obligatorio</strong> — Vercel → Deployments →
-            Redeploy. Sin redeploy la clave nueva no se aplica.
+            <strong className="text-white">Primer scrape</strong> — abre{' '}
+            <code className="font-mono-data text-xs">/radar</code>, espera 15 s y recarga. Si
+            sigue pendiente, ejecuta el SQL de columnas scrape arriba.
           </li>
         )}
       </ol>
