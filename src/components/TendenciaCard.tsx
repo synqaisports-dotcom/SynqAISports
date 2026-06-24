@@ -45,6 +45,11 @@ export function TendenciaCard({
                 Predicción
               </span>
             )}
+            {candidate.aliexpress_item_id && (
+              <span className="mb-1 mr-2 inline-flex rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-mono-data uppercase text-emerald-300">
+                Producto real
+              </span>
+            )}
             {candidate.summer_fit && (
               <span className="mb-1 inline-flex items-center gap-1 rounded bg-amber-400/20 px-1.5 py-0.5 text-[10px] font-mono-data uppercase text-amber-300">
                 <Sun className="h-3 w-3" /> Ventana verano

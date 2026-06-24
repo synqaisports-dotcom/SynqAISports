@@ -6,6 +6,7 @@ import {
   schoolYearStart,
   type MarketplaceCatalogItem,
 } from './marketplace-catalog';
+import { enrichWithAliExpressProduct } from './aliexpress-enricher';
 import { scrapeGoogleNewsLocale } from './scrapers/google-news';
 import { scrapeReddit } from './scrapers/reddit';
 
@@ -100,28 +101,31 @@ function catalogToCandidate(
       ? `News+Reddit 21d: ${weighted.toFixed(1)}w (CN${sig.cn} US${sig.us} ES${sig.es})`
       : 'Sin menciones recientes — vigilar marketplace';
 
-  return {
-    slug: item.slug,
-    canonical_name: item.canonical_name,
-    world: item.world,
-    image_url: item.image_url,
-    origin_price_eur: item.origin_price_eur,
-    origin_marketplace: item.origin_marketplace,
-    purchase_url: item.purchase_url,
-    units_sold_label: soldLabel,
-    signal_cn: sig.cn,
-    signal_us: sig.us,
-    signal_es: sig.es,
-    signal_latam: sig.lat,
-    signal_reddit: sig.reddit,
-    dna_match_slug: item.wave_pattern_slug,
-    estimated_window_es: windowLabel,
-    source_type: 'marketplace_2c',
-    notes: item.notes,
-    estimated_arrival_es: arrival,
-    summer_fit,
-    weighted,
-  };
+  return { ...enrichWithAliExpressProduct(
+    {
+      slug: item.slug,
+      canonical_name: item.canonical_name,
+      world: item.world,
+      image_url: item.image_url,
+      origin_price_eur: item.origin_price_eur,
+      origin_marketplace: item.origin_marketplace,
+      purchase_url: item.purchase_url,
+      units_sold_label: soldLabel,
+      signal_cn: sig.cn,
+      signal_us: sig.us,
+      signal_es: sig.es,
+      signal_latam: sig.lat,
+      signal_reddit: sig.reddit,
+      dna_match_slug: item.wave_pattern_slug,
+      estimated_window_es: windowLabel,
+      source_type: 'marketplace_2c',
+      notes: item.notes,
+      estimated_arrival_es: arrival,
+      summer_fit,
+      weighted_score: weighted,
+    },
+    { catalogSlug: item.slug, keywords: item.news_query }
+  ), weighted };
 }
 
 export async function runMarketplaceIngest(): Promise<MarketplaceIngestResult> {

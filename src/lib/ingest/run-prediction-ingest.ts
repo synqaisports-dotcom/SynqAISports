@@ -1,5 +1,6 @@
 import type { MarketplaceCandidate } from '../cycle-types';
 import { applyPriceEstimate } from '../price-comparator';
+import { enrichWithAliExpressProduct } from './aliexpress-enricher';
 import type { ScrapedHit } from './scraper-types';
 import {
   DISCOVERY_QUERIES,
@@ -67,32 +68,40 @@ function predictionFromHit(
   const keywords = searchKeywords(title);
   const prediction_score = origin * 1.2 - sig.es * 0.8;
 
-  const base: MarketplaceCandidate = {
-    slug,
-    canonical_name: title,
-    world: 'playground',
-    image_url: `https://placehold.co/400x400/1a1f2e/22d3ee?text=${encodeURIComponent(title.slice(0, 14))}`,
-    origin_price_eur: 0,
-    origin_marketplace: 'Origen · AliExpress / Amazon US',
-    purchase_url: '',
-    units_sold_label: `Predicción · CN${sig.cn} US${sig.us} ES${sig.es}`,
-    signal_cn: sig.cn,
-    signal_us: sig.us,
-    signal_es: sig.es,
-    signal_latam: sig.lat,
-    dna_match_slug: dq.wave_pattern_slug,
-    estimated_window_es: null,
-    estimated_arrival_es: null,
-    summer_fit: false,
-    weighted_score: prediction_score,
-    source_type: 'prediction',
-    is_predicted: true,
-    prediction_score,
-    evidence_urls: [hit.link].filter(Boolean),
-    notes: `Titular ${hit.channel}. Patrón ADN solo para estimar delay/margen.`,
-  };
+  const base = applyPriceEstimate(
+    {
+      slug,
+      canonical_name: title,
+      world: 'playground',
+      image_url: `https://placehold.co/400x400/1a1f2e/22d3ee?text=${encodeURIComponent(title.slice(0, 14))}`,
+      origin_price_eur: 0,
+      origin_marketplace: 'Origen · AliExpress / Amazon US',
+      purchase_url: '',
+      units_sold_label: `Predicción · CN${sig.cn} US${sig.us} ES${sig.es}`,
+      signal_cn: sig.cn,
+      signal_us: sig.us,
+      signal_es: sig.es,
+      signal_latam: sig.lat,
+      dna_match_slug: dq.wave_pattern_slug,
+      estimated_window_es: null,
+      estimated_arrival_es: null,
+      summer_fit: false,
+      weighted_score: prediction_score,
+      source_type: 'prediction',
+      is_predicted: true,
+      prediction_score,
+      evidence_urls: [hit.link].filter(Boolean),
+      notes: `Titular ${hit.channel}. Patrón ADN solo para estimar delay/margen.`,
+    },
+    keywords,
+    now
+  );
 
-  return applyPriceEstimate(base, keywords, now);
+  return enrichWithAliExpressProduct(base, {
+    keywords,
+    catalogSlug: dq.id,
+    evidenceUrls: [hit.link].filter(Boolean),
+  });
 }
 
 async function signalsForQuery(dq: DiscoveryQuery) {

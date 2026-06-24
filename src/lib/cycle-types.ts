@@ -46,6 +46,9 @@ export interface MarketplaceCandidate {
   purchase_links?: { aliexpress: string; amazon_us: string };
   window_note?: string;
   window_days_left?: number;
+  /** Fase 2c+ — producto AliExpress real */
+  aliexpress_item_id?: string;
+  aliexpress_product_title?: string;
 }
 
 export interface TrendCycleRow {

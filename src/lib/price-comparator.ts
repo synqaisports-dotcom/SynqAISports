@@ -35,10 +35,12 @@ function inferOriginBase(title: string, patternSlug: string): number {
   return p.origin_price_typical_eur;
 }
 
-export function buildPurchaseLinks(keywords: string): PurchaseLinks {
+export function buildPurchaseLinks(keywords: string, aliexpressItemId?: string): PurchaseLinks {
   const q = encodeURIComponent(keywords);
   return {
-    aliexpress: `https://www.aliexpress.com/w/wholesale-${q}.html`,
+    aliexpress: aliexpressItemId
+      ? `https://es.aliexpress.com/item/${aliexpressItemId}.html`
+      : `https://www.aliexpress.com/w/wholesale-${q}.html`,
     amazon_us: `https://www.amazon.com/s?k=${q}`,
   };
 }

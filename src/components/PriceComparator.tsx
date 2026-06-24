@@ -16,6 +16,8 @@ type WithPrice = MarketplaceCandidate & {
   purchase_links?: { aliexpress: string; amazon_us: string };
   window_note?: string;
   window_days_left?: number;
+  aliexpress_item_id?: string;
+  aliexpress_product_title?: string;
 };
 
 export function PriceComparator({ item }: { item: MarketplaceCandidate }) {
@@ -38,12 +40,22 @@ export function PriceComparator({ item }: { item: MarketplaceCandidate }) {
     aliexpress: c.purchase_url,
     amazon_us: `https://www.amazon.com/s?k=trending+toy`,
   };
+  const isDirectProduct =
+    Boolean(c.aliexpress_item_id) ||
+    /aliexpress\.com\/item\/\d+\.html/i.test(links.aliexpress);
 
   return (
     <div className="space-y-3 rounded-lg border border-tp-cyan/20 bg-black/25 p-3">
       <p className="text-[10px] font-mono-data uppercase tracking-widest text-tp-cyan">
         Comparador · comprar en origen
+        {isDirectProduct && (
+          <span className="ml-2 text-emerald-400">· producto directo AliExpress</span>
+        )}
       </p>
+
+      {c.aliexpress_product_title && (
+        <p className="text-[11px] leading-snug text-slate-400">{c.aliexpress_product_title}</p>
+      )}
 
       <div className="grid gap-2 sm:grid-cols-2">
         <div className="rounded-md bg-emerald-500/10 p-2 ring-1 ring-emerald-500/20">
@@ -61,7 +73,8 @@ export function PriceComparator({ item }: { item: MarketplaceCandidate }) {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-[11px] text-emerald-300 hover:underline"
             >
-              AliExpress (CN) <ExternalLink className="h-3 w-3" />
+              {isDirectProduct ? 'AliExpress · producto directo' : 'AliExpress (CN)'}{' '}
+              <ExternalLink className="h-3 w-3" />
             </Link>
             <Link
               href={links.amazon_us}

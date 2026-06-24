@@ -23,7 +23,7 @@ export type PredictionData = {
 
 const cachedPredictions = unstable_cache(
   async () => runPredictionIngest(),
-  ['trendpulse-predictions-v2'],
+  ['trendpulse-predictions-v3'],
   { revalidate: 3600 }
 );
 

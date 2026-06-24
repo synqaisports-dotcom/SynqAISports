@@ -91,7 +91,8 @@ export function CycleSlotCard({ slot }: { slot: CycleSlotRow }) {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-xs text-emerald-400 hover:underline"
               >
-                AliExpress <ExternalLink className="h-3 w-3" />
+                {slot.aliexpress_item_id ? 'AliExpress · producto directo' : 'AliExpress'}{' '}
+                <ExternalLink className="h-3 w-3" />
               </a>
             )}
           </div>
