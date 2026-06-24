@@ -36,9 +36,9 @@ function nextSteps(
     ];
   }
   return [
-    'Validar fechas de Labubu, Pokémon y FIFA 2022 contigo',
     'Diseñar timelines visuales por caso',
     'Planificar Fase 2: ingesta automática cada 48h',
+    'Validar 3 casos más (Dumplings, One Piece, Sonny Angel)',
   ];
 }
 
