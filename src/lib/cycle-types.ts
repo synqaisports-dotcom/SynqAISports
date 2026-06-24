@@ -6,6 +6,19 @@ export type CycleFeedbackType =
   | 'no_show'
   | 'false_positive';
 
+export type TrendProductPick = {
+  rank: number;
+  item_id: string;
+  title: string;
+  image_url: string;
+  price_eur: number;
+  orders_count: number;
+  orders_label: string | null;
+  purchase_url: string;
+  margin_eur?: number;
+  margin_pct?: number;
+};
+
 export interface MarketplaceCandidate {
   slug: string;
   canonical_name: string;
@@ -51,6 +64,15 @@ export interface MarketplaceCandidate {
   aliexpress_product_title?: string;
   /** Titular de noticia / señal — no es el nombre del producto */
   signal_headline?: string;
+  /** Categoría tendencia (una ficha = una categoría) */
+  category_id?: string;
+  category_search?: string;
+  /** Top 3 más vendidos AliExpress en esta categoría */
+  top_products?: TrendProductPick[];
+  /** Suma pedidos top 3 origen */
+  origin_orders_total?: number;
+  /** Titular eco España si hay menciones */
+  es_headline?: string;
 }
 
 export interface TrendCycleRow {

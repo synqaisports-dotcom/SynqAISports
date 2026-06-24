@@ -1,5 +1,5 @@
 import type { MarketplaceCandidate } from '../cycle-types';
-import { candidateFromAliExpressProduct } from './aliexpress-enricher';
+import { candidateFromTrendCategory } from './aliexpress-enricher';
 import { searchAliExpressTopSellers } from './aliexpress-search';
 import type { ScrapedHit } from './scraper-types';
 import {
@@ -20,6 +20,17 @@ export type PredictionIngestResult = {
 };
 
 const TOP_PRODUCTS_PER_CATEGORY = 3;
+
+const CATEGORY_LABELS: Record<string, string> = {
+  'viral-toy-tiktok': 'Juguete viral · TikTok / patio',
+  'new-fidget': 'Nuevo fidget · antistress',
+  'squish-collectible': 'Squishy / mochi coleccionable',
+  'mystery-blind-kids': 'Mystery blind box niños',
+  'summer-playground': 'Verano · patio / agua',
+  'aliexpress-trend-kids': 'Trending AliExpress niños',
+  'cn-toy-export': 'Exportación juguete China',
+  'backpack-charm-trend': 'Charm mochila / llavero',
+};
 
 function slugify(text: string): string {
   return text
@@ -50,6 +61,10 @@ function pickSignalHeadline(hits: ScrapedHit[]): string | undefined {
     if (title.length >= 12 && !isExcludedTitle(title)) return title;
   }
   return undefined;
+}
+
+function categoryLabel(dq: DiscoveryQuery): string {
+  return CATEGORY_LABELS[dq.id] ?? dq.aliexpress_search;
 }
 
 async function signalsForQuery(dq: DiscoveryQuery) {
@@ -94,7 +109,11 @@ export async function runPredictionIngest(): Promise<PredictionIngestResult> {
     const originHits = [...us, ...cn, ...lat, ...reddit].sort(
       (a, b) => (b.publishedAt?.getTime() ?? 0) - (a.publishedAt?.getTime() ?? 0)
     );
+    const esHits = [...es].sort(
+      (a, b) => (b.publishedAt?.getTime() ?? 0) - (a.publishedAt?.getTime() ?? 0)
+    );
     const signalHeadline = pickSignalHeadline(originHits);
+    const esHeadline = pickSignalHeadline(esHits);
     const prediction_score = origin * 1.2 - counts.es * 0.8;
 
     const { products, error: searchErr, fromCache } = await searchAliExpressTopSellers(
@@ -102,63 +121,70 @@ export async function runPredictionIngest(): Promise<PredictionIngestResult> {
       TOP_PRODUCTS_PER_CATEGORY
     );
     if (searchErr) errors.push(`${dq.id}:ae:${searchErr}`);
+    if (products.length === 0) continue;
 
-    for (const product of products) {
-      const slug = `ae-${dq.id}-${product.item_id}`;
-      if (seenSlugs.has(slug)) continue;
-      seenSlugs.add(slug);
+    const slug = `trend-${dq.id}`;
+    if (seenSlugs.has(slug)) continue;
+    seenSlugs.add(slug);
 
-      const base: MarketplaceCandidate = {
-        slug,
-        canonical_name: product.title.slice(0, 120),
-        world: 'playground',
-        image_url: product.image_url,
-        origin_price_eur: product.price_eur,
-        origin_marketplace: 'AliExpress · más vendidos',
-        purchase_url: '',
-        units_sold_label: product.orders_label ?? `${product.orders_count}+ vendidos`,
-        signal_cn: counts.cn,
-        signal_us: counts.us,
-        signal_es: counts.es,
-        signal_latam: counts.lat,
-        dna_match_slug: dq.wave_pattern_slug,
-        estimated_window_es: null,
-        estimated_arrival_es: null,
-        summer_fit: false,
-        weighted_score: prediction_score + product.orders_count / 1000,
-        source_type: 'prediction',
-        is_predicted: true,
-        prediction_score: prediction_score + product.orders_count / 500,
-        evidence_urls: originHits.slice(0, 2).map((h) => h.link).filter(Boolean),
-        notes: [
-          signalHeadline ? `Señal: «${signalHeadline}»` : null,
-          `Categoría ${dq.id} · búsqueda «${dq.aliexpress_search}»`,
-          fromCache ? 'Productos desde caché AliExpress' : 'Productos en vivo AliExpress',
-        ]
-          .filter(Boolean)
-          .join(' · '),
-      };
+    const lead = products[0];
+    const ordersTotal = products.reduce((s, p) => s + p.orders_count, 0);
 
-      predictions.push(
-        candidateFromAliExpressProduct(base, product, {
-          signalHeadline,
-          keywords: dq.aliexpress_search,
-        })
-      );
-    }
+    const base: MarketplaceCandidate = {
+      slug,
+      canonical_name: categoryLabel(dq),
+      world: 'playground',
+      image_url: lead.image_url,
+      origin_price_eur: lead.price_eur,
+      origin_marketplace: 'AliExpress · top ventas origen',
+      purchase_url: '',
+      units_sold_label: `${ordersTotal.toLocaleString('es-ES')}+ pedidos (top 3)`,
+      signal_cn: counts.cn,
+      signal_us: counts.us,
+      signal_es: counts.es,
+      signal_latam: counts.lat,
+      dna_match_slug: dq.wave_pattern_slug,
+      estimated_window_es: null,
+      estimated_arrival_es: null,
+      summer_fit: false,
+      weighted_score: prediction_score + ordersTotal / 2000,
+      source_type: 'prediction',
+      is_predicted: true,
+      prediction_score: prediction_score + ordersTotal / 1000,
+      category_id: dq.id,
+      category_search: dq.aliexpress_search,
+      origin_orders_total: ordersTotal,
+      evidence_urls: [
+        ...originHits.slice(0, 2).map((h) => h.link),
+        ...esHits.slice(0, 1).map((h) => h.link),
+      ].filter(Boolean),
+      signal_headline: signalHeadline,
+      es_headline: esHeadline,
+      notes: [
+        `Búsqueda «${dq.aliexpress_search}»`,
+        fromCache ? 'Productos desde caché AliExpress' : 'Productos en vivo AliExpress',
+      ].join(' · '),
+    };
 
-    if (counts.es > 0 && counts.us + counts.cn <= counts.es) {
-      for (const hit of es.slice(0, 1)) {
-        const title = cleanTitle(hit.title);
-        if (title.length < 12) continue;
-        const slug = `pred-es-echo-${slugify(title)}`;
-        if (seenSlugs.has(slug)) continue;
-        seenSlugs.add(slug);
+    predictions.push(
+      candidateFromTrendCategory(base, products, {
+        signalHeadline,
+        esHeadline,
+        keywords: dq.aliexpress_search,
+        wavePatternSlug: dq.wave_pattern_slug,
+        signals: { cn: counts.cn, us: counts.us, es: counts.es },
+      })
+    );
+
+    if (counts.es > 0 && counts.us + counts.cn <= counts.es && esHeadline) {
+      const ecoSlug = `pred-es-echo-${dq.id}`;
+      if (!seenSlugs.has(ecoSlug)) {
+        seenSlugs.add(ecoSlug);
         predictions.push({
-          slug,
-          canonical_name: `[Eco ES] ${title}`,
+          slug: ecoSlug,
+          canonical_name: `[Eco ES] ${categoryLabel(dq)}`,
           world: 'playground',
-          image_url: `https://placehold.co/400x400/1a1f2e/94a3b8?text=Eco+ES`,
+          image_url: lead.image_url,
           origin_price_eur: 0,
           origin_marketplace: 'Solo observación — sin compra ES',
           purchase_url: '',
@@ -167,6 +193,8 @@ export async function runPredictionIngest(): Promise<PredictionIngestResult> {
           signal_us: counts.us,
           signal_es: counts.es,
           dna_match_slug: dq.wave_pattern_slug,
+          category_id: dq.id,
+          es_headline: esHeadline,
           estimated_window_es: 'Mercado ES ya activo — margen importación cerrado. Solo aprender.',
           estimated_arrival_es: null,
           summer_fit: false,
@@ -174,8 +202,8 @@ export async function runPredictionIngest(): Promise<PredictionIngestResult> {
           source_type: 'prediction',
           is_predicted: true,
           prediction_score: counts.es,
-          evidence_urls: [hit.link],
-          notes: 'Confirmación tardía. No enlaces de compra en España.',
+          evidence_urls: esHits.slice(0, 1).map((h) => h.link),
+          notes: `Confirmación tardía en España: «${esHeadline}». Origen top ventas: ${ordersTotal}+ pedidos.`,
         });
       }
     }

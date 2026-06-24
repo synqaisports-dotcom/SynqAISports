@@ -6,7 +6,7 @@ import {
   schoolYearStart,
   type MarketplaceCatalogItem,
 } from './marketplace-catalog';
-import { candidateFromAliExpressProduct } from './aliexpress-enricher';
+import { candidateFromTrendCategory } from './aliexpress-enricher';
 import { searchAliExpressTopSellers } from './aliexpress-search';
 import { scrapeGoogleNewsLocale } from './scrapers/google-news';
 import { scrapeReddit } from './scrapers/reddit';
@@ -98,19 +98,20 @@ async function catalogToCandidate(
         ? `Ya hay eco en ES (${sig.es} menciones) — puede ser tarde para primer lote`
         : `Vigilar · est. llegada ${arrival} (ADN ~${delay}d)`;
 
-  const { products, error } = await searchAliExpressTopSellers(item.aliexpress_search, 1);
-  const product = products[0];
-  if (!product) return null;
+  const { products, error } = await searchAliExpressTopSellers(item.aliexpress_search, 3);
+  if (products.length === 0) return null;
+
+  const lead = products[0];
 
   const base: MarketplaceCandidate = {
-    slug: `${item.slug}-${product.item_id}`,
-    canonical_name: product.title.slice(0, 120),
+    slug: `${item.slug}-${lead.item_id}`,
+    canonical_name: item.canonical_name,
     world: item.world,
-    image_url: product.image_url,
-    origin_price_eur: product.price_eur,
-    origin_marketplace: 'AliExpress · más vendidos',
+    image_url: lead.image_url,
+    origin_price_eur: lead.price_eur,
+    origin_marketplace: 'AliExpress · top ventas',
     purchase_url: '',
-    units_sold_label: product.orders_label ?? `${product.orders_count}+ vendidos`,
+    units_sold_label: lead.orders_label ?? `${lead.orders_count}+ vendidos`,
     signal_cn: sig.cn,
     signal_us: sig.us,
     signal_es: sig.es,
@@ -121,18 +122,20 @@ async function catalogToCandidate(
     source_type: 'marketplace_2c',
     notes: item.notes,
     estimated_arrival_es: arrival,
-    summer_fit: summer_fit && product.price_eur <= 8,
+    summer_fit: summer_fit && lead.price_eur <= 8,
     weighted_score: weighted,
   };
 
-  const enriched = candidateFromAliExpressProduct(base, product, {
+  const enriched = candidateFromTrendCategory(base, products, {
     keywords: item.aliexpress_search,
+    wavePatternSlug: item.wave_pattern_slug,
+    signals: { cn: sig.cn, us: sig.us, es: sig.es },
   });
 
   return {
     ...enriched,
     estimated_arrival_es: arrival,
-    summer_fit: summer_fit && product.price_eur <= 8,
+    summer_fit: summer_fit && lead.price_eur <= 8,
     weighted,
   };
 }

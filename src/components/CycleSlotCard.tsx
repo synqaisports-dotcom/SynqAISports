@@ -1,10 +1,11 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, MapPin } from 'lucide-react';
 import type { CycleSlotRow } from '@/lib/cycle-types';
 import { MODE_LABELS, WORLD_LABELS } from '@/lib/cycle-types';
 import { CycleFeedbackForm } from './CycleFeedbackForm';
 import { PriceComparator } from './PriceComparator';
+import { TopProductsList } from './TopProductsList';
 
 export function CycleSlotCard({ slot }: { slot: CycleSlotRow }) {
   const isAct = slot.mode === 'act';
@@ -51,7 +52,13 @@ export function CycleSlotCard({ slot }: { slot: CycleSlotRow }) {
               <h3 className="mt-1 font-medium text-white leading-snug">{slot.canonical_name}</h3>
               {slot.signal_headline && (
                 <p className="text-[11px] leading-snug text-violet-300/90">
-                  Señal: {slot.signal_headline}
+                  Señal origen: {slot.signal_headline}
+                </p>
+              )}
+              {slot.es_headline && (
+                <p className="flex items-start gap-1 text-[11px] leading-snug text-amber-300/90">
+                  <MapPin className="mt-0.5 h-3 w-3 shrink-0" />
+                  Eco ES: {slot.es_headline}
                 </p>
               )}
               <p className="text-[11px] text-slate-400">
@@ -74,6 +81,10 @@ export function CycleSlotCard({ slot }: { slot: CycleSlotRow }) {
 
           {slot.estimated_window_es && (
             <p className="text-[11px] text-slate-400">{slot.estimated_window_es}</p>
+          )}
+
+          {slot.top_products && slot.top_products.length > 0 && (
+            <TopProductsList products={slot.top_products} compact />
           )}
 
           <PriceComparator item={slot} />

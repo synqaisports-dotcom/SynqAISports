@@ -1,9 +1,10 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { Sun } from 'lucide-react';
+import { Sun, MapPin } from 'lucide-react';
 import type { MarketplaceCandidate } from '@/lib/cycle-types';
 import { WORLD_LABELS } from '@/lib/cycle-types';
 import { PriceComparator } from './PriceComparator';
+import { TopProductsList } from './TopProductsList';
 
 export function TendenciaCard({
   candidate,
@@ -13,6 +14,7 @@ export function TendenciaCard({
   rank: number;
 }) {
   const isEcoEs = candidate.canonical_name.startsWith('[Eco ES]');
+  const hasTop = (candidate.top_products?.length ?? 0) > 0;
 
   return (
     <article
@@ -42,12 +44,12 @@ export function TendenciaCard({
           <div>
             {candidate.is_predicted && (
               <span className="mb-1 mr-2 inline-flex rounded bg-violet-500/20 px-1.5 py-0.5 text-[10px] font-mono-data uppercase text-violet-300">
-                Predicción
+                Tendencia
               </span>
             )}
-            {candidate.aliexpress_item_id && (
+            {hasTop && (
               <span className="mb-1 mr-2 inline-flex rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-mono-data uppercase text-emerald-300">
-                Producto real
+                Top {candidate.top_products!.length} ventas
               </span>
             )}
             {candidate.summer_fit && (
@@ -56,9 +58,25 @@ export function TendenciaCard({
               </span>
             )}
             <h3 className="font-medium text-white leading-snug">{candidate.canonical_name}</h3>
+            {candidate.category_search && (
+              <p className="text-[10px] font-mono-data text-slate-500">
+                AliExpress · {candidate.category_search}
+              </p>
+            )}
             {candidate.signal_headline && (
               <p className="mt-1 text-[11px] leading-snug text-violet-300/90">
-                Señal: {candidate.signal_headline}
+                Señal origen: {candidate.signal_headline}
+              </p>
+            )}
+            {candidate.es_headline && (
+              <p className="mt-0.5 flex items-start gap-1 text-[11px] leading-snug text-amber-300/90">
+                <MapPin className="mt-0.5 h-3 w-3 shrink-0" />
+                Eco ES ({candidate.signal_es} ref.): {candidate.es_headline}
+              </p>
+            )}
+            {!candidate.es_headline && candidate.signal_es === 0 && !isEcoEs && (
+              <p className="mt-0.5 text-[10px] text-tp-green/90">
+                Sin referencias en España — origen vendiendo, ES quieto
               </p>
             )}
             <p className="text-[11px] text-slate-400">{WORLD_LABELS[candidate.world]}</p>
@@ -67,8 +85,21 @@ export function TendenciaCard({
           <div className="flex flex-wrap gap-2 text-[10px] font-mono-data">
             <span className="rounded bg-white/5 px-1.5 py-0.5 text-slate-400">CN {candidate.signal_cn}</span>
             <span className="rounded bg-white/5 px-1.5 py-0.5 text-slate-400">US {candidate.signal_us}</span>
-            <span className="rounded bg-white/5 px-1.5 py-0.5 text-slate-400">ES {candidate.signal_es}</span>
+            <span
+              className={`rounded px-1.5 py-0.5 ${
+                candidate.signal_es >= 2 ? 'bg-amber-500/20 text-amber-300' : 'bg-white/5 text-slate-400'
+              }`}
+            >
+              ES {candidate.signal_es}
+            </span>
+            {candidate.origin_orders_total != null && candidate.origin_orders_total > 0 && (
+              <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-emerald-300">
+                {candidate.origin_orders_total.toLocaleString('es-ES')}+ pedidos origen
+              </span>
+            )}
           </div>
+
+          {hasTop && <TopProductsList products={candidate.top_products!} />}
 
           <PriceComparator item={candidate} />
 

@@ -1,6 +1,6 @@
-import type { MarketplaceCandidate } from '../cycle-types';
+import type { MarketplaceCandidate, TrendProductPick } from '../cycle-types';
 import type { PurchaseLinks } from '../price-comparator';
-import { applyPriceEstimate } from '../price-comparator';
+import { applyPriceEstimate, buildPriceEstimate } from '../price-comparator';
 import {
   type AliExpressProduct,
   buildAliExpressProductUrl,
@@ -39,6 +39,87 @@ function productToFields(product: AliExpressProduct): EnrichedProductFields {
     },
     origin_marketplace: 'AliExpress · más vendidos · enlace directo',
     units_sold_label: product.orders_label ?? null,
+  };
+}
+
+/** Construye top 3 con margen estimado por producto. */
+export function buildTopProductPicks(
+  hits: AliExpressSearchHit[],
+  wavePatternSlug: string,
+  signals: { cn: number; us: number; es: number }
+): TrendProductPick[] {
+  return hits.slice(0, 3).map((hit, i) => {
+    const product = searchHitToProduct(hit);
+    const est = buildPriceEstimate({
+      keywords: product.title.slice(0, 40),
+      title: product.title,
+      wave_pattern_slug: wavePatternSlug,
+      signal_cn: signals.cn,
+      signal_us: signals.us,
+      signal_es: signals.es,
+    });
+    const margin =
+      product.price_eur > 0
+        ? Math.round((est.estimated_es_retail_mid_eur - product.price_eur) * 100) / 100
+        : est.margin_eur;
+
+    return {
+      rank: i + 1,
+      item_id: product.item_id,
+      title: product.title.slice(0, 100),
+      image_url: normalizeAliExpressImage(product.image_url),
+      price_eur: product.price_eur,
+      orders_count: hit.orders_count,
+      orders_label: product.orders_label ?? null,
+      purchase_url: buildAliExpressProductUrl(product.item_id, 'es'),
+      margin_eur: margin,
+      margin_pct:
+        product.price_eur > 0
+          ? Math.round((margin / product.price_eur) * 100)
+          : est.margin_pct,
+    };
+  });
+}
+
+/** Una ficha de tendencia = categoría + top 3 productos; #1 es el principal. */
+export function candidateFromTrendCategory<T extends MarketplaceCandidate>(
+  base: T,
+  hits: AliExpressSearchHit[],
+  options: {
+    signalHeadline?: string;
+    esHeadline?: string;
+    keywords: string;
+    wavePatternSlug: string;
+    signals: { cn: number; us: number; es: number };
+  }
+): T & Partial<EnrichedProductFields> {
+  if (hits.length === 0) return base;
+
+  const topProducts = buildTopProductPicks(hits, options.wavePatternSlug, options.signals);
+  const lead = hits[0];
+  const enriched = candidateFromAliExpressProduct(base, lead, {
+    signalHeadline: options.signalHeadline,
+    keywords: options.keywords,
+  });
+
+  const ordersTotal = hits.slice(0, 3).reduce((s, h) => s + h.orders_count, 0);
+
+  return {
+    ...enriched,
+    top_products: topProducts,
+    origin_orders_total: ordersTotal,
+    es_headline: options.esHeadline,
+    units_sold_label: `Top ventas origen: ${ordersTotal.toLocaleString('es-ES')}+ pedidos (top 3)`,
+    notes: [
+      base.notes,
+      options.esHeadline
+        ? `Eco ES: «${options.esHeadline}» (${options.signals.es} menciones)`
+        : options.signals.es === 0
+          ? 'Sin referencias en España — ventana importación abierta'
+          : `ES: ${options.signals.es} mención(es) — vigilar saturación`,
+    ]
+      .filter(Boolean)
+      .join(' · '),
   };
 }
 
