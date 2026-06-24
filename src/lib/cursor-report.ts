@@ -36,9 +36,9 @@ function nextSteps(
     ];
   }
   return [
-    'Planificar Fase 2: ingesta automática cada 48h',
-    'Validar 3 casos más (Dumplings, One Piece, Sonny Angel)',
-    'Añadir filtros por perfil de ola en timelines',
+    'Ejecutar SQL Fase 2 en Supabase (trend_live_signals)',
+    'Conectar fuentes ingesta 48h (TikTok, Trends)',
+    'Validar 3 casos más en ADN histórico',
   ];
 }
 

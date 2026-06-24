@@ -5,6 +5,9 @@ import { buildCursorReport } from '@/lib/cursor-report';
 import { WAVE_PROFILE_LABELS, type HistoricalDnaRow } from '@/lib/types';
 import { CopyReportButton } from '@/components/CopyReportButton';
 import { TimelineCaseCard, TimelineLegend } from '@/components/WaveTimeline';
+import { RadarPanel } from '@/components/RadarPanel';
+import { fetchLiveSignals } from '@/lib/radar';
+import { DEMO_RADAR } from '@/lib/demo-radar';
 
 import { DEMO_SEED } from '@/lib/demo-seed';
 
@@ -25,6 +28,10 @@ export default async function TrendPulseHomePage() {
   const rows = supabaseConnected ? fromDb : DEMO_SEED;
   const report = buildCursorReport(rows, supabaseConnected, configured, error);
 
+  const { rows: radarFromDb } = await fetchLiveSignals();
+  const radarSignals = radarFromDb.length > 0 ? radarFromDb : DEMO_RADAR;
+  const radarIsDemo = radarFromDb.length === 0;
+
   const avgDelay =
     rows.filter((r) => r.delay_days_to_target != null).length > 0
       ? Math.round(
@@ -44,7 +51,7 @@ export default async function TrendPulseHomePage() {
               Nexus Labs
             </p>
             <h1 className="text-xl font-bold text-white">TrendPulse</h1>
-            <p className="text-xs text-slate-400">Fase 1 · ADN histórico de tendencias</p>
+            <p className="text-xs text-slate-400">Fase 1 ADN + Radar Fase 2</p>
           </div>
           <CopyReportButton report={report} />
         </div>
@@ -75,6 +82,8 @@ export default async function TrendPulseHomePage() {
             )}
           </div>
         )}
+
+        <RadarPanel signals={radarSignals} isDemo={radarIsDemo} />
 
         <div className="mb-8 grid gap-4 sm:grid-cols-3">
           {[
