@@ -59,10 +59,32 @@ export default async function RadarPage() {
 
       {data.secretKeyConfigured && !data.hasScrapeData && (
         <p className="mt-2 text-center text-xs text-slate-500">
-          Prueba manual: abre{' '}
-          <code className="font-mono-data text-tp-cyan">/api/cron/ingest</code> en tu dominio y
-          mira si dice <code className="font-mono-data">persisted: true</code>
+          Diagnóstico: abre{' '}
+          <code className="font-mono-data text-tp-cyan">/api/radar/status</code> y{' '}
+          <code className="font-mono-data text-tp-cyan">/api/cron/ingest</code>
         </p>
+      )}
+
+      {!data.secretKeyConfigured && data.supabaseConnected && (
+        <div className="mb-6 rounded-xl border border-red-400/30 bg-red-400/5 px-4 py-4 text-sm text-red-200">
+          <p className="font-medium text-red-300">Vercel no ve SUPABASE_SECRET_KEY en este deploy</p>
+          <ol className="mt-2 list-decimal space-y-1 pl-5 text-red-100/90">
+            <li>
+              Nombre exacto de la variable:{' '}
+              <code className="font-mono-data">SUPABASE_SECRET_KEY</code>
+            </li>
+            <li>Valor: Supabase → Settings → API → <strong>Secret key</strong> (sb_secret_...)</li>
+            <li>Entorno: <strong>Production</strong> marcado</li>
+            <li>
+              <strong>Save</strong> y luego <strong>Deployments → Redeploy</strong> (commit reciente
+              en main, no un deploy viejo)
+            </li>
+            <li>
+              Comprueba: <code className="font-mono-data">/api/radar/status</code> debe decir{' '}
+              <code className="font-mono-data">secretKey: true</code>
+            </li>
+          </ol>
+        </div>
       )}
     </TrendPulseShell>
   );

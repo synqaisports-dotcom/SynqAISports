@@ -41,6 +41,46 @@ export function getSupabaseAdmin(): SupabaseClient | null {
   return adminClient;
 }
 
+function resolveSupabaseSecretKey(): string | undefined {
+  const key =
+    process.env.SUPABASE_SECRET_KEY ??
+    process.env.SUPABASE_SERVICE_ROLE_KEY ??
+    process.env.SUPABASE_SERVICE_KEY;
+  const trimmed = key?.trim();
+  return trimmed || undefined;
+}
+
+export type SupabaseEnvStatus = {
+  url: boolean;
+  readKey: boolean;
+  secretKey: boolean;
+  secretFormat: 'sb_secret' | 'legacy_jwt' | 'unknown' | 'missing';
+  envNamesFound: {
+    SUPABASE_SECRET_KEY: boolean;
+    SUPABASE_SERVICE_ROLE_KEY: boolean;
+  };
+};
+
+export function getSupabaseEnvStatus(): SupabaseEnvStatus {
+  const secret = resolveSupabaseSecretKey();
+  return {
+    url: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()),
+    readKey: Boolean(resolveSupabaseReadKey()?.trim()),
+    secretKey: Boolean(secret),
+    secretFormat: secret?.startsWith('sb_secret_')
+      ? 'sb_secret'
+      : secret?.startsWith('eyJ')
+        ? 'legacy_jwt'
+        : secret
+          ? 'unknown'
+          : 'missing',
+    envNamesFound: {
+      SUPABASE_SECRET_KEY: Boolean(process.env.SUPABASE_SECRET_KEY?.trim()),
+      SUPABASE_SERVICE_ROLE_KEY: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()),
+    },
+  };
+}
+
 export function isSupabaseConfigured(): boolean {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = resolveSupabaseReadKey();
@@ -48,15 +88,15 @@ export function isSupabaseConfigured(): boolean {
 }
 
 export function hasSupabaseServiceRole(): boolean {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const key = resolveSupabaseSecretKey();
   return Boolean(url && key);
 }
 
 /** Cliente con permisos de escritura para cron / ingesta. */
 export function getSupabaseServiceRole(): SupabaseClient | null {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const key = resolveSupabaseSecretKey();
   if (!url || !key) return null;
 
   // sb_secret_ y legacy eyJ necesitan Authorization estándar para escribir

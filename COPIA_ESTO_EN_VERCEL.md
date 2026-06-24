@@ -43,3 +43,23 @@ apps/nexus
 URL TrendPulse: 
 ¿Ves Labubu?: sí/no
 ```
+
+---
+
+## Radar — guardar scrape (SUPABASE_SECRET_KEY)
+
+Sin esto el radar **lee** pero **no guarda** noticias scrapeadas.
+
+1. Supabase → **Project Settings** → **API Keys** → copia **Secret key** (`sb_secret_...`)
+   - No uses la Publishable ni la anon.
+   - Alternativa legacy: pestaña **Legacy API Keys** → `service_role` (empieza por `eyJ`)
+2. Vercel → proyecto TrendPulse → **Settings** → **Environment Variables**
+3. Añade:
+   - **Name:** `SUPABASE_SECRET_KEY` (nombre exacto, sin espacios)
+   - **Value:** pega la secret key completa
+   - **Environments:** marca **Production** (obligatorio)
+4. **Save**
+5. **Deployments** → deploy más reciente de `main` → **Redeploy**
+6. Comprueba en el navegador: `https://TU-DOMINIO/api/radar/status`
+   - Debe decir `"secretKey": true`
+7. Luego abre `/radar` o `/api/cron/ingest` → `"persisted": true`
