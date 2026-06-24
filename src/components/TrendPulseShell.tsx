@@ -42,7 +42,7 @@ export function TrendPulseShell({
         <Link href="https://nexuslabs.vercel.app" className="text-tp-cyan hover:underline">
           Nexus Labs
         </Link>
-        {' · '}5 pilotos activos · Radar cada 48h
+        {' · '}Ciclo patio · Radar cada 48h
       </footer>
     </div>
   );

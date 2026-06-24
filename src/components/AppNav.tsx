@@ -2,10 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Dna, LayoutDashboard, Radar } from 'lucide-react';
+import { Dna, LayoutDashboard, Radar, School } from 'lucide-react';
 
 const NAV = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/ciclo', label: 'Ciclo', icon: School },
   { href: '/radar', label: 'Radar', icon: Radar },
   { href: '/adn', label: 'ADN', icon: Dna },
 ] as const;

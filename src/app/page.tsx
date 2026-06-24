@@ -52,6 +52,27 @@ export default async function DashboardPage() {
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <div>
             <h2 className="text-sm font-semibold uppercase tracking-widest text-tp-cyan">
+              Ciclo patio
+            </h2>
+            <p className="text-xs text-slate-500">3 actuar + 3 observar esta quincena</p>
+          </div>
+          <Link
+            href="/ciclo"
+            className="flex items-center gap-1 text-xs text-tp-cyan hover:underline"
+          >
+            Ir al ciclo <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+        <div className="rounded-xl border border-tp-green/20 bg-tp-green/5 px-4 py-3 text-sm text-slate-300">
+          Compra barato → hijos al cole → feedback. Observa otras tendencias sin gastar para
+          calibrar predicciones.
+        </div>
+      </section>
+
+      <section className="mb-8">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-tp-cyan">
               Radar · resumen
             </h2>
             <p className="text-xs text-slate-500">5 productos en seguimiento con datos reales</p>
