@@ -6,7 +6,8 @@ import {
   schoolYearStart,
   type MarketplaceCatalogItem,
 } from './marketplace-catalog';
-import { enrichWithAliExpressProduct } from './aliexpress-enricher';
+import { candidateFromAliExpressProduct } from './aliexpress-enricher';
+import { searchAliExpressTopSellers } from './aliexpress-search';
 import { scrapeGoogleNewsLocale } from './scrapers/google-news';
 import { scrapeReddit } from './scrapers/reddit';
 
@@ -67,11 +68,13 @@ async function signalsForItem(item: MarketplaceCatalogItem): Promise<{
   };
 }
 
-function catalogToCandidate(
+async function catalogToCandidate(
   item: MarketplaceCatalogItem,
   sig: { cn: number; us: number; es: number; lat: number; reddit: number },
   now: Date
-): MarketplaceCandidate & { estimated_arrival_es: string; summer_fit: boolean; weighted: number } {
+): Promise<
+  (MarketplaceCandidate & { estimated_arrival_es: string; summer_fit: boolean; weighted: number }) | null
+> {
   const weighted = weightedScore(sig.cn, sig.us, sig.es, sig.lat, sig.reddit);
   const originActive = sig.cn + sig.us + sig.lat + sig.reddit;
   const esQuiet = sig.es <= 1;
@@ -82,7 +85,6 @@ function catalogToCandidate(
   const arrivalDate = new Date(arrival);
   const summer_fit =
     item.world === 'playground' &&
-    item.origin_price_eur <= 8 &&
     esQuiet &&
     originActive >= 1 &&
     arrivalDate <= sept;
@@ -96,36 +98,43 @@ function catalogToCandidate(
         ? `Ya hay eco en ES (${sig.es} menciones) — puede ser tarde para primer lote`
         : `Vigilar · est. llegada ${arrival} (ADN ~${delay}d)`;
 
-  const soldLabel =
-    weighted > 0
-      ? `News+Reddit 21d: ${weighted.toFixed(1)}w (CN${sig.cn} US${sig.us} ES${sig.es})`
-      : 'Sin menciones recientes — vigilar marketplace';
+  const { products, error } = await searchAliExpressTopSellers(item.aliexpress_search, 1);
+  const product = products[0];
+  if (!product) return null;
 
-  return { ...enrichWithAliExpressProduct(
-    {
-      slug: item.slug,
-      canonical_name: item.canonical_name,
-      world: item.world,
-      image_url: item.image_url,
-      origin_price_eur: item.origin_price_eur,
-      origin_marketplace: item.origin_marketplace,
-      purchase_url: item.purchase_url,
-      units_sold_label: soldLabel,
-      signal_cn: sig.cn,
-      signal_us: sig.us,
-      signal_es: sig.es,
-      signal_latam: sig.lat,
-      signal_reddit: sig.reddit,
-      dna_match_slug: item.wave_pattern_slug,
-      estimated_window_es: windowLabel,
-      source_type: 'marketplace_2c',
-      notes: item.notes,
-      estimated_arrival_es: arrival,
-      summer_fit,
-      weighted_score: weighted,
-    },
-    { catalogSlug: item.slug, keywords: item.news_query }
-  ), weighted };
+  const base: MarketplaceCandidate = {
+    slug: `${item.slug}-${product.item_id}`,
+    canonical_name: product.title.slice(0, 120),
+    world: item.world,
+    image_url: product.image_url,
+    origin_price_eur: product.price_eur,
+    origin_marketplace: 'AliExpress · más vendidos',
+    purchase_url: '',
+    units_sold_label: product.orders_label ?? `${product.orders_count}+ vendidos`,
+    signal_cn: sig.cn,
+    signal_us: sig.us,
+    signal_es: sig.es,
+    signal_latam: sig.lat,
+    signal_reddit: sig.reddit,
+    dna_match_slug: item.wave_pattern_slug,
+    estimated_window_es: windowLabel,
+    source_type: 'marketplace_2c',
+    notes: item.notes,
+    estimated_arrival_es: arrival,
+    summer_fit: summer_fit && product.price_eur <= 8,
+    weighted_score: weighted,
+  };
+
+  const enriched = candidateFromAliExpressProduct(base, product, {
+    keywords: item.aliexpress_search,
+  });
+
+  return {
+    ...enriched,
+    estimated_arrival_es: arrival,
+    summer_fit: summer_fit && product.price_eur <= 8,
+    weighted,
+  };
 }
 
 export async function runMarketplaceIngest(): Promise<MarketplaceIngestResult> {
@@ -145,7 +154,9 @@ export async function runMarketplaceIngest(): Promise<MarketplaceIngestResult> {
   );
   for (const { item, sig } of batch) {
     errors.push(...sig.errors);
-    candidates.push(catalogToCandidate(item, sig, now));
+    const c = await catalogToCandidate(item, sig, now);
+    if (c) candidates.push(c);
+    else errors.push(`${item.slug}:no_aliexpress_product`);
   }
 
   candidates.sort((a, b) => {

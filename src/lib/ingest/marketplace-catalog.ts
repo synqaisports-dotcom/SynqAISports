@@ -15,6 +15,8 @@ export type MarketplaceCatalogItem = {
    */
   wave_pattern_slug: string;
   adn_delay_days: number;
+  /** Búsqueda AliExpress — top seller real */
+  aliexpress_search: string;
   notes: string;
   /** true = descubrimiento nuevo; false = no mostrar en /tendencias */
   is_discovery: boolean;
@@ -48,6 +50,7 @@ export const DISCOVERY_SUMMER_CATALOG: MarketplaceCatalogItem[] = [
     reddit_query: '3d printed dragon toy fidget',
     wave_pattern_slug: 'pop-it',
     adn_delay_days: 44,
+    aliexpress_search: '3d printed dragon toy',
     notes: 'Nuevo en radar. Patrón patio barato + TikTok/AliExpress.',
     is_discovery: true,
   },
@@ -63,6 +66,7 @@ export const DISCOVERY_SUMMER_CATALOG: MarketplaceCatalogItem[] = [
     reddit_query: 'mochi squishy toy',
     wave_pattern_slug: 'pop-it',
     adn_delay_days: 35,
+    aliexpress_search: 'mochi squishy toy kids',
     notes: 'Nuevo. Sensorial + mini colección.',
     is_discovery: true,
   },
@@ -78,6 +82,7 @@ export const DISCOVERY_SUMMER_CATALOG: MarketplaceCatalogItem[] = [
     reddit_query: 'plush keychain charm backpack kids',
     wave_pattern_slug: 'pop-it',
     adn_delay_days: 45,
+    aliexpress_search: 'plush keychain charm backpack kids',
     notes: 'Nuevo. Derivado económico de modas adultas — puente al patio.',
     is_discovery: true,
   },
@@ -93,6 +98,7 @@ export const DISCOVERY_SUMMER_CATALOG: MarketplaceCatalogItem[] = [
     reddit_query: 'mesh ball fidget toy',
     wave_pattern_slug: 'pop-it',
     adn_delay_days: 40,
+    aliexpress_search: 'mesh squishy ball fidget',
     notes: 'Nuevo. Recurrente post-fidget; bueno para verano.',
     is_discovery: true,
   },
@@ -108,6 +114,7 @@ export const DISCOVERY_SUMMER_CATALOG: MarketplaceCatalogItem[] = [
     reddit_query: 'finger skateboard trend',
     wave_pattern_slug: 'pop-it',
     adn_delay_days: 50,
+    aliexpress_search: 'finger skateboard toy',
     notes: 'Nuevo ciclo posible en patios.',
     is_discovery: true,
   },
@@ -123,6 +130,7 @@ export const DISCOVERY_SUMMER_CATALOG: MarketplaceCatalogItem[] = [
     reddit_query: 'reusable water balloons kids',
     wave_pattern_slug: 'pop-it',
     adn_delay_days: 30,
+    aliexpress_search: 'reusable water balloon kids',
     notes: 'Nuevo pico estacional verano — ventana corta antes de sept.',
     is_discovery: true,
   },
@@ -138,6 +146,7 @@ export const DISCOVERY_SUMMER_CATALOG: MarketplaceCatalogItem[] = [
     reddit_query: 'diabolo yoyo kids trend',
     wave_pattern_slug: 'beyblade-burst',
     adn_delay_days: 60,
+    aliexpress_search: 'diabolo yoyo kids',
     notes: 'Ciclo recurrente — vigilar si ES empieza a moverse.',
     is_discovery: true,
   },
@@ -153,6 +162,7 @@ export const DISCOVERY_SUMMER_CATALOG: MarketplaceCatalogItem[] = [
     reddit_query: 'loom bands kids trend',
     wave_pattern_slug: 'pop-it',
     adn_delay_days: 55,
+    aliexpress_search: 'loom bands bracelet kids',
     notes: 'Nuevo resurgir posible — patrón cíclico patio.',
     is_discovery: true,
   },
@@ -168,6 +178,7 @@ export const DISCOVERY_SUMMER_CATALOG: MarketplaceCatalogItem[] = [
     reddit_query: 'shoe charms croc kids',
     wave_pattern_slug: 'pop-it',
     adn_delay_days: 40,
+    aliexpress_search: 'shoe charms croc kids',
     notes: 'Nuevo. Verano + personalización en cole.',
     is_discovery: true,
   },
@@ -183,6 +194,7 @@ export const DISCOVERY_SUMMER_CATALOG: MarketplaceCatalogItem[] = [
     reddit_query: 'magnetic fidget rings',
     wave_pattern_slug: 'pop-it',
     adn_delay_days: 42,
+    aliexpress_search: 'magnetic fidget ring kids',
     notes: 'Nuevo. Sucesor espiritual del spinner en algunos mercados.',
     is_discovery: true,
   },

@@ -32,6 +32,7 @@ export function normalizeAliExpressImage(url: string): string {
   return url
     .replace(/^\/\//, 'https://')
     .replace(/^https:(?!\/\/)/, 'https://')
+    .replace(/^http:(?!\/\/)/, 'http://')
     .replace(/_\d+x\d+q\d+\.jpg[^/]*$/i, '.jpg')
     .replace(/\.jpg_\.webp$/i, '.jpg')
     .replace(/\.png_\.webp$/i, '.png');

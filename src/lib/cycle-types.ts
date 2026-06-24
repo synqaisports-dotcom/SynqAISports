@@ -49,6 +49,8 @@ export interface MarketplaceCandidate {
   /** Fase 2c+ — producto AliExpress real */
   aliexpress_item_id?: string;
   aliexpress_product_title?: string;
+  /** Titular de noticia / señal — no es el nombre del producto */
+  signal_headline?: string;
 }
 
 export interface TrendCycleRow {

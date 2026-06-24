@@ -4,15 +4,14 @@ import { applyPriceEstimate } from '../price-comparator';
 import {
   type AliExpressProduct,
   buildAliExpressProductUrl,
-  getAliExpressProductById,
-  matchAliExpressProduct,
   normalizeAliExpressImage,
-  parseAliExpressItemId,
 } from './aliexpress-catalog';
+import { type AliExpressSearchHit, searchHitToProduct } from './aliexpress-search';
 
 export type EnrichedProductFields = {
   aliexpress_item_id?: string;
   aliexpress_product_title?: string;
+  signal_headline?: string;
   image_url: string;
   origin_price_eur: number;
   purchase_url: string;
@@ -38,50 +37,38 @@ function productToFields(product: AliExpressProduct): EnrichedProductFields {
       aliexpress: url,
       amazon_us: `https://www.amazon.com/s?k=${encodeURIComponent(product.title.slice(0, 40))}`,
     },
-    origin_marketplace: 'AliExpress · enlace directo al producto',
+    origin_marketplace: 'AliExpress · más vendidos · enlace directo',
     units_sold_label: product.orders_label ?? null,
   };
 }
 
-/** Aplica producto AliExpress real a un candidato (imagen, precio, URL directa). */
-export function enrichWithAliExpressProduct<T extends MarketplaceCandidate>(
-  candidate: T,
-  options?: {
-    keywords?: string;
-    catalogSlug?: string;
-    evidenceUrls?: string[];
-  }
+/** Crea candidato desde producto AliExpress real + señal de titular opcional. */
+export function candidateFromAliExpressProduct<T extends MarketplaceCandidate>(
+  base: T,
+  hit: AliExpressSearchHit,
+  options?: { signalHeadline?: string; keywords?: string }
 ): T & Partial<EnrichedProductFields> {
-  const evidence = [
-    ...(options?.evidenceUrls ?? []),
-    ...(candidate.evidence_urls ?? []),
-    candidate.purchase_url,
-  ].filter(Boolean) as string[];
-
-  let product = matchAliExpressProduct({
-    title: candidate.canonical_name,
-    keywords: options?.keywords,
-    catalogSlug: options?.catalogSlug,
-    evidenceUrls: evidence,
-  });
-
-  if (!product) return candidate;
-
+  const product = searchHitToProduct(hit);
   const fields = productToFields(product);
 
-  if (!fields.image_url && product.item_id) {
-    fields.image_url = candidate.image_url;
-  }
+  const titled: T = {
+    ...base,
+    canonical_name: product.title.slice(0, 120),
+    signal_headline: options?.signalHeadline,
+    image_url: fields.image_url || base.image_url,
+  };
 
   const withEstimate = applyPriceEstimate(
-    candidate,
-    options?.keywords ?? candidate.canonical_name.slice(0, 30),
+    titled,
+    options?.keywords ?? product.title.slice(0, 40),
     undefined
   ) as T & Partial<EnrichedProductFields>;
 
   return {
     ...withEstimate,
     ...fields,
+    canonical_name: product.title.slice(0, 120),
+    signal_headline: options?.signalHeadline,
     origin_price_eur: product.price_eur > 0 ? product.price_eur : withEstimate.origin_price_eur,
     origin_price_us_eur:
       product.price_eur > 0
@@ -101,24 +88,11 @@ export function enrichWithAliExpressProduct<T extends MarketplaceCandidate>(
               100
           )
         : withEstimate.margin_pct,
+    notes: [
+      base.notes,
+      product.price_eur > 0 ? 'Precio origen desde listado AliExpress (puede incluir IVA en ES).' : null,
+    ]
+      .filter(Boolean)
+      .join(' · '),
   };
-}
-
-/** Resuelve producto solo por URLs en titulares (sin catálogo). */
-export function resolveProductFromUrls(urls: string[]): AliExpressProduct | null {
-  for (const url of urls) {
-    const id = parseAliExpressItemId(url);
-    if (!id) continue;
-    const known = getAliExpressProductById(id);
-    if (known) return known;
-    return {
-      item_id: id,
-      title: `AliExpress #${id}`,
-      image_url: '',
-      price_eur: 0,
-      price_usd: 0,
-      keywords: [],
-    };
-  }
-  return null;
 }

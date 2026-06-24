@@ -23,12 +23,13 @@ export default async function TendenciasPage() {
         <div className="flex items-start gap-3">
           <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-violet-300" />
           <div className="text-sm text-slate-300">
-            <p className="font-medium text-white">Fase 3 — Predicción (no catálogo fijo)</p>
+            <p className="font-medium text-white">Fase 3 — Productos reales AliExpress (más vendidos)</p>
             <p className="mt-1 text-xs leading-relaxed text-slate-400">
-              Compra en <strong className="text-emerald-300">origen</strong> (AliExpress / Amazon US).
-              El precio ES es <strong className="text-amber-200">estimación</strong> según patrones
-              históricos del ADN — no un enlace de compra en España. Tu margen = diferencia origen →
-              vending/patio cuando llegue.
+              Cada tarjeta muestra un <strong className="text-emerald-300">producto concreto</strong> de
+              AliExpress (top ventas por categoría), con precio y enlace directo. La{' '}
+              <strong className="text-violet-300">señal</strong> (titular de noticia) indica por qué
+              vigilar la categoría — no es el nombre del producto. El precio ES es{' '}
+              <strong className="text-amber-200">estimación</strong> según ADN histórico.
             </p>
             {market.scraped_at && (
               <p className="mt-2 font-mono-data text-[10px] text-slate-500">

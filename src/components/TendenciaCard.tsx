@@ -56,6 +56,11 @@ export function TendenciaCard({
               </span>
             )}
             <h3 className="font-medium text-white leading-snug">{candidate.canonical_name}</h3>
+            {candidate.signal_headline && (
+              <p className="mt-1 text-[11px] leading-snug text-violet-300/90">
+                Señal: {candidate.signal_headline}
+              </p>
+            )}
             <p className="text-[11px] text-slate-400">{WORLD_LABELS[candidate.world]}</p>
           </div>
 

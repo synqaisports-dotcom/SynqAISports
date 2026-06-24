@@ -18,6 +18,7 @@ type WithPrice = MarketplaceCandidate & {
   window_days_left?: number;
   aliexpress_item_id?: string;
   aliexpress_product_title?: string;
+  signal_headline?: string;
 };
 
 export function PriceComparator({ item }: { item: MarketplaceCandidate }) {
@@ -53,8 +54,13 @@ export function PriceComparator({ item }: { item: MarketplaceCandidate }) {
         )}
       </p>
 
-      {c.aliexpress_product_title && (
+      {c.aliexpress_product_title && c.aliexpress_product_title !== c.canonical_name && (
         <p className="text-[11px] leading-snug text-slate-400">{c.aliexpress_product_title}</p>
+      )}
+      {c.signal_headline && (
+        <p className="text-[10px] leading-snug text-violet-300/80">
+          Señal detectada: {c.signal_headline}
+        </p>
       )}
 
       <div className="grid gap-2 sm:grid-cols-2">
@@ -65,6 +71,7 @@ export function PriceComparator({ item }: { item: MarketplaceCandidate }) {
           </p>
           <p className="text-[10px] text-slate-500">
             US ref. ~{c.origin_price_us_eur?.toFixed(2) ?? '—'} €
+            {c.aliexpress_item_id ? ' · precio listado AliExpress (ES puede incluir IVA)' : ''}
           </p>
           <div className="mt-2 flex flex-col gap-1">
             <Link

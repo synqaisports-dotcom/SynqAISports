@@ -49,6 +49,11 @@ export function CycleSlotCard({ slot }: { slot: CycleSlotRow }) {
                 {MODE_LABELS[slot.mode]}
               </span>
               <h3 className="mt-1 font-medium text-white leading-snug">{slot.canonical_name}</h3>
+              {slot.signal_headline && (
+                <p className="text-[11px] leading-snug text-violet-300/90">
+                  Señal: {slot.signal_headline}
+                </p>
+              )}
               <p className="text-[11px] text-slate-400">
                 {WORLD_LABELS[slot.world]} · {slot.origin_marketplace}
               </p>
