@@ -61,3 +61,4 @@ Pégame el informe de nuevo con el botón **Copiar informe para Cursor**.
 - [13 casos adicionales (25 total)](https://github.com/synqaisports-dotcom/SynqAISports/blob/main/supabase/migrations/20260623230000_trendpulse_seed_25_cases.sql)
 - [Referencia LATAM — 5 casos piloto](https://github.com/synqaisports-dotcom/SynqAISports/blob/main/supabase/migrations/20260625120000_trendpulse_latam_corridors.sql) (opcional; línea violeta en timelines)
 - [Radar 5 pilotos](https://github.com/synqaisports-dotcom/SynqAISports/blob/main/supabase/migrations/20260625140000_trendpulse_radar_5_pilots.sql) (5 productos reales de seguimiento)
+- [Permisos escritura radar](https://github.com/synqaisports-dotcom/SynqAISports/blob/main/supabase/migrations/20260625200000_trendpulse_radar_write_grants.sql) (si sale `permission denied` al scrape)
