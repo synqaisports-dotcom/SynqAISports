@@ -1,10 +1,15 @@
 import type { LiveSignalRow } from '../radar-types';
 import type { CycleSlotMode, CycleSlotRow, MarketplaceCandidate, TrendCycleRow } from '../cycle-types';
 import { DEMO_MARKETPLACE } from '../demo-marketplace';
+import { isExcludedAdnCase } from '../ingest/marketplace-catalog';
 
 const MAX_ACT_PRICE_EUR = 8;
 const ACT_COUNT = 3;
 const OBSERVE_COUNT = 3;
+
+function isPilotDna(slug: string): boolean {
+  return isExcludedAdnCase(slug);
+}
 
 function weekSlug(d = new Date()): string {
   const start = new Date(d);
@@ -100,12 +105,13 @@ export function buildDemoCycle(
 
   const fromRadar = radarSignals
     .map(radarToCandidate)
-    .filter((c): c is MarketplaceCandidate => c != null);
+    .filter((c): c is MarketplaceCandidate => c != null)
+    .filter((c) => !c.dna_match_slug || !isPilotDna(c.dna_match_slug));
 
   const pool = dedupe([
     ...marketplaceCandidates,
     ...fromRadar,
-    ...(marketplaceCandidates.length === 0 ? DEMO_MARKETPLACE : []),
+    ...(marketplaceCandidates.length === 0 ? DEMO_MARKETPLACE.filter((d) => !isPilotDna(d.dna_match_slug ?? '')) : []),
   ]);
 
   const actPool = [...pool].sort((a, b) => scoreAct(b) - scoreAct(a));

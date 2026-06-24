@@ -23,12 +23,12 @@ export default async function TendenciasPage() {
         <div className="flex items-start gap-3">
           <Sun className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
           <div className="text-sm text-slate-300">
-            <p className="font-medium text-white">Fase 2c — Señales reales por producto</p>
+            <p className="font-medium text-white">Descubrimiento — productos nuevos</p>
             <p className="mt-1 text-xs leading-relaxed text-slate-400">
-              Cada producto se escanea en Google News (ES/US/CN/LATAM) y Reddit. Los marcados{' '}
-              <strong className="text-amber-300">Verano</strong> tienen señal en origen, poco eco
-              en España y precio ≤8 € — candidatos para comprar <em>este verano</em> y probar en el
-              cole antes de septiembre.
+              <strong className="text-white">No son</strong> los casos del ADN histórico (Labubu,
+              Pop It, Pokémon SV…). Son candidatos nuevos detectados por señales News+Reddit. El
+              «patrón ola» solo indica un reloj parecido (ej. reloj corto tipo Pop It), no que el
+              producto ya haya pasado por España.
             </p>
             {market.scraped_at && (
               <p className="mt-2 font-mono-data text-[10px] text-slate-500">

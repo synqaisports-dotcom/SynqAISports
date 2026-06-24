@@ -72,7 +72,7 @@ export function CycleSlotCard({ slot }: { slot: CycleSlotRow }) {
           )}
 
           {slot.dna_match_slug && (
-            <p className="text-[10px] text-tp-cyan/80">ADN ref. · {slot.dna_match_slug}</p>
+            <p className="text-[10px] text-tp-cyan/80">Patrón ola · {slot.dna_match_slug}</p>
           )}
 
           {isAct && (

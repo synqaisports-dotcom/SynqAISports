@@ -70,7 +70,7 @@ export function TendenciaCard({
             <p className="flex items-center gap-1 text-[10px] text-slate-500">
               <Calendar className="h-3 w-3" />
               Llegada est. {candidate.estimated_arrival_es}
-              {candidate.dna_match_slug && ` · ADN ${candidate.dna_match_slug}`}
+              {candidate.dna_match_slug && ` · patrón ${candidate.dna_match_slug}`}
             </p>
           )}
 

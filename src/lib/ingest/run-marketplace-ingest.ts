@@ -1,6 +1,6 @@
 import type { MarketplaceCandidate } from '../cycle-types';
 import {
-  PLAYGROUND_SUMMER_CATALOG,
+  DISCOVERY_SUMMER_CATALOG,
   addDaysIso,
   daysUntilSeptember,
   schoolYearStart,
@@ -114,7 +114,7 @@ function catalogToCandidate(
     signal_es: sig.es,
     signal_latam: sig.lat,
     signal_reddit: sig.reddit,
-    dna_match_slug: item.dna_match_slug,
+    dna_match_slug: item.wave_pattern_slug,
     estimated_window_es: windowLabel,
     source_type: 'marketplace_2c',
     notes: item.notes,
@@ -134,7 +134,7 @@ export async function runMarketplaceIngest(): Promise<MarketplaceIngestResult> {
   })[] = [];
 
   const batch = await Promise.all(
-    PLAYGROUND_SUMMER_CATALOG.map(async (item) => {
+    DISCOVERY_SUMMER_CATALOG.map(async (item) => {
       const sig = await signalsForItem(item);
       return { item, sig };
     })

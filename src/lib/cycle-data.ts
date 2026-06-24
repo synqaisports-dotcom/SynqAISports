@@ -2,6 +2,7 @@ import { unstable_cache } from 'next/cache';
 import { buildDemoCycle } from './cycle/build-cycle';
 import type { CycleSlotRow, TrendCycleRow } from './cycle-types';
 import type { LiveSignalRow } from './radar-types';
+import { isExcludedAdnCase } from './ingest/marketplace-catalog';
 import { runMarketplaceIngest } from './ingest/run-marketplace-ingest';
 import { fetchMarketplaceCandidates, persistMarketplaceCandidates } from './marketplace';
 import { hasSupabaseServiceRole } from './supabase';
@@ -37,7 +38,7 @@ export async function loadMarketplaceData(options?: {
     const { rows, fromDb } = await fetchMarketplaceCandidates();
     if (fromDb && rows.length > 0) {
       return {
-        candidates: rows,
+        candidates: filterDiscoveryCandidates(rows),
         scraped_at: null,
         days_until_september,
         fromDb: true,
@@ -53,12 +54,24 @@ export async function loadMarketplaceData(options?: {
   }
 
   return {
-    candidates: result.candidates,
+    candidates: filterDiscoveryCandidates(result.candidates),
     scraped_at: result.scraped_at,
     days_until_september: result.days_until_september,
     fromDb: false,
     isLive: true,
   };
+}
+
+/** Solo candidatos de descubrimiento — sin pilotos radar ni casos ADN cerrados. */
+export function filterDiscoveryCandidates(
+  candidates: import('./cycle-types').MarketplaceCandidate[]
+): import('./cycle-types').MarketplaceCandidate[] {
+  return candidates.filter(
+    (c) =>
+      c.source_type === 'marketplace_2c' &&
+      !c.slug.startsWith('radar-') &&
+      !isExcludedAdnCase(c.dna_match_slug)
+  );
 }
 
 /** Ciclo patio con candidatos marketplace 2c (prioridad sobre demo estático). */

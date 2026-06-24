@@ -37,11 +37,9 @@ export default async function CicloPage() {
       </div>
 
       <div className="mb-6 rounded-xl border border-tp-cyan/20 bg-tp-cyan/5 px-4 py-3 text-sm text-slate-300">
-        <p className="font-medium text-white">Fase 2d + 2c — Ciclo patio (Jaris)</p>
+        <p className="font-medium text-white">Fase 2d + 2c — solo descubrimiento nuevo</p>
         <p className="mt-1 text-xs leading-relaxed text-slate-400">
-          <strong className="text-tp-green">Actuar:</strong> compra ≤8 €, hijos al cole, feedback.{' '}
-          <strong className="text-violet-300">Observar:</strong> sin comprar. Productos con señales
-          News+Reddit reales (Fase 2c).
+          Sin Labubu, Pokémon ni dumplings del radar/ADN. Productos nuevos para probar este verano.
         </p>
       </div>
 
