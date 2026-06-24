@@ -5,9 +5,17 @@ export type SourceBreakdown = {
   es: number;
   us: number;
   cn: number;
+  latam: number;
   pod: number;
   reddit: number;
   weighted: number;
+};
+
+export type MentionSnippet = {
+  title: string;
+  title_es: string;
+  link: string;
+  channel: string;
 };
 
 export interface LiveSignalRow {
@@ -29,6 +37,7 @@ export interface LiveSignalRow {
   scrape_hits?: number;
   last_scraped_at?: string | null;
   source_breakdown?: SourceBreakdown | null;
+  mention_snippets?: MentionSnippet[] | null;
 }
 
 export const SIGNAL_STATUS_LABELS: Record<SignalStatus, string> = {

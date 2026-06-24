@@ -67,6 +67,7 @@ export default async function DashboardPage() {
           signals={data.radarSignals.slice(0, 3)}
           isDemo={data.radarIsDemo}
           hasScrape={data.hasScrapeData}
+          dailyHistory={data.radarDaily}
         />
       </section>
 

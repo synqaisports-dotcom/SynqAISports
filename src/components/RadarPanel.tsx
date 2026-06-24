@@ -1,7 +1,12 @@
+import Link from 'next/link';
 import { Radar, Sparkles, TrendingUp } from 'lucide-react';
 import type { LiveSignalRow } from '@/lib/radar-types';
 import { CONFIDENCE_LABELS, SIGNAL_STATUS_LABELS } from '@/lib/radar-types';
 import { daysUntil } from '@/lib/radar';
+import { buildCorridorInsight } from '@/lib/corridor-insight';
+import { CorridorBars } from '@/components/CorridorBars';
+import { MentionList } from '@/components/MentionList';
+import { Sparkline } from '@/components/Sparkline';
 
 function formatDate(d: string | null) {
   if (!d) return '—';
@@ -17,6 +22,7 @@ function CorridorChips({ breakdown }: { breakdown: LiveSignalRow['source_breakdo
   const items = [
     { key: 'CN', n: breakdown.cn, color: 'text-rose-300 bg-rose-500/10' },
     { key: 'US', n: breakdown.us, color: 'text-sky-300 bg-sky-500/10' },
+    { key: 'LAT', n: breakdown.latam ?? 0, color: 'text-orange-300 bg-orange-500/10' },
     { key: 'POD', n: breakdown.pod, color: 'text-violet-300 bg-violet-500/10' },
     { key: 'ES', n: breakdown.es, color: 'text-emerald-300 bg-emerald-500/10' },
     { key: 'RD', n: breakdown.reddit, color: 'text-amber-300 bg-amber-500/10' },
@@ -57,11 +63,13 @@ export function RadarPanel({
   isDemo,
   hasScrape,
   secretConfigured,
+  dailyHistory,
 }: {
   signals: LiveSignalRow[];
   isDemo?: boolean;
   hasScrape?: boolean;
   secretConfigured?: boolean;
+  dailyHistory?: Map<string, number[]>;
 }) {
   return (
     <section className="mb-8">
@@ -135,7 +143,11 @@ export function RadarPanel({
                       {SIGNAL_STATUS_LABELS[s.status]}
                     </span>
                   </div>
-                  <h3 className="mt-1 font-semibold text-white">{s.canonical_name}</h3>
+                  <h3 className="mt-1 font-semibold text-white">
+                    <Link href={`/radar/${s.slug}`} className="hover:text-tp-cyan">
+                      {s.canonical_name}
+                    </Link>
+                  </h3>
                   <p className="text-xs text-slate-500">{s.signal_source}</p>
                 </div>
                 {s.dna_match_score != null && (
@@ -143,7 +155,7 @@ export function RadarPanel({
                     <p className="font-mono-data text-lg font-bold text-tp-cyan">
                       {Math.round(s.dna_match_score * 100)}%
                     </p>
-                    <p className="text-[10px] text-slate-500">match ADN</p>
+                    <p className="text-[10px] text-slate-500">índice actividad</p>
                   </div>
                 )}
               </div>
@@ -180,7 +192,27 @@ export function RadarPanel({
                 </p>
               )}
 
+              <CorridorBars breakdown={s.source_breakdown ?? undefined} />
+
+              <p className="mb-2 text-[11px] leading-relaxed text-slate-300">
+                {buildCorridorInsight(
+                  s.source_breakdown ?? {
+                    es: 0,
+                    us: 0,
+                    cn: 0,
+                    latam: 0,
+                    pod: 0,
+                    reddit: 0,
+                    weighted: 0,
+                  },
+                  s.origin_region,
+                  s.dna_match_slug
+                )}
+              </p>
+
               <CorridorChips breakdown={s.source_breakdown} />
+
+              <Sparkline points={dailyHistory?.get(s.slug) ?? []} />
 
               {s.scrape_hits != null && s.scrape_hits > 0 && (
                 <p className="mb-2 font-mono-data text-[11px] text-tp-amber">
@@ -208,7 +240,9 @@ export function RadarPanel({
                 />
               </div>
 
-              {s.notes && (
+              <MentionList snippets={s.mention_snippets} />
+
+              {s.notes && !s.mention_snippets?.length && (
                 <p className="mt-3 text-xs leading-relaxed text-slate-400">{s.notes}</p>
               )}
             </article>

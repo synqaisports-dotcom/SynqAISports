@@ -11,6 +11,7 @@ import {
   type ScrapedHit,
   type SourceBreakdown,
 } from './scraper-types';
+import { buildMentionSnippets } from './mention-snippets';
 
 export type IngestSignal = {
   slug: string;
@@ -29,6 +30,7 @@ export type IngestSignal = {
   reference_urls: string[];
   scrape_hits: number;
   source_breakdown: SourceBreakdown;
+  mention_snippets: import('@/lib/radar-types').MentionSnippet[];
 };
 
 function addDays(iso: string, days: number): string {
@@ -55,13 +57,14 @@ function hitsToScore(weighted: number): number {
 
 function formatSourceLabel(b: SourceBreakdown, total: number): string {
   if (total === 0) return 'scrape:2b (sin menciones 14d)';
-  return `scrape:2b es:${b.es} us:${b.us} cn:${b.cn} pod:${b.pod} rd:${b.reddit} (${b.weighted}w)`;
+  return `scrape:2b es:${b.es} us:${b.us} cn:${b.cn} lat:${b.latam} pod:${b.pod} rd:${b.reddit} (${b.weighted}w)`;
 }
 
 function formatNotes(today: string, b: SourceBreakdown, titles: string): string {
   const corridors = [
     b.cn > 0 ? `CN ${b.cn}` : null,
     b.us > 0 ? `US ${b.us}` : null,
+    b.latam > 0 ? `LAT ${b.latam}` : null,
     b.pod > 0 ? `POD ${b.pod}` : null,
     b.es > 0 ? `ES ${b.es}` : null,
     b.reddit > 0 ? `RD ${b.reddit}` : null,
@@ -114,6 +117,14 @@ async function scrapeWatchItem(watch: (typeof WATCHLIST)[0]): Promise<{
       })
     );
   }
+  if (watch.googleQueryLatam) {
+    tasks.push(
+      scrapeGoogleNewsLocale(watch.googleQueryLatam, 'latam').catch((e) => {
+        errors.push(`google_latam:${watch.slug}:${String(e)}`);
+        return [];
+      })
+    );
+  }
   if (watch.podQuery) {
     tasks.push(
       scrapeGoogleNewsPod(watch.podQuery).catch((e) => {
@@ -153,10 +164,8 @@ export async function runIngest(): Promise<IngestResult> {
         .filter(Boolean)
         .slice(0, 6);
 
-      const topTitles = hits
-        .map((h) => h.title)
-        .slice(0, 3)
-        .join(' · ');
+      const mention_snippets = await buildMentionSnippets(hits);
+      const titlesEs = mention_snippets.map((m) => `[${m.channel}] ${m.title_es}`).join(' · ');
 
       const delay = watch.default_delay_days;
       const predictedPeak = addDays(today, Math.max(3, Math.round(delay * 0.3)));
@@ -174,10 +183,11 @@ export async function runIngest(): Promise<IngestResult> {
         dna_match_score: hitsToScore(weighted),
         confidence: hitsToConfidence(weighted),
         signal_source: formatSourceLabel(breakdown, totalRaw),
-        notes: formatNotes(today, breakdown, topTitles),
+        notes: formatNotes(today, breakdown, titlesEs || hits.map((h) => h.title).slice(0, 2).join(' · ')),
         reference_urls: urls,
         scrape_hits: totalRaw,
         source_breakdown: breakdown,
+        mention_snippets,
       });
     } catch (e) {
       errors.push(`watch:${watch.slug}:${String(e)}`);

@@ -1,6 +1,6 @@
 import { buildCursorReport } from './cursor-report';
 import { fetchCorridorDelays, fetchHistoricalDna, hasSupabaseServiceRole } from './supabase';
-import { fetchLiveSignals, refreshRadarFromScrape } from './radar';
+import { fetchLiveSignals, refreshRadarFromScrape, fetchRadarDailyMap } from './radar';
 import { DEMO_SEED } from './demo-seed';
 import { DEMO_CORRIDORS, corridorsBySlug } from './demo-corridors';
 import { DEMO_RADAR } from './demo-radar';
@@ -28,6 +28,7 @@ export type TrendPulseData = {
   radarError: string | null;
   scrapePersistReason: string | null;
   scrapeErrors: string[];
+  radarDaily: Map<string, number[]>;
   supabaseConnected: boolean;
   configured: boolean;
   error: string | null;
@@ -63,6 +64,7 @@ export async function loadTrendPulseData(options?: {
   const rawRadar = radarFromDb.length > 0 ? radarFromDb : DEMO_RADAR;
   const radarSignals = sortPilotRadarSignals(rawRadar);
   const radarIsDemo = radarFromDb.length === 0;
+  const radarDaily = await fetchRadarDailyMap(radarSignals.map((s) => s.slug));
   const hasScrapeData = radarFromDb.some(
     (r) => r.signal_source?.startsWith('scrape:') || r.last_scraped_at != null
   );
@@ -91,6 +93,7 @@ export async function loadTrendPulseData(options?: {
     radarError,
     scrapePersistReason,
     scrapeErrors,
+    radarDaily,
     supabaseConnected,
     configured,
     error,

@@ -15,10 +15,11 @@ type NewsLocale = {
   channel: ScrapeChannel;
 };
 
-const LOCALES: Record<'es' | 'us' | 'cn', NewsLocale> = {
+const LOCALES: Record<'es' | 'us' | 'cn' | 'latam', NewsLocale> = {
   es: { hl: 'es', gl: 'ES', ceid: 'ES:es', channel: 'google_news_es' },
   us: { hl: 'en', gl: 'US', ceid: 'US:en', channel: 'google_news_us' },
   cn: { hl: 'zh-CN', gl: 'CN', ceid: 'CN:zh-Hans', channel: 'google_news_cn' },
+  latam: { hl: 'es', gl: 'MX', ceid: 'MX:es', channel: 'google_news_latam' },
 };
 
 export async function scrapeGoogleNewsLocale(

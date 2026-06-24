@@ -2,6 +2,7 @@ export type ScrapeChannel =
   | 'google_news_es'
   | 'google_news_us'
   | 'google_news_cn'
+  | 'google_news_latam'
   | 'google_news_pod'
   | 'reddit';
 
@@ -16,6 +17,7 @@ export type SourceBreakdown = {
   es: number;
   us: number;
   cn: number;
+  latam: number;
   pod: number;
   reddit: number;
   weighted: number;
@@ -24,17 +26,19 @@ export type SourceBreakdown = {
 export const CHANNEL_WEIGHTS: Record<keyof Omit<SourceBreakdown, 'weighted'>, number> = {
   cn: 1.5,
   us: 1.3,
+  latam: 1.15,
   pod: 1.2,
   es: 1.0,
   reddit: 1.0,
 };
 
 export function breakdownFromHits(hits: ScrapedHit[]): SourceBreakdown {
-  const counts = { es: 0, us: 0, cn: 0, pod: 0, reddit: 0 };
+  const counts = { es: 0, us: 0, cn: 0, latam: 0, pod: 0, reddit: 0 };
   for (const hit of hits) {
     if (hit.channel === 'google_news_es') counts.es += 1;
     else if (hit.channel === 'google_news_us') counts.us += 1;
     else if (hit.channel === 'google_news_cn') counts.cn += 1;
+    else if (hit.channel === 'google_news_latam') counts.latam += 1;
     else if (hit.channel === 'google_news_pod') counts.pod += 1;
     else if (hit.channel === 'reddit') counts.reddit += 1;
   }

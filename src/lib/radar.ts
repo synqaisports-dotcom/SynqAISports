@@ -66,6 +66,18 @@ export async function persistIngestSignals(signals: IngestSignal[], errors: stri
       errors.push(`upsert:${signal.slug}:${error.message}`);
     } else {
       saved += 1;
+      const today = new Date().toISOString().slice(0, 10);
+      const { error: dailyErr } = await supabase.from('trend_radar_daily').upsert(
+        {
+          signal_slug: signal.slug,
+          snapshot_date: today,
+          scrape_hits: signal.scrape_hits,
+          weighted_score: signal.source_breakdown.weighted,
+          source_breakdown: signal.source_breakdown,
+        },
+        { onConflict: 'signal_slug,snapshot_date' }
+      );
+      if (dailyErr) errors.push(`daily:${signal.slug}:${dailyErr.message}`);
     }
   }
 
@@ -127,4 +139,60 @@ export function daysUntil(isoDate: string | null): number | null {
   const target = new Date(isoDate);
   const now = new Date();
   return Math.round((target.getTime() - now.getTime()) / 86_400_000);
+}
+
+export type DailyPoint = { date: string; weighted: number };
+
+export async function fetchRadarDailyMap(
+  slugs: string[]
+): Promise<Map<string, number[]>> {
+  const map = new Map<string, number[]>();
+  if (slugs.length === 0) return map;
+
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return map;
+
+  const { data, error } = await supabase
+    .from('trend_radar_daily')
+    .select('signal_slug, snapshot_date, weighted_score')
+    .in('signal_slug', slugs)
+    .order('snapshot_date', { ascending: true });
+
+  if (error || !data) return map;
+
+  for (const slug of slugs) {
+    map.set(
+      slug,
+      data.filter((r) => r.signal_slug === slug).map((r) => Number(r.weighted_score))
+    );
+  }
+  return map;
+}
+
+export async function fetchRadarSignalBySlug(
+  slug: string
+): Promise<{ signal: LiveSignalRow | null; daily: DailyPoint[] }> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return { signal: null, daily: [] };
+
+  const { data: signal } = await supabase
+    .from('trend_live_signals')
+    .select('*')
+    .eq('slug', slug)
+    .eq('is_active', true)
+    .maybeSingle();
+
+  const { data: daily } = await supabase
+    .from('trend_radar_daily')
+    .select('snapshot_date, weighted_score, scrape_hits, source_breakdown')
+    .eq('signal_slug', slug)
+    .order('snapshot_date', { ascending: true });
+
+  return {
+    signal: (signal as LiveSignalRow) ?? null,
+    daily: (daily ?? []).map((d) => ({
+      date: d.snapshot_date,
+      weighted: Number(d.weighted_score),
+    })),
+  };
 }

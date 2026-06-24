@@ -37,6 +37,7 @@ export default async function RadarPage() {
         isDemo={data.radarIsDemo}
         hasScrape={data.hasScrapeData}
         secretConfigured={data.secretKeyConfigured}
+        dailyHistory={data.radarDaily}
       />
 
       {data.scrapePersistReason && (

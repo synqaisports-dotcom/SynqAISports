@@ -9,6 +9,8 @@ export type WatchItem = {
   googleQueryUs?: string;
   /** Google News China (zh) — señal temprana Asia */
   googleQueryCn?: string;
+  /** Google News LATAM (México proxy) */
+  googleQueryLatam?: string;
   /** Reddit USA / global inglés */
   redditQueryUs?: string;
   /** Proxy POD: Redbubble/TeePublic vía Google News US */
@@ -25,6 +27,7 @@ export const WATCHLIST: WatchItem[] = [
     googleQuery: 'Labubu Pop Mart blind box tendencia España',
     googleQueryUs: 'Labubu Pop Mart blind box trending sold out',
     googleQueryCn: 'Labubu Pop Mart 盲盒 预售 潮玩',
+    googleQueryLatam: 'Labubu Pop Mart juguete tendencia México',
     redditQuery: 'labubu pop mart',
     redditQueryUs: 'labubu pop mart blind box',
     dna_match_slug: 'labubu',
@@ -36,6 +39,7 @@ export const WATCHLIST: WatchItem[] = [
     canonical_name: 'Pop It Fidget',
     googleQuery: 'Pop It fidget viral colegio juguete España',
     googleQueryUs: 'Pop It fidget toy viral TikTok trending',
+    googleQueryLatam: 'Pop It juguete viral México colegio',
     redditQuery: 'pop it fidget toy',
     redditQueryUs: 'pop it fidget viral',
     podQuery: 'pop it fidget toy',
@@ -49,6 +53,7 @@ export const WATCHLIST: WatchItem[] = [
     googleQuery: 'cartas Pokémon TCG agotado España vending',
     googleQueryUs: 'Pokemon TCG Scarlet Violet restock sold out',
     googleQueryCn: '宝可梦 卡牌 预售 缺货',
+    googleQueryLatam: 'cartas Pokémon agotado México',
     redditQuery: 'pokemon tcg scarlet violet',
     redditQueryUs: 'pokemon tcg vending restock',
     dna_match_slug: 'pokemon-tcg-sv',
@@ -60,6 +65,7 @@ export const WATCHLIST: WatchItem[] = [
     canonical_name: 'Cromos Mundial 2026 — Panini',
     googleQuery: 'cromos Panini Mundial 2026 agotado España',
     googleQueryUs: 'Panini World Cup 2026 stickers sold out',
+    googleQueryLatam: 'cromos Panini Mundial 2026 México agotado',
     redditQuery: 'panini world cup 2026 stickers',
     redditQueryUs: 'panini fifa 2026 album',
     dna_match_slug: 'fifa-stickers-2022',
@@ -71,6 +77,7 @@ export const WATCHLIST: WatchItem[] = [
     canonical_name: 'Squishmallows',
     googleQuery: 'Squishmallows coleccionable viral agotado España',
     googleQueryUs: 'Squishmallows restock trending collectible',
+    googleQueryLatam: 'Squishmallows coleccionable México',
     redditQuery: 'squishmallows trend',
     redditQueryUs: 'squishmallows hunt restock',
     podQuery: 'squishmallows plush',
@@ -86,6 +93,7 @@ export const PHASE_2B_SOURCES = [
   'google_news_es',
   'google_news_us',
   'google_news_cn',
+  'google_news_latam',
   'google_news_pod',
   'reddit',
 ] as const;
