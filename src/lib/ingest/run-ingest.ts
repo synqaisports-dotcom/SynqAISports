@@ -69,7 +69,6 @@ export async function runIngest(): Promise<IngestResult> {
       ]);
 
       const hits = news.length + reddit.length;
-      if (hits === 0) continue;
 
       const urls = [...news, ...reddit]
         .map((h) => h.link)
@@ -81,7 +80,7 @@ export async function runIngest(): Promise<IngestResult> {
         .slice(0, 3)
         .join(' · ');
 
-      const status = hitsToStatus(hits);
+      const status = hits > 0 ? hitsToStatus(hits) : 'watching';
       const delay = watch.default_delay_days;
       const predictedPeak = addDays(today, Math.max(3, Math.round(delay * 0.3)));
 
@@ -97,8 +96,14 @@ export async function runIngest(): Promise<IngestResult> {
         dna_match_slug: watch.dna_match_slug,
         dna_match_score: hitsToScore(hits),
         confidence: hitsToConfidence(hits),
-        signal_source: `scrape:google_news+reddit (${hits} hits)`,
-        notes: `Scraping ${today}: ${hits} menciones recientes. ${topTitles}`,
+        signal_source:
+          hits > 0
+            ? `scrape:google_news+reddit (${hits} hits)`
+            : 'scrape:google_news+reddit (sin menciones 14d)',
+        notes:
+          hits > 0
+            ? `Scraping ${today}: ${hits} menciones recientes. ${topTitles}`
+            : `Scraping ${today}: sin menciones recientes. Vigilancia activa.`,
         reference_urls: urls,
         scrape_hits: hits,
       });

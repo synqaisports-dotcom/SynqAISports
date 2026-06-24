@@ -63,7 +63,7 @@ export function RadarPanel({
         )}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {signals.map((s) => {
           const daysToPeak = daysUntil(s.predicted_es_peak_date);
           const isScraped = s.signal_source?.includes('scrape');
