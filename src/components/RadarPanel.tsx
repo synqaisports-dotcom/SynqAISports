@@ -28,9 +28,11 @@ function statusColor(status: LiveSignalRow['status']) {
 export function RadarPanel({
   signals,
   isDemo,
+  hasScrape,
 }: {
   signals: LiveSignalRow[];
   isDemo?: boolean;
+  hasScrape?: boolean;
 }) {
   return (
     <section className="mb-8">
@@ -42,13 +44,21 @@ export function RadarPanel({
               Radar Fase 2
             </h2>
             <p className="text-xs text-slate-500">
-              Señales vivas · cruce ADN histórico · ingesta cada 48h (próximo)
+              Google News RSS + Reddit · ingesta cada 48h
+              {hasScrape && (
+                <span className="ml-2 text-tp-green">· scraping activo</span>
+              )}
             </p>
           </div>
         </div>
         {isDemo && (
           <span className="rounded border border-tp-amber/30 bg-tp-amber/5 px-2 py-1 text-[10px] font-mono-data uppercase text-tp-amber">
-            Demo radar
+            Sin datos radar
+          </span>
+        )}
+        {!isDemo && !hasScrape && (
+          <span className="rounded border border-tp-amber/30 bg-tp-amber/5 px-2 py-1 text-[10px] font-mono-data uppercase text-tp-amber">
+            Añade SUPABASE_SECRET_KEY para guardar scrape
           </span>
         )}
       </div>
@@ -56,8 +66,9 @@ export function RadarPanel({
       <div className="grid gap-4 lg:grid-cols-3">
         {signals.map((s) => {
           const daysToPeak = daysUntil(s.predicted_es_peak_date);
-          const isFuture = s.slug.includes('predicted') || s.status === 'watching';
-          const isReal = !s.slug.includes('predicted');
+          const isScraped = s.signal_source?.includes('scrape');
+          const isFuture = s.slug.includes('predicted') || (s.status === 'watching' && !isScraped);
+          const isReal = isScraped || (!s.slug.includes('predicted') && s.status !== 'watching');
 
           return (
             <article
@@ -71,7 +82,11 @@ export function RadarPanel({
               <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    {isReal ? (
+                    {isScraped ? (
+                      <span className="flex items-center gap-1 text-[10px] font-mono-data uppercase text-tp-green">
+                        <TrendingUp className="h-3 w-3" /> Scrape
+                      </span>
+                    ) : isReal ? (
                       <span className="flex items-center gap-1 text-[10px] font-mono-data uppercase text-tp-green">
                         <TrendingUp className="h-3 w-3" /> Real
                       </span>
@@ -128,6 +143,12 @@ export function RadarPanel({
                 <p className="mb-2 text-[11px] text-slate-500">
                   ADN ref:{' '}
                   <code className="font-mono-data text-tp-cyan">{s.dna_match_slug}</code>
+                </p>
+              )}
+
+              {s.scrape_hits != null && s.scrape_hits > 0 && (
+                <p className="mb-2 font-mono-data text-[11px] text-tp-amber">
+                  {s.scrape_hits} menciones scrape (14d)
                 </p>
               )}
 

@@ -4,10 +4,8 @@ import type { HistoricalDnaRow } from './types';
 let adminClient: SupabaseClient | null = null;
 let clientKey: string | null = null;
 
-function resolveSupabaseKey(): string | undefined {
+function resolveSupabaseReadKey(): string | undefined {
   return (
-    process.env.SUPABASE_SERVICE_ROLE_KEY ??
-    process.env.SUPABASE_SECRET_KEY ??
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   );
@@ -27,15 +25,9 @@ function createPublishableFetch(key: string): typeof fetch {
   };
 }
 
-export function isSupabaseConfigured(): boolean {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = resolveSupabaseKey();
-  return Boolean(url && key);
-}
-
 export function getSupabaseAdmin(): SupabaseClient | null {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = resolveSupabaseKey();
+  const key = resolveSupabaseReadKey();
   if (!url || !key) return null;
 
   if (adminClient && clientKey === key) return adminClient;
@@ -47,6 +39,31 @@ export function getSupabaseAdmin(): SupabaseClient | null {
   adminClient = createClient(url, key, options);
   clientKey = key;
   return adminClient;
+}
+
+export function isSupabaseConfigured(): boolean {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = resolveSupabaseReadKey();
+  return Boolean(url && key);
+}
+
+export function hasSupabaseServiceRole(): boolean {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY;
+  return Boolean(url && key);
+}
+
+/** Cliente con permisos de escritura para cron / ingesta. */
+export function getSupabaseServiceRole(): SupabaseClient | null {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY;
+  if (!url || !key) return null;
+
+  const options = isNewFormatKey(key)
+    ? { auth: { persistSession: false, autoRefreshToken: false }, global: { fetch: createPublishableFetch(key) } }
+    : { auth: { persistSession: false, autoRefreshToken: false } };
+
+  return createClient(url, key, options);
 }
 
 export type FetchDnaResult = {

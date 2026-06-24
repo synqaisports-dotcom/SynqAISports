@@ -6,7 +6,7 @@ import { WAVE_PROFILE_LABELS, type HistoricalDnaRow } from '@/lib/types';
 import { CopyReportButton } from '@/components/CopyReportButton';
 import { TimelineCaseCard, TimelineLegend } from '@/components/WaveTimeline';
 import { RadarPanel } from '@/components/RadarPanel';
-import { fetchLiveSignals } from '@/lib/radar';
+import { fetchLiveSignals, refreshRadarFromScrape } from '@/lib/radar';
 import { DEMO_RADAR } from '@/lib/demo-radar';
 
 import { DEMO_SEED } from '@/lib/demo-seed';
@@ -28,9 +28,13 @@ export default async function TrendPulseHomePage() {
   const rows = supabaseConnected ? fromDb : DEMO_SEED;
   const report = buildCursorReport(rows, supabaseConnected, configured, error);
 
+  if (supabaseConnected) {
+    await refreshRadarFromScrape();
+  }
   const { rows: radarFromDb } = await fetchLiveSignals();
   const radarSignals = radarFromDb.length > 0 ? radarFromDb : DEMO_RADAR;
   const radarIsDemo = radarFromDb.length === 0;
+  const hasScrapeData = radarFromDb.some((r) => r.signal_source?.includes('scrape'));
 
   const avgDelay =
     rows.filter((r) => r.delay_days_to_target != null).length > 0
@@ -83,7 +87,7 @@ export default async function TrendPulseHomePage() {
           </div>
         )}
 
-        <RadarPanel signals={radarSignals} isDemo={radarIsDemo} />
+        <RadarPanel signals={radarSignals} isDemo={radarIsDemo} hasScrape={hasScrapeData} />
 
         <div className="mb-8 grid gap-4 sm:grid-cols-3">
           {[

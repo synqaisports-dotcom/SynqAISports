@@ -1,9 +1,14 @@
 import { NextResponse } from 'next/server';
+import { persistIngestSignals } from '@/lib/radar';
+import { runIngest } from '@/lib/ingest/run-ingest';
+import { hasSupabaseServiceRole } from '@/lib/supabase';
+
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
 
 /**
- * Cron Fase 2 — ingesta cada 48h (stub).
- * Vercel: añadir CRON_SECRET en env y configurar cron en vercel.json.
- * Por ahora solo confirma que el endpoint está vivo.
+ * Cron Fase 2 — scraping Google News RSS + Reddit cada 48h.
+ * Vercel: CRON_SECRET + SUPABASE_SECRET_KEY (service role) en env.
  */
 export async function GET(request: Request) {
   const auth = request.headers.get('authorization');
@@ -13,11 +18,37 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const result = await runIngest();
+  let persisted = false;
+  let persistReason: string | undefined;
+
+  if (hasSupabaseServiceRole()) {
+    const p = await persistIngestSignals(result.signals, result.errors);
+    persisted = p.ok;
+    if (!p.ok) persistReason = p.reason;
+  } else {
+    persistReason = 'missing_SUPABASE_SECRET_KEY';
+  }
+
   return NextResponse.json({
     ok: true,
     phase: 2,
-    message: 'Ingesta 48h pendiente de conectar fuentes (TikTok, Google Trends, retail).',
-    next: 'Conectar APIs y escribir en trend_live_signals',
-    ran_at: new Date().toISOString(),
+    scraped_at: result.scraped_at,
+    signals_found: result.signals.length,
+    persisted,
+    persist_reason: persistReason,
+    errors: result.errors,
+    signals: result.signals.map((s) => ({
+      slug: s.slug,
+      name: s.canonical_name,
+      hits: s.scrape_hits,
+      status: s.status,
+      source: s.signal_source,
+    })),
   });
+}
+
+/** POST manual desde panel admin / prueba */
+export async function POST(request: Request) {
+  return GET(request);
 }

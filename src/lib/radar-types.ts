@@ -17,6 +17,8 @@ export interface LiveSignalRow {
   signal_source: string;
   notes: string | null;
   reference_urls: string[];
+  scrape_hits?: number;
+  last_scraped_at?: string | null;
 }
 
 export const SIGNAL_STATUS_LABELS: Record<SignalStatus, string> = {
