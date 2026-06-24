@@ -29,10 +29,12 @@ export function RadarPanel({
   signals,
   isDemo,
   hasScrape,
+  secretConfigured,
 }: {
   signals: LiveSignalRow[];
   isDemo?: boolean;
   hasScrape?: boolean;
+  secretConfigured?: boolean;
 }) {
   return (
     <section className="mb-8">
@@ -56,9 +58,14 @@ export function RadarPanel({
             Sin datos radar
           </span>
         )}
-        {!isDemo && !hasScrape && (
+        {!isDemo && !hasScrape && !secretConfigured && (
           <span className="rounded border border-tp-amber/30 bg-tp-amber/5 px-2 py-1 text-[10px] font-mono-data uppercase text-tp-amber">
             Añade SUPABASE_SECRET_KEY para guardar scrape
+          </span>
+        )}
+        {!isDemo && !hasScrape && secretConfigured && (
+          <span className="rounded border border-tp-amber/30 bg-tp-amber/5 px-2 py-1 text-[10px] font-mono-data uppercase text-tp-amber">
+            Scrape en curso o pendiente de columnas SQL
           </span>
         )}
       </div>

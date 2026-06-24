@@ -26,6 +26,8 @@ export type TrendPulseData = {
   hasScrapeData: boolean;
   secretKeyConfigured: boolean;
   radarError: string | null;
+  scrapePersistReason: string | null;
+  scrapeErrors: string[];
   supabaseConnected: boolean;
   configured: boolean;
   error: string | null;
@@ -45,8 +47,15 @@ export async function loadTrendPulseData(options?: {
   const corridorMap = corridorsBySlug(corridors);
   const report = buildCursorReport(rows, supabaseConnected, configured, error);
 
+  let scrapePersistReason: string | null = null;
+  let scrapeErrors: string[] = [];
+
   if (supabaseConnected && options?.refreshScrape !== false) {
-    await refreshRadarFromScrape();
+    const scrape = await refreshRadarFromScrape();
+    if (!scrape.persisted && scrape.persistReason) {
+      scrapePersistReason = scrape.persistReason;
+    }
+    scrapeErrors = scrape.persistErrors ?? scrape.preview?.errors ?? [];
   }
 
   const secretKeyConfigured = hasSupabaseServiceRole();
@@ -80,6 +89,8 @@ export async function loadTrendPulseData(options?: {
     hasScrapeData,
     secretKeyConfigured,
     radarError,
+    scrapePersistReason,
+    scrapeErrors,
     supabaseConnected,
     configured,
     error,

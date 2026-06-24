@@ -53,7 +53,7 @@ function isRealScrapeSource(source: string | null | undefined): boolean {
 export async function persistIngestSignals(signals: IngestSignal[], errors: string[]) {
   const supabase = getSupabaseServiceRole();
   if (!supabase) {
-    return { ok: false, reason: 'missing_service_role_key' as const };
+    return { ok: false, reason: 'missing_service_role_key' as const, errors };
   }
 
   let saved = 0;
@@ -69,7 +69,7 @@ export async function persistIngestSignals(signals: IngestSignal[], errors: stri
   }
 
   if (saved === 0) {
-    return { ok: false, reason: 'upsert_failed' as const };
+    return { ok: false, reason: 'upsert_failed' as const, errors };
   }
 
   const { error: logError } = await supabase.from('trend_ingest_runs').insert({
@@ -82,7 +82,7 @@ export async function persistIngestSignals(signals: IngestSignal[], errors: stri
     errors.push(`ingest_log:${logError.message}`);
   }
 
-  return { ok: true, count: saved };
+  return { ok: true, count: saved, errors };
 }
 
 /** Ejecuta scraping y guarda si hay service role; si no, solo devuelve preview. */
@@ -90,19 +90,27 @@ export async function refreshRadarFromScrape(): Promise<{
   ran: boolean;
   preview?: Awaited<ReturnType<typeof runIngest>>;
   persisted?: boolean;
+  persistReason?: string;
+  persistErrors?: string[];
 }> {
   const age = await getLastIngestAgeHours();
   const live = await fetchLiveSignals();
   const hasRealScrape = live.rows.some((r) => isRealScrapeSource(r.signal_source));
 
   if (age != null && age < 48 && hasRealScrape) {
-    return { ran: false };
+    return { ran: false, persisted: true };
   }
 
   const result = await runIngest();
   const persist = await persistIngestSignals(result.signals, result.errors);
 
-  return { ran: true, preview: result, persisted: persist.ok };
+  return {
+    ran: true,
+    preview: result,
+    persisted: persist.ok,
+    persistReason: persist.ok ? undefined : persist.reason,
+    persistErrors: persist.errors ?? result.errors,
+  };
 }
 
 export function daysUntil(isoDate: string | null): number | null {
