@@ -25,10 +25,10 @@ export default async function TendenciasPage() {
           <div className="text-sm text-slate-300">
             <p className="font-medium text-white">Fase 3 — Predicción (no catálogo fijo)</p>
             <p className="mt-1 text-xs leading-relaxed text-slate-400">
-              Cada predicción sale de <strong className="text-white">titulares reales</strong> donde
-              hay más señal en origen (US/CN/LATAM) que en España. No son productos que ya tenemos en
-              ADN ni en una lista manual — son oportunidades inferidas ahora. El enlace de compra es
-              una búsqueda sugerida, no un SKU concreto.
+              Compra en <strong className="text-emerald-300">origen</strong> (AliExpress / Amazon US).
+              El precio ES es <strong className="text-amber-200">estimación</strong> según patrones
+              históricos del ADN — no un enlace de compra en España. Tu margen = diferencia origen →
+              vending/patio cuando llegue.
             </p>
             {market.scraped_at && (
               <p className="mt-2 font-mono-data text-[10px] text-slate-500">

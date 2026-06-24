@@ -1,8 +1,9 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { Calendar, ExternalLink, Sun } from 'lucide-react';
+import { Sun } from 'lucide-react';
 import type { MarketplaceCandidate } from '@/lib/cycle-types';
 import { WORLD_LABELS } from '@/lib/cycle-types';
+import { PriceComparator } from './PriceComparator';
 
 export function TendenciaCard({
   candidate,
@@ -11,12 +12,16 @@ export function TendenciaCard({
   candidate: MarketplaceCandidate;
   rank: number;
 }) {
+  const isEcoEs = candidate.canonical_name.startsWith('[Eco ES]');
+
   return (
     <article
       className={`rounded-xl border p-4 ${
         candidate.summer_fit
           ? 'border-amber-400/40 bg-amber-400/5'
-          : 'border-white/10 bg-tp-panel/80'
+          : isEcoEs
+            ? 'border-slate-600/40 bg-slate-800/20'
+            : 'border-white/10 bg-tp-panel/80'
       }`}
     >
       <div className="flex gap-4">
@@ -33,51 +38,29 @@ export function TendenciaCard({
           />
         </div>
 
-        <div className="min-w-0 flex-1 space-y-2">
-          <div className="flex flex-wrap items-start justify-between gap-2">
-            <div>
-              {candidate.is_predicted && (
-                <span className="mb-1 mr-2 inline-flex rounded bg-violet-500/20 px-1.5 py-0.5 text-[10px] font-mono-data uppercase text-violet-300">
-                  Predicción
-                </span>
-              )}
-              {candidate.summer_fit && (
-                <span className="mb-1 inline-flex items-center gap-1 rounded bg-amber-400/20 px-1.5 py-0.5 text-[10px] font-mono-data uppercase text-amber-300">
-                  <Sun className="h-3 w-3" /> Verano · antes de sept
-                </span>
-              )}
-              <h3 className="font-medium text-white leading-snug">{candidate.canonical_name}</h3>
-              <p className="text-[11px] text-slate-400">
-                {WORLD_LABELS[candidate.world]} · {candidate.origin_marketplace}
-              </p>
-            </div>
-            <p className="font-mono-data text-xl font-semibold text-tp-cyan">
-              {candidate.origin_price_eur.toFixed(2)} €
-            </p>
+        <div className="min-w-0 flex-1 space-y-3">
+          <div>
+            {candidate.is_predicted && (
+              <span className="mb-1 mr-2 inline-flex rounded bg-violet-500/20 px-1.5 py-0.5 text-[10px] font-mono-data uppercase text-violet-300">
+                Predicción
+              </span>
+            )}
+            {candidate.summer_fit && (
+              <span className="mb-1 inline-flex items-center gap-1 rounded bg-amber-400/20 px-1.5 py-0.5 text-[10px] font-mono-data uppercase text-amber-300">
+                <Sun className="h-3 w-3" /> Ventana verano
+              </span>
+            )}
+            <h3 className="font-medium text-white leading-snug">{candidate.canonical_name}</h3>
+            <p className="text-[11px] text-slate-400">{WORLD_LABELS[candidate.world]}</p>
           </div>
 
           <div className="flex flex-wrap gap-2 text-[10px] font-mono-data">
             <span className="rounded bg-white/5 px-1.5 py-0.5 text-slate-400">CN {candidate.signal_cn}</span>
             <span className="rounded bg-white/5 px-1.5 py-0.5 text-slate-400">US {candidate.signal_us}</span>
             <span className="rounded bg-white/5 px-1.5 py-0.5 text-slate-400">ES {candidate.signal_es}</span>
-            {candidate.weighted_score != null && candidate.weighted_score > 0 && (
-              <span className="rounded bg-tp-cyan/10 px-1.5 py-0.5 text-tp-cyan">
-                {candidate.weighted_score.toFixed(1)}w
-              </span>
-            )}
           </div>
 
-          {candidate.estimated_window_es && (
-            <p className="text-[11px] leading-relaxed text-slate-300">{candidate.estimated_window_es}</p>
-          )}
-
-          {candidate.estimated_arrival_es && (
-            <p className="flex items-center gap-1 text-[10px] text-slate-500">
-              <Calendar className="h-3 w-3" />
-              Llegada est. {candidate.estimated_arrival_es}
-              {candidate.dna_match_slug && ` · patrón ${candidate.dna_match_slug}`}
-            </p>
-          )}
+          <PriceComparator item={candidate} />
 
           {candidate.evidence_urls && candidate.evidence_urls.length > 0 && (
             <Link
@@ -86,23 +69,13 @@ export function TendenciaCard({
               rel="noopener noreferrer"
               className="text-[10px] text-slate-500 hover:text-tp-cyan"
             >
-              Fuente predicción →
+              Fuente señal (noticia) →
             </Link>
           )}
 
-          <div className="flex flex-wrap gap-3 pt-1">
-            <Link
-              href={candidate.purchase_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 rounded-md bg-tp-cyan/15 px-3 py-1.5 text-xs font-medium text-tp-cyan hover:bg-tp-cyan/25"
-            >
-              Comprar / ver precio <ExternalLink className="h-3 w-3" />
-            </Link>
-            <Link href="/ciclo" className="text-xs text-slate-400 hover:text-white">
-              Ir al ciclo patio →
-            </Link>
-          </div>
+          <Link href="/ciclo" className="text-xs text-slate-400 hover:text-white">
+            Ir al ciclo patio →
+          </Link>
         </div>
       </div>
     </article>

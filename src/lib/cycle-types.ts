@@ -32,6 +32,20 @@ export interface MarketplaceCandidate {
   is_predicted?: boolean;
   prediction_score?: number;
   evidence_urls?: string[];
+  /** Comparador — compra origen, venta ES estimada */
+  origin_price_us_eur?: number;
+  estimated_es_retail_low_eur?: number;
+  estimated_es_retail_high_eur?: number;
+  estimated_es_retail_mid_eur?: number;
+  margin_eur?: number;
+  margin_pct?: number;
+  adn_pattern_label?: string;
+  adn_example_case?: string;
+  adn_channel?: string;
+  adn_delay_days?: number;
+  purchase_links?: { aliexpress: string; amazon_us: string };
+  window_note?: string;
+  window_days_left?: number;
 }
 
 export interface TrendCycleRow {

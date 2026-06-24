@@ -4,6 +4,7 @@ import { ExternalLink } from 'lucide-react';
 import type { CycleSlotRow } from '@/lib/cycle-types';
 import { MODE_LABELS, WORLD_LABELS } from '@/lib/cycle-types';
 import { CycleFeedbackForm } from './CycleFeedbackForm';
+import { PriceComparator } from './PriceComparator';
 
 export function CycleSlotCard({ slot }: { slot: CycleSlotRow }) {
   const isAct = slot.mode === 'act';
@@ -70,14 +71,10 @@ export function CycleSlotCard({ slot }: { slot: CycleSlotRow }) {
             <p className="text-[11px] text-slate-400">{slot.estimated_window_es}</p>
           )}
 
-          {slot.estimated_arrival_es && (
-            <p className="text-[10px] font-mono-data text-slate-500">
-              Llegada est. {slot.estimated_arrival_es}
-            </p>
-          )}
+          <PriceComparator item={slot} />
 
-          {slot.dna_match_slug && (
-            <p className="text-[10px] text-tp-cyan/80">Patrón ola · {slot.dna_match_slug}</p>
+          {slot.dna_match_slug && !slot.canonical_name.startsWith('[Eco ES]') && (
+            <p className="text-[10px] text-violet-300/80">Patrón ola · {slot.dna_match_slug}</p>
           )}
 
           {isAct && (
@@ -87,14 +84,16 @@ export function CycleSlotCard({ slot }: { slot: CycleSlotRow }) {
           )}
 
           <div className="flex flex-wrap items-center gap-3 pt-1">
-            <Link
-              href={slot.purchase_url}
-              target={slot.purchase_url.startsWith('http') ? '_blank' : undefined}
-              rel={slot.purchase_url.startsWith('http') ? 'noopener noreferrer' : undefined}
-              className="inline-flex items-center gap-1 text-xs text-tp-cyan hover:underline"
-            >
-              Dónde comprar <ExternalLink className="h-3 w-3" />
-            </Link>
+            {slot.purchase_links?.aliexpress && (
+              <a
+                href={slot.purchase_links.aliexpress}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-emerald-400 hover:underline"
+              >
+                AliExpress <ExternalLink className="h-3 w-3" />
+              </a>
+            )}
           </div>
 
           <CycleFeedbackForm slot={slot} />

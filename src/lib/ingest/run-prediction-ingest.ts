@@ -1,11 +1,10 @@
 import type { MarketplaceCandidate } from '../cycle-types';
+import { applyPriceEstimate } from '../price-comparator';
 import type { ScrapedHit } from './scraper-types';
 import {
   DISCOVERY_QUERIES,
   EXCLUDED_HEADLINE_TERMS,
-  addDaysIso,
   daysUntilSeptember,
-  schoolYearStart,
   type DiscoveryQuery,
 } from './discovery-queries';
 import { scrapeGoogleNewsLocale } from './scrapers/google-news';
@@ -66,41 +65,34 @@ function predictionFromHit(
 
   const slug = `pred-${dq.id}-${slugify(title)}`;
   const keywords = searchKeywords(title);
-  const delay = dq.adn_delay_days;
-  const arrival = addDaysIso(now, Math.round(delay * 0.35));
-  const sept = schoolYearStart(now);
-  const arrivalDate = new Date(arrival);
   const prediction_score = origin * 1.2 - sig.es * 0.8;
 
-  const summer_fit =
-    arrivalDate <= sept && sig.es <= 1 && prediction_score >= 1.5;
-
-  return {
+  const base: MarketplaceCandidate = {
     slug,
     canonical_name: title,
     world: 'playground',
     image_url: `https://placehold.co/400x400/1a1f2e/22d3ee?text=${encodeURIComponent(title.slice(0, 14))}`,
-    origin_price_eur: 4.0,
-    origin_marketplace: 'Predicción · buscar en',
-    purchase_url: `https://www.aliexpress.com/w/wholesale-${encodeURIComponent(keywords)}.html`,
+    origin_price_eur: 0,
+    origin_marketplace: 'Origen · AliExpress / Amazon US',
+    purchase_url: '',
     units_sold_label: `Predicción · CN${sig.cn} US${sig.us} ES${sig.es}`,
     signal_cn: sig.cn,
     signal_us: sig.us,
     signal_es: sig.es,
     signal_latam: sig.lat,
     dna_match_slug: dq.wave_pattern_slug,
-    estimated_window_es: summer_fit
-      ? `Predicción verano: origen activo, ES quieto — ventana ~${arrival}`
-      : `Predicción: origen ${origin} vs ES ${sig.es} — llegada est. ${arrival}`,
-    estimated_arrival_es: arrival,
-    summer_fit,
+    estimated_window_es: null,
+    estimated_arrival_es: null,
+    summer_fit: false,
     weighted_score: prediction_score,
     source_type: 'prediction',
     is_predicted: true,
     prediction_score,
     evidence_urls: [hit.link].filter(Boolean),
-    notes: `Generado desde titular ${hit.channel}. No es producto del catálogo ADN.`,
+    notes: `Titular ${hit.channel}. Patrón ADN solo para estimar delay/margen.`,
   };
+
+  return applyPriceEstimate(base, keywords, now);
 }
 
 async function signalsForQuery(dq: DiscoveryQuery) {
@@ -163,15 +155,15 @@ export async function runPredictionIngest(): Promise<PredictionIngestResult> {
         canonical_name: `[Eco ES] ${title}`,
         world: 'playground',
         image_url: `https://placehold.co/400x400/1a1f2e/94a3b8?text=Eco+ES`,
-        origin_price_eur: 5,
-        origin_marketplace: 'Observar · ya en ES',
-        purchase_url: `https://www.amazon.es/s?k=${encodeURIComponent(searchKeywords(title))}`,
+        origin_price_eur: 0,
+        origin_marketplace: 'Solo observación — sin compra ES',
+        purchase_url: '',
         units_sold_label: `Eco ES ${counts.es} menciones`,
         signal_cn: counts.cn,
         signal_us: counts.us,
         signal_es: counts.es,
         dna_match_slug: dq.wave_pattern_slug,
-        estimated_window_es: 'Ya hay menciones en España — solo observar, no comprar temprano',
+        estimated_window_es: 'Mercado ES ya activo — margen importación cerrado. Solo aprender.',
         estimated_arrival_es: null,
         summer_fit: false,
         weighted_score: counts.es,
@@ -179,7 +171,7 @@ export async function runPredictionIngest(): Promise<PredictionIngestResult> {
         is_predicted: true,
         prediction_score: counts.es,
         evidence_urls: [hit.link],
-        notes: 'Predicción tardía o confirmación — no actuar para primer lote.',
+        notes: 'Confirmación tardía. No enlaces de compra en España.',
       });
     }
   }
