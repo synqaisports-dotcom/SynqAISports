@@ -36,6 +36,14 @@ export default async function RadarPage() {
         isDemo={data.radarIsDemo}
         hasScrape={data.hasScrapeData}
       />
+
+      {data.supabaseConnected && (
+        <p className="mt-4 text-center font-mono-data text-[10px] text-slate-600">
+          radar DB: {data.radarIsDemo ? '0' : data.radarSignals.length} filas
+          {data.radarError ? ` · error: ${data.radarError}` : ''}
+          {data.hasScrapeData ? ' · scrape OK' : ' · scrape pendiente'}
+        </p>
+      )}
     </TrendPulseShell>
   );
 }
