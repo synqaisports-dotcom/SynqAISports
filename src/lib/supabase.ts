@@ -2,28 +2,50 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { HistoricalDnaRow } from './types';
 
 let adminClient: SupabaseClient | null = null;
+let clientKey: string | null = null;
 
-export function isSupabaseConfigured(): boolean {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key =
+function resolveSupabaseKey(): string | undefined {
+  return (
     process.env.SUPABASE_SERVICE_ROLE_KEY ??
     process.env.SUPABASE_SECRET_KEY ??
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
+}
+
+function isNewFormatKey(key: string): boolean {
+  return key.startsWith('sb_publishable_') || key.startsWith('sb_secret_');
+}
+
+/** Claves sb_publishable_ no van en Authorization: Bearer (solo apikey). */
+function createPublishableFetch(key: string): typeof fetch {
+  return async (input, init) => {
+    const headers = new Headers(init?.headers);
+    headers.set('apikey', key);
+    headers.delete('Authorization');
+    return fetch(input, { ...init, headers });
+  };
+}
+
+export function isSupabaseConfigured(): boolean {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = resolveSupabaseKey();
   return Boolean(url && key);
 }
 
 export function getSupabaseAdmin(): SupabaseClient | null {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key =
-    process.env.SUPABASE_SERVICE_ROLE_KEY ??
-    process.env.SUPABASE_SECRET_KEY ??
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const key = resolveSupabaseKey();
   if (!url || !key) return null;
-  if (!adminClient) {
-    adminClient = createClient(url, key, { auth: { persistSession: false } });
-  }
+
+  if (adminClient && clientKey === key) return adminClient;
+
+  const options = isNewFormatKey(key)
+    ? { auth: { persistSession: false }, global: { fetch: createPublishableFetch(key) } }
+    : { auth: { persistSession: false } };
+
+  adminClient = createClient(url, key, options);
+  clientKey = key;
   return adminClient;
 }
 
