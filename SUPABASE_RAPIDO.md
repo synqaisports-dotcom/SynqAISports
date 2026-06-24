@@ -35,8 +35,12 @@ Debería decir **Success**.
 
 1. Supabase → **Project Settings** → **API**
 2. Copia:
-   - **Project URL** → variable `NEXT_PUBLIC_SUPABASE_URL`
-   - **anon public** key → variable `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - **Project URL** → `NEXT_PUBLIC_SUPABASE_URL`
+   - **Publishable key** (`sb_publishable_...`) → `NEXT_PUBLIC_SUPABASE_ANON_KEY`  
+     (o crea `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` con el mismo valor)
+
+   > **No escribas la palabra "anon".** Copia la clave entera con el botón Copy.
+   > La clave **Secret** (`sb_secret_...`) no va en Vercel para TrendPulse.
 3. Vercel → tu proyecto TrendPulse → **Settings** → **Environment Variables**
 4. Añade las dos variables → **Save**
 5. **Deployments** → **Redeploy**
