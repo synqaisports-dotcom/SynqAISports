@@ -5,6 +5,20 @@ export type WaveProfile =
   | 'seasonal_mass'
   | 'kidult_nostalgia';
 
+export type CorridorRelation = 'before' | 'after' | 'parallel';
+
+export interface CorridorDelayRow {
+  id: string;
+  dna_id: string;
+  slug?: string;
+  origin_region: string;
+  target_market: string;
+  reference_date: string | null;
+  delay_days: number | null;
+  relation_to_es: CorridorRelation | null;
+  notes: string | null;
+}
+
 export interface HistoricalDnaRow {
   id: string;
   canonical_name: string;

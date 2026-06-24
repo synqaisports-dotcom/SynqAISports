@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Activity, Globe2, Timer } from 'lucide-react';
-import { fetchHistoricalDna } from '@/lib/supabase';
+import { fetchCorridorDelays, fetchHistoricalDna } from '@/lib/supabase';
 import { buildCursorReport } from '@/lib/cursor-report';
 import { WAVE_PROFILE_LABELS, type HistoricalDnaRow } from '@/lib/types';
 import { CopyReportButton } from '@/components/CopyReportButton';
@@ -10,6 +10,7 @@ import { fetchLiveSignals, refreshRadarFromScrape } from '@/lib/radar';
 import { DEMO_RADAR } from '@/lib/demo-radar';
 
 import { DEMO_SEED } from '@/lib/demo-seed';
+import { DEMO_CORRIDORS, corridorsBySlug } from '@/lib/demo-corridors';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,8 +25,11 @@ function formatDate(d: string | null) {
 
 export default async function TrendPulseHomePage() {
   const { rows: fromDb, configured, error } = await fetchHistoricalDna();
+  const { rows: corridorsFromDb } = await fetchCorridorDelays();
   const supabaseConnected = configured && fromDb.length > 0 && !error;
   const rows = supabaseConnected ? fromDb : DEMO_SEED;
+  const corridors = supabaseConnected && corridorsFromDb.length > 0 ? corridorsFromDb : DEMO_CORRIDORS;
+  const corridorMap = corridorsBySlug(corridors);
   const report = buildCursorReport(rows, supabaseConnected, configured, error);
 
   if (supabaseConnected) {
@@ -113,7 +117,7 @@ export default async function TrendPulseHomePage() {
                 Timelines ADN
               </h2>
               <p className="text-xs text-slate-500">
-                Ola origen → delay geográfico → meseta España → caída
+                Ola origen → delay geográfico → meseta España → caída · línea violeta = referencia LATAM
               </p>
             </div>
             <p className="font-mono-data text-xs text-slate-500">{rows.length} casos</p>
@@ -121,7 +125,7 @@ export default async function TrendPulseHomePage() {
           <TimelineLegend />
           <div className="grid gap-3 sm:grid-cols-2">
             {rows.map((r) => (
-              <TimelineCaseCard key={r.id} row={r} />
+              <TimelineCaseCard key={r.id} row={r} corridor={corridorMap.get(r.slug)} />
             ))}
           </div>
         </section>

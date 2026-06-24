@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import type { HistoricalDnaRow } from './types';
+import type { CorridorDelayRow, HistoricalDnaRow } from './types';
 
 let adminClient: SupabaseClient | null = null;
 let clientKey: string | null = null;
@@ -91,4 +91,48 @@ export async function fetchHistoricalDna(): Promise<FetchDnaResult> {
   }
 
   return { rows: (data ?? []) as HistoricalDnaRow[], configured: true, error: null };
+}
+
+export type FetchCorridorsResult = {
+  rows: CorridorDelayRow[];
+  configured: boolean;
+  error: string | null;
+};
+
+export async function fetchCorridorDelays(): Promise<FetchCorridorsResult> {
+  const configured = isSupabaseConfigured();
+  const supabase = getSupabaseAdmin();
+  if (!supabase) {
+    return { rows: [], configured: false, error: null };
+  }
+
+  const { data, error } = await supabase
+    .from('trend_corridor_delays')
+    .select(
+      'id, dna_id, origin_region, target_market, reference_date, delay_days, relation_to_es, notes, trend_historical_dna!inner(slug)'
+    )
+    .eq('target_market', 'LATAM');
+
+  if (error) {
+    console.error('[TrendPulse] fetchCorridorDelays', error.message);
+    return { rows: [], configured: true, error: error.message };
+  }
+
+  const rows: CorridorDelayRow[] = (data ?? []).map((row) => {
+    const joined = row.trend_historical_dna as { slug: string } | { slug: string }[];
+    const slug = Array.isArray(joined) ? joined[0]?.slug : joined?.slug;
+    return {
+      id: row.id,
+      dna_id: row.dna_id,
+      slug,
+      origin_region: row.origin_region,
+      target_market: row.target_market,
+      reference_date: row.reference_date,
+      delay_days: row.delay_days,
+      relation_to_es: row.relation_to_es,
+      notes: row.notes,
+    };
+  });
+
+  return { rows, configured: true, error: null };
 }
