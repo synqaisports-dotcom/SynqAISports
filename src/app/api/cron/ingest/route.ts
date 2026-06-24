@@ -32,7 +32,7 @@ export async function GET(request: Request) {
 
   return NextResponse.json({
     ok: true,
-    phase: 2,
+    phase: result.phase,
     scraped_at: result.scraped_at,
     signals_found: result.signals.length,
     persisted,
@@ -42,6 +42,8 @@ export async function GET(request: Request) {
       slug: s.slug,
       name: s.canonical_name,
       hits: s.scrape_hits,
+      weighted: s.source_breakdown.weighted,
+      breakdown: s.source_breakdown,
       status: s.status,
       source: s.signal_source,
     })),

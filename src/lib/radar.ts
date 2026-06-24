@@ -1,5 +1,6 @@
 import { getSupabaseAdmin, getSupabaseServiceRole } from './supabase';
 import type { LiveSignalRow } from './radar-types';
+import { PHASE_2B_SOURCES } from './ingest/watchlist';
 import { runIngest, type IngestSignal } from './ingest/run-ingest';
 
 export async function fetchLiveSignals(): Promise<{
@@ -75,7 +76,15 @@ export async function persistIngestSignals(signals: IngestSignal[], errors: stri
   const { error: logError } = await supabase.from('trend_ingest_runs').insert({
     signals_count: saved,
     errors,
-    log: { signals: signals.map((s) => ({ slug: s.slug, hits: s.scrape_hits })) },
+    sources: [...PHASE_2B_SOURCES],
+    log: {
+      phase: '2b',
+      signals: signals.map((s) => ({
+        slug: s.slug,
+        hits: s.scrape_hits,
+        breakdown: s.source_breakdown,
+      })),
+    },
   });
 
   if (logError) {

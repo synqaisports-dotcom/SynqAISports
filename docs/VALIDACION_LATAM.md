@@ -29,10 +29,13 @@ Ejecutar después de las migraciones de Fase 1:
 
 `supabase/migrations/20260625120000_trendpulse_latam_corridors.sql`
 
-## Próximo paso radar (Fase 2b)
+## Próximo paso radar (Fase 2b) — IMPLEMENTADO
 
-Fuentes tempranas planificadas (no implementadas aún):
+Fuentes activas en código:
 
-- **China:** preventa / “próximamente” en webs de fabricante (1688, Pop Mart, tiendas DTC).
-- **USA:** preventa DTC, TikTok Shop trending, bestsellers POD (Redbubble, TeePublic) como proxy de meme visual.
-- **LATAM:** señal de comprobación, no asumir siempre “antes de ES”.
+- **China:** Google News `zh-CN` (proxy; 1688/Pop Mart directo en Fase 2c)
+- **USA:** Google News US + Reddit US + proxy POD (Redbubble/TeePublic vía News)
+- **ES:** Google News ES + Reddit (confirmación)
+- **LATAM:** referencia ADN, no asumir siempre "antes de ES"
+
+Ver `docs/SCRAPING.md` y migración `20260626120000_trendpulse_phase2b_breakdown.sql`.

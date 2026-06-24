@@ -12,6 +12,33 @@ function formatDate(d: string | null) {
   });
 }
 
+function CorridorChips({ breakdown }: { breakdown: LiveSignalRow['source_breakdown'] }) {
+  if (!breakdown || breakdown.weighted === 0) return null;
+  const items = [
+    { key: 'CN', n: breakdown.cn, color: 'text-rose-300 bg-rose-500/10' },
+    { key: 'US', n: breakdown.us, color: 'text-sky-300 bg-sky-500/10' },
+    { key: 'POD', n: breakdown.pod, color: 'text-violet-300 bg-violet-500/10' },
+    { key: 'ES', n: breakdown.es, color: 'text-emerald-300 bg-emerald-500/10' },
+    { key: 'RD', n: breakdown.reddit, color: 'text-amber-300 bg-amber-500/10' },
+  ].filter((i) => i.n > 0);
+
+  return (
+    <div className="mb-2 flex flex-wrap gap-1">
+      {items.map((i) => (
+        <span
+          key={i.key}
+          className={`rounded px-1.5 py-0.5 font-mono-data text-[10px] ${i.color}`}
+        >
+          {i.key} {i.n}
+        </span>
+      ))}
+      <span className="rounded bg-white/5 px-1.5 py-0.5 font-mono-data text-[10px] text-tp-cyan">
+        {breakdown.weighted}w
+      </span>
+    </div>
+  );
+}
+
 function statusColor(status: LiveSignalRow['status']) {
   switch (status) {
     case 'watching':
@@ -43,10 +70,10 @@ export function RadarPanel({
           <Radar className="h-5 w-5 text-tp-cyan" />
           <div>
             <h2 className="text-sm font-semibold uppercase tracking-widest text-tp-cyan">
-              Radar Fase 2
+              Radar Fase 2b
             </h2>
             <p className="text-xs text-slate-500">
-              Google News RSS + Reddit · ingesta cada 48h
+              ES + USA + China (News RSS) · POD proxy · Reddit · cada 48h
               {hasScrape && (
                 <span className="ml-2 text-tp-green">· scraping activo</span>
               )}
@@ -152,6 +179,8 @@ export function RadarPanel({
                   <code className="font-mono-data text-tp-cyan">{s.dna_match_slug}</code>
                 </p>
               )}
+
+              <CorridorChips breakdown={s.source_breakdown} />
 
               {s.scrape_hits != null && s.scrape_hits > 0 && (
                 <p className="mb-2 font-mono-data text-[11px] text-tp-amber">

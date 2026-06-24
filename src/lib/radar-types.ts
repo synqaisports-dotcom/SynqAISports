@@ -1,6 +1,15 @@
 export type SignalStatus = 'watching' | 'emerging' | 'peak_es' | 'decline';
 export type SignalConfidence = 'low' | 'medium' | 'high';
 
+export type SourceBreakdown = {
+  es: number;
+  us: number;
+  cn: number;
+  pod: number;
+  reddit: number;
+  weighted: number;
+};
+
 export interface LiveSignalRow {
   id: string;
   canonical_name: string;
@@ -19,6 +28,7 @@ export interface LiveSignalRow {
   reference_urls: string[];
   scrape_hits?: number;
   last_scraped_at?: string | null;
+  source_breakdown?: SourceBreakdown | null;
 }
 
 export const SIGNAL_STATUS_LABELS: Record<SignalStatus, string> = {

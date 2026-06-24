@@ -1,36 +1,43 @@
-# Scraping Radar — TrendPulse Fase 2
+# Scraping Radar — TrendPulse Fase 2b
 
-## Fuentes (gratis, sin API key)
+## Fuentes activas (gratis, sin API key)
 
-| Fuente | Qué scrapea |
-|--------|----------------|
-| **Google News RSS** | Noticias ES últimos 14 días por keyword |
-| **Reddit JSON** | Posts recientes por búsqueda |
+| Corredor | Fuente | Qué detecta |
+|----------|--------|-------------|
+| **ES** | Google News RSS `hl=es` | Noticias España últimos 14d |
+| **US** | Google News RSS `hl=en&gl=US` | Señal temprana USA |
+| **CN** | Google News RSS `hl=zh-CN&gl=CN` | Señal temprana Asia (proxy) |
+| **POD** | Google News `site:redbubble.com OR teepublic.com` | Proxy meme/visual USA |
+| **Reddit** | Reddit search JSON | Menciones globales + US |
 
-## Keywords monitorizadas (6)
+## Peso por corredor (scoring)
 
-Labubu, Dumplings, Mundial 2026 Panini, Pokémon TCG, One Piece TCG, blind box patio.
+| Canal | Peso | Motivo |
+|-------|------|--------|
+| China (CN) | 1.5× | Reloj largo; señal más temprana |
+| USA (US) | 1.3× | TikTok/retail pipeline |
+| POD | 1.2× | Proxy visual/meme |
+| ES / Reddit | 1.0× | Confirmación mercado destino |
 
-Cada hit se cruza con el **ADN histórico** (delay, perfil de ola, score).
+El score en tarjetas usa **hits ponderados** (`12w` = 12 weighted).
+
+## 5 pilotos monitorizados
+
+Labubu, Pop It, Pokémon SV, FIFA 2026, Squishmallows — alineados con ADN/LATAM.
+
+## SQL nuevo (Fase 2b)
+
+Ejecutar en Supabase:
+
+`supabase/migrations/20260626120000_trendpulse_phase2b_breakdown.sql`
+
+Añade columna `source_breakdown` (jsonb) con desglose por corredor.
 
 ## Activar guardado en Supabase
 
-1. Supabase → **Settings** → **API Keys** → copia **Secret key** (`sb_secret_...`)
-2. Vercel → **Environment Variables**:
-   - `SUPABASE_SECRET_KEY` = secret key (solo servidor, nunca en navegador)
-   - `CRON_SECRET` = una contraseña inventada (para el cron)
+1. `SUPABASE_SECRET_KEY` en Vercel Production
+2. Permisos escritura: `20260625200000_trendpulse_radar_write_grants.sql`
 3. **Redeploy**
-
-## SQL pendiente (si no lo ejecutaste)
-
-- `supabase/migrations/20260624140000_trendpulse_phase2_radar.sql`
-- `supabase/migrations/20260624160000_trendpulse_scrape_columns.sql`
-
-## Cron automático
-
-Cada **48h** a las 08:00 UTC → `/api/cron/ingest`
-
-Al abrir TrendPulse también corre scrape si pasaron >48h (con secret key).
 
 ## Probar manualmente
 
@@ -38,10 +45,15 @@ Al abrir TrendPulse también corre scrape si pasaron >48h (con secret key).
 https://TU-DOMINIO/api/cron/ingest
 ```
 
-Con header `Authorization: Bearer TU_CRON_SECRET` si configuraste CRON_SECRET.
+Respuesta esperada: `"phase": "2b"`, `signal_source` tipo `scrape:2b es:2 us:5 cn:1 ...`
 
-## Próximas fuentes (roadmap)
+## Cron automático
+
+Cada **48h** a las 08:00 UTC → `/api/cron/ingest`
+
+## Roadmap Fase 2c (no implementado)
 
 - TikTok Creative Center (cuando haya acceso)
-- Google Trends API no oficial
-- Alertas Jofemar / operadores vending (email webhook)
+- 1688 / Pop Mart preventa directa (anti-bot)
+- Google Trends no oficial
+- Alertas operadores vending (email webhook)

@@ -12,7 +12,7 @@ export default async function RadarPage() {
   return (
     <TrendPulseShell
       title="Radar"
-      subtitle="Seguimiento en vivo · Google News + Reddit cada 48h"
+      subtitle="Fase 2b · ES + USA + China + POD proxy · cada 48h"
       report={data.report}
     >
       <SetupBanner

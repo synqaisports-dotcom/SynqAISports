@@ -1,9 +1,4 @@
-export type ScrapedHit = {
-  title: string;
-  link: string;
-  publishedAt: Date | null;
-  source: 'reddit';
-};
+import type { ScrapedHit } from '../scraper-types';
 
 type RedditSearchResponse = {
   data?: {
@@ -12,7 +7,6 @@ type RedditSearchResponse = {
         title?: string;
         permalink?: string;
         created_utc?: number;
-        score?: number;
       };
     }>;
   };
@@ -21,7 +15,7 @@ type RedditSearchResponse = {
 export async function scrapeReddit(query: string, limit = 8): Promise<ScrapedHit[]> {
   const url = `https://www.reddit.com/search.json?q=${encodeURIComponent(query)}&sort=new&limit=${limit}`;
   const res = await fetch(url, {
-    headers: { 'User-Agent': 'TrendPulse/1.0 (Nexus Labs radar)' },
+    headers: { 'User-Agent': 'TrendPulse/2b (Nexus Labs radar)' },
     next: { revalidate: 0 },
   });
 
@@ -37,7 +31,7 @@ export async function scrapeReddit(query: string, limit = 8): Promise<ScrapedHit
       title: d!.title ?? '',
       link: d!.permalink ? `https://www.reddit.com${d!.permalink}` : '',
       publishedAt: d!.created_utc ? new Date(d!.created_utc * 1000) : null,
-      source: 'reddit' as const,
+      channel: 'reddit' as const,
     }))
     .filter((h) => h.title && (!h.publishedAt || h.publishedAt.getTime() >= cutoff));
 }
