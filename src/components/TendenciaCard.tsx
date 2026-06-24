@@ -14,7 +14,12 @@ export function TendenciaCard({
   rank: number;
 }) {
   const isEcoEs = candidate.canonical_name.startsWith('[Eco ES]');
-  const hasTop = (candidate.top_products?.length ?? 0) > 0;
+  const hasTop =
+    (candidate.top_products?.length ?? 0) > 0 ||
+    Object.values(candidate.top_by_marketplace ?? {}).some((arr) => (arr?.length ?? 0) > 0);
+  const mpCount = candidate.top_by_marketplace
+    ? Object.values(candidate.top_by_marketplace).filter((a) => (a?.length ?? 0) > 0).length
+    : candidate.top_products?.length ? 1 : 0;
 
   return (
     <article
@@ -49,7 +54,7 @@ export function TendenciaCard({
             )}
             {hasTop && (
               <span className="mb-1 mr-2 inline-flex rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-mono-data uppercase text-emerald-300">
-                Top {candidate.top_products!.length} ventas
+                Top 3 · {mpCount > 1 ? `${mpCount} marketplaces` : 'ventas'}
               </span>
             )}
             {candidate.summer_fit && (
@@ -60,7 +65,7 @@ export function TendenciaCard({
             <h3 className="font-medium text-white leading-snug">{candidate.canonical_name}</h3>
             {candidate.category_search && (
               <p className="text-[10px] font-mono-data text-slate-500">
-                AliExpress · {candidate.category_search}
+                Búsqueda · {candidate.category_search}
               </p>
             )}
             {candidate.signal_headline && (
@@ -99,7 +104,12 @@ export function TendenciaCard({
             )}
           </div>
 
-          {hasTop && <TopProductsList products={candidate.top_products!} />}
+          {hasTop && (
+            <TopProductsList
+              products={candidate.top_products}
+              topByMarketplace={candidate.top_by_marketplace}
+            />
+          )}
 
           <PriceComparator item={candidate} />
 

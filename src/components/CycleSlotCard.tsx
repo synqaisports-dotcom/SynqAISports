@@ -83,8 +83,12 @@ export function CycleSlotCard({ slot }: { slot: CycleSlotRow }) {
             <p className="text-[11px] text-slate-400">{slot.estimated_window_es}</p>
           )}
 
-          {slot.top_products && slot.top_products.length > 0 && (
-            <TopProductsList products={slot.top_products} compact />
+          {(slot.top_products?.length || slot.top_by_marketplace) && (
+            <TopProductsList
+              products={slot.top_products}
+              topByMarketplace={slot.top_by_marketplace}
+              compact
+            />
           )}
 
           <PriceComparator item={slot} />

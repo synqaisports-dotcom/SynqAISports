@@ -6,8 +6,11 @@ export type CycleFeedbackType =
   | 'no_show'
   | 'false_positive';
 
+export type MarketplaceId = 'aliexpress' | 'amazon_es' | 'amazon_us' | 'temu';
+
 export type TrendProductPick = {
   rank: number;
+  marketplace?: MarketplaceId;
   item_id: string;
   title: string;
   image_url: string;
@@ -18,6 +21,8 @@ export type TrendProductPick = {
   margin_eur?: number;
   margin_pct?: number;
 };
+
+export type TopByMarketplace = Partial<Record<MarketplaceId, TrendProductPick[]>>;
 
 export interface MarketplaceCandidate {
   slug: string;
@@ -67,8 +72,10 @@ export interface MarketplaceCandidate {
   /** Categoría tendencia (una ficha = una categoría) */
   category_id?: string;
   category_search?: string;
-  /** Top 3 más vendidos AliExpress en esta categoría */
+  /** Top 3 más vendidos AliExpress en esta categoría (alias de top_by_marketplace.aliexpress) */
   top_products?: TrendProductPick[];
+  /** Top 3 por marketplace: AliExpress, Amazon ES/US, Temu */
+  top_by_marketplace?: TopByMarketplace;
   /** Suma pedidos top 3 origen */
   origin_orders_total?: number;
   /** Titular eco España si hay menciones */

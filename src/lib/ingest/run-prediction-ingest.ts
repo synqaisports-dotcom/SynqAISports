@@ -1,6 +1,6 @@
 import type { MarketplaceCandidate } from '../cycle-types';
 import { candidateFromTrendCategory } from './aliexpress-enricher';
-import { searchAliExpressTopSellers } from './aliexpress-search';
+import { searchAllMarketplaceTopSellers } from './multi-marketplace-search';
 import type { ScrapedHit } from './scraper-types';
 import {
   DISCOVERY_QUERIES,
@@ -116,12 +116,17 @@ export async function runPredictionIngest(): Promise<PredictionIngestResult> {
     const esHeadline = pickSignalHeadline(esHits);
     const prediction_score = origin * 1.2 - counts.es * 0.8;
 
-    const { products, error: searchErr, fromCache } = await searchAliExpressTopSellers(
+    const { byMarketplace, errors: mpErrors } = await searchAllMarketplaceTopSellers(
       dq.aliexpress_search,
       TOP_PRODUCTS_PER_CATEGORY
     );
-    if (searchErr) errors.push(`${dq.id}:ae:${searchErr}`);
+    errors.push(...mpErrors.map((e) => `${dq.id}:${e}`));
+
+    const aeBlock = byMarketplace.aliexpress;
+    const products = aeBlock?.products ?? [];
     if (products.length === 0) continue;
+
+    const fromCache = aeBlock?.fromCache ?? false;
 
     const slug = `trend-${dq.id}`;
     if (seenSlugs.has(slug)) continue;
@@ -129,6 +134,12 @@ export async function runPredictionIngest(): Promise<PredictionIngestResult> {
 
     const lead = products[0];
     const ordersTotal = products.reduce((s, p) => s + p.orders_count, 0);
+
+    const mpLabels: string[] = [];
+    if (byMarketplace.aliexpress) mpLabels.push('AliExpress');
+    if (byMarketplace.amazon_es) mpLabels.push('Amazon ES');
+    if (byMarketplace.amazon_us) mpLabels.push('Amazon US');
+    if (byMarketplace.temu) mpLabels.push('Temu');
 
     const base: MarketplaceCandidate = {
       slug,
@@ -162,18 +173,37 @@ export async function runPredictionIngest(): Promise<PredictionIngestResult> {
       es_headline: esHeadline,
       notes: [
         `Búsqueda «${dq.aliexpress_search}»`,
-        fromCache ? 'Productos desde caché AliExpress' : 'Productos en vivo AliExpress',
-      ].join(' · '),
+        mpLabels.length ? `Top 3: ${mpLabels.join(' · ')}` : null,
+        fromCache ? 'Productos desde caché' : 'Productos en vivo',
+      ]
+        .filter(Boolean)
+        .join(' · '),
     };
 
     predictions.push(
-      candidateFromTrendCategory(base, products, {
-        signalHeadline,
-        esHeadline,
-        keywords: dq.aliexpress_search,
-        wavePatternSlug: dq.wave_pattern_slug,
-        signals: { cn: counts.cn, us: counts.us, es: counts.es },
-      })
+      candidateFromTrendCategory(
+        base,
+        products.map((p) => ({
+          item_id: p.item_id,
+          title: p.title,
+          image_url: p.image_url,
+          price_eur: p.price_eur,
+          price_usd: Math.round((p.price_eur / 0.92) * 100) / 100,
+          keywords: [],
+          orders_count: p.orders_count,
+          orders_label: p.orders_label ?? undefined,
+          search_query: p.search_query,
+          fetched_at: p.fetched_at,
+        })),
+        {
+          signalHeadline,
+          esHeadline,
+          keywords: dq.aliexpress_search,
+          wavePatternSlug: dq.wave_pattern_slug,
+          signals: { cn: counts.cn, us: counts.us, es: counts.es },
+          multiMarketplace: { byMarketplace, errors: mpErrors },
+        }
+      )
     );
 
     if (counts.es > 0 && counts.us + counts.cn <= counts.es && esHeadline) {
