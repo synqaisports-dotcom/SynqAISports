@@ -4,6 +4,7 @@ import { fetchHistoricalDna } from '@/lib/supabase';
 import { buildCursorReport } from '@/lib/cursor-report';
 import { WAVE_PROFILE_LABELS, type HistoricalDnaRow } from '@/lib/types';
 import { CopyReportButton } from '@/components/CopyReportButton';
+import { TimelineCaseCard, TimelineLegend } from '@/components/WaveTimeline';
 
 import { DEMO_SEED } from '@/lib/demo-seed';
 
@@ -92,6 +93,29 @@ export default async function TrendPulseHomePage() {
           ))}
         </div>
 
+        <section className="mb-8">
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
+            <div>
+              <h2 className="text-sm font-semibold uppercase tracking-widest text-tp-cyan">
+                Timelines ADN
+              </h2>
+              <p className="text-xs text-slate-500">
+                Ola origen → delay geográfico → meseta España → caída
+              </p>
+            </div>
+            <p className="font-mono-data text-xs text-slate-500">{rows.length} casos</p>
+          </div>
+          <TimelineLegend />
+          <div className="grid gap-3 sm:grid-cols-2">
+            {rows.map((r) => (
+              <TimelineCaseCard key={r.id} row={r} />
+            ))}
+          </div>
+        </section>
+
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-widest text-slate-400">
+          Tabla de datos
+        </h2>
         <div className="overflow-x-auto rounded-xl border border-white/5 bg-tp-panel">
           <table className="w-full min-w-[900px] text-left text-sm">
             <thead>
