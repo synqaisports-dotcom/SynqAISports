@@ -70,7 +70,9 @@ CREATE TABLE IF NOT EXISTS public.trend_corridor_delays (
 );
 
 CREATE OR REPLACE FUNCTION public.set_trendpulse_updated_at()
-RETURNS trigger LANGUAGE plpgsql AS $$
+RETURNS trigger LANGUAGE plpgsql
+SET search_path = public
+AS $$
 BEGIN
   NEW.updated_at = now();
   RETURN NEW;
@@ -84,6 +86,10 @@ CREATE TRIGGER trg_trend_historical_dna_updated
 
 ALTER TABLE public.trend_historical_dna ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.trend_corridor_delays ENABLE ROW LEVEL SECURITY;
+
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+GRANT SELECT ON public.trend_historical_dna TO anon, authenticated;
+GRANT SELECT ON public.trend_corridor_delays TO anon, authenticated;
 
 CREATE POLICY trend_dna_public_read ON public.trend_historical_dna
   FOR SELECT USING (is_active = true);
