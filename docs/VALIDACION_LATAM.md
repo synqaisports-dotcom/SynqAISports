@@ -1,6 +1,6 @@
 # Referencia LATAM en ADN histórico
 
-Fechas **orientativas** para el corredor LATAM en 5 casos piloto. No tienen el mismo rigor que Labubu/Pokémon/FIFA validados para ES.
+Fechas documentadas para el corredor LATAM en 5 casos piloto. Pop It y Squishmallows actualizados jun 2026 con fuentes.
 
 ## Regla importante
 
@@ -18,16 +18,20 @@ Fechas **orientativas** para el corredor LATAM en 5 casos piloto. No tienen el m
 | Slug | LATAM ref. | Relación vs ES | Notas |
 |------|------------|----------------|-------|
 | `labubu` | 15-oct-2024 | antes (~46d) | MX/BR coleccionistas |
-| `pop-it` | 10-abr-2021 | antes (~30d) | TikTok LATAM español |
+| `pop-it` | 10-abr-2021 | antes (~35d) | TikTok LATAM antes patios ES mayo 2021 |
 | `pokemon-tcg-sv` | 25-abr-2023 | después (~25d) | Retail LATAM tras EU |
 | `fifa-stickers-2022` | 20-nov-2022 | paralelo | Semana 1 Mundial |
-| `squishmallows` | 15-ago-2021 | después (~14d) | Import tras pico EU |
+| `squishmallows` | 15-nov-2021 | antes (~520d) | MX/BR 2021; ES pico abr-2023 |
 
 ## SQL
 
 Ejecutar después de las migraciones de Fase 1:
 
 `supabase/migrations/20260625120000_trendpulse_latam_corridors.sql`
+
+Corredores Pop It y Squishmallows refinados en:
+
+`supabase/migrations/20260627120000_validate_pilot_adn_real_data.sql`
 
 ## Próximo paso radar (Fase 2b) — IMPLEMENTADO
 

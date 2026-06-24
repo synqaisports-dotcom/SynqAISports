@@ -45,7 +45,7 @@ export const WATCHLIST: WatchItem[] = [
     podQuery: 'pop it fidget toy',
     dna_match_slug: 'pop-it',
     origin_region: 'usa',
-    default_delay_days: 30,
+    default_delay_days: 44,
   },
   {
     slug: 'radar-pokemon-sv',

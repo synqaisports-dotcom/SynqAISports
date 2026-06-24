@@ -21,10 +21,10 @@ export const DEMO_CORRIDORS: CorridorDelayRow[] = [
     origin_region: 'usa',
     target_market: 'LATAM',
     reference_date: '2021-04-10',
-    delay_days: 30,
+    delay_days: 35,
     relation_to_es: 'before',
     notes:
-      'Estimado: viral TikTok en LATAM español ~4 sem antes del pico en colegios ES.',
+      'Validado orientativo: viral TikTok US/LATAM ~4 sem antes del pico en colegios ES (mayo 2021).',
   },
   {
     id: 'demo-corridor-pokemon',
@@ -56,11 +56,11 @@ export const DEMO_CORRIDORS: CorridorDelayRow[] = [
     slug: 'squishmallows',
     origin_region: 'usa',
     target_market: 'LATAM',
-    reference_date: '2021-08-15',
-    delay_days: 14,
-    relation_to_es: 'after',
+    reference_date: '2021-11-15',
+    delay_days: 520,
+    relation_to_es: 'before',
     notes:
-      'Estimado: oleada US 2021; LATAM retail/import ~2 sem después del primer pico EU/ES.',
+      'Validado orientativo: MX/BR fenómeno ventas 2021 (NPD global). Pico retail ES/Iberia abr-2023 — LATAM ~18 meses antes.',
   },
 ];
 

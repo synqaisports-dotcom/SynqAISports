@@ -1,6 +1,8 @@
-# Validación de fechas — 3 casos piloto (jun 2026)
+# Validación de fechas — casos piloto ADN (jun 2026)
 
 Criterio TrendPulse: **pico origen** = máximo hype en región de origen; **pico ES** = máximo demanda retail/vending en España.
+
+**Estado:** 6 casos validados con fuentes (`labubu`, `pokemon-tcg-sv`, `fifa-stickers-2022`, `pop-it`, `squishmallows`, `dumplings-squishy` origen US).
 
 ---
 
@@ -45,10 +47,56 @@ Criterio TrendPulse: **pico origen** = máximo hype en región de origen; **pico
 
 ---
 
+## 4. Pop It Fidget
+
+| Campo | Antes | Después | Fuente |
+|-------|-------|---------|--------|
+| Señal origen | feb 2021 | **15 nov 2020** | Primer viral TikTok (mono Gaitlyn Rae) ([BBC](https://www.bbc.com/news/business-58408570)) |
+| Pico origen | 15 mar 2021 | **1 abr 2021** | Primavera 2021 US; hashtag #PopIt 1B+ views ([ABC Australia](https://www.abc.net.au/news/2021-04-26/tiktok-sensation-pop-it-fly-off-australian-toy-shelves/13237776)) |
+| Señal ES | abr 2021 | **1 feb 2021** | Google Trends ES desde finales 2020 ([HuffPost ES](https://www.huffingtonpost.es/entry/pop-it-que-son-como-jugar_es_609cf92de4b069dc48f76689.html)) |
+| Pico ES | 10 may 2021 | **15 may 2021** | +500% ventas mayo 2021; invasión aulas ([HuffPost](https://www.huffingtonpost.es/entry/pop-it-que-son-como-jugar_es_609cf92de4b069dc48f76689.html), [20minutos](https://yosoytuprofe.20minutos.es/2021/05/10/el-popit-un-nuevo-fenomeno-que-invade-las-aulas/)) |
+| Delay pico | ~25d | **~44d** | 1 abr → 15 may 2021 |
+| Caída | sep 2021 | **sep 2021** | Fin curso escolar 2021 |
+
+**Lectura vending:** ola **corta** TikTok US → patios ES en ~6 semanas. Ventana óptima importación: **marzo–abril 2021**.
+
+---
+
+## 5. Squishmallows
+
+| Campo | Antes | Después | Fuente |
+|-------|-------|---------|--------|
+| Señal origen | ago 2021 | **1 mar 2020** | Boom TikTok pandemia 2020 ([Galaxus](https://www.galaxus.ch/en/page/from-tiktok-trend-to-bestseller-squishmallows-dominate-the-cuddly-toy-market-33834)) |
+| Pico origen | nov 2021 | **1 dic 2021** | Top juguete Navidad 2021 US/UK; TOTY 2022 ([The Guardian](https://www.theguardian.com/business/2022/dec/09/squishmallows-go-from-tiktok-sensation-to-top-christmas-toy)) |
+| Señal ES | ene 2022 | **1 sep 2021** | Distribución Toy Partner Iberia |
+| Pico ES | abr 2022 | **15 abr 2023** | Peluche más vendido Iberia abr-2023 (NPD/GfK) ([Interempresas](https://www.interempresas.net/Juguetes/482719-Squishmallows-revoluciona-el-mundo-del-peluche-desde-las-redes-sociales.html)) |
+| Delay pico | ~4 meses | **~500d** | Reloj **largo** US → ES |
+| Caída | oct 2022 | **jun 2024** | Mercado plush estabilizado |
+
+**Lectura vending:** no confundir con viral corto tipo Pop It. El pico real en patios ES llegó **~18 meses** después del hype US. México/BR ya eran fenómeno en 2021.
+
+---
+
+## 6. Dumpling Squishy Steamer (tendencia activa)
+
+| Campo | Antes | Después | Fuente |
+|-------|-------|---------|--------|
+| Señal origen US | mar 2026 | **1 ago 2025** | Primera fase viral RMS Crazy Fun ([BusinessWire](https://www.businesswire.com/news/home/20260319125442/en/A-Viral-Sensation-Turned-Retail-Juggernaut-RMS-USAs-Mystery-Dumpling-Continues-Its-Sell-Out-Streak)) |
+| Pico origen US | abr 2026 | **15 nov 2025** | Sell-outs Five Below; 500M+ views TikTok fase 1 ([The Toy Book](https://toybook.com/rms-usa-five-below-dumpling-giveaway-news/)) |
+| Pico ES | may 2026 (estimado) | **pendiente** | Sin señal documentada en patios ES a jun 2026 |
+| Golden Ticket drop | — | **16 may 2026** | Five Below nationwide ([RMS USA](https://www.rms-usa.com/press/golden-ticket-mystery-dumpling)) |
+
+**Lectura vending:** caso **activo** en US (reloj largo tipo Labubu). Las fechas ES del radar son **previsión**, no histórico validado.
+
+---
+
 ## Aplicar en Supabase
 
-Ejecuta en SQL Editor:
+Ejecuta en SQL Editor (en orden):
 
-`supabase/migrations/20260624120000_validate_three_cases.sql`
+1. `supabase/migrations/20260624120000_validate_three_cases.sql` — Labubu, Pokémon SV, FIFA 2022
+2. `supabase/migrations/20260627120000_validate_pilot_adn_real_data.sql` — Pop It, Squishmallows, Dumplings
 
-O raw: https://raw.githubusercontent.com/synqaisports-dotcom/SynqAISports/main/supabase/migrations/20260624120000_validate_three_cases.sql
+O raw:
+- https://raw.githubusercontent.com/synqaisports-dotcom/SynqAISports/main/supabase/migrations/20260624120000_validate_three_cases.sql
+- https://raw.githubusercontent.com/synqaisports-dotcom/SynqAISports/main/supabase/migrations/20260627120000_validate_pilot_adn_real_data.sql

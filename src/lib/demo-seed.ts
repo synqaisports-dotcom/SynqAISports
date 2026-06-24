@@ -14,6 +14,7 @@ type SeedInput = {
   peak_search_volume: number | null;
   success_rate: number | null;
   notes: string | null;
+  reference_urls?: string[];
   dna_features?: Record<string, unknown>;
 };
 
@@ -52,7 +53,7 @@ function toRow(seed: SeedInput): HistoricalDnaRow {
     decline_days,
     peak_search_volume: seed.peak_search_volume,
     success_rate: seed.success_rate,
-    reference_urls: [],
+    reference_urls: seed.reference_urls ?? [],
     notes: seed.notes,
     dna_features: seed.dna_features ?? {},
   };
@@ -82,31 +83,49 @@ const SEED_INPUTS: SeedInput[] = [
     canonical_name: 'Dumpling Squishy Steamer',
     wave_profile: 'micro_viral_playground',
     origin_region: 'usa',
-    origin_signal_start: '2026-03-15',
-    origin_peak_date: '2026-04-10',
-    target_signal_start: '2026-04-20',
-    target_peak_date: '2026-05-02',
-    plateau_days: 14,
-    decline_start_date: '2026-06-01',
+    origin_signal_start: '2025-08-01',
+    origin_peak_date: '2025-11-15',
+    target_signal_start: null,
+    target_peak_date: null,
+    plateau_days: null,
+    decline_start_date: null,
     peak_search_volume: 120000,
     success_rate: 0.88,
-    notes: 'ASMR sensorial. Delay corto por TikTok Shop.',
-    dna_features: { virality: 'tiktok_kids', cycle_days: 25 },
+    notes:
+      'Validado 2026-06 (origen US): RMS Mystery Dumpling, 500M+ views TikTok 2025. Sell-outs Five Below. Patio ES sin señal — reloj largo.',
+    reference_urls: [
+      'https://toybook.com/rms-usa-five-below-dumpling-giveaway-news/',
+      'https://www.businesswire.com/news/home/20260319125442/en/A-Viral-Sensation-Turned-Retail-Juggernaut-RMS-USAs-Mystery-Dumpling-Continues-Its-Sell-Out-Streak',
+      'https://www.rms-usa.com/press/golden-ticket-mystery-dumpling',
+    ],
+    dna_features: {
+      virality: 'tiktok_kids',
+      validated: '2026-06',
+      status: 'active_us_only',
+      es_pending: true,
+    },
   },
   {
     slug: 'pop-it',
     canonical_name: 'Pop It Fidget',
     wave_profile: 'micro_viral_playground',
     origin_region: 'usa',
-    origin_signal_start: '2021-02-01',
-    origin_peak_date: '2021-03-15',
-    target_signal_start: '2021-04-01',
-    target_peak_date: '2021-05-10',
+    origin_signal_start: '2020-11-15',
+    origin_peak_date: '2021-04-01',
+    target_signal_start: '2021-02-01',
+    target_peak_date: '2021-05-15',
     plateau_days: 45,
     decline_start_date: '2021-09-01',
     peak_search_volume: 200000,
     success_rate: 0.75,
-    notes: 'Ola clásica patio post-TikTok inicial.',
+    notes:
+      'Validado 2026-06: viral TikTok US primavera 2021 (mono Gaitlyn Rae). ES: +500% ventas mayo 2021, patios/colegios. Delay ~44d.',
+    reference_urls: [
+      'https://www.bbc.com/news/business-58408570',
+      'https://www.huffingtonpost.es/entry/pop-it-que-son-como-jugar_es_609cf92de4b069dc48f76689.html',
+      'https://www.theguardian.com/lifeandstyle/2021/may/28/pop-hit-how-rainbow-reusable-bubblewrap-became-a-playground-must-have',
+    ],
+    dna_features: { virality: 'tiktok', audience: 'kids', validated: '2026-06' },
   },
   {
     slug: 'pokemon-tcg-sv',
@@ -209,15 +228,21 @@ const SEED_INPUTS: SeedInput[] = [
     canonical_name: 'Squishmallows Wave',
     wave_profile: 'micro_viral_playground',
     origin_region: 'usa',
-    origin_signal_start: '2021-08-01',
-    origin_peak_date: '2021-11-01',
-    target_signal_start: '2022-01-01',
-    target_peak_date: '2022-04-01',
-    plateau_days: 40,
-    decline_start_date: '2022-10-01',
+    origin_signal_start: '2020-03-01',
+    origin_peak_date: '2021-12-01',
+    target_signal_start: '2021-09-01',
+    target_peak_date: '2023-04-15',
+    plateau_days: 90,
+    decline_start_date: '2024-06-01',
     peak_search_volume: 130000,
     success_rate: 0.8,
-    notes: 'Peluche coleccionable. Retail tardío.',
+    notes:
+      'Validado 2026-06: US pico Navidad 2021. Iberia peluche #1 abr-2023 (NPD/GfK). Delay ~500d — reloj largo.',
+    reference_urls: [
+      'https://www.theguardian.com/business/2022/dec/09/squishmallows-go-from-tiktok-sensation-to-top-christmas-toy',
+      'https://www.interempresas.net/Juguetes/482719-Squishmallows-revoluciona-el-mundo-del-peluche-desde-las-redes-sociales.html',
+    ],
+    dna_features: { virality: 'tiktok', audience: 'kids_teen', validated: '2026-06', long_clock: true },
   },
   {
     slug: 'sonny-angel',
