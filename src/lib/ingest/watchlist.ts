@@ -18,6 +18,8 @@ export type WatchItem = {
   dna_match_slug: string;
   origin_region: string;
   default_delay_days: number;
+  /** Búsqueda top ventas en marketplaces (AliExpress, Amazon, Temu) */
+  marketplace_search: string;
 };
 
 export const WATCHLIST: WatchItem[] = [
@@ -33,6 +35,7 @@ export const WATCHLIST: WatchItem[] = [
     dna_match_slug: 'labubu',
     origin_region: 'asia',
     default_delay_days: 121,
+    marketplace_search: 'labubu pop mart blind box',
   },
   {
     slug: 'radar-pop-it',
@@ -46,6 +49,7 @@ export const WATCHLIST: WatchItem[] = [
     dna_match_slug: 'pop-it',
     origin_region: 'usa',
     default_delay_days: 44,
+    marketplace_search: 'pop it fidget toy kids',
   },
   {
     slug: 'radar-pokemon-sv',
@@ -59,6 +63,7 @@ export const WATCHLIST: WatchItem[] = [
     dna_match_slug: 'pokemon-tcg-sv',
     origin_region: 'asia',
     default_delay_days: 75,
+    marketplace_search: 'pokemon tcg scarlet violet booster',
   },
   {
     slug: 'radar-fifa-2026',
@@ -71,6 +76,7 @@ export const WATCHLIST: WatchItem[] = [
     dna_match_slug: 'fifa-stickers-2022',
     origin_region: 'global',
     default_delay_days: 7,
+    marketplace_search: 'panini world cup 2026 stickers album',
   },
   {
     slug: 'radar-squishmallows',
@@ -84,6 +90,7 @@ export const WATCHLIST: WatchItem[] = [
     dna_match_slug: 'squishmallows',
     origin_region: 'usa',
     default_delay_days: 45,
+    marketplace_search: 'squishmallows plush collectible',
   },
 ];
 

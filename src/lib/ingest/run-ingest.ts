@@ -1,5 +1,7 @@
 import type { SignalConfidence, SignalStatus } from '@/lib/radar-types';
+import type { TopByMarketplace, TrendProductPick } from '@/lib/cycle-types';
 import { WATCHLIST } from './watchlist';
+import { enrichRadarWithSales, salesBoostFromOrders } from './radar-enricher';
 import {
   scrapeGoogleNews,
   scrapeGoogleNewsLocale,
@@ -31,6 +33,14 @@ export type IngestSignal = {
   scrape_hits: number;
   source_breakdown: SourceBreakdown;
   mention_snippets: import('@/lib/radar-types').MentionSnippet[];
+  top_by_marketplace?: TopByMarketplace;
+  top_products?: TrendProductPick[];
+  origin_orders_total?: number;
+  marketplace_search?: string;
+  lead_image_url?: string;
+  lead_price_eur?: number;
+  lead_purchase_url?: string;
+  sales_weighted_score?: number;
 };
 
 function addDays(iso: string, days: number): string {
@@ -39,20 +49,22 @@ function addDays(iso: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-function hitsToStatus(weighted: number): SignalStatus {
-  if (weighted >= 12) return 'peak_es';
-  if (weighted >= 5) return 'emerging';
+function hitsToStatus(weighted: number, salesBoost: number): SignalStatus {
+  const blended = weighted + salesBoost;
+  if (blended >= 12) return 'peak_es';
+  if (blended >= 5) return 'emerging';
   return 'watching';
 }
 
-function hitsToConfidence(weighted: number): SignalConfidence {
-  if (weighted >= 10) return 'high';
-  if (weighted >= 4) return 'medium';
+function hitsToConfidence(weighted: number, salesBoost: number): SignalConfidence {
+  const blended = weighted + salesBoost;
+  if (blended >= 10) return 'high';
+  if (blended >= 4) return 'medium';
   return 'low';
 }
 
-function hitsToScore(weighted: number): number {
-  return Math.min(0.98, 0.45 + weighted * 0.05);
+function hitsToScore(weighted: number, salesBoost: number): number {
+  return Math.min(0.98, 0.45 + (weighted + salesBoost) * 0.05);
 }
 
 function formatSourceLabel(b: SourceBreakdown, total: number): string {
@@ -159,6 +171,19 @@ export async function runIngest(): Promise<IngestResult> {
       const totalRaw = hits.length;
       const weighted = breakdown.weighted;
 
+      const sales = await enrichRadarWithSales(watch, {
+        cn: breakdown.cn,
+        us: breakdown.us,
+        es: breakdown.es,
+      }).catch((e) => {
+        errors.push(`sales:${watch.slug}:${String(e)}`);
+        return null;
+      });
+      if (sales?.errors.length) errors.push(...sales.errors.map((e) => `${watch.slug}:${e}`));
+
+      const salesBoost = salesBoostFromOrders(sales?.origin_orders_total ?? 0);
+      const salesWeighted = Math.round((weighted + salesBoost) * 10) / 10;
+
       const urls = hits
         .map((h) => h.link)
         .filter(Boolean)
@@ -170,24 +195,39 @@ export async function runIngest(): Promise<IngestResult> {
       const delay = watch.default_delay_days;
       const predictedPeak = addDays(today, Math.max(3, Math.round(delay * 0.3)));
 
+      const corridorNotes = formatNotes(
+        today,
+        breakdown,
+        titlesEs || hits.map((h) => h.title).slice(0, 2).join(' · ')
+      );
+      const notes = [corridorNotes, sales?.sales_notes].filter(Boolean).join(' · ');
+
       signals.push({
         slug: watch.slug,
         canonical_name: watch.canonical_name,
-        status: weighted > 0 ? hitsToStatus(weighted) : 'watching',
+        status: weighted > 0 || salesBoost > 0 ? hitsToStatus(weighted, salesBoost) : 'watching',
         origin_region: watch.origin_region,
         detected_at: new Date().toISOString(),
         origin_peak_date: today,
         predicted_es_peak_date: predictedPeak,
         predicted_delay_days: delay,
         dna_match_slug: watch.dna_match_slug,
-        dna_match_score: hitsToScore(weighted),
-        confidence: hitsToConfidence(weighted),
+        dna_match_score: hitsToScore(weighted, salesBoost),
+        confidence: hitsToConfidence(weighted, salesBoost),
         signal_source: formatSourceLabel(breakdown, totalRaw),
-        notes: formatNotes(today, breakdown, titlesEs || hits.map((h) => h.title).slice(0, 2).join(' · ')),
+        notes,
         reference_urls: urls,
         scrape_hits: totalRaw,
         source_breakdown: breakdown,
         mention_snippets,
+        top_by_marketplace: sales?.top_by_marketplace,
+        top_products: sales?.top_products,
+        origin_orders_total: sales?.origin_orders_total ?? 0,
+        marketplace_search: watch.marketplace_search,
+        lead_image_url: sales?.lead_image_url,
+        lead_price_eur: sales?.lead_price_eur,
+        lead_purchase_url: sales?.lead_purchase_url,
+        sales_weighted_score: salesWeighted,
       });
     } catch (e) {
       errors.push(`watch:${watch.slug}:${String(e)}`);

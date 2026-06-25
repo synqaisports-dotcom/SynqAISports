@@ -2,6 +2,7 @@ import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { execSync } from 'child_process';
 import { DISCOVERY_QUERIES } from '../src/lib/ingest/discovery-queries';
+import { WATCHLIST } from '../src/lib/ingest/watchlist';
 import { parseAmazonSearchHtml } from '../src/lib/ingest/amazon-search';
 import type { MarketplaceSearchHit } from '../src/lib/ingest/marketplace-search-types';
 
@@ -25,8 +26,13 @@ async function main() {
   const usCache: Record<string, { fetched_at: string; products: MarketplaceSearchHit[] }> = {};
   const now = new Date().toISOString();
 
-  for (const dq of DISCOVERY_QUERIES) {
-    const q = dq.aliexpress_search;
+  const queries = [
+    ...DISCOVERY_QUERIES.map((dq) => dq.aliexpress_search),
+    ...WATCHLIST.map((w) => w.marketplace_search),
+  ];
+  const unique = [...new Set(queries)];
+
+  for (const q of unique) {
     const key = slugQuery(q);
     console.log(`Fetching Amazon ES: ${q}`);
 

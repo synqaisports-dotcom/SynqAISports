@@ -4,6 +4,7 @@
 import { readFile, writeFile } from 'fs/promises';
 import path from 'path';
 import { DISCOVERY_QUERIES } from '../src/lib/ingest/discovery-queries';
+import { WATCHLIST } from '../src/lib/ingest/watchlist';
 import type { MarketplaceSearchHit } from '../src/lib/ingest/marketplace-search-types';
 
 function slugQuery(q: string): string {
@@ -29,8 +30,13 @@ async function main() {
   const temuCache: Record<string, { fetched_at: string; products: MarketplaceSearchHit[] }> = {};
   const now = new Date().toISOString();
 
-  for (const dq of DISCOVERY_QUERIES) {
-    const key = slugQuery(dq.aliexpress_search);
+  const categories = [
+    ...DISCOVERY_QUERIES.map((dq) => ({ id: dq.id, search: dq.aliexpress_search })),
+    ...WATCHLIST.map((w) => ({ id: w.slug, search: w.marketplace_search })),
+  ];
+
+  for (const cat of categories) {
+    const key = slugQuery(cat.search);
     const ae = aeCache[key]?.products ?? [];
     const top3 = ae.slice(0, 3);
 
@@ -38,7 +44,7 @@ async function main() {
 
     temuCache[key] = {
       fetched_at: now,
-      products: top3.map((p, i) => ({
+      products: top3.map((p) => ({
         item_id: `temu-${p.item_id}`,
         title: p.title.slice(0, 120),
         image_url: p.image_url.startsWith('http') ? p.image_url : `https:${p.image_url}`,
@@ -47,11 +53,11 @@ async function main() {
         orders_label: p.orders_label ?? 'Top ventas Temu',
         purchase_url: temuUrlForTitle(p.title),
         marketplace: 'temu' as const,
-        search_query: dq.aliexpress_search,
+        search_query: cat.search,
         fetched_at: now,
       })),
     };
-    console.log(`${dq.id}: ${top3.length} Temu proxy products`);
+    console.log(`${cat.id}: ${top3.length} Temu proxy products`);
   }
 
   await writeFile(

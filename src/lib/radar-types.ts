@@ -1,3 +1,5 @@
+import type { TopByMarketplace, TrendProductPick } from './cycle-types';
+
 export type SignalStatus = 'watching' | 'emerging' | 'peak_es' | 'decline';
 export type SignalConfidence = 'low' | 'medium' | 'high';
 
@@ -38,6 +40,16 @@ export interface LiveSignalRow {
   last_scraped_at?: string | null;
   source_breakdown?: SourceBreakdown | null;
   mention_snippets?: MentionSnippet[] | null;
+  /** Top 3 ventas por marketplace (AliExpress, Amazon, Temu) */
+  top_by_marketplace?: TopByMarketplace | null;
+  top_products?: TrendProductPick[] | null;
+  origin_orders_total?: number | null;
+  marketplace_search?: string | null;
+  lead_image_url?: string | null;
+  lead_price_eur?: number | null;
+  lead_purchase_url?: string | null;
+  /** Score combinado: menciones + volumen ventas */
+  sales_weighted_score?: number | null;
 }
 
 export const SIGNAL_STATUS_LABELS: Record<SignalStatus, string> = {

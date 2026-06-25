@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { Radar, Sparkles, TrendingUp } from 'lucide-react';
+import Image from 'next/image';
+import { Radar, ShoppingBag, Sparkles, TrendingUp } from 'lucide-react';
 import type { LiveSignalRow } from '@/lib/radar-types';
 import { CONFIDENCE_LABELS, SIGNAL_STATUS_LABELS } from '@/lib/radar-types';
 import { daysUntil } from '@/lib/radar';
@@ -7,6 +8,7 @@ import { buildCorridorInsight } from '@/lib/corridor-insight';
 import { CorridorBars } from '@/components/CorridorBars';
 import { MentionList } from '@/components/MentionList';
 import { Sparkline } from '@/components/Sparkline';
+import { TopProductsList } from '@/components/TopProductsList';
 
 function formatDate(d: string | null) {
   if (!d) return '—';
@@ -81,7 +83,7 @@ export function RadarPanel({
               Radar Fase 2b
             </h2>
             <p className="text-xs text-slate-500">
-              ES + USA + China (News RSS) · POD proxy · Reddit · cada 48h
+              ES + USA + China (News RSS) · top ventas AE/Amazon/Temu · cada 48h
               {hasScrape && (
                 <span className="ml-2 text-tp-green">· scraping activo</span>
               )}
@@ -111,6 +113,11 @@ export function RadarPanel({
           const isScraped = s.signal_source?.startsWith('scrape:');
           const isFuture = s.slug.includes('predicted') || (s.status === 'watching' && !isScraped);
           const isReal = isScraped || (!s.slug.includes('predicted') && s.status !== 'watching');
+          const hasSales =
+            (s.top_products?.length ?? 0) > 0 ||
+            Object.values(s.top_by_marketplace ?? {}).some((arr) => (arr?.length ?? 0) > 0);
+          const newsScore = s.source_breakdown?.weighted ?? 0;
+          const salesScore = s.sales_weighted_score ?? newsScore;
 
           return (
             <article
@@ -121,7 +128,20 @@ export function RadarPanel({
                   : 'border-white/10 bg-tp-panel'
               }`}
             >
-              <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+              <div className="mb-3 flex gap-3">
+                {s.lead_image_url && (
+                  <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-black/30 ring-1 ring-white/10">
+                    <Image
+                      src={s.lead_image_url}
+                      alt={s.canonical_name}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     {isScraped ? (
@@ -148,6 +168,11 @@ export function RadarPanel({
                       {s.canonical_name}
                     </Link>
                   </h3>
+                  {s.marketplace_search && (
+                    <p className="text-[10px] font-mono-data text-slate-500">
+                      Ventas · {s.marketplace_search}
+                    </p>
+                  )}
                   <p className="text-xs text-slate-500">{s.signal_source}</p>
                 </div>
                 {s.dna_match_score != null && (
@@ -158,6 +183,8 @@ export function RadarPanel({
                     <p className="text-[10px] text-slate-500">índice actividad</p>
                   </div>
                 )}
+              </div>
+                </div>
               </div>
 
               <div className="mb-3 grid grid-cols-2 gap-2 text-xs">
@@ -212,6 +239,25 @@ export function RadarPanel({
 
               <CorridorChips breakdown={s.source_breakdown} />
 
+              {(newsScore > 0 || (s.origin_orders_total ?? 0) > 0) && (
+                <div className="mb-2 flex flex-wrap gap-2 text-[10px] font-mono-data">
+                  <span className="rounded bg-violet-500/15 px-1.5 py-0.5 text-violet-300">
+                    Noticias {newsScore}w
+                  </span>
+                  {salesScore !== newsScore && (
+                    <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-emerald-300">
+                      + ventas → {salesScore}w
+                    </span>
+                  )}
+                  {(s.origin_orders_total ?? 0) > 0 && (
+                    <span className="flex items-center gap-0.5 rounded bg-emerald-500/10 px-1.5 py-0.5 text-emerald-300">
+                      <ShoppingBag className="h-2.5 w-2.5" />
+                      {s.origin_orders_total!.toLocaleString('es-ES')}+ pedidos origen
+                    </span>
+                  )}
+                </div>
+              )}
+
               <Sparkline points={dailyHistory?.get(s.slug) ?? []} />
 
               {s.scrape_hits != null && s.scrape_hits > 0 && (
@@ -242,7 +288,17 @@ export function RadarPanel({
 
               <MentionList snippets={s.mention_snippets} />
 
-              {s.notes && !s.mention_snippets?.length && (
+              {hasSales && (
+                <div className="mt-3 border-t border-white/5 pt-3">
+                  <TopProductsList
+                    products={s.top_products ?? undefined}
+                    topByMarketplace={s.top_by_marketplace ?? undefined}
+                    compact
+                  />
+                </div>
+              )}
+
+              {s.notes && !s.mention_snippets?.length && !hasSales && (
                 <p className="mt-3 text-xs leading-relaxed text-slate-400">{s.notes}</p>
               )}
             </article>
