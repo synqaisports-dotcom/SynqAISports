@@ -1,17 +1,21 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Settings, Shield, Users } from 'lucide-react';
-
-const upcomingModules = 'Metodología, patrocinadores y torneos — próximamente';
+import { usePathname, useRouter } from 'next/navigation';
+import {
+  BookOpen,
+  LayoutDashboard,
+  Settings,
+  Shield,
+  Users,
+} from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
 
 const links = [
   { href: '/portal', label: 'Inicio', icon: LayoutDashboard, exact: true },
   { href: '/portal/club', label: 'Club', icon: Shield, exact: false },
   { href: '/portal/cantera', label: 'Cantera', icon: Users, exact: false },
+  { href: '/portal/metodologia', label: 'Metodología', icon: BookOpen, exact: false },
   { href: '/portal/config', label: 'Configuración', icon: Settings, exact: false },
 ];
 
@@ -40,13 +44,13 @@ export function PortalSidebar({ clubName, role }: Props) {
       </div>
       <nav className="flex-1 space-y-1 p-3">
         {links.map(({ href, label, icon: Icon, exact }) => {
-          const active = exact ? pathname === href : pathname.startsWith(href);
+          const isActive = exact ? pathname === href : pathname.startsWith(href);
           return (
             <Link
               key={href}
               href={href}
               className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
-                active
+                isActive
                   ? 'bg-synq-pitch/20 text-synq-accent'
                   : 'text-synq-muted hover:bg-white/5 hover:text-white'
               }`}
@@ -57,7 +61,7 @@ export function PortalSidebar({ clubName, role }: Props) {
           );
         })}
         <div className="mt-4 rounded-lg border border-dashed border-white/10 px-3 py-2 text-xs text-synq-muted">
-          {upcomingModules}
+          Patrocinadores, signage y torneos — próximamente
         </div>
       </nav>
       <div className="border-t border-white/5 p-3">

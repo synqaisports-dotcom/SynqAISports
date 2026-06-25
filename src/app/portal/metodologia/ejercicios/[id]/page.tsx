@@ -1,0 +1,34 @@
+import { ExerciseEditor, type ExerciseRow } from '@/components/methodology/ExerciseEditor';
+import { MethodologySubnav } from '@/components/methodology/MethodologySubnav';
+import { getStaffContext } from '@/lib/portal';
+import { createClient } from '@/lib/supabase/server';
+import { notFound, redirect } from 'next/navigation';
+
+type Props = { params: Promise<{ id: string }> };
+
+export default async function EditarEjercicioPage({ params }: Props) {
+  const { id } = await params;
+  const supabase = await createClient();
+  const ctx = await getStaffContext(supabase);
+  if (!ctx) redirect('/login');
+
+  const { data: exercise } = await supabase
+    .from('synq_exercises')
+    .select('id, title, objectives, duration_min, materials, notes, drawing_json')
+    .eq('id', id)
+    .eq('club_id', ctx.club.id)
+    .single();
+
+  if (!exercise) notFound();
+
+  return (
+    <div>
+      <h1 className="font-serif-display text-3xl text-white">Editar ejercicio</h1>
+      <p className="mt-2 text-synq-muted">{exercise.title}</p>
+      <MethodologySubnav />
+      <div className="mt-6">
+        <ExerciseEditor exercise={exercise as ExerciseRow} />
+      </div>
+    </div>
+  );
+}

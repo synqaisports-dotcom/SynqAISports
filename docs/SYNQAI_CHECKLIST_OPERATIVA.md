@@ -2,7 +2,7 @@
 
 Guía paso a paso de **todo lo que debes ir haciendo tú** (manual) mientras el desarrollo avanza en ramas. Marca cada ítem cuando lo completes.
 
-**Última actualización:** fase web portal + cantera · rama `cursor/synq-web-club-f457`
+**Última actualización:** fase web portal + cantera + metodología · rama `cursor/synq-web-club-f457`
 
 ---
 
@@ -11,7 +11,7 @@ Guía paso a paso de **todo lo que debes ir haciendo tú** (manual) mientras el 
 | Rama | Contenido | Estado |
 |------|-----------|--------|
 | `main` | Landing SynqAI + documentación | Producción actual |
-| `cursor/synq-web-club-f457` | Web: index, login, portal, cantera | En desarrollo |
+| `cursor/synq-web-club-f457` | Web: index, login, portal, cantera, metodología | En desarrollo |
 | `cursor/synq-coach-free-f457` | App Android Synq Coach Free | En desarrollo |
 | `trendpulse` | TrendPulse (producto separado) | Independiente |
 
@@ -32,8 +32,9 @@ En **SQL Editor** del proyecto SynqAI, ejecutar **en este orden**:
 1. [ ] `supabase/migrations/20260701000000_synqai_init.sql`
 2. [ ] `supabase/migrations/20260702000000_synqai_portal.sql`
 3. [ ] `supabase/migrations/20260703000000_synqai_cantera.sql`
+4. [ ] `supabase/migrations/20260704000000_synqai_methodology.sql`
 
-> Si ya ejecutaste las dos primeras antes de cantera, solo añade la tercera.
+> Si ya ejecutaste migraciones anteriores, solo añade las que falten.
 
 ### A3. Variables de entorno locales
 
@@ -109,6 +110,11 @@ Abrir http://localhost:9100
 - [ ] `/portal/club` → editar datos y guardar
 - [ ] `/portal/config` → ver/generar código QR del club
 - [ ] `/portal/cantera` → crear equipo y jugadores
+- [ ] `/portal/metodologia` → resumen con contadores
+- [ ] `/portal/metodologia/ejercicios` → crear ejercicio con pizarra web
+- [ ] `/portal/metodologia/microciclos` → crear microciclo y asignar ejercicios a slots
+- [ ] `/portal/metodologia/objetivos` → guardar objetivos por categoría/temporada
+- [ ] `/portal/metodologia/solicitudes` → probar flujo aprobar/rechazar (manual)
 
 ### B5. Probar formulario founding (público)
 
@@ -214,9 +220,9 @@ Marca cuando esté hecho en código **y** probado por ti:
 
 | # | Módulo | Rama probable | Tu acción al terminar |
 |---|--------|---------------|------------------------|
-| F1 | Cantera web (equipos/jugadores) | `cursor/synq-web-club-f457` | Migración 3 + probar `/portal/cantera` |
-| F2 | Metodología (ejercicios web) | web | Nueva migración + probar CRUD |
-| F3 | Patrocinadores + signage config | web | Subir creatividades, emparejar TV |
+| F1 | Cantera web (equipos/jugadores) | `cursor/synq-web-club-f457` | Migración 3 + `/portal/cantera` |
+| F2 | Metodología web (ejercicios, microciclos) | `cursor/synq-web-club-f457` | Migración 4 + `/portal/metodologia` |
+| F3 | Patrocinadores + signage config | web | Nueva migración + probar CRUD |
 | F4 | Synq Coach ↔ club (sync roster) | android + api | Código club en app + Supabase |
 | F5 | App familias | nueva app | Play Console `com.synqai.families` |
 | F6 | SynqAI Admin (aprobar founding) | nueva rama | Usuario staff Nexus only |

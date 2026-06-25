@@ -72,9 +72,14 @@ export default async function PortalHomePage() {
             <a href="/portal/cantera" className="text-synq-accent hover:underline">
               Cantera
             </a>{' '}
-            — equipos y jugadores (disponible)
+            — equipos y jugadores
           </li>
-          <li>Metodología — ejercicios y microciclos</li>
+          <li>
+            <a href="/portal/metodologia" className="text-synq-accent hover:underline">
+              Metodología
+            </a>{' '}
+            — ejercicios, microciclos, objetivos
+          </li>
           <li>Patrocinadores y digital signage</li>
           <li>Torneos y informes</li>
         </ul>
