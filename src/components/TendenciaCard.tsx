@@ -27,9 +27,11 @@ export function TendenciaCard({
 
       <div className="flex gap-4 p-4">
         <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-black/30 ring-1 ring-white/10">
-          <span className="absolute left-1 top-1 z-10 rounded bg-black/60 px-1.5 py-0.5 font-mono-data text-[10px] text-white">
-            #{rank}
-          </span>
+          {rank > 0 && (
+            <span className="absolute left-1 top-1 z-10 rounded bg-black/60 px-1.5 py-0.5 font-mono-data text-[10px] text-white">
+              #{rank}
+            </span>
+          )}
           {candidate.image_url ? (
             <Image
               src={candidate.image_url}

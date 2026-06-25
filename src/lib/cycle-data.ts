@@ -5,7 +5,11 @@ import type { LiveSignalRow } from './radar-types';
 import { runPredictionIngest } from './ingest/run-prediction-ingest';
 import { hydratePredictionCandidates } from './ingest/prediction-hydrator';
 import { daysUntilSeptember } from './ingest/discovery-queries';
-import { fetchMarketplaceCandidates, persistMarketplaceCandidates } from './marketplace';
+import {
+  fetchMarketplaceCandidates,
+  fetchMarketplaceCandidateBySlug,
+  persistMarketplaceCandidates,
+} from './marketplace';
 import { hasSupabaseServiceRole } from './supabase';
 
 export type CycleData = {
@@ -70,6 +74,21 @@ export async function loadPredictionData(options?: {
 
 /** @deprecated usar loadPredictionData */
 export const loadMarketplaceData = loadPredictionData;
+
+/** Ficha de tendencia por slug (DB o pool en vivo del último ingest). */
+export async function loadTrendenciaBySlug(slug: string): Promise<MarketplaceCandidate | null> {
+  const { candidate: fromDb } = await fetchMarketplaceCandidateBySlug(slug);
+  if (fromDb) {
+    const [hydrated] = await hydratePredictionCandidates([fromDb]);
+    return hydrated;
+  }
+
+  const market = await loadPredictionData();
+  const found = market.candidates.find((c) => c.slug === slug);
+  if (!found) return null;
+  const [hydrated] = await hydratePredictionCandidates([found]);
+  return hydrated;
+}
 
 export async function loadCycleData(
   radarSignals: LiveSignalRow[],

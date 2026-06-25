@@ -1,72 +1,12 @@
-import Link from 'next/link';
-import Image from 'next/image';
-import { Radar, ShoppingBag, Sparkles, TrendingUp } from 'lucide-react';
+import { Radar } from 'lucide-react';
 import type { LiveSignalRow } from '@/lib/radar-types';
-import { CONFIDENCE_LABELS, SIGNAL_STATUS_LABELS } from '@/lib/radar-types';
-import { getRadarVerdict, VERDICT_STYLES } from '@/lib/trend-verdict';
-import { daysUntil } from '@/lib/radar';
-import { buildCorridorInsight } from '@/lib/corridor-insight';
-import { CorridorBars } from '@/components/CorridorBars';
-import { MentionList } from '@/components/MentionList';
-import { Sparkline } from '@/components/Sparkline';
-import { TopProductsList } from '@/components/TopProductsList';
-
-function formatDate(d: string | null) {
-  if (!d) return '—';
-  return new Date(d).toLocaleDateString('es-ES', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
-}
-
-function CorridorChips({ breakdown }: { breakdown: LiveSignalRow['source_breakdown'] }) {
-  if (!breakdown || breakdown.weighted === 0) return null;
-  const items = [
-    { key: 'CN', n: breakdown.cn, color: 'text-rose-300 bg-rose-500/10' },
-    { key: 'US', n: breakdown.us, color: 'text-sky-300 bg-sky-500/10' },
-    { key: 'LAT', n: breakdown.latam ?? 0, color: 'text-orange-300 bg-orange-500/10' },
-    { key: 'POD', n: breakdown.pod, color: 'text-violet-300 bg-violet-500/10' },
-    { key: 'ES', n: breakdown.es, color: 'text-emerald-300 bg-emerald-500/10' },
-    { key: 'RD', n: breakdown.reddit, color: 'text-amber-300 bg-amber-500/10' },
-  ].filter((i) => i.n > 0);
-
-  return (
-    <div className="mb-2 flex flex-wrap gap-1">
-      {items.map((i) => (
-        <span
-          key={i.key}
-          className={`rounded px-1.5 py-0.5 font-mono-data text-[10px] ${i.color}`}
-        >
-          {i.key} {i.n}
-        </span>
-      ))}
-      <span className="rounded bg-white/5 px-1.5 py-0.5 font-mono-data text-[10px] text-tp-cyan">
-        {breakdown.weighted}w
-      </span>
-    </div>
-  );
-}
-
-function statusColor(status: LiveSignalRow['status']) {
-  switch (status) {
-    case 'watching':
-      return 'border-slate-500/40 bg-slate-500/10 text-slate-300';
-    case 'emerging':
-      return 'border-tp-amber/40 bg-tp-amber/10 text-tp-amber';
-    case 'peak_es':
-      return 'border-tp-cyan/40 bg-tp-cyan/10 text-tp-cyan';
-    case 'decline':
-      return 'border-red-400/30 bg-red-400/10 text-red-300';
-  }
-}
+import { RadarCardCompact } from '@/components/RadarCardCompact';
 
 export function RadarPanel({
   signals,
   isDemo,
   hasScrape,
   secretConfigured,
-  dailyHistory,
 }: {
   signals: LiveSignalRow[];
   isDemo?: boolean;
@@ -84,10 +24,8 @@ export function RadarPanel({
               Radar · productos en seguimiento
             </h2>
             <p className="text-xs text-slate-500">
-              ES + USA + China (News RSS) · top ventas AE/Amazon/Temu · cada 48h
-              {hasScrape && (
-                <span className="ml-2 text-tp-green">· scraping activo</span>
-              )}
+              Pulsa una tarjeta para ver señales, ventas y ADN completos
+              {hasScrape && <span className="ml-2 text-tp-green">· scraping activo</span>}
             </p>
           </div>
         </div>
@@ -108,212 +46,10 @@ export function RadarPanel({
         )}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {signals.map((s) => {
-          const daysToPeak = daysUntil(s.predicted_es_peak_date);
-          const isScraped = s.signal_source?.startsWith('scrape:');
-          const isFuture = s.slug.includes('predicted') || (s.status === 'watching' && !isScraped);
-          const isReal = isScraped || (!s.slug.includes('predicted') && s.status !== 'watching');
-          const hasSales =
-            (s.top_products?.length ?? 0) > 0 ||
-            Object.values(s.top_by_marketplace ?? {}).some((arr) => (arr?.length ?? 0) > 0);
-          const newsScore = s.source_breakdown?.weighted ?? 0;
-          const salesScore = s.sales_weighted_score ?? newsScore;
-          const verdict = getRadarVerdict(s);
-          const vStyles = VERDICT_STYLES[verdict.verdict];
-
-          return (
-            <article
-              key={s.id}
-              className={`rounded-xl border p-4 ${
-                isFuture
-                  ? 'border-tp-cyan/30 bg-gradient-to-br from-tp-cyan/5 to-transparent'
-                  : 'border-white/10 bg-tp-panel'
-              }`}
-            >
-              <div className={`mb-3 rounded-lg border px-3 py-2 ${vStyles.border} ${vStyles.bg}`}>
-                <p className={`text-xs font-semibold ${vStyles.text}`}>
-                  {verdict.emoji} {verdict.title}
-                </p>
-                <p className="mt-0.5 text-[10px] leading-snug text-slate-400">{verdict.subtitle}</p>
-              </div>
-
-              <div className="mb-3 flex gap-3">
-                {s.lead_image_url && (
-                  <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-black/30 ring-1 ring-white/10">
-                    <Image
-                      src={s.lead_image_url}
-                      alt={s.canonical_name}
-                      fill
-                      className="object-cover"
-                      unoptimized
-                    />
-                  </div>
-                )}
-                <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {isScraped ? (
-                      <span className="flex items-center gap-1 text-[10px] font-mono-data uppercase text-tp-green">
-                        <TrendingUp className="h-3 w-3" /> Scrape
-                      </span>
-                    ) : isReal ? (
-                      <span className="flex items-center gap-1 text-[10px] font-mono-data uppercase text-tp-green">
-                        <TrendingUp className="h-3 w-3" /> Real
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1 text-[10px] font-mono-data uppercase text-tp-cyan">
-                        <Sparkles className="h-3 w-3" /> Predicción
-                      </span>
-                    )}
-                    <span
-                      className={`rounded border px-1.5 py-0.5 text-[10px] font-mono-data uppercase ${statusColor(s.status)}`}
-                    >
-                      {SIGNAL_STATUS_LABELS[s.status]}
-                    </span>
-                  </div>
-                  <h3 className="mt-1 font-semibold text-white">
-                    <Link href={`/radar/${s.slug}`} className="hover:text-tp-cyan">
-                      {s.canonical_name}
-                    </Link>
-                  </h3>
-                  {s.marketplace_search && (
-                    <p className="text-[10px] font-mono-data text-slate-500">
-                      Ventas · {s.marketplace_search}
-                    </p>
-                  )}
-                  <p className="text-xs text-slate-500">{s.signal_source}</p>
-                </div>
-                {s.dna_match_score != null && (
-                  <div className="text-right">
-                    <p className="font-mono-data text-lg font-bold text-tp-cyan">
-                      {Math.round(s.dna_match_score * 100)}%
-                    </p>
-                    <p className="text-[10px] text-slate-500">índice actividad</p>
-                  </div>
-                )}
-              </div>
-                </div>
-              </div>
-
-              <div className="mb-3 grid grid-cols-2 gap-2 text-xs">
-                <div className="rounded-lg bg-black/20 px-2 py-1.5">
-                  <p className="text-slate-500">Origen</p>
-                  <p className="font-mono-data uppercase text-slate-300">{s.origin_region}</p>
-                </div>
-                <div className="rounded-lg bg-black/20 px-2 py-1.5">
-                  <p className="text-slate-500">Delay est.</p>
-                  <p className="font-mono-data text-tp-amber">
-                    {s.predicted_delay_days != null ? `${s.predicted_delay_days}d` : '—'}
-                  </p>
-                </div>
-                <div className="rounded-lg bg-black/20 px-2 py-1.5">
-                  <p className="text-slate-500">Pico ES previsto</p>
-                  <p className="font-mono-data text-white">
-                    {formatDate(s.predicted_es_peak_date)}
-                  </p>
-                </div>
-                <div className="rounded-lg bg-black/20 px-2 py-1.5">
-                  <p className="text-slate-500">Confianza</p>
-                  <p className="font-mono-data text-slate-300">
-                    {CONFIDENCE_LABELS[s.confidence]}
-                  </p>
-                </div>
-              </div>
-
-              {s.dna_match_slug && (
-                <p className="mb-2 text-[11px] text-slate-500">
-                  ADN ref:{' '}
-                  <code className="font-mono-data text-tp-cyan">{s.dna_match_slug}</code>
-                </p>
-              )}
-
-              <CorridorBars breakdown={s.source_breakdown ?? undefined} />
-
-              <p className="mb-2 text-[11px] leading-relaxed text-slate-300">
-                {buildCorridorInsight(
-                  s.source_breakdown ?? {
-                    es: 0,
-                    us: 0,
-                    cn: 0,
-                    latam: 0,
-                    pod: 0,
-                    reddit: 0,
-                    weighted: 0,
-                  },
-                  s.origin_region,
-                  s.dna_match_slug
-                )}
-              </p>
-
-              <CorridorChips breakdown={s.source_breakdown} />
-
-              {(newsScore > 0 || (s.origin_orders_total ?? 0) > 0) && (
-                <div className="mb-2 flex flex-wrap gap-2 text-[10px] font-mono-data">
-                  <span className="rounded bg-violet-500/15 px-1.5 py-0.5 text-violet-300">
-                    Noticias {newsScore}w
-                  </span>
-                  {salesScore !== newsScore && (
-                    <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-emerald-300">
-                      + ventas → {salesScore}w
-                    </span>
-                  )}
-                  {(s.origin_orders_total ?? 0) > 0 && (
-                    <span className="flex items-center gap-0.5 rounded bg-emerald-500/10 px-1.5 py-0.5 text-emerald-300">
-                      <ShoppingBag className="h-2.5 w-2.5" />
-                      {s.origin_orders_total!.toLocaleString('es-ES')}+ pedidos origen
-                    </span>
-                  )}
-                </div>
-              )}
-
-              <Sparkline points={dailyHistory?.get(s.slug) ?? []} />
-
-              {s.scrape_hits != null && s.scrape_hits > 0 && (
-                <p className="mb-2 font-mono-data text-[11px] text-tp-amber">
-                  {s.scrape_hits} menciones scrape (14d)
-                </p>
-              )}
-
-              {daysToPeak != null && (
-                <p className="mb-2 font-mono-data text-xs text-tp-cyan">
-                  {daysToPeak > 0
-                    ? `→ Pico ES en ~${daysToPeak} días`
-                    : daysToPeak === 0
-                      ? '→ Pico ES: hoy'
-                      : `→ Pico ES hace ${Math.abs(daysToPeak)} días`}
-                </p>
-              )}
-
-              {/* Mini timeline futuro */}
-              <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/5">
-                <div
-                  className={`h-full rounded-full ${isFuture ? 'bg-tp-cyan/60' : 'bg-tp-amber/80'}`}
-                  style={{
-                    width: `${Math.min(95, Math.max(15, 100 - (daysToPeak != null && daysToPeak > 0 ? daysToPeak / 4 : 10)))}%`,
-                  }}
-                />
-              </div>
-
-              <MentionList snippets={s.mention_snippets} />
-
-              {hasSales && (
-                <div className="mt-3 border-t border-white/5 pt-3">
-                  <TopProductsList
-                    products={s.top_products ?? undefined}
-                    topByMarketplace={s.top_by_marketplace ?? undefined}
-                    compact
-                  />
-                </div>
-              )}
-
-              {s.notes && !s.mention_snippets?.length && !hasSales && (
-                <p className="mt-3 text-xs leading-relaxed text-slate-400">{s.notes}</p>
-              )}
-            </article>
-          );
-        })}
+      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+        {signals.map((s) => (
+          <RadarCardCompact key={s.id} signal={s} />
+        ))}
       </div>
     </section>
   );

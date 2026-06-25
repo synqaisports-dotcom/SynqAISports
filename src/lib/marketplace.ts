@@ -103,3 +103,49 @@ export async function fetchMarketplaceCandidates(): Promise<{
 
   return { rows, fromDb: rows.length > 0, error: null };
 }
+
+export async function fetchMarketplaceCandidateBySlug(
+  slug: string
+): Promise<{ candidate: MarketplaceCandidate | null; fromDb: boolean }> {
+  if (!isSupabaseConfigured()) {
+    return { candidate: null, fromDb: false };
+  }
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return { candidate: null, fromDb: false };
+
+  const { data, error } = await supabase
+    .from('trend_marketplace_candidates')
+    .select('*')
+    .eq('slug', slug)
+    .eq('is_active', true)
+    .maybeSingle();
+
+  if (error || !data) return { candidate: null, fromDb: false };
+
+  const candidate: MarketplaceCandidate = {
+    slug: data.slug,
+    canonical_name: data.canonical_name,
+    world: data.world,
+    image_url: data.image_url ?? '',
+    origin_price_eur: Number(data.origin_price_eur),
+    origin_marketplace: data.origin_marketplace ?? '',
+    purchase_url: data.purchase_url ?? '',
+    units_sold_label: data.units_sold_label,
+    signal_cn: data.signal_cn ?? 0,
+    signal_us: data.signal_us ?? 0,
+    signal_es: data.signal_es ?? 0,
+    dna_match_slug: data.dna_match_slug,
+    estimated_window_es: data.estimated_window_es,
+    source_type: data.source_type ?? 'marketplace_2c',
+    notes: data.notes,
+    estimated_arrival_es: data.estimated_arrival_es,
+    summer_fit: data.summer_fit ?? false,
+    is_predicted: data.source_type === 'prediction',
+    prediction_score: Number(data.weighted_score ?? 0),
+    evidence_urls: [],
+    signal_latam: data.signal_latam ?? 0,
+    signal_reddit: data.signal_reddit ?? 0,
+  };
+
+  return { candidate, fromDb: true };
+}

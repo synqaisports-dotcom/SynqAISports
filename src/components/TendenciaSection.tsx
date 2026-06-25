@@ -1,4 +1,4 @@
-import { TendenciaCard } from '@/components/TendenciaCard';
+import { TendenciaCardCompact } from '@/components/TendenciaCardCompact';
 import type { MarketplaceCandidate } from '@/lib/cycle-types';
 
 export function TendenciaSection({
@@ -23,9 +23,9 @@ export function TendenciaSection({
         {title} ({candidates.length})
       </h2>
       <p className="mb-4 text-xs text-slate-500">{subtitle}</p>
-      <div className="grid gap-4">
+      <div className="grid gap-2 sm:grid-cols-2">
         {candidates.map((c, i) => (
-          <TendenciaCard key={c.slug} candidate={c} rank={i + 1} />
+          <TendenciaCardCompact key={c.slug} candidate={c} rank={i + 1} />
         ))}
       </div>
     </section>
