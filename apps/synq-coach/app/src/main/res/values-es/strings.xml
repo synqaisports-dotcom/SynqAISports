@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Synq Coach</string>
+    <string name="default_team_name">Mi equipo</string>
+
+    <string name="nav_board">Pizarra</string>
+    <string name="nav_team">Equipo</string>
+    <string name="nav_training">Entreno</string>
+    <string name="nav_league">Liga</string>
+
+    <string name="pitch_f11">Fútbol 11</string>
+    <string name="pitch_f7">Fútbol 7</string>
+    <string name="pitch_futsal">Fútbol sala</string>
+
+    <string name="board_load_team">Cargar equipo</string>
+    <string name="board_move">Mover</string>
+    <string name="board_arrow">Flecha</string>
+    <string name="board_undo">Deshacer</string>
+    <string name="board_clear">Borrar</string>
+
+    <string name="team_title">Plantilla</string>
+    <string name="team_add_player">Añadir jugador</string>
+    <string name="team_name_required">El nombre es obligatorio</string>
+    <string name="player_name">Nombre</string>
+    <string name="player_number">Dorsal</string>
+    <string name="player_position">Posición</string>
+    <string name="delete">Eliminar</string>
+
+    <string name="training_title">Microciclos</string>
+    <string name="training_limit_hint">%1$d / 2 microciclos (plan gratuito)</string>
+    <string name="training_fields_required">Título y semana son obligatorios</string>
+    <string name="training_max_microcycles">El plan gratuito permite hasta 2 microciclos</string>
+    <string name="micro_title">Título del microciclo</string>
+    <string name="micro_week">Etiqueta de semana</string>
+    <string name="micro_create">Crear microciclo</string>
+
+    <string name="slot_warmup">Calentamiento</string>
+    <string name="slot_main">Principal</string>
+    <string name="slot_cooldown">Vuelta a la calma</string>
+    <string name="exercise_title">Título del ejercicio</string>
+    <string name="exercise_notes">Notas</string>
+    <string name="save">Guardar</string>
+    <string name="saved">Guardado</string>
+
+    <string name="league_title">Liga</string>
+    <string name="league_name">Nombre de la liga</string>
+    <string name="league_season">Temporada</string>
+    <string name="league_create">Crear / actualizar liga</string>
+    <string name="league_name_required">El nombre de la liga es obligatorio</string>
+    <string name="league_create_first">Crea una liga primero</string>
+    <string name="league_reset_title">Reiniciar temporada</string>
+    <string name="league_reset_message">¿Archivar la liga actual y empezar de cero?</string>
+    <string name="match_opponent">Rival</string>
+    <string name="match_home">Partido en casa</string>
+    <string name="match_add">Añadir partido</string>
+    <string name="match_goal_home">+1 gol</string>
+
+    <string name="confirm">Confirmar</string>
+    <string name="cancel">Cancelar</string>
+</resources>

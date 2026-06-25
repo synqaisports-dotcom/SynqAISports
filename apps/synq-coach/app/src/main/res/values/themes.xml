@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.SynqCoach" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/synq_primary</item>
+        <item name="colorPrimaryVariant">@color/synq_primary_dark</item>
+        <item name="colorOnPrimary">@color/synq_on_primary</item>
+        <item name="android:statusBarColor">@color/synq_bg</item>
+        <item name="android:navigationBarColor">@color/synq_surface</item>
+        <item name="android:windowBackground">@color/synq_bg</item>
+    </style>
+
+    <style name="Widget.Synq.Button" parent="Widget.MaterialComponents.Button">
+        <item name="android:textColor">@color/synq_on_primary</item>
+        <item name="backgroundTint">@color/synq_primary</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+    <style name="Widget.Synq.Button.Outlined" parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <item name="strokeColor">@color/synq_primary</item>
+        <item name="android:textColor">@color/synq_primary</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+</resources>
