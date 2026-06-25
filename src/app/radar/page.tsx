@@ -1,5 +1,6 @@
 import { RadarPanel } from '@/components/RadarPanel';
 import { RadarSetupBanner } from '@/components/RadarSetupBanner';
+import { HowToReadPanel } from '@/components/HowToReadPanel';
 import { SetupBanner, TrendPulseShell } from '@/components/TrendPulseShell';
 import { loadTrendPulseData } from '@/lib/trendpulse-data';
 import { DEMO_SEED } from '@/lib/demo-seed';
@@ -12,9 +13,11 @@ export default async function RadarPage() {
   return (
     <TrendPulseShell
       title="Radar"
-      subtitle="Fase 2b · ES + USA + China + POD proxy · cada 48h"
+      subtitle="5 productos conocidos · noticias + ventas reales"
       report={data.report}
     >
+      <HowToReadPanel variant="radar" />
+
       <SetupBanner
         supabaseConnected={data.supabaseConnected}
         configured={data.configured}

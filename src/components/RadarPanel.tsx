@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { Radar, ShoppingBag, Sparkles, TrendingUp } from 'lucide-react';
 import type { LiveSignalRow } from '@/lib/radar-types';
 import { CONFIDENCE_LABELS, SIGNAL_STATUS_LABELS } from '@/lib/radar-types';
+import { getRadarVerdict, VERDICT_STYLES } from '@/lib/trend-verdict';
 import { daysUntil } from '@/lib/radar';
 import { buildCorridorInsight } from '@/lib/corridor-insight';
 import { CorridorBars } from '@/components/CorridorBars';
@@ -80,7 +81,7 @@ export function RadarPanel({
           <Radar className="h-5 w-5 text-tp-cyan" />
           <div>
             <h2 className="text-sm font-semibold uppercase tracking-widest text-tp-cyan">
-              Radar Fase 2b
+              Radar · productos en seguimiento
             </h2>
             <p className="text-xs text-slate-500">
               ES + USA + China (News RSS) · top ventas AE/Amazon/Temu · cada 48h
@@ -118,6 +119,8 @@ export function RadarPanel({
             Object.values(s.top_by_marketplace ?? {}).some((arr) => (arr?.length ?? 0) > 0);
           const newsScore = s.source_breakdown?.weighted ?? 0;
           const salesScore = s.sales_weighted_score ?? newsScore;
+          const verdict = getRadarVerdict(s);
+          const vStyles = VERDICT_STYLES[verdict.verdict];
 
           return (
             <article
@@ -128,6 +131,13 @@ export function RadarPanel({
                   : 'border-white/10 bg-tp-panel'
               }`}
             >
+              <div className={`mb-3 rounded-lg border px-3 py-2 ${vStyles.border} ${vStyles.bg}`}>
+                <p className={`text-xs font-semibold ${vStyles.text}`}>
+                  {verdict.emoji} {verdict.title}
+                </p>
+                <p className="mt-0.5 text-[10px] leading-snug text-slate-400">{verdict.subtitle}</p>
+              </div>
+
               <div className="mb-3 flex gap-3">
                 {s.lead_image_url && (
                   <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-black/30 ring-1 ring-white/10">

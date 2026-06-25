@@ -3,6 +3,7 @@ import { buildDemoCycle } from './cycle/build-cycle';
 import type { CycleSlotRow, TrendCycleRow, MarketplaceCandidate } from './cycle-types';
 import type { LiveSignalRow } from './radar-types';
 import { runPredictionIngest } from './ingest/run-prediction-ingest';
+import { hydratePredictionCandidates } from './ingest/prediction-hydrator';
 import { daysUntilSeptember } from './ingest/discovery-queries';
 import { fetchMarketplaceCandidates, persistMarketplaceCandidates } from './marketplace';
 import { hasSupabaseServiceRole } from './supabase';
@@ -37,8 +38,9 @@ export async function loadPredictionData(options?: {
     const { rows, fromDb } = await fetchMarketplaceCandidates();
     const predicted = rows.filter((r) => r.source_type === 'prediction' || r.is_predicted);
     if (fromDb && predicted.length > 0) {
+      const hydrated = await hydratePredictionCandidates(predicted);
       return {
-        candidates: predicted,
+        candidates: hydrated,
         scraped_at: null,
         days_until_september,
         fromDb: true,
@@ -48,16 +50,17 @@ export async function loadPredictionData(options?: {
   }
 
   const result = await cachedPredictions();
+  const hydrated = await hydratePredictionCandidates(result.predictions);
 
   if (hasSupabaseServiceRole()) {
     await persistMarketplaceCandidates({
       scraped_at: result.scraped_at,
-      candidates: result.predictions,
+      candidates: hydrated,
     });
   }
 
   return {
-    candidates: result.predictions,
+    candidates: hydrated,
     scraped_at: result.scraped_at,
     days_until_september: result.days_until_september,
     fromDb: false,

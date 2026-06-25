@@ -1,91 +1,86 @@
-import Link from 'next/link';
-import { ArrowRight, Sun, Sparkles } from 'lucide-react';
-import { TendenciaCard } from '@/components/TendenciaCard';
+import { TendenciaSection } from '@/components/TendenciaSection';
+import { HowToReadPanel } from '@/components/HowToReadPanel';
 import { TrendPulseShell } from '@/components/TrendPulseShell';
+import { groupCandidatesByVerdict } from '@/lib/group-candidates';
 import { loadPredictionData } from '@/lib/cycle-data';
 import { formatTrendDate } from '@/lib/trendpulse-data';
+import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 120;
 
 export default async function TendenciasPage() {
   const market = await loadPredictionData();
-  const predictions = market.candidates.filter((c) => !c.canonical_name.startsWith('[Eco ES]'));
-  const summer = predictions.filter((c) => c.summer_fit);
-  const ecoEs = market.candidates.filter((c) => c.canonical_name.startsWith('[Eco ES]'));
+  const all = market.candidates.filter((c) => !c.canonical_name.startsWith('[Eco ES]'));
+  const { comprar, vigilar, tarde, sin_datos } = groupCandidatesByVerdict(all);
 
   return (
     <TrendPulseShell
-      title="Predicciones patio"
-      subtitle={`Verano 2026 · ${market.days_until_september} días hasta septiembre`}
+      title="Tendencias"
+      subtitle={`Qué comprar antes que llegue al patio · ${market.days_until_september} días hasta septiembre`}
     >
-      <div className="mb-6 rounded-xl border border-violet-500/30 bg-violet-500/5 px-4 py-4">
-        <div className="flex items-start gap-3">
-          <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-violet-300" />
-          <div className="text-sm text-slate-300">
-            <p className="font-medium text-white">Tendencias · top ventas origen + eco España</p>
-            <p className="mt-1 text-xs leading-relaxed text-slate-400">
-              Cada ficha = una <strong className="text-white">categoría tendencia</strong> con los{' '}
-              <strong className="text-emerald-300">3 productos más vendidos</strong> en AliExpress
-              (precio real + enlace directo). Las señales CN/US/ES indican si hay noticias en origen
-              o ya en España. Si ES = 0 y origen vende fuerte → ventana de importación.
-            </p>
-            {market.scraped_at && (
-              <p className="mt-2 font-mono-data text-[10px] text-slate-500">
-                Scan: {formatTrendDate(market.scraped_at.slice(0, 10))}
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
+      <HowToReadPanel />
 
-      {summer.length > 0 && (
-        <section className="mb-10">
-          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-widest text-amber-300">
-            <Sun className="h-4 w-4" />
-            Predicción verano — comprar y probar ({summer.length})
-          </h2>
-          <div className="grid gap-4">
-            {summer.map((c, i) => (
-              <TendenciaCard key={c.slug} candidate={c} rank={i + 1} />
-            ))}
-          </div>
-        </section>
+      {market.scraped_at && (
+        <p className="mb-4 font-mono-data text-[10px] text-slate-500">
+          Último scan: {formatTrendDate(market.scraped_at.slice(0, 10))}
+          {market.fromDb ? ' · desde base de datos' : ' · en vivo'}
+        </p>
       )}
 
-      <section className="mb-10">
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-tp-cyan">
-          Todas las predicciones ({predictions.length})
-        </h2>
-        {predictions.length === 0 ? (
-          <p className="text-sm text-slate-500">
-            Sin predicciones en este scan — vuelve en unas horas o ejecuta el cron marketplace.
+      {all.length === 0 ? (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-6 text-center">
+          <p className="text-sm text-amber-200">No hay tendencias en este momento</p>
+          <p className="mt-2 text-xs text-slate-400">
+            El sistema busca noticias + productos más vendidos cada hora. Vuelve pronto o ejecuta{' '}
+            <code className="text-tp-cyan">/api/cron/marketplace</code>
           </p>
-        ) : (
-          <div className="grid gap-4">
-            {predictions.map((c, i) => (
-              <TendenciaCard key={c.slug} candidate={c} rank={i + 1} />
-            ))}
-          </div>
-        )}
-      </section>
+        </div>
+      ) : (
+        <>
+          <TendenciaSection
+            emoji="🟢"
+            title="Oportunidades — comprar muestra"
+            subtitle="Origen vendiendo o con noticias, España aún quieto. Buen momento para probar en el cole."
+            candidates={comprar}
+            accent="text-emerald-400"
+          />
 
-      {ecoEs.length > 0 && (
-        <section className="mb-8">
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-slate-400">
-            Ya hay eco en España — solo observar ({ecoEs.length})
-          </h2>
-          <div className="grid gap-4">
-            {ecoEs.map((c, i) => (
-              <TendenciaCard key={c.slug} candidate={c} rank={i + 1} />
-            ))}
-          </div>
-        </section>
+          <TendenciaSection
+            emoji="🟡"
+            title="Vigilar — probar con cuidado"
+            subtitle="Algo de movimiento en España o ventas moderadas. Compra pequeña o espera confirmación."
+            candidates={vigilar}
+            accent="text-amber-400"
+          />
+
+          <TendenciaSection
+            emoji="🔴"
+            title="Tarde para importar"
+            subtitle="España ya habla de esto. Solo observa, no compres para revender."
+            candidates={tarde}
+            accent="text-red-400"
+          />
+
+          {sin_datos.length > 0 && (
+            <TendenciaSection
+              emoji="⚪"
+              title="Sin datos"
+              subtitle="Faltan productos o señales. Se actualizará en el próximo scan."
+              candidates={sin_datos}
+              accent="text-slate-400"
+            />
+          )}
+        </>
       )}
 
       <div className="flex flex-wrap gap-4 border-t border-white/5 pt-6">
         <Link href="/ciclo" className="flex items-center gap-1 text-sm text-tp-cyan hover:underline">
-          Ciclo 3 actuar + 3 observar <ArrowRight className="h-4 w-4" />
+          Ir al ciclo patio (3 actuar + 3 observar) <ArrowRight className="h-4 w-4" />
+        </Link>
+        <Link href="/radar" className="flex items-center gap-1 text-sm text-slate-400 hover:text-white">
+          Ver radar de productos conocidos <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
     </TrendPulseShell>

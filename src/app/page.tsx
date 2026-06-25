@@ -60,12 +60,12 @@ export default async function DashboardPage() {
             href="/tendencias"
             className="flex items-center gap-1 text-xs text-amber-300 hover:underline"
           >
-            Ver tendencias <ArrowRight className="h-3 w-3" />
+            Ver tendencias nuevas <ArrowRight className="h-3 w-3" />
           </Link>
         </div>
         <div className="rounded-xl border border-amber-400/20 bg-amber-400/5 px-4 py-3 text-sm text-slate-300">
-          Señales reales por producto (News + Reddit). Enlaces para comprar en AliExpress, Amazon
-          o Five Below.
+          Tendencias <strong className="text-white">nuevas</strong> que aún no están en el radar — con
+          productos más vendidos y semáforo 🟢🟡🔴 de si conviene comprar.
         </div>
       </section>
 
