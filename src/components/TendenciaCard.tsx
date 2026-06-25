@@ -4,6 +4,7 @@ import { Sun, MapPin, ChevronDown } from 'lucide-react';
 import type { MarketplaceCandidate } from '@/lib/cycle-types';
 import { PriceComparator } from './PriceComparator';
 import { TopProductsList } from './TopProductsList';
+import { SourceBuyPanel } from './SourceBuyPanel';
 import { TrendVerdictBanner } from './TrendVerdictBanner';
 
 export function TendenciaCard({
@@ -117,6 +118,10 @@ export function TendenciaCard({
           Productos en carga — se mostrarán en el próximo scan.
         </div>
       )}
+
+      <div className="border-t border-white/5 p-4">
+        <SourceBuyPanel item={candidate} />
+      </div>
 
       <div className="border-t border-white/5 p-4">
         <PriceComparator item={candidate} />

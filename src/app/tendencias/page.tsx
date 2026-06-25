@@ -1,8 +1,11 @@
+import { AppSuccessPanel } from '@/components/AppSuccessPanel';
 import { TendenciaSection } from '@/components/TendenciaSection';
 import { HowToReadPanel } from '@/components/HowToReadPanel';
 import { TrendPulseShell } from '@/components/TrendPulseShell';
+import { fetchAppSuccessStats } from '@/lib/app-success-stats';
 import { groupCandidatesByVerdict } from '@/lib/group-candidates';
 import { loadPredictionData } from '@/lib/cycle-data';
+import { fetchHistoricalDna } from '@/lib/supabase';
 import { formatTrendDate } from '@/lib/trendpulse-data';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
@@ -12,6 +15,8 @@ export const maxDuration = 120;
 
 export default async function TendenciasPage() {
   const market = await loadPredictionData();
+  const { rows: dnaRows } = await fetchHistoricalDna();
+  const successStats = await fetchAppSuccessStats(dnaRows, market.candidates.length);
   const all = market.candidates.filter((c) => !c.canonical_name.startsWith('[Eco ES]'));
   const { comprar, vigilar, tarde, sin_datos } = groupCandidatesByVerdict(all);
 
@@ -21,6 +26,8 @@ export default async function TendenciasPage() {
       subtitle={`Qué comprar antes que llegue al patio · ${market.days_until_september} días hasta septiembre`}
     >
       <HowToReadPanel />
+
+      <AppSuccessPanel stats={successStats} />
 
       {market.scraped_at && (
         <p className="mb-4 font-mono-data text-[10px] text-slate-500">

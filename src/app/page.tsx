@@ -1,15 +1,19 @@
 import Link from 'next/link';
 import { Activity, ArrowRight, Radar, Timer } from 'lucide-react';
+import { AppSuccessPanel } from '@/components/AppSuccessPanel';
 import { RadarPanel } from '@/components/RadarPanel';
 import { SetupBanner, TrendPulseShell } from '@/components/TrendPulseShell';
 import { TimelineCaseCard } from '@/components/WaveTimeline';
+import { fetchAppSuccessStats } from '@/lib/app-success-stats';
+import { loadPredictionData } from '@/lib/cycle-data';
 import { loadTrendPulseData } from '@/lib/trendpulse-data';
 import { DEMO_SEED } from '@/lib/demo-seed';
 
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
-  const data = await loadTrendPulseData();
+  const [data, market] = await Promise.all([loadTrendPulseData(), loadPredictionData()]);
+  const successStats = await fetchAppSuccessStats(data.rows, market.candidates.length);
 
   return (
     <TrendPulseShell
@@ -24,6 +28,8 @@ export default async function DashboardPage() {
         fromDbEmpty={data.configured && !data.error && data.rows.length === 0}
         demoCount={DEMO_SEED.length}
       />
+
+      <AppSuccessPanel stats={successStats} />
 
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[

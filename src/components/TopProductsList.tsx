@@ -2,9 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ExternalLink, TrendingUp } from 'lucide-react';
 import type { MarketplaceId, TopByMarketplace, TrendProductPick } from '@/lib/cycle-types';
-import {
-  MARKETPLACE_LABELS,
-} from '@/lib/ingest/marketplace-search-types';
+import { MARKETPLACE_LABELS } from '@/lib/ingest/marketplace-search-types';
 
 const MP_STYLES: Record<MarketplaceId, { ring: string; badge: string; label: string; price: string; link: string }> = {
   aliexpress: {
@@ -109,13 +107,20 @@ function MarketplaceSection({
 }) {
   if (!products.length) return null;
   const styles = MP_STYLES[marketplace];
+  const isRetailRef = marketplace === 'amazon_es' || marketplace === 'amazon_us' || marketplace === 'temu';
 
   return (
     <div className="space-y-2">
       <p className={`flex items-center gap-1.5 text-[10px] font-mono-data uppercase tracking-widest ${styles.label}`}>
         <TrendingUp className="h-3 w-3" />
-        Top {products.length} · {MARKETPLACE_LABELS[marketplace]}
+        {isRetailRef ? 'Referencia retail · ' : 'Top ventas · '}
+        {MARKETPLACE_LABELS[marketplace]}
       </p>
+      {isRetailRef && (
+        <p className="text-[10px] text-slate-500">
+          Precio ya inflado — no compres aquí para importar. Solo para ver qué paga el consumidor.
+        </p>
+      )}
       <ul className={`grid gap-2 ${compact ? '' : 'sm:grid-cols-1'}`}>
         {products.map((p) => (
           <ProductRow key={`${marketplace}-${p.item_id}`} p={p} compact={compact} />

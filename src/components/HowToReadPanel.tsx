@@ -38,16 +38,15 @@ export function HowToReadPanel({ variant = 'tendencias' }: { variant?: 'tendenci
               tarde para España
             </li>
             <li>
-              Baja a <strong className="text-emerald-300">Top ventas</strong> — son los 3 productos más vendidos en
-              AliExpress, Amazon y Temu con enlace directo
+              <strong className="text-emerald-300">Fuente (Best Sink Store)</strong> — dónde comprar
+              barato en origen
             </li>
             <li>
-              <strong className="text-white">China / USA / España</strong> = noticias detectadas. Si España = 0 y
-              origen vende → ventana abierta
+              <strong className="text-sky-300">AliExpress</strong> — muestra de 1 unidad sin MOQ
             </li>
             <li>
-              El <strong className="text-tp-cyan">comparador</strong> estima cuánto costaría en un quiosco español vs
-              lo que pagas en origen
+              <strong className="text-amber-300">Amazon / Temu</strong> — solo referencia retail (ya
+              inflado, no comprar para importar)
             </li>
           </ol>
         </div>
