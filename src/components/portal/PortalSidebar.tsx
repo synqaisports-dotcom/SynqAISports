@@ -3,12 +3,15 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Settings, Shield, Users } from 'lucide-react';
+
+const upcomingModules = 'Metodología, patrocinadores y torneos — próximamente';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
 const links = [
   { href: '/portal', label: 'Inicio', icon: LayoutDashboard, exact: true },
   { href: '/portal/club', label: 'Club', icon: Shield, exact: false },
+  { href: '/portal/cantera', label: 'Cantera', icon: Users, exact: false },
   { href: '/portal/config', label: 'Configuración', icon: Settings, exact: false },
 ];
 
@@ -54,8 +57,7 @@ export function PortalSidebar({ clubName, role }: Props) {
           );
         })}
         <div className="mt-4 rounded-lg border border-dashed border-white/10 px-3 py-2 text-xs text-synq-muted">
-          <Users className="mb-1 h-4 w-4" />
-          Cantera, metodología y torneos — próximamente
+          {upcomingModules}
         </div>
       </nav>
       <div className="border-t border-white/5 p-3">

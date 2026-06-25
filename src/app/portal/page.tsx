@@ -68,7 +68,12 @@ export default async function PortalHomePage() {
       <div className="mt-8 rounded-2xl border border-dashed border-white/10 p-6 text-sm text-synq-muted">
         <p className="font-medium text-white">Próximos módulos</p>
         <ul className="mt-3 list-inside list-disc space-y-1">
-          <li>Cantera — equipos y jugadores</li>
+          <li>
+            <a href="/portal/cantera" className="text-synq-accent hover:underline">
+              Cantera
+            </a>{' '}
+            — equipos y jugadores (disponible)
+          </li>
           <li>Metodología — ejercicios y microciclos</li>
           <li>Patrocinadores y digital signage</li>
           <li>Torneos y informes</li>

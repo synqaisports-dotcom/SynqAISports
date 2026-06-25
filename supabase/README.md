@@ -24,8 +24,9 @@ Ejecutar en orden en el SQL Editor:
 
 1. `supabase/migrations/20260701000000_synqai_init.sql`
 2. `supabase/migrations/20260702000000_synqai_portal.sql`
+3. `supabase/migrations/20260703000000_synqai_cantera.sql`
 
-Ver también `.env.example` en la raíz del repo web.
+Ver también `.env.example` en la raíz del repo web y **`docs/SYNQAI_CHECKLIST_OPERATIVA.md`** (pasos manuales completos).
 
 ## Tablas
 
