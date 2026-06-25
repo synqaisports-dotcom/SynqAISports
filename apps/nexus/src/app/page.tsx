@@ -3,16 +3,16 @@ import { ArrowRight, Layers, Radar, Shield } from 'lucide-react';
 
 const products = [
   {
-    name: 'TrendPulse',
-    tag: 'En desarrollo',
-    desc: 'Inteligencia de delay geográfico. Detecta olas de consumo antes de que saturen tu mercado.',
-    href: 'https://trendpulse.vercel.app',
+    name: 'SynqAI Sports',
+    tag: 'Activo',
+    desc: 'Plataforma 360 para clubes: familias, entrenadores, ads y margen para el club.',
+    href: 'https://www.synqai.net',
   },
   {
-    name: 'SynqAI Sports',
-    tag: 'Roadmap',
-    desc: 'Operaciones deportivas para clubes y entrenadores. Nacido de necesidades reales en el campo.',
-    href: 'https://www.synqai.net',
+    name: 'TrendPulse',
+    tag: 'Piloto interno',
+    desc: 'Inteligencia de delay geográfico. Producto separado — deploy en rama trendpulse.',
+    href: 'https://trendpulse.vercel.app',
   },
 ];
 

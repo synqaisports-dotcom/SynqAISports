@@ -2,8 +2,9 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'TrendPulse — Delay Intelligence',
-  description: 'Motor de predicción de tendencias por arbitraje temporal geográfico.',
+  title: 'SynqAI Sports — Plataforma 360 para clubes',
+  description:
+    'Ecosistema digital para clubes deportivos: entrenadores, familias, pantallas y gestión. El club cobra 12–24 €/año por niño; SynqAI desde 0,50 €/usuario/mes.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

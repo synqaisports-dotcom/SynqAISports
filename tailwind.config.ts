@@ -4,12 +4,12 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        tp: {
-          night: '#0a0e17',
-          panel: '#111827',
-          cyan: '#22d3ee',
-          green: '#34d399',
-          amber: '#fbbf24',
+        synq: {
+          navy: '#0a1628',
+          slate: '#132337',
+          pitch: '#16a34a',
+          accent: '#22c55e',
+          muted: '#94a3b8',
         },
       },
     },

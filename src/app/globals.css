@@ -1,23 +1,20 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Instrument+Serif:ital@0;1&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --tp-night: #0a0e17;
-  --tp-panel: #111827;
-  --tp-cyan: #22d3ee;
-  --tp-green: #34d399;
-  --tp-amber: #fbbf24;
+  --synq-navy: #0a1628;
+  --synq-pitch: #16a34a;
 }
 
 body {
-  font-family: 'Outfit', system-ui, sans-serif;
-  background: var(--tp-night);
-  color: #e2e8f0;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: var(--synq-navy);
+  color: #e8edf4;
 }
 
-.font-mono-data {
-  font-family: 'JetBrains Mono', monospace;
+.font-serif-display {
+  font-family: 'Instrument Serif', Georgia, serif;
 }

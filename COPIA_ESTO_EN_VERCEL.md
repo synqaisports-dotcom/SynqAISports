@@ -1,65 +1,23 @@
-# Copia esto en Vercel (2 minutos)
+# SynqAI en Vercel (`www.synqai.net`)
 
----
+La rama **`main`** despliega SynqAI Sports. TrendPulse está en la rama **`trendpulse`** (otro proyecto Vercel).
 
-## TrendPulse (empieza por este)
+## Deploy SynqAI
 
-1. https://vercel.com/new → **SynqAISports** → **Import**
-2. **Root Directory:** déjalo **vacío** (no toques nada)
-3. Rama: `main`
-4. **Deploy**
+1. Vercel → proyecto **synqai.net** → **Settings → Git**
+2. **Production Branch:** `main`
+3. **Root Directory:** vacío (`./`)
+4. Deploy
 
-**Deberías ver:** fondo oscuro, "TrendPulse", tabla con Labubu.
+## Supabase SynqAI (proyecto nuevo)
 
----
+Ver `supabase/README.md` — **no uses** el Supabase de TrendPulse.
 
-## Si te sale error de Next.js
+Variables mínimas (cuando conectes DB):
 
-Significa que en **Root Directory** hay algo escrito (ruta vieja).
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 
-1. **Settings** → **General** → **Root Directory**
-2. Bórralo todo o pon solo `./`
-3. **Save** → **Deployments** → **Redeploy**
+## TrendPulse (separado)
 
-Rutas que **ya no existen** (no uses):
-- `nexus-labs/apps/trendpulse`
-- `apps/trendpulse`
-
----
-
-## Nexus (opcional, otro proyecto)
-
-Root Directory:
-
-```
-apps/nexus
-```
-
----
-
-## Pégame esto
-
-```
-URL TrendPulse: 
-¿Ves Labubu?: sí/no
-```
-
----
-
-## Radar — guardar scrape (SUPABASE_SECRET_KEY)
-
-Sin esto el radar **lee** pero **no guarda** noticias scrapeadas.
-
-1. Supabase → **Project Settings** → **API Keys** → copia **Secret key** (`sb_secret_...`)
-   - No uses la Publishable ni la anon.
-   - Alternativa legacy: pestaña **Legacy API Keys** → `service_role` (empieza por `eyJ`)
-2. Vercel → proyecto TrendPulse → **Settings** → **Environment Variables**
-3. Añade:
-   - **Name:** `SUPABASE_SECRET_KEY` (nombre exacto, sin espacios)
-   - **Value:** pega la secret key completa
-   - **Environments:** marca **Production** (obligatorio)
-4. **Save**
-5. **Deployments** → deploy más reciente de `main` → **Redeploy**
-6. Comprueba en el navegador: `https://TU-DOMINIO/api/radar/status`
-   - Debe decir `"secretKey": true`
-7. Luego abre `/radar` o `/api/cron/ingest` → `"persisted": true`
+Ver `docs/NEXUS_ARQUITECTURA.md` y en la rama `trendpulse`: `docs/TRENDPULSE_DEPLOY.md`.
