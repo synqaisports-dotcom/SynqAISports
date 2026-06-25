@@ -18,6 +18,15 @@ SynqAI usa un **proyecto Supabase nuevo**, distinto del de TrendPulse.
 
 **No reutilices** las credenciales del proyecto TrendPulse.
 
+## Migraciones
+
+Ejecutar en orden en el SQL Editor:
+
+1. `supabase/migrations/20260701000000_synqai_init.sql`
+2. `supabase/migrations/20260702000000_synqai_portal.sql`
+
+Ver también `.env.example` en la raíz del repo web.
+
 ## Tablas
 
 Prefijo `synq_*` — sin mezclar con tablas `trend_*` de TrendPulse.
