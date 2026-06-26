@@ -9,8 +9,12 @@ export async function updateSession(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+  const isProtected =
+    request.nextUrl.pathname.startsWith('/portal') ||
+    request.nextUrl.pathname.startsWith('/print');
+
   if (!url || !key) {
-    if (!request.nextUrl.pathname.startsWith('/portal')) {
+    if (!isProtected) {
       return supabaseResponse;
     }
     const loginUrl = request.nextUrl.clone();
@@ -37,10 +41,13 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user && request.nextUrl.pathname.startsWith('/portal')) {
+  if (!user && isProtected) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = '/login';
-    loginUrl.searchParams.set('next', request.nextUrl.pathname);
+    loginUrl.searchParams.set(
+      'next',
+      `${request.nextUrl.pathname}${request.nextUrl.search}`
+    );
     return NextResponse.redirect(loginUrl);
   }
 

@@ -3,6 +3,7 @@
 import { useFormState } from 'react-dom';
 import { updateMicrocycleSlot, type ActionState } from '@/app/actions/methodology';
 import { ExerciseSheetForm } from '@/components/methodology/ExerciseSheetForm';
+import { ExerciseSheetPrintLink } from '@/components/methodology/ExerciseSheetPrintLink';
 import { SLOT_LABELS, type SlotType } from '@/lib/methodology';
 import { legacyToSheet, parseExerciseSheet, type ExerciseTaskSheet } from '@/lib/exercise-sheet';
 
@@ -108,7 +109,7 @@ function SlotForm({ slot, exercises }: { slot: SlotRow; exercises: ExerciseOptio
       <input type="hidden" name="taskType" value={slot.slot_type} />
       <ExerciseSheetForm sheet={sheet} showCanvas={false} showTaskType={false} />
 
-      <div className="mt-4 flex items-center gap-3">
+      <div className="mt-4 flex flex-wrap items-center gap-3">
         <button
           type="submit"
           disabled={pending}
@@ -116,6 +117,7 @@ function SlotForm({ slot, exercises }: { slot: SlotRow; exercises: ExerciseOptio
         >
           {pending ? '…' : 'Guardar ficha del slot'}
         </button>
+        <ExerciseSheetPrintLink href={`/print/ficha/slot/${slot.id}`} />
         {state.ok && <span className="text-xs text-synq-accent">Guardado</span>}
       </div>
     </form>

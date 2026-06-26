@@ -165,6 +165,61 @@ export function sheetFromFormData(
   };
 }
 
+export function sheetFromExerciseRow(row: {
+  title: string;
+  objectives: string;
+  notes: string;
+  materials: string;
+  sheet_json?: unknown;
+  task_type?: string;
+}): ExerciseTaskSheet {
+  const parsed = parseExerciseSheet(row.sheet_json);
+  if (parsed.title) return parsed;
+  return legacyToSheet({
+    title: row.title,
+    objectives: row.objectives,
+    notes: row.notes,
+    materials: row.materials,
+    taskType:
+      row.task_type === 'warmup' || row.task_type === 'cooldown'
+        ? row.task_type
+        : 'main',
+  });
+}
+
+export function sheetFromSlotRow(slot: {
+  slot_type: string;
+  title: string;
+  notes: string;
+  sheet_json?: unknown;
+}): ExerciseTaskSheet {
+  const taskType: TaskType =
+    slot.slot_type === 'warmup' || slot.slot_type === 'cooldown'
+      ? slot.slot_type
+      : 'main';
+  const parsed = parseExerciseSheet(slot.sheet_json);
+  if (parsed.title) {
+    parsed.taskType = taskType;
+    return parsed;
+  }
+  return legacyToSheet({
+    title: slot.title,
+    objectives: '',
+    notes: slot.notes,
+    taskType,
+  });
+}
+
+export function sheetPdfFilename(title: string): string {
+  const base = (title || 'ficha')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60);
+  return base || 'ficha';
+}
+
 export const SHEET_FIELD_LABELS = {
   title: 'Título',
   didacticStrategy: 'Estrategia didáctica',

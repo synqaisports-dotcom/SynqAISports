@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useFormState } from 'react-dom';
 import { createExercise, updateExercise, type ActionState } from '@/app/actions/methodology';
 import { ExerciseSheetForm } from '@/components/methodology/ExerciseSheetForm';
+import { ExerciseSheetPrintLink } from '@/components/methodology/ExerciseSheetPrintLink';
 import { ExerciseSheetView } from '@/components/methodology/ExerciseSheetView';
 import {
   legacyToSheet,
@@ -76,6 +77,11 @@ export function ExerciseEditor({ exercise, mode = 'edit' }: Props) {
 
   return (
     <form action={action} className="max-w-4xl space-y-4">
+      {isEdit && exercise && (
+        <div className="flex justify-end">
+          <ExerciseSheetPrintLink href={`/print/ficha/ejercicio/${exercise.id}`} />
+        </div>
+      )}
       <ExerciseSheetForm sheet={sheet} drawingJson={exercise?.drawing_json} />
       {state.ok && isEdit && <p className="text-sm text-synq-accent">Ficha guardada.</p>}
       {state.message === 'error' && <p className="text-sm text-red-400">Error al guardar.</p>}

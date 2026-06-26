@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { DeleteExerciseButton } from '@/components/methodology/DeleteExerciseButton';
 import { ExerciseCanvasPreview } from '@/components/methodology/ExerciseCanvas';
+import { ExerciseSheetPrintLink } from '@/components/methodology/ExerciseSheetPrintLink';
 import { MethodologySubnav } from '@/components/methodology/MethodologySubnav';
 import { parseExerciseSheet } from '@/lib/exercise-sheet';
 import { createClient } from '@/lib/supabase/server';
@@ -57,7 +58,8 @@ export default async function EjerciciosListPage() {
               {subtitle && (
                 <p className="mt-2 line-clamp-2 text-sm text-synq-muted">{subtitle}</p>
               )}
-              <div className="mt-3">
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <ExerciseSheetPrintLink href={`/print/ficha/ejercicio/${ex.id}`} />
                 <DeleteExerciseButton id={ex.id} />
               </div>
             </div>
