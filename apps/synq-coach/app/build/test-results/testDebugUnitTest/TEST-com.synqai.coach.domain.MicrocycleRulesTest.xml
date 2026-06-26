@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.synqai.coach.domain.MicrocycleRulesTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-06-25T19:19:18" hostname="cursor" time="0.001">
-  <properties/>
-  <testcase name="validSlotCounts_rejectsExtraMainSlot" classname="com.synqai.coach.domain.MicrocycleRulesTest" time="0.001"/>
-  <testcase name="maxMicrocycles_isTwoForFreeTier" classname="com.synqai.coach.domain.MicrocycleRulesTest" time="0.0"/>
-  <testcase name="validSlotCounts_matchesFreeTierTemplate" classname="com.synqai.coach.domain.MicrocycleRulesTest" time="0.0"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>
