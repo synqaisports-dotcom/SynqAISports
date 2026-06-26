@@ -1,6 +1,8 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
+const demoMode = () => process.env.NEXT_PUBLIC_SYNQ_DEMO_MODE === 'true';
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -42,6 +44,9 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user && isProtected) {
+    if (demoMode()) {
+      return supabaseResponse;
+    }
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = '/login';
     loginUrl.searchParams.set(
@@ -51,7 +56,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (user && request.nextUrl.pathname === '/login') {
+  if (user && request.nextUrl.pathname === '/login' && !demoMode()) {
     const portalUrl = request.nextUrl.clone();
     portalUrl.pathname = '/portal';
     portalUrl.search = '';

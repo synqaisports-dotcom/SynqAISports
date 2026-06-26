@@ -1,7 +1,14 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { isDemoMode } from '@/lib/demo';
+import { createServiceClient } from '@/lib/supabase/service';
 
 export async function createClient() {
+  if (isDemoMode()) {
+    const service = createServiceClient();
+    if (service) return service;
+  }
+
   const cookieStore = await cookies();
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key =

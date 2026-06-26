@@ -1,11 +1,13 @@
 import { redirect } from 'next/navigation';
+import { DemoModeBanner } from '@/components/portal/DemoModeBanner';
 import { PortalSidebar } from '@/components/portal/PortalSidebar';
+import { isDemoMode } from '@/lib/demo';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
-  if (!isSupabaseConfigured()) {
+  if (!isSupabaseConfigured() && !isDemoMode()) {
     redirect('/login');
   }
 
@@ -17,14 +19,17 @@ export default async function PortalLayout({ children }: { children: React.React
   }
 
   return (
-    <div className="flex min-h-screen bg-synq-navy">
-      <PortalSidebar clubName={ctx.club.name} role={ctx.role} />
-      <main
-        className="flex-1 overflow-auto p-6 md:p-8"
-        style={{ color: '#e8edf4', backgroundColor: '#0a1628' }}
-      >
-        {children}
-      </main>
+    <div className="flex min-h-screen flex-col bg-synq-navy">
+      {isDemoMode() && <DemoModeBanner />}
+      <div className="flex min-h-0 flex-1">
+        <PortalSidebar clubName={ctx.club.name} role={ctx.role} demoMode={isDemoMode()} />
+        <main
+          className="flex-1 overflow-auto p-6 md:p-8"
+          style={{ color: '#e8edf4', backgroundColor: '#0a1628' }}
+        >
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

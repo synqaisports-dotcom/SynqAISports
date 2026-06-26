@@ -12,9 +12,10 @@ const links = [
 type Props = {
   clubName: string;
   role: string;
+  demoMode?: boolean;
 };
 
-export function PortalSidebar({ clubName, role }: Props) {
+export function PortalSidebar({ clubName, role, demoMode = false }: Props) {
   const roleLabel = (role || 'admin').replace(/_/g, ' ');
 
   return (
@@ -52,7 +53,17 @@ export function PortalSidebar({ clubName, role }: Props) {
         </div>
       </nav>
       <div className="border-t border-white/10 p-3">
-        <PortalSignOutButton />
+        {demoMode ? (
+          <Link
+            href="/"
+            className="block w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-white/10"
+            style={{ color: '#94a3b8' }}
+          >
+            Salir del demo
+          </Link>
+        ) : (
+          <PortalSignOutButton />
+        )}
       </div>
     </aside>
   );

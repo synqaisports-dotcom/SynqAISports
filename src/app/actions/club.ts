@@ -1,5 +1,6 @@
 'use server';
 
+import { isDemoMode } from '@/lib/demo';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
@@ -17,7 +18,7 @@ export async function updateClubProfile(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { ok: false, message: 'unauthorized' };
+  if (!user && !isDemoMode()) return { ok: false, message: 'unauthorized' };
 
   const name = String(formData.get('name') ?? '').trim();
   const address = String(formData.get('address') ?? '').trim();
@@ -64,7 +65,7 @@ export async function regenerateInviteCode(clubId: string): Promise<{ ok: boolea
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { ok: false };
+  if (!user && !isDemoMode()) return { ok: false };
 
   const code = randomCode();
   const { error } = await supabase

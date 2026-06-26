@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { getDemoClubId, isDemoMode, loadDemoStaffContext } from '@/lib/demo';
 
 export type ClubRow = {
   id: string;
@@ -24,6 +25,20 @@ export type StaffContext = {
 export async function getStaffContext(
   supabase: SupabaseClient
 ): Promise<StaffContext | null> {
+  if (isDemoMode()) {
+    return loadDemoStaffContext(async (clubId) => {
+      const { data: club, error } = await supabase
+        .from('synq_clubs')
+        .select(
+          'id, name, slug, country_code, address, phone, email, players_count, family_fee_annual_eur, synq_rate_per_user_eur, invite_code, is_founding, founding_until'
+        )
+        .eq('id', clubId)
+        .maybeSingle();
+      if (error || !club) return null;
+      return club as ClubRow;
+    });
+  }
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
