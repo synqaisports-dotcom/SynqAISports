@@ -1,8 +1,12 @@
-import { getDemoClubId, isDemoActive } from '@/lib/demo';
+import { getDemoClubIdFallback, hasServiceRoleKey, isDemoActive, resolveDemoClub } from '@/lib/demo';
 import { createClient } from '@/lib/supabase/server';
 
 export async function requireClubId(): Promise<string | null> {
-  if (await isDemoActive()) return getDemoClubId();
+  if (await isDemoActive()) {
+    const supabase = await createClient();
+    const club = await resolveDemoClub(supabase);
+    return club.id;
+  }
 
   const supabase = await createClient();
   const {

@@ -1,13 +1,28 @@
 import { cookies } from 'next/headers';
 import type { NextRequest } from 'next/server';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { ClubRow, StaffContext } from '@/lib/portal';
 
 export const DEMO_COOKIE = 'synq_demo';
 
 export const DEMO_CLUB_ID = '00000000-0000-4000-8000-000000000001';
 
+const CLUB_SELECT =
+  'id, name, slug, country_code, address, phone, email, players_count, family_fee_annual_eur, synq_rate_per_user_eur, invite_code, is_founding, founding_until';
+
+/** Demo en Vercel sin login. Variable: SYNQ_VERCEL_DEMO=true */
 export function isDemoModeEnv(): boolean {
-  return process.env.NEXT_PUBLIC_SYNQ_DEMO_MODE === 'true';
+  return (
+    process.env.NEXT_PUBLIC_SYNQ_DEMO_MODE === 'true' ||
+    process.env.SYNQ_VERCEL_DEMO === 'true'
+  );
+}
+
+export function hasServiceRoleKey(): boolean {
+  return Boolean(
+    process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ||
+      process.env.SUPABASE_SECRET_KEY?.trim()
+  );
 }
 
 export function isDemoCookieValue(value: string | undefined): boolean {
@@ -24,14 +39,14 @@ export async function isDemoActive(): Promise<boolean> {
   return isDemoCookieValue(cookieStore.get(DEMO_COOKIE)?.value);
 }
 
-export function getDemoClubId(): string {
+export function getDemoClubIdFallback(): string {
   return process.env.SYNQ_DEMO_CLUB_ID?.trim() || DEMO_CLUB_ID;
 }
 
 export function staticDemoStaffContext(): StaffContext {
   return {
     club: {
-      id: getDemoClubId(),
+      id: getDemoClubIdFallback(),
       name: 'Club Demo SynqAI',
       slug: 'club-demo-synqai',
       country_code: 'ES',
@@ -49,18 +64,52 @@ export function staticDemoStaffContext(): StaffContext {
   };
 }
 
-export async function loadDemoStaffContext(
-  fetchClub: (clubId: string) => Promise<ClubRow | null>
-): Promise<StaffContext> {
-  const clubId = getDemoClubId();
-  const club = await fetchClub(clubId);
-  if (club) {
-    return { club, role: 'admin' };
+export async function resolveDemoClub(supabase: SupabaseClient): Promise<ClubRow> {
+  const configuredId = process.env.SYNQ_DEMO_CLUB_ID?.trim();
+  if (configuredId) {
+    const { data } = await supabase
+      .from('synq_clubs')
+      .select(CLUB_SELECT)
+      .eq('id', configuredId)
+      .maybeSingle();
+    if (data) return data as ClubRow;
   }
-  return staticDemoStaffContext();
+
+  const { data: first } = await supabase
+    .from('synq_clubs')
+    .select(CLUB_SELECT)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (first) return first as ClubRow;
+
+  if (!hasServiceRoleKey()) {
+    return staticDemoStaffContext().club;
+  }
+
+  const { data: created } = await supabase
+    .from('synq_clubs')
+    .insert({
+      name: 'Club Piloto Madrid',
+      slug: `club-piloto-${Date.now().toString(36)}`,
+      players_count: 80,
+      is_founding: true,
+      invite_code: 'SYNQ2026',
+    })
+    .select(CLUB_SELECT)
+    .single();
+
+  if (created) return created as ClubRow;
+  return staticDemoStaffContext().club;
 }
 
-/** @deprecated Usa isDemoActive() */
+export async function loadDemoStaffContext(
+  supabase: SupabaseClient
+): Promise<StaffContext> {
+  const club = await resolveDemoClub(supabase);
+  return { club, role: 'admin' };
+}
+
 export function isDemoMode(): boolean {
   return isDemoModeEnv();
 }

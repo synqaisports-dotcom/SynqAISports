@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { ClubCalculator } from '@/components/ClubCalculator';
 import { FoundingForm } from '@/components/public/FoundingForm';
 import { PublicHeader } from '@/components/public/PublicHeader';
+import { isDemoModeEnv } from '@/lib/demo';
 import { getDictionary } from '@/lib/i18n/dictionaries';
 import { getLocale } from '@/lib/i18n/get-locale';
 
@@ -50,11 +51,19 @@ export default async function SynqHomePage() {
   const locale = await getLocale();
   const dict = getDictionary(locale);
   const isEn = locale === 'en';
-  const portalHref = '/demo';
+  const portalHref = isDemoModeEnv() ? '/portal' : '/demo';
+  const portalLabel = isDemoModeEnv()
+    ? 'Entrar al portal de pruebas'
+    : dict.hero.ctaPortal;
 
   return (
     <div className="min-h-screen bg-synq-navy">
-      <PublicHeader dict={dict} locale={locale} />
+      <PublicHeader
+        dict={dict}
+        locale={locale}
+        portalHref={portalHref}
+        portalLabel={portalLabel}
+      />
 
       <main>
         <section className="mx-auto max-w-5xl px-6 py-12 md:py-20">
@@ -72,7 +81,7 @@ export default async function SynqHomePage() {
                   href={portalHref}
                   className="inline-flex items-center gap-2 rounded-full bg-synq-pitch px-6 py-3 text-sm font-semibold text-white hover:bg-synq-accent transition-colors"
                 >
-                  {dict.hero.ctaPortal}
+                  {portalLabel}
                   <LogIn className="h-4 w-4" />
                 </Link>
                 <a
