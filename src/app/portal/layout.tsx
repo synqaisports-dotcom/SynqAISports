@@ -19,7 +19,12 @@ export default async function PortalLayout({ children }: { children: React.React
   return (
     <div className="flex min-h-screen bg-synq-navy">
       <PortalSidebar clubName={ctx.club.name} role={ctx.role} />
-      <main className="flex-1 overflow-auto p-6 md:p-8">{children}</main>
+      <main
+        className="flex-1 overflow-auto p-6 md:p-8"
+        style={{ color: '#e8edf4', backgroundColor: '#0a1628' }}
+      >
+        {children}
+      </main>
     </div>
   );
 }

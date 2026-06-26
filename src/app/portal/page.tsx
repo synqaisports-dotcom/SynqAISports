@@ -44,8 +44,10 @@ export default async function PortalHomePage() {
 
   return (
     <div>
-      <h1 className="font-serif-display text-3xl text-white">Inicio</h1>
-      <p className="mt-2 text-synq-muted">
+      <h1 className="font-serif-display text-3xl" style={{ color: '#ffffff' }}>
+        Inicio
+      </h1>
+      <p className="mt-2" style={{ color: '#94a3b8' }}>
         Panel de {ctx.club.name}. Métricas ampliadas en fases siguientes.
       </p>
 
