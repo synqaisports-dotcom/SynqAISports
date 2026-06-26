@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0A1628">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <Spinner android:id="@+id/slot_spinner" android:layout_width="match_parent" android:layout_height="wrap_content" />
+        <EditText android:id="@+id/input_slot_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/exercise_title" android:textColor="#FFF" android:textColorHint="#94A3B8" />
+        <EditText android:id="@+id/input_slot_notes" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/exercise_notes" android:textColor="#FFF" android:textColorHint="#94A3B8" />
+
+        <com.synqai.coach.board.ExerciseBoardView
+            android:id="@+id/exercise_board"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_marginTop="8dp" />
+
+        <Button android:id="@+id/btn_clear_drawing" style="@style/Widget.Synq.Button" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/board_clear" />
+        <Button android:id="@+id/btn_save_slot" style="@style/Widget.Synq.Button" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/save" />
+    </LinearLayout>
+</ScrollView>

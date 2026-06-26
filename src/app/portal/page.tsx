@@ -1,4 +1,3 @@
-import { Users, Smartphone, Calendar, TrendingUp } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { countActivePlayers, getStaffContext } from '@/lib/portal';
 import { redirect } from 'next/navigation';
@@ -18,19 +17,19 @@ export default async function PortalHomePage() {
       label: 'Jugadores activos',
       value: String(activePlayers),
       hint: `${ctx.club.players_count} de referencia`,
-      icon: Users,
+      icon: '👥',
     },
     {
       label: 'Cuota familiar',
       value: `${ctx.club.family_fee_annual_eur} €/año`,
       hint: 'Configuración del club',
-      icon: TrendingUp,
+      icon: '📈',
     },
     {
       label: 'Tarifa SynqAI',
       value: `${ctx.club.synq_rate_per_user_eur} €/user/mes`,
       hint: 'Escala PPP',
-      icon: Smartphone,
+      icon: '📱',
     },
     {
       label: 'Estado',
@@ -38,7 +37,7 @@ export default async function PortalHomePage() {
       hint: ctx.club.founding_until
         ? `Hasta ${new Date(ctx.club.founding_until).toLocaleDateString('es-ES')}`
         : 'Temporada actual',
-      icon: Calendar,
+      icon: '📅',
     },
   ];
 
@@ -52,14 +51,16 @@ export default async function PortalHomePage() {
       </p>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {kpis.map(({ label, value, hint, icon: Icon }) => (
+        {kpis.map(({ label, value, hint, icon }) => (
           <article
             key={label}
             className="rounded-2xl border border-white/5 bg-synq-slate/40 p-5"
           >
             <div className="flex items-start justify-between">
               <p className="text-sm text-synq-muted">{label}</p>
-              <Icon className="h-5 w-5 text-synq-accent" />
+              <span className="text-lg" aria-hidden>
+                {icon}
+              </span>
             </div>
             <p className="mt-3 text-2xl font-semibold text-white">{value}</p>
             <p className="mt-1 text-xs text-synq-muted">{hint}</p>

@@ -23,7 +23,11 @@ export function ExerciseSheetPrintToolbar({
     if (!element) return;
     setExporting(true);
     try {
-      const html2pdf = (await import('html2pdf.js')).default;
+      const mod = await import('html2pdf.js');
+      const html2pdf = mod.default;
+      if (typeof html2pdf !== 'function') {
+        throw new Error('html2pdf no disponible');
+      }
       await html2pdf()
         .set({
           margin: 0,
