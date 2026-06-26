@@ -1,12 +1,14 @@
 import {
   ArrowRight,
   Calculator,
+  LogIn,
   Megaphone,
   Shield,
   Smartphone,
   Trophy,
   Users,
 } from 'lucide-react';
+import Link from 'next/link';
 import { ClubCalculator } from '@/components/ClubCalculator';
 import { FoundingForm } from '@/components/public/FoundingForm';
 import { PublicHeader } from '@/components/public/PublicHeader';
@@ -65,9 +67,16 @@ export default async function SynqHomePage() {
               </h1>
               <p className="mt-6 text-lg text-synq-muted leading-relaxed">{dict.hero.body}</p>
               <div className="mt-8 flex flex-wrap gap-4">
+                <Link
+                  href="/login"
+                  className="inline-flex items-center gap-2 rounded-full bg-synq-pitch px-6 py-3 text-sm font-semibold text-white hover:bg-synq-accent transition-colors"
+                >
+                  {dict.hero.ctaPortal}
+                  <LogIn className="h-4 w-4" />
+                </Link>
                 <a
                   href="#calculadora"
-                  className="inline-flex items-center gap-2 rounded-full bg-synq-pitch px-6 py-3 text-sm font-semibold text-white hover:bg-synq-accent transition-colors"
+                  className="inline-flex items-center gap-2 rounded-full border border-white/15 px-6 py-3 text-sm font-semibold text-white hover:border-synq-accent/50 transition-colors"
                 >
                   {dict.hero.ctaCalc}
                   <Calculator className="h-4 w-4" />

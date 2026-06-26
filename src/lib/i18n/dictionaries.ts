@@ -18,6 +18,7 @@ export type Dictionary = {
     body: string;
     ctaCalc: string;
     ctaFounding: string;
+    ctaPortal: string;
   };
   founding: {
     title: string;
@@ -65,6 +66,7 @@ const es: Dictionary = {
     body: 'Ecosistema digital para fútbol base y multi-deporte: entrenadores, padres, pantallas y gestión. El club fija el precio familiar — 12 € o 24 € al año por niño — y retiene el margen sobre la cuota SynqAI desde 0,50 €/usuario/mes.',
     ctaCalc: 'Simular ingresos del club',
     ctaFounding: 'Solicitar founding club',
+    ctaPortal: 'Entrar al portal del club',
   },
   founding: {
     title: 'Founding club',
@@ -112,6 +114,7 @@ const en: Dictionary = {
     body: 'Digital ecosystem for grassroots football and multi-sport: coaches, parents, screens and management. The club sets the family fee — €12 or €24 per child per year — and keeps margin over SynqAI from €0.50/user/month.',
     ctaCalc: 'Simulate club revenue',
     ctaFounding: 'Apply for founding club',
+    ctaPortal: 'Open club portal',
   },
   founding: {
     title: 'Founding club',

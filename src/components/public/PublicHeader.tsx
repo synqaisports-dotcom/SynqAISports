@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { LogIn } from 'lucide-react';
 import type { Dictionary, Locale } from '@/lib/i18n/dictionaries';
 
 type Props = {
@@ -20,7 +21,7 @@ export function PublicHeader({ dict, locale }: Props) {
 
   return (
     <header className="border-b border-white/5">
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
+      <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-6 py-5">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-synq-muted">
             Nexus Labs
@@ -29,7 +30,16 @@ export function PublicHeader({ dict, locale }: Props) {
             SynqAI Sports
           </Link>
         </div>
-        <nav className="hidden items-center gap-5 text-sm text-synq-muted md:flex">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/login"
+            className="inline-flex shrink-0 items-center gap-2 rounded-full bg-synq-pitch px-4 py-2 text-sm font-semibold text-white hover:bg-synq-accent transition-colors"
+          >
+            <LogIn className="h-4 w-4" />
+            <span className="hidden sm:inline">{dict.nav.login}</span>
+            <span className="sm:hidden">Portal</span>
+          </Link>
+          <nav className="hidden items-center gap-5 text-sm text-synq-muted lg:flex">
           <a href="#modelo" className="hover:text-white transition-colors">
             {dict.nav.model}
           </a>
@@ -45,9 +55,6 @@ export function PublicHeader({ dict, locale }: Props) {
           <a href="#nosotros" className="hover:text-white transition-colors">
             {dict.nav.about}
           </a>
-          <Link href="/login" className="font-medium text-synq-accent hover:text-white transition-colors">
-            {dict.nav.login}
-          </Link>
           <button
             type="button"
             onClick={() => setLocale(otherLocale)}
@@ -56,7 +63,8 @@ export function PublicHeader({ dict, locale }: Props) {
           >
             {otherLocale}
           </button>
-        </nav>
+          </nav>
+        </div>
       </div>
     </header>
   );
