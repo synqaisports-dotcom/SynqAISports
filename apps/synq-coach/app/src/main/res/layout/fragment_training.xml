@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0A1628">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/training_title" android:textColor="#FFF" android:textSize="20sp" android:textStyle="bold" />
+        <TextView android:id="@+id/training_hint" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#94A3B8" />
+
+        <EditText android:id="@+id/input_micro_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/micro_title" android:textColor="#FFF" android:textColorHint="#94A3B8" />
+        <EditText android:id="@+id/input_micro_week" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/micro_week" android:textColor="#FFF" android:textColorHint="#94A3B8" />
+        <Button android:id="@+id/btn_create_microcycle" style="@style/Widget.Synq.Button" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/micro_create" />
+
+        <androidx.recyclerview.widget.RecyclerView android:id="@+id/microcycle_list" android:layout_width="match_parent" android:layout_height="wrap_content" />
+    </LinearLayout>
+</ScrollView>

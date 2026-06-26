@@ -1,6 +1,13 @@
 'use server';
 
 import { requireClubId, requireUserId } from '@/lib/auth-staff';
+import {
+  emptyExerciseSheet,
+  parseExerciseSheet,
+  sheetFromFormData,
+  sheetToLegacyFields,
+  type TaskType,
+} from '@/lib/exercise-sheet';
 import { defaultSlotsTemplate, parseDrawingJson } from '@/lib/methodology';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
@@ -17,14 +24,11 @@ export async function createExercise(
   const userId = await requireUserId();
   if (!clubId) return { ok: false, message: 'unauthorized' };
 
-  const title = String(formData.get('title') ?? '').trim();
-  const objectives = String(formData.get('objectives') ?? '').trim();
-  const durationMin = parseInt(String(formData.get('durationMin') ?? '15'), 10);
-  const materials = String(formData.get('materials') ?? '').trim();
-  const notes = String(formData.get('notes') ?? '').trim();
-  const drawingRaw = String(formData.get('drawingJson') ?? '{"strokes":[]}');
+  const sheet = sheetFromFormData(formData);
+  if (!sheet.title) return { ok: false, message: 'validation' };
 
-  if (!title) return { ok: false, message: 'validation' };
+  const legacy = sheetToLegacyFields(sheet);
+  const drawingRaw = String(formData.get('drawingJson') ?? '{"strokes":[]}');
 
   let drawing_json;
   try {
@@ -38,12 +42,14 @@ export async function createExercise(
     .from('synq_exercises')
     .insert({
       club_id: clubId,
-      title,
-      objectives,
-      duration_min: Number.isNaN(durationMin) ? 15 : durationMin,
-      materials,
-      notes,
+      title: legacy.title,
+      objectives: legacy.objectives,
+      duration_min: legacy.duration_min,
+      materials: legacy.materials,
+      notes: legacy.notes,
       drawing_json,
+      sheet_json: sheet,
+      task_type: sheet.taskType,
       created_by: userId,
     })
     .select('id')
@@ -67,14 +73,11 @@ export async function updateExercise(
   const clubId = await requireClubId();
   if (!clubId) return { ok: false, message: 'unauthorized' };
 
-  const title = String(formData.get('title') ?? '').trim();
-  const objectives = String(formData.get('objectives') ?? '').trim();
-  const durationMin = parseInt(String(formData.get('durationMin') ?? '15'), 10);
-  const materials = String(formData.get('materials') ?? '').trim();
-  const notes = String(formData.get('notes') ?? '').trim();
-  const drawingRaw = String(formData.get('drawingJson') ?? '{"strokes":[]}');
+  const sheet = sheetFromFormData(formData);
+  if (!sheet.title) return { ok: false, message: 'validation' };
 
-  if (!title) return { ok: false, message: 'validation' };
+  const legacy = sheetToLegacyFields(sheet);
+  const drawingRaw = String(formData.get('drawingJson') ?? '{"strokes":[]}');
 
   let drawing_json;
   try {
@@ -87,12 +90,14 @@ export async function updateExercise(
   const { error } = await supabase
     .from('synq_exercises')
     .update({
-      title,
-      objectives,
-      duration_min: Number.isNaN(durationMin) ? 15 : durationMin,
-      materials,
-      notes,
+      title: legacy.title,
+      objectives: legacy.objectives,
+      duration_min: legacy.duration_min,
+      materials: legacy.materials,
+      notes: legacy.notes,
       drawing_json,
+      sheet_json: sheet,
+      task_type: sheet.taskType,
       updated_at: new Date().toISOString(),
     })
     .eq('id', exerciseId)
@@ -166,6 +171,7 @@ export async function createMicrocycle(
       order_index: s.order_index,
       title: '',
       notes: '',
+      sheet_json: emptyExerciseSheet(s.slot_type),
     }))
   );
 
@@ -187,19 +193,37 @@ export async function updateMicrocycleSlot(
   if (!clubId) return { ok: false, message: 'unauthorized' };
 
   const exerciseId = String(formData.get('exerciseId') ?? '').trim() || null;
-  const title = String(formData.get('title') ?? '').trim();
-  const notes = String(formData.get('notes') ?? '').trim();
   const sessionDate = String(formData.get('sessionDate') ?? '').trim() || null;
 
   const supabase = await createClient();
 
   const { data: slot } = await supabase
     .from('synq_microcycle_slots')
-    .select('microcycle_id')
+    .select('microcycle_id, slot_type')
     .eq('id', slotId)
     .single();
 
   if (!slot) return { ok: false, message: 'unauthorized' };
+
+  const slotTaskType = (slot.slot_type as TaskType) || 'main';
+  let sheet = sheetFromFormData(formData, slotTaskType);
+
+  if (exerciseId && !sheet.title) {
+    const { data: ex } = await supabase
+      .from('synq_exercises')
+      .select('sheet_json, title, objectives, notes')
+      .eq('id', exerciseId)
+      .single();
+    if (ex) {
+      sheet = parseExerciseSheet(ex.sheet_json);
+      sheet.taskType = slotTaskType;
+      if (!sheet.title) sheet.title = ex.title;
+      if (!sheet.objectives) sheet.objectives = ex.objectives;
+      if (!sheet.description) sheet.description = ex.notes;
+    }
+  }
+
+  const legacy = sheetToLegacyFields(sheet);
 
   const { data: micro } = await supabase
     .from('synq_microcycles')
@@ -215,8 +239,9 @@ export async function updateMicrocycleSlot(
     .from('synq_microcycle_slots')
     .update({
       exercise_id: exerciseId,
-      title,
-      notes,
+      title: legacy.title,
+      notes: legacy.notes,
+      sheet_json: sheet,
       session_date: sessionDate,
     })
     .eq('id', slotId);

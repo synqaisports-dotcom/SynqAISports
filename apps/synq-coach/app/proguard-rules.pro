@@ -1,0 +1,2 @@
+-keep class com.synqai.coach.** { *; }
+-keep class com.google.android.gms.ads.** { *; }

@@ -3,7 +3,13 @@
 import Link from 'next/link';
 import { useFormState } from 'react-dom';
 import { createExercise, updateExercise, type ActionState } from '@/app/actions/methodology';
-import { ExerciseCanvas } from '@/components/methodology/ExerciseCanvas';
+import { ExerciseSheetForm } from '@/components/methodology/ExerciseSheetForm';
+import { ExerciseSheetView } from '@/components/methodology/ExerciseSheetView';
+import {
+  legacyToSheet,
+  parseExerciseSheet,
+  type ExerciseTaskSheet,
+} from '@/lib/exercise-sheet';
 import type { DrawingData } from '@/lib/methodology';
 
 export type ExerciseRow = {
@@ -14,112 +20,72 @@ export type ExerciseRow = {
   materials: string;
   notes: string;
   drawing_json: DrawingData;
+  sheet_json?: unknown;
+  task_type?: string;
 };
 
 const initial: ActionState = { ok: false };
 
 type Props = {
   exercise?: ExerciseRow;
-  redirectOnCreate?: string;
+  mode?: 'edit' | 'view';
 };
 
-export function ExerciseEditor({ exercise }: Props) {
+function resolveSheet(exercise?: ExerciseRow): ExerciseTaskSheet {
+  if (!exercise) return legacyToSheet({});
+  const parsed = parseExerciseSheet(exercise.sheet_json);
+  if (parsed.title) return parsed;
+  return legacyToSheet({
+    title: exercise.title,
+    objectives: exercise.objectives,
+    notes: exercise.notes,
+    materials: exercise.materials,
+    taskType:
+      exercise.task_type === 'warmup' || exercise.task_type === 'cooldown'
+        ? exercise.task_type
+        : 'main',
+  });
+}
+
+export function ExerciseEditor({ exercise, mode = 'edit' }: Props) {
   const isEdit = Boolean(exercise);
   const bound = isEdit
     ? updateExercise.bind(null, exercise!.id)
     : createExercise;
   const [state, action, pending] = useFormState(bound, initial);
+  const sheet = resolveSheet(exercise);
 
   if (!isEdit && state.ok && state.id) {
     return (
       <p className="text-synq-accent">
         Ejercicio creado.{' '}
         <Link href={`/portal/metodologia/ejercicios/${state.id}`} className="underline">
-          Editar
+          Ver ficha
         </Link>{' '}
         ·{' '}
         <Link href="/portal/metodologia/ejercicios" className="underline">
-          Volver al listado
+          Listado
         </Link>
       </p>
     );
   }
 
+  if (mode === 'view' && exercise) {
+    return <ExerciseSheetView sheet={sheet} drawingJson={exercise.drawing_json} />;
+  }
+
   return (
-    <form action={action} className="max-w-2xl space-y-4">
-      <Field label="Título" name="title" defaultValue={exercise?.title} required />
-      <div>
-        <label className="mb-1 block text-xs text-synq-muted">Objetivos</label>
-        <textarea
-          name="objectives"
-          rows={3}
-          defaultValue={exercise?.objectives}
-          className="w-full rounded-lg border border-white/10 bg-synq-navy/80 px-3 py-2 text-sm text-white"
-        />
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field
-          label="Duración (min)"
-          name="durationMin"
-          type="number"
-          min={1}
-          defaultValue={String(exercise?.duration_min ?? 15)}
-          required
-        />
-        <Field label="Material" name="materials" defaultValue={exercise?.materials} />
-      </div>
-      <div>
-        <label className="mb-1 block text-xs text-synq-muted">Pizarra web (boceto)</label>
-        <ExerciseCanvas initialData={exercise?.drawing_json} />
-      </div>
-      <div>
-        <label className="mb-1 block text-xs text-synq-muted">Notas</label>
-        <textarea
-          name="notes"
-          rows={2}
-          defaultValue={exercise?.notes}
-          className="w-full rounded-lg border border-white/10 bg-synq-navy/80 px-3 py-2 text-sm text-white"
-        />
-      </div>
-      {state.ok && isEdit && <p className="text-sm text-synq-accent">Guardado.</p>}
+    <form action={action} className="max-w-4xl space-y-4">
+      <ExerciseSheetForm sheet={sheet} drawingJson={exercise?.drawing_json} />
+      {state.ok && isEdit && <p className="text-sm text-synq-accent">Ficha guardada.</p>}
       {state.message === 'error' && <p className="text-sm text-red-400">Error al guardar.</p>}
       <button
         type="submit"
         disabled={pending}
         className="rounded-full bg-synq-pitch px-6 py-2 text-sm font-semibold text-white hover:bg-synq-accent disabled:opacity-50"
       >
-        {pending ? 'Guardando…' : isEdit ? 'Guardar cambios' : 'Crear ejercicio'}
+        {pending ? 'Guardando…' : isEdit ? 'Guardar ficha' : 'Crear ficha de ejercicio'}
       </button>
     </form>
-  );
-}
-
-function Field({
-  label,
-  name,
-  type = 'text',
-  defaultValue,
-  required,
-  min,
-}: {
-  label: string;
-  name: string;
-  type?: string;
-  defaultValue?: string;
-  required?: boolean;
-  min?: number;
-}) {
-  return (
-    <div>
-      <label className="mb-1 block text-xs text-synq-muted">{label}</label>
-      <input
-        name={name}
-        type={type}
-        defaultValue={defaultValue}
-        required={required}
-        min={min}
-        className="w-full rounded-lg border border-white/10 bg-synq-navy/80 px-3 py-2 text-sm text-white"
-      />
-    </div>
   );
 }

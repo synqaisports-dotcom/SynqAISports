@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Synq Coach</string>
+    <string name="default_team_name">My team</string>
+
+    <string name="nav_board">Board</string>
+    <string name="nav_team">Team</string>
+    <string name="nav_training">Training</string>
+    <string name="nav_league">League</string>
+
+    <string name="pitch_f11">Football 11</string>
+    <string name="pitch_f7">Football 7</string>
+    <string name="pitch_futsal">Futsal</string>
+
+    <string name="board_load_team">Load team</string>
+    <string name="board_move">Move</string>
+    <string name="board_arrow">Arrow</string>
+    <string name="board_undo">Undo</string>
+    <string name="board_clear">Clear</string>
+
+    <string name="team_title">Squad</string>
+    <string name="team_add_player">Add player</string>
+    <string name="team_name_required">Player name is required</string>
+    <string name="player_name">Name</string>
+    <string name="player_number">Number</string>
+    <string name="player_position">Position</string>
+    <string name="delete">Delete</string>
+
+    <string name="training_title">Microcycles</string>
+    <string name="training_limit_hint">%1$d / 2 microcycles (free tier)</string>
+    <string name="training_fields_required">Title and week are required</string>
+    <string name="training_max_microcycles">Free tier allows up to 2 microcycles</string>
+    <string name="micro_title">Microcycle title</string>
+    <string name="micro_week">Week label</string>
+    <string name="micro_create">Create microcycle</string>
+
+    <string name="slot_warmup">Warm-up</string>
+    <string name="slot_main">Main</string>
+    <string name="slot_cooldown">Cool-down</string>
+    <string name="exercise_title">Exercise title</string>
+    <string name="exercise_notes">Notes</string>
+    <string name="sheet_template_header">TASK SHEET TEMPLATE</string>
+    <string name="sheet_title">Title</string>
+    <string name="sheet_didactic_strategy">Didactic strategy</string>
+    <string name="sheet_objectives">Objectives</string>
+    <string name="sheet_conditional_row">Conditional · Time · Space · Situation · Coordination</string>
+    <string name="sheet_conditional_content">Conditional content</string>
+    <string name="sheet_time">Time</string>
+    <string name="sheet_space">Space</string>
+    <string name="sheet_game_situation">Game situation</string>
+    <string name="sheet_coordination">Coordination</string>
+    <string name="sheet_technical">Technical action / coordinative skill</string>
+    <string name="sheet_tactical">Tactical action / intention</string>
+    <string name="sheet_collective">Collective game content</string>
+    <string name="sheet_description">Description</string>
+    <string name="sheet_rules">Provocation rules / regulations</string>
+    <string name="sheet_cues">Coaching cues</string>
+    <string name="save">Save</string>
+    <string name="saved">Saved</string>
+
+    <string name="league_title">League</string>
+    <string name="league_name">League name</string>
+    <string name="league_season">Season</string>
+    <string name="league_create">Create / update league</string>
+    <string name="league_name_required">League name is required</string>
+    <string name="league_create_first">Create a league first</string>
+    <string name="league_reset_title">Reset season</string>
+    <string name="league_reset_message">Archive the current league and start fresh?</string>
+    <string name="match_opponent">Opponent</string>
+    <string name="match_home">Home match</string>
+    <string name="match_add">Add match</string>
+    <string name="match_goal_home">+1 goal</string>
+
+    <string name="confirm">Confirm</string>
+    <string name="cancel">Cancel</string>
+</resources>

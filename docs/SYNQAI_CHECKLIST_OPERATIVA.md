@@ -33,6 +33,7 @@ En **SQL Editor** del proyecto SynqAI, ejecutar **en este orden**:
 2. [ ] `supabase/migrations/20260702000000_synqai_portal.sql`
 3. [ ] `supabase/migrations/20260703000000_synqai_cantera.sql`
 4. [ ] `supabase/migrations/20260704000000_synqai_methodology.sql`
+5. [ ] `supabase/migrations/20260705000000_synqai_exercise_sheet.sql`
 
 > Si ya ejecutaste migraciones anteriores, solo añade las que falten.
 

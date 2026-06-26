@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/boardFragment">
+
+    <fragment
+        android:id="@+id/boardFragment"
+        android:name="com.synqai.coach.ui.board.BoardFragment"
+        android:label="@string/nav_board" />
+
+    <fragment
+        android:id="@+id/teamFragment"
+        android:name="com.synqai.coach.ui.team.TeamFragment"
+        android:label="@string/nav_team" />
+
+    <fragment
+        android:id="@+id/trainingFragment"
+        android:name="com.synqai.coach.ui.training.TrainingFragment"
+        android:label="@string/nav_training" />
+
+    <fragment
+        android:id="@+id/leagueFragment"
+        android:name="com.synqai.coach.ui.league.LeagueFragment"
+        android:label="@string/nav_league" />
+</navigation>

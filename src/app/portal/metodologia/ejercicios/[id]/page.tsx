@@ -14,7 +14,7 @@ export default async function EditarEjercicioPage({ params }: Props) {
 
   const { data: exercise } = await supabase
     .from('synq_exercises')
-    .select('id, title, objectives, duration_min, materials, notes, drawing_json')
+    .select('id, title, objectives, duration_min, materials, notes, drawing_json, sheet_json, task_type')
     .eq('id', id)
     .eq('club_id', ctx.club.id)
     .single();

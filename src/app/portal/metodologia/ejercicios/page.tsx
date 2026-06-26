@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { DeleteExerciseButton } from '@/components/methodology/DeleteExerciseButton';
 import { ExerciseCanvasPreview } from '@/components/methodology/ExerciseCanvas';
 import { MethodologySubnav } from '@/components/methodology/MethodologySubnav';
+import { parseExerciseSheet } from '@/lib/exercise-sheet';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import { redirect } from 'next/navigation';
@@ -13,7 +14,7 @@ export default async function EjerciciosListPage() {
 
   const { data: exercises } = await supabase
     .from('synq_exercises')
-    .select('id, title, duration_min, objectives, drawing_json')
+    .select('id, title, duration_min, objectives, drawing_json, sheet_json, task_type')
     .eq('club_id', ctx.club.id)
     .order('updated_at', { ascending: false });
 
@@ -34,7 +35,10 @@ export default async function EjerciciosListPage() {
       <MethodologySubnav />
 
       <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {(exercises ?? []).map((ex) => (
+        {(exercises ?? []).map((ex) => {
+          const sheet = parseExerciseSheet(ex.sheet_json);
+          const subtitle = sheet.didacticStrategy || ex.objectives;
+          return (
           <li
             key={ex.id}
             className="rounded-2xl border border-white/5 bg-synq-slate/30 overflow-hidden"
@@ -47,16 +51,19 @@ export default async function EjerciciosListPage() {
               >
                 {ex.title}
               </Link>
-              <p className="mt-1 text-xs text-synq-muted">{ex.duration_min} min</p>
-              {ex.objectives && (
-                <p className="mt-2 line-clamp-2 text-sm text-synq-muted">{ex.objectives}</p>
+              <p className="mt-1 text-xs text-synq-muted">
+                {sheet.conditionalGrid.time || `${ex.duration_min} min`}
+              </p>
+              {subtitle && (
+                <p className="mt-2 line-clamp-2 text-sm text-synq-muted">{subtitle}</p>
               )}
               <div className="mt-3">
                 <DeleteExerciseButton id={ex.id} />
               </div>
             </div>
           </li>
-        ))}
+        );
+        })}
       </ul>
       {(exercises ?? []).length === 0 && (
         <p className="text-synq-muted">Aún no hay ejercicios. Crea el primero.</p>

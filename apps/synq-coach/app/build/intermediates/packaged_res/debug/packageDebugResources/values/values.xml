@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="nav_item_active">#22C55E</color>
+    <color name="nav_item_inactive">#64748B</color>
+    <color name="synq_bg">#0A1628</color>
+    <color name="synq_on_primary">#FFFFFF</color>
+    <color name="synq_primary">#22C55E</color>
+    <color name="synq_primary_dark">#16A34A</color>
+    <color name="synq_surface">#132337</color>
+    <color name="synq_text_muted">#94A3B8</color>
+    <string name="app_name">Synq Coach</string>
+    <string name="board_arrow">Arrow</string>
+    <string name="board_clear">Clear</string>
+    <string name="board_load_team">Load team</string>
+    <string name="board_move">Move</string>
+    <string name="board_undo">Undo</string>
+    <string name="cancel">Cancel</string>
+    <string name="confirm">Confirm</string>
+    <string name="default_team_name">My team</string>
+    <string name="delete">Delete</string>
+    <string name="exercise_notes">Notes</string>
+    <string name="exercise_title">Exercise title</string>
+    <string name="league_create">Create / update league</string>
+    <string name="league_create_first">Create a league first</string>
+    <string name="league_name">League name</string>
+    <string name="league_name_required">League name is required</string>
+    <string name="league_reset_message">Archive the current league and start fresh?</string>
+    <string name="league_reset_title">Reset season</string>
+    <string name="league_season">Season</string>
+    <string name="league_title">League</string>
+    <string name="match_add">Add match</string>
+    <string name="match_goal_home">+1 goal</string>
+    <string name="match_home">Home match</string>
+    <string name="match_opponent">Opponent</string>
+    <string name="micro_create">Create microcycle</string>
+    <string name="micro_title">Microcycle title</string>
+    <string name="micro_week">Week label</string>
+    <string name="nav_board">Board</string>
+    <string name="nav_league">League</string>
+    <string name="nav_team">Team</string>
+    <string name="nav_training">Training</string>
+    <string name="pitch_f11">Football 11</string>
+    <string name="pitch_f7">Football 7</string>
+    <string name="pitch_futsal">Futsal</string>
+    <string name="player_name">Name</string>
+    <string name="player_number">Number</string>
+    <string name="player_position">Position</string>
+    <string name="save">Save</string>
+    <string name="saved">Saved</string>
+    <string name="slot_cooldown">Cool-down</string>
+    <string name="slot_main">Main</string>
+    <string name="slot_warmup">Warm-up</string>
+    <string name="team_add_player">Add player</string>
+    <string name="team_name_required">Player name is required</string>
+    <string name="team_title">Squad</string>
+    <string name="training_fields_required">Title and week are required</string>
+    <string name="training_limit_hint">%1$d / 2 microcycles (free tier)</string>
+    <string name="training_max_microcycles">Free tier allows up to 2 microcycles</string>
+    <string name="training_title">Microcycles</string>
+    <style name="Theme.SynqCoach" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/synq_primary</item>
+        <item name="colorPrimaryVariant">@color/synq_primary_dark</item>
+        <item name="colorOnPrimary">@color/synq_on_primary</item>
+        <item name="android:statusBarColor">@color/synq_bg</item>
+        <item name="android:navigationBarColor">@color/synq_surface</item>
+        <item name="android:windowBackground">@color/synq_bg</item>
+    </style>
+    <style name="Widget.Synq.Button" parent="Widget.MaterialComponents.Button">
+        <item name="android:textColor">@color/synq_on_primary</item>
+        <item name="backgroundTint">@color/synq_primary</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+    <style name="Widget.Synq.Button.Outlined" parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <item name="strokeColor">@color/synq_primary</item>
+        <item name="android:textColor">@color/synq_primary</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+</resources>

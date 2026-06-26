@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0A1628">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/league_title" android:textColor="#FFF" android:textSize="20sp" android:textStyle="bold" />
+
+        <EditText android:id="@+id/input_league_name" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/league_name" android:textColor="#FFF" android:textColorHint="#94A3B8" />
+        <EditText android:id="@+id/input_season" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/league_season" android:textColor="#FFF" android:textColorHint="#94A3B8" />
+        <Button android:id="@+id/btn_create_league" style="@style/Widget.Synq.Button" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/league_create" />
+
+        <EditText android:id="@+id/input_opponent" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/match_opponent" android:textColor="#FFF" android:textColorHint="#94A3B8" />
+        <CheckBox android:id="@+id/check_home" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" android:text="@string/match_home" android:textColor="#FFF" />
+        <Button android:id="@+id/btn_add_match" style="@style/Widget.Synq.Button" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/match_add" />
+
+        <androidx.recyclerview.widget.RecyclerView android:id="@+id/match_list" android:layout_width="match_parent" android:layout_height="wrap_content" />
+
+        <Button android:id="@+id/btn_reset_season" style="@style/Widget.Synq.Button.Outlined" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/league_reset_title" />
+    </LinearLayout>
+</ScrollView>

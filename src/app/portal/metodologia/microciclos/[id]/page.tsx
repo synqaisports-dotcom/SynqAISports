@@ -26,7 +26,7 @@ export default async function MicrocicloDetailPage({ params }: Props) {
     supabase
       .from('synq_microcycle_slots')
       .select(
-        'id, slot_type, order_index, title, notes, session_date, exercise_id, synq_exercises(id, title)'
+        'id, slot_type, order_index, title, notes, session_date, exercise_id, sheet_json, synq_exercises(id, title)'
       )
       .eq('microcycle_id', id)
       .order('order_index'),
