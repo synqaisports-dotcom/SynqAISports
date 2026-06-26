@@ -1,8 +1,8 @@
-import { getDemoClubId, isDemoMode } from '@/lib/demo';
+import { getDemoClubId, isDemoActive } from '@/lib/demo';
 import { createClient } from '@/lib/supabase/server';
 
 export async function requireClubId(): Promise<string | null> {
-  if (isDemoMode()) return getDemoClubId();
+  if (await isDemoActive()) return getDemoClubId();
 
   const supabase = await createClient();
   const {
@@ -21,7 +21,7 @@ export async function requireClubId(): Promise<string | null> {
 }
 
 export async function requireUserId(): Promise<string | null> {
-  if (isDemoMode()) return null;
+  if (await isDemoActive()) return null;
 
   const supabase = await createClient();
   const {

@@ -14,7 +14,6 @@ import { FoundingForm } from '@/components/public/FoundingForm';
 import { PublicHeader } from '@/components/public/PublicHeader';
 import { getDictionary } from '@/lib/i18n/dictionaries';
 import { getLocale } from '@/lib/i18n/get-locale';
-import { isDemoMode } from '@/lib/demo';
 
 const modules = [
   {
@@ -51,8 +50,7 @@ export default async function SynqHomePage() {
   const locale = await getLocale();
   const dict = getDictionary(locale);
   const isEn = locale === 'en';
-  const demo = isDemoMode();
-  const portalHref = demo ? '/portal' : '/login';
+  const portalHref = '/demo';
 
   return (
     <div className="min-h-screen bg-synq-navy">
@@ -74,7 +72,7 @@ export default async function SynqHomePage() {
                   href={portalHref}
                   className="inline-flex items-center gap-2 rounded-full bg-synq-pitch px-6 py-3 text-sm font-semibold text-white hover:bg-synq-accent transition-colors"
                 >
-                  {demo ? 'Ver portal del club (demo)' : dict.hero.ctaPortal}
+                  {dict.hero.ctaPortal}
                   <LogIn className="h-4 w-4" />
                 </Link>
                 <a

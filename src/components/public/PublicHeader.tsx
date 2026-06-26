@@ -5,8 +5,6 @@ import { useRouter } from 'next/navigation';
 import { LogIn } from 'lucide-react';
 import type { Dictionary, Locale } from '@/lib/i18n/dictionaries';
 
-const demoMode = process.env.NEXT_PUBLIC_SYNQ_DEMO_MODE === 'true';
-
 type Props = {
   dict: Dictionary;
   locale: Locale;
@@ -34,12 +32,12 @@ export function PublicHeader({ dict, locale }: Props) {
         </div>
         <div className="flex items-center gap-3">
           <Link
-            href={demoMode ? '/portal' : '/login'}
+            href="/demo"
             className="inline-flex shrink-0 items-center gap-2 rounded-full bg-synq-pitch px-4 py-2 text-sm font-semibold text-white hover:bg-synq-accent transition-colors"
           >
             <LogIn className="h-4 w-4" />
-            <span className="hidden sm:inline">{demoMode ? 'Portal demo' : dict.nav.login}</span>
-            <span className="sm:hidden">{demoMode ? 'Demo' : 'Portal'}</span>
+            <span className="hidden sm:inline">Portal demo</span>
+            <span className="sm:hidden">Demo</span>
           </Link>
           <nav className="hidden items-center gap-5 text-sm text-synq-muted lg:flex">
           <a href="#modelo" className="hover:text-white transition-colors">

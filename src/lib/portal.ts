@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { getDemoClubId, isDemoMode, loadDemoStaffContext } from '@/lib/demo';
+import { getDemoClubId, isDemoActive, loadDemoStaffContext } from '@/lib/demo';
 
 export type ClubRow = {
   id: string;
@@ -25,7 +25,7 @@ export type StaffContext = {
 export async function getStaffContext(
   supabase: SupabaseClient
 ): Promise<StaffContext | null> {
-  if (isDemoMode()) {
+  if (await isDemoActive()) {
     return loadDemoStaffContext(async (clubId) => {
       const { data: club, error } = await supabase
         .from('synq_clubs')

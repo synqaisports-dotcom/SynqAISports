@@ -1,10 +1,10 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { isDemoMode } from '@/lib/demo';
+import { isDemoActive } from '@/lib/demo';
 import { createServiceClient } from '@/lib/supabase/service';
 
 export async function createClient() {
-  if (isDemoMode()) {
+  if (await isDemoActive()) {
     const service = createServiceClient();
     if (service) return service;
   }

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { getDictionary } from '@/lib/i18n/dictionaries';
 import { getLocale } from '@/lib/i18n/get-locale';
-import { isDemoMode } from '@/lib/demo';
+import { isDemoActive } from '@/lib/demo';
 
 type Props = { searchParams: Promise<{ error?: string }> };
 
@@ -11,7 +11,7 @@ export default async function LoginPage({ searchParams }: Props) {
   const locale = await getLocale();
   const dict = getDictionary(locale);
   const { error } = await searchParams;
-  const demo = isDemoMode();
+  const demo = await isDemoActive();
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-synq-navy px-6">
@@ -20,19 +20,21 @@ export default async function LoginPage({ searchParams }: Props) {
         <h1 className="mt-2 font-serif-display text-3xl text-white">{dict.login.title}</h1>
         <p className="mt-2 text-sm text-synq-muted">{dict.login.subtitle}</p>
 
-        {demo && (
-          <div className="mt-6 rounded-xl border border-synq-accent/40 bg-synq-pitch/10 p-4">
-            <p className="text-sm font-semibold text-white">Modo demo activo</p>
+        <div className="mt-6 rounded-xl border border-synq-accent/40 bg-synq-pitch/10 p-4">
+            <p className="text-sm font-semibold text-white">Acceso demo (sin contraseña)</p>
             <p className="mt-1 text-xs text-synq-muted">
-              Entra al portal sin email ni contraseña para ver lo que hemos construido.
+              Pulsa para ver el portal del club sin configurar login.
             </p>
             <Link
-              href="/portal"
+              href="/demo"
               className="mt-4 flex w-full items-center justify-center rounded-full bg-synq-pitch py-3 text-sm font-semibold text-white hover:bg-synq-accent"
             >
               Ver portal del club (demo)
             </Link>
           </div>
+
+        {demo && (
+          <p className="mt-4 text-center text-xs text-synq-accent">Modo demo ya activo — también puedes ir a /portal</p>
         )}
 
         {error === 'no_club' && !demo && (
@@ -45,19 +47,15 @@ export default async function LoginPage({ searchParams }: Props) {
           </div>
         )}
 
-        {!demo && (
         <div className="mt-8">
           <Suspense fallback={<p className="text-sm text-synq-muted">…</p>}>
             <LoginForm dict={dict} />
           </Suspense>
         </div>
-        )}
 
-        {demo && (
-          <p className="mt-6 text-center text-xs text-synq-muted">
-            El formulario de login real está desactivado mientras el modo demo está activo.
-          </p>
-        )}
+        <p className="mt-6 text-center text-xs text-synq-muted">
+          ¿Problemas con el login? Usa el botón demo de arriba.
+        </p>
       </div>
     </div>
   );
