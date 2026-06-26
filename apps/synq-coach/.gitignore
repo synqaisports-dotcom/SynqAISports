@@ -16,3 +16,5 @@ bin/
 gen/
 out/
 release/
+apps/synq-coach/app/build/
+apps/synq-coach/.gradle/
