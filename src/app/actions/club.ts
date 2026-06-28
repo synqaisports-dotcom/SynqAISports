@@ -24,6 +24,8 @@ export async function updateClubProfile(
   const address = String(formData.get('address') ?? '').trim();
   const phone = String(formData.get('phone') ?? '').trim();
   const email = String(formData.get('email') ?? '').trim();
+  const coverUrl = String(formData.get('coverUrl') ?? '').trim();
+  const logoUrl = String(formData.get('logoUrl') ?? '').trim();
   const playersCount = parseInt(String(formData.get('playersCount') ?? '0'), 10);
   const familyFee = parseFloat(String(formData.get('familyFee') ?? '12'));
 
@@ -36,6 +38,8 @@ export async function updateClubProfile(
       address: address || null,
       phone: phone || null,
       email: email || null,
+      cover_url: coverUrl || null,
+      logo_url: logoUrl || null,
       players_count: playersCount,
       family_fee_annual_eur: familyFee,
     })
@@ -48,6 +52,7 @@ export async function updateClubProfile(
 
   revalidatePath('/portal');
   revalidatePath('/portal/club');
+  revalidatePath('/portal/club/datos');
   return { ok: true };
 }
 

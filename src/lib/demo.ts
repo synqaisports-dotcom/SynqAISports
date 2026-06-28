@@ -23,7 +23,7 @@ export {
 } from '@/lib/demo-constants';
 
 const CLUB_SELECT =
-  'id, name, slug, country_code, address, phone, email, players_count, family_fee_annual_eur, synq_rate_per_user_eur, invite_code, is_founding, founding_until';
+  'id, name, slug, country_code, address, phone, email, cover_url, logo_url, players_count, family_fee_annual_eur, synq_rate_per_user_eur, invite_code, is_founding, founding_until';
 
 export async function isDemoActive(): Promise<boolean> {
   if (isDemoModeEnv()) return true;
@@ -41,6 +41,8 @@ export function staticDemoStaffContext(): StaffContext {
       address: 'Calle del Fútbol 1, Madrid',
       phone: '+34 600 000 000',
       email: 'demo@synqai.test',
+      cover_url: null,
+      logo_url: null,
       players_count: 80,
       family_fee_annual_eur: 12,
       synq_rate_per_user_eur: 0.5,

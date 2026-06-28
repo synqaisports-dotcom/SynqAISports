@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ArrowLeft, Pencil } from 'lucide-react';
+import { ClubIdentityHero } from '@/components/portal/ClubIdentityHero';
 import { PageContainer } from '@/components/portal/PageContainer';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
@@ -25,6 +26,8 @@ export default async function PortalClubDatosLandingPage() {
     { label: 'Cuota familiar', value: `${club.family_fee_annual_eur} €/año` },
     { label: 'Tarifa SynqAI', value: `${club.synq_rate_per_user_eur} €/usuario/mes` },
     { label: 'Código invitación', value: club.invite_code ?? '—' },
+    { label: 'Banner', value: club.cover_url ?? 'Sin imagen' },
+    { label: 'Escudo', value: club.logo_url ?? 'Sin imagen' },
   ];
 
   return (
@@ -48,16 +51,25 @@ export default async function PortalClubDatosLandingPage() {
         </div>
       }
     >
-      <Card>
+      <Card className="overflow-hidden p-0">
+        <ClubIdentityHero club={club} />
+        <CardContent className="pt-2">
+          <p className="text-sm text-muted-foreground">
+            Identidad visual del club en la portada y futura ficha pública.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6">
         <CardHeader>
           <CardTitle className="text-base">Ficha del club</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-0 sm:grid-cols-2">
           {fields.map(({ label, value }, i) => (
             <div key={label}>
-              {i > 0 && <Separator className="my-3 sm:hidden" />}
+              {i > 0 ? <Separator className="my-3 sm:hidden" /> : null}
               <p className="text-xs font-medium text-muted-foreground">{label}</p>
-              <p className="mt-0.5 text-sm font-medium">{value}</p>
+              <p className="mt-0.5 break-all text-sm font-medium">{value}</p>
             </div>
           ))}
         </CardContent>

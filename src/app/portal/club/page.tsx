@@ -9,11 +9,11 @@ import {
   UserCog,
   Users,
 } from 'lucide-react';
+import { ClubIdentityHero } from '@/components/portal/ClubIdentityHero';
 import { PageContainer } from '@/components/portal/PageContainer';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import { redirect } from 'next/navigation';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -76,22 +76,9 @@ export default async function PortalClubLandingPage() {
         </Button>
       }
     >
-      <Card className="overflow-hidden">
-        <div className="h-24 bg-gradient-to-r from-primary/20 via-primary/10 to-transparent" />
-        <CardHeader className="-mt-10 relative">
-          <div className="flex size-16 items-center justify-center rounded-xl border-4 border-background bg-primary text-2xl font-bold text-primary-foreground shadow-sm">
-            {club.name.slice(0, 2).toUpperCase()}
-          </div>
-          <CardTitle className="mt-4 text-2xl">{club.name}</CardTitle>
-          <CardDescription className="flex flex-wrap items-center gap-2">
-            <Badge variant="secondary">{club.country_code}</Badge>
-            {club.is_founding && <Badge>Founding club</Badge>}
-            {club.invite_code && (
-              <Badge variant="outline">Código {club.invite_code}</Badge>
-            )}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+      <Card className="overflow-hidden p-0">
+        <ClubIdentityHero club={club} showEditHint />
+        <CardContent className="pt-4">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div>
               <p className="text-xs text-muted-foreground">Jugadores ref.</p>
@@ -111,12 +98,12 @@ export default async function PortalClubLandingPage() {
               <p className="text-sm text-muted-foreground">{club.phone ?? '—'}</p>
             </div>
           </div>
-          {club.address && (
+          {club.address ? (
             <>
               <Separator className="my-4" />
               <p className="text-sm text-muted-foreground">{club.address}</p>
             </>
-          )}
+          ) : null}
         </CardContent>
       </Card>
 
