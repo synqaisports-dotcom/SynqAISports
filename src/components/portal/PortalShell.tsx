@@ -19,7 +19,7 @@ export function PortalShell({
   role,
   demoMode,
   demoCanPersist,
-  defaultOpen = true,
+  defaultOpen = false,
 }: Props) {
   return (
     <SidebarProvider defaultOpen={defaultOpen} className="min-h-svh">

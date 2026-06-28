@@ -1,4 +1,3 @@
-import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { PortalThemeProvider } from '@/components/portal/PortalThemeProvider';
@@ -24,9 +23,6 @@ export default async function PortalLayout({ children }: { children: React.React
     redirect('/login?error=no_club');
   }
 
-  const cookieStore = await cookies();
-  const defaultOpen = cookieStore.get('sidebar_state')?.value !== 'false';
-
   return (
     <PortalThemeProvider>
       <div className="portal-dashboard dark min-h-svh">
@@ -35,7 +31,6 @@ export default async function PortalLayout({ children }: { children: React.React
           role={ctx.role}
           demoMode={demo}
           demoCanPersist={hasServiceRoleKey()}
-          defaultOpen={defaultOpen}
         >
           {children}
         </PortalShell>

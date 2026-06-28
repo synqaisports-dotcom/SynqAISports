@@ -8,10 +8,10 @@ module.exports = {
   			synq: {
   				navy: '#050d14',
   				slate: '#0c1824',
-  				cyan: '#00e5ff',
-  				electric: '#00d4ff',
-  				accent: '#22d3ee',
-  				pitch: '#00b8d4',
+  				cyan: '#00f2ff',
+  				electric: '#00f2ff',
+  				accent: '#66f7ff',
+  				pitch: '#00d4ee',
   				muted: '#94a3b8'
   			},
   			border: 'hsl(var(--border))',
