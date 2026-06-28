@@ -1,5 +1,5 @@
 import { ArrowLeft, Pencil } from 'lucide-react';
-import { loadClubPeople } from '@/app/actions/club-people';
+import { loadClubPeople, loadClubTeams, loadPersonAssignments } from '@/app/actions/club-people';
 import { SportPersonForm } from '@/components/portal/SportPersonForm';
 import { StaffHero, StaffHeroLinkAction } from '@/components/portal/StaffHero';
 import {
@@ -31,6 +31,11 @@ export default async function PortalClubStaffEditarPage({ params }: Props) {
   const people = await loadClubPeople(ctx.club.id);
   const person = people.find((row) => row.id === id);
   if (!person || person.person_kind === 'institutional') notFound();
+
+  const [teams, initialAssignments] = await Promise.all([
+    loadClubTeams(ctx.club.id),
+    loadPersonAssignments(person.id),
+  ]);
 
   const medical = medicalStatus(person);
 
@@ -68,7 +73,12 @@ export default async function PortalClubStaffEditarPage({ params }: Props) {
         }
       />
 
-      <SportPersonForm clubId={ctx.club.id} person={person} />
+      <SportPersonForm
+        clubId={ctx.club.id}
+        person={person}
+        teams={teams}
+        initialAssignments={initialAssignments}
+      />
     </PageContainer>
   );
 }

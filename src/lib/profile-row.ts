@@ -24,10 +24,10 @@ export function clubPersonInstitutionalFields(person: ClubPerson) {
   return fields;
 }
 
-export function clubPersonSportFields(person: ClubPerson) {
+export function clubPersonSportFields(person: ClubPerson, teamsLabel?: string) {
   const medical = medicalStatus(person);
   return [
-    { label: 'Equipos', value: person.sport_teams ?? '' },
+    { label: 'Equipos', value: teamsLabel || person.sport_teams || '' },
     { label: 'Email', value: person.email ?? '' },
     { label: 'Teléfono', value: person.phone ?? '' },
     {

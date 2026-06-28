@@ -4,6 +4,9 @@ import { useState } from 'react';
 import { useFormState } from 'react-dom';
 import { upsertSportPerson, type ClubPeopleState } from '@/app/actions/club-people';
 import { sportAccessProfileOptions, type AccessProfile, type ClubPerson } from '@/lib/club-people';
+import type { PersonAssignment, TeamOption } from '@/lib/person-assignments';
+import { PersonAssignmentsField } from '@/components/portal/PersonAssignmentsField';
+import { PersonPhotoField } from '@/components/portal/PersonPhotoField';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,9 +17,11 @@ const initial: ClubPeopleState = { ok: false };
 type Props = {
   clubId: string;
   person?: ClubPerson | null;
+  teams: TeamOption[];
+  initialAssignments?: PersonAssignment[];
 };
 
-export function SportPersonForm({ clubId, person }: Props) {
+export function SportPersonForm({ clubId, person, teams, initialAssignments = [] }: Props) {
   const bound = upsertSportPerson.bind(null, clubId);
   const [state, action, pending] = useFormState(bound, initial);
   const [accessProfile, setAccessProfile] = useState<AccessProfile>(person?.access_profile ?? 'coach');
@@ -33,6 +38,15 @@ export function SportPersonForm({ clubId, person }: Props) {
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
+          <div className="md:col-span-2">
+            <PersonPhotoField
+              clubId={clubId}
+              personId={person?.id}
+              initialPhotoUrl={person?.photo_url}
+              personName={person?.full_name ?? 'Nueva ficha'}
+            />
+          </div>
+
           <div className="md:col-span-2">
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Nombre completo
@@ -59,17 +73,6 @@ export function SportPersonForm({ clubId, person }: Props) {
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Equipos asignados
-            </label>
-            <Input
-              name="sportTeams"
-              defaultValue={person?.sport_teams ?? ''}
-              placeholder="Sub-14 A, Sub-16 B"
-              className="border-primary/30 bg-background/80"
-            />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Perfil de acceso (futuro)
             </label>
             <SynqSelect
@@ -80,6 +83,13 @@ export function SportPersonForm({ clubId, person }: Props) {
             />
             <input type="hidden" name="accessProfile" value={accessProfile ?? 'coach'} readOnly />
           </div>
+
+          <PersonAssignmentsField
+            accessProfile={accessProfile}
+            teams={teams}
+            initialAssignments={initialAssignments}
+          />
+
           <div>
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Reconocimiento médico — válido hasta

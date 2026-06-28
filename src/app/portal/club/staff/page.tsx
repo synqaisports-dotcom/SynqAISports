@@ -1,5 +1,5 @@
 import { ArrowLeft, BarChart3, Pencil, Plus, User } from 'lucide-react';
-import { loadSportPeople } from '@/app/actions/club-people';
+import { loadClubPersonAssignments, loadClubTeams, loadSportPeople } from '@/app/actions/club-people';
 import {
   ProfileRowAction,
   ProfileRowCard,
@@ -14,6 +14,7 @@ import {
   clubPersonSportFields,
   medicalStatus,
 } from '@/lib/profile-row';
+import { formatAssignmentSummary } from '@/lib/person-assignments';
 import { redirect } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -24,6 +25,16 @@ export default async function PortalClubStaffLandingPage() {
   if (!ctx) redirect('/login');
 
   const people = await loadSportPeople(ctx.club.id);
+  const [teams, assignments] = await Promise.all([
+    loadClubTeams(ctx.club.id),
+    loadClubPersonAssignments(ctx.club.id),
+  ]);
+  const assignmentsByPerson = new Map<string, typeof assignments>();
+  for (const row of assignments) {
+    const list = assignmentsByPerson.get(row.person_id) ?? [];
+    list.push(row);
+    assignmentsByPerson.set(row.person_id, list);
+  }
 
   return (
     <PageContainer>
@@ -52,6 +63,9 @@ export default async function PortalClubStaffLandingPage() {
       <ProfileRowList className="mt-6">
         {people.map((person) => {
           const medical = medicalStatus(person);
+          const personAssignments = assignmentsByPerson.get(person.id) ?? [];
+          const teamsLabel =
+            formatAssignmentSummary(personAssignments, teams) || person.sport_teams || '';
           return (
             <ProfileRowCard
               key={person.id}
@@ -63,7 +77,7 @@ export default async function PortalClubStaffLandingPage() {
                   {medical.label}
                 </Badge>
               }
-              fields={clubPersonSportFields(person)}
+              fields={clubPersonSportFields(person, teamsLabel)}
               actions={
                 <>
                   <ProfileRowAction

@@ -1,4 +1,5 @@
 import { ArrowLeft } from 'lucide-react';
+import { loadClubTeams } from '@/app/actions/club-people';
 import { SportPersonForm } from '@/components/portal/SportPersonForm';
 import { StaffHero, StaffHeroLinkAction } from '@/components/portal/StaffHero';
 import { PageContainer } from '@/components/portal/PageContainer';
@@ -11,6 +12,8 @@ export default async function PortalClubStaffNuevoPage() {
   const supabase = await createClient();
   const ctx = await getStaffContext(supabase);
   if (!ctx) redirect('/login');
+
+  const teams = await loadClubTeams(ctx.club.id);
 
   return (
     <PageContainer>
@@ -25,7 +28,7 @@ export default async function PortalClubStaffNuevoPage() {
           }
         />
       </Card>
-      <SportPersonForm clubId={ctx.club.id} />
+      <SportPersonForm clubId={ctx.club.id} teams={teams} />
     </PageContainer>
   );
 }

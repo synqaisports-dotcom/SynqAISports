@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useFormState } from 'react-dom';
 import { upsertInstitutionalPerson, type ClubPeopleState } from '@/app/actions/club-people';
 import { accessProfileOptions, type AccessProfile, type ClubPerson } from '@/lib/club-people';
+import { PersonPhotoField } from '@/components/portal/PersonPhotoField';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -33,6 +34,14 @@ export function InstitutionalPersonForm({ clubId, person }: Props) {
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
+          <div className="md:col-span-2">
+            <PersonPhotoField
+              clubId={clubId}
+              personId={person?.id}
+              initialPhotoUrl={person?.photo_url}
+              personName={person?.full_name ?? 'Nueva ficha'}
+            />
+          </div>
           <div className="md:col-span-2">
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Nombre completo
