@@ -20,10 +20,10 @@ export function PortalShell({
   defaultOpen = true,
 }: Props) {
   return (
-    <SidebarProvider defaultOpen={defaultOpen}>
-      <AppSidebar clubName={clubName} role={role} demoMode={demoMode} />
-      <SidebarInset>
-        <PortalHeader />
+    <SidebarProvider defaultOpen={defaultOpen} className="min-h-svh">
+      <AppSidebar clubName={clubName} role={role} />
+      <SidebarInset className="min-h-svh">
+        <PortalHeader clubName={clubName} role={role} demoMode={demoMode} />
         {children}
       </SidebarInset>
     </SidebarProvider>

@@ -1,7 +1,6 @@
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
+import { ArrowLeft, BarChart3, Plus } from 'lucide-react';
 import { PageContainer } from '@/components/portal/PageContainer';
-import { PortalFeatureSpecs } from '@/components/portal/PortalFeatureSpecs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,18 +26,32 @@ const demoStaff = [
   },
 ];
 
-export default function PortalClubStaffPage() {
+export default function PortalClubStaffLandingPage() {
   return (
     <PageContainer
       pageTitle="Cuerpo técnico"
-      pageDescription="Listado de staff con equipos asignados, categoría y reconocimiento médico."
+      pageDescription="Portada del staff — listado y accesos a gestión."
       pageHeaderAction={
-        <Button asChild size="sm">
-          <Link href="/portal/club/staff/nuevo">
-            <Plus className="h-4 w-4" />
-            Nueva ficha
-          </Link>
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/portal/club">
+              <ArrowLeft className="h-4 w-4" />
+              Volver
+            </Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/portal/club/staff/categorias">
+              <BarChart3 className="h-4 w-4" />
+              Por categorías
+            </Link>
+          </Button>
+          <Button size="sm" asChild>
+            <Link href="/portal/club/staff/nuevo">
+              <Plus className="h-4 w-4" />
+              Crear ficha
+            </Link>
+          </Button>
+        </div>
       }
     >
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -48,41 +61,22 @@ export default function PortalClubStaffPage() {
               <div className="flex items-start justify-between gap-2">
                 <CardTitle className="text-base">{person.name}</CardTitle>
                 <Badge variant={person.medical.ok ? 'default' : 'destructive'}>
-                  {person.medical.ok ? 'Médico OK' : 'Médico pendiente'}
+                  {person.medical.ok ? 'Médico OK' : 'Pendiente'}
                 </Badge>
               </div>
               <CardDescription>{person.role}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-2 text-sm">
+            <CardContent className="space-y-3 text-sm">
               <p>
                 <span className="text-muted-foreground">Equipos: </span>
                 {person.teams.join(', ')}
               </p>
-              {person.medical.until && (
-                <p className="text-xs text-muted-foreground">
-                  Reconocimiento hasta {new Date(person.medical.until).toLocaleDateString('es-ES')}
-                </p>
-              )}
+              <Button variant="outline" size="sm" className="w-full" disabled>
+                Modificar ficha
+              </Button>
             </CardContent>
           </Card>
         ))}
-      </div>
-
-      <div className="mt-6">
-        <PortalFeatureSpecs
-          title="Ficha de staff (especificación)"
-          description="Cada técnico tendrá ficha completa editable."
-          specs={[
-            { title: 'Equipos asignados', description: 'Uno o varios equipos desde cantera.', status: 'mvp' },
-            { title: 'Categoría / cargo', description: 'Entrenador, 2º, delegado, preparador físico…', status: 'mvp' },
-            { title: 'Documentación', description: 'Subir títulos, contratos y certificados.', status: 'next' },
-            {
-              title: 'Reconocimiento médico',
-              description: 'Estado sí/no con fecha inicio y fecha fin.',
-              status: 'mvp',
-            },
-          ]}
-        />
       </div>
     </PageContainer>
   );

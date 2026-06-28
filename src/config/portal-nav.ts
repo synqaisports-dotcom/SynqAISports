@@ -2,15 +2,12 @@ import type { LucideIcon } from 'lucide-react';
 import {
   Building2,
   CalendarClock,
-  ClipboardList,
-  GitBranch,
   GraduationCap,
   LayoutDashboard,
   MapPin,
   Network,
   Settings,
   UserCog,
-  UserPlus,
   Users,
   UsersRound,
 } from 'lucide-react';
@@ -19,8 +16,8 @@ export type PortalNavNode = {
   title: string;
   href?: string;
   icon?: LucideIcon;
+  /** Solo portadas: sin formularios ni rutas de edición en el sidebar */
   exact?: boolean;
-  badge?: string;
   children?: PortalNavNode[];
 };
 
@@ -29,6 +26,7 @@ export type PortalNavGroup = {
   items: PortalNavNode[];
 };
 
+/** Solo enlaces a portadas / landings. Formularios vía botones Crear/Modificar en cada portada. */
 export const portalNavGroups: PortalNavGroup[] = [
   {
     label: 'General',
@@ -44,19 +42,10 @@ export const portalNavGroups: PortalNavGroup[] = [
         title: 'Club',
         icon: Building2,
         href: '/portal/club',
+        exact: true,
         children: [
-          { title: 'Datos del club', href: '/portal/club/datos' },
-          { title: 'Redes y ficha pública', href: '/portal/club/redes' },
           { title: 'Organigrama', href: '/portal/club/organigrama', icon: Network },
-          {
-            title: 'Staff',
-            icon: UserCog,
-            href: '/portal/club/staff',
-            children: [
-              { title: 'Dashboard por categorías', href: '/portal/club/staff/categorias' },
-              { title: 'Nueva ficha de staff', href: '/portal/club/staff/nuevo', icon: UserPlus },
-            ],
-          },
+          { title: 'Staff', href: '/portal/club/staff', icon: UserCog },
           { title: 'Instalaciones', href: '/portal/club/instalaciones', icon: MapPin },
         ],
       },
@@ -68,7 +57,8 @@ export const portalNavGroups: PortalNavGroup[] = [
       {
         title: 'Cantera',
         icon: Users,
-        href: '/portal/cantera/equipos',
+        href: '/portal/cantera',
+        exact: true,
         children: [
           { title: 'Equipos', href: '/portal/cantera/equipos' },
           { title: 'Horarios', href: '/portal/cantera/horarios', icon: CalendarClock },
@@ -84,39 +74,13 @@ export const portalNavGroups: PortalNavGroup[] = [
         title: 'Metodología',
         icon: GraduationCap,
         href: '/portal/metodologia',
+        exact: true,
         children: [
-          { title: 'Información general', href: '/portal/metodologia' },
-          { title: 'Planograma', href: '/portal/metodologia/planograma', icon: GitBranch },
+          { title: 'Planograma', href: '/portal/metodologia/planograma' },
           { title: 'Ejercicios', href: '/portal/metodologia/ejercicios' },
           { title: 'Microciclos', href: '/portal/metodologia/microciclos' },
-          { title: 'Objetivos', href: '/portal/metodologia/objetivos' },
-          { title: 'Solicitudes', href: '/portal/metodologia/solicitudes', icon: ClipboardList },
         ],
       },
     ],
   },
 ];
-
-/** Mapa plano href → título para breadcrumbs */
-export const portalRouteLabels: Record<string, string> = {
-  portal: 'Dashboard',
-  club: 'Club',
-  datos: 'Datos del club',
-  redes: 'Redes',
-  organigrama: 'Organigrama',
-  staff: 'Staff',
-  categorias: 'Por categorías',
-  nuevo: 'Nueva ficha',
-  instalaciones: 'Instalaciones',
-  cantera: 'Cantera',
-  equipos: 'Equipos',
-  horarios: 'Horarios',
-  jugadores: 'Jugadores',
-  metodologia: 'Metodología',
-  planograma: 'Planograma',
-  ejercicios: 'Ejercicios',
-  microciclos: 'Microciclos',
-  objetivos: 'Objetivos',
-  solicitudes: 'Solicitudes',
-  config: 'Configuración',
-};

@@ -1,8 +1,11 @@
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 import { PageContainer } from '@/components/portal/PageContainer';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import { redirect } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default async function PortalCanteraJugadoresPage() {
@@ -21,6 +24,14 @@ export default async function PortalCanteraJugadoresPage() {
     <PageContainer
       pageTitle="Jugadores"
       pageDescription="Listado de jugadores asignados a cada equipo de cantera."
+      pageHeaderAction={
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/portal/cantera">
+            <ArrowLeft className="h-4 w-4" />
+            Volver
+          </Link>
+        </Button>
+      }
     >
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {(players ?? []).map((p) => {

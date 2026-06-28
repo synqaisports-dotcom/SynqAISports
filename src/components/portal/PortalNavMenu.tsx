@@ -30,48 +30,15 @@ function SubNavItems({ nodes, pathname }: { nodes: PortalNavNode[]; pathname: st
     <>
       {nodes.map((node) => {
         const key = node.href ?? node.title;
-        const hasChildren = Boolean(node.children?.length);
+        if (!node.href) return null;
         const active = isActive(pathname, node.href, node.exact);
-        const open = branchOpen(pathname, node);
-
-        if (!hasChildren && node.href) {
-          return (
-            <SidebarMenuSubItem key={key}>
-              <SidebarMenuSubButton asChild isActive={active}>
-                <Link href={node.href}>{node.title}</Link>
-              </SidebarMenuSubButton>
-            </SidebarMenuSubItem>
-          );
-        }
-
-        if (hasChildren) {
-          return (
-            <Collapsible key={key} asChild defaultOpen={open} className="group/subcollapsible">
-              <SidebarMenuSubItem>
-                <CollapsibleTrigger asChild>
-                  <SidebarMenuSubButton isActive={open}>
-                    <span>{node.title}</span>
-                    <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/subcollapsible:rotate-90" />
-                  </SidebarMenuSubButton>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <SidebarMenuSub className="mr-0 border-l-0">
-                    {node.href && (
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild isActive={active}>
-                          <Link href={node.href}>Resumen</Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    )}
-                    <SubNavItems nodes={node.children!} pathname={pathname} />
-                  </SidebarMenuSub>
-                </CollapsibleContent>
-              </SidebarMenuSubItem>
-            </Collapsible>
-          );
-        }
-
-        return null;
+        return (
+          <SidebarMenuSubItem key={key}>
+            <SidebarMenuSubButton asChild isActive={active}>
+              <Link href={node.href}>{node.title}</Link>
+            </SidebarMenuSubButton>
+          </SidebarMenuSubItem>
+        );
       })}
     </>
   );
@@ -101,26 +68,34 @@ export function PortalNavMenu({ groups }: { groups: PortalNavNode[] }) {
           );
         }
 
-        if (hasChildren && node.icon) {
+        if (hasChildren && node.icon && node.href) {
           return (
             <Collapsible key={key} asChild defaultOpen={open} className="group/collapsible">
               <SidebarMenuItem>
-                <CollapsibleTrigger asChild>
-                  <SidebarMenuButton tooltip={node.title} isActive={open}>
-                    <node.icon />
-                    <span>{node.title}</span>
-                    <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                <div className="flex w-full items-center">
+                  <SidebarMenuButton
+                    asChild
+                    tooltip={node.title}
+                    isActive={active}
+                    className="flex-1"
+                  >
+                    <Link href={node.href}>
+                      <node.icon />
+                      <span>{node.title}</span>
+                    </Link>
                   </SidebarMenuButton>
-                </CollapsibleTrigger>
+                  <CollapsibleTrigger asChild>
+                    <button
+                      type="button"
+                      className="flex size-8 shrink-0 items-center justify-center rounded-md text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:hidden"
+                      aria-label={`Expandir ${node.title}`}
+                    >
+                      <ChevronRight className="size-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                    </button>
+                  </CollapsibleTrigger>
+                </div>
                 <CollapsibleContent>
                   <SidebarMenuSub>
-                    {node.href && (
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild isActive={active}>
-                          <Link href={node.href}>Resumen</Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    )}
                     <SubNavItems nodes={node.children!} pathname={pathname} />
                   </SidebarMenuSub>
                 </CollapsibleContent>

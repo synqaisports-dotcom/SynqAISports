@@ -1,25 +1,24 @@
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 import { PageContainer } from '@/components/portal/PageContainer';
 import { OrganigramaTree } from '@/components/portal/OrganigramaTree';
-import { PortalFeatureSpecs } from '@/components/portal/PortalFeatureSpecs';
+import { Button } from '@/components/ui/button';
 
 export default function PortalClubOrganigramaPage() {
   return (
     <PageContainer
-      pageTitle="Organigrama del club"
-      pageDescription="Estructura jerárquica con dependencias: dirección, metodología, cantera y coordinadores."
+      pageTitle="Organigrama"
+      pageDescription="Estructura jerárquica del club y dependencias entre cargos."
+      pageHeaderAction={
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/portal/club">
+            <ArrowLeft className="h-4 w-4" />
+            Volver
+          </Link>
+        </Button>
+      }
     >
       <OrganigramaTree />
-      <div className="mt-6">
-        <PortalFeatureSpecs
-          title="Funcionalidades previstas"
-          description="Cada nodo será editable y vinculado al staff."
-          specs={[
-            { title: 'Dependencias', description: 'Quién reporta a quién en el organigrama.', status: 'mvp' },
-            { title: 'Arrastrar y soltar', description: 'Reorganizar cargos visualmente.', status: 'next' },
-            { title: 'Enlace con staff', description: 'Cada puesto enlaza a la ficha del técnico.', status: 'mvp' },
-          ]}
-        />
-      </div>
     </PageContainer>
   );
 }

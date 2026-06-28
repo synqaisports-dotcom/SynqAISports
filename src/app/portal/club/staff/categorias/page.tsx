@@ -1,4 +1,7 @@
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 import { PageContainer } from '@/components/portal/PageContainer';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
@@ -6,16 +9,21 @@ const categories = [
   { name: 'Prebenjamín', teams: 2, staff: 4, medicalOk: 3 },
   { name: 'Benjamín', teams: 3, staff: 6, medicalOk: 5 },
   { name: 'Alevín', teams: 4, staff: 8, medicalOk: 7 },
-  { name: 'Infantil', teams: 3, staff: 7, medicalOk: 6 },
-  { name: 'Cadete', teams: 2, staff: 5, medicalOk: 4 },
-  { name: 'Juvenil', teams: 2, staff: 5, medicalOk: 5 },
 ];
 
 export default function PortalClubStaffCategoriasPage() {
   return (
     <PageContainer
       pageTitle="Staff por categorías"
-      pageDescription="Dashboard del cuerpo técnico agrupado por categoría de cantera."
+      pageDescription="Dashboard del cuerpo técnico agrupado por categoría."
+      pageHeaderAction={
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/portal/club/staff">
+            <ArrowLeft className="h-4 w-4" />
+            Volver
+          </Link>
+        </Button>
+      }
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {categories.map((cat) => (

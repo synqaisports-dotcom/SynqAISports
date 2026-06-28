@@ -12,10 +12,10 @@ export function SidebarCollapseButton() {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-8"
+    <Button
+      variant="ghost"
+      size="icon"
+      className="hidden size-8 md:inline-flex"
           onClick={toggleSidebar}
           aria-label={collapsed ? 'Expandir menú' : 'Colapsar menú'}
         >

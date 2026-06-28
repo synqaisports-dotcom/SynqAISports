@@ -1,9 +1,11 @@
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 import { CanteraPanel, type PlayerRow, type TeamRow } from '@/components/portal/CanteraPanel';
 import { PageContainer } from '@/components/portal/PageContainer';
-import { PortalFeatureSpecs } from '@/components/portal/PortalFeatureSpecs';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import { redirect } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 
 export default async function PortalCanteraEquiposPage() {
   const supabase = await createClient();
@@ -43,19 +45,17 @@ export default async function PortalCanteraEquiposPage() {
   return (
     <PageContainer
       pageTitle="Equipos"
-      pageDescription="Equipos de cantera por categoría, letra y deporte."
+      pageDescription="Equipos de cantera por categoría y deporte."
+      pageHeaderAction={
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/portal/cantera">
+            <ArrowLeft className="h-4 w-4" />
+            Volver
+          </Link>
+        </Button>
+      }
     >
       <CanteraPanel teams={(teams ?? []) as TeamRow[]} players={players} />
-      <div className="mt-6">
-        <PortalFeatureSpecs
-          title="Próximamente en equipos"
-          description="Campos adicionales por equipo."
-          specs={[
-            { title: 'Letra de categoría', description: 'A, B, C… dentro de la misma categoría.', status: 'mvp' },
-            { title: 'Staff vinculado', description: 'Entrenador, 2º, delegado y preparador desde ficha staff.', status: 'mvp' },
-          ]}
-        />
-      </div>
     </PageContainer>
   );
 }

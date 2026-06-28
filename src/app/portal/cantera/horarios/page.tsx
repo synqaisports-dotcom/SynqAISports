@@ -1,6 +1,8 @@
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 import { PageContainer } from '@/components/portal/PageContainer';
-import { PortalFeatureSpecs } from '@/components/portal/PortalFeatureSpecs';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 const schedules = [
@@ -33,6 +35,14 @@ export default function PortalCanteraHorariosPage() {
     <PageContainer
       pageTitle="Horarios de entrenamiento"
       pageDescription="Planificación por equipo: formación o competición, categoría, letra y cuerpo técnico."
+      pageHeaderAction={
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/portal/cantera">
+            <ArrowLeft className="h-4 w-4" />
+            Volver
+          </Link>
+        </Button>
+      }
     >
       <div className="space-y-4">
         {schedules.map((row) => (
@@ -54,18 +64,6 @@ export default function PortalCanteraHorariosPage() {
             </CardContent>
           </Card>
         ))}
-      </div>
-
-      <div className="mt-6">
-        <PortalFeatureSpecs
-          title="Especificación horarios"
-          description="Los entrenadores se cargan desde la ficha de staff del club."
-          specs={[
-            { title: 'Tipo sesión', description: 'Competición vs formación.', status: 'mvp' },
-            { title: 'Categoría y letra', description: 'Agrupación visual por edad.', status: 'mvp' },
-            { title: 'Calendario', description: 'Vista semanal con instalaciones.', status: 'next' },
-          ]}
-        />
       </div>
     </PageContainer>
   );

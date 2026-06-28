@@ -129,4 +129,8 @@ body {
     @apply bg-background text-foreground antialiased;
     font-family: 'DM Sans', system-ui, sans-serif;
   }
+
+  .portal-dashboard [data-slot='sidebar-wrapper'] {
+    @apply min-h-svh w-full;
+  }
 }
