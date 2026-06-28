@@ -4,8 +4,8 @@ import { useMemo, useState } from 'react';
 import { useFormState } from 'react-dom';
 import { Plus, Trash2 } from 'lucide-react';
 import { updateOrganigrama, type OrganigramaState } from '@/app/actions/organigrama';
+import { buildPersonSelectGroups, type ClubPerson } from '@/lib/club-people';
 import {
-  buildOrganigramaTree,
   flattenOrganigrama,
   newOrganigramaNodeId,
   type OrganigramaNode,
@@ -21,9 +21,10 @@ const initial: OrganigramaState = { ok: false };
 type Props = {
   clubId: string;
   nodes: OrganigramaNode[];
+  people: ClubPerson[];
 };
 
-export function OrganigramaEditorForm({ clubId, nodes }: Props) {
+export function OrganigramaEditorForm({ clubId, nodes, people }: Props) {
   const bound = updateOrganigrama.bind(null, clubId);
   const [state, action, pending] = useFormState(bound, initial);
   const [rows, setRows] = useState<OrganigramaNodeFlat[]>(() => flattenOrganigrama(nodes));
@@ -33,10 +34,10 @@ export function OrganigramaEditorForm({ clubId, nodes }: Props) {
     [rows]
   );
 
+  const personGroups = useMemo(() => buildPersonSelectGroups(people), [people]);
+
   const organigramaJson = JSON.stringify(
-    buildOrganigramaTree(
-      rows.filter((row) => row.id.trim() && row.role.trim())
-    )
+    rows.filter((row) => row.id.trim() && row.role.trim())
   );
 
   const updateRow = (id: string, patch: Partial<OrganigramaNodeFlat>) => {
@@ -60,7 +61,7 @@ export function OrganigramaEditorForm({ clubId, nodes }: Props) {
       {
         id: newOrganigramaNodeId(),
         role: 'Nuevo cargo',
-        name: 'Por asignar',
+        personId: null,
         parentId: rootId,
       },
     ]);
@@ -99,11 +100,11 @@ export function OrganigramaEditorForm({ clubId, nodes }: Props) {
                 <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Persona
                 </label>
-                <Input
-                  value={row.name}
-                  onChange={(e) => updateRow(row.id, { name: e.target.value })}
-                  placeholder="Nombre del responsable"
-                  className="w-full border-primary/30 bg-background/80 focus-visible:ring-primary"
+                <SynqSelect
+                  value={row.personId ?? ''}
+                  onChange={(next) => updateRow(row.id, { personId: next || null })}
+                  groups={personGroups}
+                  placeholder="Vacante"
                 />
               </div>
               <div className="md:col-span-4">

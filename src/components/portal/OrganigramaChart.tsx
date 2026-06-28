@@ -1,9 +1,9 @@
 'use client';
 
-import type { OrganigramaNode } from '@/lib/organigrama';
+import type { OrganigramaNodeView } from '@/lib/organigrama';
 import { OrganigramaNodeCard } from '@/components/portal/OrganigramaNodeCard';
 
-function OrgChartBranch({ node }: { node: OrganigramaNode }) {
+function OrgChartBranch({ node }: { node: OrganigramaNodeView }) {
   const hasChildren = node.children.length > 0;
 
   return (
@@ -36,7 +36,7 @@ function OrgChartBranch({ node }: { node: OrganigramaNode }) {
 }
 
 type Props = {
-  nodes: OrganigramaNode[];
+  nodes: OrganigramaNodeView[];
 };
 
 export function OrganigramaChart({ nodes }: Props) {

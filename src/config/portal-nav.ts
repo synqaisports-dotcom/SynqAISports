@@ -3,6 +3,7 @@ import {
   Building2,
   CalendarClock,
   GraduationCap,
+  Landmark,
   LayoutDashboard,
   MapPin,
   Network,
@@ -45,6 +46,7 @@ export const portalNavGroups: PortalNavGroup[] = [
         exact: true,
         children: [
           { title: 'Organigrama', href: '/portal/club/organigrama', icon: Network },
+          { title: 'Estructura no deportiva', href: '/portal/club/estructura', icon: Landmark },
           { title: 'Staff', href: '/portal/club/staff', icon: UserCog },
           { title: 'Instalaciones', href: '/portal/club/instalaciones', icon: MapPin },
         ],

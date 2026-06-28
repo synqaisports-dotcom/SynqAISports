@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { MapPin, Network, Pencil, UserCog } from 'lucide-react';
+import { Landmark, MapPin, Network, Pencil, UserCog } from 'lucide-react';
 import {
   ClubIdentityHeroLinkAction,
 } from '@/components/portal/ClubIdentityHero';
@@ -23,6 +23,12 @@ export default async function PortalClubLandingPage() {
       description: 'Estructura jerárquica y dependencias del club.',
       href: '/portal/club/organigrama',
       icon: Network,
+    },
+    {
+      title: 'Estructura no deportiva',
+      description: 'Presidente, junta directiva y cargos institucionales.',
+      href: '/portal/club/estructura',
+      icon: Landmark,
     },
     {
       title: 'Cuerpo técnico',

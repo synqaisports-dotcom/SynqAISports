@@ -3,19 +3,19 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { Network } from 'lucide-react';
-import type { OrganigramaNode } from '@/lib/organigrama';
+import type { OrganigramaNodeView } from '@/lib/organigrama';
 import { countOrganigramaNodes, countVacantNodes, maxOrganigramaDepth } from '@/lib/organigrama';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { OrganigramaNodeCard } from '@/components/portal/OrganigramaNodeCard';
 
 type Props = {
-  nodes: OrganigramaNode[];
+  nodes: OrganigramaNodeView[];
   actions?: ReactNode;
   className?: string;
 };
 
-function MiniChart({ nodes }: { nodes: OrganigramaNode[] }) {
+function MiniChart({ nodes }: { nodes: OrganigramaNodeView[] }) {
   const roots = nodes.slice(0, 1);
   const root = roots[0];
   if (!root) return null;

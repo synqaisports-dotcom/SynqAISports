@@ -1,47 +1,96 @@
+import { displayPersonName, peopleById, type ClubPerson } from '@/lib/club-people';
+
 export type OrganigramaNode = {
   id: string;
   role: string;
-  name: string;
+  personId: string | null;
   children: OrganigramaNode[];
 };
 
 export type OrganigramaNodeFlat = {
   id: string;
   role: string;
-  name: string;
+  personId: string | null;
   parentId: string | null;
+};
+
+export type OrganigramaNodeView = {
+  id: string;
+  role: string;
+  personId: string | null;
+  displayName: string;
+  vacant: boolean;
+  children: OrganigramaNodeView[];
+};
+
+type LegacyOrganigramaNode = {
+  id: string;
+  role: string;
+  name?: string;
+  personId?: string | null;
+  children: LegacyOrganigramaNode[];
 };
 
 export const DEFAULT_ORGANIGRAMA: OrganigramaNode[] = [
   {
     id: 'root',
     role: 'Dirección deportiva',
-    name: 'Por asignar',
+    personId: null,
     children: [
       {
         id: 'met',
         role: 'Director de metodología',
-        name: 'Por asignar',
+        personId: null,
         children: [
-          { id: 'coord-u16', role: 'Coordinador Sub-16', name: 'Por asignar', children: [] },
-          { id: 'coord-u14', role: 'Coordinador Sub-14', name: 'Por asignar', children: [] },
+          { id: 'coord-u16', role: 'Coordinador Sub-16', personId: null, children: [] },
+          { id: 'coord-u14', role: 'Coordinador Sub-14', personId: null, children: [] },
         ],
       },
       {
         id: 'can',
         role: 'Director de cantera',
-        name: 'Por asignar',
-        children: [
-          { id: 'deleg', role: 'Delegados por equipo', name: 'Varios', children: [] },
-        ],
+        personId: null,
+        children: [{ id: 'deleg', role: 'Delegados por equipo', personId: null, children: [] }],
       },
     ],
   },
 ];
 
+function normalizeNode(raw: LegacyOrganigramaNode): OrganigramaNode {
+  const personId =
+    raw.personId != null && String(raw.personId).trim()
+      ? String(raw.personId).trim()
+      : null;
+
+  return {
+    id: String(raw.id),
+    role: String(raw.role ?? '').trim() || 'Cargo',
+    personId,
+    children: Array.isArray(raw.children) ? raw.children.map(normalizeNode) : [],
+  };
+}
+
 export function parseOrganigramaJson(value: unknown): OrganigramaNode[] {
   if (!Array.isArray(value) || value.length === 0) return DEFAULT_ORGANIGRAMA;
-  return value as OrganigramaNode[];
+  return (value as LegacyOrganigramaNode[]).map(normalizeNode);
+}
+
+export function enrichOrganigramaNodes(
+  nodes: OrganigramaNode[],
+  people: ClubPerson[]
+): OrganigramaNodeView[] {
+  const map = peopleById(people);
+  const enrich = (node: OrganigramaNode): OrganigramaNodeView => {
+    const vacant = !node.personId;
+    const displayName = vacant ? 'Por asignar' : displayPersonName(map.get(node.personId!));
+    return {
+      ...node,
+      displayName,
+      vacant,
+      children: node.children.map(enrich),
+    };
+  };
+  return nodes.map(enrich);
 }
 
 export function countOrganigramaNodes(nodes: OrganigramaNode[]): number {
@@ -50,7 +99,7 @@ export function countOrganigramaNodes(nodes: OrganigramaNode[]): number {
 
 export function countVacantNodes(nodes: OrganigramaNode[]): number {
   return nodes.reduce((acc, node) => {
-    const vacant = !node.name.trim() || node.name.toLowerCase() === 'por asignar' ? 1 : 0;
+    const vacant = !node.personId ? 1 : 0;
     return acc + vacant + countVacantNodes(node.children);
   }, 0);
 }
@@ -69,7 +118,7 @@ export function flattenOrganigrama(
   parentId: string | null = null
 ): OrganigramaNodeFlat[] {
   return nodes.flatMap((node) => [
-    { id: node.id, role: node.role, name: node.name, parentId },
+    { id: node.id, role: node.role, personId: node.personId, parentId },
     ...flattenOrganigrama(node.children, node.id),
   ]);
 }
@@ -86,7 +135,7 @@ export function buildOrganigramaTree(flat: OrganigramaNodeFlat[]): OrganigramaNo
     (byParent.get(parentId) ?? []).map((row) => ({
       id: row.id,
       role: row.role,
-      name: row.name,
+      personId: row.personId,
       children: build(row.id),
     }));
 

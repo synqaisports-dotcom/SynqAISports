@@ -33,12 +33,14 @@ export async function updateOrganigrama(
   }
 
   const tree = buildOrganigramaTree(
-    flat.map((row) => ({
-      id: String(row.id ?? '').trim(),
-      role: String(row.role ?? '').trim(),
-      name: String(row.name ?? '').trim() || 'Por asignar',
-      parentId: row.parentId ? String(row.parentId) : null,
-    })).filter((row) => row.id && row.role)
+    flat
+      .map((row) => ({
+        id: String(row.id ?? '').trim(),
+        role: String(row.role ?? '').trim(),
+        personId: row.personId ? String(row.personId).trim() : null,
+        parentId: row.parentId ? String(row.parentId) : null,
+      }))
+      .filter((row) => row.id && row.role)
   );
 
   if (tree.length === 0) return { ok: false, message: 'validation' };
