@@ -1,6 +1,6 @@
-import { ArrowLeft, Pencil } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { loadOrganigramaFromClub } from '@/app/actions/organigrama';
-import { OrganigramaChart } from '@/components/portal/OrganigramaChart';
+import { OrganigramaEditorForm } from '@/components/portal/OrganigramaEditorForm';
 import {
   OrganigramaHero,
   OrganigramaHeroLinkAction,
@@ -11,7 +11,7 @@ import { getStaffContext } from '@/lib/portal';
 import { redirect } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 
-export default async function PortalClubOrganigramaPage() {
+export default async function PortalClubOrganigramaEditarPage() {
   const supabase = await createClient();
   const ctx = await getStaffContext(supabase);
   if (!ctx) redirect('/login');
@@ -20,27 +20,18 @@ export default async function PortalClubOrganigramaPage() {
 
   return (
     <PageContainer>
-      <Card className="overflow-hidden p-0">
+      <Card className="mb-6 overflow-hidden p-0">
         <OrganigramaHero
           nodes={nodes}
           actions={
-            <>
-              <OrganigramaHeroLinkAction href="/portal/club" variant="outline">
-                <ArrowLeft className="size-3.5" />
-                Volver
-              </OrganigramaHeroLinkAction>
-              <OrganigramaHeroLinkAction href="/portal/club/organigrama/editar">
-                <Pencil className="size-3.5" />
-                Modificar
-              </OrganigramaHeroLinkAction>
-            </>
+            <OrganigramaHeroLinkAction href="/portal/club/organigrama" variant="outline">
+              <ArrowLeft className="size-3.5" />
+              Cancelar
+            </OrganigramaHeroLinkAction>
           }
         />
       </Card>
-
-      <div className="mt-6">
-        <OrganigramaChart nodes={nodes} />
-      </div>
+      <OrganigramaEditorForm clubId={ctx.club.id} nodes={nodes} />
     </PageContainer>
   );
 }

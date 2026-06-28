@@ -1,0 +1,161 @@
+'use client';
+
+import { useMemo, useState } from 'react';
+import { useFormState } from 'react-dom';
+import { Plus, Trash2 } from 'lucide-react';
+import { updateOrganigrama, type OrganigramaState } from '@/app/actions/organigrama';
+import {
+  buildOrganigramaTree,
+  flattenOrganigrama,
+  newOrganigramaNodeId,
+  type OrganigramaNode,
+  type OrganigramaNodeFlat,
+} from '@/lib/organigrama';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+
+const initial: OrganigramaState = { ok: false };
+
+type Props = {
+  clubId: string;
+  nodes: OrganigramaNode[];
+};
+
+export function OrganigramaEditorForm({ clubId, nodes }: Props) {
+  const bound = updateOrganigrama.bind(null, clubId);
+  const [state, action, pending] = useFormState(bound, initial);
+  const [rows, setRows] = useState<OrganigramaNodeFlat[]>(() => flattenOrganigrama(nodes));
+
+  const parentOptions = useMemo(
+    () => rows.map((row) => ({ id: row.id, label: row.role })),
+    [rows]
+  );
+
+  const organigramaJson = JSON.stringify(
+    buildOrganigramaTree(
+      rows.filter((row) => row.id.trim() && row.role.trim())
+    )
+  );
+
+  const updateRow = (id: string, patch: Partial<OrganigramaNodeFlat>) => {
+    setRows((prev) => prev.map((row) => (row.id === id ? { ...row, ...patch } : row)));
+  };
+
+  const removeRow = (id: string) => {
+    setRows((prev) => {
+      const filtered = prev.filter((row) => row.id !== id);
+      return filtered.map((row) => ({
+        ...row,
+        parentId: row.parentId === id ? null : row.parentId,
+      }));
+    });
+  };
+
+  const addRow = () => {
+    const rootId = rows.find((r) => !r.parentId)?.id ?? null;
+    setRows((prev) => [
+      ...prev,
+      {
+        id: newOrganigramaNodeId(),
+        role: 'Nuevo cargo',
+        name: 'Por asignar',
+        parentId: rootId,
+      },
+    ]);
+  };
+
+  return (
+    <form action={action} className="w-full space-y-6">
+      <input type="hidden" name="organigramaJson" value={organigramaJson} readOnly />
+
+      <Card className="w-full">
+        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0 pb-4">
+          <CardTitle className="text-base">Cargos y dependencias</CardTitle>
+          <Button type="button" variant="outline" size="sm" onClick={addRow}>
+            <Plus className="size-4" />
+            Añadir cargo
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {rows.map((row, index) => (
+            <div
+              key={row.id}
+              className="grid w-full gap-3 rounded-xl border border-primary/20 bg-muted/10 p-4 md:grid-cols-12 md:items-end"
+            >
+              <div className="md:col-span-4">
+                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                  Cargo
+                </label>
+                <Input
+                  value={row.role}
+                  onChange={(e) => updateRow(row.id, { role: e.target.value })}
+                  placeholder="Ej. Director de cantera"
+                  className="w-full"
+                />
+              </div>
+              <div className="md:col-span-3">
+                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                  Persona
+                </label>
+                <Input
+                  value={row.name}
+                  onChange={(e) => updateRow(row.id, { name: e.target.value })}
+                  placeholder="Nombre o «Por asignar»"
+                  className="w-full"
+                />
+              </div>
+              <div className="md:col-span-4">
+                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                  Reporta a
+                </label>
+                <select
+                  value={row.parentId ?? ''}
+                  onChange={(e) =>
+                    updateRow(row.id, { parentId: e.target.value || null })
+                  }
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm"
+                  disabled={index === 0 && !row.parentId}
+                >
+                  <option value="">— Raíz del organigrama —</option>
+                  {parentOptions
+                    .filter((opt) => opt.id !== row.id)
+                    .map((opt) => (
+                      <option key={opt.id} value={opt.id}>
+                        {opt.label}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <div className="flex md:col-span-1 md:justify-end">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="text-muted-foreground hover:text-destructive"
+                  onClick={() => removeRow(row.id)}
+                  disabled={rows.length <= 1}
+                  aria-label="Eliminar cargo"
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <div className="flex flex-wrap items-center gap-4 border-t border-primary/15 pt-2">
+        <Button type="submit" disabled={pending}>
+          {pending ? 'Guardando…' : 'Guardar organigrama'}
+        </Button>
+        {state.ok ? (
+          <p className="text-sm font-medium text-primary">Organigrama guardado.</p>
+        ) : null}
+        {state.message === 'error' ? (
+          <p className="text-sm text-destructive">Error al guardar. Revisa permisos RLS.</p>
+        ) : null}
+      </div>
+    </form>
+  );
+}

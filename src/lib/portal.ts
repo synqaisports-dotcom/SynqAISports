@@ -17,6 +17,7 @@ export type ClubRow = {
   x_url: string | null;
   tiktok_url: string | null;
   youtube_url: string | null;
+  organigrama_json: unknown | null;
   players_count: number;
   family_fee_annual_eur: number;
   synq_rate_per_user_eur: number;
@@ -54,7 +55,7 @@ export async function getStaffContext(
   const { data: club, error: clubError } = await supabase
     .from('synq_clubs')
     .select(
-      'id, name, slug, country_code, address, phone, email, cover_url, logo_url, website_url, instagram_url, facebook_url, x_url, tiktok_url, youtube_url, players_count, family_fee_annual_eur, synq_rate_per_user_eur, invite_code, is_founding, founding_until'
+      'id, name, slug, country_code, address, phone, email, cover_url, logo_url, website_url, instagram_url, facebook_url, x_url, tiktok_url, youtube_url, organigrama_json, players_count, family_fee_annual_eur, synq_rate_per_user_eur, invite_code, is_founding, founding_until'
     )
     .eq('id', staff.club_id)
     .single();
