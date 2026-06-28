@@ -85,16 +85,18 @@ export async function createTeam(
   if (!clubId) return { ok: false, message: 'unauthorized' };
 
   const name = String(formData.get('name') ?? '').trim();
+  const categorySlug = String(formData.get('categorySlug') ?? '').trim();
   const category = String(formData.get('category') ?? '').trim();
   const sport = String(formData.get('sport') ?? 'football');
 
-  if (!name || !category) return { ok: false, message: 'validation' };
+  if (!name || (!categorySlug && !category)) return { ok: false, message: 'validation' };
 
   const supabase = await createClient();
   const { error } = await supabase.from('synq_teams').insert({
     club_id: clubId,
     name,
-    category,
+    category: category || categorySlug,
+    category_slug: categorySlug || null,
     sport: sport === 'futsal' ? 'futsal' : 'football',
   });
 
@@ -104,7 +106,73 @@ export async function createTeam(
   }
 
   revalidatePath('/portal/cantera');
-  revalidatePath('/portal');
+  revalidatePath('/portal/cantera/equipos');
+  if (categorySlug) revalidatePath(`/portal/cantera/equipos/${categorySlug}`);
+  return { ok: true };
+}
+
+export async function updateTeam(
+  teamId: string,
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'unauthorized' };
+
+  const name = String(formData.get('name') ?? '').trim();
+  const sport = String(formData.get('sport') ?? 'football');
+
+  if (!name) return { ok: false, message: 'validation' };
+
+  const supabase = await createClient();
+  const { data: team } = await supabase
+    .from('synq_teams')
+    .select('category_slug')
+    .eq('id', teamId)
+    .eq('club_id', clubId)
+    .maybeSingle();
+
+  const { error } = await supabase
+    .from('synq_teams')
+    .update({
+      name,
+      sport: sport === 'futsal' ? 'futsal' : 'football',
+    })
+    .eq('id', teamId)
+    .eq('club_id', clubId);
+
+  if (error) return { ok: false, message: 'error' };
+
+  revalidatePath('/portal/cantera/equipos');
+  revalidatePath(`/portal/cantera/equipos/equipo/${teamId}`);
+  if (team?.category_slug) revalidatePath(`/portal/cantera/equipos/${team.category_slug}`);
+  return { ok: true };
+}
+
+export async function toggleTeamActive(teamId: string, active: boolean): Promise<ActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'unauthorized' };
+
+  const supabase = await createClient();
+  const { data: team } = await supabase
+    .from('synq_teams')
+    .select('category_slug')
+    .eq('id', teamId)
+    .eq('club_id', clubId)
+    .maybeSingle();
+
+  const { error } = await supabase
+    .from('synq_teams')
+    .update({ active })
+    .eq('id', teamId)
+    .eq('club_id', clubId);
+
+  if (error) return { ok: false, message: 'error' };
+
+  revalidatePath('/portal/cantera');
+  revalidatePath('/portal/cantera/equipos');
+  revalidatePath(`/portal/cantera/equipos/equipo/${teamId}`);
+  if (team?.category_slug) revalidatePath(`/portal/cantera/equipos/${team.category_slug}`);
   return { ok: true };
 }
 
@@ -122,6 +190,7 @@ export async function deleteTeam(teamId: string): Promise<ActionState> {
   if (error) return { ok: false, message: 'error' };
 
   revalidatePath('/portal/cantera');
+  revalidatePath('/portal/cantera/equipos');
   return { ok: true };
 }
 

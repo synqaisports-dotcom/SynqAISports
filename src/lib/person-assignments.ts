@@ -7,11 +7,11 @@ export type TeamOption = {
 };
 
 export const DEMO_TEAMS: TeamOption[] = [
-  { id: 'demo-team-u14a', name: 'Sub-14 A', category: 'Sub-14' },
-  { id: 'demo-team-u14b', name: 'Sub-14 B', category: 'Sub-14' },
-  { id: 'demo-team-u16a', name: 'Sub-16 A', category: 'Sub-16' },
-  { id: 'demo-team-u16b', name: 'Sub-16 B', category: 'Sub-16' },
-  { id: 'demo-team-u18', name: 'Sub-18', category: 'Sub-18' },
+  { id: 'demo-team-u14a', name: 'Infantil A', category: 'Infantil' },
+  { id: 'demo-team-u14b', name: 'Infantil B', category: 'Infantil' },
+  { id: 'demo-team-u16a', name: 'Cadete A', category: 'Cadete' },
+  { id: 'demo-team-u16b', name: 'Cadete B', category: 'Cadete' },
+  { id: 'demo-team-u18', name: 'Juvenil A', category: 'Juvenil' },
 ];
 
 export type AssignmentRole =

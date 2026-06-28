@@ -72,12 +72,12 @@ export async function uploadPersonPhoto(
 export async function loadClubTeams(clubId: string): Promise<TeamOption[]> {
   if (await isDemoActive()) {
     const supabase = await createClient();
-    const { data } = await supabase
-      .from('synq_teams')
-      .select('id, name, category')
-      .eq('club_id', clubId)
-      .eq('active', true)
-      .order('name');
+  const { data } = await supabase
+    .from('synq_teams')
+    .select('id, name, category, category_slug')
+    .eq('club_id', clubId)
+    .eq('active', true)
+    .order('name');
     if (data && data.length > 0) return data as TeamOption[];
     return DEMO_TEAMS;
   }
