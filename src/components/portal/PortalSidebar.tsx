@@ -1,13 +1,7 @@
 import Link from 'next/link';
+import { Shield } from 'lucide-react';
+import { PortalNav } from '@/components/portal/PortalNav';
 import { PortalSignOutButton } from '@/components/portal/PortalSignOutButton';
-
-const links = [
-  { href: '/portal', label: 'Inicio' },
-  { href: '/portal/club', label: 'Club' },
-  { href: '/portal/cantera', label: 'Cantera' },
-  { href: '/portal/metodologia', label: 'Metodología' },
-  { href: '/portal/config', label: 'Configuración' },
-];
 
 type Props = {
   clubName: string;
@@ -19,47 +13,33 @@ export function PortalSidebar({ clubName, role, demoMode = false }: Props) {
   const roleLabel = (role || 'admin').replace(/_/g, ' ');
 
   return (
-    <aside
-      className="flex w-56 shrink-0 flex-col border-r border-white/10 bg-synq-slate"
-      style={{ backgroundColor: '#132337', color: '#e8edf4', borderRight: '1px solid rgba(255,255,255,0.1)' }}
-    >
+    <aside className="flex w-64 shrink-0 flex-col border-r border-white/10 bg-synq-slate/80 backdrop-blur-xl">
       <div className="border-b border-white/10 p-5">
-        <p className="text-[10px] uppercase tracking-widest" style={{ color: '#94a3b8' }}>
-          Portal club
-        </p>
-        <p className="mt-1 font-semibold truncate" style={{ color: '#ffffff' }}>
-          {clubName}
-        </p>
-        <p className="text-xs capitalize" style={{ color: '#94a3b8' }}>
+        <div className="flex items-center gap-2">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-synq-pitch to-synq-accent shadow-lg shadow-synq-pitch/20">
+            <Shield className="h-4 w-4 text-white" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-synq-muted">
+              Portal club
+            </p>
+            <p className="truncate font-semibold text-white">{clubName}</p>
+          </div>
+        </div>
+        <p className="mt-3 inline-flex rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-0.5 text-[11px] capitalize text-synq-muted">
           {roleLabel}
         </p>
       </div>
-      <nav className="flex-1 space-y-1 p-3">
-        {links.map(({ href, label }) => (
-          <Link
-            key={href}
-            href={href}
-            className="block rounded-lg px-3 py-2 text-sm hover:bg-white/10"
-            style={{ color: '#e8edf4' }}
-          >
-            {label}
-          </Link>
-        ))}
-        <div
-          className="mt-4 rounded-lg border border-dashed border-white/10 px-3 py-2 text-xs"
-          style={{ color: '#94a3b8' }}
-        >
-          Patrocinadores, signage y torneos — próximamente
-        </div>
-      </nav>
+
+      <PortalNav />
+
       <div className="border-t border-white/10 p-3">
         {demoMode ? (
           <Link
             href="/"
-            className="block w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-white/10"
-            style={{ color: '#94a3b8' }}
+            className="block w-full rounded-xl px-3 py-2.5 text-left text-sm text-synq-muted transition-colors hover:bg-white/[0.06] hover:text-white"
           >
-            Salir del demo
+            ← Volver a la web
           </Link>
         ) : (
           <PortalSignOutButton />

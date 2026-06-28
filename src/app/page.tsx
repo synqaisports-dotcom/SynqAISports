@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import {
   ArrowRight,
   Calculator,
@@ -7,12 +8,12 @@ import {
   Smartphone,
   Trophy,
   Users,
+  Zap,
 } from 'lucide-react';
-import Link from 'next/link';
 import { ClubCalculator } from '@/components/ClubCalculator';
 import { FoundingForm } from '@/components/public/FoundingForm';
 import { PublicHeader } from '@/components/public/PublicHeader';
-import { isDemoModeEnv } from '@/lib/demo';
+import { DEMO_ENTRY_PATH } from '@/lib/demo-constants';
 import { getDictionary } from '@/lib/i18n/dictionaries';
 import { getLocale } from '@/lib/i18n/get-locale';
 
@@ -47,85 +48,103 @@ const modules = [
   },
 ];
 
+const stats = [
+  { value: '12–24 €', label: 'Cuota familiar / año', labelEn: 'Family fee / year' },
+  { value: '0,50 €', label: 'SynqAI desde / usuario', labelEn: 'SynqAI from / user' },
+  { value: '40 %', label: 'Sobrante ads al club', labelEn: 'Ad surplus to club' },
+];
+
 export default async function SynqHomePage() {
   const locale = await getLocale();
   const dict = getDictionary(locale);
   const isEn = locale === 'en';
-  const portalHref = isDemoModeEnv() ? '/portal' : '/demo';
-  const portalLabel = isDemoModeEnv()
-    ? 'Entrar al portal de pruebas'
-    : dict.hero.ctaPortal;
 
   return (
-    <div className="min-h-screen bg-synq-navy">
-      <PublicHeader
-        dict={dict}
-        locale={locale}
-        portalHref={portalHref}
-        portalLabel={portalLabel}
-      />
+    <div className="min-h-screen synq-mesh-bg">
+      <PublicHeader dict={dict} locale={locale} portalHref={DEMO_ENTRY_PATH} portalLabel={dict.hero.ctaPortal} />
 
       <main>
-        <section className="mx-auto max-w-5xl px-6 py-12 md:py-20">
-          <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
-            <div>
-              <p className="mb-4 text-sm font-medium tracking-widest text-synq-accent uppercase">
-                {dict.hero.tag}
-              </p>
-              <h1 className="font-serif-display text-4xl leading-tight text-white md:text-5xl">
-                {dict.hero.title}
-              </h1>
-              <p className="mt-6 text-lg text-synq-muted leading-relaxed">{dict.hero.body}</p>
-              <div className="mt-8 flex flex-wrap gap-4">
-                <Link
-                  href={portalHref}
-                  className="inline-flex items-center gap-2 rounded-full bg-synq-pitch px-6 py-3 text-sm font-semibold text-white hover:bg-synq-accent transition-colors"
-                >
-                  {portalLabel}
-                  <LogIn className="h-4 w-4" />
-                </Link>
-                <a
-                  href="#calculadora"
-                  className="inline-flex items-center gap-2 rounded-full border border-white/15 px-6 py-3 text-sm font-semibold text-white hover:border-synq-accent/50 transition-colors"
-                >
-                  {dict.hero.ctaCalc}
-                  <Calculator className="h-4 w-4" />
-                </a>
-                <a
-                  href="#founding"
-                  className="inline-flex items-center gap-2 rounded-full border border-white/15 px-6 py-3 text-sm font-semibold text-white hover:border-synq-accent/50 transition-colors"
-                >
-                  {dict.hero.ctaFounding}
-                  <ArrowRight className="h-4 w-4" />
-                </a>
+        <section className="relative overflow-hidden">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(34,197,94,0.08),transparent_70%)]" />
+          <div className="relative mx-auto max-w-6xl px-6 py-16 md:py-24">
+            <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
+              <div>
+                <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-synq-accent/30 bg-synq-accent/10 px-3 py-1 text-xs font-semibold tracking-widest text-synq-accent uppercase">
+                  <Zap className="h-3.5 w-3.5" />
+                  {dict.hero.tag}
+                </p>
+                <h1 className="font-serif-display text-4xl leading-[1.1] md:text-6xl">
+                  <span className="synq-gradient-text">{dict.hero.title}</span>
+                </h1>
+                <p className="mt-6 max-w-xl text-lg text-synq-muted leading-relaxed">{dict.hero.body}</p>
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <Link href={DEMO_ENTRY_PATH} className="synq-btn-primary">
+                    {dict.hero.ctaPortal}
+                    <LogIn className="h-4 w-4" />
+                  </Link>
+                  <a href="#calculadora" className="synq-btn-ghost">
+                    {dict.hero.ctaCalc}
+                    <Calculator className="h-4 w-4" />
+                  </a>
+                  <a href="#founding" className="synq-btn-ghost">
+                    {dict.hero.ctaFounding}
+                    <ArrowRight className="h-4 w-4" />
+                  </a>
+                </div>
+                <div className="mt-10 grid grid-cols-3 gap-3">
+                  {stats.map(({ value, label, labelEn }) => (
+                    <div key={value} className="synq-glass rounded-xl px-3 py-3 text-center">
+                      <p className="text-lg font-bold text-white">{value}</p>
+                      <p className="mt-1 text-[10px] leading-tight text-synq-muted">
+                        {isEn ? labelEn : label}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-            <div className="overflow-hidden rounded-2xl border border-white/10 bg-synq-slate/50 shadow-2xl">
-              <div className="aspect-video bg-black">
-                <video
-                  className="h-full w-full object-cover"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 9'%3E%3Crect fill='%230a1628' width='16' height='9'/%3E%3Ctext x='8' y='5' text-anchor='middle' fill='%2322c55e' font-size='1' font-family='sans-serif'%3ESynqAI%3C/text%3E%3C/svg%3E"
-                >
-                  <source
-                    src="https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
-                    type="video/mp4"
-                  />
-                </video>
+
+              <div className="synq-card overflow-hidden shadow-2xl shadow-black/40">
+                <div className="border-b border-white/10 bg-synq-slate/60 px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-red-400/80" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-amber-400/80" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/80" />
+                    <span className="ml-2 text-xs text-synq-muted">portal.synqai.net — demo</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-px bg-white/5 p-4">
+                  {['Cantera', 'Metodología', 'Club'].map((item) => (
+                    <div key={item} className="rounded-lg bg-synq-navy/80 p-3 text-center text-xs text-synq-muted">
+                      {item}
+                    </div>
+                  ))}
+                </div>
+                <div className="aspect-video bg-gradient-to-br from-synq-slate to-synq-navy p-6">
+                  <div className="grid h-full grid-cols-2 gap-3">
+                    <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
+                      <p className="text-[10px] uppercase tracking-wider text-synq-muted">Jugadores</p>
+                      <p className="mt-2 text-3xl font-bold text-white">80</p>
+                    </div>
+                    <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
+                      <p className="text-[10px] uppercase tracking-wider text-synq-muted">Ejercicios</p>
+                      <p className="mt-2 text-3xl font-bold text-synq-accent">24</p>
+                    </div>
+                    <div className="col-span-2 rounded-xl border border-synq-accent/20 bg-synq-accent/5 p-4">
+                      <p className="text-sm text-white">Fichas UEFA · Microciclos · PDF</p>
+                      <p className="mt-1 text-xs text-synq-muted">
+                        {isEn ? 'Try the club portal without login' : 'Prueba el portal del club sin login'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <p className="px-4 py-2 text-center text-xs text-synq-muted">
-                {isEn ? 'Demo reel — replace with SynqAI product video' : 'Vídeo demo — sustituir por reel del producto SynqAI'}
-              </p>
             </div>
           </div>
         </section>
 
-        <section id="modelo" className="border-y border-white/5 bg-synq-slate/40">
-          <div className="mx-auto max-w-5xl px-6 py-16">
-            <h2 className="font-serif-display text-3xl text-white">
+        <section id="modelo" className="border-y border-white/5 bg-synq-slate/30">
+          <div className="mx-auto max-w-6xl px-6 py-16">
+            <h2 className="font-serif-display text-3xl text-white md:text-4xl">
               {isEn ? 'How the money flows' : 'Cómo funciona el dinero'}
             </h2>
             <div className="mt-10 grid gap-6 md:grid-cols-3">
@@ -141,11 +160,8 @@ export default async function SynqHomePage() {
                     { step: '3', title: 'Ads → Reparto', text: 'La publicidad cubre primero SynqAI. Sobrante: 40 % al club.' },
                   ]
               ).map(({ step, title, text }) => (
-                <article
-                  key={step}
-                  className="rounded-2xl border border-white/5 bg-synq-navy/60 p-6"
-                >
-                  <span className="font-mono text-xs text-synq-accent">
+                <article key={step} className="synq-card-hover p-6">
+                  <span className="font-mono text-xs font-semibold text-synq-accent">
                     {isEn ? `Step ${step}` : `Paso ${step}`}
                   </span>
                   <h3 className="mt-2 text-lg font-semibold text-white">{title}</h3>
@@ -156,7 +172,7 @@ export default async function SynqHomePage() {
           </div>
         </section>
 
-        <section id="calculadora" className="mx-auto max-w-5xl px-6 py-20">
+        <section id="calculadora" className="mx-auto max-w-6xl px-6 py-20">
           <div className="mb-8 flex items-center gap-2">
             <Calculator className="h-6 w-6 text-synq-accent" />
             <h2 className="font-serif-display text-3xl text-white">{dict.nav.calculator}</h2>
@@ -164,8 +180,8 @@ export default async function SynqHomePage() {
           <ClubCalculator />
         </section>
 
-        <section id="founding" className="border-t border-white/5 bg-synq-slate/30">
-          <div className="mx-auto max-w-5xl px-6 py-16">
+        <section id="founding" className="border-t border-white/5 bg-synq-slate/20">
+          <div className="mx-auto max-w-6xl px-6 py-16">
             <h2 className="font-serif-display text-3xl text-white">{dict.founding.title}</h2>
             <p className="mt-2 max-w-2xl text-synq-muted">{dict.founding.subtitle}</p>
             <div className="mt-8">
@@ -175,17 +191,16 @@ export default async function SynqHomePage() {
         </section>
 
         <section id="modulos" className="border-t border-white/5">
-          <div className="mx-auto max-w-5xl px-6 py-16">
+          <div className="mx-auto max-w-6xl px-6 py-16">
             <h2 className="font-serif-display text-3xl text-white">
               {isEn ? 'Ecosystem' : 'Ecosistema'}
             </h2>
             <div className="mt-10 grid gap-6 sm:grid-cols-2">
               {modules.map(({ icon: Icon, title, titleEn, text, textEn }) => (
-                <article
-                  key={title}
-                  className="rounded-2xl border border-white/5 bg-synq-navy/50 p-6"
-                >
-                  <Icon className="mb-4 h-8 w-8 text-synq-accent" />
+                <article key={title} className="synq-card-hover group p-6">
+                  <div className="mb-4 inline-flex rounded-xl bg-synq-pitch/15 p-3 transition-colors group-hover:bg-synq-pitch/25">
+                    <Icon className="h-7 w-7 text-synq-accent" />
+                  </div>
                   <h3 className="text-lg font-semibold text-white">{isEn ? titleEn : title}</h3>
                   <p className="mt-2 text-sm text-synq-muted leading-relaxed">
                     {isEn ? textEn : text}
@@ -203,7 +218,7 @@ export default async function SynqHomePage() {
         </section>
 
         <section id="nosotros" className="border-t border-white/5 bg-synq-slate/20">
-          <div className="mx-auto max-w-5xl px-6 py-16">
+          <div className="mx-auto max-w-6xl px-6 py-16">
             <h2 className="font-serif-display text-3xl text-white">{dict.about.title}</h2>
             <p className="mt-4 max-w-3xl text-synq-muted leading-relaxed">{dict.about.body}</p>
           </div>
