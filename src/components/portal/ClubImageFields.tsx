@@ -144,7 +144,7 @@ export function ClubImageFields({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="w-full space-y-6">
       <div>
         <p className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
           <ImageIcon className="size-3.5" />
@@ -158,7 +158,7 @@ export function ClubImageFields({
         />
       </div>
 
-      <div className="grid gap-5">
+      <div className="grid w-full gap-5 lg:grid-cols-2">
         <UrlField
           id="coverUrl"
           name="coverUrl"

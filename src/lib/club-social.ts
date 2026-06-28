@@ -2,13 +2,14 @@ import type { ClubRow } from '@/lib/portal';
 import {
   FacebookIcon,
   GlobeIcon,
+  InstagramIcon,
   TikTokIcon,
   XIcon,
   YouTubeIcon,
 } from '@/components/icons/social';
 import type { ComponentType } from 'react';
 
-export type ClubSocialKey = 'website' | 'facebook' | 'x' | 'tiktok' | 'youtube';
+export type ClubSocialKey = 'website' | 'instagram' | 'facebook' | 'x' | 'tiktok' | 'youtube';
 
 export type ClubSocialLink = {
   key: ClubSocialKey;
@@ -19,6 +20,7 @@ export type ClubSocialLink = {
 
 export const CLUB_SOCIAL_FORM_NAMES: Record<ClubSocialKey, string> = {
   website: 'websiteUrl',
+  instagram: 'instagramUrl',
   facebook: 'facebookUrl',
   x: 'xUrl',
   tiktok: 'tiktokUrl',
@@ -38,6 +40,13 @@ export const CLUB_SOCIAL_FIELDS: {
     field: 'website_url',
     placeholder: 'https://miclub.es',
     Icon: GlobeIcon,
+  },
+  {
+    key: 'instagram',
+    label: 'Instagram',
+    field: 'instagram_url',
+    placeholder: 'https://instagram.com/miclub',
+    Icon: InstagramIcon,
   },
   {
     key: 'facebook',

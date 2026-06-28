@@ -27,6 +27,7 @@ export async function updateClubProfile(
   const coverUrl = String(formData.get('coverUrl') ?? '').trim();
   const logoUrl = String(formData.get('logoUrl') ?? '').trim();
   const websiteUrl = String(formData.get('websiteUrl') ?? '').trim();
+  const instagramUrl = String(formData.get('instagramUrl') ?? '').trim();
   const facebookUrl = String(formData.get('facebookUrl') ?? '').trim();
   const xUrl = String(formData.get('xUrl') ?? '').trim();
   const tiktokUrl = String(formData.get('tiktokUrl') ?? '').trim();
@@ -46,6 +47,7 @@ export async function updateClubProfile(
       cover_url: coverUrl || null,
       logo_url: logoUrl || null,
       website_url: websiteUrl || null,
+      instagram_url: instagramUrl || null,
       facebook_url: facebookUrl || null,
       x_url: xUrl || null,
       tiktok_url: tiktokUrl || null,

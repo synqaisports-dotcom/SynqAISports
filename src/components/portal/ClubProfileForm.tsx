@@ -18,12 +18,12 @@ export function ClubProfileForm({ club }: Props) {
   const [state, action, pending] = useFormState(bound, initial);
 
   return (
-    <form action={action} className="mx-auto max-w-2xl space-y-6">
-      <Card>
-        <CardHeader>
+    <form action={action} className="w-full space-y-6">
+      <Card className="w-full">
+        <CardHeader className="pb-4">
           <CardTitle className="text-base">Imagen del club</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="w-full">
           <ClubImageFields
             clubId={club.id}
             coverUrl={club.cover_url}
@@ -34,13 +34,13 @@ export function ClubProfileForm({ club }: Props) {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
+      <Card className="w-full">
+        <CardHeader className="pb-4">
           <CardTitle className="text-base">Datos generales</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
-          <Field label="Nombre del club" name="name" defaultValue={club.name} required className="sm:col-span-2" />
-          <Field label="Dirección" name="address" defaultValue={club.address ?? ''} className="sm:col-span-2" />
+        <CardContent className="grid w-full gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <Field label="Nombre del club" name="name" defaultValue={club.name} required className="sm:col-span-2 xl:col-span-3" />
+          <Field label="Dirección" name="address" defaultValue={club.address ?? ''} className="sm:col-span-2 xl:col-span-3" />
           <Field label="Teléfono" name="phone" defaultValue={club.phone ?? ''} />
           <Field label="Email" name="email" type="email" defaultValue={club.email ?? ''} />
           <Field
@@ -60,15 +60,15 @@ export function ClubProfileForm({ club }: Props) {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
+      <Card className="w-full">
+        <CardHeader className="pb-4">
           <CardTitle className="text-base">Redes y web pública</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-4">
+        <CardContent className="grid w-full gap-4 md:grid-cols-2 xl:grid-cols-3">
           {CLUB_SOCIAL_FIELDS.map(({ key, label, field, placeholder, Icon }) => (
-            <div key={key} className="space-y-1.5">
-              <label htmlFor={field} className="flex items-center gap-2 text-sm font-medium">
-                <span className="inline-flex size-8 items-center justify-center rounded-md border border-primary/25 bg-primary/10 text-primary">
+            <div key={key} className="min-w-0 space-y-1.5">
+              <label htmlFor={field} className="flex items-center gap-2 text-sm font-medium leading-none">
+                <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-md border border-primary/25 bg-primary/10 text-primary">
                   <Icon className="size-4" />
                 </span>
                 {label}
@@ -79,22 +79,24 @@ export function ClubProfileForm({ club }: Props) {
                 type="url"
                 placeholder={placeholder}
                 defaultValue={(club[field] as string | null) ?? ''}
+                className="w-full"
               />
             </div>
           ))}
         </CardContent>
       </Card>
 
-      {state.ok ? (
-        <p className="text-sm font-medium text-primary">Guardado correctamente.</p>
-      ) : null}
-      {state.message === 'error' ? (
-        <p className="text-sm text-destructive">Error al guardar. Revisa permisos RLS.</p>
-      ) : null}
-
-      <Button type="submit" disabled={pending}>
-        {pending ? 'Guardando…' : 'Guardar ficha'}
-      </Button>
+      <div className="flex flex-wrap items-center gap-4 border-t border-primary/15 pt-2">
+        <Button type="submit" disabled={pending}>
+          {pending ? 'Guardando…' : 'Guardar ficha'}
+        </Button>
+        {state.ok ? (
+          <p className="text-sm font-medium text-primary">Guardado correctamente.</p>
+        ) : null}
+        {state.message === 'error' ? (
+          <p className="text-sm text-destructive">Error al guardar. Revisa permisos RLS.</p>
+        ) : null}
+      </div>
     </form>
   );
 }
@@ -131,6 +133,7 @@ function Field({
         required={required}
         min={min}
         step={step}
+        className="w-full"
       />
     </div>
   );
