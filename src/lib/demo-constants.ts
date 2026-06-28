@@ -27,3 +27,7 @@ export function hasServiceRoleKey(): boolean {
 export function getDemoClubIdFallback(): string {
   return process.env.SYNQ_DEMO_CLUB_ID?.trim() || DEMO_CLUB_ID;
 }
+
+export function isDemoRequest(request: { cookies: { get: (name: string) => { value?: string } | undefined } }): boolean {
+  return isDemoModeEnv() || isDemoCookieValue(request.cookies.get(DEMO_COOKIE)?.value);
+}

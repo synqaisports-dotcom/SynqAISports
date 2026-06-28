@@ -19,14 +19,11 @@ export {
   hasServiceRoleKey,
   isDemoCookieValue,
   isDemoModeEnv,
+  isDemoRequest,
 } from '@/lib/demo-constants';
 
 const CLUB_SELECT =
   'id, name, slug, country_code, address, phone, email, players_count, family_fee_annual_eur, synq_rate_per_user_eur, invite_code, is_founding, founding_until';
-
-export function isDemoRequest(request: NextRequest): boolean {
-  return isDemoModeEnv() || isDemoCookieValue(request.cookies.get(DEMO_COOKIE)?.value);
-}
 
 export async function isDemoActive(): Promise<boolean> {
   if (isDemoModeEnv()) return true;
