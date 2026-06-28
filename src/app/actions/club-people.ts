@@ -11,7 +11,7 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
 const PERSON_SELECT =
-  'id, club_id, full_name, email, phone, person_kind, institutional_role, sport_role, access_profile, user_id, notes';
+  'id, club_id, full_name, email, phone, person_kind, institutional_role, sport_role, access_profile, user_id, notes, photo_url, medical_until, sport_teams';
 
 export type ClubPeopleState = {
   ok: boolean;
@@ -42,6 +42,13 @@ export async function loadInstitutionalPeople(clubId: string): Promise<ClubPerso
   const people = await loadClubPeople(clubId);
   return people.filter(
     (person) => person.person_kind === 'institutional' || person.person_kind === 'mixed'
+  );
+}
+
+export async function loadSportPeople(clubId: string): Promise<ClubPerson[]> {
+  const people = await loadClubPeople(clubId);
+  return people.filter(
+    (person) => person.person_kind === 'sport' || person.person_kind === 'mixed'
   );
 }
 
@@ -97,6 +104,71 @@ export async function upsertInstitutionalPerson(
 
   revalidatePath('/portal/club/estructura');
   revalidatePath('/portal/club/estructura/editar');
+  revalidatePath('/portal/club/organigrama');
+  revalidatePath('/portal/club/organigrama/editar');
+  return { ok: true };
+}
+
+export async function upsertSportPerson(
+  clubId: string,
+  _prev: ClubPeopleState,
+  formData: FormData
+): Promise<ClubPeopleState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user && !(await isDemoActive())) return { ok: false, message: 'unauthorized' };
+
+  const personId = String(formData.get('personId') ?? '').trim();
+  const fullName = String(formData.get('fullName') ?? '').trim();
+  const email = String(formData.get('email') ?? '').trim();
+  const phone = String(formData.get('phone') ?? '').trim();
+  const sportRole = String(formData.get('sportRole') ?? '').trim();
+  const sportTeams = String(formData.get('sportTeams') ?? '').trim();
+  const medicalUntil = String(formData.get('medicalUntil') ?? '').trim();
+  const accessProfile = String(formData.get('accessProfile') ?? '').trim() as AccessProfile;
+  const notes = String(formData.get('notes') ?? '').trim();
+
+  if (!fullName || !sportRole) return { ok: false, message: 'validation' };
+
+  const payload = {
+    club_id: clubId,
+    full_name: fullName,
+    email: email || null,
+    phone: phone || null,
+    person_kind: 'sport' as PersonKind,
+    institutional_role: null,
+    sport_role: sportRole,
+    sport_teams: sportTeams || null,
+    medical_until: medicalUntil || null,
+    access_profile: accessProfile || 'coach',
+    notes: notes || null,
+  };
+
+  if (await isDemoActive()) {
+    revalidatePath('/portal/club/staff');
+    revalidatePath('/portal/club/organigrama');
+    revalidatePath('/portal/club/organigrama/editar');
+    return { ok: true };
+  }
+
+  const query = personId
+    ? supabase.from('synq_club_people').update(payload).eq('id', personId).eq('club_id', clubId)
+    : supabase.from('synq_club_people').insert(payload);
+
+  const { error } = await query;
+  if (error) {
+    console.error('upsertSportPerson', error);
+    return { ok: false, message: 'error' };
+  }
+
+  revalidatePath('/portal/club/staff');
+  revalidatePath('/portal/club/staff/nuevo');
+  if (personId) {
+    revalidatePath(`/portal/club/staff/${personId}`);
+    revalidatePath(`/portal/club/staff/${personId}/editar`);
+  }
   revalidatePath('/portal/club/organigrama');
   revalidatePath('/portal/club/organigrama/editar');
   return { ok: true };

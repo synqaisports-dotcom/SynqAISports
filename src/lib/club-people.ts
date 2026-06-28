@@ -24,6 +24,9 @@ export type ClubPerson = {
   access_profile: AccessProfile;
   user_id: string | null;
   notes: string | null;
+  photo_url: string | null;
+  medical_until: string | null;
+  sport_teams: string | null;
 };
 
 export const PERSON_KIND_LABELS: Record<PersonKind, string> = {
@@ -57,6 +60,9 @@ export const DEMO_CLUB_PEOPLE: ClubPerson[] = [
     access_profile: 'coach',
     user_id: null,
     notes: null,
+    photo_url: null,
+    medical_until: '2026-08-15',
+    sport_teams: 'Sub-14 A',
   },
   {
     id: 'demo-person-sport-2',
@@ -70,6 +76,9 @@ export const DEMO_CLUB_PEOPLE: ClubPerson[] = [
     access_profile: 'coach',
     user_id: null,
     notes: null,
+    photo_url: null,
+    medical_until: null,
+    sport_teams: 'Sub-16 B',
   },
   {
     id: 'demo-person-sport-3',
@@ -83,6 +92,9 @@ export const DEMO_CLUB_PEOPLE: ClubPerson[] = [
     access_profile: 'coach',
     user_id: null,
     notes: null,
+    photo_url: null,
+    medical_until: '2026-11-01',
+    sport_teams: 'Sub-16 A, Sub-18',
   },
   {
     id: 'demo-person-inst-1',
@@ -96,6 +108,9 @@ export const DEMO_CLUB_PEOPLE: ClubPerson[] = [
     access_profile: 'president',
     user_id: null,
     notes: null,
+    photo_url: null,
+    medical_until: null,
+    sport_teams: null,
   },
   {
     id: 'demo-person-inst-2',
@@ -109,6 +124,9 @@ export const DEMO_CLUB_PEOPLE: ClubPerson[] = [
     access_profile: 'treasurer',
     user_id: null,
     notes: null,
+    photo_url: null,
+    medical_until: null,
+    sport_teams: null,
   },
 ];
 
@@ -137,6 +155,19 @@ export type PersonSelectGroup = {
   label: string;
   options: { value: string; label: string }[];
 };
+
+export function sportAccessProfileOptions() {
+  const sportKeys: NonNullable<AccessProfile>[] = [
+    'sport_director',
+    'methodology',
+    'coordinator',
+    'coach',
+    'delegate',
+    'admin',
+    'none',
+  ];
+  return sportKeys.map((value) => ({ value, label: ACCESS_PROFILE_LABELS[value] }));
+}
 
 export function accessProfileOptions() {
   return Object.entries(ACCESS_PROFILE_LABELS).map(([value, label]) => ({ value, label }));

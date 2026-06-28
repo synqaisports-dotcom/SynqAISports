@@ -1,83 +1,92 @@
-import Link from 'next/link';
-import { ArrowLeft, BarChart3, Plus } from 'lucide-react';
+import { ArrowLeft, BarChart3, Pencil, Plus, User } from 'lucide-react';
+import { loadSportPeople } from '@/app/actions/club-people';
+import {
+  ProfileRowAction,
+  ProfileRowCard,
+  ProfileRowList,
+} from '@/components/portal/ProfileRowCard';
+import { StaffHero, StaffHeroLinkAction } from '@/components/portal/StaffHero';
 import { PageContainer } from '@/components/portal/PageContainer';
+import { createClient } from '@/lib/supabase/server';
+import { getStaffContext } from '@/lib/portal';
+import {
+  clubPersonRowSubtitle,
+  clubPersonSportFields,
+  medicalStatus,
+} from '@/lib/profile-row';
+import { redirect } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 
-const demoStaff = [
-  {
-    name: 'Carlos Méndez',
-    role: 'Entrenador Sub-14 A',
-    teams: ['Sub-14 A'],
-    medical: { ok: true, until: '2026-08-15' },
-  },
-  {
-    name: 'Laura Ruiz',
-    role: '2ª entrenadora Sub-16',
-    teams: ['Sub-16 B'],
-    medical: { ok: false, until: null },
-  },
-  {
-    name: 'Miguel Soto',
-    role: 'Preparador físico',
-    teams: ['Sub-16 A', 'Sub-18'],
-    medical: { ok: true, until: '2026-11-01' },
-  },
-];
+export default async function PortalClubStaffLandingPage() {
+  const supabase = await createClient();
+  const ctx = await getStaffContext(supabase);
+  if (!ctx) redirect('/login');
 
-export default function PortalClubStaffLandingPage() {
+  const people = await loadSportPeople(ctx.club.id);
+
   return (
     <PageContainer>
-      <Card className="mb-4">
-        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 space-y-0">
-          <CardTitle className="text-base">Cuerpo técnico</CardTitle>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/portal/club">
-                <ArrowLeft className="h-4 w-4" />
+      <Card className="overflow-hidden p-0">
+        <StaffHero
+          people={people}
+          actions={
+            <>
+              <StaffHeroLinkAction href="/portal/club" variant="outline">
+                <ArrowLeft className="size-3.5" />
                 Volver
-              </Link>
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/portal/club/staff/categorias">
-                <BarChart3 className="h-4 w-4" />
+              </StaffHeroLinkAction>
+              <StaffHeroLinkAction href="/portal/club/staff/categorias" variant="outline">
+                <BarChart3 className="size-3.5" />
                 Por categorías
-              </Link>
-            </Button>
-            <Button size="sm" asChild>
-              <Link href="/portal/club/staff/nuevo">
-                <Plus className="h-4 w-4" />
+              </StaffHeroLinkAction>
+              <StaffHeroLinkAction href="/portal/club/staff/nuevo">
+                <Plus className="size-3.5" />
                 Crear ficha
-              </Link>
-            </Button>
-          </div>
-        </CardHeader>
+              </StaffHeroLinkAction>
+            </>
+          }
+        />
       </Card>
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {demoStaff.map((person) => (
-          <Card key={person.name}>
-            <CardHeader className="pb-2">
-              <div className="flex items-start justify-between gap-2">
-                <CardTitle className="text-base">{person.name}</CardTitle>
-                <Badge variant={person.medical.ok ? 'default' : 'destructive'}>
-                  {person.medical.ok ? 'Médico OK' : 'Pendiente'}
+
+      <ProfileRowList className="mt-6">
+        {people.map((person) => {
+          const medical = medicalStatus(person);
+          return (
+            <ProfileRowCard
+              key={person.id}
+              photoUrl={person.photo_url}
+              title={person.full_name}
+              subtitle={clubPersonRowSubtitle(person)}
+              badges={
+                <Badge variant={medical.ok ? 'default' : 'destructive'} className="text-[10px]">
+                  {medical.label}
                 </Badge>
-              </div>
-              <CardDescription>{person.role}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <p>
-                <span className="text-muted-foreground">Equipos: </span>
-                {person.teams.join(', ')}
-              </p>
-              <Button variant="outline" size="sm" className="w-full" disabled>
-                Modificar ficha
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              }
+              fields={clubPersonSportFields(person)}
+              actions={
+                <>
+                  <ProfileRowAction
+                    href={`/portal/club/staff/${person.id}/editar`}
+                    label="Modificar ficha"
+                    icon={Pencil}
+                  />
+                  <ProfileRowAction
+                    href={`/portal/club/staff/${person.id}`}
+                    label="Ver perfil"
+                    icon={User}
+                  />
+                </>
+              }
+            />
+          );
+        })}
+        {people.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Aún no hay fichas de cuerpo técnico. Crea la primera para asignarla en el organigrama.
+          </p>
+        ) : null}
+      </ProfileRowList>
     </PageContainer>
   );
 }
