@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { ArrowLeft, Pencil } from 'lucide-react';
 import { PageContainer } from '@/components/portal/PageContainer';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const redesDemo = [
   { label: 'Web oficial', value: '—' },
@@ -13,30 +13,24 @@ const redesDemo = [
 
 export default function PortalClubRedesLandingPage() {
   return (
-    <PageContainer
-      pageTitle="Redes y ficha pública"
-      pageDescription="Presencia digital del club visible para familias y patrocinadores."
-      pageHeaderAction={
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/portal/club">
-              <ArrowLeft className="h-4 w-4" />
-              Volver
-            </Link>
-          </Button>
-          <Button size="sm" asChild>
-            <Link href="/portal/club/redes/editar">
-              <Pencil className="h-4 w-4" />
-              Modificar
-            </Link>
-          </Button>
-        </div>
-      }
-    >
+    <PageContainer>
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Enlaces públicos</CardTitle>
-          <CardDescription>Aún no configurados. Pulsa Modificar para añadirlos.</CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+          <CardTitle className="text-base">Redes y ficha pública</CardTitle>
+          <div className="flex shrink-0 gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/portal/club">
+                <ArrowLeft className="h-4 w-4" />
+                Volver
+              </Link>
+            </Button>
+            <Button size="sm" asChild>
+              <Link href="/portal/club/redes/editar">
+                <Pencil className="h-4 w-4" />
+                Modificar
+              </Link>
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           {redesDemo.map(({ label, value }) => (

@@ -2,27 +2,21 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { PageContainer } from '@/components/portal/PageContainer';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 
 export default function PortalClubStaffNuevoPage() {
   return (
-    <PageContainer
-      pageTitle="Crear ficha de staff"
-      pageDescription="Alta de un técnico en el cuerpo del club."
-      pageHeaderAction={
-        <Button variant="outline" size="sm" asChild>
-          <Link href="/portal/club/staff">
-            <ArrowLeft className="h-4 w-4" />
-            Cancelar
-          </Link>
-        </Button>
-      }
-    >
+    <PageContainer>
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Datos del técnico</CardTitle>
-          <CardDescription>Formulario de alta — persistencia en la siguiente fase.</CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+          <CardTitle className="text-base">Crear ficha de staff</CardTitle>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/portal/club/staff">
+              <ArrowLeft className="h-4 w-4" />
+              Cancelar
+            </Link>
+          </Button>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <label className="text-sm">
@@ -49,7 +43,7 @@ export default function PortalClubStaffNuevoPage() {
             <span className="mb-1.5 block text-muted-foreground">Reconocimiento médico — fin</span>
             <Input type="date" />
           </label>
-          <Button className="sm:col-span-2 w-fit" disabled>
+          <Button className="w-fit sm:col-span-2" disabled>
             Crear ficha (próximamente)
           </Button>
         </CardContent>

@@ -7,14 +7,15 @@ import {
   Pencil,
   Share2,
   UserCog,
-  Users,
 } from 'lucide-react';
-import { ClubIdentityHero } from '@/components/portal/ClubIdentityHero';
+import {
+  ClubIdentityHero,
+  ClubIdentityHeroLinkAction,
+} from '@/components/portal/ClubIdentityHero';
 import { PageContainer } from '@/components/portal/PageContainer';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import { redirect } from 'next/navigation';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 
@@ -64,20 +65,17 @@ export default async function PortalClubLandingPage() {
   ];
 
   return (
-    <PageContainer
-      pageTitle={club.name}
-      pageDescription="Portada del club — resumen y acceso a cada área. Los formularios se abren desde cada sección."
-      pageHeaderAction={
-        <Button asChild>
-          <Link href="/portal/club/datos/editar">
-            <Pencil className="h-4 w-4" />
-            Modificar datos
-          </Link>
-        </Button>
-      }
-    >
+    <PageContainer>
       <Card className="overflow-hidden p-0">
-        <ClubIdentityHero club={club} showEditHint />
+        <ClubIdentityHero
+          club={club}
+          actions={
+            <ClubIdentityHeroLinkAction href="/portal/club/datos/editar">
+              <Pencil className="size-3.5" />
+              Modificar
+            </ClubIdentityHeroLinkAction>
+          }
+        />
         <CardContent className="pt-4">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div>
@@ -107,7 +105,7 @@ export default async function PortalClubLandingPage() {
         </CardContent>
       </Card>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {modules.map(({ title, description, href, icon: Icon, action }) => (
           <Card key={title} className="flex flex-col transition-colors hover:border-primary/30">
             <CardHeader>
@@ -118,24 +116,17 @@ export default async function PortalClubLandingPage() {
               <CardDescription>{description}</CardDescription>
             </CardHeader>
             <CardContent className="mt-auto">
-              <Button variant="outline" size="sm" asChild className="w-full">
-                <Link href={href}>
-                  {action}
-                  <ArrowRight className="ml-1 h-4 w-4" />
-                </Link>
-              </Button>
+              <Link
+                href={href}
+                className="inline-flex h-9 w-full items-center justify-center gap-1 rounded-md border border-primary/25 bg-transparent px-3 text-sm font-medium transition-colors hover:border-primary/45 hover:bg-primary/5"
+              >
+                {action}
+                <ArrowRight className="size-4" />
+              </Link>
             </CardContent>
           </Card>
         ))}
       </div>
-
-      <Card className="mt-6 border-dashed">
-        <CardContent className="flex items-center gap-3 py-4 text-sm text-muted-foreground">
-          <Users className="h-4 w-4 shrink-0 text-primary" />
-          Desde cada tarjeta accedes a la portada del módulo. Crear o editar fichas solo con los
-          botones dentro de cada sección.
-        </CardContent>
-      </Card>
     </PageContainer>
   );
 }

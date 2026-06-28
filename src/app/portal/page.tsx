@@ -60,10 +60,8 @@ export default async function PortalHomePage() {
   ];
 
   return (
-    <PageContainer
-      pageTitle={`Bienvenido, ${ctx.club.name}`}
-      pageDescription="Panel de control del club — cantera, metodología y configuración."
-    >
+    <PageContainer>
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {kpis.map(({ label, value, hint, icon: Icon }) => (
           <Card key={label}>

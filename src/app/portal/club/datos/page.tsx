@@ -1,11 +1,13 @@
 import Link from 'next/link';
 import { ArrowLeft, Pencil } from 'lucide-react';
-import { ClubIdentityHero } from '@/components/portal/ClubIdentityHero';
+import {
+  ClubIdentityHero,
+  ClubIdentityHeroLinkAction,
+} from '@/components/portal/ClubIdentityHero';
 import { PageContainer } from '@/components/portal/PageContainer';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import { redirect } from 'next/navigation';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 
@@ -26,38 +28,26 @@ export default async function PortalClubDatosLandingPage() {
     { label: 'Cuota familiar', value: `${club.family_fee_annual_eur} €/año` },
     { label: 'Tarifa SynqAI', value: `${club.synq_rate_per_user_eur} €/usuario/mes` },
     { label: 'Código invitación', value: club.invite_code ?? '—' },
-    { label: 'Banner', value: club.cover_url ?? 'Sin imagen' },
-    { label: 'Escudo', value: club.logo_url ?? 'Sin imagen' },
   ];
 
   return (
-    <PageContainer
-      pageTitle="Datos del club"
-      pageDescription="Vista de la ficha oficial. Usa Modificar para editar."
-      pageHeaderAction={
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/portal/club">
-              <ArrowLeft className="h-4 w-4" />
-              Volver
-            </Link>
-          </Button>
-          <Button size="sm" asChild>
-            <Link href="/portal/club/datos/editar">
-              <Pencil className="h-4 w-4" />
-              Modificar
-            </Link>
-          </Button>
-        </div>
-      }
-    >
+    <PageContainer>
       <Card className="overflow-hidden p-0">
-        <ClubIdentityHero club={club} />
-        <CardContent className="pt-2">
-          <p className="text-sm text-muted-foreground">
-            Identidad visual del club en la portada y futura ficha pública.
-          </p>
-        </CardContent>
+        <ClubIdentityHero
+          club={club}
+          actions={
+            <>
+              <ClubIdentityHeroLinkAction href="/portal/club" variant="outline">
+                <ArrowLeft className="size-3.5" />
+                Volver
+              </ClubIdentityHeroLinkAction>
+              <ClubIdentityHeroLinkAction href="/portal/club/datos/editar">
+                <Pencil className="size-3.5" />
+                Modificar
+              </ClubIdentityHeroLinkAction>
+            </>
+          }
+        />
       </Card>
 
       <Card className="mt-6">

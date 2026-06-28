@@ -49,10 +49,8 @@ export default async function PortalCanteraLandingPage() {
   ];
 
   return (
-    <PageContainer
-      pageTitle="Cantera"
-      pageDescription="Portada de la cantera del club."
-    >
+    <PageContainer>
+
       <div className="grid gap-4 md:grid-cols-3">
         {modules.map(({ title, description, href, icon: Icon, stat }) => (
           <Card key={title} className="flex flex-col hover:border-primary/30">

@@ -13,18 +13,18 @@ const categories = [
 
 export default function PortalClubStaffCategoriasPage() {
   return (
-    <PageContainer
-      pageTitle="Staff por categorías"
-      pageDescription="Dashboard del cuerpo técnico agrupado por categoría."
-      pageHeaderAction={
-        <Button variant="outline" size="sm" asChild>
-          <Link href="/portal/club/staff">
-            <ArrowLeft className="h-4 w-4" />
-            Volver
-          </Link>
-        </Button>
-      }
-    >
+    <PageContainer>
+      <Card className="mb-4">
+        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+          <CardTitle className="text-base">Staff por categorías</CardTitle>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/portal/club/staff">
+              <ArrowLeft className="h-4 w-4" />
+              Volver
+            </Link>
+          </Button>
+        </CardHeader>
+      </Card>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {categories.map((cat) => (
           <Card key={cat.name}>

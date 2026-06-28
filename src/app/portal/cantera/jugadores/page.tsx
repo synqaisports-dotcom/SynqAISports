@@ -21,18 +21,18 @@ export default async function PortalCanteraJugadoresPage() {
     .order('display_name');
 
   return (
-    <PageContainer
-      pageTitle="Jugadores"
-      pageDescription="Listado de jugadores asignados a cada equipo de cantera."
-      pageHeaderAction={
-        <Button variant="outline" size="sm" asChild>
-          <Link href="/portal/cantera">
-            <ArrowLeft className="h-4 w-4" />
-            Volver
-          </Link>
-        </Button>
-      }
-    >
+    <PageContainer>
+      <Card className="mb-4">
+        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+          <CardTitle className="text-base">Jugadores</CardTitle>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/portal/cantera">
+              <ArrowLeft className="h-4 w-4" />
+              Volver
+            </Link>
+          </Button>
+        </CardHeader>
+      </Card>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {(players ?? []).map((p) => {
           const team = Array.isArray(p.synq_teams) ? p.synq_teams[0] : p.synq_teams;

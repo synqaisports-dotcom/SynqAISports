@@ -32,18 +32,18 @@ const schedules = [
 
 export default function PortalCanteraHorariosPage() {
   return (
-    <PageContainer
-      pageTitle="Horarios de entrenamiento"
-      pageDescription="Planificación por equipo: formación o competición, categoría, letra y cuerpo técnico."
-      pageHeaderAction={
-        <Button variant="outline" size="sm" asChild>
-          <Link href="/portal/cantera">
-            <ArrowLeft className="h-4 w-4" />
-            Volver
-          </Link>
-        </Button>
-      }
-    >
+    <PageContainer>
+      <Card className="mb-4">
+        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+          <CardTitle className="text-base">Horarios de entrenamiento</CardTitle>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/portal/cantera">
+              <ArrowLeft className="h-4 w-4" />
+              Volver
+            </Link>
+          </Button>
+        </CardHeader>
+      </Card>
       <div className="space-y-4">
         {schedules.map((row) => (
           <Card key={row.team}>

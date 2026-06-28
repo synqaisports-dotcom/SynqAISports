@@ -1,114 +1,189 @@
 'use client';
 
-import { useState } from 'react';
-import { ImageIcon, Shield } from 'lucide-react';
+import { useRef, useState, useTransition } from 'react';
+import { ImageIcon, Loader2, Upload } from 'lucide-react';
+import { uploadClubMedia } from '@/app/actions/club';
+import { ClubIdentityPreview } from '@/components/portal/ClubIdentityHero';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
 
 type Props = {
+  clubId: string;
   coverUrl: string | null;
   logoUrl: string | null;
   clubName: string;
+  countryCode?: string;
 };
 
-function clubInitials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) {
-    return `${parts[0][0] ?? ''}${parts[1][0] ?? ''}`.toUpperCase();
-  }
-  return name.slice(0, 2).toUpperCase();
+function UploadButton({
+  label,
+  uploading,
+  onPick,
+}: {
+  label: string;
+  uploading: boolean;
+  onPick: (file: File) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml"
+        className="sr-only"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) onPick(file);
+          e.target.value = '';
+        }}
+      />
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="shrink-0 gap-1.5"
+        disabled={uploading}
+        onClick={() => inputRef.current?.click()}
+      >
+        {uploading ? (
+          <Loader2 className="size-3.5 animate-spin" />
+        ) : (
+          <Upload className="size-3.5" />
+        )}
+        {label}
+      </Button>
+    </>
+  );
 }
 
-export function ClubImageFields({ coverUrl, logoUrl, clubName }: Props) {
+function UrlField({
+  id,
+  name,
+  label,
+  hint,
+  value,
+  onChange,
+  uploadLabel,
+  uploading,
+  onUpload,
+  error,
+}: {
+  id: string;
+  name: string;
+  label: string;
+  hint: string;
+  value: string;
+  onChange: (value: string) => void;
+  uploadLabel: string;
+  uploading: boolean;
+  onUpload: (file: File) => void;
+  error?: string | null;
+}) {
+  return (
+    <div className="space-y-2">
+      <label htmlFor={id} className="text-sm font-medium leading-none">
+        {label}
+      </label>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Input
+          id={id}
+          name={name}
+          type="url"
+          placeholder="https://…"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="min-w-0 flex-1"
+        />
+        <UploadButton label={uploadLabel} uploading={uploading} onPick={onUpload} />
+      </div>
+      <p className="text-xs text-muted-foreground">{hint}</p>
+      {error ? <p className="text-xs text-destructive">{error}</p> : null}
+    </div>
+  );
+}
+
+export function ClubImageFields({
+  clubId,
+  coverUrl,
+  logoUrl,
+  clubName,
+  countryCode = 'ES',
+}: Props) {
   const [coverPreview, setCoverPreview] = useState(coverUrl ?? '');
   const [logoPreview, setLogoPreview] = useState(logoUrl ?? '');
-  const initials = clubInitials(clubName);
+  const [coverError, setCoverError] = useState<string | null>(null);
+  const [logoError, setLogoError] = useState<string | null>(null);
+  const [coverPending, startCoverUpload] = useTransition();
+  const [logoPending, startLogoUpload] = useTransition();
+
+  const uploadFile = (type: 'cover' | 'logo', file: File) => {
+    const start = type === 'cover' ? startCoverUpload : startLogoUpload;
+    const setUrl = type === 'cover' ? setCoverPreview : setLogoPreview;
+    const setError = type === 'cover' ? setCoverError : setLogoError;
+
+    start(async () => {
+      setError(null);
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('type', type);
+      const result = await uploadClubMedia(clubId, fd);
+      if (result.ok && result.url) {
+        setUrl(result.url);
+      } else {
+        const messages: Record<string, string> = {
+          too_large: 'La imagen supera 5 MB.',
+          invalid_type: 'Formato no válido. Usa JPG, PNG, WebP, GIF o SVG.',
+          upload_error: 'No se pudo subir. Comprueba Supabase Storage (bucket club-media).',
+          unauthorized: 'Sin permiso para subir.',
+        };
+        setError(messages[result.message ?? ''] ?? 'Error al subir la imagen.');
+      }
+    });
+  };
 
   return (
     <div className="space-y-6">
-      <div className="overflow-hidden rounded-xl border border-primary/30">
-        <p className="border-b border-primary/15 bg-muted/30 px-4 py-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+      <div>
+        <p className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          <ImageIcon className="size-3.5" />
           Vista previa
         </p>
-        <div className="relative bg-card">
-          <div className="relative h-32 w-full overflow-hidden md:h-36">
-            {coverPreview.trim() ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={coverPreview.trim()}
-                alt="Vista previa del banner"
-                className="h-full w-full object-cover"
-                onError={() => setCoverPreview('')}
-              />
-            ) : (
-              <div className="flex h-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-primary/20 to-transparent text-primary/60">
-                <ImageIcon className="size-7" />
-                <span className="text-xs">Banner alargado del club</span>
-              </div>
-            )}
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-card/80 to-transparent" />
-          </div>
-          <div className="absolute bottom-0 left-4 translate-y-1/2">
-            <div
-              className={cn(
-                'flex size-16 items-center justify-center overflow-hidden rounded-xl border-4 border-card bg-card shadow-md',
-                !logoPreview.trim() && 'bg-primary text-primary-foreground'
-              )}
-            >
-              {logoPreview.trim() ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={logoPreview.trim()}
-                  alt="Vista previa del escudo"
-                  className="h-full w-full object-contain p-1"
-                  onError={() => setLogoPreview('')}
-                />
-              ) : (
-                <div className="flex flex-col items-center gap-0.5">
-                  <Shield className="size-4 opacity-80" />
-                  <span className="text-xs font-bold">{initials}</span>
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="h-10" aria-hidden />
-        </div>
+        <ClubIdentityPreview
+          name={clubName}
+          coverUrl={coverPreview}
+          logoUrl={logoPreview}
+          countryCode={countryCode}
+        />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2 sm:col-span-2">
-          <label htmlFor="coverUrl" className="text-sm font-medium leading-none">
-            URL del banner (imagen alargada)
-          </label>
-          <Input
-            id="coverUrl"
-            name="coverUrl"
-            type="url"
-            placeholder="https://tu-cdn.com/banner-club.jpg"
-            defaultValue={coverUrl ?? ''}
-            onChange={(e) => setCoverPreview(e.target.value)}
-          />
-          <p className="text-xs text-muted-foreground">
-            Recomendado: imagen horizontal amplia (mín. 1200×400 px).
-          </p>
-        </div>
+      <div className="grid gap-5">
+        <UrlField
+          id="coverUrl"
+          name="coverUrl"
+          label="Banner del club"
+          hint="URL directa o sube una imagen horizontal desde tu PC (máx. 5 MB)."
+          value={coverPreview}
+          onChange={setCoverPreview}
+          uploadLabel="Desde PC"
+          uploading={coverPending}
+          onUpload={(file) => uploadFile('cover', file)}
+          error={coverError}
+        />
 
-        <div className="space-y-2 sm:col-span-2">
-          <label htmlFor="logoUrl" className="text-sm font-medium leading-none">
-            URL del escudo del club
-          </label>
-          <Input
-            id="logoUrl"
-            name="logoUrl"
-            type="url"
-            placeholder="https://tu-cdn.com/escudo.png"
-            defaultValue={logoUrl ?? ''}
-            onChange={(e) => setLogoPreview(e.target.value)}
-          />
-          <p className="text-xs text-muted-foreground">
-            PNG o SVG con fondo transparente funciona mejor.
-          </p>
-        </div>
+        <UrlField
+          id="logoUrl"
+          name="logoUrl"
+          label="Escudo del club"
+          hint="URL o archivo local. PNG/SVG con fondo transparente recomendado."
+          value={logoPreview}
+          onChange={setLogoPreview}
+          uploadLabel="Desde PC"
+          uploading={logoPending}
+          onUpload={(file) => uploadFile('logo', file)}
+          error={logoError}
+        />
       </div>
     </div>
   );

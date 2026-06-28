@@ -28,32 +28,32 @@ const demoStaff = [
 
 export default function PortalClubStaffLandingPage() {
   return (
-    <PageContainer
-      pageTitle="Cuerpo técnico"
-      pageDescription="Portada del staff — listado y accesos a gestión."
-      pageHeaderAction={
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/portal/club">
-              <ArrowLeft className="h-4 w-4" />
-              Volver
-            </Link>
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/portal/club/staff/categorias">
-              <BarChart3 className="h-4 w-4" />
-              Por categorías
-            </Link>
-          </Button>
-          <Button size="sm" asChild>
-            <Link href="/portal/club/staff/nuevo">
-              <Plus className="h-4 w-4" />
-              Crear ficha
-            </Link>
-          </Button>
-        </div>
-      }
-    >
+    <PageContainer>
+      <Card className="mb-4">
+        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 space-y-0">
+          <CardTitle className="text-base">Cuerpo técnico</CardTitle>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/portal/club">
+                <ArrowLeft className="h-4 w-4" />
+                Volver
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/portal/club/staff/categorias">
+                <BarChart3 className="h-4 w-4" />
+                Por categorías
+              </Link>
+            </Button>
+            <Button size="sm" asChild>
+              <Link href="/portal/club/staff/nuevo">
+                <Plus className="h-4 w-4" />
+                Crear ficha
+              </Link>
+            </Button>
+          </div>
+        </CardHeader>
+      </Card>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {demoStaff.map((person) => (
           <Card key={person.name}>

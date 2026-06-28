@@ -27,9 +27,11 @@ export function ClubProfileForm({ club }: Props) {
         </CardHeader>
         <CardContent>
           <ClubImageFields
+            clubId={club.id}
             coverUrl={club.cover_url}
             logoUrl={club.logo_url}
             clubName={club.name}
+            countryCode={club.country_code}
           />
         </CardContent>
       </Card>

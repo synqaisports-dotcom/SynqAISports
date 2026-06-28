@@ -22,24 +22,24 @@ const facilities = [
 
 export default function PortalClubInstalacionesLandingPage() {
   return (
-    <PageContainer
-      pageTitle="Instalaciones"
-      pageDescription="Campos e instalaciones del club."
-      pageHeaderAction={
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/portal/club">
-              <ArrowLeft className="h-4 w-4" />
-              Volver
-            </Link>
-          </Button>
-          <Button size="sm" disabled>
-            <Plus className="h-4 w-4" />
-            Crear instalación
-          </Button>
-        </div>
-      }
-    >
+    <PageContainer>
+      <Card className="mb-4">
+        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+          <CardTitle className="text-base">Instalaciones</CardTitle>
+          <div className="flex shrink-0 gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/portal/club">
+                <ArrowLeft className="h-4 w-4" />
+                Volver
+              </Link>
+            </Button>
+            <Button size="sm" disabled>
+              <Plus className="h-4 w-4" />
+              Crear
+            </Button>
+          </div>
+        </CardHeader>
+      </Card>
       <div className="grid gap-4 lg:grid-cols-2">
         {facilities.map((f) => (
           <Card key={f.name}>

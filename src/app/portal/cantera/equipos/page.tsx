@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default async function PortalCanteraEquiposPage() {
   const supabase = await createClient();
@@ -43,18 +44,18 @@ export default async function PortalCanteraEquiposPage() {
   });
 
   return (
-    <PageContainer
-      pageTitle="Equipos"
-      pageDescription="Equipos de cantera por categoría y deporte."
-      pageHeaderAction={
-        <Button variant="outline" size="sm" asChild>
-          <Link href="/portal/cantera">
-            <ArrowLeft className="h-4 w-4" />
-            Volver
-          </Link>
-        </Button>
-      }
-    >
+    <PageContainer>
+      <Card className="mb-4">
+        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+          <CardTitle className="text-base">Equipos</CardTitle>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/portal/cantera">
+              <ArrowLeft className="h-4 w-4" />
+              Volver
+            </Link>
+          </Button>
+        </CardHeader>
+      </Card>
       <CanteraPanel teams={(teams ?? []) as TeamRow[]} players={players} />
     </PageContainer>
   );

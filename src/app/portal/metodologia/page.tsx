@@ -72,10 +72,8 @@ export default async function MetodologiaHomePage() {
   ];
 
   return (
-    <PageContainer
-      pageTitle="Metodología"
-      pageDescription="Información general del modelo de juego, periodización y biblioteca de ejercicios del club."
-    >
+    <PageContainer>
+
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-base">Modelo de juego del club</CardTitle>
