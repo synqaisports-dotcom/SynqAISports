@@ -47,7 +47,7 @@ Si no entra, comprueba que `SYNQ_VERCEL_DEMO=true` **o** que `/demo` responde (p
 - `/portal/club` — datos del club
 - `/portal/config` — código QR
 
-Banner amarillo arriba = modo pruebas activo.
+Campana cyan en la barra superior (icono de avisos) = modo pruebas activo.
 
 ---
 
