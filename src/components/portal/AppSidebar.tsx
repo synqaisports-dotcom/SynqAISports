@@ -2,15 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-  ChevronsUpDown,
-  Home,
-  LogOut,
-  Shield,
-} from 'lucide-react';
+import { ChevronsUpDown, Home, LogOut, Shield } from 'lucide-react';
 import { portalNavGroups } from '@/config/portal-nav';
 import { DEMO_ENTRY_PATH } from '@/lib/demo-constants';
+import { PortalNavMenu } from '@/components/portal/PortalNavMenu';
 import { PortalSignOutMenuItem } from '@/components/portal/PortalSignOutMenuItem';
+import { SidebarCollapseButton } from '@/components/portal/SidebarCollapseButton';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -20,6 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Sidebar,
   SidebarContent,
@@ -39,11 +37,6 @@ type Props = {
   demoMode?: boolean;
 };
 
-function isActive(pathname: string, href: string, exact?: boolean) {
-  if (exact) return pathname === href;
-  return pathname === href || pathname.startsWith(`${href}/`);
-}
-
 function initials(name: string) {
   return name
     .split(/\s+/)
@@ -53,15 +46,14 @@ function initials(name: string) {
 }
 
 export function AppSidebar({ clubName, role, demoMode = false }: Props) {
-  const pathname = usePathname();
   const roleLabel = (role || 'admin').replace(/_/g, ' ');
 
   return (
     <Sidebar collapsible="icon" variant="inset">
-      <SidebarHeader>
+      <SidebarHeader className="border-b border-sidebar-border">
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
+          <SidebarMenuItem className="flex items-center gap-1">
+            <SidebarMenuButton size="lg" asChild className="flex-1">
               <Link href="/portal">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                   <Shield className="size-4" />
@@ -72,34 +64,23 @@ export function AppSidebar({ clubName, role, demoMode = false }: Props) {
                 </div>
               </Link>
             </SidebarMenuButton>
+            <SidebarCollapseButton />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
 
       <SidebarContent>
-        {portalNavGroups.map((group) => (
-          <SidebarGroup key={group.label ?? 'main'}>
-            {group.label && <SidebarGroupLabel>{group.label}</SidebarGroupLabel>}
-            <SidebarMenu>
-              {group.items.map((item) => {
-                const active = isActive(pathname, item.href, item.exact);
-                return (
-                  <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton asChild tooltip={item.title} isActive={active}>
-                      <Link href={item.href}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroup>
-        ))}
+        <ScrollArea className="h-full">
+          {portalNavGroups.map((group) => (
+            <SidebarGroup key={group.label}>
+              <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+              <PortalNavMenu groups={group.items} />
+            </SidebarGroup>
+          ))}
+        </ScrollArea>
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="border-t border-sidebar-border">
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
@@ -124,7 +105,7 @@ export function AppSidebar({ clubName, role, demoMode = false }: Props) {
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-                side="bottom"
+                side="top"
                 align="end"
                 sideOffset={4}
               >

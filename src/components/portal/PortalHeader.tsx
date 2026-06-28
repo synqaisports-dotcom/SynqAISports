@@ -14,31 +14,19 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { ThemeModeToggle } from '@/components/portal/ThemeModeToggle';
-
-const labels: Record<string, string> = {
-  portal: 'Dashboard',
-  club: 'Club',
-  cantera: 'Cantera',
-  metodologia: 'Metodología',
-  config: 'Configuración',
-  ejercicios: 'Ejercicios',
-  microciclos: 'Microciclos',
-  objetivos: 'Objetivos',
-  solicitudes: 'Solicitudes',
-  nuevo: 'Nuevo',
-};
+import { portalRouteLabels } from '@/config/portal-nav';
 
 export function PortalHeader() {
   const pathname = usePathname();
   const segments = pathname.split('/').filter(Boolean).slice(1);
 
   return (
-    <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between gap-2 border-b bg-background/60 backdrop-blur-md">
-      <div className="flex items-center gap-2 px-4">
-        <SidebarTrigger className="-ml-1" />
-        <Separator orientation="vertical" className="mr-2 h-4" />
-        <Breadcrumb>
-          <BreadcrumbList>
+    <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between gap-2 border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
+      <div className="flex min-w-0 items-center gap-2 px-4">
+        <SidebarTrigger className="-ml-1 md:hidden" />
+        <Separator orientation="vertical" className="mr-2 hidden h-4 md:block" />
+        <Breadcrumb className="min-w-0">
+          <BreadcrumbList className="flex-nowrap">
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
                 <Link href="/portal">Portal</Link>
@@ -47,11 +35,11 @@ export function PortalHeader() {
             {segments.map((segment, index) => {
               const href = `/portal/${segments.slice(0, index + 1).join('/')}`;
               const isLast = index === segments.length - 1;
-              const label = labels[segment] ?? segment;
+              const label = portalRouteLabels[segment] ?? segment;
               return (
                 <React.Fragment key={href}>
                   <BreadcrumbSeparator />
-                  <BreadcrumbItem>
+                  <BreadcrumbItem className="max-w-[140px] truncate sm:max-w-none">
                     {isLast ? (
                       <BreadcrumbPage>{label}</BreadcrumbPage>
                     ) : (
