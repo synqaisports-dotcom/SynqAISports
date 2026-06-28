@@ -26,6 +26,11 @@ export async function updateClubProfile(
   const email = String(formData.get('email') ?? '').trim();
   const coverUrl = String(formData.get('coverUrl') ?? '').trim();
   const logoUrl = String(formData.get('logoUrl') ?? '').trim();
+  const websiteUrl = String(formData.get('websiteUrl') ?? '').trim();
+  const facebookUrl = String(formData.get('facebookUrl') ?? '').trim();
+  const xUrl = String(formData.get('xUrl') ?? '').trim();
+  const tiktokUrl = String(formData.get('tiktokUrl') ?? '').trim();
+  const youtubeUrl = String(formData.get('youtubeUrl') ?? '').trim();
   const playersCount = parseInt(String(formData.get('playersCount') ?? '0'), 10);
   const familyFee = parseFloat(String(formData.get('familyFee') ?? '12'));
 
@@ -40,6 +45,11 @@ export async function updateClubProfile(
       email: email || null,
       cover_url: coverUrl || null,
       logo_url: logoUrl || null,
+      website_url: websiteUrl || null,
+      facebook_url: facebookUrl || null,
+      x_url: xUrl || null,
+      tiktok_url: tiktokUrl || null,
+      youtube_url: youtubeUrl || null,
       players_count: playersCount,
       family_fee_annual_eur: familyFee,
     })

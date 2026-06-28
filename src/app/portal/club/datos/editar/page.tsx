@@ -21,9 +21,9 @@ export default async function PortalClubDatosEditarPage() {
         <ClubIdentityHero
           club={ctx.club}
           actions={
-            <ClubIdentityHeroLinkAction href="/portal/club/datos" variant="outline">
+            <ClubIdentityHeroLinkAction href="/portal/club" variant="outline">
               <ArrowLeft className="size-3.5" />
-              Cancelar
+              Volver
             </ClubIdentityHeroLinkAction>
           }
         />
