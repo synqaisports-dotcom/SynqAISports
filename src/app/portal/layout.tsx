@@ -1,6 +1,8 @@
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { DemoModeBanner } from '@/components/portal/DemoModeBanner';
-import { PortalSidebar } from '@/components/portal/PortalSidebar';
+import { PortalShell } from '@/components/portal/PortalShell';
+import { PortalThemeProvider } from '@/components/portal/PortalThemeProvider';
 import { isDemoActive, hasServiceRoleKey } from '@/lib/demo';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { createClient } from '@/lib/supabase/server';
@@ -23,13 +25,22 @@ export default async function PortalLayout({ children }: { children: React.React
     redirect('/login?error=no_club');
   }
 
+  const cookieStore = await cookies();
+  const defaultOpen = cookieStore.get('sidebar_state')?.value !== 'false';
+
   return (
-    <div className="synq-mesh-bg flex min-h-screen flex-col">
-      {demo && <DemoModeBanner canPersist={hasServiceRoleKey()} clubName={ctx.club.name} />}
-      <div className="flex min-h-0 flex-1">
-        <PortalSidebar clubName={ctx.club.name} role={ctx.role} demoMode={demo} />
-        <main className="flex-1 overflow-auto p-6 md:p-8 lg:p-10">{children}</main>
+    <PortalThemeProvider>
+      <div className="portal-dashboard dark min-h-svh">
+        {demo && <DemoModeBanner canPersist={hasServiceRoleKey()} clubName={ctx.club.name} />}
+        <PortalShell
+          clubName={ctx.club.name}
+          role={ctx.role}
+          demoMode={demo}
+          defaultOpen={defaultOpen}
+        >
+          {children}
+        </PortalShell>
       </div>
-    </div>
+    </PortalThemeProvider>
   );
 }
