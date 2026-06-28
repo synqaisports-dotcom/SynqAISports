@@ -1,8 +1,7 @@
 'use client';
 
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import { AppSidebar } from '@/components/portal/AppSidebar';
 import { PortalHeader } from '@/components/portal/PortalHeader';
+import { PortalSidebarProvider } from '@/components/portal/portal-sidebar';
 
 type Props = {
   children: React.ReactNode;
@@ -10,7 +9,6 @@ type Props = {
   role: string;
   demoMode?: boolean;
   demoCanPersist?: boolean;
-  defaultOpen?: boolean;
 };
 
 export function PortalShell({
@@ -19,20 +17,16 @@ export function PortalShell({
   role,
   demoMode,
   demoCanPersist,
-  defaultOpen = false,
 }: Props) {
   return (
-    <SidebarProvider defaultOpen={defaultOpen} className="min-h-svh">
-      <AppSidebar clubName={clubName} role={role} />
-      <SidebarInset className="min-h-svh">
-        <PortalHeader
-          clubName={clubName}
-          role={role}
-          demoMode={demoMode}
-          demoCanPersist={demoCanPersist}
-        />
-        {children}
-      </SidebarInset>
-    </SidebarProvider>
+    <PortalSidebarProvider clubName={clubName}>
+      <PortalHeader
+        clubName={clubName}
+        role={role}
+        demoMode={demoMode}
+        demoCanPersist={demoCanPersist}
+      />
+      <div className="synq-portal-content flex min-h-0 flex-1 flex-col">{children}</div>
+    </PortalSidebarProvider>
   );
 }
