@@ -1,6 +1,5 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { DemoModeBanner } from '@/components/portal/DemoModeBanner';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { PortalThemeProvider } from '@/components/portal/PortalThemeProvider';
 import { isDemoActive, hasServiceRoleKey } from '@/lib/demo';
@@ -31,11 +30,11 @@ export default async function PortalLayout({ children }: { children: React.React
   return (
     <PortalThemeProvider>
       <div className="portal-dashboard dark min-h-svh">
-        {demo && <DemoModeBanner canPersist={hasServiceRoleKey()} clubName={ctx.club.name} />}
         <PortalShell
           clubName={ctx.club.name}
           role={ctx.role}
           demoMode={demo}
+          demoCanPersist={hasServiceRoleKey()}
           defaultOpen={defaultOpen}
         >
           {children}

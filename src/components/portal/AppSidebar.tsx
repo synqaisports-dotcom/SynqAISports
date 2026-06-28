@@ -24,8 +24,8 @@ type Props = {
 
 export function AppSidebar({ clubName }: Props) {
   return (
-    <Sidebar collapsible="icon" variant="sidebar" className="border-r">
-      <SidebarHeader className="border-b border-sidebar-border">
+    <Sidebar collapsible="icon" variant="sidebar" className="border-r border-primary/25">
+      <SidebarHeader className="border-b border-primary/20">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild tooltip={clubName}>

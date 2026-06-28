@@ -6,10 +6,12 @@ module.exports = {
   	extend: {
   		colors: {
   			synq: {
-  				navy: '#0a1628',
-  				slate: '#132337',
-  				pitch: '#16a34a',
-  				accent: '#22c55e',
+  				navy: '#050d14',
+  				slate: '#0c1824',
+  				cyan: '#00e5ff',
+  				electric: '#00d4ff',
+  				accent: '#22d3ee',
+  				pitch: '#00b8d4',
   				muted: '#94a3b8'
   			},
   			border: 'hsl(var(--border))',

@@ -16,16 +16,20 @@ export function PageContainer({
   const hasHeader = pageTitle || pageHeaderAction;
 
   return (
-    <div className="flex flex-1 flex-col px-4 pb-4 pt-2 md:px-6 md:pt-4">
+    <div className="synq-portal-content flex flex-1 flex-col px-4 pb-6 pt-2 md:px-6 md:pt-4">
       {hasHeader && (
-        <div className="mb-6 flex items-start justify-between gap-4">
-          <div>
-            {pageTitle && <h1 className="text-2xl font-semibold tracking-tight">{pageTitle}</h1>}
-            {pageDescription && (
-              <p className="mt-1 text-sm text-muted-foreground">{pageDescription}</p>
-            )}
+        <div className="synq-section-border mb-6 rounded-xl p-5 md:p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              {pageTitle && (
+                <h1 className="text-2xl font-semibold tracking-tight text-foreground">{pageTitle}</h1>
+              )}
+              {pageDescription && (
+                <p className="mt-1 text-sm text-muted-foreground">{pageDescription}</p>
+              )}
+            </div>
+            {pageHeaderAction && <div className="shrink-0">{pageHeaderAction}</div>}
           </div>
-          {pageHeaderAction && <div className="shrink-0">{pageHeaderAction}</div>}
         </div>
       )}
       {children}
