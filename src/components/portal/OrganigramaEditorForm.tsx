@@ -14,6 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { SynqSelect } from '@/components/portal/SynqSelect';
 
 const initial: OrganigramaState = { ok: false };
 
@@ -84,48 +85,43 @@ export function OrganigramaEditorForm({ clubId, nodes }: Props) {
               className="grid w-full gap-3 rounded-xl border border-primary/20 bg-muted/10 p-4 md:grid-cols-12 md:items-end"
             >
               <div className="md:col-span-4">
-                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Cargo
                 </label>
                 <Input
                   value={row.role}
                   onChange={(e) => updateRow(row.id, { role: e.target.value })}
-                  placeholder="Ej. Director de cantera"
-                  className="w-full"
+                  placeholder="Director de cantera"
+                  className="w-full border-primary/30 bg-background/80 focus-visible:ring-primary"
                 />
               </div>
               <div className="md:col-span-3">
-                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Persona
                 </label>
                 <Input
                   value={row.name}
                   onChange={(e) => updateRow(row.id, { name: e.target.value })}
-                  placeholder="Nombre o «Por asignar»"
-                  className="w-full"
+                  placeholder="Nombre del responsable"
+                  className="w-full border-primary/30 bg-background/80 focus-visible:ring-primary"
                 />
               </div>
               <div className="md:col-span-4">
-                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Reporta a
                 </label>
-                <select
+                <SynqSelect
                   value={row.parentId ?? ''}
-                  onChange={(e) =>
-                    updateRow(row.id, { parentId: e.target.value || null })
-                  }
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm"
+                  onChange={(next) => updateRow(row.id, { parentId: next || null })}
                   disabled={index === 0 && !row.parentId}
-                >
-                  <option value="">— Raíz del organigrama —</option>
-                  {parentOptions
-                    .filter((opt) => opt.id !== row.id)
-                    .map((opt) => (
-                      <option key={opt.id} value={opt.id}>
-                        {opt.label}
-                      </option>
-                    ))}
-                </select>
+                  placeholder="Raíz del organigrama"
+                  options={[
+                    { value: '', label: 'Raíz del organigrama' },
+                    ...parentOptions
+                      .filter((opt) => opt.id !== row.id)
+                      .map((opt) => ({ value: opt.id, label: opt.label })),
+                  ]}
+                />
               </div>
               <div className="flex md:col-span-1 md:justify-end">
                 <Button
