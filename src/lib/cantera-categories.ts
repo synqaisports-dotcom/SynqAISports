@@ -158,6 +158,7 @@ export type CanteraTeamRow = {
   name: string;
   category: string;
   category_slug: CanteraCategorySlug | null;
+  team_letter: string | null;
   sport: string;
   active: boolean;
   player_count?: number;

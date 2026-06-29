@@ -97,10 +97,10 @@ function CanteraTeamRowCard({
         ) : null
       }
       fields={[
+        { label: 'Letra', value: team.team_letter ?? '—' },
         { label: 'Categoría', value: category.name },
         { label: 'Equivalencia', value: category.international },
         { label: 'Jugadores', value: team.player_count != null ? String(team.player_count) : '—' },
-        { label: 'Deporte', value: sportLabel },
       ]}
       actions={
         <>

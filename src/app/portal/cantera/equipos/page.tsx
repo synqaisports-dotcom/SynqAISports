@@ -7,6 +7,8 @@ import {
   groupTeamsByCategory,
   type CanteraTeamRow,
 } from '@/lib/cantera-categories';
+import { DEMO_CANTERA_TEAMS } from '@/lib/cantera-teams';
+import { isDemoActive } from '@/lib/demo';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import { redirect } from 'next/navigation';
@@ -20,8 +22,9 @@ export default async function PortalCanteraEquiposPage() {
 
   const { data: teams } = await supabase
     .from('synq_teams')
-    .select('id, name, category, category_slug, sport, active')
+    .select('id, name, category, category_slug, team_letter, sport, active')
     .eq('club_id', ctx.club.id)
+    .order('team_letter')
     .order('name');
 
   const { data: playerCounts } = await supabase
@@ -36,15 +39,31 @@ export default async function PortalCanteraEquiposPage() {
     countByTeam.set(row.team_id, (countByTeam.get(row.team_id) ?? 0) + 1);
   }
 
-  const teamRows: CanteraTeamRow[] = (teams ?? []).map((team) => ({
+  let teamRows: CanteraTeamRow[] = (teams ?? []).map((team) => ({
     id: team.id,
     name: team.name,
     category: team.category,
     category_slug: team.category_slug,
+    team_letter: team.team_letter,
     sport: team.sport,
     active: team.active,
     player_count: countByTeam.get(team.id) ?? 0,
   }));
+
+  if (await isDemoActive()) {
+    const existingKeys = new Set(
+      teamRows.map((team) => `${team.category_slug}:${team.team_letter}`)
+    );
+    for (const demo of DEMO_CANTERA_TEAMS) {
+      const key = `${demo.category_slug}:${demo.team_letter}`;
+      if (!existingKeys.has(key)) {
+        teamRows.push({
+          ...demo,
+          player_count: demo.player_count ?? 0,
+        });
+      }
+    }
+  }
 
   const grouped = groupTeamsByCategory(teamRows);
 

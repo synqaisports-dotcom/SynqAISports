@@ -1,13 +1,14 @@
 'use client';
 
+import { useMemo, useState } from 'react';
 import { useFormState } from 'react-dom';
 import { createTeam, type ActionState } from '@/app/actions/cantera';
 import type { CanteraCategory } from '@/lib/cantera-categories';
+import { formatTeamName, teamLetterOptions } from '@/lib/cantera-teams';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { SynqSelect } from '@/components/portal/SynqSelect';
-import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
@@ -15,17 +16,23 @@ const initial: ActionState = { ok: false };
 
 type Props = {
   category: CanteraCategory;
+  usedLetters: string[];
 };
 
-export function TeamCreateForm({ category }: Props) {
+export function TeamCreateForm({ category, usedLetters }: Props) {
   const bound = createTeam;
   const [state, action, pending] = useFormState(bound, initial);
   const [sport, setSport] = useState('football');
+  const letterOptions = useMemo(() => teamLetterOptions(usedLetters), [usedLetters]);
+  const [teamLetter, setTeamLetter] = useState(letterOptions[0]?.value ?? '');
+
+  const previewName = teamLetter ? formatTeamName(category.name, teamLetter) : '';
 
   return (
     <form action={action} className="w-full space-y-6">
       <input type="hidden" name="categorySlug" value={category.slug} readOnly />
       <input type="hidden" name="category" value={category.name} readOnly />
+      <input type="hidden" name="teamLetter" value={teamLetter} readOnly />
 
       <Card className={cn('w-full border', category.borderClass)}>
         <CardHeader>
@@ -37,19 +44,31 @@ export function TeamCreateForm({ category }: Props) {
           </div>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
-          <div className="md:col-span-2">
+          <div>
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Nombre del equipo
+              Letra del equipo
             </label>
-            <Input
-              name="name"
-              required
-              placeholder={`${category.name} A`}
-              className="border-primary/30 bg-background/80"
-            />
+            {letterOptions.length > 0 ? (
+              <SynqSelect
+                value={teamLetter}
+                onChange={setTeamLetter}
+                options={letterOptions}
+                placeholder="Seleccionar letra"
+              />
+            ) : (
+              <p className="text-sm text-destructive">
+                No quedan letras libres en {category.name} (A–Z ocupadas).
+              </p>
+            )}
             <p className="mt-1.5 text-[11px] text-muted-foreground">
-              Ejemplo: letra (A, B), color o nombre propio del club en esa categoría.
+              Solo puede existir un {category.name} A, un {category.name} B, etc.
             </p>
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Nombre generado
+            </label>
+            <Input value={previewName} disabled className="bg-muted/20 font-medium" />
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -71,14 +90,23 @@ export function TeamCreateForm({ category }: Props) {
             </label>
             <Input value={category.ages} disabled className="bg-muted/20" />
           </div>
+          <div className="md:col-span-2">
+            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Equivalencia internacional
+            </label>
+            <Input value={category.international} disabled className="bg-muted/20" />
+          </div>
         </CardContent>
       </Card>
 
       <div className="flex flex-wrap items-center gap-4">
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" disabled={pending || !teamLetter || letterOptions.length === 0}>
           {pending ? 'Creando…' : 'Crear equipo'}
         </Button>
         {state.ok ? <p className="text-sm font-medium text-primary">Equipo creado.</p> : null}
+        {state.message === 'duplicate_letter' ? (
+          <p className="text-sm text-destructive">Esa letra ya está en uso en esta categoría.</p>
+        ) : null}
         {state.message === 'error' ? (
           <p className="text-sm text-destructive">Error al crear. Revisa permisos RLS.</p>
         ) : null}

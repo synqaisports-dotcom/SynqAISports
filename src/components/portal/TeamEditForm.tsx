@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useFormState } from 'react-dom';
 import { updateTeam, type ActionState } from '@/app/actions/cantera';
 import type { CanteraCategory } from '@/lib/cantera-categories';
+import { formatTeamName, teamLetterOptions } from '@/lib/cantera-teams';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -15,21 +16,43 @@ const initial: ActionState = { ok: false };
 
 type Props = {
   teamId: string;
-  name: string;
+  teamLetter: string;
   sport: string;
   category: CanteraCategory | null;
+  usedLetters: string[];
 };
 
-export function TeamEditForm({ teamId, name, sport: initialSport, category }: Props) {
+export function TeamEditForm({
+  teamId,
+  teamLetter: initialLetter,
+  sport: initialSport,
+  category,
+  usedLetters,
+}: Props) {
   const bound = updateTeam.bind(null, teamId);
   const [state, action, pending] = useFormState(bound, initial);
   const [sport, setSport] = useState(initialSport === 'futsal' ? 'futsal' : 'football');
+  const availableLetters = useMemo(() => {
+    const opts = teamLetterOptions(usedLetters);
+    if (initialLetter && !opts.find((o) => o.value === initialLetter)) {
+      return [{ value: initialLetter, label: initialLetter }, ...opts];
+    }
+    return opts.length > 0
+      ? opts
+      : initialLetter
+        ? [{ value: initialLetter, label: initialLetter }]
+        : [];
+  }, [usedLetters, initialLetter]);
+
+  const [teamLetter, setTeamLetter] = useState(initialLetter || availableLetters[0]?.value || '');
+  const previewName =
+    category && teamLetter ? formatTeamName(category.name, teamLetter) : '';
 
   return (
     <form action={action} className="w-full space-y-6">
-      <Card
-        className={cn('w-full border', category?.borderClass ?? 'border-primary/25')}
-      >
+      <input type="hidden" name="teamLetter" value={teamLetter} readOnly />
+
+      <Card className={cn('w-full border', category?.borderClass ?? 'border-primary/25')}>
         <CardHeader>
           <CardTitle className="text-base">Editar equipo</CardTitle>
           {category ? (
@@ -39,16 +62,22 @@ export function TeamEditForm({ teamId, name, sport: initialSport, category }: Pr
           ) : null}
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
-          <div className="md:col-span-2">
+          <div>
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Nombre del equipo
+              Letra del equipo
             </label>
-            <Input
-              name="name"
-              defaultValue={name}
-              required
-              className="border-primary/30 bg-background/80"
+            <SynqSelect
+              value={teamLetter}
+              onChange={setTeamLetter}
+              options={availableLetters}
+              placeholder="Seleccionar letra"
             />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Nombre generado
+            </label>
+            <Input value={previewName} disabled className="bg-muted/20 font-medium" />
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -64,14 +93,25 @@ export function TeamEditForm({ teamId, name, sport: initialSport, category }: Pr
             />
             <input type="hidden" name="sport" value={sport} readOnly />
           </div>
+          {category ? (
+            <div>
+              <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Edades
+              </label>
+              <Input value={category.ages} disabled className="bg-muted/20" />
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 
       <div className="flex flex-wrap items-center gap-4">
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" disabled={pending || !teamLetter}>
           {pending ? 'Guardando…' : 'Guardar cambios'}
         </Button>
         {state.ok ? <p className="text-sm font-medium text-primary">Equipo actualizado.</p> : null}
+        {state.message === 'duplicate_letter' ? (
+          <p className="text-sm text-destructive">Esa letra ya está en uso en esta categoría.</p>
+        ) : null}
       </div>
     </form>
   );

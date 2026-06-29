@@ -2,6 +2,8 @@
 
 import { isDemoActive } from '@/lib/demo';
 import { requireClubId } from '@/lib/auth-staff';
+import { DEMO_CANTERA_TEAMS, formatTeamName } from '@/lib/cantera-teams';
+import { getCanteraCategory } from '@/lib/cantera-categories';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
@@ -77,6 +79,42 @@ export async function updatePlayerPhoto(
   return { ok: true };
 }
 
+export async function getUsedTeamLetters(
+  clubId: string,
+  categorySlug: string,
+  excludeTeamId?: string
+): Promise<string[]> {
+  const letters = new Set<string>();
+
+  if (await isDemoActive()) {
+    for (const team of DEMO_CANTERA_TEAMS) {
+      if (team.category_slug === categorySlug && team.team_letter && team.id !== excludeTeamId) {
+        letters.add(team.team_letter.toUpperCase());
+      }
+    }
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('synq_teams')
+    .select('team_letter, id')
+    .eq('club_id', clubId)
+    .eq('category_slug', categorySlug)
+    .not('team_letter', 'is', null);
+
+  if (error) {
+    console.error('getUsedTeamLetters', error);
+  } else {
+    for (const row of data ?? []) {
+      if (row.team_letter && row.id !== excludeTeamId) {
+        letters.add(String(row.team_letter).toUpperCase());
+      }
+    }
+  }
+
+  return [...letters];
+}
+
 export async function createTeam(
   _prev: ActionState,
   formData: FormData
@@ -84,30 +122,44 @@ export async function createTeam(
   const clubId = await requireClubId();
   if (!clubId) return { ok: false, message: 'unauthorized' };
 
-  const name = String(formData.get('name') ?? '').trim();
   const categorySlug = String(formData.get('categorySlug') ?? '').trim();
   const category = String(formData.get('category') ?? '').trim();
+  const teamLetter = String(formData.get('teamLetter') ?? '')
+    .trim()
+    .toUpperCase();
   const sport = String(formData.get('sport') ?? 'football');
 
-  if (!name || (!categorySlug && !category)) return { ok: false, message: 'validation' };
+  const categoryMeta = categorySlug ? getCanteraCategory(categorySlug) : null;
+  const categoryName = category || categoryMeta?.name || '';
+
+  if (!categorySlug || !teamLetter || !/^[A-Z]$/.test(teamLetter) || !categoryName) {
+    return { ok: false, message: 'validation' };
+  }
+
+  const used = await getUsedTeamLetters(clubId, categorySlug);
+  if (used.includes(teamLetter)) return { ok: false, message: 'duplicate_letter' };
+
+  const name = formatTeamName(categoryName, teamLetter);
 
   const supabase = await createClient();
   const { error } = await supabase.from('synq_teams').insert({
     club_id: clubId,
     name,
-    category: category || categorySlug,
-    category_slug: categorySlug || null,
+    category: categoryName,
+    category_slug: categorySlug,
+    team_letter: teamLetter,
     sport: sport === 'futsal' ? 'futsal' : 'football',
   });
 
   if (error) {
     console.error('create team', error);
+    if (error.code === '23505') return { ok: false, message: 'duplicate_letter' };
     return { ok: false, message: 'error' };
   }
 
   revalidatePath('/portal/cantera');
   revalidatePath('/portal/cantera/equipos');
-  if (categorySlug) revalidatePath(`/portal/cantera/equipos/${categorySlug}`);
+  revalidatePath(`/portal/cantera/equipos/${categorySlug}`);
   return { ok: true };
 }
 
@@ -119,33 +171,49 @@ export async function updateTeam(
   const clubId = await requireClubId();
   if (!clubId) return { ok: false, message: 'unauthorized' };
 
-  const name = String(formData.get('name') ?? '').trim();
+  const teamLetter = String(formData.get('teamLetter') ?? '')
+    .trim()
+    .toUpperCase();
   const sport = String(formData.get('sport') ?? 'football');
 
-  if (!name) return { ok: false, message: 'validation' };
+  if (!teamLetter || !/^[A-Z]$/.test(teamLetter)) return { ok: false, message: 'validation' };
 
   const supabase = await createClient();
   const { data: team } = await supabase
     .from('synq_teams')
-    .select('category_slug')
+    .select('category_slug, category')
     .eq('id', teamId)
     .eq('club_id', clubId)
     .maybeSingle();
+
+  if (!team?.category_slug) return { ok: false, message: 'validation' };
+
+  const used = await getUsedTeamLetters(clubId, team.category_slug, teamId);
+  if (used.includes(teamLetter)) return { ok: false, message: 'duplicate_letter' };
+
+  const categoryMeta = getCanteraCategory(team.category_slug);
+  const categoryName = team.category || categoryMeta?.name || team.category_slug;
+  const name = formatTeamName(categoryName, teamLetter);
 
   const { error } = await supabase
     .from('synq_teams')
     .update({
       name,
+      team_letter: teamLetter,
       sport: sport === 'futsal' ? 'futsal' : 'football',
     })
     .eq('id', teamId)
     .eq('club_id', clubId);
 
-  if (error) return { ok: false, message: 'error' };
+  if (error) {
+    if (error.code === '23505') return { ok: false, message: 'duplicate_letter' };
+    return { ok: false, message: 'error' };
+  }
 
   revalidatePath('/portal/cantera/equipos');
   revalidatePath(`/portal/cantera/equipos/equipo/${teamId}`);
-  if (team?.category_slug) revalidatePath(`/portal/cantera/equipos/${team.category_slug}`);
+  revalidatePath(`/portal/cantera/equipos/equipo/${teamId}/editar`);
+  if (team.category_slug) revalidatePath(`/portal/cantera/equipos/${team.category_slug}`);
   return { ok: true };
 }
 
