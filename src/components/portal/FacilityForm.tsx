@@ -278,7 +278,7 @@ export function FacilityForm({ facility }: Props) {
           <div
             className={cn(
               'md:col-span-2 grid gap-4',
-              showDivisionSchedule ? 'lg:grid-cols-2' : 'grid-cols-1'
+              showDivisionSchedule ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'
             )}
           >
             <ScheduleBlockFields
