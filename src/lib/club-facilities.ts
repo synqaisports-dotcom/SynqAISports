@@ -38,6 +38,11 @@ export type ClubFacility = {
   surface_type: string | null;
   division_mode: FacilityDivisionMode;
   address: string | null;
+  availability_days: string;
+  availability_start: string;
+  availability_end: string;
+  is_match_venue: boolean;
+  /** Texto legado / resumen generado al guardar */
   availability_note: string | null;
   notes: string | null;
   active: boolean;
@@ -122,7 +127,11 @@ export const DEMO_FACILITIES: ClubFacility[] = [
     surface_type: 'Césped natural',
     division_mode: 'quarters_4',
     address: 'Polideportivo municipal — acceso norte',
-    availability_note: 'L-V 17:00–22:00',
+    availability_days: 'mon,tue,wed,thu,fri',
+    availability_start: '17:00',
+    availability_end: '22:00',
+    is_match_venue: true,
+    availability_note: 'L M X J V · 17:00 – 22:00',
     notes: 'Compartido con escuela de fútbol los martes por la mañana.',
     active: true,
   },
@@ -134,7 +143,11 @@ export const DEMO_FACILITIES: ClubFacility[] = [
     surface_type: 'Césped artificial',
     division_mode: 'halves_2',
     address: 'Anexo del club',
-    availability_note: 'L-D 09:00–21:00',
+    availability_days: 'mon,tue,wed,thu,fri,sat,sun',
+    availability_start: '09:00',
+    availability_end: '21:00',
+    is_match_venue: false,
+    availability_note: 'L M X J V S D · 09:00 – 21:00',
     notes: null,
     active: true,
   },
@@ -184,6 +197,10 @@ export function parseFacilityFromForm(formData: FormData) {
   const sport = String(formData.get('sport') ?? 'football') as ClubSport;
   const facilityKind = String(formData.get('facilityKind') ?? 'football_11') as FacilityKind;
   const divisionMode = String(formData.get('divisionMode') ?? 'full') as FacilityDivisionMode;
+  const availabilityDays = String(formData.get('availabilityDays') ?? '').trim();
+  const availabilityStart = String(formData.get('availabilityStart') ?? '').trim();
+  const availabilityEnd = String(formData.get('availabilityEnd') ?? '').trim();
+  const isMatchVenue = formData.get('isMatchVenue') === 'on';
 
   return {
     name: String(formData.get('name') ?? '').trim(),
@@ -192,9 +209,25 @@ export function parseFacilityFromForm(formData: FormData) {
     surface_type: String(formData.get('surfaceType') ?? '').trim() || null,
     division_mode: facilitySupportsDivisions(facilityKind) ? divisionMode : ('full' as const),
     address: String(formData.get('address') ?? '').trim() || null,
-    availability_note: String(formData.get('availabilityNote') ?? '').trim() || null,
+    availability_days: availabilityDays,
+    availability_start: availabilityStart,
+    availability_end: availabilityEnd,
+    is_match_venue: isMatchVenue,
     notes: String(formData.get('notes') ?? '').trim() || null,
   };
+}
+
+export function buildAvailabilityNote(
+  days: string,
+  start: string,
+  end: string
+): string | null {
+  const dayLetters = formatTrainingDayLetters(days);
+  const time = formatTimeRange(start || null, end || null);
+  const parts = [dayLetters !== '—' ? dayLetters : null, time !== '—' ? time : null].filter(
+    Boolean
+  );
+  return parts.length > 0 ? parts.join(' · ') : null;
 }
 
 export function facilityToDbPayload(data: ReturnType<typeof parseFacilityFromForm>) {
@@ -205,7 +238,15 @@ export function facilityToDbPayload(data: ReturnType<typeof parseFacilityFromFor
     surface_type: data.surface_type,
     division_mode: data.division_mode,
     address: data.address,
-    availability_note: data.availability_note,
+    availability_days: data.availability_days || null,
+    availability_start: data.availability_start || null,
+    availability_end: data.availability_end || null,
+    is_match_venue: data.is_match_venue,
+    availability_note: buildAvailabilityNote(
+      data.availability_days,
+      data.availability_start,
+      data.availability_end
+    ),
     notes: data.notes,
   };
 }
@@ -234,19 +275,51 @@ export function divisionOptionsForFacility(
   ];
 }
 
-export const WEEKDAY_OPTIONS = [
-  { value: 'mon', label: 'Lunes' },
-  { value: 'tue', label: 'Martes' },
-  { value: 'wed', label: 'Miércoles' },
-  { value: 'thu', label: 'Jueves' },
-  { value: 'fri', label: 'Viernes' },
-  { value: 'sat', label: 'Sábado' },
-  { value: 'sun', label: 'Domingo' },
-];
+export const WEEKDAY_BUTTONS = [
+  { value: 'mon', letter: 'L', title: 'Lunes' },
+  { value: 'tue', letter: 'M', title: 'Martes' },
+  { value: 'wed', letter: 'X', title: 'Miércoles' },
+  { value: 'thu', letter: 'J', title: 'Jueves' },
+  { value: 'fri', letter: 'V', title: 'Viernes' },
+  { value: 'sat', letter: 'S', title: 'Sábado' },
+  { value: 'sun', letter: 'D', title: 'Domingo' },
+] as const;
+
+export const WEEKDAY_OPTIONS = WEEKDAY_BUTTONS.map((day) => ({
+  value: day.value,
+  label: day.title,
+}));
+
+export function sortWeekdayCodes(codes: string[]): string[] {
+  const order = WEEKDAY_BUTTONS.map((day) => day.value);
+  return [...codes].sort((a, b) => order.indexOf(a) - order.indexOf(b));
+}
+  if (!codes.trim()) return '—';
+  const map = new Map<string, string>(WEEKDAY_BUTTONS.map((day) => [day.value, day.letter]));
+  return codes
+    .split(',')
+    .map((code) => map.get(code.trim()) ?? '')
+    .filter(Boolean)
+    .join(' ');
+}
+
+export function formatFacilityAvailability(
+  facility: Pick<
+    ClubFacility,
+    'availability_days' | 'availability_start' | 'availability_end' | 'availability_note'
+  >
+): string {
+  const fromFields = buildAvailabilityNote(
+    facility.availability_days,
+    facility.availability_start,
+    facility.availability_end
+  );
+  return fromFields ?? facility.availability_note ?? '—';
+}
 
 export function formatTrainingDays(codes: string): string {
   if (!codes.trim()) return '—';
-  const map = new Map(WEEKDAY_OPTIONS.map((day) => [day.value, day.label]));
+  const map = new Map<string, string>(WEEKDAY_OPTIONS.map((day) => [day.value, day.label]));
   return codes
     .split(',')
     .map((code) => map.get(code.trim()) ?? code)
@@ -261,6 +334,6 @@ export function formatTimeRange(start: string | null, end: string | null): strin
 }
 
 const FACILITY_SELECT =
-  'id, name, sport, facility_kind, surface_type, division_mode, address, availability_note, notes, active';
+  'id, name, sport, facility_kind, surface_type, division_mode, address, availability_days, availability_start, availability_end, is_match_venue, availability_note, notes, active';
 
 export { FACILITY_SELECT };

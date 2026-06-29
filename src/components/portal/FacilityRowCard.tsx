@@ -4,6 +4,8 @@ import {
   DIVISION_MODE_LABELS,
   FACILITY_KIND_LABELS,
   SPORT_LABELS,
+  formatFacilityAvailability,
+  formatTrainingDayLetters,
   type ClubFacility,
   facilitySupportsDivisions,
 } from '@/lib/club-facilities';
@@ -38,6 +40,11 @@ export function FacilityRowCard({ facility }: Props) {
                 Pausada
               </Badge>
             ) : null}
+            {facility.is_match_venue ? (
+              <Badge variant="secondary" className="text-[10px]">
+                Sede
+              </Badge>
+            ) : null}
           </div>
           <p className="mt-0.5 truncate text-xs text-muted-foreground sm:text-sm">
             {SPORT_LABELS[facility.sport]} · {FACILITY_KIND_LABELS[facility.facility_kind]}
@@ -54,7 +61,8 @@ export function FacilityRowCard({ facility }: Props) {
                 : '—'
             }
           />
-          <Field label="Horario ref." value={facility.availability_note ?? '—'} />
+          <Field label="Días" value={formatTrainingDayLetters(facility.availability_days)} />
+          <Field label="Horario ref." value={formatFacilityAvailability(facility)} />
           <Field label="Ubicación" value={facility.address ?? '—'} />
         </div>
       </div>

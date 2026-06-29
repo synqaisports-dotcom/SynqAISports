@@ -15,6 +15,13 @@ import { revalidatePath } from 'next/cache';
 export type FacilityActionState = { ok: boolean; message?: string; facilityId?: string };
 
 function mapFacilityRow(row: Record<string, unknown>): ClubFacility {
+  const availabilityStart = row.availability_start
+    ? String(row.availability_start).slice(0, 5)
+    : '';
+  const availabilityEnd = row.availability_end
+    ? String(row.availability_end).slice(0, 5)
+    : '';
+
   return {
     id: String(row.id),
     name: String(row.name),
@@ -23,6 +30,10 @@ function mapFacilityRow(row: Record<string, unknown>): ClubFacility {
     surface_type: row.surface_type ? String(row.surface_type) : null,
     division_mode: row.division_mode as ClubFacility['division_mode'],
     address: row.address ? String(row.address) : null,
+    availability_days: row.availability_days ? String(row.availability_days) : '',
+    availability_start: availabilityStart,
+    availability_end: availabilityEnd,
+    is_match_venue: row.is_match_venue === true,
     availability_note: row.availability_note ? String(row.availability_note) : null,
     notes: row.notes ? String(row.notes) : null,
     active: row.active !== false,

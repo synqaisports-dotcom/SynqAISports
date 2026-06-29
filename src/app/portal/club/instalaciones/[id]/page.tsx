@@ -7,6 +7,9 @@ import {
   DIVISION_MODE_LABELS,
   FACILITY_KIND_LABELS,
   SPORT_LABELS,
+  formatFacilityAvailability,
+  formatTimeRange,
+  formatTrainingDayLetters,
   facilitySupportsDivisions,
 } from '@/lib/club-facilities';
 import { isDemoActive } from '@/lib/demo';
@@ -43,6 +46,11 @@ export default async function PortalClubInstalacionPage({ params }: Props) {
               {!facility.active ? (
                 <Badge variant="outline" className="text-[10px]">
                   Pausada
+                </Badge>
+              ) : null}
+              {facility.is_match_venue ? (
+                <Badge variant="secondary" className="text-[10px]">
+                  Sede de partidos
                 </Badge>
               ) : null}
             </div>
@@ -86,7 +94,22 @@ export default async function PortalClubInstalacionPage({ params }: Props) {
             <DataRow label="División" value={DIVISION_MODE_LABELS[facility.division_mode]} />
           ) : null}
           <DataRow label="Dirección" value={facility.address ?? '—'} />
-          <DataRow label="Horario habitual" value={facility.availability_note ?? '—'} />
+          <DataRow
+            label="Sede de partidos"
+            value={facility.is_match_venue ? 'Sí' : 'No'}
+          />
+          <DataRow
+            label="Días"
+            value={formatTrainingDayLetters(facility.availability_days)}
+          />
+          <DataRow
+            label="Horario"
+            value={formatTimeRange(
+              facility.availability_start || null,
+              facility.availability_end || null
+            )}
+          />
+          <DataRow label="Resumen" value={formatFacilityAvailability(facility)} />
           {facility.notes ? (
             <div className="rounded-lg border border-primary/15 bg-muted/10 p-3 text-xs leading-relaxed text-muted-foreground">
               {facility.notes}

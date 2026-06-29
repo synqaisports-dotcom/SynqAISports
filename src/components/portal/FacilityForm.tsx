@@ -21,6 +21,7 @@ import {
   surfaceOptionsForKind,
 } from '@/lib/club-facilities';
 import { SynqSelect } from '@/components/portal/SynqSelect';
+import { WeekdayToggleButtons } from '@/components/portal/WeekdayToggleButtons';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -47,6 +48,14 @@ export function FacilityForm({ facility }: Props) {
     facility?.division_mode ?? 'quarters_4'
   );
   const [surfaceType, setSurfaceType] = useState(facility?.surface_type ?? '');
+  const [availabilityDays, setAvailabilityDays] = useState(
+    facility?.availability_days
+      ? facility.availability_days.split(',').map((day) => day.trim()).filter(Boolean)
+      : []
+  );
+  const [availabilityStart, setAvailabilityStart] = useState(facility?.availability_start ?? '');
+  const [availabilityEnd, setAvailabilityEnd] = useState(facility?.availability_end ?? '');
+  const [isMatchVenue, setIsMatchVenue] = useState(facility?.is_match_venue ?? false);
 
   const kindOptions = useMemo(() => facilityKindOptions(sport), [sport]);
   const surfaceOptions = useMemo(() => surfaceOptionsForKind(facilityKind), [facilityKind]);
@@ -91,6 +100,12 @@ export function FacilityForm({ facility }: Props) {
       <input type="hidden" name="facilityKind" value={facilityKind} readOnly />
       <input type="hidden" name="divisionMode" value={divisionMode} readOnly />
       <input type="hidden" name="surfaceType" value={surfaceType} readOnly />
+      <input
+        type="hidden"
+        name="availabilityDays"
+        value={sortWeekdayCodes(availabilityDays).join(',')}
+        readOnly
+      />
 
       <Card className="w-full border border-primary/25">
         <CardHeader>
@@ -184,18 +199,63 @@ export function FacilityForm({ facility }: Props) {
           </div>
 
           <div className="md:col-span-2">
+            <label
+              className={cn(
+                'flex cursor-pointer items-start gap-3 rounded-lg border border-primary/20 p-3 transition-colors',
+                isMatchVenue && 'border-primary/40 bg-primary/5'
+              )}
+            >
+              <input
+                type="checkbox"
+                name="isMatchVenue"
+                checked={isMatchVenue}
+                onChange={(event) => setIsMatchVenue(event.target.checked)}
+                className="mt-0.5 size-4 rounded border-primary/40 accent-primary"
+              />
+              <span>
+                <span className="block text-sm font-medium text-foreground">
+                  Sede de partidos del club
+                </span>
+                <span className="mt-0.5 block text-xs text-muted-foreground">
+                  Marca si esta instalación puede usarse como sede oficial para jugar partidos.
+                </span>
+              </span>
+            </label>
+          </div>
+
+          <div className="md:col-span-2">
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Horario habitual (referencia)
+              Días de uso habitual
+            </label>
+            <WeekdayToggleButtons values={availabilityDays} onChange={setAvailabilityDays} />
+            <p className="mt-1.5 text-[11px] text-muted-foreground">
+              L · M · X · J · V · S · D. Los horarios concretos de cada equipo se asignan en Cantera.
+            </p>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Hora inicio
             </label>
             <Input
-              name="availabilityNote"
-              defaultValue={facility?.availability_note ?? ''}
-              placeholder="Ej. L-V 17:00–22:00"
+              type="time"
+              name="availabilityStart"
+              value={availabilityStart}
+              onChange={(event) => setAvailabilityStart(event.target.value)}
               className="border-primary/30 bg-background/80"
             />
-            <p className="mt-1.5 text-[11px] text-muted-foreground">
-              Texto informativo. Los horarios reales de cada equipo se asignan en Cantera → Equipos.
-            </p>
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Hora fin
+            </label>
+            <Input
+              type="time"
+              name="availabilityEnd"
+              value={availabilityEnd}
+              onChange={(event) => setAvailabilityEnd(event.target.value)}
+              className="border-primary/30 bg-background/80"
+            />
           </div>
 
           <div className="md:col-span-2">

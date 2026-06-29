@@ -49,6 +49,7 @@ Ejecutar **todas en orden** en el SQL Editor del entorno **staging** primero; va
 14. `supabase/migrations/20260706040000_team_letter_player_names.sql`
 15. `supabase/migrations/20260706050000_facilities_team_venue.sql`
 16. `supabase/migrations/20260706060000_facilities_multisport.sql`
+17. `supabase/migrations/20260706070000_facilities_days_venue.sql`
 
 Ver también `.env.example` y **`docs/SYNQAI_CHECKLIST_OPERATIVA.md`**.
 
