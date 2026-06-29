@@ -9,6 +9,7 @@ import {
   TRAINING_DIVISION_LABELS,
   divisionOptionsForFacility,
   facilityHasSharedDivisions,
+  formatDivisionSchedule,
   sortWeekdayCodes,
 } from '@/lib/club-facilities';
 import {
@@ -23,8 +24,8 @@ import {
   type TeamTrainingSlot,
 } from '@/lib/team-setup';
 import { FacilityDivisionOccupancy } from '@/components/portal/FacilityDivisionOccupancy';
+import { ScheduleBlockFields } from '@/components/portal/ScheduleBlockFields';
 import { SynqSelect } from '@/components/portal/SynqSelect';
-import { WeekdayToggleButtons } from '@/components/portal/WeekdayToggleButtons';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -159,7 +160,6 @@ export function TeamSetupFields({
       <input type="hidden" name="teamPurpose" value={teamPurpose} readOnly />
       <input type="hidden" name="trainingFacilityId" value={trainingFacilityId} readOnly />
       <input type="hidden" name="trainingDivision" value={trainingDivision} readOnly />
-      <input type="hidden" name="trainingDays" value={sortedTrainingDays.join(',')} readOnly />
       <input type="hidden" name="matchVenueType" value={matchVenueType} readOnly />
 
       <Card className="w-full border border-primary/25">
@@ -203,10 +203,17 @@ export function TeamSetupFields({
               </p>
             )}
             {selectedFacility ? (
-              <p className="mt-1.5 text-[11px] text-muted-foreground">
-                {DIVISION_MODE_LABELS[selectedFacility.division_mode]}
-                {selectedFacility.address ? ` · ${selectedFacility.address}` : ''}
-              </p>
+              <div className="mt-1.5 space-y-1 text-[11px] text-muted-foreground">
+                <p>
+                  {DIVISION_MODE_LABELS[selectedFacility.division_mode]}
+                  {selectedFacility.address ? ` · ${selectedFacility.address}` : ''}
+                </p>
+                {facilityHasSharedDivisions(selectedFacility) ? (
+                  <p>
+                    División activa: {formatDivisionSchedule(selectedFacility)}
+                  </p>
+                ) : null}
+              </div>
             ) : null}
           </div>
 
@@ -228,41 +235,19 @@ export function TeamSetupFields({
             </div>
           ) : null}
 
-          <div className={selectedFacility && divisionOptions.length > 0 ? '' : 'md:col-span-2'}>
-            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Días de entrenamiento
-            </label>
-            <WeekdayToggleButtons
-              values={trainingDays}
-              onChange={setTrainingDays}
-              disabled={disabled}
-            />
-            <p className="mt-1.5 text-[11px] text-muted-foreground">
-              L · M · X · J · V · S · D
-            </p>
-          </div>
-
-          <div>
-            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Hora inicio
-            </label>
-            <Input
-              type="time"
-              name="trainingStart"
-              value={trainingStart}
-              onChange={(event) => setTrainingStart(event.target.value)}
-              disabled={disabled}
-            />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Hora fin
-            </label>
-            <Input
-              type="time"
-              name="trainingEnd"
-              value={trainingEnd}
-              onChange={(event) => setTrainingEnd(event.target.value)}
+          <div className="md:col-span-2">
+            <ScheduleBlockFields
+              title="Días y horario de entrenamiento"
+              hint="L · M · X · J · V · S · D"
+              days={trainingDays}
+              onDaysChange={setTrainingDays}
+              start={trainingStart}
+              end={trainingEnd}
+              onStartChange={setTrainingStart}
+              onEndChange={setTrainingEnd}
+              daysFieldName="trainingDays"
+              startFieldName="trainingStart"
+              endFieldName="trainingEnd"
               disabled={disabled}
             />
           </div>

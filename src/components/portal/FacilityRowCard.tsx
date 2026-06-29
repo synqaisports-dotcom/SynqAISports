@@ -4,9 +4,11 @@ import {
   DIVISION_MODE_LABELS,
   FACILITY_KIND_LABELS,
   SPORT_LABELS,
+  buildAvailabilityNote,
+  formatDivisionSchedule,
   formatFacilityAvailability,
-  formatTrainingDayLetters,
   type ClubFacility,
+  facilityHasSharedDivisions,
   facilitySupportsDivisions,
 } from '@/lib/club-facilities';
 import { FacilityPauseButton } from '@/components/portal/FacilityPauseButton';
@@ -61,8 +63,19 @@ export function FacilityRowCard({ facility }: Props) {
                 : '—'
             }
           />
-          <Field label="Días" value={formatTrainingDayLetters(facility.availability_days)} />
-          <Field label="Horario ref." value={formatFacilityAvailability(facility)} />
+          <Field
+            label="Horario habitual"
+            value={buildAvailabilityNote(
+              facility.availability_days,
+              facility.availability_start,
+              facility.availability_end
+            ) ?? '—'}
+          />
+          {facilityHasSharedDivisions(facility) ? (
+            <Field label="Horario división" value={formatDivisionSchedule(facility)} />
+          ) : (
+            <Field label="Ubicación" value={facility.address ?? '—'} />
+          )}
           <Field label="Ubicación" value={facility.address ?? '—'} />
         </div>
       </div>

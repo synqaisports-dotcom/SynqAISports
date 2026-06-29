@@ -22,6 +22,13 @@ function mapFacilityRow(row: Record<string, unknown>): ClubFacility {
     ? String(row.availability_end).slice(0, 5)
     : '';
 
+  const divisionScheduleStart = row.division_schedule_start
+    ? String(row.division_schedule_start).slice(0, 5)
+    : '';
+  const divisionScheduleEnd = row.division_schedule_end
+    ? String(row.division_schedule_end).slice(0, 5)
+    : '';
+
   return {
     id: String(row.id),
     name: String(row.name),
@@ -33,6 +40,11 @@ function mapFacilityRow(row: Record<string, unknown>): ClubFacility {
     availability_days: row.availability_days ? String(row.availability_days) : '',
     availability_start: availabilityStart,
     availability_end: availabilityEnd,
+    division_schedule_days: row.division_schedule_days
+      ? String(row.division_schedule_days)
+      : '',
+    division_schedule_start: divisionScheduleStart,
+    division_schedule_end: divisionScheduleEnd,
     is_match_venue: row.is_match_venue === true,
     availability_note: row.availability_note ? String(row.availability_note) : null,
     notes: row.notes ? String(row.notes) : null,

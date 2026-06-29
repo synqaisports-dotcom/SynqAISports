@@ -15,20 +15,24 @@ import {
   type FacilityDivisionMode,
   type FacilityKind,
   defaultDivisionModeForKind,
+  facilityHasSharedDivisions,
   facilityKindOptions,
   facilitySupportsDivisions,
   sportOptions,
-  sortWeekdayCodes,
   surfaceOptionsForKind,
 } from '@/lib/club-facilities';
+import { ScheduleBlockFields } from '@/components/portal/ScheduleBlockFields';
 import { SynqSelect } from '@/components/portal/SynqSelect';
-import { WeekdayToggleButtons } from '@/components/portal/WeekdayToggleButtons';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
 const initial: FacilityActionState = { ok: false };
+
+function parseDays(value: string | undefined) {
+  return value ? value.split(',').map((day) => day.trim()).filter(Boolean) : [];
+}
 
 type Props = {
   facility?: ClubFacility | null;
@@ -50,17 +54,63 @@ export function FacilityForm({ facility }: Props) {
   );
   const [surfaceType, setSurfaceType] = useState(facility?.surface_type ?? '');
   const [availabilityDays, setAvailabilityDays] = useState(
-    facility?.availability_days
-      ? facility.availability_days.split(',').map((day) => day.trim()).filter(Boolean)
-      : []
+    parseDays(facility?.availability_days)
   );
   const [availabilityStart, setAvailabilityStart] = useState(facility?.availability_start ?? '');
   const [availabilityEnd, setAvailabilityEnd] = useState(facility?.availability_end ?? '');
+  const [divisionScheduleDays, setDivisionScheduleDays] = useState(
+    parseDays(facility?.division_schedule_days)
+  );
+  const [divisionScheduleStart, setDivisionScheduleStart] = useState(
+    facility?.division_schedule_start ?? ''
+  );
+  const [divisionScheduleEnd, setDivisionScheduleEnd] = useState(
+    facility?.division_schedule_end ?? ''
+  );
   const [isMatchVenue, setIsMatchVenue] = useState(facility?.is_match_venue ?? false);
 
   const kindOptions = useMemo(() => facilityKindOptions(sport), [sport]);
   const surfaceOptions = useMemo(() => surfaceOptionsForKind(facilityKind), [facilityKind]);
-  const showDivisions = facilitySupportsDivisions(facilityKind);
+  const showDivisionType = facilitySupportsDivisions(facilityKind);
+
+  const draftFacility = useMemo(
+    (): ClubFacility => ({
+      id: facility?.id ?? 'draft',
+      name: facility?.name ?? '',
+      sport,
+      facility_kind: facilityKind,
+      surface_type: surfaceType || null,
+      division_mode: showDivisionType ? divisionMode : 'full',
+      address: facility?.address ?? null,
+      availability_days: availabilityDays.join(','),
+      availability_start: availabilityStart,
+      availability_end: availabilityEnd,
+      division_schedule_days: divisionScheduleDays.join(','),
+      division_schedule_start: divisionScheduleStart,
+      division_schedule_end: divisionScheduleEnd,
+      is_match_venue: isMatchVenue,
+      availability_note: null,
+      notes: facility?.notes ?? null,
+      active: true,
+    }),
+    [
+      facility,
+      sport,
+      facilityKind,
+      surfaceType,
+      divisionMode,
+      showDivisionType,
+      availabilityDays,
+      availabilityStart,
+      availabilityEnd,
+      divisionScheduleDays,
+      divisionScheduleStart,
+      divisionScheduleEnd,
+      isMatchVenue,
+    ]
+  );
+
+  const showDivisionSchedule = facilityHasSharedDivisions(draftFacility);
 
   useEffect(() => {
     if (state.ok) {
@@ -86,6 +136,9 @@ export function FacilityForm({ facility }: Props) {
     setFacilityKind(nextKind);
     if (!facilitySupportsDivisions(nextKind)) {
       setDivisionMode('full');
+      setDivisionScheduleDays([]);
+      setDivisionScheduleStart('');
+      setDivisionScheduleEnd('');
     } else if (!facilitySupportsDivisions(facilityKind)) {
       setDivisionMode(defaultDivisionModeForKind(nextKind));
     }
@@ -95,18 +148,22 @@ export function FacilityForm({ facility }: Props) {
     }
   };
 
+  const handleDivisionModeChange = (value: string) => {
+    const nextMode = value as FacilityDivisionMode;
+    setDivisionMode(nextMode);
+    if (nextMode === 'full') {
+      setDivisionScheduleDays([]);
+      setDivisionScheduleStart('');
+      setDivisionScheduleEnd('');
+    }
+  };
+
   return (
     <form action={action} className="w-full space-y-6">
       <input type="hidden" name="sport" value={sport} readOnly />
       <input type="hidden" name="facilityKind" value={facilityKind} readOnly />
       <input type="hidden" name="divisionMode" value={divisionMode} readOnly />
       <input type="hidden" name="surfaceType" value={surfaceType} readOnly />
-      <input
-        type="hidden"
-        name="availabilityDays"
-        value={sortWeekdayCodes(availabilityDays).join(',')}
-        readOnly
-      />
 
       <Card className="w-full border border-primary/25">
         <CardHeader>
@@ -138,9 +195,6 @@ export function FacilityForm({ facility }: Props) {
               options={sportOptions()}
               placeholder="Seleccionar deporte"
             />
-            <p className="mt-1.5 text-[11px] text-muted-foreground">
-              Plataforma multideporte; el lanzamiento inicial está optimizado para fútbol.
-            </p>
           </div>
 
           <div>
@@ -167,27 +221,24 @@ export function FacilityForm({ facility }: Props) {
             />
           </div>
 
-          {showDivisions ? (
+          {showDivisionType ? (
             <div>
               <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                División del espacio
+                Modo de división del campo
               </label>
               <SynqSelect
                 value={divisionMode}
-                onChange={(value) => setDivisionMode(value as FacilityDivisionMode)}
+                onChange={handleDivisionModeChange}
                 options={[
                   { value: 'full', label: DIVISION_MODE_LABELS.full },
                   { value: 'halves_2', label: DIVISION_MODE_LABELS.halves_2 },
                   { value: 'quarters_4', label: DIVISION_MODE_LABELS.quarters_4 },
                 ]}
               />
-              <p className="mt-1.5 text-[11px] text-muted-foreground">
-                Define si varios equipos pueden entrenar a la vez en mitades o cuartos del campo.
-              </p>
             </div>
           ) : null}
 
-          <div className={showDivisions ? '' : 'md:col-span-2'}>
+          <div className={showDivisionType ? '' : 'md:col-span-2'}>
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Dirección o ubicación
             </label>
@@ -225,39 +276,39 @@ export function FacilityForm({ facility }: Props) {
           </div>
 
           <div className="md:col-span-2">
-            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Días de uso habitual
-            </label>
-            <WeekdayToggleButtons values={availabilityDays} onChange={setAvailabilityDays} />
-            <p className="mt-1.5 text-[11px] text-muted-foreground">
-              L · M · X · J · V · S · D. Los horarios concretos de cada equipo se asignan en Cantera.
-            </p>
+            <ScheduleBlockFields
+              title="Horario habitual del campo"
+              hint="Días y franja en los que la instalación está disponible en general (L · M · X · J · V · S · D)."
+              days={availabilityDays}
+              onDaysChange={setAvailabilityDays}
+              start={availabilityStart}
+              end={availabilityEnd}
+              onStartChange={setAvailabilityStart}
+              onEndChange={setAvailabilityEnd}
+              daysFieldName="availabilityDays"
+              startFieldName="availabilityStart"
+              endFieldName="availabilityEnd"
+            />
           </div>
 
-          <div>
-            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Hora inicio
-            </label>
-            <Input
-              type="time"
-              name="availabilityStart"
-              value={availabilityStart}
-              onChange={(event) => setAvailabilityStart(event.target.value)}
-              className="border-primary/30 bg-background/80"
-            />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Hora fin
-            </label>
-            <Input
-              type="time"
-              name="availabilityEnd"
-              value={availabilityEnd}
-              onChange={(event) => setAvailabilityEnd(event.target.value)}
-              className="border-primary/30 bg-background/80"
-            />
-          </div>
+          {showDivisionSchedule ? (
+            <div className="md:col-span-2">
+              <ScheduleBlockFields
+                title={`Horario de división — ${DIVISION_MODE_LABELS[divisionMode]}`}
+                hint="Días y franja en los que el campo se comparte en zonas (mitades o cuartos). Suele ser un subconjunto del horario habitual."
+                days={divisionScheduleDays}
+                onDaysChange={setDivisionScheduleDays}
+                start={divisionScheduleStart}
+                end={divisionScheduleEnd}
+                onStartChange={setDivisionScheduleStart}
+                onEndChange={setDivisionScheduleEnd}
+                daysFieldName="divisionScheduleDays"
+                startFieldName="divisionScheduleStart"
+                endFieldName="divisionScheduleEnd"
+                className="border-primary/35 bg-primary/5"
+              />
+            </div>
+          ) : null}
 
           <div className="md:col-span-2">
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">

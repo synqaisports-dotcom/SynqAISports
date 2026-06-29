@@ -9,10 +9,10 @@ import {
   DIVISION_MODE_LABELS,
   FACILITY_KIND_LABELS,
   SPORT_LABELS,
+  buildAvailabilityNote,
   facilityHasSharedDivisions,
+  formatDivisionSchedule,
   formatFacilityAvailability,
-  formatTimeRange,
-  formatTrainingDayLetters,
   facilitySupportsDivisions,
 } from '@/lib/club-facilities';
 import { buildFacilityDivisionSchedule } from '@/lib/team-setup';
@@ -99,7 +99,7 @@ export default async function PortalClubInstalacionPage({ params }: Props) {
           <DataRow label="Tipo" value={FACILITY_KIND_LABELS[facility.facility_kind]} />
           <DataRow label="Superficie" value={facility.surface_type ?? '—'} />
           {facilitySupportsDivisions(facility.facility_kind) ? (
-            <DataRow label="División" value={DIVISION_MODE_LABELS[facility.division_mode]} />
+            <DataRow label="Modo división" value={DIVISION_MODE_LABELS[facility.division_mode]} />
           ) : null}
           <DataRow label="Dirección" value={facility.address ?? '—'} />
           <DataRow
@@ -107,16 +107,21 @@ export default async function PortalClubInstalacionPage({ params }: Props) {
             value={facility.is_match_venue ? 'Sí' : 'No'}
           />
           <DataRow
-            label="Días"
-            value={formatTrainingDayLetters(facility.availability_days)}
+            label="Horario habitual"
+            value={
+              buildAvailabilityNote(
+                facility.availability_days,
+                facility.availability_start,
+                facility.availability_end
+              ) ?? '—'
+            }
           />
-          <DataRow
-            label="Horario"
-            value={formatTimeRange(
-              facility.availability_start || null,
-              facility.availability_end || null
-            )}
-          />
+          {facilityHasSharedDivisions(facility) ? (
+            <DataRow
+              label="Horario de división"
+              value={formatDivisionSchedule(facility)}
+            />
+          ) : null}
           <DataRow label="Resumen" value={formatFacilityAvailability(facility)} />
           {facility.notes ? (
             <div className="rounded-lg border border-primary/15 bg-muted/10 p-3 text-xs leading-relaxed text-muted-foreground">

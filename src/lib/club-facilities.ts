@@ -41,6 +41,9 @@ export type ClubFacility = {
   availability_days: string;
   availability_start: string;
   availability_end: string;
+  division_schedule_days: string;
+  division_schedule_start: string;
+  division_schedule_end: string;
   is_match_venue: boolean;
   /** Texto legado / resumen generado al guardar */
   availability_note: string | null;
@@ -130,8 +133,11 @@ export const DEMO_FACILITIES: ClubFacility[] = [
     availability_days: 'mon,tue,wed,thu,fri',
     availability_start: '17:00',
     availability_end: '22:00',
+    division_schedule_days: 'mon,tue,wed,thu',
+    division_schedule_start: '17:00',
+    division_schedule_end: '21:00',
     is_match_venue: true,
-    availability_note: 'L M X J V · 17:00 – 22:00',
+    availability_note: 'L M X J V · 17:00 – 22:00 | División: L M X J · 17:00 – 21:00',
     notes: 'Compartido con escuela de fútbol los martes por la mañana.',
     active: true,
   },
@@ -146,8 +152,11 @@ export const DEMO_FACILITIES: ClubFacility[] = [
     availability_days: 'mon,tue,wed,thu,fri,sat,sun',
     availability_start: '09:00',
     availability_end: '21:00',
+    division_schedule_days: 'mon,tue,wed,thu,fri',
+    division_schedule_start: '17:00',
+    division_schedule_end: '20:00',
     is_match_venue: false,
-    availability_note: 'L M X J V S D · 09:00 – 21:00',
+    availability_note: 'L M X J V S D · 09:00 – 21:00 | División: L M X J V · 17:00 – 20:00',
     notes: null,
     active: true,
   },
@@ -204,18 +213,27 @@ export function parseFacilityFromForm(formData: FormData) {
   const availabilityDays = String(formData.get('availabilityDays') ?? '').trim();
   const availabilityStart = String(formData.get('availabilityStart') ?? '').trim();
   const availabilityEnd = String(formData.get('availabilityEnd') ?? '').trim();
+  const divisionScheduleDays = String(formData.get('divisionScheduleDays') ?? '').trim();
+  const divisionScheduleStart = String(formData.get('divisionScheduleStart') ?? '').trim();
+  const divisionScheduleEnd = String(formData.get('divisionScheduleEnd') ?? '').trim();
   const isMatchVenue = formData.get('isMatchVenue') === 'on';
+  const resolvedDivisionMode = facilitySupportsDivisions(facilityKind) ? divisionMode : 'full';
 
   return {
     name: String(formData.get('name') ?? '').trim(),
     sport,
     facility_kind: facilityKind,
     surface_type: String(formData.get('surfaceType') ?? '').trim() || null,
-    division_mode: facilitySupportsDivisions(facilityKind) ? divisionMode : ('full' as const),
+    division_mode: resolvedDivisionMode,
     address: String(formData.get('address') ?? '').trim() || null,
     availability_days: availabilityDays,
     availability_start: availabilityStart,
     availability_end: availabilityEnd,
+    division_schedule_days:
+      resolvedDivisionMode !== 'full' ? divisionScheduleDays : '',
+    division_schedule_start:
+      resolvedDivisionMode !== 'full' ? divisionScheduleStart : '',
+    division_schedule_end: resolvedDivisionMode !== 'full' ? divisionScheduleEnd : '',
     is_match_venue: isMatchVenue,
     notes: String(formData.get('notes') ?? '').trim() || null,
   };
@@ -234,6 +252,39 @@ export function buildAvailabilityNote(
   return parts.length > 0 ? parts.join(' · ') : null;
 }
 
+export function buildFacilityAvailabilityNote(data: {
+  availability_days: string;
+  availability_start: string;
+  availability_end: string;
+  division_mode: FacilityDivisionMode;
+  facility_kind: FacilityKind;
+  division_schedule_days: string;
+  division_schedule_start: string;
+  division_schedule_end: string;
+}): string | null {
+  const general = buildAvailabilityNote(
+    data.availability_days,
+    data.availability_start,
+    data.availability_end
+  );
+
+  if (
+    data.division_mode !== 'full' &&
+    facilitySupportsDivisions(data.facility_kind) &&
+    data.division_schedule_days.trim()
+  ) {
+    const division = buildAvailabilityNote(
+      data.division_schedule_days,
+      data.division_schedule_start,
+      data.division_schedule_end
+    );
+    const parts = [general, division ? `División: ${division}` : null].filter(Boolean);
+    return parts.length > 0 ? parts.join(' | ') : null;
+  }
+
+  return general;
+}
+
 export function facilityToDbPayload(data: ReturnType<typeof parseFacilityFromForm>) {
   return {
     name: data.name,
@@ -245,12 +296,11 @@ export function facilityToDbPayload(data: ReturnType<typeof parseFacilityFromFor
     availability_days: data.availability_days || null,
     availability_start: data.availability_start || null,
     availability_end: data.availability_end || null,
+    division_schedule_days: data.division_schedule_days || null,
+    division_schedule_start: data.division_schedule_start || null,
+    division_schedule_end: data.division_schedule_end || null,
     is_match_venue: data.is_match_venue,
-    availability_note: buildAvailabilityNote(
-      data.availability_days,
-      data.availability_start,
-      data.availability_end
-    ),
+    availability_note: buildFacilityAvailabilityNote(data),
     notes: data.notes,
   };
 }
@@ -312,15 +362,48 @@ export function formatTrainingDayLetters(codes: string): string {
 export function formatFacilityAvailability(
   facility: Pick<
     ClubFacility,
-    'availability_days' | 'availability_start' | 'availability_end' | 'availability_note'
+    | 'availability_days'
+    | 'availability_start'
+    | 'availability_end'
+    | 'division_mode'
+    | 'facility_kind'
+    | 'division_schedule_days'
+    | 'division_schedule_start'
+    | 'division_schedule_end'
+    | 'availability_note'
   >
 ): string {
-  const fromFields = buildAvailabilityNote(
-    facility.availability_days,
-    facility.availability_start,
-    facility.availability_end
-  );
+  const fromFields = buildFacilityAvailabilityNote({
+    availability_days: facility.availability_days,
+    availability_start: facility.availability_start,
+    availability_end: facility.availability_end,
+    division_mode: facility.division_mode,
+    facility_kind: facility.facility_kind,
+    division_schedule_days: facility.division_schedule_days,
+    division_schedule_start: facility.division_schedule_start,
+    division_schedule_end: facility.division_schedule_end,
+  });
   return fromFields ?? facility.availability_note ?? '—';
+}
+
+export function formatDivisionSchedule(
+  facility: Pick<
+    ClubFacility,
+    | 'division_mode'
+    | 'facility_kind'
+    | 'division_schedule_days'
+    | 'division_schedule_start'
+    | 'division_schedule_end'
+  >
+): string {
+  if (!facilityHasSharedDivisions(facility as ClubFacility)) return '—';
+  return (
+    buildAvailabilityNote(
+      facility.division_schedule_days,
+      facility.division_schedule_start,
+      facility.division_schedule_end
+    ) ?? '—'
+  );
 }
 
 export function formatTrainingDays(codes: string): string {
@@ -340,6 +423,6 @@ export function formatTimeRange(start: string | null, end: string | null): strin
 }
 
 const FACILITY_SELECT =
-  'id, name, sport, facility_kind, surface_type, division_mode, address, availability_days, availability_start, availability_end, is_match_venue, availability_note, notes, active';
+  'id, name, sport, facility_kind, surface_type, division_mode, address, availability_days, availability_start, availability_end, division_schedule_days, division_schedule_start, division_schedule_end, is_match_venue, availability_note, notes, active';
 
 export { FACILITY_SELECT };
