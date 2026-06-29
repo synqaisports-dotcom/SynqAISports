@@ -2,8 +2,10 @@ import type { ClubFacility, FacilityDivisionMode, TrainingDivision } from '@/lib
 import {
   DIVISION_MODE_LABELS,
   TRAINING_DIVISION_LABELS,
+  divisionOptionsForFacility,
+  facilityHasSharedDivisions,
   formatTimeRange,
-  formatTrainingDays,
+  formatTrainingDayLetters,
 } from '@/lib/club-facilities';
 
 export type TeamPurpose = 'competition' | 'formation';
@@ -113,7 +115,7 @@ export function describeTrainingSetup(
   setup: TeamSetupData,
   facilityName?: string | null
 ): string {
-  const days = formatTrainingDays(setup.training_days);
+  const days = formatTrainingDayLetters(setup.training_days);
   const time = formatTimeRange(setup.training_start, setup.training_end);
   const division = setup.training_division
     ? TRAINING_DIVISION_LABELS[setup.training_division]
@@ -122,6 +124,76 @@ export function describeTrainingSetup(
     Boolean
   );
   return parts.length > 0 ? parts.join(' · ') : 'Sin asignar';
+}
+
+export function formatTrainingSlotBrief(slot: TeamTrainingSlot): string {
+  const days = formatTrainingDayLetters(slot.training_days);
+  const time = formatTimeRange(slot.training_start, slot.training_end);
+  return `${days} · ${time}`;
+}
+
+export type DivisionScheduleEntry = {
+  teamId?: string;
+  teamName: string;
+  days: string;
+  time: string;
+  isPreview?: boolean;
+};
+
+export type DivisionScheduleRow = {
+  division: TrainingDivision;
+  label: string;
+  entries: DivisionScheduleEntry[];
+};
+
+export function buildFacilityDivisionSchedule(
+  facility: ClubFacility,
+  slots: TeamTrainingSlot[],
+  options?: {
+    excludeTeamId?: string;
+    preview?: {
+      teamName: string;
+      training_division: TrainingDivision;
+      training_days: string;
+      training_start: string;
+      training_end: string;
+    };
+  }
+): DivisionScheduleRow[] {
+  if (!facilityHasSharedDivisions(facility)) return [];
+
+  const facilitySlots = slots.filter(
+    (slot) =>
+      slot.training_facility_id === facility.id &&
+      (!options?.excludeTeamId || slot.teamId !== options.excludeTeamId)
+  );
+
+  return divisionOptionsForFacility(facility).map((option) => {
+    const entries: DivisionScheduleEntry[] = facilitySlots
+      .filter((slot) => slot.training_division === option.value)
+      .map((slot) => ({
+        teamId: slot.teamId,
+        teamName: slot.teamName,
+        days: formatTrainingDayLetters(slot.training_days),
+        time: formatTimeRange(slot.training_start, slot.training_end),
+      }));
+
+    const preview = options?.preview;
+    if (preview?.training_division === option.value && preview.training_days.trim()) {
+      entries.push({
+        teamName: preview.teamName,
+        days: formatTrainingDayLetters(preview.training_days),
+        time: formatTimeRange(preview.training_start, preview.training_end),
+        isPreview: true,
+      });
+    }
+
+    return {
+      division: option.value,
+      label: option.label,
+      entries,
+    };
+  });
 }
 
 export type TeamTrainingSlot = {
@@ -335,7 +407,7 @@ export const DEMO_TEAM_SETUP: Record<string, TeamSetupData> = {
   'demo-team-cadete-a': {
     team_purpose: 'competition',
     training_facility_id: 'demo-facility-main',
-    training_division: 'half_1',
+    training_division: 'quarter_3',
     training_days: 'mon,wed,fri',
     training_start: '20:00',
     training_end: '21:30',
@@ -349,7 +421,7 @@ export const DEMO_TEAM_SETUP: Record<string, TeamSetupData> = {
   'demo-team-juvenil-a': {
     team_purpose: 'competition',
     training_facility_id: 'demo-facility-main',
-    training_division: 'full',
+    training_division: 'quarter_4',
     training_days: 'tue,thu,sat',
     training_start: '20:30',
     training_end: '22:00',

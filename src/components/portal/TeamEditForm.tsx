@@ -120,6 +120,7 @@ export function TeamEditForm({
         occupiedSlots={occupiedSlots}
         initial={initialSetup}
         excludeTeamId={teamId}
+        teamName={previewName || 'Este equipo'}
         disabled={readOnly}
       />
 

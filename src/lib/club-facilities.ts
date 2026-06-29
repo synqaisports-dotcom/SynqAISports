@@ -178,6 +178,10 @@ export function facilitySupportsDivisions(kind: FacilityKind): boolean {
   return SPLITTABLE_KINDS.has(kind);
 }
 
+export function facilityHasSharedDivisions(facility: ClubFacility): boolean {
+  return facilitySupportsDivisions(facility.facility_kind) && facility.division_mode !== 'full';
+}
+
 export function defaultDivisionModeForKind(kind: FacilityKind): FacilityDivisionMode {
   if (!facilitySupportsDivisions(kind)) return 'full';
   if (kind === 'football_11') return 'quarters_4';

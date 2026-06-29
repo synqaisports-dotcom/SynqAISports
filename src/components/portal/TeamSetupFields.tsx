@@ -2,25 +2,29 @@
 
 import { useMemo, useState } from 'react';
 import { AlertTriangle } from 'lucide-react';
-import type { ClubFacility } from '@/lib/club-facilities';
+import type { ClubFacility, TrainingDivision } from '@/lib/club-facilities';
 import {
   DIVISION_MODE_LABELS,
   SPORT_LABELS,
   TRAINING_DIVISION_LABELS,
-  WEEKDAY_OPTIONS,
   divisionOptionsForFacility,
+  facilityHasSharedDivisions,
+  sortWeekdayCodes,
 } from '@/lib/club-facilities';
 import {
   DEFAULT_TEAM_SETUP,
   MATCH_VENUE_LABELS,
   TEAM_PURPOSE_LABELS,
+  buildFacilityDivisionSchedule,
+  findTrainingConflicts,
+  formatTrainingSlotBrief,
   type TeamPurpose,
   type TeamSetupData,
   type TeamTrainingSlot,
-  findTrainingConflicts,
 } from '@/lib/team-setup';
-import { SynqMultiSelect } from '@/components/portal/SynqMultiSelect';
+import { FacilityDivisionOccupancy } from '@/components/portal/FacilityDivisionOccupancy';
 import { SynqSelect } from '@/components/portal/SynqSelect';
+import { WeekdayToggleButtons } from '@/components/portal/WeekdayToggleButtons';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -30,6 +34,7 @@ type Props = {
   initial?: TeamSetupData;
   occupiedSlots?: TeamTrainingSlot[];
   excludeTeamId?: string;
+  teamName?: string;
   disabled?: boolean;
 };
 
@@ -38,6 +43,7 @@ export function TeamSetupFields({
   initial = DEFAULT_TEAM_SETUP,
   occupiedSlots = [],
   excludeTeamId,
+  teamName = 'Este equipo',
   disabled,
 }: Props) {
   const [teamPurpose, setTeamPurpose] = useState<TeamPurpose>(initial.team_purpose);
@@ -75,6 +81,8 @@ export function TeamSetupFields({
     [selectedFacility]
   );
 
+  const sortedTrainingDays = useMemo(() => sortWeekdayCodes(trainingDays), [trainingDays]);
+
   const handleFacilityChange = (facilityId: string) => {
     setTrainingFacilityId(facilityId);
     const facility = facilities.find((item) => item.id === facilityId);
@@ -88,7 +96,7 @@ export function TeamSetupFields({
     team_purpose: teamPurpose,
     training_facility_id: trainingFacilityId || null,
     training_division: (trainingDivision || null) as TeamSetupData['training_division'],
-    training_days: trainingDays.join(','),
+    training_days: sortedTrainingDays.join(','),
     training_start: trainingStart,
     training_end: trainingEnd,
     match_venue_type: matchVenueType,
@@ -110,6 +118,37 @@ export function TeamSetupFields({
     [currentSetup, selectedFacility, occupiedSlots, excludeTeamId]
   );
 
+  const divisionSchedule = useMemo(() => {
+    if (!selectedFacility) return [];
+    const previewDivision = trainingDivision as TrainingDivision;
+    const hasPreview =
+      Boolean(trainingDivision) &&
+      sortedTrainingDays.length > 0 &&
+      Boolean(trainingStart || trainingEnd);
+
+    return buildFacilityDivisionSchedule(selectedFacility, occupiedSlots, {
+      excludeTeamId,
+      preview: hasPreview
+        ? {
+            teamName,
+            training_division: previewDivision,
+            training_days: sortedTrainingDays.join(','),
+            training_start: trainingStart,
+            training_end: trainingEnd,
+          }
+        : undefined,
+    });
+  }, [
+    selectedFacility,
+    occupiedSlots,
+    excludeTeamId,
+    trainingDivision,
+    sortedTrainingDays,
+    trainingStart,
+    trainingEnd,
+    teamName,
+  ]);
+
   const facilityOptions = facilities.map((facility) => ({
     value: facility.id,
     label: `${facility.name} (${SPORT_LABELS[facility.sport]})`,
@@ -120,7 +159,7 @@ export function TeamSetupFields({
       <input type="hidden" name="teamPurpose" value={teamPurpose} readOnly />
       <input type="hidden" name="trainingFacilityId" value={trainingFacilityId} readOnly />
       <input type="hidden" name="trainingDivision" value={trainingDivision} readOnly />
-      <input type="hidden" name="trainingDays" value={trainingDays.join(',')} readOnly />
+      <input type="hidden" name="trainingDays" value={sortedTrainingDays.join(',')} readOnly />
       <input type="hidden" name="matchVenueType" value={matchVenueType} readOnly />
 
       <Card className="w-full border border-primary/25">
@@ -193,13 +232,14 @@ export function TeamSetupFields({
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Días de entrenamiento
             </label>
-            <SynqMultiSelect
+            <WeekdayToggleButtons
               values={trainingDays}
               onChange={setTrainingDays}
-              options={WEEKDAY_OPTIONS}
-              placeholder="Seleccionar días"
               disabled={disabled}
             />
+            <p className="mt-1.5 text-[11px] text-muted-foreground">
+              L · M · X · J · V · S · D
+            </p>
           </div>
 
           <div>
@@ -227,6 +267,16 @@ export function TeamSetupFields({
             />
           </div>
 
+          {selectedFacility && facilityHasSharedDivisions(selectedFacility) ? (
+            <div className="md:col-span-2">
+              <FacilityDivisionOccupancy
+                rows={divisionSchedule}
+                title="Ocupación de la instalación por zona"
+                className="border-0 bg-muted/5 shadow-none"
+              />
+            </div>
+          ) : null}
+
           {conflicts.length > 0 ? (
             <div className="md:col-span-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-100">
               <div className="flex items-start gap-2">
@@ -242,12 +292,13 @@ export function TeamSetupFields({
                         {slot.training_division
                           ? ` (${TRAINING_DIVISION_LABELS[slot.training_division]})`
                           : ''}
+                        {' — '}
+                        {formatTrainingSlotBrief(slot)}
                       </li>
                     ))}
                   </ul>
                   <p className="mt-2 text-[11px] text-amber-100/80">
-                    Revisa horarios y zonas del campo antes de guardar. Más adelante bloquearemos
-                    automáticamente los cruces en instalaciones compartidas.
+                    Revisa horarios y zonas del campo antes de guardar.
                   </p>
                 </div>
               </div>

@@ -1,17 +1,21 @@
 import Link from 'next/link';
 import { ArrowLeft, Pencil } from 'lucide-react';
 import { loadFacilityById } from '@/app/actions/club-facilities';
+import { getTeamTrainingSlots } from '@/app/actions/cantera';
+import { FacilityDivisionOccupancy } from '@/components/portal/FacilityDivisionOccupancy';
 import { FacilityPauseButton } from '@/components/portal/FacilityPauseButton';
 import { PageContainer } from '@/components/portal/PageContainer';
 import {
   DIVISION_MODE_LABELS,
   FACILITY_KIND_LABELS,
   SPORT_LABELS,
+  facilityHasSharedDivisions,
   formatFacilityAvailability,
   formatTimeRange,
   formatTrainingDayLetters,
   facilitySupportsDivisions,
 } from '@/lib/club-facilities';
+import { buildFacilityDivisionSchedule } from '@/lib/team-setup';
 import { isDemoActive } from '@/lib/demo';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
@@ -35,6 +39,10 @@ export default async function PortalClubInstalacionPage({ params }: Props) {
   if (!facility) notFound();
 
   const demo = await isDemoActive();
+  const trainingSlots = await getTeamTrainingSlots(ctx.club.id);
+  const divisionSchedule = facilityHasSharedDivisions(facility)
+    ? buildFacilityDivisionSchedule(facility, trainingSlots)
+    : [];
 
   return (
     <PageContainer>
@@ -121,6 +129,14 @@ export default async function PortalClubInstalacionPage({ params }: Props) {
           </p>
         </CardContent>
       </Card>
+
+      {divisionSchedule.length > 0 ? (
+        <FacilityDivisionOccupancy
+          rows={divisionSchedule}
+          title="Equipos por zona — días y horarios"
+          className="mt-6"
+        />
+      ) : null}
     </PageContainer>
   );
 }

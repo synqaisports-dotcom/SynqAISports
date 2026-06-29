@@ -104,7 +104,11 @@ export function TeamCreateForm({ category, usedLetters, facilities, occupiedSlot
         </CardContent>
       </Card>
 
-      <TeamSetupFields facilities={facilities} occupiedSlots={occupiedSlots} />
+      <TeamSetupFields
+        facilities={facilities}
+        occupiedSlots={occupiedSlots}
+        teamName={previewName || 'Este equipo'}
+      />
 
       <div className="flex flex-wrap items-center gap-4">
         <Button type="submit" disabled={pending || !teamLetter || letterOptions.length === 0}>
