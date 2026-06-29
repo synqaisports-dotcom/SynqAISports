@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { getDictionary } from '@/lib/i18n/dictionaries';
 import { getLocale } from '@/lib/i18n/get-locale';
-import { isDemoModeEnv } from '@/lib/demo';
+import { DEMO_ENTRY_PATH, isDemoModeEnv } from '@/lib/demo-constants';
 
 type Props = { searchParams: Promise<{ error?: string }> };
 
@@ -28,19 +28,11 @@ export default async function LoginPage({ searchParams }: Props) {
 
         <div className="mt-6 space-y-3">
           <Link
-            href="/demo"
-            className="flex w-full items-center justify-center rounded-full bg-synq-pitch py-3 text-sm font-semibold text-white hover:bg-synq-accent"
+            href={DEMO_ENTRY_PATH}
+            className="flex w-full items-center justify-center rounded-full bg-gradient-to-r from-synq-pitch to-synq-accent py-3 text-sm font-semibold text-white shadow-lg shadow-synq-pitch/20 hover:brightness-110"
           >
             Entrar al portal del club
           </Link>
-          {vercelDemo && (
-            <Link
-              href="/portal"
-              className="flex w-full items-center justify-center rounded-full border border-white/20 py-3 text-sm font-semibold text-white hover:border-synq-accent"
-            >
-              Ir directo a /portal
-            </Link>
-          )}
         </div>
 
         {error === 'no_club' && !vercelDemo && (

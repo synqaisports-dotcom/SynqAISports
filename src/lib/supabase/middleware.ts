@@ -1,4 +1,4 @@
-import { isDemoModeEnv, isDemoRequest } from '@/lib/demo';
+import { isDemoModeEnv, isDemoRequest } from '@/lib/demo-constants';
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
@@ -18,8 +18,15 @@ export async function updateSession(request: NextRequest) {
     if (!isProtected) {
       return supabaseResponse;
     }
+    if (isDemoRequest(request)) {
+      return supabaseResponse;
+    }
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = '/login';
+    loginUrl.searchParams.set(
+      'next',
+      `${request.nextUrl.pathname}${request.nextUrl.search}`
+    );
     return NextResponse.redirect(loginUrl);
   }
 

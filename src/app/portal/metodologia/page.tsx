@@ -1,9 +1,12 @@
 import Link from 'next/link';
 import { MethodologySubnav } from '@/components/methodology/MethodologySubnav';
+import { PageContainer } from '@/components/portal/PageContainer';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import { redirect } from 'next/navigation';
-import { BookOpen, ClipboardList, Layers, Target } from 'lucide-react';
+import { BookOpen, ClipboardList, GitBranch, Layers, Target } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 export default async function MetodologiaHomePage() {
   const supabase = await createClient();
@@ -32,11 +35,18 @@ export default async function MetodologiaHomePage() {
 
   const cards = [
     {
+      href: '/portal/metodologia/planograma',
+      label: 'Planograma',
+      count: '—',
+      icon: GitBranch,
+      hint: 'Macro → meso → micro → sesiones',
+    },
+    {
       href: '/portal/metodologia/ejercicios',
       label: 'Biblioteca de ejercicios',
       count: exercises.count ?? 0,
       icon: BookOpen,
-      hint: 'Crear con pizarra web y metadatos',
+      hint: 'Fichas UEFA y pizarra',
     },
     {
       href: '/portal/metodologia/microciclos',
@@ -62,30 +72,42 @@ export default async function MetodologiaHomePage() {
   ];
 
   return (
-    <div>
-      <h1 className="font-serif-display text-3xl text-white">Metodología</h1>
-      <p className="mt-2 text-synq-muted">
-        Biblioteca de ejercicios, planificación y objetivos. Las apps de campo consumirán esta
-        información en una fase posterior.
-      </p>
+    <PageContainer>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-base">Modelo de juego del club</CardTitle>
+          <CardDescription>
+            Texto metodológico genérico editable — principios ofensivos, defensivos y transiciones.
+            En la siguiente fase se podrá enriquecer con vídeos y documentos.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground leading-relaxed">
+          El club trabaja una propuesta de juego basada en la ocupación de espacios, presión tras
+          pérdida y salida desde portero. Cada categoría adapta el mismo ADN con progresiones
+          técnicas y tácticas acordes a su etapa formativa.
+        </CardContent>
+      </Card>
+
       <MethodologySubnav />
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map(({ href, label, count, icon: Icon, hint }) => (
-          <Link
-            key={href}
-            href={href}
-            className="rounded-2xl border border-white/5 bg-synq-slate/40 p-5 transition-colors hover:border-synq-accent/30"
-          >
-            <div className="flex items-start justify-between">
-              <Icon className="h-6 w-6 text-synq-accent" />
-              <span className="font-mono text-2xl font-bold text-white">{count}</span>
-            </div>
-            <p className="mt-3 font-semibold text-white">{label}</p>
-            <p className="mt-1 text-sm text-synq-muted">{hint}</p>
-          </Link>
+          <Card key={href} className="transition-colors hover:border-primary/40">
+            <CardHeader className="flex flex-row items-start justify-between pb-2">
+              <Icon className="h-5 w-5 text-primary" />
+              <span className="font-mono text-xl font-bold">{count}</span>
+            </CardHeader>
+            <CardContent>
+              <CardTitle className="mb-1 text-base">{label}</CardTitle>
+              <CardDescription className="mb-3">{hint}</CardDescription>
+              <Button variant="outline" size="sm" asChild>
+                <Link href={href}>Abrir</Link>
+              </Button>
+            </CardContent>
+          </Card>
         ))}
       </div>
-    </div>
+    </PageContainer>
   );
 }

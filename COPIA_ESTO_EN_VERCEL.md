@@ -32,10 +32,10 @@ Sin `SUPABASE_SERVICE_ROLE_KEY` ves la UI pero **no guarda** ejercicios ni cambi
 ## 3. Cómo entrar (sin login)
 
 1. Abre **https://www.synqai.net**
-2. Botón verde **«Entrar al portal de pruebas»**
-3. O directo: **https://www.synqai.net/portal**
+2. Botón verde **«Entrar al portal»** (va a `/demo` y activa la sesión)
+3. O directo: **https://www.synqai.net/demo**
 
-No hace falta email ni contraseña.
+Si no entra, comprueba que `SYNQ_VERCEL_DEMO=true` **o** que `/demo` responde (pone la cookie).
 
 ---
 
@@ -47,7 +47,7 @@ No hace falta email ni contraseña.
 - `/portal/club` — datos del club
 - `/portal/config` — código QR
 
-Banner amarillo arriba = modo pruebas activo.
+Campana cyan en la barra superior (icono de avisos) = modo pruebas activo.
 
 ---
 

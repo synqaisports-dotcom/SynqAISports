@@ -2,45 +2,33 @@ import { cookies } from 'next/headers';
 import type { NextRequest } from 'next/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { ClubRow, StaffContext } from '@/lib/portal';
+import {
+  DEMO_CLUB_ID,
+  DEMO_COOKIE,
+  getDemoClubIdFallback,
+  hasServiceRoleKey,
+  isDemoCookieValue,
+  isDemoModeEnv,
+} from '@/lib/demo-constants';
 
-export const DEMO_COOKIE = 'synq_demo';
-
-export const DEMO_CLUB_ID = '00000000-0000-4000-8000-000000000001';
+export {
+  DEMO_COOKIE,
+  DEMO_ENTRY_PATH,
+  DEMO_CLUB_ID,
+  getDemoClubIdFallback,
+  hasServiceRoleKey,
+  isDemoCookieValue,
+  isDemoModeEnv,
+  isDemoRequest,
+} from '@/lib/demo-constants';
 
 const CLUB_SELECT =
-  'id, name, slug, country_code, address, phone, email, players_count, family_fee_annual_eur, synq_rate_per_user_eur, invite_code, is_founding, founding_until';
-
-/** Demo en Vercel sin login. Variable: SYNQ_VERCEL_DEMO=true */
-export function isDemoModeEnv(): boolean {
-  return (
-    process.env.NEXT_PUBLIC_SYNQ_DEMO_MODE === 'true' ||
-    process.env.SYNQ_VERCEL_DEMO === 'true'
-  );
-}
-
-export function hasServiceRoleKey(): boolean {
-  return Boolean(
-    process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ||
-      process.env.SUPABASE_SECRET_KEY?.trim()
-  );
-}
-
-export function isDemoCookieValue(value: string | undefined): boolean {
-  return value === '1';
-}
-
-export function isDemoRequest(request: NextRequest): boolean {
-  return isDemoModeEnv() || isDemoCookieValue(request.cookies.get(DEMO_COOKIE)?.value);
-}
+  'id, name, slug, country_code, address, phone, email, cover_url, logo_url, website_url, instagram_url, facebook_url, x_url, tiktok_url, youtube_url, organigrama_json, players_count, family_fee_annual_eur, synq_rate_per_user_eur, invite_code, is_founding, founding_until';
 
 export async function isDemoActive(): Promise<boolean> {
   if (isDemoModeEnv()) return true;
   const cookieStore = await cookies();
   return isDemoCookieValue(cookieStore.get(DEMO_COOKIE)?.value);
-}
-
-export function getDemoClubIdFallback(): string {
-  return process.env.SYNQ_DEMO_CLUB_ID?.trim() || DEMO_CLUB_ID;
 }
 
 export function staticDemoStaffContext(): StaffContext {
@@ -53,6 +41,15 @@ export function staticDemoStaffContext(): StaffContext {
       address: 'Calle del Fútbol 1, Madrid',
       phone: '+34 600 000 000',
       email: 'demo@synqai.test',
+      cover_url: null,
+      logo_url: null,
+      website_url: null,
+      instagram_url: null,
+      facebook_url: null,
+      x_url: null,
+      tiktok_url: null,
+      youtube_url: null,
+      organigrama_json: null,
       players_count: 80,
       family_fee_annual_eur: 12,
       synq_rate_per_user_eur: 0.5,
