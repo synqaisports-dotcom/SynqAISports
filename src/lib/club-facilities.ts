@@ -9,16 +9,64 @@ export type TrainingDivision =
   | 'quarter_3'
   | 'quarter_4';
 
+/** Deporte principal de la instalación (plataforma multideporte). */
+export type ClubSport =
+  | 'football'
+  | 'futsal'
+  | 'basketball'
+  | 'volleyball'
+  | 'handball'
+  | 'multisport'
+  | 'other';
+
+export type FacilityKind =
+  | 'football_11'
+  | 'football_7'
+  | 'futsal_court'
+  | 'basketball_court'
+  | 'volleyball_court'
+  | 'handball_court'
+  | 'multisport_hall'
+  | 'gym'
+  | 'other';
+
 export type ClubFacility = {
   id: string;
   name: string;
+  sport: ClubSport;
+  facility_kind: FacilityKind;
   surface_type: string | null;
   division_mode: FacilityDivisionMode;
   address: string | null;
+  availability_note: string | null;
+  notes: string | null;
+  active: boolean;
+};
+
+export const SPORT_LABELS: Record<ClubSport, string> = {
+  football: 'Fútbol',
+  futsal: 'Fútbol sala',
+  basketball: 'Baloncesto',
+  volleyball: 'Voleibol',
+  handball: 'Balonmano',
+  multisport: 'Polideportivo',
+  other: 'Otro',
+};
+
+export const FACILITY_KIND_LABELS: Record<FacilityKind, string> = {
+  football_11: 'Campo de fútbol 11',
+  football_7: 'Campo de fútbol 7',
+  futsal_court: 'Pista de fútbol sala',
+  basketball_court: 'Pista de baloncesto',
+  volleyball_court: 'Pista de voleibol',
+  handball_court: 'Pista de balonmano',
+  multisport_hall: 'Pabellón polideportivo',
+  gym: 'Gimnasio / sala de musculación',
+  other: 'Otra instalación',
 };
 
 export const DIVISION_MODE_LABELS: Record<FacilityDivisionMode, string> = {
-  full: 'Campo completo',
+  full: 'Campo completo (sin dividir)',
   halves_2: 'División en 2 mitades',
   quarters_4: 'División en 4 cuartos',
 };
@@ -33,27 +81,142 @@ export const TRAINING_DIVISION_LABELS: Record<TrainingDivision, string> = {
   quarter_4: 'Cuarto 4',
 };
 
+const SPLITTABLE_KINDS = new Set<FacilityKind>(['football_11', 'football_7', 'futsal_court']);
+
+export const FACILITY_KINDS_BY_SPORT: Record<ClubSport, FacilityKind[]> = {
+  football: ['football_11', 'football_7', 'multisport_hall', 'gym', 'other'],
+  futsal: ['futsal_court', 'multisport_hall', 'gym', 'other'],
+  basketball: ['basketball_court', 'multisport_hall', 'gym', 'other'],
+  volleyball: ['volleyball_court', 'multisport_hall', 'gym', 'other'],
+  handball: ['handball_court', 'multisport_hall', 'gym', 'other'],
+  multisport: [
+    'multisport_hall',
+    'football_11',
+    'football_7',
+    'futsal_court',
+    'basketball_court',
+    'gym',
+    'other',
+  ],
+  other: ['other', 'multisport_hall', 'gym'],
+};
+
+export const SURFACE_OPTIONS: Record<FacilityKind, string[]> = {
+  football_11: ['Césped natural', 'Césped artificial', 'Tierra / no regado'],
+  football_7: ['Césped artificial', 'Césped natural', 'Tierra / no regado'],
+  futsal_court: ['Parquet', 'Resina / pavimento', 'Césped artificial'],
+  basketball_court: ['Parquet', 'Resina / pavimento', 'Hormigón poroso'],
+  volleyball_court: ['Parquet', 'Resina / pavimento', 'Arena (playa)'],
+  handball_court: ['Parquet', 'Resina / pavimento'],
+  multisport_hall: ['Parquet', 'Resina / pavimento', 'Césped artificial'],
+  gym: ['Suelo de goma', 'Parquet', 'Resina / pavimento'],
+  other: ['Césped natural', 'Césped artificial', 'Parquet', 'Resina / pavimento', 'Otro'],
+};
+
 export const DEMO_FACILITIES: ClubFacility[] = [
   {
     id: 'demo-facility-main',
     name: 'Campo principal F-11',
+    sport: 'football',
+    facility_kind: 'football_11',
     surface_type: 'Césped natural',
     division_mode: 'quarters_4',
     address: 'Polideportivo municipal — acceso norte',
+    availability_note: 'L-V 17:00–22:00',
+    notes: 'Compartido con escuela de fútbol los martes por la mañana.',
+    active: true,
   },
   {
     id: 'demo-facility-annex',
     name: 'Campo anexo F-7',
+    sport: 'football',
+    facility_kind: 'football_7',
     surface_type: 'Césped artificial',
     division_mode: 'halves_2',
     address: 'Anexo del club',
+    availability_note: 'L-D 09:00–21:00',
+    notes: null,
+    active: true,
   },
 ];
+
+export function sportOptions() {
+  return (Object.keys(SPORT_LABELS) as ClubSport[]).map((sport) => ({
+    value: sport,
+    label: SPORT_LABELS[sport],
+  }));
+}
+
+export function facilityKindOptions(sport: ClubSport) {
+  return FACILITY_KINDS_BY_SPORT[sport].map((kind) => ({
+    value: kind,
+    label: FACILITY_KIND_LABELS[kind],
+  }));
+}
+
+export function surfaceOptionsForKind(kind: FacilityKind) {
+  return SURFACE_OPTIONS[kind].map((surface) => ({
+    value: surface,
+    label: surface,
+  }));
+}
+
+export function facilitySupportsDivisions(kind: FacilityKind): boolean {
+  return SPLITTABLE_KINDS.has(kind);
+}
+
+export function defaultDivisionModeForKind(kind: FacilityKind): FacilityDivisionMode {
+  if (!facilitySupportsDivisions(kind)) return 'full';
+  if (kind === 'football_11') return 'quarters_4';
+  return 'halves_2';
+}
+
+export function facilitySummary(facility: ClubFacility): string {
+  const parts = [
+    SPORT_LABELS[facility.sport],
+    FACILITY_KIND_LABELS[facility.facility_kind],
+    facility.surface_type,
+  ].filter(Boolean);
+  return parts.join(' · ');
+}
+
+export function parseFacilityFromForm(formData: FormData) {
+  const sport = String(formData.get('sport') ?? 'football') as ClubSport;
+  const facilityKind = String(formData.get('facilityKind') ?? 'football_11') as FacilityKind;
+  const divisionMode = String(formData.get('divisionMode') ?? 'full') as FacilityDivisionMode;
+
+  return {
+    name: String(formData.get('name') ?? '').trim(),
+    sport,
+    facility_kind: facilityKind,
+    surface_type: String(formData.get('surfaceType') ?? '').trim() || null,
+    division_mode: facilitySupportsDivisions(facilityKind) ? divisionMode : ('full' as const),
+    address: String(formData.get('address') ?? '').trim() || null,
+    availability_note: String(formData.get('availabilityNote') ?? '').trim() || null,
+    notes: String(formData.get('notes') ?? '').trim() || null,
+  };
+}
+
+export function facilityToDbPayload(data: ReturnType<typeof parseFacilityFromForm>) {
+  return {
+    name: data.name,
+    sport: data.sport,
+    facility_kind: data.facility_kind,
+    surface_type: data.surface_type,
+    division_mode: data.division_mode,
+    address: data.address,
+    availability_note: data.availability_note,
+    notes: data.notes,
+  };
+}
 
 export function divisionOptionsForFacility(
   facility: ClubFacility | undefined
 ): { value: TrainingDivision; label: string }[] {
   if (!facility) return [];
+  if (!facilitySupportsDivisions(facility.facility_kind)) {
+    return [{ value: 'full', label: TRAINING_DIVISION_LABELS.full }];
+  }
   if (facility.division_mode === 'full') {
     return [{ value: 'full', label: TRAINING_DIVISION_LABELS.full }];
   }
@@ -96,3 +259,8 @@ export function formatTimeRange(start: string | null, end: string | null): strin
   const fmt = (value: string | null) => (value ? value.slice(0, 5) : '—');
   return `${fmt(start)} – ${fmt(end)}`;
 }
+
+const FACILITY_SELECT =
+  'id, name, sport, facility_kind, surface_type, division_mode, address, availability_note, notes, active';
+
+export { FACILITY_SELECT };

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ArrowLeft, Pencil } from 'lucide-react';
-import { loadClubFacilities } from '@/app/actions/cantera';
+import { loadClubFacilities } from '@/app/actions/club-facilities';
 import { TeamViewSections } from '@/components/portal/TeamViewSections';
 import { PageContainer } from '@/components/portal/PageContainer';
 import {

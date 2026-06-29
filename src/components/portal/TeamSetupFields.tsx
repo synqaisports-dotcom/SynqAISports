@@ -5,6 +5,7 @@ import { AlertTriangle } from 'lucide-react';
 import type { ClubFacility } from '@/lib/club-facilities';
 import {
   DIVISION_MODE_LABELS,
+  SPORT_LABELS,
   TRAINING_DIVISION_LABELS,
   WEEKDAY_OPTIONS,
   divisionOptionsForFacility,
@@ -111,7 +112,7 @@ export function TeamSetupFields({
 
   const facilityOptions = facilities.map((facility) => ({
     value: facility.id,
-    label: facility.name,
+    label: `${facility.name} (${SPORT_LABELS[facility.sport]})`,
   }));
 
   return (

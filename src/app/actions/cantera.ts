@@ -4,7 +4,7 @@ import { isDemoActive } from '@/lib/demo';
 import { requireClubId } from '@/lib/auth-staff';
 import { DEMO_CANTERA_TEAMS, formatTeamName } from '@/lib/cantera-teams';
 import { getCanteraCategory } from '@/lib/cantera-categories';
-import { DEMO_FACILITIES, type ClubFacility } from '@/lib/club-facilities';
+import { loadClubFacilities } from '@/app/actions/club-facilities';
 import {
   DEMO_TEAM_SETUP,
   findTrainingConflicts,
@@ -123,30 +123,6 @@ export async function getUsedTeamLetters(
   return [...letters];
 }
 
-export async function loadClubFacilities(clubId: string): Promise<ClubFacility[]> {
-  if (await isDemoActive()) return DEMO_FACILITIES;
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('synq_facilities')
-    .select('id, name, surface_type, division_mode, address')
-    .eq('club_id', clubId)
-    .eq('active', true)
-    .order('name');
-
-  if (error) {
-    console.error('loadClubFacilities', error);
-    return [];
-  }
-
-  return (data ?? []).map((row) => ({
-    id: row.id,
-    name: row.name,
-    surface_type: row.surface_type,
-    division_mode: row.division_mode as ClubFacility['division_mode'],
-    address: row.address,
-  }));
-}
 
 export async function getTeamTrainingSlots(
   clubId: string,

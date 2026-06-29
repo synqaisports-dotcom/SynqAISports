@@ -1,0 +1,182 @@
+'use server';
+
+import { requireClubId } from '@/lib/auth-staff';
+import { isDemoActive } from '@/lib/demo';
+import {
+  DEMO_FACILITIES,
+  FACILITY_SELECT,
+  type ClubFacility,
+  facilityToDbPayload,
+  parseFacilityFromForm,
+} from '@/lib/club-facilities';
+import { createClient } from '@/lib/supabase/server';
+import { revalidatePath } from 'next/cache';
+
+export type FacilityActionState = { ok: boolean; message?: string; facilityId?: string };
+
+function mapFacilityRow(row: Record<string, unknown>): ClubFacility {
+  return {
+    id: String(row.id),
+    name: String(row.name),
+    sport: row.sport as ClubFacility['sport'],
+    facility_kind: row.facility_kind as ClubFacility['facility_kind'],
+    surface_type: row.surface_type ? String(row.surface_type) : null,
+    division_mode: row.division_mode as ClubFacility['division_mode'],
+    address: row.address ? String(row.address) : null,
+    availability_note: row.availability_note ? String(row.availability_note) : null,
+    notes: row.notes ? String(row.notes) : null,
+    active: row.active !== false,
+  };
+}
+
+export async function loadClubFacilities(
+  clubId: string,
+  options?: { includeInactive?: boolean }
+): Promise<ClubFacility[]> {
+  if (await isDemoActive()) return DEMO_FACILITIES;
+
+  const supabase = await createClient();
+  let query = supabase
+    .from('synq_facilities')
+    .select(FACILITY_SELECT)
+    .eq('club_id', clubId)
+    .order('name');
+
+  if (!options?.includeInactive) {
+    query = query.eq('active', true);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('loadClubFacilities', error);
+    return [];
+  }
+
+  return (data ?? []).map((row) => mapFacilityRow(row as Record<string, unknown>));
+}
+
+export async function loadFacilityById(
+  clubId: string,
+  facilityId: string
+): Promise<ClubFacility | null> {
+  if (await isDemoActive()) {
+    return DEMO_FACILITIES.find((facility) => facility.id === facilityId) ?? null;
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('synq_facilities')
+    .select(FACILITY_SELECT)
+    .eq('club_id', clubId)
+    .eq('id', facilityId)
+    .maybeSingle();
+
+  if (error || !data) {
+    console.error('loadFacilityById', error);
+    return null;
+  }
+
+  return mapFacilityRow(data as Record<string, unknown>);
+}
+
+function revalidateFacilityPaths(facilityId?: string) {
+  revalidatePath('/portal/club/instalaciones');
+  revalidatePath('/portal/cantera/equipos');
+  if (facilityId) {
+    revalidatePath(`/portal/club/instalaciones/${facilityId}`);
+    revalidatePath(`/portal/club/instalaciones/${facilityId}/editar`);
+  }
+}
+
+export async function createFacility(
+  _prev: FacilityActionState,
+  formData: FormData
+): Promise<FacilityActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'unauthorized' };
+
+  const parsed = parseFacilityFromForm(formData);
+  if (!parsed.name) return { ok: false, message: 'validation' };
+
+  if (await isDemoActive()) {
+    revalidateFacilityPaths();
+    return { ok: true };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('synq_facilities')
+    .insert({
+      club_id: clubId,
+      ...facilityToDbPayload(parsed),
+      active: true,
+    })
+    .select('id')
+    .single();
+
+  if (error) {
+    console.error('createFacility', error);
+    return { ok: false, message: 'error' };
+  }
+
+  revalidateFacilityPaths(data.id);
+  return { ok: true, facilityId: data.id };
+}
+
+export async function updateFacility(
+  facilityId: string,
+  _prev: FacilityActionState,
+  formData: FormData
+): Promise<FacilityActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'unauthorized' };
+
+  const parsed = parseFacilityFromForm(formData);
+  if (!parsed.name) return { ok: false, message: 'validation' };
+
+  if (await isDemoActive()) {
+    revalidateFacilityPaths(facilityId);
+    return { ok: true, facilityId };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('synq_facilities')
+    .update(facilityToDbPayload(parsed))
+    .eq('id', facilityId)
+    .eq('club_id', clubId);
+
+  if (error) {
+    console.error('updateFacility', error);
+    return { ok: false, message: 'error' };
+  }
+
+  revalidateFacilityPaths(facilityId);
+  return { ok: true, facilityId };
+}
+
+export async function toggleFacilityActive(
+  facilityId: string,
+  active: boolean
+): Promise<FacilityActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'unauthorized' };
+
+  if (await isDemoActive()) {
+    revalidateFacilityPaths(facilityId);
+    return { ok: true };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('synq_facilities')
+    .update({ active })
+    .eq('id', facilityId)
+    .eq('club_id', clubId);
+
+  if (error) return { ok: false, message: 'error' };
+
+  revalidateFacilityPaths(facilityId);
+  return { ok: true };
+}

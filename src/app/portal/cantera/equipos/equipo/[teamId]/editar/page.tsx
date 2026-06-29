@@ -1,9 +1,9 @@
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import { loadClubFacilities } from '@/app/actions/club-facilities';
 import {
   getTeamTrainingSlots,
   getUsedTeamLetters,
-  loadClubFacilities,
 } from '@/app/actions/cantera';
 import { TeamEditForm } from '@/components/portal/TeamEditForm';
 import { PageContainer } from '@/components/portal/PageContainer';

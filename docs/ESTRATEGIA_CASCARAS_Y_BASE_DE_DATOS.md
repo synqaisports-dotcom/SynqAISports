@@ -50,7 +50,7 @@ Los registros demo usan prefijos como `demo-team-*`, `demo-facility-*`. El códi
 | Club (datos, redes) | `/portal/club/datos` | Parcial / club demo | `20260702000000`, `20260704000000` |
 | Organigrama | `/portal/club/organigrama` | `organigrama_json` demo | `20260705000000_club_organigrama_json` |
 | Personas maestras | staff, estructura, jugadores | `DEMO_CLUB_PEOPLE` | `20260706000000` … `20260706020000` |
-| Instalaciones | `/portal/club/instalaciones` | `DEMO_FACILITIES` (estático en página) | `20260706050000` (`synq_facilities`) |
+| Instalaciones | `/portal/club/instalaciones` | `DEMO_FACILITIES` + CRUD cáscara | `20260706050000`, `20260706060000` |
 | Cantera — categorías | `/portal/cantera/equipos` | `cantera-categories.ts` | `category_slug` en teams |
 | Cantera — equipos | crear / editar / ver | `DEMO_CANTERA_TEAMS`, `DEMO_TEAM_SETUP` | `20260706030000` … `20260706050000` |
 | Cantera — jugadores | `/portal/cantera/jugadores` | `DEMO_TEAM_PLAYERS` | `synq_players` (init) |
