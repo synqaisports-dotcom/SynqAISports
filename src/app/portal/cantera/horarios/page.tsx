@@ -1,39 +1,62 @@
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import { getTeamTrainingSlots } from '@/app/actions/cantera';
+import { loadClubFacilities } from '@/app/actions/club-facilities';
+import { TrainingCalendarView } from '@/components/portal/TrainingCalendarView';
 import { PageContainer } from '@/components/portal/PageContainer';
-import { Badge } from '@/components/ui/badge';
+import { isDemoActive } from '@/lib/demo';
+import { DEMO_CANTERA_TEAMS } from '@/lib/cantera-teams';
+import { createClient } from '@/lib/supabase/server';
+import { getStaffContext } from '@/lib/portal';
+import { buildTrainingCalendarEvents } from '@/lib/training-calendar';
+import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 
-const schedules = [
-  {
-    team: 'Sub-14 A',
-    category: 'Infantil',
-    letter: 'A',
-    type: 'Formación',
-    days: 'Mar y Jue 18:00',
-    coach: 'Carlos Méndez',
-    coach2: '—',
-    delegate: 'Ana Pérez',
-    physio: 'Miguel Soto',
-  },
-  {
-    team: 'Sub-16 B',
-    category: 'Cadete',
-    letter: 'B',
-    type: 'Competición',
-    days: 'Lun Mié Vie 19:30',
-    coach: 'Laura Ruiz',
-    coach2: 'Pablo Núñez',
-    delegate: '—',
-    physio: 'Miguel Soto',
-  },
-];
+export default async function PortalCanteraHorariosPage() {
+  const supabase = await createClient();
+  const ctx = await getStaffContext(supabase);
+  if (!ctx) redirect('/login');
 
-export default function PortalCanteraHorariosPage() {
+  const demo = await isDemoActive();
+  const [slots, facilities] = await Promise.all([
+    getTeamTrainingSlots(ctx.club.id),
+    loadClubFacilities(ctx.club.id),
+  ]);
+
+  const { data: teams } = await supabase
+    .from('synq_teams')
+    .select('id, name, category_slug')
+    .eq('club_id', ctx.club.id);
+
+  let teamMeta = (teams ?? []).map((team) => ({
+    teamId: team.id,
+    teamName: team.name,
+    categorySlug: team.category_slug,
+  }));
+
+  if (demo) {
+    const existingIds = new Set(teamMeta.map((team) => team.teamId));
+    for (const demoTeam of DEMO_CANTERA_TEAMS) {
+      if (!existingIds.has(demoTeam.id)) {
+        teamMeta.push({
+          teamId: demoTeam.id,
+          teamName: demoTeam.name,
+          categorySlug: demoTeam.category_slug,
+        });
+      }
+    }
+  }
+
+  const events = buildTrainingCalendarEvents(
+    slots,
+    teamMeta,
+    facilities.map((facility) => ({ id: facility.id, name: facility.name }))
+  );
+
   return (
     <PageContainer>
-      <Card className="mb-4">
+      <Card className="mb-4 border border-primary/25">
         <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
           <CardTitle className="text-base">Horarios de entrenamiento</CardTitle>
           <Button variant="outline" size="sm" asChild>
@@ -44,27 +67,18 @@ export default function PortalCanteraHorariosPage() {
           </Button>
         </CardHeader>
       </Card>
-      <div className="space-y-4">
-        {schedules.map((row) => (
-          <Card key={row.team}>
-            <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 pb-2">
-              <div>
-                <CardTitle className="text-base">{row.team}</CardTitle>
-                <CardDescription>
-                  {row.category} {row.letter} · {row.days}
-                </CardDescription>
-              </div>
-              <Badge variant={row.type === 'Competición' ? 'default' : 'secondary'}>{row.type}</Badge>
-            </CardHeader>
-            <CardContent className="grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-4">
-              <p><span className="text-muted-foreground">Entrenador:</span> {row.coach}</p>
-              <p><span className="text-muted-foreground">2º entrenador:</span> {row.coach2}</p>
-              <p><span className="text-muted-foreground">Delegado:</span> {row.delegate}</p>
-              <p><span className="text-muted-foreground">Prep. físico:</span> {row.physio}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+
+      {demo ? (
+        <p className="mb-4 rounded-lg border border-primary/20 bg-muted/10 p-4 text-sm text-muted-foreground">
+          Calendario con datos de demo: equipos, franjas y campos configurados en cada ficha de
+          equipo. Los cambios se reflejan aquí al editar el entrenamiento.
+        </p>
+      ) : null}
+
+      <TrainingCalendarView
+        events={events}
+        facilities={facilities.map((facility) => ({ id: facility.id, name: facility.name }))}
+      />
     </PageContainer>
   );
 }
