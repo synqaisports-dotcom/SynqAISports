@@ -291,9 +291,11 @@ export const WEEKDAY_OPTIONS = WEEKDAY_BUTTONS.map((day) => ({
 }));
 
 export function sortWeekdayCodes(codes: string[]): string[] {
-  const order = WEEKDAY_BUTTONS.map((day) => day.value);
+  const order: string[] = WEEKDAY_BUTTONS.map((day) => day.value);
   return [...codes].sort((a, b) => order.indexOf(a) - order.indexOf(b));
 }
+
+export function formatTrainingDayLetters(codes: string): string {
   if (!codes.trim()) return '—';
   const map = new Map<string, string>(WEEKDAY_BUTTONS.map((day) => [day.value, day.letter]));
   return codes

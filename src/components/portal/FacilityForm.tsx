@@ -18,6 +18,7 @@ import {
   facilityKindOptions,
   facilitySupportsDivisions,
   sportOptions,
+  sortWeekdayCodes,
   surfaceOptionsForKind,
 } from '@/lib/club-facilities';
 import { SynqSelect } from '@/components/portal/SynqSelect';
