@@ -2,7 +2,18 @@
 
 Guía paso a paso de **todo lo que debes ir haciendo tú** (manual) mientras el desarrollo avanza en ramas. Marca cada ítem cuando lo completes.
 
-**Última actualización:** fase web portal + cantera + metodología · rama `cursor/synq-web-club-f457`
+**Última actualización:** fase **cáscaras** (UI sin BD en Supabase) · junio 2026
+
+> **Aplazar Fase A** hasta tener las cáscaras cerradas. Mientras tanto: demo en `/demo` y datos estáticos en código. Ver `docs/ESTRATEGIA_CASCARAS_Y_BASE_DE_DATOS.md` y `docs/MODELO_COMERCIAL_B2B.md`.
+
+---
+
+## Fase 0 — Cáscaras (fase actual)
+
+- [ ] Recorrer demo: `/demo` → portal club, cantera, equipos, jugadores, metodología
+- [ ] Validar flujos UX con clubes piloto (sin persistencia real)
+- [ ] Documentar módulos nuevos en `docs/ESTRATEGIA_CASCARAS_Y_BASE_DE_DATOS.md` §3
+- [ ] **No** ejecutar migraciones SQL en Supabase todavía
 
 ---
 
@@ -17,7 +28,9 @@ Guía paso a paso de **todo lo que debes ir haciendo tú** (manual) mientras el 
 
 ---
 
-## Fase A — Infraestructura base (hazlo una vez)
+## Fase A — Infraestructura base (aplazar hasta fin de cáscaras)
+
+> Ejecutar esta fase **una sola vez** en Supabase **staging**, validar, y luego replicar en **producción**.
 
 ### A1. Proyecto Supabase SynqAI
 
@@ -27,15 +40,9 @@ Guía paso a paso de **todo lo que debes ir haciendo tú** (manual) mientras el 
 
 ### A2. Migraciones SQL (en orden)
 
-En **SQL Editor** del proyecto SynqAI, ejecutar **en este orden**:
+En **SQL Editor** del proyecto SynqAI **staging**, ejecutar **todas** las de `supabase/README.md` (lista completa, 15 archivos).
 
-1. [ ] `supabase/migrations/20260701000000_synqai_init.sql`
-2. [ ] `supabase/migrations/20260702000000_synqai_portal.sql`
-3. [ ] `supabase/migrations/20260703000000_synqai_cantera.sql`
-4. [ ] `supabase/migrations/20260704000000_synqai_methodology.sql`
-5. [ ] `supabase/migrations/20260705000000_synqai_exercise_sheet.sql`
-
-> Si ya ejecutaste migraciones anteriores, solo añade las que falten.
+Lista mínima si partes de cero en un entorno nuevo — usar la lista completa del README.
 
 ### A3. Variables de entorno locales
 
