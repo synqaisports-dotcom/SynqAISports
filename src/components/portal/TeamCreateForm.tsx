@@ -4,7 +4,10 @@ import { useMemo, useState } from 'react';
 import { useFormState } from 'react-dom';
 import { createTeam, type ActionState } from '@/app/actions/cantera';
 import type { CanteraCategory } from '@/lib/cantera-categories';
+import type { ClubFacility } from '@/lib/club-facilities';
 import { formatTeamName, teamLetterOptions } from '@/lib/cantera-teams';
+import type { TeamTrainingSlot } from '@/lib/team-setup';
+import { TeamSetupFields } from '@/components/portal/TeamSetupFields';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -17,9 +20,11 @@ const initial: ActionState = { ok: false };
 type Props = {
   category: CanteraCategory;
   usedLetters: string[];
+  facilities: ClubFacility[];
+  occupiedSlots: TeamTrainingSlot[];
 };
 
-export function TeamCreateForm({ category, usedLetters }: Props) {
+export function TeamCreateForm({ category, usedLetters, facilities, occupiedSlots }: Props) {
   const bound = createTeam;
   const [state, action, pending] = useFormState(bound, initial);
   const [sport, setSport] = useState('football');
@@ -99,6 +104,8 @@ export function TeamCreateForm({ category, usedLetters }: Props) {
         </CardContent>
       </Card>
 
+      <TeamSetupFields facilities={facilities} occupiedSlots={occupiedSlots} />
+
       <div className="flex flex-wrap items-center gap-4">
         <Button type="submit" disabled={pending || !teamLetter || letterOptions.length === 0}>
           {pending ? 'Creando…' : 'Crear equipo'}
@@ -106,6 +113,11 @@ export function TeamCreateForm({ category, usedLetters }: Props) {
         {state.ok ? <p className="text-sm font-medium text-primary">Equipo creado.</p> : null}
         {state.message === 'duplicate_letter' ? (
           <p className="text-sm text-destructive">Esa letra ya está en uso en esta categoría.</p>
+        ) : null}
+        {state.message === 'training_conflict' ? (
+          <p className="text-sm text-destructive">
+            El horario se solapa con otro equipo en la misma zona del campo.
+          </p>
         ) : null}
         {state.message === 'error' ? (
           <p className="text-sm text-destructive">Error al crear. Revisa permisos RLS.</p>

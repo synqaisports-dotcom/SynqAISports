@@ -24,6 +24,10 @@ type TeamData = {
   sport: string;
   active: boolean;
   categoryName: string;
+  teamPurpose?: string;
+  trainingSummary?: string;
+  matchVenueSummary?: string;
+  externalVenueAddress?: string | null;
 };
 
 type Props = {
@@ -54,15 +58,18 @@ export function TeamViewSections({ team, category, players }: Props) {
           <DataRow label="Edades" value={category?.ages ?? '—'} />
           <DataRow label="Equivalencia" value={category?.international ?? '—'} />
           <DataRow label="Deporte" value={sportLabel} />
+          <DataRow label="Tipo" value={team.teamPurpose ?? '—'} />
+          <DataRow label="Entrenamiento" value={team.trainingSummary ?? 'Sin asignar'} />
+          <DataRow label="Sede partidos" value={team.matchVenueSummary ?? '—'} />
+          {team.externalVenueAddress ? (
+            <DataRow label="Dirección sede" value={team.externalVenueAddress} />
+          ) : null}
           <DataRow label="Estado" value={team.active ? 'Activo' : 'Pausado'} />
           {category ? (
             <p className="rounded-lg border border-primary/15 bg-muted/10 p-3 text-xs leading-relaxed text-muted-foreground">
               {category.description}
             </p>
           ) : null}
-          <div className="rounded-lg border border-dashed border-primary/20 p-3 text-xs text-muted-foreground">
-            Próximamente: entrenadores, coordinador de etapa, horarios y campos de juego/entreno.
-          </div>
         </CardContent>
       </Card>
 

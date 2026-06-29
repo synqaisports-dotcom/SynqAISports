@@ -1,6 +1,10 @@
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import { getUsedTeamLetters } from '@/app/actions/cantera';
+import {
+  getTeamTrainingSlots,
+  getUsedTeamLetters,
+  loadClubFacilities,
+} from '@/app/actions/cantera';
 import { TeamCreateForm } from '@/components/portal/TeamCreateForm';
 import { PageContainer } from '@/components/portal/PageContainer';
 import { getCanteraCategory } from '@/lib/cantera-categories';
@@ -24,6 +28,8 @@ export default async function PortalCanteraEquipoNuevoPage({ params }: Props) {
   if (!ctx) redirect('/login');
 
   const usedLetters = await getUsedTeamLetters(ctx.club.id, categorySlug);
+  const facilities = await loadClubFacilities(ctx.club.id);
+  const occupiedSlots = await getTeamTrainingSlots(ctx.club.id);
 
   return (
     <PageContainer>
@@ -38,7 +44,12 @@ export default async function PortalCanteraEquipoNuevoPage({ params }: Props) {
           </Button>
         </CardHeader>
       </Card>
-      <TeamCreateForm category={category} usedLetters={usedLetters} />
+      <TeamCreateForm
+        category={category}
+        usedLetters={usedLetters}
+        facilities={facilities}
+        occupiedSlots={occupiedSlots}
+      />
     </PageContainer>
   );
 }

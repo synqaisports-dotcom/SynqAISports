@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ArrowLeft, Pencil } from 'lucide-react';
-import { getUsedTeamLetters } from '@/app/actions/cantera';
+import { loadClubFacilities } from '@/app/actions/cantera';
 import { TeamViewSections } from '@/components/portal/TeamViewSections';
 import { PageContainer } from '@/components/portal/PageContainer';
 import {
@@ -11,6 +11,13 @@ import {
   DEMO_CANTERA_TEAMS,
   DEMO_TEAM_PLAYERS,
 } from '@/lib/cantera-teams';
+import {
+  DEMO_TEAM_SETUP,
+  TEAM_PURPOSE_LABELS,
+  describeMatchVenue,
+  describeTrainingSetup,
+  teamSetupFromDb,
+} from '@/lib/team-setup';
 import { isDemoActive } from '@/lib/demo';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
@@ -41,14 +48,32 @@ export default async function PortalCanteraEquipoPage({ params }: Props) {
     team_letter: string | null;
     sport: string;
     active: boolean;
+    team_purpose?: string | null;
+    training_facility_id?: string | null;
+    training_division?: string | null;
+    training_days?: string | null;
+    training_start?: string | null;
+    training_end?: string | null;
+    match_venue_type?: string | null;
+    match_own_single_venue?: boolean | null;
+    match_home_mode?: string | null;
+    match_away_mode?: string | null;
+    external_venue_name?: string | null;
+    external_venue_address?: string | null;
   } | null = null;
 
   if (demoTeam) {
-    team = demoTeam;
+    team = {
+      ...demoTeam,
+      ...teamSetupFromDb(DEMO_TEAM_SETUP[demoTeam.id]),
+      training_facility_id: DEMO_TEAM_SETUP[demoTeam.id]?.training_facility_id ?? null,
+    };
   } else {
     const { data } = await supabase
       .from('synq_teams')
-      .select('id, name, category, category_slug, team_letter, sport, active')
+      .select(
+        'id, name, category, category_slug, team_letter, sport, active, team_purpose, training_facility_id, training_division, training_days, training_start, training_end, match_venue_type, match_own_single_venue, match_home_mode, match_away_mode, external_venue_name, external_venue_address'
+      )
       .eq('club_id', ctx.club.id)
       .eq('id', teamId)
       .maybeSingle();
@@ -60,6 +85,12 @@ export default async function PortalCanteraEquipoPage({ params }: Props) {
   const slug =
     team.category_slug ?? resolveTeamCategorySlug(team.category, team.category_slug);
   const category = slug ? getCanteraCategory(slug) : null;
+  const teamSetup = demoTeam
+    ? DEMO_TEAM_SETUP[demoTeam.id] ?? teamSetupFromDb(team)
+    : teamSetupFromDb(team);
+  const facilities = await loadClubFacilities(ctx.club.id);
+  const facilityName =
+    facilities.find((facility) => facility.id === teamSetup.training_facility_id)?.name ?? null;
 
   let players: {
     id: string;
@@ -148,6 +179,11 @@ export default async function PortalCanteraEquipoPage({ params }: Props) {
           sport: team.sport,
           active: team.active,
           categoryName: team.category,
+          teamPurpose: TEAM_PURPOSE_LABELS[teamSetup.team_purpose],
+          trainingSummary: describeTrainingSetup(teamSetup, facilityName),
+          matchVenueSummary: describeMatchVenue(teamSetup),
+          externalVenueAddress:
+            teamSetup.match_venue_type === 'external' ? teamSetup.external_venue_address : null,
         }}
         category={category ?? null}
         players={players}

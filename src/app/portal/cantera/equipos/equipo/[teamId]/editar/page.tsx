@@ -1,6 +1,10 @@
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import { getUsedTeamLetters } from '@/app/actions/cantera';
+import {
+  getTeamTrainingSlots,
+  getUsedTeamLetters,
+  loadClubFacilities,
+} from '@/app/actions/cantera';
 import { TeamEditForm } from '@/components/portal/TeamEditForm';
 import { PageContainer } from '@/components/portal/PageContainer';
 import {
@@ -8,6 +12,7 @@ import {
   resolveTeamCategorySlug,
 } from '@/lib/cantera-categories';
 import { DEMO_CANTERA_TEAMS } from '@/lib/cantera-teams';
+import { DEMO_TEAM_SETUP, teamSetupFromDb } from '@/lib/team-setup';
 import { isDemoActive } from '@/lib/demo';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
@@ -35,14 +40,32 @@ export default async function PortalCanteraEquipoEditarPage({ params }: Props) {
     category: string;
     team_letter: string | null;
     sport: string;
+    team_purpose?: string | null;
+    training_facility_id?: string | null;
+    training_division?: string | null;
+    training_days?: string | null;
+    training_start?: string | null;
+    training_end?: string | null;
+    match_venue_type?: string | null;
+    match_own_single_venue?: boolean | null;
+    match_home_mode?: string | null;
+    match_away_mode?: string | null;
+    external_venue_name?: string | null;
+    external_venue_address?: string | null;
   } | null = null;
 
   if (demoTeam) {
-    team = demoTeam;
+    team = {
+      ...demoTeam,
+      ...teamSetupFromDb(DEMO_TEAM_SETUP[demoTeam.id]),
+      training_facility_id: DEMO_TEAM_SETUP[demoTeam.id]?.training_facility_id ?? null,
+    };
   } else {
     const { data } = await supabase
       .from('synq_teams')
-      .select('id, name, category, category_slug, team_letter, sport, active')
+      .select(
+        'id, name, category, category_slug, team_letter, sport, active, team_purpose, training_facility_id, training_division, training_days, training_start, training_end, match_venue_type, match_own_single_venue, match_home_mode, match_away_mode, external_venue_name, external_venue_address'
+      )
       .eq('club_id', ctx.club.id)
       .eq('id', teamId)
       .maybeSingle();
@@ -57,6 +80,11 @@ export default async function PortalCanteraEquipoEditarPage({ params }: Props) {
 
   const usedLetters =
     slug && !demoTeam ? await getUsedTeamLetters(ctx.club.id, slug, teamId) : [];
+  const facilities = await loadClubFacilities(ctx.club.id);
+  const occupiedSlots = await getTeamTrainingSlots(ctx.club.id, teamId);
+  const initialSetup = demoTeam
+    ? DEMO_TEAM_SETUP[demoTeam.id] ?? teamSetupFromDb(team)
+    : teamSetupFromDb(team);
 
   return (
     <PageContainer>
@@ -73,7 +101,8 @@ export default async function PortalCanteraEquipoEditarPage({ params }: Props) {
       </Card>
       {demoTeam ? (
         <p className="mb-4 rounded-lg border border-primary/20 bg-muted/10 p-4 text-sm text-muted-foreground">
-          Equipo de demostración. En tu club real podrás cambiar la letra y el deporte desde aquí.
+          Equipo de demostración. Puedes revisar instalación, horarios y sede; en tu club real podrás
+          editarlos y guardar los cambios.
         </p>
       ) : null}
       <TeamEditForm
@@ -82,6 +111,10 @@ export default async function PortalCanteraEquipoEditarPage({ params }: Props) {
         sport={team.sport}
         category={category ?? null}
         usedLetters={usedLetters}
+        facilities={facilities}
+        occupiedSlots={occupiedSlots}
+        initialSetup={initialSetup}
+        readOnly={Boolean(demoTeam)}
       />
       <p className="mt-4 text-xs text-muted-foreground">
         Usa «Pausar» en el listado para archivar sin borrar histórico. Más adelante registraremos

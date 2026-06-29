@@ -4,6 +4,14 @@ import { isDemoActive } from '@/lib/demo';
 import { requireClubId } from '@/lib/auth-staff';
 import { DEMO_CANTERA_TEAMS, formatTeamName } from '@/lib/cantera-teams';
 import { getCanteraCategory } from '@/lib/cantera-categories';
+import { DEMO_FACILITIES, type ClubFacility } from '@/lib/club-facilities';
+import {
+  DEMO_TEAM_SETUP,
+  findTrainingConflicts,
+  parseTeamSetupFromForm,
+  teamSetupToDbPayload,
+  type TeamTrainingSlot,
+} from '@/lib/team-setup';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
@@ -115,6 +123,101 @@ export async function getUsedTeamLetters(
   return [...letters];
 }
 
+export async function loadClubFacilities(clubId: string): Promise<ClubFacility[]> {
+  if (await isDemoActive()) return DEMO_FACILITIES;
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('synq_facilities')
+    .select('id, name, surface_type, division_mode, address')
+    .eq('club_id', clubId)
+    .eq('active', true)
+    .order('name');
+
+  if (error) {
+    console.error('loadClubFacilities', error);
+    return [];
+  }
+
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    name: row.name,
+    surface_type: row.surface_type,
+    division_mode: row.division_mode as ClubFacility['division_mode'],
+    address: row.address,
+  }));
+}
+
+export async function getTeamTrainingSlots(
+  clubId: string,
+  excludeTeamId?: string
+): Promise<TeamTrainingSlot[]> {
+  const slots: TeamTrainingSlot[] = [];
+
+  if (await isDemoActive()) {
+    for (const team of DEMO_CANTERA_TEAMS) {
+      if (team.id === excludeTeamId) continue;
+      const setup = DEMO_TEAM_SETUP[team.id];
+      if (!setup?.training_facility_id) continue;
+      slots.push({
+        teamId: team.id,
+        teamName: team.name,
+        training_facility_id: setup.training_facility_id,
+        training_division: setup.training_division,
+        training_days: setup.training_days,
+        training_start: setup.training_start,
+        training_end: setup.training_end,
+      });
+    }
+    return slots;
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('synq_teams')
+    .select(
+      'id, name, training_facility_id, training_division, training_days, training_start, training_end'
+    )
+    .eq('club_id', clubId)
+    .not('training_facility_id', 'is', null);
+
+  if (error) {
+    console.error('getTeamTrainingSlots', error);
+    return slots;
+  }
+
+  for (const row of data ?? []) {
+    if (row.id === excludeTeamId || !row.training_facility_id) continue;
+    slots.push({
+      teamId: row.id,
+      teamName: row.name,
+      training_facility_id: row.training_facility_id,
+      training_division: row.training_division,
+      training_days: row.training_days ?? '',
+      training_start: row.training_start ? String(row.training_start).slice(0, 5) : '',
+      training_end: row.training_end ? String(row.training_end).slice(0, 5) : '',
+    });
+  }
+
+  return slots;
+}
+
+async function validateTeamSetup(
+  clubId: string,
+  setup: ReturnType<typeof parseTeamSetupFromForm>,
+  excludeTeamId?: string
+): Promise<string | null> {
+  if (!setup.training_facility_id) return null;
+
+  const facilities = await loadClubFacilities(clubId);
+  const facility = facilities.find((item) => item.id === setup.training_facility_id);
+  const slots = await getTeamTrainingSlots(clubId, excludeTeamId);
+  const conflicts = findTrainingConflicts(setup, facility, slots, excludeTeamId);
+
+  if (conflicts.length > 0) return 'training_conflict';
+  return null;
+}
+
 export async function createTeam(
   _prev: ActionState,
   formData: FormData
@@ -140,6 +243,9 @@ export async function createTeam(
   if (used.includes(teamLetter)) return { ok: false, message: 'duplicate_letter' };
 
   const name = formatTeamName(categoryName, teamLetter);
+  const setup = parseTeamSetupFromForm(formData);
+  const setupError = await validateTeamSetup(clubId, setup);
+  if (setupError) return { ok: false, message: setupError };
 
   const supabase = await createClient();
   const { error } = await supabase.from('synq_teams').insert({
@@ -149,6 +255,7 @@ export async function createTeam(
     category_slug: categorySlug,
     team_letter: teamLetter,
     sport: sport === 'futsal' ? 'futsal' : 'football',
+    ...teamSetupToDbPayload(setup),
   });
 
   if (error) {
@@ -194,6 +301,17 @@ export async function updateTeam(
   const categoryMeta = getCanteraCategory(team.category_slug);
   const categoryName = team.category || categoryMeta?.name || team.category_slug;
   const name = formatTeamName(categoryName, teamLetter);
+  const setup = parseTeamSetupFromForm(formData);
+  const setupError = await validateTeamSetup(clubId, setup, teamId);
+  if (setupError) return { ok: false, message: setupError };
+
+  if (await isDemoActive()) {
+    revalidatePath('/portal/cantera/equipos');
+    revalidatePath(`/portal/cantera/equipos/equipo/${teamId}`);
+    revalidatePath(`/portal/cantera/equipos/equipo/${teamId}/editar`);
+    if (team.category_slug) revalidatePath(`/portal/cantera/equipos/${team.category_slug}`);
+    return { ok: true };
+  }
 
   const { error } = await supabase
     .from('synq_teams')
@@ -201,6 +319,7 @@ export async function updateTeam(
       name,
       team_letter: teamLetter,
       sport: sport === 'futsal' ? 'futsal' : 'football',
+      ...teamSetupToDbPayload(setup),
     })
     .eq('id', teamId)
     .eq('club_id', clubId);

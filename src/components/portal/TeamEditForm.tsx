@@ -4,7 +4,10 @@ import { useMemo, useState } from 'react';
 import { useFormState } from 'react-dom';
 import { updateTeam, type ActionState } from '@/app/actions/cantera';
 import type { CanteraCategory } from '@/lib/cantera-categories';
+import type { ClubFacility } from '@/lib/club-facilities';
 import { formatTeamName, teamLetterOptions } from '@/lib/cantera-teams';
+import type { TeamSetupData, TeamTrainingSlot } from '@/lib/team-setup';
+import { TeamSetupFields } from '@/components/portal/TeamSetupFields';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -20,6 +23,10 @@ type Props = {
   sport: string;
   category: CanteraCategory | null;
   usedLetters: string[];
+  facilities: ClubFacility[];
+  occupiedSlots: TeamTrainingSlot[];
+  initialSetup: TeamSetupData;
+  readOnly?: boolean;
 };
 
 export function TeamEditForm({
@@ -28,6 +35,10 @@ export function TeamEditForm({
   sport: initialSport,
   category,
   usedLetters,
+  facilities,
+  occupiedSlots,
+  initialSetup,
+  readOnly,
 }: Props) {
   const bound = updateTeam.bind(null, teamId);
   const [state, action, pending] = useFormState(bound, initial);
@@ -104,13 +115,26 @@ export function TeamEditForm({
         </CardContent>
       </Card>
 
+      <TeamSetupFields
+        facilities={facilities}
+        occupiedSlots={occupiedSlots}
+        initial={initialSetup}
+        excludeTeamId={teamId}
+        disabled={readOnly}
+      />
+
       <div className="flex flex-wrap items-center gap-4">
-        <Button type="submit" disabled={pending || !teamLetter}>
+        <Button type="submit" disabled={pending || !teamLetter || readOnly}>
           {pending ? 'Guardando…' : 'Guardar cambios'}
         </Button>
         {state.ok ? <p className="text-sm font-medium text-primary">Equipo actualizado.</p> : null}
         {state.message === 'duplicate_letter' ? (
           <p className="text-sm text-destructive">Esa letra ya está en uso en esta categoría.</p>
+        ) : null}
+        {state.message === 'training_conflict' ? (
+          <p className="text-sm text-destructive">
+            El horario se solapa con otro equipo en la misma zona del campo.
+          </p>
         ) : null}
       </div>
     </form>
