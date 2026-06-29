@@ -275,7 +275,12 @@ export function FacilityForm({ facility }: Props) {
             </label>
           </div>
 
-          <div className="md:col-span-2">
+          <div
+            className={cn(
+              'md:col-span-2 grid gap-4',
+              showDivisionSchedule ? 'lg:grid-cols-2' : 'grid-cols-1'
+            )}
+          >
             <ScheduleBlockFields
               title="Horario habitual del campo"
               hint="Días y franja en los que la instalación está disponible en general (L · M · X · J · V · S · D)."
@@ -288,11 +293,10 @@ export function FacilityForm({ facility }: Props) {
               daysFieldName="availabilityDays"
               startFieldName="availabilityStart"
               endFieldName="availabilityEnd"
+              className="h-full"
             />
-          </div>
 
-          {showDivisionSchedule ? (
-            <div className="md:col-span-2">
+            {showDivisionSchedule ? (
               <ScheduleBlockFields
                 title={`Horario de división — ${DIVISION_MODE_LABELS[divisionMode]}`}
                 hint="Días y franja en los que el campo se comparte en zonas (mitades o cuartos). Suele ser un subconjunto del horario habitual."
@@ -305,10 +309,10 @@ export function FacilityForm({ facility }: Props) {
                 daysFieldName="divisionScheduleDays"
                 startFieldName="divisionScheduleStart"
                 endFieldName="divisionScheduleEnd"
-                className="border-primary/35 bg-primary/5"
+                className="h-full border-primary/35 bg-primary/5"
               />
-            </div>
-          ) : null}
+            ) : null}
+          </div>
 
           <div className="md:col-span-2">
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
