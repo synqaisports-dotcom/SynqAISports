@@ -14,6 +14,24 @@ const { line: LINE, lineShadow: LINE_SHADOW } = FOOTBALL_COLORS;
 
 const GRASS_PATTERN_SCALE = 1.35;
 
+/** Cuarto de círculo reglamentario futsal (6 m desde cada poste). */
+function futsalQuarterArcPts(
+  cx: number,
+  cy: number,
+  r: number,
+  startAngle: number,
+  endAngle: number,
+  segments = 18
+): number[] {
+  const pts: number[] = [];
+  for (let i = 0; i <= segments; i++) {
+    const t = i / segments;
+    const a = startAngle + t * (endAngle - startAngle);
+    pts.push(cx + r * Math.cos(a), cy + r * Math.sin(a));
+  }
+  return pts;
+}
+
 /** Arco de penalty FIFA (9,15 m desde el punto, parte exterior del área 16,5 m). */
 function footballPenaltyArcPts(
   spotX: number,
@@ -211,14 +229,34 @@ function FutsalMarkings({ x, y, w, h, lw }: M) {
       <Circle x={cx} y={cy} radius={rCenter} stroke={fl} strokeWidth={lw} fill="transparent" />
       <Circle x={cx} y={cy} radius={lw * 0.85} fill={fl} />
 
-      {/* Área izquierda — D reglamentaria */}
-      <Arc x={x} y={ty} innerRadius={R} outerRadius={R} angle={90} rotation={0} stroke={fl} strokeWidth={lw} />
-      <Arc x={x} y={by} innerRadius={R} outerRadius={R} angle={90} rotation={270} stroke={fl} strokeWidth={lw} />
+      {/* Área izquierda — D reglamentaria (cuartos de círculo + línea a 6 m) */}
+      <Line
+        points={futsalQuarterArcPts(x, ty, R, -Math.PI / 2, 0)}
+        stroke={fl}
+        strokeWidth={lw}
+        lineCap="round"
+      />
+      <Line
+        points={futsalQuarterArcPts(x, by, R, 0, Math.PI / 2)}
+        stroke={fl}
+        strokeWidth={lw}
+        lineCap="round"
+      />
       <Line points={[x + R, ty, x + R, by]} stroke={fl} strokeWidth={lw} />
 
       {/* Área derecha */}
-      <Arc x={x + w} y={ty} innerRadius={R} outerRadius={R} angle={90} rotation={180} stroke={fl} strokeWidth={lw} />
-      <Arc x={x + w} y={by} innerRadius={R} outerRadius={R} angle={90} rotation={90} stroke={fl} strokeWidth={lw} />
+      <Line
+        points={futsalQuarterArcPts(x + w, ty, R, Math.PI, (3 * Math.PI) / 2)}
+        stroke={fl}
+        strokeWidth={lw}
+        lineCap="round"
+      />
+      <Line
+        points={futsalQuarterArcPts(x + w, by, R, Math.PI / 2, Math.PI)}
+        stroke={fl}
+        strokeWidth={lw}
+        lineCap="round"
+      />
       <Line points={[x + w - R, ty, x + w - R, by]} stroke={fl} strokeWidth={lw} />
 
       <Circle x={x + spot6} y={cy} radius={lw * 0.85} fill={fl} />

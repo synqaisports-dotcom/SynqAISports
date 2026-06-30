@@ -67,8 +67,8 @@ const SHAPE_TOOLS: { id: StudioTool; label: string; icon: React.ReactNode }[] = 
 
 const COLORS = ['#fbbf24', '#38bdf8', '#f87171', '#4ade80', '#ffffff', '#a78bfa'];
 
-/** 12px margen lateral + hueco para controles flotantes */
-const FIELD_INSETS = { top: 56, bottom: 92, left: 12, right: 12 };
+/** Margen lateral mínimo + hueco para controles flotantes */
+const FIELD_INSETS = { top: 56, bottom: 92, left: 4, right: 4 };
 
 export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
