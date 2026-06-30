@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { Pencil, PenLine } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ExerciseDrawingModal } from '@/components/methodology/drawing/ExerciseDrawingModal';
+import { ExerciseDrawingStudio } from '@/components/methodology/drawing/ExerciseDrawingStudio';
 import { FieldBackground } from '@/components/methodology/drawing/FieldBackground';
 import { DrawingScene } from '@/components/methodology/drawing/DrawingScene';
 import {
@@ -81,7 +81,7 @@ export function ExerciseDrawingTrigger({
 
       <input type="hidden" name={name} value={json} readOnly />
 
-      <ExerciseDrawingModal
+      <ExerciseDrawingStudio
         open={open}
         initialData={JSON.parse(json)}
         onClose={() => setOpen(false)}
