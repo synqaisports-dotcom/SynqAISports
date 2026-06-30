@@ -384,12 +384,15 @@ export type FieldRectInsets = {
   right?: number;
 };
 
+export type FieldFitMode = 'contain' | 'fill-width';
+
 export function computeFieldRect(
   stageWidth: number,
   stageHeight: number,
   field: FieldTemplate,
   padding = 4,
-  insets: FieldRectInsets = {}
+  insets: FieldRectInsets = {},
+  fit: FieldFitMode = 'fill-width'
 ): FieldRect {
   const top = insets.top ?? 0;
   const bottom = insets.bottom ?? 0;
@@ -398,6 +401,18 @@ export function computeFieldRect(
   const aspect = FIELD_TEMPLATES[field].aspectRatio;
   const availW = Math.max(1, stageWidth - left - right);
   const availH = Math.max(1, stageHeight - top - bottom);
+
+  if (fit === 'fill-width') {
+    const width = Math.max(1, availW - padding * 2);
+    const height = width / aspect;
+    return {
+      x: left + (availW - width) / 2,
+      y: top + (availH - height) / 2,
+      width,
+      height,
+    };
+  }
+
   const maxW = Math.max(1, availW - padding * 2);
   const maxH = Math.max(1, availH - padding * 2);
   let width = maxW;
