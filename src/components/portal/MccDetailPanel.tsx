@@ -1,15 +1,24 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { Copy, ExternalLink, Link2, Loader2, Users, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { SynqSelect } from '@/components/portal/SynqSelect';
 import { sessionStructureSummary } from '@/lib/periodization';
 import type { MccContext } from '@/lib/periodization';
 import type { MccLink, RhythmVariant, TeamMccInstance } from '@/lib/periodization-document';
 import { cn } from '@/lib/utils';
 
 type TeamOption = { id: string; name: string };
+
+export type TemplateMicrocycleOption = {
+  id: string;
+  title: string;
+  week_label: string;
+  week_start: string | null;
+};
 
 type Props = {
   context: MccContext;
@@ -23,12 +32,16 @@ type Props = {
   forkingTeamId: string | null;
   assignedTeams: TeamOption[];
   teamInstances: Record<string, TeamMccInstance>;
+  templateMicrocycles: TemplateMicrocycleOption[];
+  panelError: string | null;
+  panelSuccess: string | null;
   onClose: () => void;
   onLabelChange: (label: string) => void;
   onNoteChange: (note: string) => void;
   onSaveOverride: () => void;
   onToggleExcluded: () => void;
   onCreateMicrocycle: () => void;
+  onLinkExistingTemplate: (microcycleId: string) => void;
   onForkTeam: (teamId: string) => void;
   onForkAllTeams: () => void;
 };
@@ -45,18 +58,23 @@ export function MccDetailPanel({
   forkingTeamId,
   assignedTeams,
   teamInstances,
+  templateMicrocycles,
+  panelError,
+  panelSuccess,
   onClose,
   onLabelChange,
   onNoteChange,
   onSaveOverride,
   onToggleExcluded,
   onCreateMicrocycle,
+  onLinkExistingTemplate,
   onForkTeam,
   onForkAllTeams,
 }: Props) {
   const { micro, meso, macro } = context;
   const isDemoLink = link?.microcycleId.startsWith('demo-micro-');
   const forkedCount = assignedTeams.filter((team) => teamInstances[team.id]).length;
+  const [selectedTemplateId, setSelectedTemplateId] = useState('');
 
   return (
     <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l border-primary/25 bg-background/95 shadow-2xl backdrop-blur-md">
@@ -218,11 +236,46 @@ export function MccDetailPanel({
       </div>
 
       <div className="space-y-2 border-t border-primary/20 p-4">
+        {panelError ? (
+          <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+            {panelError}
+          </p>
+        ) : null}
+        {panelSuccess ? (
+          <p className="rounded-md border border-emerald-400/40 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-400">
+            {panelSuccess}
+          </p>
+        ) : null}
         {!link ? (
-          <Button type="button" className="w-full gap-2" disabled={pending} onClick={onCreateMicrocycle}>
-            {pending ? <Loader2 className="size-4 animate-spin" /> : <Link2 className="size-4" />}
-            Crear microciclo plantilla
-          </Button>
+          <>
+            <Button type="button" className="w-full gap-2" disabled={pending} onClick={onCreateMicrocycle}>
+              {pending ? <Loader2 className="size-4 animate-spin" /> : <Link2 className="size-4" />}
+              Crear microciclo plantilla
+            </Button>
+            {templateMicrocycles.length > 0 ? (
+              <div className="space-y-2 rounded-lg border border-dashed border-primary/25 p-3">
+                <p className="text-xs font-medium text-muted-foreground">O enlazar plantilla existente</p>
+                <SynqSelect
+                  value={selectedTemplateId}
+                  onChange={setSelectedTemplateId}
+                  placeholder="Elegir microciclo…"
+                  options={templateMicrocycles.map((item) => ({
+                    value: item.id,
+                    label: `${item.title} (${item.week_label || item.week_start || 'sin fecha'})`,
+                  }))}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  disabled={!selectedTemplateId || pending}
+                  onClick={() => onLinkExistingTemplate(selectedTemplateId)}
+                >
+                  Asignar plantilla seleccionada
+                </Button>
+              </div>
+            ) : null}
+          </>
         ) : isDemoLink ? (
           <Button type="button" variant="outline" className="w-full gap-2" disabled>
             <ExternalLink className="size-4" />

@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { createMicrocycleFromMcc, forkMicrocycleForTeam, loadCategoryPeriodization, saveCategoryPeriodization } from '@/app/actions/periodization';
 import { PeriodizationGrid } from '@/components/portal/PeriodizationGrid';
-import { MccDetailPanel } from '@/components/portal/MccDetailPanel';
+import { MccDetailPanel, type TemplateMicrocycleOption } from '@/components/portal/MccDetailPanel';
 import { SynqDateField } from '@/components/portal/SynqDateField';
 import { SynqSelect } from '@/components/portal/SynqSelect';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +28,7 @@ import {
   sessionStructureSummary,
   type MacroCount,
   type MainTasksPerSession,
+  type MccContext,
   type MicrocycleWeek,
 } from '@/lib/periodization';
 import { applyPlanExclusions } from '@/lib/periodization-plan-utils';
@@ -50,16 +51,22 @@ import {
   type CategoryPeriodizationDocument,
   type RhythmVariant,
 } from '@/lib/periodization-document';
+import { demoTeamMicrocycleId, demoTemplateMicrocycleId, isDemoClient } from '@/lib/periodization-client';
 import { cn } from '@/lib/utils';
 
 export type TeamOption = { id: string; name: string; category_slug: CanteraCategorySlug | null };
 
 type Props = {
   teams: TeamOption[];
+  templateMicrocycles?: TemplateMicrocycleOption[];
   initialCategory?: CanteraCategorySlug;
 };
 
-export function CategoryCyclesHub({ teams, initialCategory = 'alevin' }: Props) {
+export function CategoryCyclesHub({
+  teams,
+  templateMicrocycles = [],
+  initialCategory = 'alevin',
+}: Props) {
   const [categorySlug, setCategorySlug] = useState<CanteraCategorySlug>(initialCategory);
   const category = CANTERA_CATEGORIES.find((item) => item.slug === categorySlug)!;
 
@@ -69,8 +76,11 @@ export function CategoryCyclesHub({ teams, initialCategory = 'alevin' }: Props) 
   const [plan, setPlan] = useState(() => buildPlanForVariant(document, document.activeVariantId));
   const [activeMacroIndex, setActiveMacroIndex] = useState(0);
   const [selectedMcc, setSelectedMcc] = useState<MicrocycleWeek | null>(null);
+  const [panelContext, setPanelContext] = useState<MccContext | null>(null);
   const [panelLabel, setPanelLabel] = useState('');
   const [panelNote, setPanelNote] = useState('');
+  const [panelError, setPanelError] = useState<string | null>(null);
+  const [panelSuccess, setPanelSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -106,6 +116,7 @@ export function CategoryCyclesHub({ teams, initialCategory = 'alevin' }: Props) 
       setPlan(rawPlan ? applyPlanExclusions(rawPlan, excluded) : null);
       setActiveMacroIndex(0);
       setSelectedMcc(null);
+      setPanelContext(null);
       setError(null);
       setLoaded(true);
     },
@@ -138,6 +149,7 @@ export function CategoryCyclesHub({ teams, initialCategory = 'alevin' }: Props) 
       setPlan(nextPlan);
       setActiveMacroIndex(0);
       setSelectedMcc(null);
+      setPanelContext(null);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo generar el planograma.');
@@ -161,6 +173,7 @@ export function CategoryCyclesHub({ teams, initialCategory = 'alevin' }: Props) 
     setPlan(rawPlan ? applyPlanExclusions(rawPlan, excluded) : null);
     setActiveMacroIndex(0);
     setSelectedMcc(null);
+    setPanelContext(null);
   };
 
   const toggleTeamOnVariant = (variantId: string, teamId: string) => {
@@ -183,12 +196,31 @@ export function CategoryCyclesHub({ teams, initialCategory = 'alevin' }: Props) 
 
   const openMccPanel = (micro: MicrocycleWeek) => {
     setSelectedMcc(micro);
+    setPanelContext(plan ? findMccInPlan(plan, micro.id) : null);
+    setPanelError(null);
+    setPanelSuccess(null);
     const override = variantState.mccOverrides[micro.id];
     setPanelLabel(override?.label ?? '');
     setPanelNote(override?.note ?? '');
   };
 
-  const mccContext = plan && selectedMcc ? findMccInPlan(plan, selectedMcc.id) : null;
+  const mccContext =
+    panelContext ?? (plan && selectedMcc ? findMccInPlan(plan, selectedMcc.id) : null);
+
+  const applyMccLink = (microcycleId: string) => {
+    if (!selectedMcc || !activeVariant) return;
+    updateDocument((current) =>
+      setMccLink(current, activeVariant.id, selectedMcc.id, {
+        microcycleId,
+        variantId: activeVariant.id,
+        status: 'linked',
+        createdAt: new Date().toISOString(),
+      })
+    );
+    setPanelError(null);
+    setPanelSuccess('Plantilla asignada a este MCC.');
+    setError(null);
+  };
 
   const handleSaveOverride = () => {
     if (!selectedMcc) return;
@@ -202,9 +234,27 @@ export function CategoryCyclesHub({ teams, initialCategory = 'alevin' }: Props) 
   };
 
   const handleCreateMicrocycle = async () => {
-    if (!selectedMcc || !activeVariant || !mccContext) return;
+    if (!selectedMcc || !activeVariant) {
+      setPanelError('Selecciona un MCC del planograma.');
+      return;
+    }
+    if (!mccContext) {
+      setPanelError('No se encontró el MCC en el planograma. Regenera el plan y vuelve a intentarlo.');
+      return;
+    }
+
     setCreating(true);
+    setPanelError(null);
+    setPanelSuccess(null);
+
     const displayLabel = panelLabel.trim() || mccContext.micro.label;
+
+    if (isDemoClient()) {
+      applyMccLink(demoTemplateMicrocycleId(selectedMcc.id, activeVariant.id));
+      setCreating(false);
+      return;
+    }
+
     const result = await createMicrocycleFromMcc({
       categorySlug,
       variantId: activeVariant.id,
@@ -218,19 +268,25 @@ export function CategoryCyclesHub({ teams, initialCategory = 'alevin' }: Props) 
     setCreating(false);
 
     if (!result.ok || !result.microcycleId) {
-      setError('No se pudo crear el microciclo.');
+      const message =
+        result.message === 'unauthorized'
+          ? 'Sesión no válida. Recarga la página o entra por /demo.'
+          : 'No se pudo crear el microciclo en el servidor. Comprueba que las migraciones estén aplicadas.';
+      setPanelError(message);
+      setError(message);
       return;
     }
 
-    updateDocument((current) =>
-      setMccLink(current, activeVariant.id, selectedMcc.id, {
-        microcycleId: result.microcycleId!,
-        variantId: activeVariant.id,
-        status: 'linked',
-        createdAt: new Date().toISOString(),
-      })
-    );
-    setError(null);
+    applyMccLink(result.microcycleId);
+  };
+
+  const handleLinkExistingTemplate = (microcycleId: string) => {
+    if (!selectedMcc || !activeVariant) return;
+    if (!microcycleId) {
+      setPanelError('Elige una plantilla de la lista.');
+      return;
+    }
+    applyMccLink(microcycleId);
   };
 
   const forkTeamForMcc = async (teamId: string) => {
@@ -245,7 +301,24 @@ export function CategoryCyclesHub({ teams, initialCategory = 'alevin' }: Props) 
     if (!team) return;
 
     setForkingTeamId(teamId);
+    setPanelError(null);
     const displayLabel = panelLabel.trim() || mccContext.micro.label;
+
+    if (isDemoClient()) {
+      updateDocument((current) =>
+        setTeamMccInstance(current, activeVariant.id, {
+          microcycleId: demoTeamMicrocycleId(teamId, selectedMcc.id),
+          templateMicrocycleId: link.microcycleId,
+          teamId,
+          mccId: selectedMcc.id,
+          forkedAt: new Date().toISOString(),
+        })
+      );
+      setPanelSuccess(`Instancia demo creada para ${team.name}.`);
+      setForkingTeamId(null);
+      return;
+    }
+
     const result = await forkMicrocycleForTeam({
       templateMicrocycleId: link.microcycleId,
       teamId,
@@ -261,7 +334,12 @@ export function CategoryCyclesHub({ teams, initialCategory = 'alevin' }: Props) 
     setForkingTeamId(null);
 
     if (!result.ok || !result.microcycleId) {
-      setError('No se pudo crear la instancia del equipo.');
+      const message =
+        result.message === 'unauthorized'
+          ? 'Sesión no válida para crear la instancia del equipo.'
+          : 'No se pudo crear la instancia del equipo.';
+      setPanelError(message);
+      setError(message);
       return;
     }
 
@@ -274,6 +352,7 @@ export function CategoryCyclesHub({ teams, initialCategory = 'alevin' }: Props) 
         forkedAt: new Date().toISOString(),
       })
     );
+    setPanelSuccess(`Instancia creada para ${team.name}.`);
     setError(null);
   };
 
@@ -597,7 +676,12 @@ export function CategoryCyclesHub({ teams, initialCategory = 'alevin' }: Props) 
             type="button"
             className="fixed inset-0 z-40 bg-black/40"
             aria-label="Cerrar panel"
-            onClick={() => setSelectedMcc(null)}
+            onClick={() => {
+              setSelectedMcc(null);
+              setPanelContext(null);
+              setPanelError(null);
+              setPanelSuccess(null);
+            }}
           />
           <MccDetailPanel
             context={mccContext}
@@ -611,12 +695,21 @@ export function CategoryCyclesHub({ teams, initialCategory = 'alevin' }: Props) 
             forkingTeamId={forkingTeamId}
             assignedTeams={categoryTeams.filter((team) => activeVariant.teamIds.includes(team.id))}
             teamInstances={teamInstancesForMcc}
-            onClose={() => setSelectedMcc(null)}
+            templateMicrocycles={templateMicrocycles}
+            panelError={panelError}
+            panelSuccess={panelSuccess}
+            onClose={() => {
+              setSelectedMcc(null);
+              setPanelContext(null);
+              setPanelError(null);
+              setPanelSuccess(null);
+            }}
             onLabelChange={setPanelLabel}
             onNoteChange={setPanelNote}
             onSaveOverride={handleSaveOverride}
             onToggleExcluded={handleToggleExcluded}
             onCreateMicrocycle={handleCreateMicrocycle}
+            onLinkExistingTemplate={handleLinkExistingTemplate}
             onForkTeam={forkTeamForMcc}
             onForkAllTeams={forkAllTeamsForMcc}
           />

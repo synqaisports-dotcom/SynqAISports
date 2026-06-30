@@ -42,6 +42,30 @@ export default async function PortalMetodologiaCiclosPage() {
     }
   }
 
+  let templateMicrocycles: {
+    id: string;
+    title: string;
+    week_label: string;
+    week_start: string | null;
+  }[] = [];
+
+  const { data: templateRows, error: templateError } = await supabase
+    .from('synq_microcycles')
+    .select('id, title, week_label, week_start, is_template, team_id')
+    .eq('club_id', ctx.club.id)
+    .order('week_start', { ascending: false });
+
+  if (!templateError && templateRows) {
+    templateMicrocycles = templateRows
+      .filter((row) => (row.is_template ?? true) && !row.team_id)
+      .map((row) => ({
+        id: row.id,
+        title: row.title,
+        week_label: row.week_label,
+        week_start: row.week_start,
+      }));
+  }
+
   return (
     <PageContainer>
       <Card className="mb-4 border border-primary/25">
@@ -61,7 +85,7 @@ export default async function PortalMetodologiaCiclosPage() {
 
       <MethodologySubnav />
 
-      <CategoryCyclesHub teams={teamOptions} />
+      <CategoryCyclesHub teams={teamOptions} templateMicrocycles={templateMicrocycles} />
     </PageContainer>
   );
 }
