@@ -8,7 +8,7 @@ import {
   type SessionsPerMicro,
 } from '@/lib/periodization';
 
-export const PERIODIZATION_DOC_VERSION = 1 as const;
+export const PERIODIZATION_DOC_VERSION = 2 as const;
 
 export type MccLinkStatus = 'draft' | 'linked' | 'complete';
 
@@ -22,6 +22,15 @@ export type MccLink = {
 export type MccOverride = {
   label?: string;
   note?: string;
+  excluded?: boolean;
+};
+
+export type TeamMccInstance = {
+  microcycleId: string;
+  templateMicrocycleId: string;
+  teamId: string;
+  mccId: string;
+  forkedAt: string;
 };
 
 export type RhythmVariant = {
@@ -35,6 +44,7 @@ export type RhythmVariant = {
 export type VariantState = {
   mccLinks: Record<string, MccLink>;
   mccOverrides: Record<string, MccOverride>;
+  teamInstances: Record<string, Record<string, TeamMccInstance>>;
 };
 
 export type CategoryPeriodizationDocument = {
@@ -71,7 +81,7 @@ export function defaultRhythmVariants(): RhythmVariant[] {
 }
 
 export function emptyVariantState(): VariantState {
-  return { mccLinks: {}, mccOverrides: {} };
+  return { mccLinks: {}, mccOverrides: {}, teamInstances: {} };
 }
 
 export function defaultCategoryDocument(
@@ -162,9 +172,19 @@ export function saveDocumentToStorage(document: CategoryPeriodizationDocument): 
 
 export function parseCategoryDocument(raw: unknown): CategoryPeriodizationDocument | null {
   if (!raw || typeof raw !== 'object') return null;
-  const obj = raw as Partial<CategoryPeriodizationDocument>;
-  if (obj.version !== PERIODIZATION_DOC_VERSION || !obj.categorySlug) return null;
+  const obj = raw as Partial<CategoryPeriodizationDocument> & { version?: number };
+  if (!obj.categorySlug) return null;
   if (!Array.isArray(obj.variants) || obj.variants.length === 0) return null;
+
+  const variantState: Record<string, VariantState> = {};
+  for (const variant of obj.variants) {
+    const existing = obj.variantState?.[variant.id];
+    variantState[variant.id] = {
+      mccLinks: existing?.mccLinks ?? {},
+      mccOverrides: existing?.mccOverrides ?? {},
+      teamInstances: existing?.teamInstances ?? {},
+    };
+  }
 
   return {
     version: PERIODIZATION_DOC_VERSION,
@@ -176,7 +196,7 @@ export function parseCategoryDocument(raw: unknown): CategoryPeriodizationDocume
     macroNames: obj.macroNames ?? ['Macrociclo 1'],
     variants: obj.variants,
     activeVariantId: obj.activeVariantId ?? obj.variants[0].id,
-    variantState: obj.variantState ?? {},
+    variantState,
     updatedAt: obj.updatedAt ?? new Date().toISOString(),
   };
 }
@@ -226,4 +246,66 @@ export function setMccOverride(
 export function countLinkedMcc(document: CategoryPeriodizationDocument, variantId: string): number {
   const links = getVariantState(document, variantId).mccLinks;
   return Object.keys(links).length;
+}
+
+export function getExcludedMccIds(document: CategoryPeriodizationDocument, variantId: string): Set<string> {
+  const overrides = getVariantState(document, variantId).mccOverrides;
+  return new Set(
+    Object.entries(overrides)
+      .filter(([, value]) => value.excluded)
+      .map(([mccId]) => mccId)
+  );
+}
+
+export function toggleMccExcluded(
+  document: CategoryPeriodizationDocument,
+  variantId: string,
+  mccId: string,
+  excluded: boolean
+): CategoryPeriodizationDocument {
+  const state = getVariantState(document, variantId);
+  const current = state.mccOverrides[mccId] ?? {};
+  return setMccOverride(document, variantId, mccId, { ...current, excluded });
+}
+
+export function setTeamMccInstance(
+  document: CategoryPeriodizationDocument,
+  variantId: string,
+  instance: TeamMccInstance
+): CategoryPeriodizationDocument {
+  const state = getVariantState(document, variantId);
+  const teamMap = state.teamInstances[instance.teamId] ?? {};
+  return touchDocument({
+    ...document,
+    variantState: {
+      ...document.variantState,
+      [variantId]: {
+        ...state,
+        teamInstances: {
+          ...state.teamInstances,
+          [instance.teamId]: {
+            ...teamMap,
+            [instance.mccId]: instance,
+          },
+        },
+      },
+    },
+  });
+}
+
+export function countTeamInstances(document: CategoryPeriodizationDocument, variantId: string): number {
+  const state = getVariantState(document, variantId);
+  return Object.values(state.teamInstances).reduce(
+    (sum, teamMap) => sum + Object.keys(teamMap).length,
+    0
+  );
+}
+
+export function getTeamInstance(
+  document: CategoryPeriodizationDocument,
+  variantId: string,
+  teamId: string,
+  mccId: string
+): TeamMccInstance | null {
+  return getVariantState(document, variantId).teamInstances[teamId]?.[mccId] ?? null;
 }

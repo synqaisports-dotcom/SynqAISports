@@ -12,6 +12,7 @@ type Props = {
   categorySlug: CanteraCategorySlug;
   mccLinks: Record<string, MccLink>;
   mccOverrides: Record<string, MccOverride>;
+  excludedMccIds: Set<string>;
   selectedMccId: string | null;
   onSelectMcc: (micro: MicrocycleWeek) => void;
 };
@@ -21,6 +22,7 @@ export function PeriodizationGrid({
   categorySlug,
   mccLinks,
   mccOverrides,
+  excludedMccIds,
   selectedMccId,
   onSelectMcc,
 }: Props) {
@@ -97,6 +99,7 @@ export function PeriodizationGrid({
                   }
 
                   const linked = Boolean(mccLinks[micro.id]);
+                  const excluded = excludedMccIds.has(micro.id);
                   const active = selectedMccId === micro.id;
                   const displayLabel = getMccDisplayLabel(micro, mccOverrides[micro.id]);
 
@@ -109,7 +112,8 @@ export function PeriodizationGrid({
                           'w-full rounded-md border px-1.5 py-1.5 text-center transition-colors',
                           styles.micro,
                           active && 'ring-2 ring-primary ring-offset-1 ring-offset-background',
-                          linked && 'shadow-[inset_0_0_0_1px_hsl(142_76%_45%_/_0.45)]'
+                          linked && 'shadow-[inset_0_0_0_1px_hsl(142_76%_45%_/_0.45)]',
+                          excluded && 'opacity-40 line-through'
                         )}
                         title={`${micro.weekStart} → ${micro.weekEnd}`}
                       >

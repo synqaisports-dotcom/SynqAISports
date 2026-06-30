@@ -10,7 +10,7 @@ import {
   Save,
   Users,
 } from 'lucide-react';
-import { createMicrocycleFromMcc, loadCategoryPeriodization, saveCategoryPeriodization } from '@/app/actions/periodization';
+import { createMicrocycleFromMcc, forkMicrocycleForTeam, loadCategoryPeriodization, saveCategoryPeriodization } from '@/app/actions/periodization';
 import { PeriodizationGrid } from '@/components/portal/PeriodizationGrid';
 import { MccDetailPanel } from '@/components/portal/MccDetailPanel';
 import { SynqDateField } from '@/components/portal/SynqDateField';
@@ -30,16 +30,22 @@ import {
   type MainTasksPerSession,
   type MicrocycleWeek,
 } from '@/lib/periodization';
+import { applyPlanExclusions } from '@/lib/periodization-plan-utils';
 import {
   buildPlanForVariant,
   countLinkedMcc,
+  countTeamInstances,
   defaultCategoryDocument,
+  getExcludedMccIds,
+  getTeamInstance,
   getVariant,
   getVariantState,
   loadDocumentFromStorage,
   saveDocumentToStorage,
   setMccLink,
   setMccOverride,
+  setTeamMccInstance,
+  toggleMccExcluded,
   variantTotals,
   type CategoryPeriodizationDocument,
   type RhythmVariant,
@@ -68,6 +74,7 @@ export function CategoryCyclesHub({ teams, initialCategory = 'alevin' }: Props) 
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [forkingTeamId, setForkingTeamId] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   const activeVariant = getVariant(document, document.activeVariantId);
@@ -94,7 +101,9 @@ export function CategoryCyclesHub({ teams, initialCategory = 'alevin' }: Props) 
       const fromServer = await loadCategoryPeriodization(slug);
       const next = fromStorage ?? fromServer ?? defaultCategoryDocument(slug, cat.name);
       setDocument(next);
-      setPlan(buildPlanForVariant(next, next.activeVariantId));
+      const rawPlan = buildPlanForVariant(next, next.activeVariantId);
+      const excluded = getExcludedMccIds(next, next.activeVariantId);
+      setPlan(rawPlan ? applyPlanExclusions(rawPlan, excluded) : null);
       setActiveMacroIndex(0);
       setSelectedMcc(null);
       setError(null);
@@ -122,8 +131,10 @@ export function CategoryCyclesHub({ teams, initialCategory = 'alevin' }: Props) 
 
   const handleGenerate = () => {
     try {
-      const nextPlan = buildPlanForVariant(document, document.activeVariantId);
-      if (!nextPlan) throw new Error('No se pudo generar el planograma.');
+      const rawPlan = buildPlanForVariant(document, document.activeVariantId);
+      if (!rawPlan) throw new Error('No se pudo generar el planograma.');
+      const excluded = getExcludedMccIds(document, document.activeVariantId);
+      const nextPlan = applyPlanExclusions(rawPlan, excluded);
       setPlan(nextPlan);
       setActiveMacroIndex(0);
       setSelectedMcc(null);
@@ -145,7 +156,9 @@ export function CategoryCyclesHub({ teams, initialCategory = 'alevin' }: Props) 
 
   const handleVariantSelect = (variantId: string) => {
     updateDocument((current) => ({ ...current, activeVariantId: variantId }));
-    setPlan(buildPlanForVariant({ ...document, activeVariantId: variantId }, variantId));
+    const rawPlan = buildPlanForVariant({ ...document, activeVariantId: variantId }, variantId);
+    const excluded = getExcludedMccIds({ ...document, activeVariantId: variantId }, variantId);
+    setPlan(rawPlan ? applyPlanExclusions(rawPlan, excluded) : null);
     setActiveMacroIndex(0);
     setSelectedMcc(null);
   };
@@ -183,6 +196,7 @@ export function CategoryCyclesHub({ teams, initialCategory = 'alevin' }: Props) 
       setMccOverride(current, document.activeVariantId, selectedMcc.id, {
         label: panelLabel.trim() || undefined,
         note: panelNote.trim() || undefined,
+        excluded: variantState.mccOverrides[selectedMcc.id]?.excluded,
       })
     );
   };
@@ -219,6 +233,75 @@ export function CategoryCyclesHub({ teams, initialCategory = 'alevin' }: Props) 
     setError(null);
   };
 
+  const forkTeamForMcc = async (teamId: string) => {
+    if (!selectedMcc || !activeVariant || !mccContext) return;
+    const link = variantState.mccLinks[selectedMcc.id];
+    if (!link) {
+      setError('Crea primero la plantilla de este MCC.');
+      return;
+    }
+
+    const team = categoryTeams.find((item) => item.id === teamId);
+    if (!team) return;
+
+    setForkingTeamId(teamId);
+    const displayLabel = panelLabel.trim() || mccContext.micro.label;
+    const result = await forkMicrocycleForTeam({
+      templateMicrocycleId: link.microcycleId,
+      teamId,
+      teamName: team.name,
+      mccId: selectedMcc.id,
+      variantId: activeVariant.id,
+      mccLabel: displayLabel,
+      weekStart: selectedMcc.weekStart,
+      weekEnd: selectedMcc.weekEnd,
+      mainTasksPerSession: activeVariant.mainTasksPerSession,
+      categorySlug,
+    });
+    setForkingTeamId(null);
+
+    if (!result.ok || !result.microcycleId) {
+      setError('No se pudo crear la instancia del equipo.');
+      return;
+    }
+
+    updateDocument((current) =>
+      setTeamMccInstance(current, activeVariant.id, {
+        microcycleId: result.microcycleId!,
+        templateMicrocycleId: link.microcycleId,
+        teamId,
+        mccId: selectedMcc.id,
+        forkedAt: new Date().toISOString(),
+      })
+    );
+    setError(null);
+  };
+
+  const forkAllTeamsForMcc = async () => {
+    if (!activeVariant || !selectedMcc) return;
+    for (const team of categoryTeams.filter((team) => activeVariant.teamIds.includes(team.id))) {
+      if (!getTeamInstance(document, activeVariant.id, team.id, selectedMcc.id)) {
+        await forkTeamForMcc(team.id);
+      }
+    }
+  };
+
+  const handleToggleExcluded = () => {
+    if (!selectedMcc) return;
+    const currently = variantState.mccOverrides[selectedMcc.id]?.excluded ?? false;
+    updateDocument((current) =>
+      toggleMccExcluded(current, document.activeVariantId, selectedMcc.id, !currently)
+    );
+    if (plan) {
+      const excluded = getExcludedMccIds(
+        toggleMccExcluded(document, document.activeVariantId, selectedMcc.id, !currently),
+        document.activeVariantId
+      );
+      const rawPlan = buildPlanForVariant(document, document.activeVariantId);
+      if (rawPlan) setPlan(applyPlanExclusions(rawPlan, excluded));
+    }
+  };
+
   const distributionPreview = useMemo(() => {
     if (!activeVariant) return null;
     return previewPeriodizationDistribution(
@@ -231,6 +314,22 @@ export function CategoryCyclesHub({ teams, initialCategory = 'alevin' }: Props) 
 
   const activeMacro = plan?.macrocycles[activeMacroIndex] ?? null;
   const linkedCount = countLinkedMcc(document, document.activeVariantId);
+  const teamInstanceCount = countTeamInstances(document, document.activeVariantId);
+  const excludedMccIds = getExcludedMccIds(document, document.activeVariantId);
+  const rawPlanForTotals = buildPlanForVariant(document, document.activeVariantId);
+  const excludedCount = rawPlanForTotals
+    ? rawPlanForTotals.totalMicrocycles - (plan?.totalMicrocycles ?? rawPlanForTotals.totalMicrocycles)
+    : 0;
+
+  const teamInstancesForMcc = useMemo(() => {
+    if (!selectedMcc) return {};
+    const result: Record<string, import('@/lib/periodization-document').TeamMccInstance> = {};
+    for (const [teamId, mccMap] of Object.entries(variantState.teamInstances)) {
+      const instance = mccMap[selectedMcc.id];
+      if (instance) result[teamId] = instance;
+    }
+    return result;
+  }, [variantState.teamInstances, selectedMcc]);
 
   if (!loaded) {
     return (
@@ -431,12 +530,20 @@ export function CategoryCyclesHub({ teams, initialCategory = 'alevin' }: Props) 
                 {plan.totalTasks} tareas
               </Badge>
               <Badge variant="outline" className="border-emerald-400/30 text-emerald-300">
-                {linkedCount}/{plan.totalMicrocycles} plantillas
+                {linkedCount}/{rawPlanForTotals?.totalMicrocycles ?? plan.totalMicrocycles} plantillas
               </Badge>
+              <Badge variant="outline" className="border-sky-400/30 text-sky-300">
+                {teamInstanceCount} instancias equipo
+              </Badge>
+              {excludedCount > 0 ? (
+                <Badge variant="outline" className="border-amber-400/30 text-amber-300">
+                  {excludedCount} festivo{excludedCount === 1 ? '' : 's'}
+                </Badge>
+              ) : null}
             </div>
             <p className="text-xs text-muted-foreground">{formatMacroDistributionSummary(plan)}</p>
             <p className="text-xs text-muted-foreground">
-              Pulsa un MCC para ver detalle, renombrar o crear la plantilla de microciclo. Sin festivos.
+              Pulsa un MCC para plantilla, fork por equipo o marcar festivo. Totales sin semanas excluidas.
             </p>
 
             {plan.macrocycles.length > 1 ? (
@@ -469,6 +576,7 @@ export function CategoryCyclesHub({ teams, initialCategory = 'alevin' }: Props) 
                 categorySlug={categorySlug}
                 mccLinks={variantState.mccLinks}
                 mccOverrides={variantState.mccOverrides}
+                excludedMccIds={excludedMccIds}
                 selectedMccId={selectedMcc?.id ?? null}
                 onSelectMcc={openMccPanel}
               />
@@ -498,12 +606,19 @@ export function CategoryCyclesHub({ teams, initialCategory = 'alevin' }: Props) 
             link={variantState.mccLinks[selectedMcc!.id] ?? null}
             label={panelLabel}
             note={panelNote}
+            excluded={variantState.mccOverrides[selectedMcc!.id]?.excluded ?? false}
             pending={creating}
+            forkingTeamId={forkingTeamId}
+            assignedTeams={categoryTeams.filter((team) => activeVariant.teamIds.includes(team.id))}
+            teamInstances={teamInstancesForMcc}
             onClose={() => setSelectedMcc(null)}
             onLabelChange={setPanelLabel}
             onNoteChange={setPanelNote}
             onSaveOverride={handleSaveOverride}
+            onToggleExcluded={handleToggleExcluded}
             onCreateMicrocycle={handleCreateMicrocycle}
+            onForkTeam={forkTeamForMcc}
+            onForkAllTeams={forkAllTeamsForMcc}
           />
         </>
       ) : null}

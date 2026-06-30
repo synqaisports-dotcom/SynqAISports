@@ -19,7 +19,8 @@ export default async function SolicitudesPage() {
     <div>
       <h1 className="font-serif-display text-3xl text-white">Solicitudes de cambio</h1>
       <p className="mt-2 text-synq-muted">
-        Flujo de aprobación para cambios propuestos por entrenadores (app en fase posterior).
+        Flujo de aprobación para cambios propuestos por entrenadores desde la vista Entrenador o
+        registro manual.
       </p>
       <MethodologySubnav />
       <div className="mt-6">

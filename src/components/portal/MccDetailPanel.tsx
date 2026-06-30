@@ -1,13 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { ExternalLink, Link2, Loader2, X } from 'lucide-react';
+import { Copy, ExternalLink, Link2, Loader2, Users, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { sessionStructureSummary } from '@/lib/periodization';
 import type { MccContext } from '@/lib/periodization';
-import type { MccLink, RhythmVariant } from '@/lib/periodization-document';
+import type { MccLink, RhythmVariant, TeamMccInstance } from '@/lib/periodization-document';
 import { cn } from '@/lib/utils';
+
+type TeamOption = { id: string; name: string };
 
 type Props = {
   context: MccContext;
@@ -16,12 +18,19 @@ type Props = {
   link: MccLink | null;
   label: string;
   note: string;
+  excluded: boolean;
   pending: boolean;
+  forkingTeamId: string | null;
+  assignedTeams: TeamOption[];
+  teamInstances: Record<string, TeamMccInstance>;
   onClose: () => void;
   onLabelChange: (label: string) => void;
   onNoteChange: (note: string) => void;
   onSaveOverride: () => void;
+  onToggleExcluded: () => void;
   onCreateMicrocycle: () => void;
+  onForkTeam: (teamId: string) => void;
+  onForkAllTeams: () => void;
 };
 
 export function MccDetailPanel({
@@ -31,15 +40,23 @@ export function MccDetailPanel({
   link,
   label,
   note,
+  excluded,
   pending,
+  forkingTeamId,
+  assignedTeams,
+  teamInstances,
   onClose,
   onLabelChange,
   onNoteChange,
   onSaveOverride,
+  onToggleExcluded,
   onCreateMicrocycle,
+  onForkTeam,
+  onForkAllTeams,
 }: Props) {
   const { micro, meso, macro } = context;
   const isDemoLink = link?.microcycleId.startsWith('demo-micro-');
+  const forkedCount = assignedTeams.filter((team) => teamInstances[team.id]).length;
 
   return (
     <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l border-primary/25 bg-background/95 shadow-2xl backdrop-blur-md">
@@ -58,8 +75,7 @@ export function MccDetailPanel({
       <div className="flex-1 space-y-4 overflow-y-auto p-4">
         <div className="rounded-lg border border-primary/20 bg-muted/10 p-3 text-sm">
           <p>
-            <span className="text-muted-foreground">Semana:</span>{' '}
-            {micro.weekStart} → {micro.weekEnd}
+            <span className="text-muted-foreground">Semana:</span> {micro.weekStart} → {micro.weekEnd}
           </p>
           <p className="mt-1">
             <span className="text-muted-foreground">Mesociclo:</span> {meso.label}
@@ -70,15 +86,25 @@ export function MccDetailPanel({
         </div>
 
         <div className="grid grid-cols-2 gap-2 text-center text-sm">
-          <div className="rounded-lg border border-primary/20 p-3">
+          <div className={cn('rounded-lg border p-3', excluded && 'opacity-50')}>
             <p className="text-2xl font-bold text-primary">{micro.sessionsCount}</p>
             <p className="text-xs text-muted-foreground">sesiones</p>
           </div>
-          <div className="rounded-lg border border-primary/20 p-3">
+          <div className={cn('rounded-lg border p-3', excluded && 'opacity-50')}>
             <p className="text-2xl font-bold text-primary">{micro.tasksCount}</p>
             <p className="text-xs text-muted-foreground">tareas</p>
           </div>
         </div>
+
+        <Button
+          type="button"
+          variant={excluded ? 'default' : 'outline'}
+          size="sm"
+          className="w-full"
+          onClick={onToggleExcluded}
+        >
+          {excluded ? 'Reactivar semana' : 'Marcar festivo / sin entreno'}
+        </Button>
 
         <p className="text-xs text-muted-foreground">
           Estructura: {sessionStructureSummary(variant.mainTasksPerSession)} por sesión.
@@ -120,18 +146,75 @@ export function MccDetailPanel({
         >
           <div className="flex items-center gap-2 text-sm font-medium">
             <Link2 className="size-4" />
-            {link ? 'Microciclo plantilla enlazado' : 'Sin microciclo plantilla'}
+            {link ? 'Plantilla de variante' : 'Sin plantilla'}
           </div>
           {link ? (
-            <p className="mt-1 text-xs text-muted-foreground">
-              Estado: {link.status === 'linked' ? 'enlazado' : link.status}
-            </p>
+            <p className="mt-1 text-xs text-muted-foreground">Lista para fork a equipos asignados.</p>
           ) : (
             <p className="mt-1 text-xs text-muted-foreground">
-              Crea la plantilla de esta semana para la variante. Los equipos heredarán esta base.
+              Crea la plantilla antes de generar instancias por equipo.
             </p>
           )}
         </div>
+
+        {link && assignedTeams.length > 0 ? (
+          <div className="rounded-lg border border-primary/20 p-3">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <p className="flex items-center gap-1.5 text-sm font-medium">
+                <Users className="size-4" />
+                Instancias equipo ({forkedCount}/{assignedTeams.length})
+              </p>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-7 text-xs"
+                disabled={forkingTeamId !== null}
+                onClick={onForkAllTeams}
+              >
+                <Copy className="mr-1 size-3" />
+                Todas
+              </Button>
+            </div>
+            <ul className="space-y-1.5">
+              {assignedTeams.map((team) => {
+                const instance = teamInstances[team.id];
+                const isForking = forkingTeamId === team.id;
+                return (
+                  <li
+                    key={team.id}
+                    className="flex items-center justify-between gap-2 rounded-md border border-primary/10 px-2 py-1.5 text-xs"
+                  >
+                    <span>{team.name}</span>
+                    {instance ? (
+                      instance.microcycleId.startsWith('demo-') ? (
+                        <span className="text-emerald-400">Instancia demo</span>
+                      ) : (
+                        <Link
+                          href={`/portal/metodologia/microciclos/${instance.microcycleId}`}
+                          className="text-primary hover:underline"
+                        >
+                          Abrir
+                        </Link>
+                      )
+                    ) : (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 text-xs"
+                        disabled={isForking}
+                        onClick={() => onForkTeam(team.id)}
+                      >
+                        {isForking ? <Loader2 className="size-3 animate-spin" /> : 'Fork'}
+                      </Button>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ) : null}
       </div>
 
       <div className="space-y-2 border-t border-primary/20 p-4">
@@ -149,7 +232,7 @@ export function MccDetailPanel({
           <Button type="button" variant="outline" className="w-full gap-2" asChild>
             <Link href={`/portal/metodologia/microciclos/${link.microcycleId}`}>
               <ExternalLink className="size-4" />
-              Abrir microciclo
+              Abrir plantilla
             </Link>
           </Button>
         )}

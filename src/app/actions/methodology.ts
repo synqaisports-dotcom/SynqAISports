@@ -400,14 +400,25 @@ export async function createChangeRequest(
   const reason = String(formData.get('reason') ?? '').trim();
   const exerciseId = String(formData.get('exerciseId') ?? '').trim() || null;
   const slotId = String(formData.get('slotId') ?? '').trim() || null;
+  const teamId = String(formData.get('teamId') ?? '').trim() || null;
+  const sessionLabel = String(formData.get('sessionLabel') ?? '').trim() || null;
+  const microcycleId = String(formData.get('microcycleId') ?? '').trim() || null;
 
   if (!reason) return { ok: false, message: 'validation' };
+
+  if (await isDemoActive()) {
+    revalidatePath('/portal/metodologia/solicitudes');
+    return { ok: true, id: `demo-request-${Date.now()}` };
+  }
 
   const supabase = await createClient();
   const { error } = await supabase.from('synq_change_requests').insert({
     club_id: clubId,
     exercise_id: exerciseId,
     microcycle_slot_id: slotId,
+    team_id: teamId,
+    session_label: sessionLabel,
+    microcycle_id: microcycleId,
     requested_by: userId,
     reason,
     status: 'pending',
