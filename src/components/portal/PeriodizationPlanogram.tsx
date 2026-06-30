@@ -9,10 +9,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { CANTERA_CATEGORIES, type CanteraCategorySlug } from '@/lib/cantera-categories';
+import { formatTrainingDayLetters } from '@/lib/club-facilities';
 import {
   CATEGORY_PLAN_STYLES,
   buildPeriodizationPlan,
+  countNaturalMonthsBetween,
   defaultPeriodizationConfig,
+  defaultTrainingDaysForSessions,
   macroNamesForCount,
   sessionStructureSummary,
   type MacrocycleBlock,
@@ -27,11 +30,9 @@ import { cn } from '@/lib/utils';
 function PeriodizationGrid({
   macro,
   styles,
-  sessionsPerMicro,
 }: {
   macro: MacrocycleBlock;
   styles: (typeof CATEGORY_PLAN_STYLES)[CanteraCategorySlug];
-  sessionsPerMicro: SessionsPerMicro;
 }) {
   if (macro.mesocycles.length === 0) {
     return (
@@ -104,7 +105,9 @@ function PeriodizationGrid({
                         title={`${micro.weekStart} → ${micro.weekEnd}`}
                       >
                         <p className="text-[11px] font-bold tracking-wide">{micro.label}</p>
-                        <p className="mt-0.5 text-[10px] opacity-90">{sessionsPerMicro} ses.</p>
+                        <p className="mt-0.5 text-[10px] opacity-90">
+                          {micro.sessionsCount} ses.
+                        </p>
                         <p className="mt-0.5 text-[9px] text-muted-foreground">
                           {micro.weekStart.slice(5).replace('-', '/')} –{' '}
                           {micro.weekEnd.slice(5).replace('-', '/')}
@@ -199,6 +202,17 @@ export function PeriodizationPlanogram() {
     }
   };
 
+  const mesocyclePreview = useMemo(() => {
+    if (!config.startDate || !config.endDate) return null;
+    const count = countNaturalMonthsBetween(config.startDate, config.endDate);
+    if (count === 0) return 'Revisa las fechas: el fin debe ser posterior al inicio.';
+    return `${count} mesociclo${count === 1 ? '' : 's'} (meses naturales entre inicio y fin)`;
+  }, [config.startDate, config.endDate]);
+
+  const trainingDaysLabel = formatTrainingDayLetters(
+    defaultTrainingDaysForSessions(config.sessionsPerMicro).join(',')
+  );
+
   const activeMacro = plan?.macrocycles[activeMacroIndex] ?? null;
 
   const summary = useMemo(() => {
@@ -283,6 +297,9 @@ export function PeriodizationPlanogram() {
                   onChange={(endDate) => updateConfig({ endDate })}
                 />
               </div>
+              {mesocyclePreview ? (
+                <p className="text-[11px] text-muted-foreground sm:col-span-2">{mesocyclePreview}</p>
+              ) : null}
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -308,10 +325,15 @@ export function PeriodizationPlanogram() {
                   updateConfig({ sessionsPerMicro: Number(value) as SessionsPerMicro })
                 }
                 options={[
-                  { value: '2', label: '2 sesiones / semana' },
-                  { value: '3', label: '3 sesiones / semana' },
+                  { value: '2', label: '2 sesiones / semana (M J)' },
+                  { value: '3', label: '3 sesiones / semana (L X V)' },
                 ]}
               />
+              <p className="mt-1.5 text-[11px] text-muted-foreground">
+                Días de entreno: <span className="text-foreground">{trainingDaysLabel}</span>. Las
+                sesiones de cada MCC se calculan con los días reales de esa semana dentro del mes y
+                la temporada.
+              </p>
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -432,11 +454,7 @@ export function PeriodizationPlanogram() {
           </CardHeader>
           <CardContent>
             {activeMacro ? (
-              <PeriodizationGrid
-                macro={activeMacro}
-                styles={styles}
-                sessionsPerMicro={plan.config.sessionsPerMicro}
-              />
+              <PeriodizationGrid macro={activeMacro} styles={styles} />
             ) : null}
             <p className="mt-4 text-xs text-muted-foreground">
               Fase A: estructura automática por mes y semana. Plantilla de sesión alineada con microciclos

@@ -190,6 +190,80 @@ function monthKey(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 }
 
+function monthBounds(dateInMonth: Date): { start: Date; end: Date } {
+  const year = dateInMonth.getFullYear();
+  const month = dateInMonth.getMonth();
+  return {
+    start: new Date(year, month, 1, 12, 0, 0, 0),
+    end: new Date(year, month + 1, 0, 12, 0, 0, 0),
+  };
+}
+
+/** Meses naturales (inclusive) entre inicio y fin de temporada. */
+export function naturalMonthsInRange(rangeStart: Date, rangeEnd: Date): string[] {
+  const months: string[] = [];
+  let cursor = new Date(rangeStart.getFullYear(), rangeStart.getMonth(), 1, 12, 0, 0, 0);
+  const endCursor = new Date(rangeEnd.getFullYear(), rangeEnd.getMonth(), 1, 12, 0, 0, 0);
+
+  while (cursor <= endCursor) {
+    months.push(monthKey(cursor));
+    cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1, 12, 0, 0, 0);
+  }
+
+  return months;
+}
+
+export function countNaturalMonthsBetween(startDate: string, endDate: string): number {
+  const start = parseISODate(startDate);
+  const end = parseISODate(endDate);
+  if (end < start) return 0;
+  return naturalMonthsInRange(start, end).length;
+}
+
+function intersectRange(
+  aStart: Date,
+  aEnd: Date,
+  bStart: Date,
+  bEnd: Date
+): { start: Date; end: Date } | null {
+  const start = clampDate(aStart, bStart, bEnd);
+  const end = clampDate(aEnd, bStart, bEnd);
+  if (start > end) return null;
+  return { start, end };
+}
+
+const JS_DAY_TO_WEEKDAY_CODE: Record<number, string> = {
+  0: 'sun',
+  1: 'mon',
+  2: 'tue',
+  3: 'wed',
+  4: 'thu',
+  5: 'fri',
+  6: 'sat',
+};
+
+export function defaultTrainingDaysForSessions(sessions: SessionsPerMicro): string[] {
+  return sessions === 2 ? ['tue', 'thu'] : ['mon', 'wed', 'fri'];
+}
+
+export function countTrainingSessionsInRange(
+  rangeStart: Date,
+  rangeEnd: Date,
+  trainingDays: string[]
+): number {
+  const daySet = new Set(trainingDays);
+  let count = 0;
+  let cursor = new Date(rangeStart);
+
+  while (cursor <= rangeEnd) {
+    const code = JS_DAY_TO_WEEKDAY_CODE[cursor.getDay()];
+    if (code && daySet.has(code)) count += 1;
+    cursor = addDays(cursor, 1);
+  }
+
+  return count;
+}
+
 function monthLabelFromKey(key: string): string {
   const month = Number(key.split('-')[1]);
   return MONTH_NAMES[month - 1] ?? key;
@@ -276,55 +350,71 @@ export function buildPeriodizationPlan(config: PeriodizationConfig): Periodizati
   }
 
   const macroRanges = splitMacroRanges(seasonStart, seasonEnd, config.macroCount);
-  const allSeasonWeeks = weeksInRange(seasonStart, seasonEnd);
+  const seasonMonths = naturalMonthsInRange(seasonStart, seasonEnd);
+  const trainingDays = defaultTrainingDaysForSessions(config.sessionsPerMicro);
+  const tasksPerSession = tasksPerSessionFromMainCount(config.mainTasksPerSession);
 
   const macrocycles: MacrocycleBlock[] = macroRanges.map((range, macroIndex) => {
-    const macroWeeks = allSeasonWeeks.filter(
-      (week) => week.weekStart >= range.start && week.weekStart <= range.end
-    );
-
-    const weeksByMonth = new Map<string, { weekStart: Date; weekEnd: Date }[]>();
-    for (const week of macroWeeks) {
-      const key = monthKey(week.weekStart);
-      const list = weeksByMonth.get(key) ?? [];
-      list.push(week);
-      weeksByMonth.set(key, list);
-    }
-
-    const sortedMonthKeys = [...weeksByMonth.keys()].sort();
     let mccCounter = 0;
+    let mesoCounter = 0;
 
-    const mesocycles: MesocycleMonth[] = sortedMonthKeys.map((key, mesoIndex) => {
-      const monthWeeks = weeksByMonth.get(key) ?? [];
-      const microcycles: MicrocycleWeek[] = monthWeeks.map((week) => {
-        mccCounter += 1;
-        const sessionsCount = config.sessionsPerMicro;
+    const mesocycles: MesocycleMonth[] = seasonMonths
+      .map((key) => {
+        const [year, month] = key.split('-').map(Number);
+        const calendarBounds = monthBounds(new Date(year, month - 1, 1, 12, 0, 0, 0));
+        const monthInSeason = intersectRange(
+          calendarBounds.start,
+          calendarBounds.end,
+          seasonStart,
+          seasonEnd
+        );
+        if (!monthInSeason) return null;
+
+        const monthInMacro = intersectRange(
+          monthInSeason.start,
+          monthInSeason.end,
+          range.start,
+          range.end
+        );
+        if (!monthInMacro) return null;
+
+        const monthWeeks = weeksInRange(monthInMacro.start, monthInMacro.end);
+        const microcycles: MicrocycleWeek[] = monthWeeks.map((week) => {
+          mccCounter += 1;
+          const sessionsCount = countTrainingSessionsInRange(
+            week.weekStart,
+            week.weekEnd,
+            trainingDays
+          );
+
+          return {
+            id: `mcc-${macroIndex}-${key}-${mccCounter}`,
+            mccIndex: mccCounter,
+            label: `MCC${mccCounter}`,
+            weekStart: formatISO(week.weekStart),
+            weekEnd: formatISO(week.weekEnd),
+            sessionsCount,
+            tasksCount: sessionsCount * tasksPerSession,
+          };
+        });
+
+        const totalSessions = microcycles.reduce((sum, micro) => sum + micro.sessionsCount, 0);
+        const totalTasks = microcycles.reduce((sum, micro) => sum + micro.tasksCount, 0);
+        const monthName = monthLabelFromKey(key);
+        mesoCounter += 1;
+
         return {
-          id: `mcc-${macroIndex}-${key}-${mccCounter}`,
-          mccIndex: mccCounter,
-          label: `MCC${mccCounter}`,
-          weekStart: formatISO(week.weekStart),
-          weekEnd: formatISO(week.weekEnd),
-          sessionsCount,
-          tasksCount: sessionsCount * tasksPerSessionFromMainCount(config.mainTasksPerSession),
+          id: `meso-${macroIndex}-${key}`,
+          monthKey: key,
+          monthName,
+          mesoIndex: mesoCounter,
+          label: `Mesociclo ${mesoCounter} — ${monthName}`,
+          microcycles,
+          totalSessions,
+          totalTasks,
         };
-      });
-
-      const totalSessions = microcycles.reduce((sum, micro) => sum + micro.sessionsCount, 0);
-      const totalTasks = microcycles.reduce((sum, micro) => sum + micro.tasksCount, 0);
-      const monthName = monthLabelFromKey(key);
-
-      return {
-        id: `meso-${macroIndex}-${key}`,
-        monthKey: key,
-        monthName,
-        mesoIndex: mesoIndex + 1,
-        label: `Mesociclo ${mesoIndex + 1} — ${monthName}`,
-        microcycles,
-        totalSessions,
-        totalTasks,
-      };
-    });
+      })
+      .filter((meso): meso is MesocycleMonth => meso !== null);
 
     const totalSessions = mesocycles.reduce((sum, meso) => sum + meso.totalSessions, 0);
     const totalTasks = mesocycles.reduce((sum, meso) => sum + meso.totalTasks, 0);
