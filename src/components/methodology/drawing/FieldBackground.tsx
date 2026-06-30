@@ -21,8 +21,8 @@ export function FieldBackground({ template, className }: Props) {
         <svg viewBox="0 0 105 68" className="h-full w-full rounded-md bg-slate-800" />
       ) : isFutsal ? (
         <svg viewBox="0 0 40 20" preserveAspectRatio="xMidYMid meet" className="h-full w-full rounded-md shadow-lg">
-          <rect width="40" height="20" fill="#1a4d7a" />
-          <rect x="1.2" y="0.6" width="37.6" height="18.8" fill="#5eb8e8" />
+          <rect width="40" height="20" fill="#1e5a8f" />
+          <rect x="1" y="0.5" width="38" height="19" fill="#6ec8f5" />
           <FutsalSvg />
         </svg>
       ) : (
@@ -34,15 +34,15 @@ export function FieldBackground({ template, className }: Props) {
             </linearGradient>
           </defs>
           <rect width="105" height="68" fill={GRASS_A} />
-          {Array.from({ length: 18 }).map((_, i) => (
+          {Array.from({ length: 8 }).map((_, i) => (
             <rect
               key={i}
-              x={(105 / 18) * i}
+              x={(105 / 8) * i}
               y={0}
-              width={105 / 18}
+              width={105 / 8}
               height={68}
-              fill={i % 2 === 0 ? GRASS_A : GRASS_B}
-              opacity={0.92}
+              fill={i % 2 === 0 ? '#4cc463' : '#2f8a42'}
+              opacity={0.9}
             />
           ))}
           <rect width="105" height="68" fill="url(#pitch-vignette)" />
@@ -111,18 +111,28 @@ function ThirdSvg() {
 
 function FutsalSvg() {
   const p = { stroke: LINE, strokeWidth: 0.12, fill: 'none' as const };
+  const gw = 1.5;
+  const R = 6;
   return (
     <g>
-      <rect x="1.2" y="0.6" width="37.6" height="18.8" {...p} />
-      <line x1="20" y1="0.6" x2="20" y2="19.4" {...p} />
+      <rect x="1" y="0.5" width="38" height="19" {...p} />
+      <line x1="20" y1="0.5" x2="20" y2="19.5" {...p} />
       <circle cx="20" cy="10" r="3" {...p} />
       <circle cx="20" cy="10" r="0.15" fill={LINE} />
-      <line x1="7.2" y1="4.5" x2="7.2" y2="15.5" {...p} />
-      <line x1="32.8" y1="4.5" x2="32.8" y2="15.5" {...p} />
-      <circle cx="7.2" cy="10" r="0.12" fill={LINE} />
-      <circle cx="12" cy="10" r="0.12" fill={LINE} />
-      <circle cx="28" cy="10" r="0.12" fill={LINE} />
-      <circle cx="32.8" cy="10" r="0.12" fill={LINE} />
+      {/* Área izq — D */}
+      <path
+        d={`M 1 ${10 - gw} A ${R} ${R} 0 0 1 ${1 + R} ${10 - gw} L ${1 + R} ${10 + gw} A ${R} ${R} 0 0 1 1 ${10 + gw}`}
+        {...p}
+      />
+      <circle cx="7" cy="10" r="0.12" fill={LINE} />
+      <circle cx="11" cy="10" r="0.12" fill={LINE} />
+      {/* Área der */}
+      <path
+        d={`M 39 ${10 - gw} A ${R} ${R} 0 0 0 ${39 - R} ${10 - gw} L ${39 - R} ${10 + gw} A ${R} ${R} 0 0 0 39 ${10 + gw}`}
+        {...p}
+      />
+      <circle cx="33" cy="10" r="0.12" fill={LINE} />
+      <circle cx="29" cy="10" r="0.12" fill={LINE} />
     </g>
   );
 }

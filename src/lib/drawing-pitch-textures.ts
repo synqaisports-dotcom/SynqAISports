@@ -17,32 +17,36 @@ function renderGrassTexture(): string {
   canvas.width = s;
   canvas.height = s;
   const ctx = canvas.getContext('2d')!;
-  const stripes = 18;
+  const stripes = 8;
   const sw = s / stripes;
 
   for (let i = 0; i < stripes; i++) {
     const grad = ctx.createLinearGradient(i * sw, 0, (i + 1) * sw, 0);
     if (i % 2 === 0) {
-      grad.addColorStop(0, '#45b85a');
-      grad.addColorStop(1, '#3daa52');
+      grad.addColorStop(0, '#4cc463');
+      grad.addColorStop(1, '#42b85a');
     } else {
-      grad.addColorStop(0, '#358f44');
-      grad.addColorStop(1, '#2f8440');
+      grad.addColorStop(0, '#38984a');
+      grad.addColorStop(1, '#2f8a42');
     }
     ctx.fillStyle = grad;
     ctx.fillRect(i * sw, 0, sw + 1, s);
   }
 
-  for (let n = 0; n < 5000; n++) {
-    ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.035})`;
+  for (let n = 0; n < 4000; n++) {
+    ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.03})`;
     ctx.fillRect(Math.random() * s, Math.random() * s, 1, 1);
   }
-  for (let n = 0; n < 3500; n++) {
-    ctx.fillStyle = `rgba(0,0,0,${Math.random() * 0.04})`;
+  for (let n = 0; n < 2800; n++) {
+    ctx.fillStyle = `rgba(0,0,0,${Math.random() * 0.035})`;
     ctx.fillRect(Math.random() * s, Math.random() * s, 1, 1);
   }
 
   return canvas.toDataURL('image/png');
+}
+
+export function resetGrassTextureCache(): void {
+  grassCache = null;
 }
 
 export async function getGrassTexture(): Promise<HTMLImageElement> {
@@ -53,8 +57,8 @@ export async function getGrassTexture(): Promise<HTMLImageElement> {
 }
 
 export const FUTSAL_COLORS = {
-  border: '#1a4d7a',
-  court: '#5eb8e8',
+  border: '#1e5a8f',
+  court: '#6ec8f5',
   line: '#ffffff',
 } as const;
 

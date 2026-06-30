@@ -405,12 +405,10 @@ export function computeFieldRect(
   if (fit === 'fill-width') {
     const width = Math.max(1, availW - padding * 2);
     const height = width / aspect;
-    return {
-      x: left + (availW - width) / 2,
-      y: top + (availH - height) / 2,
-      width,
-      height,
-    };
+    const xPos = left + (availW - width) / 2;
+    let yPos = top + (availH - height) / 2;
+    if (yPos < top) yPos = top;
+    return { x: xPos, y: yPos, width, height };
   }
 
   const maxW = Math.max(1, availW - padding * 2);

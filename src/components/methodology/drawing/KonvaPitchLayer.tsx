@@ -12,6 +12,27 @@ type Props = {
 
 const { line: LINE, lineShadow: LINE_SHADOW } = FOOTBALL_COLORS;
 
+const GRASS_PATTERN_SCALE = 1.35;
+
+/** Arco de penalty FIFA (9,15 m desde el punto, parte exterior del área 16,5 m). */
+function footballPenaltyArcPts(
+  spotX: number,
+  spotY: number,
+  radius: number,
+  facing: 'left' | 'right',
+  segments = 36
+): number[] {
+  const halfAngle = Math.acos(5.5 / 9.15);
+  const center = facing === 'left' ? 0 : Math.PI;
+  const pts: number[] = [];
+  for (let i = 0; i <= segments; i++) {
+    const t = i / segments;
+    const a = center - halfAngle + t * 2 * halfAngle;
+    pts.push(spotX + radius * Math.cos(a), spotY + radius * Math.sin(a));
+  }
+  return pts;
+}
+
 /** Césped / pista y líneas reglamentarias en Konva. */
 export function KonvaPitchLayer({ rect, template }: Props) {
   const { x, y, width: w, height: h } = rect;
@@ -47,7 +68,7 @@ export function KonvaPitchLayer({ rect, template }: Props) {
           height={h}
           fillPatternImage={grassImg}
           fillPatternRepeat="repeat"
-          fillPatternScale={{ x: 0.55, y: 0.55 }}
+          fillPatternScale={{ x: GRASS_PATTERN_SCALE, y: GRASS_PATTERN_SCALE }}
         />
       ) : (
         <GrassFallback x={x} y={y} w={w} h={h} />
@@ -59,7 +80,7 @@ export function KonvaPitchLayer({ rect, template }: Props) {
         height={h}
         fillLinearGradientStartPoint={{ x: 0, y: 0 }}
         fillLinearGradientEndPoint={{ x: w, y: h }}
-        fillLinearGradientColorStops={[0, 'rgba(0,0,0,0)', 0.5, 'rgba(0,0,0,0.02)', 1, 'rgba(0,0,0,0.12)']}
+        fillLinearGradientColorStops={[0, 'rgba(0,0,0,0)', 0.5, 'rgba(0,0,0,0.02)', 1, 'rgba(0,0,0,0.1)']}
         listening={false}
       />
 
@@ -69,26 +90,18 @@ export function KonvaPitchLayer({ rect, template }: Props) {
       {template === 'football-third' && <ThirdMarkings x={x} y={y} w={w} h={h} lw={lw} />}
 
       {isFootball ? (
-        <Rect
-          x={x}
-          y={y}
-          width={w}
-          height={h}
-          stroke="rgba(0,0,0,0.25)"
-          strokeWidth={1}
-          listening={false}
-        />
+        <Rect x={x} y={y} width={w} height={h} stroke="rgba(0,0,0,0.2)" strokeWidth={1} listening={false} />
       ) : null}
     </Group>
   );
 }
 
 function GrassFallback({ x, y, w, h }: { x: number; y: number; w: number; h: number }) {
-  const count = 20;
+  const count = 8;
   const sw = w / count;
   return (
     <Group>
-      <Rect x={x} y={y} width={w} height={h} fill="#3daa52" />
+      <Rect x={x} y={y} width={w} height={h} fill="#42b85a" />
       {Array.from({ length: count }).map((_, i) => (
         <Rect
           key={i}
@@ -96,8 +109,8 @@ function GrassFallback({ x, y, w, h }: { x: number; y: number; w: number; h: num
           y={y}
           width={sw}
           height={h}
-          fill={i % 2 === 0 ? '#45b85a' : '#2f8440'}
-          opacity={0.85}
+          fill={i % 2 === 0 ? '#4cc463' : '#2f8a42'}
+          opacity={0.88}
         />
       ))}
     </Group>
@@ -105,7 +118,7 @@ function GrassFallback({ x, y, w, h }: { x: number; y: number; w: number; h: num
 }
 
 function FutsalPitch({ x, y, w, h, lw }: { x: number; y: number; w: number; h: number; lw: number }) {
-  const band = Math.max(6, w * 0.035);
+  const band = Math.max(10, Math.min(w, h) * 0.04);
   const px = x + band;
   const py = y + band;
   const pw = w - band * 2;
@@ -122,7 +135,6 @@ function FutsalPitch({ x, y, w, h, lw }: { x: number; y: number; w: number; h: n
 
 type M = { x: number; y: number; w: number; h: number; lw: number };
 
-/** F11 — proporciones FIFA (105 × 68 m), líneas a borde del rectángulo */
 function F11Markings({ x, y, w, h, lw }: M) {
   const cx = x + w / 2;
   const cy = y + h / 2;
@@ -135,7 +147,10 @@ function F11Markings({ x, y, w, h, lw }: M) {
   const arcR = w * (9.15 / 105);
   const cornerR = h * (1 / 68);
   const netW = h * (7.32 / 68);
-  const netD = w * (0.018);
+  const netD = w * (0.016);
+
+  const leftSpotX = x + spot;
+  const rightSpotX = x + w - spot;
 
   return (
     <Group>
@@ -144,37 +159,26 @@ function F11Markings({ x, y, w, h, lw }: M) {
       <Circle x={cx} y={cy} radius={r} stroke={LINE} strokeWidth={lw} fill="transparent" />
       <Circle x={cx} y={cy} radius={lw * 0.9} fill={LINE} />
 
-      {/* Portería izquierda */}
       <Rect x={x - netD} y={cy - netW / 2} width={netD} height={netW} stroke={LINE} strokeWidth={lw} />
-      {/* Área izq */}
       <Rect x={x} y={cy - penW / 2} width={penD} height={penW} stroke={LINE} strokeWidth={lw} />
       <Rect x={x} y={cy - goalW / 2} width={goalD} height={goalW} stroke={LINE} strokeWidth={lw} />
-      <Circle x={x + spot} y={cy} radius={lw * 0.85} fill={LINE} />
-      <Arc
-        x={x + spot}
-        y={cy}
-        innerRadius={arcR}
-        outerRadius={arcR}
-        angle={120}
-        rotation={-60}
+      <Circle x={leftSpotX} y={cy} radius={lw * 0.85} fill={LINE} />
+      <Line
+        points={footballPenaltyArcPts(leftSpotX, cy, arcR, 'left')}
         stroke={LINE}
         strokeWidth={lw}
+        lineCap="round"
       />
 
-      {/* Portería derecha */}
       <Rect x={x + w} y={cy - netW / 2} width={netD} height={netW} stroke={LINE} strokeWidth={lw} />
       <Rect x={x + w - penD} y={cy - penW / 2} width={penD} height={penW} stroke={LINE} strokeWidth={lw} />
       <Rect x={x + w - goalD} y={cy - goalW / 2} width={goalD} height={goalW} stroke={LINE} strokeWidth={lw} />
-      <Circle x={x + w - spot} y={cy} radius={lw * 0.85} fill={LINE} />
-      <Arc
-        x={x + w - spot}
-        y={cy}
-        innerRadius={arcR}
-        outerRadius={arcR}
-        angle={120}
-        rotation={-120}
+      <Circle x={rightSpotX} y={cy} radius={lw * 0.85} fill={LINE} />
+      <Line
+        points={footballPenaltyArcPts(rightSpotX, cy, arcR, 'right')}
         stroke={LINE}
         strokeWidth={lw}
+        lineCap="round"
       />
 
       <CornerArc cx={x} cy={y} r={cornerR} rot={0} lw={lw} />
@@ -185,66 +189,51 @@ function F11Markings({ x, y, w, h, lw }: M) {
   );
 }
 
-/** Fútbol sala — 40 × 20 m */
+/** Fútbol sala 40 × 20 m — áreas en D con cuartos de círculo de 6 m */
 function FutsalMarkings({ x, y, w, h, lw }: M) {
   const cx = x + w / 2;
   const cy = y + h / 2;
-  const penLine = w * (6 / 40);
-  const penArcR = w * (6 / 40);
+  const R = w * (6 / 40);
+  const gw = h * (3 / 20);
   const spot6 = w * (6 / 40);
   const spot10 = w * (10 / 40);
-  const r = h * (3 / 20);
+  const rCenter = h * (3 / 20);
   const cornerR = h * (0.25 / 20);
-  const subTick = h * (0.08 / 20);
+  const subTick = h * (0.06 / 20);
+  const fl = FUTSAL_COLORS.line;
 
   return (
     <Group>
-      <PitchLine points={[x, y, x + w, y, x + w, y + h, x, y + h, x, y]} lw={lw} color={FUTSAL_COLORS.line} />
-      <Line points={[cx, y, cx, y + h]} stroke={FUTSAL_COLORS.line} strokeWidth={lw} />
-      <Circle x={cx} y={cy} radius={r} stroke={FUTSAL_COLORS.line} strokeWidth={lw} fill="transparent" />
-      <Circle x={cx} y={cy} radius={lw * 0.85} fill={FUTSAL_COLORS.line} />
+      <PitchLine points={[x, y, x + w, y, x + w, y + h, x, y + h, x, y]} lw={lw} color={fl} />
+      <Line points={[cx, y, cx, y + h]} stroke={fl} strokeWidth={lw} />
+      <Circle x={cx} y={cy} radius={rCenter} stroke={fl} strokeWidth={lw} fill="transparent" />
+      <Circle x={cx} y={cy} radius={lw * 0.85} fill={fl} />
 
-      {/* Lado izquierdo */}
-      <Line points={[x + penLine, y + h * 0.22, x + penLine, y + h * 0.78]} stroke={FUTSAL_COLORS.line} strokeWidth={lw} />
-      <Arc
-        x={x}
-        y={cy}
-        innerRadius={penArcR}
-        outerRadius={penArcR}
-        angle={180}
-        rotation={-90}
-        stroke={FUTSAL_COLORS.line}
-        strokeWidth={lw}
-      />
-      <Circle x={x + spot6} y={cy} radius={lw * 0.85} fill={FUTSAL_COLORS.line} />
-      <Circle x={x + spot10} y={cy} radius={lw * 0.85} fill={FUTSAL_COLORS.line} />
+      {/* Área izquierda — D reglamentaria */}
+      <Arc x={x} y={cy - gw / 2} innerRadius={R} outerRadius={R} angle={90} rotation={-90} stroke={fl} strokeWidth={lw} />
+      <Arc x={x} y={cy + gw / 2} innerRadius={R} outerRadius={R} angle={90} rotation={180} stroke={fl} strokeWidth={lw} />
+      <Line points={[x + R, cy - gw / 2, x + R, cy + gw / 2]} stroke={fl} strokeWidth={lw} />
+      <Circle x={x + spot6} y={cy} radius={lw * 0.85} fill={fl} />
+      <Circle x={x + spot10} y={cy} radius={lw * 0.85} fill={fl} />
 
-      {/* Lado derecho */}
-      <Line points={[x + w - penLine, y + h * 0.22, x + w - penLine, y + h * 0.78]} stroke={FUTSAL_COLORS.line} strokeWidth={lw} />
-      <Arc
-        x={x + w}
-        y={cy}
-        innerRadius={penArcR}
-        outerRadius={penArcR}
-        angle={180}
-        rotation={90}
-        stroke={FUTSAL_COLORS.line}
-        strokeWidth={lw}
-      />
-      <Circle x={x + w - spot6} y={cy} radius={lw * 0.85} fill={FUTSAL_COLORS.line} />
-      <Circle x={x + w - spot10} y={cy} radius={lw * 0.85} fill={FUTSAL_COLORS.line} />
+      {/* Área derecha */}
+      <Arc x={x + w} y={cy - gw / 2} innerRadius={R} outerRadius={R} angle={90} rotation={0} stroke={fl} strokeWidth={lw} />
+      <Arc x={x + w} y={cy + gw / 2} innerRadius={R} outerRadius={R} angle={90} rotation={-90} stroke={fl} strokeWidth={lw} />
+      <Line points={[x + w - R, cy - gw / 2, x + w - R, cy + gw / 2]} stroke={fl} strokeWidth={lw} />
+      <Circle x={x + w - spot6} y={cy} radius={lw * 0.85} fill={fl} />
+      <Circle x={x + w - spot10} y={cy} radius={lw * 0.85} fill={fl} />
 
-      <CornerArc cx={x} cy={y} r={cornerR} rot={0} lw={lw} color={FUTSAL_COLORS.line} />
-      <CornerArc cx={x + w} cy={y} r={cornerR} rot={90} lw={lw} color={FUTSAL_COLORS.line} />
-      <CornerArc cx={x} cy={y + h} r={cornerR} rot={270} lw={lw} color={FUTSAL_COLORS.line} />
-      <CornerArc cx={x + w} cy={y + h} r={cornerR} rot={180} lw={lw} color={FUTSAL_COLORS.line} />
+      <CornerArc cx={x} cy={y} r={cornerR} rot={0} lw={lw} color={fl} />
+      <CornerArc cx={x + w} cy={y} r={cornerR} rot={90} lw={lw} color={fl} />
+      <CornerArc cx={x} cy={y + h} r={cornerR} rot={270} lw={lw} color={fl} />
+      <CornerArc cx={x + w} cy={y + h} r={cornerR} rot={180} lw={lw} color={fl} />
 
-      {/* Zonas de sustitución (línea inferior) */}
+      {/* Sustitución — marcas hacia dentro en banda inferior */}
       {[0.2, 0.35, 0.65, 0.8].map((t) => (
         <Line
           key={t}
-          points={[x + w * t, y + h, x + w * t, y + h + subTick]}
-          stroke={FUTSAL_COLORS.line}
+          points={[x + w * t, y + h, x + w * t, y + h - subTick]}
+          stroke={fl}
           strokeWidth={lw * 0.9}
         />
       ))}
@@ -252,20 +241,21 @@ function FutsalMarkings({ x, y, w, h, lw }: M) {
   );
 }
 
+/** F7 — 60 × 40 m */
 function F7Markings({ x, y, w, h, lw }: M) {
   const cx = x + w / 2;
   const cy = y + h / 2;
-  const penD = w * 0.18;
-  const penW = h * 0.58;
-  const goalD = w * 0.07;
-  const goalW = h * 0.3;
-  const r = h * 0.2;
+  const penD = w * (12 / 60);
+  const penW = h * (24 / 40);
+  const goalD = w * (4 / 60);
+  const goalW = h * (10 / 40);
+  const r = h * (6 / 40);
 
   return (
     <Group>
       <PitchLine points={[x, y, x + w, y, x + w, y + h, x, y + h, x, y]} lw={lw} />
       <PitchLine points={[cx, y, cx, y + h]} lw={lw} />
-      <Circle x={cx} y={cy} radius={r} stroke={LINE} strokeWidth={lw} />
+      <Circle x={cx} y={cy} radius={r} stroke={LINE} strokeWidth={lw} fill="transparent" />
       <Circle x={cx} y={cy} radius={lw * 0.9} fill={LINE} />
       <Rect x={x} y={cy - penW / 2} width={penD} height={penW} stroke={LINE} strokeWidth={lw} />
       <Rect x={x} y={cy - goalW / 2} width={goalD} height={goalW} stroke={LINE} strokeWidth={lw} />
@@ -326,7 +316,7 @@ function PitchLine({
 }) {
   return (
     <Group>
-      <Line points={points} stroke={LINE_SHADOW} strokeWidth={lw + 0.6} lineJoin="round" opacity={0.5} />
+      <Line points={points} stroke={LINE_SHADOW} strokeWidth={lw + 0.5} lineJoin="round" opacity={0.45} />
       <Line points={points} stroke={color} strokeWidth={lw} lineJoin="round" />
     </Group>
   );
