@@ -56,8 +56,8 @@ export const CATEGORY_EVENT_STYLES: Record<
     dot: 'bg-fuchsia-400',
   },
   prebenjamin: {
-    block: 'border-primary/70 bg-primary/20 text-primary-foreground',
-    dot: 'bg-primary',
+    block: 'border-white/70 bg-white/20 text-white',
+    dot: 'bg-white',
   },
   benjamin: {
     block: 'border-emerald-400/70 bg-emerald-400/25 text-emerald-100',

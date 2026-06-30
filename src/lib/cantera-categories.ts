@@ -40,9 +40,9 @@ export const CANTERA_CATEGORIES: CanteraCategory[] = [
     international: 'SUB 7 · SUB 8',
     description:
       'Inicio del fútbol. Los niños y niñas descubren qué es el fútbol y cómo se juega, con pocos conocimientos técnicos formales.',
-    borderClass: 'border-cyan-400/55',
-    ringClass: 'shadow-[0_0_0_1px_hsl(183_100%_50%_/_0.3)]',
-    badgeClass: 'border-primary/40 bg-primary/10 text-primary',
+    borderClass: 'border-white/55',
+    ringClass: 'shadow-[0_0_0_1px_hsl(0_0%_100%_/_0.25)]',
+    badgeClass: 'border-white/40 bg-white/10 text-white',
     order: 1,
   },
   {
