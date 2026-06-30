@@ -4,6 +4,7 @@ import {
   CalendarClock,
   GraduationCap,
   Landmark,
+  Layers,
   LayoutDashboard,
   MapPin,
   Network,
@@ -62,7 +63,7 @@ export const portalNavGroups: PortalNavGroup[] = [
         href: '/portal/cantera',
         exact: true,
         children: [
-          { title: 'Equipos', href: '/portal/cantera/equipos' },
+          { title: 'Equipos', href: '/portal/cantera/equipos', icon: Layers },
           { title: 'Horarios', href: '/portal/cantera/horarios', icon: CalendarClock },
           { title: 'Jugadores', href: '/portal/cantera/jugadores', icon: UsersRound },
         ],
