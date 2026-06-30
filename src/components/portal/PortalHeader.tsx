@@ -1,6 +1,7 @@
 'use client';
 
 import { ThemeModeToggle } from '@/components/portal/ThemeModeToggle';
+import { PortalConfigButton } from '@/components/portal/PortalConfigButton';
 import { PortalUserMenu } from '@/components/portal/PortalUserMenu';
 import { DemoModeBell } from '@/components/portal/DemoModeBell';
 import { PortalSidebarMobileTrigger } from '@/components/portal/portal-sidebar';
@@ -19,6 +20,7 @@ export function PortalHeader({ clubName, role, demoMode, demoCanPersist }: Props
         <PortalSidebarMobileTrigger />
       </div>
       <div className="flex items-center gap-1">
+        <PortalConfigButton />
         {demoMode && <DemoModeBell canPersist={demoCanPersist ?? false} clubName={clubName} />}
         <ThemeModeToggle />
         <PortalUserMenu clubName={clubName} role={role} demoMode={demoMode} />

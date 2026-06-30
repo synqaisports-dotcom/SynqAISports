@@ -8,7 +8,6 @@ import {
   LayoutDashboard,
   MapPin,
   Network,
-  Settings,
   UserCog,
   Users,
   UsersRound,
@@ -34,7 +33,6 @@ export const portalNavGroups: PortalNavGroup[] = [
     label: 'General',
     items: [
       { title: 'Dashboard', href: '/portal', icon: LayoutDashboard, exact: true },
-      { title: 'Configuración', href: '/portal/config', icon: Settings },
     ],
   },
   {
