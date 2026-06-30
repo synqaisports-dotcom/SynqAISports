@@ -88,7 +88,7 @@ export function TeamViewSections({ team, category, players }: Props) {
               {players.map((player) => (
                 <li key={player.id}>
                   <Link
-                    href={`/portal/cantera/jugadores/${player.id}`}
+                    href={`/portal/cantera/jugadores?player=${player.id}`}
                     className="flex items-center gap-3 rounded-xl border border-primary/20 bg-muted/5 p-3 transition-colors hover:border-primary/40 hover:bg-primary/5"
                   >
                     <div className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-primary/25 bg-muted/20">

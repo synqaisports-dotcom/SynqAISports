@@ -87,6 +87,58 @@ export async function updatePlayerPhoto(
   return { ok: true };
 }
 
+export async function updatePlayer(
+  playerId: string,
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'unauthorized' };
+
+  const firstName = String(formData.get('firstName') ?? '').trim();
+  const lastName = String(formData.get('lastName') ?? '').trim();
+  const displayName = [firstName, lastName].filter(Boolean).join(' ').trim();
+  const jerseyRaw = String(formData.get('jerseyNumber') ?? '').trim();
+  const jerseyNumber = jerseyRaw ? parseInt(jerseyRaw, 10) : null;
+  const position = String(formData.get('position') ?? '').trim() || null;
+  const birthRaw = String(formData.get('birthYear') ?? '').trim();
+  const birthYear = birthRaw ? parseInt(birthRaw, 10) : null;
+  const photoUrl = String(formData.get('photoUrl') ?? '').trim();
+
+  if (!displayName) return { ok: false, message: 'validation' };
+
+  if (await isDemoActive()) {
+    revalidatePath('/portal/cantera/jugadores');
+    revalidatePath(`/portal/cantera/jugadores/${playerId}`);
+    return { ok: true };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('synq_players')
+    .update({
+      first_name: firstName || null,
+      last_name: lastName || null,
+      display_name: displayName,
+      jersey_number: jerseyNumber != null && !Number.isNaN(jerseyNumber) ? jerseyNumber : null,
+      position,
+      birth_year: birthYear != null && !Number.isNaN(birthYear) ? birthYear : null,
+      photo_url: photoUrl || null,
+    })
+    .eq('id', playerId)
+    .eq('club_id', clubId);
+
+  if (error) {
+    console.error('updatePlayer', error);
+    return { ok: false, message: 'error' };
+  }
+
+  revalidatePath('/portal/cantera/jugadores');
+  revalidatePath(`/portal/cantera/jugadores/${playerId}`);
+  revalidatePath(`/portal/cantera/jugadores/${playerId}/editar`);
+  return { ok: true };
+}
+
 export async function getUsedTeamLetters(
   clubId: string,
   categorySlug: string,
