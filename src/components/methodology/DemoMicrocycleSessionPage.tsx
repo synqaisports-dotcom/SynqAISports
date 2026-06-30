@@ -6,7 +6,7 @@ import {
   type MicrocycleSessionPayload,
 } from '@/components/methodology/MicrocycleSessionWorkspace';
 import type { ExerciseLibraryItem } from '@/components/methodology/ExerciseLibraryPanel';
-import { loadDemoMicrocycle } from '@/lib/demo-microcycles-store';
+import { loadOrHydrateDemoMicrocycle } from '@/lib/demo-microcycle-hydrate';
 import { resolveMicrocycleSessions } from '@/lib/microcycle-sessions';
 import Link from 'next/link';
 
@@ -17,10 +17,10 @@ type Props = {
 };
 
 export function DemoMicrocycleSessionPage({ microcycleId, sessionIndex, exercises }: Props) {
-  const [micro, setMicro] = useState(() => loadDemoMicrocycle(microcycleId));
+  const [micro, setMicro] = useState(() => loadOrHydrateDemoMicrocycle(microcycleId));
 
   useEffect(() => {
-    setMicro(loadDemoMicrocycle(microcycleId));
+    setMicro(loadOrHydrateDemoMicrocycle(microcycleId));
   }, [microcycleId]);
 
   if (!micro) {

@@ -52,6 +52,7 @@ import {
   type RhythmVariant,
 } from '@/lib/periodization-document';
 import { demoTeamMicrocycleId, demoTemplateMicrocycleId, isDemoClient } from '@/lib/periodization-client';
+import { syncDemoMicrocyclesFromDocument } from '@/lib/demo-microcycle-hydrate';
 import {
   forkDemoMicrocycleFromTemplate,
   saveDemoMicrocycle,
@@ -123,6 +124,9 @@ export function CategoryCyclesHub({
       setPanelContext(null);
       setError(null);
       setLoaded(true);
+      if (isDemoClient()) {
+        syncDemoMicrocyclesFromDocument(next);
+      }
     },
     []
   );
@@ -130,6 +134,11 @@ export function CategoryCyclesHub({
   useEffect(() => {
     void hydrateCategory(categorySlug);
   }, [categorySlug, hydrateCategory]);
+
+  useEffect(() => {
+    if (!loaded || !isDemoClient()) return;
+    syncDemoMicrocyclesFromDocument(document);
+  }, [document, loaded]);
 
   const updateDocument = (updater: (current: CategoryPeriodizationDocument) => CategoryPeriodizationDocument) => {
     setDocument((current) => {
@@ -305,6 +314,23 @@ export function CategoryCyclesHub({
     if (!microcycleId) {
       setPanelError('Elige una plantilla de la lista.');
       return;
+    }
+    if (isDemoClient() && microcycleId.startsWith('demo-micro-')) {
+      const displayLabel = panelLabel.trim() || mccContext?.micro.label || selectedMcc.label;
+      saveDemoMicrocycle({
+        id: microcycleId,
+        title: `${displayLabel} — ${activeVariant.name}`,
+        week_label: `${selectedMcc.weekStart.slice(5).replace('-', '/')} – ${selectedMcc.weekEnd.slice(5).replace('-', '/')}`,
+        week_start: selectedMcc.weekStart,
+        week_end: selectedMcc.weekEnd,
+        category_slug: categorySlug,
+        plan_variant_id: activeVariant.id,
+        plan_mcc_id: selectedMcc.id,
+        sessions_per_micro: activeVariant.sessionsPerMicro,
+        main_tasks_per_session: activeVariant.mainTasksPerSession,
+        is_template: true,
+        team_id: null,
+      });
     }
     applyMccLink(microcycleId);
   };

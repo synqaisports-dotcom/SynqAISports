@@ -13,7 +13,7 @@ import {
   resolveMainTasksForMicro,
 } from '@/components/methodology/SessionStructurePanel';
 import { Badge } from '@/components/ui/badge';
-import { loadDemoMicrocycle } from '@/lib/demo-microcycles-store';
+import { loadOrHydrateDemoMicrocycle } from '@/lib/demo-microcycle-hydrate';
 import {
   groupSlotsBySession,
   isDemoMicrocycleId,
@@ -57,7 +57,7 @@ export function MicrocycleSessionWorkspace({ microcycle, sessionIndex, exercises
 
   const reloadDemo = useCallback(() => {
     if (!isDemoMicrocycleId(microcycle.id)) return;
-    const loaded = loadDemoMicrocycle(microcycle.id);
+    const loaded = loadOrHydrateDemoMicrocycle(microcycle.id);
     if (loaded) {
       setDemoMicro({
         ...microcycle,

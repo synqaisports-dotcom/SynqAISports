@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { SlotEditor, type SlotEditorPayload } from '@/components/methodology/SlotEditor';
-import { loadDemoMicrocycle } from '@/lib/demo-microcycles-store';
+import { loadOrHydrateDemoMicrocycle } from '@/lib/demo-microcycle-hydrate';
 import type { SlotType } from '@/lib/methodology';
 
 type Props = {
@@ -16,7 +16,7 @@ export function DemoSlotEditorPage({ microcycleId, slotId }: Props) {
   const [title, setTitle] = useState('');
 
   useEffect(() => {
-    const micro = loadDemoMicrocycle(microcycleId);
+    const micro = loadOrHydrateDemoMicrocycle(microcycleId);
     if (!micro) {
       setSlot(null);
       return;

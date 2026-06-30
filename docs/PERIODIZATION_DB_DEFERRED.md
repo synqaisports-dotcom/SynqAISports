@@ -72,6 +72,7 @@ Implementación: `buildMicrocycleSlotSeeds()` en `src/lib/microcycle-sessions.ts
 | Plan periodización | `synq-periodization-{slug}` | `synq_periodization_plans` |
 | Microciclos demo ID | `demo-micro-*` en `synq-demo-microcycles` | Tabla `synq_microcycles` |
 | Slots demo | Dentro del registro demo | `synq_microcycle_slots` |
+| Hidratación demo | Si falta el registro, se reconstruye desde `synq-periodization-{slug}` (`hydrateDemoMicrocycle`) | N/A |
 | Asignar ejercicio | Action + fallback demo store | `updateMicrocycleSlot` / `assignExerciseToSlot` |
 
 Clave localStorage: `synq-demo-microcycles` — ver `src/lib/demo-microcycles-store.ts`.

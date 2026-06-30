@@ -5,7 +5,10 @@ import { useEffect, useState } from 'react';
 import { MethodologySubnav } from '@/components/methodology/MethodologySubnav';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { loadDemoMicrocycle } from '@/lib/demo-microcycles-store';
+import {
+  loadOrHydrateDemoMicrocycle,
+  syncDemoMicrocyclesFromDocument,
+} from '@/lib/demo-microcycle-hydrate';
 import {
   countFilledSlots,
   groupSlotsBySession,
@@ -20,10 +23,10 @@ type Props = {
 };
 
 export function DemoMicrocycleOverview({ microcycleId }: Props) {
-  const [micro, setMicro] = useState(() => loadDemoMicrocycle(microcycleId));
+  const [micro, setMicro] = useState(() => loadOrHydrateDemoMicrocycle(microcycleId));
 
   useEffect(() => {
-    setMicro(loadDemoMicrocycle(microcycleId));
+    setMicro(loadOrHydrateDemoMicrocycle(microcycleId));
   }, [microcycleId]);
 
   if (!micro) {
