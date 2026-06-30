@@ -535,3 +535,27 @@ export function previewPeriodizationDistribution(
 export function macroNamesForCount(count: MacroCount, current: string[] = []): string[] {
   return DEFAULT_MACRO_NAMES[count].map((fallback, index) => current[index]?.trim() || fallback);
 }
+
+export type MccContext = {
+  micro: MicrocycleWeek;
+  meso: MesocycleMonth;
+  macro: MacrocycleBlock;
+};
+
+export function findMccInPlan(plan: PeriodizationPlan, mccId: string): MccContext | null {
+  for (const macro of plan.macrocycles) {
+    for (const meso of macro.mesocycles) {
+      const micro = meso.microcycles.find((item) => item.id === mccId);
+      if (micro) return { micro, meso, macro };
+    }
+  }
+  return null;
+}
+
+export function getMccDisplayLabel(
+  micro: MicrocycleWeek,
+  override?: { label?: string }
+): string {
+  return override?.label?.trim() || micro.label;
+}
+

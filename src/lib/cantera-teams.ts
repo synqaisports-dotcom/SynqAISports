@@ -68,6 +68,16 @@ export const DEMO_CANTERA_TEAMS: TeamRecord[] = [
     player_count: 18,
   },
   {
+    id: 'demo-team-alevin-b',
+    name: 'Alevín B',
+    category: 'Alevín',
+    category_slug: 'alevin',
+    team_letter: 'B',
+    sport: 'football',
+    active: true,
+    player_count: 16,
+  },
+  {
     id: 'demo-team-infantil-a',
     name: 'Infantil A',
     category: 'Infantil',

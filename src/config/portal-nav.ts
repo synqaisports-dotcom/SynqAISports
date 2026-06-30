@@ -78,7 +78,7 @@ export const portalNavGroups: PortalNavGroup[] = [
         href: '/portal/metodologia',
         exact: true,
         children: [
-          { title: 'Planograma', href: '/portal/metodologia/planograma' },
+          { title: 'Ciclos', href: '/portal/metodologia/ciclos' },
           { title: 'Ejercicios', href: '/portal/metodologia/ejercicios' },
           { title: 'Microciclos', href: '/portal/metodologia/microciclos' },
           { title: 'Objetivos', href: '/portal/metodologia/objetivos', icon: Target },

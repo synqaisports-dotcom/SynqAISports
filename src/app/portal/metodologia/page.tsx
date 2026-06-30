@@ -35,11 +35,11 @@ export default async function MetodologiaHomePage() {
 
   const cards = [
     {
-      href: '/portal/metodologia/planograma',
-      label: 'Planograma',
+      href: '/portal/metodologia/ciclos',
+      label: 'Ciclos y planograma',
       count: '—',
       icon: GitBranch,
-      hint: 'Macro → meso → micro → sesiones',
+      hint: 'Variantes, equipos y MCC',
     },
     {
       href: '/portal/metodologia/ejercicios',
