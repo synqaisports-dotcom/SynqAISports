@@ -9,14 +9,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { CANTERA_CATEGORIES, type CanteraCategorySlug } from '@/lib/cantera-categories';
-import { formatTrainingDayLetters } from '@/lib/club-facilities';
 import {
   CATEGORY_PLAN_STYLES,
   buildPeriodizationPlan,
-  countNaturalMonthsBetween,
   defaultPeriodizationConfig,
-  defaultTrainingDaysForSessions,
+  formatMacroDistributionSummary,
   macroNamesForCount,
+  previewPeriodizationDistribution,
   sessionStructureSummary,
   type MacrocycleBlock,
   type MacroCount,
@@ -105,9 +104,7 @@ function PeriodizationGrid({
                         title={`${micro.weekStart} → ${micro.weekEnd}`}
                       >
                         <p className="text-[11px] font-bold tracking-wide">{micro.label}</p>
-                        <p className="mt-0.5 text-[10px] opacity-90">
-                          {micro.sessionsCount} ses.
-                        </p>
+                        <p className="mt-0.5 text-[10px] opacity-90">{micro.sessionsCount} ses.</p>
                         <p className="mt-0.5 text-[9px] text-muted-foreground">
                           {micro.weekStart.slice(5).replace('-', '/')} –{' '}
                           {micro.weekEnd.slice(5).replace('-', '/')}
@@ -202,29 +199,25 @@ export function PeriodizationPlanogram() {
     }
   };
 
-  const mesocyclePreview = useMemo(() => {
-    if (!config.startDate || !config.endDate) return null;
-    const count = countNaturalMonthsBetween(config.startDate, config.endDate);
-    if (count === 0) return 'Revisa las fechas: el fin debe ser posterior al inicio.';
-    return `${count} mesociclo${count === 1 ? '' : 's'} (meses naturales entre inicio y fin)`;
-  }, [config.startDate, config.endDate]);
-
-  const trainingDaysLabel = formatTrainingDayLetters(
-    defaultTrainingDaysForSessions(config.sessionsPerMicro).join(',')
-  );
+  const distributionPreview = useMemo(() => {
+    return previewPeriodizationDistribution(
+      config.startDate,
+      config.endDate,
+      config.macroCount,
+      config.sessionsPerMicro
+    );
+  }, [config.startDate, config.endDate, config.macroCount, config.sessionsPerMicro]);
 
   const activeMacro = plan?.macrocycles[activeMacroIndex] ?? null;
 
   const summary = useMemo(() => {
     if (!plan) return null;
     return {
-      mesocycles: plan.macrocycles.reduce((sum, macro) => sum + macro.mesocycles.length, 0),
-      microcycles: plan.macrocycles.reduce(
-        (sum, macro) => sum + macro.mesocycles.reduce((m, meso) => m + meso.microcycles.length, 0),
-        0
-      ),
-      sessions: plan.macrocycles.reduce((sum, macro) => sum + macro.totalSessions, 0),
-      tasks: plan.macrocycles.reduce((sum, macro) => sum + macro.totalTasks, 0),
+      mesocycles: plan.totalMesocycles,
+      microcycles: plan.totalMicrocycles,
+      sessions: plan.totalSessions,
+      tasks: plan.totalTasks,
+      distribution: formatMacroDistributionSummary(plan),
     };
   }, [plan]);
 
@@ -297,9 +290,15 @@ export function PeriodizationPlanogram() {
                   onChange={(endDate) => updateConfig({ endDate })}
                 />
               </div>
-              {mesocyclePreview ? (
-                <p className="text-[11px] text-muted-foreground sm:col-span-2">{mesocyclePreview}</p>
-              ) : null}
+              {distributionPreview ? (
+                <p className="text-[11px] leading-relaxed text-muted-foreground sm:col-span-2">
+                  {distributionPreview}
+                </p>
+              ) : (
+                <p className="text-[11px] text-destructive sm:col-span-2">
+                  Revisa las fechas: el fin debe ser posterior al inicio.
+                </p>
+              )}
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -314,6 +313,10 @@ export function PeriodizationPlanogram() {
                   { value: '3', label: '3 macrociclos' },
                 ]}
               />
+              <p className="mt-1.5 text-[11px] text-muted-foreground">
+                Los mesociclos y microciclos se reparten de forma proporcional entre macrociclos (mismo
+                nº de MCC por macro, salvo diferencia de 1).
+              </p>
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -325,14 +328,13 @@ export function PeriodizationPlanogram() {
                   updateConfig({ sessionsPerMicro: Number(value) as SessionsPerMicro })
                 }
                 options={[
-                  { value: '2', label: '2 sesiones / semana (M J)' },
-                  { value: '3', label: '3 sesiones / semana (L X V)' },
+                  { value: '2', label: '2 sesiones / microciclo' },
+                  { value: '3', label: '3 sesiones / microciclo' },
                 ]}
               />
               <p className="mt-1.5 text-[11px] text-muted-foreground">
-                Días de entreno: <span className="text-foreground">{trainingDaysLabel}</span>. Las
-                sesiones de cada MCC se calculan con los días reales de esa semana dentro del mes y
-                la temporada.
+                Independiente del día de la semana de cada equipo (L-X, M-J, etc.). Cada MCC suma este
+                número fijo de sesiones.
               </p>
             </div>
             <div>
@@ -428,6 +430,7 @@ export function PeriodizationPlanogram() {
                 {summary.tasks} tareas
               </Badge>
             </div>
+            <p className="text-xs leading-relaxed text-muted-foreground">{summary.distribution}</p>
 
             {plan.macrocycles.length > 1 ? (
               <div className="flex flex-wrap gap-1 rounded-xl border border-primary/20 bg-muted/5 p-1">
@@ -445,7 +448,11 @@ export function PeriodizationPlanogram() {
                           : 'text-muted-foreground hover:bg-primary/5 hover:text-foreground'
                       )}
                     >
-                      {macro.name}
+                      <span className="block">{macro.name}</span>
+                      <span className="block text-[10px] font-normal text-muted-foreground">
+                        {macro.microcycleCount} MCC · {macro.mesocycleCount} mesos ·{' '}
+                        {macro.startDate} → {macro.endDate}
+                      </span>
                     </button>
                   );
                 })}

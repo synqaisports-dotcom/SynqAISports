@@ -67,6 +67,8 @@ export type MacrocycleBlock = {
   name: string;
   startDate: string;
   endDate: string;
+  mesocycleCount: number;
+  microcycleCount: number;
   mesocycles: MesocycleMonth[];
   totalSessions: number;
   totalTasks: number;
@@ -75,6 +77,10 @@ export type MacrocycleBlock = {
 export type PeriodizationPlan = {
   config: PeriodizationConfig;
   macrocycles: MacrocycleBlock[];
+  totalMicrocycles: number;
+  totalMesocycles: number;
+  totalSessions: number;
+  totalTasks: number;
 };
 
 const MONTH_NAMES = [
@@ -232,36 +238,12 @@ function intersectRange(
   return { start, end };
 }
 
-const JS_DAY_TO_WEEKDAY_CODE: Record<number, string> = {
-  0: 'sun',
-  1: 'mon',
-  2: 'tue',
-  3: 'wed',
-  4: 'thu',
-  5: 'fri',
-  6: 'sat',
-};
-
-export function defaultTrainingDaysForSessions(sessions: SessionsPerMicro): string[] {
-  return sessions === 2 ? ['tue', 'thu'] : ['mon', 'wed', 'fri'];
-}
-
-export function countTrainingSessionsInRange(
-  rangeStart: Date,
-  rangeEnd: Date,
-  trainingDays: string[]
-): number {
-  const daySet = new Set(trainingDays);
-  let count = 0;
-  let cursor = new Date(rangeStart);
-
-  while (cursor <= rangeEnd) {
-    const code = JS_DAY_TO_WEEKDAY_CODE[cursor.getDay()];
-    if (code && daySet.has(code)) count += 1;
-    cursor = addDays(cursor, 1);
-  }
-
-  return count;
+/** Reparte un total en partes lo más iguales posible (diferencia máx. 1). */
+export function splitEvenly(total: number, parts: number): number[] {
+  if (parts <= 0) return [];
+  const base = Math.floor(total / parts);
+  const remainder = total % parts;
+  return Array.from({ length: parts }, (_, index) => base + (index < remainder ? 1 : 0));
 }
 
 function monthLabelFromKey(key: string): string {
@@ -291,30 +273,140 @@ function weeksInRange(rangeStart: Date, rangeEnd: Date): { weekStart: Date; week
   return weeks;
 }
 
-function splitMacroRanges(
-  start: Date,
-  end: Date,
-  count: MacroCount
-): { start: Date; end: Date }[] {
-  if (count === 1) return [{ start, end }];
+function chunkArray<T>(items: T[], sizes: number[]): T[][] {
+  const chunks: T[][] = [];
+  let offset = 0;
+  for (const size of sizes) {
+    chunks.push(items.slice(offset, offset + size));
+    offset += size;
+  }
+  return chunks;
+}
 
-  const ranges: { start: Date; end: Date }[] = [];
-  const totalDays = Math.max(
-    1,
-    Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
+function weekOverlapsMonth(
+  week: { weekStart: Date; weekEnd: Date },
+  monthKeyValue: string,
+  seasonStart: Date,
+  seasonEnd: Date
+): boolean {
+  const [year, month] = monthKeyValue.split('-').map(Number);
+  const calendarBounds = monthBounds(new Date(year, month - 1, 1, 12, 0, 0, 0));
+  const monthInSeason = intersectRange(
+    calendarBounds.start,
+    calendarBounds.end,
+    seasonStart,
+    seasonEnd
   );
+  if (!monthInSeason) return false;
+  return week.weekStart <= monthInSeason.end && week.weekEnd >= monthInSeason.start;
+}
 
-  for (let index = 0; index < count; index++) {
-    const rangeStart =
-      index === 0
-        ? start
-        : addDays(start, Math.floor((totalDays * index) / count));
-    const rangeEnd =
-      index === count - 1 ? end : addDays(start, Math.floor((totalDays * (index + 1)) / count) - 1);
-    ranges.push({ start: rangeStart, end: rangeEnd });
+function countOverlapDays(
+  week: { weekStart: Date; weekEnd: Date },
+  monthKeyValue: string,
+  seasonStart: Date,
+  seasonEnd: Date
+): number {
+  const [year, month] = monthKeyValue.split('-').map(Number);
+  const calendarBounds = monthBounds(new Date(year, month - 1, 1, 12, 0, 0, 0));
+  const monthInSeason = intersectRange(
+    calendarBounds.start,
+    calendarBounds.end,
+    seasonStart,
+    seasonEnd
+  );
+  if (!monthInSeason) return 0;
+
+  const start = clampDate(week.weekStart, monthInSeason.start, monthInSeason.end);
+  const end = clampDate(week.weekEnd, monthInSeason.start, monthInSeason.end);
+  if (start > end) return 0;
+
+  return Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+}
+
+function assignWeekToMacroMonth(
+  week: { weekStart: Date; weekEnd: Date },
+  macroMonthKeys: string[],
+  seasonStart: Date,
+  seasonEnd: Date
+): string {
+  const weekMonth = monthKey(week.weekStart);
+  if (macroMonthKeys.includes(weekMonth)) return weekMonth;
+
+  const [firstYear, firstMonth] = macroMonthKeys[0].split('-').map(Number);
+  const [lastYear, lastMonth] = macroMonthKeys[macroMonthKeys.length - 1].split('-').map(Number);
+  const firstDay = new Date(firstYear, firstMonth - 1, 1, 12, 0, 0, 0);
+  const lastDay = new Date(lastYear, lastMonth, 0, 12, 0, 0, 0);
+
+  if (week.weekStart < firstDay) return macroMonthKeys[0];
+  if (week.weekStart > lastDay) return macroMonthKeys[macroMonthKeys.length - 1];
+
+  let bestKey = macroMonthKeys[0];
+  let bestOverlap = 0;
+  for (const key of macroMonthKeys) {
+    const overlap = countOverlapDays(week, key, seasonStart, seasonEnd);
+    if (overlap > bestOverlap) {
+      bestOverlap = overlap;
+      bestKey = key;
+    }
+  }
+  return bestKey;
+}
+
+function buildMesocyclesForMacro(
+  macroWeeks: { weekStart: Date; weekEnd: Date }[],
+  macroMonthKeys: string[],
+  macroIndex: number,
+  seasonStart: Date,
+  seasonEnd: Date,
+  sessionsPerMicro: SessionsPerMicro,
+  tasksPerSession: number,
+  mccCounterRef: { value: number }
+): MesocycleMonth[] {
+  const weeksByMonth = new Map<string, { weekStart: Date; weekEnd: Date }[]>();
+  for (const key of macroMonthKeys) weeksByMonth.set(key, []);
+
+  for (const week of macroWeeks) {
+    const targetMonth = assignWeekToMacroMonth(week, macroMonthKeys, seasonStart, seasonEnd);
+    weeksByMonth.get(targetMonth)?.push(week);
   }
 
-  return ranges;
+  let mesoCounter = 0;
+  return macroMonthKeys
+    .map((key) => {
+      const monthWeeks = weeksByMonth.get(key) ?? [];
+      if (monthWeeks.length === 0) return null;
+
+      const microcycles: MicrocycleWeek[] = monthWeeks.map((week) => {
+        mccCounterRef.value += 1;
+        return {
+          id: `mcc-${macroIndex}-${key}-${mccCounterRef.value}`,
+          mccIndex: mccCounterRef.value,
+          label: `MCC${mccCounterRef.value}`,
+          weekStart: formatISO(week.weekStart),
+          weekEnd: formatISO(week.weekEnd),
+          sessionsCount: sessionsPerMicro,
+          tasksCount: sessionsPerMicro * tasksPerSession,
+        };
+      });
+
+      mesoCounter += 1;
+      const monthName = monthLabelFromKey(key);
+      const totalSessions = microcycles.reduce((sum, micro) => sum + micro.sessionsCount, 0);
+      const totalTasks = microcycles.reduce((sum, micro) => sum + micro.tasksCount, 0);
+
+      return {
+        id: `meso-${macroIndex}-${key}`,
+        monthKey: key,
+        monthName,
+        mesoIndex: mesoCounter,
+        label: `Mesociclo ${mesoCounter} — ${monthName}`,
+        microcycles,
+        totalSessions,
+        totalTasks,
+      };
+    })
+    .filter((meso): meso is MesocycleMonth => meso !== null);
 }
 
 function defaultSeasonTitle(categoryName: string, startDate: string, endDate: string): string {
@@ -349,75 +441,34 @@ export function buildPeriodizationPlan(config: PeriodizationConfig): Periodizati
     throw new Error('La fecha final debe ser posterior a la de inicio.');
   }
 
-  const macroRanges = splitMacroRanges(seasonStart, seasonEnd, config.macroCount);
   const seasonMonths = naturalMonthsInRange(seasonStart, seasonEnd);
-  const trainingDays = defaultTrainingDaysForSessions(config.sessionsPerMicro);
+  const seasonWeeks = weeksInRange(seasonStart, seasonEnd);
   const tasksPerSession = tasksPerSessionFromMainCount(config.mainTasksPerSession);
+  const sessionsPerMicro = config.sessionsPerMicro;
 
-  const macrocycles: MacrocycleBlock[] = macroRanges.map((range, macroIndex) => {
-    let mccCounter = 0;
-    let mesoCounter = 0;
+  const monthChunks = chunkArray(seasonMonths, splitEvenly(seasonMonths.length, config.macroCount));
+  const weekChunks = chunkArray(seasonWeeks, splitEvenly(seasonWeeks.length, config.macroCount));
 
-    const mesocycles: MesocycleMonth[] = seasonMonths
-      .map((key) => {
-        const [year, month] = key.split('-').map(Number);
-        const calendarBounds = monthBounds(new Date(year, month - 1, 1, 12, 0, 0, 0));
-        const monthInSeason = intersectRange(
-          calendarBounds.start,
-          calendarBounds.end,
-          seasonStart,
-          seasonEnd
-        );
-        if (!monthInSeason) return null;
+  const mccCounterRef = { value: 0 };
 
-        const monthInMacro = intersectRange(
-          monthInSeason.start,
-          monthInSeason.end,
-          range.start,
-          range.end
-        );
-        if (!monthInMacro) return null;
+  const macrocycles: MacrocycleBlock[] = weekChunks.map((macroWeeks, macroIndex) => {
+    const macroMonthKeys = monthChunks[macroIndex] ?? [];
+    const mesocycles = buildMesocyclesForMacro(
+      macroWeeks,
+      macroMonthKeys,
+      macroIndex,
+      seasonStart,
+      seasonEnd,
+      sessionsPerMicro,
+      tasksPerSession,
+      mccCounterRef
+    );
 
-        const monthWeeks = weeksInRange(monthInMacro.start, monthInMacro.end);
-        const microcycles: MicrocycleWeek[] = monthWeeks.map((week) => {
-          mccCounter += 1;
-          const sessionsCount = countTrainingSessionsInRange(
-            week.weekStart,
-            week.weekEnd,
-            trainingDays
-          );
-
-          return {
-            id: `mcc-${macroIndex}-${key}-${mccCounter}`,
-            mccIndex: mccCounter,
-            label: `MCC${mccCounter}`,
-            weekStart: formatISO(week.weekStart),
-            weekEnd: formatISO(week.weekEnd),
-            sessionsCount,
-            tasksCount: sessionsCount * tasksPerSession,
-          };
-        });
-
-        const totalSessions = microcycles.reduce((sum, micro) => sum + micro.sessionsCount, 0);
-        const totalTasks = microcycles.reduce((sum, micro) => sum + micro.tasksCount, 0);
-        const monthName = monthLabelFromKey(key);
-        mesoCounter += 1;
-
-        return {
-          id: `meso-${macroIndex}-${key}`,
-          monthKey: key,
-          monthName,
-          mesoIndex: mesoCounter,
-          label: `Mesociclo ${mesoCounter} — ${monthName}`,
-          microcycles,
-          totalSessions,
-          totalTasks,
-        };
-      })
-      .filter((meso): meso is MesocycleMonth => meso !== null);
-
-    const totalSessions = mesocycles.reduce((sum, meso) => sum + meso.totalSessions, 0);
-    const totalTasks = mesocycles.reduce((sum, meso) => sum + meso.totalTasks, 0);
+    const macroStart = macroWeeks[0]?.weekStart ?? seasonStart;
+    const macroEnd = macroWeeks[macroWeeks.length - 1]?.weekEnd ?? seasonEnd;
+    const microcycleCount = macroWeeks.length;
+    const totalSessions = microcycleCount * sessionsPerMicro;
+    const totalTasks = totalSessions * tasksPerSession;
     const macroName =
       config.macroNames[macroIndex]?.trim() || DEFAULT_MACRO_NAMES[config.macroCount][macroIndex];
 
@@ -425,15 +476,60 @@ export function buildPeriodizationPlan(config: PeriodizationConfig): Periodizati
       id: `macro-${macroIndex}`,
       index: macroIndex,
       name: macroName,
-      startDate: formatISO(range.start),
-      endDate: formatISO(range.end),
+      startDate: formatISO(macroStart),
+      endDate: formatISO(macroEnd),
+      mesocycleCount: mesocycles.length,
+      microcycleCount,
       mesocycles,
       totalSessions,
       totalTasks,
     };
   });
 
-  return { config, macrocycles };
+  const totalMicrocycles = seasonWeeks.length;
+  const totalMesocycles = seasonMonths.length;
+  const totalSessions = totalMicrocycles * sessionsPerMicro;
+  const totalTasks = totalSessions * tasksPerSession;
+
+  return {
+    config,
+    macrocycles,
+    totalMicrocycles,
+    totalMesocycles,
+    totalSessions,
+    totalTasks,
+  };
+}
+
+export function formatMacroDistributionSummary(plan: PeriodizationPlan): string {
+  const { sessionsPerMicro, macroCount } = plan.config;
+  const macroParts = plan.macrocycles
+    .map(
+      (macro) =>
+        `${macro.name}: ${macro.microcycleCount} MCC · ${macro.mesocycleCount} meso${macro.mesocycleCount === 1 ? '' : 's'}`
+    )
+    .join(' · ');
+
+  return `${plan.totalMicrocycles} microciclos × ${sessionsPerMicro} sesiones = ${plan.totalSessions} sesiones (${macroCount} macrociclo${macroCount === 1 ? '' : 's'}: ${macroParts}). Sin festivos.`;
+}
+
+export function previewPeriodizationDistribution(
+  startDate: string,
+  endDate: string,
+  macroCount: MacroCount,
+  sessionsPerMicro: SessionsPerMicro
+): string | null {
+  const seasonStart = parseISODate(startDate);
+  const seasonEnd = parseISODate(endDate);
+  if (seasonEnd < seasonStart) return null;
+
+  const mesoTotal = naturalMonthsInRange(seasonStart, seasonEnd).length;
+  const microTotal = weeksInRange(seasonStart, seasonEnd).length;
+  const mesoSplit = splitEvenly(mesoTotal, macroCount).join(' + ');
+  const microSplit = splitEvenly(microTotal, macroCount).join(' + ');
+  const sessionsTotal = microTotal * sessionsPerMicro;
+
+  return `${microTotal} microciclos × ${sessionsPerMicro} sesiones = ${sessionsTotal} sesiones · ${mesoTotal} mesociclos repartidos ${mesoSplit} · MCC por macro: ${microSplit}`;
 }
 
 export function macroNamesForCount(count: MacroCount, current: string[] = []): string[] {
