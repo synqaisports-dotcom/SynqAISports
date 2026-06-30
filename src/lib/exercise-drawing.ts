@@ -377,15 +377,29 @@ export function serializeExerciseDrawing(doc: ExerciseDrawingDocument): string {
 
 export type FieldRect = { x: number; y: number; width: number; height: number };
 
+export type FieldRectInsets = {
+  top?: number;
+  bottom?: number;
+  left?: number;
+  right?: number;
+};
+
 export function computeFieldRect(
   stageWidth: number,
   stageHeight: number,
   field: FieldTemplate,
-  padding = 4
+  padding = 4,
+  insets: FieldRectInsets = {}
 ): FieldRect {
+  const top = insets.top ?? 0;
+  const bottom = insets.bottom ?? 0;
+  const left = insets.left ?? 0;
+  const right = insets.right ?? 0;
   const aspect = FIELD_TEMPLATES[field].aspectRatio;
-  const maxW = Math.max(1, stageWidth - padding * 2);
-  const maxH = Math.max(1, stageHeight - padding * 2);
+  const availW = Math.max(1, stageWidth - left - right);
+  const availH = Math.max(1, stageHeight - top - bottom);
+  const maxW = Math.max(1, availW - padding * 2);
+  const maxH = Math.max(1, availH - padding * 2);
   let width = maxW;
   let height = width / aspect;
   if (height > maxH) {
@@ -393,8 +407,8 @@ export function computeFieldRect(
     width = height * aspect;
   }
   return {
-    x: (stageWidth - width) / 2,
-    y: (stageHeight - height) / 2,
+    x: left + (availW - width) / 2,
+    y: top + (availH - height) / 2,
     width,
     height,
   };

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Stage, Layer, Line, Arrow, Rect, Group, Circle, Image as KonvaImage, Transformer } from 'react-konva';
 import type Konva from 'konva';
 import {
@@ -9,6 +10,8 @@ import {
   Check,
   Minus,
   MousePointer2,
+  Package,
+  PenTool,
   Spline,
   Square,
   Trash2,
@@ -64,9 +67,13 @@ const SHAPE_TOOLS: { id: StudioTool; label: string; icon: React.ReactNode }[] = 
 
 const COLORS = ['#fbbf24', '#38bdf8', '#f87171', '#4ade80', '#ffffff', '#a78bfa'];
 
+/** Zona segura para que el campo no quede bajo controles flotantes */
+const FIELD_INSETS = { top: 56, bottom: 100, left: 12, right: 12 };
+
 export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const transformerRef = useRef<Konva.Transformer>(null);
+  const [mounted, setMounted] = useState(false);
   const [size, setSize] = useState({ width: 1200, height: 800 });
   const [doc, setDoc] = useState<ExerciseDrawingDocument>(() => parseExerciseDrawing(initialData));
   const [sport, setSport] = useState<SportKind>(() => sportForField(parseExerciseDrawing(initialData).field));
@@ -77,7 +84,19 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
   const [materialImages, setMaterialImages] = useState<Partial<Record<MaterialKind, HTMLImageElement>>>({});
   const [materialsOpen, setMaterialsOpen] = useState(false);
-  const [toolsOpen, setToolsOpen] = useState(true);
+  const [toolsOpen, setToolsOpen] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -87,7 +106,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     setSelectedId(null);
     setDraft(null);
     setTool('select');
-    setToolsOpen(true);
+    setToolsOpen(false);
     setMaterialsOpen(false);
   }, [open, initialData]);
 
@@ -108,7 +127,10 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     return () => ro.disconnect();
   }, [open]);
 
-  const fieldRect = useMemo(() => computeFieldRect(size.width, size.height, doc.field, 4), [size, doc.field]);
+  const fieldRect = useMemo(
+    () => computeFieldRect(size.width, size.height, doc.field, 6, FIELD_INSETS),
+    [size, doc.field]
+  );
 
   const selected = doc.elements.find((el) => el.id === selectedId) ?? null;
   const fieldOptions = SPORT_OPTIONS[sport].fields;
@@ -219,8 +241,6 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     const field = defaultFieldForSport(next);
     setDoc((d) => ({ ...d, field }));
   };
-
-  if (!open) return null;
 
   const dashArray = (s: StrokeStyle) => (s.dash ? [10, 6] : undefined);
   const cursorClass = tool === 'select' ? 'cursor-default' : 'cursor-crosshair';
@@ -441,8 +461,12 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     return null;
   };
 
-  return (
-    <div className="fixed inset-0 z-[200] overflow-hidden bg-[#060a12] text-foreground">
+  if (!open || !mounted) return null;
+
+  const panelW = 'min(44vw, 480px)';
+
+  const studio = (
+    <div className="fixed inset-0 z-[9999] overflow-hidden bg-[#060a12] text-foreground">
       <div ref={containerRef} className="absolute inset-0 touch-none">
         <Stage
           width={size.width}
@@ -647,86 +671,94 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
         </div>
       ) : null}
 
-      {/* Botoneras expandibles desde el centro */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-5 z-40 flex justify-center px-3">
-        <div className="pointer-events-auto flex max-w-[98vw] items-end justify-center">
-          {/* Materiales → expande a la izquierda */}
+      {/* Botoneras expandibles — hub fijo, paneles absolutos tipo sidebar */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-5 z-40 flex justify-center">
+        <div className="pointer-events-auto relative">
+          {/* Materiales — desenrolla hacia la izquierda */}
           <div
             className={cn(
-              'origin-right overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]',
-              materialsOpen ? 'mr-2 max-h-56 w-[min(46vw,500px)] opacity-100' : 'mr-0 max-h-0 w-0 opacity-0'
+              'absolute bottom-0 right-full origin-right overflow-hidden',
+              'transition-[width,opacity] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]',
+              materialsOpen ? 'w-[var(--dock-panel-w)] opacity-100' : 'pointer-events-none w-0 opacity-0'
             )}
+            style={{ '--dock-panel-w': panelW } as React.CSSProperties}
           >
-            <div className="rounded-2xl border border-white/15 bg-black/80 p-3 shadow-2xl backdrop-blur-xl">
-              <p className="mb-2 text-center text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                Material
-              </p>
-              <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-5">
+            <div
+              className="mr-2 rounded-2xl border border-white/15 bg-black/85 p-2.5 shadow-2xl backdrop-blur-xl"
+              style={{ width: panelW }}
+            >
+              <div className="grid grid-cols-5 gap-1.5">
                 {MATERIAL_CATALOG.map(({ kind, label }) => (
                   <button
                     key={kind}
                     type="button"
+                    title={label}
                     onClick={() => {
                       setTool(kind);
                       setMaterialsOpen(false);
                     }}
                     className={cn(
-                      'flex flex-col items-center gap-1 rounded-xl border px-1.5 py-2 text-[9px] transition-colors',
+                      'flex size-11 items-center justify-center rounded-xl border transition-colors',
                       tool === kind
-                        ? 'border-primary bg-primary/15 text-primary'
+                        ? 'border-primary bg-primary/15'
                         : 'border-white/10 bg-white/5 hover:border-primary/30'
                     )}
                   >
                     {materialImages[kind] ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={materialImages[kind]!.src} alt={label} className="size-9 object-contain" />
+                      <img src={materialImages[kind]!.src} alt={label} className="size-8 object-contain" />
                     ) : (
-                      <BoxSelect className="size-7 opacity-40" />
+                      <BoxSelect className="size-6 opacity-40" />
                     )}
-                    <span className="truncate">{label}</span>
                   </button>
                 ))}
               </div>
             </div>
           </div>
 
-          {/* Hub central */}
-          <div className="flex shrink-0 flex-col items-center">
-            <div className="flex overflow-hidden rounded-full border border-white/20 bg-black/80 shadow-2xl backdrop-blur-xl">
-              <button
-                type="button"
-                onClick={() => setMaterialsOpen((v) => !v)}
-                className={cn(
-                  'border-r border-white/15 px-5 py-2.5 text-sm font-medium transition-colors',
-                  materialsOpen ? 'bg-primary/25 text-primary' : 'text-foreground hover:bg-white/5'
-                )}
-              >
-                Material
-              </button>
-              <button
-                type="button"
-                onClick={() => setToolsOpen((v) => !v)}
-                className={cn(
-                  'px-5 py-2.5 text-sm font-medium transition-colors',
-                  toolsOpen ? 'bg-primary/25 text-primary' : 'text-foreground hover:bg-white/5'
-                )}
-              >
-                Herramientas
-              </button>
-            </div>
+          {/* Hub central — solo iconos */}
+          <div className="relative z-10 flex overflow-hidden rounded-full border border-white/20 bg-black/85 shadow-2xl backdrop-blur-xl">
+            <button
+              type="button"
+              title="Material"
+              aria-label="Material"
+              aria-expanded={materialsOpen}
+              onClick={() => setMaterialsOpen((v) => !v)}
+              className={cn(
+                'flex size-11 items-center justify-center border-r border-white/15 transition-colors',
+                materialsOpen ? 'bg-primary/25 text-primary' : 'text-foreground hover:bg-white/5'
+              )}
+            >
+              <Package className="size-5" />
+            </button>
+            <button
+              type="button"
+              title="Herramientas de dibujo"
+              aria-label="Herramientas de dibujo"
+              aria-expanded={toolsOpen}
+              onClick={() => setToolsOpen((v) => !v)}
+              className={cn(
+                'flex size-11 items-center justify-center transition-colors',
+                toolsOpen ? 'bg-primary/25 text-primary' : 'text-foreground hover:bg-white/5'
+              )}
+            >
+              <PenTool className="size-5" />
+            </button>
           </div>
 
-          {/* Herramientas → expande a la derecha */}
+          {/* Herramientas — desenrolla hacia la derecha */}
           <div
             className={cn(
-              'origin-left overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]',
-              toolsOpen ? 'ml-2 max-h-56 w-[min(46vw,500px)] opacity-100' : 'ml-0 max-h-0 w-0 opacity-0'
+              'absolute bottom-0 left-full origin-left overflow-hidden',
+              'transition-[width,opacity] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]',
+              toolsOpen ? 'w-[var(--dock-panel-w)] opacity-100' : 'pointer-events-none w-0 opacity-0'
             )}
+            style={{ '--dock-panel-w': panelW } as React.CSSProperties}
           >
-            <div className="rounded-2xl border border-white/15 bg-black/80 p-3 shadow-2xl backdrop-blur-xl">
-              <p className="mb-2 text-center text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                Dibujo
-              </p>
+            <div
+              className="ml-2 rounded-2xl border border-white/15 bg-black/85 p-2.5 shadow-2xl backdrop-blur-xl"
+              style={{ width: panelW }}
+            >
               <div className="flex flex-wrap justify-center gap-1.5">
                 {SHAPE_TOOLS.map((item) => (
                   <button
@@ -789,4 +821,6 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
       </div>
     </div>
   );
+
+  return createPortal(studio, document.body);
 }
