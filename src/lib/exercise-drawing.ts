@@ -403,9 +403,10 @@ export function computeFieldRect(
   const availH = Math.max(1, stageHeight - top - bottom);
 
   if (fit === 'fill-width') {
-    const width = Math.max(1, availW - padding * 2);
+    const width = Math.max(1, stageWidth - left - right);
     const height = width / aspect;
-    const xPos = left + (availW - width) / 2;
+    const xPos = left;
+    const availH = stageHeight - top - bottom;
     let yPos = top + (availH - height) / 2;
     if (yPos < top) yPos = top;
     return { x: xPos, y: yPos, width, height };

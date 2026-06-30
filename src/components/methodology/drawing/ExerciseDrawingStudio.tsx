@@ -67,14 +67,8 @@ const SHAPE_TOOLS: { id: StudioTool; label: string; icon: React.ReactNode }[] = 
 
 const COLORS = ['#fbbf24', '#38bdf8', '#f87171', '#4ade80', '#ffffff', '#a78bfa'];
 
-/** Margen mínimo visible en los cuatro lados + zona de controles */
-const FIELD_EDGE = 16;
-const FIELD_INSETS = {
-  top: 52 + FIELD_EDGE,
-  bottom: 88 + FIELD_EDGE,
-  left: FIELD_EDGE,
-  right: FIELD_EDGE,
-};
+/** 12px margen lateral + hueco para controles flotantes */
+const FIELD_INSETS = { top: 56, bottom: 92, left: 12, right: 12 };
 
 export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -134,7 +128,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
   }, [open]);
 
   const fieldRect = useMemo(
-    () => computeFieldRect(size.width, size.height, doc.field, 0, FIELD_INSETS, 'contain'),
+    () => computeFieldRect(size.width, size.height, doc.field, 0, FIELD_INSETS, 'fill-width'),
     [size, doc.field]
   );
 
