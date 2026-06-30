@@ -1,28 +1,57 @@
-import { CategoryGoalsPanel, type GoalRow } from '@/components/methodology/CategoryGoalsPanel';
+import Link from 'next/link';
+import { ArrowLeft, Target } from 'lucide-react';
+import { loadMethodologyObjectives } from '@/app/actions/methodology';
+import { MethodologyObjectivesPanel } from '@/components/methodology/MethodologyObjectivesPanel';
 import { MethodologySubnav } from '@/components/methodology/MethodologySubnav';
-import { getStaffContext } from '@/lib/portal';
+import { PageContainer } from '@/components/portal/PageContainer';
+import { isDemoActive } from '@/lib/demo';
+import { canEditMethodologyObjectives } from '@/lib/methodology-objectives';
 import { createClient } from '@/lib/supabase/server';
+import { getStaffContext } from '@/lib/portal';
 import { redirect } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default async function ObjetivosPage() {
   const supabase = await createClient();
   const ctx = await getStaffContext(supabase);
   if (!ctx) redirect('/login');
 
-  const { data: goals } = await supabase
-    .from('synq_category_goals')
-    .select('id, category, season, goals_text')
-    .eq('club_id', ctx.club.id)
-    .order('season', { ascending: false });
+  const demo = await isDemoActive();
+  const objectives = await loadMethodologyObjectives(ctx.club.id);
+  const canEdit = canEditMethodologyObjectives(ctx.role);
 
   return (
-    <div>
-      <h1 className="font-serif-display text-3xl text-white">Objetivos de temporada</h1>
-      <p className="mt-2 text-synq-muted">Por categoría y temporada.</p>
+    <PageContainer>
+      <Card className="mb-4 border border-primary/25">
+        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 space-y-0">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Target className="size-4 text-primary" />
+            Objetivos formativos
+          </CardTitle>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/portal/metodologia">
+              <ArrowLeft className="h-4 w-4" />
+              Volver
+            </Link>
+          </Button>
+        </CardHeader>
+      </Card>
+
+      {demo ? (
+        <p className="mb-4 rounded-lg border border-primary/20 bg-muted/10 p-4 text-sm text-muted-foreground">
+          Referencia metodológica por categoría. El personal autorizado puede adaptar los textos a la
+          propuesta del club.
+        </p>
+      ) : null}
+
       <MethodologySubnav />
-      <div className="mt-6">
-        <CategoryGoalsPanel goals={(goals ?? []) as GoalRow[]} />
-      </div>
-    </div>
+
+      <MethodologyObjectivesPanel
+        objectives={objectives}
+        canEdit={canEdit}
+        demoMode={demo}
+      />
+    </PageContainer>
   );
 }

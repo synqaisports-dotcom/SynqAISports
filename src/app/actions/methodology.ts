@@ -1,5 +1,6 @@
 'use server';
 
+import { isDemoActive } from '@/lib/demo';
 import { requireClubId, requireUserId } from '@/lib/auth-staff';
 import {
   emptyExerciseSheet,
@@ -9,6 +10,12 @@ import {
   type TaskType,
 } from '@/lib/exercise-sheet';
 import { defaultSlotsTemplate, parseDrawingJson } from '@/lib/methodology';
+import type { CanteraCategorySlug } from '@/lib/cantera-categories';
+import {
+  mergeMethodologyObjectives,
+  type CategoryObjectives,
+  type MethodologyObjectivesMap,
+} from '@/lib/methodology-objectives';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
@@ -270,6 +277,82 @@ export async function deleteMicrocycle(microcycleId: string): Promise<ActionStat
 }
 
 // ——— Objetivos por categoría ———
+
+export async function loadMethodologyObjectives(
+  clubId: string
+): Promise<MethodologyObjectivesMap> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('synq_methodology_objectives')
+    .select('objectives_json')
+    .eq('club_id', clubId)
+    .maybeSingle();
+
+  if (error) {
+    console.error('loadMethodologyObjectives', error);
+    return mergeMethodologyObjectives(null);
+  }
+
+  return mergeMethodologyObjectives(
+    (data?.objectives_json as Partial<MethodologyObjectivesMap> | null) ?? null
+  );
+}
+
+export async function updateCategoryObjectives(
+  categorySlug: string,
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'unauthorized' };
+
+  const slug = categorySlug as CanteraCategorySlug;
+  const dimensions: Partial<CategoryObjectives> = {};
+
+  for (const key of ['technique', 'tactics', 'physical', 'psychological', 'rules'] as const) {
+    dimensions[key] = {
+      key,
+      itemLabel: String(formData.get(`${key}Label`) ?? '').trim(),
+      content: String(formData.get(`${key}Content`) ?? '').trim(),
+    };
+  }
+
+  if (await isDemoActive()) {
+    revalidatePath('/portal/metodologia/objetivos');
+    return { ok: true };
+  }
+
+  const supabase = await createClient();
+  const { data: existing } = await supabase
+    .from('synq_methodology_objectives')
+    .select('objectives_json')
+    .eq('club_id', clubId)
+    .maybeSingle();
+
+  const current =
+    (existing?.objectives_json as Partial<MethodologyObjectivesMap> | null) ?? {};
+  const next = {
+    ...current,
+    [slug]: {
+      ...(current[slug] ?? {}),
+      ...dimensions,
+    },
+  };
+
+  const { error } = await supabase.from('synq_methodology_objectives').upsert({
+    club_id: clubId,
+    objectives_json: next,
+    updated_at: new Date().toISOString(),
+  });
+
+  if (error) {
+    console.error('updateCategoryObjectives', error);
+    return { ok: false, message: 'error' };
+  }
+
+  revalidatePath('/portal/metodologia/objetivos');
+  return { ok: true };
+}
 
 export async function upsertCategoryGoal(
   _prev: ActionState,
