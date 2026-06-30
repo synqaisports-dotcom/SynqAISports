@@ -1,6 +1,6 @@
 import type { ExerciseTaskSheet } from '@/lib/exercise-sheet';
 import { SHEET_FIELD_LABELS, TASK_TYPE_LABELS } from '@/lib/exercise-sheet';
-import { ExerciseCanvasPreview } from '@/components/methodology/ExerciseCanvas';
+import { ExerciseDrawingPreview } from '@/components/methodology/drawing/ExerciseDrawingTrigger';
 
 type Props = {
   sheet: ExerciseTaskSheet;
@@ -58,7 +58,7 @@ export function ExerciseSheetView({ sheet, drawingJson, compact }: Props) {
         {drawingJson != null && (
           <div>
             <p className="mb-2 text-xs text-synq-muted">Esquema</p>
-            <ExerciseCanvasPreview data={drawingJson} height={compact ? 100 : 160} />
+            <ExerciseDrawingPreview data={drawingJson} className="w-full" />
           </div>
         )}
       </div>

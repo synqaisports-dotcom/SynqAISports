@@ -1,28 +1,22 @@
+import {
+  EMPTY_DRAWING_DOC,
+  parseExerciseDrawing,
+  type ExerciseDrawingDocument,
+} from '@/lib/exercise-drawing';
+
 export type DrawingStroke = {
   points: [number, number][];
   color: string;
   width: number;
 };
 
-export type DrawingData = {
-  strokes: DrawingStroke[];
-};
+/** @deprecated Usar ExerciseDrawingDocument (v2) */
+export type DrawingData = ExerciseDrawingDocument;
 
-export const EMPTY_DRAWING: DrawingData = { strokes: [] };
+export const EMPTY_DRAWING: DrawingData = EMPTY_DRAWING_DOC;
 
 export function parseDrawingJson(raw: unknown): DrawingData {
-  if (!raw || typeof raw !== 'object') return EMPTY_DRAWING;
-  const obj = raw as { strokes?: unknown };
-  if (!Array.isArray(obj.strokes)) return EMPTY_DRAWING;
-  return {
-    strokes: obj.strokes.filter(
-      (s): s is DrawingStroke =>
-        typeof s === 'object' &&
-        s !== null &&
-        Array.isArray((s as DrawingStroke).points) &&
-        typeof (s as DrawingStroke).color === 'string'
-    ),
-  };
+  return parseExerciseDrawing(raw);
 }
 
 export const SLOT_TYPES = ['warmup', 'main', 'cooldown'] as const;

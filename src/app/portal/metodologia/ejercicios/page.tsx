@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { DeleteExerciseButton } from '@/components/methodology/DeleteExerciseButton';
-import { ExerciseCanvasPreview } from '@/components/methodology/ExerciseCanvas';
+import { ExerciseDrawingPreview } from '@/components/methodology/drawing/ExerciseDrawingTrigger';
 import { ExerciseSheetPrintLink } from '@/components/methodology/ExerciseSheetPrintLink';
 import { MethodologySubnav } from '@/components/methodology/MethodologySubnav';
 import { parseExerciseSheet } from '@/lib/exercise-sheet';
@@ -44,7 +44,7 @@ export default async function EjerciciosListPage() {
             key={ex.id}
             className="rounded-2xl border border-white/5 bg-synq-slate/30 overflow-hidden"
           >
-            <ExerciseCanvasPreview data={ex.drawing_json} />
+            <ExerciseDrawingPreview data={ex.drawing_json} className="w-full" />
             <div className="p-4">
               <Link
                 href={`/portal/metodologia/ejercicios/${ex.id}`}

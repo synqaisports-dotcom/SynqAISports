@@ -1,6 +1,6 @@
 import type { ExerciseTaskSheet } from '@/lib/exercise-sheet';
 import { SHEET_FIELD_LABELS, TASK_TYPE_LABELS } from '@/lib/exercise-sheet';
-import { ExerciseCanvasPreview } from '@/components/methodology/ExerciseCanvas';
+import { ExerciseDrawingPreview } from '@/components/methodology/drawing/ExerciseDrawingTrigger';
 
 type Props = {
   sheet: ExerciseTaskSheet;
@@ -87,7 +87,7 @@ export function ExerciseSheetPrintDocument({
         <div className="mt-3 border border-black p-2">
           <p className="mb-2 text-[9px] font-bold uppercase">Esquema / pizarra</p>
           <div className="flex justify-center bg-slate-900 print:bg-slate-900">
-            <ExerciseCanvasPreview data={drawingJson} height={140} />
+            <ExerciseDrawingPreview data={drawingJson} className="mx-auto w-full max-w-md" />
           </div>
         </div>
       )}

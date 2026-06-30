@@ -2,7 +2,7 @@
 
 import type { ExerciseTaskSheet, TaskType } from '@/lib/exercise-sheet';
 import { SHEET_FIELD_LABELS, TASK_TYPE_LABELS } from '@/lib/exercise-sheet';
-import { ExerciseCanvas } from '@/components/methodology/ExerciseCanvas';
+import { ExerciseDrawingTrigger } from '@/components/methodology/drawing/ExerciseDrawingTrigger';
 import { ExerciseEditorLayout } from '@/components/methodology/ExerciseEditorLayout';
 import type { DrawingData } from '@/lib/methodology';
 
@@ -140,7 +140,7 @@ export function ExerciseSheetForm({
   if (showCanvas && layout === 'split') {
     return (
       <ExerciseEditorLayout
-        canvas={<ExerciseCanvas initialData={drawingJson} />}
+        canvas={<ExerciseDrawingTrigger initialData={drawingJson} compact />}
         form={fields}
       />
     );
@@ -149,12 +149,7 @@ export function ExerciseSheetForm({
   return (
     <div className="space-y-6">
       {fields}
-      {showCanvas && (
-        <div>
-          <label className="mb-1 block text-xs text-synq-muted">Esquema / pizarra (boceto)</label>
-          <ExerciseCanvas initialData={drawingJson} />
-        </div>
-      )}
+      {showCanvas ? <ExerciseDrawingTrigger initialData={drawingJson} /> : null}
     </div>
   );
 }
