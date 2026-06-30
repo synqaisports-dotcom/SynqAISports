@@ -10,6 +10,8 @@ import {
   type TaskType,
 } from '@/lib/exercise-sheet';
 import { defaultSlotsTemplate, parseDrawingJson } from '@/lib/methodology';
+import { buildMicrocycleSlotSeeds } from '@/lib/microcycle-sessions';
+import type { MainTasksPerSession, SessionsPerMicro } from '@/lib/periodization';
 import type { CanteraCategorySlug } from '@/lib/cantera-categories';
 import {
   mergeMethodologyObjectives,
@@ -20,6 +22,49 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
 export type ActionState = { ok: boolean; message?: string; id?: string };
+
+function slotInsertRows(
+  microcycleId: string,
+  sessionsPerMicro: SessionsPerMicro = 3,
+  mainTasksPerSession: MainTasksPerSession = 3
+) {
+  return buildMicrocycleSlotSeeds(sessionsPerMicro, mainTasksPerSession).map((seed) => ({
+    microcycle_id: microcycleId,
+    session_index: seed.session_index,
+    slot_type: seed.slot_type,
+    order_index: seed.order_index,
+    title: '',
+    notes: '',
+    sheet_json: emptyExerciseSheet(seed.slot_type),
+  }));
+}
+
+async function insertMicrocycleSlots(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  microcycleId: string,
+  sessionsPerMicro: SessionsPerMicro = 3,
+  mainTasksPerSession: MainTasksPerSession = 3
+) {
+  const rows = slotInsertRows(microcycleId, sessionsPerMicro, mainTasksPerSession);
+  const { error } = await supabase.from('synq_microcycle_slots').insert(rows);
+  if (!error) return { ok: true as const };
+
+  // Fallback sin session_index (BBDD sin migrar aún)
+  const legacyRows = defaultSlotsTemplate().map((slot) => ({
+    microcycle_id: microcycleId,
+    slot_type: slot.slot_type,
+    order_index: slot.order_index,
+    title: '',
+    notes: '',
+    sheet_json: emptyExerciseSheet(slot.slot_type),
+  }));
+  const legacy = await supabase.from('synq_microcycle_slots').insert(legacyRows);
+  if (legacy.error) {
+    console.error('insertMicrocycleSlots', legacy.error);
+    return { ok: false as const };
+  }
+  return { ok: true as const };
+}
 
 // ——— Ejercicios ———
 
@@ -36,6 +81,8 @@ export async function createExercise(
 
   const legacy = sheetToLegacyFields(sheet);
   const drawingRaw = String(formData.get('drawingJson') ?? '{"strokes":[]}');
+  const categorySlug = String(formData.get('categorySlug') ?? '').trim();
+  const returnTo = String(formData.get('returnTo') ?? '').trim();
 
   let drawing_json;
   try {
@@ -53,7 +100,7 @@ export async function createExercise(
       objectives: legacy.objectives,
       duration_min: legacy.duration_min,
       materials: legacy.materials,
-      notes: legacy.notes,
+      notes: categorySlug ? `[cat:${categorySlug}] ${legacy.notes}`.trim() : legacy.notes,
       drawing_json,
       sheet_json: sheet,
       task_type: sheet.taskType,
@@ -69,7 +116,10 @@ export async function createExercise(
 
   revalidatePath('/portal/metodologia');
   revalidatePath('/portal/metodologia/ejercicios');
-  return { ok: true, id: data.id };
+  if (returnTo.startsWith('/portal/')) {
+    revalidatePath(returnTo);
+  }
+  return { ok: true, id: data.id, message: returnTo || undefined };
 }
 
 export async function updateExercise(
@@ -161,6 +211,8 @@ export async function createMicrocycle(
       week_label: weekLabel,
       week_start: weekStart,
       week_number: Number.isNaN(weekNumber) ? null : weekNumber,
+      sessions_per_micro: 3,
+      main_tasks_per_session: 3,
     })
     .select('id')
     .single();
@@ -170,22 +222,8 @@ export async function createMicrocycle(
     return { ok: false, message: 'error' };
   }
 
-  const slots = defaultSlotsTemplate();
-  const { error: slotsError } = await supabase.from('synq_microcycle_slots').insert(
-    slots.map((s) => ({
-      microcycle_id: data.id,
-      slot_type: s.slot_type,
-      order_index: s.order_index,
-      title: '',
-      notes: '',
-      sheet_json: emptyExerciseSheet(s.slot_type),
-    }))
-  );
-
-  if (slotsError) {
-    console.error('create slots', slotsError);
-    return { ok: false, message: 'error' };
-  }
+  const slotsResult = await insertMicrocycleSlots(supabase, data.id, 3, 3);
+  if (!slotsResult.ok) return { ok: false, message: 'error' };
 
   revalidatePath('/portal/metodologia/microciclos');
   return { ok: true, id: data.id };
@@ -206,7 +244,7 @@ export async function updateMicrocycleSlot(
 
   const { data: slot } = await supabase
     .from('synq_microcycle_slots')
-    .select('microcycle_id, slot_type')
+    .select('microcycle_id, slot_type, session_index')
     .eq('id', slotId)
     .single();
 
@@ -255,7 +293,77 @@ export async function updateMicrocycleSlot(
 
   if (error) return { ok: false, message: 'error' };
 
+  const sessionIndex = slot.session_index ?? 1;
   revalidatePath(`/portal/metodologia/microciclos/${slot.microcycle_id}`);
+  revalidatePath(`/portal/metodologia/microciclos/${slot.microcycle_id}/sesiones/${sessionIndex}`);
+  revalidatePath(
+    `/portal/metodologia/microciclos/${slot.microcycle_id}/sesiones/${sessionIndex}/slots/${slotId}`
+  );
+  return { ok: true };
+}
+
+export async function assignExerciseToSlot(
+  slotId: string,
+  exerciseId: string
+): Promise<ActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'unauthorized' };
+
+  const supabase = await createClient();
+
+  const { data: slot } = await supabase
+    .from('synq_microcycle_slots')
+    .select('microcycle_id, slot_type, session_index')
+    .eq('id', slotId)
+    .single();
+
+  if (!slot) return { ok: false, message: 'unauthorized' };
+
+  const { data: micro } = await supabase
+    .from('synq_microcycles')
+    .select('club_id')
+    .eq('id', slot.microcycle_id)
+    .single();
+
+  if (!micro || micro.club_id !== clubId) return { ok: false, message: 'unauthorized' };
+
+  const { data: exercise } = await supabase
+    .from('synq_exercises')
+    .select('sheet_json, title, objectives, notes, drawing_json')
+    .eq('id', exerciseId)
+    .eq('club_id', clubId)
+    .single();
+
+  if (!exercise) return { ok: false, message: 'validation' };
+
+  let sheet = parseExerciseSheet(exercise.sheet_json);
+  sheet.taskType = (slot.slot_type as TaskType) || 'main';
+  if (!sheet.title) sheet.title = exercise.title;
+  if (!sheet.objectives) sheet.objectives = exercise.objectives;
+  if (!sheet.description) sheet.description = exercise.notes;
+
+  const legacy = sheetToLegacyFields(sheet);
+
+  const { error } = await supabase
+    .from('synq_microcycle_slots')
+    .update({
+      exercise_id: exerciseId,
+      title: legacy.title,
+      notes: legacy.notes,
+      sheet_json: sheet,
+    })
+    .eq('id', slotId);
+
+  if (error) return { ok: false, message: 'error' };
+
+  const sessionIndex = slot.session_index ?? 1;
+  revalidatePath(`/portal/metodologia/microciclos/${slot.microcycle_id}`);
+  revalidatePath(
+    `/portal/metodologia/microciclos/${slot.microcycle_id}/sesiones/${sessionIndex}`
+  );
+  revalidatePath(
+    `/portal/metodologia/microciclos/${slot.microcycle_id}/sesiones/${sessionIndex}/slots/${slotId}`
+  );
   return { ok: true };
 }
 

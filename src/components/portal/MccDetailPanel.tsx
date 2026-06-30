@@ -209,7 +209,7 @@ export function MccDetailPanel({
                         <span className="text-emerald-400">Instancia demo</span>
                       ) : (
                         <Link
-                          href={`/portal/metodologia/microciclos/${instance.microcycleId}`}
+                          href={`/portal/metodologia/microciclos/${instance.microcycleId}/sesiones/1`}
                           className="text-primary hover:underline"
                         >
                           Abrir
@@ -277,13 +277,15 @@ export function MccDetailPanel({
             ) : null}
           </>
         ) : isDemoLink ? (
-          <Button type="button" variant="outline" className="w-full gap-2" disabled>
-            <ExternalLink className="size-4" />
-            Demo: plantilla registrada
+          <Button type="button" variant="outline" className="w-full gap-2" asChild>
+            <Link href={`/portal/metodologia/microciclos/${link.microcycleId}/sesiones/1`}>
+              <ExternalLink className="size-4" />
+              Abrir plantilla (demo)
+            </Link>
           </Button>
         ) : (
           <Button type="button" variant="outline" className="w-full gap-2" asChild>
-            <Link href={`/portal/metodologia/microciclos/${link.microcycleId}`}>
+            <Link href={`/portal/metodologia/microciclos/${link.microcycleId}/sesiones/1`}>
               <ExternalLink className="size-4" />
               Abrir plantilla
             </Link>

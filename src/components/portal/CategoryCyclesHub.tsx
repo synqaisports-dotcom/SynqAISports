@@ -52,6 +52,10 @@ import {
   type RhythmVariant,
 } from '@/lib/periodization-document';
 import { demoTeamMicrocycleId, demoTemplateMicrocycleId, isDemoClient } from '@/lib/periodization-client';
+import {
+  forkDemoMicrocycleFromTemplate,
+  saveDemoMicrocycle,
+} from '@/lib/demo-microcycles-store';
 import { cn } from '@/lib/utils';
 
 export type TeamOption = { id: string; name: string; category_slug: CanteraCategorySlug | null };
@@ -250,7 +254,22 @@ export function CategoryCyclesHub({
     const displayLabel = panelLabel.trim() || mccContext.micro.label;
 
     if (isDemoClient()) {
-      applyMccLink(demoTemplateMicrocycleId(selectedMcc.id, activeVariant.id));
+      const microcycleId = demoTemplateMicrocycleId(selectedMcc.id, activeVariant.id);
+      saveDemoMicrocycle({
+        id: microcycleId,
+        title: `${displayLabel} — ${activeVariant.name}`,
+        week_label: `${selectedMcc.weekStart.slice(5).replace('-', '/')} – ${selectedMcc.weekEnd.slice(5).replace('-', '/')}`,
+        week_start: selectedMcc.weekStart,
+        week_end: selectedMcc.weekEnd,
+        category_slug: categorySlug,
+        plan_variant_id: activeVariant.id,
+        plan_mcc_id: selectedMcc.id,
+        sessions_per_micro: activeVariant.sessionsPerMicro,
+        main_tasks_per_session: activeVariant.mainTasksPerSession,
+        is_template: true,
+        team_id: null,
+      });
+      applyMccLink(microcycleId);
       setCreating(false);
       return;
     }
@@ -263,6 +282,7 @@ export function CategoryCyclesHub({
       mccLabel: displayLabel,
       weekStart: selectedMcc.weekStart,
       weekEnd: selectedMcc.weekEnd,
+      sessionsPerMicro: activeVariant.sessionsPerMicro,
       mainTasksPerSession: activeVariant.mainTasksPerSession,
     });
     setCreating(false);
@@ -305,9 +325,16 @@ export function CategoryCyclesHub({
     const displayLabel = panelLabel.trim() || mccContext.micro.label;
 
     if (isDemoClient()) {
+      const teamMicrocycleId = demoTeamMicrocycleId(teamId, selectedMcc.id);
+      forkDemoMicrocycleFromTemplate({
+        templateId: link.microcycleId,
+        id: teamMicrocycleId,
+        title: `${displayLabel} — ${team.name}`,
+        team_id: teamId,
+      });
       updateDocument((current) =>
         setTeamMccInstance(current, activeVariant.id, {
-          microcycleId: demoTeamMicrocycleId(teamId, selectedMcc.id),
+          microcycleId: teamMicrocycleId,
           templateMicrocycleId: link.microcycleId,
           teamId,
           mccId: selectedMcc.id,
@@ -329,6 +356,7 @@ export function CategoryCyclesHub({
       weekStart: selectedMcc.weekStart,
       weekEnd: selectedMcc.weekEnd,
       mainTasksPerSession: activeVariant.mainTasksPerSession,
+      sessionsPerMicro: activeVariant.sessionsPerMicro,
       categorySlug,
     });
     setForkingTeamId(null);

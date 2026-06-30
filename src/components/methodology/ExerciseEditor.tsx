@@ -10,6 +10,7 @@ import {
   legacyToSheet,
   parseExerciseSheet,
   type ExerciseTaskSheet,
+  type TaskType,
 } from '@/lib/exercise-sheet';
 import type { DrawingData } from '@/lib/methodology';
 
@@ -30,6 +31,9 @@ const initial: ActionState = { ok: false };
 type Props = {
   exercise?: ExerciseRow;
   mode?: 'edit' | 'view';
+  defaultTaskType?: TaskType;
+  categorySlug?: string;
+  returnTo?: string;
 };
 
 function resolveSheet(exercise?: ExerciseRow): ExerciseTaskSheet {
@@ -48,24 +52,35 @@ function resolveSheet(exercise?: ExerciseRow): ExerciseTaskSheet {
   });
 }
 
-export function ExerciseEditor({ exercise, mode = 'edit' }: Props) {
+export function ExerciseEditor({
+  exercise,
+  mode = 'edit',
+  defaultTaskType,
+  categorySlug,
+  returnTo,
+}: Props) {
   const isEdit = Boolean(exercise);
   const bound = isEdit
     ? updateExercise.bind(null, exercise!.id)
     : createExercise;
   const [state, action, pending] = useFormState(bound, initial);
   const sheet = resolveSheet(exercise);
+  if (defaultTaskType && !sheet.title) {
+    sheet.taskType = defaultTaskType;
+  }
 
   if (!isEdit && state.ok && state.id) {
+    const redirectTo =
+      returnTo && returnTo.startsWith('/portal/') ? returnTo : `/portal/metodologia/ejercicios/${state.id}`;
     return (
       <p className="text-synq-accent">
         Ejercicio creado.{' '}
-        <Link href={`/portal/metodologia/ejercicios/${state.id}`} className="underline">
-          Ver ficha
+        <Link href={redirectTo} className="underline">
+          {returnTo ? 'Volver a la sesión' : 'Ver ficha'}
         </Link>{' '}
         ·{' '}
-        <Link href="/portal/metodologia/ejercicios" className="underline">
-          Listado
+        <Link href={`/portal/metodologia/ejercicios/${state.id}`} className="underline">
+          Abrir ejercicio
         </Link>
       </p>
     );
@@ -76,13 +91,25 @@ export function ExerciseEditor({ exercise, mode = 'edit' }: Props) {
   }
 
   return (
-    <form action={action} className="max-w-4xl space-y-4">
+    <form action={action} className="max-w-6xl space-y-4">
+      {categorySlug ? (
+        <p className="rounded-lg border border-primary/25 bg-primary/10 px-3 py-2 text-sm text-primary">
+          Categoría heredada: <strong>{categorySlug}</strong>
+          <input type="hidden" name="categorySlug" value={categorySlug} />
+        </p>
+      ) : null}
+      {returnTo ? <input type="hidden" name="returnTo" value={returnTo} /> : null}
       {isEdit && exercise && (
         <div className="flex justify-end">
           <ExerciseSheetPrintLink href={`/print/ficha/ejercicio/${exercise.id}`} />
         </div>
       )}
-      <ExerciseSheetForm sheet={sheet} drawingJson={exercise?.drawing_json} />
+      <ExerciseSheetForm
+        sheet={sheet}
+        drawingJson={exercise?.drawing_json}
+        layout="split"
+        showTaskType={!defaultTaskType}
+      />
       {state.ok && isEdit && <p className="text-sm text-synq-accent">Ficha guardada.</p>}
       {state.message === 'error' && <p className="text-sm text-red-400">Error al guardar.</p>}
       <button

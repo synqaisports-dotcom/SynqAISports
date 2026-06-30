@@ -8,6 +8,7 @@ import {
   type CategoryPeriodizationDocument,
 } from '@/lib/periodization-document';
 import { sessionSlotsForMainCount } from '@/lib/periodization';
+import { buildMicrocycleSlotSeeds } from '@/lib/microcycle-sessions';
 import { emptyExerciseSheet } from '@/lib/exercise-sheet';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
@@ -70,6 +71,7 @@ export type CreateMccMicrocycleInput = {
   mccLabel: string;
   weekStart: string;
   weekEnd: string;
+  sessionsPerMicro: 2 | 3;
   mainTasksPerSession: 2 | 3;
 };
 
@@ -102,6 +104,8 @@ export async function createMicrocycleFromMcc(
       plan_variant_id: input.variantId,
       week_end: input.weekEnd,
       is_template: true,
+      sessions_per_micro: input.sessionsPerMicro,
+      main_tasks_per_session: input.mainTasksPerSession,
     })
     .select('id')
     .single();
@@ -111,21 +115,36 @@ export async function createMicrocycleFromMcc(
     return { ok: false, message: 'error' };
   }
 
-  const slots = sessionSlotsForMainCount(input.mainTasksPerSession);
+  const slotSeeds = buildMicrocycleSlotSeeds(input.sessionsPerMicro, input.mainTasksPerSession);
   const { error: slotsError } = await supabase.from('synq_microcycle_slots').insert(
-    slots.map((slot, index) => ({
+    slotSeeds.map((seed) => ({
       microcycle_id: data.id,
-      slot_type: slot.slot_type,
-      order_index: index,
+      session_index: seed.session_index,
+      slot_type: seed.slot_type,
+      order_index: seed.order_index,
       title: '',
       notes: '',
-      sheet_json: emptyExerciseSheet(slot.slot_type),
+      sheet_json: emptyExerciseSheet(seed.slot_type),
     }))
   );
 
   if (slotsError) {
     console.error('createMicrocycleFromMcc slots', slotsError);
-    return { ok: false, message: 'error' };
+    const fallback = sessionSlotsForMainCount(input.mainTasksPerSession);
+    const { error: fallbackError } = await supabase.from('synq_microcycle_slots').insert(
+      fallback.map((slot, index) => ({
+        microcycle_id: data.id,
+        slot_type: slot.slot_type,
+        order_index: index,
+        title: '',
+        notes: '',
+        sheet_json: emptyExerciseSheet(slot.slot_type),
+      }))
+    );
+    if (fallbackError) {
+      console.error('createMicrocycleFromMcc slots fallback', fallbackError);
+      return { ok: false, message: 'error' };
+    }
   }
 
   revalidatePath('/portal/metodologia/microciclos');
@@ -143,6 +162,7 @@ export type ForkTeamMicrocycleInput = {
   weekStart: string;
   weekEnd: string;
   mainTasksPerSession: 2 | 3;
+  sessionsPerMicro?: 2 | 3;
   categorySlug: CanteraCategorySlug;
 };
 
@@ -198,6 +218,8 @@ export async function forkMicrocycleForTeam(
       plan_variant_id: input.variantId,
       template_microcycle_id: input.templateMicrocycleId,
       is_template: false,
+      sessions_per_micro: input.sessionsPerMicro ?? 3,
+      main_tasks_per_session: input.mainTasksPerSession,
     })
     .select('id')
     .single();
@@ -209,26 +231,33 @@ export async function forkMicrocycleForTeam(
 
   const { data: templateSlots } = await supabase
     .from('synq_microcycle_slots')
-    .select('slot_type, order_index, title, notes, sheet_json, exercise_id, session_date')
+    .select(
+      'slot_type, order_index, session_index, title, notes, sheet_json, exercise_id, session_date'
+    )
     .eq('microcycle_id', input.templateMicrocycleId)
+    .order('session_index')
     .order('order_index');
 
   const slots =
     templateSlots && templateSlots.length > 0
       ? templateSlots
-      : sessionSlotsForMainCount(input.mainTasksPerSession).map((slot, index) => ({
-          slot_type: slot.slot_type,
-          order_index: index,
-          title: '',
-          notes: '',
-          sheet_json: emptyExerciseSheet(slot.slot_type),
-          exercise_id: null,
-          session_date: null,
-        }));
+      : buildMicrocycleSlotSeeds(input.sessionsPerMicro ?? 3, input.mainTasksPerSession).map(
+          (seed) => ({
+            slot_type: seed.slot_type,
+            order_index: seed.order_index,
+            session_index: seed.session_index,
+            title: '',
+            notes: '',
+            sheet_json: emptyExerciseSheet(seed.slot_type),
+            exercise_id: null,
+            session_date: null,
+          })
+        );
 
   const { error: slotsError } = await supabase.from('synq_microcycle_slots').insert(
     slots.map((slot) => ({
       microcycle_id: created.id,
+      session_index: slot.session_index ?? 1,
       slot_type: slot.slot_type,
       order_index: slot.order_index,
       title: slot.title ?? '',
