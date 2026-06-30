@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { CalendarRange, GitBranch, Layers3, RefreshCw } from 'lucide-react';
 import { SynqSelect } from '@/components/portal/SynqSelect';
+import { SynqDateField } from '@/components/portal/SynqDateField';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,8 +14,10 @@ import {
   buildPeriodizationPlan,
   defaultPeriodizationConfig,
   macroNamesForCount,
+  sessionStructureSummary,
   type MacrocycleBlock,
   type MacroCount,
+  type MainTasksPerSession,
   type PeriodizationConfig,
   type PeriodizationPlan,
   type SessionsPerMicro,
@@ -40,26 +43,37 @@ function PeriodizationGrid({
 
   const maxMicros = Math.max(...macro.mesocycles.map((meso) => meso.microcycles.length));
 
+  const labelCell =
+    'w-[5.5rem] min-w-[5.5rem] border border-primary/15 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground align-middle';
+
   return (
-    <div className="overflow-x-auto rounded-xl border border-primary/20">
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wide">
+        <span className={cn('rounded-md border px-2.5 py-1', styles.macro)}>Macrociclos</span>
+        <span className={cn('rounded-md border px-2.5 py-1', styles.meso)}>Mesociclos</span>
+        <span className={cn('rounded-md border px-2.5 py-1', styles.micro)}>Microciclos</span>
+      </div>
+      <div className="overflow-x-auto rounded-xl border border-primary/20">
       <table className="w-full min-w-[48rem] border-collapse text-sm">
         <thead>
           <tr>
+            <th className={labelCell}>Macrociclo</th>
             <th
               colSpan={macro.mesocycles.length}
-              className={cn('border-b px-4 py-3 text-left text-sm font-semibold uppercase tracking-wide', styles.macro)}
+              className={cn('border-b px-3 py-2 text-left text-sm font-semibold uppercase tracking-wide', styles.macro)}
             >
               {macro.name}
-              <span className="mt-1 block text-[11px] font-normal normal-case text-muted-foreground">
+              <span className="mt-0.5 block text-[10px] font-normal normal-case text-muted-foreground">
                 {macro.startDate} → {macro.endDate}
               </span>
             </th>
           </tr>
           <tr>
+            <th className={labelCell}>Mesociclos</th>
             {macro.mesocycles.map((meso) => (
               <th
                 key={meso.id}
-                className={cn('border border-primary/15 px-3 py-2 text-center text-xs font-semibold uppercase tracking-wide', styles.meso)}
+                className={cn('border border-primary/15 px-2 py-1.5 text-center text-[11px] font-semibold uppercase tracking-wide', styles.meso)}
               >
                 {meso.label}
               </th>
@@ -69,6 +83,14 @@ function PeriodizationGrid({
         <tbody>
           {Array.from({ length: maxMicros }).map((_, rowIndex) => (
             <tr key={`micro-row-${rowIndex}`}>
+              {rowIndex === 0 ? (
+                <td
+                  rowSpan={maxMicros}
+                  className={cn(labelCell, 'align-middle text-center')}
+                >
+                  Microciclos
+                </td>
+              ) : null}
               {macro.mesocycles.map((meso) => {
                 const micro = meso.microcycles[rowIndex];
                 return (
@@ -76,20 +98,20 @@ function PeriodizationGrid({
                     {micro ? (
                       <div
                         className={cn(
-                          'rounded-lg border px-2 py-2 text-center transition-colors hover:brightness-110',
+                          'rounded-md border px-1.5 py-1.5 text-center transition-colors hover:brightness-110',
                           styles.micro
                         )}
                         title={`${micro.weekStart} → ${micro.weekEnd}`}
                       >
-                        <p className="text-xs font-bold tracking-wide">{micro.label}</p>
-                        <p className="mt-1 text-[11px] opacity-90">{sessionsPerMicro} ses.</p>
-                        <p className="mt-0.5 text-[10px] text-muted-foreground">
+                        <p className="text-[11px] font-bold tracking-wide">{micro.label}</p>
+                        <p className="mt-0.5 text-[10px] opacity-90">{sessionsPerMicro} ses.</p>
+                        <p className="mt-0.5 text-[9px] text-muted-foreground">
                           {micro.weekStart.slice(5).replace('-', '/')} –{' '}
                           {micro.weekEnd.slice(5).replace('-', '/')}
                         </p>
                       </div>
                     ) : (
-                      <div className="h-[4.5rem] rounded-lg border border-transparent" />
+                      <div className="h-[3.25rem] rounded-md border border-transparent" />
                     )}
                   </td>
                 );
@@ -97,27 +119,30 @@ function PeriodizationGrid({
             </tr>
           ))}
           <tr>
+            <td className={cn(labelCell, 'text-center')}>Sesiones</td>
             {macro.mesocycles.map((meso) => (
               <td
                 key={`${meso.id}-sessions`}
-                className="border border-primary/10 bg-muted/10 px-3 py-2 text-center text-xs font-semibold text-foreground"
+                className="border border-primary/10 bg-muted/10 px-2 py-1.5 text-center text-[11px] font-semibold text-foreground"
               >
-                {meso.totalSessions} sesiones
+                {meso.totalSessions}
               </td>
             ))}
           </tr>
           <tr>
+            <td className={cn(labelCell, 'text-center')}>Tareas</td>
             {macro.mesocycles.map((meso) => (
               <td
                 key={`${meso.id}-tasks`}
-                className="border border-primary/10 bg-muted/5 px-3 py-2 text-center text-xs text-muted-foreground"
+                className="border border-primary/10 bg-muted/5 px-2 py-1.5 text-center text-[11px] text-muted-foreground"
               >
-                {meso.totalTasks} tareas
+                {meso.totalTasks}
               </td>
             ))}
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
@@ -239,27 +264,25 @@ export function PeriodizationPlanogram() {
                 className="border-primary/30 bg-background/80"
               />
             </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Inicio temporada
-              </label>
-              <Input
-                type="date"
-                value={config.startDate}
-                onChange={(event) => updateConfig({ startDate: event.target.value })}
-                className="border-primary/30 bg-background/80"
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Fin temporada
-              </label>
-              <Input
-                type="date"
-                value={config.endDate}
-                onChange={(event) => updateConfig({ endDate: event.target.value })}
-                className="border-primary/30 bg-background/80"
-              />
+            <div className="grid gap-3 sm:grid-cols-2 lg:max-w-xl">
+              <div>
+                <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Inicio temporada
+                </label>
+                <SynqDateField
+                  value={config.startDate}
+                  onChange={(startDate) => updateConfig({ startDate })}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Fin temporada
+                </label>
+                <SynqDateField
+                  value={config.endDate}
+                  onChange={(endDate) => updateConfig({ endDate })}
+                />
+              </div>
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -292,18 +315,22 @@ export function PeriodizationPlanogram() {
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Tareas por sesión
+                Estructura por sesión
               </label>
-              <Input
-                type="number"
-                min={1}
-                max={8}
-                value={config.tasksPerSession}
-                onChange={(event) =>
-                  updateConfig({ tasksPerSession: Number(event.target.value) || 4 })
+              <SynqSelect
+                value={String(config.mainTasksPerSession)}
+                onChange={(value) =>
+                  updateConfig({ mainTasksPerSession: Number(value) as MainTasksPerSession })
                 }
-                className="border-primary/30 bg-background/80"
+                options={[
+                  { value: '3', label: 'Estándar — 3 tareas principales' },
+                  { value: '2', label: 'Corta — 2 tareas principales' },
+                ]}
               />
+              <p className="mt-1.5 text-[11px] text-muted-foreground">
+                {sessionStructureSummary(config.mainTasksPerSession)}. Si eliges sesión corta, la tercera
+                principal no aparece en la sesión.
+              </p>
             </div>
           </div>
 
@@ -412,8 +439,9 @@ export function PeriodizationPlanogram() {
               />
             ) : null}
             <p className="mt-4 text-xs text-muted-foreground">
-              Fase A: estructura automática por mes y semana. En la siguiente fase enlazaremos cada
-              MCC con microciclos reales, sesiones y ejercicios.
+              Fase A: estructura automática por mes y semana. Plantilla de sesión alineada con microciclos
+              (calentamiento + principales + vuelta a la calma). En la siguiente fase enlazaremos cada MCC
+              con microciclos reales y ejercicios.
             </p>
           </CardContent>
         </Card>

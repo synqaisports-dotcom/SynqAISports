@@ -1,7 +1,14 @@
 import type { CanteraCategorySlug } from '@/lib/cantera-categories';
+import { defaultSlotsTemplate, type SlotType } from '@/lib/methodology';
 
 export type MacroCount = 1 | 2 | 3;
 export type SessionsPerMicro = 2 | 3;
+export type MainTasksPerSession = 2 | 3;
+
+export type SessionSlotTemplate = {
+  slot_type: SlotType;
+  order_index: number;
+};
 
 export type PeriodizationConfig = {
   categorySlug: CanteraCategorySlug;
@@ -10,9 +17,28 @@ export type PeriodizationConfig = {
   endDate: string;
   macroCount: MacroCount;
   sessionsPerMicro: SessionsPerMicro;
-  tasksPerSession: number;
+  mainTasksPerSession: MainTasksPerSession;
   macroNames: string[];
 };
+
+export function sessionSlotsForMainCount(mainCount: MainTasksPerSession): SessionSlotTemplate[] {
+  if (mainCount === 3) return defaultSlotsTemplate();
+
+  return [
+    { slot_type: 'warmup', order_index: 0 },
+    { slot_type: 'main', order_index: 1 },
+    { slot_type: 'main', order_index: 2 },
+    { slot_type: 'cooldown', order_index: 3 },
+  ];
+}
+
+export function tasksPerSessionFromMainCount(mainCount: MainTasksPerSession): number {
+  return sessionSlotsForMainCount(mainCount).length;
+}
+
+export function sessionStructureSummary(mainCount: MainTasksPerSession): string {
+  return `1 calent. + ${mainCount} princ. + vuelta calma`;
+}
 
 export type MicrocycleWeek = {
   id: string;
@@ -236,7 +262,7 @@ export function defaultPeriodizationConfig(
     endDate: '2019-01-31',
     macroCount: 1,
     sessionsPerMicro: 3,
-    tasksPerSession: 4,
+    mainTasksPerSession: 3,
     macroNames: [...DEFAULT_MACRO_NAMES[1]],
   };
 }
@@ -280,7 +306,7 @@ export function buildPeriodizationPlan(config: PeriodizationConfig): Periodizati
           weekStart: formatISO(week.weekStart),
           weekEnd: formatISO(week.weekEnd),
           sessionsCount,
-          tasksCount: sessionsCount * config.tasksPerSession,
+          tasksCount: sessionsCount * tasksPerSessionFromMainCount(config.mainTasksPerSession),
         };
       });
 
