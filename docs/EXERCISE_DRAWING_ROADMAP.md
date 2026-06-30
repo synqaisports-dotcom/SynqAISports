@@ -10,8 +10,9 @@ Vídeo de referencia del club: [Tutorial Camelot Tarea - OnFormación | FFIB-RFE
 
 | Camelot / OnFormación | SynqAI (v3) |
 |----------------------|-------------|
-| Pantalla completa para dibujar | `ExerciseDrawingStudio` — viewport 100 %, campo = área de pintar |
-| Botoneras flotantes materiales / herramientas | Docks inferiores «Material» y «Herramientas» |
+| Pantalla completa para dibujar | `ExerciseDrawingStudio` — campo ~100 % del viewport (Konva) |
+| Botoneras flotantes materiales / herramientas | Hub central; materiales expanden ← izquierda, herramientas → derecha |
+| Selector deporte y formato | Superior derecha: Fútbol / Fútbol sala + F11 / F7 / Medio / Tercio / Sala |
 | Jugadores, conos, balones, porterías | Texturas canvas HD (`drawing-material-assets.ts`) + Konva |
 | Flechas, líneas, curvas, ondas, zonas | `shape-line`, `shape-arrow`, `shape-curve`, `shape-wave`, `shape-rect` |
 | Grosor, discontinua, color | `StrokeStyle` + panel de propiedades flotante |

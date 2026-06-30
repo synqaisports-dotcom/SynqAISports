@@ -6,41 +6,46 @@ type Props = {
   className?: string;
 };
 
-/** Fondo de campo con proporciones reglamentarias (viewBox normalizado 0–100). */
+const GRASS_A = '#1a6b3c';
+const GRASS_B = '#1f7a45';
+const LINE = '#f1f5f9';
+
+/** Preview SVG del campo (ficha, listados, impresión). */
 export function FieldBackground({ template, className }: Props) {
   const { aspectRatio } = FIELD_TEMPLATES[template];
 
   return (
-    <div
-      className={className}
-      style={{ aspectRatio }}
-    >
-      <svg
-        viewBox="0 0 100 100"
-        preserveAspectRatio="xMidYMid meet"
-        className="h-full w-full rounded-lg border border-white/15 shadow-inner"
-      >
+    <div className={className} style={{ aspectRatio }}>
+      <svg viewBox="0 0 105 68" preserveAspectRatio="xMidYMid meet" className="h-full w-full rounded-md shadow-lg">
         <defs>
-          <linearGradient id="pitch-grass" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#1a5c38" />
-            <stop offset="50%" stopColor="#1e6b42" />
-            <stop offset="100%" stopColor="#165a34" />
+          <linearGradient id="pitch-vignette" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#000" stopOpacity="0.08" />
+            <stop offset="100%" stopColor="#000" stopOpacity="0.18" />
           </linearGradient>
-          <pattern id="pitch-stripes" width="10" height="100" patternUnits="userSpaceOnUse">
-            <rect width="5" height="100" fill="#1a5c38" opacity="0.35" />
-          </pattern>
         </defs>
 
         {template === 'blank' ? (
-          <rect width="100" height="100" fill="#1e293b" />
+          <rect width="105" height="68" fill="#1e293b" />
         ) : (
           <>
-            <rect width="100" height="100" fill="url(#pitch-grass)" />
-            <rect width="100" height="100" fill="url(#pitch-stripes)" />
-            {template === 'football-full' && <FullPitchMarkings />}
-            {template === 'football-half' && <HalfPitchMarkings />}
-            {template === 'football-third' && <ThirdPitchMarkings />}
-            {template === 'futsal' && <FutsalMarkings />}
+            <rect width="105" height="68" fill={GRASS_A} />
+            {Array.from({ length: 12 }).map((_, i) => (
+              <rect
+                key={i}
+                x={(105 / 12) * i}
+                y={0}
+                width={105 / 12}
+                height={68}
+                fill={i % 2 === 0 ? GRASS_A : GRASS_B}
+                opacity={0.9}
+              />
+            ))}
+            <rect width="105" height="68" fill="url(#pitch-vignette)" />
+            {template === 'football-full' && <F11Svg />}
+            {template === 'football-f7' && <F7Svg />}
+            {template === 'football-half' && <HalfSvg />}
+            {template === 'football-third' && <ThirdSvg />}
+            {template === 'futsal' && <FutsalSvg />}
           </>
         )}
       </svg>
@@ -48,66 +53,74 @@ export function FieldBackground({ template, className }: Props) {
   );
 }
 
-function lineProps(stroke = '#e2e8f0', width = 0.35) {
-  return { stroke, strokeWidth: width, fill: 'none', opacity: 0.85 };
+function line(strokeWidth = 0.35) {
+  return { stroke: LINE, strokeWidth, fill: 'none' as const };
 }
 
-function FullPitchMarkings() {
-  const p = lineProps();
+function F11Svg() {
+  const p = line();
   return (
-    <g>
-      <rect x="3" y="3" width="94" height="94" {...p} />
-      <line x1="50" y1="3" x2="50" y2="97" {...p} />
-      <circle cx="50" cy="50" r="9" {...p} />
-      <circle cx="50" cy="50" r="0.8" fill="#e2e8f0" />
-      <rect x="3" y="22" width="16" height="56" {...p} />
-      <rect x="81" y="22" width="16" height="56" {...p} />
-      <rect x="3" y="34" width="6" height="32" {...p} />
-      <rect x="91" y="34" width="6" height="32" {...p} />
-      <circle cx="11" cy="50" r="0.6" fill="#e2e8f0" />
-      <circle cx="89" cy="50" r="0.6" fill="#e2e8f0" />
-      <path d="M 3 38 A 6 6 0 0 0 3 62" {...p} />
-      <path d="M 97 38 A 6 6 0 0 1 97 62" {...p} />
-      <circle cx="3" cy="50" r="1.2" fill="none" stroke="#e2e8f0" strokeWidth="0.25" />
-      <circle cx="97" cy="50" r="1.2" fill="none" stroke="#e2e8f0" strokeWidth="0.25" />
+    <g transform="translate(3 3) scale(0.943)">
+      <rect x="0" y="0" width="105" height="68" {...p} />
+      <line x1="52.5" y1="0" x2="52.5" y2="68" {...p} />
+      <circle cx="52.5" cy="34" r="9.15" {...p} />
+      <circle cx="52.5" cy="34" r="0.5" fill={LINE} />
+      <rect x="0" y="13.84" width="16.5" height="40.32" {...p} />
+      <rect x="88.5" y="13.84" width="16.5" height="40.32" {...p} />
+      <rect x="0" y="24.84" width="5.5" height="18.32" {...p} />
+      <rect x="99.5" y="24.84" width="5.5" height="18.32" {...p} />
+      <circle cx="11" cy="34" r="0.45" fill={LINE} />
+      <circle cx="94" cy="34" r="0.45" fill={LINE} />
     </g>
   );
 }
 
-function HalfPitchMarkings() {
-  const p = lineProps();
+function F7Svg() {
+  const p = line(0.4);
   return (
-    <g>
-      <rect x="3" y="3" width="94" height="94" {...p} />
-      <line x1="3" y1="50" x2="97" y2="50" {...p} />
-      <circle cx="50" cy="50" r="9" {...p} />
-      <rect x="55" y="22" width="42" height="56" {...p} />
-      <rect x="85" y="34" width="12" height="32" {...p} />
-      <circle cx="89" cy="50" r="0.6" fill="#e2e8f0" />
+    <g transform="translate(4 4) scale(0.88)">
+      <rect x="0" y="0" width="60" height="40" {...p} />
+      <line x1="30" y1="0" x2="30" y2="40" {...p} />
+      <circle cx="30" cy="20" r="7" {...p} />
+      <rect x="0" y="9" width="8" height="22" {...p} />
+      <rect x="52" y="9" width="8" height="22" {...p} />
     </g>
   );
 }
 
-function ThirdPitchMarkings() {
-  const p = lineProps();
+function HalfSvg() {
+  const p = line();
   return (
-    <g>
-      <rect x="3" y="3" width="94" height="94" {...p} />
-      <line x1="50" y1="3" x2="50" y2="97" {...p} strokeDasharray="2 1.5" />
-      <rect x="55" y="25" width="38" height="50" {...p} strokeDasharray="1.5 1" />
+    <g transform="translate(3 3) scale(0.943)">
+      <rect x="0" y="0" width="52.5" height="68" {...p} />
+      <line x1="0" y1="34" x2="52.5" y2="34" {...p} />
+      <circle cx="26.25" cy="34" r="9.15" {...p} />
+      <rect x="36" y="13.84" width="16.5" height="40.32" {...p} />
+      <rect x="46.5" y="24.84" width="5.5" height="18.32" {...p} />
     </g>
   );
 }
 
-function FutsalMarkings() {
-  const p = lineProps('#f8fafc', 0.4);
+function ThirdSvg() {
+  const p = line();
   return (
-    <g>
-      <rect x="4" y="8" width="92" height="84" {...p} />
-      <line x1="50" y1="8" x2="50" y2="92" {...p} />
-      <circle cx="50" cy="50" r="8" {...p} />
-      <rect x="4" y="30" width="12" height="40" {...p} />
-      <rect x="84" y="30" width="12" height="40" {...p} />
+    <g transform="translate(3 3) scale(0.943)">
+      <rect x="0" y="0" width="35" height="68" {...p} />
+      <line x1="17.5" y1="0" x2="17.5" y2="68" {...p} strokeDasharray="2 1.5" />
+      <rect x="17.5" y="14" width="17.5" height="40" {...p} strokeDasharray="1.5 1" />
+    </g>
+  );
+}
+
+function FutsalSvg() {
+  const p = line(0.4);
+  return (
+    <g transform="translate(2 6) scale(0.95)">
+      <rect x="0" y="0" width="40" height="20" {...p} />
+      <line x1="20" y1="0" x2="20" y2="20" {...p} />
+      <circle cx="20" cy="10" r="4.5" {...p} />
+      <rect x="0" y="5" width="3" height="10" {...p} />
+      <rect x="37" y="5" width="3" height="10" {...p} />
     </g>
   );
 }

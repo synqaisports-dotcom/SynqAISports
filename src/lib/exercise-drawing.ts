@@ -9,21 +9,73 @@ export const DRAWING_DOC_VERSION = 3 as const;
 
 export type FieldTemplate =
   | 'football-full'
+  | 'football-f7'
   | 'football-half'
   | 'football-third'
   | 'futsal'
   | 'blank';
 
+export type SportKind = 'football' | 'futsal';
+
+export const SPORT_OPTIONS: Record<SportKind, { label: string; fields: FieldTemplate[] }> = {
+  football: {
+    label: 'Fútbol',
+    fields: ['football-full', 'football-f7', 'football-half', 'football-third'],
+  },
+  futsal: {
+    label: 'Fútbol sala',
+    fields: ['futsal'],
+  },
+};
+
+export const FIELD_FORMAT_SHORT: Record<FieldTemplate, string> = {
+  'football-full': 'F11',
+  'football-f7': 'F7',
+  'football-half': 'Medio',
+  'football-third': 'Tercio',
+  futsal: 'Sala',
+  blank: 'Libre',
+};
+
 export const FIELD_TEMPLATES: Record<
   FieldTemplate,
-  { label: string; aspectRatio: number; description: string }
+  { label: string; aspectRatio: number; description: string; sport: SportKind }
 > = {
-  'football-full': { label: 'Campo completo', aspectRatio: 105 / 68, description: '105 × 68 m' },
-  'football-half': { label: 'Medio campo', aspectRatio: 52.5 / 68, description: 'Horizontal' },
-  'football-third': { label: 'Tercio', aspectRatio: 35 / 68, description: 'Zona reducida' },
-  futsal: { label: 'Fútbol sala', aspectRatio: 40 / 20, description: '40 × 20 m' },
-  blank: { label: 'Lienzo libre', aspectRatio: 4 / 3, description: 'Libre' },
+  'football-full': {
+    label: 'F11 — Campo completo',
+    aspectRatio: 105 / 68,
+    description: '105 × 68 m',
+    sport: 'football',
+  },
+  'football-f7': {
+    label: 'F7 — Campo reducido',
+    aspectRatio: 60 / 40,
+    description: '60 × 40 m',
+    sport: 'football',
+  },
+  'football-half': {
+    label: 'Medio campo',
+    aspectRatio: 52.5 / 68,
+    description: '52,5 × 68 m',
+    sport: 'football',
+  },
+  'football-third': {
+    label: 'Tercio de campo',
+    aspectRatio: 35 / 68,
+    description: '35 × 68 m',
+    sport: 'football',
+  },
+  futsal: { label: 'Fútbol sala', aspectRatio: 40 / 20, description: '40 × 20 m', sport: 'futsal' },
+  blank: { label: 'Lienzo libre', aspectRatio: 16 / 10, description: 'Libre', sport: 'football' },
 };
+
+export function sportForField(field: FieldTemplate): SportKind {
+  return FIELD_TEMPLATES[field]?.sport ?? 'football';
+}
+
+export function defaultFieldForSport(sport: SportKind): FieldTemplate {
+  return sport === 'futsal' ? 'futsal' : 'football-full';
+}
 
 export type StrokeStyle = {
   color: string;
@@ -329,11 +381,11 @@ export function computeFieldRect(
   stageWidth: number,
   stageHeight: number,
   field: FieldTemplate,
-  padding = 24
+  padding = 4
 ): FieldRect {
   const aspect = FIELD_TEMPLATES[field].aspectRatio;
-  const maxW = stageWidth - padding * 2;
-  const maxH = stageHeight - padding * 2;
+  const maxW = Math.max(1, stageWidth - padding * 2);
+  const maxH = Math.max(1, stageHeight - padding * 2);
   let width = maxW;
   let height = width / aspect;
   if (height > maxH) {

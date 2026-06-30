@@ -16,7 +16,7 @@ import {
   X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { FieldBackground } from '@/components/methodology/drawing/FieldBackground';
+import { KonvaPitchLayer } from '@/components/methodology/drawing/KonvaPitchLayer';
 import {
   MATERIAL_CATALOG,
   getMaterialImage,
@@ -24,20 +24,24 @@ import {
 } from '@/lib/drawing-material-assets';
 import {
   DEFAULT_STROKE,
-  FIELD_TEMPLATES,
+  FIELD_FORMAT_SHORT,
+  SPORT_OPTIONS,
   type DrawingElement,
   type ExerciseDrawingDocument,
   type FieldTemplate,
+  type SportKind,
   type StrokeStyle,
   type StudioTool,
   computeFieldRect,
   defaultDraftForTool,
+  defaultFieldForSport,
   isMaterialTool,
   isShapeTool,
   normToPx,
   parseExerciseDrawing,
   pxToNorm,
   serializeExerciseDrawing,
+  sportForField,
   wavePathPoints,
 } from '@/lib/exercise-drawing';
 import { cn } from '@/lib/utils';
@@ -65,20 +69,26 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
   const transformerRef = useRef<Konva.Transformer>(null);
   const [size, setSize] = useState({ width: 1200, height: 800 });
   const [doc, setDoc] = useState<ExerciseDrawingDocument>(() => parseExerciseDrawing(initialData));
+  const [sport, setSport] = useState<SportKind>(() => sportForField(parseExerciseDrawing(initialData).field));
   const [tool, setTool] = useState<StudioTool>('select');
   const [stroke, setStroke] = useState<StrokeStyle>(DEFAULT_STROKE);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draft, setDraft] = useState<DrawingElement | null>(null);
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
   const [materialImages, setMaterialImages] = useState<Partial<Record<MaterialKind, HTMLImageElement>>>({});
-  const [activeDock, setActiveDock] = useState<'tools' | 'materials' | null>('tools');
+  const [materialsOpen, setMaterialsOpen] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(true);
 
   useEffect(() => {
     if (!open) return;
-    setDoc(parseExerciseDrawing(initialData));
+    const parsed = parseExerciseDrawing(initialData);
+    setDoc(parsed);
+    setSport(sportForField(parsed.field));
     setSelectedId(null);
     setDraft(null);
     setTool('select');
+    setToolsOpen(true);
+    setMaterialsOpen(false);
   }, [open, initialData]);
 
   useEffect(() => {
@@ -98,12 +108,10 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     return () => ro.disconnect();
   }, [open]);
 
-  const fieldRect = useMemo(
-    () => computeFieldRect(size.width, size.height, doc.field, 32),
-    [size, doc.field]
-  );
+  const fieldRect = useMemo(() => computeFieldRect(size.width, size.height, doc.field, 4), [size, doc.field]);
 
   const selected = doc.elements.find((el) => el.id === selectedId) ?? null;
+  const fieldOptions = SPORT_OPTIONS[sport].fields;
 
   const attachTransformer = useCallback(
     (node: Konva.Node | null) => {
@@ -125,7 +133,8 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     return pxToNorm(pos.x, pos.y, fieldRect);
   };
 
-  const handleStageMouseDown = (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
+  const handleStagePointerDown = (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
+    if ('touches' in e.evt) e.evt.preventDefault();
     const stage = e.target.getStage();
     if (!stage) return;
     const clickedOnEmpty = e.target === stage || e.target.name() === 'field-hit';
@@ -148,12 +157,11 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
 
     if (isShapeTool(tool)) {
       setDragStart(norm);
-      const el = defaultDraftForTool(tool, norm.x, norm.y, norm.x, norm.y, stroke);
-      setDraft(el);
+      setDraft(defaultDraftForTool(tool, norm.x, norm.y, norm.x, norm.y, stroke));
     }
   };
 
-  const handleStageMouseMove = (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
+  const handleStagePointerMove = (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
     if (!dragStart || !draft) return;
     const stage = e.target.getStage();
     if (!stage) return;
@@ -183,7 +191,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     }
   };
 
-  const handleStageMouseUp = () => {
+  const handleStagePointerUp = () => {
     if (draft) {
       setDoc((d) => ({ ...d, elements: [...d.elements, draft] }));
       setSelectedId(draft.id);
@@ -206,9 +214,16 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     setSelectedId(null);
   };
 
+  const handleSportChange = (next: SportKind) => {
+    setSport(next);
+    const field = defaultFieldForSport(next);
+    setDoc((d) => ({ ...d, field }));
+  };
+
   if (!open) return null;
 
   const dashArray = (s: StrokeStyle) => (s.dash ? [10, 6] : undefined);
+  const cursorClass = tool === 'select' ? 'cursor-default' : 'cursor-crosshair';
 
   const renderElement = (element: DrawingElement, isPreview = false) => {
     const key = isPreview ? `draft-${element.id}` : element.id;
@@ -248,7 +263,6 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
       const p1 = normToPx(element.x1, element.y1, fieldRect);
       const p2 = normToPx(element.x2, element.y2, fieldRect);
       const pc = normToPx(element.cx, element.cy, fieldRect);
-      const path = `M ${p1.x} ${p1.y} Q ${pc.x} ${pc.y} ${p2.x} ${p2.y}`;
       return (
         <Group key={key} onClick={() => !isPreview && setSelectedId(element.id)}>
           <Line
@@ -279,8 +293,8 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               stroke="#0f172a"
               strokeWidth={2}
               draggable
-              onDragMove={(e) => {
-                const n = pxToNorm(e.target.x(), e.target.y(), fieldRect);
+              onDragMove={(ev) => {
+                const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
                 updateElement(element.id, { cx: n.x, cy: n.y });
               }}
             />
@@ -320,8 +334,6 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           width={w}
           height={h}
           rotation={element.rotation}
-          offsetX={0}
-          offsetY={0}
           fill={element.fill}
           opacity={element.fillOpacity}
           stroke={element.style.color}
@@ -329,12 +341,12 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           dash={dashArray(element.style)}
           draggable={tool === 'select'}
           onClick={() => setSelectedId(element.id)}
-          onDragEnd={(e) => {
-            const n = pxToNorm(e.target.x(), e.target.y(), fieldRect);
+          onDragEnd={(ev) => {
+            const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
             updateElement(element.id, { x: n.x, y: n.y });
           }}
-          onTransformEnd={(e) => {
-            const node = e.target;
+          onTransformEnd={(ev) => {
+            const node = ev.target;
             const n = pxToNorm(node.x(), node.y(), fieldRect);
             updateElement(element.id, {
               x: n.x,
@@ -356,7 +368,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     if (element.type === 'material') {
       const img = materialImages[element.material];
       const p = normToPx(element.x, element.y, fieldRect);
-      const scale = element.scale * (fieldRect.width * 0.09);
+      const scale = element.scale * (fieldRect.width * 0.075);
       return (
         <Group
           key={key}
@@ -366,12 +378,12 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           rotation={element.rotation}
           draggable={tool === 'select'}
           onClick={() => setSelectedId(element.id)}
-          onDragEnd={(e) => {
-            const n = pxToNorm(e.target.x(), e.target.y(), fieldRect);
+          onDragEnd={(ev) => {
+            const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
             updateElement(element.id, { x: n.x, y: n.y });
           }}
-          onTransformEnd={(e) => {
-            const node = e.target;
+          onTransformEnd={(ev) => {
+            const node = ev.target;
             const n = pxToNorm(node.x(), node.y(), fieldRect);
             updateElement(element.id, {
               x: n.x,
@@ -400,7 +412,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
 
   const renderAnchors = () => {
     if (!selected || tool !== 'select') return null;
-    if (selected.type === 'shape-line') {
+    if (selected.type === 'shape-line' || selected.type === 'shape-wave' || selected.type === 'shape-curve') {
       const anchors = [
         { role: 'start', x: selected.x1, y: selected.y1 },
         { role: 'end', x: selected.x2, y: selected.y2 },
@@ -417,34 +429,8 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             stroke="#0f172a"
             strokeWidth={2}
             draggable
-            onDragMove={(e) => {
-              const n = pxToNorm(e.target.x(), e.target.y(), fieldRect);
-              if (a.role === 'start') updateElement(selected.id, { x1: n.x, y1: n.y });
-              else updateElement(selected.id, { x2: n.x, y2: n.y });
-            }}
-          />
-        );
-      });
-    }
-    if (selected.type === 'shape-wave' || selected.type === 'shape-curve') {
-      const anchors = [
-        { role: 'start', x: selected.x1, y: selected.y1 },
-        { role: 'end', x: selected.x2, y: selected.y2 },
-      ];
-      return anchors.map((a) => {
-        const p = normToPx(a.x, a.y, fieldRect);
-        return (
-          <Circle
-            key={a.role}
-            x={p.x}
-            y={p.y}
-            radius={9}
-            fill="#22d3ee"
-            stroke="#0f172a"
-            strokeWidth={2}
-            draggable
-            onDragMove={(e) => {
-              const n = pxToNorm(e.target.x(), e.target.y(), fieldRect);
+            onDragMove={(ev) => {
+              const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
               if (a.role === 'start') updateElement(selected.id, { x1: n.x, y1: n.y });
               else updateElement(selected.id, { x2: n.x, y2: n.y });
             }}
@@ -456,69 +442,22 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex flex-col bg-[#070b14] text-foreground">
-      <header className="flex shrink-0 items-center justify-between border-b border-white/10 px-4 py-2.5 backdrop-blur-md">
-        <div className="flex items-center gap-3">
-          <p className="text-sm font-semibold tracking-wide text-primary">Pizarra SynqAI</p>
-          <select
-            value={doc.field}
-            onChange={(e) => setDoc((d) => ({ ...d, field: e.target.value as FieldTemplate }))}
-            className="rounded-lg border border-white/15 bg-white/5 px-2 py-1 text-xs"
-          >
-            {(Object.keys(FIELD_TEMPLATES) as FieldTemplate[]).map((key) => (
-              <option key={key} value={key}>
-                {FIELD_TEMPLATES[key].label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            className="gap-1.5"
-            onClick={() => {
-              onSave(serializeExerciseDrawing(doc));
-              onClose();
-            }}
-          >
-            <Check className="size-4" />
-            Guardar
-          </Button>
-          <Button type="button" variant="ghost" size="icon" onClick={onClose}>
-            <X className="size-4" />
-          </Button>
-        </div>
-      </header>
-
-      <div ref={containerRef} className="relative min-h-0 flex-1 overflow-hidden">
-        <div
-          className="pointer-events-none absolute"
-          style={{
-            left: fieldRect.x,
-            top: fieldRect.y,
-            width: fieldRect.width,
-            height: fieldRect.height,
-          }}
-        >
-          <FieldBackground template={doc.field} className="h-full w-full shadow-2xl" />
-        </div>
-
+    <div className="fixed inset-0 z-[200] overflow-hidden bg-[#060a12] text-foreground">
+      <div ref={containerRef} className="absolute inset-0 touch-none">
         <Stage
           width={size.width}
           height={size.height}
-          onMouseDown={handleStageMouseDown}
-          onMousemove={handleStageMouseMove}
-          onMouseup={handleStageMouseUp}
-          onTouchStart={handleStageMouseDown}
-          onTouchMove={handleStageMouseMove}
-          onTouchEnd={handleStageMouseUp}
-          className="absolute inset-0 cursor-crosshair"
+          onMouseDown={handleStagePointerDown}
+          onMousemove={handleStagePointerMove}
+          onMouseup={handleStagePointerUp}
+          onTouchStart={handleStagePointerDown}
+          onTouchMove={handleStagePointerMove}
+          onTouchEnd={handleStagePointerUp}
+          className={cn('absolute inset-0', cursorClass)}
         >
           <Layer>
+            <Rect x={0} y={0} width={size.width} height={size.height} fill="#060a12" listening={false} />
+            <KonvaPitchLayer rect={fieldRect} template={doc.field} />
             <Rect
               name="field-hit"
               x={fieldRect.x}
@@ -542,13 +481,73 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
         </Stage>
       </div>
 
-      {/* Propiedades flotantes — formas */}
+      {/* Cerrar — superior izquierda */}
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute left-4 top-4 z-40 flex size-10 items-center justify-center rounded-full border border-white/15 bg-black/60 text-muted-foreground shadow-xl backdrop-blur-xl transition-colors hover:border-white/30 hover:text-foreground"
+        aria-label="Cerrar"
+      >
+        <X className="size-4" />
+      </button>
+
+      {/* Controles — superior derecha */}
+      <div className="absolute right-4 top-4 z-40 flex max-w-[min(92vw,640px)] flex-wrap items-center justify-end gap-2">
+        <div className="flex rounded-full border border-white/15 bg-black/65 p-0.5 shadow-xl backdrop-blur-xl">
+          {(Object.keys(SPORT_OPTIONS) as SportKind[]).map((key) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => handleSportChange(key)}
+              className={cn(
+                'rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors',
+                sport === key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              {SPORT_OPTIONS[key].label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap justify-end gap-1 rounded-2xl border border-white/15 bg-black/65 px-2 py-1.5 shadow-xl backdrop-blur-xl">
+          {fieldOptions.map((field) => (
+            <button
+              key={field}
+              type="button"
+              onClick={() => setDoc((d) => ({ ...d, field }))}
+              className={cn(
+                'rounded-lg px-2.5 py-1 text-xs font-medium transition-colors',
+                doc.field === field
+                  ? 'bg-white/15 text-primary'
+                  : 'text-muted-foreground hover:bg-white/5 hover:text-foreground'
+              )}
+            >
+              {FIELD_FORMAT_SHORT[field]}
+            </button>
+          ))}
+        </div>
+
+        <Button
+          type="button"
+          size="sm"
+          className="h-9 gap-1.5 rounded-full px-4 shadow-xl"
+          onClick={() => {
+            onSave(serializeExerciseDrawing(doc));
+            onClose();
+          }}
+        >
+          <Check className="size-4" />
+          Guardar
+        </Button>
+      </div>
+
+      {/* Propiedades selección */}
       {selected &&
       (selected.type === 'shape-line' ||
         selected.type === 'shape-curve' ||
         selected.type === 'shape-wave' ||
         selected.type === 'shape-rect') ? (
-        <div className="pointer-events-none absolute bottom-28 left-1/2 z-20 flex max-w-[95vw] flex-wrap justify-center gap-3 rounded-2xl border border-white/15 bg-black/70 px-4 py-2.5 shadow-2xl backdrop-blur-xl">
+        <div className="pointer-events-none absolute bottom-[5.5rem] left-1/2 z-30 flex max-w-[95vw] -translate-x-1/2 flex-wrap justify-center gap-3 rounded-2xl border border-white/15 bg-black/75 px-4 py-2.5 shadow-2xl backdrop-blur-xl">
           <label className="pointer-events-auto flex items-center gap-2 text-xs text-muted-foreground">
             Grosor
             <input
@@ -556,10 +555,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               min={1}
               max={8}
               value={selected.style.width}
-              onChange={(e) => {
-                const width = Number(e.target.value);
-                updateElement(selected.id, { style: { ...selected.style, width } });
-              }}
+              onChange={(e) => updateElement(selected.id, { style: { ...selected.style, width: Number(e.target.value) } })}
               className="w-24"
             />
           </label>
@@ -567,9 +563,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             <input
               type="checkbox"
               checked={selected.style.dash}
-              onChange={(e) => {
-                updateElement(selected.id, { style: { ...selected.style, dash: e.target.checked } });
-              }}
+              onChange={(e) => updateElement(selected.id, { style: { ...selected.style, dash: e.target.checked } })}
             />
             Discontinua
           </label>
@@ -593,16 +587,6 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               </label>
             </>
           ) : null}
-          {selected.type === 'shape-curve' ? (
-            <label className="pointer-events-auto flex items-center gap-1.5 text-xs text-muted-foreground">
-              <input
-                type="checkbox"
-                checked={selected.arrowEnd}
-                onChange={(e) => updateElement(selected.id, { arrowEnd: e.target.checked })}
-              />
-              Punta fin
-            </label>
-          ) : null}
           <div className="pointer-events-auto flex gap-1">
             {COLORS.map((c) => (
               <button
@@ -610,9 +594,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
                 type="button"
                 className="size-6 rounded-full border border-white/20"
                 style={{ backgroundColor: c }}
-                onClick={() => {
-                  updateElement(selected.id, { style: { ...selected.style, color: c } });
-                }}
+                onClick={() => updateElement(selected.id, { style: { ...selected.style, color: c } })}
               />
             ))}
           </div>
@@ -622,9 +604,8 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
         </div>
       ) : null}
 
-      {/* Propiedades flotantes — material */}
       {selected && selected.type === 'material' ? (
-        <div className="pointer-events-none absolute bottom-28 left-1/2 z-20 flex max-w-[95vw] flex-wrap justify-center gap-3 rounded-2xl border border-white/15 bg-black/70 px-4 py-2.5 shadow-2xl backdrop-blur-xl">
+        <div className="pointer-events-none absolute bottom-[5.5rem] left-1/2 z-30 flex max-w-[95vw] -translate-x-1/2 flex-wrap justify-center gap-3 rounded-2xl border border-white/15 bg-black/75 px-4 py-2.5 shadow-2xl backdrop-blur-xl">
           <label className="pointer-events-auto flex items-center gap-2 text-xs text-muted-foreground">
             Escala
             <input
@@ -666,38 +647,86 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
         </div>
       ) : null}
 
-      {/* Botoneras flotantes */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-4 z-30 flex justify-center gap-3 px-4">
-        <div className="pointer-events-auto flex max-w-[95vw] flex-col gap-2">
-          <div className="flex justify-center gap-2">
-            <button
-              type="button"
-              onClick={() => setActiveDock(activeDock === 'materials' ? null : 'materials')}
-              className={cn(
-                'rounded-full border px-5 py-2.5 text-sm font-medium shadow-xl backdrop-blur-xl transition-all',
-                activeDock === 'materials'
-                  ? 'border-primary bg-primary/20 text-primary'
-                  : 'border-white/15 bg-black/75 text-foreground hover:border-primary/40'
-              )}
-            >
-              Material
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveDock(activeDock === 'tools' ? null : 'tools')}
-              className={cn(
-                'rounded-full border px-5 py-2.5 text-sm font-medium shadow-xl backdrop-blur-xl transition-all',
-                activeDock === 'tools'
-                  ? 'border-primary bg-primary/20 text-primary'
-                  : 'border-white/15 bg-black/75 text-foreground hover:border-primary/40'
-              )}
-            >
-              Herramientas
-            </button>
+      {/* Botoneras expandibles desde el centro */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-5 z-40 flex justify-center px-3">
+        <div className="pointer-events-auto flex max-w-[98vw] items-end justify-center">
+          {/* Materiales → expande a la izquierda */}
+          <div
+            className={cn(
+              'origin-right overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]',
+              materialsOpen ? 'mr-2 max-h-56 w-[min(46vw,500px)] opacity-100' : 'mr-0 max-h-0 w-0 opacity-0'
+            )}
+          >
+            <div className="rounded-2xl border border-white/15 bg-black/80 p-3 shadow-2xl backdrop-blur-xl">
+              <p className="mb-2 text-center text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                Material
+              </p>
+              <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-5">
+                {MATERIAL_CATALOG.map(({ kind, label }) => (
+                  <button
+                    key={kind}
+                    type="button"
+                    onClick={() => {
+                      setTool(kind);
+                      setMaterialsOpen(false);
+                    }}
+                    className={cn(
+                      'flex flex-col items-center gap-1 rounded-xl border px-1.5 py-2 text-[9px] transition-colors',
+                      tool === kind
+                        ? 'border-primary bg-primary/15 text-primary'
+                        : 'border-white/10 bg-white/5 hover:border-primary/30'
+                    )}
+                  >
+                    {materialImages[kind] ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={materialImages[kind]!.src} alt={label} className="size-9 object-contain" />
+                    ) : (
+                      <BoxSelect className="size-7 opacity-40" />
+                    )}
+                    <span className="truncate">{label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
-          {activeDock === 'tools' ? (
-            <div className="flex flex-col items-center gap-2 rounded-2xl border border-white/15 bg-black/80 p-2 shadow-2xl backdrop-blur-xl">
+          {/* Hub central */}
+          <div className="flex shrink-0 flex-col items-center">
+            <div className="flex overflow-hidden rounded-full border border-white/20 bg-black/80 shadow-2xl backdrop-blur-xl">
+              <button
+                type="button"
+                onClick={() => setMaterialsOpen((v) => !v)}
+                className={cn(
+                  'border-r border-white/15 px-5 py-2.5 text-sm font-medium transition-colors',
+                  materialsOpen ? 'bg-primary/25 text-primary' : 'text-foreground hover:bg-white/5'
+                )}
+              >
+                Material
+              </button>
+              <button
+                type="button"
+                onClick={() => setToolsOpen((v) => !v)}
+                className={cn(
+                  'px-5 py-2.5 text-sm font-medium transition-colors',
+                  toolsOpen ? 'bg-primary/25 text-primary' : 'text-foreground hover:bg-white/5'
+                )}
+              >
+                Herramientas
+              </button>
+            </div>
+          </div>
+
+          {/* Herramientas → expande a la derecha */}
+          <div
+            className={cn(
+              'origin-left overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]',
+              toolsOpen ? 'ml-2 max-h-56 w-[min(46vw,500px)] opacity-100' : 'ml-0 max-h-0 w-0 opacity-0'
+            )}
+          >
+            <div className="rounded-2xl border border-white/15 bg-black/80 p-3 shadow-2xl backdrop-blur-xl">
+              <p className="mb-2 text-center text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                Dibujo
+              </p>
               <div className="flex flex-wrap justify-center gap-1.5">
                 {SHAPE_TOOLS.map((item) => (
                   <button
@@ -709,7 +738,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
                       setSelectedId(null);
                     }}
                     className={cn(
-                      'flex size-11 items-center justify-center rounded-xl border transition-colors',
+                      'flex size-10 items-center justify-center rounded-xl border transition-colors',
                       tool === item.id
                         ? 'border-primary bg-primary/20 text-primary'
                         : 'border-white/10 bg-white/5 hover:border-primary/30'
@@ -719,7 +748,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
                   </button>
                 ))}
               </div>
-              <div className="flex flex-wrap items-center justify-center gap-3 border-t border-white/10 pt-2 text-xs text-muted-foreground">
+              <div className="mt-2 flex flex-wrap items-center justify-center gap-3 border-t border-white/10 pt-2 text-xs text-muted-foreground">
                 <label className="flex items-center gap-2">
                   Grosor
                   <input
@@ -755,36 +784,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
                 </div>
               </div>
             </div>
-          ) : null}
-
-          {activeDock === 'materials' ? (
-            <div className="flex max-w-3xl flex-wrap justify-center gap-2 rounded-2xl border border-white/15 bg-black/80 p-3 shadow-2xl backdrop-blur-xl">
-              {MATERIAL_CATALOG.map(({ kind, label }) => (
-                <button
-                  key={kind}
-                  type="button"
-                  onClick={() => {
-                    setTool(kind);
-                    setActiveDock(null);
-                  }}
-                  className={cn(
-                    'flex flex-col items-center gap-1 rounded-xl border px-3 py-2 text-[10px] transition-colors',
-                    tool === kind
-                      ? 'border-primary bg-primary/15 text-primary'
-                      : 'border-white/10 bg-white/5 hover:border-primary/30'
-                  )}
-                >
-                  {materialImages[kind] ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={materialImages[kind]!.src} alt={label} className="size-10 object-contain" />
-                  ) : (
-                    <BoxSelect className="size-8 opacity-40" />
-                  )}
-                  {label}
-                </button>
-              ))}
-            </div>
-          ) : null}
+          </div>
         </div>
       </div>
     </div>
