@@ -68,19 +68,36 @@ const SHAPE_TOOLS: { id: StudioTool; label: string; icon: React.ReactNode }[] = 
 
 const COLORS = ['#fbbf24', '#38bdf8', '#f87171', '#4ade80', '#ffffff', '#a78bfa'];
 
-/** Estilo glass compartido en la pizarra */
+/** Anclajes del transformer — 4 esquinas + 4 puntos medios */
+const TRANSFORMER_ANCHORS = [
+  'top-left',
+  'top-center',
+  'top-right',
+  'middle-right',
+  'bottom-right',
+  'bottom-center',
+  'bottom-left',
+  'middle-left',
+] as const;
+
+/** Estilo glass compartido en la pizarra — bordes y textos cyan */
 const GLASS = {
-  panel: 'border border-white/20 bg-white/[0.08] shadow-[0_8px_32px_rgba(0,0,0,0.45)] backdrop-blur-2xl',
-  pill: 'rounded-full border border-white/20 bg-white/[0.08] shadow-[0_8px_32px_rgba(0,0,0,0.45)] backdrop-blur-2xl',
-  btn: 'border border-white/15 bg-white/[0.06] backdrop-blur-md transition-all hover:border-white/30 hover:bg-white/12',
+  panel:
+    'border border-cyan-400/40 bg-cyan-950/20 shadow-[0_8px_32px_rgba(0,0,0,0.45)] backdrop-blur-2xl',
+  pill:
+    'rounded-full border border-cyan-400/40 bg-cyan-950/20 shadow-[0_8px_32px_rgba(0,0,0,0.45)] backdrop-blur-2xl',
+  btn: 'border border-cyan-400/35 bg-cyan-400/[0.07] text-cyan-300 backdrop-blur-md transition-all hover:border-cyan-400/55 hover:bg-cyan-400/12 hover:text-cyan-200',
   btnActive:
-    'border-primary/45 bg-primary/18 text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_0_18px_rgba(34,211,238,0.18)]',
+    'border-cyan-400/80 bg-cyan-400/20 text-cyan-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_0_20px_rgba(34,211,238,0.28)]',
   iconBtn:
-    'flex items-center justify-center rounded-full border border-white/20 bg-white/[0.08] shadow-[0_4px_24px_rgba(0,0,0,0.35)] backdrop-blur-2xl transition-all hover:border-white/35 hover:bg-white/14',
+    'flex items-center justify-center rounded-full border border-cyan-400/45 bg-cyan-400/[0.1] text-cyan-300 shadow-[0_4px_24px_rgba(0,0,0,0.35)] backdrop-blur-2xl transition-all hover:border-cyan-400/65 hover:bg-cyan-400/16 hover:text-cyan-100',
   dockBtn:
-    'flex items-center justify-center rounded-xl border border-white/15 bg-white/[0.06] backdrop-blur-md transition-all hover:border-white/30 hover:bg-white/12',
-  dockBtnActive: 'border-primary/45 bg-primary/18 text-primary shadow-[0_0_16px_rgba(34,211,238,0.2)]',
-  danger: 'border-red-400/35 bg-red-500/12 backdrop-blur-md transition-all hover:border-red-400/50 hover:bg-red-500/22',
+    'flex items-center justify-center rounded-xl border border-cyan-400/35 bg-cyan-400/[0.07] text-cyan-300 backdrop-blur-md transition-all hover:border-cyan-400/55 hover:bg-cyan-400/12 hover:text-cyan-200',
+  dockBtnActive:
+    'border-cyan-400/75 bg-cyan-400/18 text-cyan-100 shadow-[0_0_16px_rgba(34,211,238,0.24)]',
+  danger:
+    'border-red-400/45 bg-red-500/12 text-red-300 backdrop-blur-md transition-all hover:border-red-400/60 hover:bg-red-500/22',
+  label: 'text-xs text-cyan-300/90',
 } as const;
 
 /** Campo a ancho completo, pegado arriba; controles flotan encima */
@@ -486,7 +503,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
   const toolsPanelW = 'min(92vw, 480px)';
 
   const studio = (
-    <div className="fixed inset-0 z-[9999] overflow-hidden bg-[#060a12] text-foreground">
+    <div className="fixed inset-0 z-[9999] overflow-hidden bg-[#060a12] text-cyan-200">
       <div ref={containerRef} className="absolute inset-0 touch-none">
         <Stage
           width={size.width}
@@ -519,7 +536,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             <Transformer
               ref={transformerRef}
               rotateEnabled
-              enabledAnchors={['top-left', 'top-right', 'bottom-left', 'bottom-right']}
+              enabledAnchors={[...TRANSFORMER_ANCHORS]}
               borderStroke="#22d3ee"
               anchorStroke="#22d3ee"
               anchorFill="#67e8f9"
@@ -532,7 +549,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
       <button
         type="button"
         onClick={onClose}
-        className={cn('absolute left-4 top-4 z-40 size-10 text-muted-foreground hover:text-foreground', GLASS.iconBtn)}
+        className={cn('absolute left-4 top-4 z-40 size-10', GLASS.iconBtn)}
         aria-label="Cerrar"
       >
         <X className="size-4" />
@@ -548,7 +565,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               onClick={() => handleSportChange(key)}
               className={cn(
                 'rounded-full px-3.5 py-1.5 text-xs font-medium transition-all',
-                sport === key ? GLASS.btnActive : cn(GLASS.btn, 'border-transparent text-muted-foreground hover:text-foreground')
+                sport === key ? GLASS.btnActive : GLASS.btn
               )}
             >
               {SPORT_OPTIONS[key].label}
@@ -564,9 +581,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               onClick={() => setDoc((d) => ({ ...d, field }))}
               className={cn(
                 'rounded-lg px-2.5 py-1 text-xs font-medium transition-all',
-                doc.field === field
-                  ? GLASS.btnActive
-                  : cn(GLASS.btn, 'border-transparent text-muted-foreground hover:text-foreground')
+                doc.field === field ? GLASS.btnActive : GLASS.btn
               )}
             >
               {FIELD_FORMAT_SHORT[field]}
@@ -578,7 +593,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           type="button"
           title="Guardar"
           aria-label="Guardar"
-          className={cn('size-10 text-primary hover:text-primary', GLASS.iconBtn)}
+          className={cn('size-10', GLASS.iconBtn)}
           onClick={() => {
             onSave(serializeExerciseDrawing(doc));
             onClose();
@@ -595,7 +610,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
         selected.type === 'shape-wave' ||
         selected.type === 'shape-rect') ? (
         <div className={cn('pointer-events-none absolute bottom-[5.5rem] left-1/2 z-30 flex max-w-[95vw] -translate-x-1/2 flex-wrap justify-center gap-3 rounded-2xl px-4 py-2.5', GLASS.panel)}>
-          <label className="pointer-events-auto flex items-center gap-2 text-xs text-muted-foreground">
+          <label className={cn('pointer-events-auto flex items-center gap-2', GLASS.label)}>
             Grosor
             <input
               type="range"
@@ -606,7 +621,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               className="w-24"
             />
           </label>
-          <label className="pointer-events-auto flex items-center gap-2 text-xs text-muted-foreground">
+          <label className={cn('pointer-events-auto flex items-center gap-2', GLASS.label)}>
             <input
               type="checkbox"
               checked={selected.style.dash}
@@ -616,7 +631,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           </label>
           {selected.type === 'shape-line' ? (
             <>
-              <label className="pointer-events-auto flex items-center gap-1.5 text-xs text-muted-foreground">
+              <label className={cn('pointer-events-auto flex items-center gap-1.5', GLASS.label)}>
                 <input
                   type="checkbox"
                   checked={selected.arrowStart}
@@ -624,7 +639,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
                 />
                 Punta inicio
               </label>
-              <label className="pointer-events-auto flex items-center gap-1.5 text-xs text-muted-foreground">
+              <label className={cn('pointer-events-auto flex items-center gap-1.5', GLASS.label)}>
                 <input
                   type="checkbox"
                   checked={selected.arrowEnd}
@@ -639,7 +654,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               <button
                 key={c}
                 type="button"
-                className="size-6 rounded-full border border-white/20"
+                className="size-6 rounded-full border border-cyan-400/35"
                 style={{ backgroundColor: c }}
                 onClick={() => updateElement(selected.id, { style: { ...selected.style, color: c } })}
               />
@@ -659,7 +674,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
 
       {selected && selected.type === 'material' ? (
         <div className={cn('pointer-events-none absolute bottom-[5.5rem] left-1/2 z-30 flex max-w-[95vw] -translate-x-1/2 flex-wrap justify-center gap-3 rounded-2xl px-4 py-2.5', GLASS.panel)}>
-          <label className="pointer-events-auto flex items-center gap-2 text-xs text-muted-foreground">
+          <label className={cn('pointer-events-auto flex items-center gap-2', GLASS.label)}>
             Escala
             <input
               type="range"
@@ -671,7 +686,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               className="w-24"
             />
           </label>
-          <label className="pointer-events-auto flex items-center gap-2 text-xs text-muted-foreground">
+          <label className={cn('pointer-events-auto flex items-center gap-2', GLASS.label)}>
             Rotación
             <input
               type="range"
@@ -683,14 +698,14 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             />
           </label>
           {selected.material.startsWith('player') ? (
-            <label className="pointer-events-auto flex items-center gap-2 text-xs text-muted-foreground">
+            <label className={cn('pointer-events-auto flex items-center gap-2', GLASS.label)}>
               Etiqueta
               <input
                 type="text"
                 maxLength={3}
                 value={selected.label ?? ''}
                 onChange={(e) => updateElement(selected.id, { label: e.target.value })}
-                className="w-12 rounded border border-white/15 bg-white/5 px-1.5 py-0.5 text-center text-xs"
+                className="w-12 rounded border border-cyan-400/35 bg-cyan-400/10 px-1.5 py-0.5 text-center text-xs text-cyan-200"
               />
             </label>
           ) : null}
@@ -759,8 +774,8 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               aria-expanded={materialsOpen}
               onClick={() => setMaterialsOpen((v) => !v)}
               className={cn(
-                'flex size-11 items-center justify-center border-r border-white/15 transition-all',
-                materialsOpen ? GLASS.btnActive : 'text-foreground hover:bg-white/10'
+                'flex size-11 items-center justify-center border-r border-cyan-400/30 transition-all',
+                materialsOpen ? GLASS.btnActive : 'text-cyan-300 hover:bg-cyan-400/10 hover:text-cyan-200'
               )}
             >
               <Package className="size-5" />
@@ -773,7 +788,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               onClick={() => setToolsOpen((v) => !v)}
               className={cn(
                 'flex size-11 items-center justify-center transition-all',
-                toolsOpen ? GLASS.btnActive : 'text-foreground hover:bg-white/10'
+                toolsOpen ? GLASS.btnActive : 'text-cyan-300 hover:bg-cyan-400/10 hover:text-cyan-200'
               )}
             >
               <PenTool className="size-5" />
@@ -813,7 +828,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
                   </button>
                 ))}
               </div>
-              <div className="mt-2 flex flex-wrap items-center justify-center gap-3 border-t border-white/10 pt-2 text-xs text-muted-foreground">
+              <div className={cn('mt-2 flex flex-wrap items-center justify-center gap-3 border-t border-cyan-400/25 pt-2', GLASS.label)}>
                 <label className="flex items-center gap-2">
                   Grosor
                   <input
@@ -840,7 +855,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
                       type="button"
                       className={cn(
                         'size-5 rounded-full border',
-                        stroke.color === c ? 'border-white ring-1 ring-primary' : 'border-white/20'
+                        stroke.color === c ? 'border-cyan-300 ring-1 ring-cyan-400' : 'border-cyan-400/35'
                       )}
                       style={{ backgroundColor: c }}
                       onClick={() => setStroke((s) => ({ ...s, color: c }))}
