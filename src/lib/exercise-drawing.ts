@@ -20,7 +20,7 @@ export type SportKind = 'football' | 'futsal';
 export const SPORT_OPTIONS: Record<SportKind, { label: string; fields: FieldTemplate[] }> = {
   football: {
     label: 'Fútbol',
-    fields: ['football-full', 'football-f7', 'football-half', 'football-third'],
+    fields: ['football-full', 'football-f7', 'football-half'],
   },
   futsal: {
     label: 'Fútbol sala',
