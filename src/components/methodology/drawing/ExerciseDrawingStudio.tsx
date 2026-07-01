@@ -7,18 +7,17 @@ import type Konva from 'konva';
 import {
   ArrowRight,
   BoxSelect,
-  Check,
   Minus,
   MousePointer2,
   Package,
   PenTool,
+  Save,
   Spline,
   Square,
   Trash2,
   Waves,
   X,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { KonvaPitchLayer } from '@/components/methodology/drawing/KonvaPitchLayer';
 import { useFieldTransition } from '@/hooks/useFieldTransition';
 import { MATERIAL_SCALE_NORM } from '@/lib/field-engine';
@@ -68,6 +67,21 @@ const SHAPE_TOOLS: { id: StudioTool; label: string; icon: React.ReactNode }[] = 
 ];
 
 const COLORS = ['#fbbf24', '#38bdf8', '#f87171', '#4ade80', '#ffffff', '#a78bfa'];
+
+/** Estilo glass compartido en la pizarra */
+const GLASS = {
+  panel: 'border border-white/20 bg-white/[0.08] shadow-[0_8px_32px_rgba(0,0,0,0.45)] backdrop-blur-2xl',
+  pill: 'rounded-full border border-white/20 bg-white/[0.08] shadow-[0_8px_32px_rgba(0,0,0,0.45)] backdrop-blur-2xl',
+  btn: 'border border-white/15 bg-white/[0.06] backdrop-blur-md transition-all hover:border-white/30 hover:bg-white/12',
+  btnActive:
+    'border-primary/45 bg-primary/18 text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_0_18px_rgba(34,211,238,0.18)]',
+  iconBtn:
+    'flex items-center justify-center rounded-full border border-white/20 bg-white/[0.08] shadow-[0_4px_24px_rgba(0,0,0,0.35)] backdrop-blur-2xl transition-all hover:border-white/35 hover:bg-white/14',
+  dockBtn:
+    'flex items-center justify-center rounded-xl border border-white/15 bg-white/[0.06] backdrop-blur-md transition-all hover:border-white/30 hover:bg-white/12',
+  dockBtnActive: 'border-primary/45 bg-primary/18 text-primary shadow-[0_0_16px_rgba(34,211,238,0.2)]',
+  danger: 'border-red-400/35 bg-red-500/12 backdrop-blur-md transition-all hover:border-red-400/50 hover:bg-red-500/22',
+} as const;
 
 /** Campo a ancho completo, pegado arriba; controles flotan encima */
 const FIELD_INSETS = { top: 0, bottom: 0, left: 4, right: 4 };
@@ -518,7 +532,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
       <button
         type="button"
         onClick={onClose}
-        className="absolute left-4 top-4 z-40 flex size-10 items-center justify-center rounded-full border border-white/15 bg-black/60 text-muted-foreground shadow-xl backdrop-blur-xl transition-colors hover:border-white/30 hover:text-foreground"
+        className={cn('absolute left-4 top-4 z-40 size-10 text-muted-foreground hover:text-foreground', GLASS.iconBtn)}
         aria-label="Cerrar"
       >
         <X className="size-4" />
@@ -526,15 +540,15 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
 
       {/* Controles — superior derecha */}
       <div className="absolute right-4 top-4 z-40 flex max-w-[min(92vw,640px)] flex-wrap items-center justify-end gap-2">
-        <div className="flex rounded-full border border-white/15 bg-black/65 p-0.5 shadow-xl backdrop-blur-xl">
+        <div className={cn('flex p-0.5', GLASS.pill)}>
           {(Object.keys(SPORT_OPTIONS) as SportKind[]).map((key) => (
             <button
               key={key}
               type="button"
               onClick={() => handleSportChange(key)}
               className={cn(
-                'rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors',
-                sport === key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+                'rounded-full px-3.5 py-1.5 text-xs font-medium transition-all',
+                sport === key ? GLASS.btnActive : cn(GLASS.btn, 'border-transparent text-muted-foreground hover:text-foreground')
               )}
             >
               {SPORT_OPTIONS[key].label}
@@ -542,17 +556,17 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           ))}
         </div>
 
-        <div className="flex flex-wrap justify-end gap-1 rounded-2xl border border-white/15 bg-black/65 px-2 py-1.5 shadow-xl backdrop-blur-xl">
+        <div className={cn('flex flex-wrap justify-end gap-1 rounded-2xl px-2 py-1.5', GLASS.panel)}>
           {fieldOptions.map((field) => (
             <button
               key={field}
               type="button"
               onClick={() => setDoc((d) => ({ ...d, field }))}
               className={cn(
-                'rounded-lg px-2.5 py-1 text-xs font-medium transition-colors',
+                'rounded-lg px-2.5 py-1 text-xs font-medium transition-all',
                 doc.field === field
-                  ? 'bg-white/15 text-primary'
-                  : 'text-muted-foreground hover:bg-white/5 hover:text-foreground'
+                  ? GLASS.btnActive
+                  : cn(GLASS.btn, 'border-transparent text-muted-foreground hover:text-foreground')
               )}
             >
               {FIELD_FORMAT_SHORT[field]}
@@ -560,18 +574,18 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           ))}
         </div>
 
-        <Button
+        <button
           type="button"
-          size="sm"
-          className="h-9 gap-1.5 rounded-full px-4 shadow-xl"
+          title="Guardar"
+          aria-label="Guardar"
+          className={cn('size-10 text-primary hover:text-primary', GLASS.iconBtn)}
           onClick={() => {
             onSave(serializeExerciseDrawing(doc));
             onClose();
           }}
         >
-          <Check className="size-4" />
-          Guardar
-        </Button>
+          <Save className="size-4" />
+        </button>
       </div>
 
       {/* Propiedades selección */}
@@ -580,7 +594,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
         selected.type === 'shape-curve' ||
         selected.type === 'shape-wave' ||
         selected.type === 'shape-rect') ? (
-        <div className="pointer-events-none absolute bottom-[5.5rem] left-1/2 z-30 flex max-w-[95vw] -translate-x-1/2 flex-wrap justify-center gap-3 rounded-2xl border border-white/15 bg-black/75 px-4 py-2.5 shadow-2xl backdrop-blur-xl">
+        <div className={cn('pointer-events-none absolute bottom-[5.5rem] left-1/2 z-30 flex max-w-[95vw] -translate-x-1/2 flex-wrap justify-center gap-3 rounded-2xl px-4 py-2.5', GLASS.panel)}>
           <label className="pointer-events-auto flex items-center gap-2 text-xs text-muted-foreground">
             Grosor
             <input
@@ -631,14 +645,20 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               />
             ))}
           </div>
-          <Button type="button" size="sm" variant="destructive" className="pointer-events-auto h-8" onClick={deleteSelected}>
+          <button
+            type="button"
+            title="Eliminar"
+            aria-label="Eliminar"
+            className={cn('pointer-events-auto flex size-8 items-center justify-center rounded-lg text-red-300', GLASS.danger)}
+            onClick={deleteSelected}
+          >
             <Trash2 className="size-3.5" />
-          </Button>
+          </button>
         </div>
       ) : null}
 
       {selected && selected.type === 'material' ? (
-        <div className="pointer-events-none absolute bottom-[5.5rem] left-1/2 z-30 flex max-w-[95vw] -translate-x-1/2 flex-wrap justify-center gap-3 rounded-2xl border border-white/15 bg-black/75 px-4 py-2.5 shadow-2xl backdrop-blur-xl">
+        <div className={cn('pointer-events-none absolute bottom-[5.5rem] left-1/2 z-30 flex max-w-[95vw] -translate-x-1/2 flex-wrap justify-center gap-3 rounded-2xl px-4 py-2.5', GLASS.panel)}>
           <label className="pointer-events-auto flex items-center gap-2 text-xs text-muted-foreground">
             Escala
             <input
@@ -674,9 +694,15 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               />
             </label>
           ) : null}
-          <Button type="button" size="sm" variant="destructive" className="pointer-events-auto h-8" onClick={deleteSelected}>
+          <button
+            type="button"
+            title="Eliminar"
+            aria-label="Eliminar"
+            className={cn('pointer-events-auto flex size-8 items-center justify-center rounded-lg text-red-300', GLASS.danger)}
+            onClick={deleteSelected}
+          >
             <Trash2 className="size-3.5" />
-          </Button>
+          </button>
         </div>
       ) : null}
 
@@ -693,7 +719,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             style={{ '--dock-panel-w': materialsPanelW } as React.CSSProperties}
           >
             <div
-              className="mr-2 rounded-2xl border border-white/15 bg-black/85 p-2.5 shadow-2xl backdrop-blur-xl"
+              className={cn('mr-2 rounded-2xl p-2.5', GLASS.panel)}
               style={{ width: materialsPanelW }}
             >
               <div className="flex flex-nowrap items-center justify-center gap-1.5 overflow-x-auto">
@@ -707,10 +733,9 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
                       setMaterialsOpen(false);
                     }}
                     className={cn(
-                      'flex size-11 items-center justify-center rounded-xl border transition-colors',
-                      tool === kind
-                        ? 'border-primary bg-primary/15'
-                        : 'border-white/10 bg-white/5 hover:border-primary/30'
+                      'flex size-11 items-center justify-center',
+                      GLASS.dockBtn,
+                      tool === kind && GLASS.dockBtnActive
                     )}
                   >
                     {materialImages[kind] ? (
@@ -726,7 +751,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           </div>
 
           {/* Hub central — solo iconos */}
-          <div className="relative z-10 flex overflow-hidden rounded-full border border-white/20 bg-black/85 shadow-2xl backdrop-blur-xl">
+          <div className={cn('relative z-10 flex overflow-hidden', GLASS.pill)}>
             <button
               type="button"
               title="Material"
@@ -734,8 +759,8 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               aria-expanded={materialsOpen}
               onClick={() => setMaterialsOpen((v) => !v)}
               className={cn(
-                'flex size-11 items-center justify-center border-r border-white/15 transition-colors',
-                materialsOpen ? 'bg-primary/25 text-primary' : 'text-foreground hover:bg-white/5'
+                'flex size-11 items-center justify-center border-r border-white/15 transition-all',
+                materialsOpen ? GLASS.btnActive : 'text-foreground hover:bg-white/10'
               )}
             >
               <Package className="size-5" />
@@ -747,8 +772,8 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               aria-expanded={toolsOpen}
               onClick={() => setToolsOpen((v) => !v)}
               className={cn(
-                'flex size-11 items-center justify-center transition-colors',
-                toolsOpen ? 'bg-primary/25 text-primary' : 'text-foreground hover:bg-white/5'
+                'flex size-11 items-center justify-center transition-all',
+                toolsOpen ? GLASS.btnActive : 'text-foreground hover:bg-white/10'
               )}
             >
               <PenTool className="size-5" />
@@ -765,7 +790,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             style={{ '--dock-panel-w': toolsPanelW } as React.CSSProperties}
           >
             <div
-              className="ml-2 rounded-2xl border border-white/15 bg-black/85 p-2.5 shadow-2xl backdrop-blur-xl"
+              className={cn('ml-2 rounded-2xl p-2.5', GLASS.panel)}
               style={{ width: toolsPanelW }}
             >
               <div className="flex flex-nowrap items-center justify-center gap-1.5 overflow-x-auto">
@@ -779,10 +804,9 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
                       setSelectedId(null);
                     }}
                     className={cn(
-                      'flex size-10 items-center justify-center rounded-xl border transition-colors',
-                      tool === item.id
-                        ? 'border-primary bg-primary/20 text-primary'
-                        : 'border-white/10 bg-white/5 hover:border-primary/30'
+                      'flex size-10 items-center justify-center',
+                      GLASS.dockBtn,
+                      tool === item.id && GLASS.dockBtnActive
                     )}
                   >
                     {item.icon}
