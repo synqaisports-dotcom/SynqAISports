@@ -402,12 +402,27 @@ export function computeFieldRect(
   const availW = Math.max(1, stageWidth - left - right);
   const availH = Math.max(1, stageHeight - top - bottom);
 
-  if (fit === 'fill-width' || fit === 'fill-width-top') {
-    const width = Math.max(1, stageWidth - left - right);
+  if (fit === 'fill-width') {
+    const width = availW;
     const height = width / aspect;
-    const xPos = left;
-    const yPos = fit === 'fill-width-top' ? top : top + (availH - height) / 2;
-    return { x: xPos, y: Math.max(top, yPos), width, height };
+    const yPos = top + (availH - height) / 2;
+    return { x: left, y: Math.max(top, yPos), width, height };
+  }
+
+  if (fit === 'fill-width-top') {
+    // Máximo ancho posible; si la altura reglamentaria no cabe, escala por alto
+    let width = availW;
+    let height = width / aspect;
+    if (height > availH) {
+      height = availH;
+      width = height * aspect;
+    }
+    return {
+      x: left + (availW - width) / 2,
+      y: top,
+      width,
+      height,
+    };
   }
 
   const maxW = Math.max(1, availW - padding * 2);
