@@ -522,6 +522,40 @@ export function wavePathPoints(
   return points;
 }
 
+/** Punto en curva cuadrática Bézier (p0 → p1 control → p2). */
+export function quadBezierPoint(
+  p0: { x: number; y: number },
+  p1: { x: number; y: number },
+  p2: { x: number; y: number },
+  t: number
+) {
+  const u = 1 - t;
+  return {
+    x: u * u * p0.x + 2 * u * t * p1.x + t * t * p2.x,
+    y: u * u * p0.y + 2 * u * t * p1.y + t * t * p2.y,
+  };
+}
+
+/** Ángulo de la tangente al final de la curva (para orientar la punta de flecha). */
+export function quadBezierEndAngle(
+  p0: { x: number; y: number },
+  p1: { x: number; y: number },
+  p2: { x: number; y: number },
+  sampleT = 0.92
+) {
+  const near = quadBezierPoint(p0, p1, p2, sampleT);
+  return Math.atan2(p2.y - near.y, p2.x - near.x);
+}
+
+/** Triángulo de punta de flecha en coordenadas planas [tip, left, right]. */
+export function arrowHeadPoints(tipX: number, tipY: number, angle: number, length = 10): number[] {
+  const x1 = tipX - length * Math.cos(angle - 0.4);
+  const y1 = tipY - length * Math.sin(angle - 0.4);
+  const x2 = tipX - length * Math.cos(angle + 0.4);
+  const y2 = tipY - length * Math.sin(angle + 0.4);
+  return [tipX, tipY, x1, y1, x2, y2];
+}
+
 export function defaultDraftForTool(
   tool: StudioTool,
   x1: number,
