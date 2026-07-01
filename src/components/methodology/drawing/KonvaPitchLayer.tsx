@@ -196,8 +196,6 @@ function F11Markings({ m, lw }: { m: FieldMapper; lw: number }) {
   const spot = 11 / 105;
   const arcR = m.w(9.15 / 105);
   const cornerR = m.h(1 / 68);
-  const netW = m.h(7.32 / 68);
-  const netD = m.w(0.016);
 
   const leftSpotX = m.x(spot);
   const rightSpotX = m.x(1 - spot);
@@ -209,13 +207,11 @@ function F11Markings({ m, lw }: { m: FieldMapper; lw: number }) {
       <Circle x={cx} y={cy} radius={r} stroke={LINE} strokeWidth={lw} fill="transparent" />
       <Circle x={cx} y={cy} radius={lw * 0.9} fill={LINE} />
 
-      <Rect x={m.x(0) - netD} y={cy - netW / 2} width={netD} height={netW} stroke={LINE} strokeWidth={lw} />
       <Rect x={m.x(0)} y={cy - penW / 2} width={penD} height={penW} stroke={LINE} strokeWidth={lw} />
       <Rect x={m.x(0)} y={cy - goalW / 2} width={goalD} height={goalW} stroke={LINE} strokeWidth={lw} />
       <Circle x={leftSpotX} y={cy} radius={lw * 0.85} fill={LINE} />
       <Line points={footballPenaltyArcPts(leftSpotX, cy, arcR, 'left')} stroke={LINE} strokeWidth={lw} lineCap="round" />
 
-      <Rect x={m.x(1)} y={cy - netW / 2} width={netD} height={netW} stroke={LINE} strokeWidth={lw} />
       <Rect x={m.x(1) - penD} y={cy - penW / 2} width={penD} height={penW} stroke={LINE} strokeWidth={lw} />
       <Rect x={m.x(1) - goalD} y={cy - goalW / 2} width={goalD} height={goalW} stroke={LINE} strokeWidth={lw} />
       <Circle x={rightSpotX} y={cy} radius={lw * 0.85} fill={LINE} />
@@ -285,7 +281,6 @@ function F7Markings({ m, lw }: { m: FieldMapper; lw: number }) {
   const goalW = m.h(F7_MARKS.goalWidth);
   const r = m.h(F7_MARKS.centerR);
   const arcR = m.w(F7_MARKS.arcR);
-  const cornerR = m.h(F7_MARKS.cornerR);
   const leftSpotX = m.x(F7_MARKS.spot);
   const rightSpotX = m.x(1 - F7_MARKS.spot);
 
@@ -300,22 +295,16 @@ function F7Markings({ m, lw }: { m: FieldMapper; lw: number }) {
       <Line points={[m.x(F7_MARKS.offside), m.y(0), m.x(F7_MARKS.offside), m.y(1)]} stroke={LINE} strokeWidth={lw} />
       <Line points={[m.x(1 - F7_MARKS.offside), m.y(0), m.x(1 - F7_MARKS.offside), m.y(1)]} stroke={LINE} strokeWidth={lw} />
 
-      {/* Área izquierda */}
+      {/* Área grande + área pequeña (meta) */}
       <Rect x={m.x(0)} y={cy - penW / 2} width={penD} height={penW} stroke={LINE} strokeWidth={lw} />
       <Rect x={m.x(0)} y={cy - goalW / 2} width={goalD} height={goalW} stroke={LINE} strokeWidth={lw} />
       <Circle x={leftSpotX} y={cy} radius={lw * 0.85} fill={LINE} />
       <Line points={f7PenaltyArcPts(leftSpotX, cy, arcR, 'left')} stroke={LINE} strokeWidth={lw} lineCap="round" />
 
-      {/* Área derecha */}
       <Rect x={m.x(1) - penD} y={cy - penW / 2} width={penD} height={penW} stroke={LINE} strokeWidth={lw} />
       <Rect x={m.x(1) - goalD} y={cy - goalW / 2} width={goalD} height={goalW} stroke={LINE} strokeWidth={lw} />
       <Circle x={rightSpotX} y={cy} radius={lw * 0.85} fill={LINE} />
       <Line points={f7PenaltyArcPts(rightSpotX, cy, arcR, 'right')} stroke={LINE} strokeWidth={lw} lineCap="round" />
-
-      <CornerArc cx={m.x(0)} cy={m.y(0)} r={cornerR} rot={0} lw={lw} />
-      <CornerArc cx={m.x(1)} cy={m.y(0)} r={cornerR} rot={90} lw={lw} />
-      <CornerArc cx={m.x(0)} cy={m.y(1)} r={cornerR} rot={270} lw={lw} />
-      <CornerArc cx={m.x(1)} cy={m.y(1)} r={cornerR} rot={180} lw={lw} />
     </Group>
   );
 }

@@ -103,8 +103,6 @@ function F11Svg() {
       <rect x="99.5" y="24.84" width="5.5" height="18.32" {...p} />
       <circle cx="11" cy="34" r="0.4" fill={LINE} />
       <circle cx="94" cy="34" r="0.4" fill={LINE} />
-      <rect x="-0.8" y="30.34" width="0.8" height="7.32" {...p} />
-      <rect x="105" y="30.34" width="0.8" height="7.32" {...p} />
     </g>
   );
 }
