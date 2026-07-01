@@ -202,10 +202,25 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
 
   useEffect(() => {
     const tr = transformerRef.current;
-    if (!tr || selected?.type !== 'material') return;
-    tr.keepRatio(selected.material !== 'ladder');
-    tr.getLayer()?.batchDraw();
-  }, [selected]);
+    if (!tr || !open) return;
+    if (
+      !selectedId ||
+      !selected ||
+      (selected.type !== 'shape-rect' && selected.type !== 'material')
+    ) {
+      tr.nodes([]);
+      tr.getLayer()?.batchDraw();
+      return;
+    }
+    requestAnimationFrame(() => {
+      const stage = tr.getStage();
+      const node = stage?.findOne('#' + selectedId);
+      if (!node) return;
+      tr.nodes([node]);
+      tr.keepRatio(!(selected.type === 'material' && selected.material === 'ladder'));
+      tr.getLayer()?.batchDraw();
+    });
+  }, [selectedId, selected, open, layeredElements]);
 
   const getPointerNorm = (stage: Konva.Stage) => {
     const pos = stage.getPointerPosition();
@@ -479,7 +494,18 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             scaleY={sy / unitH}
             opacity={element.opacity}
             draggable={tool === 'select'}
-            onClick={() => setSelectedId(element.id)}
+            onMouseDown={(e) => {
+              e.cancelBubble = true;
+              if (tool === 'select') setSelectedId(element.id);
+            }}
+            onTap={(e) => {
+              e.cancelBubble = true;
+              if (tool === 'select') setSelectedId(element.id);
+            }}
+            onClick={(e) => {
+              e.cancelBubble = true;
+              setSelectedId(element.id);
+            }}
             onDragEnd={(ev) => {
               const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
               updateElement(element.id, { x: n.x, y: n.y });
@@ -501,6 +527,14 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               if (selectedId === element.id) attachTransformer(node);
             }}
           >
+            <Rect
+              x={-hw}
+              y={-hh}
+              width={unitW}
+              height={unitH}
+              fill="rgba(0,0,0,0.001)"
+              listening
+            />
             <Line points={[-hw, -hh, -hw, hh]} stroke={pole} strokeWidth={2.5} lineCap="round" listening={false} />
             <Line points={[hw, -hh, hw, hh]} stroke={pole} strokeWidth={2.5} lineCap="round" listening={false} />
             {Array.from({ length: rungs }).map((_, i) => {
