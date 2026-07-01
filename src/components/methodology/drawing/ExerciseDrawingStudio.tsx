@@ -44,7 +44,10 @@ import {
   normToPx,
   parseExerciseDrawing,
   pxToNorm,
+  RECT_STROKE_OPACITY,
+  RECT_STROKE_WIDTH_FACTOR,
   serializeExerciseDrawing,
+  sortElementsByLayer,
   sportForField,
   wavePathPoints,
 } from '@/lib/exercise-drawing';
@@ -169,6 +172,15 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
 
   const selected = doc.elements.find((el) => el.id === selectedId) ?? null;
   const fieldOptions = SPORT_OPTIONS[sport].fields;
+  const layeredElements = useMemo(() => sortElementsByLayer(doc.elements), [doc.elements]);
+  const shapeElements = useMemo(
+    () => layeredElements.filter((el) => el.type !== 'material'),
+    [layeredElements]
+  );
+  const materialElements = useMemo(
+    () => layeredElements.filter((el) => el.type === 'material'),
+    [layeredElements]
+  );
 
   const attachTransformer = useCallback(
     (node: Konva.Node | null) => {
@@ -206,7 +218,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     if (isMaterialTool(tool)) {
       const el = defaultDraftForTool(tool, norm.x, norm.y, norm.x, norm.y, stroke);
       if (!el) return;
-      setDoc((d) => ({ ...d, elements: [...d.elements, el] }));
+      setDoc((d) => ({ ...d, elements: sortElementsByLayer([...d.elements, el]) }));
       setSelectedId(el.id);
       setTool('select');
       return;
@@ -295,6 +307,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             strokeWidth={element.style.width}
             dash={dashArray(element.style)}
             fill={element.style.color}
+            opacity={element.opacity}
             pointerLength={10}
             pointerWidth={10}
             onClick={() => !isPreview && setSelectedId(element.id)}
@@ -308,6 +321,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           stroke={element.style.color}
           strokeWidth={element.style.width}
           dash={dashArray(element.style)}
+          opacity={element.opacity}
           lineCap="round"
           onClick={() => !isPreview && setSelectedId(element.id)}
         />
@@ -319,7 +333,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
       const p2 = normToPx(element.x2, element.y2, fieldRect);
       const pc = normToPx(element.cx, element.cy, fieldRect);
       return (
-        <Group key={key} onClick={() => !isPreview && setSelectedId(element.id)}>
+        <Group key={key} opacity={element.opacity} onClick={() => !isPreview && setSelectedId(element.id)}>
           <Line
             points={[p1.x, p1.y, pc.x, pc.y, p2.x, p2.y]}
             stroke={element.style.color}
@@ -370,6 +384,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           stroke={element.style.color}
           strokeWidth={element.style.width}
           dash={dashArray(element.style)}
+          opacity={element.opacity}
           lineCap="round"
           onClick={() => !isPreview && setSelectedId(element.id)}
         />
@@ -390,9 +405,11 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           height={h}
           rotation={element.rotation}
           fill={element.fill}
-          opacity={element.fillOpacity}
+          fillOpacity={element.fillOpacity}
           stroke={element.style.color}
-          strokeWidth={element.style.width}
+          strokeOpacity={RECT_STROKE_OPACITY}
+          strokeWidth={element.style.width * RECT_STROKE_WIDTH_FACTOR}
+          opacity={element.opacity}
           dash={dashArray(element.style)}
           draggable={tool === 'select'}
           onClick={() => setSelectedId(element.id)}
@@ -431,6 +448,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           x={p.x}
           y={p.y}
           rotation={element.rotation}
+          opacity={element.opacity}
           draggable={tool === 'select'}
           onClick={() => setSelectedId(element.id)}
           onDragEnd={(ev) => {
@@ -530,8 +548,9 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               height={fieldRect.height}
               fill="rgba(0,0,0,0.001)"
             />
-            {doc.elements.map((el) => renderElement(el))}
+            {shapeElements.map((el) => renderElement(el))}
             {draft ? renderElement(draft, true) : null}
+            {materialElements.map((el) => renderElement(el))}
             {renderAnchors()}
             <Transformer
               ref={transformerRef}
@@ -611,6 +630,18 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
         selected.type === 'shape-rect') ? (
         <div className={cn('pointer-events-none absolute bottom-[5.5rem] left-1/2 z-30 flex max-w-[95vw] -translate-x-1/2 flex-wrap justify-center gap-3 rounded-2xl px-4 py-2.5', GLASS.panel)}>
           <label className={cn('pointer-events-auto flex items-center gap-2', GLASS.label)}>
+            Transparencia
+            <input
+              type="range"
+              min={0.15}
+              max={1}
+              step={0.05}
+              value={selected.opacity}
+              onChange={(e) => updateElement(selected.id, { opacity: Number(e.target.value) })}
+              className="w-24"
+            />
+          </label>
+          <label className={cn('pointer-events-auto flex items-center gap-2', GLASS.label)}>
             Grosor
             <input
               type="range"
@@ -656,7 +687,14 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
                 type="button"
                 className="size-6 rounded-full border border-cyan-400/35"
                 style={{ backgroundColor: c }}
-                onClick={() => updateElement(selected.id, { style: { ...selected.style, color: c } })}
+                onClick={() =>
+                  updateElement(
+                    selected.id,
+                    selected.type === 'shape-rect'
+                      ? { style: { ...selected.style, color: c }, fill: c }
+                      : { style: { ...selected.style, color: c } }
+                  )
+                }
               />
             ))}
           </div>
@@ -674,6 +712,18 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
 
       {selected && selected.type === 'material' ? (
         <div className={cn('pointer-events-none absolute bottom-[5.5rem] left-1/2 z-30 flex max-w-[95vw] -translate-x-1/2 flex-wrap justify-center gap-3 rounded-2xl px-4 py-2.5', GLASS.panel)}>
+          <label className={cn('pointer-events-auto flex items-center gap-2', GLASS.label)}>
+            Transparencia
+            <input
+              type="range"
+              min={0.15}
+              max={1}
+              step={0.05}
+              value={selected.opacity}
+              onChange={(e) => updateElement(selected.id, { opacity: Number(e.target.value) })}
+              className="w-24"
+            />
+          </label>
           <label className={cn('pointer-events-auto flex items-center gap-2', GLASS.label)}>
             Escala
             <input
