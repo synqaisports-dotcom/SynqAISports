@@ -20,6 +20,8 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { KonvaPitchLayer } from '@/components/methodology/drawing/KonvaPitchLayer';
+import { useFieldTransition } from '@/hooks/useFieldTransition';
+import { MATERIAL_SCALE_NORM } from '@/lib/field-engine';
 import {
   MATERIAL_CATALOG,
   getMaterialImage,
@@ -127,10 +129,12 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     return () => ro.disconnect();
   }, [open]);
 
-  const fieldRect = useMemo(
+  const targetRect = useMemo(
     () => computeFieldRect(size.width, size.height, doc.field, 0, FIELD_INSETS, 'fill-width-top'),
     [size, doc.field]
   );
+  const { displayRect, outgoing, blend } = useFieldTransition(doc.field, targetRect);
+  const fieldRect = displayRect;
 
   const selected = doc.elements.find((el) => el.id === selectedId) ?? null;
   const fieldOptions = SPORT_OPTIONS[sport].fields;
@@ -388,7 +392,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     if (element.type === 'material') {
       const img = materialImages[element.material];
       const p = normToPx(element.x, element.y, fieldRect);
-      const scale = element.scale * (fieldRect.width * 0.075);
+      const scale = element.scale * (fieldRect.width * MATERIAL_SCALE_NORM);
       return (
         <Group
           key={key}
@@ -481,7 +485,10 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
         >
           <Layer>
             <Rect x={0} y={0} width={size.width} height={size.height} fill="#060a12" listening={false} />
-            <KonvaPitchLayer rect={fieldRect} template={doc.field} />
+            {outgoing ? (
+              <KonvaPitchLayer rect={displayRect} template={outgoing} opacity={1 - blend} />
+            ) : null}
+            <KonvaPitchLayer rect={displayRect} template={doc.field} opacity={blend} />
             <Rect
               name="field-hit"
               x={fieldRect.x}

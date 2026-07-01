@@ -9,6 +9,7 @@ import type {
   WaveShapeElement,
 } from '@/lib/exercise-drawing';
 import { getElementAnchors, wavePathPoints } from '@/lib/exercise-drawing';
+import { FIELD_VIEWBOX, MATERIAL_SCALE_NORM } from '@/lib/field-engine';
 
 type Props = {
   document: ExerciseDrawingDocument;
@@ -16,12 +17,6 @@ type Props = {
   showAnchors?: boolean;
   onSelect?: (id: string | null) => void;
 };
-
-const VB = 100;
-
-function toVb(nx: number, ny: number) {
-  return { x: nx * VB, y: ny * VB };
-}
 
 function dashArray(dash: boolean) {
   return dash ? '2.5 1.8' : undefined;
@@ -33,9 +28,17 @@ export function DrawingScene({
   showAnchors = false,
   onSelect,
 }: Props) {
+  const vb = FIELD_VIEWBOX[document.field];
+  const viewW = vb.width;
+  const viewH = vb.height;
+
+  function toVb(nx: number, ny: number) {
+    return { x: nx * viewW, y: ny * viewH };
+  }
+
   return (
     <svg
-      viewBox={`0 0 ${VB} ${VB}`}
+      viewBox={`0 0 ${viewW} ${viewH}`}
       preserveAspectRatio="xMidYMid meet"
       className="absolute inset-0 h-full w-full touch-none"
       onClick={(event) => {
@@ -43,7 +46,7 @@ export function DrawingScene({
       }}
     >
       {document.legacyStrokes?.map((stroke, index) => (
-        <LegacyStrokePath key={`legacy-${index}`} stroke={stroke} />
+        <LegacyStrokePath key={`legacy-${index}`} stroke={stroke} viewW={viewW} viewH={viewH} />
       ))}
       {document.elements.map((element) => (
         <g
@@ -55,7 +58,13 @@ export function DrawingScene({
           className="cursor-pointer"
           opacity={selectedId && selectedId !== element.id ? 0.72 : 1}
         >
-          <DrawingElementShape element={element} selected={selectedId === element.id} />
+          <DrawingElementShape
+            element={element}
+            selected={selectedId === element.id}
+            toVb={toVb}
+            viewW={viewW}
+            viewH={viewH}
+          />
         </g>
       ))}
       {showAnchors && selectedId
@@ -65,12 +74,12 @@ export function DrawingScene({
             .map((anchor) => (
               <circle
                 key={anchor.id}
-                cx={anchor.x * VB}
-                cy={anchor.y * VB}
-                r={1.8}
+                cx={anchor.x * viewW}
+                cy={anchor.y * viewH}
+                r={viewW * 0.017}
                 fill="#22d3ee"
                 stroke="#0f172a"
-                strokeWidth={0.4}
+                strokeWidth={viewW * 0.004}
                 className="pointer-events-none"
               />
             ))
@@ -79,12 +88,20 @@ export function DrawingScene({
   );
 }
 
-function LegacyStrokePath({ stroke }: { stroke: LegacyStroke }) {
+function LegacyStrokePath({
+  stroke,
+  viewW,
+  viewH,
+}: {
+  stroke: LegacyStroke;
+  viewW: number;
+  viewH: number;
+}) {
   if (stroke.points.length < 2) return null;
   const d = stroke.points
     .map((point, index) => {
-      const x = (point[0] / 400) * VB;
-      const y = (point[1] / 440) * VB;
+      const x = (point[0] / 400) * viewW;
+      const y = (point[1] / 440) * viewH;
       return `${index === 0 ? 'M' : 'L'} ${x} ${y}`;
     })
     .join(' ');
@@ -104,31 +121,47 @@ function LegacyStrokePath({ stroke }: { stroke: LegacyStroke }) {
 function DrawingElementShape({
   element,
   selected,
+  toVb,
+  viewW,
+  viewH,
 }: {
   element: DrawingElement;
   selected: boolean;
+  toVb: (nx: number, ny: number) => { x: number; y: number };
+  viewW: number;
+  viewH: number;
 }) {
   switch (element.type) {
     case 'shape-line':
-      return <LineShape element={element} selected={selected} />;
+      return <LineShape element={element} selected={selected} toVb={toVb} viewW={viewW} />;
     case 'shape-curve':
-      return <CurveShape element={element} selected={selected} />;
+      return <CurveShape element={element} selected={selected} toVb={toVb} viewW={viewW} />;
     case 'shape-wave':
-      return <WaveShape element={element} selected={selected} />;
+      return <WaveShape element={element} selected={selected} toVb={toVb} viewW={viewW} viewH={viewH} />;
     case 'shape-rect':
-      return <RectShape element={element} selected={selected} />;
+      return <RectShape element={element} selected={selected} toVb={toVb} viewW={viewW} viewH={viewH} />;
     case 'material':
-      return <MaterialShape element={element} selected={selected} />;
+      return <MaterialShape element={element} selected={selected} toVb={toVb} viewW={viewW} />;
     default:
       return null;
   }
 }
 
-function LineShape({ element, selected }: { element: LineShapeElement; selected: boolean }) {
+function LineShape({
+  element,
+  selected,
+  toVb,
+  viewW,
+}: {
+  element: LineShapeElement;
+  selected: boolean;
+  toVb: (nx: number, ny: number) => { x: number; y: number };
+  viewW: number;
+}) {
   const p1 = toVb(element.x1, element.y1);
   const p2 = toVb(element.x2, element.y2);
   const color = selected ? '#22d3ee' : element.style.color;
-  const sw = element.style.width / 2.8;
+  const sw = element.style.width / (viewW / 35);
 
   if (element.arrowEnd || element.arrowStart) {
     const markerEnd = element.arrowEnd ? `url(#arrow-end-${element.id})` : undefined;
@@ -191,12 +224,22 @@ function LineShape({ element, selected }: { element: LineShapeElement; selected:
   );
 }
 
-function CurveShape({ element, selected }: { element: CurveShapeElement; selected: boolean }) {
+function CurveShape({
+  element,
+  selected,
+  toVb,
+  viewW,
+}: {
+  element: CurveShapeElement;
+  selected: boolean;
+  toVb: (nx: number, ny: number) => { x: number; y: number };
+  viewW: number;
+}) {
   const p1 = toVb(element.x1, element.y1);
   const p2 = toVb(element.x2, element.y2);
   const pc = toVb(element.cx, element.cy);
   const color = selected ? '#22d3ee' : element.style.color;
-  const sw = element.style.width / 2.8;
+  const sw = element.style.width / (viewW / 35);
   const path = `M ${p1.x} ${p1.y} Q ${pc.x} ${pc.y} ${p2.x} ${p2.y}`;
 
   return (
@@ -219,13 +262,25 @@ function CurveShape({ element, selected }: { element: CurveShapeElement; selecte
   );
 }
 
-function WaveShape({ element, selected }: { element: WaveShapeElement; selected: boolean }) {
+function WaveShape({
+  element,
+  selected,
+  toVb,
+  viewW,
+  viewH,
+}: {
+  element: WaveShapeElement;
+  selected: boolean;
+  toVb: (nx: number, ny: number) => { x: number; y: number };
+  viewW: number;
+  viewH: number;
+}) {
   const p1 = toVb(element.x1, element.y1);
   const p2 = toVb(element.x2, element.y2);
-  const amp = element.amplitude * VB;
+  const amp = element.amplitude * viewW;
   const pts = wavePathPoints(p1.x, p1.y, p2.x, p2.y, amp);
   const color = selected ? '#22d3ee' : element.style.color;
-  const sw = element.style.width / 2.8;
+  const sw = element.style.width / (viewW / 35);
   const d = pts.reduce((acc, val, i) => {
     if (i % 2 !== 0) return acc;
     const x = pts[i];
@@ -245,32 +300,54 @@ function WaveShape({ element, selected }: { element: WaveShapeElement; selected:
   );
 }
 
-function RectShape({ element, selected }: { element: RectShapeElement; selected: boolean }) {
+function RectShape({
+  element,
+  selected,
+  toVb,
+  viewW,
+  viewH,
+}: {
+  element: RectShapeElement;
+  selected: boolean;
+  toVb: (nx: number, ny: number) => { x: number; y: number };
+  viewW: number;
+  viewH: number;
+}) {
   const p = toVb(element.x, element.y);
   const color = selected ? '#22d3ee' : element.style.color;
   const fill = selected ? '#22d3ee' : element.fill;
-  const cx = p.x + (element.width * VB) / 2;
-  const cy = p.y + (element.height * VB) / 2;
+  const cx = p.x + (element.width * viewW) / 2;
+  const cy = p.y + (element.height * viewH) / 2;
 
   return (
     <rect
       x={p.x}
       y={p.y}
-      width={element.width * VB}
-      height={element.height * VB}
+      width={element.width * viewW}
+      height={element.height * viewH}
       fill={fill}
       fillOpacity={element.fillOpacity}
       stroke={color}
-      strokeWidth={element.style.width / 2.8}
+      strokeWidth={element.style.width / (viewW / 35)}
       strokeDasharray={dashArray(element.style.dash)}
       transform={`rotate(${element.rotation} ${cx} ${cy})`}
     />
   );
 }
 
-function MaterialShape({ element, selected }: { element: MaterialElement; selected: boolean }) {
+function MaterialShape({
+  element,
+  selected,
+  toVb,
+  viewW,
+}: {
+  element: MaterialElement;
+  selected: boolean;
+  toVb: (nx: number, ny: number) => { x: number; y: number };
+  viewW: number;
+}) {
   const p = toVb(element.x, element.y);
-  const size = element.scale * 9;
+  const size = element.scale * (viewW * MATERIAL_SCALE_NORM);
 
   if (element.material.startsWith('player')) {
     const fill =
