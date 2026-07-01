@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { LogIn } from 'lucide-react';
+import { LogIn, Sparkles } from 'lucide-react';
 import type { Dictionary, Locale } from '@/lib/i18n/dictionaries';
+import { DEMO_ENTRY_PATH } from '@/lib/demo-constants';
 
 type Props = {
   dict: Dictionary;
@@ -15,7 +16,7 @@ type Props = {
 export function PublicHeader({
   dict,
   locale,
-  portalHref = '/demo',
+  portalHref = DEMO_ENTRY_PATH,
   portalLabel = 'Portal demo',
 }: Props) {
   const router = useRouter();
@@ -27,10 +28,11 @@ export function PublicHeader({
   }
 
   return (
-    <header className="border-b border-white/5">
-      <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-6 py-5">
+    <header className="sticky top-0 z-50 border-b border-white/5 synq-glass">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-synq-muted">
+          <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.25em] text-synq-muted">
+            <Sparkles className="h-3 w-3 text-synq-accent" />
             Nexus Labs
           </p>
           <Link href="/" className="text-lg font-bold text-white">
@@ -38,34 +40,31 @@ export function PublicHeader({
           </Link>
         </div>
         <div className="flex items-center gap-3">
-          <Link
-            href={portalHref}
-            className="inline-flex shrink-0 items-center gap-2 rounded-full bg-synq-pitch px-4 py-2 text-sm font-semibold text-white hover:bg-synq-accent transition-colors"
-          >
+          <Link href={portalHref} className="synq-btn-primary shrink-0 !px-4 !py-2">
             <LogIn className="h-4 w-4" />
             <span className="hidden sm:inline">{portalLabel}</span>
             <span className="sm:hidden">Portal</span>
           </Link>
           <nav className="hidden items-center gap-5 text-sm text-synq-muted lg:flex">
-            <a href="#modelo" className="hover:text-white transition-colors">
+            <a href="#modelo" className="transition-colors hover:text-white">
               {dict.nav.model}
             </a>
-            <a href="#calculadora" className="hover:text-white transition-colors">
+            <a href="#calculadora" className="transition-colors hover:text-white">
               {dict.nav.calculator}
             </a>
-            <a href="#modulos" className="hover:text-white transition-colors">
+            <a href="#modulos" className="transition-colors hover:text-white">
               {dict.nav.modules}
             </a>
-            <a href="#founding" className="hover:text-white transition-colors">
+            <a href="#founding" className="transition-colors hover:text-white">
               {dict.nav.founding}
             </a>
-            <a href="#nosotros" className="hover:text-white transition-colors">
+            <a href="#nosotros" className="transition-colors hover:text-white">
               {dict.nav.about}
             </a>
             <button
               type="button"
               onClick={() => setLocale(otherLocale)}
-              className="rounded border border-white/10 px-2 py-0.5 text-xs uppercase hover:border-synq-accent/50"
+              className="rounded-full border border-white/10 px-2.5 py-0.5 text-xs uppercase transition-colors hover:border-synq-accent/50"
               aria-label="Change language"
             >
               {otherLocale}

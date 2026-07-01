@@ -1,11 +1,17 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useFormState } from 'react-dom';
 import {
   createChangeRequest,
   resolveChangeRequest,
   type ActionState,
 } from '@/app/actions/methodology';
+import {
+  loadCoachChangeRequests,
+  updateCoachChangeRequestStatus,
+  type CoachChangeRequest,
+} from '@/lib/coach-change-requests-store';
 
 export type ChangeRequestRow = {
   id: string;
@@ -13,19 +19,52 @@ export type ChangeRequestRow = {
   status: string;
   created_at: string;
   synq_exercises: { title: string } | { title: string }[] | null;
+  source?: 'server' | 'coach-demo';
+  teamName?: string;
+  sessionLabel?: string;
 };
 
 const initial: ActionState = { ok: false };
 
 export function ChangeRequestsPanel({ requests }: { requests: ChangeRequestRow[] }) {
   const [state, action, pending] = useFormState(createChangeRequest, initial);
+  const [coachRequests, setCoachRequests] = useState<CoachChangeRequest[]>([]);
+
+  useEffect(() => {
+    setCoachRequests(loadCoachChangeRequests());
+  }, [state.ok]);
+
+  const merged: ChangeRequestRow[] = [
+    ...coachRequests.map((item) => ({
+      id: item.id,
+      reason: item.reason,
+      status: item.status,
+      created_at: item.createdAt,
+      synq_exercises: null,
+      source: 'coach-demo' as const,
+      teamName: item.teamName,
+      sessionLabel: item.sessionLabel,
+    })),
+    ...requests,
+  ];
+
+  const handleResolve = async (requestId: string, status: 'approved' | 'rejected') => {
+    if (requestId.startsWith('coach-req-')) {
+      updateCoachChangeRequestStatus(requestId, status);
+      setCoachRequests(loadCoachChangeRequests());
+      return;
+    }
+    await resolveChangeRequest(requestId, status);
+    window.location.reload();
+  };
 
   return (
     <div className="grid gap-10 lg:grid-cols-2">
       <section>
-        <h2 className="text-lg font-semibold text-white">Nueva solicitud</h2>
+        <h2 className="text-lg font-semibold text-white">Nueva solicitud (manual)</h2>
         <p className="mt-1 text-sm text-synq-muted">
-          Los entrenadores podrán solicitar cambios desde la app (fase posterior). Por ahora, registro manual.
+          Los entrenadores envían solicitudes desde la vista Entrenador. Aquí puedes registrar una
+          manualmente si hace falta.
         </p>
         <form action={action} className="mt-4 grid gap-3">
           <Field label="ID ejercicio (opcional)" name="exerciseId" placeholder="uuid" />
@@ -53,44 +92,40 @@ export function ChangeRequestsPanel({ requests }: { requests: ChangeRequestRow[]
       <section>
         <h2 className="text-lg font-semibold text-white">Pendientes y historial</h2>
         <ul className="mt-4 space-y-3">
-          {requests.length === 0 && (
-            <li className="text-sm text-synq-muted">Sin solicitudes.</li>
-          )}
-          {requests.map((r) => {
+          {merged.length === 0 && <li className="text-sm text-synq-muted">Sin solicitudes.</li>}
+          {merged.map((r) => {
             const ex = Array.isArray(r.synq_exercises) ? r.synq_exercises[0] : r.synq_exercises;
             return (
-              <li
-                key={r.id}
-                className="rounded-lg border border-white/5 bg-synq-slate/30 p-4"
-              >
+              <li key={r.id} className="rounded-lg border border-white/5 bg-synq-slate/30 p-4">
                 <div className="flex items-start justify-between gap-2">
-                  <p className="text-xs uppercase text-synq-muted">{r.status}</p>
+                  <p className="text-xs uppercase text-synq-muted">
+                    {r.status}
+                    {r.source === 'coach-demo' ? ' · entrenador' : ''}
+                  </p>
                   <span className="text-xs text-synq-muted">
                     {new Date(r.created_at).toLocaleDateString('es-ES')}
                   </span>
                 </div>
+                {r.teamName ? (
+                  <p className="mt-1 text-xs text-synq-accent">
+                    {r.teamName}
+                    {r.sessionLabel ? ` · ${r.sessionLabel}` : ''}
+                  </p>
+                ) : null}
                 <p className="mt-2 text-sm text-white">{r.reason}</p>
                 {ex && <p className="mt-1 text-xs text-synq-muted">Ejercicio: {ex.title}</p>}
                 {r.status === 'pending' && (
                   <div className="mt-3 flex gap-2">
                     <button
                       type="button"
-                      onClick={() =>
-                        void resolveChangeRequest(r.id, 'approved').then(() =>
-                          window.location.reload()
-                        )
-                      }
+                      onClick={() => void handleResolve(r.id, 'approved')}
                       className="text-xs text-synq-accent"
                     >
                       Aprobar
                     </button>
                     <button
                       type="button"
-                      onClick={() =>
-                        void resolveChangeRequest(r.id, 'rejected').then(() =>
-                          window.location.reload()
-                        )
-                      }
+                      onClick={() => void handleResolve(r.id, 'rejected')}
                       className="text-xs text-red-400"
                     >
                       Rechazar

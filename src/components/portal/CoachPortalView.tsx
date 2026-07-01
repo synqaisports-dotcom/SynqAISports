@@ -1,0 +1,235 @@
+'use client';
+
+import { useMemo, useState } from 'react';
+import { CalendarDays, MessageSquarePlus, Smartphone } from 'lucide-react';
+import { createChangeRequest, type ActionState } from '@/app/actions/methodology';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { SynqSelect } from '@/components/portal/SynqSelect';
+import type { CanteraCategorySlug } from '@/lib/cantera-categories';
+import {
+  saveCoachChangeRequest,
+  type CoachChangeRequest,
+} from '@/lib/coach-change-requests-store';
+import { sessionStructureSummary, findMccInPlan } from '@/lib/periodization';
+import { applyPlanExclusions, findCurrentMccId } from '@/lib/periodization-plan-utils';
+import {
+  buildPlanForVariant,
+  getExcludedMccIds,
+  getTeamInstance,
+  loadDocumentFromStorage,
+} from '@/lib/periodization-document';
+import { cn } from '@/lib/utils';
+
+export type CoachTeamOption = {
+  id: string;
+  name: string;
+  category_slug: CanteraCategorySlug | null;
+};
+
+type Props = {
+  teams: CoachTeamOption[];
+};
+
+const initial: ActionState = { ok: false };
+
+export function CoachPortalView({ teams }: Props) {
+  const [teamId, setTeamId] = useState(teams[0]?.id ?? '');
+  const [requestingSession, setRequestingSession] = useState<string | null>(null);
+  const [reason, setReason] = useState('');
+  const [feedback, setFeedback] = useState<string | null>(null);
+
+  const team = teams.find((item) => item.id === teamId) ?? teams[0];
+  const categorySlug = team?.category_slug ?? 'alevin';
+
+  const weekContext = useMemo(() => {
+    if (!team?.category_slug) return null;
+    const document = loadDocumentFromStorage(team.category_slug);
+    if (!document) return null;
+
+    const variant = document.variants.find((item) => item.teamIds.includes(team.id));
+    if (!variant) return null;
+
+    const rawPlan = buildPlanForVariant(document, variant.id);
+    if (!rawPlan) return null;
+
+    const plan = applyPlanExclusions(rawPlan, getExcludedMccIds(document, variant.id));
+    const mccId = findCurrentMccId(plan);
+    if (!mccId) return null;
+
+    const context = findMccInPlan(plan, mccId);
+    if (!context) return null;
+
+    const instance = getTeamInstance(document, variant.id, team.id, mccId);
+    const excluded = getExcludedMccIds(document, variant.id).has(mccId);
+
+    return { document, variant, plan, context, instance, excluded };
+  }, [team]);
+
+  const sessions = useMemo(() => {
+    if (!weekContext) return [];
+    const count = weekContext.variant.sessionsPerMicro;
+    const structure = sessionStructureSummary(weekContext.variant.mainTasksPerSession);
+    return Array.from({ length: count }, (_, index) => ({
+      id: `session-${index + 1}`,
+      label: `Sesión ${index + 1}`,
+      structure,
+    }));
+  }, [weekContext]);
+
+  const submitRequest = async (sessionLabel: string) => {
+    if (!team || !reason.trim() || !weekContext) return;
+
+    const request: CoachChangeRequest = {
+      id: `coach-req-${Date.now()}`,
+      teamId: team.id,
+      teamName: team.name,
+      reason: reason.trim(),
+      microcycleId: weekContext.instance?.microcycleId,
+      mccLabel: weekContext.context.micro.label,
+      sessionLabel,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+    };
+
+    saveCoachChangeRequest(request);
+
+    const formData = new FormData();
+    formData.set('reason', `[${team.name} · ${sessionLabel}] ${reason.trim()}`);
+    formData.set('teamId', team.id);
+    formData.set('sessionLabel', sessionLabel);
+    if (weekContext.instance?.microcycleId) {
+      formData.set('microcycleId', weekContext.instance.microcycleId);
+    }
+
+    await createChangeRequest({ ok: false } as ActionState, formData);
+
+    setReason('');
+    setRequestingSession(null);
+    setFeedback('Solicitud enviada al director de metodología.');
+  };
+
+  return (
+    <div className="mx-auto max-w-lg space-y-4 pb-8">
+      <div className="flex items-center gap-2 text-primary">
+        <Smartphone className="size-5" />
+        <p className="text-sm font-medium">Vista entrenador · tablet / móvil</p>
+      </div>
+
+      <Card className="border border-primary/25">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Mi equipo</CardTitle>
+          <CardDescription>Semana actual y sesiones planificadas.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <SynqSelect
+            value={teamId}
+            onChange={setTeamId}
+            options={teams.map((item) => ({ value: item.id, label: item.name }))}
+          />
+
+          {weekContext ? (
+            <div className="space-y-3 rounded-xl border border-primary/20 bg-muted/10 p-4">
+              <div className="flex items-start gap-2">
+                <CalendarDays className="mt-0.5 size-4 text-primary" />
+                <div>
+                  <p className="font-semibold">
+                    {weekContext.context.micro.label} · {weekContext.variant.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {weekContext.context.micro.weekStart} → {weekContext.context.micro.weekEnd}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {weekContext.document.seasonTitle}
+                  </p>
+                </div>
+              </div>
+
+              {weekContext.excluded ? (
+                <p className="rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+                  Semana marcada como festivo / sin entreno.
+                </p>
+              ) : null}
+
+              {weekContext.instance ? (
+                <p className="text-xs text-emerald-300">
+                  Instancia de equipo activa (fork desde plantilla de categoría).
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Aún no hay instancia de equipo para esta semana. El director puede hacer fork desde
+                  Ciclos.
+                </p>
+              )}
+
+              <div className="space-y-2">
+                {sessions.map((session) => (
+                  <div
+                    key={session.id}
+                    className={cn(
+                      'rounded-lg border border-primary/15 p-3',
+                      weekContext.excluded && 'opacity-50'
+                    )}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-medium">{session.label}</p>
+                        <p className="text-[11px] text-muted-foreground">{session.structure}</p>
+                        <p className="mt-1 text-[10px] text-muted-foreground">
+                          Ejercicios: pendiente de asignar
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="shrink-0 gap-1 text-xs"
+                        disabled={weekContext.excluded}
+                        onClick={() =>
+                          setRequestingSession(
+                            requestingSession === session.label ? null : session.label
+                          )
+                        }
+                      >
+                        <MessageSquarePlus className="size-3.5" />
+                        Cambio
+                      </Button>
+                    </div>
+
+                    {requestingSession === session.label ? (
+                      <div className="mt-3 space-y-2 border-t border-primary/10 pt-3">
+                        <textarea
+                          value={reason}
+                          onChange={(event) => setReason(event.target.value)}
+                          rows={3}
+                          placeholder="Ej. No tengo conos suficientes, propongo rondo 4v4 en espacio reducido…"
+                          className="w-full rounded-md border border-primary/25 bg-background/80 px-3 py-2 text-sm"
+                        />
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="w-full"
+                          disabled={!reason.trim()}
+                          onClick={() => void submitRequest(session.label)}
+                        >
+                          Enviar solicitud de cambio
+                        </Button>
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p className="rounded-lg border border-dashed border-primary/20 p-4 text-sm text-muted-foreground">
+              No hay plan de ciclos para este equipo. Configura la temporada en Metodología → Ciclos
+              y asigna el equipo a una variante.
+            </p>
+          )}
+
+          {feedback ? <p className="text-sm text-primary">{feedback}</p> : null}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

@@ -46,7 +46,7 @@
 | **Web = club** | Gestión, metodología, cantera, informes, configuración |
 | **Apps = campo** | Entrenador, padres, signage, KDS |
 | **Multiidioma desde v1** | ES, EN, PT mínimo; `locale` + `country_code` |
-| **Pagos** | SynqAI **no gestiona tesorería** del club en Admin; configuración de importes sí; torneos pueden usar Stripe del club (fase posterior) |
+| **Pagos** | SynqAI **no gestiona tesorería** del club; factura B2B al club (~0,50 €/niño/mes, sin Stripe). El club cobra a padres por su cuenta. Ver `docs/MODELO_COMERCIAL_B2B.md` |
 | **TrendPulse separado** | Rama `trendpulse`, Supabase A, deploy propio — no mezclar |
 
 **Objetivo de mercado (horizonte):** ~0,7 % del mercado addressable (entrenadores + clubes). **Realista a 5 años:** 0,1–0,15 %. **Madrid 10 clubes** valida el primer tramo.

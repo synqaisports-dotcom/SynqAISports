@@ -2,7 +2,8 @@
 
 import type { ExerciseTaskSheet, TaskType } from '@/lib/exercise-sheet';
 import { SHEET_FIELD_LABELS, TASK_TYPE_LABELS } from '@/lib/exercise-sheet';
-import { ExerciseCanvas } from '@/components/methodology/ExerciseCanvas';
+import { ExerciseDrawingTrigger } from '@/components/methodology/drawing/ExerciseDrawingTrigger';
+import { ExerciseEditorLayout } from '@/components/methodology/ExerciseEditorLayout';
 import type { DrawingData } from '@/lib/methodology';
 
 type Props = {
@@ -10,6 +11,7 @@ type Props = {
   drawingJson?: DrawingData | unknown;
   showCanvas?: boolean;
   showTaskType?: boolean;
+  layout?: 'stacked' | 'split';
 };
 
 export function ExerciseSheetForm({
@@ -17,11 +19,12 @@ export function ExerciseSheetForm({
   drawingJson,
   showCanvas = true,
   showTaskType = true,
+  layout = 'stacked',
 }: Props) {
   const s = sheet;
 
-  return (
-    <div className="space-y-6">
+  const fields = (
+    <>
       <div className="rounded-xl border border-synq-accent/20 bg-synq-slate/20 px-4 py-2 text-center text-xs font-semibold uppercase tracking-widest text-synq-accent">
         Plantilla de tarea
       </div>
@@ -131,13 +134,22 @@ export function ExerciseSheetForm({
         defaultValue={s?.coachingCues}
         rows={3}
       />
+    </>
+  );
 
-      {showCanvas && (
-        <div>
-          <label className="mb-1 block text-xs text-synq-muted">Esquema / pizarra (boceto)</label>
-          <ExerciseCanvas initialData={drawingJson} />
-        </div>
-      )}
+  if (showCanvas && layout === 'split') {
+    return (
+      <ExerciseEditorLayout
+        canvas={<ExerciseDrawingTrigger initialData={drawingJson} compact />}
+        form={fields}
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {fields}
+      {showCanvas ? <ExerciseDrawingTrigger initialData={drawingJson} /> : null}
     </div>
   );
 }

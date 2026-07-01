@@ -1,6 +1,18 @@
+import Link from 'next/link';
+import {
+  ArrowRight,
+  Calendar,
+  ClipboardList,
+  Smartphone,
+  TrendingUp,
+  Users,
+} from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { countActivePlayers, getStaffContext } from '@/lib/portal';
 import { redirect } from 'next/navigation';
+import { PageContainer } from '@/components/portal/PageContainer';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 export default async function PortalHomePage() {
   const supabase = await createClient();
@@ -9,7 +21,7 @@ export default async function PortalHomePage() {
 
   const activePlayers = await countActivePlayers(supabase, ctx.club.id);
   const foundingBadge = ctx.club.is_founding
-    ? 'Founding — año 1 sin cuota SynqAI'
+    ? 'Founding — año 1 sin cuota'
     : 'Club socio';
 
   const kpis = [
@@ -17,76 +29,82 @@ export default async function PortalHomePage() {
       label: 'Jugadores activos',
       value: String(activePlayers),
       hint: `${ctx.club.players_count} de referencia`,
-      icon: '👥',
+      icon: Users,
     },
     {
       label: 'Cuota familiar',
-      value: `${ctx.club.family_fee_annual_eur} €/año`,
-      hint: 'Configuración del club',
-      icon: '📈',
+      value: `${ctx.club.family_fee_annual_eur} €`,
+      hint: 'Por jugador / año',
+      icon: TrendingUp,
     },
     {
       label: 'Tarifa SynqAI',
-      value: `${ctx.club.synq_rate_per_user_eur} €/user/mes`,
-      hint: 'Escala PPP',
-      icon: '📱',
+      value: `${ctx.club.synq_rate_per_user_eur} €`,
+      hint: 'Por usuario / mes',
+      icon: Smartphone,
     },
     {
-      label: 'Estado',
+      label: 'Estado club',
       value: foundingBadge,
       hint: ctx.club.founding_until
         ? `Hasta ${new Date(ctx.club.founding_until).toLocaleDateString('es-ES')}`
         : 'Temporada actual',
-      icon: '📅',
+      icon: Calendar,
     },
   ];
 
-  return (
-    <div>
-      <h1 className="font-serif-display text-3xl" style={{ color: '#ffffff' }}>
-        Inicio
-      </h1>
-      <p className="mt-2" style={{ color: '#94a3b8' }}>
-        Panel de {ctx.club.name}. Métricas ampliadas en fases siguientes.
-      </p>
+  const quickLinks = [
+    { href: '/portal/cantera', title: 'Cantera', text: 'Equipos, jugadores y categorías.' },
+    { href: '/portal/metodologia', title: 'Metodología', text: 'Ejercicios, microciclos y PDF.' },
+    { href: '/portal/club', title: 'Datos del club', text: 'Perfil, contacto y tarifas.' },
+  ];
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {kpis.map(({ label, value, hint, icon }) => (
-          <article
-            key={label}
-            className="rounded-2xl border border-white/5 bg-synq-slate/40 p-5"
-          >
-            <div className="flex items-start justify-between">
-              <p className="text-sm text-synq-muted">{label}</p>
-              <span className="text-lg" aria-hidden>
-                {icon}
-              </span>
-            </div>
-            <p className="mt-3 text-2xl font-semibold text-white">{value}</p>
-            <p className="mt-1 text-xs text-synq-muted">{hint}</p>
-          </article>
+  return (
+    <PageContainer>
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {kpis.map(({ label, value, hint, icon: Icon }) => (
+          <Card key={label}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{label}</CardTitle>
+              <Icon className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{value}</div>
+              <p className="text-xs text-muted-foreground">{hint}</p>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
-      <div className="mt-8 rounded-2xl border border-dashed border-white/10 p-6 text-sm text-synq-muted">
-        <p className="font-medium text-white">Próximos módulos</p>
-        <ul className="mt-3 list-inside list-disc space-y-1">
-          <li>
-            <a href="/portal/cantera" className="text-synq-accent hover:underline">
-              Cantera
-            </a>{' '}
-            — equipos y jugadores
-          </li>
-          <li>
-            <a href="/portal/metodologia" className="text-synq-accent hover:underline">
-              Metodología
-            </a>{' '}
-            — ejercicios, microciclos, objetivos
-          </li>
-          <li>Patrocinadores y digital signage</li>
-          <li>Torneos y informes</li>
-        </ul>
+      <div className="mt-6 grid gap-4 md:grid-cols-3">
+        {quickLinks.map(({ href, title, text }) => (
+          <Card key={href} className="transition-colors hover:border-primary/40">
+            <CardHeader>
+              <CardTitle className="text-base">{title}</CardTitle>
+              <CardDescription>{text}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button variant="outline" size="sm" asChild>
+                <Link href={href}>
+                  Abrir
+                  <ArrowRight className="ml-1 h-4 w-4" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
       </div>
-    </div>
+
+      <Card className="mt-6 border-dashed">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <ClipboardList className="h-4 w-4 text-primary" />
+            Próximos módulos
+          </CardTitle>
+          <CardDescription>Patrocinadores, pantallas LED y torneos.</CardDescription>
+        </CardHeader>
+      </Card>
+    </PageContainer>
   );
 }

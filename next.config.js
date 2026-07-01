@@ -5,6 +5,7 @@ const nextConfig = {
   },
   images: {
     remotePatterns: [
+      { protocol: 'https', hostname: '**.supabase.co', pathname: '/storage/v1/object/public/**' },
       { protocol: 'https', hostname: 'placehold.co', pathname: '/**' },
       { protocol: 'https', hostname: 'ae-pic-a1.aliexpress-media.com', pathname: '/**' },
       { protocol: 'https', hostname: 'ae01.alicdn.com', pathname: '/**' },

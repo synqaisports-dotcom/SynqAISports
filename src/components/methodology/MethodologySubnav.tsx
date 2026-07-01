@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 
 const links = [
   { href: '/portal/metodologia', label: 'Resumen', exact: true },
+  { href: '/portal/metodologia/ciclos', label: 'Ciclos', exact: false },
   { href: '/portal/metodologia/ejercicios', label: 'Ejercicios', exact: false },
   { href: '/portal/metodologia/microciclos', label: 'Microciclos', exact: false },
   { href: '/portal/metodologia/objetivos', label: 'Objetivos', exact: false },
