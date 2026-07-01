@@ -29,6 +29,7 @@ import {
 import {
   DEFAULT_STROKE,
   FIELD_FORMAT_SHORT,
+  DEFAULT_WAVE_WAVELENGTH_NORM,
   SPORT_OPTIONS,
   type DrawingElement,
   type ExerciseDrawingDocument,
@@ -190,13 +191,21 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
       if (!tr) return;
       if (node && (selected?.type === 'material' || selected?.type === 'shape-rect')) {
         tr.nodes([node]);
+        tr.keepRatio(!(selected?.type === 'material' && selected.material === 'ladder'));
       } else {
         tr.nodes([]);
       }
       tr.getLayer()?.batchDraw();
     },
-    [selected?.type]
+    [selected]
   );
+
+  useEffect(() => {
+    const tr = transformerRef.current;
+    if (!tr || selected?.type !== 'material') return;
+    tr.keepRatio(selected.material !== 'ladder');
+    tr.getLayer()?.batchDraw();
+  }, [selected]);
 
   const getPointerNorm = (stage: Konva.Stage) => {
     const pos = stage.getPointerPosition();
@@ -383,7 +392,8 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
       const p1 = normToPx(element.x1, element.y1, fieldRect);
       const p2 = normToPx(element.x2, element.y2, fieldRect);
       const amp = element.amplitude * fieldRect.width;
-      const pts = wavePathPoints(p1.x, p1.y, p2.x, p2.y, amp);
+      const wavelength = DEFAULT_WAVE_WAVELENGTH_NORM * fieldRect.width;
+      const pts = wavePathPoints(p1.x, p1.y, p2.x, p2.y, amp, wavelength);
       return (
         <Line
           key={key}
@@ -445,9 +455,73 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     }
 
     if (element.type === 'material') {
-      const img = materialImages[element.material];
       const p = normToPx(element.x, element.y, fieldRect);
-      const scale = element.scale * (fieldRect.width * MATERIAL_SCALE_NORM);
+      const base = fieldRect.width * MATERIAL_SCALE_NORM;
+
+      if (element.material === 'ladder') {
+        const unitW = 110;
+        const unitH = 56;
+        const sx = (element.scaleX ?? element.scale) * base;
+        const sy = (element.scaleY ?? element.scale) * base;
+        const pole = selectedId === element.id && !isPreview ? '#22d3ee' : '#0f172a';
+        const rung = selectedId === element.id && !isPreview ? '#22d3ee' : '#fbbf24';
+        const hw = unitW / 2;
+        const hh = unitH / 2;
+        const rungs = 5;
+        return (
+          <Group
+            key={key}
+            id={element.id}
+            x={p.x}
+            y={p.y}
+            rotation={element.rotation}
+            scaleX={sx / unitW}
+            scaleY={sy / unitH}
+            opacity={element.opacity}
+            draggable={tool === 'select'}
+            onClick={() => setSelectedId(element.id)}
+            onDragEnd={(ev) => {
+              const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
+              updateElement(element.id, { x: n.x, y: n.y });
+            }}
+            onTransformEnd={(ev) => {
+              const node = ev.target;
+              const n = pxToNorm(node.x(), node.y(), fieldRect);
+              updateElement(element.id, {
+                x: n.x,
+                y: n.y,
+                rotation: node.rotation(),
+                scaleX: (element.scaleX ?? element.scale) * node.scaleX(),
+                scaleY: (element.scaleY ?? element.scale) * node.scaleY(),
+              });
+              node.scaleX(1);
+              node.scaleY(1);
+            }}
+            ref={(node) => {
+              if (selectedId === element.id) attachTransformer(node);
+            }}
+          >
+            <Line points={[-hw, -hh, -hw, hh]} stroke={pole} strokeWidth={2.5} lineCap="round" listening={false} />
+            <Line points={[hw, -hh, hw, hh]} stroke={pole} strokeWidth={2.5} lineCap="round" listening={false} />
+            {Array.from({ length: rungs }).map((_, i) => {
+              const y = -hh + (i / (rungs - 1)) * unitH;
+              return (
+                <Line
+                  key={i}
+                  points={[-hw, y, hw, y]}
+                  stroke={rung}
+                  strokeWidth={2}
+                  lineCap="round"
+                  listening={false}
+                />
+              );
+            })}
+          </Group>
+        );
+      }
+
+      const img = materialImages[element.material];
+      const scale = element.scale * base;
       return (
         <Group
           key={key}
