@@ -542,14 +542,16 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
       const base = fieldRect.width * MATERIAL_SCALE_NORM;
 
       if (element.material === 'ladder') {
+        const scaleXn = element.scaleX ?? element.scale;
+        const scaleYn = element.scaleY ?? element.scale;
         const unitW = 110;
         const unitH = 56;
-        const sx = (element.scaleX ?? element.scale) * base;
-        const sy = (element.scaleY ?? element.scale) * base;
+        const ladderW = scaleXn * base;
+        const ladderH = scaleYn * base * (unitH / unitW);
+        const hw = ladderW / 2;
+        const hh = ladderH / 2;
         const pole = selectedId === element.id && !isPreview ? '#22d3ee' : '#0f172a';
         const rung = selectedId === element.id && !isPreview ? '#22d3ee' : '#fbbf24';
-        const hw = unitW / 2;
-        const hh = unitH / 2;
         const rungs = 5;
         return (
           <Group
@@ -558,8 +560,6 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             x={p.x}
             y={p.y}
             rotation={element.rotation}
-            scaleX={sx / unitW}
-            scaleY={sy / unitH}
             opacity={element.opacity}
             draggable={canDrag}
             onMouseDown={(e) => {
@@ -581,15 +581,20 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             onTransformEnd={(ev) => {
               const node = ev.target;
               const n = pxToNorm(node.x(), node.y(), fieldRect);
+              const ratioX = node.scaleX();
+              const ratioY = node.scaleY();
+              node.scaleX(1);
+              node.scaleY(1);
+              const nextScaleX = Math.abs(ratioX - 1) >= 0.001 ? scaleXn * ratioX : scaleXn;
+              const nextScaleY = Math.abs(ratioY - 1) >= 0.001 ? scaleYn * ratioY : scaleYn;
               updateElement(element.id, {
                 x: n.x,
                 y: n.y,
                 rotation: node.rotation(),
-                scaleX: (element.scaleX ?? element.scale) * node.scaleX(),
-                scaleY: (element.scaleY ?? element.scale) * node.scaleY(),
+                scaleX: nextScaleX,
+                scaleY: nextScaleY,
+                scale: Math.max(nextScaleX, nextScaleY),
               });
-              node.scaleX(1);
-              node.scaleY(1);
             }}
             ref={(node) => {
               if (selectedId === element.id) attachTransformer(node);
@@ -598,15 +603,15 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             <Rect
               x={-hw}
               y={-hh}
-              width={unitW}
-              height={unitH}
+              width={ladderW}
+              height={ladderH}
               fill="rgba(0,0,0,0.001)"
               listening
             />
             <Line points={[-hw, -hh, -hw, hh]} stroke={pole} strokeWidth={2.5} lineCap="round" listening={false} />
             <Line points={[hw, -hh, hw, hh]} stroke={pole} strokeWidth={2.5} lineCap="round" listening={false} />
             {Array.from({ length: rungs }).map((_, i) => {
-              const y = -hh + (i / (rungs - 1)) * unitH;
+              const y = -hh + (i / (rungs - 1)) * ladderH;
               return (
                 <Line
                   key={i}
@@ -928,8 +933,15 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               min={0.5}
               max={2.5}
               step={0.1}
-              value={selected.scale}
-              onChange={(e) => updateElement(selected.id, { scale: Number(e.target.value) })}
+              value={selected.material === 'ladder' ? (selected.scaleX ?? selected.scale) : selected.scale}
+              onChange={(e) => {
+                const v = Number(e.target.value);
+                if (selected.material === 'ladder') {
+                  updateElement(selected.id, { scale: v, scaleX: v, scaleY: v });
+                } else {
+                  updateElement(selected.id, { scale: v });
+                }
+              }}
               className="w-24"
             />
           </label>

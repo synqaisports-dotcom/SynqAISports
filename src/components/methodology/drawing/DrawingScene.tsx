@@ -479,23 +479,23 @@ function MaterialShape({
 
   if (element.material === 'ladder') {
     const base = viewW * MATERIAL_SCALE_NORM;
-    const sx = (element.scaleX ?? element.scale) * base;
-    const sy = (element.scaleY ?? element.scale) * base;
-    const unitW = 110;
+    const scaleXn = element.scaleX ?? element.scale;
+    const scaleYn = element.scaleY ?? element.scale;
     const unitH = 56;
-    const hw = unitW / 2;
-    const hh = unitH / 2;
+    const unitW = 110;
+    const ladderW = scaleXn * base;
+    const ladderH = scaleYn * base * (unitH / unitW);
+    const hw = ladderW / 2;
+    const hh = ladderH / 2;
     const pole = selected ? '#22d3ee' : '#0f172a';
     const rung = selected ? '#22d3ee' : '#fbbf24';
     const rungs = 5;
     return (
-      <g
-        transform={`translate(${p.x} ${p.y}) rotate(${element.rotation}) scale(${sx / unitW} ${sy / unitH})`}
-      >
+      <g transform={`translate(${p.x} ${p.y}) rotate(${element.rotation})`}>
         <line x1={-hw} y1={-hh} x2={-hw} y2={hh} stroke={pole} strokeWidth={2.5} strokeLinecap="round" />
         <line x1={hw} y1={-hh} x2={hw} y2={hh} stroke={pole} strokeWidth={2.5} strokeLinecap="round" />
         {Array.from({ length: rungs }).map((_, i) => {
-          const y = -hh + (i / (rungs - 1)) * unitH;
+          const y = -hh + (i / (rungs - 1)) * ladderH;
           return (
             <line key={i} x1={-hw} y1={y} x2={hw} y2={y} stroke={rung} strokeWidth={2} strokeLinecap="round" />
           );
