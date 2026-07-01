@@ -115,14 +115,17 @@ function F7Svg() {
   const goalD = 60 * F7_MARKS.goalDepth;
   const goalW = 40 * F7_MARKS.goalWidth;
   const r = 40 * F7_MARKS.centerR;
-  const arcR = 60 * F7_MARKS.arcR;
+  const arcRx = 60 * F7_MARKS.arcR;
+  const arcRy = 40 * F7_MARKS.arcRy;
   const off = 60 * F7_MARKS.offside;
   const spot = 60 * F7_MARKS.spot;
   const crx = 60 * F7_MARKS.cornerRx;
   const cry = 40 * F7_MARKS.cornerRy;
 
-  const leftArc = f7ArcPath(spot, cy, arcR, 'left');
-  const rightArc = f7ArcPath(60 - spot, cy, arcR, 'right');
+  const leftArc = f7ArcPath(spot, cy, arcRx, arcRy, 'left');
+  const rightArc = f7ArcPath(60 - spot, cy, arcRx, arcRy, 'right');
+  const goalLeft = `M 0 ${cy - goalW / 2} L ${goalD} ${cy - goalW / 2} L ${goalD} ${cy + goalW / 2} L 0 ${cy + goalW / 2}`;
+  const goalRight = `M ${60 - goalD} ${cy - goalW / 2} L 60 ${cy - goalW / 2} L 60 ${cy + goalW / 2} L ${60 - goalD} ${cy + goalW / 2}`;
 
   return (
     <g>
@@ -135,12 +138,12 @@ function F7Svg() {
       <line x1={60 - off} y1="0" x2={60 - off} y2="40" {...p} />
 
       <rect x="0" y={cy - penW / 2} width={penD} height={penW} {...p} />
-      <rect x="0" y={cy - goalW / 2} width={goalD} height={goalW} {...p} />
+      <path d={goalLeft} {...p} />
       <circle cx={spot} cy={cy} r="0.35" fill={LINE} />
       <path d={leftArc} {...p} />
 
       <rect x={60 - penD} y={cy - penW / 2} width={penD} height={penW} {...p} />
-      <rect x={60 - goalD} y={cy - goalW / 2} width={goalD} height={goalW} {...p} />
+      <path d={goalRight} {...p} />
       <circle cx={60 - spot} cy={cy} r="0.35" fill={LINE} />
       <path d={rightArc} {...p} />
 
@@ -162,9 +165,9 @@ function f7CornerSvg(cx: number, cy: number, rx: number, ry: number, corner: 'tl
   return paths[corner];
 }
 
-function f7ArcPath(spotX: number, spotY: number, r: number, side: 'left' | 'right') {
+function f7ArcPath(spotX: number, spotY: number, rx: number, ry: number, side: 'left' | 'right') {
   const sweep = side === 'left' ? 1 : 0;
-  return `M ${spotX} ${spotY - r} A ${r} ${r} 0 0 ${sweep} ${spotX} ${spotY + r}`;
+  return `M ${spotX} ${spotY - ry} A ${rx} ${ry} 0 0 ${sweep} ${spotX} ${spotY + ry}`;
 }
 
 function HalfSvg() {
