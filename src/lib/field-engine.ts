@@ -25,7 +25,8 @@ export const F7_MARKS = {
   spot: 9 / 60,
   offside: 12 / 60,
   arcR: 6 / 60,
-  cornerR: 0.6 / 40,
+  cornerRx: 0.6 / 60,
+  cornerRy: 0.6 / 40,
 } as const;
 
 /** Medio campo F11 — portería arriba, línea media abajo (68 × 52,5 m). */

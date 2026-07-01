@@ -281,6 +281,8 @@ function F7Markings({ m, lw }: { m: FieldMapper; lw: number }) {
   const goalW = m.h(F7_MARKS.goalWidth);
   const r = m.h(F7_MARKS.centerR);
   const arcR = m.w(F7_MARKS.arcR);
+  const cornerRx = m.w(F7_MARKS.cornerRx);
+  const cornerRy = m.h(F7_MARKS.cornerRy);
   const leftSpotX = m.x(F7_MARKS.spot);
   const rightSpotX = m.x(1 - F7_MARKS.spot);
 
@@ -295,18 +297,47 @@ function F7Markings({ m, lw }: { m: FieldMapper; lw: number }) {
       <Line points={[m.x(F7_MARKS.offside), m.y(0), m.x(F7_MARKS.offside), m.y(1)]} stroke={LINE} strokeWidth={lw} />
       <Line points={[m.x(1 - F7_MARKS.offside), m.y(0), m.x(1 - F7_MARKS.offside), m.y(1)]} stroke={LINE} strokeWidth={lw} />
 
-      {/* Área grande + área pequeña (meta) */}
-      <Rect x={m.x(0)} y={cy - penW / 2} width={penD} height={penW} stroke={LINE} strokeWidth={lw} />
-      <Rect x={m.x(0)} y={cy - goalW / 2} width={goalD} height={goalW} stroke={LINE} strokeWidth={lw} />
+      {/* Área grande (penalti) + área pequeña (meta) */}
+      <PitchRect x={m.x(0)} y={cy - penW / 2} w={penD} h={penW} lw={lw} />
+      <PitchRect x={m.x(0)} y={cy - goalW / 2} w={goalD} h={goalW} lw={lw} />
       <Circle x={leftSpotX} y={cy} radius={lw * 0.85} fill={LINE} />
       <Line points={f7PenaltyArcPts(leftSpotX, cy, arcR, 'left')} stroke={LINE} strokeWidth={lw} lineCap="round" />
 
-      <Rect x={m.x(1) - penD} y={cy - penW / 2} width={penD} height={penW} stroke={LINE} strokeWidth={lw} />
-      <Rect x={m.x(1) - goalD} y={cy - goalW / 2} width={goalD} height={goalW} stroke={LINE} strokeWidth={lw} />
+      <PitchRect x={m.x(1) - penD} y={cy - penW / 2} w={penD} h={penW} lw={lw} />
+      <PitchRect x={m.x(1) - goalD} y={cy - goalW / 2} w={goalD} h={goalW} lw={lw} />
       <Circle x={rightSpotX} y={cy} radius={lw * 0.85} fill={LINE} />
       <Line points={f7PenaltyArcPts(rightSpotX, cy, arcR, 'right')} stroke={LINE} strokeWidth={lw} lineCap="round" />
+
+      <Line points={cornerArcPts(m.x(0), m.y(0), cornerRx, cornerRy, 'tl')} stroke={LINE} strokeWidth={lw} lineCap="round" />
+      <Line points={cornerArcPts(m.x(1), m.y(0), cornerRx, cornerRy, 'tr')} stroke={LINE} strokeWidth={lw} lineCap="round" />
+      <Line points={cornerArcPts(m.x(0), m.y(1), cornerRx, cornerRy, 'bl')} stroke={LINE} strokeWidth={lw} lineCap="round" />
+      <Line points={cornerArcPts(m.x(1), m.y(1), cornerRx, cornerRy, 'br')} stroke={LINE} strokeWidth={lw} lineCap="round" />
     </Group>
   );
+}
+
+function cornerArcPts(
+  cx: number,
+  cy: number,
+  rx: number,
+  ry: number,
+  corner: 'tl' | 'tr' | 'bl' | 'br',
+  segments = 10
+): number[] {
+  const range: Record<typeof corner, [number, number]> = {
+    tl: [0, Math.PI / 2],
+    tr: [Math.PI / 2, Math.PI],
+    bl: [(3 * Math.PI) / 2, 2 * Math.PI],
+    br: [Math.PI, (3 * Math.PI) / 2],
+  };
+  const [start, end] = range[corner];
+  const pts: number[] = [];
+  for (let i = 0; i <= segments; i++) {
+    const t = i / segments;
+    const a = start + t * (end - start);
+    pts.push(cx + rx * Math.cos(a), cy + ry * Math.sin(a));
+  }
+  return pts;
 }
 
 function HalfMarkings({ m, lw }: { m: FieldMapper; lw: number }) {
@@ -387,6 +418,24 @@ function PitchLine({ points, lw, color = LINE }: { points: number[]; lw: number;
       <Line points={points} stroke={color} strokeWidth={lw} lineJoin="round" />
     </Group>
   );
+}
+
+function PitchRect({
+  x,
+  y,
+  w,
+  h,
+  lw,
+  color = LINE,
+}: {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  lw: number;
+  color?: string;
+}) {
+  return <PitchLine points={[x, y, x + w, y, x + w, y + h, x, y + h, x, y]} lw={lw} color={color} />;
 }
 
 function CornerArc({

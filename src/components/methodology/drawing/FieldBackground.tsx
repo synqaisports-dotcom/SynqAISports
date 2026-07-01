@@ -118,6 +118,8 @@ function F7Svg() {
   const arcR = 60 * F7_MARKS.arcR;
   const off = 60 * F7_MARKS.offside;
   const spot = 60 * F7_MARKS.spot;
+  const crx = 60 * F7_MARKS.cornerRx;
+  const cry = 40 * F7_MARKS.cornerRy;
 
   const leftArc = f7ArcPath(spot, cy, arcR, 'left');
   const rightArc = f7ArcPath(60 - spot, cy, arcR, 'right');
@@ -141,8 +143,23 @@ function F7Svg() {
       <rect x={60 - goalD} y={cy - goalW / 2} width={goalD} height={goalW} {...p} />
       <circle cx={60 - spot} cy={cy} r="0.35" fill={LINE} />
       <path d={rightArc} {...p} />
+
+      <path d={f7CornerSvg(0, 0, crx, cry, 'tl')} {...p} />
+      <path d={f7CornerSvg(60, 0, crx, cry, 'tr')} {...p} />
+      <path d={f7CornerSvg(0, 40, crx, cry, 'bl')} {...p} />
+      <path d={f7CornerSvg(60, 40, crx, cry, 'br')} {...p} />
     </g>
   );
+}
+
+function f7CornerSvg(cx: number, cy: number, rx: number, ry: number, corner: 'tl' | 'tr' | 'bl' | 'br') {
+  const paths: Record<typeof corner, string> = {
+    tl: `M ${cx + rx} ${cy} A ${rx} ${ry} 0 0 1 ${cx} ${cy + ry}`,
+    tr: `M ${cx} ${cy + ry} A ${rx} ${ry} 0 0 1 ${cx - rx} ${cy}`,
+    bl: `M ${cx} ${cy - ry} A ${rx} ${ry} 0 0 1 ${cx + rx} ${cy}`,
+    br: `M ${cx - rx} ${cy} A ${rx} ${ry} 0 0 1 ${cx} ${cy - ry}`,
+  };
+  return paths[corner];
 }
 
 function f7ArcPath(spotX: number, spotY: number, r: number, side: 'left' | 'right') {
