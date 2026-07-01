@@ -1,5 +1,6 @@
 import type { FieldTemplate } from '@/lib/exercise-drawing';
 import { FIELD_TEMPLATES } from '@/lib/exercise-drawing';
+import { F7_MARKS } from '@/lib/field-engine';
 
 type Props = {
   template: FieldTemplate;
@@ -14,6 +15,7 @@ const LINE = '#ffffff';
 export function FieldBackground({ template, className }: Props) {
   const { aspectRatio } = FIELD_TEMPLATES[template];
   const isFutsal = template === 'futsal';
+  const isF7 = template === 'football-f7';
 
   return (
     <div className={className} style={{ aspectRatio }}>
@@ -24,6 +26,22 @@ export function FieldBackground({ template, className }: Props) {
           <rect width="40" height="20" fill="#1e5a8f" />
           <rect x="1" y="0.5" width="38" height="19" fill="#6ec8f5" />
           <FutsalSvg />
+        </svg>
+      ) : isF7 ? (
+        <svg viewBox="0 0 60 40" preserveAspectRatio="xMidYMid meet" className="h-full w-full rounded-md shadow-lg">
+          <rect width="60" height="40" fill={GRASS_A} />
+          {Array.from({ length: 8 }).map((_, i) => (
+            <rect
+              key={i}
+              x={(60 / 8) * i}
+              y={0}
+              width={60 / 8}
+              height={40}
+              fill={i % 2 === 0 ? '#4cc463' : '#2f8a42'}
+              opacity={0.9}
+            />
+          ))}
+          <F7Svg />
         </svg>
       ) : (
         <svg viewBox="0 0 105 68" preserveAspectRatio="xMidYMid meet" className="h-full w-full rounded-md shadow-lg">
@@ -47,7 +65,6 @@ export function FieldBackground({ template, className }: Props) {
           ))}
           <rect width="105" height="68" fill="url(#pitch-vignette)" />
           {template === 'football-full' && <F11Svg />}
-          {template === 'football-f7' && <F7Svg />}
           {template === 'football-half' && <HalfSvg />}
           {template === 'football-third' && <ThirdSvg />}
         </svg>
@@ -77,14 +94,46 @@ function F11Svg() {
 }
 
 function F7Svg() {
-  const p = { stroke: LINE, strokeWidth: 0.35, fill: 'none' as const };
+  const p = { stroke: LINE, strokeWidth: 0.22, fill: 'none' as const };
+  const cy = 20;
+  const penD = 60 * F7_MARKS.penDepth;
+  const penW = 40 * F7_MARKS.penWidth;
+  const goalD = 60 * F7_MARKS.goalDepth;
+  const goalW = 40 * F7_MARKS.goalWidth;
+  const r = 40 * F7_MARKS.centerR;
+  const arcR = 60 * F7_MARKS.arcR;
+  const off = 60 * F7_MARKS.offside;
+  const spot = 60 * F7_MARKS.spot;
+
+  const leftArc = f7ArcPath(spot, cy, arcR, 'left');
+  const rightArc = f7ArcPath(60 - spot, cy, arcR, 'right');
+
   return (
-    <g transform="translate(22 14)">
+    <g>
       <rect x="0" y="0" width="60" height="40" {...p} />
       <line x1="30" y1="0" x2="30" y2="40" {...p} />
-      <circle cx="30" cy="20" r="7" {...p} />
+      <circle cx="30" cy={cy} r={r} {...p} />
+      <circle cx="30" cy={cy} r="0.35" fill={LINE} />
+
+      <line x1={off} y1="0" x2={off} y2="40" {...p} />
+      <line x1={60 - off} y1="0" x2={60 - off} y2="40" {...p} />
+
+      <rect x="0" y={cy - penW / 2} width={penD} height={penW} {...p} />
+      <rect x="0" y={cy - goalW / 2} width={goalD} height={goalW} {...p} />
+      <circle cx={spot} cy={cy} r="0.35" fill={LINE} />
+      <path d={leftArc} {...p} />
+
+      <rect x={60 - penD} y={cy - penW / 2} width={penD} height={penW} {...p} />
+      <rect x={60 - goalD} y={cy - goalW / 2} width={goalD} height={goalW} {...p} />
+      <circle cx={60 - spot} cy={cy} r="0.35" fill={LINE} />
+      <path d={rightArc} {...p} />
     </g>
   );
+}
+
+function f7ArcPath(spotX: number, spotY: number, r: number, side: 'left' | 'right') {
+  const sweep = side === 'left' ? 1 : 0;
+  return `M ${spotX} ${spotY - r} A ${r} ${r} 0 0 ${sweep} ${spotX} ${spotY + r}`;
 }
 
 function HalfSvg() {

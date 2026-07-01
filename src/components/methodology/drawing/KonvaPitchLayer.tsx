@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Group, Rect, Line, Circle, Arc } from 'react-konva';
 import type { FieldRect, FieldTemplate } from '@/lib/exercise-drawing';
-import { FUTSAL_COURT_NORM, FieldMapper } from '@/lib/field-engine';
+import { F7_MARKS, FUTSAL_COURT_NORM, FieldMapper } from '@/lib/field-engine';
 import { FOOTBALL_COLORS, FUTSAL_COLORS, getGrassTexture } from '@/lib/drawing-pitch-textures';
 
 type Props = {
@@ -45,6 +45,23 @@ function footballPenaltyArcPts(
   for (let i = 0; i <= segments; i++) {
     const t = i / segments;
     const a = center - halfAngle + t * 2 * halfAngle;
+    pts.push(spotX + radius * Math.cos(a), spotY + radius * Math.sin(a));
+  }
+  return pts;
+}
+
+function f7PenaltyArcPts(
+  spotX: number,
+  spotY: number,
+  radius: number,
+  facing: 'left' | 'right',
+  segments = 28
+): number[] {
+  const center = facing === 'left' ? 0 : Math.PI;
+  const pts: number[] = [];
+  for (let i = 0; i <= segments; i++) {
+    const t = i / segments;
+    const a = center - Math.PI / 2 + t * Math.PI;
     pts.push(spotX + radius * Math.cos(a), spotY + radius * Math.sin(a));
   }
   return pts;
@@ -233,11 +250,15 @@ function FutsalMarkings({ m, lw }: { m: FieldMapper; lw: number }) {
 function F7Markings({ m, lw }: { m: FieldMapper; lw: number }) {
   const cx = m.x(0.5);
   const cy = m.y(0.5);
-  const penD = m.w(12 / 60);
-  const penW = m.h(24 / 40);
-  const goalD = m.w(4 / 60);
-  const goalW = m.h(10 / 40);
-  const r = m.h(6 / 40);
+  const penD = m.w(F7_MARKS.penDepth);
+  const penW = m.h(F7_MARKS.penWidth);
+  const goalD = m.w(F7_MARKS.goalDepth);
+  const goalW = m.h(F7_MARKS.goalWidth);
+  const r = m.h(F7_MARKS.centerR);
+  const arcR = m.w(F7_MARKS.arcR);
+  const cornerR = m.h(F7_MARKS.cornerR);
+  const leftSpotX = m.x(F7_MARKS.spot);
+  const rightSpotX = m.x(1 - F7_MARKS.spot);
 
   return (
     <Group>
@@ -245,10 +266,27 @@ function F7Markings({ m, lw }: { m: FieldMapper; lw: number }) {
       <PitchLine points={[cx, m.y(0), cx, m.y(1)]} lw={lw} />
       <Circle x={cx} y={cy} radius={r} stroke={LINE} strokeWidth={lw} fill="transparent" />
       <Circle x={cx} y={cy} radius={lw * 0.9} fill={LINE} />
+
+      {/* Líneas de fuera de juego — 12 m desde cada meta */}
+      <Line points={[m.x(F7_MARKS.offside), m.y(0), m.x(F7_MARKS.offside), m.y(1)]} stroke={LINE} strokeWidth={lw} />
+      <Line points={[m.x(1 - F7_MARKS.offside), m.y(0), m.x(1 - F7_MARKS.offside), m.y(1)]} stroke={LINE} strokeWidth={lw} />
+
+      {/* Área izquierda */}
       <Rect x={m.x(0)} y={cy - penW / 2} width={penD} height={penW} stroke={LINE} strokeWidth={lw} />
       <Rect x={m.x(0)} y={cy - goalW / 2} width={goalD} height={goalW} stroke={LINE} strokeWidth={lw} />
+      <Circle x={leftSpotX} y={cy} radius={lw * 0.85} fill={LINE} />
+      <Line points={f7PenaltyArcPts(leftSpotX, cy, arcR, 'left')} stroke={LINE} strokeWidth={lw} lineCap="round" />
+
+      {/* Área derecha */}
       <Rect x={m.x(1) - penD} y={cy - penW / 2} width={penD} height={penW} stroke={LINE} strokeWidth={lw} />
       <Rect x={m.x(1) - goalD} y={cy - goalW / 2} width={goalD} height={goalW} stroke={LINE} strokeWidth={lw} />
+      <Circle x={rightSpotX} y={cy} radius={lw * 0.85} fill={LINE} />
+      <Line points={f7PenaltyArcPts(rightSpotX, cy, arcR, 'right')} stroke={LINE} strokeWidth={lw} lineCap="round" />
+
+      <CornerArc cx={m.x(0)} cy={m.y(0)} r={cornerR} rot={0} lw={lw} />
+      <CornerArc cx={m.x(1)} cy={m.y(0)} r={cornerR} rot={90} lw={lw} />
+      <CornerArc cx={m.x(0)} cy={m.y(1)} r={cornerR} rot={270} lw={lw} />
+      <CornerArc cx={m.x(1)} cy={m.y(1)} r={cornerR} rot={180} lw={lw} />
     </Group>
   );
 }

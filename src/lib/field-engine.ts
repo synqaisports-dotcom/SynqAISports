@@ -15,8 +15,22 @@ export const FIELD_VIEWBOX: Record<FieldTemplate, { width: number; height: numbe
   blank: { width: 16, height: 10 },
 };
 
+/** Fútbol 7 — medidas RFEF sobre 60 × 40 m */
+export const F7_MARKS = {
+  penDepth: 9 / 60,
+  penWidth: 24 / 40,
+  goalDepth: 3 / 60,
+  goalWidth: 6 / 40,
+  centerR: 6 / 40,
+  spot: 9 / 60,
+  offside: 12 / 60,
+  arcR: 6 / 60,
+  cornerR: 0.6 / 40,
+} as const;
+
 /** Futsal: pista interior dentro del viewBox 40×20 m. */
 export const FUTSAL_COURT_NORM = { x: 1 / 40, y: 0.5 / 20, w: 38 / 40, h: 19 / 20 };
+
 
 export function easeOutCubic(t: number): number {
   return 1 - (1 - t) ** 3;
