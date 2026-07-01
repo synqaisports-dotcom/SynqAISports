@@ -9,7 +9,9 @@ import type {
   WaveShapeElement,
 } from '@/lib/exercise-drawing';
 import {
+  arrowHeadPoints,
   getElementAnchors,
+  quadBezierEndAngle,
   RECT_STROKE_OPACITY,
   RECT_STROKE_WIDTH_FACTOR,
   sortElementsByLayer,
@@ -265,7 +267,12 @@ function CurveShape({
       />
       {element.arrowEnd ? (
         <polygon
-          points={arrowHead(p2.x, p2.y, Math.atan2(p2.y - pc.y, p2.x - pc.x), color)}
+          points={arrowHeadPoints(
+            p2.x,
+            p2.y,
+            quadBezierEndAngle(p1, pc, p2),
+            Math.max(3.5, sw * 2.8)
+          ).join(' ')}
           fill={color}
         />
       ) : null}
@@ -486,13 +493,4 @@ function MaterialShape({
   }
 
   return null;
-}
-
-function arrowHead(x: number, y: number, angle: number, color: string): string {
-  const head = 3.5;
-  const x1 = x - head * Math.cos(angle - 0.4);
-  const y1 = y - head * Math.sin(angle - 0.4);
-  const x2 = x - head * Math.cos(angle + 0.4);
-  const y2 = y - head * Math.sin(angle + 0.4);
-  return `${x},${y} ${x1},${y1} ${x2},${y2}`;
 }

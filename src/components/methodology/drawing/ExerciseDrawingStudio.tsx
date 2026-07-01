@@ -44,6 +44,8 @@ import {
   normToPx,
   parseExerciseDrawing,
   pxToNorm,
+  quadBezierEndAngle,
+  arrowHeadPoints,
   RECT_STROKE_OPACITY,
   RECT_STROKE_WIDTH_FACTOR,
   serializeExerciseDrawing,
@@ -344,13 +346,18 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             lineCap="round"
           />
           {element.arrowEnd ? (
-            <Arrow
-              points={[pc.x, pc.y, p2.x, p2.y]}
-              stroke={element.style.color}
-              strokeWidth={element.style.width}
+            <Line
+              points={arrowHeadPoints(
+                p2.x,
+                p2.y,
+                quadBezierEndAngle(p1, pc, p2),
+                Math.max(8, element.style.width * 3)
+              )}
+              closed
               fill={element.style.color}
-              pointerLength={8}
-              pointerWidth={8}
+              stroke={element.style.color}
+              strokeWidth={1}
+              listening={false}
             />
           ) : null}
           {selectedId === element.id && !isPreview ? (
