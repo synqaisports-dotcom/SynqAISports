@@ -92,6 +92,9 @@ export const DEFAULT_STROKE: StrokeStyle = {
 /** Opacidad global del objeto (0..1). El relleno del rectángulo usa fillOpacity aparte. */
 export const DEFAULT_ELEMENT_OPACITY = 1;
 
+/** Longitud de onda fija (fracción del ancho del campo) — las ondas se añaden al alargar el trazo. */
+export const DEFAULT_WAVE_WAVELENGTH_NORM = 0.03;
+
 /** Relleno suave del rectángulo; el borde se dibuja más intenso encima. */
 export const DEFAULT_RECT_FILL_OPACITY = 0.18;
 
@@ -172,6 +175,9 @@ export type MaterialElement = {
   scale: number;
   label?: string;
   opacity: number;
+  /** Escalera: ancho independiente del alto */
+  scaleX?: number;
+  scaleY?: number;
 };
 
 export type DrawingElement =
@@ -253,6 +259,14 @@ function normalizeElementOpacity(el: DrawingElement): DrawingElement {
     typeof raw.opacity === 'number' && Number.isFinite(raw.opacity)
       ? clamp01(raw.opacity)
       : DEFAULT_ELEMENT_OPACITY;
+  if (el.type === 'material' && el.material === 'ladder') {
+    return {
+      ...el,
+      opacity,
+      scaleX: el.scaleX ?? el.scale,
+      scaleY: el.scaleY ?? el.scale,
+    };
+  }
   return { ...el, opacity };
 }
 
@@ -504,19 +518,28 @@ export function wavePathPoints(
   x2: number,
   y2: number,
   amplitude: number,
-  segments = 24
+  wavelength: number
 ): number[] {
   const points: number[] = [];
   const dx = x2 - x1;
   const dy = y2 - y1;
-  const len = Math.hypot(dx, dy) || 1;
+  const len = Math.hypot(dx, dy);
+  if (len < 0.5) {
+    points.push(x1, y1);
+    return points;
+  }
   const nx = -dy / len;
   const ny = dx / len;
-  for (let i = 0; i <= segments; i++) {
-    const t = i / segments;
+  const safeWl = Math.max(wavelength, 8);
+  const waveCycles = len / safeWl;
+  const samplesPerWave = 10;
+  const segmentCount = Math.max(2, Math.ceil(waveCycles * samplesPerWave));
+  for (let i = 0; i <= segmentCount; i++) {
+    const t = i / segmentCount;
+    const dist = len * t;
     const px = x1 + dx * t;
     const py = y1 + dy * t;
-    const wave = Math.sin(t * Math.PI * 4) * amplitude;
+    const wave = Math.sin((dist / safeWl) * Math.PI * 2) * amplitude;
     points.push(px + nx * wave, py + ny * wave);
   }
   return points;
@@ -665,6 +688,8 @@ export function defaultDraftForTool(
           y: y1,
           rotation: 0,
           scale: tool === 'goal' ? 1.2 : 1,
+          scaleX: tool === 'ladder' ? 1 : undefined,
+          scaleY: tool === 'ladder' ? 1 : undefined,
           opacity: DEFAULT_ELEMENT_OPACITY,
         };
       }

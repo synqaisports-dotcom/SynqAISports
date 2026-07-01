@@ -10,6 +10,7 @@ import type {
 } from '@/lib/exercise-drawing';
 import {
   arrowHeadPoints,
+  DEFAULT_WAVE_WAVELENGTH_NORM,
   getElementAnchors,
   quadBezierEndAngle,
   RECT_STROKE_OPACITY,
@@ -296,7 +297,8 @@ function WaveShape({
   const p1 = toVb(element.x1, element.y1);
   const p2 = toVb(element.x2, element.y2);
   const amp = element.amplitude * viewW;
-  const pts = wavePathPoints(p1.x, p1.y, p2.x, p2.y, amp);
+  const wavelength = DEFAULT_WAVE_WAVELENGTH_NORM * viewW;
+  const pts = wavePathPoints(p1.x, p1.y, p2.x, p2.y, amp, wavelength);
   const color = selected ? '#22d3ee' : element.style.color;
   const sw = element.style.width / (viewW / 35);
   const d = pts.reduce((acc, val, i) => {
@@ -476,16 +478,26 @@ function MaterialShape({
   }
 
   if (element.material === 'ladder') {
-    const w = size * 1.1;
-    const stroke = selected ? '#22d3ee' : '#fbbf24';
+    const base = viewW * MATERIAL_SCALE_NORM;
+    const sx = (element.scaleX ?? element.scale) * base;
+    const sy = (element.scaleY ?? element.scale) * base;
+    const unitW = 110;
+    const unitH = 56;
+    const hw = unitW / 2;
+    const hh = unitH / 2;
+    const pole = selected ? '#22d3ee' : '#0f172a';
+    const rung = selected ? '#22d3ee' : '#fbbf24';
+    const rungs = 5;
     return (
-      <g transform={`rotate(${element.rotation} ${p.x} ${p.y})`}>
-        <line x1={p.x - w / 2} y1={p.y - size * 0.35} x2={p.x - w / 2} y2={p.y + size * 0.35} stroke={stroke} strokeWidth={1} />
-        <line x1={p.x + w / 2} y1={p.y - size * 0.35} x2={p.x + w / 2} y2={p.y + size * 0.35} stroke={stroke} strokeWidth={1} />
-        {[0, 1, 2, 3, 4].map((i) => {
-          const y = p.y - size * 0.3 + i * (size * 0.15);
+      <g
+        transform={`translate(${p.x} ${p.y}) rotate(${element.rotation}) scale(${sx / unitW} ${sy / unitH})`}
+      >
+        <line x1={-hw} y1={-hh} x2={-hw} y2={hh} stroke={pole} strokeWidth={2.5} strokeLinecap="round" />
+        <line x1={hw} y1={-hh} x2={hw} y2={hh} stroke={pole} strokeWidth={2.5} strokeLinecap="round" />
+        {Array.from({ length: rungs }).map((_, i) => {
+          const y = -hh + (i / (rungs - 1)) * unitH;
           return (
-            <line key={i} x1={p.x - w / 2} y1={y} x2={p.x + w / 2} y2={y} stroke={stroke} strokeWidth={0.8} />
+            <line key={i} x1={-hw} y1={y} x2={hw} y2={y} stroke={rung} strokeWidth={2} strokeLinecap="round" />
           );
         })}
       </g>

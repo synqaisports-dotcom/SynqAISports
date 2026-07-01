@@ -180,14 +180,16 @@ function drawHurdle(ctx: CanvasRenderingContext2D) {
 function drawLadder(ctx: CanvasRenderingContext2D) {
   const s = 128;
   ctx.clearRect(0, 0, s, s);
-  ctx.strokeStyle = '#fbbf24';
+  ctx.strokeStyle = '#0f172a';
   ctx.lineWidth = 5;
+  ctx.lineCap = 'round';
   ctx.beginPath();
   ctx.moveTo(36, 30);
   ctx.lineTo(36, 100);
   ctx.moveTo(92, 30);
   ctx.lineTo(92, 100);
   ctx.stroke();
+  ctx.strokeStyle = '#fbbf24';
   ctx.lineWidth = 4;
   for (let i = 0; i < 6; i++) {
     const y = 34 + i * 12;
