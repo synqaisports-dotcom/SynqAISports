@@ -384,7 +384,7 @@ export type FieldRectInsets = {
   right?: number;
 };
 
-export type FieldFitMode = 'contain' | 'fill-width';
+export type FieldFitMode = 'contain' | 'fill-width' | 'fill-width-top';
 
 export function computeFieldRect(
   stageWidth: number,
@@ -402,14 +402,12 @@ export function computeFieldRect(
   const availW = Math.max(1, stageWidth - left - right);
   const availH = Math.max(1, stageHeight - top - bottom);
 
-  if (fit === 'fill-width') {
+  if (fit === 'fill-width' || fit === 'fill-width-top') {
     const width = Math.max(1, stageWidth - left - right);
     const height = width / aspect;
     const xPos = left;
-    const availH = stageHeight - top - bottom;
-    let yPos = top + (availH - height) / 2;
-    if (yPos < top) yPos = top;
-    return { x: xPos, y: yPos, width, height };
+    const yPos = fit === 'fill-width-top' ? top : top + (availH - height) / 2;
+    return { x: xPos, y: Math.max(top, yPos), width, height };
   }
 
   const maxW = Math.max(1, availW - padding * 2);
