@@ -52,6 +52,7 @@ import {
   serializeExerciseDrawing,
   sortElementsByLayer,
   sportForField,
+  translateElementBy,
   wavePathPoints,
 } from '@/lib/exercise-drawing';
 import { cn } from '@/lib/utils';
@@ -318,8 +319,20 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
   const dashArray = (s: StrokeStyle) => (s.dash ? [10, 6] : undefined);
   const cursorClass = tool === 'select' ? 'cursor-default' : 'cursor-crosshair';
 
+  const finishElementDrag = (element: DrawingElement, node: Konva.Node) => {
+    const dx = node.x() / fieldRect.width;
+    const dy = node.y() / fieldRect.height;
+    node.position({ x: 0, y: 0 });
+    if (Math.abs(dx) > 0.0001 || Math.abs(dy) > 0.0001) {
+      updateElement(element.id, translateElementBy(element, dx, dy));
+    }
+  };
+
   const renderElement = (element: DrawingElement, isPreview = false) => {
     const key = isPreview ? `draft-${element.id}` : element.id;
+    const canDrag = tool === 'select' && !isPreview;
+    const hitStroke =
+      element.type === 'material' ? 16 : Math.max(16, element.style.width * 5);
 
     if (element.type === 'shape-line') {
       const p1 = normToPx(element.x1, element.y1, fieldRect);
@@ -328,6 +341,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
         return (
           <Arrow
             key={key}
+            id={element.id}
             points={[p1.x, p1.y, p2.x, p2.y]}
             stroke={element.style.color}
             strokeWidth={element.style.width}
@@ -336,6 +350,13 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             opacity={element.opacity}
             pointerLength={10}
             pointerWidth={10}
+            hitStrokeWidth={hitStroke}
+            draggable={canDrag}
+            onMouseDown={(e) => {
+              e.cancelBubble = true;
+              if (canDrag) setSelectedId(element.id);
+            }}
+            onDragEnd={(e) => finishElementDrag(element, e.target)}
             onClick={() => !isPreview && setSelectedId(element.id)}
           />
         );
@@ -343,12 +364,20 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
       return (
         <Line
           key={key}
+          id={element.id}
           points={[p1.x, p1.y, p2.x, p2.y]}
           stroke={element.style.color}
           strokeWidth={element.style.width}
           dash={dashArray(element.style)}
           opacity={element.opacity}
           lineCap="round"
+          hitStrokeWidth={hitStroke}
+          draggable={canDrag}
+          onMouseDown={(e) => {
+            e.cancelBubble = true;
+            if (canDrag) setSelectedId(element.id);
+          }}
+          onDragEnd={(e) => finishElementDrag(element, e.target)}
           onClick={() => !isPreview && setSelectedId(element.id)}
         />
       );
@@ -358,8 +387,31 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
       const p1 = normToPx(element.x1, element.y1, fieldRect);
       const p2 = normToPx(element.x2, element.y2, fieldRect);
       const pc = normToPx(element.cx, element.cy, fieldRect);
+      const pad = hitStroke;
+      const minX = Math.min(p1.x, p2.x, pc.x) - pad;
+      const minY = Math.min(p1.y, p2.y, pc.y) - pad;
+      const boxW = Math.max(p1.x, p2.x, pc.x) - minX + pad;
+      const boxH = Math.max(p1.y, p2.y, pc.y) - minY + pad;
       return (
-        <Group key={key} opacity={element.opacity} onClick={() => !isPreview && setSelectedId(element.id)}>
+        <Group
+          key={key}
+          id={element.id}
+          opacity={element.opacity}
+          draggable={canDrag}
+          onMouseDown={(e) => {
+            e.cancelBubble = true;
+            if (canDrag) setSelectedId(element.id);
+          }}
+          onDragEnd={(e) => finishElementDrag(element, e.target)}
+          onClick={() => !isPreview && setSelectedId(element.id)}
+        >
+          <Rect
+            x={minX}
+            y={minY}
+            width={boxW}
+            height={boxH}
+            fill="rgba(0,0,0,0.001)"
+          />
           <Line
             points={[p1.x, p1.y, pc.x, pc.y, p2.x, p2.y]}
             stroke={element.style.color}
@@ -368,6 +420,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             tension={0.4}
             bezier
             lineCap="round"
+            listening={false}
           />
           {element.arrowEnd ? (
             <Line
@@ -393,6 +446,9 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               stroke="#0f172a"
               strokeWidth={2}
               draggable
+              onMouseDown={(e) => {
+                e.cancelBubble = true;
+              }}
               onDragMove={(ev) => {
                 const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
                 updateElement(element.id, { cx: n.x, cy: n.y });
@@ -412,12 +468,20 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
       return (
         <Line
           key={key}
+          id={element.id}
           points={pts}
           stroke={element.style.color}
           strokeWidth={element.style.width}
           dash={dashArray(element.style)}
           opacity={element.opacity}
           lineCap="round"
+          hitStrokeWidth={hitStroke}
+          draggable={canDrag}
+          onMouseDown={(e) => {
+            e.cancelBubble = true;
+            if (canDrag) setSelectedId(element.id);
+          }}
+          onDragEnd={(e) => finishElementDrag(element, e.target)}
           onClick={() => !isPreview && setSelectedId(element.id)}
         />
       );
@@ -443,7 +507,11 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           strokeWidth={element.style.width * RECT_STROKE_WIDTH_FACTOR}
           opacity={element.opacity}
           dash={dashArray(element.style)}
-          draggable={tool === 'select'}
+          draggable={canDrag}
+          onMouseDown={(e) => {
+            e.cancelBubble = true;
+            if (canDrag) setSelectedId(element.id);
+          }}
           onClick={() => setSelectedId(element.id)}
           onDragEnd={(ev) => {
             const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
@@ -493,14 +561,14 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             scaleX={sx / unitW}
             scaleY={sy / unitH}
             opacity={element.opacity}
-            draggable={tool === 'select'}
+            draggable={canDrag}
             onMouseDown={(e) => {
               e.cancelBubble = true;
-              if (tool === 'select') setSelectedId(element.id);
+              if (canDrag) setSelectedId(element.id);
             }}
             onTap={(e) => {
               e.cancelBubble = true;
-              if (tool === 'select') setSelectedId(element.id);
+              if (canDrag) setSelectedId(element.id);
             }}
             onClick={(e) => {
               e.cancelBubble = true;
@@ -564,8 +632,19 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           y={p.y}
           rotation={element.rotation}
           opacity={element.opacity}
-          draggable={tool === 'select'}
-          onClick={() => setSelectedId(element.id)}
+          draggable={canDrag}
+          onMouseDown={(e) => {
+            e.cancelBubble = true;
+            if (canDrag) setSelectedId(element.id);
+          }}
+          onTap={(e) => {
+            e.cancelBubble = true;
+            if (canDrag) setSelectedId(element.id);
+          }}
+          onClick={(e) => {
+            e.cancelBubble = true;
+            setSelectedId(element.id);
+          }}
           onDragEnd={(ev) => {
             const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
             updateElement(element.id, { x: n.x, y: n.y });
@@ -617,6 +696,9 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             stroke="#0f172a"
             strokeWidth={2}
             draggable
+            onMouseDown={(e) => {
+              e.cancelBubble = true;
+            }}
             onDragMove={(ev) => {
               const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
               if (a.role === 'start') updateElement(selected.id, { x1: n.x, y1: n.y });

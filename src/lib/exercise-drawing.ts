@@ -721,6 +721,46 @@ export function isShapeTool(tool: StudioTool): boolean {
   );
 }
 
+export function translateElementBy(
+  element: DrawingElement,
+  dx: number,
+  dy: number
+): Partial<DrawingElement> {
+  const tx = (v: number) => clamp01(v + dx);
+  const ty = (v: number) => clamp01(v + dy);
+  switch (element.type) {
+    case 'shape-line':
+      return {
+        x1: tx(element.x1),
+        y1: ty(element.y1),
+        x2: tx(element.x2),
+        y2: ty(element.y2),
+      };
+    case 'shape-curve':
+      return {
+        x1: tx(element.x1),
+        y1: ty(element.y1),
+        x2: tx(element.x2),
+        y2: ty(element.y2),
+        cx: tx(element.cx),
+        cy: ty(element.cy),
+      };
+    case 'shape-wave':
+      return {
+        x1: tx(element.x1),
+        y1: ty(element.y1),
+        x2: tx(element.x2),
+        y2: ty(element.y2),
+      };
+    case 'shape-rect':
+      return { x: tx(element.x), y: ty(element.y) };
+    case 'material':
+      return { x: tx(element.x), y: ty(element.y) };
+    default:
+      return {};
+  }
+}
+
 export type ElementAnchor = { id: string; role: string; x: number; y: number };
 
 export function getElementAnchors(element: DrawingElement): ElementAnchor[] {
