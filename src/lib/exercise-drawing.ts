@@ -55,7 +55,7 @@ export const FIELD_TEMPLATES: Record<
   },
   'football-half': {
     label: 'Medio campo',
-    aspectRatio: 52.5 / 68,
+    aspectRatio: 68 / 52.5,
     description: '52,5 × 68 m',
     sport: 'football',
   },

@@ -9,7 +9,7 @@ import type { FieldRect, FieldTemplate } from '@/lib/exercise-drawing';
 export const FIELD_VIEWBOX: Record<FieldTemplate, { width: number; height: number }> = {
   'football-full': { width: 105, height: 68 },
   'football-f7': { width: 60, height: 40 },
-  'football-half': { width: 52.5, height: 68 },
+  'football-half': { width: 68, height: 52.5 },
   'football-third': { width: 35, height: 68 },
   futsal: { width: 40, height: 20 },
   blank: { width: 16, height: 10 },
@@ -26,6 +26,21 @@ export const F7_MARKS = {
   offside: 12 / 60,
   arcR: 6 / 60,
   cornerR: 0.6 / 40,
+} as const;
+
+/** Medio campo F11 — portería arriba, línea media abajo (68 × 52,5 m). */
+export const HALF_MARKS = {
+  penDepth: 16.5 / 52.5,
+  penWidth: 40.32 / 68,
+  goalDepth: 5.5 / 52.5,
+  goalWidth: 18.32 / 68,
+  centerR: 9.15 / 68,
+  centerRy: 9.15 / 52.5,
+  spot: 11 / 52.5,
+  arcR: 9.15 / 68,
+  arcRy: 9.15 / 52.5,
+  cornerR: 1 / 68,
+  cornerRy: 1 / 52.5,
 } as const;
 
 /** Futsal: pista interior dentro del viewBox 40×20 m. */

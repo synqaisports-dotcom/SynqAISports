@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Group, Rect, Line, Circle, Arc } from 'react-konva';
 import type { FieldRect, FieldTemplate } from '@/lib/exercise-drawing';
-import { F7_MARKS, FUTSAL_COURT_NORM, FieldMapper } from '@/lib/field-engine';
+import { F7_MARKS, FUTSAL_COURT_NORM, HALF_MARKS, FieldMapper } from '@/lib/field-engine';
 import { FOOTBALL_COLORS, FUTSAL_COLORS, getGrassTexture } from '@/lib/drawing-pitch-textures';
 
 type Props = {
@@ -63,6 +63,35 @@ function f7PenaltyArcPts(
     const t = i / segments;
     const a = center - Math.PI / 2 + t * Math.PI;
     pts.push(spotX + radius * Math.cos(a), spotY + radius * Math.sin(a));
+  }
+  return pts;
+}
+
+function halfCenterArcPts(m: FieldMapper, segments = 36): number[] {
+  const cx = m.x(0.5);
+  const cy = m.y(1);
+  const rx = m.w(HALF_MARKS.centerR);
+  const ry = m.h(HALF_MARKS.centerRy);
+  const pts: number[] = [];
+  for (let i = 0; i <= segments; i++) {
+    const t = i / segments;
+    const a = Math.PI + t * Math.PI;
+    pts.push(cx + rx * Math.cos(a), cy + ry * Math.sin(a));
+  }
+  return pts;
+}
+
+function halfPenaltyArcPts(m: FieldMapper, segments = 36): number[] {
+  const cx = m.x(0.5);
+  const spotY = m.y(HALF_MARKS.spot);
+  const rx = m.w(HALF_MARKS.arcR);
+  const ry = m.h(HALF_MARKS.arcRy);
+  const halfAngle = Math.acos(5.5 / 9.15);
+  const pts: number[] = [];
+  for (let i = 0; i <= segments; i++) {
+    const t = i / segments;
+    const a = Math.PI / 2 - halfAngle + t * 2 * halfAngle;
+    pts.push(cx + rx * Math.cos(a), spotY + ry * Math.sin(a));
   }
   return pts;
 }
@@ -293,23 +322,62 @@ function F7Markings({ m, lw }: { m: FieldMapper; lw: number }) {
 
 function HalfMarkings({ m, lw }: { m: FieldMapper; lw: number }) {
   const cx = m.x(0.5);
-  const cy = m.y(0.5);
-  const penD = m.w(16.5 / 52.5);
-  const penW = m.h(40.32 / 68);
-  const goalD = m.w(5.5 / 52.5);
-  const goalW = m.h(18.32 / 68);
-  const r = m.h(9.15 / 68);
+  const penD = m.h(HALF_MARKS.penDepth);
+  const penW = m.w(HALF_MARKS.penWidth);
+  const goalD = m.h(HALF_MARKS.goalDepth);
+  const goalW = m.w(HALF_MARKS.goalWidth);
+  const cornerRx = m.w(HALF_MARKS.cornerR);
+  const cornerRy = m.h(HALF_MARKS.cornerRy);
 
   return (
     <Group>
       <PitchLine points={[m.x(0), m.y(0), m.x(1), m.y(0), m.x(1), m.y(1), m.x(0), m.y(1), m.x(0), m.y(0)]} lw={lw} />
-      <PitchLine points={[m.x(0), cy, m.x(1), cy]} lw={lw} />
-      <Circle x={cx} y={cy} radius={r} stroke={LINE} strokeWidth={lw} />
-      <Rect x={m.x(1) - penD} y={cy - penW / 2} width={penD} height={penW} stroke={LINE} strokeWidth={lw} />
-      <Rect x={m.x(1) - goalD} y={cy - goalW / 2} width={goalD} height={goalW} stroke={LINE} strokeWidth={lw} />
-      <Circle x={m.x(1 - 11 / 52.5)} y={cy} radius={lw * 0.85} fill={LINE} />
+      {/* Línea media — borde inferior */}
+      <PitchLine points={[m.x(0), m.y(1), m.x(1), m.y(1)]} lw={lw} />
+      {/* Semicírculo central (abre hacia la portería) */}
+      <Line points={halfCenterArcPts(m)} stroke={LINE} strokeWidth={lw} lineCap="round" />
+
+      {/* Portería y áreas — parte superior */}
+      <Rect x={cx - penW / 2} y={m.y(0)} width={penW} height={penD} stroke={LINE} strokeWidth={lw} />
+      <Rect x={cx - goalW / 2} y={m.y(0)} width={goalW} height={goalD} stroke={LINE} strokeWidth={lw} />
+      <Circle x={cx} y={m.y(HALF_MARKS.spot)} radius={lw * 0.85} fill={LINE} />
+      <Line points={halfPenaltyArcPts(m)} stroke={LINE} strokeWidth={lw} lineCap="round" />
+
+      {/* Esquinas superiores */}
+      <Line
+        points={halfCornerArcPts(m.x(0), m.y(0), cornerRx, cornerRy, 'tl')}
+        stroke={LINE}
+        strokeWidth={lw}
+        lineCap="round"
+      />
+      <Line
+        points={halfCornerArcPts(m.x(1), m.y(0), cornerRx, cornerRy, 'tr')}
+        stroke={LINE}
+        strokeWidth={lw}
+        lineCap="round"
+      />
     </Group>
   );
+}
+
+function halfCornerArcPts(
+  cx: number,
+  cy: number,
+  rx: number,
+  ry: number,
+  corner: 'tl' | 'tr',
+  segments = 10
+): number[] {
+  const pts: number[] = [];
+  for (let i = 0; i <= segments; i++) {
+    const t = i / segments;
+    const a =
+      corner === 'tl'
+        ? t * (Math.PI / 2)
+        : Math.PI - t * (Math.PI / 2);
+    pts.push(cx + rx * Math.cos(a), cy + ry * Math.sin(a));
+  }
+  return pts;
 }
 
 function ThirdMarkings({ m, lw }: { m: FieldMapper; lw: number }) {

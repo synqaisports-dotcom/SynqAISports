@@ -1,6 +1,6 @@
 import type { FieldTemplate } from '@/lib/exercise-drawing';
 import { FIELD_TEMPLATES } from '@/lib/exercise-drawing';
-import { F7_MARKS } from '@/lib/field-engine';
+import { F7_MARKS, HALF_MARKS } from '@/lib/field-engine';
 
 type Props = {
   template: FieldTemplate;
@@ -16,6 +16,7 @@ export function FieldBackground({ template, className }: Props) {
   const { aspectRatio } = FIELD_TEMPLATES[template];
   const isFutsal = template === 'futsal';
   const isF7 = template === 'football-f7';
+  const isHalf = template === 'football-half';
 
   return (
     <div className={className} style={{ aspectRatio }}>
@@ -43,6 +44,22 @@ export function FieldBackground({ template, className }: Props) {
           ))}
           <F7Svg />
         </svg>
+      ) : isHalf ? (
+        <svg viewBox="0 0 68 52.5" preserveAspectRatio="xMidYMid meet" className="h-full w-full rounded-md shadow-lg">
+          <rect width="68" height="52.5" fill={GRASS_A} />
+          {Array.from({ length: 8 }).map((_, i) => (
+            <rect
+              key={i}
+              x={(68 / 8) * i}
+              y={0}
+              width={68 / 8}
+              height={52.5}
+              fill={i % 2 === 0 ? '#4cc463' : '#2f8a42'}
+              opacity={0.9}
+            />
+          ))}
+          <HalfSvg />
+        </svg>
       ) : (
         <svg viewBox="0 0 105 68" preserveAspectRatio="xMidYMid meet" className="h-full w-full rounded-md shadow-lg">
           <defs>
@@ -65,7 +82,6 @@ export function FieldBackground({ template, className }: Props) {
           ))}
           <rect width="105" height="68" fill="url(#pitch-vignette)" />
           {template === 'football-full' && <F11Svg />}
-          {template === 'football-half' && <HalfSvg />}
           {template === 'football-third' && <ThirdSvg />}
         </svg>
       )}
@@ -137,13 +153,41 @@ function f7ArcPath(spotX: number, spotY: number, r: number, side: 'left' | 'righ
 }
 
 function HalfSvg() {
-  const p = { stroke: LINE, strokeWidth: 0.32, fill: 'none' as const };
+  const p = { stroke: LINE, strokeWidth: 0.28, fill: 'none' as const };
+  const cx = 34;
+  const penD = 52.5 * HALF_MARKS.penDepth;
+  const penW = 68 * HALF_MARKS.penWidth;
+  const goalD = 52.5 * HALF_MARKS.goalDepth;
+  const goalW = 68 * HALF_MARKS.goalWidth;
+  const rx = 68 * HALF_MARKS.centerR;
+  const ry = 52.5 * HALF_MARKS.centerRy;
+  const spot = 52.5 * HALF_MARKS.spot;
+  const arcRx = 68 * HALF_MARKS.arcR;
+  const arcRy = 52.5 * HALF_MARKS.arcRy;
+  const halfAngle = Math.acos(5.5 / 9.15);
+
+  const centerArc = `M ${cx - rx} 52.5 A ${rx} ${ry} 0 0 1 ${cx + rx} 52.5`;
+  const penArc = (() => {
+    const pts: string[] = [];
+    for (let i = 0; i <= 24; i++) {
+      const t = i / 24;
+      const a = Math.PI / 2 - halfAngle + t * 2 * halfAngle;
+      const x = cx + arcRx * Math.cos(a);
+      const y = spot + arcRy * Math.sin(a);
+      pts.push(`${i === 0 ? 'M' : 'L'} ${x} ${y}`);
+    }
+    return pts.join(' ');
+  })();
+
   return (
-    <g transform="translate(26 0)">
-      <rect x="0" y="0" width="52.5" height="68" {...p} />
-      <line x1="0" y1="34" x2="52.5" y2="34" {...p} />
-      <circle cx="26.25" cy="34" r="9.15" {...p} />
-      <rect x="36" y="13.84" width="16.5" height="40.32" {...p} />
+    <g>
+      <rect x="0" y="0" width="68" height="52.5" {...p} />
+      <line x1="0" y1="52.5" x2="68" y2="52.5" {...p} />
+      <path d={centerArc} {...p} />
+      <rect x={cx - penW / 2} y="0" width={penW} height={penD} {...p} />
+      <rect x={cx - goalW / 2} y="0" width={goalW} height={goalD} {...p} />
+      <circle cx={cx} cy={spot} r="0.4" fill={LINE} />
+      <path d={penArc} {...p} />
     </g>
   );
 }
