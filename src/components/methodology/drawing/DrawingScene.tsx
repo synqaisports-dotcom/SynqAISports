@@ -8,7 +8,13 @@ import type {
   RectShapeElement,
   WaveShapeElement,
 } from '@/lib/exercise-drawing';
-import { getElementAnchors, wavePathPoints } from '@/lib/exercise-drawing';
+import {
+  getElementAnchors,
+  RECT_STROKE_OPACITY,
+  RECT_STROKE_WIDTH_FACTOR,
+  sortElementsByLayer,
+  wavePathPoints,
+} from '@/lib/exercise-drawing';
 import { FIELD_VIEWBOX, MATERIAL_SCALE_NORM } from '@/lib/field-engine';
 
 type Props = {
@@ -31,6 +37,7 @@ export function DrawingScene({
   const vb = FIELD_VIEWBOX[document.field];
   const viewW = vb.width;
   const viewH = vb.height;
+  const layeredElements = sortElementsByLayer(document.elements);
 
   function toVb(nx: number, ny: number) {
     return { x: nx * viewW, y: ny * viewH };
@@ -48,7 +55,7 @@ export function DrawingScene({
       {document.legacyStrokes?.map((stroke, index) => (
         <LegacyStrokePath key={`legacy-${index}`} stroke={stroke} viewW={viewW} viewH={viewH} />
       ))}
-      {document.elements.map((element) => (
+      {layeredElements.map((element) => (
         <g
           key={element.id}
           onClick={(event) => {
@@ -56,7 +63,11 @@ export function DrawingScene({
             onSelect?.(element.id);
           }}
           className="cursor-pointer"
-          opacity={selectedId && selectedId !== element.id ? 0.72 : 1}
+          opacity={
+            selectedId && selectedId !== element.id
+              ? Math.min(0.72, element.opacity)
+              : element.opacity
+          }
         >
           <DrawingElementShape
             element={element}
@@ -68,7 +79,7 @@ export function DrawingScene({
         </g>
       ))}
       {showAnchors && selectedId
-        ? document.elements
+        ? layeredElements
             .filter((el) => el.id === selectedId)
             .flatMap((el) => getElementAnchors(el))
             .map((anchor) => (
@@ -318,6 +329,7 @@ function RectShape({
   const fill = selected ? '#22d3ee' : element.fill;
   const cx = p.x + (element.width * viewW) / 2;
   const cy = p.y + (element.height * viewH) / 2;
+  const sw = (element.style.width * RECT_STROKE_WIDTH_FACTOR) / (viewW / 35);
 
   return (
     <rect
@@ -328,7 +340,8 @@ function RectShape({
       fill={fill}
       fillOpacity={element.fillOpacity}
       stroke={color}
-      strokeWidth={element.style.width / (viewW / 35)}
+      strokeOpacity={RECT_STROKE_OPACITY}
+      strokeWidth={sw}
       strokeDasharray={dashArray(element.style.dash)}
       transform={`rotate(${element.rotation} ${cx} ${cy})`}
     />

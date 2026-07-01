@@ -89,6 +89,17 @@ export const DEFAULT_STROKE: StrokeStyle = {
   dash: false,
 };
 
+/** Opacidad global del objeto (0..1). El relleno del rectángulo usa fillOpacity aparte. */
+export const DEFAULT_ELEMENT_OPACITY = 1;
+
+/** Relleno suave del rectángulo; el borde se dibuja más intenso encima. */
+export const DEFAULT_RECT_FILL_OPACITY = 0.18;
+
+/** El borde del rectángulo es más grueso que el grosor base de trazo. */
+export const RECT_STROKE_WIDTH_FACTOR = 1.45;
+
+export const RECT_STROKE_OPACITY = 1;
+
 export type StudioTool =
   | 'select'
   | 'shape-line'
@@ -108,6 +119,7 @@ export type LineShapeElement = {
   arrowStart: boolean;
   arrowEnd: boolean;
   style: StrokeStyle;
+  opacity: number;
 };
 
 export type CurveShapeElement = {
@@ -121,6 +133,7 @@ export type CurveShapeElement = {
   cy: number;
   arrowEnd: boolean;
   style: StrokeStyle;
+  opacity: number;
 };
 
 export type WaveShapeElement = {
@@ -132,6 +145,7 @@ export type WaveShapeElement = {
   y2: number;
   amplitude: number;
   style: StrokeStyle;
+  opacity: number;
 };
 
 export type RectShapeElement = {
@@ -145,6 +159,7 @@ export type RectShapeElement = {
   fill: string;
   fillOpacity: number;
   style: StrokeStyle;
+  opacity: number;
 };
 
 export type MaterialElement = {
@@ -156,6 +171,7 @@ export type MaterialElement = {
   rotation: number;
   scale: number;
   label?: string;
+  opacity: number;
 };
 
 export type DrawingElement =
@@ -231,6 +247,26 @@ function isV3Element(value: unknown): value is DrawingElement {
   );
 }
 
+function normalizeElementOpacity(el: DrawingElement): DrawingElement {
+  const raw = el as DrawingElement & { opacity?: number };
+  const opacity =
+    typeof raw.opacity === 'number' && Number.isFinite(raw.opacity)
+      ? clamp01(raw.opacity)
+      : DEFAULT_ELEMENT_OPACITY;
+  return { ...el, opacity };
+}
+
+/** Materiales siempre encima de trazos y zonas. */
+export function sortElementsByLayer(elements: DrawingElement[]): DrawingElement[] {
+  const shapes = elements.filter((el) => el.type !== 'material');
+  const materials = elements.filter((el) => el.type === 'material');
+  return [...shapes, ...materials];
+}
+
+export function isMaterialElement(el: DrawingElement): el is MaterialElement {
+  return el.type === 'material';
+}
+
 /** Migra elementos v2 al modelo v3 */
 function migrateV2Element(raw: Record<string, unknown>): DrawingElement | null {
   const id = typeof raw.id === 'string' ? raw.id : createElementId();
@@ -251,6 +287,7 @@ function migrateV2Element(raw: Record<string, unknown>): DrawingElement | null {
         arrowStart: false,
         arrowEnd: true,
         style,
+        opacity: DEFAULT_ELEMENT_OPACITY,
       };
     case 'line':
       return {
@@ -263,6 +300,7 @@ function migrateV2Element(raw: Record<string, unknown>): DrawingElement | null {
         arrowStart: false,
         arrowEnd: false,
         style,
+        opacity: DEFAULT_ELEMENT_OPACITY,
       };
     case 'zone':
       return {
@@ -274,8 +312,9 @@ function migrateV2Element(raw: Record<string, unknown>): DrawingElement | null {
         height: Number(raw.height) || 0.15,
         rotation: Number(raw.rotation) || 0,
         fill: typeof raw.color === 'string' ? raw.color : '#22d3ee',
-        fillOpacity: typeof raw.opacity === 'number' ? raw.opacity : 0.25,
+        fillOpacity: typeof raw.opacity === 'number' ? raw.opacity : DEFAULT_RECT_FILL_OPACITY,
         style: { ...style, dash: true },
+        opacity: DEFAULT_ELEMENT_OPACITY,
       };
     case 'player': {
       const team = raw.team as string;
@@ -290,6 +329,7 @@ function migrateV2Element(raw: Record<string, unknown>): DrawingElement | null {
         rotation: Number(raw.rotation) || 0,
         scale: 1,
         label: typeof raw.label === 'string' ? raw.label : undefined,
+        opacity: DEFAULT_ELEMENT_OPACITY,
       };
     }
     case 'cone':
@@ -301,6 +341,7 @@ function migrateV2Element(raw: Record<string, unknown>): DrawingElement | null {
         y: Number(raw.y) || 0.5,
         rotation: Number(raw.rotation) || 0,
         scale: 1,
+        opacity: DEFAULT_ELEMENT_OPACITY,
       };
     case 'ball':
       return {
@@ -311,6 +352,7 @@ function migrateV2Element(raw: Record<string, unknown>): DrawingElement | null {
         y: Number(raw.y) || 0.5,
         rotation: 0,
         scale: 1,
+        opacity: DEFAULT_ELEMENT_OPACITY,
       };
     case 'goal':
       return {
@@ -321,6 +363,7 @@ function migrateV2Element(raw: Record<string, unknown>): DrawingElement | null {
         y: Number(raw.y) || 0.5,
         rotation: Number(raw.rotation) || 0,
         scale: 1.2,
+        opacity: DEFAULT_ELEMENT_OPACITY,
       };
     default:
       return null;
@@ -335,15 +378,18 @@ export function parseExerciseDrawing(raw: unknown): ExerciseDrawingDocument {
     return {
       version: DRAWING_DOC_VERSION,
       field: isFieldTemplate(obj.field) ? obj.field : 'football-full',
-      elements: obj.elements.filter(isV3Element),
+      elements: sortElementsByLayer(obj.elements.filter(isV3Element).map(normalizeElementOpacity)),
       legacyStrokes: parseLegacyStrokes(obj.legacyStrokes),
     };
   }
 
   if (obj.version === 2 && Array.isArray(obj.elements)) {
-    const elements = obj.elements
-      .map((el) => migrateV2Element(el as Record<string, unknown>))
-      .filter((el): el is DrawingElement => el !== null);
+    const elements = sortElementsByLayer(
+      obj.elements
+        .map((el) => migrateV2Element(el as Record<string, unknown>))
+        .filter((el): el is DrawingElement => el !== null)
+        .map(normalizeElementOpacity)
+    );
     return {
       version: DRAWING_DOC_VERSION,
       field: isFieldTemplate(obj.field) ? obj.field : 'football-full',
@@ -369,7 +415,7 @@ export function serializeExerciseDrawing(doc: ExerciseDrawingDocument): string {
   const payload: ExerciseDrawingDocument = {
     version: DRAWING_DOC_VERSION,
     field: doc.field,
-    elements: doc.elements,
+    elements: sortElementsByLayer(doc.elements.map(normalizeElementOpacity)),
   };
   if (doc.legacyStrokes?.length) payload.legacyStrokes = doc.legacyStrokes;
   return JSON.stringify(payload);
@@ -497,6 +543,7 @@ export function defaultDraftForTool(
         arrowStart: false,
         arrowEnd: false,
         style: { ...style },
+        opacity: DEFAULT_ELEMENT_OPACITY,
       };
     case 'shape-arrow':
       return {
@@ -509,6 +556,7 @@ export function defaultDraftForTool(
         arrowStart: false,
         arrowEnd: true,
         style: { ...style },
+        opacity: DEFAULT_ELEMENT_OPACITY,
       };
     case 'shape-curve':
       return {
@@ -522,6 +570,7 @@ export function defaultDraftForTool(
         cy: Math.min(y1, y2) - 0.08,
         arrowEnd: true,
         style: { ...style },
+        opacity: DEFAULT_ELEMENT_OPACITY,
       };
     case 'shape-wave':
       return {
@@ -533,6 +582,7 @@ export function defaultDraftForTool(
         y2,
         amplitude: 0.02,
         style: { ...style },
+        opacity: DEFAULT_ELEMENT_OPACITY,
       };
     case 'shape-rect': {
       const x = Math.min(x1, x2);
@@ -546,8 +596,9 @@ export function defaultDraftForTool(
         height: Math.max(0.02, Math.abs(y2 - y1)),
         rotation: 0,
         fill: style.color,
-        fillOpacity: 0.18,
+        fillOpacity: DEFAULT_RECT_FILL_OPACITY,
         style: { ...style, dash: true },
+        opacity: DEFAULT_ELEMENT_OPACITY,
       };
     }
     default:
@@ -561,6 +612,7 @@ export function defaultDraftForTool(
           rotation: 0,
           scale: 1,
           label: tool === 'player-own' ? '1' : tool === 'player-rival' ? 'X' : 'N',
+          opacity: DEFAULT_ELEMENT_OPACITY,
         };
       }
       if (
@@ -579,6 +631,7 @@ export function defaultDraftForTool(
           y: y1,
           rotation: 0,
           scale: tool === 'goal' ? 1.2 : 1,
+          opacity: DEFAULT_ELEMENT_OPACITY,
         };
       }
       return null;
