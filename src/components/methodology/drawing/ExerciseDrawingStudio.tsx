@@ -467,7 +467,9 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
 
   if (!open || !mounted) return null;
 
-  const panelW = 'min(44vw, 480px)';
+  /** Ancho del panel de materiales: 9 iconos en una fila (~464px) + margen */
+  const materialsPanelW = 'min(92vw, 31rem)';
+  const toolsPanelW = 'min(92vw, 480px)';
 
   const studio = (
     <div className="fixed inset-0 z-[9999] overflow-hidden bg-[#060a12] text-foreground">
@@ -688,13 +690,13 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               'transition-[width,opacity] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]',
               materialsOpen ? 'w-[var(--dock-panel-w)] opacity-100' : 'pointer-events-none w-0 opacity-0'
             )}
-            style={{ '--dock-panel-w': panelW } as React.CSSProperties}
+            style={{ '--dock-panel-w': materialsPanelW } as React.CSSProperties}
           >
             <div
               className="mr-2 rounded-2xl border border-white/15 bg-black/85 p-2.5 shadow-2xl backdrop-blur-xl"
-              style={{ width: panelW }}
+              style={{ width: materialsPanelW }}
             >
-              <div className="grid grid-cols-5 gap-1.5">
+              <div className="flex flex-nowrap items-center justify-center gap-1.5 overflow-x-auto">
                 {MATERIAL_CATALOG.map(({ kind, label }) => (
                   <button
                     key={kind}
@@ -760,13 +762,13 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               'transition-[width,opacity] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]',
               toolsOpen ? 'w-[var(--dock-panel-w)] opacity-100' : 'pointer-events-none w-0 opacity-0'
             )}
-            style={{ '--dock-panel-w': panelW } as React.CSSProperties}
+            style={{ '--dock-panel-w': toolsPanelW } as React.CSSProperties}
           >
             <div
               className="ml-2 rounded-2xl border border-white/15 bg-black/85 p-2.5 shadow-2xl backdrop-blur-xl"
-              style={{ width: panelW }}
+              style={{ width: toolsPanelW }}
             >
-              <div className="flex flex-wrap justify-center gap-1.5">
+              <div className="flex flex-nowrap items-center justify-center gap-1.5 overflow-x-auto">
                 {SHAPE_TOOLS.map((item) => (
                   <button
                     key={item.id}
