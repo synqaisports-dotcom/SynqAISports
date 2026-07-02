@@ -84,7 +84,7 @@ export type StrokeStyle = {
 };
 
 export const DEFAULT_STROKE: StrokeStyle = {
-  color: '#fbbf24',
+  color: '#ffffff',
   width: 3,
   dash: false,
 };
@@ -557,6 +557,21 @@ export function quadBezierPoint(
     x: u * u * p0.x + 2 * u * t * p1.x + t * t * p2.x,
     y: u * u * p0.y + 2 * u * t * p1.y + t * t * p2.y,
   };
+}
+
+/** Muestrea una Bézier cuadrática para Konva Line (sin tension). */
+export function quadBezierLinePoints(
+  p0: { x: number; y: number },
+  p1: { x: number; y: number },
+  p2: { x: number; y: number },
+  segments = 32
+): number[] {
+  const pts: number[] = [];
+  for (let i = 0; i <= segments; i++) {
+    const p = quadBezierPoint(p0, p1, p2, i / segments);
+    pts.push(p.x, p.y);
+  }
+  return pts;
 }
 
 /** Ángulo de la tangente al final de la curva (para orientar la punta de flecha). */

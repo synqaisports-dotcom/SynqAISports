@@ -48,6 +48,7 @@ import {
   parseExerciseDrawing,
   pxToNorm,
   quadBezierEndAngle,
+  quadBezierLinePoints,
   arrowHeadPoints,
   RECT_STROKE_OPACITY,
   RECT_STROKE_WIDTH_FACTOR,
@@ -314,7 +315,15 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
 
   const duplicateSelected = () => {
     if (!selected) return;
-    const copy = duplicateDrawingElement(selected);
+    let copy = duplicateDrawingElement(selected);
+    if (
+      selected.type === 'material' &&
+      copy.type === 'material' &&
+      copy.material === 'player-own'
+    ) {
+      const current = parseInt(selected.label ?? '1', 10);
+      copy = { ...copy, label: String(Number.isFinite(current) ? current + 1 : 1) };
+    }
     setDoc((d) => ({ ...d, elements: sortElementsByLayer([...d.elements, copy]) }));
     setSelectedId(copy.id);
   };
@@ -396,47 +405,54 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
       const p1 = normToPx(element.x1, element.y1, fieldRect);
       const p2 = normToPx(element.x2, element.y2, fieldRect);
       const pc = normToPx(element.cx, element.cy, fieldRect);
+      const lp2 = { x: p2.x - p1.x, y: p2.y - p1.y };
+      const lpc = { x: pc.x - p1.x, y: pc.y - p1.y };
+      const origin = { x: 0, y: 0 };
       const pad = hitStroke;
-      const minX = Math.min(p1.x, p2.x, pc.x) - pad;
-      const minY = Math.min(p1.y, p2.y, pc.y) - pad;
-      const boxW = Math.max(p1.x, p2.x, pc.x) - minX + pad;
-      const boxH = Math.max(p1.y, p2.y, pc.y) - minY + pad;
+      const minX = Math.min(0, lp2.x, lpc.x) - pad;
+      const minY = Math.min(0, lp2.y, lpc.y) - pad;
+      const boxW = Math.max(0, lp2.x, lpc.x) - minX + pad;
+      const boxH = Math.max(0, lp2.y, lpc.y) - minY + pad;
       return (
         <Group
           key={key}
           id={element.id}
+          x={p1.x}
+          y={p1.y}
           opacity={element.opacity}
           draggable={canDrag}
           onMouseDown={(e) => {
             e.cancelBubble = true;
             if (canDrag) setSelectedId(element.id);
           }}
-          onDragEnd={(e) => finishElementDrag(element, e.target)}
+          onDragEnd={(e) => {
+            const node = e.target;
+            const n = pxToNorm(node.x(), node.y(), fieldRect);
+            const dx = n.x - element.x1;
+            const dy = n.y - element.y1;
+            if (Math.abs(dx) > 0.0001 || Math.abs(dy) > 0.0001) {
+              updateElement(element.id, translateElementBy(element, dx, dy));
+            }
+            const snapped = normToPx(element.x1 + dx, element.y1 + dy, fieldRect);
+            node.position({ x: snapped.x, y: snapped.y });
+          }}
           onClick={() => !isPreview && setSelectedId(element.id)}
         >
-          <Rect
-            x={minX}
-            y={minY}
-            width={boxW}
-            height={boxH}
-            fill="rgba(0,0,0,0.001)"
-          />
+          <Rect x={minX} y={minY} width={boxW} height={boxH} fill="rgba(0,0,0,0.001)" />
           <Line
-            points={[p1.x, p1.y, pc.x, pc.y, p2.x, p2.y]}
+            points={quadBezierLinePoints(origin, lpc, lp2)}
             stroke={element.style.color}
             strokeWidth={element.style.width}
             dash={dashArray(element.style)}
-            tension={0.4}
-            bezier
             lineCap="round"
             listening={false}
           />
           {element.arrowEnd ? (
             <Line
               points={arrowHeadPoints(
-                p2.x,
-                p2.y,
-                quadBezierEndAngle(p1, pc, p2),
+                lp2.x,
+                lp2.y,
+                quadBezierEndAngle(origin, lpc, lp2),
                 Math.max(8, element.style.width * 3)
               )}
               closed
@@ -444,24 +460,6 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               stroke={element.style.color}
               strokeWidth={1}
               listening={false}
-            />
-          ) : null}
-          {selectedId === element.id && !isPreview ? (
-            <Circle
-              x={pc.x}
-              y={pc.y}
-              radius={8}
-              fill="#22d3ee"
-              stroke="#0f172a"
-              strokeWidth={2}
-              draggable
-              onMouseDown={(e) => {
-                e.cancelBubble = true;
-              }}
-              onDragMove={(ev) => {
-                const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
-                updateElement(element.id, { cx: n.x, cy: n.y });
-              }}
             />
           ) : null}
         </Group>
@@ -694,10 +692,13 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
   const renderAnchors = () => {
     if (!selected || tool !== 'select') return null;
     if (selected.type === 'shape-line' || selected.type === 'shape-wave' || selected.type === 'shape-curve') {
-      const anchors = [
+      const anchors: { role: string; x: number; y: number }[] = [
         { role: 'start', x: selected.x1, y: selected.y1 },
         { role: 'end', x: selected.x2, y: selected.y2 },
       ];
+      if (selected.type === 'shape-curve') {
+        anchors.push({ role: 'control', x: selected.cx, y: selected.cy });
+      }
       return anchors.map((a) => {
         const p = normToPx(a.x, a.y, fieldRect);
         return (
@@ -705,7 +706,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             key={a.role}
             x={p.x}
             y={p.y}
-            radius={9}
+            radius={a.role === 'control' ? 8 : 9}
             fill="#22d3ee"
             stroke="#0f172a"
             strokeWidth={2}
@@ -713,10 +714,17 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             onMouseDown={(e) => {
               e.cancelBubble = true;
             }}
-            onDragMove={(ev) => {
+            onDragEnd={(ev) => {
               const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
-              if (a.role === 'start') updateElement(selected.id, { x1: n.x, y1: n.y });
-              else updateElement(selected.id, { x2: n.x, y2: n.y });
+              if (a.role === 'start') {
+                updateElement(selected.id, { x1: n.x, y1: n.y });
+              } else if (a.role === 'end') {
+                updateElement(selected.id, { x2: n.x, y2: n.y });
+              } else if (a.role === 'control') {
+                updateElement(selected.id, { cx: n.x, cy: n.y });
+              }
+              const synced = normToPx(n.x, n.y, fieldRect);
+              ev.target.position({ x: synced.x, y: synced.y });
             }}
           />
         );
@@ -729,7 +737,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
 
   /** Ancho del panel de materiales: 9 iconos en una fila (~464px) + margen */
   const materialsPanelW = 'min(92vw, 31rem)';
-  const toolsPanelW = 'min(92vw, 480px)';
+  const toolsPanelW = 'min(92vw, 420px)';
 
   const studio = (
     <div className="fixed inset-0 z-[9999] overflow-hidden bg-[#060a12] text-cyan-200">
@@ -1113,41 +1121,6 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
                     {item.icon}
                   </button>
                 ))}
-              </div>
-              <div className={cn('mt-2 flex flex-wrap items-center justify-center gap-3 border-t border-cyan-400/25 pt-2', GLASS.label)}>
-                <label className="flex items-center gap-2">
-                  Grosor
-                  <input
-                    type="range"
-                    min={1}
-                    max={8}
-                    value={stroke.width}
-                    onChange={(e) => setStroke((s) => ({ ...s, width: Number(e.target.value) }))}
-                    className="w-20"
-                  />
-                </label>
-                <label className="flex items-center gap-1.5">
-                  <input
-                    type="checkbox"
-                    checked={stroke.dash}
-                    onChange={(e) => setStroke((s) => ({ ...s, dash: e.target.checked }))}
-                  />
-                  Discontinua
-                </label>
-                <div className="flex gap-1">
-                  {COLORS.map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      className={cn(
-                        'size-5 rounded-full border',
-                        stroke.color === c ? 'border-cyan-300 ring-1 ring-cyan-400' : 'border-cyan-400/35'
-                      )}
-                      style={{ backgroundColor: c }}
-                      onClick={() => setStroke((s) => ({ ...s, color: c }))}
-                    />
-                  ))}
-                </div>
               </div>
             </div>
           </div>
