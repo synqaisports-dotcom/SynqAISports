@@ -41,7 +41,7 @@ type Props = {
 
 export function OrganigramaChart({ nodes }: Props) {
   return (
-    <div className="org-chart-board w-full overflow-x-auto rounded-xl border border-primary/25 bg-card/40 p-6 md:p-10">
+    <div className="org-chart-board portal-section-surface w-full overflow-x-auto rounded-xl p-6 md:p-10">
       <div className="flex min-w-max flex-col items-center gap-2">
         {nodes.map((node) => (
           <OrgChartBranch key={node.id} node={node} />

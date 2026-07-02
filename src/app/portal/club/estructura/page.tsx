@@ -16,7 +16,6 @@ import { clubPersonInstitutionalFields, clubPersonRowSubtitle } from '@/lib/prof
 import { ACCESS_PROFILE_LABELS } from '@/lib/club-people';
 import { redirect } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
 
 export default async function PortalClubEstructuraPage() {
   const supabase = await createClient();
@@ -27,23 +26,21 @@ export default async function PortalClubEstructuraPage() {
 
   return (
     <PageContainer>
-      <Card className="overflow-hidden p-0">
-        <EstructuraHero
-          people={people}
-          actions={
-            <>
-              <EstructuraHeroLinkAction href="/portal/club" variant="outline">
-                <ArrowLeft className="size-3.5" />
-                Volver
-              </EstructuraHeroLinkAction>
-              <EstructuraHeroLinkAction href="/portal/club/estructura/nuevo">
-                <Plus className="size-3.5" />
-                Crear ficha
-              </EstructuraHeroLinkAction>
-            </>
-          }
-        />
-      </Card>
+      <EstructuraHero
+        people={people}
+        actions={
+          <>
+            <EstructuraHeroLinkAction href="/portal/club" variant="outline">
+              <ArrowLeft className="size-3.5" />
+              Volver
+            </EstructuraHeroLinkAction>
+            <EstructuraHeroLinkAction href="/portal/club/estructura/nuevo">
+              <Plus className="size-3.5" />
+              Crear ficha
+            </EstructuraHeroLinkAction>
+          </>
+        }
+      />
 
       <ProfileRowList className="mt-6">
         {people.map((person) => {

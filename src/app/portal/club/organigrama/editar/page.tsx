@@ -11,7 +11,6 @@ import { enrichOrganigramaNodes } from '@/lib/organigrama';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import { redirect } from 'next/navigation';
-import { Card } from '@/components/ui/card';
 
 export default async function PortalClubOrganigramaEditarPage() {
   const supabase = await createClient();
@@ -26,17 +25,16 @@ export default async function PortalClubOrganigramaEditarPage() {
 
   return (
     <PageContainer>
-      <Card className="mb-6 overflow-hidden p-0">
-        <OrganigramaHero
-          nodes={viewNodes}
-          actions={
-            <OrganigramaHeroLinkAction href="/portal/club/organigrama" variant="outline">
-              <ArrowLeft className="size-3.5" />
-              Cancelar
-            </OrganigramaHeroLinkAction>
-          }
-        />
-      </Card>
+      <OrganigramaHero
+        className="mb-6"
+        nodes={viewNodes}
+        actions={
+          <OrganigramaHeroLinkAction href="/portal/club/organigrama" variant="outline">
+            <ArrowLeft className="size-3.5" />
+            Cancelar
+          </OrganigramaHeroLinkAction>
+        }
+      />
       <OrganigramaEditorForm clubId={ctx.club.id} nodes={nodes} people={people} />
     </PageContainer>
   );
