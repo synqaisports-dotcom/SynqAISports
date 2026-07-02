@@ -16,7 +16,6 @@ import {
 } from '@/lib/profile-row';
 import { notFound, redirect } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -40,23 +39,22 @@ export default async function PortalClubStaffPerfilPage({ params }: Props) {
 
   return (
     <PageContainer>
-      <Card className="mb-6 overflow-hidden p-0">
-        <StaffHero
-          people={[person]}
-          actions={
-            <>
-              <StaffHeroLinkAction href="/portal/club/staff" variant="outline">
-                <ArrowLeft className="size-3.5" />
-                Volver
-              </StaffHeroLinkAction>
-              <StaffHeroLinkAction href={`/portal/club/staff/${person.id}/editar`}>
-                <Pencil className="size-3.5" />
-                Modificar
-              </StaffHeroLinkAction>
-            </>
-          }
-        />
-      </Card>
+      <StaffHero
+        className="mb-6"
+        people={[person]}
+        actions={
+          <>
+            <StaffHeroLinkAction href="/portal/club/staff" variant="outline">
+              <ArrowLeft className="size-3.5" />
+              Volver
+            </StaffHeroLinkAction>
+            <StaffHeroLinkAction href={`/portal/club/staff/${person.id}/editar`}>
+              <Pencil className="size-3.5" />
+              Modificar
+            </StaffHeroLinkAction>
+          </>
+        }
+      />
 
       <ProfileRowCard
         photoUrl={person.photo_url}

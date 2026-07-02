@@ -9,7 +9,6 @@ import { PageContainer } from '@/components/portal/PageContainer';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import { notFound, redirect } from 'next/navigation';
-import { Card } from '@/components/ui/card';
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -27,17 +26,16 @@ export default async function PortalClubEstructuraEditarPage({ params }: Props) 
 
   return (
     <PageContainer>
-      <Card className="mb-6 overflow-hidden p-0">
-        <EstructuraHero
-          people={[person]}
-          actions={
-            <EstructuraHeroLinkAction href="/portal/club/estructura" variant="outline">
-              <ArrowLeft className="size-3.5" />
-              Cancelar
-            </EstructuraHeroLinkAction>
-          }
-        />
-      </Card>
+      <EstructuraHero
+        className="mb-6"
+        people={[person]}
+        actions={
+          <EstructuraHeroLinkAction href="/portal/club/estructura" variant="outline">
+            <ArrowLeft className="size-3.5" />
+            Cancelar
+          </EstructuraHeroLinkAction>
+        }
+      />
       <InstitutionalPersonForm clubId={ctx.club.id} person={person} />
     </PageContainer>
   );

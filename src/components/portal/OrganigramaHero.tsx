@@ -8,6 +8,7 @@ import { countOrganigramaNodes, countVacantNodes, maxOrganigramaDepth } from '@/
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { OrganigramaNodeCard } from '@/components/portal/OrganigramaNodeCard';
+import { PortalSectionBadge, PortalSectionShell } from '@/components/portal/PortalSectionShell';
 
 type Props = {
   nodes: OrganigramaNodeView[];
@@ -21,7 +22,7 @@ function MiniChart({ nodes }: { nodes: OrganigramaNodeView[] }) {
   if (!root) return null;
 
   return (
-    <div className="flex flex-col items-center gap-3 py-2">
+    <div className="flex flex-col items-center gap-3 py-1">
       <OrganigramaNodeCard node={root} variant="hero" className="min-w-[10rem]" />
       {root.children.length > 0 ? (
         <>
@@ -47,42 +48,22 @@ export function OrganigramaHero({ nodes, actions, className }: Props) {
   const depth = maxOrganigramaDepth(nodes);
 
   return (
-    <div className={cn('overflow-hidden', className)}>
-      <div className="relative overflow-hidden border-b border-primary/20 bg-gradient-to-br from-primary/20 via-background to-background px-4 py-6 md:px-6 md:py-8">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.12]"
-          style={{
-            backgroundImage:
-              'radial-gradient(circle at 1px 1px, hsl(183 100% 50% / 0.5) 1px, transparent 0)',
-            backgroundSize: '24px 24px',
-          }}
-        />
-        <div className="pointer-events-none absolute -right-16 -top-16 size-48 rounded-full bg-primary/10 blur-3xl" />
-
-        {actions ? (
-          <div className="relative z-10 mb-4 flex justify-end gap-2">{actions}</div>
-        ) : null}
-
-        <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="min-w-0">
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-              <Network className="size-3.5" />
-              Estructura del club
-            </div>
-            <h1 className="text-xl font-semibold tracking-tight md:text-2xl">Organigrama</h1>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Badge variant="secondary">{total} cargos</Badge>
-              <Badge variant="outline">{depth} niveles</Badge>
-              {vacant > 0 ? <Badge variant="outline">{vacant} vacantes</Badge> : null}
-            </div>
-          </div>
-
-          <div className="w-full overflow-x-auto lg:max-w-[55%]">
-            <MiniChart nodes={nodes} />
+    <PortalSectionShell actions={actions} className={className}>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <PortalSectionBadge icon={<Network className="size-3.5" />}>Estructura del club</PortalSectionBadge>
+          <h1 className="text-xl font-semibold tracking-tight md:text-2xl">Organigrama</h1>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <Badge variant="secondary">{total} cargos</Badge>
+            <Badge variant="outline">{depth} niveles</Badge>
+            {vacant > 0 ? <Badge variant="outline">{vacant} vacantes</Badge> : null}
           </div>
         </div>
+        <div className="w-full overflow-x-auto lg:max-w-[55%]">
+          <MiniChart nodes={nodes} />
+        </div>
       </div>
-    </div>
+    </PortalSectionShell>
   );
 }
 
@@ -102,7 +83,7 @@ export function OrganigramaHeroLinkAction({
         'inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-xs font-medium shadow-sm transition-colors',
         variant === 'default'
           ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-          : 'border border-primary/30 bg-card/90 text-foreground hover:bg-card'
+          : 'border border-primary/30 bg-background/40 text-foreground backdrop-blur-sm hover:bg-primary/10'
       )}
     >
       {children}

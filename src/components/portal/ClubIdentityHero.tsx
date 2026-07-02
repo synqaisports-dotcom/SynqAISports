@@ -94,7 +94,7 @@ export function ClubIdentityHero({ club, actions, className }: Props) {
         ) : null}
       </div>
 
-      <div className="flex items-center gap-4 border-t border-primary/15 bg-card/40 px-4 py-4 md:gap-5 md:px-5 md:py-5">
+      <div className="portal-section-surface flex items-center gap-4 px-4 py-3 md:gap-5 md:px-5 md:py-3.5">
         <ShieldBlock name={club.name} logoUrl={club.logo_url} size="lg" />
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-xl font-semibold tracking-tight md:text-2xl">{club.name}</h1>
@@ -165,7 +165,7 @@ export function ClubIdentityHeroLinkAction({
         'inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-xs font-medium shadow-sm transition-colors',
         variant === 'default'
           ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-          : 'border border-primary/30 bg-card/90 text-foreground hover:bg-card'
+          : 'border border-primary/30 bg-background/40 text-foreground backdrop-blur-sm hover:bg-primary/10'
       )}
     >
       {children}

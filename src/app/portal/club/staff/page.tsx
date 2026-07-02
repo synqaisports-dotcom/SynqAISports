@@ -17,7 +17,6 @@ import {
 import { formatAssignmentSummary } from '@/lib/person-assignments';
 import { redirect } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
 
 export default async function PortalClubStaffLandingPage() {
   const supabase = await createClient();
@@ -38,27 +37,25 @@ export default async function PortalClubStaffLandingPage() {
 
   return (
     <PageContainer>
-      <Card className="overflow-hidden p-0">
-        <StaffHero
-          people={people}
-          actions={
-            <>
-              <StaffHeroLinkAction href="/portal/club" variant="outline">
-                <ArrowLeft className="size-3.5" />
-                Volver
-              </StaffHeroLinkAction>
-              <StaffHeroLinkAction href="/portal/club/staff/categorias" variant="outline">
-                <BarChart3 className="size-3.5" />
-                Por categorías
-              </StaffHeroLinkAction>
-              <StaffHeroLinkAction href="/portal/club/staff/nuevo">
-                <Plus className="size-3.5" />
-                Crear ficha
-              </StaffHeroLinkAction>
-            </>
-          }
-        />
-      </Card>
+      <StaffHero
+        people={people}
+        actions={
+          <>
+            <StaffHeroLinkAction href="/portal/club" variant="outline">
+              <ArrowLeft className="size-3.5" />
+              Volver
+            </StaffHeroLinkAction>
+            <StaffHeroLinkAction href="/portal/club/staff/categorias" variant="outline">
+              <BarChart3 className="size-3.5" />
+              Por categorías
+            </StaffHeroLinkAction>
+            <StaffHeroLinkAction href="/portal/club/staff/nuevo">
+              <Plus className="size-3.5" />
+              Crear ficha
+            </StaffHeroLinkAction>
+          </>
+        }
+      />
 
       <ProfileRowList className="mt-6">
         {people.map((person) => {

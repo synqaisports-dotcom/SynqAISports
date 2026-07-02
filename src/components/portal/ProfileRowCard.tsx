@@ -34,7 +34,7 @@ export function ProfileRowCard({
   return (
     <article
       className={cn(
-        'flex w-full items-stretch gap-3 rounded-xl border border-primary/25 bg-card p-3 shadow-[0_4px_24px_hsl(183_100%_50%_/_0.06)] transition-colors sm:items-center sm:gap-4 sm:p-4',
+        'portal-section-surface flex w-full items-stretch gap-3 rounded-xl p-3 transition-colors sm:items-center sm:gap-4 sm:p-4',
         inactive && 'opacity-60',
         className
       )}

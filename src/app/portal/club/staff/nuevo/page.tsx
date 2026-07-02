@@ -6,7 +6,6 @@ import { PageContainer } from '@/components/portal/PageContainer';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import { redirect } from 'next/navigation';
-import { Card } from '@/components/ui/card';
 
 export default async function PortalClubStaffNuevoPage() {
   const supabase = await createClient();
@@ -17,17 +16,16 @@ export default async function PortalClubStaffNuevoPage() {
 
   return (
     <PageContainer>
-      <Card className="mb-6 overflow-hidden p-0">
-        <StaffHero
-          people={[]}
-          actions={
-            <StaffHeroLinkAction href="/portal/club/staff" variant="outline">
-              <ArrowLeft className="size-3.5" />
-              Cancelar
-            </StaffHeroLinkAction>
-          }
-        />
-      </Card>
+      <StaffHero
+        className="mb-6"
+        people={[]}
+        actions={
+          <StaffHeroLinkAction href="/portal/club/staff" variant="outline">
+            <ArrowLeft className="size-3.5" />
+            Cancelar
+          </StaffHeroLinkAction>
+        }
+      />
       <SportPersonForm clubId={ctx.club.id} teams={teams} />
     </PageContainer>
   );
