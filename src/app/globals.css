@@ -59,26 +59,25 @@ body {
   }
 
   .portal-sidebar-surface {
-    --portal-sidebar-glow: hsl(183 100% 50% / 0.16);
-    background-color: hsl(212 42% 5%) !important;
-    background-image:
-      linear-gradient(
-        165deg,
-        hsl(205 48% 14% / 0.98) 0%,
-        hsl(210 42% 7% / 0.96) 38%,
-        hsl(212 40% 5% / 0.98) 72%,
-        hsl(208 38% 8% / 1) 100%
-      ),
-      radial-gradient(ellipse 120% 90% at -20% -10%, var(--portal-sidebar-glow), transparent 52%),
-      radial-gradient(ellipse 80% 60% at 110% 100%, hsl(200 65% 22% / 0.14), transparent 50%) !important;
+    /* Base actual del sidebar; +3 tonos hacia arriba-izquierda (~+4% L por tono) */
+    --portal-sidebar-base: 212 42% 5%;
+    --portal-sidebar-light: 205 44% 17%;
+    background-color: hsl(var(--portal-sidebar-base)) !important;
+    background-image: linear-gradient(
+      to top left,
+      hsl(var(--portal-sidebar-light)) 0%,
+      hsl(208 43% 11%) 38%,
+      hsl(210 42% 7%) 68%,
+      hsl(var(--portal-sidebar-base)) 100%
+    ) !important;
     box-shadow:
-      inset 1px 0 0 hsl(183 100% 50% / 0.14),
-      8px 0 32px hsl(0 0% 0% / 0.42);
+      inset 1px 0 0 hsl(183 100% 50% / 0.1),
+      8px 0 32px hsl(0 0% 0% / 0.38);
   }
 
   .portal-sidebar-brand {
-    background: linear-gradient(180deg, hsl(183 100% 50% / 0.06) 0%, transparent 100%);
-    border-bottom: 1px solid hsl(183 100% 50% / 0.12);
+    background: transparent;
+    border-bottom: 1px solid hsl(183 100% 50% / 0.1);
   }
 
   .portal-sidebar-logo {
@@ -124,7 +123,7 @@ body {
   }
 
   .portal-nav-subpanel {
-    @apply ml-2.5 mt-1 space-y-0.5 rounded-xl border border-white/[0.05] bg-black/25 p-1;
+    @apply ml-3.5 mt-0.5 space-y-0.5 border-l border-white/[0.08] py-0.5 pl-2.5;
   }
 
   .portal-nav-subitem {
@@ -138,7 +137,7 @@ body {
   }
 
   .portal-nav-subicon {
-    @apply flex size-6 shrink-0 items-center justify-center rounded-md bg-white/[0.03] text-sidebar-foreground/70;
+    @apply flex size-6 shrink-0 items-center justify-center rounded-md text-sidebar-foreground/65;
   }
 
   .portal-nav-subitem-active .portal-nav-subicon {
