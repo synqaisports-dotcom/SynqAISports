@@ -59,17 +59,21 @@ body {
   }
 
   .portal-sidebar-surface {
-    /* Base actual del sidebar; +3 tonos hacia arriba-izquierda (~+4% L por tono) */
+    /* Base actual del sidebar; +3 tonos hacia arriba-izquierda, zona clara más amplia */
     --portal-sidebar-base: 212 42% 5%;
-    --portal-sidebar-light: 205 44% 17%;
+    --portal-sidebar-light: 205 46% 20%;
     background-color: hsl(var(--portal-sidebar-base)) !important;
-    background-image: linear-gradient(
-      to top left,
-      hsl(var(--portal-sidebar-light)) 0%,
-      hsl(208 43% 11%) 38%,
-      hsl(210 42% 7%) 68%,
-      hsl(var(--portal-sidebar-base)) 100%
-    ) !important;
+    background-image:
+      radial-gradient(ellipse 200% 160% at 0% 0%, hsl(var(--portal-sidebar-light) / 0.82), transparent 72%),
+      linear-gradient(
+        to top left,
+        hsl(var(--portal-sidebar-light)) 0%,
+        hsl(206 44% 15%) 42%,
+        hsl(208 43% 10%) 68%,
+        hsl(210 42% 7%) 90%,
+        hsl(var(--portal-sidebar-base)) 100%
+      ) !important;
+    background-attachment: fixed;
     box-shadow:
       inset 1px 0 0 hsl(183 100% 50% / 0.1),
       8px 0 32px hsl(0 0% 0% / 0.38);
@@ -170,17 +174,21 @@ body {
   }
 
   .portal-main-surface {
-    /* Espejo del sidebar: claro arriba-izq → oscuro abajo-dcha */
+    /* Espejo del sidebar: claro arriba-izq → oscuro abajo-dcha, mayor alcance */
     --portal-main-base: 212 42% 4%;
-    --portal-main-light: 205 44% 14%;
+    --portal-main-light: 205 46% 18%;
     background-color: hsl(var(--portal-main-base));
-    background-image: linear-gradient(
-      to bottom right,
-      hsl(var(--portal-main-light)) 0%,
-      hsl(208 43% 9%) 34%,
-      hsl(210 42% 6%) 68%,
-      hsl(var(--portal-main-base)) 100%
-    );
+    background-image:
+      radial-gradient(ellipse 180% 140% at 0% 0%, hsl(var(--portal-main-light) / 0.88), transparent 70%),
+      linear-gradient(
+        to bottom right,
+        hsl(var(--portal-main-light)) 0%,
+        hsl(206 44% 14%) 38%,
+        hsl(208 43% 10%) 62%,
+        hsl(210 42% 7%) 86%,
+        hsl(var(--portal-main-base)) 100%
+      );
+    background-attachment: fixed;
   }
 }
 
