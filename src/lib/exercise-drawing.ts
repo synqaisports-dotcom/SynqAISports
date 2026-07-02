@@ -785,3 +785,59 @@ export function getElementAnchors(element: DrawingElement): ElementAnchor[] {
       return [];
   }
 }
+
+const DUPLICATE_OFFSET_NORM = 0.025;
+
+/** Clona un elemento con nuevo id y ligero desplazamiento para distinguirlo. */
+export function duplicateDrawingElement(element: DrawingElement): DrawingElement {
+  const id = createElementId();
+  const ox = DUPLICATE_OFFSET_NORM;
+  const oy = DUPLICATE_OFFSET_NORM;
+  const bump = (v: number) => clamp01(v + ox);
+
+  switch (element.type) {
+    case 'shape-line':
+      return {
+        ...element,
+        id,
+        x1: bump(element.x1),
+        y1: clamp01(element.y1 + oy),
+        x2: bump(element.x2),
+        y2: clamp01(element.y2 + oy),
+      };
+    case 'shape-curve':
+      return {
+        ...element,
+        id,
+        x1: bump(element.x1),
+        y1: clamp01(element.y1 + oy),
+        x2: bump(element.x2),
+        y2: clamp01(element.y2 + oy),
+        cx: bump(element.cx),
+        cy: clamp01(element.cy + oy),
+      };
+    case 'shape-wave':
+      return {
+        ...element,
+        id,
+        x1: bump(element.x1),
+        y1: clamp01(element.y1 + oy),
+        x2: bump(element.x2),
+        y2: clamp01(element.y2 + oy),
+      };
+    case 'shape-rect':
+      return {
+        ...element,
+        id,
+        x: bump(element.x),
+        y: clamp01(element.y + oy),
+      };
+    case 'material':
+      return {
+        ...element,
+        id,
+        x: bump(element.x),
+        y: clamp01(element.y + oy),
+      };
+  }
+}

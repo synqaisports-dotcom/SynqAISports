@@ -7,6 +7,7 @@ import type Konva from 'konva';
 import {
   ArrowRight,
   BoxSelect,
+  Copy,
   Minus,
   MousePointer2,
   Package,
@@ -40,6 +41,7 @@ import {
   computeFieldRect,
   defaultDraftForTool,
   defaultFieldForSport,
+  duplicateDrawingElement,
   isMaterialTool,
   isShapeTool,
   normToPx,
@@ -308,6 +310,13 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     if (!selectedId) return;
     setDoc((d) => ({ ...d, elements: d.elements.filter((el) => el.id !== selectedId) }));
     setSelectedId(null);
+  };
+
+  const duplicateSelected = () => {
+    if (!selected) return;
+    const copy = duplicateDrawingElement(selected);
+    setDoc((d) => ({ ...d, elements: sortElementsByLayer([...d.elements, copy]) }));
+    setSelectedId(copy.id);
   };
 
   const handleSportChange = (next: SportKind) => {
@@ -902,6 +911,15 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           </div>
           <button
             type="button"
+            title="Duplicar"
+            aria-label="Duplicar"
+            className={cn('pointer-events-auto flex size-8 items-center justify-center rounded-lg', GLASS.btn)}
+            onClick={duplicateSelected}
+          >
+            <Copy className="size-3.5" />
+          </button>
+          <button
+            type="button"
             title="Eliminar"
             aria-label="Eliminar"
             className={cn('pointer-events-auto flex size-8 items-center justify-center rounded-lg text-red-300', GLASS.danger)}
@@ -968,6 +986,15 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               />
             </label>
           ) : null}
+          <button
+            type="button"
+            title="Duplicar"
+            aria-label="Duplicar"
+            className={cn('pointer-events-auto flex size-8 items-center justify-center rounded-lg', GLASS.btn)}
+            onClick={duplicateSelected}
+          >
+            <Copy className="size-3.5" />
+          </button>
           <button
             type="button"
             title="Eliminar"
