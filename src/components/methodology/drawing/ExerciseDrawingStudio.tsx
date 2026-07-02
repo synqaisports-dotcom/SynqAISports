@@ -7,6 +7,7 @@ import type Konva from 'konva';
 import {
   ArrowRight,
   BoxSelect,
+  Circle as CircleIcon,
   Minus,
   MousePointer2,
   Package,
@@ -46,6 +47,7 @@ import {
   parseExerciseDrawing,
   pxToNorm,
   quadBezierEndAngle,
+  quadBezierLinePoints,
   arrowHeadPoints,
   RECT_STROKE_OPACITY,
   RECT_STROKE_WIDTH_FACTOR,
@@ -71,6 +73,7 @@ const SHAPE_TOOLS: { id: StudioTool; label: string; icon: React.ReactNode }[] = 
   { id: 'shape-curve', label: 'Curva', icon: <Spline className="size-5" /> },
   { id: 'shape-wave', label: 'Ondas', icon: <Waves className="size-5" /> },
   { id: 'shape-rect', label: 'Zona', icon: <Square className="size-5" /> },
+  { id: 'shape-circle', label: 'Círculo', icon: <CircleIcon className="size-5" /> },
 ];
 
 const COLORS = ['#fbbf24', '#38bdf8', '#f87171', '#4ade80', '#ffffff', '#a78bfa'];
@@ -190,7 +193,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     (node: Konva.Node | null) => {
       const tr = transformerRef.current;
       if (!tr) return;
-      if (node && (selected?.type === 'material' || selected?.type === 'shape-rect')) {
+      if (node && (selected?.type === 'material' || selected?.type === 'shape-rect' || selected?.type === 'shape-circle')) {
         tr.nodes([node]);
         tr.keepRatio(!(selected?.type === 'material' && selected.material === 'ladder'));
       } else {
@@ -207,7 +210,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     if (
       !selectedId ||
       !selected ||
-      (selected.type !== 'shape-rect' && selected.type !== 'material')
+      (selected.type !== 'shape-rect' && selected.type !== 'shape-circle' && selected.type !== 'material')
     ) {
       tr.nodes([]);
       tr.getLayer()?.batchDraw();
@@ -284,6 +287,9 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
         width: Math.max(0.02, Math.abs(norm.x - dragStart.x)),
         height: Math.max(0.02, Math.abs(norm.y - dragStart.y)),
       });
+    } else if (draft.type === 'shape-circle') {
+      const radius = Math.max(0.02, Math.hypot(norm.x - dragStart.x, norm.y - dragStart.y));
+      setDraft({ ...draft, radius });
     }
   };
 
@@ -413,12 +419,10 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             fill="rgba(0,0,0,0.001)"
           />
           <Line
-            points={[p1.x, p1.y, pc.x, pc.y, p2.x, p2.y]}
+            points={quadBezierLinePoints(p1, pc, p2)}
             stroke={element.style.color}
             strokeWidth={element.style.width}
             dash={dashArray(element.style)}
-            tension={0.4}
-            bezier
             lineCap="round"
             listening={false}
           />
@@ -526,6 +530,52 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               width: Math.max(0.02, (node.width() * node.scaleX()) / fieldRect.width),
               height: Math.max(0.02, (node.height() * node.scaleY()) / fieldRect.height),
               rotation: node.rotation(),
+            });
+            node.scaleX(1);
+            node.scaleY(1);
+          }}
+          ref={(node) => {
+            if (selectedId === element.id) attachTransformer(node);
+          }}
+        />
+      );
+    }
+
+    if (element.type === 'shape-circle') {
+      const p = normToPx(element.x, element.y, fieldRect);
+      const r = element.radius * fieldRect.width;
+      return (
+        <Circle
+          key={key}
+          id={element.id}
+          x={p.x}
+          y={p.y}
+          radius={r}
+          fill={element.fill}
+          fillOpacity={element.fillOpacity}
+          stroke={element.style.color}
+          strokeOpacity={RECT_STROKE_OPACITY}
+          strokeWidth={element.style.width * RECT_STROKE_WIDTH_FACTOR}
+          opacity={element.opacity}
+          dash={dashArray(element.style)}
+          draggable={canDrag}
+          onMouseDown={(e) => {
+            e.cancelBubble = true;
+            if (canDrag) setSelectedId(element.id);
+          }}
+          onClick={() => setSelectedId(element.id)}
+          onDragEnd={(ev) => {
+            const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
+            updateElement(element.id, { x: n.x, y: n.y });
+          }}
+          onTransformEnd={(ev) => {
+            const node = ev.target;
+            const n = pxToNorm(node.x(), node.y(), fieldRect);
+            const scale = Math.max(node.scaleX(), node.scaleY());
+            updateElement(element.id, {
+              x: n.x,
+              y: n.y,
+              radius: Math.max(0.02, element.radius * scale),
             });
             node.scaleX(1);
             node.scaleY(1);
@@ -718,9 +768,9 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
 
   if (!open || !mounted) return null;
 
-  /** Ancho del panel de materiales: 9 iconos en una fila (~464px) + margen */
-  const materialsPanelW = 'min(92vw, 31rem)';
-  const toolsPanelW = 'min(92vw, 480px)';
+  /** Ancho del panel de materiales: 10 iconos en una fila (~520px) + margen */
+  const materialsPanelW = 'min(92vw, 34rem)';
+  const toolsPanelW = 'min(92vw, 520px)';
 
   const studio = (
     <div className="fixed inset-0 z-[9999] overflow-hidden bg-[#060a12] text-cyan-200">
@@ -829,7 +879,8 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
       (selected.type === 'shape-line' ||
         selected.type === 'shape-curve' ||
         selected.type === 'shape-wave' ||
-        selected.type === 'shape-rect') ? (
+        selected.type === 'shape-rect' ||
+        selected.type === 'shape-circle') ? (
         <div className={cn('pointer-events-none absolute bottom-[5.5rem] left-1/2 z-30 flex max-w-[95vw] -translate-x-1/2 flex-wrap justify-center gap-3 rounded-2xl px-4 py-2.5', GLASS.panel)}>
           <label className={cn('pointer-events-auto flex items-center gap-2', GLASS.label)}>
             Transparencia
@@ -892,7 +943,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
                 onClick={() =>
                   updateElement(
                     selected.id,
-                    selected.type === 'shape-rect'
+                    selected.type === 'shape-rect' || selected.type === 'shape-circle'
                       ? { style: { ...selected.style, color: c }, fill: c }
                       : { style: { ...selected.style, color: c } }
                   )

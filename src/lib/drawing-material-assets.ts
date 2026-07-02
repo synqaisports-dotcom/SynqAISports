@@ -9,7 +9,8 @@ export type MaterialKind =
   | 'ball'
   | 'goal'
   | 'hurdle'
-  | 'ladder';
+  | 'ladder'
+  | 'sports-arrow';
 
 const cache = new Map<MaterialKind, HTMLImageElement>();
 
@@ -200,6 +201,44 @@ function drawLadder(ctx: CanvasRenderingContext2D) {
   }
 }
 
+/** Seta plana de entrenamiento (cono bajo ancho). */
+function drawSportsArrow(ctx: CanvasRenderingContext2D) {
+  const s = 128;
+  ctx.clearRect(0, 0, s, s);
+  ctx.shadowColor = 'rgba(0,0,0,0.35)';
+  ctx.shadowBlur = 6;
+  ctx.shadowOffsetY = 3;
+
+  const grad = ctx.createLinearGradient(0, 72, 0, 98);
+  grad.addColorStop(0, '#fbbf24');
+  grad.addColorStop(1, '#d97706');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.moveTo(24, 88);
+  ctx.lineTo(104, 88);
+  ctx.lineTo(64, 58);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = '#92400e';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.fillStyle = 'rgba(0,0,0,0.12)';
+  ctx.beginPath();
+  ctx.ellipse(64, 92, 42, 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  ctx.beginPath();
+  ctx.moveTo(52, 78);
+  ctx.lineTo(76, 78);
+  ctx.lineTo(64, 64);
+  ctx.closePath();
+  ctx.fill();
+}
+
 function lighten(hex: string, amount: number): string {
   const n = parseInt(hex.slice(1), 16);
   const r = Math.min(255, ((n >> 16) & 255) + 255 * amount);
@@ -242,6 +281,9 @@ function renderMaterial(kind: MaterialKind): string {
     case 'ladder':
       drawLadder(ctx);
       break;
+    case 'sports-arrow':
+      drawSportsArrow(ctx);
+      break;
   }
   return canvas.toDataURL('image/png');
 }
@@ -267,4 +309,5 @@ export const MATERIAL_CATALOG: { kind: MaterialKind; label: string }[] = [
   { kind: 'goal', label: 'Portería' },
   { kind: 'hurdle', label: 'Valla' },
   { kind: 'ladder', label: 'Escalera' },
+  { kind: 'sports-arrow', label: 'Seta' },
 ];
