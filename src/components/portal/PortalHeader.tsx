@@ -15,7 +15,7 @@ type Props = {
 
 export function PortalHeader({ clubName, role, demoMode, demoCanPersist }: Props) {
   return (
-    <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between gap-2 border-b border-primary/20 bg-background/80 px-4 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between gap-2 border-b border-primary/15 bg-[hsl(205_42%_7%/_0.72)] px-4 backdrop-blur-md supports-[backdrop-filter]:bg-[hsl(205_42%_7%/_0.55)]">
       <div className="flex items-center gap-1">
         <PortalSidebarMobileTrigger />
       </div>

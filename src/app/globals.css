@@ -168,6 +168,20 @@ body {
     background: hsl(183 100% 50%);
     box-shadow: 0 0 8px hsl(183 100% 50% / 0.7);
   }
+
+  .portal-main-surface {
+    /* Espejo del sidebar: claro arriba-izq → oscuro abajo-dcha */
+    --portal-main-base: 212 42% 4%;
+    --portal-main-light: 205 44% 14%;
+    background-color: hsl(var(--portal-main-base));
+    background-image: linear-gradient(
+      to bottom right,
+      hsl(var(--portal-main-light)) 0%,
+      hsl(208 43% 9%) 34%,
+      hsl(210 42% 6%) 68%,
+      hsl(var(--portal-main-base)) 100%
+    );
+  }
 }
 
 
@@ -241,9 +255,7 @@ body {
   .portal-dashboard {
     @apply bg-background text-foreground antialiased;
     font-family: 'DM Sans', system-ui, sans-serif;
-    background-image:
-      radial-gradient(ellipse 120% 80% at 50% -20%, hsl(183 100% 50% / 0.09), transparent 50%),
-      radial-gradient(ellipse 60% 40% at 100% 50%, hsl(183 100% 50% / 0.04), transparent 60%);
+    background-color: hsl(212 42% 4%);
   }
 
   .portal-dashboard [data-slot='sidebar-wrapper'] {
@@ -253,9 +265,15 @@ body {
   .synq-portal-content .rounded-xl.border.bg-card,
   .synq-portal-content .bg-card.border {
     border-color: hsl(183 100% 50% / 0.45);
+    background: linear-gradient(
+      155deg,
+      hsl(205 40% 10% / 0.92) 0%,
+      hsl(205 40% 7.5% / 0.88) 100%
+    );
     box-shadow:
       0 0 0 1px hsl(183 100% 50% / 0.1),
-      0 4px 24px hsl(183 100% 50% / 0.06);
+      0 8px 32px hsl(0 0% 0% / 0.28),
+      0 2px 12px hsl(183 100% 50% / 0.05);
   }
 
   .synq-section-border {

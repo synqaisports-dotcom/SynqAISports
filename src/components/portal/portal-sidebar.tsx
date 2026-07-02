@@ -192,7 +192,7 @@ export function PortalSidebarProvider({ children, clubName }: ProviderProps) {
             </Sheet>
           )}
 
-          <div className="flex min-h-svh min-w-0 flex-1 flex-col">{children}</div>
+          <div className="portal-main-surface flex min-h-svh min-w-0 flex-1 flex-col">{children}</div>
         </div>
       </TooltipProvider>
     </PortalSidebarContext.Provider>
