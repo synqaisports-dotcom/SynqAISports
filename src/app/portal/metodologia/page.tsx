@@ -4,7 +4,7 @@ import { PageContainer } from '@/components/portal/PageContainer';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import { redirect } from 'next/navigation';
-import { BookOpen, ClipboardList, GitBranch, Layers, Target } from 'lucide-react';
+import { BookOpen, ClipboardList, GitBranch, Target } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
@@ -36,24 +36,17 @@ export default async function MetodologiaHomePage() {
   const cards = [
     {
       href: '/portal/metodologia/ciclos',
-      label: 'Ciclos y planograma',
-      count: '—',
+      label: 'Ciclos y microciclos',
+      count: microcycles.count ?? 0,
       icon: GitBranch,
-      hint: 'Variantes, equipos y MCC',
+      hint: 'Periodización, variantes, equipos y plan semanal',
     },
     {
       href: '/portal/metodologia/ejercicios',
       label: 'Biblioteca de ejercicios',
       count: exercises.count ?? 0,
       icon: BookOpen,
-      hint: 'Fichas UEFA y pizarra',
-    },
-    {
-      href: '/portal/metodologia/microciclos',
-      label: 'Microciclos',
-      count: microcycles.count ?? 0,
-      icon: Layers,
-      hint: 'Plan semanal por equipo',
+      hint: 'Fichas UEFA y pizarra — catálogo global del club',
     },
     {
       href: '/portal/metodologia/objetivos',

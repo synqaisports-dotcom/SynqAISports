@@ -24,7 +24,13 @@ export default async function EjerciciosListPage() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="font-serif-display text-3xl text-white">Ejercicios</h1>
-          <p className="mt-2 text-synq-muted">Biblioteca del club con boceto en pizarra web.</p>
+          <p className="mt-2 text-synq-muted">
+            Catálogo global del club. Para asignarlos a sesiones, entra por{' '}
+            <Link href="/portal/metodologia/ciclos" className="text-synq-accent hover:underline">
+              Ciclos
+            </Link>
+            .
+          </p>
         </div>
         <Link
           href="/portal/metodologia/ejercicios/nuevo"

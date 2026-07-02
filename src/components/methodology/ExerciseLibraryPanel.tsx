@@ -109,7 +109,14 @@ export function ExerciseLibraryPanel({
         <h2 className="text-sm font-semibold">Biblioteca de ejercicios</h2>
         <p className="mt-1 text-xs text-muted-foreground">
           {categorySlug ? `Categoría: ${categorySlug}` : 'Todo el club'}
-          {activeSlotType ? ` · filtro: ${activeSlotType}` : ''}
+          {activeSlotType ? ` · filtro por tipo de slot: ${activeSlotType}` : ''}
+        </p>
+        <p className="mt-1.5 text-xs text-muted-foreground">
+          Misma biblioteca que en{' '}
+          <Link href="/portal/metodologia/ejercicios" className="text-primary hover:underline">
+            Ejercicios
+          </Link>
+          {activeSlotType ? ', filtrada para el slot activo' : ''}.
         </p>
       </div>
 
