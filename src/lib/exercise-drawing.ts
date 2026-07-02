@@ -77,6 +77,23 @@ export function defaultFieldForSport(sport: SportKind): FieldTemplate {
   return sport === 'futsal' ? 'futsal' : 'football-full';
 }
 
+/** Campos completos horizontales en pizarra → miniatura vertical (90° a la derecha). */
+export const PORTRAIT_PREVIEW_FIELDS: readonly FieldTemplate[] = [
+  'football-full',
+  'football-f7',
+  'futsal',
+];
+
+export function drawingPreviewUsesPortraitRotation(field: FieldTemplate): boolean {
+  return (PORTRAIT_PREVIEW_FIELDS as readonly string[]).includes(field);
+}
+
+/** Relación de aspecto del marco de miniatura (puede ser vertical para campos completos). */
+export function drawingPreviewAspectRatio(field: FieldTemplate): number {
+  const { aspectRatio } = FIELD_TEMPLATES[field];
+  return drawingPreviewUsesPortraitRotation(field) ? 1 / aspectRatio : aspectRatio;
+}
+
 export type StrokeStyle = {
   color: string;
   width: number;
