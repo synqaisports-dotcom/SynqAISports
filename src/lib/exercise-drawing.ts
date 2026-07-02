@@ -98,6 +98,9 @@ export const DEFAULT_WAVE_WAVELENGTH_NORM = 0.03;
 /** Relleno suave del rectángulo; el borde se dibuja más intenso encima. */
 export const DEFAULT_RECT_FILL_OPACITY = 0.18;
 
+/** Círculos / aros: solo contorno, sin relleno. */
+export const DEFAULT_CIRCLE_FILL_OPACITY = 0;
+
 /** El borde del rectángulo es más grueso que el grosor base de trazo. */
 export const RECT_STROKE_WIDTH_FACTOR = 1.45;
 
@@ -191,6 +194,8 @@ export type MaterialElement = {
   /** Escalera: ancho independiente del alto */
   scaleX?: number;
   scaleY?: number;
+  /** Color personalizado (p. ej. setas deportivas) */
+  color?: string;
 };
 
 export type DrawingElement =
@@ -696,8 +701,8 @@ export function defaultDraftForTool(
         y: y1,
         radius: 0.02,
         fill: style.color,
-        fillOpacity: DEFAULT_RECT_FILL_OPACITY,
-        style: { ...style, dash: true },
+        fillOpacity: DEFAULT_CIRCLE_FILL_OPACITY,
+        style: { ...style, dash: false },
         opacity: DEFAULT_ELEMENT_OPACITY,
       };
     default:
@@ -733,6 +738,7 @@ export function defaultDraftForTool(
           scale: tool === 'goal' ? 1.2 : 1,
           scaleX: tool === 'ladder' ? 1 : undefined,
           scaleY: tool === 'ladder' ? 1 : undefined,
+          color: tool === 'sports-arrow' ? style.color : undefined,
           opacity: DEFAULT_ELEMENT_OPACITY,
         };
       }
@@ -830,5 +836,68 @@ export function getElementAnchors(element: DrawingElement): ElementAnchor[] {
       ];
     default:
       return [];
+  }
+}
+
+const DUPLICATE_OFFSET_NORM = 0.025;
+
+/** Clona un elemento con nuevo id y ligero desplazamiento para distinguirlo. */
+export function duplicateDrawingElement(element: DrawingElement): DrawingElement {
+  const id = createElementId();
+  const ox = DUPLICATE_OFFSET_NORM;
+  const oy = DUPLICATE_OFFSET_NORM;
+  const bump = (v: number) => clamp01(v + ox);
+
+  switch (element.type) {
+    case 'shape-line':
+      return {
+        ...element,
+        id,
+        x1: bump(element.x1),
+        y1: clamp01(element.y1 + oy),
+        x2: bump(element.x2),
+        y2: clamp01(element.y2 + oy),
+      };
+    case 'shape-curve':
+      return {
+        ...element,
+        id,
+        x1: bump(element.x1),
+        y1: clamp01(element.y1 + oy),
+        x2: bump(element.x2),
+        y2: clamp01(element.y2 + oy),
+        cx: bump(element.cx),
+        cy: clamp01(element.cy + oy),
+      };
+    case 'shape-wave':
+      return {
+        ...element,
+        id,
+        x1: bump(element.x1),
+        y1: clamp01(element.y1 + oy),
+        x2: bump(element.x2),
+        y2: clamp01(element.y2 + oy),
+      };
+    case 'shape-rect':
+      return {
+        ...element,
+        id,
+        x: bump(element.x),
+        y: clamp01(element.y + oy),
+      };
+    case 'shape-circle':
+      return {
+        ...element,
+        id,
+        x: bump(element.x),
+        y: clamp01(element.y + oy),
+      };
+    case 'material':
+      return {
+        ...element,
+        id,
+        x: bump(element.x),
+        y: clamp01(element.y + oy),
+      };
   }
 }

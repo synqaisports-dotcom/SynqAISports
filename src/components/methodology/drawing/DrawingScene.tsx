@@ -373,7 +373,6 @@ function CircleShape({
 }) {
   const p = toVb(element.x, element.y);
   const color = selected ? '#22d3ee' : element.style.color;
-  const fill = selected ? '#22d3ee' : element.fill;
   const sw = (element.style.width * RECT_STROKE_WIDTH_FACTOR) / (viewW / 35);
 
   return (
@@ -381,8 +380,7 @@ function CircleShape({
       cx={p.x}
       cy={p.y}
       r={element.radius * viewW}
-      fill={fill}
-      fillOpacity={element.fillOpacity}
+      fill="none"
       stroke={color}
       strokeOpacity={RECT_STROKE_OPACITY}
       strokeWidth={sw}
@@ -541,7 +539,7 @@ function MaterialShape({
   if (element.material === 'sports-arrow') {
     const w = size * 0.9;
     const h = size * 0.55;
-    const fill = selected ? '#22d3ee' : '#fbbf24';
+    const fill = selected ? '#22d3ee' : (element.color ?? '#fbbf24');
     return (
       <g transform={`rotate(${element.rotation} ${p.x} ${p.y})`}>
         <polygon
