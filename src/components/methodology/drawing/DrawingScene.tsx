@@ -1,4 +1,5 @@
 import type {
+  CircleShapeElement,
   CurveShapeElement,
   DrawingElement,
   ExerciseDrawingDocument,
@@ -154,6 +155,8 @@ function DrawingElementShape({
       return <WaveShape element={element} selected={selected} toVb={toVb} viewW={viewW} viewH={viewH} />;
     case 'shape-rect':
       return <RectShape element={element} selected={selected} toVb={toVb} viewW={viewW} viewH={viewH} />;
+    case 'shape-circle':
+      return <CircleShape element={element} selected={selected} toVb={toVb} viewW={viewW} />;
     case 'material':
       return <MaterialShape element={element} selected={selected} toVb={toVb} viewW={viewW} />;
     default:
@@ -357,6 +360,37 @@ function RectShape({
   );
 }
 
+function CircleShape({
+  element,
+  selected,
+  toVb,
+  viewW,
+}: {
+  element: CircleShapeElement;
+  selected: boolean;
+  toVb: (nx: number, ny: number) => { x: number; y: number };
+  viewW: number;
+}) {
+  const p = toVb(element.x, element.y);
+  const color = selected ? '#22d3ee' : element.style.color;
+  const fill = selected ? '#22d3ee' : element.fill;
+  const sw = (element.style.width * RECT_STROKE_WIDTH_FACTOR) / (viewW / 35);
+
+  return (
+    <circle
+      cx={p.x}
+      cy={p.y}
+      r={element.radius * viewW}
+      fill={fill}
+      fillOpacity={element.fillOpacity}
+      stroke={color}
+      strokeOpacity={RECT_STROKE_OPACITY}
+      strokeWidth={sw}
+      strokeDasharray={dashArray(element.style.dash)}
+    />
+  );
+}
+
 function MaterialShape({
   element,
   selected,
@@ -500,6 +534,26 @@ function MaterialShape({
             <line key={i} x1={-hw} y1={y} x2={hw} y2={y} stroke={rung} strokeWidth={2} strokeLinecap="round" />
           );
         })}
+      </g>
+    );
+  }
+
+  if (element.material === 'sports-arrow') {
+    const w = size * 0.9;
+    const h = size * 0.55;
+    const fill = selected ? '#22d3ee' : '#fbbf24';
+    return (
+      <g transform={`rotate(${element.rotation} ${p.x} ${p.y})`}>
+        <polygon
+          points={`${p.x - w / 2},${p.y + h / 2} ${p.x + w / 2},${p.y + h / 2} ${p.x},${p.y - h / 2}`}
+          fill={fill}
+          stroke="#92400e"
+          strokeWidth={0.35}
+        />
+        <polygon
+          points={`${p.x - w * 0.12},${p.y + h * 0.05} ${p.x + w * 0.12},${p.y + h * 0.05} ${p.x},${p.y - h * 0.35}`}
+          fill="rgba(255,255,255,0.25)"
+        />
       </g>
     );
   }
