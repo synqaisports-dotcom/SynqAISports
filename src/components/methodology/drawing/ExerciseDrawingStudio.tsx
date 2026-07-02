@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Stage, Layer, Line, Arrow, Rect, Group, Circle, Image as KonvaImage, Transformer } from 'react-konva';
+import { Stage, Layer, Line, Arrow, Rect, Group, Circle, Image as KonvaImage, Text, Transformer } from 'react-konva';
 import type Konva from 'konva';
 import {
   ArrowRight,
@@ -16,6 +16,7 @@ import {
   Spline,
   Square,
   Trash2,
+  Type,
   Waves,
   X,
 } from 'lucide-react';
@@ -44,6 +45,7 @@ import {
   duplicateDrawingElement,
   isMaterialTool,
   isShapeTool,
+  isTextTool,
   normToPx,
   parseExerciseDrawing,
   pxToNorm,
@@ -55,7 +57,10 @@ import {
   serializeExerciseDrawing,
   sortElementsByLayer,
   sportForField,
+  TEXT_FONT_SIZE_LABELS,
+  textFontSizePx,
   translateElementBy,
+  type TextFontSize,
   wavePathPoints,
 } from '@/lib/exercise-drawing';
 import { cn } from '@/lib/utils';
@@ -74,6 +79,7 @@ const SHAPE_TOOLS: { id: StudioTool; label: string; icon: React.ReactNode }[] = 
   { id: 'shape-curve', label: 'Curva', icon: <Spline className="size-5" /> },
   { id: 'shape-wave', label: 'Ondas', icon: <Waves className="size-5" /> },
   { id: 'shape-rect', label: 'Zona', icon: <Square className="size-5" /> },
+  { id: 'shape-text', label: 'Texto', icon: <Type className="size-5" /> },
 ];
 
 const COLORS = ['#fbbf24', '#38bdf8', '#f87171', '#4ade80', '#ffffff', '#a78bfa'];
@@ -254,6 +260,15 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
       return;
     }
 
+    if (isTextTool(tool)) {
+      const el = defaultDraftForTool(tool, norm.x, norm.y, norm.x, norm.y, stroke);
+      if (!el) return;
+      setDoc((d) => ({ ...d, elements: sortElementsByLayer([...d.elements, el]) }));
+      setSelectedId(el.id);
+      setTool('select');
+      return;
+    }
+
     if (isShapeTool(tool)) {
       setDragStart(norm);
       setDraft(defaultDraftForTool(tool, norm.x, norm.y, norm.x, norm.y, stroke));
@@ -350,7 +365,9 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     const key = isPreview ? `draft-${element.id}` : element.id;
     const canDrag = tool === 'select' && !isPreview;
     const hitStroke =
-      element.type === 'material' ? 16 : Math.max(16, element.style.width * 5);
+      element.type === 'material' || element.type === 'shape-text'
+        ? 16
+        : Math.max(16, element.style.width * 5);
 
     if (element.type === 'shape-line') {
       const p1 = normToPx(element.x1, element.y1, fieldRect);
@@ -541,6 +558,48 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             if (selectedId === element.id) attachTransformer(node);
           }}
         />
+      );
+    }
+
+    if (element.type === 'shape-text') {
+      const p = normToPx(element.x, element.y, fieldRect);
+      const fontSize = textFontSizePx(element.fontSize, fieldRect.width);
+      const approxW = Math.max(fontSize, element.text.length * fontSize * 0.58);
+      const approxH = fontSize * 1.25;
+      return (
+        <Group
+          key={key}
+          id={element.id}
+          x={p.x}
+          y={p.y}
+          opacity={element.opacity}
+          draggable={canDrag}
+          onMouseDown={(e) => {
+            e.cancelBubble = true;
+            if (canDrag) setSelectedId(element.id);
+          }}
+          onDragEnd={(ev) => {
+            const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
+            updateElement(element.id, { x: n.x, y: n.y });
+          }}
+          onClick={() => !isPreview && setSelectedId(element.id)}
+        >
+          <Rect
+            x={0}
+            y={0}
+            width={approxW}
+            height={approxH}
+            fill="rgba(0,0,0,0.001)"
+          />
+          <Text
+            text={element.text}
+            fontSize={fontSize}
+            fill={selectedId === element.id && !isPreview ? '#22d3ee' : element.color}
+            fontFamily="system-ui, -apple-system, sans-serif"
+            fontStyle="bold"
+            listening={false}
+          />
+        </Group>
       );
     }
 
@@ -737,7 +796,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
 
   /** Ancho del panel de materiales: 9 iconos en una fila (~464px) + margen */
   const materialsPanelW = 'min(92vw, 31rem)';
-  const toolsPanelW = 'min(92vw, 420px)';
+  const toolsPanelW = 'min(92vw, 28rem)';
 
   const studio = (
     <div className="fixed inset-0 z-[9999] overflow-hidden bg-[#060a12] text-cyan-200">
@@ -914,6 +973,82 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
                       : { style: { ...selected.style, color: c } }
                   )
                 }
+              />
+            ))}
+          </div>
+          <button
+            type="button"
+            title="Duplicar"
+            aria-label="Duplicar"
+            className={cn('pointer-events-auto flex size-8 items-center justify-center rounded-lg', GLASS.btn)}
+            onClick={duplicateSelected}
+          >
+            <Copy className="size-3.5" />
+          </button>
+          <button
+            type="button"
+            title="Eliminar"
+            aria-label="Eliminar"
+            className={cn('pointer-events-auto flex size-8 items-center justify-center rounded-lg text-red-300', GLASS.danger)}
+            onClick={deleteSelected}
+          >
+            <Trash2 className="size-3.5" />
+          </button>
+        </div>
+      ) : null}
+
+      {selected && selected.type === 'shape-text' ? (
+        <div className={cn('pointer-events-none absolute bottom-[5.5rem] left-1/2 z-30 flex max-w-[95vw] -translate-x-1/2 flex-wrap justify-center gap-3 rounded-2xl px-4 py-2.5', GLASS.panel)}>
+          <label className={cn('pointer-events-auto flex items-center gap-2', GLASS.label)}>
+            Texto
+            <input
+              type="text"
+              maxLength={48}
+              value={selected.text}
+              onChange={(e) => updateElement(selected.id, { text: e.target.value })}
+              className="w-36 rounded border border-cyan-400/35 bg-cyan-400/10 px-2 py-0.5 text-xs text-cyan-200"
+            />
+          </label>
+          <div className="pointer-events-auto flex items-center gap-2">
+            <span className={GLASS.label}>Tamaño</span>
+            <div className="flex gap-1">
+              {(['sm', 'md', 'lg'] as TextFontSize[]).map((size) => (
+                <button
+                  key={size}
+                  type="button"
+                  title={size === 'sm' ? 'Pequeño' : size === 'md' ? 'Mediano' : 'Grande'}
+                  className={cn(
+                    'flex size-8 items-center justify-center rounded-lg text-xs font-semibold',
+                    GLASS.btn,
+                    selected.fontSize === size && GLASS.btnActive
+                  )}
+                  onClick={() => updateElement(selected.id, { fontSize: size })}
+                >
+                  {TEXT_FONT_SIZE_LABELS[size]}
+                </button>
+              ))}
+            </div>
+          </div>
+          <label className={cn('pointer-events-auto flex items-center gap-2', GLASS.label)}>
+            Transparencia
+            <input
+              type="range"
+              min={0.15}
+              max={1}
+              step={0.05}
+              value={selected.opacity}
+              onChange={(e) => updateElement(selected.id, { opacity: Number(e.target.value) })}
+              className="w-24"
+            />
+          </label>
+          <div className="pointer-events-auto flex gap-1">
+            {COLORS.map((c) => (
+              <button
+                key={c}
+                type="button"
+                className="size-6 rounded-full border border-cyan-400/35"
+                style={{ backgroundColor: c }}
+                onClick={() => updateElement(selected.id, { color: c })}
               />
             ))}
           </div>

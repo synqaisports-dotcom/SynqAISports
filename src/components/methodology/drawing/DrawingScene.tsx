@@ -6,6 +6,7 @@ import type {
   LineShapeElement,
   MaterialElement,
   RectShapeElement,
+  TextShapeElement,
   WaveShapeElement,
 } from '@/lib/exercise-drawing';
 import {
@@ -16,6 +17,7 @@ import {
   RECT_STROKE_OPACITY,
   RECT_STROKE_WIDTH_FACTOR,
   sortElementsByLayer,
+  textFontSizePx,
   wavePathPoints,
 } from '@/lib/exercise-drawing';
 import { FIELD_VIEWBOX, MATERIAL_SCALE_NORM } from '@/lib/field-engine';
@@ -154,6 +156,8 @@ function DrawingElementShape({
       return <WaveShape element={element} selected={selected} toVb={toVb} viewW={viewW} viewH={viewH} />;
     case 'shape-rect':
       return <RectShape element={element} selected={selected} toVb={toVb} viewW={viewW} viewH={viewH} />;
+    case 'shape-text':
+      return <TextShape element={element} selected={selected} toVb={toVb} viewW={viewW} />;
     case 'material':
       return <MaterialShape element={element} selected={selected} toVb={toVb} viewW={viewW} />;
     default:
@@ -354,6 +358,36 @@ function RectShape({
       strokeDasharray={dashArray(element.style.dash)}
       transform={`rotate(${element.rotation} ${cx} ${cy})`}
     />
+  );
+}
+
+function TextShape({
+  element,
+  selected,
+  toVb,
+  viewW,
+}: {
+  element: TextShapeElement;
+  selected: boolean;
+  toVb: (nx: number, ny: number) => { x: number; y: number };
+  viewW: number;
+}) {
+  const p = toVb(element.x, element.y);
+  const fontSize = textFontSizePx(element.fontSize, viewW);
+  const color = selected ? '#22d3ee' : element.color;
+
+  return (
+    <text
+      x={p.x}
+      y={p.y + fontSize * 0.85}
+      fill={color}
+      fontSize={fontSize}
+      fontWeight="600"
+      fontFamily="system-ui, -apple-system, sans-serif"
+      style={{ userSelect: 'none' }}
+    >
+      {element.text}
+    </text>
   );
 }
 

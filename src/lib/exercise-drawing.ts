@@ -110,6 +110,7 @@ export type StudioTool =
   | 'shape-curve'
   | 'shape-wave'
   | 'shape-rect'
+  | 'shape-text'
   | MaterialKind;
 
 export type LineShapeElement = {
@@ -165,6 +166,38 @@ export type RectShapeElement = {
   opacity: number;
 };
 
+export type TextFontSize = 'sm' | 'md' | 'lg';
+
+export const TEXT_FONT_SIZE_LABELS: Record<TextFontSize, string> = {
+  sm: 'S',
+  md: 'M',
+  lg: 'L',
+};
+
+/** Fracción del ancho del campo para el tamaño de fuente. */
+export const TEXT_FONT_SIZE_NORM: Record<TextFontSize, number> = {
+  sm: 0.022,
+  md: 0.032,
+  lg: 0.045,
+};
+
+export const DEFAULT_TEXT_FONT_SIZE: TextFontSize = 'md';
+
+export function textFontSizePx(size: TextFontSize, fieldWidth: number): number {
+  return Math.max(10, TEXT_FONT_SIZE_NORM[size] * fieldWidth);
+}
+
+export type TextShapeElement = {
+  id: string;
+  type: 'shape-text';
+  x: number;
+  y: number;
+  text: string;
+  fontSize: TextFontSize;
+  color: string;
+  opacity: number;
+};
+
 export type MaterialElement = {
   id: string;
   type: 'material';
@@ -185,6 +218,7 @@ export type DrawingElement =
   | CurveShapeElement
   | WaveShapeElement
   | RectShapeElement
+  | TextShapeElement
   | MaterialElement;
 
 export type LegacyStroke = {
@@ -249,6 +283,7 @@ function isV3Element(value: unknown): value is DrawingElement {
     t === 'shape-curve' ||
     t === 'shape-wave' ||
     t === 'shape-rect' ||
+    t === 'shape-text' ||
     t === 'material'
   );
 }
@@ -673,6 +708,17 @@ export function defaultDraftForTool(
         opacity: DEFAULT_ELEMENT_OPACITY,
       };
     }
+    case 'shape-text':
+      return {
+        id,
+        type: 'shape-text',
+        x: x1,
+        y: y1,
+        text: 'Texto',
+        fontSize: DEFAULT_TEXT_FONT_SIZE,
+        color: style.color,
+        opacity: DEFAULT_ELEMENT_OPACITY,
+      };
     default:
       if (typeof tool === 'string' && tool.startsWith('player')) {
         return {
@@ -736,6 +782,10 @@ export function isShapeTool(tool: StudioTool): boolean {
   );
 }
 
+export function isTextTool(tool: StudioTool): boolean {
+  return tool === 'shape-text';
+}
+
 export function translateElementBy(
   element: DrawingElement,
   dx: number,
@@ -768,6 +818,8 @@ export function translateElementBy(
         y2: ty(element.y2),
       };
     case 'shape-rect':
+      return { x: tx(element.x), y: ty(element.y) };
+    case 'shape-text':
       return { x: tx(element.x), y: ty(element.y) };
     case 'material':
       return { x: tx(element.x), y: ty(element.y) };
@@ -841,6 +893,13 @@ export function duplicateDrawingElement(element: DrawingElement): DrawingElement
         y2: clamp01(element.y2 + oy),
       };
     case 'shape-rect':
+      return {
+        ...element,
+        id,
+        x: bump(element.x),
+        y: clamp01(element.y + oy),
+      };
+    case 'shape-text':
       return {
         ...element,
         id,
