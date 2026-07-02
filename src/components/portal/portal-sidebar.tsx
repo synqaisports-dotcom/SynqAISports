@@ -152,8 +152,8 @@ export function PortalSidebarProvider({ children, clubName }: ProviderProps) {
               <div className="hidden shrink-0 md:block" style={{ width: RAIL_PX }} aria-hidden />
               <aside
                 className={cn(
-                  'portal-sidebar-rail relative fixed inset-y-0 left-0 z-50 hidden flex-col',
-                  'border-r border-primary/30 bg-sidebar/95 text-sidebar-foreground backdrop-blur-xl',
+                  'portal-sidebar-rail portal-sidebar-surface relative fixed inset-y-0 left-0 z-50 hidden flex-col',
+                  'border-r border-primary/30 text-sidebar-foreground backdrop-blur-xl',
                   'transition-[width,box-shadow] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] md:flex',
                   expanded
                     ? 'shadow-[4px_0_40px_hsl(183_100%_50%_/_0.1)]'
@@ -172,7 +172,7 @@ export function PortalSidebarProvider({ children, clubName }: ProviderProps) {
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetContent
                 side="left"
-                className="w-[min(18rem,85vw)] border-primary/25 bg-sidebar p-0 text-sidebar-foreground [&>button]:text-sidebar-foreground"
+                className="portal-sidebar-surface w-[min(18rem,85vw)] border-primary/25 p-0 text-sidebar-foreground [&>button]:text-sidebar-foreground"
               >
                 <SidebarPanel clubName={clubName} expanded />
               </SheetContent>

@@ -1,7 +1,10 @@
 import type { LucideIcon } from 'lucide-react';
 import {
+  BookOpen,
   Building2,
   CalendarClock,
+  ClipboardList,
+  GitBranch,
   GraduationCap,
   Landmark,
   Layers,
@@ -80,9 +83,10 @@ export const portalNavGroups: PortalNavGroup[] = [
         href: '/portal/metodologia',
         exact: true,
         children: [
-          { title: 'Ciclos', href: '/portal/metodologia/ciclos' },
-          { title: 'Ejercicios', href: '/portal/metodologia/ejercicios' },
+          { title: 'Ciclos', href: '/portal/metodologia/ciclos', icon: GitBranch },
+          { title: 'Ejercicios', href: '/portal/metodologia/ejercicios', icon: BookOpen },
           { title: 'Objetivos', href: '/portal/metodologia/objetivos', icon: Target },
+          { title: 'Solicitudes', href: '/portal/metodologia/solicitudes', icon: ClipboardList },
         ],
       },
     ],

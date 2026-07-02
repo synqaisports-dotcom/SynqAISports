@@ -159,6 +159,18 @@ body {
       0 0 20px hsl(183 100% 50% / 0.04);
   }
 
+  .portal-sidebar-surface {
+    background:
+      linear-gradient(105deg, hsl(183 100% 50% / 0.09) 0%, transparent 42%),
+      linear-gradient(
+        180deg,
+        hsl(205 46% 9% / 0.98) 0%,
+        hsl(210 40% 6% / 0.97) 48%,
+        hsl(205 42% 8% / 0.98) 100%
+      );
+    box-shadow: inset -1px 0 0 hsl(183 100% 50% / 0.08);
+  }
+
   .portal-sidebar-rail::after {
     content: '';
     position: absolute;

@@ -81,7 +81,11 @@ function ExpandedNavLeaf({
       )}
       aria-current={active ? 'page' : undefined}
     >
-      {Icon ? <Icon className="size-4 shrink-0" /> : <span className="size-4 shrink-0" />}
+      {Icon ? (
+        <Icon className={cn('size-4 shrink-0', indent && 'size-3.5 opacity-80')} />
+      ) : (
+        <span className="size-4 shrink-0" />
+      )}
       <span className="truncate">{node.title}</span>
     </Link>
   );
