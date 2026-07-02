@@ -59,17 +59,115 @@ body {
   }
 
   .portal-sidebar-surface {
-    background-color: hsl(205 48% 7%) !important;
+    --portal-sidebar-glow: hsl(183 100% 50% / 0.16);
+    background-color: hsl(212 42% 5%) !important;
     background-image:
-      radial-gradient(ellipse 90% 70% at 0% 0%, hsl(183 100% 50% / 0.28), transparent 58%),
-      radial-gradient(ellipse 70% 50% at 100% 100%, hsl(200 70% 28% / 0.2), transparent 55%),
       linear-gradient(
-        180deg,
-        hsl(205 52% 13%) 0%,
-        hsl(210 44% 6%) 42%,
-        hsl(205 40% 9%) 100%
-      ) !important;
-    box-shadow: inset -1px 0 0 hsl(183 100% 50% / 0.18);
+        165deg,
+        hsl(205 48% 14% / 0.98) 0%,
+        hsl(210 42% 7% / 0.96) 38%,
+        hsl(212 40% 5% / 0.98) 72%,
+        hsl(208 38% 8% / 1) 100%
+      ),
+      radial-gradient(ellipse 120% 90% at -20% -10%, var(--portal-sidebar-glow), transparent 52%),
+      radial-gradient(ellipse 80% 60% at 110% 100%, hsl(200 65% 22% / 0.14), transparent 50%) !important;
+    box-shadow:
+      inset 1px 0 0 hsl(183 100% 50% / 0.14),
+      8px 0 32px hsl(0 0% 0% / 0.42);
+  }
+
+  .portal-sidebar-brand {
+    background: linear-gradient(180deg, hsl(183 100% 50% / 0.06) 0%, transparent 100%);
+    border-bottom: 1px solid hsl(183 100% 50% / 0.12);
+  }
+
+  .portal-sidebar-logo {
+    background: linear-gradient(145deg, hsl(183 100% 55%) 0%, hsl(183 90% 38%) 100%);
+    box-shadow:
+      0 0 0 1px hsl(183 100% 70% / 0.35),
+      0 4px 16px hsl(183 100% 50% / 0.28);
+  }
+
+  .portal-sidebar-group-label {
+    @apply mb-2 px-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-sidebar-foreground/40;
+  }
+
+  .portal-nav-item {
+    @apply relative flex min-w-0 items-center gap-2.5 rounded-lg px-2.5 text-sm text-sidebar-foreground/80 transition-all duration-200;
+    @apply hover:bg-white/[0.05] hover:text-sidebar-foreground;
+  }
+
+  .portal-nav-item-active {
+    @apply bg-primary/[0.1] font-medium text-primary;
+    box-shadow: inset 0 0 0 1px hsl(183 100% 50% / 0.22);
+  }
+
+  .portal-nav-item-active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    height: 1.125rem;
+    width: 3px;
+    transform: translateY(-50%);
+    border-radius: 0 4px 4px 0;
+    background: linear-gradient(180deg, hsl(183 100% 65%), hsl(183 100% 42%));
+    box-shadow: 0 0 10px hsl(183 100% 50% / 0.55);
+  }
+
+  .portal-nav-icon {
+    @apply flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.04] ring-1 ring-white/[0.07] transition-colors;
+  }
+
+  .portal-nav-item-active .portal-nav-icon {
+    @apply bg-primary/15 ring-primary/30 text-primary;
+  }
+
+  .portal-nav-subpanel {
+    @apply ml-2.5 mt-1 space-y-0.5 rounded-xl border border-white/[0.05] bg-black/25 p-1;
+  }
+
+  .portal-nav-subitem {
+    @apply relative flex h-8 min-w-0 items-center gap-2 rounded-md px-2 text-[13px] text-sidebar-foreground/75 transition-colors;
+    @apply hover:bg-white/[0.05] hover:text-sidebar-foreground;
+  }
+
+  .portal-nav-subitem-active {
+    @apply bg-primary/[0.12] font-medium text-primary;
+    box-shadow: inset 0 0 0 1px hsl(183 100% 50% / 0.18);
+  }
+
+  .portal-nav-subicon {
+    @apply flex size-6 shrink-0 items-center justify-center rounded-md bg-white/[0.03] text-sidebar-foreground/70;
+  }
+
+  .portal-nav-subitem-active .portal-nav-subicon {
+    @apply bg-primary/15 text-primary;
+  }
+
+  .portal-sidebar-rail-btn {
+    @apply relative mx-auto flex size-10 items-center justify-center rounded-xl text-sidebar-foreground/70 transition-all duration-200;
+    @apply hover:bg-white/[0.06] hover:text-sidebar-foreground;
+  }
+
+  .portal-sidebar-rail-btn-active {
+    @apply bg-primary/[0.12] text-primary;
+    box-shadow:
+      inset 0 0 0 1px hsl(183 100% 50% / 0.35),
+      0 0 14px hsl(183 100% 50% / 0.12);
+  }
+
+  .portal-sidebar-rail-btn-active::before {
+    content: '';
+    position: absolute;
+    left: -6px;
+    top: 50%;
+    height: 1.25rem;
+    width: 3px;
+    transform: translateY(-50%);
+    border-radius: 0 4px 4px 0;
+    background: hsl(183 100% 50%);
+    box-shadow: 0 0 8px hsl(183 100% 50% / 0.7);
   }
 }
 
@@ -183,15 +281,16 @@ body {
     background: linear-gradient(
       180deg,
       transparent 0%,
-      hsl(183 100% 50% / 0.55) 35%,
-      hsl(183 100% 50% / 0.55) 65%,
+      hsl(183 100% 50% / 0.35) 30%,
+      hsl(183 100% 50% / 0.45) 50%,
+      hsl(183 100% 50% / 0.35) 70%,
       transparent 100%
     );
     pointer-events: none;
   }
 
   .portal-sidebar-rail[data-expanded='true']::after {
-    opacity: 0.35;
+    opacity: 0.5;
   }
 
   .org-chart-line-v {
