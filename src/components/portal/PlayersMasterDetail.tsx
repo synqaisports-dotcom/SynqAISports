@@ -9,7 +9,6 @@ import { Camera, Search, User, Users } from 'lucide-react';
 import { updatePlayer, type ActionState } from '@/app/actions/cantera';
 import { PlayerPhotoField } from '@/components/portal/PlayerPhotoField';
 import { SynqSelect } from '@/components/portal/SynqSelect';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -193,47 +192,36 @@ function PlayerDetailPanel({
   }
 
   const name = playerFullName(player);
-  const positionCode = positionShort(player.position);
+  const detailFields = playerDetailFields(player).filter((field) => field.label !== 'Equipo');
 
   return (
     <Card className="flex h-full min-h-[28rem] flex-col border border-primary/25">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base">Ficha del jugador</CardTitle>
-        <CardDescription>{player.team_name}</CardDescription>
+        <CardTitle className="text-lg font-semibold tracking-tight">{name}</CardTitle>
+        <p className="text-sm font-medium text-primary">{player.team_name}</p>
       </CardHeader>
       <CardContent className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
-        <div className="flex flex-col items-center gap-3 text-center">
-          <div className="relative flex size-28 items-center justify-center overflow-hidden rounded-2xl border border-primary/30 bg-muted/20 shadow-[0_0_24px_hsl(183_100%_50%_/_0.08)]">
+        <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] sm:items-start">
+          <div className="relative mx-auto aspect-[3/4] w-full max-w-[10rem] overflow-hidden rounded-2xl border border-primary/30 bg-muted/20 shadow-[0_0_24px_hsl(183_100%_50%_/_0.08)] sm:mx-0 sm:max-w-none">
             {player.photo_url ? (
-              <Image src={player.photo_url} alt={name} fill className="object-cover" sizes="112px" />
+              <Image src={player.photo_url} alt={name} fill className="object-cover" sizes="(max-width: 640px) 10rem, 33vw" />
             ) : (
-              <User className="size-12 text-primary/60" strokeWidth={1.25} />
+              <div className="flex h-full items-center justify-center">
+                <User className="size-12 text-primary/60" strokeWidth={1.25} />
+              </div>
             )}
           </div>
-          <div>
-            <p className="text-lg font-semibold text-foreground">{name}</p>
-            <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
-              {positionCode !== '—' ? (
-                <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary">
-                  {positionCode}
-                </Badge>
-              ) : null}
-              {player.jersey_number != null ? (
-                <Badge variant="secondary">#{player.jersey_number}</Badge>
-              ) : null}
-            </div>
-          </div>
-        </div>
 
-        <div className="grid gap-3 rounded-xl border border-primary/15 bg-muted/5 p-4 sm:grid-cols-2">
-          {playerDetailFields(player).map((field) => (
-            <div key={field.label}>
-              <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                {field.label}
-              </p>
-              <p className="mt-0.5 text-sm text-foreground">{field.value || '—'}</p>
-            </div>
-          ))}
+          <div className="grid gap-3 rounded-xl border border-primary/15 bg-muted/5 p-4 sm:grid-cols-2">
+            {detailFields.map((field) => (
+              <div key={field.label}>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                  {field.label}
+                </p>
+                <p className="mt-0.5 text-sm text-foreground">{field.value || '—'}</p>
+              </div>
+            ))}
+          </div>
         </div>
 
         {player.team_id ? (
