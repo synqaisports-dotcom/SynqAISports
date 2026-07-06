@@ -1,6 +1,9 @@
 import Link from 'next/link';
 import { ArrowRight, CalendarClock, Users, UsersRound } from 'lucide-react';
+import { CanteraRecentMovements } from '@/components/portal/CanteraRecentMovements';
 import { PageContainer } from '@/components/portal/PageContainer';
+import { demoCanteraMovements, loadCanteraRecentMovements } from '@/lib/cantera-movements';
+import { isDemoActive } from '@/lib/demo';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import { redirect } from 'next/navigation';
@@ -89,6 +92,10 @@ export default async function PortalCanteraLandingPage() {
 
   const teams = teamCount ?? 0;
   const players = playerCount ?? 0;
+  const demo = await isDemoActive();
+  const movements = demo
+    ? demoCanteraMovements()
+    : await loadCanteraRecentMovements(supabase, ctx.club.id);
 
   const modules = [
     {
@@ -120,7 +127,7 @@ export default async function PortalCanteraLandingPage() {
 
       <div className="grid gap-4 md:grid-cols-3">
         {modules.map(({ title, description, href, icon: Icon, stat }) => (
-          <Card key={title} className="flex flex-col hover:border-primary/30">
+          <Card key={title} className="flex flex-col">
             <CardHeader>
               <Icon className="mb-2 h-6 w-6 text-primary" />
               <CardTitle className="text-base">{title}</CardTitle>
@@ -138,6 +145,8 @@ export default async function PortalCanteraLandingPage() {
           </Card>
         ))}
       </div>
+
+      <CanteraRecentMovements movements={movements} />
     </PageContainer>
   );
 }
