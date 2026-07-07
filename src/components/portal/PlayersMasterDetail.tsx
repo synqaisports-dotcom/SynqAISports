@@ -10,6 +10,7 @@ import { updatePlayer, type ActionState } from '@/app/actions/cantera';
 import { PlayerPauseButton } from '@/components/portal/PlayerPauseButton';
 import { PlayerPhotoField } from '@/components/portal/PlayerPhotoField';
 import { PlayerPositionsPicker } from '@/components/portal/PlayerPositionsPicker';
+import { SynqNumericStepper } from '@/components/portal/SynqNumericStepper';
 import { SynqSelect } from '@/components/portal/SynqSelect';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,6 +27,7 @@ import {
   playerSortKey,
   type PlayerProfile,
 } from '@/lib/player-profile';
+import { playerBirthYearOptions } from '@/lib/player-form';
 import {
   PLAYER_POSITIONS,
   playerHasPosition,
@@ -72,10 +74,18 @@ function PlayerDetailForm({
   const bound = updatePlayer.bind(null, player.id);
   const [state, action, pending] = useFormState(bound, initial);
   const [positions, setPositions] = useState(player.position ?? '');
+  const [jerseyNumber, setJerseyNumber] = useState<number | null>(player.jersey_number);
+  const [birthYear, setBirthYear] = useState(player.birth_year ? String(player.birth_year) : '');
+  const birthYearOptions = useMemo(
+    () => [{ value: '', label: 'Sin especificar' }, ...playerBirthYearOptions()],
+    []
+  );
 
   useEffect(() => {
     setPositions(player.position ?? '');
-  }, [player.id, player.position]);
+    setJerseyNumber(player.jersey_number);
+    setBirthYear(player.birth_year ? String(player.birth_year) : '');
+  }, [player.id, player.position, player.jersey_number, player.birth_year]);
 
   useEffect(() => {
     if (state.ok) onSaved?.();
@@ -111,14 +121,26 @@ function PlayerDetailForm({
           <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Dorsal
           </label>
-          <Input
+          <SynqNumericStepper
             name="jerseyNumber"
-            type="number"
+            value={jerseyNumber}
+            onChange={setJerseyNumber}
             min={0}
             max={99}
-            defaultValue={player.jersey_number ?? ''}
-            className="border-primary/30 bg-background/80"
+            placeholder="Sin dorsal"
           />
+        </div>
+        <div>
+          <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Año de nacimiento
+          </label>
+          <SynqSelect
+            value={birthYear}
+            onChange={setBirthYear}
+            options={birthYearOptions}
+            placeholder="Seleccionar año"
+          />
+          <input type="hidden" name="birthYear" value={birthYear} readOnly />
         </div>
         <div className="sm:col-span-2">
           <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -129,20 +151,6 @@ function PlayerDetailForm({
           <p className="mt-1.5 text-xs text-muted-foreground">
             Puedes seleccionar varias posiciones. Pasa el ratón para ver el nombre completo.
           </p>
-        </div>
-        <div className="sm:col-span-2">
-          <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Año de nacimiento
-          </label>
-          <Input
-            name="birthYear"
-            type="number"
-            min={1990}
-            max={2025}
-            defaultValue={player.birth_year ?? ''}
-            placeholder="Ej. 2012"
-            className="border-primary/30 bg-background/80"
-          />
         </div>
       </div>
 
@@ -160,6 +168,11 @@ function PlayerDetailForm({
         {state.ok ? <p className="text-sm font-medium text-primary">Ficha actualizada.</p> : null}
         {state.message === 'error' ? (
           <p className="text-sm text-destructive">No se pudo guardar. Revisa permisos.</p>
+        ) : null}
+        {state.message === 'validation' ? (
+          <p className="text-sm text-destructive">
+            Revisa los datos: nombre obligatorio, dorsal entre 0 y 99, año de nacimiento válido.
+          </p>
         ) : null}
         {demoMode ? (
           <p className="text-xs text-muted-foreground">

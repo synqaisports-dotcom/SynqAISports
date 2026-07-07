@@ -1,6 +1,12 @@
 'use server';
 
 import { isDemoActive } from '@/lib/demo';
+import {
+  isValidBirthYear,
+  isValidJerseyNumber,
+  parseOptionalInt,
+  playerBirthYearMax,
+} from '@/lib/player-form';
 import { requireClubId } from '@/lib/auth-staff';
 import { DEMO_CANTERA_TEAMS, formatTeamName } from '@/lib/cantera-teams';
 import { getCanteraCategory } from '@/lib/cantera-categories';
@@ -99,13 +105,15 @@ export async function updatePlayer(
   const lastName = String(formData.get('lastName') ?? '').trim();
   const displayName = [firstName, lastName].filter(Boolean).join(' ').trim();
   const jerseyRaw = String(formData.get('jerseyNumber') ?? '').trim();
-  const jerseyNumber = jerseyRaw ? parseInt(jerseyRaw, 10) : null;
+  const jerseyNumber = parseOptionalInt(jerseyRaw);
   const position = String(formData.get('position') ?? '').trim() || null;
   const birthRaw = String(formData.get('birthYear') ?? '').trim();
-  const birthYear = birthRaw ? parseInt(birthRaw, 10) : null;
+  const birthYear = parseOptionalInt(birthRaw);
   const photoUrl = String(formData.get('photoUrl') ?? '').trim();
 
   if (!displayName) return { ok: false, message: 'validation' };
+  if (!isValidJerseyNumber(jerseyNumber)) return { ok: false, message: 'validation' };
+  if (!isValidBirthYear(birthYear, playerBirthYearMax())) return { ok: false, message: 'validation' };
 
   if (await isDemoActive()) {
     revalidatePath('/portal/cantera/jugadores');
@@ -120,9 +128,9 @@ export async function updatePlayer(
       first_name: firstName || null,
       last_name: lastName || null,
       display_name: displayName,
-      jersey_number: jerseyNumber != null && !Number.isNaN(jerseyNumber) ? jerseyNumber : null,
+      jersey_number: jerseyNumber,
       position,
-      birth_year: birthYear != null && !Number.isNaN(birthYear) ? birthYear : null,
+      birth_year: birthYear,
       photo_url: photoUrl || null,
     })
     .eq('id', playerId)
