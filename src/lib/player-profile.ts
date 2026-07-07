@@ -1,6 +1,7 @@
 import { playerDisplayName } from '@/lib/cantera-teams';
 import type { PlayerGuardian } from '@/lib/player-guardians';
 import type { PlayerMedicalInfo } from '@/lib/player-medical';
+import type { PlayerClubHistoryEvent } from '@/lib/player-club-history';
 import { positionShort } from '@/lib/player-positions';
 
 export type PlayerProfile = {
@@ -18,6 +19,8 @@ export type PlayerProfile = {
   active: boolean;
   is_minor: boolean;
   guardians: PlayerGuardian[];
+  created_at: string | null;
+  history: PlayerClubHistoryEvent[];
 } & PlayerMedicalInfo;
 
 export function playerFullName(player: Pick<PlayerProfile, 'first_name' | 'last_name' | 'display_name'>) {

@@ -6,6 +6,7 @@ import { DEMO_CANTERA_TEAMS, DEMO_TEAM_PLAYERS } from '@/lib/cantera-teams';
 import { isDemoActive } from '@/lib/demo';
 import type { PlayerProfile } from '@/lib/player-profile';
 import { parseGuardiansJson } from '@/lib/player-guardians';
+import { parsePlayerHistoryJson } from '@/lib/player-club-history';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import { redirect } from 'next/navigation';
@@ -38,7 +39,7 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
   const { data: players } = await supabase
     .from('synq_players')
     .select(
-      'id, display_name, first_name, last_name, jersey_number, position, active, photo_url, birth_year, is_minor, guardians_json, medical_until, medical_document_url, team_id, synq_teams(name, category)'
+      'id, display_name, first_name, last_name, jersey_number, position, active, photo_url, birth_year, is_minor, guardians_json, medical_until, medical_document_url, player_history_json, created_at, team_id, synq_teams(name, category)'
     )
     .eq('club_id', ctx.club.id)
     .eq('active', true)
@@ -64,6 +65,8 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
       guardians: parseGuardiansJson(row.guardians_json),
       medical_until: row.medical_until ?? null,
       medical_document_url: row.medical_document_url ?? null,
+      created_at: row.created_at ?? null,
+      history: parsePlayerHistoryJson(row.player_history_json),
     };
   });
 
@@ -92,6 +95,29 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
             : [],
         medical_until: demoPlayer.id === 'demo-pl-ale-1' ? '2026-12-31' : null,
         medical_document_url: null,
+        created_at:
+          demoPlayer.id === 'demo-pl-ale-1'
+            ? '2024-09-01T10:00:00.000Z'
+            : new Date(Date.now() - 120 * 24 * 60 * 60 * 1000).toISOString(),
+        history:
+          demoPlayer.id === 'demo-pl-ale-1'
+            ? [
+                {
+                  id: 'demo-hist-1',
+                  kind: 'category_change',
+                  title: 'Ascenso de categoría',
+                  detail: 'Benjamín A → Alevín A',
+                  occurredAt: '2025-07-01T09:00:00.000Z',
+                },
+                {
+                  id: 'demo-hist-2',
+                  kind: 'joined',
+                  title: 'Alta en el club',
+                  detail: `Plantilla · ${team.team_name}`,
+                  occurredAt: '2024-09-01T10:00:00.000Z',
+                },
+              ]
+            : [],
       });
     }
   }

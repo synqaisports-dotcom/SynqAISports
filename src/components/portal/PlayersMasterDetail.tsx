@@ -7,8 +7,10 @@ import { useRouter } from 'next/navigation';
 import { useFormState } from 'react-dom';
 import { Camera, FileText, Pencil, Search, User, Users } from 'lucide-react';
 import { updatePlayer, type ActionState } from '@/app/actions/cantera';
+import { PlayerClubHistorySection } from '@/components/portal/PlayerClubHistorySection';
 import { PlayerDocumentsForm } from '@/components/portal/PlayerDocumentsForm';
 import { PlayerGuardiansForm } from '@/components/portal/PlayerGuardiansForm';
+import { PlayerGuardiansSummary } from '@/components/portal/PlayerGuardiansSummary';
 import { PlayerMedicalBadge } from '@/components/portal/PlayerMedicalBadge';
 import { PlayerPauseButton } from '@/components/portal/PlayerPauseButton';
 import { PlayerPhotoField } from '@/components/portal/PlayerPhotoField';
@@ -247,6 +249,7 @@ function PlayerDetailPanel({
   const name = playerFullName(player);
   const actionButtonClass =
     'inline-flex size-9 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary';
+  const sectionClass = 'rounded-xl border border-primary/15 bg-muted/5 p-4';
 
   return (
     <Card className="flex h-full min-h-[28rem] flex-col border border-primary/25">
@@ -304,7 +307,7 @@ function PlayerDetailPanel({
             </div>
           </div>
 
-          <div className="space-y-4 rounded-xl border border-primary/15 bg-muted/5 p-4">
+          <div className={`${sectionClass} space-y-4`}>
             <div>
               <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                 Categoría
@@ -341,6 +344,10 @@ function PlayerDetailPanel({
             </div>
           </div>
         </div>
+
+        <PlayerGuardiansSummary player={player} />
+
+        <PlayerClubHistorySection player={player} />
 
         <Sheet open={editOpen} onOpenChange={setEditOpen}>
           <SheetContent
