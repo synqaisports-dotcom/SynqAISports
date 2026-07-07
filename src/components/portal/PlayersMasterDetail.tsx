@@ -49,6 +49,7 @@ type Props = {
   players: PlayerProfile[];
   teams: PlayerTeamOption[];
   initialPlayerId?: string | null;
+  initialTeamFilter?: string | null;
   demoMode?: boolean;
 };
 
@@ -402,11 +403,13 @@ export function PlayersMasterDetail({
   players,
   teams,
   initialPlayerId,
+  initialTeamFilter,
   demoMode,
 }: Props) {
   const router = useRouter();
   const [search, setSearch] = useState('');
   const [positionFilter, setPositionFilter] = useState('all');
+  const [teamFilter, setTeamFilter] = useState(initialTeamFilter ?? 'all');
   const [sortMode, setSortMode] = useState<PlayerListSortMode>('category');
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(
@@ -417,9 +420,17 @@ export function PlayersMasterDetail({
   const rosterActionClass =
     'inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary';
 
+  useEffect(() => {
+    if (initialTeamFilter) setTeamFilter(initialTeamFilter);
+  }, [initialTeamFilter]);
+
   const filteredPlayers = useMemo(() => {
     const query = search.trim().toLowerCase();
     let list = [...players];
+
+    if (teamFilter !== 'all') {
+      list = list.filter((player) => player.team_id === teamFilter);
+    }
 
     if (query) {
       list = list.filter((player) => {
@@ -445,7 +456,12 @@ export function PlayersMasterDetail({
     list.sort((a, b) => comparePlayersForList(a, b, sortMode));
 
     return list;
-  }, [players, search, positionFilter, sortMode]);
+  }, [players, search, positionFilter, teamFilter, sortMode]);
+
+  const teamFilterLabel = useMemo(() => {
+    if (teamFilter === 'all') return null;
+    return teams.find((team) => team.id === teamFilter)?.name ?? null;
+  }, [teamFilter, teams]);
 
   const selectedPlayer =
     players.find((player) => player.id === selectedId) ??
@@ -476,6 +492,17 @@ export function PlayersMasterDetail({
     router.refresh();
   };
 
+  const teamFilterOptions = useMemo(
+    () => [
+      { value: 'all', label: 'Todos los equipos' },
+      ...teams.map((team) => ({
+        value: team.id,
+        label: `${team.name} · ${team.category}`,
+      })),
+    ],
+    [teams]
+  );
+
   const positionOptions = [
     { value: 'all', label: 'Todas las posiciones' },
     ...PLAYER_POSITIONS.map((item) => ({
@@ -493,6 +520,7 @@ export function PlayersMasterDetail({
               <CardTitle className="text-base">Plantilla</CardTitle>
               <CardDescription>
                 {filteredPlayers.length} de {players.length} jugadores
+                {teamFilterLabel ? ` · ${teamFilterLabel}` : ''}
               </CardDescription>
             </div>
             <button
@@ -517,11 +545,19 @@ export function PlayersMasterDetail({
             </div>
             <div className="grid gap-2 sm:grid-cols-2">
               <SynqSelect
+                value={teamFilter}
+                onChange={setTeamFilter}
+                options={teamFilterOptions}
+                placeholder="Equipo"
+              />
+              <SynqSelect
                 value={positionFilter}
                 onChange={setPositionFilter}
                 options={positionOptions}
                 placeholder="Posición"
               />
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2">
               <SynqSelect
                 value={sortMode}
                 onChange={(value) => setSortMode(value as PlayerListSortMode)}

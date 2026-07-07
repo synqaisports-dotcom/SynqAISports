@@ -46,7 +46,7 @@ export function PlayerPauseButton({ playerId, playerName }: Props) {
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
         title={`¿Pausar a ${playerName}?`}
-        description="Dejará de aparecer en la plantilla activa, pero se conserva su historial."
+        description="Dejará de aparecer en la plantilla activa del club. Se conserva su historial, ficha y datos. La acción que se ejecutará es pausar al jugador."
         confirmLabel="Pausar jugador"
         onConfirm={handleConfirm}
         pending={pending}

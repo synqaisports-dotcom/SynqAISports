@@ -25,6 +25,7 @@ const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'i
 export type ClubPeopleState = {
   ok: boolean;
   message?: string;
+  personId?: string;
 };
 
 async function uploadClubMediaFile(
@@ -317,7 +318,7 @@ export async function upsertSportPerson(
     revalidatePath('/portal/club/staff');
     revalidatePath('/portal/club/organigrama');
     revalidatePath('/portal/club/organigrama/editar');
-    return { ok: true };
+    return { ok: true, message: 'demo', personId: personId || undefined };
   }
 
   let savedPersonId = personId;
@@ -366,7 +367,7 @@ export async function upsertSportPerson(
   revalidatePath(`/portal/club/staff/${savedPersonId}/editar`);
   revalidatePath('/portal/club/organigrama');
   revalidatePath('/portal/club/organigrama/editar');
-  return { ok: true };
+  return { ok: true, personId: savedPersonId };
 }
 
 export async function deleteInstitutionalPerson(

@@ -114,7 +114,7 @@ function CanteraTeamRowCard({
             label="Editar equipo"
             icon={Pencil}
           />
-          <TeamPauseButton teamId={team.id} active={team.active} />
+          <TeamPauseButton teamId={team.id} teamName={team.name} active={team.active} />
         </>
       }
     />

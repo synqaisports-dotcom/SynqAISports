@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CalendarDays, Layers, Pencil, Plus, Search, Users } from 'lucide-react';
+import { CalendarDays, ClipboardList, Layers, Pencil, Plus, Search, UserCog } from 'lucide-react';
 import { TeamCreateForm } from '@/components/portal/TeamCreateForm';
 import { TeamEditForm } from '@/components/portal/TeamEditForm';
 import { TeamPauseButton } from '@/components/portal/TeamPauseButton';
@@ -141,6 +141,22 @@ function TeamDetailPanel({
               <Pencil className="size-4" />
             </button>
             <Link
+              href={`/portal/cantera/jugadores?team=${team.id}`}
+              className={actionButtonClass}
+              aria-label="Ver plantilla del equipo"
+              title="Ver plantilla (gestionar jugadores, cambios de equipo y ascensos)"
+            >
+              <ClipboardList className="size-4" />
+            </Link>
+            <Link
+              href={`/portal/club/staff?team=${team.id}`}
+              className={actionButtonClass}
+              aria-label="Ver staff asignado"
+              title="Ver cuerpo técnico asignado a este equipo"
+            >
+              <UserCog className="size-4" />
+            </Link>
+            <Link
               href="/portal/cantera/horarios"
               className={actionButtonClass}
               aria-label="Ver horarios"
@@ -148,15 +164,7 @@ function TeamDetailPanel({
             >
               <CalendarDays className="size-4" />
             </Link>
-            <Link
-              href="/portal/cantera/jugadores"
-              className={actionButtonClass}
-              aria-label="Ver jugadores"
-              title="Ir a jugadores"
-            >
-              <Users className="size-4" />
-            </Link>
-            <TeamPauseButton teamId={team.id} active={team.active} />
+            <TeamPauseButton teamId={team.id} teamName={team.name} active={team.active} />
           </div>
         </div>
       </CardHeader>

@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 
 type Props = {
-  searchParams: Promise<{ player?: string }>;
+  searchParams: Promise<{ player?: string; team?: string }>;
 };
 
 function teamMetaForId(teamId: string | null) {
@@ -35,7 +35,7 @@ function teamMetaForId(teamId: string | null) {
 }
 
 export default async function PortalCanteraJugadoresPage({ searchParams }: Props) {
-  const { player: initialPlayerId } = await searchParams;
+  const { player: initialPlayerId, team: initialTeamFilter } = await searchParams;
   const supabase = await createClient();
   const ctx = await getStaffContext(supabase);
   if (!ctx) redirect('/login');
@@ -197,6 +197,7 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
         players={profiles}
         teams={teamOptions}
         initialPlayerId={initialPlayerId}
+        initialTeamFilter={initialTeamFilter}
         demoMode={demo}
       />
     </PageContainer>

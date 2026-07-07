@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFormState } from 'react-dom';
 import { upsertSportPerson, type ClubPeopleState } from '@/app/actions/club-people';
 import { sportAccessProfileOptions, type AccessProfile, type ClubPerson } from '@/lib/club-people';
@@ -19,13 +19,24 @@ type Props = {
   person?: ClubPerson | null;
   teams: TeamOption[];
   initialAssignments?: PersonAssignment[];
+  onSaved?: (personId: string) => void;
 };
 
-export function SportPersonForm({ clubId, person, teams, initialAssignments = [] }: Props) {
+export function SportPersonForm({
+  clubId,
+  person,
+  teams,
+  initialAssignments = [],
+  onSaved,
+}: Props) {
   const bound = upsertSportPerson.bind(null, clubId);
   const [state, action, pending] = useFormState(bound, initial);
   const [accessProfile, setAccessProfile] = useState<AccessProfile>(person?.access_profile ?? 'coach');
   const profileOptions = sportAccessProfileOptions();
+
+  useEffect(() => {
+    if (state.ok && state.personId) onSaved?.(state.personId);
+  }, [state.ok, state.personId, onSaved]);
 
   return (
     <form action={action} className="w-full space-y-6">
@@ -143,6 +154,11 @@ export function SportPersonForm({ clubId, person, teams, initialAssignments = []
           {pending ? 'Guardando…' : 'Guardar ficha'}
         </Button>
         {state.ok ? <p className="text-sm font-medium text-primary">Ficha guardada.</p> : null}
+        {state.message === 'demo' ? (
+          <p className="text-sm text-muted-foreground">
+            En demo los cambios no persisten en el listado; con Supabase se actualizará la ficha.
+          </p>
+        ) : null}
         {state.message === 'error' ? (
           <p className="text-sm text-destructive">Error al guardar. Revisa permisos RLS.</p>
         ) : null}
