@@ -36,9 +36,10 @@ function parseDays(value: string | undefined) {
 
 type Props = {
   facility?: ClubFacility | null;
+  onSaved?: (facilityId: string) => void;
 };
 
-export function FacilityForm({ facility }: Props) {
+export function FacilityForm({ facility, onSaved }: Props) {
   const router = useRouter();
   const bound = facility
     ? updateFacility.bind(null, facility.id)
@@ -113,12 +114,15 @@ export function FacilityForm({ facility }: Props) {
   const showDivisionSchedule = facilityHasSharedDivisions(draftFacility);
 
   useEffect(() => {
-    if (state.ok) {
-      const target = state.facilityId ?? facility?.id;
-      router.push(target ? `/portal/club/instalaciones/${target}` : '/portal/club/instalaciones');
-      router.refresh();
+    if (!state.ok) return;
+    const target = state.facilityId ?? facility?.id;
+    if (target && onSaved) {
+      onSaved(target);
+      return;
     }
-  }, [state.ok, state.facilityId, facility?.id, router]);
+    router.push(target ? `/portal/club/instalaciones?facility=${target}` : '/portal/club/instalaciones');
+    router.refresh();
+  }, [state.ok, state.facilityId, facility?.id, onSaved, router]);
 
   const handleSportChange = (value: string) => {
     const nextSport = value as ClubSport;

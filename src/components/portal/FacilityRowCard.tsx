@@ -76,7 +76,6 @@ export function FacilityRowCard({ facility }: Props) {
           ) : (
             <Field label="Ubicación" value={facility.address ?? '—'} />
           )}
-          <Field label="Ubicación" value={facility.address ?? '—'} />
         </div>
       </div>
 

@@ -1,25 +1,45 @@
 import Link from 'next/link';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
+import { getTeamTrainingSlots } from '@/app/actions/cantera';
 import { loadClubFacilities } from '@/app/actions/club-facilities';
-import { FacilityRowCard } from '@/components/portal/FacilityRowCard';
+import { FacilitiesMasterDetail } from '@/components/portal/FacilitiesMasterDetail';
 import { PageContainer } from '@/components/portal/PageContainer';
+import { isDemoActive } from '@/lib/demo';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 
-export default async function PortalClubInstalacionesLandingPage() {
+type Props = {
+  searchParams: Promise<{
+    facility?: string;
+    create?: string;
+    edit?: string;
+  }>;
+};
+
+export default async function PortalClubInstalacionesLandingPage({ searchParams }: Props) {
+  const {
+    facility: initialFacilityId,
+    create: initialCreate,
+    edit: initialEdit,
+  } = await searchParams;
+
   const supabase = await createClient();
   const ctx = await getStaffContext(supabase);
   if (!ctx) redirect('/login');
 
-  const facilities = await loadClubFacilities(ctx.club.id, { includeInactive: true });
+  const demo = await isDemoActive();
+  const [facilities, trainingSlots] = await Promise.all([
+    loadClubFacilities(ctx.club.id, { includeInactive: true }),
+    getTeamTrainingSlots(ctx.club.id),
+  ]);
 
   return (
     <PageContainer>
-      <Card className="mb-4">
-        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+      <Card className="mb-4 border border-primary/25">
+        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 space-y-0">
           <div>
             <CardTitle className="text-base">Instalaciones</CardTitle>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -27,37 +47,29 @@ export default async function PortalClubInstalacionesLandingPage() {
               fútbol.
             </p>
           </div>
-          <div className="flex shrink-0 gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/portal/club">
-                <ArrowLeft className="h-4 w-4" />
-                Volver
-              </Link>
-            </Button>
-            <Button size="sm" asChild>
-              <Link href="/portal/club/instalaciones/nuevo">
-                <Plus className="h-4 w-4" />
-                Crear
-              </Link>
-            </Button>
-          </div>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/portal/club">
+              <ArrowLeft className="h-4 w-4" />
+              Volver
+            </Link>
+          </Button>
         </CardHeader>
       </Card>
 
-      {facilities.length > 0 ? (
-        <ul className="space-y-3">
-          {facilities.map((facility) => (
-            <li key={facility.id}>
-              <FacilityRowCard facility={facility} />
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="rounded-xl border border-dashed border-primary/25 px-4 py-10 text-center text-sm text-muted-foreground">
-          Aún no hay instalaciones registradas. Crea la primera para asignarla a los equipos en
-          Cantera.
+      {demo ? (
+        <p className="mb-4 rounded-lg border border-primary/20 bg-muted/10 p-4 text-sm text-muted-foreground">
+          Vista maestro-detalle con instalaciones de demo. Usa + para probar el alta y selecciona
+          una sede para ver horarios y ocupación por zonas.
         </p>
-      )}
+      ) : null}
+
+      <FacilitiesMasterDetail
+        facilities={facilities}
+        trainingSlots={trainingSlots}
+        initialFacilityId={initialFacilityId}
+        initialCreateOpen={initialCreate === '1'}
+        initialEditOpen={initialEdit === '1'}
+      />
     </PageContainer>
   );
 }
