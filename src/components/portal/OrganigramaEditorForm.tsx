@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useFormState } from 'react-dom';
 import { Plus, Trash2 } from 'lucide-react';
 import { updateOrganigrama, type OrganigramaState } from '@/app/actions/organigrama';
@@ -22,9 +22,10 @@ type Props = {
   clubId: string;
   nodes: OrganigramaNode[];
   people: ClubPerson[];
+  onSaved?: () => void;
 };
 
-export function OrganigramaEditorForm({ clubId, nodes, people }: Props) {
+export function OrganigramaEditorForm({ clubId, nodes, people, onSaved }: Props) {
   const bound = updateOrganigrama.bind(null, clubId);
   const [state, action, pending] = useFormState(bound, initial);
   const [rows, setRows] = useState<OrganigramaNodeFlat[]>(() => flattenOrganigrama(nodes));
@@ -35,6 +36,10 @@ export function OrganigramaEditorForm({ clubId, nodes, people }: Props) {
   );
 
   const personGroups = useMemo(() => buildPersonSelectGroups(people), [people]);
+
+  useEffect(() => {
+    if (state.ok) onSaved?.();
+  }, [state.ok, onSaved]);
 
   const organigramaJson = JSON.stringify(
     rows.filter((row) => row.id.trim() && row.role.trim())

@@ -246,8 +246,10 @@ export async function upsertInstitutionalPerson(
     revalidatePath('/portal/club/estructura');
     revalidatePath('/portal/club/organigrama');
     revalidatePath('/portal/club/organigrama/editar');
-    return { ok: true };
+    return { ok: true, message: 'demo', personId: personId || undefined };
   }
+
+  let savedPersonId = personId;
 
   if (personId) {
     const { error } = await supabase
@@ -260,17 +262,22 @@ export async function upsertInstitutionalPerson(
       return { ok: false, message: 'error' };
     }
   } else {
-    const { error } = await supabase.from('synq_club_people').insert(payload);
-    if (error) {
+    const { data, error } = await supabase
+      .from('synq_club_people')
+      .insert(payload)
+      .select('id')
+      .single();
+    if (error || !data) {
       console.error('upsertInstitutionalPerson', error);
       return { ok: false, message: 'error' };
     }
+    savedPersonId = data.id;
   }
 
   revalidatePath('/portal/club/estructura');
   revalidatePath('/portal/club/organigrama');
   revalidatePath('/portal/club/organigrama/editar');
-  return { ok: true };
+  return { ok: true, personId: savedPersonId };
 }
 
 export async function upsertSportPerson(

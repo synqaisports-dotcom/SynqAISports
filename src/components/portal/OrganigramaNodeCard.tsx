@@ -6,14 +6,39 @@ type Props = {
   node: OrganigramaNodeView;
   variant?: 'default' | 'hero' | 'compact';
   className?: string;
+  selected?: boolean;
+  onSelect?: (nodeId: string) => void;
 };
 
-export function OrganigramaNodeCard({ node, variant = 'default', className }: Props) {
+export function OrganigramaNodeCard({
+  node,
+  variant = 'default',
+  className,
+  selected = false,
+  onSelect,
+}: Props) {
+  const interactive = Boolean(onSelect);
+
   return (
     <div
+      role={interactive ? 'button' : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      onClick={interactive ? () => onSelect?.(node.id) : undefined}
+      onKeyDown={
+        interactive
+          ? (event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                onSelect?.(node.id);
+              }
+            }
+          : undefined
+      }
       className={cn(
         'relative rounded-xl border bg-card text-center shadow-[0_4px_24px_hsl(183_100%_50%_/_0.08)] transition-colors',
         node.vacant ? 'border-primary/25' : 'border-primary/45',
+        selected && 'border-primary bg-primary/10 ring-2 ring-primary/30',
+        interactive && 'cursor-pointer hover:border-primary/60 hover:bg-primary/5',
         variant === 'hero' && 'px-3 py-2.5',
         variant === 'default' && 'px-4 py-3',
         variant === 'compact' && 'px-2.5 py-2',
