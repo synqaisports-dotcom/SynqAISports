@@ -13,6 +13,10 @@
   --synq-pitch: #00d4ee;
   --synq-muted: #94a3b8;
   --synq-glow: rgba(0, 242, 255, 0.4);
+  /* Primary 183 100% 50% → dos tonos más oscuro para scrollbars */
+  --synq-scrollbar-thumb: 183 88% 34%;
+  --synq-scrollbar-thumb-hover: 183 92% 40%;
+  --synq-scrollbar-track: 183 28% 9%;
 }
 
 body {
@@ -390,5 +394,40 @@ body {
 
   .org-chart-board {
     background-image: radial-gradient(ellipse 80% 50% at 50% 0%, hsl(183 100% 50% / 0.06), transparent 60%);
+  }
+
+  .portal-dashboard,
+  .portal-dashboard * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--synq-scrollbar-thumb) / 0.85) hsl(var(--synq-scrollbar-track));
+  }
+
+  .portal-dashboard ::-webkit-scrollbar,
+  .portal-dashboard *::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+  }
+
+  .portal-dashboard ::-webkit-scrollbar-track,
+  .portal-dashboard *::-webkit-scrollbar-track {
+    background: hsl(var(--synq-scrollbar-track));
+    border-radius: 999px;
+  }
+
+  .portal-dashboard ::-webkit-scrollbar-thumb,
+  .portal-dashboard *::-webkit-scrollbar-thumb {
+    background: hsl(var(--synq-scrollbar-thumb) / 0.85);
+    border-radius: 999px;
+    border: 1px solid hsl(var(--synq-scrollbar-track));
+  }
+
+  .portal-dashboard ::-webkit-scrollbar-thumb:hover,
+  .portal-dashboard *::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--synq-scrollbar-thumb-hover) / 0.95);
+  }
+
+  .portal-dashboard ::-webkit-scrollbar-corner,
+  .portal-dashboard *::-webkit-scrollbar-corner {
+    background: transparent;
   }
 }
