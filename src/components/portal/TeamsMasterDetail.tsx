@@ -39,6 +39,8 @@ import {
   type TeamListSortMode,
   type TeamProfile,
 } from '@/lib/team-profile';
+import type { PlayerTeamOption } from '@/lib/player-teams';
+import { sortPlayerTeamsByCategory } from '@/lib/player-teams';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -59,6 +61,70 @@ function teamCategoryMeta(team: TeamProfile) {
   const slug =
     team.category_slug ?? resolveTeamCategorySlug(team.category, team.category_slug);
   return slug ? (getCanteraCategory(slug) ?? null) : null;
+}
+
+function teamOptionsFromProfiles(teams: TeamProfile[]): PlayerTeamOption[] {
+  return sortPlayerTeamsByCategory(
+    teams.map((team) => ({
+      id: team.id,
+      name: team.name,
+      category: team.category,
+      category_slug: team.category_slug,
+    }))
+  );
+}
+
+const teamActionButtonClass =
+  'inline-flex size-9 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary';
+
+function TeamDetailActions({
+  team,
+  onEdit,
+  onRoster,
+}: {
+  team: TeamProfile;
+  onEdit: () => void;
+  onRoster: () => void;
+}) {
+  return (
+    <div className="flex shrink-0 flex-nowrap items-center gap-0.5 rounded-xl border border-primary/20 bg-muted/10 p-1">
+      <button
+        type="button"
+        className={teamActionButtonClass}
+        aria-label="Editar equipo"
+        title="Editar equipo"
+        onClick={onEdit}
+      >
+        <Pencil className="size-4" />
+      </button>
+      <button
+        type="button"
+        className={teamActionButtonClass}
+        aria-label="Ver plantilla del equipo"
+        title="Ver plantilla del equipo"
+        onClick={onRoster}
+      >
+        <ClipboardList className="size-4" />
+      </button>
+      <Link
+        href={`/portal/club/staff?team=${team.id}`}
+        className={teamActionButtonClass}
+        aria-label="Ver staff asignado"
+        title="Ver cuerpo técnico asignado a este equipo"
+      >
+        <UserCog className="size-4" />
+      </Link>
+      <Link
+        href="/portal/cantera/horarios"
+        className={teamActionButtonClass}
+        aria-label="Ver horarios"
+        title="Ver horarios del club"
+      >
+        <CalendarDays className="size-4" />
+      </Link>
+      <TeamPauseButton teamId={team.id} teamName={team.name} active={team.active} />
+    </div>
+  );
 }
 
 function TeamDetailPanel({
@@ -107,21 +173,20 @@ function TeamDetailPanel({
     team.category_slug ?? '',
     team.id
   );
-  const actionButtonClass =
-    'inline-flex size-9 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary';
+  const teamOptions = teamOptionsFromProfiles(teams);
 
   return (
-    <Card
-      className={cn(
-        'flex h-full min-h-[28rem] flex-col border',
-        category?.borderClass ?? 'border-primary/25'
-      )}
-    >
-      <CardHeader className="pb-3">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
+    <Card className="flex h-full min-h-[28rem] flex-col border border-primary/25">
+      <CardHeader className="space-y-2 pb-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <CardTitle className="text-lg font-semibold tracking-tight">{team.name}</CardTitle>
+              {category ? (
+                <Badge variant="outline" className={cn('text-[10px]', category.badgeClass)}>
+                  {category.name}
+                </Badge>
+              ) : null}
               <Badge variant="secondary" className="text-[10px]">
                 {team.player_count} jugadores
               </Badge>
@@ -131,52 +196,20 @@ function TeamDetailPanel({
                 </Badge>
               ) : null}
             </div>
-            {category ? (
-              <p className="mt-1 text-sm text-muted-foreground">
-                {category.name} · Letra {team.team_letter ?? '—'} · {category.international}
-              </p>
-            ) : (
-              <p className="mt-1 text-sm text-muted-foreground">{sportLabel}</p>
-            )}
           </div>
-          <div className="flex shrink-0 items-center gap-1">
-            <button
-              type="button"
-              className={actionButtonClass}
-              aria-label="Editar equipo"
-              title="Editar equipo"
-              onClick={() => setEditOpen(true)}
-            >
-              <Pencil className="size-4" />
-            </button>
-            <button
-              type="button"
-              className={actionButtonClass}
-              aria-label="Ver plantilla del equipo"
-              title="Ver plantilla del equipo"
-              onClick={() => setRosterOpen(true)}
-            >
-              <ClipboardList className="size-4" />
-            </button>
-            <Link
-              href={`/portal/club/staff?team=${team.id}`}
-              className={actionButtonClass}
-              aria-label="Ver staff asignado"
-              title="Ver cuerpo técnico asignado a este equipo"
-            >
-              <UserCog className="size-4" />
-            </Link>
-            <Link
-              href="/portal/cantera/horarios"
-              className={actionButtonClass}
-              aria-label="Ver horarios"
-              title="Ver horarios del club"
-            >
-              <CalendarDays className="size-4" />
-            </Link>
-            <TeamPauseButton teamId={team.id} teamName={team.name} active={team.active} />
-          </div>
+          <TeamDetailActions
+            team={team}
+            onEdit={() => setEditOpen(true)}
+            onRoster={() => setRosterOpen(true)}
+          />
         </div>
+        {category ? (
+          <p className="text-sm text-muted-foreground">
+            Letra {team.team_letter ?? '—'} · {category.ages}
+          </p>
+        ) : (
+          <p className="text-sm text-muted-foreground">{sportLabel}</p>
+        )}
       </CardHeader>
       <CardContent className="min-h-0 flex-1 overflow-y-auto">
         {demoMode && team.is_demo ? (
@@ -214,7 +247,12 @@ function TeamDetailPanel({
             <SheetTitle>Plantilla · {team.name}</SheetTitle>
           </SheetHeader>
           <div className="mt-4">
-            <TeamRosterList teamId={team.id} teamName={team.name} players={team.players} />
+            <TeamRosterList
+              teamId={team.id}
+              teamName={team.name}
+              players={team.players}
+              teams={teamOptions}
+            />
           </div>
         </SheetContent>
       </Sheet>

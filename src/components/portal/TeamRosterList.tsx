@@ -1,8 +1,12 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { Camera, User } from 'lucide-react';
+import { PlayerTeamMoveButton } from '@/components/portal/PlayerTeamMoveButton';
 import { playerDisplayName } from '@/lib/cantera-teams';
 import { positionShort } from '@/lib/player-positions';
+import type { PlayerTeamOption } from '@/lib/player-teams';
 import type { TeamViewPlayer } from '@/components/portal/TeamViewSections';
 import { Badge } from '@/components/ui/badge';
 
@@ -10,9 +14,10 @@ type Props = {
   teamId: string;
   teamName: string;
   players: TeamViewPlayer[];
+  teams: PlayerTeamOption[];
 };
 
-export function TeamRosterList({ teamId, teamName, players }: Props) {
+export function TeamRosterList({ teamId, teamName, players, teams }: Props) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -21,6 +26,11 @@ export function TeamRosterList({ teamId, teamName, players }: Props) {
         </p>
         <Badge variant="secondary">{players.length}</Badge>
       </div>
+
+      <p className="text-xs text-muted-foreground">
+        Usa el icono de intercambio para cambiar de equipo o ascender de categoría. El movimiento se
+        guarda en el histórico del jugador.
+      </p>
 
       {players.length === 0 ? (
         <p className="rounded-lg border border-dashed border-primary/20 px-4 py-8 text-center text-sm text-muted-foreground">
@@ -41,35 +51,42 @@ export function TeamRosterList({ teamId, teamName, players }: Props) {
 
             return (
               <li key={player.id}>
-                <Link
-                  href={`/portal/cantera/jugadores?player=${player.id}`}
-                  className="flex items-center gap-3 rounded-xl border border-primary/20 bg-muted/5 p-3 transition-colors hover:border-primary/40 hover:bg-primary/5"
-                >
-                  <div className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-primary/25 bg-muted/20">
-                    {player.photo_url ? (
-                      <Image
-                        src={player.photo_url}
-                        alt={name}
-                        fill
-                        className="object-cover"
-                        sizes="48px"
-                      />
-                    ) : (
-                      <Camera className="size-5 text-primary/70" strokeWidth={1.5} />
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-foreground">
-                      {firstName}{' '}
-                      <span className="font-medium text-muted-foreground">{lastName}</span>
-                    </p>
-                    <p className="mt-0.5 text-xs text-primary/80">
-                      {positionShort(player.position)}
-                      {player.jersey_number != null ? ` · #${player.jersey_number}` : ''}
-                    </p>
-                  </div>
-                  <User className="size-4 shrink-0 text-muted-foreground" />
-                </Link>
+                <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-muted/5 p-3">
+                  <Link
+                    href={`/portal/cantera/jugadores?player=${player.id}`}
+                    className="flex min-w-0 flex-1 items-center gap-3 transition-colors hover:opacity-90"
+                  >
+                    <div className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-primary/25 bg-muted/20">
+                      {player.photo_url ? (
+                        <Image
+                          src={player.photo_url}
+                          alt={name}
+                          fill
+                          className="object-cover"
+                          sizes="48px"
+                        />
+                      ) : (
+                        <Camera className="size-5 text-primary/70" strokeWidth={1.5} />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-foreground">
+                        {firstName}{' '}
+                        <span className="font-medium text-muted-foreground">{lastName}</span>
+                      </p>
+                      <p className="mt-0.5 text-xs text-primary/80">
+                        {positionShort(player.position)}
+                        {player.jersey_number != null ? ` · #${player.jersey_number}` : ''}
+                      </p>
+                    </div>
+                    <User className="size-4 shrink-0 text-muted-foreground" />
+                  </Link>
+                  <PlayerTeamMoveButton
+                    player={player}
+                    currentTeamId={teamId}
+                    teams={teams}
+                  />
+                </div>
               </li>
             );
           })}

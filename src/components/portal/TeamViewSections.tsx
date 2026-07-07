@@ -1,6 +1,5 @@
 import type { CanteraCategory } from '@/lib/cantera-categories';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
 
 type TeamData = {
   id: string;
@@ -34,13 +33,7 @@ export function TeamViewSections({ team, category }: Props) {
   const sportLabel = team.sport === 'futsal' ? 'Fútbol sala' : 'Fútbol';
 
   return (
-    <Card
-      className={cn(
-        'h-fit border',
-        category?.borderClass ?? 'border-primary/25',
-        category?.ringClass
-      )}
-    >
+    <Card className="h-fit border border-primary/25">
       <CardHeader>
         <CardTitle className="text-base">Datos del equipo</CardTitle>
       </CardHeader>

@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -14,6 +15,7 @@ type Props = {
   onConfirm: () => void;
   pending?: boolean;
   destructive?: boolean;
+  children?: ReactNode;
 };
 
 export function PortalConfirmDialog({
@@ -26,6 +28,7 @@ export function PortalConfirmDialog({
   onConfirm,
   pending = false,
   destructive = false,
+  children,
 }: Props) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -44,6 +47,8 @@ export function PortalConfirmDialog({
           <Dialog.Description className="mt-2 text-sm leading-relaxed text-muted-foreground">
             {description}
           </Dialog.Description>
+
+          {children ? <div className="mt-4">{children}</div> : null}
 
           <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button

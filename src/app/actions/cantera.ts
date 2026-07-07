@@ -8,7 +8,7 @@ import {
   playerBirthYearMax,
 } from '@/lib/player-form';
 import { parseGuardiansFromForm, validateGuardians } from '@/lib/player-guardians';
-import { buildInitialPlayerHistory } from '@/lib/player-club-history';
+import { buildInitialPlayerHistory, buildTeamMoveHistoryEvent, parsePlayerHistoryJson, prependPlayerHistoryEvent } from '@/lib/player-club-history';
 import { isValidMedicalDate } from '@/lib/player-medical';
 import { requireClubId } from '@/lib/auth-staff';
 import { DEMO_CANTERA_TEAMS, formatTeamName } from '@/lib/cantera-teams';
@@ -199,6 +199,81 @@ export async function updatePlayer(
   revalidatePath(`/portal/cantera/jugadores/${playerId}`);
   revalidatePath(`/portal/cantera/jugadores/${playerId}/editar`);
   return { ok: true };
+}
+
+export async function movePlayerTeam(
+  playerId: string,
+  newTeamId: string
+): Promise<ActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'unauthorized' };
+
+  if (!newTeamId) return { ok: false, message: 'validation' };
+
+  if (await isDemoActive()) {
+    revalidatePath('/portal/cantera/jugadores');
+    revalidatePath('/portal/cantera/equipos');
+    return { ok: true, message: 'demo' };
+  }
+
+  const supabase = await createClient();
+
+  const { data: player } = await supabase
+    .from('synq_players')
+    .select('id, team_id, player_history_json, synq_teams(name, category, category_slug)')
+    .eq('id', playerId)
+    .eq('club_id', clubId)
+    .maybeSingle();
+
+  if (!player) return { ok: false, message: 'error' };
+  if (player.team_id === newTeamId) return { ok: false, message: 'validation' };
+
+  const { data: newTeam } = await supabase
+    .from('synq_teams')
+    .select('id, name, category, category_slug')
+    .eq('id', newTeamId)
+    .eq('club_id', clubId)
+    .maybeSingle();
+
+  if (!newTeam) return { ok: false, message: 'validation' };
+
+  const currentTeam = Array.isArray(player.synq_teams)
+    ? player.synq_teams[0]
+    : player.synq_teams;
+
+  const history = parsePlayerHistoryJson(player.player_history_json);
+  const moveEvent = buildTeamMoveHistoryEvent({
+    fromTeam: currentTeam
+      ? {
+          name: currentTeam.name,
+          category: currentTeam.category,
+          category_slug: currentTeam.category_slug,
+        }
+      : null,
+    toTeam: {
+      name: newTeam.name,
+      category: newTeam.category,
+      category_slug: newTeam.category_slug,
+    },
+  });
+
+  const { error } = await supabase
+    .from('synq_players')
+    .update({
+      team_id: newTeamId,
+      player_history_json: prependPlayerHistoryEvent(history, moveEvent),
+    })
+    .eq('id', playerId)
+    .eq('club_id', clubId);
+
+  if (error) {
+    console.error('movePlayerTeam', error);
+    return { ok: false, message: 'error' };
+  }
+
+  revalidatePath('/portal/cantera/jugadores');
+  revalidatePath('/portal/cantera/equipos');
+  return { ok: true, playerId };
 }
 
 export async function updatePlayerMedical(

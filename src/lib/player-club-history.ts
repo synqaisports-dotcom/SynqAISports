@@ -73,3 +73,48 @@ export function formatPlayerHistoryWhen(iso: string): string {
     year: 'numeric',
   });
 }
+
+export function prependPlayerHistoryEvent(
+  existing: PlayerClubHistoryEvent[],
+  event: Omit<PlayerClubHistoryEvent, 'id'> & { id?: string }
+): PlayerClubHistoryEvent[] {
+  const entry: PlayerClubHistoryEvent = {
+    id: event.id ?? `history-${Date.now()}`,
+    kind: event.kind,
+    title: event.title,
+    detail: event.detail,
+    occurredAt: event.occurredAt,
+  };
+  return [entry, ...existing];
+}
+
+export function buildTeamMoveHistoryEvent(input: {
+  fromTeam: { name: string; category_slug: string | null; category: string } | null;
+  toTeam: { name: string; category_slug: string | null; category: string };
+}): PlayerClubHistoryEvent {
+  const occurredAt = new Date().toISOString();
+  const fromLabel = input.fromTeam?.name ?? 'Sin equipo';
+  const toLabel = input.toTeam.name;
+  const categoryChanged =
+    input.fromTeam?.category_slug &&
+    input.toTeam.category_slug &&
+    input.fromTeam.category_slug !== input.toTeam.category_slug;
+
+  if (categoryChanged) {
+    return {
+      id: `category-change-${occurredAt}`,
+      kind: 'category_change',
+      title: 'Ascenso de categoría',
+      detail: `${fromLabel} → ${toLabel}`,
+      occurredAt,
+    };
+  }
+
+  return {
+    id: `team-change-${occurredAt}`,
+    kind: 'team_change',
+    title: 'Cambio de equipo',
+    detail: `${fromLabel} → ${toLabel}`,
+    occurredAt,
+  };
+}
