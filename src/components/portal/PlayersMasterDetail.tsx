@@ -203,8 +203,10 @@ function PlayerDetailPanel({
   return (
     <Card className="flex h-full min-h-[28rem] flex-col border border-primary/25">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-semibold tracking-tight">{name}</CardTitle>
-        <p className="text-sm font-medium text-primary">{player.team_name}</p>
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+          <CardTitle className="text-lg font-semibold tracking-tight">{name}</CardTitle>
+          <span className="text-sm font-medium text-primary">{player.team_name}</span>
+        </div>
       </CardHeader>
       <CardContent className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
         <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] sm:items-start">
