@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import { useFormState } from 'react-dom';
+import { ArrowLeft, Printer } from 'lucide-react';
 import { createExercise, updateExercise, type ActionState } from '@/app/actions/methodology';
 import { ExerciseSheetForm } from '@/components/methodology/ExerciseSheetForm';
-import { ExerciseSheetPrintLink } from '@/components/methodology/ExerciseSheetPrintLink';
 import { ExerciseSheetView } from '@/components/methodology/ExerciseSheetView';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   legacyToSheet,
   parseExerciseSheet,
@@ -73,16 +75,20 @@ export function ExerciseEditor({
     const redirectTo =
       returnTo && returnTo.startsWith('/portal/') ? returnTo : `/portal/metodologia/ejercicios/${state.id}`;
     return (
-      <p className="text-synq-accent">
-        Ejercicio creado.{' '}
-        <Link href={redirectTo} className="underline">
-          {returnTo ? 'Volver a la sesión' : 'Ver ficha'}
-        </Link>{' '}
-        ·{' '}
-        <Link href={`/portal/metodologia/ejercicios/${state.id}`} className="underline">
-          Abrir ejercicio
-        </Link>
-      </p>
+      <Card className="border border-primary/25">
+        <CardContent className="p-6">
+          <p className="text-sm text-primary">
+            Ejercicio creado.{' '}
+            <Link href={redirectTo} className="font-medium underline">
+              {returnTo ? 'Volver a la sesión' : 'Ver ficha'}
+            </Link>{' '}
+            ·{' '}
+            <Link href={`/portal/metodologia/ejercicios/${state.id}`} className="font-medium underline">
+              Abrir ejercicio
+            </Link>
+          </p>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -91,34 +97,54 @@ export function ExerciseEditor({
   }
 
   return (
-    <form action={action} className="max-w-6xl space-y-4">
+    <form action={action} className="space-y-4">
       {categorySlug ? (
-        <p className="rounded-lg border border-primary/25 bg-primary/10 px-3 py-2 text-sm text-primary">
-          Categoría heredada: <strong>{categorySlug}</strong>
-          <input type="hidden" name="categorySlug" value={categorySlug} />
-        </p>
+        <Card className="border border-primary/25 bg-primary/5">
+          <CardContent className="p-4 text-sm text-primary">
+            Categoría heredada: <strong>{categorySlug}</strong>
+            <input type="hidden" name="categorySlug" value={categorySlug} />
+          </CardContent>
+        </Card>
       ) : null}
       {returnTo ? <input type="hidden" name="returnTo" value={returnTo} /> : null}
-      {isEdit && exercise && (
+
+      {isEdit && exercise ? (
         <div className="flex justify-end">
-          <ExerciseSheetPrintLink href={`/print/ficha/ejercicio/${exercise.id}`} />
+          <Button type="button" variant="outline" size="sm" className="gap-2" asChild>
+            <Link href={`/print/ficha/ejercicio/${exercise.id}`}>
+              <Printer className="size-4" />
+              Imprimir ficha
+            </Link>
+          </Button>
         </div>
-      )}
+      ) : null}
+
       <ExerciseSheetForm
         sheet={sheet}
         drawingJson={exercise?.drawing_json}
         layout="split"
         showTaskType={!defaultTaskType}
       />
-      {state.ok && isEdit && <p className="text-sm text-synq-accent">Ficha guardada.</p>}
-      {state.message === 'error' && <p className="text-sm text-red-400">Error al guardar.</p>}
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-full bg-synq-pitch px-6 py-2 text-sm font-semibold text-white hover:bg-synq-accent disabled:opacity-50"
-      >
-        {pending ? 'Guardando…' : isEdit ? 'Guardar ficha' : 'Crear ficha de ejercicio'}
-      </button>
+
+      <Card className="border border-primary/25">
+        <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+          <div className="flex flex-wrap gap-2">
+            <Button type="submit" disabled={pending}>
+              {pending ? 'Guardando…' : isEdit ? 'Guardar ficha' : 'Crear ficha de ejercicio'}
+            </Button>
+            <Button type="button" variant="outline" className="gap-2" asChild>
+              <Link href={returnTo && returnTo.startsWith('/portal/') ? returnTo : '/portal/metodologia/ejercicios'}>
+                <ArrowLeft className="size-4" />
+                {returnTo ? 'Volver a la sesión' : 'Volver al catálogo'}
+              </Link>
+            </Button>
+          </div>
+          {state.ok && isEdit ? <p className="text-sm text-emerald-400">Ficha guardada.</p> : null}
+          {state.message === 'error' ? (
+            <p className="text-sm text-destructive">Error al guardar.</p>
+          ) : null}
+        </CardContent>
+      </Card>
     </form>
   );
 }

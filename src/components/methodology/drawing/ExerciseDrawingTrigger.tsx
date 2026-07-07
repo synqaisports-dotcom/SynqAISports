@@ -64,12 +64,12 @@ export function ExerciseDrawingTrigger({
       </div>
 
       {!isEmpty ? (
-        <DrawingPreviewFrame document={doc} className="w-full max-w-xs opacity-95" />
+        <DrawingPreviewFrame document={doc} className="w-full opacity-95" />
       ) : compact ? (
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="flex aspect-[105/68] w-full max-w-xs items-center justify-center rounded-lg border border-dashed border-primary/30 bg-muted/10 text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:bg-primary/5"
+          className="flex aspect-[105/68] w-full items-center justify-center rounded-lg border border-dashed border-primary/30 bg-muted/10 text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:bg-primary/5"
         >
           Pulsa para abrir la pizarra
         </button>
