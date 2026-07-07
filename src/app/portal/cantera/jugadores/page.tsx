@@ -6,6 +6,7 @@ import { DEMO_CANTERA_TEAMS, DEMO_TEAM_PLAYERS } from '@/lib/cantera-teams';
 import { isDemoActive } from '@/lib/demo';
 import type { PlayerProfile } from '@/lib/player-profile';
 import type { PlayerTeamOption } from '@/lib/player-teams';
+import { sortPlayerTeamsByCategory } from '@/lib/player-teams';
 import { parseGuardiansJson } from '@/lib/player-guardians';
 import { parsePlayerHistoryJson } from '@/lib/player-club-history';
 import { createClient } from '@/lib/supabase/server';
@@ -49,16 +50,16 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
       .order('first_name'),
     supabase
       .from('synq_teams')
-      .select('id, name, category')
+      .select('id, name, category, category_slug')
       .eq('club_id', ctx.club.id)
-      .eq('active', true)
-      .order('name'),
+      .eq('active', true),
   ]);
 
   let teamOptions: PlayerTeamOption[] = (teams ?? []).map((team) => ({
     id: team.id,
     name: team.name,
     category: team.category,
+    category_slug: team.category_slug,
   }));
 
   if (demo) {
@@ -69,10 +70,12 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
         id: demoTeam.id,
         name: demoTeam.name,
         category: demoTeam.category,
+        category_slug: demoTeam.category_slug,
       });
     }
-    teamOptions.sort((a, b) => a.name.localeCompare(b.name, 'es'));
   }
+
+  teamOptions = sortPlayerTeamsByCategory(teamOptions);
 
   let profiles: PlayerProfile[] = (players ?? []).map((row) => {
     const team = Array.isArray(row.synq_teams) ? row.synq_teams[0] : row.synq_teams;
