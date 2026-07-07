@@ -4,6 +4,7 @@ import { ExerciseDrawingPreview } from '@/components/methodology/drawing/Exercis
 import { ExerciseSheetPrintLink } from '@/components/methodology/ExerciseSheetPrintLink';
 import { MethodologySubnav } from '@/components/methodology/MethodologySubnav';
 import { parseExerciseSheet } from '@/lib/exercise-sheet';
+import { loadExerciseLibrary } from '@/lib/microcycle-page-data';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import { redirect } from 'next/navigation';
@@ -13,11 +14,7 @@ export default async function EjerciciosListPage() {
   const ctx = await getStaffContext(supabase);
   if (!ctx) redirect('/login');
 
-  const { data: exercises } = await supabase
-    .from('synq_exercises')
-    .select('id, title, duration_min, objectives, drawing_json, sheet_json, task_type')
-    .eq('club_id', ctx.club.id)
-    .order('updated_at', { ascending: false });
+  const exercises = await loadExerciseLibrary(supabase, ctx.club.id);
 
   return (
     <div>
@@ -42,9 +39,10 @@ export default async function EjerciciosListPage() {
       <MethodologySubnav />
 
       <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {(exercises ?? []).map((ex) => {
+        {exercises.map((ex) => {
           const sheet = parseExerciseSheet(ex.sheet_json);
           const subtitle = sheet.didacticStrategy || ex.objectives;
+          const durationMin = 'duration_min' in ex && typeof ex.duration_min === 'number' ? ex.duration_min : 15;
           return (
           <li
             key={ex.id}
@@ -59,7 +57,7 @@ export default async function EjerciciosListPage() {
                 {ex.title}
               </Link>
               <p className="mt-1 text-xs text-synq-muted">
-                {sheet.conditionalGrid.time || `${ex.duration_min} min`}
+                {sheet.conditionalGrid.time || `${durationMin} min`}
               </p>
               {subtitle && (
                 <p className="mt-2 line-clamp-2 text-sm text-synq-muted">{subtitle}</p>
@@ -73,7 +71,7 @@ export default async function EjerciciosListPage() {
         );
         })}
       </ul>
-      {(exercises ?? []).length === 0 && (
+      {exercises.length === 0 && (
         <p className="text-synq-muted">Aún no hay ejercicios. Crea el primero.</p>
       )}
     </div>

@@ -40,7 +40,8 @@ export type MicrocycleSessionPayload = {
     session_date: string | null;
     exercise_id: string | null;
     sheet_json?: unknown;
-    synq_exercises?: { id: string; title: string } | { id: string; title: string }[] | null;
+    synq_exercises?: { id: string; title: string; drawing_json?: unknown } | { id: string; title: string; drawing_json?: unknown }[] | null;
+    drawing_json?: unknown;
   }>;
 };
 
@@ -87,16 +88,29 @@ export function MicrocycleSessionWorkspace({ microcycle, sessionIndex, exercises
     [data.slots]
   );
 
+  const exerciseById = useMemo(
+    () => new Map(exercises.map((exercise) => [exercise.id, exercise])),
+    [exercises]
+  );
+
   const sessionSlots = slotsBySession.get(sessionIndex) ?? [];
   const sessionSlotViews = sessionSlots.map((slot) => {
     const linked = Array.isArray(slot.synq_exercises)
       ? slot.synq_exercises[0]
       : slot.synq_exercises;
+    const libraryExercise = slot.exercise_id ? exerciseById.get(slot.exercise_id) : undefined;
+    const drawing_json =
+      slot.drawing_json ??
+      linked?.drawing_json ??
+      libraryExercise?.drawing_json ??
+      null;
+
     return {
       ...slot,
       session_date: slot.session_date ?? null,
       slot_type: slot.slot_type as SlotType,
       linkedTitle: linked?.title ?? null,
+      drawing_json,
     };
   });
 

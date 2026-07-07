@@ -106,7 +106,9 @@ export function loadDemoSlot(microcycleId: string, slotId: string): SlotRowBase 
 export function updateDemoSlot(
   microcycleId: string,
   slotId: string,
-  patch: Partial<Pick<SlotRowBase, 'title' | 'notes' | 'exercise_id' | 'session_date' | 'sheet_json'>>
+  patch: Partial<
+    Pick<SlotRowBase, 'title' | 'notes' | 'exercise_id' | 'session_date' | 'sheet_json' | 'drawing_json'>
+  >
 ): boolean {
   const store = readStore();
   const micro = store[microcycleId];
@@ -127,6 +129,7 @@ export function assignExerciseToDemoSlot(
     sheet_json?: unknown;
     objectives?: string;
     notes?: string;
+    drawing_json?: unknown;
   }
 ): boolean {
   const micro = loadDemoMicrocycle(microcycleId);
@@ -144,6 +147,7 @@ export function assignExerciseToDemoSlot(
     title: sheet.title,
     notes: exercise.notes ?? '',
     sheet_json: sheet,
+    drawing_json: exercise.drawing_json,
   });
 }
 

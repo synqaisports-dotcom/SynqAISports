@@ -34,6 +34,7 @@ export type SlotRowBase = {
   session_date: string | null;
   exercise_id: string | null;
   sheet_json?: unknown;
+  drawing_json?: unknown;
 };
 
 export function isDemoMicrocycleId(id: string): boolean {

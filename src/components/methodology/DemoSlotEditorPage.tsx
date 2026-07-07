@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { SlotEditor, type SlotEditorPayload } from '@/components/methodology/SlotEditor';
+import { resolveDemoExerciseDrawing } from '@/lib/demo-exercises';
 import { loadOrHydrateDemoMicrocycle } from '@/lib/demo-microcycle-hydrate';
 import type { SlotType } from '@/lib/methodology';
 
@@ -38,6 +39,7 @@ export function DemoSlotEditorPage({ microcycleId, slotId }: Props) {
       session_date: found.session_date,
       exercise_id: found.exercise_id,
       sheet_json: found.sheet_json,
+      drawing_json: found.drawing_json ?? resolveDemoExerciseDrawing(found.exercise_id),
     });
   }, [microcycleId, slotId]);
 

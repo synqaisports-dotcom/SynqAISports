@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { CheckCircle2, Circle, Pencil } from 'lucide-react';
+import { ExerciseDrawingPreview } from '@/components/methodology/drawing/ExerciseDrawingTrigger';
 import { Button } from '@/components/ui/button';
 import { sessionStructureSummary } from '@/lib/periodization';
 import {
@@ -15,6 +16,7 @@ import { cn } from '@/lib/utils';
 
 export type SessionSlotView = SlotRowBase & {
   linkedTitle?: string | null;
+  drawing_json?: unknown;
 };
 
 type Props = {
@@ -57,30 +59,38 @@ export function SessionStructurePanel({
                 type="button"
                 onClick={() => onSelectSlot(slot.id)}
                 className={cn(
-                  'flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-left text-sm transition-colors',
+                  'flex w-full items-stretch gap-2 rounded-lg border text-left text-sm transition-colors',
                   active
                     ? 'border-primary bg-primary/15 text-primary'
                     : 'border-primary/15 hover:border-primary/35 hover:bg-primary/5'
                 )}
               >
-                <span className="flex items-center gap-2">
-                  {assigned ? (
-                    <CheckCircle2 className="size-4 shrink-0 text-emerald-400" />
-                  ) : (
-                    <Circle className="size-4 shrink-0 text-muted-foreground/50" />
-                  )}
-                  <span>
-                    <span className="font-medium">{label}</span>
-                    {slot.linkedTitle || slot.title ? (
-                      <span className="mt-0.5 block text-xs text-muted-foreground">
-                        {slot.linkedTitle || slot.title}
-                      </span>
+                {assigned ? (
+                  <ExerciseDrawingPreview
+                    data={slot.drawing_json}
+                    className="w-20 shrink-0 rounded-none rounded-l-lg border-0 border-r border-primary/15"
+                  />
+                ) : null}
+                <span className="flex min-w-0 flex-1 items-center justify-between gap-2 px-3 py-2.5">
+                  <span className="flex min-w-0 items-center gap-2">
+                    {assigned ? (
+                      <CheckCircle2 className="size-4 shrink-0 text-emerald-400" />
                     ) : (
-                      <span className="mt-0.5 block text-xs text-muted-foreground">Sin asignar</span>
+                      <Circle className="size-4 shrink-0 text-muted-foreground/50" />
                     )}
+                    <span className="min-w-0">
+                      <span className="font-medium">{label}</span>
+                      {slot.linkedTitle || slot.title ? (
+                        <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                          {slot.linkedTitle || slot.title}
+                        </span>
+                      ) : (
+                        <span className="mt-0.5 block text-xs text-muted-foreground">Sin asignar</span>
+                      )}
+                    </span>
                   </span>
+                  <Pencil className="size-3.5 shrink-0 opacity-60" />
                 </span>
-                <Pencil className="size-3.5 shrink-0 opacity-60" />
               </button>
             </li>
           );

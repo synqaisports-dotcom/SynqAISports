@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Loader2, Plus, Search } from 'lucide-react';
+import { ExerciseDrawingPreview } from '@/components/methodology/drawing/ExerciseDrawingTrigger';
 import { assignExerciseToSlot } from '@/app/actions/methodology';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +19,7 @@ export type ExerciseLibraryItem = {
   objectives?: string | null;
   notes?: string | null;
   sheet_json?: unknown;
+  drawing_json?: unknown;
 };
 
 type Props = {
@@ -84,6 +86,7 @@ export function ExerciseLibraryPanel({
         sheet_json: exercise.sheet_json,
         objectives: exercise.objectives ?? undefined,
         notes: exercise.notes ?? undefined,
+        drawing_json: exercise.drawing_json,
       });
       setPendingId(null);
       if (!ok) {
@@ -164,19 +167,22 @@ export function ExerciseLibraryPanel({
                   disabled={!activeSlotId || isPending}
                   onClick={() => void handleAssign(exercise)}
                   className={cn(
-                    'w-full rounded-lg border border-primary/15 px-3 py-2 text-left text-sm transition-colors hover:border-primary/35 hover:bg-primary/5 disabled:opacity-50',
+                    'w-full overflow-hidden rounded-lg border border-primary/15 text-left text-sm transition-colors hover:border-primary/35 hover:bg-primary/5 disabled:opacity-50',
                     !activeSlotId && 'cursor-not-allowed'
                   )}
                 >
-                  <span className="flex items-center justify-between gap-2">
-                    <span className="font-medium">{exercise.title}</span>
-                    {isPending ? <Loader2 className="size-4 animate-spin" /> : null}
-                  </span>
-                  {exercise.objectives ? (
-                    <span className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
-                      {exercise.objectives}
+                  <ExerciseDrawingPreview data={exercise.drawing_json} className="w-full" />
+                  <div className="px-3 py-2">
+                    <span className="flex items-center justify-between gap-2">
+                      <span className="font-medium">{exercise.title}</span>
+                      {isPending ? <Loader2 className="size-4 animate-spin" /> : null}
                     </span>
-                  ) : null}
+                    {exercise.objectives ? (
+                      <span className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
+                        {exercise.objectives}
+                      </span>
+                    ) : null}
+                  </div>
                 </button>
               </li>
             );
