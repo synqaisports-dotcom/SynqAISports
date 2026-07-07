@@ -5,13 +5,21 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useFormState } from 'react-dom';
-import { Camera, Search, User, Users } from 'lucide-react';
+import { Camera, Pencil, Search, User, Users } from 'lucide-react';
 import { updatePlayer, type ActionState } from '@/app/actions/cantera';
+import { PlayerPauseButton } from '@/components/portal/PlayerPauseButton';
 import { PlayerPhotoField } from '@/components/portal/PlayerPhotoField';
 import { SynqSelect } from '@/components/portal/SynqSelect';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import {
   playerDetailFields,
   playerFullName,
@@ -54,10 +62,12 @@ function PlayerDetailForm({
   clubId,
   player,
   demoMode,
+  onSaved,
 }: {
   clubId: string;
   player: PlayerProfile;
   demoMode?: boolean;
+  onSaved?: () => void;
 }) {
   const bound = updatePlayer.bind(null, player.id);
   const [state, action, pending] = useFormState(bound, initial);
@@ -67,17 +77,12 @@ function PlayerDetailForm({
     setPosition(normalizePositionCode(player.position) ?? '');
   }, [player.id, player.position]);
 
-  return (
-    <form action={action} className="space-y-4 border-t border-primary/15 pt-4">
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-primary/90">
-          Modificar ficha
-        </p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Los cambios se guardan aquí. Para cambiar de equipo, usa Cantera → Equipos.
-        </p>
-      </div>
+  useEffect(() => {
+    if (state.ok) onSaved?.();
+  }, [state.ok, onSaved]);
 
+  return (
+    <form action={action} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -177,6 +182,8 @@ function PlayerDetailPanel({
   player: PlayerProfile | null;
   demoMode?: boolean;
 }) {
+  const [editOpen, setEditOpen] = useState(false);
+
   if (!player) {
     return (
       <Card className="flex h-full min-h-[28rem] flex-col border border-primary/25">
@@ -193,6 +200,8 @@ function PlayerDetailPanel({
 
   const name = playerFullName(player);
   const detailFields = playerDetailFields(player).filter((field) => field.label !== 'Equipo');
+  const actionButtonClass =
+    'inline-flex size-9 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary';
 
   return (
     <Card className="flex h-full min-h-[28rem] flex-col border border-primary/25">
@@ -202,14 +211,41 @@ function PlayerDetailPanel({
       </CardHeader>
       <CardContent className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
         <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] sm:items-start">
-          <div className="relative mx-auto aspect-[3/4] w-full max-w-[10rem] overflow-hidden rounded-2xl border border-primary/30 bg-muted/20 shadow-[0_0_24px_hsl(183_100%_50%_/_0.08)] sm:mx-0 sm:max-w-none">
-            {player.photo_url ? (
-              <Image src={player.photo_url} alt={name} fill className="object-cover" sizes="(max-width: 640px) 10rem, 33vw" />
-            ) : (
-              <div className="flex h-full items-center justify-center">
-                <User className="size-12 text-primary/60" strokeWidth={1.25} />
-              </div>
-            )}
+          <div className="flex flex-col gap-3">
+            <div className="relative mx-auto aspect-[3/4] w-full max-w-[10rem] overflow-hidden rounded-2xl border border-primary/30 bg-muted/20 shadow-[0_0_24px_hsl(183_100%_50%_/_0.08)] sm:mx-0 sm:max-w-none">
+              {player.photo_url ? (
+                <Image src={player.photo_url} alt={name} fill className="object-cover" sizes="(max-width: 640px) 10rem, 33vw" />
+              ) : (
+                <div className="flex h-full items-center justify-center">
+                  <User className="size-12 text-primary/60" strokeWidth={1.25} />
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-center gap-1">
+              <button
+                type="button"
+                className={actionButtonClass}
+                aria-label="Modificar ficha"
+                title="Modificar ficha"
+                onClick={() => setEditOpen(true)}
+              >
+                <Pencil className="size-4" />
+              </button>
+
+              {player.team_id ? (
+                <Link
+                  href={`/portal/cantera/equipos/equipo/${player.team_id}`}
+                  className={actionButtonClass}
+                  aria-label="Ver equipo"
+                  title="Ver equipo"
+                >
+                  <Users className="size-4" />
+                </Link>
+              ) : null}
+
+              <PlayerPauseButton playerId={player.id} playerName={name} />
+            </div>
           </div>
 
           <div className="grid gap-3 rounded-xl border border-primary/15 bg-muted/5 p-4 sm:grid-cols-2">
@@ -224,13 +260,29 @@ function PlayerDetailPanel({
           </div>
         </div>
 
-        {player.team_id ? (
-          <Button variant="outline" size="sm" className="w-fit" asChild>
-            <Link href={`/portal/cantera/equipos/equipo/${player.team_id}`}>Ver equipo</Link>
-          </Button>
-        ) : null}
+        <Sheet open={editOpen} onOpenChange={setEditOpen}>
+          <SheetContent
+            side="right"
+            className="w-full overflow-y-auto border-primary/20 sm:max-w-md"
+          >
+            <SheetHeader>
+              <SheetTitle>Modificar ficha</SheetTitle>
+              <SheetDescription>
+                Actualiza los datos de {name}. Para cambiar de equipo, usa Cantera → Equipos.
+              </SheetDescription>
+            </SheetHeader>
 
-        <PlayerDetailForm key={player.id} clubId={clubId} player={player} demoMode={demoMode} />
+            <div className="mt-6">
+              <PlayerDetailForm
+                key={player.id}
+                clubId={clubId}
+                player={player}
+                demoMode={demoMode}
+                onSaved={() => setEditOpen(false)}
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
       </CardContent>
     </Card>
   );
