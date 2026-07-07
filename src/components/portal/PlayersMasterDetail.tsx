@@ -209,19 +209,17 @@ function PlayerDetailPanel({
         </div>
       </CardHeader>
       <CardContent className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
-        <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] sm:items-start">
-          <div className="flex flex-col gap-3">
-            <div className="relative mx-auto aspect-[3/4] w-full max-w-[10rem] overflow-hidden rounded-2xl border border-primary/30 bg-muted/20 shadow-[0_0_24px_hsl(183_100%_50%_/_0.08)] sm:mx-0 sm:max-w-none">
-              {player.photo_url ? (
-                <Image src={player.photo_url} alt={name} fill className="object-cover" sizes="(max-width: 640px) 10rem, 33vw" />
-              ) : (
-                <div className="flex h-full items-center justify-center">
-                  <User className="size-12 text-primary/60" strokeWidth={1.25} />
-                </div>
-              )}
-            </div>
+        <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] sm:items-stretch">
+          <div className="relative mx-auto min-h-[12rem] w-full max-w-[10rem] overflow-hidden rounded-2xl border border-primary/30 bg-muted/20 shadow-[0_0_24px_hsl(183_100%_50%_/_0.08)] sm:mx-0 sm:h-full sm:max-w-none">
+            {player.photo_url ? (
+              <Image src={player.photo_url} alt={name} fill className="object-cover" sizes="(max-width: 640px) 10rem, 33vw" />
+            ) : (
+              <div className="flex h-full min-h-[12rem] items-center justify-center">
+                <User className="size-12 text-primary/60" strokeWidth={1.25} />
+              </div>
+            )}
 
-            <div className="flex items-center justify-center gap-1">
+            <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-gradient-to-t from-background/95 via-background/55 to-transparent px-2 pb-2 pt-8">
               <button
                 type="button"
                 className={actionButtonClass}
