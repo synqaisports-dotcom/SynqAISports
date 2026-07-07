@@ -8,6 +8,7 @@ import {
   playerBirthYearMax,
 } from '@/lib/player-form';
 import { parseGuardiansFromForm, validateGuardians } from '@/lib/player-guardians';
+import { isValidMedicalDate } from '@/lib/player-medical';
 import { requireClubId } from '@/lib/auth-staff';
 import { DEMO_CANTERA_TEAMS, formatTeamName } from '@/lib/cantera-teams';
 import { getCanteraCategory } from '@/lib/cantera-categories';
@@ -25,7 +26,14 @@ import { revalidatePath } from 'next/cache';
 export type ActionState = { ok: boolean; message?: string };
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+const ALLOWED_DOCUMENT_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'application/pdf',
+]);
 
 export async function uploadPlayerPhoto(
   clubId: string,
@@ -54,6 +62,40 @@ export async function uploadPlayerPhoto(
 
   if (error) {
     console.error('upload player photo', error);
+    return { ok: false, message: 'upload_error' };
+  }
+
+  const { data } = supabase.storage.from('club-media').getPublicUrl(path);
+  return { ok: true, url: data.publicUrl };
+}
+
+export async function uploadPlayerDocument(
+  clubId: string,
+  formData: FormData
+): Promise<{ ok: boolean; url?: string; message?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user && !(await isDemoActive())) return { ok: false, message: 'unauthorized' };
+
+  const file = formData.get('file');
+  const playerId = String(formData.get('playerId') ?? '').trim();
+  if (!(file instanceof File) || file.size === 0) return { ok: false, message: 'no_file' };
+  if (file.size > MAX_DOCUMENT_BYTES) return { ok: false, message: 'too_large' };
+  if (!ALLOWED_DOCUMENT_TYPES.has(file.type)) return { ok: false, message: 'invalid_type' };
+
+  const ext = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'pdf';
+  const path = `${clubId}/players/${playerId || 'drafts'}/documents/${Date.now()}.${ext}`;
+
+  const { error } = await supabase.storage.from('club-media').upload(path, file, {
+    cacheControl: '3600',
+    upsert: true,
+    contentType: file.type,
+  });
+
+  if (error) {
+    console.error('upload player document', error);
     return { ok: false, message: 'upload_error' };
   }
 
@@ -150,6 +192,47 @@ export async function updatePlayer(
   revalidatePath('/portal/cantera/jugadores');
   revalidatePath(`/portal/cantera/jugadores/${playerId}`);
   revalidatePath(`/portal/cantera/jugadores/${playerId}/editar`);
+  return { ok: true };
+}
+
+export async function updatePlayerMedical(
+  playerId: string,
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'unauthorized' };
+
+  const medicalUntil = String(formData.get('medicalUntil') ?? '').trim();
+  const medicalDocumentUrl = String(formData.get('medicalDocumentUrl') ?? '').trim();
+
+  if (!medicalUntil || !isValidMedicalDate(medicalUntil)) {
+    return { ok: false, message: 'validation' };
+  }
+
+  if (await isDemoActive()) {
+    revalidatePath('/portal/cantera/jugadores');
+    revalidatePath(`/portal/cantera/jugadores/${playerId}`);
+    return { ok: true };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('synq_players')
+    .update({
+      medical_until: medicalUntil,
+      medical_document_url: medicalDocumentUrl || null,
+    })
+    .eq('id', playerId)
+    .eq('club_id', clubId);
+
+  if (error) {
+    console.error('updatePlayerMedical', error);
+    return { ok: false, message: 'error' };
+  }
+
+  revalidatePath('/portal/cantera/jugadores');
+  revalidatePath(`/portal/cantera/jugadores/${playerId}`);
   return { ok: true };
 }
 

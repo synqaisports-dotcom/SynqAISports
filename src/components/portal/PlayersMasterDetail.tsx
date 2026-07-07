@@ -5,9 +5,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useFormState } from 'react-dom';
-import { Camera, Pencil, Search, User, Users } from 'lucide-react';
+import { Camera, FileText, Pencil, Search, User, Users } from 'lucide-react';
 import { updatePlayer, type ActionState } from '@/app/actions/cantera';
+import { PlayerDocumentsForm } from '@/components/portal/PlayerDocumentsForm';
 import { PlayerGuardiansForm } from '@/components/portal/PlayerGuardiansForm';
+import { PlayerMedicalBadge } from '@/components/portal/PlayerMedicalBadge';
 import { PlayerPauseButton } from '@/components/portal/PlayerPauseButton';
 import { PlayerPhotoField } from '@/components/portal/PlayerPhotoField';
 import { PlayerPositionsPicker } from '@/components/portal/PlayerPositionsPicker';
@@ -226,6 +228,7 @@ function PlayerDetailPanel({
   demoMode?: boolean;
 }) {
   const [editOpen, setEditOpen] = useState(false);
+  const [docsOpen, setDocsOpen] = useState(false);
 
   if (!player) {
     return (
@@ -248,9 +251,10 @@ function PlayerDetailPanel({
   return (
     <Card className="flex h-full min-h-[28rem] flex-col border border-primary/25">
       <CardHeader className="pb-3">
-        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <CardTitle className="text-lg font-semibold tracking-tight">{name}</CardTitle>
           <span className="text-sm font-medium text-primary">{player.team_name}</span>
+          <PlayerMedicalBadge player={player} />
         </div>
       </CardHeader>
       <CardContent className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
@@ -273,6 +277,16 @@ function PlayerDetailPanel({
                 onClick={() => setEditOpen(true)}
               >
                 <Pencil className="size-4" />
+              </button>
+
+              <button
+                type="button"
+                className={actionButtonClass}
+                aria-label="Documentación del jugador"
+                title="Documentación"
+                onClick={() => setDocsOpen(true)}
+              >
+                <FileText className="size-4" />
               </button>
 
               {player.team_id ? (
@@ -344,6 +358,27 @@ function PlayerDetailPanel({
                 player={player}
                 demoMode={demoMode}
                 onSaved={() => setEditOpen(false)}
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
+
+        <Sheet open={docsOpen} onOpenChange={setDocsOpen}>
+          <SheetContent
+            side="right"
+            className="w-full overflow-y-auto border-primary/20 sm:max-w-md"
+          >
+            <SheetHeader>
+              <SheetTitle>Documentación</SheetTitle>
+            </SheetHeader>
+
+            <div className="mt-4">
+              <PlayerDocumentsForm
+                key={player.id}
+                clubId={clubId}
+                player={player}
+                demoMode={demoMode}
+                onSaved={() => setDocsOpen(false)}
               />
             </div>
           </SheetContent>
@@ -492,10 +527,13 @@ export function PlayersMasterDetail({
                     >
                       <PlayerListPhoto player={player} />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-foreground">
-                          {firstName}{' '}
-                          <span className="font-medium text-muted-foreground">{lastName}</span>
-                        </p>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <p className="truncate text-sm font-semibold text-foreground">
+                            {firstName}{' '}
+                            <span className="font-medium text-muted-foreground">{lastName}</span>
+                          </p>
+                          <PlayerMedicalBadge player={player} />
+                        </div>
                         <p className="truncate text-xs text-muted-foreground">{player.team_name}</p>
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-1">

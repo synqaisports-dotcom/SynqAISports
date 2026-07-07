@@ -38,7 +38,7 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
   const { data: players } = await supabase
     .from('synq_players')
     .select(
-      'id, display_name, first_name, last_name, jersey_number, position, active, photo_url, birth_year, is_minor, guardians_json, team_id, synq_teams(name, category)'
+      'id, display_name, first_name, last_name, jersey_number, position, active, photo_url, birth_year, is_minor, guardians_json, medical_until, medical_document_url, team_id, synq_teams(name, category)'
     )
     .eq('club_id', ctx.club.id)
     .eq('active', true)
@@ -62,6 +62,8 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
       active: row.active,
       is_minor: row.is_minor ?? false,
       guardians: parseGuardiansJson(row.guardians_json),
+      medical_until: row.medical_until ?? null,
+      medical_document_url: row.medical_document_url ?? null,
     };
   });
 
@@ -88,6 +90,8 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
           demoPlayer.id === 'demo-pl-ale-1'
             ? [{ first_name: 'Ana', last_name: 'Castro', email: 'ana.castro@email.com', phone: '600 123 456' }]
             : [],
+        medical_until: demoPlayer.id === 'demo-pl-ale-1' ? '2026-12-31' : null,
+        medical_document_url: null,
       });
     }
   }
