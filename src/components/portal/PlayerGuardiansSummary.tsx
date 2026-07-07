@@ -36,30 +36,44 @@ export function PlayerGuardiansSummary({ player }: Props) {
     <section className={`${sectionClass} space-y-4`}>
       <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Tutores</p>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="space-y-3">
         {player.guardians.map((guardian, index) => (
           <div
             key={`${player.id}-tutor-${index}`}
-            className="rounded-lg border border-primary/10 bg-background/40 p-3"
+            className="w-full rounded-lg border border-primary/10 bg-background/40 p-3"
           >
             <p className="text-xs font-semibold uppercase tracking-wider text-primary/90">
               Tutor {index + 1}
             </p>
-            <p className="mt-2 text-sm font-medium text-foreground">{guardianName(guardian)}</p>
-            <div className="mt-2 space-y-1 text-xs text-muted-foreground">
-              <p>
-                <span className="text-foreground/70">Email:</span>{' '}
-                {guardian.email ? (
-                  <a href={`mailto:${guardian.email}`} className="text-primary hover:underline">
-                    {guardian.email}
-                  </a>
-                ) : (
-                  '—'
-                )}
-              </p>
-              <p>
-                <span className="text-foreground/70">Teléfono:</span> {guardian.phone || '—'}
-              </p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-3">
+              <div className="min-w-0">
+                <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Nombre
+                </p>
+                <p className="mt-0.5 truncate text-sm font-medium text-foreground">
+                  {guardianName(guardian)}
+                </p>
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Email
+                </p>
+                <p className="mt-0.5 truncate text-sm text-foreground">
+                  {guardian.email ? (
+                    <a href={`mailto:${guardian.email}`} className="text-primary hover:underline">
+                      {guardian.email}
+                    </a>
+                  ) : (
+                    '—'
+                  )}
+                </p>
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Teléfono
+                </p>
+                <p className="mt-0.5 truncate text-sm text-foreground">{guardian.phone || '—'}</p>
+              </div>
             </div>
           </div>
         ))}
