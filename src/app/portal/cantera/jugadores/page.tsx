@@ -4,7 +4,7 @@ import { PlayersMasterDetail } from '@/components/portal/PlayersMasterDetail';
 import { PageContainer } from '@/components/portal/PageContainer';
 import { DEMO_CANTERA_TEAMS, DEMO_TEAM_PLAYERS } from '@/lib/cantera-teams';
 import { isDemoActive } from '@/lib/demo';
-import type { PlayerProfile } from '@/lib/player-profile';
+import { comparePlayersForList, type PlayerProfile } from '@/lib/player-profile';
 import type { PlayerTeamOption } from '@/lib/player-teams';
 import { sortPlayerTeamsByCategory } from '@/lib/player-teams';
 import { parseGuardiansJson } from '@/lib/player-guardians';
@@ -21,13 +21,17 @@ type Props = {
 
 function teamMetaForId(teamId: string | null) {
   if (!teamId) {
-    return { team_name: 'Sin equipo', team_category: '' };
+    return { team_name: 'Sin equipo', team_category: '', team_category_slug: null };
   }
   const demoTeam = DEMO_CANTERA_TEAMS.find((team) => team.id === teamId);
   if (demoTeam) {
-    return { team_name: demoTeam.name, team_category: demoTeam.category };
+    return {
+      team_name: demoTeam.name,
+      team_category: demoTeam.category,
+      team_category_slug: demoTeam.category_slug,
+    };
   }
-  return { team_name: 'Sin equipo', team_category: '' };
+  return { team_name: 'Sin equipo', team_category: '', team_category_slug: null };
 }
 
 export default async function PortalCanteraJugadoresPage({ searchParams }: Props) {
@@ -42,7 +46,7 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
     supabase
       .from('synq_players')
       .select(
-        'id, display_name, first_name, last_name, jersey_number, position, active, photo_url, birth_year, is_minor, guardians_json, medical_until, medical_document_url, player_history_json, created_at, team_id, synq_teams(name, category)'
+        'id, display_name, first_name, last_name, jersey_number, position, active, photo_url, birth_year, is_minor, guardians_json, medical_until, medical_document_url, player_history_json, created_at, team_id, synq_teams(name, category, category_slug)'
       )
       .eq('club_id', ctx.club.id)
       .eq('active', true)
@@ -91,6 +95,7 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
       team_id: row.team_id,
       team_name: team?.name ?? 'Sin equipo',
       team_category: team?.category ?? '',
+      team_category_slug: team?.category_slug ?? null,
       active: row.active,
       is_minor: row.is_minor ?? false,
       guardians: parseGuardiansJson(row.guardians_json),
@@ -118,6 +123,7 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
         team_id: demoPlayer.team_id,
         team_name: team.team_name,
         team_category: team.team_category,
+        team_category_slug: team.team_category_slug,
         active: true,
         is_minor: demoPlayer.id === 'demo-pl-ale-1',
         guardians:
@@ -153,11 +159,7 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
     }
   }
 
-  profiles.sort((a, b) => {
-    const lastA = (a.last_name ?? a.display_name).toLowerCase();
-    const lastB = (b.last_name ?? b.display_name).toLowerCase();
-    return lastA.localeCompare(lastB, 'es');
-  });
+  profiles.sort((a, b) => comparePlayersForList(a, b, 'category'));
 
   return (
     <PageContainer>

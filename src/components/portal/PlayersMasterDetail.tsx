@@ -28,8 +28,9 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import {
+  comparePlayersForList,
   playerFullName,
-  playerSortKey,
+  type PlayerListSortMode,
   type PlayerProfile,
 } from '@/lib/player-profile';
 import { playerBirthYearOptions } from '@/lib/player-form';
@@ -42,8 +43,6 @@ import {
   type PlayerPositionCode,
 } from '@/lib/player-positions';
 import { cn } from '@/lib/utils';
-
-type SortDirection = 'asc' | 'desc';
 
 type Props = {
   clubId: string;
@@ -408,7 +407,7 @@ export function PlayersMasterDetail({
   const router = useRouter();
   const [search, setSearch] = useState('');
   const [positionFilter, setPositionFilter] = useState('all');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [sortMode, setSortMode] = useState<PlayerListSortMode>('category');
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(
     initialPlayerId && players.some((player) => player.id === initialPlayerId)
@@ -443,13 +442,10 @@ export function PlayersMasterDetail({
       );
     }
 
-    list.sort((a, b) => {
-      const cmp = playerSortKey(a).localeCompare(playerSortKey(b), 'es');
-      return sortDirection === 'asc' ? cmp : -cmp;
-    });
+    list.sort((a, b) => comparePlayersForList(a, b, sortMode));
 
     return list;
-  }, [players, search, positionFilter, sortDirection]);
+  }, [players, search, positionFilter, sortMode]);
 
   const selectedPlayer =
     players.find((player) => player.id === selectedId) ??
@@ -527,11 +523,12 @@ export function PlayersMasterDetail({
                 placeholder="Posición"
               />
               <SynqSelect
-                value={sortDirection}
-                onChange={(value) => setSortDirection(value as SortDirection)}
+                value={sortMode}
+                onChange={(value) => setSortMode(value as PlayerListSortMode)}
                 options={[
-                  { value: 'asc', label: 'A → Z (apellidos)' },
-                  { value: 'desc', label: 'Z → A (apellidos)' },
+                  { value: 'category', label: 'Por categoría' },
+                  { value: 'name-asc', label: 'A → Z (apellidos)' },
+                  { value: 'name-desc', label: 'Z → A (apellidos)' },
                 ]}
               />
             </div>
