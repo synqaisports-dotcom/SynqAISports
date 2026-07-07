@@ -2,10 +2,10 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Loader2, Plus, Search } from 'lucide-react';
-import { ExerciseDrawingPreview } from '@/components/methodology/drawing/ExerciseDrawingTrigger';
+import { BookOpen, Loader2, Plus, Search } from 'lucide-react';
 import { assignExerciseToSlot } from '@/app/actions/methodology';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { assignExerciseToDemoSlot } from '@/lib/demo-microcycles-store';
 import { isDemoMicrocycleId } from '@/lib/microcycle-sessions';
@@ -31,6 +31,14 @@ type Props = {
   sessionIndex: number;
   onAssigned: () => void;
 };
+
+const listItemClass = (active: boolean, disabled: boolean) =>
+  cn(
+    'flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left text-sm transition-colors',
+    disabled && 'cursor-not-allowed opacity-50',
+    !disabled && active && 'border-primary/50 bg-primary/10 shadow-[inset_2px_0_0_0_hsl(var(--primary))]',
+    !disabled && !active && 'border-primary/15 hover:border-primary/30 hover:bg-muted/20'
+  );
 
 export function ExerciseLibraryPanel({
   exercises,
@@ -107,88 +115,89 @@ export function ExerciseLibraryPanel({
   };
 
   return (
-    <div className="flex h-full flex-col rounded-xl border border-primary/25 bg-muted/5">
-      <div className="border-b border-primary/20 px-4 py-3">
-        <h2 className="text-sm font-semibold">Biblioteca de ejercicios</h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {categorySlug ? `Categoría: ${categorySlug}` : 'Todo el club'}
-          {activeSlotType ? ` · filtro por tipo de slot: ${activeSlotType}` : ''}
-        </p>
-        <p className="mt-1.5 text-xs text-muted-foreground">
+    <Card className="flex min-h-[28rem] flex-col border border-primary/25 lg:sticky lg:top-[4.5rem] lg:max-h-[calc(100vh-5.5rem)]">
+      <CardHeader className="space-y-3 pb-3">
+        <div>
+          <CardTitle className="text-base">Biblioteca de ejercicios</CardTitle>
+          <CardDescription>
+            {categorySlug ? `Categoría: ${categorySlug}` : 'Todo el club'}
+            {activeSlotType ? ` · filtro: ${activeSlotType}` : ''}
+            {' · '}
+            {filtered.length} de {exercises.length}
+          </CardDescription>
+        </div>
+        <p className="text-xs text-muted-foreground">
           Misma biblioteca que en{' '}
           <Link href="/portal/metodologia/ejercicios" className="text-primary hover:underline">
             Ejercicios
           </Link>
           {activeSlotType ? ', filtrada para el slot activo' : ''}.
         </p>
-      </div>
-
-      <div className="space-y-2 border-b border-primary/15 p-3">
-        <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-          <Input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Buscar ejercicio…"
-            className="border-primary/25 bg-background/80 pl-9"
-          />
+        <div className="space-y-2">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Buscar ejercicio…"
+              className="border-primary/30 bg-background/80 pl-9"
+            />
+          </div>
+          <Button type="button" variant="outline" size="sm" className="w-full gap-2" asChild>
+            <Link href={addExerciseHref}>
+              <Plus className="size-4" />
+              Añadir ejercicio
+            </Link>
+          </Button>
         </div>
-        <Button type="button" variant="outline" size="sm" className="w-full gap-2" asChild>
-          <Link href={addExerciseHref}>
-            <Plus className="size-4" />
-            Añadir ejercicio
-          </Link>
-        </Button>
-      </div>
+      </CardHeader>
 
-      {error ? (
-        <p className="mx-3 mt-2 rounded-md border border-destructive/40 bg-destructive/10 px-2 py-1.5 text-xs text-destructive">
-          {error}
-        </p>
-      ) : null}
+      <CardContent className="min-h-0 flex-1 overflow-y-auto pt-0">
+        {error ? (
+          <p className="mb-3 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+            {error}
+          </p>
+        ) : null}
 
-      {!activeSlotId ? (
-        <p className="p-4 text-xs text-muted-foreground">
-          Elige un slot a la izquierda (calentamiento, principal o vuelta calma) para asignar un
-          ejercicio.
-        </p>
-      ) : null}
+        {!activeSlotId ? (
+          <p className="mb-3 rounded-lg border border-dashed border-primary/20 px-4 py-6 text-center text-xs text-muted-foreground">
+            Elige un slot a la izquierda (calentamiento, principal o vuelta a la calma) para asignar
+            un ejercicio.
+          </p>
+        ) : null}
 
-      <ul className="flex-1 space-y-1.5 overflow-y-auto p-3">
         {filtered.length === 0 ? (
-          <li className="py-6 text-center text-xs text-muted-foreground">Sin ejercicios.</li>
+          <p className="rounded-lg border border-dashed border-primary/20 px-4 py-8 text-center text-sm text-muted-foreground">
+            Sin ejercicios.
+          </p>
         ) : (
-          filtered.map((exercise) => {
-            const isPending = pendingId === exercise.id;
-            return (
-              <li key={exercise.id}>
-                <button
-                  type="button"
-                  disabled={!activeSlotId || isPending}
-                  onClick={() => void handleAssign(exercise)}
-                  className={cn(
-                    'w-full overflow-hidden rounded-lg border border-primary/15 text-left text-sm transition-colors hover:border-primary/35 hover:bg-primary/5 disabled:opacity-50',
-                    !activeSlotId && 'cursor-not-allowed'
-                  )}
-                >
-                  <ExerciseDrawingPreview data={exercise.drawing_json} className="w-full" />
-                  <div className="px-3 py-2">
-                    <span className="flex items-center justify-between gap-2">
-                      <span className="font-medium">{exercise.title}</span>
-                      {isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+          <ul className="space-y-1.5">
+            {filtered.map((exercise) => {
+              const isPending = pendingId === exercise.id;
+              const disabled = !activeSlotId || isPending;
+
+              return (
+                <li key={exercise.id}>
+                  <button
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => void handleAssign(exercise)}
+                    className={listItemClass(false, disabled)}
+                  >
+                    <div className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-primary/5">
+                      <BookOpen className="size-4 text-primary/80" strokeWidth={1.5} />
+                    </div>
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+                      {exercise.title}
                     </span>
-                    {exercise.objectives ? (
-                      <span className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
-                        {exercise.objectives}
-                      </span>
-                    ) : null}
-                  </div>
-                </button>
-              </li>
-            );
-          })
+                    {isPending ? <Loader2 className="size-4 shrink-0 animate-spin text-muted-foreground" /> : null}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
         )}
-      </ul>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

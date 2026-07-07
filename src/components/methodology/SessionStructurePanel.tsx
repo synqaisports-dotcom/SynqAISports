@@ -1,9 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { CheckCircle2, Circle, Pencil } from 'lucide-react';
-import { ExerciseDrawingPreview } from '@/components/methodology/drawing/ExerciseDrawingTrigger';
+import { CheckCircle2, Circle, Flame, Pencil, Target, Wind } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { sessionStructureSummary } from '@/lib/periodization';
 import {
   countFilledSlots,
@@ -16,7 +16,6 @@ import { cn } from '@/lib/utils';
 
 export type SessionSlotView = SlotRowBase & {
   linkedTitle?: string | null;
-  drawing_json?: unknown;
 };
 
 type Props = {
@@ -27,6 +26,29 @@ type Props = {
   activeSlotId: string | null;
   onSelectSlot: (slotId: string) => void;
 };
+
+const listItemClass = (active: boolean) =>
+  cn(
+    'flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors',
+    active
+      ? 'border-primary/50 bg-primary/10 shadow-[inset_2px_0_0_0_hsl(var(--primary))]'
+      : 'border-primary/15 hover:border-primary/30 hover:bg-muted/20'
+  );
+
+function SlotListIcon({ slotType, assigned }: { slotType: SlotType; assigned: boolean }) {
+  const Icon = slotType === 'warmup' ? Flame : slotType === 'cooldown' ? Wind : Target;
+
+  return (
+    <div
+      className={cn(
+        'flex size-11 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-primary/5',
+        assigned && 'border-emerald-500/30 bg-emerald-500/10'
+      )}
+    >
+      <Icon className={cn('size-4', assigned ? 'text-emerald-400' : 'text-primary/80')} strokeWidth={1.5} />
+    </div>
+  );
+}
 
 export function SessionStructurePanel({
   microcycleId,
@@ -39,66 +61,53 @@ export function SessionStructurePanel({
   const filled = countFilledSlots(slots);
 
   return (
-    <div className="flex h-full flex-col rounded-xl border border-primary/25 bg-muted/5">
-      <div className="border-b border-primary/20 px-4 py-3">
-        <h2 className="text-sm font-semibold">Estructura · Sesión {sessionIndex}</h2>
-        <p className="mt-1 text-xs text-muted-foreground">
+    <Card className="flex min-h-[28rem] flex-col border border-primary/25 lg:sticky lg:top-[4.5rem] lg:max-h-[calc(100vh-5.5rem)]">
+      <CardHeader className="space-y-1 pb-3">
+        <CardTitle className="text-base">Estructura · Sesión {sessionIndex}</CardTitle>
+        <CardDescription>
           {sessionStructureSummary(mainTasksPerSession)} · {filled}/{slots.length} asignadas
-        </p>
-      </div>
+        </CardDescription>
+      </CardHeader>
 
-      <ul className="flex-1 space-y-2 overflow-y-auto p-3">
-        {slots.map((slot) => {
-          const label = slotDisplayLabel(slot.slot_type as SlotType, slot.order_index);
-          const assigned = Boolean(slot.exercise_id || slot.title?.trim());
-          const active = activeSlotId === slot.id;
+      <CardContent className="min-h-0 flex-1 overflow-y-auto pt-0">
+        <ul className="space-y-1.5">
+          {slots.map((slot) => {
+            const label = slotDisplayLabel(slot.slot_type as SlotType, slot.order_index);
+            const assigned = Boolean(slot.exercise_id || slot.title?.trim());
+            const active = activeSlotId === slot.id;
+            const exerciseTitle = slot.linkedTitle || slot.title;
 
-          return (
-            <li key={slot.id}>
-              <button
-                type="button"
-                onClick={() => onSelectSlot(slot.id)}
-                className={cn(
-                  'flex w-full items-stretch gap-2 rounded-lg border text-left text-sm transition-colors',
-                  active
-                    ? 'border-primary bg-primary/15 text-primary'
-                    : 'border-primary/15 hover:border-primary/35 hover:bg-primary/5'
-                )}
-              >
-                {assigned ? (
-                  <ExerciseDrawingPreview
-                    data={slot.drawing_json}
-                    className="w-20 shrink-0 rounded-none rounded-l-lg border-0 border-r border-primary/15"
-                  />
-                ) : null}
-                <span className="flex min-w-0 flex-1 items-center justify-between gap-2 px-3 py-2.5">
-                  <span className="flex min-w-0 items-center gap-2">
-                    {assigned ? (
-                      <CheckCircle2 className="size-4 shrink-0 text-emerald-400" />
-                    ) : (
-                      <Circle className="size-4 shrink-0 text-muted-foreground/50" />
-                    )}
-                    <span className="min-w-0">
-                      <span className="font-medium">{label}</span>
-                      {slot.linkedTitle || slot.title ? (
-                        <span className="mt-0.5 block truncate text-xs text-muted-foreground">
-                          {slot.linkedTitle || slot.title}
-                        </span>
+            return (
+              <li key={slot.id}>
+                <button
+                  type="button"
+                  onClick={() => onSelectSlot(slot.id)}
+                  className={listItemClass(active)}
+                >
+                  <SlotListIcon slotType={slot.slot_type as SlotType} assigned={assigned} />
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-2">
+                      {assigned ? (
+                        <CheckCircle2 className="size-3.5 shrink-0 text-emerald-400" />
                       ) : (
-                        <span className="mt-0.5 block text-xs text-muted-foreground">Sin asignar</span>
+                        <Circle className="size-3.5 shrink-0 text-muted-foreground/50" />
                       )}
+                      <span className="truncate text-sm font-medium text-foreground">{label}</span>
+                    </span>
+                    <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                      {exerciseTitle || 'Sin asignar'}
                     </span>
                   </span>
-                  <Pencil className="size-3.5 shrink-0 opacity-60" />
-                </span>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+                  <Pencil className="size-3.5 shrink-0 text-muted-foreground opacity-70" />
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </CardContent>
 
       {activeSlotId ? (
-        <div className="border-t border-primary/20 p-3">
+        <div className="border-t border-primary/15 p-4">
           <Button type="button" variant="outline" size="sm" className="w-full" asChild>
             <Link
               href={`/portal/metodologia/microciclos/${microcycleId}/sesiones/${sessionIndex}/slots/${activeSlotId}`}
@@ -108,7 +117,7 @@ export function SessionStructurePanel({
           </Button>
         </div>
       ) : null}
-    </div>
+    </Card>
   );
 }
 
