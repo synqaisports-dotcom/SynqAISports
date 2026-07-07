@@ -51,6 +51,19 @@ export function buildPlayerClubHistory(
   ];
 }
 
+export function buildInitialPlayerHistory(teamName: string | null): PlayerClubHistoryEvent[] {
+  const occurredAt = new Date().toISOString();
+  return [
+    {
+      id: `joined-${occurredAt}`,
+      kind: 'joined',
+      title: 'Alta en el club',
+      detail: teamName ? `Plantilla · ${teamName}` : 'Sin equipo asignado',
+      occurredAt,
+    },
+  ];
+}
+
 export function formatPlayerHistoryWhen(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return '—';

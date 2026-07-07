@@ -5,9 +5,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useFormState } from 'react-dom';
-import { Camera, FileText, Pencil, Search, User, Users } from 'lucide-react';
+import { Camera, FileText, Pencil, Search, User, UserPlus, Users } from 'lucide-react';
 import { updatePlayer, type ActionState } from '@/app/actions/cantera';
 import { PlayerClubHistorySection } from '@/components/portal/PlayerClubHistorySection';
+import { PlayerCreateForm } from '@/components/portal/PlayerCreateForm';
 import { PlayerDocumentsForm } from '@/components/portal/PlayerDocumentsForm';
 import { PlayerGuardiansForm } from '@/components/portal/PlayerGuardiansForm';
 import { PlayerGuardiansSummary } from '@/components/portal/PlayerGuardiansSummary';
@@ -33,6 +34,7 @@ import {
 } from '@/lib/player-profile';
 import { playerBirthYearOptions } from '@/lib/player-form';
 import { emptyPlayerGuardian } from '@/lib/player-guardians';
+import type { PlayerTeamOption } from '@/lib/player-teams';
 import {
   PLAYER_POSITIONS,
   playerHasPosition,
@@ -46,6 +48,7 @@ type SortDirection = 'asc' | 'desc';
 type Props = {
   clubId: string;
   players: PlayerProfile[];
+  teams: PlayerTeamOption[];
   initialPlayerId?: string | null;
   demoMode?: boolean;
 };
@@ -239,7 +242,7 @@ function PlayerDetailPanel({
           <Users className="size-10 text-primary/50" />
           <p className="text-sm font-medium text-foreground">Selecciona un jugador</p>
           <p className="max-w-xs text-sm text-muted-foreground">
-            Elige un jugador del listado para ver su ficha y modificar sus datos.
+            Elige un jugador del listado o crea uno nuevo con el icono de añadir.
           </p>
         </CardContent>
       </Card>
@@ -398,6 +401,7 @@ function PlayerDetailPanel({
 export function PlayersMasterDetail({
   clubId,
   players,
+  teams,
   initialPlayerId,
   demoMode,
 }: Props) {
@@ -405,11 +409,14 @@ export function PlayersMasterDetail({
   const [search, setSearch] = useState('');
   const [positionFilter, setPositionFilter] = useState('all');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [createOpen, setCreateOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(
     initialPlayerId && players.some((player) => player.id === initialPlayerId)
       ? initialPlayerId
       : players[0]?.id ?? null
   );
+  const rosterActionClass =
+    'inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary';
 
   const filteredPlayers = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -450,6 +457,12 @@ export function PlayersMasterDetail({
     null;
 
   useEffect(() => {
+    if (initialPlayerId && players.some((player) => player.id === initialPlayerId)) {
+      setSelectedId(initialPlayerId);
+    }
+  }, [initialPlayerId, players]);
+
+  useEffect(() => {
     if (selectedId && !players.some((player) => player.id === selectedId)) {
       setSelectedId(players[0]?.id ?? null);
     }
@@ -458,6 +471,13 @@ export function PlayersMasterDetail({
   const handleSelect = (playerId: string) => {
     setSelectedId(playerId);
     router.replace(`/portal/cantera/jugadores?player=${playerId}`, { scroll: false });
+  };
+
+  const handlePlayerCreated = (playerId: string) => {
+    setCreateOpen(false);
+    setSelectedId(playerId);
+    router.replace(`/portal/cantera/jugadores?player=${playerId}`, { scroll: false });
+    router.refresh();
   };
 
   const positionOptions = [
@@ -472,11 +492,22 @@ export function PlayersMasterDetail({
     <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
       <Card className="flex min-h-[28rem] flex-col border border-primary/25 lg:sticky lg:top-[4.5rem] lg:max-h-[calc(100vh-5.5rem)]">
         <CardHeader className="space-y-3 pb-3">
-          <div>
-            <CardTitle className="text-base">Plantilla</CardTitle>
-            <CardDescription>
-              {filteredPlayers.length} de {players.length} jugadores
-            </CardDescription>
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <CardTitle className="text-base">Plantilla</CardTitle>
+              <CardDescription>
+                {filteredPlayers.length} de {players.length} jugadores
+              </CardDescription>
+            </div>
+            <button
+              type="button"
+              className={rosterActionClass}
+              aria-label="Nuevo jugador"
+              title="Nuevo jugador"
+              onClick={() => setCreateOpen(true)}
+            >
+              <UserPlus className="size-4" />
+            </button>
           </div>
           <div className="space-y-2">
             <div className="relative">
@@ -509,7 +540,9 @@ export function PlayersMasterDetail({
         <CardContent className="min-h-0 flex-1 overflow-y-auto pt-0">
           {filteredPlayers.length === 0 ? (
             <p className="rounded-lg border border-dashed border-primary/20 px-4 py-8 text-center text-sm text-muted-foreground">
-              No hay jugadores con esos filtros.
+              {players.length === 0
+                ? 'No hay jugadores todavía. Pulsa + para crear el primero.'
+                : 'No hay jugadores con esos filtros.'}
             </p>
           ) : (
             <ul className="space-y-1.5">
@@ -567,6 +600,21 @@ export function PlayersMasterDetail({
         player={selectedPlayer}
         demoMode={demoMode}
       />
+
+      <Sheet open={createOpen} onOpenChange={setCreateOpen}>
+        <SheetContent side="right" className="w-full overflow-y-auto border-primary/20 sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle>Nuevo jugador</SheetTitle>
+          </SheetHeader>
+          <div className="mt-4">
+            <PlayerCreateForm
+              teams={teams}
+              demoMode={demoMode}
+              onCreated={handlePlayerCreated}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

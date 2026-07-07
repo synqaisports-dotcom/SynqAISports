@@ -8,6 +8,7 @@ import {
   playerBirthYearMax,
 } from '@/lib/player-form';
 import { parseGuardiansFromForm, validateGuardians } from '@/lib/player-guardians';
+import { buildInitialPlayerHistory } from '@/lib/player-club-history';
 import { isValidMedicalDate } from '@/lib/player-medical';
 import { requireClubId } from '@/lib/auth-staff';
 import { DEMO_CANTERA_TEAMS, formatTeamName } from '@/lib/cantera-teams';
@@ -23,7 +24,7 @@ import {
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
-export type ActionState = { ok: boolean; message?: string };
+export type ActionState = { ok: boolean; message?: string; playerId?: string };
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024;
@@ -513,24 +514,61 @@ export async function createPlayer(
   const clubId = await requireClubId();
   if (!clubId) return { ok: false, message: 'unauthorized' };
 
-  const displayName = String(formData.get('displayName') ?? '').trim();
+  const firstName = String(formData.get('firstName') ?? '').trim();
+  const lastName = String(formData.get('lastName') ?? '').trim();
+  const legacyDisplay = String(formData.get('displayName') ?? '').trim();
+  const displayName = [firstName, lastName].filter(Boolean).join(' ').trim() || legacyDisplay;
   const teamId = String(formData.get('teamId') ?? '').trim() || null;
-  const jerseyNumber = parseInt(String(formData.get('jerseyNumber') ?? ''), 10);
-  const position = String(formData.get('position') ?? '').trim();
-  const birthYear = parseInt(String(formData.get('birthYear') ?? ''), 10);
+  const jerseyNumber = parseOptionalInt(String(formData.get('jerseyNumber') ?? '').trim());
+  const position = String(formData.get('position') ?? '').trim() || null;
+  const birthYear = parseOptionalInt(String(formData.get('birthYear') ?? '').trim());
 
   if (!displayName) return { ok: false, message: 'validation' };
+  if (!isValidJerseyNumber(jerseyNumber)) return { ok: false, message: 'validation' };
+
+  const usesNewForm = Boolean(firstName || lastName);
+  if (usesNewForm && (!birthYear || !isValidBirthYear(birthYear, playerBirthYearMax()))) {
+    return { ok: false, message: 'validation' };
+  }
 
   const supabase = await createClient();
-  const { error } = await supabase.from('synq_players').insert({
-    club_id: clubId,
-    team_id: teamId,
-    display_name: displayName,
-    jersey_number: Number.isNaN(jerseyNumber) ? null : jerseyNumber,
-    position: position || null,
-    birth_year: Number.isNaN(birthYear) ? null : birthYear,
-    active: true,
-  });
+
+  let teamName: string | null = null;
+  if (teamId) {
+    const { data: team } = await supabase
+      .from('synq_teams')
+      .select('name')
+      .eq('id', teamId)
+      .eq('club_id', clubId)
+      .maybeSingle();
+    teamName = team?.name ?? null;
+  }
+
+  const history = buildInitialPlayerHistory(teamName);
+
+  if (await isDemoActive()) {
+    revalidatePath('/portal/cantera/jugadores');
+    revalidatePath('/portal/cantera');
+    return { ok: true, message: 'demo' };
+  }
+
+  const { data, error } = await supabase
+    .from('synq_players')
+    .insert({
+      club_id: clubId,
+      team_id: teamId,
+      first_name: firstName || null,
+      last_name: lastName || null,
+      display_name: displayName,
+      jersey_number: jerseyNumber,
+      position,
+      birth_year: birthYear,
+      active: true,
+      is_minor: false,
+      player_history_json: history,
+    })
+    .select('id')
+    .single();
 
   if (error) {
     console.error('create player', error);
@@ -538,8 +576,9 @@ export async function createPlayer(
   }
 
   revalidatePath('/portal/cantera');
+  revalidatePath('/portal/cantera/jugadores');
   revalidatePath('/portal');
-  return { ok: true };
+  return { ok: true, playerId: data.id };
 }
 
 export async function togglePlayerActive(playerId: string, active: boolean): Promise<ActionState> {
