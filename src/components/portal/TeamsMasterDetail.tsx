@@ -7,6 +7,7 @@ import { CalendarDays, ClipboardList, Layers, Pencil, Plus, Search, UserCog } fr
 import { TeamCreateForm } from '@/components/portal/TeamCreateForm';
 import { TeamEditForm } from '@/components/portal/TeamEditForm';
 import { TeamPauseButton } from '@/components/portal/TeamPauseButton';
+import { TeamRosterList } from '@/components/portal/TeamRosterList';
 import { TeamViewSections } from '@/components/portal/TeamViewSections';
 import { SynqSelect } from '@/components/portal/SynqSelect';
 import { Badge } from '@/components/ui/badge';
@@ -76,10 +77,15 @@ function TeamDetailPanel({
   initialEditOpen?: boolean;
 }) {
   const [editOpen, setEditOpen] = useState(Boolean(initialEditOpen));
+  const [rosterOpen, setRosterOpen] = useState(false);
 
   useEffect(() => {
     setEditOpen(Boolean(initialEditOpen));
   }, [team?.id, initialEditOpen]);
+
+  useEffect(() => {
+    setRosterOpen(false);
+  }, [team?.id]);
 
   if (!team) {
     return (
@@ -116,6 +122,9 @@ function TeamDetailPanel({
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <CardTitle className="text-lg font-semibold tracking-tight">{team.name}</CardTitle>
+              <Badge variant="secondary" className="text-[10px]">
+                {team.player_count} jugadores
+              </Badge>
               {!team.active ? (
                 <Badge variant="outline" className="text-[10px]">
                   Pausado
@@ -140,14 +149,15 @@ function TeamDetailPanel({
             >
               <Pencil className="size-4" />
             </button>
-            <Link
-              href={`/portal/cantera/jugadores?team=${team.id}`}
+            <button
+              type="button"
               className={actionButtonClass}
               aria-label="Ver plantilla del equipo"
-              title="Ver plantilla (gestionar jugadores, cambios de equipo y ascensos)"
+              title="Ver plantilla del equipo"
+              onClick={() => setRosterOpen(true)}
             >
               <ClipboardList className="size-4" />
-            </Link>
+            </button>
             <Link
               href={`/portal/club/staff?team=${team.id}`}
               className={actionButtonClass}
@@ -176,9 +186,7 @@ function TeamDetailPanel({
           </p>
         ) : null}
         <TeamViewSections
-          layout="stack"
           category={category}
-          players={team.players}
           team={{
             id: team.id,
             name: team.name,
@@ -196,6 +204,20 @@ function TeamDetailPanel({
           }}
         />
       </CardContent>
+
+      <Sheet open={rosterOpen} onOpenChange={setRosterOpen}>
+        <SheetContent
+          side="right"
+          className="w-full overflow-y-auto border-primary/20 sm:max-w-md"
+        >
+          <SheetHeader>
+            <SheetTitle>Plantilla · {team.name}</SheetTitle>
+          </SheetHeader>
+          <div className="mt-4">
+            <TeamRosterList teamId={team.id} teamName={team.name} players={team.players} />
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <Sheet open={editOpen} onOpenChange={setEditOpen}>
         <SheetContent
