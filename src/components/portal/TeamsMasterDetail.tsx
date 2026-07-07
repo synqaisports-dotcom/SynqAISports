@@ -3,7 +3,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CalendarDays, ClipboardList, Layers, Pencil, Plus, Search, UserCog } from 'lucide-react';
+import { CalendarDays, ClipboardList, Layers, Pencil, Plus, Search, TrendingUp, UserCog } from 'lucide-react';
+import { CategorySeasonPromoteSheet } from '@/components/portal/CategorySeasonPromoteSheet';
+import { TeamClubHistorySection } from '@/components/portal/TeamClubHistorySection';
+import { TeamSeasonPromoteSheet } from '@/components/portal/TeamSeasonPromoteSheet';
 import { TeamCreateForm } from '@/components/portal/TeamCreateForm';
 import { TeamEditForm } from '@/components/portal/TeamEditForm';
 import { TeamPauseButton } from '@/components/portal/TeamPauseButton';
@@ -81,10 +84,12 @@ function TeamDetailActions({
   team,
   onEdit,
   onRoster,
+  onSeason,
 }: {
   team: TeamProfile;
   onEdit: () => void;
   onRoster: () => void;
+  onSeason: () => void;
 }) {
   return (
     <div className="flex shrink-0 flex-nowrap items-center gap-0.5 rounded-xl border border-primary/20 bg-muted/10 p-1">
@@ -105,6 +110,15 @@ function TeamDetailActions({
         onClick={onRoster}
       >
         <ClipboardList className="size-4" />
+      </button>
+      <button
+        type="button"
+        className={teamActionButtonClass}
+        aria-label="Cierre de temporada"
+        title="Cierre de temporada (ascenso, letra o fusión)"
+        onClick={onSeason}
+      >
+        <TrendingUp className="size-4" />
       </button>
       <Link
         href={`/portal/club/staff?team=${team.id}`}
@@ -144,6 +158,7 @@ function TeamDetailPanel({
 }) {
   const [editOpen, setEditOpen] = useState(Boolean(initialEditOpen));
   const [rosterOpen, setRosterOpen] = useState(false);
+  const [seasonOpen, setSeasonOpen] = useState(false);
 
   useEffect(() => {
     setEditOpen(Boolean(initialEditOpen));
@@ -151,6 +166,7 @@ function TeamDetailPanel({
 
   useEffect(() => {
     setRosterOpen(false);
+    setSeasonOpen(false);
   }, [team?.id]);
 
   if (!team) {
@@ -201,6 +217,7 @@ function TeamDetailPanel({
             team={team}
             onEdit={() => setEditOpen(true)}
             onRoster={() => setRosterOpen(true)}
+            onSeason={() => setSeasonOpen(true)}
           />
         </div>
         {category ? (
@@ -236,7 +253,16 @@ function TeamDetailPanel({
                 : null,
           }}
         />
+        <TeamClubHistorySection events={team.history} />
       </CardContent>
+
+      <TeamSeasonPromoteSheet
+        team={team}
+        teams={teams}
+        teamOptions={teamOptions}
+        open={seasonOpen}
+        onOpenChange={setSeasonOpen}
+      />
 
       <Sheet open={rosterOpen} onOpenChange={setRosterOpen}>
         <SheetContent
@@ -303,6 +329,7 @@ export function TeamsMasterDetail({
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [sortMode, setSortMode] = useState<TeamListSortMode>('category');
   const [createOpen, setCreateOpen] = useState(Boolean(initialCreateOpen));
+  const [categorySeasonOpen, setCategorySeasonOpen] = useState(false);
   const [createCategorySlug, setCreateCategorySlug] = useState<CanteraCategorySlug>(
     initialCreateCategory && CANTERA_CATEGORIES.some((item) => item.slug === initialCreateCategory)
       ? initialCreateCategory
@@ -426,15 +453,26 @@ export function TeamsMasterDetail({
                 {filteredTeams.length} de {teams.length} equipos
               </CardDescription>
             </div>
-            <button
-              type="button"
-              className={rosterActionClass}
-              aria-label="Nuevo equipo"
-              title="Nuevo equipo"
-              onClick={() => setCreateOpen(true)}
-            >
-              <Plus className="size-4" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                className={rosterActionClass}
+                aria-label="Cierre de temporada por categoría"
+                title="Cierre de temporada por categoría"
+                onClick={() => setCategorySeasonOpen(true)}
+              >
+                <TrendingUp className="size-4" />
+              </button>
+              <button
+                type="button"
+                className={rosterActionClass}
+                aria-label="Nuevo equipo"
+                title="Nuevo equipo"
+                onClick={() => setCreateOpen(true)}
+              >
+                <Plus className="size-4" />
+              </button>
+            </div>
           </div>
           <div className="space-y-2">
             <div className="relative">
@@ -577,6 +615,12 @@ export function TeamsMasterDetail({
         teams={teams}
         demoMode={demoMode}
         initialEditOpen={initialEditOpen && selectedTeam?.id === initialTeamId}
+      />
+
+      <CategorySeasonPromoteSheet
+        teams={teams}
+        open={categorySeasonOpen}
+        onOpenChange={setCategorySeasonOpen}
       />
 
       <Sheet open={createOpen} onOpenChange={setCreateOpen}>

@@ -17,6 +17,7 @@ import {
 import { isDemoActive } from '@/lib/demo';
 import type { TeamProfile } from '@/lib/team-profile';
 import { compareTeamsForList } from '@/lib/team-profile';
+import { parseTeamHistoryJson } from '@/lib/team-club-history';
 import {
   DEMO_TEAM_SETUP,
   DEFAULT_TEAM_SETUP,
@@ -39,7 +40,7 @@ type Props = {
 };
 
 const TEAM_SELECT =
-  'id, name, category, category_slug, team_letter, sport, active, team_purpose, training_facility_id, training_division, training_days, training_start, training_end, match_venue_type, match_own_single_venue, match_home_mode, match_away_mode, external_venue_name, external_venue_address';
+  'id, name, category, category_slug, team_letter, sport, active, team_purpose, training_facility_id, training_division, training_days, training_start, training_end, match_venue_type, match_own_single_venue, match_home_mode, match_away_mode, external_venue_name, external_venue_address, team_history_json';
 
 function isCategorySlug(value: string | undefined): value is CanteraCategorySlug {
   return Boolean(value && CANTERA_CATEGORIES.some((category) => category.slug === value));
@@ -60,6 +61,7 @@ function buildTeamProfile(input: {
   team_letter: string | null;
   sport: string;
   active: boolean;
+  team_history_json?: unknown;
   setup: TeamSetupData;
   facility_name: string | null;
   players: TeamViewPlayer[];
@@ -77,6 +79,7 @@ function buildTeamProfile(input: {
     setup: input.setup,
     facility_name: input.facility_name,
     players: input.players,
+    history: parseTeamHistoryJson(input.team_history_json),
     is_demo: input.is_demo,
   };
 }
@@ -104,7 +107,7 @@ export default async function PortalCanteraEquiposPage({ searchParams }: Props) 
       .order('name'),
     supabase
       .from('synq_players')
-      .select('id, team_id, display_name, first_name, last_name, position, photo_url, jersey_number')
+      .select('id, team_id, display_name, first_name, last_name, position, photo_url, jersey_number, birth_year')
       .eq('club_id', ctx.club.id)
       .eq('active', true)
       .order('last_name')
@@ -125,6 +128,7 @@ export default async function PortalCanteraEquiposPage({ searchParams }: Props) 
       position: row.position,
       photo_url: row.photo_url,
       jersey_number: row.jersey_number,
+      birth_year: row.birth_year,
     });
     playersByTeam.set(row.team_id, list);
   }
@@ -145,6 +149,7 @@ export default async function PortalCanteraEquiposPage({ searchParams }: Props) 
       setup,
       facility_name: facilityName,
       players: mapPlayersForTeam(team.id, playersByTeam),
+      team_history_json: team.team_history_json,
       is_demo: false,
     });
   });
@@ -185,6 +190,7 @@ export default async function PortalCanteraEquiposPage({ searchParams }: Props) 
           setup,
           facility_name: facilityName,
           players: demoPlayers,
+          team_history_json: [],
           is_demo: true,
         })
       );

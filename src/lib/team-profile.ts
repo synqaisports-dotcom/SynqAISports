@@ -4,6 +4,7 @@ import {
   type CanteraCategorySlug,
 } from '@/lib/cantera-categories';
 import type { TeamViewPlayer } from '@/components/portal/TeamViewSections';
+import type { TeamClubHistoryEvent } from '@/lib/team-club-history';
 import type { TeamSetupData } from '@/lib/team-setup';
 
 export type TeamProfile = {
@@ -18,6 +19,7 @@ export type TeamProfile = {
   setup: TeamSetupData;
   facility_name: string | null;
   players: TeamViewPlayer[];
+  history: TeamClubHistoryEvent[];
   is_demo: boolean;
 };
 

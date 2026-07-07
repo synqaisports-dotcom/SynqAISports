@@ -22,6 +22,7 @@ export type TeamViewPlayer = {
   position: string | null;
   photo_url: string | null;
   jersey_number: number | null;
+  birth_year?: number | null;
 };
 
 type Props = {
