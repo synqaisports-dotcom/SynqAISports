@@ -1,5 +1,5 @@
 import { playerDisplayName } from '@/lib/cantera-teams';
-import { positionLabel, positionShort } from '@/lib/player-positions';
+import { positionShort } from '@/lib/player-positions';
 
 export type PlayerProfile = {
   id: string;
@@ -30,7 +30,6 @@ export function playerDetailFields(player: PlayerProfile) {
   return [
     { label: 'Equipo', value: player.team_name },
     { label: 'Categoría', value: player.team_category },
-    { label: 'Posición', value: positionLabel(player.position) },
     {
       label: 'Dorsal',
       value: player.jersey_number != null ? `#${player.jersey_number}` : '—',

@@ -9,6 +9,7 @@ import { Camera, Pencil, Search, User, Users } from 'lucide-react';
 import { updatePlayer, type ActionState } from '@/app/actions/cantera';
 import { PlayerPauseButton } from '@/components/portal/PlayerPauseButton';
 import { PlayerPhotoField } from '@/components/portal/PlayerPhotoField';
+import { PlayerPositionsPicker } from '@/components/portal/PlayerPositionsPicker';
 import { SynqSelect } from '@/components/portal/SynqSelect';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,16 +22,15 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import {
-  playerDetailFields,
   playerFullName,
   playerSortKey,
   type PlayerProfile,
 } from '@/lib/player-profile';
 import {
   PLAYER_POSITIONS,
-  normalizePositionCode,
-  positionSelectOptions,
+  playerHasPosition,
   positionShort,
+  type PlayerPositionCode,
 } from '@/lib/player-positions';
 import { cn } from '@/lib/utils';
 
@@ -71,10 +71,10 @@ function PlayerDetailForm({
 }) {
   const bound = updatePlayer.bind(null, player.id);
   const [state, action, pending] = useFormState(bound, initial);
-  const [position, setPosition] = useState(normalizePositionCode(player.position) ?? '');
+  const [positions, setPositions] = useState(player.position ?? '');
 
   useEffect(() => {
-    setPosition(normalizePositionCode(player.position) ?? '');
+    setPositions(player.position ?? '');
   }, [player.id, player.position]);
 
   useEffect(() => {
@@ -120,17 +120,15 @@ function PlayerDetailForm({
             className="border-primary/30 bg-background/80"
           />
         </div>
-        <div>
+        <div className="sm:col-span-2">
           <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Posición principal
+            Posiciones
           </label>
-          <SynqSelect
-            value={position}
-            onChange={setPosition}
-            options={positionSelectOptions()}
-            placeholder="Seleccionar"
-          />
-          <input type="hidden" name="position" value={position} readOnly />
+          <PlayerPositionsPicker value={positions} onChange={setPositions} />
+          <input type="hidden" name="position" value={positions} readOnly />
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            Puedes seleccionar varias posiciones. Pasa el ratón para ver el nombre completo.
+          </p>
         </div>
         <div className="sm:col-span-2">
           <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -199,7 +197,6 @@ function PlayerDetailPanel({
   }
 
   const name = playerFullName(player);
-  const detailFields = playerDetailFields(player).filter((field) => field.label !== 'Equipo');
   const actionButtonClass =
     'inline-flex size-9 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary';
 
@@ -248,15 +245,41 @@ function PlayerDetailPanel({
             </div>
           </div>
 
-          <div className="grid gap-3 rounded-xl border border-primary/15 bg-muted/5 p-4 sm:grid-cols-2">
-            {detailFields.map((field) => (
-              <div key={field.label}>
-                <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                  {field.label}
-                </p>
-                <p className="mt-0.5 text-sm text-foreground">{field.value || '—'}</p>
+          <div className="space-y-4 rounded-xl border border-primary/15 bg-muted/5 p-4">
+            <div>
+              <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                Categoría
+              </p>
+              <p className="mt-0.5 text-sm text-foreground">{player.team_category || '—'}</p>
+            </div>
+
+            <div>
+              <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                Posiciones
+              </p>
+              <div className="mt-2">
+                <PlayerPositionsPicker value={player.position} readOnly />
               </div>
-            ))}
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Dorsal
+                </p>
+                <p className="mt-0.5 text-sm text-foreground">
+                  {player.jersey_number != null ? `#${player.jersey_number}` : '—'}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Año nacimiento
+                </p>
+                <p className="mt-0.5 text-sm text-foreground">
+                  {player.birth_year ? String(player.birth_year) : '—'}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -324,8 +347,8 @@ export function PlayersMasterDetail({
     }
 
     if (positionFilter !== 'all') {
-      list = list.filter(
-        (player) => normalizePositionCode(player.position) === positionFilter
+      list = list.filter((player) =>
+        playerHasPosition(player.position, positionFilter as PlayerPositionCode)
       );
     }
 
