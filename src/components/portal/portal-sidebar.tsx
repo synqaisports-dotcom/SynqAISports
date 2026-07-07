@@ -69,10 +69,8 @@ function SidebarNav({ expanded }: { expanded: boolean }) {
     <ScrollArea className="min-h-0 flex-1">
       <div className={cn('py-4', expanded ? 'px-2.5' : 'px-1.5')}>
         {portalNavGroups.map((group, index) => (
-          <div key={group.label} className={cn(index > 0 && 'mt-5')}>
-            {expanded ? (
-              <p className="portal-sidebar-group-label">{group.label}</p>
-            ) : index > 0 ? (
+          <div key={group.label} className={cn(index > 0 && 'mt-3')}>
+            {!expanded && index > 0 ? (
               <div className="mx-auto mb-3 h-px w-5 bg-gradient-to-r from-transparent via-primary/25 to-transparent" aria-hidden />
             ) : null}
             <PortalNavMenu items={group.items} expanded={expanded} />
