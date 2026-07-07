@@ -57,9 +57,7 @@ export function demoCanteraMovements(): CanteraMovement[] {
     title: 'Nuevo equipo',
     detail: team.name,
     occurredAt: hours(index + 5),
-    href: team.category_slug
-      ? `/portal/cantera/equipos/equipo/${team.id}`
-      : '/portal/cantera/equipos',
+    href: `/portal/cantera/equipos?team=${team.id}`,
   }));
 
   return mergeRecentMovements(playerMoves, teamMoves);
@@ -104,9 +102,7 @@ export async function loadCanteraRecentMovements(
     title: 'Nuevo equipo',
     detail: row.name,
     occurredAt: row.created_at,
-    href: row.category_slug
-      ? `/portal/cantera/equipos/equipo/${row.id}`
-      : '/portal/cantera/equipos',
+    href: `/portal/cantera/equipos?team=${row.id}`,
   }));
 
   return mergeRecentMovements(playerMoves, teamMoves, limit);

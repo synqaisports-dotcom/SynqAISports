@@ -34,13 +34,19 @@ type Props = {
   team: TeamData;
   category: CanteraCategory | null;
   players: TeamViewPlayer[];
+  layout?: 'grid' | 'stack';
 };
 
-export function TeamViewSections({ team, category, players }: Props) {
+export function TeamViewSections({ team, category, players, layout = 'grid' }: Props) {
   const sportLabel = team.sport === 'futsal' ? 'Fútbol sala' : 'Fútbol';
 
   return (
-    <div className="grid w-full gap-6 lg:grid-cols-2">
+    <div
+      className={cn(
+        'grid w-full gap-6',
+        layout === 'stack' ? 'grid-cols-1' : 'lg:grid-cols-2'
+      )}
+    >
       <Card
         className={cn(
           'h-fit border',

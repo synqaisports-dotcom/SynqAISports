@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useFormState } from 'react-dom';
 import { updateTeam, type ActionState } from '@/app/actions/cantera';
 import type { CanteraCategory } from '@/lib/cantera-categories';
@@ -27,6 +27,7 @@ type Props = {
   occupiedSlots: TeamTrainingSlot[];
   initialSetup: TeamSetupData;
   readOnly?: boolean;
+  onSaved?: () => void;
 };
 
 export function TeamEditForm({
@@ -39,6 +40,7 @@ export function TeamEditForm({
   occupiedSlots,
   initialSetup,
   readOnly,
+  onSaved,
 }: Props) {
   const bound = updateTeam.bind(null, teamId);
   const [state, action, pending] = useFormState(bound, initial);
@@ -58,6 +60,10 @@ export function TeamEditForm({
   const [teamLetter, setTeamLetter] = useState(initialLetter || availableLetters[0]?.value || '');
   const previewName =
     category && teamLetter ? formatTeamName(category.name, teamLetter) : '';
+
+  useEffect(() => {
+    if (state.ok) onSaved?.();
+  }, [state.ok, onSaved]);
 
   return (
     <form action={action} className="w-full space-y-6">

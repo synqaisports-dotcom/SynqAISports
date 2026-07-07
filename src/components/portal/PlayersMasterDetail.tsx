@@ -296,7 +296,7 @@ function PlayerDetailPanel({
 
               {player.team_id ? (
                 <Link
-                  href={`/portal/cantera/equipos/equipo/${player.team_id}`}
+                  href={`/portal/cantera/equipos?team=${player.team_id}`}
                   className={actionButtonClass}
                   aria-label="Ver equipo"
                   title="Ver equipo"

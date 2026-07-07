@@ -24,7 +24,12 @@ import {
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
-export type ActionState = { ok: boolean; message?: string; playerId?: string };
+export type ActionState = {
+  ok: boolean;
+  message?: string;
+  playerId?: string;
+  teamId?: string;
+};
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024;
@@ -373,16 +378,25 @@ export async function createTeam(
   const setupError = await validateTeamSetup(clubId, setup);
   if (setupError) return { ok: false, message: setupError };
 
+  if (await isDemoActive()) {
+    revalidatePath('/portal/cantera/equipos');
+    return { ok: true, message: 'demo' };
+  }
+
   const supabase = await createClient();
-  const { error } = await supabase.from('synq_teams').insert({
-    club_id: clubId,
-    name,
-    category: categoryName,
-    category_slug: categorySlug,
-    team_letter: teamLetter,
-    sport: sport === 'futsal' ? 'futsal' : 'football',
-    ...teamSetupToDbPayload(setup),
-  });
+  const { data, error } = await supabase
+    .from('synq_teams')
+    .insert({
+      club_id: clubId,
+      name,
+      category: categoryName,
+      category_slug: categorySlug,
+      team_letter: teamLetter,
+      sport: sport === 'futsal' ? 'futsal' : 'football',
+      ...teamSetupToDbPayload(setup),
+    })
+    .select('id')
+    .single();
 
   if (error) {
     console.error('create team', error);
@@ -393,7 +407,7 @@ export async function createTeam(
   revalidatePath('/portal/cantera');
   revalidatePath('/portal/cantera/equipos');
   revalidatePath(`/portal/cantera/equipos/${categorySlug}`);
-  return { ok: true };
+  return { ok: true, teamId: data.id };
 }
 
 export async function updateTeam(
