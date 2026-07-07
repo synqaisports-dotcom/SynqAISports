@@ -7,6 +7,7 @@ import {
   parseOptionalInt,
   playerBirthYearMax,
 } from '@/lib/player-form';
+import { parseGuardiansFromForm, validateGuardians } from '@/lib/player-guardians';
 import { requireClubId } from '@/lib/auth-staff';
 import { DEMO_CANTERA_TEAMS, formatTeamName } from '@/lib/cantera-teams';
 import { getCanteraCategory } from '@/lib/cantera-categories';
@@ -110,10 +111,13 @@ export async function updatePlayer(
   const birthRaw = String(formData.get('birthYear') ?? '').trim();
   const birthYear = parseOptionalInt(birthRaw);
   const photoUrl = String(formData.get('photoUrl') ?? '').trim();
+  const isMinor = formData.get('isMinor') === 'true';
+  const guardians = parseGuardiansFromForm(formData);
 
   if (!displayName) return { ok: false, message: 'validation' };
   if (!isValidJerseyNumber(jerseyNumber)) return { ok: false, message: 'validation' };
   if (!isValidBirthYear(birthYear, playerBirthYearMax())) return { ok: false, message: 'validation' };
+  if (!validateGuardians(isMinor, guardians)) return { ok: false, message: 'validation' };
 
   if (await isDemoActive()) {
     revalidatePath('/portal/cantera/jugadores');
@@ -132,6 +136,8 @@ export async function updatePlayer(
       position,
       birth_year: birthYear,
       photo_url: photoUrl || null,
+      is_minor: isMinor,
+      guardians_json: isMinor && guardians.length > 0 ? guardians : null,
     })
     .eq('id', playerId)
     .eq('club_id', clubId);

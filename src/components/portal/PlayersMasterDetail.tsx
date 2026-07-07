@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useFormState } from 'react-dom';
 import { Camera, Pencil, Search, User, Users } from 'lucide-react';
 import { updatePlayer, type ActionState } from '@/app/actions/cantera';
+import { PlayerGuardiansForm } from '@/components/portal/PlayerGuardiansForm';
 import { PlayerPauseButton } from '@/components/portal/PlayerPauseButton';
 import { PlayerPhotoField } from '@/components/portal/PlayerPhotoField';
 import { PlayerPositionsPicker } from '@/components/portal/PlayerPositionsPicker';
@@ -18,7 +19,6 @@ import { Input } from '@/components/ui/input';
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
@@ -28,6 +28,7 @@ import {
   type PlayerProfile,
 } from '@/lib/player-profile';
 import { playerBirthYearOptions } from '@/lib/player-form';
+import { emptyPlayerGuardian } from '@/lib/player-guardians';
 import {
   PLAYER_POSITIONS,
   playerHasPosition,
@@ -76,16 +77,22 @@ function PlayerDetailForm({
   const [positions, setPositions] = useState(player.position ?? '');
   const [jerseyNumber, setJerseyNumber] = useState<number | null>(player.jersey_number);
   const [birthYear, setBirthYear] = useState(player.birth_year ? String(player.birth_year) : '');
+  const [isMinor, setIsMinor] = useState(player.is_minor);
+  const [showSecondGuardian, setShowSecondGuardian] = useState(player.guardians.length > 1);
   const birthYearOptions = useMemo(
     () => [{ value: '', label: 'Sin especificar' }, ...playerBirthYearOptions()],
     []
   );
+  const tutor1 = player.guardians[0] ?? emptyPlayerGuardian();
+  const tutor2 = player.guardians[1] ?? emptyPlayerGuardian();
 
   useEffect(() => {
     setPositions(player.position ?? '');
     setJerseyNumber(player.jersey_number);
     setBirthYear(player.birth_year ? String(player.birth_year) : '');
-  }, [player.id, player.position, player.jersey_number, player.birth_year]);
+    setIsMinor(player.is_minor);
+    setShowSecondGuardian(player.guardians.length > 1);
+  }, [player.id, player.position, player.jersey_number, player.birth_year, player.is_minor, player.guardians.length]);
 
   useEffect(() => {
     if (state.ok) onSaved?.();
@@ -93,6 +100,20 @@ function PlayerDetailForm({
 
   return (
     <form action={action} className="space-y-4">
+      <label className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-primary/25 bg-muted/5 px-3 py-2.5">
+        <input
+          type="checkbox"
+          checked={isMinor}
+          onChange={(event) => {
+            setIsMinor(event.target.checked);
+            if (!event.target.checked) setShowSecondGuardian(false);
+          }}
+          className="size-4 rounded border-primary/40 bg-background/80 text-primary focus:ring-primary"
+        />
+        <span className="text-sm font-medium text-foreground">Es menor de edad</span>
+      </label>
+      <input type="hidden" name="isMinor" value={isMinor ? 'true' : 'false'} readOnly />
+
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -161,6 +182,17 @@ function PlayerDetailForm({
         playerName={playerFullName(player)}
       />
 
+      {isMinor ? (
+        <PlayerGuardiansForm
+          key={`${player.id}-${showSecondGuardian ? '2' : '1'}`}
+          tutor1={tutor1}
+          tutor2={tutor2}
+          showSecond={showSecondGuardian}
+          onAddSecond={() => setShowSecondGuardian(true)}
+          onRemoveSecond={() => setShowSecondGuardian(false)}
+        />
+      ) : null}
+
       <div className="flex flex-wrap items-center gap-3">
         <Button type="submit" disabled={pending}>
           {pending ? 'Guardando…' : 'Guardar cambios'}
@@ -171,7 +203,7 @@ function PlayerDetailForm({
         ) : null}
         {state.message === 'validation' ? (
           <p className="text-sm text-destructive">
-            Revisa los datos: nombre obligatorio, dorsal entre 0 y 99, año de nacimiento válido.
+            Revisa los datos: nombre obligatorio, dorsal, año, y tutores completos si es menor.
           </p>
         ) : null}
         {demoMode ? (
@@ -303,12 +335,9 @@ function PlayerDetailPanel({
           >
             <SheetHeader>
               <SheetTitle>Modificar ficha</SheetTitle>
-              <SheetDescription>
-                Actualiza los datos de {name}. Para cambiar de equipo, usa Cantera → Equipos.
-              </SheetDescription>
             </SheetHeader>
 
-            <div className="mt-6">
+            <div className="mt-4">
               <PlayerDetailForm
                 key={player.id}
                 clubId={clubId}

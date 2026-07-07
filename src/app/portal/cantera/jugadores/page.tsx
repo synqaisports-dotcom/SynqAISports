@@ -5,6 +5,7 @@ import { PageContainer } from '@/components/portal/PageContainer';
 import { DEMO_CANTERA_TEAMS, DEMO_TEAM_PLAYERS } from '@/lib/cantera-teams';
 import { isDemoActive } from '@/lib/demo';
 import type { PlayerProfile } from '@/lib/player-profile';
+import { parseGuardiansJson } from '@/lib/player-guardians';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import { redirect } from 'next/navigation';
@@ -37,7 +38,7 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
   const { data: players } = await supabase
     .from('synq_players')
     .select(
-      'id, display_name, first_name, last_name, jersey_number, position, active, photo_url, birth_year, team_id, synq_teams(name, category)'
+      'id, display_name, first_name, last_name, jersey_number, position, active, photo_url, birth_year, is_minor, guardians_json, team_id, synq_teams(name, category)'
     )
     .eq('club_id', ctx.club.id)
     .eq('active', true)
@@ -59,6 +60,8 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
       team_name: team?.name ?? 'Sin equipo',
       team_category: team?.category ?? '',
       active: row.active,
+      is_minor: row.is_minor ?? false,
+      guardians: parseGuardiansJson(row.guardians_json),
     };
   });
 
@@ -75,11 +78,16 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
         jersey_number: demoPlayer.jersey_number,
         position: demoPlayer.position,
         photo_url: demoPlayer.photo_url,
-        birth_year: null,
+        birth_year: demoPlayer.id === 'demo-pl-ale-1' ? 2014 : null,
         team_id: demoPlayer.team_id,
         team_name: team.team_name,
         team_category: team.team_category,
         active: true,
+        is_minor: demoPlayer.id === 'demo-pl-ale-1',
+        guardians:
+          demoPlayer.id === 'demo-pl-ale-1'
+            ? [{ first_name: 'Ana', last_name: 'Castro', email: 'ana.castro@email.com' }]
+            : [],
       });
     }
   }
