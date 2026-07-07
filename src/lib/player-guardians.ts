@@ -2,10 +2,11 @@ export type PlayerGuardian = {
   first_name: string;
   last_name: string;
   email: string;
+  phone: string;
 };
 
 export function emptyPlayerGuardian(): PlayerGuardian {
-  return { first_name: '', last_name: '', email: '' };
+  return { first_name: '', last_name: '', email: '', phone: '' };
 }
 
 export function parseGuardiansJson(value: unknown): PlayerGuardian[] {
@@ -16,8 +17,11 @@ export function parseGuardiansJson(value: unknown): PlayerGuardian[] {
       first_name: String(item?.first_name ?? '').trim(),
       last_name: String(item?.last_name ?? '').trim(),
       email: String(item?.email ?? '').trim(),
+      phone: String(item?.phone ?? '').trim(),
     }))
-    .filter((guardian) => guardian.first_name || guardian.last_name || guardian.email)
+    .filter(
+      (guardian) => guardian.first_name || guardian.last_name || guardian.email || guardian.phone
+    )
     .slice(0, 2);
 }
 
@@ -33,9 +37,10 @@ export function parseGuardiansFromForm(formData: FormData): PlayerGuardian[] {
     const first_name = String(formData.get(`tutor${index}FirstName`) ?? '').trim();
     const last_name = String(formData.get(`tutor${index}LastName`) ?? '').trim();
     const email = String(formData.get(`tutor${index}Email`) ?? '').trim();
+    const phone = String(formData.get(`tutor${index}Phone`) ?? '').trim();
 
-    if (first_name || last_name || email) {
-      guardians.push({ first_name, last_name, email });
+    if (first_name || last_name || email || phone) {
+      guardians.push({ first_name, last_name, email, phone });
     }
   }
 
@@ -46,15 +51,34 @@ export function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+export function isValidPhone(phone: string): boolean {
+  const digits = phone.replace(/\D/g, '');
+  return digits.length >= 9 && digits.length <= 15;
+}
+
 export function validateGuardians(isMinor: boolean, guardians: PlayerGuardian[]): boolean {
   if (!isMinor) return true;
 
   const primary = guardians[0];
   if (!primary) return false;
-  if (!primary.first_name || !primary.last_name || !isValidEmail(primary.email)) return false;
+  if (
+    !primary.first_name ||
+    !primary.last_name ||
+    !isValidEmail(primary.email) ||
+    !isValidPhone(primary.phone)
+  ) {
+    return false;
+  }
 
   for (const tutor of guardians.slice(1)) {
-    if (!tutor.first_name || !tutor.last_name || !isValidEmail(tutor.email)) return false;
+    if (
+      !tutor.first_name ||
+      !tutor.last_name ||
+      !isValidEmail(tutor.email) ||
+      !isValidPhone(tutor.phone)
+    ) {
+      return false;
+    }
   }
 
   return true;

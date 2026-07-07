@@ -44,7 +44,7 @@ function GuardianFields({
           className={inputClass}
         />
       </div>
-      <div className="sm:col-span-2">
+      <div>
         <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
           Email tutor {index}
         </label>
@@ -60,6 +60,20 @@ function GuardianFields({
         <p className="mt-1 text-xs text-muted-foreground">
           Acceso a la app y consulta de los datos de su hijo o hija.
         </p>
+      </div>
+      <div>
+        <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          Teléfono tutor {index}
+        </label>
+        <Input
+          name={`tutor${index}Phone`}
+          type="tel"
+          inputMode="tel"
+          autoComplete="tel"
+          defaultValue={guardian.phone}
+          placeholder="Ej. 600 123 456"
+          className={inputClass}
+        />
       </div>
     </div>
   );

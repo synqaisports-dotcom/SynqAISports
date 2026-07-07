@@ -86,7 +86,7 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
         is_minor: demoPlayer.id === 'demo-pl-ale-1',
         guardians:
           demoPlayer.id === 'demo-pl-ale-1'
-            ? [{ first_name: 'Ana', last_name: 'Castro', email: 'ana.castro@email.com' }]
+            ? [{ first_name: 'Ana', last_name: 'Castro', email: 'ana.castro@email.com', phone: '600 123 456' }]
             : [],
       });
     }
