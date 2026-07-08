@@ -59,6 +59,7 @@ export default async function MicrocicloSessionPage({ params }: Props) {
     week_label: bundle.micro.week_label,
     category_slug: bundle.micro.category_slug,
     plan_variant_id: bundle.micro.plan_variant_id,
+    plan_mcc_id: bundle.micro.plan_mcc_id,
     sessions_per_micro: bundle.micro.sessions_per_micro,
     main_tasks_per_session: bundle.micro.main_tasks_per_session,
     is_template: Boolean(bundle.micro.is_template),

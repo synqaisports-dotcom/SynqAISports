@@ -37,6 +37,22 @@ export type SlotRowBase = {
   drawing_json?: unknown;
 };
 
+export function resolveMicrocycleMccLabel(meta: {
+  title: string;
+  plan_mcc_id?: string | null;
+}): string {
+  const fromTitle = meta.title.split(' — ')[0]?.trim();
+  if (fromTitle) return fromTitle;
+
+  if (meta.plan_mcc_id) {
+    const match = meta.plan_mcc_id.match(/^mcc-(\d+)/i);
+    if (match) return `MCC${Number(match[1]) + 1}`;
+    return meta.plan_mcc_id.toUpperCase();
+  }
+
+  return 'MCC';
+}
+
 export function isDemoMicrocycleId(id: string): boolean {
   return id.startsWith('demo-micro-');
 }

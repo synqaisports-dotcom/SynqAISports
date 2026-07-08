@@ -11,7 +11,7 @@ export async function loadMicrocycleBundle(
   const { data: micro } = await supabase
     .from('synq_microcycles')
     .select(
-      'id, title, week_label, week_start, week_end, category_slug, plan_variant_id, sessions_per_micro, main_tasks_per_session, is_template, team_id'
+      'id, title, week_label, week_start, week_end, category_slug, plan_variant_id, plan_mcc_id, sessions_per_micro, main_tasks_per_session, is_template, team_id'
     )
     .eq('id', microcycleId)
     .eq('club_id', clubId)

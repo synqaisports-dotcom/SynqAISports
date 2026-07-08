@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
 import { MethodologySubnav } from '@/components/methodology/MethodologySubnav';
 import {
   ExerciseLibraryPanel,
@@ -10,13 +9,13 @@ import {
 } from '@/components/methodology/ExerciseLibraryPanel';
 import {
   SessionStructurePanel,
-  resolveMainTasksForMicro,
 } from '@/components/methodology/SessionStructurePanel';
 import { Badge } from '@/components/ui/badge';
 import { loadOrHydrateDemoMicrocycle } from '@/lib/demo-microcycle-hydrate';
 import {
   groupSlotsBySession,
   isDemoMicrocycleId,
+  resolveMicrocycleMccLabel,
   resolveMicrocycleSessions,
 } from '@/lib/microcycle-sessions';
 import type { SlotType } from '@/lib/methodology';
@@ -27,6 +26,7 @@ export type MicrocycleSessionPayload = {
   week_label: string;
   category_slug: string | null;
   plan_variant_id: string | null;
+  plan_mcc_id?: string | null;
   sessions_per_micro: number | null;
   main_tasks_per_session: number | null;
   is_template: boolean;
@@ -62,6 +62,7 @@ export function MicrocycleSessionWorkspace({ microcycle, sessionIndex, exercises
     if (loaded) {
       setDemoMicro({
         ...microcycle,
+        plan_mcc_id: loaded.plan_mcc_id,
         slots: loaded.slots.map((slot) => ({
           ...slot,
           synq_exercises: null,
@@ -76,7 +77,10 @@ export function MicrocycleSessionWorkspace({ microcycle, sessionIndex, exercises
 
   const data = isDemoMicrocycleId(microcycle.id) ? demoMicro : microcycle;
   const sessionsCount = resolveMicrocycleSessions(data);
-  const mainTasks = resolveMainTasksForMicro(data);
+  const mccLabel = useMemo(
+    () => resolveMicrocycleMccLabel({ title: data.title, plan_mcc_id: data.plan_mcc_id }),
+    [data.title, data.plan_mcc_id]
+  );
   const slotsBySession = useMemo(
     () =>
       groupSlotsBySession(
@@ -106,38 +110,38 @@ export function MicrocycleSessionWorkspace({ microcycle, sessionIndex, exercises
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <Link
-          href={`/portal/metodologia/microciclos/${data.id}`}
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="size-4" />
-          {data.title}
-        </Link>
-        {data.is_template ? <Badge variant="outline">Plantilla</Badge> : null}
-        <span className="text-sm text-muted-foreground">{data.week_label}</span>
-      </div>
-
       <MethodologySubnav />
 
-      <div className="flex flex-wrap gap-2">
-        {Array.from({ length: sessionsCount }, (_, index) => {
-          const n = index + 1;
-          const active = n === sessionIndex;
-          return (
-            <Link
-              key={n}
-              href={`/portal/metodologia/microciclos/${data.id}/sesiones/${n}`}
-              className={`rounded-lg border px-3 py-1.5 text-sm ${
-                active
-                  ? 'border-primary bg-primary/15 font-semibold text-primary'
-                  : 'border-primary/20 text-muted-foreground hover:bg-primary/5'
-              }`}
-            >
-              Sesión {n}
-            </Link>
-          );
-        })}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-2">
+          {Array.from({ length: sessionsCount }, (_, index) => {
+            const n = index + 1;
+            const active = n === sessionIndex;
+            return (
+              <Link
+                key={n}
+                href={`/portal/metodologia/microciclos/${data.id}/sesiones/${n}`}
+                className={`rounded-lg border px-3 py-1.5 text-sm ${
+                  active
+                    ? 'border-primary bg-primary/15 font-semibold text-primary'
+                    : 'border-primary/20 text-muted-foreground hover:bg-primary/5'
+                }`}
+              >
+                Sesión {n}
+              </Link>
+            );
+          })}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          {data.is_template ? (
+            <Badge variant="outline" className="border-primary/25 text-[10px]">
+              Plantilla
+            </Badge>
+          ) : null}
+          <span className="font-semibold text-primary">{mccLabel}</span>
+          <span className="text-muted-foreground">{data.week_label}</span>
+        </div>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
@@ -145,7 +149,6 @@ export function MicrocycleSessionWorkspace({ microcycle, sessionIndex, exercises
           microcycleId={data.id}
           sessionIndex={sessionIndex}
           slots={sessionSlotViews}
-          mainTasksPerSession={mainTasks}
           activeSlotId={activeSlotId}
           onSelectSlot={setActiveSlotId}
         />

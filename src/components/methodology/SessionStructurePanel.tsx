@@ -2,15 +2,8 @@
 
 import Link from 'next/link';
 import { CheckCircle2, Circle, Flame, Pencil, Target, Wind } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { sessionStructureSummary } from '@/lib/periodization';
-import {
-  countFilledSlots,
-  resolveMainTasksPerSession,
-  slotDisplayLabel,
-  type SlotRowBase,
-} from '@/lib/microcycle-sessions';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { slotDisplayLabel, type SlotRowBase } from '@/lib/microcycle-sessions';
 import type { SlotType } from '@/lib/methodology';
 import { cn } from '@/lib/utils';
 
@@ -22,7 +15,6 @@ type Props = {
   microcycleId: string;
   sessionIndex: number;
   slots: SessionSlotView[];
-  mainTasksPerSession: 2 | 3;
   activeSlotId: string | null;
   onSelectSlot: (slotId: string) => void;
 };
@@ -34,6 +26,9 @@ const listItemClass = (active: boolean) =>
       ? 'border-primary/50 bg-primary/10 shadow-[inset_2px_0_0_0_hsl(var(--primary))]'
       : 'border-primary/15 hover:border-primary/30 hover:bg-muted/20'
   );
+
+const editButtonClass =
+  'inline-flex size-8 shrink-0 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary';
 
 function SlotListIcon({ slotType, assigned }: { slotType: SlotType; assigned: boolean }) {
   const Icon = slotType === 'warmup' ? Flame : slotType === 'cooldown' ? Wind : Target;
@@ -54,19 +49,13 @@ export function SessionStructurePanel({
   microcycleId,
   sessionIndex,
   slots,
-  mainTasksPerSession,
   activeSlotId,
   onSelectSlot,
 }: Props) {
-  const filled = countFilledSlots(slots);
-
   return (
     <Card className="flex min-h-[28rem] flex-col border border-primary/25 lg:sticky lg:top-[4.5rem] lg:max-h-[calc(100vh-5.5rem)]">
-      <CardHeader className="space-y-1 pb-3">
+      <CardHeader className="pb-3">
         <CardTitle className="text-base">Estructura · Sesión {sessionIndex}</CardTitle>
-        <CardDescription>
-          {sessionStructureSummary(mainTasksPerSession)} · {filled}/{slots.length} asignadas
-        </CardDescription>
       </CardHeader>
 
       <CardContent className="min-h-0 flex-1 overflow-y-auto pt-0">
@@ -76,6 +65,7 @@ export function SessionStructurePanel({
             const assigned = Boolean(slot.exercise_id || slot.title?.trim());
             const active = activeSlotId === slot.id;
             const exerciseTitle = slot.linkedTitle || slot.title;
+            const editHref = `/portal/metodologia/microciclos/${microcycleId}/sesiones/${sessionIndex}/slots/${slot.id}`;
 
             return (
               <li key={slot.id}>
@@ -107,32 +97,23 @@ export function SessionStructurePanel({
                       )}
                     </span>
                   </span>
-                  <Pencil className="size-3.5 shrink-0 text-muted-foreground opacity-70" />
+                  <Link
+                    href={editHref}
+                    onClick={(event) => event.stopPropagation()}
+                    className={editButtonClass}
+                    aria-label={`Editar ficha de ${label}`}
+                    title="Editar ficha del slot"
+                  >
+                    <Pencil className="size-3.5" />
+                  </Link>
                 </button>
               </li>
             );
           })}
         </ul>
       </CardContent>
-
-      {activeSlotId ? (
-        <div className="border-t border-primary/15 p-4">
-          <Button type="button" variant="outline" size="sm" className="w-full" asChild>
-            <Link
-              href={`/portal/metodologia/microciclos/${microcycleId}/sesiones/${sessionIndex}/slots/${activeSlotId}`}
-            >
-              Editar ficha del slot
-            </Link>
-          </Button>
-        </div>
-      ) : null}
     </Card>
   );
 }
 
-export function resolveMainTasksForMicro(meta: {
-  main_tasks_per_session?: number | null;
-  plan_variant_id?: string | null;
-}): 2 | 3 {
-  return resolveMainTasksPerSession(meta);
-}
+export { resolveMainTasksPerSession as resolveMainTasksForMicro } from '@/lib/microcycle-sessions';
