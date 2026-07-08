@@ -58,7 +58,7 @@ export default async function MicrocicloSlotPage({ params }: Props) {
 
   return (
     <PageContainer>
-      <SlotEditor microcycleTitle={bundle.micro.title} slot={payload} />
+      <SlotEditor slot={payload} />
     </PageContainer>
   );
 }

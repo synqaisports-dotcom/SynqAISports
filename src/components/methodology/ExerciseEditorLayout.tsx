@@ -10,6 +10,7 @@ type Props = {
   className?: string;
   formTitle?: string;
   formDescription?: string;
+  showCanvasHeader?: boolean;
 };
 
 /** Layout 40 % pizarra (izq) · 60 % formulario (der) en desktop. */
@@ -19,14 +20,17 @@ export function ExerciseEditorLayout({
   className,
   formTitle = 'Ficha de la tarea',
   formDescription = 'Plantilla UEFA / proyecto ABR',
+  showCanvasHeader = true,
 }: Props) {
   return (
     <div className={cn('grid gap-4 lg:grid-cols-[2fr_3fr] lg:items-start', className)}>
       <Card className="overflow-hidden border border-primary/25">
-        <CardHeader className="space-y-1 border-b border-primary/10 pb-3">
-          <CardTitle className="text-base">Esquema / pizarra</CardTitle>
-          <CardDescription>Toca el icono inferior para editar el dibujo</CardDescription>
-        </CardHeader>
+        {showCanvasHeader ? (
+          <CardHeader className="space-y-1 border-b border-primary/10 pb-3">
+            <CardTitle className="text-base">Esquema / pizarra</CardTitle>
+            <CardDescription>Toca el icono inferior para editar el dibujo</CardDescription>
+          </CardHeader>
+        ) : null}
         <CardContent className="p-0">{canvas}</CardContent>
       </Card>
 

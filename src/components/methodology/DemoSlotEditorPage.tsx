@@ -14,7 +14,6 @@ type Props = {
 
 export function DemoSlotEditorPage({ microcycleId, slotId }: Props) {
   const [slot, setSlot] = useState<SlotEditorPayload | null>(null);
-  const [title, setTitle] = useState('');
 
   useEffect(() => {
     const micro = loadOrHydrateDemoMicrocycle(microcycleId);
@@ -22,7 +21,6 @@ export function DemoSlotEditorPage({ microcycleId, slotId }: Props) {
       setSlot(null);
       return;
     }
-    setTitle(micro.title);
     const found = micro.slots.find((item) => item.id === slotId);
     if (!found) {
       setSlot(null);
@@ -54,5 +52,5 @@ export function DemoSlotEditorPage({ microcycleId, slotId }: Props) {
     );
   }
 
-  return <SlotEditor microcycleTitle={title} slot={slot} />;
+  return <SlotEditor slot={slot} />;
 }

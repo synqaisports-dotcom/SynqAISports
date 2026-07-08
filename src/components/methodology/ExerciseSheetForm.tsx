@@ -14,6 +14,7 @@ type Props = {
   showCanvas?: boolean;
   showTaskType?: boolean;
   layout?: 'stacked' | 'split';
+  showCanvasHeader?: boolean;
 };
 
 const fieldClass = 'border-primary/30 bg-background/80';
@@ -25,6 +26,7 @@ export function ExerciseSheetForm({
   showCanvas = true,
   showTaskType = true,
   layout = 'stacked',
+  showCanvasHeader = true,
 }: Props) {
   const s = sheet;
 
@@ -182,6 +184,7 @@ export function ExerciseSheetForm({
       <ExerciseEditorLayout
         canvas={<ExerciseDrawingTrigger initialData={drawingJson} compact />}
         form={fields}
+        showCanvasHeader={showCanvasHeader}
       />
     );
   }
