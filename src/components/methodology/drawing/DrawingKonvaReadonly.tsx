@@ -15,6 +15,7 @@ import {
   RECT_STROKE_WIDTH_FACTOR,
   type DrawingElement,
   type ExerciseDrawingDocument,
+  type FieldFitMode,
   type FieldRect,
   type StrokeStyle,
   arrowHeadPoints,
@@ -31,6 +32,7 @@ type Props = {
   document: ExerciseDrawingDocument;
   width: number;
   height: number;
+  fit?: FieldFitMode;
 };
 
 function dashArray(style: StrokeStyle) {
@@ -240,7 +242,7 @@ function ReadonlyElement({
   return null;
 }
 
-export function DrawingKonvaReadonly({ document, width, height }: Props) {
+export function DrawingKonvaReadonly({ document, width, height, fit = 'fill-width' }: Props) {
   const [materialImages, setMaterialImages] = useState<Partial<Record<MaterialKind, HTMLImageElement>>>({});
 
   useEffect(() => {
@@ -250,8 +252,8 @@ export function DrawingKonvaReadonly({ document, width, height }: Props) {
   }, []);
 
   const fieldRect = useMemo(
-    () => computeFieldRect(width, height, document.field, 4, {}, 'contain'),
-    [width, height, document.field]
+    () => computeFieldRect(width, height, document.field, 0, {}, fit),
+    [width, height, document.field, fit]
   );
 
   const layeredElements = useMemo(() => sortElementsByLayer(document.elements), [document.elements]);

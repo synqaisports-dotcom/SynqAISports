@@ -22,12 +22,12 @@ export function ExerciseEditorLayout({
 }: Props) {
   return (
     <div className={cn('grid gap-4 lg:grid-cols-[2fr_3fr] lg:items-start', className)}>
-      <Card className="border border-primary/25 lg:sticky lg:top-[4.5rem] lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto">
-        <CardHeader className="pb-3">
+      <Card className="overflow-hidden border border-primary/25">
+        <CardHeader className="space-y-1 border-b border-primary/10 pb-3">
           <CardTitle className="text-base">Esquema / pizarra</CardTitle>
-          <CardDescription>Dibuja el campo y los elementos del ejercicio</CardDescription>
+          <CardDescription>Toca el icono inferior para editar el dibujo</CardDescription>
         </CardHeader>
-        <CardContent>{canvas}</CardContent>
+        <CardContent className="p-0">{canvas}</CardContent>
       </Card>
 
       <Card className="border border-primary/25">
