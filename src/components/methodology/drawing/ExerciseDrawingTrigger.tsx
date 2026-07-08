@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils';
 type Props = {
   name?: string;
   initialData?: unknown;
-  /** Vista compacta en formulario split: solo campo + icono de acción abajo */
+  /** Vista compacta en formulario split: solo campo + icono de acción arriba a la derecha */
   compact?: boolean;
 };
 
@@ -48,21 +48,19 @@ export function ExerciseDrawingTrigger({
             style={{ aspectRatio: previewAspect }}
             aria-label="Crear dibujo en la pizarra"
           >
-            Sin esquema — pulsa el icono inferior
+            Sin esquema — pulsa el icono superior
           </button>
         )}
 
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center bg-gradient-to-t from-black/55 via-black/20 to-transparent pb-3 pt-8">
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            className={cn(canvasActionClass, 'pointer-events-auto')}
-            aria-label={isEmpty ? 'Crear dibujo' : 'Modificar dibujo'}
-            title={isEmpty ? 'Crear dibujo' : 'Modificar dibujo'}
-          >
-            {isEmpty ? <PenLine className="size-4" /> : <Pencil className="size-4" />}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className={cn(canvasActionClass, 'absolute right-3 top-3 z-10')}
+          aria-label={isEmpty ? 'Crear dibujo' : 'Modificar dibujo'}
+          title={isEmpty ? 'Crear dibujo' : 'Modificar dibujo'}
+        >
+          {isEmpty ? <PenLine className="size-4" /> : <Pencil className="size-4" />}
+        </button>
 
         <input type="hidden" name={name} value={json} readOnly />
 
