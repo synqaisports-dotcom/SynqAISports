@@ -14,6 +14,8 @@ type Props = {
   document: ExerciseDrawingDocument;
   className?: string;
   fieldClassName?: string;
+  /** `horizontal` fuerza campo en apaisado (sin rotación vertical de miniatura). */
+  orientation?: 'auto' | 'horizontal';
 };
 
 function KonvaPreviewCanvas({ document }: { document: ExerciseDrawingDocument }) {
@@ -48,11 +50,13 @@ function KonvaPreviewCanvas({ document }: { document: ExerciseDrawingDocument })
 }
 
 /** Miniatura del dibujo con el mismo motor Konva que la pizarra. */
-export function DrawingPreviewFrame({ document, className }: Props) {
+export function DrawingPreviewFrame({ document, className, orientation = 'auto' }: Props) {
   const field: FieldTemplate = document.field;
   const { aspectRatio } = FIELD_TEMPLATES[field];
-  const portrait = drawingPreviewUsesPortraitRotation(field);
-  const previewAspect = drawingPreviewAspectRatio(field);
+  const portrait =
+    orientation === 'horizontal' ? false : drawingPreviewUsesPortraitRotation(field);
+  const previewAspect =
+    orientation === 'horizontal' ? aspectRatio : drawingPreviewAspectRatio(field);
 
   const scene = <KonvaPreviewCanvas document={document} />;
 
