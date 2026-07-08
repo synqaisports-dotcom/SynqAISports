@@ -86,16 +86,25 @@ export function SessionStructurePanel({
                 >
                   <SlotListIcon slotType={slot.slot_type as SlotType} assigned={assigned} />
                   <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-2">
+                    <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
                       {assigned ? (
                         <CheckCircle2 className="size-3.5 shrink-0 text-emerald-400" />
                       ) : (
                         <Circle className="size-3.5 shrink-0 text-muted-foreground/50" />
                       )}
-                      <span className="truncate text-sm font-medium text-foreground">{label}</span>
-                    </span>
-                    <span className="mt-0.5 block truncate text-xs text-muted-foreground">
-                      {exerciseTitle || 'Sin asignar'}
+                      <span className="text-sm font-medium text-foreground">{label}</span>
+                      {exerciseTitle ? (
+                        <>
+                          <span aria-hidden className="text-muted-foreground/40">
+                            ·
+                          </span>
+                          <span className="min-w-0 truncate text-xs font-semibold uppercase tracking-wide text-primary sm:text-sm">
+                            {exerciseTitle}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Sin asignar</span>
+                      )}
                     </span>
                   </span>
                   <Pencil className="size-3.5 shrink-0 text-muted-foreground opacity-70" />
