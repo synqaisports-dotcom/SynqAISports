@@ -26,14 +26,8 @@ export default async function NuevoEjercicioPage({ searchParams }: Props) {
 
   return (
     <PageContainer>
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Nuevo ejercicio</h1>
-        <p className="text-sm text-muted-foreground">
-          Crea la ficha y el esquema en pizarra. Se guardará en el catálogo del club.
-        </p>
-      </div>
-      <MethodologySubnav />
-      <div className="mt-6">
+      <div className="space-y-4">
+        <MethodologySubnav />
         <ExerciseEditor
           defaultTaskType={taskType}
           categorySlug={categorySlug}
