@@ -199,6 +199,10 @@ export function getDemoExerciseById(id: string): DemoExerciseRecord | undefined 
   return DEMO_EXERCISES.find((exercise) => exercise.id === id);
 }
 
+export function isDemoExerciseId(id: string): boolean {
+  return id.startsWith('demo-exercise-');
+}
+
 export function resolveDemoExerciseDrawing(exerciseId: string | null | undefined): unknown {
   if (!exerciseId) return undefined;
   return getDemoExerciseById(exerciseId)?.drawing_json;

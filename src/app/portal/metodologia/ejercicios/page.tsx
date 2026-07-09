@@ -2,6 +2,7 @@ import { ExercisesMasterDetail } from '@/components/methodology/ExercisesMasterD
 import { MethodologySubnav } from '@/components/methodology/MethodologySubnav';
 import { PageContainer } from '@/components/portal/PageContainer';
 import { loadExerciseLibrary } from '@/lib/microcycle-page-data';
+import { isDemoActive } from '@/lib/demo';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import { redirect } from 'next/navigation';
@@ -16,7 +17,10 @@ export default async function EjerciciosListPage({ searchParams }: Props) {
   const ctx = await getStaffContext(supabase);
   if (!ctx) redirect('/login');
 
-  const exercises = await loadExerciseLibrary(supabase, ctx.club.id);
+  const [exercises, demoMode] = await Promise.all([
+    loadExerciseLibrary(supabase, ctx.club.id),
+    isDemoActive(),
+  ]);
 
   return (
     <PageContainer>
@@ -24,7 +28,11 @@ export default async function EjerciciosListPage({ searchParams }: Props) {
 
       <MethodologySubnav />
 
-      <ExercisesMasterDetail exercises={exercises} initialExerciseId={initialExerciseId} />
+      <ExercisesMasterDetail
+        exercises={exercises}
+        initialExerciseId={initialExerciseId}
+        demoMode={demoMode}
+      />
     </PageContainer>
   );
 }

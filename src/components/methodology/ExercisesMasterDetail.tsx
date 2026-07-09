@@ -4,8 +4,9 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { BookOpen, Eye, Pencil, Plus, Printer, Search, Trash2 } from 'lucide-react';
-import { deleteExercise } from '@/app/actions/methodology';
+import { deleteExercise, updateExerciseDrawing } from '@/app/actions/methodology';
 import { DrawingPreviewFrame } from '@/components/methodology/drawing/DrawingPreviewFrame';
+import { ExerciseDrawingStudio } from '@/components/methodology/drawing/ExerciseDrawingStudio';
 import { ExercisePreviewOverlay } from '@/components/methodology/ExercisePreviewOverlay';
 import { PortalConfirmDialog } from '@/components/portal/PortalConfirmDialog';
 import { SynqSelect } from '@/components/portal/SynqSelect';
@@ -22,6 +23,11 @@ import {
   TASK_TYPE_LABELS,
   type TaskType,
 } from '@/lib/exercise-sheet';
+import {
+  isDemoExerciseId,
+  readDemoDrawingOverrides,
+  updateDemoExerciseDrawing,
+} from '@/lib/demo-exercises-store';
 import { cn } from '@/lib/utils';
 
 export type ExerciseListRecord = {
@@ -38,6 +44,7 @@ export type ExerciseListRecord = {
 type Props = {
   exercises: ExerciseListRecord[];
   initialExerciseId?: string | null;
+  demoMode?: boolean;
 };
 
 const actionButtonClass =
@@ -74,14 +81,21 @@ function DataRow({ label, value }: { label: string; value: string }) {
 function ExerciseDetailPanel({
   exercise,
   onDeleted,
+  onDrawingSave,
 }: {
   exercise: ExerciseListRecord | null;
   onDeleted: () => void;
+  onDrawingSave: (json: string) => void;
 }) {
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [studioOpen, setStudioOpen] = useState(false);
+
+  useEffect(() => {
+    setStudioOpen(false);
+  }, [exercise?.id]);
 
   if (!exercise) {
     return (
@@ -117,6 +131,12 @@ function ExerciseDetailPanel({
 
   const handlePrint = () => {
     if (!exercise) return;
+    if (isDemoExerciseId(exercise.id) && typeof window !== 'undefined') {
+      sessionStorage.setItem(
+        `synq-print-drawing-${exercise.id}`,
+        JSON.stringify(exercise.drawing_json ?? null)
+      );
+    }
     window.open(`/print/ficha/ejercicio/${exercise.id}`, '_blank', 'noopener,noreferrer');
   };
 
@@ -155,14 +175,15 @@ function ExerciseDetailPanel({
             )}
 
             <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-gradient-to-t from-background/95 via-background/55 to-transparent px-2 pb-2 pt-8">
-              <Link
-                href={`/portal/metodologia/ejercicios/${exercise.id}`}
+              <button
+                type="button"
+                onClick={() => setStudioOpen(true)}
                 className={actionButtonClass}
-                aria-label="Editar ejercicio"
-                title="Editar ejercicio"
+                aria-label="Modificar dibujo"
+                title="Modificar dibujo"
               >
                 <Pencil className="size-4" />
-              </Link>
+              </button>
               <button
                 type="button"
                 onClick={() => setPreviewOpen(true)}
@@ -248,12 +269,48 @@ function ExerciseDetailPanel({
         pending={deleting}
         onConfirm={() => void handleDeleteConfirm()}
       />
+
+      <ExerciseDrawingStudio
+        open={studioOpen}
+        initialData={exercise.drawing_json}
+        onClose={() => setStudioOpen(false)}
+        onSave={(next) => {
+          onDrawingSave(next);
+          setStudioOpen(false);
+        }}
+      />
     </>
   );
 }
 
-export function ExercisesMasterDetail({ exercises, initialExerciseId }: Props) {
+export function ExercisesMasterDetail({ exercises, initialExerciseId, demoMode = false }: Props) {
   const router = useRouter();
+  const [drawingOverrides, setDrawingOverrides] = useState<Record<string, unknown>>({});
+
+  useEffect(() => {
+    if (demoMode) {
+      setDrawingOverrides(readDemoDrawingOverrides());
+    }
+  }, [demoMode]);
+
+  const resolvedExercises = useMemo(
+    () =>
+      exercises.map((exercise) => ({
+        ...exercise,
+        drawing_json: drawingOverrides[exercise.id] ?? exercise.drawing_json,
+      })),
+    [exercises, drawingOverrides]
+  );
+
+  const handleDrawingSave = (exerciseId: string, json: string) => {
+    const parsed = JSON.parse(json) as unknown;
+    setDrawingOverrides((current) => ({ ...current, [exerciseId]: parsed }));
+    if (isDemoExerciseId(exerciseId)) {
+      updateDemoExerciseDrawing(exerciseId, parsed);
+      return;
+    }
+    void updateExerciseDrawing(exerciseId, json).then(() => router.refresh());
+  };
   const [search, setSearch] = useState('');
   const [taskFilter, setTaskFilter] = useState<'all' | TaskType>('all');
   const [selectedId, setSelectedId] = useState<string | null>(
@@ -264,7 +321,7 @@ export function ExercisesMasterDetail({ exercises, initialExerciseId }: Props) {
 
   const filteredExercises = useMemo(() => {
     const query = search.trim().toLowerCase();
-    let list = [...exercises];
+    let list = [...resolvedExercises];
 
     if (taskFilter !== 'all') {
       list = list.filter((exercise) => {
@@ -287,22 +344,22 @@ export function ExercisesMasterDetail({ exercises, initialExerciseId }: Props) {
 
     list.sort((a, b) => a.title.localeCompare(b.title, 'es', { sensitivity: 'base' }));
     return list;
-  }, [exercises, search, taskFilter]);
+  }, [resolvedExercises, search, taskFilter]);
 
   const selectedExercise =
-    exercises.find((exercise) => exercise.id === selectedId) ?? filteredExercises[0] ?? null;
+    resolvedExercises.find((exercise) => exercise.id === selectedId) ?? filteredExercises[0] ?? null;
 
   useEffect(() => {
-    if (initialExerciseId && exercises.some((exercise) => exercise.id === initialExerciseId)) {
+    if (initialExerciseId && resolvedExercises.some((exercise) => exercise.id === initialExerciseId)) {
       setSelectedId(initialExerciseId);
     }
-  }, [initialExerciseId, exercises]);
+  }, [initialExerciseId, resolvedExercises]);
 
   useEffect(() => {
-    if (selectedId && !exercises.some((exercise) => exercise.id === selectedId)) {
-      setSelectedId(exercises[0]?.id ?? null);
+    if (selectedId && !resolvedExercises.some((exercise) => exercise.id === selectedId)) {
+      setSelectedId(resolvedExercises[0]?.id ?? null);
     }
-  }, [exercises, selectedId]);
+  }, [resolvedExercises, selectedId]);
 
   useEffect(() => {
     if (selectedId && !filteredExercises.some((exercise) => exercise.id === selectedId)) {
@@ -331,7 +388,7 @@ export function ExercisesMasterDetail({ exercises, initialExerciseId }: Props) {
             <div>
               <CardTitle className="text-base">Biblioteca</CardTitle>
               <CardDescription>
-                {filteredExercises.length} de {exercises.length} ejercicios
+                {filteredExercises.length} de {resolvedExercises.length} ejercicios
               </CardDescription>
             </div>
             <Link
@@ -363,7 +420,7 @@ export function ExercisesMasterDetail({ exercises, initialExerciseId }: Props) {
         <CardContent className="min-h-0 flex-1 overflow-y-auto pt-0">
           {filteredExercises.length === 0 ? (
             <p className="rounded-lg border border-dashed border-primary/20 px-4 py-8 text-center text-sm text-muted-foreground">
-              {exercises.length === 0
+              {resolvedExercises.length === 0
                 ? 'No hay ejercicios todavía. Pulsa + para crear el primero.'
                 : 'No hay ejercicios con esos filtros.'}
             </p>
@@ -406,6 +463,9 @@ export function ExercisesMasterDetail({ exercises, initialExerciseId }: Props) {
         onDeleted={() => {
           setSelectedId(null);
           router.replace('/portal/metodologia/ejercicios', { scroll: false });
+        }}
+        onDrawingSave={(json) => {
+          if (selectedExercise) handleDrawingSave(selectedExercise.id, json);
         }}
       />
     </div>

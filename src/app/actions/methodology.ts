@@ -167,6 +167,37 @@ export async function updateExercise(
   return { ok: true };
 }
 
+export async function updateExerciseDrawing(
+  exerciseId: string,
+  drawingRaw: string
+): Promise<ActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'unauthorized' };
+
+  let drawing_json;
+  try {
+    drawing_json = parseDrawingJson(JSON.parse(drawingRaw));
+  } catch {
+    return { ok: false, message: 'validation' };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('synq_exercises')
+    .update({
+      drawing_json,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', exerciseId)
+    .eq('club_id', clubId);
+
+  if (error) return { ok: false, message: 'error' };
+
+  revalidatePath('/portal/metodologia/ejercicios');
+  revalidatePath(`/portal/metodologia/ejercicios/${exerciseId}`);
+  return { ok: true };
+}
+
 export async function deleteExercise(exerciseId: string): Promise<ActionState> {
   const clubId = await requireClubId();
   if (!clubId) return { ok: false, message: 'unauthorized' };
