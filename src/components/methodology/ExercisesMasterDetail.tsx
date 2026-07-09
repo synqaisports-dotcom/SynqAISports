@@ -173,12 +173,12 @@ function ExerciseDetailPanel({
         </CardHeader>
 
         <CardContent className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
-          <div className="relative w-full overflow-hidden rounded-2xl border border-primary/30 bg-[#060a12] shadow-[0_0_24px_hsl(183_100%_50%_/_0.08)]">
+          <div className="relative w-full overflow-hidden rounded-2xl border border-primary/30 shadow-[0_0_24px_hsl(183_100%_50%_/_0.08)]">
             {hasDrawing ? (
               <DrawingPreviewFrame
                 document={drawingDoc}
                 orientation="horizontal"
-                className="w-full max-h-[min(16rem,40vw)]"
+                className="w-full rounded-none"
               />
             ) : (
               <div

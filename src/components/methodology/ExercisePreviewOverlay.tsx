@@ -105,12 +105,12 @@ export function ExercisePreviewOverlay({ exercise, open, onOpenChange }: Props) 
       </header>
 
       <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
-        <div className="flex min-h-[40vh] items-center justify-center border-b border-primary/30 bg-[#060a12] p-4 shadow-[inset_0_0_40px_hsl(183_100%_50%_/_0.06)] lg:min-h-0 lg:border-b-0 lg:border-r">
+        <div className="w-full self-start border-b border-primary/30 p-3 sm:p-4 lg:border-b-0 lg:border-r">
           {hasDrawing ? (
             <DrawingPreviewFrame
               document={drawingDoc}
               orientation="horizontal"
-              className="h-full max-h-full w-full max-w-full"
+              className="w-full"
             />
           ) : (
             <p className="text-sm text-muted-foreground">Sin esquema en pizarra</p>

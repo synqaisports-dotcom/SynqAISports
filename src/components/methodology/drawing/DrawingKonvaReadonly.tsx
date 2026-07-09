@@ -271,7 +271,7 @@ export function DrawingKonvaReadonly({ document, width, height, fit = 'fill-widt
   return (
     <Stage width={width} height={height} listening={false}>
       <Layer listening={false}>
-        <Rect x={0} y={0} width={width} height={height} fill="#060a12" listening={false} />
+        <Rect x={0} y={0} width={width} height={height} fill="#45b85a" listening={false} />
         <KonvaPitchLayer rect={fieldRect} template={document.field} />
         {shapeElements.map((element) => (
           <ReadonlyElement

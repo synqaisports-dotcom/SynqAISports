@@ -6,6 +6,7 @@ import {
   FIELD_TEMPLATES,
   drawingPreviewAspectRatio,
   drawingPreviewUsesPortraitRotation,
+  type FieldFitMode,
 } from '@/lib/exercise-drawing';
 import { DrawingKonvaReadonly } from '@/components/methodology/drawing/DrawingKonvaReadonly';
 import { cn } from '@/lib/utils';
@@ -16,9 +17,16 @@ type Props = {
   fieldClassName?: string;
   /** `horizontal` fuerza campo en apaisado (sin rotación vertical de miniatura). */
   orientation?: 'auto' | 'horizontal';
+  fit?: FieldFitMode;
 };
 
-function KonvaPreviewCanvas({ document }: { document: ExerciseDrawingDocument }) {
+function KonvaPreviewCanvas({
+  document,
+  fit,
+}: {
+  document: ExerciseDrawingDocument;
+  fit: FieldFitMode;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
 
@@ -43,27 +51,34 @@ function KonvaPreviewCanvas({ document }: { document: ExerciseDrawingDocument })
   return (
     <div ref={containerRef} className="h-full w-full">
       {size.width > 0 && size.height > 0 ? (
-        <DrawingKonvaReadonly document={document} width={size.width} height={size.height} />
+        <DrawingKonvaReadonly document={document} width={size.width} height={size.height} fit={fit} />
       ) : null}
     </div>
   );
 }
 
 /** Miniatura del dibujo con el mismo motor Konva que la pizarra. */
-export function DrawingPreviewFrame({ document, className, orientation = 'auto' }: Props) {
+export function DrawingPreviewFrame({
+  document,
+  className,
+  orientation = 'auto',
+  fit,
+}: Props) {
   const field: FieldTemplate = document.field;
   const { aspectRatio } = FIELD_TEMPLATES[field];
   const portrait =
     orientation === 'horizontal' ? false : drawingPreviewUsesPortraitRotation(field);
   const previewAspect =
     orientation === 'horizontal' ? aspectRatio : drawingPreviewAspectRatio(field);
+  const previewFit: FieldFitMode =
+    fit ?? (orientation === 'horizontal' ? 'fill-width-top' : 'fill-width');
 
-  const scene = <KonvaPreviewCanvas document={document} />;
+  const scene = <KonvaPreviewCanvas document={document} fit={previewFit} />;
 
   if (!portrait) {
     return (
       <div
-        className={cn('relative overflow-hidden rounded-md bg-[#060a12]', className)}
+        className={cn('relative w-full overflow-hidden rounded-md', className)}
         style={{ aspectRatio: previewAspect }}
       >
         {scene}

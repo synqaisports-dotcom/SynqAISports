@@ -496,7 +496,7 @@ export type FieldRectInsets = {
   right?: number;
 };
 
-export type FieldFitMode = 'contain' | 'fill-width' | 'fill-width-top';
+export type FieldFitMode = 'contain' | 'fill-width' | 'fill-width-top' | 'cover';
 
 export function computeFieldRect(
   stageWidth: number,
@@ -532,6 +532,21 @@ export function computeFieldRect(
     return {
       x: left + (availW - width) / 2,
       y: top,
+      width,
+      height,
+    };
+  }
+
+  if (fit === 'cover') {
+    let width = availW;
+    let height = width / aspect;
+    if (height < availH) {
+      height = availH;
+      width = height * aspect;
+    }
+    return {
+      x: left + (availW - width) / 2,
+      y: top + (availH - height) / 2,
       width,
       height,
     };
