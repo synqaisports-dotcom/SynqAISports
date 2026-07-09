@@ -1,5 +1,6 @@
 import { ChangeRequestsPanel, type ChangeRequestRow } from '@/components/methodology/ChangeRequestsPanel';
 import { MethodologySubnav } from '@/components/methodology/MethodologySubnav';
+import { PageContainer } from '@/components/portal/PageContainer';
 import { getStaffContext } from '@/lib/portal';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
@@ -16,16 +17,12 @@ export default async function SolicitudesPage() {
     .order('created_at', { ascending: false });
 
   return (
-    <div>
-      <h1 className="font-serif-display text-3xl text-white">Solicitudes de cambio</h1>
-      <p className="mt-2 text-synq-muted">
-        Flujo de aprobación para cambios propuestos por entrenadores desde la vista Entrenador o
-        registro manual.
-      </p>
+    <PageContainer>
+      <h1 className="text-2xl font-semibold tracking-tight">Solicitudes</h1>
+
       <MethodologySubnav />
-      <div className="mt-6">
-        <ChangeRequestsPanel requests={(requests ?? []) as ChangeRequestRow[]} />
-      </div>
-    </div>
+
+      <ChangeRequestsPanel requests={(requests ?? []) as ChangeRequestRow[]} />
+    </PageContainer>
   );
 }
