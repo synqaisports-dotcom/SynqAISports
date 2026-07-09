@@ -3,9 +3,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { BookOpen, Pencil, Plus, Printer, Search, Trash2 } from 'lucide-react';
+import { BookOpen, Eye, Pencil, Plus, Printer, Search, Trash2 } from 'lucide-react';
 import { deleteExercise } from '@/app/actions/methodology';
 import { DrawingPreviewFrame } from '@/components/methodology/drawing/DrawingPreviewFrame';
+import { ExercisePreviewOverlay } from '@/components/methodology/ExercisePreviewOverlay';
+import { PortalConfirmDialog } from '@/components/portal/PortalConfirmDialog';
 import { SynqSelect } from '@/components/portal/SynqSelect';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -78,6 +80,8 @@ function ExerciseDetailPanel({
 }) {
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   if (!exercise) {
     return (
@@ -101,18 +105,25 @@ function ExerciseDetailPanel({
   const drawingDoc = parseExerciseDrawing(exercise.drawing_json);
   const hasDrawing = !drawingDocumentIsEmpty(drawingDoc);
 
-  const handleDelete = async () => {
-    if (!window.confirm(`¿Eliminar el ejercicio «${exercise.title}»?`)) return;
+  const handleDeleteConfirm = async () => {
+    if (!exercise) return;
     setDeleting(true);
     await deleteExercise(exercise.id);
     setDeleting(false);
+    setDeleteOpen(false);
     onDeleted();
     router.refresh();
   };
 
+  const handlePrint = () => {
+    if (!exercise) return;
+    window.open(`/print/ficha/ejercicio/${exercise.id}`, '_blank', 'noopener,noreferrer');
+  };
+
   return (
-    <Card className="flex h-full min-h-[28rem] flex-col border border-primary/25">
-      <CardHeader className="pb-3">
+    <>
+      <Card className="flex h-full min-h-[28rem] flex-col border border-primary/25">
+        <CardHeader className="pb-3">
         <div className="flex flex-wrap items-center gap-2">
           <CardTitle className="text-lg font-semibold tracking-tight">{exercise.title}</CardTitle>
           <Badge variant="outline" className="border-primary/25 text-[10px]">
@@ -123,9 +134,9 @@ function ExerciseDetailPanel({
           {sheet.conditionalGrid.time || `${durationMin} min`}
           {sheet.didacticStrategy ? ` · ${sheet.didacticStrategy}` : ''}
         </CardDescription>
-      </CardHeader>
+        </CardHeader>
 
-      <CardContent className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
+        <CardContent className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1.35fr)] lg:items-start">
           <div className="relative mx-auto w-full max-w-full overflow-hidden rounded-2xl border border-primary/30 bg-[#060a12] shadow-[0_0_24px_hsl(183_100%_50%_/_0.08)]">
             {hasDrawing ? (
@@ -152,19 +163,28 @@ function ExerciseDetailPanel({
               >
                 <Pencil className="size-4" />
               </Link>
-              <Link
-                href={`/print/ficha/ejercicio/${exercise.id}`}
+              <button
+                type="button"
+                onClick={() => setPreviewOpen(true)}
                 className={actionButtonClass}
-                aria-label="Imprimir ficha"
-                title="Imprimir ficha"
-                target="_blank"
+                aria-label="Previsualizar ejercicio"
+                title="Previsualizar"
+              >
+                <Eye className="size-4" />
+              </button>
+              <button
+                type="button"
+                onClick={handlePrint}
+                className={actionButtonClass}
+                aria-label="Imprimir o guardar PDF"
+                title="Imprimir / PDF"
               >
                 <Printer className="size-4" />
-              </Link>
+              </button>
               <button
                 type="button"
                 disabled={deleting}
-                onClick={() => void handleDelete()}
+                onClick={() => setDeleteOpen(true)}
                 className={cn(actionButtonClass, 'hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive')}
                 aria-label="Eliminar ejercicio"
                 title="Eliminar ejercicio"
@@ -210,7 +230,25 @@ function ExerciseDetailPanel({
           </div>
         </div>
       </CardContent>
-    </Card>
+      </Card>
+
+      <ExercisePreviewOverlay
+        exercise={exercise}
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+      />
+
+      <PortalConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Eliminar ejercicio"
+        description={`¿Eliminar el ejercicio «${exercise.title}»? Se quitará del catálogo del club y no podrás recuperarlo.`}
+        confirmLabel="Eliminar"
+        destructive
+        pending={deleting}
+        onConfirm={() => void handleDeleteConfirm()}
+      />
+    </>
   );
 }
 
