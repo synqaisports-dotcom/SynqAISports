@@ -9,7 +9,6 @@ import { DrawingPreviewFrame } from '@/components/methodology/drawing/DrawingPre
 import { ExerciseDrawingStudio } from '@/components/methodology/drawing/ExerciseDrawingStudio';
 import { ExercisePreviewOverlay } from '@/components/methodology/ExercisePreviewOverlay';
 import { PortalConfirmDialog } from '@/components/portal/PortalConfirmDialog';
-import { SynqSelect } from '@/components/portal/SynqSelect';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -59,6 +58,21 @@ const listItemClass = (active: boolean) =>
   );
 
 const sectionClass = 'rounded-xl border border-primary/15 bg-muted/5 p-4';
+
+const TYPE_FILTER_OPTIONS: { value: 'all' | TaskType; label: string }[] = [
+  { value: 'all', label: 'Ver todos los ejercicios' },
+  { value: 'warmup', label: 'Calentamiento' },
+  { value: 'main', label: 'Parte principal' },
+  { value: 'cooldown', label: 'Vuelta a la calma' },
+];
+
+const filterButtonClass = (active: boolean) =>
+  cn(
+    'w-full rounded-lg border px-3 py-2.5 text-left text-sm transition-colors',
+    active
+      ? 'border-primary/50 bg-primary/10 font-medium text-primary shadow-[inset_2px_0_0_0_hsl(var(--primary))]'
+      : 'border-primary/15 text-muted-foreground hover:border-primary/30 hover:bg-muted/20 hover:text-foreground'
+  );
 
 function ExerciseListIcon() {
   return (
@@ -157,18 +171,17 @@ function ExerciseDetailPanel({
         </CardHeader>
 
         <CardContent className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1.35fr)] lg:items-start">
-          <div className="relative mx-auto w-full max-w-full overflow-hidden rounded-2xl border border-primary/30 bg-[#060a12] shadow-[0_0_24px_hsl(183_100%_50%_/_0.08)]">
+          <div className="relative w-full overflow-hidden rounded-2xl border border-primary/30 bg-[#060a12] shadow-[0_0_24px_hsl(183_100%_50%_/_0.08)]">
             {hasDrawing ? (
               <DrawingPreviewFrame
                 document={drawingDoc}
                 orientation="horizontal"
-                className="w-full max-h-[min(14rem,36vw)]"
+                className="w-full max-h-[min(16rem,40vw)]"
               />
             ) : (
               <div
                 className="flex w-full items-center justify-center bg-[#060a12] text-xs text-muted-foreground"
-                style={{ aspectRatio: '105 / 68', maxHeight: '14rem' }}
+                style={{ aspectRatio: '105 / 68', maxHeight: '16rem' }}
               >
                 Sin esquema en pizarra
               </div>
@@ -231,26 +244,25 @@ function ExerciseDetailPanel({
               </div>
             </div>
           </div>
-        </div>
 
-        <div className="grid gap-4 lg:grid-cols-3">
-          <DataRow label={SHEET_FIELD_LABELS.technicalAction} value={sheet.technicalAction} />
-          <DataRow label={SHEET_FIELD_LABELS.tacticalAction} value={sheet.tacticalAction} />
-          <DataRow label={SHEET_FIELD_LABELS.collectiveContent} value={sheet.collectiveContent} />
-        </div>
-
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div className={sectionClass}>
-            <DataRow label={SHEET_FIELD_LABELS.description} value={sheet.description} />
+          <div className="grid gap-4 lg:grid-cols-3">
+            <DataRow label={SHEET_FIELD_LABELS.technicalAction} value={sheet.technicalAction} />
+            <DataRow label={SHEET_FIELD_LABELS.tacticalAction} value={sheet.tacticalAction} />
+            <DataRow label={SHEET_FIELD_LABELS.collectiveContent} value={sheet.collectiveContent} />
           </div>
-          <div className={sectionClass}>
-            <DataRow label={SHEET_FIELD_LABELS.rules} value={sheet.rules} />
-            <div className="mt-3">
-              <DataRow label={SHEET_FIELD_LABELS.coachingCues} value={sheet.coachingCues} />
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className={sectionClass}>
+              <DataRow label={SHEET_FIELD_LABELS.description} value={sheet.description} />
+            </div>
+            <div className={sectionClass}>
+              <DataRow label={SHEET_FIELD_LABELS.rules} value={sheet.rules} />
+              <div className="mt-3">
+                <DataRow label={SHEET_FIELD_LABELS.coachingCues} value={sheet.coachingCues} />
+              </div>
             </div>
           </div>
-        </div>
-      </CardContent>
+        </CardContent>
       </Card>
 
       <ExercisePreviewOverlay
@@ -372,14 +384,6 @@ export function ExercisesMasterDetail({ exercises, initialExerciseId, demoMode =
     router.replace(`/portal/metodologia/ejercicios?exercise=${exerciseId}`, { scroll: false });
   };
 
-  const taskOptions = [
-    { value: 'all', label: 'Todos los tipos' },
-    ...(Object.keys(TASK_TYPE_LABELS) as TaskType[]).map((key) => ({
-      value: key,
-      label: TASK_TYPE_LABELS[key],
-    })),
-  ];
-
   return (
     <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
       <Card className="flex min-h-[28rem] flex-col border border-primary/25 lg:sticky lg:top-[4.5rem] lg:max-h-[calc(100vh-5.5rem)]">
@@ -410,11 +414,18 @@ export function ExercisesMasterDetail({ exercises, initialExerciseId, demoMode =
                 className="border-primary/30 bg-background/80 pl-9"
               />
             </div>
-            <SynqSelect
-              value={taskFilter}
-              onChange={(value) => setTaskFilter(value as 'all' | TaskType)}
-              options={taskOptions}
-            />
+            <div className="space-y-1.5">
+              {TYPE_FILTER_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setTaskFilter(option.value)}
+                  className={filterButtonClass(taskFilter === option.value)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
           </div>
         </CardHeader>
         <CardContent className="min-h-0 flex-1 overflow-y-auto pt-0">
