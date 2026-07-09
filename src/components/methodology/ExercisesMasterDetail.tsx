@@ -158,16 +158,18 @@ function ExerciseDetailPanel({
     <>
       <Card className="flex h-full min-h-[28rem] flex-col border border-primary/25">
         <CardHeader className="pb-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <CardTitle className="text-lg font-semibold tracking-tight">{exercise.title}</CardTitle>
-          <Badge variant="outline" className="border-primary/25 text-[10px]">
-            {taskLabel}
-          </Badge>
-        </div>
-        <CardDescription>
-          {sheet.conditionalGrid.time || `${durationMin} min`}
-          {sheet.didacticStrategy ? ` · ${sheet.didacticStrategy}` : ''}
-        </CardDescription>
+          <div className="synq-section-border rounded-xl px-4 py-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <CardTitle className="text-lg font-semibold tracking-tight">{exercise.title}</CardTitle>
+              <Badge variant="outline" className="border-primary/40 bg-primary/10 text-[10px] text-primary">
+                {taskLabel}
+              </Badge>
+            </div>
+            <CardDescription className="mt-1 text-primary/70">
+              {sheet.conditionalGrid.time || `${durationMin} min`}
+              {sheet.didacticStrategy ? ` · ${sheet.didacticStrategy}` : ''}
+            </CardDescription>
+          </div>
         </CardHeader>
 
         <CardContent className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">

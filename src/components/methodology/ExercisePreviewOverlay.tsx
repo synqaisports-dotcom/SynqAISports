@@ -76,30 +76,32 @@ export function ExercisePreviewOverlay({ exercise, open, onOpenChange }: Props) 
       aria-modal="true"
       aria-label={`Previsualización: ${exercise.title}`}
     >
-      <header className="portal-subnav-divider flex shrink-0 items-start justify-between gap-3 px-4 py-3 sm:px-6">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">
-              {exercise.title}
-            </h2>
-            <Badge variant="outline" className="border-primary/40 bg-primary/10 text-[10px] text-primary">
-              {taskLabel}
-            </Badge>
+      <header className="shrink-0 px-4 py-3 sm:px-6">
+        <div className="synq-section-border flex items-start justify-between gap-3 rounded-xl px-4 py-3 sm:px-5">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">
+                {exercise.title}
+              </h2>
+              <Badge variant="outline" className="border-primary/40 bg-primary/10 text-[10px] text-primary">
+                {taskLabel}
+              </Badge>
+            </div>
+            <p className="mt-1 text-sm text-primary/70">
+              {sheet.conditionalGrid.time || `${durationMin} min`}
+              {sheet.didacticStrategy ? ` · ${sheet.didacticStrategy}` : ''}
+            </p>
           </div>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            {sheet.conditionalGrid.time || `${durationMin} min`}
-            {sheet.didacticStrategy ? ` · ${sheet.didacticStrategy}` : ''}
-          </p>
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/5 text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
+            aria-label="Cerrar previsualización"
+            title="Cerrar"
+          >
+            <X className="size-5" />
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => onOpenChange(false)}
-          className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
-          aria-label="Cerrar previsualización"
-          title="Cerrar"
-        >
-          <X className="size-5" />
-        </button>
       </header>
 
       <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
