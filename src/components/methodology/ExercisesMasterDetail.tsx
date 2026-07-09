@@ -68,9 +68,9 @@ const TYPE_FILTER_OPTIONS: { value: 'all' | TaskType; label: string }[] = [
 
 const filterButtonClass = (active: boolean) =>
   cn(
-    'w-full rounded-lg border px-3 py-2.5 text-left text-sm transition-colors',
+    'min-w-0 rounded-lg border px-1.5 py-2 text-center text-[11px] leading-snug transition-colors sm:px-2 sm:text-xs',
     active
-      ? 'border-primary/50 bg-primary/10 font-medium text-primary shadow-[inset_2px_0_0_0_hsl(var(--primary))]'
+      ? 'border-primary/50 bg-primary/10 font-medium text-primary'
       : 'border-primary/15 text-muted-foreground hover:border-primary/30 hover:bg-muted/20 hover:text-foreground'
   );
 
@@ -414,7 +414,7 @@ export function ExercisesMasterDetail({ exercises, initialExerciseId, demoMode =
                 className="border-primary/30 bg-background/80 pl-9"
               />
             </div>
-            <div className="space-y-1.5">
+            <div className="grid grid-cols-4 gap-1.5">
               {TYPE_FILTER_OPTIONS.map((option) => (
                 <button
                   key={option.value}
