@@ -81,8 +81,13 @@ export function enrichOrganigramaNodes(
 ): OrganigramaNodeView[] {
   const map = peopleById(people);
   const enrich = (node: OrganigramaNode): OrganigramaNodeView => {
-    const vacant = !node.personId;
-    const displayName = vacant ? 'Por asignar' : displayPersonName(map.get(node.personId!));
+    const person = node.personId ? map.get(node.personId) : undefined;
+    const vacant = !node.personId || !person;
+    const displayName = vacant
+      ? node.personId && !person
+        ? 'Persona no encontrada'
+        : 'Por asignar'
+      : displayPersonName(person);
     return {
       ...node,
       displayName,
@@ -91,6 +96,18 @@ export function enrichOrganigramaNodes(
     };
   };
   return nodes.map(enrich);
+}
+
+export function findOrganigramaNodeView(
+  nodes: OrganigramaNodeView[],
+  nodeId: string
+): OrganigramaNodeView | null {
+  for (const node of nodes) {
+    if (node.id === nodeId) return node;
+    const found = findOrganigramaNodeView(node.children, nodeId);
+    if (found) return found;
+  }
+  return null;
 }
 
 export function countOrganigramaNodes(nodes: OrganigramaNode[]): number {

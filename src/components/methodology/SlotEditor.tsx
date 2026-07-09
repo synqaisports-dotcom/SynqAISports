@@ -2,11 +2,10 @@
 
 import { useFormState } from 'react-dom';
 import Link from 'next/link';
+import { ArrowLeft, Loader2, Printer, Save } from 'lucide-react';
 import { updateMicrocycleSlot, type ActionState } from '@/app/actions/methodology';
 import { ExerciseSheetForm } from '@/components/methodology/ExerciseSheetForm';
-import { ExerciseSheetPrintLink } from '@/components/methodology/ExerciseSheetPrintLink';
 import { MethodologySubnav } from '@/components/methodology/MethodologySubnav';
-import { Button } from '@/components/ui/button';
 import { updateDemoSlot } from '@/lib/demo-microcycles-store';
 import { isDemoMicrocycleId, slotDisplayLabel } from '@/lib/microcycle-sessions';
 import { legacyToSheet, parseExerciseSheet, sheetFromFormData, sheetToLegacyFields } from '@/lib/exercise-sheet';
@@ -28,11 +27,13 @@ export type SlotEditorPayload = {
 };
 
 type Props = {
-  microcycleTitle: string;
   slot: SlotEditorPayload;
 };
 
 const initial: ActionState = { ok: false };
+
+const actionButtonClass =
+  'inline-flex size-9 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary disabled:opacity-50';
 
 function resolveSlotSheet(slot: SlotEditorPayload) {
   const parsed = parseExerciseSheet(slot.sheet_json);
@@ -48,14 +49,17 @@ function resolveSlotSheet(slot: SlotEditorPayload) {
   });
 }
 
-export function SlotEditor({ microcycleTitle, slot }: Props) {
+export function SlotEditor({ slot }: Props) {
   const [demoPending, setDemoPending] = useState(false);
   const [demoOk, setDemoOk] = useState(false);
   const bound = updateMicrocycleSlot.bind(null, slot.id);
   const [state, action, pending] = useFormState(bound, initial);
   const sheet = resolveSlotSheet(slot);
   const label = slotDisplayLabel(slot.slot_type, slot.order_index);
+  const exerciseTitle = sheet.title?.trim();
   const isDemo = isDemoMicrocycleId(slot.microcycle_id);
+  const isSaving = pending || demoPending;
+  const saved = state.ok || demoOk;
 
   const handleDemoSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -74,18 +78,10 @@ export function SlotEditor({ microcycleTitle, slot }: Props) {
     setDemoOk(ok);
   };
 
+  const backHref = `/portal/metodologia/microciclos/${slot.microcycle_id}/sesiones/${slot.session_index}`;
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-        <Link href={`/portal/metodologia/microciclos/${slot.microcycle_id}`}>{microcycleTitle}</Link>
-        <span>/</span>
-        <Link href={`/portal/metodologia/microciclos/${slot.microcycle_id}/sesiones/${slot.session_index}`}>
-          Sesión {slot.session_index}
-        </Link>
-        <span>/</span>
-        <span className="text-foreground">{label}</span>
-      </div>
-
       <MethodologySubnav />
 
       <form
@@ -96,9 +92,53 @@ export function SlotEditor({ microcycleTitle, slot }: Props) {
         <input type="hidden" name="taskType" value={slot.slot_type} />
         {slot.exercise_id ? <input type="hidden" name="exerciseId" value={slot.exercise_id} /> : null}
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-xl font-semibold">{label}</h1>
-          {!isDemo ? <ExerciseSheetPrintLink href={`/print/ficha/slot/${slot.id}`} /> : null}
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-2xl font-semibold tracking-tight">
+              <span>{label}</span>
+              {exerciseTitle ? (
+                <>
+                  <span aria-hidden className="text-muted-foreground/40">
+                    ·
+                  </span>
+                  <span className="text-base font-semibold uppercase tracking-wide text-primary sm:text-lg">
+                    {exerciseTitle}
+                  </span>
+                </>
+              ) : null}
+            </h1>
+            {saved ? <p className="mt-1 text-sm text-emerald-400">Ficha guardada.</p> : null}
+          </div>
+
+          <div className="flex shrink-0 flex-nowrap items-center gap-0.5">
+            <button
+              type="submit"
+              disabled={isSaving}
+              className={actionButtonClass}
+              aria-label="Guardar ficha del slot"
+              title="Guardar ficha del slot"
+            >
+              {isSaving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+            </button>
+            <Link
+              href={backHref}
+              className={actionButtonClass}
+              aria-label="Volver a la sesión"
+              title="Volver a la sesión"
+            >
+              <ArrowLeft className="size-4" />
+            </Link>
+            {!isDemo ? (
+              <Link
+                href={`/print/ficha/slot/${slot.id}`}
+                className={actionButtonClass}
+                aria-label="Imprimir ficha"
+                title="Imprimir ficha"
+              >
+                <Printer className="size-4" />
+              </Link>
+            ) : null}
+          </div>
         </div>
 
         <ExerciseSheetForm
@@ -107,24 +147,8 @@ export function SlotEditor({ microcycleTitle, slot }: Props) {
           showCanvas
           showTaskType={false}
           layout="split"
+          showCanvasHeader={false}
         />
-
-        <div className="flex flex-wrap gap-3">
-          <Button type="submit" disabled={pending || demoPending}>
-            {pending || demoPending ? 'Guardando…' : 'Guardar ficha del slot'}
-          </Button>
-          <Button type="button" variant="outline" asChild>
-            <Link
-              href={`/portal/metodologia/microciclos/${slot.microcycle_id}/sesiones/${slot.session_index}`}
-            >
-              Volver a la sesión
-            </Link>
-          </Button>
-        </div>
-
-        {(state.ok || demoOk) && (
-          <p className="text-sm text-emerald-400">Ficha guardada.</p>
-        )}
       </form>
     </div>
   );

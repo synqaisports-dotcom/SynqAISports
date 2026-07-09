@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFormState } from 'react-dom';
 import { upsertInstitutionalPerson, type ClubPeopleState } from '@/app/actions/club-people';
 import { accessProfileOptions, type AccessProfile, type ClubPerson } from '@/lib/club-people';
@@ -15,13 +15,18 @@ const initial: ClubPeopleState = { ok: false };
 type Props = {
   clubId: string;
   person?: ClubPerson | null;
+  onSaved?: (personId: string) => void;
 };
 
-export function InstitutionalPersonForm({ clubId, person }: Props) {
+export function InstitutionalPersonForm({ clubId, person, onSaved }: Props) {
   const bound = upsertInstitutionalPerson.bind(null, clubId);
   const [state, action, pending] = useFormState(bound, initial);
   const [accessProfile, setAccessProfile] = useState<AccessProfile>(person?.access_profile ?? 'none');
   const profileOptions = accessProfileOptions();
+
+  useEffect(() => {
+    if (state.ok && state.personId) onSaved?.(state.personId);
+  }, [state.ok, state.personId, onSaved]);
 
   return (
     <form action={action} className="w-full space-y-6">

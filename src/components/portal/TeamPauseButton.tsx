@@ -1,43 +1,66 @@
 'use client';
 
-import { useTransition } from 'react';
+import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Pause, Play } from 'lucide-react';
 import { toggleTeamActive } from '@/app/actions/cantera';
+import { PortalConfirmDialog } from '@/components/portal/PortalConfirmDialog';
 import { cn } from '@/lib/utils';
 
 type Props = {
   teamId: string;
+  teamName: string;
   active: boolean;
 };
 
-export function TeamPauseButton({ teamId, active }: Props) {
+export function TeamPauseButton({ teamId, teamName, active }: Props) {
   const router = useRouter();
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
+  const handleConfirm = () => {
+    startTransition(async () => {
+      await toggleTeamActive(teamId, !active);
+      setConfirmOpen(false);
+      router.refresh();
+    });
+  };
+
   return (
-    <button
-      type="button"
-      disabled={pending}
-      aria-label={active ? 'Pausar equipo' : 'Reactivar equipo'}
-      title={
-        active
-          ? 'Pausar (conserva histórico, no elimina datos)'
-          : 'Reactivar equipo'
-      }
-      onClick={() => {
-        startTransition(async () => {
-          await toggleTeamActive(teamId, !active);
-          router.refresh();
-        });
-      }}
-      className={cn(
-        'inline-flex size-9 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors',
-        'hover:border-primary/30 hover:bg-primary/10 hover:text-primary',
-        'disabled:opacity-50'
-      )}
-    >
-      {active ? <Pause className="size-4" /> : <Play className="size-4" />}
-    </button>
+    <>
+      <button
+        type="button"
+        disabled={pending}
+        aria-label={active ? `Pausar ${teamName}` : `Reactivar ${teamName}`}
+        title={
+          active
+            ? 'Pausar equipo (deja de mostrarse como activo; conserva datos e histórico)'
+            : 'Reactivar equipo en la cantera'
+        }
+        onClick={() => setConfirmOpen(true)}
+        className={cn(
+          'inline-flex size-9 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors',
+          'hover:border-primary/30 hover:bg-primary/10 hover:text-primary',
+          'disabled:opacity-50'
+        )}
+      >
+        {active ? <Pause className="size-4" /> : <Play className="size-4" />}
+      </button>
+
+      <PortalConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title={active ? `¿Pausar ${teamName}?` : `¿Reactivar ${teamName}?`}
+        description={
+          active
+            ? 'El equipo dejará de aparecer como activo en la cantera. Se conservan jugadores, staff asignado e histórico. Podrás reactivarlo cuando quieras.'
+            : 'El equipo volverá a mostrarse como activo en listados, fichas y asignaciones de la cantera.'
+        }
+        confirmLabel={active ? 'Pausar equipo' : 'Reactivar equipo'}
+        onConfirm={handleConfirm}
+        pending={pending}
+        destructive={active}
+      />
+    </>
   );
 }

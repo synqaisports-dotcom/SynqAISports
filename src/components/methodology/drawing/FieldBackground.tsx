@@ -5,6 +5,8 @@ import { F7_MARKS, HALF_MARKS } from '@/lib/field-engine';
 type Props = {
   template: FieldTemplate;
   className?: string;
+  /** Ocupa el contenedor padre sin imponer aspect-ratio propio */
+  fill?: boolean;
 };
 
 const GRASS_A = '#45b85a';
@@ -12,14 +14,14 @@ const GRASS_B = '#2f8440';
 const LINE = '#ffffff';
 
 /** Preview SVG del campo (ficha, listados, impresión). */
-export function FieldBackground({ template, className }: Props) {
+export function FieldBackground({ template, className, fill }: Props) {
   const { aspectRatio } = FIELD_TEMPLATES[template];
   const isFutsal = template === 'futsal';
   const isF7 = template === 'football-f7';
   const isHalf = template === 'football-half';
 
   return (
-    <div className={className} style={{ aspectRatio }}>
+    <div className={className} style={fill ? undefined : { aspectRatio }}>
       {template === 'blank' ? (
         <svg viewBox="0 0 105 68" className="h-full w-full rounded-md bg-slate-800" />
       ) : isFutsal ? (

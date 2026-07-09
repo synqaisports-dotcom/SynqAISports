@@ -26,12 +26,12 @@ export function CanteraCategoryCard({ category, teams }: Props) {
   return (
     <section
       className={cn(
-        'w-full overflow-hidden rounded-xl border bg-card/60',
+        'portal-section-surface w-full overflow-hidden rounded-xl border',
         category.borderClass,
         category.ringClass
       )}
     >
-      <header className="border-b border-white/5 bg-muted/10 px-4 py-4 md:px-5 md:py-5">
+      <header className="border-b border-white/5 px-4 py-3 md:px-5 md:py-3.5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
@@ -114,7 +114,7 @@ function CanteraTeamRowCard({
             label="Editar equipo"
             icon={Pencil}
           />
-          <TeamPauseButton teamId={team.id} active={team.active} />
+          <TeamPauseButton teamId={team.id} teamName={team.name} active={team.active} />
         </>
       }
     />

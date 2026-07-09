@@ -1,94 +1,69 @@
-import { ArrowLeft, Network, Pencil, Plus } from 'lucide-react';
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 import { loadInstitutionalPeople } from '@/app/actions/club-people';
-import {
-  EstructuraHero,
-  EstructuraHeroLinkAction,
-} from '@/components/portal/EstructuraHero';
-import {
-  ProfileRowAction,
-  ProfileRowCard,
-  ProfileRowList,
-} from '@/components/portal/ProfileRowCard';
+import { EstructuraHero } from '@/components/portal/EstructuraHero';
+import { EstructuraMasterDetail } from '@/components/portal/EstructuraMasterDetail';
 import { PageContainer } from '@/components/portal/PageContainer';
+import { isDemoActive } from '@/lib/demo';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
-import { clubPersonInstitutionalFields, clubPersonRowSubtitle } from '@/lib/profile-row';
-import { ACCESS_PROFILE_LABELS } from '@/lib/club-people';
 import { redirect } from 'next/navigation';
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 
-export default async function PortalClubEstructuraPage() {
+type Props = {
+  searchParams: Promise<{
+    person?: string;
+    create?: string;
+    edit?: string;
+  }>;
+};
+
+export default async function PortalClubEstructuraPage({ searchParams }: Props) {
+  const {
+    person: initialPersonId,
+    create: initialCreate,
+    edit: initialEdit,
+  } = await searchParams;
+
   const supabase = await createClient();
   const ctx = await getStaffContext(supabase);
   if (!ctx) redirect('/login');
 
+  const demo = await isDemoActive();
   const people = await loadInstitutionalPeople(ctx.club.id);
 
   return (
     <PageContainer>
-      <Card className="overflow-hidden p-0">
-        <EstructuraHero
-          people={people}
-          actions={
-            <>
-              <EstructuraHeroLinkAction href="/portal/club" variant="outline">
-                <ArrowLeft className="size-3.5" />
-                Volver
-              </EstructuraHeroLinkAction>
-              <EstructuraHeroLinkAction href="/portal/club/estructura/nuevo">
-                <Plus className="size-3.5" />
-                Crear ficha
-              </EstructuraHeroLinkAction>
-            </>
-          }
-        />
+      <Card className="mb-4 border border-primary/25">
+        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 space-y-0">
+          <CardTitle className="text-base">Estructura no deportiva</CardTitle>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/portal/club">
+              <ArrowLeft className="h-4 w-4" />
+              Volver
+            </Link>
+          </Button>
+        </CardHeader>
       </Card>
 
-      <ProfileRowList className="mt-6">
-        {people.map((person) => {
-          const accessLabel =
-            person.access_profile && person.access_profile !== 'none'
-              ? ACCESS_PROFILE_LABELS[person.access_profile]
-              : null;
-          return (
-            <ProfileRowCard
-              key={person.id}
-              photoUrl={person.photo_url}
-              title={person.full_name}
-              subtitle={clubPersonRowSubtitle(person)}
-              badges={
-                accessLabel ? (
-                  <Badge variant="outline" className="text-[10px]">
-                    {accessLabel}
-                  </Badge>
-                ) : null
-              }
-              fields={clubPersonInstitutionalFields(person)}
-              actions={
-                <>
-                  <ProfileRowAction
-                    href={`/portal/club/estructura/${person.id}/editar`}
-                    label="Modificar ficha"
-                    icon={Pencil}
-                  />
-                  <ProfileRowAction
-                    href="/portal/club/organigrama"
-                    label="Ver organigrama"
-                    icon={Network}
-                  />
-                </>
-              }
-            />
-          );
-        })}
-        {people.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Aún no hay personas en la estructura no deportiva. Crea la primera ficha para asignarla
-            después en el organigrama.
-          </p>
-        ) : null}
-      </ProfileRowList>
+      <EstructuraHero people={people} className="mb-4" />
+
+      {demo ? (
+        <p className="mb-4 rounded-lg border border-primary/20 bg-muted/10 p-4 text-sm text-muted-foreground">
+          Vista maestro-detalle con fichas de demo. Usa + para probar el alta y selecciona una ficha
+          para ver su contacto y asignarla después en el organigrama.
+        </p>
+      ) : null}
+
+      <EstructuraMasterDetail
+        clubId={ctx.club.id}
+        people={people}
+        initialPersonId={initialPersonId}
+        initialCreateOpen={initialCreate === '1'}
+        initialEditOpen={initialEdit === '1'}
+        demoMode={demo}
+      />
     </PageContainer>
   );
 }

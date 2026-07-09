@@ -77,6 +77,23 @@ export function defaultFieldForSport(sport: SportKind): FieldTemplate {
   return sport === 'futsal' ? 'futsal' : 'football-full';
 }
 
+/** Campos completos horizontales en pizarra → miniatura vertical (90° a la derecha). */
+export const PORTRAIT_PREVIEW_FIELDS: readonly FieldTemplate[] = [
+  'football-full',
+  'football-f7',
+  'futsal',
+];
+
+export function drawingPreviewUsesPortraitRotation(field: FieldTemplate): boolean {
+  return (PORTRAIT_PREVIEW_FIELDS as readonly string[]).includes(field);
+}
+
+/** Relación de aspecto del marco de miniatura (puede ser vertical para campos completos). */
+export function drawingPreviewAspectRatio(field: FieldTemplate): number {
+  const { aspectRatio } = FIELD_TEMPLATES[field];
+  return drawingPreviewUsesPortraitRotation(field) ? 1 / aspectRatio : aspectRatio;
+}
+
 export type StrokeStyle = {
   color: string;
   width: number;
@@ -84,7 +101,7 @@ export type StrokeStyle = {
 };
 
 export const DEFAULT_STROKE: StrokeStyle = {
-  color: '#fbbf24',
+  color: '#ffffff',
   width: 3,
   dash: false,
 };
@@ -110,6 +127,7 @@ export type StudioTool =
   | 'shape-curve'
   | 'shape-wave'
   | 'shape-rect'
+  | 'shape-text'
   | MaterialKind;
 
 export type LineShapeElement = {
@@ -165,6 +183,38 @@ export type RectShapeElement = {
   opacity: number;
 };
 
+export type TextFontSize = 'sm' | 'md' | 'lg';
+
+export const TEXT_FONT_SIZE_LABELS: Record<TextFontSize, string> = {
+  sm: 'S',
+  md: 'M',
+  lg: 'L',
+};
+
+/** Fracción del ancho del campo para el tamaño de fuente. */
+export const TEXT_FONT_SIZE_NORM: Record<TextFontSize, number> = {
+  sm: 0.022,
+  md: 0.032,
+  lg: 0.045,
+};
+
+export const DEFAULT_TEXT_FONT_SIZE: TextFontSize = 'md';
+
+export function textFontSizePx(size: TextFontSize, fieldWidth: number): number {
+  return Math.max(10, TEXT_FONT_SIZE_NORM[size] * fieldWidth);
+}
+
+export type TextShapeElement = {
+  id: string;
+  type: 'shape-text';
+  x: number;
+  y: number;
+  text: string;
+  fontSize: TextFontSize;
+  color: string;
+  opacity: number;
+};
+
 export type MaterialElement = {
   id: string;
   type: 'material';
@@ -185,6 +235,7 @@ export type DrawingElement =
   | CurveShapeElement
   | WaveShapeElement
   | RectShapeElement
+  | TextShapeElement
   | MaterialElement;
 
 export type LegacyStroke = {
@@ -249,6 +300,7 @@ function isV3Element(value: unknown): value is DrawingElement {
     t === 'shape-curve' ||
     t === 'shape-wave' ||
     t === 'shape-rect' ||
+    t === 'shape-text' ||
     t === 'material'
   );
 }
@@ -559,6 +611,21 @@ export function quadBezierPoint(
   };
 }
 
+/** Muestrea una Bézier cuadrática para Konva Line (sin tension). */
+export function quadBezierLinePoints(
+  p0: { x: number; y: number },
+  p1: { x: number; y: number },
+  p2: { x: number; y: number },
+  segments = 32
+): number[] {
+  const pts: number[] = [];
+  for (let i = 0; i <= segments; i++) {
+    const p = quadBezierPoint(p0, p1, p2, i / segments);
+    pts.push(p.x, p.y);
+  }
+  return pts;
+}
+
 /** Ángulo de la tangente al final de la curva (para orientar la punta de flecha). */
 export function quadBezierEndAngle(
   p0: { x: number; y: number },
@@ -658,6 +725,17 @@ export function defaultDraftForTool(
         opacity: DEFAULT_ELEMENT_OPACITY,
       };
     }
+    case 'shape-text':
+      return {
+        id,
+        type: 'shape-text',
+        x: x1,
+        y: y1,
+        text: 'Texto',
+        fontSize: DEFAULT_TEXT_FONT_SIZE,
+        color: style.color,
+        opacity: DEFAULT_ELEMENT_OPACITY,
+      };
     default:
       if (typeof tool === 'string' && tool.startsWith('player')) {
         return {
@@ -721,6 +799,10 @@ export function isShapeTool(tool: StudioTool): boolean {
   );
 }
 
+export function isTextTool(tool: StudioTool): boolean {
+  return tool === 'shape-text';
+}
+
 export function translateElementBy(
   element: DrawingElement,
   dx: number,
@@ -754,6 +836,8 @@ export function translateElementBy(
       };
     case 'shape-rect':
       return { x: tx(element.x), y: ty(element.y) };
+    case 'shape-text':
+      return { x: tx(element.x), y: ty(element.y) };
     case 'material':
       return { x: tx(element.x), y: ty(element.y) };
     default:
@@ -783,5 +867,68 @@ export function getElementAnchors(element: DrawingElement): ElementAnchor[] {
       ];
     default:
       return [];
+  }
+}
+
+const DUPLICATE_OFFSET_NORM = 0.025;
+
+/** Clona un elemento con nuevo id y ligero desplazamiento para distinguirlo. */
+export function duplicateDrawingElement(element: DrawingElement): DrawingElement {
+  const id = createElementId();
+  const ox = DUPLICATE_OFFSET_NORM;
+  const oy = DUPLICATE_OFFSET_NORM;
+  const bump = (v: number) => clamp01(v + ox);
+
+  switch (element.type) {
+    case 'shape-line':
+      return {
+        ...element,
+        id,
+        x1: bump(element.x1),
+        y1: clamp01(element.y1 + oy),
+        x2: bump(element.x2),
+        y2: clamp01(element.y2 + oy),
+      };
+    case 'shape-curve':
+      return {
+        ...element,
+        id,
+        x1: bump(element.x1),
+        y1: clamp01(element.y1 + oy),
+        x2: bump(element.x2),
+        y2: clamp01(element.y2 + oy),
+        cx: bump(element.cx),
+        cy: clamp01(element.cy + oy),
+      };
+    case 'shape-wave':
+      return {
+        ...element,
+        id,
+        x1: bump(element.x1),
+        y1: clamp01(element.y1 + oy),
+        x2: bump(element.x2),
+        y2: clamp01(element.y2 + oy),
+      };
+    case 'shape-rect':
+      return {
+        ...element,
+        id,
+        x: bump(element.x),
+        y: clamp01(element.y + oy),
+      };
+    case 'shape-text':
+      return {
+        ...element,
+        id,
+        x: bump(element.x),
+        y: clamp01(element.y + oy),
+      };
+    case 'material':
+      return {
+        ...element,
+        id,
+        x: bump(element.x),
+        y: clamp01(element.y + oy),
+      };
   }
 }

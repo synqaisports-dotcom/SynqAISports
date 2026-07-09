@@ -1,25 +1,46 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 type Props = {
   canvas: ReactNode;
   form: ReactNode;
   className?: string;
+  formTitle?: string;
+  formDescription?: string;
+  showCanvasHeader?: boolean;
 };
 
 /** Layout 40 % pizarra (izq) · 60 % formulario (der) en desktop. */
-export function ExerciseEditorLayout({ canvas, form, className }: Props) {
+export function ExerciseEditorLayout({
+  canvas,
+  form,
+  className,
+  formTitle = 'Ficha de la tarea',
+  formDescription = 'Plantilla UEFA / proyecto ABR',
+  showCanvasHeader = true,
+}: Props) {
   return (
-    <div className={cn('grid gap-6 lg:grid-cols-[2fr_3fr] lg:items-start', className)}>
-      <div className="rounded-xl border border-primary/20 bg-muted/10 p-3 lg:sticky lg:top-4">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Esquema / pizarra
-        </p>
-        {canvas}
-      </div>
-      <div className="min-w-0 space-y-4">{form}</div>
+    <div className={cn('grid gap-4 lg:grid-cols-[2fr_3fr] lg:items-start', className)}>
+      <Card className="overflow-hidden border border-primary/25">
+        {showCanvasHeader ? (
+          <CardHeader className="space-y-1 border-b border-primary/10 pb-3">
+            <CardTitle className="text-base">Esquema / pizarra</CardTitle>
+            <CardDescription>Toca el icono inferior para editar el dibujo</CardDescription>
+          </CardHeader>
+        ) : null}
+        <CardContent className="p-0">{canvas}</CardContent>
+      </Card>
+
+      <Card className="border border-primary/25">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">{formTitle}</CardTitle>
+          <CardDescription>{formDescription}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">{form}</CardContent>
+      </Card>
     </div>
   );
 }

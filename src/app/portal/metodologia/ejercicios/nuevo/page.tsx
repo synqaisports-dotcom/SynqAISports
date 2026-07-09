@@ -26,9 +26,8 @@ export default async function NuevoEjercicioPage({ searchParams }: Props) {
 
   return (
     <PageContainer>
-      <h1 className="text-2xl font-semibold">Nuevo ejercicio</h1>
-      <MethodologySubnav />
-      <div className="mt-6">
+      <div className="space-y-4">
+        <MethodologySubnav />
         <ExerciseEditor
           defaultTaskType={taskType}
           categorySlug={categorySlug}

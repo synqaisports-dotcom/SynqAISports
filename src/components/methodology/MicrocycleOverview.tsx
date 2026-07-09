@@ -32,7 +32,7 @@ type Props = {
   backHref?: string;
 };
 
-export function MicrocycleOverview({ micro, slots, backHref = '/portal/metodologia/microciclos' }: Props) {
+export function MicrocycleOverview({ micro, slots, backHref = '/portal/metodologia/ciclos' }: Props) {
   const sessionsCount = resolveMicrocycleSessions(micro);
   const mainTasks = micro.main_tasks_per_session === 2 ? 2 : 3;
   const grouped = groupSlotsBySession(

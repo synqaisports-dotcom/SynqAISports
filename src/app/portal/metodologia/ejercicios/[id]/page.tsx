@@ -22,13 +22,9 @@ export default async function EditarEjercicioPage({ params }: Props) {
   if (!exercise) notFound();
 
   return (
-    <div>
-      <h1 className="font-serif-display text-3xl text-white">Editar ejercicio</h1>
-      <p className="mt-2 text-synq-muted">{exercise.title}</p>
+    <div className="space-y-4">
       <MethodologySubnav />
-      <div className="mt-6">
-        <ExerciseEditor exercise={exercise as ExerciseRow} />
-      </div>
+      <ExerciseEditor exercise={exercise as ExerciseRow} />
     </div>
   );
 }

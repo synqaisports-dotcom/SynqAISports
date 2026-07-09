@@ -3,12 +3,24 @@
 import type { OrganigramaNodeView } from '@/lib/organigrama';
 import { OrganigramaNodeCard } from '@/components/portal/OrganigramaNodeCard';
 
-function OrgChartBranch({ node }: { node: OrganigramaNodeView }) {
+function OrgChartBranch({
+  node,
+  selectedNodeId,
+  onSelectNode,
+}: {
+  node: OrganigramaNodeView;
+  selectedNodeId?: string | null;
+  onSelectNode?: (nodeId: string) => void;
+}) {
   const hasChildren = node.children.length > 0;
 
   return (
     <div className="flex flex-col items-center">
-      <OrganigramaNodeCard node={node} />
+      <OrganigramaNodeCard
+        node={node}
+        selected={selectedNodeId === node.id}
+        onSelect={onSelectNode}
+      />
       {hasChildren ? (
         <>
           <div className="org-chart-line-v h-6" />
@@ -25,7 +37,11 @@ function OrgChartBranch({ node }: { node: OrganigramaNodeView }) {
             {node.children.map((child) => (
               <div key={child.id} className="flex flex-col items-center">
                 <div className="org-chart-line-v h-6" />
-                <OrgChartBranch node={child} />
+                <OrgChartBranch
+                  node={child}
+                  selectedNodeId={selectedNodeId}
+                  onSelectNode={onSelectNode}
+                />
               </div>
             ))}
           </div>
@@ -37,14 +53,21 @@ function OrgChartBranch({ node }: { node: OrganigramaNodeView }) {
 
 type Props = {
   nodes: OrganigramaNodeView[];
+  selectedNodeId?: string | null;
+  onSelectNode?: (nodeId: string) => void;
 };
 
-export function OrganigramaChart({ nodes }: Props) {
+export function OrganigramaChart({ nodes, selectedNodeId, onSelectNode }: Props) {
   return (
-    <div className="org-chart-board w-full overflow-x-auto rounded-xl border border-primary/25 bg-card/40 p-6 md:p-10">
+    <div className="org-chart-board portal-section-surface w-full overflow-x-auto rounded-xl p-6 md:p-10">
       <div className="flex min-w-max flex-col items-center gap-2">
         {nodes.map((node) => (
-          <OrgChartBranch key={node.id} node={node} />
+          <OrgChartBranch
+            key={node.id}
+            node={node}
+            selectedNodeId={selectedNodeId}
+            onSelectNode={onSelectNode}
+          />
         ))}
       </div>
     </div>

@@ -45,6 +45,7 @@ export function DemoMicrocycleSessionPage({ microcycleId, sessionIndex, exercise
     week_label: micro.week_label,
     category_slug: micro.category_slug,
     plan_variant_id: micro.plan_variant_id,
+    plan_mcc_id: micro.plan_mcc_id,
     sessions_per_micro: micro.sessions_per_micro,
     main_tasks_per_session: micro.main_tasks_per_session,
     is_template: micro.is_template,

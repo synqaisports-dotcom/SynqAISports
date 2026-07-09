@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Landmark, MapPin, Network, Pencil, UserCog } from 'lucide-react';
+import { Landmark, MapPin, Network, Package, Pencil, UserCog } from 'lucide-react';
 import {
   ClubIdentityHeroLinkAction,
 } from '@/components/portal/ClubIdentityHero';
@@ -41,6 +41,12 @@ export default async function PortalClubLandingPage() {
       description: 'Campos, horarios y división para entrenamientos.',
       href: '/portal/club/instalaciones',
       icon: MapPin,
+    },
+    {
+      title: 'Material',
+      description: 'Inventario deportivo por almacén, equipo e instalación.',
+      href: '/portal/club/material',
+      icon: Package,
     },
   ];
 

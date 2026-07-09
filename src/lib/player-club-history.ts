@@ -1,0 +1,120 @@
+export type PlayerClubHistoryKind =
+  | 'joined'
+  | 'team_change'
+  | 'category_change'
+  | 'paused'
+  | 'reactivated'
+  | 'medical';
+
+export type PlayerClubHistoryEvent = {
+  id: string;
+  kind: PlayerClubHistoryKind;
+  title: string;
+  detail: string;
+  occurredAt: string;
+};
+
+export function parsePlayerHistoryJson(value: unknown): PlayerClubHistoryEvent[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((item, index) => ({
+      id: String(item?.id ?? `history-${index}`),
+      kind: (item?.kind as PlayerClubHistoryKind) ?? 'joined',
+      title: String(item?.title ?? '').trim(),
+      detail: String(item?.detail ?? '').trim(),
+      occurredAt: String(item?.occurredAt ?? item?.occurred_at ?? '').trim(),
+    }))
+    .filter((event) => event.title && event.occurredAt)
+    .sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime());
+}
+
+export function buildPlayerClubHistory(
+  player: {
+    team_name: string;
+    created_at?: string | null;
+    history?: PlayerClubHistoryEvent[];
+  }
+): PlayerClubHistoryEvent[] {
+  if (player.history && player.history.length > 0) return player.history;
+
+  if (!player.created_at) return [];
+
+  return [
+    {
+      id: 'joined-default',
+      kind: 'joined',
+      title: 'Alta en el club',
+      detail: player.team_name ? `Plantilla · ${player.team_name}` : 'Incorporación a la cantera',
+      occurredAt: player.created_at,
+    },
+  ];
+}
+
+export function buildInitialPlayerHistory(teamName: string | null): PlayerClubHistoryEvent[] {
+  const occurredAt = new Date().toISOString();
+  return [
+    {
+      id: `joined-${occurredAt}`,
+      kind: 'joined',
+      title: 'Alta en el club',
+      detail: teamName ? `Plantilla · ${teamName}` : 'Sin equipo asignado',
+      occurredAt,
+    },
+  ];
+}
+
+export function formatPlayerHistoryWhen(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleDateString('es-ES', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+export function prependPlayerHistoryEvent(
+  existing: PlayerClubHistoryEvent[],
+  event: Omit<PlayerClubHistoryEvent, 'id'> & { id?: string }
+): PlayerClubHistoryEvent[] {
+  const entry: PlayerClubHistoryEvent = {
+    id: event.id ?? `history-${Date.now()}`,
+    kind: event.kind,
+    title: event.title,
+    detail: event.detail,
+    occurredAt: event.occurredAt,
+  };
+  return [entry, ...existing];
+}
+
+export function buildTeamMoveHistoryEvent(input: {
+  fromTeam: { name: string; category_slug: string | null; category: string } | null;
+  toTeam: { name: string; category_slug: string | null; category: string };
+}): PlayerClubHistoryEvent {
+  const occurredAt = new Date().toISOString();
+  const fromLabel = input.fromTeam?.name ?? 'Sin equipo';
+  const toLabel = input.toTeam.name;
+  const categoryChanged =
+    input.fromTeam?.category_slug &&
+    input.toTeam.category_slug &&
+    input.fromTeam.category_slug !== input.toTeam.category_slug;
+
+  if (categoryChanged) {
+    return {
+      id: `category-change-${occurredAt}`,
+      kind: 'category_change',
+      title: 'Ascenso de categoría',
+      detail: `${fromLabel} → ${toLabel}`,
+      occurredAt,
+    };
+  }
+
+  return {
+    id: `team-change-${occurredAt}`,
+    kind: 'team_change',
+    title: 'Cambio de equipo',
+    detail: `${fromLabel} → ${toLabel}`,
+    occurredAt,
+  };
+}

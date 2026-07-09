@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useFormState } from 'react-dom';
 import { createTeam, type ActionState } from '@/app/actions/cantera';
 import type { CanteraCategory } from '@/lib/cantera-categories';
@@ -22,9 +22,16 @@ type Props = {
   usedLetters: string[];
   facilities: ClubFacility[];
   occupiedSlots: TeamTrainingSlot[];
+  onCreated?: (teamId: string) => void;
 };
 
-export function TeamCreateForm({ category, usedLetters, facilities, occupiedSlots }: Props) {
+export function TeamCreateForm({
+  category,
+  usedLetters,
+  facilities,
+  occupiedSlots,
+  onCreated,
+}: Props) {
   const bound = createTeam;
   const [state, action, pending] = useFormState(bound, initial);
   const [sport, setSport] = useState('football');
@@ -32,6 +39,16 @@ export function TeamCreateForm({ category, usedLetters, facilities, occupiedSlot
   const [teamLetter, setTeamLetter] = useState(letterOptions[0]?.value ?? '');
 
   const previewName = teamLetter ? formatTeamName(category.name, teamLetter) : '';
+
+  useEffect(() => {
+    if (letterOptions.length > 0 && !letterOptions.some((option) => option.value === teamLetter)) {
+      setTeamLetter(letterOptions[0]?.value ?? '');
+    }
+  }, [letterOptions, teamLetter]);
+
+  useEffect(() => {
+    if (state.ok && state.teamId) onCreated?.(state.teamId);
+  }, [state.ok, state.teamId, onCreated]);
 
   return (
     <form action={action} className="w-full space-y-6">
@@ -114,7 +131,14 @@ export function TeamCreateForm({ category, usedLetters, facilities, occupiedSlot
         <Button type="submit" disabled={pending || !teamLetter || letterOptions.length === 0}>
           {pending ? 'Creando…' : 'Crear equipo'}
         </Button>
-        {state.ok ? <p className="text-sm font-medium text-primary">Equipo creado.</p> : null}
+        {state.ok ? (
+          <p className="text-sm font-medium text-primary">Equipo creado. Abriendo ficha…</p>
+        ) : null}
+        {state.message === 'demo' ? (
+          <p className="text-sm text-muted-foreground">
+            En demo el alta no persiste en el listado; con Supabase se abrirá la ficha del nuevo equipo.
+          </p>
+        ) : null}
         {state.message === 'duplicate_letter' ? (
           <p className="text-sm text-destructive">Esa letra ya está en uso en esta categoría.</p>
         ) : null}

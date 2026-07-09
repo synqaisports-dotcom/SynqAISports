@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Stage, Layer, Line, Arrow, Rect, Group, Circle, Image as KonvaImage, Transformer } from 'react-konva';
+import { Stage, Layer, Line, Arrow, Rect, Group, Circle, Image as KonvaImage, Text, Transformer } from 'react-konva';
 import type Konva from 'konva';
 import {
   ArrowRight,
   BoxSelect,
+  Copy,
   Minus,
   MousePointer2,
   Package,
@@ -15,6 +16,7 @@ import {
   Spline,
   Square,
   Trash2,
+  Type,
   Waves,
   X,
 } from 'lucide-react';
@@ -40,19 +42,25 @@ import {
   computeFieldRect,
   defaultDraftForTool,
   defaultFieldForSport,
+  duplicateDrawingElement,
   isMaterialTool,
   isShapeTool,
+  isTextTool,
   normToPx,
   parseExerciseDrawing,
   pxToNorm,
   quadBezierEndAngle,
+  quadBezierLinePoints,
   arrowHeadPoints,
   RECT_STROKE_OPACITY,
   RECT_STROKE_WIDTH_FACTOR,
   serializeExerciseDrawing,
   sortElementsByLayer,
   sportForField,
+  TEXT_FONT_SIZE_LABELS,
+  textFontSizePx,
   translateElementBy,
+  type TextFontSize,
   wavePathPoints,
 } from '@/lib/exercise-drawing';
 import { cn } from '@/lib/utils';
@@ -71,6 +79,7 @@ const SHAPE_TOOLS: { id: StudioTool; label: string; icon: React.ReactNode }[] = 
   { id: 'shape-curve', label: 'Curva', icon: <Spline className="size-5" /> },
   { id: 'shape-wave', label: 'Ondas', icon: <Waves className="size-5" /> },
   { id: 'shape-rect', label: 'Zona', icon: <Square className="size-5" /> },
+  { id: 'shape-text', label: 'Texto', icon: <Type className="size-5" /> },
 ];
 
 const COLORS = ['#fbbf24', '#38bdf8', '#f87171', '#4ade80', '#ffffff', '#a78bfa'];
@@ -251,6 +260,15 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
       return;
     }
 
+    if (isTextTool(tool)) {
+      const el = defaultDraftForTool(tool, norm.x, norm.y, norm.x, norm.y, stroke);
+      if (!el) return;
+      setDoc((d) => ({ ...d, elements: sortElementsByLayer([...d.elements, el]) }));
+      setSelectedId(el.id);
+      setTool('select');
+      return;
+    }
+
     if (isShapeTool(tool)) {
       setDragStart(norm);
       setDraft(defaultDraftForTool(tool, norm.x, norm.y, norm.x, norm.y, stroke));
@@ -310,6 +328,21 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     setSelectedId(null);
   };
 
+  const duplicateSelected = () => {
+    if (!selected) return;
+    let copy = duplicateDrawingElement(selected);
+    if (
+      selected.type === 'material' &&
+      copy.type === 'material' &&
+      copy.material === 'player-own'
+    ) {
+      const current = parseInt(selected.label ?? '1', 10);
+      copy = { ...copy, label: String(Number.isFinite(current) ? current + 1 : 1) };
+    }
+    setDoc((d) => ({ ...d, elements: sortElementsByLayer([...d.elements, copy]) }));
+    setSelectedId(copy.id);
+  };
+
   const handleSportChange = (next: SportKind) => {
     setSport(next);
     const field = defaultFieldForSport(next);
@@ -332,7 +365,9 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     const key = isPreview ? `draft-${element.id}` : element.id;
     const canDrag = tool === 'select' && !isPreview;
     const hitStroke =
-      element.type === 'material' ? 16 : Math.max(16, element.style.width * 5);
+      element.type === 'material' || element.type === 'shape-text'
+        ? 16
+        : Math.max(16, element.style.width * 5);
 
     if (element.type === 'shape-line') {
       const p1 = normToPx(element.x1, element.y1, fieldRect);
@@ -387,47 +422,54 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
       const p1 = normToPx(element.x1, element.y1, fieldRect);
       const p2 = normToPx(element.x2, element.y2, fieldRect);
       const pc = normToPx(element.cx, element.cy, fieldRect);
+      const lp2 = { x: p2.x - p1.x, y: p2.y - p1.y };
+      const lpc = { x: pc.x - p1.x, y: pc.y - p1.y };
+      const origin = { x: 0, y: 0 };
       const pad = hitStroke;
-      const minX = Math.min(p1.x, p2.x, pc.x) - pad;
-      const minY = Math.min(p1.y, p2.y, pc.y) - pad;
-      const boxW = Math.max(p1.x, p2.x, pc.x) - minX + pad;
-      const boxH = Math.max(p1.y, p2.y, pc.y) - minY + pad;
+      const minX = Math.min(0, lp2.x, lpc.x) - pad;
+      const minY = Math.min(0, lp2.y, lpc.y) - pad;
+      const boxW = Math.max(0, lp2.x, lpc.x) - minX + pad;
+      const boxH = Math.max(0, lp2.y, lpc.y) - minY + pad;
       return (
         <Group
           key={key}
           id={element.id}
+          x={p1.x}
+          y={p1.y}
           opacity={element.opacity}
           draggable={canDrag}
           onMouseDown={(e) => {
             e.cancelBubble = true;
             if (canDrag) setSelectedId(element.id);
           }}
-          onDragEnd={(e) => finishElementDrag(element, e.target)}
+          onDragEnd={(e) => {
+            const node = e.target;
+            const n = pxToNorm(node.x(), node.y(), fieldRect);
+            const dx = n.x - element.x1;
+            const dy = n.y - element.y1;
+            if (Math.abs(dx) > 0.0001 || Math.abs(dy) > 0.0001) {
+              updateElement(element.id, translateElementBy(element, dx, dy));
+            }
+            const snapped = normToPx(element.x1 + dx, element.y1 + dy, fieldRect);
+            node.position({ x: snapped.x, y: snapped.y });
+          }}
           onClick={() => !isPreview && setSelectedId(element.id)}
         >
-          <Rect
-            x={minX}
-            y={minY}
-            width={boxW}
-            height={boxH}
-            fill="rgba(0,0,0,0.001)"
-          />
+          <Rect x={minX} y={minY} width={boxW} height={boxH} fill="rgba(0,0,0,0.001)" />
           <Line
-            points={[p1.x, p1.y, pc.x, pc.y, p2.x, p2.y]}
+            points={quadBezierLinePoints(origin, lpc, lp2)}
             stroke={element.style.color}
             strokeWidth={element.style.width}
             dash={dashArray(element.style)}
-            tension={0.4}
-            bezier
             lineCap="round"
             listening={false}
           />
           {element.arrowEnd ? (
             <Line
               points={arrowHeadPoints(
-                p2.x,
-                p2.y,
-                quadBezierEndAngle(p1, pc, p2),
+                lp2.x,
+                lp2.y,
+                quadBezierEndAngle(origin, lpc, lp2),
                 Math.max(8, element.style.width * 3)
               )}
               closed
@@ -435,24 +477,6 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               stroke={element.style.color}
               strokeWidth={1}
               listening={false}
-            />
-          ) : null}
-          {selectedId === element.id && !isPreview ? (
-            <Circle
-              x={pc.x}
-              y={pc.y}
-              radius={8}
-              fill="#22d3ee"
-              stroke="#0f172a"
-              strokeWidth={2}
-              draggable
-              onMouseDown={(e) => {
-                e.cancelBubble = true;
-              }}
-              onDragMove={(ev) => {
-                const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
-                updateElement(element.id, { cx: n.x, cy: n.y });
-              }}
             />
           ) : null}
         </Group>
@@ -534,6 +558,48 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             if (selectedId === element.id) attachTransformer(node);
           }}
         />
+      );
+    }
+
+    if (element.type === 'shape-text') {
+      const p = normToPx(element.x, element.y, fieldRect);
+      const fontSize = textFontSizePx(element.fontSize, fieldRect.width);
+      const approxW = Math.max(fontSize, element.text.length * fontSize * 0.58);
+      const approxH = fontSize * 1.25;
+      return (
+        <Group
+          key={key}
+          id={element.id}
+          x={p.x}
+          y={p.y}
+          opacity={element.opacity}
+          draggable={canDrag}
+          onMouseDown={(e) => {
+            e.cancelBubble = true;
+            if (canDrag) setSelectedId(element.id);
+          }}
+          onDragEnd={(ev) => {
+            const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
+            updateElement(element.id, { x: n.x, y: n.y });
+          }}
+          onClick={() => !isPreview && setSelectedId(element.id)}
+        >
+          <Rect
+            x={0}
+            y={0}
+            width={approxW}
+            height={approxH}
+            fill="rgba(0,0,0,0.001)"
+          />
+          <Text
+            text={element.text}
+            fontSize={fontSize}
+            fill={selectedId === element.id && !isPreview ? '#22d3ee' : element.color}
+            fontFamily="system-ui, -apple-system, sans-serif"
+            fontStyle="bold"
+            listening={false}
+          />
+        </Group>
       );
     }
 
@@ -685,10 +751,13 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
   const renderAnchors = () => {
     if (!selected || tool !== 'select') return null;
     if (selected.type === 'shape-line' || selected.type === 'shape-wave' || selected.type === 'shape-curve') {
-      const anchors = [
+      const anchors: { role: string; x: number; y: number }[] = [
         { role: 'start', x: selected.x1, y: selected.y1 },
         { role: 'end', x: selected.x2, y: selected.y2 },
       ];
+      if (selected.type === 'shape-curve') {
+        anchors.push({ role: 'control', x: selected.cx, y: selected.cy });
+      }
       return anchors.map((a) => {
         const p = normToPx(a.x, a.y, fieldRect);
         return (
@@ -696,7 +765,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             key={a.role}
             x={p.x}
             y={p.y}
-            radius={9}
+            radius={a.role === 'control' ? 8 : 9}
             fill="#22d3ee"
             stroke="#0f172a"
             strokeWidth={2}
@@ -704,10 +773,17 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             onMouseDown={(e) => {
               e.cancelBubble = true;
             }}
-            onDragMove={(ev) => {
+            onDragEnd={(ev) => {
               const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
-              if (a.role === 'start') updateElement(selected.id, { x1: n.x, y1: n.y });
-              else updateElement(selected.id, { x2: n.x, y2: n.y });
+              if (a.role === 'start') {
+                updateElement(selected.id, { x1: n.x, y1: n.y });
+              } else if (a.role === 'end') {
+                updateElement(selected.id, { x2: n.x, y2: n.y });
+              } else if (a.role === 'control') {
+                updateElement(selected.id, { cx: n.x, cy: n.y });
+              }
+              const synced = normToPx(n.x, n.y, fieldRect);
+              ev.target.position({ x: synced.x, y: synced.y });
             }}
           />
         );
@@ -720,7 +796,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
 
   /** Ancho del panel de materiales: 9 iconos en una fila (~464px) + margen */
   const materialsPanelW = 'min(92vw, 31rem)';
-  const toolsPanelW = 'min(92vw, 480px)';
+  const toolsPanelW = 'min(92vw, 28rem)';
 
   const studio = (
     <div className="fixed inset-0 z-[9999] overflow-hidden bg-[#060a12] text-cyan-200">
@@ -902,6 +978,91 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           </div>
           <button
             type="button"
+            title="Duplicar"
+            aria-label="Duplicar"
+            className={cn('pointer-events-auto flex size-8 items-center justify-center rounded-lg', GLASS.btn)}
+            onClick={duplicateSelected}
+          >
+            <Copy className="size-3.5" />
+          </button>
+          <button
+            type="button"
+            title="Eliminar"
+            aria-label="Eliminar"
+            className={cn('pointer-events-auto flex size-8 items-center justify-center rounded-lg text-red-300', GLASS.danger)}
+            onClick={deleteSelected}
+          >
+            <Trash2 className="size-3.5" />
+          </button>
+        </div>
+      ) : null}
+
+      {selected && selected.type === 'shape-text' ? (
+        <div className={cn('pointer-events-none absolute bottom-[5.5rem] left-1/2 z-30 flex max-w-[95vw] -translate-x-1/2 flex-wrap justify-center gap-3 rounded-2xl px-4 py-2.5', GLASS.panel)}>
+          <label className={cn('pointer-events-auto flex items-center gap-2', GLASS.label)}>
+            Texto
+            <input
+              type="text"
+              maxLength={48}
+              value={selected.text}
+              onChange={(e) => updateElement(selected.id, { text: e.target.value })}
+              className="w-36 rounded border border-cyan-400/35 bg-cyan-400/10 px-2 py-0.5 text-xs text-cyan-200"
+            />
+          </label>
+          <div className="pointer-events-auto flex items-center gap-2">
+            <span className={GLASS.label}>Tamaño</span>
+            <div className="flex gap-1">
+              {(['sm', 'md', 'lg'] as TextFontSize[]).map((size) => (
+                <button
+                  key={size}
+                  type="button"
+                  title={size === 'sm' ? 'Pequeño' : size === 'md' ? 'Mediano' : 'Grande'}
+                  className={cn(
+                    'flex size-8 items-center justify-center rounded-lg text-xs font-semibold',
+                    GLASS.btn,
+                    selected.fontSize === size && GLASS.btnActive
+                  )}
+                  onClick={() => updateElement(selected.id, { fontSize: size })}
+                >
+                  {TEXT_FONT_SIZE_LABELS[size]}
+                </button>
+              ))}
+            </div>
+          </div>
+          <label className={cn('pointer-events-auto flex items-center gap-2', GLASS.label)}>
+            Transparencia
+            <input
+              type="range"
+              min={0.15}
+              max={1}
+              step={0.05}
+              value={selected.opacity}
+              onChange={(e) => updateElement(selected.id, { opacity: Number(e.target.value) })}
+              className="w-24"
+            />
+          </label>
+          <div className="pointer-events-auto flex gap-1">
+            {COLORS.map((c) => (
+              <button
+                key={c}
+                type="button"
+                className="size-6 rounded-full border border-cyan-400/35"
+                style={{ backgroundColor: c }}
+                onClick={() => updateElement(selected.id, { color: c })}
+              />
+            ))}
+          </div>
+          <button
+            type="button"
+            title="Duplicar"
+            aria-label="Duplicar"
+            className={cn('pointer-events-auto flex size-8 items-center justify-center rounded-lg', GLASS.btn)}
+            onClick={duplicateSelected}
+          >
+            <Copy className="size-3.5" />
+          </button>
+          <button
+            type="button"
             title="Eliminar"
             aria-label="Eliminar"
             className={cn('pointer-events-auto flex size-8 items-center justify-center rounded-lg text-red-300', GLASS.danger)}
@@ -968,6 +1129,15 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               />
             </label>
           ) : null}
+          <button
+            type="button"
+            title="Duplicar"
+            aria-label="Duplicar"
+            className={cn('pointer-events-auto flex size-8 items-center justify-center rounded-lg', GLASS.btn)}
+            onClick={duplicateSelected}
+          >
+            <Copy className="size-3.5" />
+          </button>
           <button
             type="button"
             title="Eliminar"
@@ -1086,41 +1256,6 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
                     {item.icon}
                   </button>
                 ))}
-              </div>
-              <div className={cn('mt-2 flex flex-wrap items-center justify-center gap-3 border-t border-cyan-400/25 pt-2', GLASS.label)}>
-                <label className="flex items-center gap-2">
-                  Grosor
-                  <input
-                    type="range"
-                    min={1}
-                    max={8}
-                    value={stroke.width}
-                    onChange={(e) => setStroke((s) => ({ ...s, width: Number(e.target.value) }))}
-                    className="w-20"
-                  />
-                </label>
-                <label className="flex items-center gap-1.5">
-                  <input
-                    type="checkbox"
-                    checked={stroke.dash}
-                    onChange={(e) => setStroke((s) => ({ ...s, dash: e.target.checked }))}
-                  />
-                  Discontinua
-                </label>
-                <div className="flex gap-1">
-                  {COLORS.map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      className={cn(
-                        'size-5 rounded-full border',
-                        stroke.color === c ? 'border-cyan-300 ring-1 ring-cyan-400' : 'border-cyan-400/35'
-                      )}
-                      style={{ backgroundColor: c }}
-                      onClick={() => setStroke((s) => ({ ...s, color: c }))}
-                    />
-                  ))}
-                </div>
               </div>
             </div>
           </div>

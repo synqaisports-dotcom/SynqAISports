@@ -161,7 +161,7 @@ export const DEMO_TEAM_PLAYERS: DemoTeamPlayer[] = [
     team_id: 'demo-team-alevin-a',
     first_name: 'Diego',
     last_name: 'Castro',
-    position: 'EXT',
+    position: 'EXD,DL',
     photo_url: null,
     jersey_number: 11,
   },

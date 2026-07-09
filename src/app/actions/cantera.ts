@@ -1,6 +1,15 @@
 'use server';
 
 import { isDemoActive } from '@/lib/demo';
+import {
+  isValidBirthYear,
+  isValidJerseyNumber,
+  parseOptionalInt,
+  playerBirthYearMax,
+} from '@/lib/player-form';
+import { parseGuardiansFromForm, validateGuardians } from '@/lib/player-guardians';
+import { buildInitialPlayerHistory, buildTeamMoveHistoryEvent, parsePlayerHistoryJson, prependPlayerHistoryEvent } from '@/lib/player-club-history';
+import { isValidMedicalDate } from '@/lib/player-medical';
 import { requireClubId } from '@/lib/auth-staff';
 import { DEMO_CANTERA_TEAMS, formatTeamName } from '@/lib/cantera-teams';
 import { getCanteraCategory } from '@/lib/cantera-categories';
@@ -15,10 +24,22 @@ import {
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
-export type ActionState = { ok: boolean; message?: string };
+export type ActionState = {
+  ok: boolean;
+  message?: string;
+  playerId?: string;
+  teamId?: string;
+};
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+const ALLOWED_DOCUMENT_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'application/pdf',
+]);
 
 export async function uploadPlayerPhoto(
   clubId: string,
@@ -47,6 +68,40 @@ export async function uploadPlayerPhoto(
 
   if (error) {
     console.error('upload player photo', error);
+    return { ok: false, message: 'upload_error' };
+  }
+
+  const { data } = supabase.storage.from('club-media').getPublicUrl(path);
+  return { ok: true, url: data.publicUrl };
+}
+
+export async function uploadPlayerDocument(
+  clubId: string,
+  formData: FormData
+): Promise<{ ok: boolean; url?: string; message?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user && !(await isDemoActive())) return { ok: false, message: 'unauthorized' };
+
+  const file = formData.get('file');
+  const playerId = String(formData.get('playerId') ?? '').trim();
+  if (!(file instanceof File) || file.size === 0) return { ok: false, message: 'no_file' };
+  if (file.size > MAX_DOCUMENT_BYTES) return { ok: false, message: 'too_large' };
+  if (!ALLOWED_DOCUMENT_TYPES.has(file.type)) return { ok: false, message: 'invalid_type' };
+
+  const ext = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'pdf';
+  const path = `${clubId}/players/${playerId || 'drafts'}/documents/${Date.now()}.${ext}`;
+
+  const { error } = await supabase.storage.from('club-media').upload(path, file, {
+    cacheControl: '3600',
+    upsert: true,
+    contentType: file.type,
+  });
+
+  if (error) {
+    console.error('upload player document', error);
     return { ok: false, message: 'upload_error' };
   }
 
@@ -99,13 +154,18 @@ export async function updatePlayer(
   const lastName = String(formData.get('lastName') ?? '').trim();
   const displayName = [firstName, lastName].filter(Boolean).join(' ').trim();
   const jerseyRaw = String(formData.get('jerseyNumber') ?? '').trim();
-  const jerseyNumber = jerseyRaw ? parseInt(jerseyRaw, 10) : null;
+  const jerseyNumber = parseOptionalInt(jerseyRaw);
   const position = String(formData.get('position') ?? '').trim() || null;
   const birthRaw = String(formData.get('birthYear') ?? '').trim();
-  const birthYear = birthRaw ? parseInt(birthRaw, 10) : null;
+  const birthYear = parseOptionalInt(birthRaw);
   const photoUrl = String(formData.get('photoUrl') ?? '').trim();
+  const isMinor = formData.get('isMinor') === 'true';
+  const guardians = parseGuardiansFromForm(formData);
 
   if (!displayName) return { ok: false, message: 'validation' };
+  if (!isValidJerseyNumber(jerseyNumber)) return { ok: false, message: 'validation' };
+  if (!isValidBirthYear(birthYear, playerBirthYearMax())) return { ok: false, message: 'validation' };
+  if (!validateGuardians(isMinor, guardians)) return { ok: false, message: 'validation' };
 
   if (await isDemoActive()) {
     revalidatePath('/portal/cantera/jugadores');
@@ -120,10 +180,12 @@ export async function updatePlayer(
       first_name: firstName || null,
       last_name: lastName || null,
       display_name: displayName,
-      jersey_number: jerseyNumber != null && !Number.isNaN(jerseyNumber) ? jerseyNumber : null,
+      jersey_number: jerseyNumber,
       position,
-      birth_year: birthYear != null && !Number.isNaN(birthYear) ? birthYear : null,
+      birth_year: birthYear,
       photo_url: photoUrl || null,
+      is_minor: isMinor,
+      guardians_json: isMinor && guardians.length > 0 ? guardians : null,
     })
     .eq('id', playerId)
     .eq('club_id', clubId);
@@ -136,6 +198,122 @@ export async function updatePlayer(
   revalidatePath('/portal/cantera/jugadores');
   revalidatePath(`/portal/cantera/jugadores/${playerId}`);
   revalidatePath(`/portal/cantera/jugadores/${playerId}/editar`);
+  return { ok: true };
+}
+
+export async function movePlayerTeam(
+  playerId: string,
+  newTeamId: string
+): Promise<ActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'unauthorized' };
+
+  if (!newTeamId) return { ok: false, message: 'validation' };
+
+  if (await isDemoActive()) {
+    revalidatePath('/portal/cantera/jugadores');
+    revalidatePath('/portal/cantera/equipos');
+    return { ok: true, message: 'demo' };
+  }
+
+  const supabase = await createClient();
+
+  const { data: player } = await supabase
+    .from('synq_players')
+    .select('id, team_id, player_history_json, synq_teams(name, category, category_slug)')
+    .eq('id', playerId)
+    .eq('club_id', clubId)
+    .maybeSingle();
+
+  if (!player) return { ok: false, message: 'error' };
+  if (player.team_id === newTeamId) return { ok: false, message: 'validation' };
+
+  const { data: newTeam } = await supabase
+    .from('synq_teams')
+    .select('id, name, category, category_slug')
+    .eq('id', newTeamId)
+    .eq('club_id', clubId)
+    .maybeSingle();
+
+  if (!newTeam) return { ok: false, message: 'validation' };
+
+  const currentTeam = Array.isArray(player.synq_teams)
+    ? player.synq_teams[0]
+    : player.synq_teams;
+
+  const history = parsePlayerHistoryJson(player.player_history_json);
+  const moveEvent = buildTeamMoveHistoryEvent({
+    fromTeam: currentTeam
+      ? {
+          name: currentTeam.name,
+          category: currentTeam.category,
+          category_slug: currentTeam.category_slug,
+        }
+      : null,
+    toTeam: {
+      name: newTeam.name,
+      category: newTeam.category,
+      category_slug: newTeam.category_slug,
+    },
+  });
+
+  const { error } = await supabase
+    .from('synq_players')
+    .update({
+      team_id: newTeamId,
+      player_history_json: prependPlayerHistoryEvent(history, moveEvent),
+    })
+    .eq('id', playerId)
+    .eq('club_id', clubId);
+
+  if (error) {
+    console.error('movePlayerTeam', error);
+    return { ok: false, message: 'error' };
+  }
+
+  revalidatePath('/portal/cantera/jugadores');
+  revalidatePath('/portal/cantera/equipos');
+  return { ok: true, playerId };
+}
+
+export async function updatePlayerMedical(
+  playerId: string,
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'unauthorized' };
+
+  const medicalUntil = String(formData.get('medicalUntil') ?? '').trim();
+  const medicalDocumentUrl = String(formData.get('medicalDocumentUrl') ?? '').trim();
+
+  if (!medicalUntil || !isValidMedicalDate(medicalUntil)) {
+    return { ok: false, message: 'validation' };
+  }
+
+  if (await isDemoActive()) {
+    revalidatePath('/portal/cantera/jugadores');
+    revalidatePath(`/portal/cantera/jugadores/${playerId}`);
+    return { ok: true };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('synq_players')
+    .update({
+      medical_until: medicalUntil,
+      medical_document_url: medicalDocumentUrl || null,
+    })
+    .eq('id', playerId)
+    .eq('club_id', clubId);
+
+  if (error) {
+    console.error('updatePlayerMedical', error);
+    return { ok: false, message: 'error' };
+  }
+
+  revalidatePath('/portal/cantera/jugadores');
+  revalidatePath(`/portal/cantera/jugadores/${playerId}`);
   return { ok: true };
 }
 
@@ -275,16 +453,25 @@ export async function createTeam(
   const setupError = await validateTeamSetup(clubId, setup);
   if (setupError) return { ok: false, message: setupError };
 
+  if (await isDemoActive()) {
+    revalidatePath('/portal/cantera/equipos');
+    return { ok: true, message: 'demo' };
+  }
+
   const supabase = await createClient();
-  const { error } = await supabase.from('synq_teams').insert({
-    club_id: clubId,
-    name,
-    category: categoryName,
-    category_slug: categorySlug,
-    team_letter: teamLetter,
-    sport: sport === 'futsal' ? 'futsal' : 'football',
-    ...teamSetupToDbPayload(setup),
-  });
+  const { data, error } = await supabase
+    .from('synq_teams')
+    .insert({
+      club_id: clubId,
+      name,
+      category: categoryName,
+      category_slug: categorySlug,
+      team_letter: teamLetter,
+      sport: sport === 'futsal' ? 'futsal' : 'football',
+      ...teamSetupToDbPayload(setup),
+    })
+    .select('id')
+    .single();
 
   if (error) {
     console.error('create team', error);
@@ -295,7 +482,7 @@ export async function createTeam(
   revalidatePath('/portal/cantera');
   revalidatePath('/portal/cantera/equipos');
   revalidatePath(`/portal/cantera/equipos/${categorySlug}`);
-  return { ok: true };
+  return { ok: true, teamId: data.id };
 }
 
 export async function updateTeam(
@@ -416,24 +603,61 @@ export async function createPlayer(
   const clubId = await requireClubId();
   if (!clubId) return { ok: false, message: 'unauthorized' };
 
-  const displayName = String(formData.get('displayName') ?? '').trim();
+  const firstName = String(formData.get('firstName') ?? '').trim();
+  const lastName = String(formData.get('lastName') ?? '').trim();
+  const legacyDisplay = String(formData.get('displayName') ?? '').trim();
+  const displayName = [firstName, lastName].filter(Boolean).join(' ').trim() || legacyDisplay;
   const teamId = String(formData.get('teamId') ?? '').trim() || null;
-  const jerseyNumber = parseInt(String(formData.get('jerseyNumber') ?? ''), 10);
-  const position = String(formData.get('position') ?? '').trim();
-  const birthYear = parseInt(String(formData.get('birthYear') ?? ''), 10);
+  const jerseyNumber = parseOptionalInt(String(formData.get('jerseyNumber') ?? '').trim());
+  const position = String(formData.get('position') ?? '').trim() || null;
+  const birthYear = parseOptionalInt(String(formData.get('birthYear') ?? '').trim());
 
   if (!displayName) return { ok: false, message: 'validation' };
+  if (!isValidJerseyNumber(jerseyNumber)) return { ok: false, message: 'validation' };
+
+  const usesNewForm = Boolean(firstName || lastName);
+  if (usesNewForm && (!birthYear || !isValidBirthYear(birthYear, playerBirthYearMax()))) {
+    return { ok: false, message: 'validation' };
+  }
 
   const supabase = await createClient();
-  const { error } = await supabase.from('synq_players').insert({
-    club_id: clubId,
-    team_id: teamId,
-    display_name: displayName,
-    jersey_number: Number.isNaN(jerseyNumber) ? null : jerseyNumber,
-    position: position || null,
-    birth_year: Number.isNaN(birthYear) ? null : birthYear,
-    active: true,
-  });
+
+  let teamName: string | null = null;
+  if (teamId) {
+    const { data: team } = await supabase
+      .from('synq_teams')
+      .select('name')
+      .eq('id', teamId)
+      .eq('club_id', clubId)
+      .maybeSingle();
+    teamName = team?.name ?? null;
+  }
+
+  const history = buildInitialPlayerHistory(teamName);
+
+  if (await isDemoActive()) {
+    revalidatePath('/portal/cantera/jugadores');
+    revalidatePath('/portal/cantera');
+    return { ok: true, message: 'demo' };
+  }
+
+  const { data, error } = await supabase
+    .from('synq_players')
+    .insert({
+      club_id: clubId,
+      team_id: teamId,
+      first_name: firstName || null,
+      last_name: lastName || null,
+      display_name: displayName,
+      jersey_number: jerseyNumber,
+      position,
+      birth_year: birthYear,
+      active: true,
+      is_minor: false,
+      player_history_json: history,
+    })
+    .select('id')
+    .single();
 
   if (error) {
     console.error('create player', error);
@@ -441,8 +665,9 @@ export async function createPlayer(
   }
 
   revalidatePath('/portal/cantera');
+  revalidatePath('/portal/cantera/jugadores');
   revalidatePath('/portal');
-  return { ok: true };
+  return { ok: true, playerId: data.id };
 }
 
 export async function togglePlayerActive(playerId: string, active: boolean): Promise<ActionState> {

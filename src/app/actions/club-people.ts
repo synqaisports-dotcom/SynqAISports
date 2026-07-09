@@ -25,6 +25,7 @@ const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'i
 export type ClubPeopleState = {
   ok: boolean;
   message?: string;
+  personId?: string;
 };
 
 async function uploadClubMediaFile(
@@ -245,8 +246,10 @@ export async function upsertInstitutionalPerson(
     revalidatePath('/portal/club/estructura');
     revalidatePath('/portal/club/organigrama');
     revalidatePath('/portal/club/organigrama/editar');
-    return { ok: true };
+    return { ok: true, message: 'demo', personId: personId || undefined };
   }
+
+  let savedPersonId = personId;
 
   if (personId) {
     const { error } = await supabase
@@ -259,17 +262,22 @@ export async function upsertInstitutionalPerson(
       return { ok: false, message: 'error' };
     }
   } else {
-    const { error } = await supabase.from('synq_club_people').insert(payload);
-    if (error) {
+    const { data, error } = await supabase
+      .from('synq_club_people')
+      .insert(payload)
+      .select('id')
+      .single();
+    if (error || !data) {
       console.error('upsertInstitutionalPerson', error);
       return { ok: false, message: 'error' };
     }
+    savedPersonId = data.id;
   }
 
   revalidatePath('/portal/club/estructura');
   revalidatePath('/portal/club/organigrama');
   revalidatePath('/portal/club/organigrama/editar');
-  return { ok: true };
+  return { ok: true, personId: savedPersonId };
 }
 
 export async function upsertSportPerson(
@@ -317,7 +325,7 @@ export async function upsertSportPerson(
     revalidatePath('/portal/club/staff');
     revalidatePath('/portal/club/organigrama');
     revalidatePath('/portal/club/organigrama/editar');
-    return { ok: true };
+    return { ok: true, message: 'demo', personId: personId || undefined };
   }
 
   let savedPersonId = personId;
@@ -366,7 +374,7 @@ export async function upsertSportPerson(
   revalidatePath(`/portal/club/staff/${savedPersonId}/editar`);
   revalidatePath('/portal/club/organigrama');
   revalidatePath('/portal/club/organigrama/editar');
-  return { ok: true };
+  return { ok: true, personId: savedPersonId };
 }
 
 export async function deleteInstitutionalPerson(

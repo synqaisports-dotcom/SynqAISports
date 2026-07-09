@@ -389,6 +389,10 @@ export async function deleteMicrocycle(microcycleId: string): Promise<ActionStat
 export async function loadMethodologyObjectives(
   clubId: string
 ): Promise<MethodologyObjectivesMap> {
+  if (await isDemoActive()) {
+    return mergeMethodologyObjectives(null);
+  }
+
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('synq_methodology_objectives')

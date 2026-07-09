@@ -12,7 +12,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 
 const RAIL_PX = 56;
-const EXPANDED_PX = 256;
+const EXPANDED_PX = 272;
 const HOVER_COLLAPSE_MS = 220;
 
 type PortalSidebarContextValue = {
@@ -37,24 +37,26 @@ function SidebarBrand({ clubName, expanded }: { clubName: string; expanded: bool
   return (
     <div
       className={cn(
-        'flex h-14 shrink-0 items-center border-b border-primary/20',
+        'portal-sidebar-brand flex h-[4.25rem] shrink-0 items-center',
         expanded ? 'px-3' : 'justify-center px-0'
       )}
     >
       <Link
         href="/portal"
         className={cn(
-          'flex items-center rounded-lg text-sidebar-foreground transition-colors hover:bg-sidebar-accent/40',
+          'flex items-center rounded-xl text-sidebar-foreground transition-colors hover:bg-white/[0.04]',
           expanded ? 'w-full gap-3 px-2 py-2' : 'size-10 justify-center'
         )}
       >
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-[0_0_14px_hsl(183_100%_50%_/_0.4)]">
-          <Shield className="size-4" />
+        <div className="portal-sidebar-logo flex size-9 shrink-0 items-center justify-center rounded-xl text-primary-foreground">
+          <Shield className="size-4" strokeWidth={2.25} />
         </div>
         {expanded ? (
           <div className="min-w-0 flex-1 overflow-hidden">
-            <p className="truncate text-sm font-semibold leading-tight">SynqAI Sports</p>
-            <p className="truncate text-xs text-muted-foreground">{clubName}</p>
+            <p className="truncate text-sm font-semibold leading-tight tracking-tight text-white">
+              SynqAI Sports
+            </p>
+            <p className="truncate text-[11px] text-sidebar-foreground/55">{clubName}</p>
           </div>
         ) : null}
       </Link>
@@ -65,15 +67,11 @@ function SidebarBrand({ clubName, expanded }: { clubName: string; expanded: bool
 function SidebarNav({ expanded }: { expanded: boolean }) {
   return (
     <ScrollArea className="min-h-0 flex-1">
-      <div className={cn('py-3', expanded ? 'px-2' : 'px-1.5')}>
+      <div className={cn('py-4', expanded ? 'px-2.5' : 'px-1.5')}>
         {portalNavGroups.map((group, index) => (
-          <div key={group.label} className={cn(index > 0 && 'mt-4')}>
-            {expanded ? (
-              <p className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/45">
-                {group.label}
-              </p>
-            ) : index > 0 ? (
-              <div className="mx-auto mb-3 h-px w-6 bg-primary/20" aria-hidden />
+          <div key={group.label} className={cn(index > 0 && 'mt-3')}>
+            {!expanded && index > 0 ? (
+              <div className="mx-auto mb-3 h-px w-5 bg-gradient-to-r from-transparent via-primary/25 to-transparent" aria-hidden />
             ) : null}
             <PortalNavMenu items={group.items} expanded={expanded} />
           </div>
@@ -83,11 +81,24 @@ function SidebarNav({ expanded }: { expanded: boolean }) {
   );
 }
 
+function SidebarFooter({ expanded }: { expanded: boolean }) {
+  if (!expanded) return null;
+  return (
+    <div className="shrink-0 border-t border-white/[0.06] px-4 py-3">
+      <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-sidebar-foreground/35">
+        Plataforma club
+      </p>
+      <p className="mt-0.5 text-[11px] text-sidebar-foreground/50">Metodología · Cantera · Club</p>
+    </div>
+  );
+}
+
 function SidebarPanel({ clubName, expanded }: { clubName: string; expanded: boolean }) {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <SidebarBrand clubName={clubName} expanded={expanded} />
       <SidebarNav expanded={expanded} />
+      <SidebarFooter expanded={expanded} />
     </div>
   );
 }
@@ -152,12 +163,12 @@ export function PortalSidebarProvider({ children, clubName }: ProviderProps) {
               <div className="hidden shrink-0 md:block" style={{ width: RAIL_PX }} aria-hidden />
               <aside
                 className={cn(
-                  'portal-sidebar-rail relative fixed inset-y-0 left-0 z-50 hidden flex-col',
-                  'border-r border-primary/30 bg-sidebar/95 text-sidebar-foreground backdrop-blur-xl',
+                  'portal-sidebar-rail portal-sidebar-surface relative fixed inset-y-0 left-0 z-50 hidden flex-col',
+                  'border-r border-primary/20 text-sidebar-foreground',
                   'transition-[width,box-shadow] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] md:flex',
                   expanded
-                    ? 'shadow-[4px_0_40px_hsl(183_100%_50%_/_0.1)]'
-                    : 'overflow-hidden shadow-[2px_0_16px_hsl(183_100%_50%_/_0.04)]'
+                    ? 'shadow-[12px_0_48px_hsl(0_0%_0%_/_0.45)]'
+                    : 'overflow-hidden shadow-[4px_0_24px_hsl(0_0%_0%_/_0.35)]'
                 )}
                 style={{ width: expanded ? EXPANDED_PX : RAIL_PX }}
                 onMouseEnter={handlePointerEnter}
@@ -172,14 +183,14 @@ export function PortalSidebarProvider({ children, clubName }: ProviderProps) {
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetContent
                 side="left"
-                className="w-[min(18rem,85vw)] border-primary/25 bg-sidebar p-0 text-sidebar-foreground [&>button]:text-sidebar-foreground"
+                className="portal-sidebar-surface w-[min(19rem,88vw)] border-primary/20 bg-transparent p-0 text-sidebar-foreground [&>button]:text-sidebar-foreground"
               >
                 <SidebarPanel clubName={clubName} expanded />
               </SheetContent>
             </Sheet>
           )}
 
-          <div className="flex min-h-svh min-w-0 flex-1 flex-col">{children}</div>
+          <div className="portal-main-surface flex min-h-svh min-w-0 flex-1 flex-col">{children}</div>
         </div>
       </TooltipProvider>
     </PortalSidebarContext.Provider>

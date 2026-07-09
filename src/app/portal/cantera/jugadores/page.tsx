@@ -4,7 +4,11 @@ import { PlayersMasterDetail } from '@/components/portal/PlayersMasterDetail';
 import { PageContainer } from '@/components/portal/PageContainer';
 import { DEMO_CANTERA_TEAMS, DEMO_TEAM_PLAYERS } from '@/lib/cantera-teams';
 import { isDemoActive } from '@/lib/demo';
-import type { PlayerProfile } from '@/lib/player-profile';
+import { comparePlayersForList, type PlayerProfile } from '@/lib/player-profile';
+import type { PlayerTeamOption } from '@/lib/player-teams';
+import { sortPlayerTeamsByCategory } from '@/lib/player-teams';
+import { parseGuardiansJson } from '@/lib/player-guardians';
+import { parsePlayerHistoryJson } from '@/lib/player-club-history';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import { redirect } from 'next/navigation';
@@ -12,37 +16,70 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 
 type Props = {
-  searchParams: Promise<{ player?: string }>;
+  searchParams: Promise<{ player?: string; team?: string }>;
 };
 
 function teamMetaForId(teamId: string | null) {
   if (!teamId) {
-    return { team_name: 'Sin equipo', team_category: '' };
+    return { team_name: 'Sin equipo', team_category: '', team_category_slug: null };
   }
   const demoTeam = DEMO_CANTERA_TEAMS.find((team) => team.id === teamId);
   if (demoTeam) {
-    return { team_name: demoTeam.name, team_category: demoTeam.category };
+    return {
+      team_name: demoTeam.name,
+      team_category: demoTeam.category,
+      team_category_slug: demoTeam.category_slug,
+    };
   }
-  return { team_name: 'Sin equipo', team_category: '' };
+  return { team_name: 'Sin equipo', team_category: '', team_category_slug: null };
 }
 
 export default async function PortalCanteraJugadoresPage({ searchParams }: Props) {
-  const { player: initialPlayerId } = await searchParams;
+  const { player: initialPlayerId, team: initialTeamFilter } = await searchParams;
   const supabase = await createClient();
   const ctx = await getStaffContext(supabase);
   if (!ctx) redirect('/login');
 
   const demo = await isDemoActive();
 
-  const { data: players } = await supabase
-    .from('synq_players')
-    .select(
-      'id, display_name, first_name, last_name, jersey_number, position, active, photo_url, birth_year, team_id, synq_teams(name, category)'
-    )
-    .eq('club_id', ctx.club.id)
-    .eq('active', true)
-    .order('last_name')
-    .order('first_name');
+  const [{ data: players }, { data: teams }] = await Promise.all([
+    supabase
+      .from('synq_players')
+      .select(
+        'id, display_name, first_name, last_name, jersey_number, position, active, photo_url, birth_year, is_minor, guardians_json, medical_until, medical_document_url, player_history_json, created_at, team_id, synq_teams(name, category, category_slug)'
+      )
+      .eq('club_id', ctx.club.id)
+      .eq('active', true)
+      .order('last_name')
+      .order('first_name'),
+    supabase
+      .from('synq_teams')
+      .select('id, name, category, category_slug')
+      .eq('club_id', ctx.club.id)
+      .eq('active', true),
+  ]);
+
+  let teamOptions: PlayerTeamOption[] = (teams ?? []).map((team) => ({
+    id: team.id,
+    name: team.name,
+    category: team.category,
+    category_slug: team.category_slug,
+  }));
+
+  if (demo) {
+    const existingTeamIds = new Set(teamOptions.map((team) => team.id));
+    for (const demoTeam of DEMO_CANTERA_TEAMS) {
+      if (existingTeamIds.has(demoTeam.id)) continue;
+      teamOptions.push({
+        id: demoTeam.id,
+        name: demoTeam.name,
+        category: demoTeam.category,
+        category_slug: demoTeam.category_slug,
+      });
+    }
+  }
+
+  teamOptions = sortPlayerTeamsByCategory(teamOptions);
 
   let profiles: PlayerProfile[] = (players ?? []).map((row) => {
     const team = Array.isArray(row.synq_teams) ? row.synq_teams[0] : row.synq_teams;
@@ -58,7 +95,14 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
       team_id: row.team_id,
       team_name: team?.name ?? 'Sin equipo',
       team_category: team?.category ?? '',
+      team_category_slug: team?.category_slug ?? null,
       active: row.active,
+      is_minor: row.is_minor ?? false,
+      guardians: parseGuardiansJson(row.guardians_json),
+      medical_until: row.medical_until ?? null,
+      medical_document_url: row.medical_document_url ?? null,
+      created_at: row.created_at ?? null,
+      history: parsePlayerHistoryJson(row.player_history_json),
     };
   });
 
@@ -75,20 +119,47 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
         jersey_number: demoPlayer.jersey_number,
         position: demoPlayer.position,
         photo_url: demoPlayer.photo_url,
-        birth_year: null,
+        birth_year: demoPlayer.id === 'demo-pl-ale-1' ? 2014 : null,
         team_id: demoPlayer.team_id,
         team_name: team.team_name,
         team_category: team.team_category,
+        team_category_slug: team.team_category_slug,
         active: true,
+        is_minor: demoPlayer.id === 'demo-pl-ale-1',
+        guardians:
+          demoPlayer.id === 'demo-pl-ale-1'
+            ? [{ first_name: 'Ana', last_name: 'Castro', email: 'ana.castro@email.com', phone: '600 123 456' }]
+            : [],
+        medical_until: demoPlayer.id === 'demo-pl-ale-1' ? '2026-12-31' : null,
+        medical_document_url: null,
+        created_at:
+          demoPlayer.id === 'demo-pl-ale-1'
+            ? '2024-09-01T10:00:00.000Z'
+            : new Date(Date.now() - 120 * 24 * 60 * 60 * 1000).toISOString(),
+        history:
+          demoPlayer.id === 'demo-pl-ale-1'
+            ? [
+                {
+                  id: 'demo-hist-1',
+                  kind: 'category_change',
+                  title: 'Ascenso de categoría',
+                  detail: 'Benjamín A → Alevín A',
+                  occurredAt: '2025-07-01T09:00:00.000Z',
+                },
+                {
+                  id: 'demo-hist-2',
+                  kind: 'joined',
+                  title: 'Alta en el club',
+                  detail: `Plantilla · ${team.team_name}`,
+                  occurredAt: '2024-09-01T10:00:00.000Z',
+                },
+              ]
+            : [],
       });
     }
   }
 
-  profiles.sort((a, b) => {
-    const lastA = (a.last_name ?? a.display_name).toLowerCase();
-    const lastB = (b.last_name ?? b.display_name).toLowerCase();
-    return lastA.localeCompare(lastB, 'es');
-  });
+  profiles.sort((a, b) => comparePlayersForList(a, b, 'category'));
 
   return (
     <PageContainer>
@@ -117,23 +188,18 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
 
       {demo ? (
         <p className="mb-4 rounded-lg border border-primary/20 bg-muted/10 p-4 text-sm text-muted-foreground">
-          Vista maestro-detalle con jugadores de demo. Selecciona uno a la izquierda para ver y editar
-          su ficha a la derecha.
+          Vista maestro-detalle con jugadores de demo. Usa + en Plantilla para probar el alta rápida.
         </p>
       ) : null}
 
-      {profiles.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-primary/20 bg-muted/5 p-6 text-sm text-muted-foreground">
-          No hay jugadores activos. Créalos desde la sección Equipos.
-        </p>
-      ) : (
-        <PlayersMasterDetail
-          clubId={ctx.club.id}
-          players={profiles}
-          initialPlayerId={initialPlayerId}
-          demoMode={demo}
-        />
-      )}
+      <PlayersMasterDetail
+        clubId={ctx.club.id}
+        players={profiles}
+        teams={teamOptions}
+        initialPlayerId={initialPlayerId}
+        initialTeamFilter={initialTeamFilter}
+        demoMode={demo}
+      />
     </PageContainer>
   );
 }
