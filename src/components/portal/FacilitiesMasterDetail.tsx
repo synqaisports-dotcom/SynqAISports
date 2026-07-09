@@ -3,11 +3,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CalendarDays, MapPin, Pencil, Plus, Search } from 'lucide-react';
+import { CalendarDays, MapPin, Pencil, Plus } from 'lucide-react';
 import { FacilityDivisionOccupancy } from '@/components/portal/FacilityDivisionOccupancy';
 import { FacilityForm } from '@/components/portal/FacilityForm';
 import { FacilityPauseButton } from '@/components/portal/FacilityPauseButton';
 import { SynqSelect } from '@/components/portal/SynqSelect';
+import { PortalSearchField } from '@/components/portal/PortalSearchField';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -370,15 +371,11 @@ export function FacilitiesMasterDetail({
             </button>
           </div>
           <div className="space-y-2">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Buscar por nombre, deporte o dirección…"
-                className="border-primary/30 bg-background/80 pl-9"
-              />
-            </div>
+            <PortalSearchField
+              value={search}
+              onChange={setSearch}
+              placeholder="Buscar por nombre, deporte o dirección…"
+            />
             <div className="grid gap-2 sm:grid-cols-2">
               <SynqSelect
                 value={sportFilter}

@@ -4,8 +4,9 @@ import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Mail, Pencil, Phone, Plus, Search, User, UserCog } from 'lucide-react';
+import { Mail, Pencil, Phone, Plus, User, UserCog } from 'lucide-react';
 import { SportPersonForm } from '@/components/portal/SportPersonForm';
+import { PortalSearchField } from '@/components/portal/PortalSearchField';
 import { SynqSelect } from '@/components/portal/SynqSelect';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -386,15 +387,11 @@ export function StaffMasterDetail({
             </button>
           </div>
           <div className="space-y-2">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Buscar por nombre, cargo o equipo…"
-                className="border-primary/30 bg-background/80 pl-9"
-              />
-            </div>
+            <PortalSearchField
+              value={search}
+              onChange={setSearch}
+              placeholder="Buscar por nombre, cargo o equipo…"
+            />
             <div className="grid gap-2 sm:grid-cols-2">
               <SynqSelect
                 value={teamFilter}

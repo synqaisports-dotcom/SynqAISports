@@ -3,15 +3,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { BookOpen, Eye, Pencil, Plus, Printer, Search, Trash2 } from 'lucide-react';
+import { BookOpen, Eye, Pencil, Plus, Printer, Trash2 } from 'lucide-react';
 import { deleteExercise, updateExerciseDrawing } from '@/app/actions/methodology';
 import { DrawingPreviewFrame } from '@/components/methodology/drawing/DrawingPreviewFrame';
 import { ExerciseDrawingStudio } from '@/components/methodology/drawing/ExerciseDrawingStudio';
 import { ExercisePreviewOverlay } from '@/components/methodology/ExercisePreviewOverlay';
 import { PortalConfirmDialog } from '@/components/portal/PortalConfirmDialog';
+import { PortalSearchField } from '@/components/portal/PortalSearchField';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import {
   drawingDocumentIsEmpty,
   parseExerciseDrawing,
@@ -57,7 +57,7 @@ const listItemClass = (active: boolean) =>
       : 'border-primary/15 hover:border-primary/30 hover:bg-muted/20'
   );
 
-const sectionClass = 'rounded-xl border border-primary/15 bg-muted/5 p-4';
+const sectionClass = 'synq-section-border rounded-xl p-4';
 
 const TYPE_FILTER_OPTIONS: { value: 'all' | TaskType; label: string }[] = [
   { value: 'all', label: 'Ver todos los ejercicios' },
@@ -71,7 +71,7 @@ const filterButtonClass = (active: boolean) =>
     'min-w-0 rounded-lg border px-1.5 py-2 text-center text-[11px] leading-snug transition-colors sm:px-2 sm:text-xs',
     active
       ? 'border-primary/50 bg-primary/10 font-medium text-primary'
-      : 'border-primary/15 text-muted-foreground hover:border-primary/30 hover:bg-muted/20 hover:text-foreground'
+      : 'border-primary/25 text-muted-foreground hover:border-primary/40 hover:bg-primary/5 hover:text-foreground'
   );
 
 function ExerciseListIcon() {
@@ -405,15 +405,11 @@ export function ExercisesMasterDetail({ exercises, initialExerciseId, demoMode =
             </Link>
           </div>
           <div className="space-y-2">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Buscar por título u objetivos…"
-                className="border-primary/30 bg-background/80 pl-9"
-              />
-            </div>
+            <PortalSearchField
+              value={search}
+              onChange={setSearch}
+              placeholder="Buscar por título u objetivos…"
+            />
             <div className="grid grid-cols-4 gap-1.5">
               {TYPE_FILTER_OPTIONS.map((option) => (
                 <button

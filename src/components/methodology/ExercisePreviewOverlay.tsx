@@ -32,12 +32,12 @@ type Props = {
   onOpenChange: (open: boolean) => void;
 };
 
-const sectionClass = 'rounded-xl border border-primary/15 bg-muted/5 p-4';
+const sectionClass = 'synq-section-border rounded-xl p-4';
 
 function PreviewField({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className="text-[10px] font-medium uppercase tracking-wider text-primary/75">{label}</p>
       <p className={cn('mt-0.5 whitespace-pre-wrap text-sm', value.trim() ? 'text-foreground' : 'text-muted-foreground')}>
         {value.trim() || '—'}
       </p>
@@ -71,18 +71,18 @@ export function ExercisePreviewOverlay({ exercise, open, onOpenChange }: Props) 
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex flex-col bg-background"
+      className="portal-dashboard fixed inset-0 z-[100] flex flex-col"
       role="dialog"
       aria-modal="true"
       aria-label={`Previsualización: ${exercise.title}`}
     >
-      <header className="flex shrink-0 items-start justify-between gap-3 border-b border-primary/20 px-4 py-3 sm:px-6">
+      <header className="portal-subnav-divider flex shrink-0 items-start justify-between gap-3 px-4 py-3 sm:px-6">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">
               {exercise.title}
             </h2>
-            <Badge variant="outline" className="border-primary/25 text-[10px]">
+            <Badge variant="outline" className="border-primary/40 bg-primary/10 text-[10px] text-primary">
               {taskLabel}
             </Badge>
           </div>
@@ -103,7 +103,7 @@ export function ExercisePreviewOverlay({ exercise, open, onOpenChange }: Props) 
       </header>
 
       <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
-        <div className="flex min-h-[40vh] items-center justify-center border-b border-primary/15 bg-[#060a12] p-4 lg:min-h-0 lg:border-b-0 lg:border-r">
+        <div className="flex min-h-[40vh] items-center justify-center border-b border-primary/30 bg-[#060a12] p-4 shadow-[inset_0_0_40px_hsl(183_100%_50%_/_0.06)] lg:min-h-0 lg:border-b-0 lg:border-r">
           {hasDrawing ? (
             <DrawingPreviewFrame
               document={drawingDoc}
@@ -115,7 +115,7 @@ export function ExercisePreviewOverlay({ exercise, open, onOpenChange }: Props) 
           )}
         </div>
 
-        <div className="min-h-0 overflow-y-auto p-4 sm:p-6">
+        <div className="min-h-0 overflow-y-auto bg-gradient-to-b from-primary/[0.04] via-transparent to-transparent p-4 sm:p-6">
           <div className="space-y-4">
             <div className={sectionClass}>
               <PreviewField
@@ -128,7 +128,7 @@ export function ExercisePreviewOverlay({ exercise, open, onOpenChange }: Props) 
             </div>
 
             <div className={sectionClass}>
-              <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-primary/75">
                 Contenido condicional
               </p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">

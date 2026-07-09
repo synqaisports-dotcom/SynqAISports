@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useFormState } from 'react-dom';
-import { Camera, FileText, Pencil, Search, User, UserPlus, Users } from 'lucide-react';
+import { Camera, FileText, Pencil, User, UserPlus, Users } from 'lucide-react';
 import { updatePlayer, type ActionState } from '@/app/actions/cantera';
 import { PlayerClubHistorySection } from '@/components/portal/PlayerClubHistorySection';
 import { PlayerCreateForm } from '@/components/portal/PlayerCreateForm';
@@ -17,6 +17,7 @@ import { PlayerPauseButton } from '@/components/portal/PlayerPauseButton';
 import { PlayerPhotoField } from '@/components/portal/PlayerPhotoField';
 import { PlayerPositionsPicker } from '@/components/portal/PlayerPositionsPicker';
 import { SynqNumericStepper } from '@/components/portal/SynqNumericStepper';
+import { PortalSearchField } from '@/components/portal/PortalSearchField';
 import { SynqSelect } from '@/components/portal/SynqSelect';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -534,15 +535,11 @@ export function PlayersMasterDetail({
             </button>
           </div>
           <div className="space-y-2">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Buscar por nombre o apellidos…"
-                className="border-primary/30 bg-background/80 pl-9"
-              />
-            </div>
+            <PortalSearchField
+              value={search}
+              onChange={setSearch}
+              placeholder="Buscar por nombre o apellidos…"
+            />
             <div className="grid gap-2 sm:grid-cols-2">
               <SynqSelect
                 value={teamFilter}

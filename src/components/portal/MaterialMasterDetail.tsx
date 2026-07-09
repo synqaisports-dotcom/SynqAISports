@@ -9,12 +9,12 @@ import {
   Package,
   Pencil,
   Plus,
-  Search,
   Warehouse,
 } from 'lucide-react';
 import { MaterialForm } from '@/components/portal/MaterialForm';
 import { MaterialPauseButton } from '@/components/portal/MaterialPauseButton';
 import { MaterialStockForm } from '@/components/portal/MaterialStockForm';
+import { PortalSearchField } from '@/components/portal/PortalSearchField';
 import { SynqSelect } from '@/components/portal/SynqSelect';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -619,21 +619,17 @@ export function MaterialMasterDetail({
           </div>
 
           <div className="space-y-2">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder={
-                  view === 'catalog'
-                    ? 'Buscar material…'
-                    : view === 'team'
-                      ? 'Buscar equipo…'
-                      : 'Buscar instalación…'
-                }
-                className="border-primary/30 bg-background/80 pl-9"
-              />
-            </div>
+            <PortalSearchField
+              value={search}
+              onChange={setSearch}
+              placeholder={
+                view === 'catalog'
+                  ? 'Buscar material…'
+                  : view === 'team'
+                    ? 'Buscar equipo…'
+                    : 'Buscar instalación…'
+              }
+            />
             {view === 'catalog' ? (
               <div className="grid gap-2 sm:grid-cols-2">
                 <SynqSelect

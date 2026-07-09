@@ -358,6 +358,36 @@ body {
       0 0 20px hsl(183 100% 50% / 0.04);
   }
 
+  .portal-search-input {
+    border-color: hsl(183 100% 50% / 0.35);
+    background: linear-gradient(
+      135deg,
+      hsl(205 40% 10% / 0.95) 0%,
+      hsl(205 40% 7% / 0.75) 100%
+    );
+    box-shadow:
+      inset 0 1px 0 0 hsl(183 100% 50% / 0.14),
+      0 0 18px hsl(183 100% 50% / 0.06);
+  }
+
+  .portal-search-input:focus-visible {
+    border-color: hsl(183 100% 50% / 0.55);
+    background: linear-gradient(
+      135deg,
+      hsl(205 40% 11% / 0.98) 0%,
+      hsl(205 40% 8% / 0.85) 100%
+    );
+    box-shadow:
+      inset 0 1px 0 0 hsl(183 100% 50% / 0.2),
+      0 0 0 1px hsl(183 100% 50% / 0.2),
+      0 0 24px hsl(183 100% 50% / 0.1);
+  }
+
+  .portal-subnav-divider {
+    border-bottom: 1px solid hsl(183 100% 50% / 0.38);
+    box-shadow: 0 1px 0 hsl(183 100% 50% / 0.12);
+  }
+
   .portal-sidebar-rail::after {
     content: '';
     position: absolute;

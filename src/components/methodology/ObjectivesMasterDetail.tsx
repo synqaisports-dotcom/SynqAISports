@@ -3,9 +3,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { GitBranch, Pencil, Search } from 'lucide-react';
+import { GitBranch, Pencil } from 'lucide-react';
 import { CategoryObjectivesForm } from '@/components/methodology/CategoryObjectivesForm';
 import { SynqSelect } from '@/components/portal/SynqSelect';
+import { PortalSearchField } from '@/components/portal/PortalSearchField';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -297,15 +298,11 @@ export function ObjectivesMasterDetail({
             </CardDescription>
           </div>
           <div className="space-y-2">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Buscar categoría o etapa…"
-                className="border-primary/30 bg-background/80 pl-9"
-              />
-            </div>
+            <PortalSearchField
+              value={search}
+              onChange={setSearch}
+              placeholder="Buscar categoría o etapa…"
+            />
             <SynqSelect
               value={stageFilter}
               onChange={(value) => setStageFilter(value as StageFilter)}
