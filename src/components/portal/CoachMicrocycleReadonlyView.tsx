@@ -1,14 +1,20 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { CheckCircle2, Circle, Flame, Target, Wind } from 'lucide-react';
+import { CheckCircle2, Circle, FileText, Flame, Target, Wind } from 'lucide-react';
+import {
+  ExercisePreviewOverlay,
+  type ExercisePreviewRecord,
+} from '@/components/methodology/ExercisePreviewOverlay';
 import { loadOrHydrateDemoMicrocycle } from '@/lib/demo-microcycle-hydrate';
 import type { SlotType } from '@/lib/methodology';
 import {
   groupSlotsBySession,
   resolveMicrocycleSessions,
   slotDisplayLabel,
+  type SlotRowBase,
 } from '@/lib/microcycle-sessions';
+import { resolveSlotExercisePreview } from '@/lib/resolve-slot-exercise-preview';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -26,6 +32,9 @@ const sessionButtonClass = (active: boolean) =>
       ? 'border-primary/55 bg-primary/10'
       : 'border-primary/15 bg-background/30 hover:border-primary/35 hover:bg-primary/5'
   );
+
+const viewFichaButtonClass =
+  'inline-flex size-8 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-background/40 text-muted-foreground transition-colors hover:border-primary/45 hover:bg-primary/10 hover:text-primary disabled:pointer-events-none disabled:opacity-35';
 
 function SlotIcon({ slotType, assigned }: { slotType: SlotType; assigned: boolean }) {
   const Icon = slotType === 'warmup' ? Flame : slotType === 'cooldown' ? Wind : Target;
@@ -51,6 +60,8 @@ export function CoachMicrocycleReadonlyView({
 }: Props) {
   const [sessionIndex, setSessionIndex] = useState(initialSessionIndex);
   const [micro, setMicro] = useState(() => loadOrHydrateDemoMicrocycle(microcycleId));
+  const [previewExercise, setPreviewExercise] = useState<ExercisePreviewRecord | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   useEffect(() => {
     setMicro(loadOrHydrateDemoMicrocycle(microcycleId));
@@ -58,6 +69,8 @@ export function CoachMicrocycleReadonlyView({
 
   useEffect(() => {
     setSessionIndex(initialSessionIndex);
+    setPreviewOpen(false);
+    setPreviewExercise(null);
   }, [microcycleId, initialSessionIndex]);
 
   if (!micro) {
@@ -71,6 +84,13 @@ export function CoachMicrocycleReadonlyView({
   const sessionsCount = resolveMicrocycleSessions(micro);
   const grouped = groupSlotsBySession(micro.slots);
   const slots = grouped.get(sessionIndex) ?? [];
+
+  const openExercisePreview = (slot: SlotRowBase) => {
+    const record = resolveSlotExercisePreview(slot);
+    if (!record) return;
+    setPreviewExercise(record);
+    setPreviewOpen(true);
+  };
 
   return (
     <div className="space-y-4">
@@ -89,7 +109,11 @@ export function CoachMicrocycleReadonlyView({
           <button
             key={index}
             type="button"
-            onClick={() => setSessionIndex(index)}
+            onClick={() => {
+              setSessionIndex(index);
+              setPreviewOpen(false);
+              setPreviewExercise(null);
+            }}
             className={sessionButtonClass(sessionIndex === index)}
           >
             Sesión {index}
@@ -105,6 +129,7 @@ export function CoachMicrocycleReadonlyView({
         ) : (
           slots.map((slot) => {
             const assigned = Boolean(slot.exercise_id || slot.title?.trim());
+            const preview = resolveSlotExercisePreview(slot);
             return (
               <li
                 key={slot.id}
@@ -124,11 +149,27 @@ export function CoachMicrocycleReadonlyView({
                     {slot.title?.trim() || 'Sin asignar'}
                   </p>
                 </div>
+                <button
+                  type="button"
+                  className={viewFichaButtonClass}
+                  title={preview ? 'Ver ficha del ejercicio' : 'Sin ficha disponible'}
+                  aria-label="Ver ficha del ejercicio"
+                  disabled={!preview}
+                  onClick={() => openExercisePreview(slot)}
+                >
+                  <FileText className="size-3.5" />
+                </button>
               </li>
             );
           })
         )}
       </ul>
+
+      <ExercisePreviewOverlay
+        exercise={previewExercise}
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+      />
     </div>
   );
 }
