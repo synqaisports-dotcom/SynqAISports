@@ -1,155 +1,254 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useFormState } from 'react-dom';
+import Link from 'next/link';
 import {
   createChangeRequest,
-  resolveChangeRequest,
   type ActionState,
 } from '@/app/actions/methodology';
+import { resolveChangeRequestWithNote } from '@/app/actions/change-requests';
+import {
+  canApproveChangeRequest,
+  type ChangeRequestInboxRow,
+} from '@/lib/change-requests';
 import {
   loadCoachChangeRequests,
   updateCoachChangeRequestStatus,
   type CoachChangeRequest,
 } from '@/lib/coach-change-requests-store';
+import { ChangeRequestCard } from '@/components/methodology/ChangeRequestCard';
+import { PortalSearchField } from '@/components/portal/PortalSearchField';
+import { cn } from '@/lib/utils';
 
-export type ChangeRequestRow = {
-  id: string;
-  reason: string;
-  status: string;
-  created_at: string;
-  synq_exercises: { title: string } | { title: string }[] | null;
-  source?: 'server' | 'coach-demo';
-  teamName?: string;
-  sessionLabel?: string;
+export type ChangeRequestRow = ChangeRequestInboxRow;
+
+type Props = {
+  requests: ChangeRequestInboxRow[];
+  role: string;
 };
 
 const initial: ActionState = { ok: false };
 
-export function ChangeRequestsPanel({ requests }: { requests: ChangeRequestRow[] }) {
+const filterButtonClass = (active: boolean) =>
+  cn(
+    'rounded-lg border px-3 py-2 text-xs transition-colors',
+    active
+      ? 'border-primary/50 bg-primary/10 font-medium text-primary'
+      : 'border-primary/25 text-muted-foreground hover:border-primary/40 hover:bg-primary/5 hover:text-foreground'
+  );
+
+function coachToInboxRow(item: CoachChangeRequest): ChangeRequestInboxRow {
+  return {
+    id: item.id,
+    reason: item.reason,
+    status: item.status,
+    request_type: 'methodology',
+    created_at: item.createdAt,
+    resolved_at: item.resolvedAt ?? null,
+    resolution_note: item.resolutionNote ?? null,
+    session_label: item.sessionLabel ?? null,
+    team_id: item.teamId,
+    microcycle_id: item.microcycleId ?? null,
+    requested_by: null,
+    requester_name: 'Entrenador (demo)',
+    team_name: item.teamName,
+    microcycle_title: item.mccLabel ?? null,
+    exercise_title: null,
+    source: 'coach-demo',
+  };
+}
+
+export function ChangeRequestsPanel({ requests, role }: Props) {
   const [state, action, pending] = useFormState(createChangeRequest, initial);
   const [coachRequests, setCoachRequests] = useState<CoachChangeRequest[]>([]);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>(
+    'pending'
+  );
 
   useEffect(() => {
     setCoachRequests(loadCoachChangeRequests());
   }, [state.ok]);
 
-  const merged: ChangeRequestRow[] = [
-    ...coachRequests.map((item) => ({
-      id: item.id,
-      reason: item.reason,
-      status: item.status,
-      created_at: item.createdAt,
-      synq_exercises: null,
-      source: 'coach-demo' as const,
-      teamName: item.teamName,
-      sessionLabel: item.sessionLabel,
-    })),
-    ...requests,
-  ];
+  const merged = useMemo(() => {
+    const list: ChangeRequestInboxRow[] = [
+      ...coachRequests.map(coachToInboxRow),
+      ...requests,
+    ];
+  return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [coachRequests, requests]);
 
-  const handleResolve = async (requestId: string, status: 'approved' | 'rejected') => {
+  const filtered = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return merged.filter((item) => {
+      if (statusFilter !== 'all' && item.status !== statusFilter) return false;
+      if (!query) return true;
+      const haystack = [
+        item.reason,
+        item.team_name,
+        item.session_label,
+        item.requester_name,
+        item.exercise_title,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(query);
+    });
+  }, [merged, search, statusFilter]);
+
+  const handleResolve = async (
+    requestId: string,
+    status: 'approved' | 'rejected',
+    resolutionNote?: string
+  ) => {
     if (requestId.startsWith('coach-req-')) {
-      updateCoachChangeRequestStatus(requestId, status);
+      updateCoachChangeRequestStatus(requestId, status, resolutionNote);
       setCoachRequests(loadCoachChangeRequests());
       return;
     }
-    await resolveChangeRequest(requestId, status);
+    await resolveChangeRequestWithNote(requestId, status, resolutionNote);
     window.location.reload();
   };
 
   return (
-    <div className="grid gap-10 lg:grid-cols-2">
-      <section>
-        <h2 className="text-lg font-semibold text-white">Nueva solicitud (manual)</h2>
-        <p className="mt-1 text-sm text-synq-muted">
-          Los entrenadores envían solicitudes desde la vista Entrenador. Aquí puedes registrar una
-          manualmente si hace falta.
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+      <section className="portal-section-surface rounded-xl p-4 sm:p-5">
+        <h2 className="text-base font-semibold text-foreground">Nueva solicitud (manual)</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Los entrenadores envían solicitudes desde la vista Entrenador o la futura app Android.
+          Registra aquí una manual si hace falta.
         </p>
         <form action={action} className="mt-4 grid gap-3">
+          <Field label="Tipo" name="requestType" as="select" options={[
+            { value: 'methodology', label: 'Metodología (planificación)' },
+            { value: 'cantera', label: 'Cantera (equipo / categoría)' },
+            { value: 'mixed', label: 'Mixta' },
+          ]} />
           <Field label="ID ejercicio (opcional)" name="exerciseId" placeholder="uuid" />
           <Field label="ID slot microciclo (opcional)" name="slotId" placeholder="uuid" />
           <div>
-            <label className="mb-1 block text-xs text-synq-muted">Motivo</label>
+            <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+              Motivo
+            </label>
             <textarea
               name="reason"
               rows={4}
               required
-              className="w-full rounded-lg border border-white/10 bg-synq-navy/80 px-3 py-2 text-sm text-white"
+              className="w-full rounded-lg border border-primary/25 bg-background/80 px-3 py-2 text-sm"
             />
           </div>
           <button
             type="submit"
             disabled={pending}
-            className="w-fit rounded-full bg-synq-pitch px-5 py-2 text-sm font-semibold text-white"
+            className="w-fit rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground"
           >
             Enviar solicitud
           </button>
-          {state.ok && <p className="text-sm text-synq-accent">Registrada.</p>}
+          {state.ok ? <p className="text-sm text-primary">Registrada.</p> : null}
         </form>
       </section>
 
-      <section>
-        <h2 className="text-lg font-semibold text-white">Pendientes y historial</h2>
-        <ul className="mt-4 space-y-3">
-          {merged.length === 0 && <li className="text-sm text-synq-muted">Sin solicitudes.</li>}
-          {merged.map((r) => {
-            const ex = Array.isArray(r.synq_exercises) ? r.synq_exercises[0] : r.synq_exercises;
-            return (
-              <li key={r.id} className="rounded-lg border border-white/5 bg-synq-slate/30 p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <p className="text-xs uppercase text-synq-muted">
-                    {r.status}
-                    {r.source === 'coach-demo' ? ' · entrenador' : ''}
-                  </p>
-                  <span className="text-xs text-synq-muted">
-                    {new Date(r.created_at).toLocaleDateString('es-ES')}
-                  </span>
-                </div>
-                {r.teamName ? (
-                  <p className="mt-1 text-xs text-synq-accent">
-                    {r.teamName}
-                    {r.sessionLabel ? ` · ${r.sessionLabel}` : ''}
-                  </p>
-                ) : null}
-                <p className="mt-2 text-sm text-white">{r.reason}</p>
-                {ex && <p className="mt-1 text-xs text-synq-muted">Ejercicio: {ex.title}</p>}
-                {r.status === 'pending' && (
-                  <div className="mt-3 flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => void handleResolve(r.id, 'approved')}
-                      className="text-xs text-synq-accent"
-                    >
-                      Aprobar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void handleResolve(r.id, 'rejected')}
-                      className="text-xs text-red-400"
-                    >
-                      Rechazar
-                    </button>
-                  </div>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+      <section className="space-y-4">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 className="text-base font-semibold text-foreground">Bandeja</h2>
+            <p className="text-sm text-muted-foreground">
+              {filtered.length} solicitud{filtered.length === 1 ? '' : 'es'}
+            </p>
+          </div>
+          <Link
+            href="/portal/entrenador"
+            className="text-xs text-primary hover:underline"
+          >
+            Vista entrenador
+          </Link>
+        </div>
+
+        <PortalSearchField
+          value={search}
+          onChange={setSearch}
+          placeholder="Buscar por equipo, sesión o motivo…"
+        />
+
+        <div className="flex flex-wrap gap-1.5">
+          {(['pending', 'approved', 'rejected', 'all'] as const).map((value) => (
+            <button
+              key={value}
+              type="button"
+              className={filterButtonClass(statusFilter === value)}
+              onClick={() => setStatusFilter(value)}
+            >
+              {value === 'all'
+                ? 'Todas'
+                : value === 'pending'
+                  ? 'Pendientes'
+                  : value === 'approved'
+                    ? 'Aprobadas'
+                    : 'Rechazadas'}
+            </button>
+          ))}
+        </div>
+
+        <div className="space-y-3">
+          {filtered.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-primary/20 px-4 py-8 text-center text-sm text-muted-foreground">
+              Sin solicitudes con esos filtros.
+            </p>
+          ) : (
+            filtered.map((item) => (
+              <ChangeRequestCard
+                key={item.id}
+                item={item}
+                canApprove={canApproveChangeRequest(role, item.request_type)}
+                onResolve={(status, note) => void handleResolve(item.id, status, note)}
+              />
+            ))
+          )}
+        </div>
       </section>
     </div>
   );
 }
 
-function Field({ label, name, placeholder }: { label: string; name: string; placeholder?: string }) {
+function Field({
+  label,
+  name,
+  placeholder,
+  as,
+  options,
+}: {
+  label: string;
+  name: string;
+  placeholder?: string;
+  as?: 'select';
+  options?: { value: string; label: string }[];
+}) {
   return (
     <div>
-      <label className="mb-1 block text-xs text-synq-muted">{label}</label>
-      <input
-        name={name}
-        placeholder={placeholder}
-        className="w-full rounded-lg border border-white/10 bg-synq-navy/80 px-3 py-2 text-sm text-white"
-      />
+      <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+        {label}
+      </label>
+      {as === 'select' ? (
+        <select
+          name={name}
+          className="w-full rounded-lg border border-primary/25 bg-background/80 px-3 py-2 text-sm"
+          defaultValue={options?.[0]?.value}
+        >
+          {options?.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <input
+          name={name}
+          placeholder={placeholder}
+          className="w-full rounded-lg border border-primary/25 bg-background/80 px-3 py-2 text-sm"
+        />
+      )}
     </div>
   );
 }

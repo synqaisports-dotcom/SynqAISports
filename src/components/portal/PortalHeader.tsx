@@ -4,6 +4,7 @@ import { ThemeModeToggle } from '@/components/portal/ThemeModeToggle';
 import { PortalConfigButton } from '@/components/portal/PortalConfigButton';
 import { PortalUserMenu } from '@/components/portal/PortalUserMenu';
 import { DemoModeBell } from '@/components/portal/DemoModeBell';
+import { ChangeRequestsBell } from '@/components/portal/ChangeRequestsBell';
 import { PortalSidebarMobileTrigger } from '@/components/portal/portal-sidebar';
 
 type Props = {
@@ -21,6 +22,7 @@ export function PortalHeader({ clubName, role, demoMode, demoCanPersist }: Props
       </div>
       <div className="flex items-center gap-1">
         <PortalConfigButton />
+        <ChangeRequestsBell role={role} demoMode={demoMode} />
         {demoMode && <DemoModeBell canPersist={demoCanPersist ?? false} clubName={clubName} />}
         <ThemeModeToggle />
         <PortalUserMenu clubName={clubName} role={role} demoMode={demoMode} />

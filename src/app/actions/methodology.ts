@@ -546,50 +546,65 @@ export async function createChangeRequest(
   const teamId = String(formData.get('teamId') ?? '').trim() || null;
   const sessionLabel = String(formData.get('sessionLabel') ?? '').trim() || null;
   const microcycleId = String(formData.get('microcycleId') ?? '').trim() || null;
+  const requestTypeRaw = String(formData.get('requestType') ?? 'methodology').trim();
+  const requestType =
+    requestTypeRaw === 'cantera' || requestTypeRaw === 'mixed' ? requestTypeRaw : 'methodology';
 
   if (!reason) return { ok: false, message: 'validation' };
 
   if (await isDemoActive()) {
     revalidatePath('/portal/metodologia/solicitudes');
+    revalidatePath('/portal/entrenador');
     return { ok: true, id: `demo-request-${Date.now()}` };
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.from('synq_change_requests').insert({
-    club_id: clubId,
-    exercise_id: exerciseId,
-    microcycle_slot_id: slotId,
-    team_id: teamId,
-    session_label: sessionLabel,
-    microcycle_id: microcycleId,
-    requested_by: userId,
-    reason,
-    status: 'pending',
-  });
+  const { data, error } = await supabase
+    .from('synq_change_requests')
+    .insert({
+      club_id: clubId,
+      exercise_id: exerciseId,
+      microcycle_slot_id: slotId,
+      team_id: teamId,
+      session_label: sessionLabel,
+      microcycle_id: microcycleId,
+      requested_by: userId,
+      reason,
+      status: 'pending',
+      request_type: requestType,
+    })
+    .select('id')
+    .single();
 
   if (error) return { ok: false, message: 'error' };
 
+  const { notifyApproversForRequest } = await import('@/app/actions/change-requests');
+  const teamName = teamId
+    ? (
+        await supabase.from('synq_teams').select('name').eq('id', teamId).maybeSingle()
+      ).data?.name
+    : null;
+  const title = teamName
+    ? `Nueva solicitud · ${teamName}`
+    : 'Nueva solicitud de cambio';
+  const body = sessionLabel ? `${sessionLabel}: ${reason}` : reason;
+
+  if (data?.id) {
+    await notifyApproversForRequest(clubId, data.id, requestType, title, body);
+  }
+
   revalidatePath('/portal/metodologia/solicitudes');
-  return { ok: true };
+  revalidatePath('/portal/entrenador');
+  revalidatePath('/portal/metodologia');
+  return { ok: true, id: data?.id };
 }
 
 export async function resolveChangeRequest(
   requestId: string,
-  status: 'approved' | 'rejected'
+  status: 'approved' | 'rejected',
+  resolutionNote?: string
 ): Promise<ActionState> {
-  const clubId = await requireClubId();
-  const userId = await requireUserId();
-  if (!clubId || !userId) return { ok: false, message: 'unauthorized' };
-
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from('synq_change_requests')
-    .update({ status, resolved_by: userId })
-    .eq('id', requestId)
-    .eq('club_id', clubId);
-
-  if (error) return { ok: false, message: 'error' };
-
-  revalidatePath('/portal/metodologia/solicitudes');
-  return { ok: true };
+  const { resolveChangeRequestWithNote } = await import('@/app/actions/change-requests');
+  const result = await resolveChangeRequestWithNote(requestId, status, resolutionNote);
+  return { ok: result.ok, message: result.message };
 }

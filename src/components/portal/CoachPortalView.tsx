@@ -1,13 +1,17 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, MessageSquarePlus, Smartphone } from 'lucide-react';
 import { createChangeRequest, type ActionState } from '@/app/actions/methodology';
+import { fetchChangeRequestInbox } from '@/app/actions/change-requests';
+import { ChangeRequestCard } from '@/components/methodology/ChangeRequestCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { SynqSelect } from '@/components/portal/SynqSelect';
 import type { CanteraCategorySlug } from '@/lib/cantera-categories';
+import type { ChangeRequestInboxRow } from '@/lib/change-requests';
 import {
+  loadCoachChangeRequests,
   saveCoachChangeRequest,
   type CoachChangeRequest,
 } from '@/lib/coach-change-requests-store';
@@ -38,6 +42,38 @@ export function CoachPortalView({ teams }: Props) {
   const [requestingSession, setRequestingSession] = useState<string | null>(null);
   const [reason, setReason] = useState('');
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [myRequests, setMyRequests] = useState<ChangeRequestInboxRow[]>([]);
+
+  useEffect(() => {
+    const load = async () => {
+      const server = await fetchChangeRequestInbox({ mineOnly: true, status: 'all', limit: 20 });
+      const local = loadCoachChangeRequests().map(
+        (item): ChangeRequestInboxRow => ({
+          id: item.id,
+          reason: item.reason,
+          status: item.status,
+          request_type: 'methodology',
+          created_at: item.createdAt,
+          resolved_at: item.resolvedAt ?? null,
+          resolution_note: item.resolutionNote ?? null,
+          session_label: item.sessionLabel ?? null,
+          team_id: item.teamId,
+          microcycle_id: item.microcycleId ?? null,
+          requested_by: null,
+          requester_name: null,
+          team_name: item.teamName,
+          microcycle_title: item.mccLabel ?? null,
+          exercise_title: null,
+          source: 'coach-demo',
+        })
+      );
+      const merged = [...local, ...server].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      setMyRequests(merged.slice(0, 8));
+    };
+    void load();
+  }, [feedback]);
 
   const team = teams.find((item) => item.id === teamId) ?? teams[0];
   const categorySlug = team?.category_slug ?? 'alevin';
@@ -98,6 +134,7 @@ export function CoachPortalView({ teams }: Props) {
     formData.set('reason', `[${team.name} · ${sessionLabel}] ${reason.trim()}`);
     formData.set('teamId', team.id);
     formData.set('sessionLabel', sessionLabel);
+    formData.set('requestType', 'methodology');
     if (weekContext.instance?.microcycleId) {
       formData.set('microcycleId', weekContext.instance.microcycleId);
     }
@@ -230,6 +267,22 @@ export function CoachPortalView({ teams }: Props) {
           {feedback ? <p className="text-sm text-primary">{feedback}</p> : null}
         </CardContent>
       </Card>
+
+      {myRequests.length > 0 ? (
+        <Card className="border border-primary/25">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Mis solicitudes</CardTitle>
+            <CardDescription>
+              Estado de tus peticiones de cambio. También las verás en la campana del header.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {myRequests.map((item) => (
+              <ChangeRequestCard key={item.id} item={item} compact />
+            ))}
+          </CardContent>
+        </Card>
+      ) : null}
     </div>
   );
 }
