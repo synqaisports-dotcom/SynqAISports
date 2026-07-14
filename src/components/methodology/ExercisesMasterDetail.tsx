@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { BookOpen, Eye, Pencil, Plus, Printer, Trash2, X } from 'lucide-react';
+import { BookOpen, Eye, Pencil, Plus, Printer, Trash2 } from 'lucide-react';
 import { deleteExercise, updateExerciseDrawing } from '@/app/actions/methodology';
 import { DrawingPreviewFrame } from '@/components/methodology/drawing/DrawingPreviewFrame';
 import { ExerciseDrawingStudio } from '@/components/methodology/drawing/ExerciseDrawingStudio';
@@ -95,12 +95,10 @@ function DataRow({ label, value }: { label: string; value: string }) {
 function ExerciseDetailPanel({
   exercise,
   onDeleted,
-  onDeselect,
   onDrawingSave,
 }: {
   exercise: ExerciseListRecord | null;
   onDeleted: () => void;
-  onDeselect: () => void;
   onDrawingSave: (json: string) => void;
 }) {
   const router = useRouter();
@@ -160,33 +158,20 @@ function ExerciseDetailPanel({
     <>
       <Card className="flex h-full min-h-[28rem] flex-col overflow-hidden border border-primary/25 bg-transparent p-0 shadow-none hover:border-primary/25 hover:shadow-none">
         <div className="exercise-detail-panel flex min-h-0 flex-1 flex-col">
-          <div className="shrink-0 px-4 pt-4 sm:px-6 sm:pt-6">
-            <div className="synq-section-border flex items-start justify-between gap-3 rounded-xl px-4 py-3">
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-lg font-semibold tracking-tight text-foreground">{exercise.title}</h2>
-                  <Badge variant="outline" className="border-primary/40 bg-primary/10 text-[10px] text-primary">
-                    {taskLabel}
-                  </Badge>
-                </div>
-                <p className="mt-1 text-sm text-primary/75">
-                  {sheet.conditionalGrid.time || `${durationMin} min`}
-                  {sheet.didacticStrategy ? ` · ${sheet.didacticStrategy}` : ''}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={onDeselect}
-                className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/5 text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
-                aria-label="Cerrar ficha"
-                title="Cerrar"
-              >
-                <X className="size-5" />
-              </button>
+          <div className="shrink-0 px-4 pt-4 sm:px-6 sm:pt-5">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-lg font-semibold tracking-tight text-foreground">{exercise.title}</h2>
+              <Badge variant="outline" className="border-primary/40 bg-primary/10 text-[10px] text-primary">
+                {taskLabel}
+              </Badge>
             </div>
+            <p className="mt-1 text-sm text-primary/75">
+              {sheet.conditionalGrid.time || `${durationMin} min`}
+              {sheet.didacticStrategy ? ` · ${sheet.didacticStrategy}` : ''}
+            </p>
           </div>
 
-        <CardContent className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4 pt-4 sm:px-6 sm:pb-6">
+        <CardContent className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4 pt-3 sm:px-6 sm:pb-6">
           <div className="relative w-full">
             <div className="exercise-field-pitch">
               {hasDrawing ? (
@@ -487,10 +472,6 @@ export function ExercisesMasterDetail({ exercises, initialExerciseId, demoMode =
       <ExerciseDetailPanel
         exercise={selectedExercise}
         onDeleted={() => {
-          setSelectedId(null);
-          router.replace('/portal/metodologia/ejercicios', { scroll: false });
-        }}
-        onDeselect={() => {
           setSelectedId(null);
           router.replace('/portal/metodologia/ejercicios', { scroll: false });
         }}
