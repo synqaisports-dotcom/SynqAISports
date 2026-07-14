@@ -32,7 +32,7 @@ type Props = {
   onOpenChange: (open: boolean) => void;
 };
 
-const sectionClass = 'synq-section-border rounded-xl p-4';
+const sectionClass = 'portal-section-surface rounded-xl p-4';
 
 function PreviewField({ label, value }: { label: string; value: string }) {
   return (
@@ -76,9 +76,8 @@ export function ExercisePreviewOverlay({ exercise, open, onOpenChange }: Props) 
       aria-modal="true"
       aria-label={`Previsualización: ${exercise.title}`}
     >
-      <header className="exercise-detail-header-zone shrink-0">
-        <div className="exercise-detail-header-zone__inner px-4 py-3 pb-6 sm:px-6 sm:pb-7">
-        <div className="exercise-detail-header flex items-start justify-between gap-3">
+      <header className="shrink-0 px-4 py-3 sm:px-6">
+        <div className="portal-section-surface flex items-start justify-between gap-3 rounded-xl px-4 py-3 sm:px-5">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">
@@ -102,7 +101,6 @@ export function ExercisePreviewOverlay({ exercise, open, onOpenChange }: Props) 
           >
             <X className="size-5" />
           </button>
-        </div>
         </div>
       </header>
 

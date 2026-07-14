@@ -195,7 +195,8 @@ body {
     background-attachment: fixed;
   }
 
-  .portal-section-surface {
+  .portal-section-surface,
+  .synq-section-border {
     position: relative;
     overflow: hidden;
     border: 1px solid hsl(183 100% 50% / 0.48);
@@ -220,7 +221,8 @@ body {
       inset -1px 0 0 hsl(183 100% 50% / 0.1);
   }
 
-  .portal-section-surface::before {
+  .portal-section-surface::before,
+  .synq-section-border::before {
     content: '';
     position: absolute;
     inset: 0;
@@ -235,7 +237,8 @@ body {
     z-index: 0;
   }
 
-  .portal-section-surface::after {
+  .portal-section-surface::after,
+  .synq-section-border::after {
     content: '';
     position: absolute;
     inset: 0;
@@ -248,7 +251,8 @@ body {
     z-index: 0;
   }
 
-  .portal-section-surface > * {
+  .portal-section-surface > *,
+  .synq-section-border > * {
     position: relative;
     z-index: 1;
   }
@@ -334,28 +338,8 @@ body {
 
   .synq-portal-content .rounded-xl.border.bg-card,
   .synq-portal-content .bg-card.border {
-    border-color: hsl(183 100% 50% / 0.45);
-    background: linear-gradient(
-      155deg,
-      hsl(205 40% 10% / 0.92) 0%,
-      hsl(205 40% 7.5% / 0.88) 100%
-    );
-    box-shadow:
-      0 0 0 1px hsl(183 100% 50% / 0.1),
-      0 8px 32px hsl(0 0% 0% / 0.28),
-      0 2px 12px hsl(183 100% 50% / 0.05);
-  }
-
-  .synq-section-border {
-    border: 1px solid hsl(183 100% 50% / 0.42);
-    background: linear-gradient(
-      135deg,
-      hsl(205 40% 9% / 0.9) 0%,
-      hsl(205 40% 7% / 0.6) 100%
-    );
-    box-shadow:
-      inset 0 1px 0 0 hsl(183 100% 50% / 0.12),
-      0 0 20px hsl(183 100% 50% / 0.04);
+    @apply portal-section-surface;
+    border-color: hsl(183 100% 50% / 0.48);
   }
 
   .portal-search-input {
@@ -386,101 +370,6 @@ body {
   .portal-subnav-divider {
     border-bottom: 1px solid hsl(183 100% 50% / 0.38);
     box-shadow: 0 1px 0 hsl(183 100% 50% / 0.12);
-  }
-
-  .exercise-detail-header-zone {
-    position: relative;
-    flex-shrink: 0;
-    overflow: hidden;
-    background:
-      radial-gradient(ellipse 85% 120% at 0% 0%, hsl(183 100% 50% / 0.34), transparent 58%),
-      radial-gradient(ellipse 70% 90% at 100% 0%, hsl(183 100% 50% / 0.16), transparent 55%),
-      linear-gradient(
-        to bottom,
-        hsl(183 58% 20% / 0.72) 0%,
-        hsl(195 46% 13% / 0.5) 38%,
-        hsl(183 100% 50% / 0.14) 72%,
-        transparent 100%
-      );
-  }
-
-  .exercise-detail-header-zone::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: linear-gradient(
-      to bottom,
-      hsl(183 100% 50% / 0.22) 0%,
-      transparent 48%
-    );
-  }
-
-  .exercise-detail-header-zone::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 2.75rem;
-    pointer-events: none;
-    background: linear-gradient(
-      to bottom,
-      transparent 0%,
-      hsl(183 100% 50% / 0.2) 55%,
-      hsl(183 100% 50% / 0.08) 100%
-    );
-    box-shadow: 0 1px 0 hsl(183 100% 50% / 0.42);
-  }
-
-  .exercise-detail-header-zone__inner {
-    position: relative;
-    z-index: 1;
-  }
-
-  .exercise-detail-header {
-    position: relative;
-    flex-shrink: 0;
-    overflow: hidden;
-    isolation: isolate;
-    border: 1px solid hsl(183 100% 50% / 0.48);
-    border-radius: 0.75rem;
-    background-color: hsl(212 42% 5%);
-    background-image:
-      radial-gradient(ellipse 115% 95% at 50% 0%, hsl(183 100% 50% / 0.38), transparent 62%),
-      linear-gradient(
-        to bottom,
-        hsl(183 62% 22% / 0.92) 0%,
-        hsl(195 48% 14% / 0.88) 28%,
-        hsl(210 42% 8% / 0.94) 58%,
-        hsl(212 42% 5% / 0.98) 100%
-      );
-    box-shadow:
-      inset 0 1px 0 hsl(183 100% 50% / 0.32),
-      0 6px 24px hsl(0 0% 0% / 0.28),
-      0 0 20px hsl(183 100% 50% / 0.1);
-    padding: 1rem 1.25rem;
-  }
-
-  .exercise-detail-header::before {
-    content: '';
-    position: absolute;
-    inset: 0 0 auto 0;
-    height: 58%;
-    pointer-events: none;
-    border-radius: inherit;
-    background: linear-gradient(
-      to bottom,
-      hsl(183 100% 50% / 0.28) 0%,
-      hsl(183 100% 50% / 0.1) 42%,
-      transparent 100%
-    );
-    z-index: 0;
-  }
-
-  .exercise-detail-header > * {
-    position: relative;
-    z-index: 1;
   }
 
   .exercise-detail-panel {
