@@ -2,24 +2,16 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { CalendarDays, MessageSquarePlus, Users } from 'lucide-react';
-import { createChangeRequest, type ActionState } from '@/app/actions/methodology';
-import { Button } from '@/components/ui/button';
+import { CalendarDays, Users } from 'lucide-react';
+import { CoachWeekSessionsPanel } from '@/components/portal/CoachWeekSessionsPanel';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { groupTeamsByCategory, type CoachPortalViewer } from '@/lib/coach-portal-teams';
-import {
-  saveCoachChangeRequest,
-  type CoachChangeRequest,
-} from '@/lib/coach-change-requests-store';
 import { resolveCoachWeekContext } from '@/lib/coach-periodization-context';
-import { sessionStructureSummary } from '@/lib/periodization';
 import { cn } from '@/lib/utils';
 
 type Props = {
   viewer: CoachPortalViewer;
 };
-
-const initial: ActionState = { ok: false };
 
 const teamCardClass = (active: boolean) =>
   cn(
@@ -32,9 +24,6 @@ const teamCardClass = (active: boolean) =>
 export function CoachPortalView({ viewer }: Props) {
   const teams = viewer.teams;
   const [teamId, setTeamId] = useState(teams[0]?.id ?? '');
-  const [requestingSession, setRequestingSession] = useState<string | null>(null);
-  const [reason, setReason] = useState('');
-  const [feedback, setFeedback] = useState<string | null>(null);
 
   const team = teams.find((item) => item.id === teamId) ?? teams[0];
   const teamGroups = useMemo(() => groupTeamsByCategory(teams), [teams]);
@@ -43,50 +32,6 @@ export function CoachPortalView({ viewer }: Props) {
     if (!team) return null;
     return resolveCoachWeekContext(team);
   }, [team]);
-
-  const sessions = useMemo(() => {
-    if (!weekContext) return [];
-    const count = weekContext.variant.sessionsPerMicro;
-    const structure = sessionStructureSummary(weekContext.variant.mainTasksPerSession);
-    return Array.from({ length: count }, (_, index) => ({
-      id: `session-${index + 1}`,
-      label: `Sesión ${index + 1}`,
-      structure,
-    }));
-  }, [weekContext]);
-
-  const submitRequest = async (sessionLabel: string) => {
-    if (!team || !reason.trim()) return;
-
-    const request: CoachChangeRequest = {
-      id: `coach-req-${Date.now()}`,
-      teamId: team.id,
-      teamName: team.name,
-      reason: reason.trim(),
-      microcycleId: weekContext?.instance?.microcycleId,
-      mccLabel: weekContext?.context.micro.label ?? 'Semana planificada',
-      sessionLabel,
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-    };
-
-    saveCoachChangeRequest(request);
-
-    const formData = new FormData();
-    formData.set('reason', `[${team.name} · ${sessionLabel}] ${reason.trim()}`);
-    formData.set('teamId', team.id);
-    formData.set('sessionLabel', sessionLabel);
-    formData.set('requestType', 'methodology');
-    if (weekContext?.instance?.microcycleId) {
-      formData.set('microcycleId', weekContext.instance.microcycleId);
-    }
-
-    await createChangeRequest({ ok: false } as ActionState, formData);
-
-    setReason('');
-    setRequestingSession(null);
-    setFeedback('Solicitud enviada al director de metodología.');
-  };
 
   return (
     <div className="flex min-h-[calc(100vh-5.5rem)] flex-col pb-4">
@@ -114,11 +59,7 @@ export function CoachPortalView({ viewer }: Props) {
                       <button
                         key={item.id}
                         type="button"
-                        onClick={() => {
-                          setTeamId(item.id);
-                          setFeedback(null);
-                          setRequestingSession(null);
-                        }}
+                        onClick={() => setTeamId(item.id)}
                         className={teamCardClass(team?.id === item.id)}
                         title={item.name}
                       >
@@ -164,78 +105,7 @@ export function CoachPortalView({ viewer }: Props) {
                   </p>
                 ) : null}
 
-                <div className="portal-section-surface rounded-xl p-4">
-                  <p className="font-semibold text-foreground">
-                    {weekContext.context.micro.label} · {weekContext.variant.name}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {weekContext.context.micro.weekStart} → {weekContext.context.micro.weekEnd}
-                  </p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {weekContext.document.seasonTitle}
-                  </p>
-                </div>
-
-                {weekContext.excluded ? (
-                  <p className="rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
-                    Semana festiva / sin entreno.
-                  </p>
-                ) : null}
-
-                <div className="space-y-2">
-                  {sessions.map((session) => (
-                    <div
-                      key={session.id}
-                      className={cn(
-                        'rounded-xl border border-primary/15 p-3',
-                        weekContext.excluded && 'opacity-50'
-                      )}
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <div>
-                          <p className="text-sm font-medium">{session.label}</p>
-                          <p className="text-[11px] text-muted-foreground">{session.structure}</p>
-                        </div>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          className="shrink-0 gap-1 text-xs"
-                          disabled={weekContext.excluded}
-                          onClick={() =>
-                            setRequestingSession(
-                              requestingSession === session.label ? null : session.label
-                            )
-                          }
-                        >
-                          <MessageSquarePlus className="size-3.5" />
-                          Cambio
-                        </Button>
-                      </div>
-
-                      {requestingSession === session.label ? (
-                        <div className="mt-3 space-y-2 border-t border-primary/10 pt-3">
-                          <textarea
-                            value={reason}
-                            onChange={(event) => setReason(event.target.value)}
-                            rows={3}
-                            placeholder="Ej. No tengo conos suficientes, propongo rondo 4v4…"
-                            className="w-full rounded-md border border-primary/25 bg-background/80 px-3 py-2 text-sm"
-                          />
-                          <Button
-                            type="button"
-                            size="sm"
-                            className="w-full"
-                            disabled={!reason.trim()}
-                            onClick={() => void submitRequest(session.label)}
-                          >
-                            Enviar solicitud
-                          </Button>
-                        </div>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
+                <CoachWeekSessionsPanel team={team} weekContext={weekContext} />
               </>
             ) : (
               <p className="rounded-lg border border-dashed border-primary/20 p-6 text-center text-sm text-muted-foreground">
@@ -246,8 +116,6 @@ export function CoachPortalView({ viewer }: Props) {
                 .
               </p>
             )}
-
-            {feedback ? <p className="text-sm text-primary">{feedback}</p> : null}
           </CardContent>
         </Card>
       </div>

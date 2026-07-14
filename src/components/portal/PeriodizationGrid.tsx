@@ -14,7 +14,8 @@ type Props = {
   mccOverrides: Record<string, MccOverride>;
   excludedMccIds: Set<string>;
   selectedMccId: string | null;
-  onSelectMcc: (micro: MicrocycleWeek) => void;
+  onSelectMcc?: (micro: MicrocycleWeek) => void;
+  readOnly?: boolean;
 };
 
 export function PeriodizationGrid({
@@ -25,6 +26,7 @@ export function PeriodizationGrid({
   excludedMccIds,
   selectedMccId,
   onSelectMcc,
+  readOnly = false,
 }: Props) {
   const styles = CATEGORY_PLAN_STYLES[categorySlug];
 
@@ -102,35 +104,48 @@ export function PeriodizationGrid({
                   const excluded = excludedMccIds.has(micro.id);
                   const active = selectedMccId === micro.id;
                   const displayLabel = getMccDisplayLabel(micro, mccOverrides[micro.id]);
+                  const cellClass = cn(
+                    'w-full rounded-md border px-1.5 py-1.5 text-center transition-colors',
+                    styles.micro,
+                    active && 'ring-2 ring-primary ring-offset-1 ring-offset-background',
+                    linked && 'shadow-[inset_0_0_0_1px_hsl(142_76%_45%_/_0.45)]',
+                    excluded && 'opacity-40 line-through',
+                    !readOnly && 'cursor-pointer hover:brightness-110'
+                  );
+                  const cellBody = (
+                    <>
+                      <div className="flex items-center justify-center gap-1">
+                        {linked ? (
+                          <CheckCircle2 className="size-3 text-emerald-400" />
+                        ) : (
+                          <Circle className="size-3 text-muted-foreground/60" />
+                        )}
+                        <p className="text-[11px] font-bold tracking-wide">{displayLabel}</p>
+                      </div>
+                      <p className="mt-0.5 text-[10px] opacity-90">{micro.sessionsCount} ses.</p>
+                      <p className="mt-0.5 text-[9px] text-muted-foreground">
+                        {micro.weekStart.slice(5).replace('-', '/')} –{' '}
+                        {micro.weekEnd.slice(5).replace('-', '/')}
+                      </p>
+                    </>
+                  );
 
                   return (
                     <td key={`${meso.id}-${rowIndex}`} className="border border-primary/10 p-1 align-top">
-                      <button
-                        type="button"
-                        onClick={() => onSelectMcc(micro)}
-                        className={cn(
-                          'w-full rounded-md border px-1.5 py-1.5 text-center transition-colors',
-                          styles.micro,
-                          active && 'ring-2 ring-primary ring-offset-1 ring-offset-background',
-                          linked && 'shadow-[inset_0_0_0_1px_hsl(142_76%_45%_/_0.45)]',
-                          excluded && 'opacity-40 line-through'
-                        )}
-                        title={`${micro.weekStart} → ${micro.weekEnd}`}
-                      >
-                        <div className="flex items-center justify-center gap-1">
-                          {linked ? (
-                            <CheckCircle2 className="size-3 text-emerald-400" />
-                          ) : (
-                            <Circle className="size-3 text-muted-foreground/60" />
-                          )}
-                          <p className="text-[11px] font-bold tracking-wide">{displayLabel}</p>
+                      {readOnly ? (
+                        <div className={cellClass} title={`${micro.weekStart} → ${micro.weekEnd}`}>
+                          {cellBody}
                         </div>
-                        <p className="mt-0.5 text-[10px] opacity-90">{micro.sessionsCount} ses.</p>
-                        <p className="mt-0.5 text-[9px] text-muted-foreground">
-                          {micro.weekStart.slice(5).replace('-', '/')} –{' '}
-                          {micro.weekEnd.slice(5).replace('-', '/')}
-                        </p>
-                      </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => onSelectMcc?.(micro)}
+                          className={cellClass}
+                          title={`${micro.weekStart} → ${micro.weekEnd}`}
+                        >
+                          {cellBody}
+                        </button>
+                      )}
                     </td>
                   );
                 })}
