@@ -106,7 +106,7 @@ export function CoachPortalView({ viewer }: Props) {
             ) : (
               teamGroups.map((group) => (
                 <div key={group.category}>
-                  <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                  <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
                     {group.category}
                   </p>
                   <div className="grid grid-cols-3 gap-1.5">

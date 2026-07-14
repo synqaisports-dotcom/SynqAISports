@@ -1,5 +1,5 @@
 import type { CanteraCategorySlug } from '@/lib/cantera-categories';
-import { getCanteraCategory } from '@/lib/cantera-categories';
+import { CANTERA_CATEGORIES, getCanteraCategory, resolveTeamCategorySlug } from '@/lib/cantera-categories';
 import { ACCESS_PROFILE_LABELS, type AccessProfile } from '@/lib/club-people';
 import type { AssignmentRole } from '@/lib/person-assignments';
 
@@ -150,14 +150,31 @@ export function coachPortalRoleLabel(role: string): string {
 }
 
 export function groupTeamsByCategory(teams: CoachPortalTeam[]): { category: string; teams: CoachPortalTeam[] }[] {
-  const map = new Map<string, CoachPortalTeam[]>();
-  for (const team of teams) {
-    const key = team.category_name;
-    const list = map.get(key) ?? [];
-    list.push(team);
-    map.set(key, list);
+  const groups = new Map<CanteraCategorySlug, CoachPortalTeam[]>();
+  for (const category of CANTERA_CATEGORIES) {
+    groups.set(category.slug, []);
   }
-  return [...map.entries()]
-    .sort(([a], [b]) => a.localeCompare(b, 'es', { sensitivity: 'base' }))
-    .map(([category, group]) => ({ category, teams: group }));
+
+  for (const team of teams) {
+    const slug =
+      team.category_slug ?? resolveTeamCategorySlug(team.category_name, team.category_slug);
+    if (slug && groups.has(slug)) {
+      groups.get(slug)!.push(team);
+      continue;
+    }
+
+    const byName = CANTERA_CATEGORIES.find(
+      (category) => category.name.toLowerCase() === team.category_name.toLowerCase()
+    );
+    if (byName) groups.get(byName.slug)!.push(team);
+  }
+
+  for (const [, list] of groups) {
+    list.sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
+  }
+
+  return CANTERA_CATEGORIES.map((category) => ({
+    category: category.name,
+    teams: groups.get(category.slug) ?? [],
+  })).filter((group) => group.teams.length > 0);
 }
