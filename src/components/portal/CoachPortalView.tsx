@@ -2,15 +2,19 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { CalendarDays, MessageSquarePlus, Smartphone } from 'lucide-react';
+import { CalendarDays, ClipboardList, MessageSquarePlus, Smartphone, Users } from 'lucide-react';
 import { createChangeRequest, type ActionState } from '@/app/actions/methodology';
 import { fetchChangeRequestInbox } from '@/app/actions/change-requests';
 import { ChangeRequestCard } from '@/components/methodology/ChangeRequestCard';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { SynqSelect } from '@/components/portal/SynqSelect';
-import type { CanteraCategorySlug } from '@/lib/cantera-categories';
 import type { ChangeRequestInboxRow } from '@/lib/change-requests';
+import {
+  coachPortalRoleLabel,
+  groupTeamsByCategory,
+  type CoachPortalViewer,
+} from '@/lib/coach-portal-teams';
 import {
   loadCoachChangeRequests,
   saveCoachChangeRequest,
@@ -20,24 +24,33 @@ import { resolveCoachWeekContext } from '@/lib/coach-periodization-context';
 import { sessionStructureSummary } from '@/lib/periodization';
 import { cn } from '@/lib/utils';
 
-export type CoachTeamOption = {
-  id: string;
-  name: string;
-  category_slug: CanteraCategorySlug | null;
-};
-
 type Props = {
-  teams: CoachTeamOption[];
+  viewer: CoachPortalViewer;
 };
 
 const initial: ActionState = { ok: false };
 
-export function CoachPortalView({ teams }: Props) {
+const teamCardClass = (active: boolean) =>
+  cn(
+    'rounded-xl border px-3 py-2.5 text-left transition-colors',
+    active
+      ? 'border-primary/55 bg-primary/10 shadow-[inset_2px_0_0_0_hsl(var(--primary))]'
+      : 'border-primary/20 bg-background/40 hover:border-primary/35 hover:bg-primary/5'
+  );
+
+export function CoachPortalView({ viewer }: Props) {
+  const teams = viewer.teams;
   const [teamId, setTeamId] = useState(teams[0]?.id ?? '');
   const [requestingSession, setRequestingSession] = useState<string | null>(null);
   const [reason, setReason] = useState('');
   const [feedback, setFeedback] = useState<string | null>(null);
   const [myRequests, setMyRequests] = useState<ChangeRequestInboxRow[]>([]);
+
+  useEffect(() => {
+    if (teams.length > 0 && !teams.some((team) => team.id === teamId)) {
+      setTeamId(teams[0]!.id);
+    }
+  }, [teams, teamId]);
 
   useEffect(() => {
     const load = async () => {
@@ -71,6 +84,8 @@ export function CoachPortalView({ teams }: Props) {
   }, [feedback]);
 
   const team = teams.find((item) => item.id === teamId) ?? teams[0];
+  const teamGroups = useMemo(() => groupTeamsByCategory(teams), [teams]);
+  const pendingCount = myRequests.filter((item) => item.status === 'pending').length;
 
   const weekContext = useMemo(() => {
     if (!team) return null;
@@ -122,50 +137,114 @@ export function CoachPortalView({ teams }: Props) {
   };
 
   return (
-    <div className="mx-auto max-w-lg space-y-4 pb-8">
-      <div className="flex items-center gap-2 text-primary">
-        <Smartphone className="size-5" />
-        <p className="text-sm font-medium">Vista entrenador · tablet / móvil</p>
+    <div className="mx-auto max-w-2xl space-y-4 pb-8">
+      <div className="portal-section-surface rounded-xl p-4 sm:p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2 text-primary">
+              <Smartphone className="size-5" />
+              <p className="text-sm font-medium">Dashboard entrenador</p>
+            </div>
+            <h1 className="mt-1 text-xl font-semibold tracking-tight text-foreground">
+              {viewer.displayName}
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">{viewer.viewModeLabel}</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="outline" className="border-primary/35 text-primary">
+              {coachPortalRoleLabel(viewer.role)}
+            </Badge>
+            {pendingCount > 0 ? (
+              <Badge variant="outline" className="border-amber-400/40 bg-amber-500/10 text-amber-200">
+                {pendingCount} solicitud{pendingCount === 1 ? '' : 'es'} pendiente{pendingCount === 1 ? '' : 's'}
+              </Badge>
+            ) : null}
+          </div>
+        </div>
+        <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+          Vista web que anticipa la app Synq Club Coach: consulta la semana planificada y solicita
+          cambios al director de metodología. En móvil/tablet nativo el entrenador verá solo sus
+          equipos asignados.
+        </p>
       </div>
 
       <Card className="border border-primary/25">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Mi equipo</CardTitle>
-          <CardDescription>Semana actual y sesiones planificadas.</CardDescription>
+          <div className="flex items-center gap-2">
+            <Users className="size-4 text-primary" />
+            <CardTitle className="text-base">Mis equipos</CardTitle>
+          </div>
+          <CardDescription>
+            {viewer.viewMode === 'coordinator'
+              ? 'Como coordinador de etapa ves todos los equipos de tu categoría.'
+              : viewer.viewMode === 'supervisor'
+                ? 'Vista de supervisión: todos los equipos del club.'
+                : 'Selecciona el equipo con el que vas a entrenar esta semana.'}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {teams.length === 0 ? (
             <p className="rounded-lg border border-dashed border-primary/20 p-4 text-sm text-muted-foreground">
-              No hay equipos activos en el club. Crea un equipo en Cantera para usar esta vista.
+              No tienes equipos asignados. El club debe vincular tu ficha en Personas con los
+              equipos o categorías correspondientes.
             </p>
           ) : (
-            <SynqSelect
-              value={teamId}
-              onChange={setTeamId}
-              options={teams.map((item) => ({ value: item.id, label: item.name }))}
-            />
+            <div className="space-y-4">
+              {teamGroups.map((group) => (
+                <div key={group.category}>
+                  {teamGroups.length > 1 ? (
+                    <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                      {group.category}
+                    </p>
+                  ) : null}
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {group.teams.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => setTeamId(item.id)}
+                        className={teamCardClass(team?.id === item.id)}
+                      >
+                        <p className="text-sm font-medium text-foreground">{item.name}</p>
+                        <p className="text-xs text-muted-foreground">{item.category_name}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
+        </CardContent>
+      </Card>
 
-          {weekContext ? (
-            <div className="space-y-3 rounded-xl border border-primary/20 bg-muted/10 p-4">
-              {weekContext.seededDocument ? (
-                <p className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary/90">
-                  Plan de demostración cargado para esta categoría. El director puede afinarlo en{' '}
-                  <Link href="/portal/metodologia/ciclos" className="underline">
-                    Metodología → Ciclos
-                  </Link>
-                  .
-                </p>
-              ) : null}
-              {weekContext.usedFallbackWeek ? (
-                <p className="rounded-lg border border-amber-400/25 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
-                  Mostrando la primera semana del plan (las fechas de la temporada no coinciden con la
-                  semana actual). Actualiza fechas en Ciclos para ver la semana en curso.
-                </p>
-              ) : null}
+      {team ? (
+        <Card className="border border-primary/25">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <CalendarDays className="size-4 text-primary" />
+              <CardTitle className="text-base">Semana · {team.name}</CardTitle>
+            </div>
+            <CardDescription>Sesiones planificadas y solicitudes de cambio.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {weekContext ? (
+              <div className="space-y-3 rounded-xl border border-primary/20 bg-muted/10 p-4">
+                {weekContext.seededDocument ? (
+                  <p className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary/90">
+                    Plan de demostración cargado. El director puede afinarlo en{' '}
+                    <Link href="/portal/metodologia/ciclos" className="underline">
+                      Metodología → Ciclos
+                    </Link>
+                    .
+                  </p>
+                ) : null}
+                {weekContext.usedFallbackWeek ? (
+                  <p className="rounded-lg border border-amber-400/25 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+                    Primera semana del plan (fechas de temporada desactualizadas). Actualiza fechas
+                    en Ciclos para la semana en curso.
+                  </p>
+                ) : null}
 
-              <div className="flex items-start gap-2">
-                <CalendarDays className="mt-0.5 size-4 text-primary" />
                 <div>
                   <p className="font-semibold">
                     {weekContext.context.micro.label} · {weekContext.variant.name}
@@ -177,110 +256,97 @@ export function CoachPortalView({ teams }: Props) {
                     {weekContext.document.seasonTitle}
                   </p>
                 </div>
-              </div>
 
-              {weekContext.excluded ? (
-                <p className="rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
-                  Semana marcada como festivo / sin entreno.
-                </p>
-              ) : null}
+                {weekContext.excluded ? (
+                  <p className="rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+                    Semana festiva / sin entreno.
+                  </p>
+                ) : null}
 
-              {weekContext.instance ? (
-                <p className="text-xs text-emerald-300">
-                  Instancia de equipo activa (fork desde plantilla de categoría).
-                </p>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  Aún no hay instancia de equipo para esta semana. El director puede hacer fork desde
-                  Ciclos.
-                </p>
-              )}
-
-              <div className="space-y-2">
-                {sessions.map((session) => (
-                  <div
-                    key={session.id}
-                    className={cn(
-                      'rounded-lg border border-primary/15 p-3',
-                      weekContext.excluded && 'opacity-50'
-                    )}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <div>
-                        <p className="text-sm font-medium">{session.label}</p>
-                        <p className="text-[11px] text-muted-foreground">{session.structure}</p>
-                        <p className="mt-1 text-[10px] text-muted-foreground">
-                          Ejercicios: pendiente de asignar
-                        </p>
-                      </div>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="shrink-0 gap-1 text-xs"
-                        disabled={weekContext.excluded}
-                        onClick={() =>
-                          setRequestingSession(
-                            requestingSession === session.label ? null : session.label
-                          )
-                        }
-                      >
-                        <MessageSquarePlus className="size-3.5" />
-                        Cambio
-                      </Button>
-                    </div>
-
-                    {requestingSession === session.label ? (
-                      <div className="mt-3 space-y-2 border-t border-primary/10 pt-3">
-                        <textarea
-                          value={reason}
-                          onChange={(event) => setReason(event.target.value)}
-                          rows={3}
-                          placeholder="Ej. No tengo conos suficientes, propongo rondo 4v4 en espacio reducido…"
-                          className="w-full rounded-md border border-primary/25 bg-background/80 px-3 py-2 text-sm"
-                        />
+                <div className="space-y-2">
+                  {sessions.map((session) => (
+                    <div
+                      key={session.id}
+                      className={cn(
+                        'rounded-lg border border-primary/15 p-3',
+                        weekContext.excluded && 'opacity-50'
+                      )}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <p className="text-sm font-medium">{session.label}</p>
+                          <p className="text-[11px] text-muted-foreground">{session.structure}</p>
+                        </div>
                         <Button
                           type="button"
                           size="sm"
-                          className="w-full"
-                          disabled={!reason.trim()}
-                          onClick={() => void submitRequest(session.label)}
+                          variant="outline"
+                          className="shrink-0 gap-1 text-xs"
+                          disabled={weekContext.excluded}
+                          onClick={() =>
+                            setRequestingSession(
+                              requestingSession === session.label ? null : session.label
+                            )
+                          }
                         >
-                          Enviar solicitud de cambio
+                          <MessageSquarePlus className="size-3.5" />
+                          Cambio
                         </Button>
                       </div>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : teams.length > 0 ? (
-            <p className="rounded-lg border border-dashed border-primary/20 p-4 text-sm text-muted-foreground">
-              No se pudo cargar el plan de este equipo. Revisa la categoría en Cantera o configura la
-              temporada en{' '}
-              <Link href="/portal/metodologia/ciclos" className="text-primary underline">
-                Metodología → Ciclos
-              </Link>
-              .
-            </p>
-          ) : null}
 
-          {feedback ? <p className="text-sm text-primary">{feedback}</p> : null}
-        </CardContent>
-      </Card>
+                      {requestingSession === session.label ? (
+                        <div className="mt-3 space-y-2 border-t border-primary/10 pt-3">
+                          <textarea
+                            value={reason}
+                            onChange={(event) => setReason(event.target.value)}
+                            rows={3}
+                            placeholder="Ej. No tengo conos suficientes, propongo rondo 4v4…"
+                            className="w-full rounded-md border border-primary/25 bg-background/80 px-3 py-2 text-sm"
+                          />
+                          <Button
+                            type="button"
+                            size="sm"
+                            className="w-full"
+                            disabled={!reason.trim()}
+                            onClick={() => void submitRequest(session.label)}
+                          >
+                            Enviar solicitud
+                          </Button>
+                        </div>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="rounded-lg border border-dashed border-primary/20 p-4 text-sm text-muted-foreground">
+                No hay plan de ciclos para {team.name}. Configura la temporada en{' '}
+                <Link href="/portal/metodologia/ciclos" className="text-primary underline">
+                  Metodología → Ciclos
+                </Link>
+                .
+              </p>
+            )}
+
+            {feedback ? <p className="text-sm text-primary">{feedback}</p> : null}
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card className="border border-primary/25">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Mis solicitudes</CardTitle>
+          <div className="flex items-center gap-2">
+            <ClipboardList className="size-4 text-primary" />
+            <CardTitle className="text-base">Mis solicitudes</CardTitle>
+          </div>
           <CardDescription>
-            Estado de tus peticiones de cambio. También las verás en la campana del header.
+            Historial de peticiones de cambio. También disponible en la campana del header.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {myRequests.length === 0 ? (
             <p className="rounded-lg border border-dashed border-primary/20 px-4 py-6 text-center text-sm text-muted-foreground">
-              Aún no has enviado solicitudes. Pulsa «Cambio» en una sesión para pedir un ajuste al
-              director de metodología.
+              Aún no has enviado solicitudes. Pulsa «Cambio» en una sesión para pedir un ajuste.
             </p>
           ) : (
             myRequests.map((item) => <ChangeRequestCard key={item.id} item={item} compact />)
