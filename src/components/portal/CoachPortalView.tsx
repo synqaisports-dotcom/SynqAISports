@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, MessageSquarePlus, Smartphone } from 'lucide-react';
 import { createChangeRequest, type ActionState } from '@/app/actions/methodology';
@@ -15,14 +16,8 @@ import {
   saveCoachChangeRequest,
   type CoachChangeRequest,
 } from '@/lib/coach-change-requests-store';
-import { sessionStructureSummary, findMccInPlan } from '@/lib/periodization';
-import { applyPlanExclusions, findCurrentMccId } from '@/lib/periodization-plan-utils';
-import {
-  buildPlanForVariant,
-  getExcludedMccIds,
-  getTeamInstance,
-  loadDocumentFromStorage,
-} from '@/lib/periodization-document';
+import { resolveCoachWeekContext } from '@/lib/coach-periodization-context';
+import { sessionStructureSummary } from '@/lib/periodization';
 import { cn } from '@/lib/utils';
 
 export type CoachTeamOption = {
@@ -76,30 +71,10 @@ export function CoachPortalView({ teams }: Props) {
   }, [feedback]);
 
   const team = teams.find((item) => item.id === teamId) ?? teams[0];
-  const categorySlug = team?.category_slug ?? 'alevin';
 
   const weekContext = useMemo(() => {
-    if (!team?.category_slug) return null;
-    const document = loadDocumentFromStorage(team.category_slug);
-    if (!document) return null;
-
-    const variant = document.variants.find((item) => item.teamIds.includes(team.id));
-    if (!variant) return null;
-
-    const rawPlan = buildPlanForVariant(document, variant.id);
-    if (!rawPlan) return null;
-
-    const plan = applyPlanExclusions(rawPlan, getExcludedMccIds(document, variant.id));
-    const mccId = findCurrentMccId(plan);
-    if (!mccId) return null;
-
-    const context = findMccInPlan(plan, mccId);
-    if (!context) return null;
-
-    const instance = getTeamInstance(document, variant.id, team.id, mccId);
-    const excluded = getExcludedMccIds(document, variant.id).has(mccId);
-
-    return { document, variant, plan, context, instance, excluded };
+    if (!team) return null;
+    return resolveCoachWeekContext(team);
   }, [team]);
 
   const sessions = useMemo(() => {
@@ -114,15 +89,15 @@ export function CoachPortalView({ teams }: Props) {
   }, [weekContext]);
 
   const submitRequest = async (sessionLabel: string) => {
-    if (!team || !reason.trim() || !weekContext) return;
+    if (!team || !reason.trim()) return;
 
     const request: CoachChangeRequest = {
       id: `coach-req-${Date.now()}`,
       teamId: team.id,
       teamName: team.name,
       reason: reason.trim(),
-      microcycleId: weekContext.instance?.microcycleId,
-      mccLabel: weekContext.context.micro.label,
+      microcycleId: weekContext?.instance?.microcycleId,
+      mccLabel: weekContext?.context.micro.label ?? 'Semana planificada',
       sessionLabel,
       status: 'pending',
       createdAt: new Date().toISOString(),
@@ -135,7 +110,7 @@ export function CoachPortalView({ teams }: Props) {
     formData.set('teamId', team.id);
     formData.set('sessionLabel', sessionLabel);
     formData.set('requestType', 'methodology');
-    if (weekContext.instance?.microcycleId) {
+    if (weekContext?.instance?.microcycleId) {
       formData.set('microcycleId', weekContext.instance.microcycleId);
     }
 
@@ -159,14 +134,36 @@ export function CoachPortalView({ teams }: Props) {
           <CardDescription>Semana actual y sesiones planificadas.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <SynqSelect
-            value={teamId}
-            onChange={setTeamId}
-            options={teams.map((item) => ({ value: item.id, label: item.name }))}
-          />
+          {teams.length === 0 ? (
+            <p className="rounded-lg border border-dashed border-primary/20 p-4 text-sm text-muted-foreground">
+              No hay equipos activos en el club. Crea un equipo en Cantera para usar esta vista.
+            </p>
+          ) : (
+            <SynqSelect
+              value={teamId}
+              onChange={setTeamId}
+              options={teams.map((item) => ({ value: item.id, label: item.name }))}
+            />
+          )}
 
           {weekContext ? (
             <div className="space-y-3 rounded-xl border border-primary/20 bg-muted/10 p-4">
+              {weekContext.seededDocument ? (
+                <p className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary/90">
+                  Plan de demostración cargado para esta categoría. El director puede afinarlo en{' '}
+                  <Link href="/portal/metodologia/ciclos" className="underline">
+                    Metodología → Ciclos
+                  </Link>
+                  .
+                </p>
+              ) : null}
+              {weekContext.usedFallbackWeek ? (
+                <p className="rounded-lg border border-amber-400/25 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+                  Mostrando la primera semana del plan (las fechas de la temporada no coinciden con la
+                  semana actual). Actualiza fechas en Ciclos para ver la semana en curso.
+                </p>
+              ) : null}
+
               <div className="flex items-start gap-2">
                 <CalendarDays className="mt-0.5 size-4 text-primary" />
                 <div>
@@ -257,32 +254,39 @@ export function CoachPortalView({ teams }: Props) {
                 ))}
               </div>
             </div>
-          ) : (
+          ) : teams.length > 0 ? (
             <p className="rounded-lg border border-dashed border-primary/20 p-4 text-sm text-muted-foreground">
-              No hay plan de ciclos para este equipo. Configura la temporada en Metodología → Ciclos
-              y asigna el equipo a una variante.
+              No se pudo cargar el plan de este equipo. Revisa la categoría en Cantera o configura la
+              temporada en{' '}
+              <Link href="/portal/metodologia/ciclos" className="text-primary underline">
+                Metodología → Ciclos
+              </Link>
+              .
             </p>
-          )}
+          ) : null}
 
           {feedback ? <p className="text-sm text-primary">{feedback}</p> : null}
         </CardContent>
       </Card>
 
-      {myRequests.length > 0 ? (
-        <Card className="border border-primary/25">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Mis solicitudes</CardTitle>
-            <CardDescription>
-              Estado de tus peticiones de cambio. También las verás en la campana del header.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {myRequests.map((item) => (
-              <ChangeRequestCard key={item.id} item={item} compact />
-            ))}
-          </CardContent>
-        </Card>
-      ) : null}
+      <Card className="border border-primary/25">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Mis solicitudes</CardTitle>
+          <CardDescription>
+            Estado de tus peticiones de cambio. También las verás en la campana del header.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {myRequests.length === 0 ? (
+            <p className="rounded-lg border border-dashed border-primary/20 px-4 py-6 text-center text-sm text-muted-foreground">
+              Aún no has enviado solicitudes. Pulsa «Cambio» en una sesión para pedir un ajuste al
+              director de metodología.
+            </p>
+          ) : (
+            myRequests.map((item) => <ChangeRequestCard key={item.id} item={item} compact />)
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
