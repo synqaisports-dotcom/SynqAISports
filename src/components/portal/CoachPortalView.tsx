@@ -5,7 +5,6 @@ import { useMemo, useState } from 'react';
 import { CalendarDays, MessageSquarePlus, Users } from 'lucide-react';
 import { createChangeRequest, type ActionState } from '@/app/actions/methodology';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { groupTeamsByCategory, type CoachPortalViewer } from '@/lib/coach-portal-teams';
 import {
   saveCoachChangeRequest,
@@ -89,22 +88,23 @@ export function CoachPortalView({ viewer }: Props) {
   };
 
   return (
-    <div className="grid gap-4 pb-8 lg:grid-cols-[minmax(0,16rem)_minmax(0,1fr)] lg:items-start xl:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
-      <Card className="border border-primary/25 lg:sticky lg:top-[4.5rem] lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto">
-        <CardHeader className="pb-3">
+    <div className="grid min-h-[calc(100vh-7rem)] pb-8 lg:grid-cols-[minmax(0,16rem)_minmax(0,1fr)] lg:items-stretch xl:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
+      <aside className="flex flex-col border-b border-primary/15 pb-4 lg:sticky lg:top-[4.5rem] lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto lg:border-b-0 lg:border-r lg:pb-0 lg:pr-5">
+        <header className="mb-4 shrink-0">
           <div className="flex items-center gap-2">
             <Users className="size-4 text-primary" />
-            <CardTitle className="text-base">Mis equipos</CardTitle>
+            <h2 className="text-base font-semibold text-foreground">Mis equipos</h2>
           </div>
-          <CardDescription>
+          <p className="mt-1 text-sm text-muted-foreground">
             {viewer.viewMode === 'coordinator'
               ? 'Equipos de tu categoría.'
               : viewer.viewMode === 'supervisor'
                 ? 'Todos los equipos del club.'
                 : 'Selecciona un equipo.'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          </p>
+        </header>
+
+        <div className="min-h-0 flex-1 space-y-4">
           {teams.length === 0 ? (
             <p className="rounded-lg border border-dashed border-primary/20 p-4 text-sm text-muted-foreground">
               No tienes equipos asignados.
@@ -135,20 +135,21 @@ export function CoachPortalView({ viewer }: Props) {
               </div>
             ))
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </aside>
 
-      <Card className="min-h-[24rem] border border-primary/25">
-        <CardHeader className="pb-3">
+      <section className="flex min-h-[24rem] flex-col pt-4 lg:min-h-0 lg:pl-5 lg:pt-0">
+        <header className="mb-4 shrink-0">
           <div className="flex items-center gap-2">
             <CalendarDays className="size-4 text-primary" />
-            <CardTitle className="text-base">
+            <h2 className="text-base font-semibold text-foreground">
               {team ? `Semana en curso · ${team.name}` : 'Semana en curso'}
-            </CardTitle>
+            </h2>
           </div>
-          <CardDescription>Sesiones planificadas de la semana.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          <p className="mt-1 text-sm text-muted-foreground">Sesiones planificadas de la semana.</p>
+        </header>
+
+        <div className="min-h-0 flex-1 space-y-4">
           {!team ? (
             <p className="rounded-lg border border-dashed border-primary/20 p-6 text-center text-sm text-muted-foreground">
               Selecciona un equipo para ver su planificación.
@@ -254,8 +255,8 @@ export function CoachPortalView({ viewer }: Props) {
           )}
 
           {feedback ? <p className="text-sm text-primary">{feedback}</p> : null}
-        </CardContent>
-      </Card>
+        </div>
+      </section>
     </div>
   );
 }
