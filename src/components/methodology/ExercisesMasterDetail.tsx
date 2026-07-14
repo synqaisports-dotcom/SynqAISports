@@ -156,8 +156,9 @@ function ExerciseDetailPanel({
 
   return (
     <>
-      <Card className="flex h-full min-h-[28rem] flex-col border border-primary/25">
-        <CardHeader className="pb-3">
+      <Card className="flex h-full min-h-[28rem] flex-col overflow-hidden border border-primary/25 bg-transparent p-0 shadow-none hover:border-primary/25 hover:shadow-none">
+        <div className="exercise-detail-panel flex min-h-0 flex-1 flex-col">
+        <CardHeader className="px-6 pb-3 pt-6">
           <div className="synq-section-border rounded-xl px-4 py-3">
             <div className="flex flex-wrap items-center gap-2">
               <CardTitle className="text-lg font-semibold tracking-tight">{exercise.title}</CardTitle>
@@ -172,9 +173,9 @@ function ExerciseDetailPanel({
           </div>
         </CardHeader>
 
-        <CardContent className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
-          <div className="exercise-field-frame relative w-full rounded-2xl p-3 sm:p-4">
-            <div className="exercise-field-frame__pitch">
+        <CardContent className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-6 pb-6">
+          <div className="relative w-full">
+            <div className="exercise-field-pitch">
               {hasDrawing ? (
                 <DrawingPreviewFrame
                   document={drawingDoc}
@@ -191,7 +192,7 @@ function ExerciseDetailPanel({
               )}
             </div>
 
-            <div className="absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-1 bg-gradient-to-t from-background/95 via-background/55 to-transparent px-2 pb-2 pt-8">
+            <div className="absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-1 bg-gradient-to-t from-[hsl(212_42%_4%_/_0.95)] via-[hsl(212_42%_4%_/_0.55)] to-transparent px-2 pb-2 pt-8">
               <button
                 type="button"
                 onClick={() => setStudioOpen(true)}
@@ -267,6 +268,7 @@ function ExerciseDetailPanel({
             </div>
           </div>
         </CardContent>
+        </div>
       </Card>
 
       <ExercisePreviewOverlay

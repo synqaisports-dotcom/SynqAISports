@@ -388,16 +388,15 @@ body {
     box-shadow: 0 1px 0 hsl(183 100% 50% / 0.12);
   }
 
-  .exercise-field-frame {
+  .exercise-detail-panel {
     position: relative;
     overflow: hidden;
-    border: 1px solid hsl(183 100% 50% / 0.38);
     background-color: hsl(212 42% 5%);
     background-image:
-      radial-gradient(ellipse 120% 85% at 50% 0%, hsl(183 100% 50% / 0.2), transparent 58%),
-      radial-gradient(ellipse 95% 70% at 50% 100%, hsl(183 100% 50% / 0.14), transparent 52%),
-      radial-gradient(ellipse 35% 65% at 0% 50%, hsl(183 100% 50% / 0.1), transparent 72%),
-      radial-gradient(ellipse 35% 65% at 100% 50%, hsl(183 100% 50% / 0.1), transparent 72%),
+      radial-gradient(ellipse 130% 100% at 50% 0%, hsl(183 100% 50% / 0.22), transparent 58%),
+      radial-gradient(ellipse 110% 90% at 50% 100%, hsl(183 100% 50% / 0.16), transparent 55%),
+      radial-gradient(ellipse 45% 80% at 0% 50%, hsl(183 100% 50% / 0.12), transparent 72%),
+      radial-gradient(ellipse 45% 80% at 100% 50%, hsl(183 100% 50% / 0.12), transparent 72%),
       linear-gradient(
         155deg,
         hsl(205 44% 11%) 0%,
@@ -405,13 +404,11 @@ body {
         hsl(212 42% 4%) 100%
       );
     box-shadow:
-      0 10px 36px hsl(0 0% 0% / 0.32),
-      0 0 28px hsl(183 100% 50% / 0.1),
       inset 0 1px 0 hsl(183 100% 50% / 0.22),
       inset 0 -1px 0 hsl(183 100% 50% / 0.1);
   }
 
-  .exercise-field-frame::before {
+  .exercise-detail-panel::before {
     content: '';
     position: absolute;
     inset: 0;
@@ -426,28 +423,28 @@ body {
     z-index: 0;
   }
 
-  .exercise-field-frame::after {
+  .exercise-detail-panel::after {
     content: '';
     position: absolute;
     inset: 0;
     pointer-events: none;
     background:
-      radial-gradient(ellipse 75% 45% at 50% 100%, hsl(183 100% 50% / 0.22), transparent 68%),
-      radial-gradient(ellipse 55% 35% at 50% 0%, hsl(183 100% 50% / 0.12), transparent 70%);
+      radial-gradient(ellipse 88% 55% at 50% 100%, hsl(183 100% 50% / 0.28), transparent 68%),
+      radial-gradient(ellipse 70% 40% at 50% 0%, hsl(183 100% 50% / 0.14), transparent 70%);
     z-index: 0;
   }
 
-  .exercise-field-frame > * {
+  .exercise-detail-panel > * {
     position: relative;
     z-index: 1;
   }
 
-  .exercise-field-frame__pitch {
+  .exercise-field-pitch {
     overflow: hidden;
     border-radius: 0.75rem;
     box-shadow:
       0 12px 40px hsl(0 0% 0% / 0.38),
-      0 0 0 1px hsl(183 100% 50% / 0.12);
+      0 0 0 1px hsl(183 100% 50% / 0.15);
   }
 
   .portal-sidebar-rail::after {
