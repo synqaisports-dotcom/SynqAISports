@@ -173,23 +173,25 @@ function ExerciseDetailPanel({
         </CardHeader>
 
         <CardContent className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
-          <div className="relative w-full overflow-hidden rounded-2xl border border-primary/30 shadow-[0_0_24px_hsl(183_100%_50%_/_0.08)]">
-            {hasDrawing ? (
-              <DrawingPreviewFrame
-                document={drawingDoc}
-                orientation="horizontal"
-                className="w-full rounded-none"
-              />
-            ) : (
-              <div
-                className="flex w-full items-center justify-center bg-[#060a12] text-xs text-muted-foreground"
-                style={{ aspectRatio: '105 / 68', maxHeight: '16rem' }}
-              >
-                Sin esquema en pizarra
-              </div>
-            )}
+          <div className="exercise-field-frame relative w-full rounded-2xl p-3 sm:p-4">
+            <div className="exercise-field-frame__pitch">
+              {hasDrawing ? (
+                <DrawingPreviewFrame
+                  document={drawingDoc}
+                  orientation="horizontal"
+                  className="w-full rounded-none"
+                />
+              ) : (
+                <div
+                  className="flex w-full items-center justify-center bg-[#060a12] text-xs text-muted-foreground"
+                  style={{ aspectRatio: '105 / 68', maxHeight: '16rem' }}
+                >
+                  Sin esquema en pizarra
+                </div>
+              )}
+            </div>
 
-            <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-gradient-to-t from-background/95 via-background/55 to-transparent px-2 pb-2 pt-8">
+            <div className="absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-1 bg-gradient-to-t from-background/95 via-background/55 to-transparent px-2 pb-2 pt-8">
               <button
                 type="button"
                 onClick={() => setStudioOpen(true)}

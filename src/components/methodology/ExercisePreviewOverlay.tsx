@@ -106,15 +106,19 @@ export function ExercisePreviewOverlay({ exercise, open, onOpenChange }: Props) 
 
       <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
         <div className="w-full self-start border-b border-primary/30 p-3 sm:p-4 lg:border-b-0 lg:border-r">
-          {hasDrawing ? (
-            <DrawingPreviewFrame
-              document={drawingDoc}
-              orientation="horizontal"
-              className="w-full"
-            />
-          ) : (
-            <p className="text-sm text-muted-foreground">Sin esquema en pizarra</p>
-          )}
+          <div className="exercise-field-frame rounded-2xl p-3 sm:p-4">
+            <div className="exercise-field-frame__pitch">
+              {hasDrawing ? (
+                <DrawingPreviewFrame
+                  document={drawingDoc}
+                  orientation="horizontal"
+                  className="w-full"
+                />
+              ) : (
+                <p className="px-4 py-10 text-center text-sm text-muted-foreground">Sin esquema en pizarra</p>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="min-h-0 overflow-y-auto bg-gradient-to-b from-primary/[0.04] via-transparent to-transparent p-4 sm:p-6">
