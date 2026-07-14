@@ -128,7 +128,7 @@ export async function resolveCoachPortalViewer(input: {
   } else if (assignments.length > 0) {
     visible = filterTeamsForAssignments(teams, assignments);
   } else {
-    visible = withCategoryNames(teams);
+    visible = [];
   }
 
   visible.sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));

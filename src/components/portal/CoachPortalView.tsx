@@ -23,9 +23,9 @@ const initial: ActionState = { ok: false };
 
 const teamCardClass = (active: boolean) =>
   cn(
-    'w-full rounded-xl border px-3 py-2.5 text-left transition-colors',
+    'rounded-lg border px-2 py-2 text-center text-sm font-medium transition-colors',
     active
-      ? 'border-primary/55 bg-primary/10 shadow-[inset_2px_0_0_0_hsl(var(--primary))]'
+      ? 'border-primary/55 bg-primary/10 shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.35)]'
       : 'border-primary/20 bg-background/40 hover:border-primary/35 hover:bg-primary/5'
   );
 
@@ -90,22 +90,15 @@ export function CoachPortalView({ viewer }: Props) {
 
   return (
     <div className="flex min-h-[calc(100vh-5.5rem)] flex-col pb-4">
-      <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,3fr)] lg:items-stretch">
+      <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,7fr)_minmax(0,13fr)] lg:items-stretch">
         <Card className="flex min-h-[18rem] flex-col border border-primary/25 lg:min-h-0 lg:max-h-[calc(100vh-5.5rem)]">
-          <CardHeader className="shrink-0 space-y-1 p-4 pb-2">
+          <CardHeader className="shrink-0 p-4 pb-2">
             <div className="flex items-center gap-2">
               <Users className="size-4 text-primary" />
               <CardTitle className="text-base">Mis equipos</CardTitle>
             </div>
-            <CardDescription>
-              {viewer.viewMode === 'coordinator'
-                ? 'Equipos de tu categoría.'
-                : viewer.viewMode === 'supervisor'
-                  ? 'Todos los equipos del club.'
-                  : 'Selecciona un equipo.'}
-            </CardDescription>
           </CardHeader>
-          <CardContent className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 pt-0">
+          <CardContent className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4 pt-0">
             {teams.length === 0 ? (
               <p className="rounded-lg border border-dashed border-primary/20 p-4 text-sm text-muted-foreground">
                 No tienes equipos asignados.
@@ -113,10 +106,10 @@ export function CoachPortalView({ viewer }: Props) {
             ) : (
               teamGroups.map((group) => (
                 <div key={group.category}>
-                  <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                  <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                     {group.category}
                   </p>
-                  <div className="space-y-1.5">
+                  <div className="grid grid-cols-3 gap-1.5">
                     {group.teams.map((item) => (
                       <button
                         key={item.id}
@@ -127,9 +120,9 @@ export function CoachPortalView({ viewer }: Props) {
                           setRequestingSession(null);
                         }}
                         className={teamCardClass(team?.id === item.id)}
+                        title={item.name}
                       >
-                        <p className="text-sm font-medium text-foreground">{item.name}</p>
-                        <p className="text-xs text-muted-foreground">{item.category_name}</p>
+                        <span className="block truncate">{item.name}</span>
                       </button>
                     ))}
                   </div>
