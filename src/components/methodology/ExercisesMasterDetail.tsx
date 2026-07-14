@@ -57,8 +57,6 @@ const listItemClass = (active: boolean) =>
       : 'border-primary/15 hover:border-primary/30 hover:bg-muted/20'
   );
 
-const sectionClass = 'synq-section-border rounded-xl p-4';
-
 const TYPE_FILTER_OPTIONS: { value: 'all' | TaskType; label: string }[] = [
   { value: 'all', label: 'Ver todos los ejercicios' },
   { value: 'warmup', label: 'Calentamiento' },
@@ -231,7 +229,7 @@ function ExerciseDetailPanel({
             </div>
           </div>
 
-          <div className={`${sectionClass} space-y-4`}>
+          <div className="space-y-4">
             <DataRow label={SHEET_FIELD_LABELS.objectives} value={sheet.objectives || exercise.objectives || ''} />
             <DataRow label={SHEET_FIELD_LABELS.didacticStrategy} value={sheet.didacticStrategy} />
 
@@ -239,29 +237,11 @@ function ExerciseDetailPanel({
               <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                 Contenido condicional
               </p>
-              <div className="mt-2 grid gap-2 text-sm sm:grid-cols-2">
+              <div className="mt-2 grid gap-3 text-sm sm:grid-cols-2">
                 <DataRow label="Tiempo" value={sheet.conditionalGrid.time} />
                 <DataRow label="Espacio" value={sheet.conditionalGrid.space} />
                 <DataRow label="Situación" value={sheet.conditionalGrid.gameSituation} />
                 <DataRow label="Coordinación" value={sheet.conditionalGrid.coordination} />
-              </div>
-            </div>
-          </div>
-
-          <div className="grid gap-4 lg:grid-cols-3">
-            <DataRow label={SHEET_FIELD_LABELS.technicalAction} value={sheet.technicalAction} />
-            <DataRow label={SHEET_FIELD_LABELS.tacticalAction} value={sheet.tacticalAction} />
-            <DataRow label={SHEET_FIELD_LABELS.collectiveContent} value={sheet.collectiveContent} />
-          </div>
-
-          <div className="grid gap-4 lg:grid-cols-2">
-            <div className={sectionClass}>
-              <DataRow label={SHEET_FIELD_LABELS.description} value={sheet.description} />
-            </div>
-            <div className={sectionClass}>
-              <DataRow label={SHEET_FIELD_LABELS.rules} value={sheet.rules} />
-              <div className="mt-3">
-                <DataRow label={SHEET_FIELD_LABELS.coachingCues} value={sheet.coachingCues} />
               </div>
             </div>
           </div>
