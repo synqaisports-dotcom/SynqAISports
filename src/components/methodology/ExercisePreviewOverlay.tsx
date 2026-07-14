@@ -76,7 +76,8 @@ export function ExercisePreviewOverlay({ exercise, open, onOpenChange }: Props) 
       aria-modal="true"
       aria-label={`Previsualización: ${exercise.title}`}
     >
-      <header className="shrink-0 px-4 py-3 sm:px-6">
+      <header className="exercise-detail-header-zone shrink-0">
+        <div className="exercise-detail-header-zone__inner px-4 py-3 pb-6 sm:px-6 sm:pb-7">
         <div className="exercise-detail-header flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
@@ -101,6 +102,7 @@ export function ExercisePreviewOverlay({ exercise, open, onOpenChange }: Props) 
           >
             <X className="size-5" />
           </button>
+        </div>
         </div>
       </header>
 

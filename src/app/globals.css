@@ -388,6 +388,56 @@ body {
     box-shadow: 0 1px 0 hsl(183 100% 50% / 0.12);
   }
 
+  .exercise-detail-header-zone {
+    position: relative;
+    flex-shrink: 0;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse 85% 120% at 0% 0%, hsl(183 100% 50% / 0.34), transparent 58%),
+      radial-gradient(ellipse 70% 90% at 100% 0%, hsl(183 100% 50% / 0.16), transparent 55%),
+      linear-gradient(
+        to bottom,
+        hsl(183 58% 20% / 0.72) 0%,
+        hsl(195 46% 13% / 0.5) 38%,
+        hsl(183 100% 50% / 0.14) 72%,
+        transparent 100%
+      );
+  }
+
+  .exercise-detail-header-zone::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      hsl(183 100% 50% / 0.22) 0%,
+      transparent 48%
+    );
+  }
+
+  .exercise-detail-header-zone::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2.75rem;
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      hsl(183 100% 50% / 0.2) 55%,
+      hsl(183 100% 50% / 0.08) 100%
+    );
+    box-shadow: 0 1px 0 hsl(183 100% 50% / 0.42);
+  }
+
+  .exercise-detail-header-zone__inner {
+    position: relative;
+    z-index: 1;
+  }
+
   .exercise-detail-header {
     position: relative;
     flex-shrink: 0;
