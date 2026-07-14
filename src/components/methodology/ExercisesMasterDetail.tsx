@@ -160,9 +160,8 @@ function ExerciseDetailPanel({
     <>
       <Card className="flex h-full min-h-[28rem] flex-col overflow-hidden border border-primary/25 bg-transparent p-0 shadow-none hover:border-primary/25 hover:shadow-none">
         <div className="exercise-detail-panel flex min-h-0 flex-1 flex-col">
-          <div className="exercise-detail-header-zone">
-            <div className="exercise-detail-header-zone__inner px-4 pt-4 pb-6 sm:px-6 sm:pt-6 sm:pb-7">
-            <div className="exercise-detail-header flex items-start justify-between gap-3">
+          <div className="shrink-0 px-4 pt-4 sm:px-6 sm:pt-6">
+            <div className="synq-section-border flex items-start justify-between gap-3 rounded-xl px-4 py-3">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="text-lg font-semibold tracking-tight text-foreground">{exercise.title}</h2>
@@ -184,7 +183,6 @@ function ExerciseDetailPanel({
               >
                 <X className="size-5" />
               </button>
-            </div>
             </div>
           </div>
 
