@@ -1,5 +1,6 @@
 import { getCanteraCategory, type CanteraCategorySlug } from '@/lib/cantera-categories';
 import { findMccInPlan, type PeriodizationPlan } from '@/lib/periodization';
+import { demoTeamMicrocycleId } from '@/lib/periodization-client';
 import { applyPlanExclusions, findCurrentMccId } from '@/lib/periodization-plan-utils';
 import {
   buildPlanForVariant,
@@ -7,6 +8,7 @@ import {
   getExcludedMccIds,
   getTeamInstance,
   getVariant,
+  getVariantState,
   loadDocumentFromStorage,
   saveDocumentToStorage,
   touchDocument,
@@ -14,6 +16,8 @@ import {
   type RhythmVariant,
   type TeamMccInstance,
 } from '@/lib/periodization-document';
+
+export const MAX_SESSIONS_PER_MICRO_LAYOUT = 5;
 
 export type CoachTeamRef = {
   id: string;
@@ -125,4 +129,20 @@ export function resolveCoachWeekContext(team: CoachTeamRef): CoachWeekContext | 
     seededDocument,
     usedFallbackWeek: mccResolved.usedFallbackWeek,
   };
+}
+
+/** Resuelve el microciclo visible para un MCC concreto (plantilla, equipo o demo). */
+export function resolveCoachMicrocycleId(
+  weekContext: CoachWeekContext,
+  teamId: string,
+  mccId: string
+): string | null {
+  const state = getVariantState(weekContext.document, weekContext.variant.id);
+  const teamInstance = state.teamInstances[teamId]?.[mccId];
+  if (teamInstance?.microcycleId) return teamInstance.microcycleId;
+
+  const linked = state.mccLinks[mccId]?.microcycleId;
+  if (linked) return linked;
+
+  return demoTeamMicrocycleId(teamId, mccId);
 }

@@ -9,7 +9,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import type { CanteraCategorySlug } from '@/lib/cantera-categories';
-import type { MacrocycleBlock } from '@/lib/periodization';
+import type { MacrocycleBlock, MicrocycleWeek } from '@/lib/periodization';
 import type { MccLink, MccOverride } from '@/lib/periodization-document';
 
 type Props = {
@@ -21,6 +21,7 @@ type Props = {
   mccOverrides: Record<string, MccOverride>;
   excludedMccIds: Set<string>;
   currentMccId: string | null;
+  onSelectMcc?: (micro: MicrocycleWeek) => void;
 };
 
 export function CoachMacrocycleOverlay({
@@ -32,6 +33,7 @@ export function CoachMacrocycleOverlay({
   mccOverrides,
   excludedMccIds,
   currentMccId,
+  onSelectMcc,
 }: Props) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -43,6 +45,7 @@ export function CoachMacrocycleOverlay({
           <SheetTitle>Macrociclo</SheetTitle>
           <SheetDescription>
             {macro.name} · {macro.startDate} → {macro.endDate}
+            {onSelectMcc ? ' · Pulsa un MCC para ver su microciclo' : null}
           </SheetDescription>
         </SheetHeader>
 
@@ -54,7 +57,8 @@ export function CoachMacrocycleOverlay({
             mccOverrides={mccOverrides}
             excludedMccIds={excludedMccIds}
             selectedMccId={currentMccId}
-            readOnly
+            onSelectMcc={onSelectMcc}
+            readOnly={!onSelectMcc}
           />
         </div>
       </SheetContent>

@@ -1,17 +1,22 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { Eye, LayoutGrid, MessageSquarePlus } from 'lucide-react';
 import { createChangeRequest, type ActionState } from '@/app/actions/methodology';
 import { Button } from '@/components/ui/button';
 import { CoachMacrocycleOverlay } from '@/components/portal/CoachMacrocycleOverlay';
+import { CoachMicrocycleOverlay } from '@/components/portal/CoachMicrocycleOverlay';
 import {
   saveCoachChangeRequest,
   type CoachChangeRequest,
 } from '@/lib/coach-change-requests-store';
-import type { CoachWeekContext } from '@/lib/coach-periodization-context';
+import {
+  MAX_SESSIONS_PER_MICRO_LAYOUT,
+  resolveCoachMicrocycleId,
+  type CoachWeekContext,
+} from '@/lib/coach-periodization-context';
 import type { CoachPortalTeam } from '@/lib/coach-portal-teams';
+import type { MicrocycleWeek } from '@/lib/periodization';
 import { getExcludedMccIds, getVariantState } from '@/lib/periodization-document';
 import { cn } from '@/lib/utils';
 
@@ -26,12 +31,19 @@ type Props = {
   weekContext: CoachWeekContext;
 };
 
+const SESSION_ROW_HEIGHT_PX = 44;
+const SESSION_ROW_GAP_PX = 6;
+
+const sessionsBlockMinHeight =
+  MAX_SESSIONS_PER_MICRO_LAYOUT * SESSION_ROW_HEIGHT_PX +
+  (MAX_SESSIONS_PER_MICRO_LAYOUT - 1) * SESSION_ROW_GAP_PX;
+
 const actionIconClass =
   'inline-flex size-10 items-center justify-center rounded-lg border border-primary/25 bg-background/40 text-muted-foreground transition-colors hover:border-primary/45 hover:bg-primary/10 hover:text-primary disabled:pointer-events-none disabled:opacity-40';
 
 const sessionButtonClass = (active: boolean) =>
   cn(
-    'w-full rounded-lg border px-3 py-2.5 text-left text-sm font-medium transition-colors',
+    'h-11 w-full rounded-lg border px-3 text-left text-sm font-medium transition-colors',
     active
       ? 'border-primary/55 bg-primary/10 shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.35)]'
       : 'border-primary/15 bg-background/30 hover:border-primary/35 hover:bg-primary/5'
@@ -50,22 +62,41 @@ export function CoachWeekSessionsPanel({ team, weekContext }: Props) {
   const [selectedSessionId, setSelectedSessionId] = useState(sessions[0]?.id ?? '');
   const [requestingChange, setRequestingChange] = useState(false);
   const [macroOpen, setMacroOpen] = useState(false);
+  const [microcycleOpen, setMicrocycleOpen] = useState(false);
+  const [viewMccId, setViewMccId] = useState<string | null>(null);
+  const [viewSessionIndex, setViewSessionIndex] = useState(1);
   const [reason, setReason] = useState('');
   const [feedback, setFeedback] = useState<string | null>(null);
 
   const selectedSession = sessions.find((session) => session.id === selectedSessionId) ?? sessions[0] ?? null;
   const variantState = getVariantState(weekContext.document, weekContext.variant.id);
   const excludedMccIds = getExcludedMccIds(weekContext.document, weekContext.variant.id);
-  const sessionViewHref = weekContext.instance?.microcycleId
-    ? `/portal/metodologia/microciclos/${weekContext.instance.microcycleId}/sesiones/${selectedSession?.index ?? 1}`
+  const currentMccId = weekContext.context.micro.id;
+  const currentMicrocycleId = resolveCoachMicrocycleId(weekContext, team.id, currentMccId);
+  const viewMicrocycleId = viewMccId
+    ? resolveCoachMicrocycleId(weekContext, team.id, viewMccId)
     : null;
+  const emptySessionSlots = Math.max(0, MAX_SESSIONS_PER_MICRO_LAYOUT - sessions.length);
 
   useEffect(() => {
     setSelectedSessionId(sessions[0]?.id ?? '');
     setRequestingChange(false);
     setReason('');
     setFeedback(null);
-  }, [team.id, weekContext.context.micro.id, sessions]);
+    setViewMccId(null);
+    setMicrocycleOpen(false);
+  }, [team.id, currentMccId, sessions]);
+
+  const openMicrocycle = (mccId: string, sessionIndex = 1) => {
+    setViewMccId(mccId);
+    setViewSessionIndex(sessionIndex);
+    setMicrocycleOpen(true);
+  };
+
+  const handleMacroMccSelect = (micro: MicrocycleWeek) => {
+    setMacroOpen(false);
+    openMicrocycle(micro.id);
+  };
 
   const submitRequest = async () => {
     if (!selectedSession || !reason.trim()) return;
@@ -102,9 +133,14 @@ export function CoachWeekSessionsPanel({ team, weekContext }: Props) {
 
   return (
     <>
-      <div className="grid min-h-0 gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-start">
-        <div className="space-y-3">
-          <div className="portal-section-surface rounded-xl p-4">
+      <div className="grid min-h-0 gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-stretch">
+        <div className="flex flex-col gap-3">
+          <button
+            type="button"
+            onClick={() => openMicrocycle(currentMccId)}
+            className="portal-section-surface w-full rounded-xl p-4 text-left transition-colors hover:border-primary/65"
+            title="Ver microciclo de la semana"
+          >
             <p className="font-semibold text-foreground">
               {weekContext.context.micro.label} · {weekContext.variant.name}
             </p>
@@ -112,7 +148,7 @@ export function CoachWeekSessionsPanel({ team, weekContext }: Props) {
               {weekContext.context.micro.weekStart} → {weekContext.context.micro.weekEnd}
             </p>
             <p className="mt-0.5 text-xs text-muted-foreground">{weekContext.document.seasonTitle}</p>
-          </div>
+          </button>
 
           {weekContext.excluded ? (
             <p className="rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
@@ -120,7 +156,7 @@ export function CoachWeekSessionsPanel({ team, weekContext }: Props) {
             </p>
           ) : null}
 
-          <div className="space-y-1.5">
+          <div className="flex flex-1 flex-col gap-1.5" style={{ minHeight: sessionsBlockMinHeight }}>
             {sessions.map((session) => (
               <button
                 key={session.id}
@@ -136,10 +172,20 @@ export function CoachWeekSessionsPanel({ team, weekContext }: Props) {
                 {session.label}
               </button>
             ))}
+            {Array.from({ length: emptySessionSlots }, (_, index) => (
+              <div
+                key={`session-slot-${index}`}
+                aria-hidden
+                className="h-11 rounded-lg border border-transparent"
+              />
+            ))}
           </div>
         </div>
 
-        <div className="flex min-h-[12rem] flex-col rounded-xl border border-primary/15 bg-background/20 p-4">
+        <div
+          className="flex min-h-0 flex-col rounded-xl border border-primary/15 bg-background/20 p-4"
+          style={{ minHeight: sessionsBlockMinHeight }}
+        >
           {selectedSession ? (
             <>
               <p className="text-sm font-semibold text-foreground">{selectedSession.label}</p>
@@ -157,26 +203,16 @@ export function CoachWeekSessionsPanel({ team, weekContext }: Props) {
                   <MessageSquarePlus className="size-4" />
                 </button>
 
-                {sessionViewHref ? (
-                  <Link
-                    href={sessionViewHref}
-                    className={actionIconClass}
-                    title="Visualizar sesión"
-                    aria-label="Visualizar sesión"
-                  >
-                    <Eye className="size-4" />
-                  </Link>
-                ) : (
-                  <button
-                    type="button"
-                    className={actionIconClass}
-                    title="Sesión sin microciclo vinculado"
-                    aria-label="Visualizar sesión"
-                    disabled
-                  >
-                    <Eye className="size-4" />
-                  </button>
-                )}
+                <button
+                  type="button"
+                  className={actionIconClass}
+                  title="Visualizar sesión"
+                  aria-label="Visualizar sesión"
+                  disabled={weekContext.excluded || !currentMicrocycleId}
+                  onClick={() => openMicrocycle(currentMccId, selectedSession.index)}
+                >
+                  <Eye className="size-4" />
+                </button>
 
                 <button
                   type="button"
@@ -189,28 +225,30 @@ export function CoachWeekSessionsPanel({ team, weekContext }: Props) {
                 </button>
               </div>
 
-              {requestingChange ? (
-                <div className="mt-4 space-y-2 border-t border-primary/10 pt-4">
-                  <textarea
-                    value={reason}
-                    onChange={(event) => setReason(event.target.value)}
-                    rows={4}
-                    placeholder="Ej. No tengo conos suficientes, propongo rondo 4v4…"
-                    className="w-full rounded-md border border-primary/25 bg-background/80 px-3 py-2 text-sm"
-                  />
-                  <Button
-                    type="button"
-                    size="sm"
-                    className="w-full"
-                    disabled={!reason.trim()}
-                    onClick={() => void submitRequest()}
-                  >
-                    Enviar solicitud
-                  </Button>
-                </div>
-              ) : null}
+              <div className="mt-4 flex min-h-0 flex-1 flex-col">
+                {requestingChange ? (
+                  <div className="space-y-2 border-t border-primary/10 pt-4">
+                    <textarea
+                      value={reason}
+                      onChange={(event) => setReason(event.target.value)}
+                      rows={4}
+                      placeholder="Ej. No tengo conos suficientes, propongo rondo 4v4…"
+                      className="w-full rounded-md border border-primary/25 bg-background/80 px-3 py-2 text-sm"
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="w-full"
+                      disabled={!reason.trim()}
+                      onClick={() => void submitRequest()}
+                    >
+                      Enviar solicitud
+                    </Button>
+                  </div>
+                ) : null}
 
-              {feedback ? <p className="mt-3 text-sm text-primary">{feedback}</p> : null}
+                {feedback ? <p className="mt-3 text-sm text-primary">{feedback}</p> : null}
+              </div>
             </>
           ) : (
             <p className="text-sm text-muted-foreground">Selecciona una sesión.</p>
@@ -226,8 +264,20 @@ export function CoachWeekSessionsPanel({ team, weekContext }: Props) {
         mccLinks={variantState.mccLinks}
         mccOverrides={variantState.mccOverrides}
         excludedMccIds={excludedMccIds}
-        currentMccId={weekContext.context.micro.id}
+        currentMccId={currentMccId}
+        onSelectMcc={handleMacroMccSelect}
       />
+
+      {viewMccId ? (
+        <CoachMicrocycleOverlay
+          open={microcycleOpen}
+          onOpenChange={setMicrocycleOpen}
+          weekContext={weekContext}
+          mccId={viewMccId}
+          microcycleId={viewMicrocycleId}
+          initialSessionIndex={viewSessionIndex}
+        />
+      ) : null}
     </>
   );
 }
