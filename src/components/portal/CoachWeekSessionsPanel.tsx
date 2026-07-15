@@ -203,7 +203,7 @@ export function CoachWeekSessionsPanel({ team, weekContext, teamContext }: Props
         </div>
 
         <div
-          className="flex min-h-0 flex-col rounded-xl border border-primary/15 bg-background/20 p-4"
+          className="portal-section-surface flex min-h-0 flex-col rounded-xl p-4"
           style={{ minHeight: sessionsBlockMinHeight }}
         >
           {selectedSession ? (
