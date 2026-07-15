@@ -1,6 +1,8 @@
 import { CoachPortalView } from '@/components/portal/CoachPortalView';
 import { PageContainer } from '@/components/portal/PageContainer';
+import { loadClubFacilities } from '@/app/actions/club-facilities';
 import { DEMO_CANTERA_TEAMS } from '@/lib/cantera-teams';
+import { loadCoachTeamContexts } from '@/lib/coach-team-context';
 import { resolveCoachPortalViewer } from '@/lib/coach-portal-teams';
 import { isDemoActive } from '@/lib/demo';
 import { getStaffContext } from '@/lib/portal';
@@ -82,9 +84,15 @@ export default async function PortalEntrenadorPage() {
     demoMode,
   });
 
+  const facilities = await loadClubFacilities(ctx.club.id);
+  const teamContexts = await loadCoachTeamContexts(supabase, ctx.club.id, viewer.teams.map((team) => team.id), {
+    demoMode,
+    facilities,
+  });
+
   return (
     <PageContainer>
-      <CoachPortalView viewer={viewer} />
+      <CoachPortalView viewer={viewer} teamContexts={teamContexts} />
     </PageContainer>
   );
 }
