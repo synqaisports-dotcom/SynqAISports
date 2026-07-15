@@ -24,7 +24,7 @@ export function MethodologySubnav() {
   const pathname = usePathname();
 
   return (
-    <nav className="mb-8 flex flex-wrap gap-2 border-b border-white/5 pb-4">
+    <nav className="portal-subnav-divider mb-8 flex flex-wrap gap-2 pb-4">
       {links.map(({ href, label, exact, icon: Icon }) => {
         const isActive = exact
           ? pathname === href

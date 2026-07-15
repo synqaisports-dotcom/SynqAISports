@@ -195,7 +195,8 @@ body {
     background-attachment: fixed;
   }
 
-  .portal-section-surface {
+  .portal-section-surface,
+  .synq-section-border {
     position: relative;
     overflow: hidden;
     border: 1px solid hsl(183 100% 50% / 0.48);
@@ -220,7 +221,8 @@ body {
       inset -1px 0 0 hsl(183 100% 50% / 0.1);
   }
 
-  .portal-section-surface::before {
+  .portal-section-surface::before,
+  .synq-section-border::before {
     content: '';
     position: absolute;
     inset: 0;
@@ -235,7 +237,8 @@ body {
     z-index: 0;
   }
 
-  .portal-section-surface::after {
+  .portal-section-surface::after,
+  .synq-section-border::after {
     content: '';
     position: absolute;
     inset: 0;
@@ -248,7 +251,8 @@ body {
     z-index: 0;
   }
 
-  .portal-section-surface > * {
+  .portal-section-surface > *,
+  .synq-section-border > * {
     position: relative;
     z-index: 1;
   }
@@ -334,28 +338,97 @@ body {
 
   .synq-portal-content .rounded-xl.border.bg-card,
   .synq-portal-content .bg-card.border {
-    border-color: hsl(183 100% 50% / 0.45);
-    background: linear-gradient(
-      155deg,
-      hsl(205 40% 10% / 0.92) 0%,
-      hsl(205 40% 7.5% / 0.88) 100%
-    );
-    box-shadow:
-      0 0 0 1px hsl(183 100% 50% / 0.1),
-      0 8px 32px hsl(0 0% 0% / 0.28),
-      0 2px 12px hsl(183 100% 50% / 0.05);
+    @apply portal-section-surface;
+    border-color: hsl(183 100% 50% / 0.48);
   }
 
-  .synq-section-border {
-    border: 1px solid hsl(183 100% 50% / 0.42);
+  .portal-search-input {
+    border-color: hsl(183 100% 50% / 0.35);
     background: linear-gradient(
       135deg,
-      hsl(205 40% 9% / 0.9) 0%,
-      hsl(205 40% 7% / 0.6) 100%
+      hsl(205 40% 10% / 0.95) 0%,
+      hsl(205 40% 7% / 0.75) 100%
     );
     box-shadow:
-      inset 0 1px 0 0 hsl(183 100% 50% / 0.12),
-      0 0 20px hsl(183 100% 50% / 0.04);
+      inset 0 1px 0 0 hsl(183 100% 50% / 0.14),
+      0 0 18px hsl(183 100% 50% / 0.06);
+  }
+
+  .portal-search-input:focus-visible {
+    border-color: hsl(183 100% 50% / 0.55);
+    background: linear-gradient(
+      135deg,
+      hsl(205 40% 11% / 0.98) 0%,
+      hsl(205 40% 8% / 0.85) 100%
+    );
+    box-shadow:
+      inset 0 1px 0 0 hsl(183 100% 50% / 0.2),
+      0 0 0 1px hsl(183 100% 50% / 0.2),
+      0 0 24px hsl(183 100% 50% / 0.1);
+  }
+
+  .portal-subnav-divider {
+    border-bottom: 1px solid hsl(183 100% 50% / 0.38);
+    box-shadow: 0 1px 0 hsl(183 100% 50% / 0.12);
+  }
+
+  .exercise-detail-panel {
+    position: relative;
+    overflow: hidden;
+    background-color: hsl(212 42% 5%);
+    background-image:
+      radial-gradient(ellipse 130% 100% at 50% 0%, hsl(183 100% 50% / 0.22), transparent 58%),
+      radial-gradient(ellipse 110% 90% at 50% 100%, hsl(183 100% 50% / 0.16), transparent 55%),
+      radial-gradient(ellipse 45% 80% at 0% 50%, hsl(183 100% 50% / 0.12), transparent 72%),
+      radial-gradient(ellipse 45% 80% at 100% 50%, hsl(183 100% 50% / 0.12), transparent 72%),
+      linear-gradient(
+        155deg,
+        hsl(205 44% 11%) 0%,
+        hsl(210 42% 7%) 48%,
+        hsl(212 42% 4%) 100%
+      );
+    box-shadow:
+      inset 0 1px 0 hsl(183 100% 50% / 0.22),
+      inset 0 -1px 0 hsl(183 100% 50% / 0.1);
+  }
+
+  .exercise-detail-panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.1;
+    background-image: radial-gradient(
+      circle at 1px 1px,
+      hsl(183 100% 50% / 0.55) 1px,
+      transparent 0
+    );
+    background-size: 22px 22px;
+    z-index: 0;
+  }
+
+  .exercise-detail-panel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 88% 55% at 50% 100%, hsl(183 100% 50% / 0.28), transparent 68%),
+      radial-gradient(ellipse 70% 40% at 50% 0%, hsl(183 100% 50% / 0.14), transparent 70%);
+    z-index: 0;
+  }
+
+  .exercise-detail-panel > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .exercise-field-pitch {
+    overflow: hidden;
+    border-radius: 0.75rem;
+    box-shadow:
+      0 12px 40px hsl(0 0% 0% / 0.38),
+      0 0 0 1px hsl(183 100% 50% / 0.15);
   }
 
   .portal-sidebar-rail::after {

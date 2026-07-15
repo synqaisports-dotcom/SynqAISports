@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CalendarDays, ClipboardList, Layers, Pencil, Plus, Search, TrendingUp, UserCog } from 'lucide-react';
+import { CalendarDays, ClipboardList, Layers, Pencil, Plus, TrendingUp, UserCog } from 'lucide-react';
 import { CategorySeasonPromoteSheet } from '@/components/portal/CategorySeasonPromoteSheet';
 import { TeamClubHistorySection } from '@/components/portal/TeamClubHistorySection';
 import { TeamSeasonPromoteSheet } from '@/components/portal/TeamSeasonPromoteSheet';
@@ -13,6 +13,7 @@ import { TeamPauseButton } from '@/components/portal/TeamPauseButton';
 import { TeamRosterList } from '@/components/portal/TeamRosterList';
 import { TeamViewSections } from '@/components/portal/TeamViewSections';
 import { SynqSelect } from '@/components/portal/SynqSelect';
+import { PortalSearchField } from '@/components/portal/PortalSearchField';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -475,15 +476,11 @@ export function TeamsMasterDetail({
             </div>
           </div>
           <div className="space-y-2">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Buscar por nombre o categoría…"
-                className="border-primary/30 bg-background/80 pl-9"
-              />
-            </div>
+            <PortalSearchField
+              value={search}
+              onChange={setSearch}
+              placeholder="Buscar por nombre o categoría…"
+            />
             <div className="grid gap-2 sm:grid-cols-2">
               <SynqSelect
                 value={categoryFilter}

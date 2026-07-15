@@ -3,13 +3,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { BookOpen, Pencil, Plus, Printer, Search, Trash2 } from 'lucide-react';
-import { deleteExercise } from '@/app/actions/methodology';
+import { BookOpen, Eye, Pencil, Plus, Printer, Trash2 } from 'lucide-react';
+import { deleteExercise, updateExerciseDrawing } from '@/app/actions/methodology';
 import { DrawingPreviewFrame } from '@/components/methodology/drawing/DrawingPreviewFrame';
-import { SynqSelect } from '@/components/portal/SynqSelect';
+import { ExerciseDrawingStudio } from '@/components/methodology/drawing/ExerciseDrawingStudio';
+import { ExercisePreviewOverlay } from '@/components/methodology/ExercisePreviewOverlay';
+import { PortalConfirmDialog } from '@/components/portal/PortalConfirmDialog';
+import { PortalSearchField } from '@/components/portal/PortalSearchField';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import {
   drawingDocumentIsEmpty,
   parseExerciseDrawing,
@@ -20,6 +22,11 @@ import {
   TASK_TYPE_LABELS,
   type TaskType,
 } from '@/lib/exercise-sheet';
+import {
+  isDemoExerciseId,
+  readDemoDrawingOverrides,
+  updateDemoExerciseDrawing,
+} from '@/lib/demo-exercises-store';
 import { cn } from '@/lib/utils';
 
 export type ExerciseListRecord = {
@@ -36,6 +43,7 @@ export type ExerciseListRecord = {
 type Props = {
   exercises: ExerciseListRecord[];
   initialExerciseId?: string | null;
+  demoMode?: boolean;
 };
 
 const actionButtonClass =
@@ -49,7 +57,20 @@ const listItemClass = (active: boolean) =>
       : 'border-primary/15 hover:border-primary/30 hover:bg-muted/20'
   );
 
-const sectionClass = 'rounded-xl border border-primary/15 bg-muted/5 p-4';
+const TYPE_FILTER_OPTIONS: { value: 'all' | TaskType; label: string }[] = [
+  { value: 'all', label: 'Ver todos los ejercicios' },
+  { value: 'warmup', label: 'Calentamiento' },
+  { value: 'main', label: 'Parte principal' },
+  { value: 'cooldown', label: 'Vuelta a la calma' },
+];
+
+const filterButtonClass = (active: boolean) =>
+  cn(
+    'min-w-0 rounded-lg border px-1.5 py-2 text-center text-[11px] leading-snug transition-colors sm:px-2 sm:text-xs',
+    active
+      ? 'border-primary/50 bg-primary/10 font-medium text-primary'
+      : 'border-primary/25 text-muted-foreground hover:border-primary/40 hover:bg-primary/5 hover:text-foreground'
+  );
 
 function ExerciseListIcon() {
   return (
@@ -72,12 +93,21 @@ function DataRow({ label, value }: { label: string; value: string }) {
 function ExerciseDetailPanel({
   exercise,
   onDeleted,
+  onDrawingSave,
 }: {
   exercise: ExerciseListRecord | null;
   onDeleted: () => void;
+  onDrawingSave: (json: string) => void;
 }) {
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [studioOpen, setStudioOpen] = useState(false);
+
+  useEffect(() => {
+    setStudioOpen(false);
+  }, [exercise?.id]);
 
   if (!exercise) {
     return (
@@ -101,70 +131,95 @@ function ExerciseDetailPanel({
   const drawingDoc = parseExerciseDrawing(exercise.drawing_json);
   const hasDrawing = !drawingDocumentIsEmpty(drawingDoc);
 
-  const handleDelete = async () => {
-    if (!window.confirm(`¿Eliminar el ejercicio «${exercise.title}»?`)) return;
+  const handleDeleteConfirm = async () => {
+    if (!exercise) return;
     setDeleting(true);
     await deleteExercise(exercise.id);
     setDeleting(false);
+    setDeleteOpen(false);
     onDeleted();
     router.refresh();
   };
 
+  const handlePrint = () => {
+    if (!exercise) return;
+    if (isDemoExerciseId(exercise.id) && typeof window !== 'undefined') {
+      sessionStorage.setItem(
+        `synq-print-drawing-${exercise.id}`,
+        JSON.stringify(exercise.drawing_json ?? null)
+      );
+    }
+    window.open(`/print/ficha/ejercicio/${exercise.id}`, '_blank', 'noopener,noreferrer');
+  };
+
   return (
-    <Card className="flex h-full min-h-[28rem] flex-col border border-primary/25">
-      <CardHeader className="pb-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <CardTitle className="text-lg font-semibold tracking-tight">{exercise.title}</CardTitle>
-          <Badge variant="outline" className="border-primary/25 text-[10px]">
-            {taskLabel}
-          </Badge>
-        </div>
-        <CardDescription>
-          {sheet.conditionalGrid.time || `${durationMin} min`}
-          {sheet.didacticStrategy ? ` · ${sheet.didacticStrategy}` : ''}
-        </CardDescription>
-      </CardHeader>
+    <>
+      <Card className="flex h-full min-h-[28rem] flex-col overflow-hidden border border-primary/25 bg-transparent p-0 shadow-none hover:border-primary/25 hover:shadow-none">
+        <div className="exercise-detail-panel flex min-h-0 flex-1 flex-col">
+          <div className="shrink-0 px-4 pt-4 sm:px-6 sm:pt-5">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-lg font-semibold tracking-tight text-foreground">{exercise.title}</h2>
+              <Badge variant="outline" className="border-primary/40 bg-primary/10 text-[10px] text-primary">
+                {taskLabel}
+              </Badge>
+            </div>
+            <p className="mt-1 text-sm text-primary/75">
+              {sheet.conditionalGrid.time || `${durationMin} min`}
+              {sheet.didacticStrategy ? ` · ${sheet.didacticStrategy}` : ''}
+            </p>
+          </div>
 
-      <CardContent className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1.35fr)] lg:items-start">
-          <div className="relative mx-auto w-full max-w-full overflow-hidden rounded-2xl border border-primary/30 bg-[#060a12] shadow-[0_0_24px_hsl(183_100%_50%_/_0.08)]">
-            {hasDrawing ? (
-              <DrawingPreviewFrame
-                document={drawingDoc}
-                orientation="horizontal"
-                className="w-full max-h-[min(14rem,36vw)]"
-              />
-            ) : (
-              <div
-                className="flex w-full items-center justify-center bg-[#060a12] text-xs text-muted-foreground"
-                style={{ aspectRatio: '105 / 68', maxHeight: '14rem' }}
-              >
-                Sin esquema en pizarra
-              </div>
-            )}
+        <CardContent className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4 pt-3 sm:px-6 sm:pb-6">
+          <div className="relative w-full">
+            <div className="exercise-field-pitch">
+              {hasDrawing ? (
+                <DrawingPreviewFrame
+                  document={drawingDoc}
+                  orientation="horizontal"
+                  className="w-full rounded-none"
+                />
+              ) : (
+                <div
+                  className="flex w-full items-center justify-center bg-[#060a12] text-xs text-muted-foreground"
+                  style={{ aspectRatio: '105 / 68', maxHeight: '16rem' }}
+                >
+                  Sin esquema en pizarra
+                </div>
+              )}
+            </div>
 
-            <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-gradient-to-t from-background/95 via-background/55 to-transparent px-2 pb-2 pt-8">
-              <Link
-                href={`/portal/metodologia/ejercicios/${exercise.id}`}
+            <div className="absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-1 bg-gradient-to-t from-[hsl(212_42%_4%_/_0.95)] via-[hsl(212_42%_4%_/_0.55)] to-transparent px-2 pb-2 pt-8">
+              <button
+                type="button"
+                onClick={() => setStudioOpen(true)}
                 className={actionButtonClass}
-                aria-label="Editar ejercicio"
-                title="Editar ejercicio"
+                aria-label="Modificar dibujo"
+                title="Modificar dibujo"
               >
                 <Pencil className="size-4" />
-              </Link>
-              <Link
-                href={`/print/ficha/ejercicio/${exercise.id}`}
+              </button>
+              <button
+                type="button"
+                onClick={() => setPreviewOpen(true)}
                 className={actionButtonClass}
-                aria-label="Imprimir ficha"
-                title="Imprimir ficha"
-                target="_blank"
+                aria-label="Previsualizar ejercicio"
+                title="Previsualizar"
+              >
+                <Eye className="size-4" />
+              </button>
+              <button
+                type="button"
+                onClick={handlePrint}
+                className={actionButtonClass}
+                aria-label="Imprimir o guardar PDF"
+                title="Imprimir / PDF"
               >
                 <Printer className="size-4" />
-              </Link>
+              </button>
               <button
                 type="button"
                 disabled={deleting}
-                onClick={() => void handleDelete()}
+                onClick={() => setDeleteOpen(true)}
                 className={cn(actionButtonClass, 'hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive')}
                 aria-label="Eliminar ejercicio"
                 title="Eliminar ejercicio"
@@ -174,7 +229,7 @@ function ExerciseDetailPanel({
             </div>
           </div>
 
-          <div className={`${sectionClass} space-y-4`}>
+          <div className="space-y-4">
             <DataRow label={SHEET_FIELD_LABELS.objectives} value={sheet.objectives || exercise.objectives || ''} />
             <DataRow label={SHEET_FIELD_LABELS.didacticStrategy} value={sheet.didacticStrategy} />
 
@@ -182,7 +237,7 @@ function ExerciseDetailPanel({
               <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                 Contenido condicional
               </p>
-              <div className="mt-2 grid gap-2 text-sm sm:grid-cols-2">
+              <div className="mt-2 grid gap-3 text-sm sm:grid-cols-2">
                 <DataRow label="Tiempo" value={sheet.conditionalGrid.time} />
                 <DataRow label="Espacio" value={sheet.conditionalGrid.space} />
                 <DataRow label="Situación" value={sheet.conditionalGrid.gameSituation} />
@@ -190,32 +245,68 @@ function ExerciseDetailPanel({
               </div>
             </div>
           </div>
+        </CardContent>
         </div>
+      </Card>
 
-        <div className="grid gap-4 lg:grid-cols-3">
-          <DataRow label={SHEET_FIELD_LABELS.technicalAction} value={sheet.technicalAction} />
-          <DataRow label={SHEET_FIELD_LABELS.tacticalAction} value={sheet.tacticalAction} />
-          <DataRow label={SHEET_FIELD_LABELS.collectiveContent} value={sheet.collectiveContent} />
-        </div>
+      <ExercisePreviewOverlay
+        exercise={exercise}
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+      />
 
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div className={sectionClass}>
-            <DataRow label={SHEET_FIELD_LABELS.description} value={sheet.description} />
-          </div>
-          <div className={sectionClass}>
-            <DataRow label={SHEET_FIELD_LABELS.rules} value={sheet.rules} />
-            <div className="mt-3">
-              <DataRow label={SHEET_FIELD_LABELS.coachingCues} value={sheet.coachingCues} />
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+      <PortalConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Eliminar ejercicio"
+        description={`¿Eliminar el ejercicio «${exercise.title}»? Se quitará del catálogo del club y no podrás recuperarlo.`}
+        confirmLabel="Eliminar"
+        destructive
+        pending={deleting}
+        onConfirm={() => void handleDeleteConfirm()}
+      />
+
+      <ExerciseDrawingStudio
+        open={studioOpen}
+        initialData={exercise.drawing_json}
+        onClose={() => setStudioOpen(false)}
+        onSave={(next) => {
+          onDrawingSave(next);
+          setStudioOpen(false);
+        }}
+      />
+    </>
   );
 }
 
-export function ExercisesMasterDetail({ exercises, initialExerciseId }: Props) {
+export function ExercisesMasterDetail({ exercises, initialExerciseId, demoMode = false }: Props) {
   const router = useRouter();
+  const [drawingOverrides, setDrawingOverrides] = useState<Record<string, unknown>>({});
+
+  useEffect(() => {
+    if (demoMode) {
+      setDrawingOverrides(readDemoDrawingOverrides());
+    }
+  }, [demoMode]);
+
+  const resolvedExercises = useMemo(
+    () =>
+      exercises.map((exercise) => ({
+        ...exercise,
+        drawing_json: drawingOverrides[exercise.id] ?? exercise.drawing_json,
+      })),
+    [exercises, drawingOverrides]
+  );
+
+  const handleDrawingSave = (exerciseId: string, json: string) => {
+    const parsed = JSON.parse(json) as unknown;
+    setDrawingOverrides((current) => ({ ...current, [exerciseId]: parsed }));
+    if (isDemoExerciseId(exerciseId)) {
+      updateDemoExerciseDrawing(exerciseId, parsed);
+      return;
+    }
+    void updateExerciseDrawing(exerciseId, json).then(() => router.refresh());
+  };
   const [search, setSearch] = useState('');
   const [taskFilter, setTaskFilter] = useState<'all' | TaskType>('all');
   const [selectedId, setSelectedId] = useState<string | null>(
@@ -226,7 +317,7 @@ export function ExercisesMasterDetail({ exercises, initialExerciseId }: Props) {
 
   const filteredExercises = useMemo(() => {
     const query = search.trim().toLowerCase();
-    let list = [...exercises];
+    let list = [...resolvedExercises];
 
     if (taskFilter !== 'all') {
       list = list.filter((exercise) => {
@@ -249,22 +340,22 @@ export function ExercisesMasterDetail({ exercises, initialExerciseId }: Props) {
 
     list.sort((a, b) => a.title.localeCompare(b.title, 'es', { sensitivity: 'base' }));
     return list;
-  }, [exercises, search, taskFilter]);
+  }, [resolvedExercises, search, taskFilter]);
 
   const selectedExercise =
-    exercises.find((exercise) => exercise.id === selectedId) ?? filteredExercises[0] ?? null;
+    resolvedExercises.find((exercise) => exercise.id === selectedId) ?? filteredExercises[0] ?? null;
 
   useEffect(() => {
-    if (initialExerciseId && exercises.some((exercise) => exercise.id === initialExerciseId)) {
+    if (initialExerciseId && resolvedExercises.some((exercise) => exercise.id === initialExerciseId)) {
       setSelectedId(initialExerciseId);
     }
-  }, [initialExerciseId, exercises]);
+  }, [initialExerciseId, resolvedExercises]);
 
   useEffect(() => {
-    if (selectedId && !exercises.some((exercise) => exercise.id === selectedId)) {
-      setSelectedId(exercises[0]?.id ?? null);
+    if (selectedId && !resolvedExercises.some((exercise) => exercise.id === selectedId)) {
+      setSelectedId(resolvedExercises[0]?.id ?? null);
     }
-  }, [exercises, selectedId]);
+  }, [resolvedExercises, selectedId]);
 
   useEffect(() => {
     if (selectedId && !filteredExercises.some((exercise) => exercise.id === selectedId)) {
@@ -277,14 +368,6 @@ export function ExercisesMasterDetail({ exercises, initialExerciseId }: Props) {
     router.replace(`/portal/metodologia/ejercicios?exercise=${exerciseId}`, { scroll: false });
   };
 
-  const taskOptions = [
-    { value: 'all', label: 'Todos los tipos' },
-    ...(Object.keys(TASK_TYPE_LABELS) as TaskType[]).map((key) => ({
-      value: key,
-      label: TASK_TYPE_LABELS[key],
-    })),
-  ];
-
   return (
     <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
       <Card className="flex min-h-[28rem] flex-col border border-primary/25 lg:sticky lg:top-[4.5rem] lg:max-h-[calc(100vh-5.5rem)]">
@@ -293,7 +376,7 @@ export function ExercisesMasterDetail({ exercises, initialExerciseId }: Props) {
             <div>
               <CardTitle className="text-base">Biblioteca</CardTitle>
               <CardDescription>
-                {filteredExercises.length} de {exercises.length} ejercicios
+                {filteredExercises.length} de {resolvedExercises.length} ejercicios
               </CardDescription>
             </div>
             <Link
@@ -306,26 +389,29 @@ export function ExercisesMasterDetail({ exercises, initialExerciseId }: Props) {
             </Link>
           </div>
           <div className="space-y-2">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Buscar por título u objetivos…"
-                className="border-primary/30 bg-background/80 pl-9"
-              />
-            </div>
-            <SynqSelect
-              value={taskFilter}
-              onChange={(value) => setTaskFilter(value as 'all' | TaskType)}
-              options={taskOptions}
+            <PortalSearchField
+              value={search}
+              onChange={setSearch}
+              placeholder="Buscar por título u objetivos…"
             />
+            <div className="grid grid-cols-4 gap-1.5">
+              {TYPE_FILTER_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setTaskFilter(option.value)}
+                  className={filterButtonClass(taskFilter === option.value)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
           </div>
         </CardHeader>
         <CardContent className="min-h-0 flex-1 overflow-y-auto pt-0">
           {filteredExercises.length === 0 ? (
             <p className="rounded-lg border border-dashed border-primary/20 px-4 py-8 text-center text-sm text-muted-foreground">
-              {exercises.length === 0
+              {resolvedExercises.length === 0
                 ? 'No hay ejercicios todavía. Pulsa + para crear el primero.'
                 : 'No hay ejercicios con esos filtros.'}
             </p>
@@ -368,6 +454,9 @@ export function ExercisesMasterDetail({ exercises, initialExerciseId }: Props) {
         onDeleted={() => {
           setSelectedId(null);
           router.replace('/portal/metodologia/ejercicios', { scroll: false });
+        }}
+        onDrawingSave={(json) => {
+          if (selectedExercise) handleDrawingSave(selectedExercise.id, json);
         }}
       />
     </div>

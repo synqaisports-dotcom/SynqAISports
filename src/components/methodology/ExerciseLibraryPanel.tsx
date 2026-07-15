@@ -2,11 +2,11 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { BookOpen, Loader2, Plus, Search } from 'lucide-react';
+import { BookOpen, Loader2, Plus } from 'lucide-react';
 import { assignExerciseToSlot } from '@/app/actions/methodology';
+import { PortalSearchField } from '@/components/portal/PortalSearchField';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { assignExerciseToDemoSlot } from '@/lib/demo-microcycles-store';
 import { isDemoMicrocycleId } from '@/lib/microcycle-sessions';
 import type { SlotType } from '@/lib/methodology';
@@ -134,15 +134,11 @@ export function ExerciseLibraryPanel({
           {activeSlotType ? ', filtrada para el slot activo' : ''}.
         </p>
         <div className="space-y-2">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Buscar ejercicio…"
-              className="border-primary/30 bg-background/80 pl-9"
-            />
-          </div>
+          <PortalSearchField
+            value={query}
+            onChange={setQuery}
+            placeholder="Buscar ejercicio…"
+          />
           <Button type="button" variant="outline" size="sm" className="w-full gap-2" asChild>
             <Link href={addExerciseHref}>
               <Plus className="size-4" />

@@ -4,10 +4,11 @@ import { useEffect, useMemo, useState, useTransition } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Mail, Network, Pencil, Phone, Plus, Search, Trash2, User } from 'lucide-react';
+import { Mail, Network, Pencil, Phone, Plus, Trash2, User } from 'lucide-react';
 import { deleteInstitutionalPerson } from '@/app/actions/club-people';
 import { InstitutionalPersonForm } from '@/components/portal/InstitutionalPersonForm';
 import { PortalConfirmDialog } from '@/components/portal/PortalConfirmDialog';
+import { PortalSearchField } from '@/components/portal/PortalSearchField';
 import { SynqSelect } from '@/components/portal/SynqSelect';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -362,15 +363,11 @@ export function EstructuraMasterDetail({
             </button>
           </div>
           <div className="space-y-2">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Buscar por nombre, cargo o contacto…"
-                className="border-primary/30 bg-background/80 pl-9"
-              />
-            </div>
+            <PortalSearchField
+              value={search}
+              onChange={setSearch}
+              placeholder="Buscar por nombre, cargo o contacto…"
+            />
             <div className="grid gap-2 sm:grid-cols-2">
               <SynqSelect
                 value={profileFilter}

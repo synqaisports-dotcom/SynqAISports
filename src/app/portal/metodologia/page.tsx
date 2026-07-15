@@ -66,21 +66,7 @@ export default async function MetodologiaHomePage() {
 
   return (
     <PageContainer>
-
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-base">Modelo de juego del club</CardTitle>
-          <CardDescription>
-            Texto metodológico genérico editable — principios ofensivos, defensivos y transiciones.
-            En la siguiente fase se podrá enriquecer con vídeos y documentos.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground leading-relaxed">
-          El club trabaja una propuesta de juego basada en la ocupación de espacios, presión tras
-          pérdida y salida desde portero. Cada categoría adapta el mismo ADN con progresiones
-          técnicas y tácticas acordes a su etapa formativa.
-        </CardContent>
-      </Card>
+      <h1 className="text-2xl font-semibold tracking-tight">Resumen</h1>
 
       <MethodologySubnav />
 

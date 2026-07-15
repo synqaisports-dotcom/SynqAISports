@@ -3,12 +3,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { GitBranch, Pencil, Search } from 'lucide-react';
+import { GitBranch, Pencil } from 'lucide-react';
 import { CategoryObjectivesForm } from '@/components/methodology/CategoryObjectivesForm';
-import { SynqSelect } from '@/components/portal/SynqSelect';
+import { PortalSearchField } from '@/components/portal/PortalSearchField';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import {
   Sheet,
   SheetContent,
@@ -40,6 +39,21 @@ type Props = {
 
 const actionButtonClass =
   'inline-flex size-9 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary';
+
+const STAGE_FILTER_OPTIONS: { value: StageFilter; label: string }[] = [
+  { value: 'all', label: 'Todas las etapas' },
+  { value: 'discovery', label: 'Descubrimiento' },
+  { value: 'transition', label: 'Transición' },
+  { value: 'specialization', label: 'Especialización' },
+];
+
+const filterButtonClass = (active: boolean) =>
+  cn(
+    'min-w-0 rounded-lg border px-1.5 py-2 text-center text-[11px] leading-snug transition-colors sm:px-2 sm:text-xs',
+    active
+      ? 'border-primary/50 bg-primary/10 font-medium text-primary'
+      : 'border-primary/25 text-muted-foreground hover:border-primary/40 hover:bg-primary/5 hover:text-foreground'
+  );
 
 function CategoryObjectivesTable({
   categorySlug,
@@ -297,26 +311,23 @@ export function ObjectivesMasterDetail({
             </CardDescription>
           </div>
           <div className="space-y-2">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Buscar categoría o etapa…"
-                className="border-primary/30 bg-background/80 pl-9"
-              />
-            </div>
-            <SynqSelect
-              value={stageFilter}
-              onChange={(value) => setStageFilter(value as StageFilter)}
-              options={[
-                { value: 'all', label: 'Todas las etapas' },
-                ...METHODOLOGY_STAGES.map((stage) => ({
-                  value: stage.id,
-                  label: `${stage.emoji} ${stage.title}`,
-                })),
-              ]}
+            <PortalSearchField
+              value={search}
+              onChange={setSearch}
+              placeholder="Buscar categoría o etapa…"
             />
+            <div className="grid grid-cols-4 gap-1.5">
+              {STAGE_FILTER_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setStageFilter(option.value)}
+                  className={filterButtonClass(stageFilter === option.value)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="flex flex-wrap gap-1.5">
             {METHODOLOGY_STAGES.map((stage) => (

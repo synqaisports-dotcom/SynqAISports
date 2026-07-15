@@ -1,5 +1,3 @@
-import Link from 'next/link';
-import { ArrowLeft, GitBranch } from 'lucide-react';
 import { CategoryCyclesHub } from '@/components/portal/CategoryCyclesHub';
 import { MethodologySubnav } from '@/components/methodology/MethodologySubnav';
 import { PageContainer } from '@/components/portal/PageContainer';
@@ -7,8 +5,6 @@ import { DEMO_CANTERA_TEAMS } from '@/lib/cantera-teams';
 import { isDemoActive } from '@/lib/demo';
 import { getStaffContext } from '@/lib/portal';
 import { createClient } from '@/lib/supabase/server';
-import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { redirect } from 'next/navigation';
 
 export default async function PortalMetodologiaCiclosPage() {
@@ -68,20 +64,7 @@ export default async function PortalMetodologiaCiclosPage() {
 
   return (
     <PageContainer>
-      <Card className="mb-4 border border-primary/25">
-        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <GitBranch className="size-4 text-primary" />
-            Ciclos y planograma
-          </CardTitle>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/portal/metodologia">
-              <ArrowLeft className="h-4 w-4" />
-              Volver
-            </Link>
-          </Button>
-        </CardHeader>
-      </Card>
+      <h1 className="text-2xl font-semibold tracking-tight">Ciclos</h1>
 
       <MethodologySubnav />
 

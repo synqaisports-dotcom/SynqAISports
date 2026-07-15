@@ -8,6 +8,8 @@ export type CoachChangeRequest = {
   sessionLabel?: string;
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
+  resolvedAt?: string;
+  resolutionNote?: string;
 };
 
 const STORAGE_KEY = 'synq-coach-change-requests';
@@ -32,11 +34,19 @@ export function saveCoachChangeRequest(request: CoachChangeRequest): void {
 
 export function updateCoachChangeRequestStatus(
   requestId: string,
-  status: 'approved' | 'rejected'
+  status: 'approved' | 'rejected',
+  resolutionNote?: string
 ): void {
   if (typeof window === 'undefined') return;
   const current = loadCoachChangeRequests().map((item) =>
-    item.id === requestId ? { ...item, status } : item
+    item.id === requestId
+      ? {
+          ...item,
+          status,
+          resolvedAt: new Date().toISOString(),
+          resolutionNote: resolutionNote?.trim() || item.resolutionNote,
+        }
+      : item
   );
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
 }
