@@ -6,6 +6,7 @@ import { createChangeRequest, type ActionState } from '@/app/actions/methodology
 import { Button } from '@/components/ui/button';
 import { CoachMacrocycleOverlay } from '@/components/portal/CoachMacrocycleOverlay';
 import { CoachMicrocycleOverlay } from '@/components/portal/CoachMicrocycleOverlay';
+import { CoachSessionSummaryPanel } from '@/components/portal/CoachSessionSummaryPanel';
 import {
   saveCoachChangeRequest,
   type CoachChangeRequest,
@@ -15,6 +16,9 @@ import {
   resolveCoachMicrocycleId,
   type CoachWeekContext,
 } from '@/lib/coach-periodization-context';
+import type { CoachTeamContext } from '@/lib/coach-team-context';
+import { computeCoachSessionStats } from '@/lib/coach-team-context';
+import { exerciseDurationsForSession } from '@/lib/coach-session-metrics';
 import type { CoachPortalTeam } from '@/lib/coach-portal-teams';
 import type { MicrocycleWeek } from '@/lib/periodization';
 import { getExcludedMccIds, getVariantState } from '@/lib/periodization-document';
@@ -29,6 +33,7 @@ type SessionItem = {
 type Props = {
   team: CoachPortalTeam;
   weekContext: CoachWeekContext;
+  teamContext: CoachTeamContext | null;
 };
 
 const SESSION_ROW_HEIGHT_PX = 44;
@@ -49,7 +54,7 @@ const sessionButtonClass = (active: boolean) =>
       : 'border-primary/15 bg-background/30 hover:border-primary/35 hover:bg-primary/5'
   );
 
-export function CoachWeekSessionsPanel({ team, weekContext }: Props) {
+export function CoachWeekSessionsPanel({ team, weekContext, teamContext }: Props) {
   const sessions = useMemo<SessionItem[]>(() => {
     const count = weekContext.variant.sessionsPerMicro;
     return Array.from({ length: count }, (_, index) => ({
@@ -77,6 +82,21 @@ export function CoachWeekSessionsPanel({ team, weekContext }: Props) {
     ? resolveCoachMicrocycleId(weekContext, team.id, viewMccId)
     : null;
   const emptySessionSlots = Math.max(0, MAX_SESSIONS_PER_MICRO_LAYOUT - sessions.length);
+
+  const sessionStats = useMemo(() => {
+    if (!selectedSession || !teamContext) return null;
+    const durations = exerciseDurationsForSession(currentMicrocycleId, selectedSession.index);
+    return computeCoachSessionStats(
+      teamContext.playerCount,
+      teamContext.trainingStart,
+      teamContext.trainingEnd,
+      durations
+    );
+  }, [
+    selectedSession,
+    teamContext,
+    currentMicrocycleId,
+  ]);
 
   useEffect(() => {
     setSelectedSessionId(sessions[0]?.id ?? '');
@@ -255,6 +275,10 @@ export function CoachWeekSessionsPanel({ team, weekContext }: Props) {
           )}
         </div>
       </div>
+
+      {teamContext && sessionStats ? (
+        <CoachSessionSummaryPanel teamContext={teamContext} stats={sessionStats} />
+      ) : null}
 
       <CoachMacrocycleOverlay
         open={macroOpen}

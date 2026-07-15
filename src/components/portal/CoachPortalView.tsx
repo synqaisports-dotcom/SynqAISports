@@ -6,11 +6,13 @@ import { CalendarDays, Users } from 'lucide-react';
 import { CoachWeekSessionsPanel } from '@/components/portal/CoachWeekSessionsPanel';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { groupTeamsByCategory, type CoachPortalViewer } from '@/lib/coach-portal-teams';
+import type { CoachTeamContext } from '@/lib/coach-team-context';
 import { resolveCoachWeekContext } from '@/lib/coach-periodization-context';
 import { cn } from '@/lib/utils';
 
 type Props = {
   viewer: CoachPortalViewer;
+  teamContexts: Record<string, CoachTeamContext>;
 };
 
 const teamCardClass = (active: boolean) =>
@@ -21,11 +23,12 @@ const teamCardClass = (active: boolean) =>
       : 'border-primary/20 bg-background/40 hover:border-primary/35 hover:bg-primary/5'
   );
 
-export function CoachPortalView({ viewer }: Props) {
+export function CoachPortalView({ viewer, teamContexts }: Props) {
   const teams = viewer.teams;
   const [teamId, setTeamId] = useState(teams[0]?.id ?? '');
 
   const team = teams.find((item) => item.id === teamId) ?? teams[0];
+  const teamContext = team ? teamContexts[team.id] ?? null : null;
   const teamGroups = useMemo(() => groupTeamsByCategory(teams), [teams]);
 
   const weekContext = useMemo(() => {
@@ -105,7 +108,11 @@ export function CoachPortalView({ viewer }: Props) {
                   </p>
                 ) : null}
 
-                <CoachWeekSessionsPanel team={team} weekContext={weekContext} />
+                <CoachWeekSessionsPanel
+                  team={team}
+                  weekContext={weekContext}
+                  teamContext={teamContext}
+                />
               </>
             ) : (
               <p className="rounded-lg border border-dashed border-primary/20 p-6 text-center text-sm text-muted-foreground">
