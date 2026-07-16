@@ -65,12 +65,36 @@ type Props = {
   teams: TeamOption[];
   templateMicrocycles?: TemplateMicrocycleOption[];
   initialCategory?: CanteraCategorySlug;
+  initialTeamId?: string | null;
+  initialMacroIndex?: number;
 };
+
+function resolveDeepLinkDocument(
+  document: CategoryPeriodizationDocument,
+  teamId?: string | null
+): { document: CategoryPeriodizationDocument; variantId: string } {
+  if (!teamId) {
+    return { document, variantId: document.activeVariantId };
+  }
+  const variant = document.variants.find((item) => item.teamIds.includes(teamId));
+  if (!variant) {
+    return { document, variantId: document.activeVariantId };
+  }
+  if (variant.id === document.activeVariantId) {
+    return { document, variantId: variant.id };
+  }
+  return {
+    document: { ...document, activeVariantId: variant.id },
+    variantId: variant.id,
+  };
+}
 
 export function CategoryCyclesHub({
   teams,
   templateMicrocycles = [],
   initialCategory = 'alevin',
+  initialTeamId = null,
+  initialMacroIndex = 1,
 }: Props) {
   const [categorySlug, setCategorySlug] = useState<CanteraCategorySlug>(initialCategory);
   const category = CANTERA_CATEGORIES.find((item) => item.slug === categorySlug)!;
@@ -114,12 +138,15 @@ export function CategoryCyclesHub({
       const cat = CANTERA_CATEGORIES.find((item) => item.slug === slug)!;
       const fromStorage = loadDocumentFromStorage(slug);
       const fromServer = await loadCategoryPeriodization(slug);
-      const next = fromStorage ?? fromServer ?? defaultCategoryDocument(slug, cat.name);
+      const loadedDocument = fromStorage ?? fromServer ?? defaultCategoryDocument(slug, cat.name);
+      const { document: next, variantId } = resolveDeepLinkDocument(loadedDocument, initialTeamId);
       setDocument(next);
-      const rawPlan = buildPlanForVariant(next, next.activeVariantId);
-      const excluded = getExcludedMccIds(next, next.activeVariantId);
+      const rawPlan = buildPlanForVariant(next, variantId);
+      const excluded = getExcludedMccIds(next, variantId);
       setPlan(rawPlan ? applyPlanExclusions(rawPlan, excluded) : null);
-      setActiveMacroIndex(0);
+      const macroIndex = Math.max(0, (initialMacroIndex ?? 1) - 1);
+      const macroCount = rawPlan?.macrocycles.length ?? 1;
+      setActiveMacroIndex(Math.min(macroIndex, Math.max(macroCount - 1, 0)));
       setSelectedMcc(null);
       setPanelContext(null);
       setError(null);
@@ -128,7 +155,7 @@ export function CategoryCyclesHub({
         syncDemoMicrocyclesFromDocument(next);
       }
     },
-    []
+    [initialTeamId, initialMacroIndex]
   );
 
   useEffect(() => {

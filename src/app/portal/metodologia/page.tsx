@@ -1,68 +1,64 @@
-import Link from 'next/link';
 import { MethodologySubnav } from '@/components/methodology/MethodologySubnav';
+import { MethodologySummaryDashboard } from '@/components/methodology/MethodologySummaryDashboard';
 import { PageContainer } from '@/components/portal/PageContainer';
-import { createClient } from '@/lib/supabase/server';
+import { DEMO_CANTERA_TEAMS } from '@/lib/cantera-teams';
+import { isDemoActive } from '@/lib/demo';
 import { getStaffContext } from '@/lib/portal';
+import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import { BookOpen, ClipboardList, GitBranch, Target } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 
 export default async function MetodologiaHomePage() {
   const supabase = await createClient();
   const ctx = await getStaffContext(supabase);
   if (!ctx) redirect('/login');
 
-  const [exercises, microcycles, goals, pendingRequests] = await Promise.all([
+  const demoActive = await isDemoActive();
+
+  const [teamsResult, playersResult, coachesResult] = await Promise.all([
     supabase
-      .from('synq_exercises')
-      .select('*', { count: 'exact', head: true })
-      .eq('club_id', ctx.club.id),
+      .from('synq_teams')
+      .select('id, name, category_slug')
+      .eq('club_id', ctx.club.id)
+      .eq('active', true)
+      .order('name'),
     supabase
-      .from('synq_microcycles')
-      .select('*', { count: 'exact', head: true })
-      .eq('club_id', ctx.club.id),
-    supabase
-      .from('synq_category_goals')
-      .select('*', { count: 'exact', head: true })
-      .eq('club_id', ctx.club.id),
-    supabase
-      .from('synq_change_requests')
+      .from('synq_players')
       .select('*', { count: 'exact', head: true })
       .eq('club_id', ctx.club.id)
-      .eq('status', 'pending'),
+      .eq('active', true),
+    supabase
+      .from('synq_staff')
+      .select('*', { count: 'exact', head: true })
+      .eq('club_id', ctx.club.id)
+      .eq('role', 'coach'),
   ]);
 
-  const cards = [
-    {
-      href: '/portal/metodologia/ciclos',
-      label: 'Ciclos y microciclos',
-      count: microcycles.count ?? 0,
-      icon: GitBranch,
-      hint: 'Periodización, variantes, equipos y plan semanal',
-    },
-    {
-      href: '/portal/metodologia/ejercicios',
-      label: 'Biblioteca de ejercicios',
-      count: exercises.count ?? 0,
-      icon: BookOpen,
-      hint: 'Fichas UEFA y pizarra — catálogo global del club',
-    },
-    {
-      href: '/portal/metodologia/objetivos',
-      label: 'Objetivos por categoría',
-      count: goals.count ?? 0,
-      icon: Target,
-      hint: 'Temporada y categoría',
-    },
-    {
-      href: '/portal/metodologia/solicitudes',
-      label: 'Solicitudes de cambio',
-      count: pendingRequests.count ?? 0,
-      icon: ClipboardList,
-      hint: 'Aprobación director metodología',
-    },
-  ];
+  let teams = (teamsResult.data ?? []).map((team) => ({
+    id: team.id,
+    name: team.name,
+    category_slug: team.category_slug,
+  }));
+
+  if (demoActive) {
+    const existingIds = new Set(teams.map((team) => team.id));
+    for (const demo of DEMO_CANTERA_TEAMS) {
+      if (!existingIds.has(demo.id)) {
+        teams.push({
+          id: demo.id,
+          name: demo.name,
+          category_slug: demo.category_slug,
+        });
+      }
+    }
+  }
+
+  const totalPlayers = playersResult.count ?? 0;
+  const totalCoaches =
+    coachesResult.count && coachesResult.count > 0
+      ? coachesResult.count
+      : demoActive
+        ? 4
+        : 0;
 
   return (
     <PageContainer>
@@ -70,23 +66,11 @@ export default async function MetodologiaHomePage() {
 
       <MethodologySubnav />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {cards.map(({ href, label, count, icon: Icon, hint }) => (
-          <Card key={href} className="transition-colors hover:border-primary/40">
-            <CardHeader className="flex flex-row items-start justify-between pb-2">
-              <Icon className="h-5 w-5 text-primary" />
-              <span className="font-mono text-xl font-bold">{count}</span>
-            </CardHeader>
-            <CardContent>
-              <CardTitle className="mb-1 text-base">{label}</CardTitle>
-              <CardDescription className="mb-3">{hint}</CardDescription>
-              <Button variant="outline" size="sm" asChild>
-                <Link href={href}>Abrir</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <MethodologySummaryDashboard
+        teams={teams}
+        totalPlayers={demoActive && totalPlayers === 0 ? 80 : totalPlayers}
+        totalCoaches={totalCoaches}
+      />
     </PageContainer>
   );
 }

@@ -1,13 +1,23 @@
 import { CategoryCyclesHub } from '@/components/portal/CategoryCyclesHub';
 import { MethodologySubnav } from '@/components/methodology/MethodologySubnav';
 import { PageContainer } from '@/components/portal/PageContainer';
+import type { CanteraCategorySlug } from '@/lib/cantera-categories';
 import { DEMO_CANTERA_TEAMS } from '@/lib/cantera-teams';
 import { isDemoActive } from '@/lib/demo';
 import { getStaffContext } from '@/lib/portal';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 
-export default async function PortalMetodologiaCiclosPage() {
+type Props = {
+  searchParams: Promise<{
+    category?: string;
+    team?: string;
+    macro?: string;
+  }>;
+};
+
+export default async function PortalMetodologiaCiclosPage({ searchParams }: Props) {
+  const params = await searchParams;
   const supabase = await createClient();
   const ctx = await getStaffContext(supabase);
   if (!ctx) redirect('/login');
@@ -62,13 +72,28 @@ export default async function PortalMetodologiaCiclosPage() {
       }));
   }
 
+  const linkedTeam = params.team
+    ? teamOptions.find((team) => team.id === params.team)
+    : null;
+  const initialCategory =
+    (params.category as CanteraCategorySlug | undefined) ??
+    linkedTeam?.category_slug ??
+    'alevin';
+  const initialMacroIndex = params.macro ? Number(params.macro) : 1;
+
   return (
     <PageContainer>
       <h1 className="text-2xl font-semibold tracking-tight">Ciclos</h1>
 
       <MethodologySubnav />
 
-      <CategoryCyclesHub teams={teamOptions} templateMicrocycles={templateMicrocycles} />
+      <CategoryCyclesHub
+        teams={teamOptions}
+        templateMicrocycles={templateMicrocycles}
+        initialCategory={initialCategory}
+        initialTeamId={params.team ?? null}
+        initialMacroIndex={Number.isFinite(initialMacroIndex) ? initialMacroIndex : 1}
+      />
     </PageContainer>
   );
 }
