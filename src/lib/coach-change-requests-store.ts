@@ -13,6 +13,12 @@ export type CoachChangeRequest = {
 };
 
 const STORAGE_KEY = 'synq-coach-change-requests';
+export const COACH_CHANGE_REQUESTS_EVENT = 'synq-coach-change-requests-updated';
+
+function notifyCoachChangeRequestsUpdated(): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new Event(COACH_CHANGE_REQUESTS_EVENT));
+}
 
 export function loadCoachChangeRequests(): CoachChangeRequest[] {
   if (typeof window === 'undefined') return [];
@@ -30,6 +36,7 @@ export function saveCoachChangeRequest(request: CoachChangeRequest): void {
   if (typeof window === 'undefined') return;
   const current = loadCoachChangeRequests();
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify([request, ...current]));
+  notifyCoachChangeRequestsUpdated();
 }
 
 export function updateCoachChangeRequestStatus(
@@ -49,4 +56,5 @@ export function updateCoachChangeRequestStatus(
       : item
   );
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
+  notifyCoachChangeRequestsUpdated();
 }

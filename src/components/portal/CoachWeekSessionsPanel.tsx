@@ -6,6 +6,7 @@ import { createChangeRequest, type ActionState } from '@/app/actions/methodology
 import { Button } from '@/components/ui/button';
 import { CoachMacrocycleOverlay } from '@/components/portal/CoachMacrocycleOverlay';
 import { CoachMicrocycleOverlay } from '@/components/portal/CoachMicrocycleOverlay';
+import { CoachSeasonProgressPanel } from '@/components/portal/CoachSeasonProgressPanel';
 import { CoachSessionSummaryPanel } from '@/components/portal/CoachSessionSummaryPanel';
 import {
   saveCoachChangeRequest,
@@ -17,6 +18,7 @@ import {
   type CoachWeekContext,
 } from '@/lib/coach-periodization-context';
 import type { CoachTeamContext } from '@/lib/coach-team-context';
+import { computeCoachSeasonProgress } from '@/lib/coach-season-progress';
 import { computeCoachSessionStats } from '@/lib/coach-team-context';
 import { exerciseDurationsForSession } from '@/lib/coach-session-metrics';
 import type { CoachPortalTeam } from '@/lib/coach-portal-teams';
@@ -97,6 +99,15 @@ export function CoachWeekSessionsPanel({ team, weekContext, teamContext }: Props
     teamContext,
     currentMicrocycleId,
   ]);
+
+  const seasonProgress = useMemo(() => {
+    if (!selectedSession) return null;
+    return computeCoachSeasonProgress(
+      weekContext.plan,
+      currentMccId,
+      selectedSession.index
+    );
+  }, [weekContext.plan, currentMccId, selectedSession]);
 
   useEffect(() => {
     setSelectedSessionId(sessions[0]?.id ?? '');
@@ -278,6 +289,10 @@ export function CoachWeekSessionsPanel({ team, weekContext, teamContext }: Props
 
       {teamContext && sessionStats ? (
         <CoachSessionSummaryPanel teamContext={teamContext} stats={sessionStats} />
+      ) : null}
+
+      {seasonProgress ? (
+        <CoachSeasonProgressPanel teamId={team.id} progress={seasonProgress} />
       ) : null}
 
       <CoachMacrocycleOverlay
