@@ -1,62 +1,48 @@
-# SynqAI en Vercel — entorno de PRUEBAS (portal sin login)
+# SynqAI en Vercel — variables de entorno
 
-## 1. Rama con el portal
-
-El portal está en **`cursor/synq-web-club-f457`** (no solo en `main`).
-
-En Vercel → **Settings → Git → Production Branch** elige una opción:
-
-- **Opción A (rápida):** Production Branch = `cursor/synq-web-club-f457`
-- **Opción B:** Merge de esa rama a `main` y deja Production Branch = `main`
-
-Luego **Deployments → Redeploy**.
+Guía completa paso a paso: **`docs/SUPABASE_VERCEL_DESDE_CERO.md`**
 
 ---
 
-## 2. Variables en Vercel (copiar tal cual)
+## Variables (Production + Preview)
 
-**Settings → Environment Variables** → añade estas **6** (marca Production + Preview):
+Sustituye los valores por los de **tu proyecto Supabase nuevo**:
 
 | Variable | Valor |
 |----------|--------|
-| `NEXT_PUBLIC_SUPABASE_URL` | `https://atwdkdqhezoddbsvffnm.supabase.co` |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | tu anon key de Supabase |
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://<TU-PROYECTO>.supabase.co` |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | clave **anon / publishable** (Settings → API) |
 | `SYNQ_VERCEL_DEMO` | `true` |
-| `SUPABASE_SERVICE_ROLE_KEY` | service_role de Supabase (Settings → API) |
-| `SYNQ_DEMO_CLUB_ID` | *(opcional)* UUID de tu club en `synq_clubs` |
+| `SUPABASE_SERVICE_ROLE_KEY` | clave **service_role** (solo servidor) |
 
-Sin `SUPABASE_SERVICE_ROLE_KEY` ves la UI pero **no guarda** ejercicios ni cambios.
+Opcional:
 
----
+| Variable | Valor |
+|----------|--------|
+| `SYNQ_DEMO_CLUB_ID` | `00000000-0000-4000-8000-000000000001` (tras ejecutar el seed) |
 
-## 3. Cómo entrar (sin login)
-
-1. Abre **https://www.synqai.net**
-2. Botón verde **«Entrar al portal»** (va a `/demo` y activa la sesión)
-3. O directo: **https://www.synqai.net/demo**
-
-Si no entra, comprueba que `SYNQ_VERCEL_DEMO=true` **o** que `/demo` responde (pone la cookie).
+Sin `SUPABASE_SERVICE_ROLE_KEY` ves la UI pero **no guarda** cambios en base de datos.
 
 ---
 
-## 4. Qué puedes probar
+## Antes de desplegar
 
-- `/portal` — dashboard
-- `/portal/cantera` — equipos y jugadores
-- `/portal/metodologia` — ejercicios, microciclos, PDF
-- `/portal/club` — datos del club
-- `/portal/config` — código QR
-
-Campana cyan en la barra superior (icono de avisos) = modo pruebas activo.
+1. Crear proyecto Supabase vacío
+2. `npm run supabase:bundle` → pegar `supabase/.bundle/full_schema.sql` en SQL Editor
+3. Ejecutar `supabase/seed/001_demo_club.sql` (modo demo)
+4. Añadir variables arriba en Vercel → **Redeploy**
 
 ---
 
-## 5. Cuando quieras login real
+## Entrar al portal (sin login)
 
-Quita o pon `SYNQ_VERCEL_DEMO=false` y configura usuarios en Supabase Auth + `synq_staff`.
+- `https://tu-dominio/demo`
+- o botón «Entrar al portal» en la home
 
 ---
 
-## TrendPulse
+## Producción real (más adelante)
 
-Rama `trendpulse` → otro proyecto Vercel. No mezclar variables.
+- `SYNQ_VERCEL_DEMO=false`
+- Usuarios en Supabase Auth + filas en `synq_staff`
+- Proyecto Supabase de **producción** separado del de staging

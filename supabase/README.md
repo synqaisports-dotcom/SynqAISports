@@ -1,68 +1,78 @@
-# SynqAI — Supabase (proyecto B)
+# SynqAI — Supabase
 
-SynqAI usa un **proyecto Supabase nuevo**, distinto del de TrendPulse.
+SynqAI usa un **proyecto Supabase independiente** de TrendPulse (tablas `synq_*`).
 
-> **Importante (junio 2026):** Estamos en fase de **cáscaras** — las migraciones de este directorio están **preparadas en el repo** pero **no deben ejecutarse** hasta cerrar la UI y conectar de una vez en **staging** y luego **producción**. Ver `docs/ESTRATEGIA_CASCARAS_Y_BASE_DE_DATOS.md`.
+**Guía completa desde cero:** `docs/SUPABASE_VERCEL_DESDE_CERO.md`
 
-## Entornos previstos
+## Entornos recomendados
 
 | Proyecto Supabase | Uso |
 |-------------------|-----|
-| **Staging** (pruebas) | Desarrollo, QA, preview Vercel |
-| **Producción** | Clubes reales en `www.synqai.net` |
+| `synqai-staging` | Desarrollo, QA, Preview Vercel |
+| `synqai-prod` | Producción en `www.synqai.net` |
 
-Cada uno con sus propias variables `NEXT_PUBLIC_SUPABASE_*` en Vercel.
+Mismas migraciones en ambos; solo cambian las variables por entorno.
 
-## Crear proyecto (cuando toque la fase datos)
+## Setup rápido
 
-1. [supabase.com/dashboard](https://supabase.com/dashboard) → **New project** → nombre ej. `synqai-sports`
-2. SQL Editor → pegar y ejecutar `supabase/migrations/20260701000000_synqai_init.sql`
-3. **Project Settings → API** → copiar URL y Publishable key
+```bash
+# 1. Crear proyecto en supabase.com/dashboard
+# 2. Generar SQL único
+npm run supabase:bundle
+# 3. Pegar supabase/.bundle/full_schema.sql en SQL Editor → Run
+# 4. (Opcional demo) Ejecutar supabase/seed/001_demo_club.sql
+# 5. Copiar URL + keys a Vercel / .env.local
+```
 
-## Variables en Vercel (proyecto SynqAI / `www.synqai.net`)
+## Variables
 
-| Variable | Valor |
-|----------|--------|
-| `NEXT_PUBLIC_SUPABASE_URL` | URL del proyecto **SynqAI** |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key SynqAI |
-| `SUPABASE_SECRET_KEY` | Secret key SynqAI (solo cuando haya escritura server-side) |
+| Variable | Obligatoria | Notas |
+|----------|-------------|-------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Sí | Project URL |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Sí | Alias: `NEXT_PUBLIC_SUPABASE_ANON_KEY` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Demo con persistencia | Alias: `SUPABASE_SECRET_KEY`. Solo servidor |
+| `SYNQ_VERCEL_DEMO` | Demo en Vercel | `true` = portal sin login |
+| `NEXT_PUBLIC_SYNQ_DEMO_MODE` | Demo local | Mismo efecto que arriba |
+| `SYNQ_DEMO_CLUB_ID` | No | UUID club en `synq_clubs` |
 
-**No reutilices** las credenciales del proyecto TrendPulse.
-
-## Migraciones
-
-Ejecutar **todas en orden** en el SQL Editor del entorno **staging** primero; validar; luego repetir en **producción**.
-
-1. `supabase/migrations/20260701000000_synqai_init.sql`
-2. `supabase/migrations/20260702000000_synqai_portal.sql`
-3. `supabase/migrations/20260703000000_club_media_storage.sql`
-4. `supabase/migrations/20260703000000_synqai_cantera.sql`
-5. `supabase/migrations/20260704000000_club_social_urls.sql`
-6. `supabase/migrations/20260704000000_synqai_methodology.sql`
-7. `supabase/migrations/20260704010000_club_instagram_url.sql`
-8. `supabase/migrations/20260705000000_club_organigrama_json.sql`
-9. `supabase/migrations/20260705000000_synqai_exercise_sheet.sql`
-10. `supabase/migrations/20260706000000_club_people.sql`
-11. `supabase/migrations/20260706010000_club_people_profile.sql`
-12. `supabase/migrations/20260706020000_person_assignments.sql`
-13. `supabase/migrations/20260706030000_team_category_slug.sql`
-14. `supabase/migrations/20260706040000_team_letter_player_names.sql`
-15. `supabase/migrations/20260706050000_facilities_team_venue.sql`
-16. `supabase/migrations/20260706060000_facilities_multisport.sql`
-17. `supabase/migrations/20260706070000_facilities_days_venue.sql`
-18. `supabase/migrations/20260706080000_facilities_division_schedule.sql`
-
-Ver también `.env.example` y **`docs/SYNQAI_CHECKLIST_OPERATIVA.md`**.
-
-### Migraciones (referencia histórica — lista corta antigua)
-
-Si ya ejecutaste migraciones anteriores en un entorno de prueba, solo añade las que falten. Lista mínima original:
+## Migraciones (29 archivos — orden alfabético)
 
 1. `20260701000000_synqai_init.sql`
 2. `20260702000000_synqai_portal.sql`
-3. `20260703000000_synqai_cantera.sql`
-4. `20260704000000_synqai_methodology.sql`
+3. `20260703000000_club_media_storage.sql`
+4. `20260703000000_synqai_cantera.sql`
+5. `20260704000000_club_social_urls.sql`
+6. `20260704000000_synqai_methodology.sql`
+7. `20260704010000_club_instagram_url.sql`
+8. `20260705000000_club_organigrama_json.sql`
+9. `20260705000000_synqai_exercise_sheet.sql`
+10. `20260706000000_club_people.sql`
+11. `20260706010000_club_people_profile.sql`
+12. `20260706020000_person_assignments.sql`
+13. `20260706030000_team_category_slug.sql`
+14. `20260706040000_team_letter_player_names.sql`
+15. `20260706050000_facilities_team_venue.sql`
+16. `20260706060000_facilities_multisport.sql`
+17. `20260706070000_facilities_days_venue.sql`
+18. `20260706080000_facilities_division_schedule.sql`
+19. `20260707000000_player_guardians.sql`
+20. `20260707010000_player_medical.sql`
+21. `20260707020000_player_history.sql`
+22. `20260707030000_team_history.sql`
+23. `20260707040000_club_material.sql`
+24. `20260709000000_methodology_objectives.sql`
+25. `20260710000000_periodization_plans.sql`
+26. `20260711000000_periodization_variant_links.sql`
+27. `20260712000000_team_microcycle_forks.sql`
+28. `20260713000000_change_requests_inbox.sql`
+29. `20260713000000_microcycle_session_slots.sql`
 
-## Tablas
+> Archivos con el mismo timestamp: ejecutar en orden alfabético del nombre completo.
 
-Prefijo `synq_*` — sin mezclar con tablas `trend_*` de TrendPulse.
+## Storage
+
+- Bucket `club-media` (público) — migración `20260703000000_club_media_storage.sql`
+
+## Primer usuario (login real)
+
+Ver `docs/SUPABASE_VERCEL_DESDE_CERO.md` §6.
