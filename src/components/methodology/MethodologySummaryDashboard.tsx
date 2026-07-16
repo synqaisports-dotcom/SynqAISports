@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { AlertCircle, CheckCircle2, ExternalLink, Layers, Loader2, Users } from 'lucide-react';
+import { AlertCircle, CheckCircle2, ExternalLink, Loader2, Users } from 'lucide-react';
 import { loadCategoryPeriodization } from '@/app/actions/periodization';
 import { MethodologyReadOnlyBanner } from '@/components/methodology/MethodologyReadOnlyBanner';
 import {
@@ -91,6 +91,7 @@ export function MethodologySummaryDashboard({ teams, totalPlayers, totalCoaches,
   const [hydrating, setHydrating] = useState(true);
   const [seasonFilter, setSeasonFilter] = useState<string | undefined>(undefined);
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
+  const [activeCategorySlug, setActiveCategorySlug] = useState<CanteraCategorySlug | null>(null);
 
   const categorySlugs = useMemo(() => {
     const fromTeams = new Set(
@@ -147,6 +148,36 @@ export function MethodologySummaryDashboard({ teams, totalPlayers, totalCoaches,
 
   const groupedTeams = useMemo(() => groupTeamsByCategory(stats.teams), [stats.teams]);
 
+  useEffect(() => {
+    if (groupedTeams.length === 0) {
+      setActiveCategorySlug(null);
+      return;
+    }
+    const stillValid = groupedTeams.some((group) => group.category.slug === activeCategorySlug);
+    if (!activeCategorySlug || !stillValid) {
+      setActiveCategorySlug(groupedTeams[0]!.category.slug);
+    }
+  }, [groupedTeams, activeCategorySlug]);
+
+  const activeCategoryGroup = useMemo(
+    () => groupedTeams.find((group) => group.category.slug === activeCategorySlug) ?? null,
+    [groupedTeams, activeCategorySlug]
+  );
+
+  const handleCategoryChange = (slug: CanteraCategorySlug) => {
+    setActiveCategorySlug(slug);
+    const group = groupedTeams.find((item) => item.category.slug === slug);
+    if (!group) return;
+    if (selectedTeamId && !group.teams.some((team) => team.id === selectedTeamId)) {
+      setSelectedTeamId(null);
+    }
+  };
+
+  const categoryPendingCount = (slug: CanteraCategorySlug) =>
+    groupedTeams
+      .find((group) => group.category.slug === slug)
+      ?.teams.filter((team) => team.totalMcc > 0 && !team.isComplete).length ?? 0;
+
   const selectedTeam =
     stats.teams.find((team) => team.id === selectedTeamId) ?? null;
 
@@ -193,14 +224,54 @@ export function MethodologySummaryDashboard({ teams, totalPlayers, totalCoaches,
 
       <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
         <Card className="flex min-h-[28rem] flex-col border border-primary/25 lg:sticky lg:top-[4.5rem] lg:max-h-[calc(100vh-5.5rem)]">
-          <CardHeader className="space-y-1 pb-3">
+          <CardHeader className="space-y-3 pb-3">
             <div className="flex items-center gap-2">
               <Users className="size-4 text-primary" />
               <CardTitle className="text-base">Equipos por categoría</CardTitle>
             </div>
             <CardDescription>
-              Selecciona un equipo para revisar su planificación y pendientes.
+              Elige categoría y luego un equipo para revisar su planificación.
             </CardDescription>
+
+            {groupedTeams.length > 0 ? (
+              <div className="overflow-x-auto pb-1">
+                <div className="flex min-w-max gap-1 rounded-xl border border-primary/20 bg-muted/5 p-1">
+                  {groupedTeams.map((group) => {
+                    const pending = categoryPendingCount(group.category.slug);
+                    const active = group.category.slug === activeCategorySlug;
+                    return (
+                      <button
+                        key={group.category.slug}
+                        type="button"
+                        onClick={() => handleCategoryChange(group.category.slug)}
+                        className={cn(
+                          'rounded-lg px-3 py-2 text-left transition-colors',
+                          active
+                            ? 'bg-primary/15 text-primary shadow-[inset_0_0_0_1px_hsl(183_100%_50%_/_0.35)]'
+                            : 'text-muted-foreground hover:bg-primary/5 hover:text-foreground'
+                        )}
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <span className="block text-sm font-semibold">{group.category.name}</span>
+                          {pending > 0 ? (
+                            <Badge
+                              variant="outline"
+                              className="h-4 border-amber-400/35 bg-amber-500/10 px-1 text-[9px] text-amber-200"
+                            >
+                              {pending}
+                            </Badge>
+                          ) : null}
+                        </span>
+                        <span className="block text-[10px] text-muted-foreground">
+                          {group.teams.length} equipo{group.teams.length === 1 ? '' : 's'} ·{' '}
+                          {group.category.ages}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
           </CardHeader>
           <CardContent className="min-h-0 flex-1 overflow-y-auto pt-0">
             {hydrating && groupedTeams.length === 0 ? (
@@ -212,33 +283,22 @@ export function MethodologySummaryDashboard({ teams, totalPlayers, totalCoaches,
               <p className="rounded-lg border border-dashed border-primary/20 px-4 py-8 text-center text-sm text-muted-foreground">
                 No hay equipos con categoría asignada.
               </p>
+            ) : !activeCategoryGroup ? (
+              <p className="rounded-lg border border-dashed border-primary/20 px-4 py-8 text-center text-sm text-muted-foreground">
+                Selecciona una categoría.
+              </p>
             ) : (
-              <div className="space-y-4">
-                {groupedTeams.map((group) => (
-                  <section key={group.category.slug}>
-                    <div className="mb-2 flex flex-wrap items-center gap-2 px-1">
-                      <Layers className="size-3.5 text-primary/80" />
-                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                        {group.category.name}
-                      </p>
-                      <Badge variant="outline" className={cn('text-[10px]', group.category.badgeClass)}>
-                        {group.category.ages}
-                      </Badge>
-                    </div>
-                    <ul className="space-y-1.5">
-                      {group.teams.map((team) => (
-                        <li key={team.id}>
-                          <TeamListItem
-                            team={team}
-                            active={selectedTeam?.id === team.id}
-                            onSelect={() => setSelectedTeamId(team.id)}
-                          />
-                        </li>
-                      ))}
-                    </ul>
-                  </section>
+              <ul className="space-y-1.5">
+                {activeCategoryGroup.teams.map((team) => (
+                  <li key={team.id}>
+                    <TeamListItem
+                      team={team}
+                      active={selectedTeam?.id === team.id}
+                      onSelect={() => setSelectedTeamId(team.id)}
+                    />
+                  </li>
                 ))}
-              </div>
+              </ul>
             )}
           </CardContent>
         </Card>
