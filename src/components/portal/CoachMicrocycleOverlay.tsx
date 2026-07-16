@@ -1,14 +1,8 @@
 'use client';
 
-import { findMccInPlan, getMccDisplayLabel, type MicrocycleWeek } from '@/lib/periodization';
+import { findMccInPlan, getMccDisplayLabel } from '@/lib/periodization';
 import { CoachMicrocycleReadonlyView } from '@/components/portal/CoachMicrocycleReadonlyView';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import type { CoachWeekContext } from '@/lib/coach-periodization-context';
 import { getVariantState } from '@/lib/periodization-document';
 
@@ -41,12 +35,7 @@ export function CoachMicrocycleOverlay({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className={COACH_SHEET_CLASS}>
-        <SheetHeader className="portal-section-surface rounded-xl p-4 pr-12 text-left">
-          <SheetTitle className="text-primary">Microciclo</SheetTitle>
-          <SheetDescription>Consulta el plan de la semana sin modificarlo.</SheetDescription>
-        </SheetHeader>
-
-        <div className="mt-4">
+        <div className="pr-10 pt-1">
           {microcycleId && mccContext ? (
             <CoachMicrocycleReadonlyView
               microcycleId={microcycleId}
