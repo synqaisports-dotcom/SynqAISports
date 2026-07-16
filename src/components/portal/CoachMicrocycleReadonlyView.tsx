@@ -25,11 +25,14 @@ type Props = {
   initialSessionIndex?: number;
 };
 
+const sectionTitleClass =
+  'text-[10px] font-semibold uppercase tracking-wider text-primary';
+
 const sessionButtonClass = (active: boolean) =>
   cn(
     'rounded-lg border px-3 py-2 text-sm font-medium transition-colors',
     active
-      ? 'border-primary/55 bg-primary/10'
+      ? 'border-primary/55 bg-primary/10 shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.35)]'
       : 'border-primary/15 bg-background/30 hover:border-primary/35 hover:bg-primary/5'
   );
 
@@ -75,7 +78,7 @@ export function CoachMicrocycleReadonlyView({
 
   if (!micro) {
     return (
-      <p className="rounded-lg border border-dashed border-primary/20 p-6 text-center text-sm text-muted-foreground">
+      <p className="portal-section-surface rounded-xl border border-dashed border-primary/25 p-6 text-center text-sm text-muted-foreground">
         Este microciclo aún no tiene contenido planificado.
       </p>
     );
@@ -94,76 +97,83 @@ export function CoachMicrocycleReadonlyView({
 
   return (
     <div className="space-y-4">
-      <div>
-        <p className="text-lg font-semibold text-foreground">
+      <div className="portal-section-surface rounded-xl p-4">
+        <p className={sectionTitleClass}>Semana planificada</p>
+        <p className="mt-2 text-lg font-semibold text-foreground">
           {mccLabel} · {micro.title}
         </p>
         <p className="mt-1 text-sm text-muted-foreground">
           {weekStart} → {weekEnd}
         </p>
-        <p className="mt-1 text-xs text-primary">Vista de entrenador · solo lectura</p>
+        <p className="mt-2 text-xs text-primary/90">Vista de entrenador · solo lectura</p>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {Array.from({ length: sessionsCount }, (_, index) => index + 1).map((index) => (
-          <button
-            key={index}
-            type="button"
-            onClick={() => {
-              setSessionIndex(index);
-              setPreviewOpen(false);
-              setPreviewExercise(null);
-            }}
-            className={sessionButtonClass(sessionIndex === index)}
-          >
-            Sesión {index}
-          </button>
-        ))}
+      <div className="portal-section-surface rounded-xl p-4">
+        <p className={sectionTitleClass}>Sesiones del microciclo</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {Array.from({ length: sessionsCount }, (_, index) => index + 1).map((index) => (
+            <button
+              key={index}
+              type="button"
+              onClick={() => {
+                setSessionIndex(index);
+                setPreviewOpen(false);
+                setPreviewExercise(null);
+              }}
+              className={sessionButtonClass(sessionIndex === index)}
+            >
+              Sesión {index}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <ul className="space-y-2">
-        {slots.length === 0 ? (
-          <li className="rounded-lg border border-dashed border-primary/20 px-3 py-4 text-sm text-muted-foreground">
-            Sin tareas planificadas en esta sesión.
-          </li>
-        ) : (
-          slots.map((slot) => {
-            const assigned = Boolean(slot.exercise_id || slot.title?.trim());
-            const preview = resolveSlotExercisePreview(slot);
-            return (
-              <li
-                key={slot.id}
-                className="flex items-center gap-3 rounded-lg border border-primary/15 bg-background/20 px-3 py-2.5"
-              >
-                <SlotIcon slotType={slot.slot_type as SlotType} assigned={assigned} />
-                <div className="min-w-0 flex-1">
-                  <p className="flex items-center gap-2 text-sm font-medium text-foreground">
-                    {assigned ? (
-                      <CheckCircle2 className="size-3.5 shrink-0 text-emerald-400" />
-                    ) : (
-                      <Circle className="size-3.5 shrink-0 text-muted-foreground/50" />
-                    )}
-                    {slotDisplayLabel(slot.slot_type as SlotType, slot.order_index)}
-                  </p>
-                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                    {slot.title?.trim() || 'Sin asignar'}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  className={viewFichaButtonClass}
-                  title={preview ? 'Ver ficha del ejercicio' : 'Sin ficha disponible'}
-                  aria-label="Ver ficha del ejercicio"
-                  disabled={!preview}
-                  onClick={() => openExercisePreview(slot)}
+      <div className="portal-section-surface rounded-xl p-4">
+        <p className={sectionTitleClass}>Sesión {sessionIndex}</p>
+        <ul className="mt-3 space-y-2">
+          {slots.length === 0 ? (
+            <li className="rounded-lg border border-dashed border-primary/25 bg-background/20 px-3 py-4 text-sm text-muted-foreground">
+              Sin tareas planificadas en esta sesión.
+            </li>
+          ) : (
+            slots.map((slot) => {
+              const assigned = Boolean(slot.exercise_id || slot.title?.trim());
+              const preview = resolveSlotExercisePreview(slot);
+              return (
+                <li
+                  key={slot.id}
+                  className="flex items-center gap-3 rounded-xl border border-primary/20 bg-background/25 px-3 py-2.5 transition-colors hover:border-primary/35 hover:bg-primary/5"
                 >
-                  <FileText className="size-3.5" />
-                </button>
-              </li>
-            );
-          })
-        )}
-      </ul>
+                  <SlotIcon slotType={slot.slot_type as SlotType} assigned={assigned} />
+                  <div className="min-w-0 flex-1">
+                    <p className="flex items-center gap-2 text-sm font-medium text-foreground">
+                      {assigned ? (
+                        <CheckCircle2 className="size-3.5 shrink-0 text-emerald-400" />
+                      ) : (
+                        <Circle className="size-3.5 shrink-0 text-muted-foreground/50" />
+                      )}
+                      {slotDisplayLabel(slot.slot_type as SlotType, slot.order_index)}
+                    </p>
+                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                      {slot.title?.trim() || 'Sin asignar'}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className={viewFichaButtonClass}
+                    title={preview ? 'Ver ficha del ejercicio' : 'Sin ficha disponible'}
+                    aria-label="Ver ficha del ejercicio"
+                    disabled={!preview}
+                    onClick={() => openExercisePreview(slot)}
+                  >
+                    <FileText className="size-3.5" />
+                  </button>
+                </li>
+              );
+            })
+          )}
+        </ul>
+      </div>
 
       <ExercisePreviewOverlay
         exercise={previewExercise}

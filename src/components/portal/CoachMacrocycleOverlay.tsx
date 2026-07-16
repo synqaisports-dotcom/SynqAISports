@@ -12,6 +12,9 @@ import type { CanteraCategorySlug } from '@/lib/cantera-categories';
 import type { MacrocycleBlock, MicrocycleWeek } from '@/lib/periodization';
 import type { MccLink, MccOverride } from '@/lib/periodization-document';
 
+const COACH_SHEET_CLASS =
+  'portal-dashboard dark portal-main-surface inset-0 h-screen w-screen max-w-none overflow-y-auto border-l border-primary/25 p-4 text-foreground sm:max-w-none md:p-6 [&>button]:rounded-lg [&>button]:border [&>button]:border-primary/25 [&>button]:bg-background/40 [&>button]:text-primary hover:[&>button]:bg-primary/10';
+
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -37,19 +40,16 @@ export function CoachMacrocycleOverlay({
 }: Props) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="right"
-        className="inset-0 h-screen w-screen max-w-none overflow-y-auto border-primary/20 p-4 sm:max-w-none md:p-6"
-      >
-        <SheetHeader className="pr-10 text-left">
-          <SheetTitle>Macrociclo</SheetTitle>
+      <SheetContent side="right" className={COACH_SHEET_CLASS}>
+        <SheetHeader className="portal-section-surface rounded-xl p-4 pr-12 text-left">
+          <SheetTitle className="text-primary">Macrociclo</SheetTitle>
           <SheetDescription>
             {macro.name} · {macro.startDate} → {macro.endDate}
             {onSelectMcc ? ' · Pulsa un MCC para ver su microciclo' : null}
           </SheetDescription>
         </SheetHeader>
 
-        <div className="mt-4">
+        <div className="portal-section-surface mt-4 overflow-x-auto rounded-xl p-4">
           <PeriodizationGrid
             macro={macro}
             categorySlug={categorySlug}
