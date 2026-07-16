@@ -20,8 +20,15 @@ import {
 } from '@/lib/methodology-objectives';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { assertCanEditMethodology } from '@/lib/methodology-access-server';
 
 export type ActionState = { ok: boolean; message?: string; id?: string };
+
+async function guardMethodologyWrite(): Promise<ActionState | null> {
+  const access = await assertCanEditMethodology();
+  if (!access.ok) return { ok: false, message: 'forbidden' };
+  return null;
+}
 
 function slotInsertRows(
   microcycleId: string,
@@ -72,6 +79,9 @@ export async function createExercise(
   _prev: ActionState,
   formData: FormData
 ): Promise<ActionState> {
+  const denied = await guardMethodologyWrite();
+  if (denied) return denied;
+
   const clubId = await requireClubId();
   const userId = await requireUserId();
   if (!clubId) return { ok: false, message: 'unauthorized' };
@@ -127,6 +137,9 @@ export async function updateExercise(
   _prev: ActionState,
   formData: FormData
 ): Promise<ActionState> {
+  const denied = await guardMethodologyWrite();
+  if (denied) return denied;
+
   const clubId = await requireClubId();
   if (!clubId) return { ok: false, message: 'unauthorized' };
 
@@ -171,6 +184,9 @@ export async function updateExerciseDrawing(
   exerciseId: string,
   drawingRaw: string
 ): Promise<ActionState> {
+  const denied = await guardMethodologyWrite();
+  if (denied) return denied;
+
   const clubId = await requireClubId();
   if (!clubId) return { ok: false, message: 'unauthorized' };
 
@@ -199,6 +215,9 @@ export async function updateExerciseDrawing(
 }
 
 export async function deleteExercise(exerciseId: string): Promise<ActionState> {
+  const denied = await guardMethodologyWrite();
+  if (denied) return denied;
+
   const clubId = await requireClubId();
   if (!clubId) return { ok: false, message: 'unauthorized' };
 
@@ -446,6 +465,9 @@ export async function updateCategoryObjectives(
   _prev: ActionState,
   formData: FormData
 ): Promise<ActionState> {
+  const denied = await guardMethodologyWrite();
+  if (denied) return denied;
+
   const clubId = await requireClubId();
   if (!clubId) return { ok: false, message: 'unauthorized' };
 
@@ -501,6 +523,9 @@ export async function upsertCategoryGoal(
   _prev: ActionState,
   formData: FormData
 ): Promise<ActionState> {
+  const denied = await guardMethodologyWrite();
+  if (denied) return denied;
+
   const clubId = await requireClubId();
   if (!clubId) return { ok: false, message: 'unauthorized' };
 

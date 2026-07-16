@@ -1,9 +1,11 @@
 import { CategoryCyclesHub } from '@/components/portal/CategoryCyclesHub';
+import { MethodologyReadOnlyBanner } from '@/components/methodology/MethodologyReadOnlyBanner';
 import { MethodologySubnav } from '@/components/methodology/MethodologySubnav';
 import { PageContainer } from '@/components/portal/PageContainer';
 import type { CanteraCategorySlug } from '@/lib/cantera-categories';
 import { DEMO_CANTERA_TEAMS } from '@/lib/cantera-teams';
 import { isDemoActive } from '@/lib/demo';
+import { canEditMethodology } from '@/lib/methodology-access';
 import { getStaffContext } from '@/lib/portal';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
@@ -87,12 +89,15 @@ export default async function PortalMetodologiaCiclosPage({ searchParams }: Prop
 
       <MethodologySubnav />
 
+      <MethodologyReadOnlyBanner role={ctx.role} />
+
       <CategoryCyclesHub
         teams={teamOptions}
         templateMicrocycles={templateMicrocycles}
         initialCategory={initialCategory}
         initialTeamId={params.team ?? null}
         initialMacroIndex={Number.isFinite(initialMacroIndex) ? initialMacroIndex : 1}
+        readOnly={!canEditMethodology(ctx.role)}
       />
     </PageContainer>
   );

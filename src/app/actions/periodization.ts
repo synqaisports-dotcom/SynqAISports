@@ -2,6 +2,7 @@
 
 import { isDemoActive } from '@/lib/demo';
 import { requireClubId } from '@/lib/auth-staff';
+import { assertCanEditMethodology } from '@/lib/methodology-access-server';
 import type { CanteraCategorySlug } from '@/lib/cantera-categories';
 import {
   parseCategoryDocument,
@@ -13,6 +14,12 @@ import { emptyExerciseSheet } from '@/lib/exercise-sheet';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import type { ActionState } from '@/app/actions/methodology';
+
+async function guardMethodologyWrite(): Promise<ActionState | null> {
+  const access = await assertCanEditMethodology();
+  if (!access.ok) return { ok: false, message: 'forbidden' };
+  return null;
+}
 
 export async function loadCategoryPeriodization(
   categorySlug: CanteraCategorySlug
@@ -38,6 +45,9 @@ export async function loadCategoryPeriodization(
 export async function saveCategoryPeriodization(
   document: CategoryPeriodizationDocument
 ): Promise<ActionState> {
+  const denied = await guardMethodologyWrite();
+  if (denied) return denied;
+
   const clubId = await requireClubId();
   if (!clubId) return { ok: false, message: 'unauthorized' };
 
@@ -78,6 +88,9 @@ export type CreateMccMicrocycleInput = {
 export async function createMicrocycleFromMcc(
   input: CreateMccMicrocycleInput
 ): Promise<ActionState & { microcycleId?: string }> {
+  const denied = await guardMethodologyWrite();
+  if (denied) return denied;
+
   const clubId = await requireClubId();
   if (!clubId) return { ok: false, message: 'unauthorized' };
 
@@ -169,6 +182,9 @@ export type ForkTeamMicrocycleInput = {
 export async function forkMicrocycleForTeam(
   input: ForkTeamMicrocycleInput
 ): Promise<ActionState & { microcycleId?: string }> {
+  const denied = await guardMethodologyWrite();
+  if (denied) return denied;
+
   const clubId = await requireClubId();
   if (!clubId) return { ok: false, message: 'unauthorized' };
 

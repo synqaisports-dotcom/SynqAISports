@@ -44,6 +44,7 @@ type Props = {
   onLinkExistingTemplate: (microcycleId: string) => void;
   onForkTeam: (teamId: string) => void;
   onForkAllTeams: () => void;
+  readOnly?: boolean;
 };
 
 export function MccDetailPanel({
@@ -70,6 +71,7 @@ export function MccDetailPanel({
   onLinkExistingTemplate,
   onForkTeam,
   onForkAllTeams,
+  readOnly = false,
 }: Props) {
   const { micro, meso, macro } = context;
   const isDemoLink = link?.microcycleId.startsWith('demo-micro-');
@@ -119,6 +121,7 @@ export function MccDetailPanel({
           variant={excluded ? 'default' : 'outline'}
           size="sm"
           className="w-full"
+          disabled={readOnly}
           onClick={onToggleExcluded}
         >
           {excluded ? 'Reactivar semana' : 'Marcar festivo / sin entreno'}
@@ -136,6 +139,7 @@ export function MccDetailPanel({
             value={label}
             onChange={(event) => onLabelChange(event.target.value)}
             placeholder={micro.label}
+            disabled={readOnly}
             className="border-primary/30 bg-background/80"
           />
         </div>
@@ -148,11 +152,12 @@ export function MccDetailPanel({
             value={note}
             onChange={(event) => onNoteChange(event.target.value)}
             placeholder="Opcional"
+            disabled={readOnly}
             className="border-primary/30 bg-background/80"
           />
         </div>
 
-        <Button type="button" variant="outline" size="sm" onClick={onSaveOverride}>
+        <Button type="button" variant="outline" size="sm" disabled={readOnly} onClick={onSaveOverride}>
           Guardar etiqueta y nota
         </Button>
 
@@ -187,7 +192,7 @@ export function MccDetailPanel({
                 size="sm"
                 variant="outline"
                 className="h-7 text-xs"
-                disabled={forkingTeamId !== null}
+                disabled={readOnly || forkingTeamId !== null}
                 onClick={onForkAllTeams}
               >
                 <Copy className="mr-1 size-3" />
@@ -221,7 +226,7 @@ export function MccDetailPanel({
                         size="sm"
                         variant="ghost"
                         className="h-7 text-xs"
-                        disabled={isForking}
+                        disabled={readOnly || isForking}
                         onClick={() => onForkTeam(team.id)}
                       >
                         {isForking ? <Loader2 className="size-3 animate-spin" /> : 'Fork'}
@@ -248,7 +253,7 @@ export function MccDetailPanel({
         ) : null}
         {!link ? (
           <>
-            <Button type="button" className="w-full gap-2" disabled={pending} onClick={onCreateMicrocycle}>
+            <Button type="button" className="w-full gap-2" disabled={readOnly || pending} onClick={onCreateMicrocycle}>
               {pending ? <Loader2 className="size-4 animate-spin" /> : <Link2 className="size-4" />}
               Crear microciclo plantilla
             </Button>
@@ -268,7 +273,7 @@ export function MccDetailPanel({
                   type="button"
                   variant="outline"
                   className="w-full"
-                  disabled={!selectedTemplateId || pending}
+                  disabled={readOnly || !selectedTemplateId || pending}
                   onClick={() => onLinkExistingTemplate(selectedTemplateId)}
                 >
                   Asignar plantilla seleccionada

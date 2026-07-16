@@ -1,4 +1,5 @@
 import type { CanteraCategorySlug } from '@/lib/cantera-categories';
+import { CANTERA_CATEGORIES } from '@/lib/cantera-categories';
 import type { PeriodizationPlan } from '@/lib/periodization';
 import { applyPlanExclusions } from '@/lib/periodization-plan-utils';
 import {
@@ -14,6 +15,7 @@ export type TeamSummaryRow = {
   id: string;
   name: string;
   categorySlug: CanteraCategorySlug | null;
+  variantLabel: string | null;
   pendingMcc: number;
   totalMcc: number;
   pendingPercent: number;
@@ -124,6 +126,108 @@ function collectMccRows(
   return rows;
 }
 
+export type TeamChartsBundle = {
+  macros: MethodologySummaryStats['macros'];
+  mesos: MethodologySummaryStats['mesos'];
+  micros: MethodologySummaryStats['micros'];
+  sessions: MethodologySummaryStats['sessions'];
+};
+
+function buildChartsFromRows(
+  allMccRows: ReturnType<typeof collectMccRows>
+): TeamChartsBundle {
+  const macroMap = new Map<string, { confirmados: number; pendientes: number }>();
+  const mesoMap = new Map<string, { confirmados: number; pendientes: number }>();
+
+  for (const row of allMccRows) {
+    const macroEntry = macroMap.get(row.macroName) ?? { confirmados: 0, pendientes: 0 };
+    if (row.confirmed) macroEntry.confirmados += 1;
+    else macroEntry.pendientes += 1;
+    macroMap.set(row.macroName, macroEntry);
+
+    const mesoEntry = mesoMap.get(row.mesoLabel) ?? { confirmados: 0, pendientes: 0 };
+    if (row.confirmed) mesoEntry.confirmados += 1;
+    else mesoEntry.pendientes += 1;
+    mesoMap.set(row.mesoLabel, mesoEntry);
+  }
+
+  const macroChart: ChartBarRow[] = Array.from(macroMap.entries()).map(([name, value]) => ({
+    name,
+    confirmados: value.confirmados,
+    pendientes: value.pendientes,
+  }));
+
+  const mesoChart: ChartBarRow[] = Array.from(mesoMap.entries()).map(([name, value]) => ({
+    name,
+    confirmados: value.confirmados,
+    pendientes: value.pendientes,
+  }));
+
+  const microChart: MicroWeekRow[] = allMccRows.map((row) => ({
+    name: row.microLabel,
+    index: row.weekIndex,
+    confirmados: row.confirmed ? 1 : 0,
+    pendientes: row.confirmed ? 0 : 1,
+  }));
+
+  const sessionStats = sessionPanelStats(allMccRows);
+
+  return {
+    macros: {
+      chart: macroChart.length > 0 ? macroChart : [{ name: 'Sin datos', confirmados: 0, pendientes: 0 }],
+      stats: panelStats(allMccRows),
+    },
+    mesos: {
+      chart: mesoChart.length > 0 ? mesoChart : [{ name: '—', confirmados: 0, pendientes: 0 }],
+      stats: panelStats(allMccRows),
+    },
+    micros: {
+      chart:
+        microChart.length > 0
+          ? microChart
+          : [{ name: '—', index: 0, confirmados: 0, pendientes: 0 }],
+      stats: panelStats(allMccRows),
+    },
+    sessions: {
+      chart: [
+        { name: 'Confirmadas', value: sessionStats.confirmados, key: 'confirmados' },
+        { name: 'Pendientes', value: sessionStats.pendientes, key: 'pendientes' },
+      ],
+      stats: sessionStats,
+    },
+  };
+}
+
+export function computeTeamCharts(
+  teamId: string,
+  documents: Partial<Record<CanteraCategorySlug, CategoryPeriodizationDocument>>,
+  seasonFilter?: string
+): TeamChartsBundle | null {
+  for (const [, document] of Object.entries(documents)) {
+    if (!document) continue;
+    if (seasonFilter && document.seasonTitle.trim() !== seasonFilter) continue;
+
+    const variant = variantForTeam(document, teamId);
+    if (!variant) continue;
+
+    const rawPlan = buildPlanForVariant(document, variant.id);
+    if (!rawPlan) return null;
+
+    const plan = applyPlanExclusions(rawPlan, getExcludedMccIds(document, variant.id));
+    const rows = collectMccRows(document, variant, plan);
+    return buildChartsFromRows(rows);
+  }
+
+  return null;
+}
+
+export function groupTeamsByCategory(teams: TeamSummaryRow[]) {
+  return CANTERA_CATEGORIES.map((category) => ({
+    category,
+    teams: teams.filter((team) => team.categorySlug === category.slug),
+  })).filter((group) => group.teams.length > 0);
+}
+
 function panelStats(rows: { confirmed: boolean; sessionsCount?: number }[]): SummaryPanelStats {
   const confirmados = rows.filter((row) => row.confirmed).length;
   const total = rows.length;
@@ -214,41 +318,7 @@ export function computeMethodologySummary(
     }
   }
 
-  const macroMap = new Map<string, { confirmados: number; pendientes: number }>();
-  const mesoMap = new Map<string, { confirmados: number; pendientes: number }>();
-
-  for (const row of allMccRows) {
-    const macroEntry = macroMap.get(row.macroName) ?? { confirmados: 0, pendientes: 0 };
-    if (row.confirmed) macroEntry.confirmados += 1;
-    else macroEntry.pendientes += 1;
-    macroMap.set(row.macroName, macroEntry);
-
-    const mesoEntry = mesoMap.get(row.mesoLabel) ?? { confirmados: 0, pendientes: 0 };
-    if (row.confirmed) mesoEntry.confirmados += 1;
-    else mesoEntry.pendientes += 1;
-    mesoMap.set(row.mesoLabel, mesoEntry);
-  }
-
-  const macroChart: ChartBarRow[] = Array.from(macroMap.entries()).map(([name, value]) => ({
-    name,
-    confirmados: value.confirmados,
-    pendientes: value.pendientes,
-  }));
-
-  const mesoChart: ChartBarRow[] = Array.from(mesoMap.entries()).map(([name, value]) => ({
-    name,
-    confirmados: value.confirmados,
-    pendientes: value.pendientes,
-  }));
-
-  const microChart: MicroWeekRow[] = allMccRows.map((row) => ({
-    name: row.microLabel,
-    index: row.weekIndex,
-    confirmados: row.confirmed ? 1 : 0,
-    pendientes: row.confirmed ? 0 : 1,
-  }));
-
-  const sessionStats = sessionPanelStats(allMccRows);
+  const charts = buildChartsFromRows(allMccRows);
 
   const teamRows: TeamSummaryRow[] = teams
     .filter((team) => team.category_slug)
@@ -259,6 +329,7 @@ export function computeMethodologySummary(
           id: team.id,
           name: team.name,
           categorySlug: team.category_slug,
+          variantLabel: null,
           pendingMcc: 0,
           totalMcc: 0,
           pendingPercent: 0,
@@ -272,6 +343,7 @@ export function computeMethodologySummary(
           id: team.id,
           name: team.name,
           categorySlug: team.category_slug,
+          variantLabel: null,
           pendingMcc: 0,
           totalMcc: 0,
           pendingPercent: 100,
@@ -285,6 +357,7 @@ export function computeMethodologySummary(
           id: team.id,
           name: team.name,
           categorySlug: team.category_slug,
+          variantLabel: variant.name,
           pendingMcc: 0,
           totalMcc: 0,
           pendingPercent: 100,
@@ -300,13 +373,19 @@ export function computeMethodologySummary(
         id: team.id,
         name: team.name,
         categorySlug: team.category_slug,
+        variantLabel: variant.name,
         pendingMcc: pending,
         totalMcc: total,
         pendingPercent,
         isComplete: total > 0 && pending === 0,
       };
     })
-    .sort((a, b) => b.pendingPercent - a.pendingPercent);
+    .sort((a, b) => {
+      const orderA = CANTERA_CATEGORIES.findIndex((item) => item.slug === a.categorySlug);
+      const orderB = CANTERA_CATEGORIES.findIndex((item) => item.slug === b.categorySlug);
+      if (orderA !== orderB) return orderA - orderB;
+      return a.name.localeCompare(b.name, 'es');
+    });
 
   const pendingTeams = teamRows.filter((team) => team.totalMcc > 0 && !team.isComplete);
   const globalPendingPercent =
@@ -323,28 +402,10 @@ export function computeMethodologySummary(
     globalPendingPercent,
     totalPlayers: options.totalPlayers ?? 0,
     totalCoaches: options.totalCoaches ?? 0,
-    macros: {
-      chart: macroChart.length > 0 ? macroChart : [{ name: 'Sin datos', confirmados: 0, pendientes: 0 }],
-      stats: panelStats(allMccRows),
-    },
-    mesos: {
-      chart: mesoChart.length > 0 ? mesoChart : [{ name: '—', confirmados: 0, pendientes: 0 }],
-      stats: panelStats(allMccRows),
-    },
-    micros: {
-      chart:
-        microChart.length > 0
-          ? microChart
-          : [{ name: '—', index: 0, confirmados: 0, pendientes: 0 }],
-      stats: panelStats(allMccRows),
-    },
-    sessions: {
-      chart: [
-        { name: 'Confirmadas', value: sessionStats.confirmados, key: 'confirmados' },
-        { name: 'Pendientes', value: sessionStats.pendientes, key: 'pendientes' },
-      ],
-      stats: sessionStats,
-    },
+    macros: charts.macros,
+    mesos: charts.mesos,
+    micros: charts.micros,
+    sessions: charts.sessions,
   };
 }
 

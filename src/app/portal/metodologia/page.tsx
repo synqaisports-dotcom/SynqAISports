@@ -70,6 +70,7 @@ export default async function MetodologiaHomePage() {
         teams={teams}
         totalPlayers={demoActive && totalPlayers === 0 ? 80 : totalPlayers}
         totalCoaches={totalCoaches}
+        role={ctx.role}
       />
     </PageContainer>
   );

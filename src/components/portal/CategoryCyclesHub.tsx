@@ -67,6 +67,7 @@ type Props = {
   initialCategory?: CanteraCategorySlug;
   initialTeamId?: string | null;
   initialMacroIndex?: number;
+  readOnly?: boolean;
 };
 
 function resolveDeepLinkDocument(
@@ -95,6 +96,7 @@ export function CategoryCyclesHub({
   initialCategory = 'alevin',
   initialTeamId = null,
   initialMacroIndex = 1,
+  readOnly = false,
 }: Props) {
   const [categorySlug, setCategorySlug] = useState<CanteraCategorySlug>(initialCategory);
   const category = CANTERA_CATEGORIES.find((item) => item.slug === categorySlug)!;
@@ -168,6 +170,7 @@ export function CategoryCyclesHub({
   }, [document, loaded]);
 
   const updateDocument = (updater: (current: CategoryPeriodizationDocument) => CategoryPeriodizationDocument) => {
+    if (readOnly) return;
     setDocument((current) => {
       const next = updater(current);
       saveDocumentToStorage(next);
@@ -181,6 +184,7 @@ export function CategoryCyclesHub({
   };
 
   const handleGenerate = () => {
+    if (readOnly) return;
     try {
       const rawPlan = buildPlanForVariant(document, document.activeVariantId);
       if (!rawPlan) throw new Error('No se pudo generar el planograma.');
@@ -198,6 +202,7 @@ export function CategoryCyclesHub({
   };
 
   const handleSave = async () => {
+    if (readOnly) return;
     setSaving(true);
     saveDocumentToStorage(document);
     const result = await saveCategoryPeriodization(document);
@@ -545,6 +550,7 @@ export function CategoryCyclesHub({
                 linkedCount={countLinkedMcc(document, variant.id)}
                 teams={categoryTeams}
                 borderClass={styles[categorySlug]}
+                readOnly={readOnly}
                 onSelect={() => handleVariantSelect(variant.id)}
                 onToggleTeam={(teamId) => toggleTeamOnVariant(variant.id, teamId)}
               />
@@ -651,11 +657,17 @@ export function CategoryCyclesHub({
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              <Button type="button" onClick={handleGenerate} className="gap-2">
+              <Button type="button" onClick={handleGenerate} disabled={readOnly} className="gap-2">
                 <RefreshCw className="size-4" />
                 Generar planograma
               </Button>
-              <Button type="button" variant="outline" onClick={handleSave} disabled={saving} className="gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleSave}
+                disabled={saving || readOnly}
+                className="gap-2"
+              >
                 {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
                 Guardar plan
               </Button>
@@ -793,6 +805,7 @@ export function CategoryCyclesHub({
             onLinkExistingTemplate={handleLinkExistingTemplate}
             onForkTeam={forkTeamForMcc}
             onForkAllTeams={forkAllTeamsForMcc}
+            readOnly={readOnly}
           />
         </>
       ) : null}
@@ -807,6 +820,7 @@ function VariantCard({
   linkedCount,
   teams,
   borderClass,
+  readOnly = false,
   onSelect,
   onToggleTeam,
 }: {
@@ -816,6 +830,7 @@ function VariantCard({
   linkedCount: number;
   teams: TeamOption[];
   borderClass: string;
+  readOnly?: boolean;
   onSelect: () => void;
   onToggleTeam: (teamId: string) => void;
 }) {
@@ -856,6 +871,7 @@ function VariantCard({
                 <button
                   key={team.id}
                   type="button"
+                  disabled={readOnly}
                   onClick={() => onToggleTeam(team.id)}
                   className={cn(
                     'rounded-full border px-2.5 py-1 text-xs transition-colors',

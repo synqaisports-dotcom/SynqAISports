@@ -1,6 +1,25 @@
 import { getDemoClubIdFallback, hasServiceRoleKey, isDemoActive, resolveDemoClub } from '@/lib/demo';
 import { createClient } from '@/lib/supabase/server';
 
+export async function getStaffRole(): Promise<string | null> {
+  if (await isDemoActive()) return 'admin';
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: staff } = await supabase
+    .from('synq_staff')
+    .select('role')
+    .eq('user_id', user.id)
+    .limit(1)
+    .maybeSingle();
+
+  return staff?.role ?? null;
+}
+
 export async function requireClubId(): Promise<string | null> {
   if (await isDemoActive()) {
     const supabase = await createClient();
