@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 56" fill="none" role="img" aria-label="SynqAI Club and Tactics Platform">
+  <defs>
+    <linearGradient id="h-hex-stroke" x1="4" y1="4" x2="44" y2="52" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#66F7FF"/>
+      <stop offset="1" stop-color="#00F2FF"/>
+    </linearGradient>
+    <linearGradient id="h-hex-fill" x1="24" y1="10" x2="24" y2="46" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0C1824"/>
+      <stop offset="1" stop-color="#050D14"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Icono -->
+  <g transform="translate(4 4) scale(1)">
+    <path d="M24 5.5 39.9 14.75V33.25L24 42.5 8.1 33.25V14.75L24 5.5Z" stroke="url(#h-hex-stroke)" stroke-width="1.5"/>
+    <path d="M24 9 36.2 16.05V29.95L24 37 11.8 29.95V16.05L24 9Z" fill="url(#h-hex-fill)" stroke="#00F2FF" stroke-opacity="0.35" stroke-width="0.75"/>
+    <path d="M15.5 17.5 15.5 30.5 31.5 24Z" stroke="#FFFFFF" stroke-width="1.35" stroke-linejoin="round"/>
+    <path d="M15.5 17.5 31.5 24" stroke="#00F2FF" stroke-width="1" stroke-dasharray="2.5 2" stroke-opacity="0.85"/>
+    <path d="M15.5 30.5 31.5 24" stroke="#00F2FF" stroke-width="1" stroke-dasharray="2.5 2" stroke-opacity="0.85"/>
+    <circle cx="15.5" cy="17.5" r="2.1" fill="#FFFFFF"/>
+    <circle cx="15.5" cy="30.5" r="2.1" fill="#FFFFFF"/>
+    <circle cx="31.5" cy="24" r="2.35" fill="#00F2FF"/>
+    <path d="M14.2 17.5 14.2 19.3 16.1 18.4Z" fill="#00F2FF"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="62" y="34" font-family="'DM Sans', system-ui, sans-serif" font-size="24" font-weight="700" letter-spacing="0.12em">
+    <tspan fill="#FFFFFF">SYNQ</tspan><tspan fill="#00F2FF">AI</tspan>
+  </text>
+  <text x="62" y="48" font-family="'DM Sans', system-ui, sans-serif" font-size="7.5" font-weight="600" fill="#94A3B8" letter-spacing="0.28em">CLUB &amp; TACTICS PLATFORM</text>
+</svg>
