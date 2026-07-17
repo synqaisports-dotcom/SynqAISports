@@ -6,7 +6,10 @@ export const SYNQ_BRAND = {
   navyLight: '#0A1522',
   white: '#FFFFFF',
   muted: '#94A3B8',
-  fontFamily: "'Exo 2', system-ui, sans-serif",
+  /** Tipografía corporativa (Google Fonts): geométrica, angular, tech/deporte */
+  fontFamily: "var(--font-orbitron), 'Orbitron', system-ui, sans-serif",
+  fontName: 'Orbitron',
+  fontUrl: 'https://fonts.google.com/specimen/Orbitron',
   wordmarkTracking: '0.12em',
   taglineTracking: '0.32em',
 } as const;

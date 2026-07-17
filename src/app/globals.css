@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -22,16 +21,16 @@
 }
 
 body {
-  font-family: 'Exo 2', system-ui, sans-serif;
+  font-family: var(--font-orbitron), 'Orbitron', system-ui, sans-serif;
   background: var(--synq-navy);
   color: #e8edf4;
 }
 
 .font-brand,
 .font-serif-display {
-  font-family: 'Exo 2', system-ui, sans-serif;
+  font-family: var(--font-orbitron), 'Orbitron', system-ui, sans-serif;
   font-weight: 800;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.06em;
 }
 
 @layer utilities {
@@ -62,14 +61,14 @@ body {
   }
 
   .synq-brand-wordmark {
-    font-family: 'Exo 2', system-ui, sans-serif;
+    font-family: var(--font-orbitron), 'Orbitron', system-ui, sans-serif;
     font-weight: 800;
     letter-spacing: var(--synq-brand-tracking);
     text-transform: uppercase;
   }
 
   .synq-brand-tagline {
-    font-family: 'Exo 2', system-ui, sans-serif;
+    font-family: var(--font-orbitron), 'Orbitron', system-ui, sans-serif;
     font-size: 0.5625rem;
     font-weight: 600;
     letter-spacing: var(--synq-tagline-tracking);
@@ -79,7 +78,7 @@ body {
   }
 
   .synq-brand-label {
-    font-family: 'Exo 2', system-ui, sans-serif;
+    font-family: var(--font-orbitron), 'Orbitron', system-ui, sans-serif;
     font-size: 0.625rem;
     font-weight: 600;
     letter-spacing: 0.22em;
@@ -359,7 +358,7 @@ body {
 
   .portal-dashboard {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Exo 2', system-ui, sans-serif;
+    font-family: var(--font-orbitron), 'Orbitron', system-ui, sans-serif;
     background-color: hsl(212 42% 4%);
   }
 

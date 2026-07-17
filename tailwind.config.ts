@@ -64,8 +64,8 @@ module.exports = {
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		fontFamily: {
-  			sans: ['Exo 2', 'system-ui', 'sans-serif'],
-  			brand: ['Exo 2', 'system-ui', 'sans-serif'],
+  			sans: ['var(--font-orbitron)', 'Orbitron', 'system-ui', 'sans-serif'],
+  			brand: ['var(--font-orbitron)', 'Orbitron', 'system-ui', 'sans-serif'],
   		},
   		keyframes: {
   			'accordion-down': {

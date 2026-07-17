@@ -9,9 +9,9 @@
       <stop offset="1" stop-color="#050A14"/>
     </linearGradient>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@800;600&amp;display=swap');
-      .synq-wordmark { font-family: 'Exo 2', system-ui, sans-serif; font-weight: 800; letter-spacing: 0.12em; }
-      .synq-tagline { font-family: 'Exo 2', system-ui, sans-serif; font-weight: 600; letter-spacing: 0.28em; font-size: 7px; fill: #94A3B8; }
+      @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&amp;display=swap');
+      .synq-wordmark { font-family: 'Orbitron', system-ui, sans-serif; font-weight: 800; letter-spacing: 0.12em; }
+      .synq-tagline { font-family: 'Orbitron', system-ui, sans-serif; font-weight: 600; letter-spacing: 0.28em; font-size: 7px; fill: #94A3B8; }
     </style>
   </defs>
 
