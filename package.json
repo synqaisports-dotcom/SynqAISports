@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "brand:export": "node scripts/export-brand-png.mjs",
+    "brand:export": "node scripts/generate-wordmark-paths.mjs && node scripts/sync-brand-svgs.mjs && node scripts/export-brand-png.mjs",
     "supabase:bundle": "node scripts/bundle-supabase-migrations.mjs"
   },
   "dependencies": {

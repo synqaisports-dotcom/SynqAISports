@@ -21,16 +21,16 @@
 }
 
 body {
-  font-family: var(--font-orbitron), 'Orbitron', system-ui, sans-serif;
+  font-family: var(--font-exo2), 'Exo 2', system-ui, sans-serif;
   background: var(--synq-navy);
   color: #e8edf4;
 }
 
 .font-brand,
 .font-serif-display {
-  font-family: var(--font-orbitron), 'Orbitron', system-ui, sans-serif;
+  font-family: var(--font-exo2), 'Exo 2', system-ui, sans-serif;
   font-weight: 800;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
 }
 
 @layer utilities {
@@ -61,14 +61,15 @@ body {
   }
 
   .synq-brand-wordmark {
-    font-family: var(--font-orbitron), 'Orbitron', system-ui, sans-serif;
+    /* Wordmark en UI: usar componente SynqWordmark (SVG vectorial Aquire) */
+    font-family: var(--font-exo2), 'Exo 2', system-ui, sans-serif;
     font-weight: 800;
     letter-spacing: var(--synq-brand-tracking);
     text-transform: uppercase;
   }
 
   .synq-brand-tagline {
-    font-family: var(--font-orbitron), 'Orbitron', system-ui, sans-serif;
+    font-family: var(--font-exo2), 'Exo 2', system-ui, sans-serif;
     font-size: 0.5625rem;
     font-weight: 600;
     letter-spacing: var(--synq-tagline-tracking);
@@ -78,7 +79,7 @@ body {
   }
 
   .synq-brand-label {
-    font-family: var(--font-orbitron), 'Orbitron', system-ui, sans-serif;
+    font-family: var(--font-exo2), 'Exo 2', system-ui, sans-serif;
     font-size: 0.625rem;
     font-weight: 600;
     letter-spacing: 0.22em;
@@ -358,7 +359,7 @@ body {
 
   .portal-dashboard {
     @apply bg-background text-foreground antialiased;
-    font-family: var(--font-orbitron), 'Orbitron', system-ui, sans-serif;
+    font-family: var(--font-exo2), 'Exo 2', system-ui, sans-serif;
     background-color: hsl(212 42% 4%);
   }
 

@@ -1,16 +1,15 @@
 # SynqAI — Identidad corporativa
 
-## Tipografía oficial: **Orbitron**
+## Tipografía del logotipo: **Aquire Bold** (vectorial)
 
 | Uso | Detalle |
 |-----|---------|
-| **Nombre** | [Orbitron](https://fonts.google.com/specimen/Orbitron) (Google Fonts, gratuita) |
-| **Estilo** | Sans geométrica, angular, tech/deporte — alineada con el hexágono táctico |
-| **Wordmark SYNQAI** | Orbitron **800** (Extra Bold), mayúsculas, tracking `0.12em` |
-| **Tagline** | Orbitron **600** (Semi Bold), tracking `0.32em` |
-| **App / web** | Orbitron en toda la interfaz vía `next/font` |
+| **Wordmark SYNQAI** | Trazos SVG generados desde **Aquire Bold** (SesoHQ) — A estilizada sin barra, Q con cola diagonal |
+| **Tagline** | Mismos trazos vectoriales, tracking amplio |
+| **Interfaz / app** | [Exo 2](https://fonts.google.com/specimen/Exo+2) (Google Fonts) — legible en dashboards |
+| **Regenerar trazos** | `npm run brand:export` (requiere `scripts/.tmp/Aquire-Bold.otf` local, no se commitea) |
 
-> El logotipo del PNG de marketing usa trazos personalizados. En producto digital usamos **Orbitron** como equivalencia oficial hasta disponer de una fuente custom.
+> El wordmark en UI usa `SynqWordmark` (SVG inline), **no** texto con fuente web. Así coincide con el PNG corporativo.
 
 ## Colores
 

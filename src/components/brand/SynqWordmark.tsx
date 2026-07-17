@@ -1,49 +1,77 @@
 import { SYNQ_BRAND } from '@/components/brand/brand-constants';
+import { WORDMARK_DATA, WORDMARK_VIEWBOX } from '@/components/brand/wordmark-data';
 import { cn } from '@/lib/utils';
 
 type Size = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
-const wordmarkSize: Record<Size, string> = {
-  xs: 'text-xs',
-  sm: 'text-sm',
-  md: 'text-base',
-  lg: 'text-xl',
-  xl: 'text-3xl',
+const wordmarkHeight: Record<Size, number> = {
+  xs: 12,
+  sm: 14,
+  md: 16,
+  lg: 22,
+  xl: 34,
 };
 
 type Props = {
   size?: Size;
   showTagline?: boolean;
-  tagline?: string;
   subtitle?: string;
   subtitleClassName?: string;
   showSportsSuffix?: boolean;
   className?: string;
 };
 
+function WordmarkSvg({ height, showTagline }: { height: number; showTagline: boolean }) {
+  const wordmarkOnlyHeight = WORDMARK_DATA.wordmark.baselineY + 2;
+  const viewHeight = showTagline ? WORDMARK_VIEWBOX.height : wordmarkOnlyHeight;
+  const aspect = WORDMARK_VIEWBOX.width / viewHeight;
+  const renderHeight = showTagline ? height * (viewHeight / wordmarkOnlyHeight) : height;
+
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox={`0 0 ${WORDMARK_VIEWBOX.width} ${viewHeight}`}
+      width={renderHeight * aspect}
+      height={renderHeight}
+      fill="none"
+      role="img"
+      aria-label="SynqAI"
+      className="block max-w-full"
+      preserveAspectRatio="xMinYMid meet"
+    >
+      {WORDMARK_DATA.wordmark.synq.map((p) => (
+        <path key={`s-${p.char}`} d={p.d} fill={SYNQ_BRAND.white} />
+      ))}
+      {WORDMARK_DATA.wordmark.ai.map((p) => (
+        <path key={`a-${p.char}`} d={p.d} fill={SYNQ_BRAND.cyan} />
+      ))}
+      {showTagline
+        ? WORDMARK_DATA.tagline.paths.map((p, i) =>
+            p.d ? <path key={`t-${i}`} d={p.d} fill={SYNQ_BRAND.white} opacity={0.92} /> : null
+          )
+        : null}
+    </svg>
+  );
+}
+
 export function SynqWordmark({
   size = 'md',
   showTagline = false,
-  tagline = 'Club & Tactics Platform',
   subtitle,
   subtitleClassName,
   showSportsSuffix = false,
   className,
 }: Props) {
+  const h = wordmarkHeight[size];
+
   return (
-    <div className={cn('min-w-0 font-brand', className)}>
-      <p className={cn('synq-brand-wordmark leading-tight', wordmarkSize[size])}>
-        <span className="text-white">SYNQ</span>
-        <span style={{ color: SYNQ_BRAND.cyan }}>AI</span>
+    <div className={cn('min-w-0', className)}>
+      <div className="flex min-w-0 items-end gap-1.5">
+        <WordmarkSvg height={h} showTagline={showTagline} />
         {showSportsSuffix ? (
-          <span className="ml-1.5 align-baseline font-semibold normal-case tracking-normal text-white/80 text-[0.62em]">
-            Sports
-          </span>
+          <span className="mb-0.5 shrink-0 text-[0.62em] font-medium tracking-wide text-white/80">Sports</span>
         ) : null}
-      </p>
-      {showTagline ? (
-        <p className="synq-brand-tagline mt-1 leading-tight text-white/90 max-sm:hidden">{tagline}</p>
-      ) : null}
+      </div>
       {subtitle ? (
         <p
           className={cn(
