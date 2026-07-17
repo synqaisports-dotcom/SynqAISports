@@ -1,6 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 48" fill="none" role="img" aria-label="SynqAI">
-  <text x="0" y="30" font-family="'DM Sans', system-ui, sans-serif" font-size="28" font-weight="700" letter-spacing="0.12em">
-    <tspan fill="#FFFFFF">SYNQ</tspan><tspan fill="#00F2FF">AI</tspan>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 64" fill="none" role="img" aria-label="SynqAI">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@800;600&amp;display=swap');
+      .synq-wordmark { font-family: 'Exo 2', system-ui, sans-serif; font-weight: 800; letter-spacing: 0.12em; }
+      .synq-tagline { font-family: 'Exo 2', system-ui, sans-serif; font-weight: 600; letter-spacing: 0.32em; font-size: 9px; fill: #FFFFFF; }
+    </style>
+  </defs>
+  <text x="0" y="36" class="synq-wordmark" font-size="36">
+    <tspan fill="#FFFFFF">SYNQ</tspan><tspan fill="#00E5FF">AI</tspan>
   </text>
-  <text x="0" y="44" font-family="'DM Sans', system-ui, sans-serif" font-size="8" font-weight="600" fill="#94A3B8" letter-spacing="0.28em">CLUB &amp; TACTICS PLATFORM</text>
+  <text x="0" y="56" class="synq-tagline">CLUB &amp; TACTICS PLATFORM</text>
 </svg>

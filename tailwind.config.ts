@@ -6,10 +6,10 @@ module.exports = {
   	extend: {
   		colors: {
   			synq: {
-  				navy: '#050d14',
-  				slate: '#0c1824',
-  				cyan: '#00f2ff',
-  				electric: '#00f2ff',
+  				navy: '#050a14',
+  				slate: '#0a1522',
+  				cyan: '#00e5ff',
+  				electric: '#00e5ff',
   				accent: '#66f7ff',
   				pitch: '#00d4ee',
   				muted: '#94a3b8'
@@ -64,7 +64,8 @@ module.exports = {
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		fontFamily: {
-  			sans: ['DM Sans', 'system-ui', 'sans-serif'],
+  			sans: ['Exo 2', 'system-ui', 'sans-serif'],
+  			brand: ['Exo 2', 'system-ui', 'sans-serif'],
   		},
   		keyframes: {
   			'accordion-down': {

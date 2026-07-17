@@ -10,6 +10,7 @@ import {
   Users,
   Zap,
 } from 'lucide-react';
+import { SynqBrandLockup } from '@/components/brand/SynqBrandLockup';
 import { ClubCalculator } from '@/components/ClubCalculator';
 import { FoundingForm } from '@/components/public/FoundingForm';
 import { PublicHeader } from '@/components/public/PublicHeader';
@@ -65,7 +66,7 @@ export default async function SynqHomePage() {
 
       <main>
         <section className="relative overflow-hidden">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(34,197,94,0.08),transparent_70%)]" />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,229,255,0.07),transparent_70%)]" />
           <div className="relative mx-auto max-w-6xl px-6 py-16 md:py-24">
             <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
               <div>
@@ -73,7 +74,7 @@ export default async function SynqHomePage() {
                   <Zap className="h-3.5 w-3.5" />
                   {dict.hero.tag}
                 </p>
-                <h1 className="font-serif-display text-4xl leading-[1.08] md:text-6xl">
+                <h1 className="font-brand text-4xl leading-[1.05] md:text-6xl">
                   <span className="synq-gradient-text">{dict.hero.title}</span>
                 </h1>
                 <p className="mt-6 max-w-xl text-lg text-synq-muted leading-relaxed">{dict.hero.body}</p>
@@ -103,7 +104,15 @@ export default async function SynqHomePage() {
                 </div>
               </div>
 
-              <div className="synq-card overflow-hidden shadow-2xl shadow-black/40">
+              <div className="flex flex-col items-center gap-8 lg:items-end">
+                <SynqBrandLockup
+                  layout="stacked"
+                  iconSize={112}
+                  wordmarkSize="xl"
+                  showTagline
+                  className="hidden lg:flex"
+                />
+              <div className="synq-card w-full overflow-hidden shadow-2xl shadow-black/40">
                 <div className="border-b border-white/10 bg-synq-slate/60 px-4 py-3">
                   <div className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full bg-red-400/80" />
@@ -136,6 +145,7 @@ export default async function SynqHomePage() {
                       </p>
                     </div>
                   </div>
+                </div>
                 </div>
               </div>
             </div>

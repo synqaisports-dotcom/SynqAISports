@@ -17,7 +17,7 @@ export default async function LoginPage({ searchParams }: Props) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-synq-navy px-6">
       <div className="w-full max-w-md rounded-2xl border border-white/10 bg-synq-slate/40 p-8">
-        <SynqBrandLockup layout="stacked" iconSize={56} showTagline showSportsSuffix className="mb-8" />
+        <SynqBrandLockup layout="stacked" iconSize={88} wordmarkSize="lg" showTagline className="mb-8" />
         <h1 className="font-serif-display text-2xl text-white">
           {vercelDemo ? 'Portal de pruebas' : dict.login.title}
         </h1>

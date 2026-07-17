@@ -37,7 +37,6 @@ export function PublicHeader({
             iconSize={40}
             wordmarkSize="lg"
             showTagline
-            showSportsSuffix
             className="items-center"
           />
         </Link>

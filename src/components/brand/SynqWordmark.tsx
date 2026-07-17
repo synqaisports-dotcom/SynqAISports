@@ -1,3 +1,4 @@
+import { SYNQ_BRAND } from '@/components/brand/brand-constants';
 import { cn } from '@/lib/utils';
 
 type Size = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
@@ -6,8 +7,8 @@ const wordmarkSize: Record<Size, string> = {
   xs: 'text-xs',
   sm: 'text-sm',
   md: 'text-base',
-  lg: 'text-lg',
-  xl: 'text-2xl',
+  lg: 'text-xl',
+  xl: 'text-3xl',
 };
 
 type Props = {
@@ -30,21 +31,26 @@ export function SynqWordmark({
   className,
 }: Props) {
   return (
-    <div className={cn('min-w-0', className)}>
+    <div className={cn('min-w-0 font-brand', className)}>
       <p className={cn('synq-brand-wordmark leading-tight', wordmarkSize[size])}>
         <span className="text-white">SYNQ</span>
-        <span className="text-synq-cyan">AI</span>
+        <span style={{ color: SYNQ_BRAND.cyan }}>AI</span>
         {showSportsSuffix ? (
-          <span className="ml-1.5 align-baseline font-semibold normal-case tracking-normal text-white/80 text-[0.65em]">
+          <span className="ml-1.5 align-baseline font-semibold normal-case tracking-normal text-white/80 text-[0.62em]">
             Sports
           </span>
         ) : null}
       </p>
       {showTagline ? (
-        <p className="synq-brand-tagline mt-1 leading-tight max-sm:hidden">{tagline}</p>
+        <p className="synq-brand-tagline mt-1 leading-tight text-white/90 max-sm:hidden">{tagline}</p>
       ) : null}
       {subtitle ? (
-        <p className={cn('mt-1 truncate text-[11px] font-medium tracking-wide text-muted-foreground', subtitleClassName)}>
+        <p
+          className={cn(
+            'mt-1 truncate text-[11px] font-medium tracking-wide text-muted-foreground',
+            subtitleClassName
+          )}
+        >
           {subtitle}
         </p>
       ) : null}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useId } from 'react';
+import { SYNQ_BRAND } from '@/components/brand/brand-constants';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -8,7 +9,7 @@ type Props = {
   className?: string;
 };
 
-/** Icono hexagonal SynqAI — SVG inline para nitidez en sidebar y cabecera. */
+/** Icono corporativo SynqAI — hexágono táctico (SVG inline). */
 export function SynqIcon({ size = 32, className }: Props) {
   const uid = useId().replace(/:/g, '');
   const strokeId = `synq-stroke-${uid}`;
@@ -18,7 +19,7 @@ export function SynqIcon({ size = 32, className }: Props) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 48 48"
+      viewBox="0 0 100 100"
       width={size}
       height={size}
       fill="none"
@@ -27,16 +28,16 @@ export function SynqIcon({ size = 32, className }: Props) {
       className={cn('block shrink-0', className)}
     >
       <defs>
-        <linearGradient id={strokeId} x1="8" y1="6" x2="40" y2="42" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#66F7FF" />
-          <stop offset="1" stopColor="#00F2FF" />
+        <linearGradient id={strokeId} x1="18" y1="12" x2="82" y2="88" gradientUnits="userSpaceOnUse">
+          <stop stopColor={SYNQ_BRAND.cyanSoft} />
+          <stop offset="1" stopColor={SYNQ_BRAND.cyan} />
         </linearGradient>
-        <linearGradient id={fillId} x1="24" y1="8" x2="24" y2="40" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#0C1824" />
-          <stop offset="1" stopColor="#050D14" />
+        <linearGradient id={fillId} x1="50" y1="18" x2="50" y2="82" gradientUnits="userSpaceOnUse">
+          <stop stopColor={SYNQ_BRAND.navyLight} />
+          <stop offset="1" stopColor={SYNQ_BRAND.navy} />
         </linearGradient>
-        <filter id={glowId} x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="0.8" result="blur" />
+        <filter id={glowId} x="-25%" y="-25%" width="150%" height="150%">
+          <feGaussianBlur stdDeviation="2.2" result="blur" />
           <feMerge>
             <feMergeNode in="blur" />
             <feMergeNode in="SourceGraphic" />
@@ -45,42 +46,58 @@ export function SynqIcon({ size = 32, className }: Props) {
       </defs>
 
       <path
-        d="M24 5.5 39.9 14.75V33.25L24 42.5 8.1 33.25V14.75L24 5.5Z"
+        d="M50 8 84.64 28V72L50 92 15.36 72V28L50 8Z"
         stroke={`url(#${strokeId})`}
-        strokeWidth="1.5"
+        strokeWidth="3"
         filter={`url(#${glowId})`}
       />
       <path
-        d="M24 9 36.2 16.05V29.95L24 37 11.8 29.95V16.05L24 9Z"
+        d="M50 16 76.16 31.1V68.9L50 84 23.84 68.9V31.1L50 16Z"
         fill={`url(#${fillId})`}
-        stroke="#00F2FF"
-        strokeOpacity="0.35"
-        strokeWidth="0.75"
+        stroke={SYNQ_BRAND.cyan}
+        strokeOpacity="0.28"
+        strokeWidth="1.2"
+      />
+
+      <circle cx="50" cy="54" r="3.2" stroke={SYNQ_BRAND.cyan} strokeWidth="1.4" fill="none" />
+      <circle cx="32" cy="38" r="3.4" fill={SYNQ_BRAND.cyan} />
+      <circle cx="28" cy="58" r="3.4" fill={SYNQ_BRAND.cyan} />
+      <circle cx="38" cy="72" r="3.4" fill={SYNQ_BRAND.cyan} />
+      <circle cx="66" cy="42" r="3.4" fill={SYNQ_BRAND.cyan} />
+      <circle cx="70" cy="64" r="3.4" fill={SYNQ_BRAND.cyan} />
+
+      <path d="M50 54 32 38" stroke={SYNQ_BRAND.cyan} strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M50 54 28 58" stroke={SYNQ_BRAND.cyan} strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M50 54 66 42" stroke={SYNQ_BRAND.cyan} strokeWidth="1.6" strokeLinecap="round" />
+
+      <path
+        d="M32 38 28 58"
+        stroke={SYNQ_BRAND.cyan}
+        strokeWidth="1.2"
+        strokeDasharray="3 2.5"
+        strokeOpacity="0.9"
       />
       <path
-        d="M15.5 17.5 15.5 30.5 31.5 24Z"
-        stroke="#FFFFFF"
-        strokeWidth="1.35"
-        strokeLinejoin="round"
+        d="M28 58 38 72"
+        stroke={SYNQ_BRAND.cyan}
+        strokeWidth="1.2"
+        strokeDasharray="3 2.5"
+        strokeOpacity="0.9"
       />
+
       <path
-        d="M15.5 17.5 31.5 24"
-        stroke="#00F2FF"
-        strokeWidth="1"
-        strokeDasharray="2.5 2"
-        strokeOpacity="0.85"
+        d="M38 72 Q52 58 70 64"
+        stroke={SYNQ_BRAND.cyan}
+        strokeWidth="1.3"
+        fill="none"
+        strokeLinecap="round"
       />
-      <path
-        d="M15.5 30.5 31.5 24"
-        stroke="#00F2FF"
-        strokeWidth="1"
-        strokeDasharray="2.5 2"
-        strokeOpacity="0.85"
-      />
-      <circle cx="15.5" cy="17.5" r="2.1" fill="#FFFFFF" />
-      <circle cx="15.5" cy="30.5" r="2.1" fill="#FFFFFF" />
-      <circle cx="31.5" cy="24" r="2.35" fill="#00F2FF" />
-      <path d="M14.2 17.5 14.2 19.3 16.1 18.4Z" fill="#00F2FF" />
+
+      <g stroke={SYNQ_BRAND.cyan} strokeWidth="1.3" strokeLinecap="round">
+        <path d="M72 34 l3.5 3.5M75.5 34 l-3.5 3.5" />
+        <path d="M24 74 l3 3M27 74 l-3 3" />
+      </g>
+      <circle cx="74" cy="70" r="2.6" stroke={SYNQ_BRAND.cyan} strokeWidth="1.3" fill="none" />
     </svg>
   );
 }

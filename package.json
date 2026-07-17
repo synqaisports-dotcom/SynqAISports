@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "brand:export": "node scripts/export-brand-png.mjs",
     "supabase:bundle": "node scripts/bundle-supabase-migrations.mjs"
   },
   "dependencies": {

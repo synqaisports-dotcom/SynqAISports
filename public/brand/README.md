@@ -1,35 +1,51 @@
-# SynqAI Brand Assets
+# SynqAI — Identidad corporativa
 
-Recursos generados a partir del logo SYNQAI (hexágono táctico + wordmark).
+Imagen de marca unificada: hexágono táctico cyan, wordmark **SYNQ** + **AI**, tagline *CLUB & TACTICS PLATFORM*.
 
-## SVG (recomendado para la app)
+Tipografía de marca: **Exo 2** (geométrica, deportiva, tech).
+
+## Colores
+
+| Token | Hex |
+|-------|-----|
+| Cyan principal | `#00E5FF` |
+| Cyan suave | `#66F7FF` |
+| Navy fondo | `#050A14` |
+| Navy claro | `#0A1522` |
+| Texto | `#FFFFFF` |
+| Muted | `#94A3B8` |
+
+## SVG (vector, editables)
 
 | Archivo | Uso |
 |---------|-----|
-| `synqai-icon.svg` | Sidebar, favicon, botones, avatares de marca |
-| `synqai-logo-horizontal.svg` | Cabecera pública, navbar, documentos |
-| `synqai-logo-stacked.svg` | Splash, login, marketing, redes |
-| `synqai-wordmark.svg` | Solo texto cuando el icono va aparte |
+| `synqai-icon.svg` | Favicon, sidebar, app icon |
+| `synqai-logo-horizontal.svg` | Cabecera, documentos anchos |
+| `synqai-logo-stacked.svg` | Login, hero, redes, presentaciones |
+| `synqai-wordmark.svg` | Solo logotipo textual |
 
-## Raster
+## PNG (exportados, listos para descargar)
 
-| Archivo | Uso |
-|---------|-----|
-| `synqai-logo-marketing.png` | Previews, Open Graph, presentaciones |
+Generar/actualizar: `npm run brand:export`
 
-## Componente React
+| Archivo | Tamaño |
+|---------|--------|
+| `png/synqai-icon-512.png` | 512×512 |
+| `png/synqai-icon-192.png` | 192×192 |
+| `png/synqai-icon-128.png` | 128×128 |
+| `png/synqai-icon-64.png` | 64×64 |
+| `png/synqai-icon-32.png` | 32×32 |
+| `png/synqai-logo-stacked-1200.png` | 1200×1400 |
+| `png/synqai-logo-stacked-800.png` | 800×933 |
+| `png/synqai-logo-horizontal-1200.png` | 1200×252 (transparente) |
+| `png/synqai-logo-horizontal-600.png` | 600×126 (transparente) |
+| `png/synqai-wordmark-800.png` | 800×160 (transparente) |
+| `synqai-logo-marketing.png` | 1024×1024 Open Graph |
+
+## Componentes React
 
 ```tsx
-import { SynqBrand } from '@/components/brand/SynqBrand';
-
-<SynqBrand variant="icon" width={36} />
-<SynqBrand variant="horizontal" width={200} />
+import { SynqIcon } from '@/components/brand/SynqIcon';
+import { SynqWordmark } from '@/components/brand/SynqWordmark';
+import { SynqBrandLockup } from '@/components/brand/SynqBrandLockup';
 ```
-
-## Colores de marca
-
-- Cyan principal: `#00F2FF`
-- Cyan suave: `#66F7FF`
-- Fondo navy: `#050D14` / `#0B111B`
-- Texto: `#FFFFFF`
-- Tagline: `#94A3B8`
