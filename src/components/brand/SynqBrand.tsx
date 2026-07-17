@@ -1,10 +1,8 @@
-import Image from 'next/image';
 import { cn } from '@/lib/utils';
 
-export type SynqBrandVariant = 'icon' | 'horizontal' | 'stacked' | 'wordmark';
+export type SynqBrandVariant = 'horizontal' | 'stacked' | 'wordmark';
 
 const ASSETS: Record<SynqBrandVariant, { src: string; width: number; height: number; alt: string }> = {
-  icon: { src: '/brand/synqai-icon.svg', width: 48, height: 48, alt: 'SynqAI' },
   horizontal: {
     src: '/brand/synqai-logo-horizontal.svg',
     width: 280,
@@ -26,26 +24,26 @@ const ASSETS: Record<SynqBrandVariant, { src: string; width: number; height: num
 };
 
 type Props = {
-  variant?: SynqBrandVariant;
+  variant: SynqBrandVariant;
   className?: string;
-  /** Ancho en px; la altura se calcula por proporción del asset. */
   width?: number;
-  priority?: boolean;
 };
 
-export function SynqBrand({ variant = 'icon', className, width, priority }: Props) {
+/** Logos completos en SVG estático (marketing, documentos). Para UI usar SynqIcon + SynqWordmark. */
+export function SynqBrand({ variant, className, width }: Props) {
   const asset = ASSETS[variant];
   const renderWidth = width ?? asset.width;
   const renderHeight = Math.round((renderWidth / asset.width) * asset.height);
 
   return (
-    <Image
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
       src={asset.src}
       alt={asset.alt}
       width={renderWidth}
       height={renderHeight}
-      className={cn('h-auto w-auto shrink-0', className)}
-      priority={priority}
+      className={cn('h-auto max-w-full shrink-0', className)}
+      decoding="async"
     />
   );
 }

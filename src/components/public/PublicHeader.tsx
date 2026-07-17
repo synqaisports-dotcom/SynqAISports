@@ -30,17 +30,16 @@ export function PublicHeader({
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/5 synq-glass">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
-        <Link href="/" className="min-w-0 shrink">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3.5">
+        <Link href="/" className="min-w-0 shrink-0">
           <SynqBrandLockup
             layout="horizontal"
             iconSize={40}
+            wordmarkSize="lg"
             showTagline
             showSportsSuffix
-            priority
-            className="hidden sm:flex"
+            className="items-center"
           />
-          <SynqBrandLockup layout="horizontal" iconSize={36} showSportsSuffix priority className="sm:hidden" />
         </Link>
         <div className="flex items-center gap-3">
           <Link href={portalHref} className="synq-btn-primary shrink-0 !px-4 !py-2">

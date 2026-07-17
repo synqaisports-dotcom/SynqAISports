@@ -31,16 +31,18 @@ export function SynqWordmark({
 }: Props) {
   return (
     <div className={cn('min-w-0', className)}>
-      <p className={cn('synq-brand-wordmark leading-none', wordmarkSize[size])}>
+      <p className={cn('synq-brand-wordmark leading-tight', wordmarkSize[size])}>
         <span className="text-white">SYNQ</span>
         <span className="text-synq-cyan">AI</span>
         {showSportsSuffix ? (
-          <span className="ml-2 font-semibold normal-case tracking-normal text-white/75 text-[0.72em]">
+          <span className="ml-1.5 align-baseline font-semibold normal-case tracking-normal text-white/80 text-[0.65em]">
             Sports
           </span>
         ) : null}
       </p>
-      {showTagline ? <p className="synq-brand-tagline mt-1.5">{tagline}</p> : null}
+      {showTagline ? (
+        <p className="synq-brand-tagline mt-1 leading-tight max-sm:hidden">{tagline}</p>
+      ) : null}
       {subtitle ? (
         <p className={cn('mt-1 truncate text-[11px] font-medium tracking-wide text-muted-foreground', subtitleClassName)}>
           {subtitle}

@@ -61,16 +61,17 @@ body {
 
   .synq-brand-wordmark {
     font-weight: 700;
-    letter-spacing: var(--synq-brand-tracking);
+    letter-spacing: 0.1em;
     text-transform: uppercase;
   }
 
   .synq-brand-tagline {
-    font-size: 0.625rem;
+    font-size: 0.5625rem;
     font-weight: 600;
-    letter-spacing: var(--synq-tagline-tracking);
+    letter-spacing: 0.22em;
     text-transform: uppercase;
     color: var(--synq-muted);
+    line-height: 1.3;
   }
 
   .synq-brand-label {

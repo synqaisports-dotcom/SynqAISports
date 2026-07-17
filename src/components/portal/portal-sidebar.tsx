@@ -37,28 +37,28 @@ function SidebarBrand({ clubName, expanded }: { clubName: string; expanded: bool
   return (
     <div
       className={cn(
-        'portal-sidebar-brand flex h-[4.25rem] shrink-0 items-center',
-        expanded ? 'px-3' : 'justify-center px-0'
+        'portal-sidebar-brand flex shrink-0 items-center',
+        expanded ? 'h-[4.5rem] px-3' : 'h-14 justify-center px-0'
       )}
     >
       <Link
         href="/portal"
         className={cn(
-          'flex items-center rounded-xl text-sidebar-foreground transition-colors hover:bg-white/[0.04]',
-          expanded ? 'w-full gap-3 px-2 py-2' : 'size-10 justify-center'
+          'rounded-xl text-sidebar-foreground transition-colors hover:bg-white/[0.04]',
+          expanded ? 'flex w-full min-w-0 items-center gap-2.5 px-2 py-2' : 'flex size-10 items-center justify-center'
         )}
+        title="SynqAI Sports"
       >
         {expanded ? (
           <SynqBrandLockup
             layout="horizontal"
-            iconSize={36}
-            showSportsSuffix
+            iconSize={34}
+            wordmarkSize="sm"
             subtitle={clubName}
             subtitleClassName="text-sidebar-foreground/55"
-            priority
           />
         ) : (
-          <SynqBrandLockup layout="icon-only" iconSize={36} priority />
+          <SynqBrandLockup layout="icon-only" iconSize={30} />
         )}
       </Link>
     </div>
