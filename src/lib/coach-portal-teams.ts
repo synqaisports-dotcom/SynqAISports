@@ -149,7 +149,12 @@ export function coachPortalRoleLabel(role: string): string {
   return ACCESS_PROFILE_LABELS[profile] ?? role;
 }
 
-export function groupTeamsByCategory(teams: CoachPortalTeam[]): { category: string; teams: CoachPortalTeam[] }[] {
+export function groupTeamsByCategory(teams: CoachPortalTeam[]): {
+  categorySlug: CanteraCategorySlug;
+  category: string;
+  ages: string;
+  teams: CoachPortalTeam[];
+}[] {
   const groups = new Map<CanteraCategorySlug, CoachPortalTeam[]>();
   for (const category of CANTERA_CATEGORIES) {
     groups.set(category.slug, []);
@@ -174,7 +179,9 @@ export function groupTeamsByCategory(teams: CoachPortalTeam[]): { category: stri
   }
 
   return CANTERA_CATEGORIES.map((category) => ({
+    categorySlug: category.slug,
     category: category.name,
+    ages: category.ages,
     teams: groups.get(category.slug) ?? [],
   })).filter((group) => group.teams.length > 0);
 }

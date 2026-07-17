@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Instrument+Serif:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -13,6 +13,8 @@
   --synq-pitch: #00d4ee;
   --synq-muted: #94a3b8;
   --synq-glow: rgba(0, 242, 255, 0.4);
+  --synq-brand-tracking: 0.14em;
+  --synq-tagline-tracking: 0.28em;
   /* Primary 183 100% 50% → dos tonos más oscuro para scrollbars */
   --synq-scrollbar-thumb: 183 88% 34%;
   --synq-scrollbar-thumb-hover: 183 92% 40%;
@@ -23,10 +25,13 @@ body {
   font-family: 'DM Sans', system-ui, sans-serif;
   background: var(--synq-navy);
   color: #e8edf4;
+  font-feature-settings: 'ss01' on, 'cv11' on;
 }
 
 .font-serif-display {
-  font-family: 'Instrument Serif', Georgia, serif;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 @layer utilities {
@@ -51,7 +56,29 @@ body {
   }
 
   .synq-gradient-text {
-    @apply bg-gradient-to-r from-white via-synq-electric to-synq-cyan bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-white via-synq-electric to-synq-cyan bg-clip-text font-bold tracking-tight text-transparent;
+  }
+
+  .synq-brand-wordmark {
+    font-weight: 700;
+    letter-spacing: var(--synq-brand-tracking);
+    text-transform: uppercase;
+  }
+
+  .synq-brand-tagline {
+    font-size: 0.625rem;
+    font-weight: 600;
+    letter-spacing: var(--synq-tagline-tracking);
+    text-transform: uppercase;
+    color: var(--synq-muted);
+  }
+
+  .synq-brand-label {
+    font-size: 0.625rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--synq-accent);
   }
 
   .synq-btn-primary {
@@ -89,10 +116,8 @@ body {
   }
 
   .portal-sidebar-logo {
-    background: linear-gradient(145deg, hsl(183 100% 55%) 0%, hsl(183 90% 38%) 100%);
-    box-shadow:
-      0 0 0 1px hsl(183 100% 70% / 0.35),
-      0 4px 16px hsl(183 100% 50% / 0.28);
+    background: transparent;
+    box-shadow: none;
   }
 
   .portal-sidebar-group-label {

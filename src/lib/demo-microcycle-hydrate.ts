@@ -17,6 +17,19 @@ import {
   type DemoMicrocycleRecord,
 } from '@/lib/demo-microcycles-store';
 
+function removeDemoMicrocycle(id: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const raw = window.localStorage.getItem('synq-demo-microcycles');
+    if (!raw) return;
+    const store = JSON.parse(raw) as Record<string, DemoMicrocycleRecord>;
+    delete store[id];
+    window.localStorage.setItem('synq-demo-microcycles', JSON.stringify(store));
+  } catch {
+    // ignore
+  }
+}
+
 export function parseDemoTemplateMicrocycleId(
   id: string
 ): { mccId: string; variantId: string } | null {
@@ -84,6 +97,46 @@ function findContextForMicrocycleId(microcycleId: string): LinkContext | null {
   return null;
 }
 
+function findVariantIdForTeam(
+  document: CategoryPeriodizationDocument,
+  teamId: string
+): string | null {
+  return document.variants.find((variant) => variant.teamIds.includes(teamId))?.id ?? null;
+}
+
+function findContextByTeamMcc(teamId: string, mccId: string): LinkContext | null {
+  for (const category of CANTERA_CATEGORIES) {
+    const document = loadDocumentFromStorage(category.slug);
+    if (!document) continue;
+
+    const variantId = findVariantIdForTeam(document, teamId);
+    if (!variantId) continue;
+
+    const state = getVariantState(document, variantId);
+    const instance = state.teamInstances[teamId]?.[mccId];
+    if (instance?.microcycleId) {
+      return {
+        document,
+        variantId,
+        mccId,
+        teamId,
+        templateMicrocycleId: instance.templateMicrocycleId,
+      };
+    }
+
+    const link = state.mccLinks[mccId];
+    if (link) {
+      return { document, variantId, mccId, teamId };
+    }
+
+    const plan = buildPlanForVariant(document, variantId);
+    if (plan && findMccInPlan(plan, mccId)) {
+      return { document, variantId, mccId, teamId };
+    }
+  }
+  return null;
+}
+
 function findContextByMccVariant(mccId: string, variantId: string): LinkContext | null {
   for (const category of CANTERA_CATEGORIES) {
     const document = loadDocumentFromStorage(category.slug);
@@ -140,8 +193,20 @@ function buildDemoFromContext(
 }
 
 export function hydrateDemoMicrocycle(microcycleId: string): DemoMicrocycleRecord | null {
+  const teamParsed = parseDemoTeamMicrocycleId(microcycleId);
   const existing = loadDemoMicrocycle(microcycleId);
-  if (existing) return existing;
+
+  if (existing && teamParsed) {
+    const teamContext = findContextByTeamMcc(teamParsed.teamId, teamParsed.mccId);
+    const variant = teamContext ? getVariant(teamContext.document, teamContext.variantId) : null;
+    if (variant && existing.sessions_per_micro !== variant.sessionsPerMicro) {
+      removeDemoMicrocycle(microcycleId);
+    } else {
+      return existing;
+    }
+  } else if (existing) {
+    return existing;
+  }
 
   let context = findContextForMicrocycleId(microcycleId);
 
@@ -150,7 +215,6 @@ export function hydrateDemoMicrocycle(microcycleId: string): DemoMicrocycleRecor
     context = findContextByMccVariant(templateParsed.mccId, templateParsed.variantId);
   }
 
-  const teamParsed = parseDemoTeamMicrocycleId(microcycleId);
   if (!context && teamParsed) {
     for (const category of CANTERA_CATEGORIES) {
       const document = loadDocumentFromStorage(category.slug);
@@ -173,12 +237,7 @@ export function hydrateDemoMicrocycle(microcycleId: string): DemoMicrocycleRecor
       if (context) break;
     }
     if (!context) {
-      const templateContext =
-        findContextByMccVariant(teamParsed.mccId, 'variant-3') ??
-        findContextByMccVariant(teamParsed.mccId, 'variant-2');
-      if (templateContext) {
-        context = { ...templateContext, teamId: teamParsed.teamId };
-      }
+      context = findContextByTeamMcc(teamParsed.teamId, teamParsed.mccId);
     }
   }
 

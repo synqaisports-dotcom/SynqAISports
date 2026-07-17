@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, Users } from 'lucide-react';
 import { CoachWeekSessionsPanel } from '@/components/portal/CoachWeekSessionsPanel';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { groupTeamsByCategory, type CoachPortalViewer } from '@/lib/coach-portal-teams';
+import type { CanteraCategorySlug } from '@/lib/cantera-categories';
 import type { CoachTeamContext } from '@/lib/coach-team-context';
 import { resolveCoachWeekContext } from '@/lib/coach-periodization-context';
 import { cn } from '@/lib/utils';
@@ -25,11 +26,41 @@ const teamCardClass = (active: boolean) =>
 
 export function CoachPortalView({ viewer, teamContexts }: Props) {
   const teams = viewer.teams;
-  const [teamId, setTeamId] = useState(teams[0]?.id ?? '');
-
-  const team = teams.find((item) => item.id === teamId) ?? teams[0];
-  const teamContext = team ? teamContexts[team.id] ?? null : null;
   const teamGroups = useMemo(() => groupTeamsByCategory(teams), [teams]);
+  const [activeCategorySlug, setActiveCategorySlug] = useState<CanteraCategorySlug | null>(
+    () => groupTeamsByCategory(teams)[0]?.categorySlug ?? null
+  );
+  const [teamId, setTeamId] = useState(() => teams[0]?.id ?? '');
+
+  const activeGroup =
+    teamGroups.find((group) => group.categorySlug === activeCategorySlug) ?? teamGroups[0] ?? null;
+  const visibleTeams = activeGroup?.teams ?? teams;
+
+  useEffect(() => {
+    if (teams.length === 0) {
+      setTeamId('');
+      setActiveCategorySlug(null);
+      return;
+    }
+    if (!teams.some((item) => item.id === teamId)) {
+      const first = teams[0];
+      setTeamId(first.id);
+      const group = teamGroups.find((item) => item.teams.some((team) => team.id === first.id));
+      setActiveCategorySlug(group?.categorySlug ?? teamGroups[0]?.categorySlug ?? null);
+    }
+  }, [teams, teamGroups, teamId]);
+
+  const handleCategoryChange = (slug: CanteraCategorySlug) => {
+    setActiveCategorySlug(slug);
+    const group = teamGroups.find((item) => item.categorySlug === slug);
+    if (!group) return;
+    if (!group.teams.some((item) => item.id === teamId)) {
+      setTeamId(group.teams[0]?.id ?? '');
+    }
+  };
+
+  const team = teams.find((item) => item.id === teamId) ?? visibleTeams[0];
+  const teamContext = team ? teamContexts[team.id] ?? null : null;
 
   const weekContext = useMemo(() => {
     if (!team) return null;
@@ -45,6 +76,7 @@ export function CoachPortalView({ viewer, teamContexts }: Props) {
               <Users className="size-4 text-primary" />
               <CardTitle className="text-base">Mis equipos</CardTitle>
             </div>
+            <CardDescription className="text-xs">{viewer.viewModeLabel}</CardDescription>
           </CardHeader>
           <CardContent className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4 pt-0">
             {teams.length === 0 ? (
@@ -52,26 +84,49 @@ export function CoachPortalView({ viewer, teamContexts }: Props) {
                 No tienes equipos asignados.
               </p>
             ) : (
-              teamGroups.map((group) => (
-                <div key={group.category}>
-                  <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
-                    {group.category}
-                  </p>
-                  <div className="grid grid-cols-3 gap-1.5">
-                    {group.teams.map((item) => (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => setTeamId(item.id)}
-                        className={teamCardClass(team?.id === item.id)}
-                        title={item.name}
-                      >
-                        <span className="block truncate">{item.name}</span>
-                      </button>
-                    ))}
+              <>
+                {teamGroups.length > 1 ? (
+                  <div className="overflow-x-auto pb-1">
+                    <div className="flex min-w-max gap-1 rounded-xl border border-primary/20 bg-muted/5 p-1">
+                      {teamGroups.map((group) => {
+                        const active = group.categorySlug === activeCategorySlug;
+                        return (
+                          <button
+                            key={group.categorySlug}
+                            type="button"
+                            onClick={() => handleCategoryChange(group.categorySlug)}
+                            className={cn(
+                              'rounded-lg px-3 py-2 text-left transition-colors',
+                              active
+                                ? 'bg-primary/15 text-primary shadow-[inset_0_0_0_1px_hsl(183_100%_50%_/_0.35)]'
+                                : 'text-muted-foreground hover:bg-primary/5 hover:text-foreground'
+                            )}
+                          >
+                            <p className="text-sm font-semibold">{group.category}</p>
+                            <p className="text-[10px] text-muted-foreground">
+                              {group.teams.length} equipo{group.teams.length === 1 ? '' : 's'} · {group.ages}
+                            </p>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
+                ) : null}
+
+                <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                  {visibleTeams.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setTeamId(item.id)}
+                      className={teamCardClass(team?.id === item.id)}
+                      title={item.name}
+                    >
+                      <span className="block truncate">{item.name}</span>
+                    </button>
+                  ))}
                 </div>
-              ))
+              </>
             )}
           </CardContent>
         </Card>

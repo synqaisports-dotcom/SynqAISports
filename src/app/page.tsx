@@ -69,11 +69,11 @@ export default async function SynqHomePage() {
           <div className="relative mx-auto max-w-6xl px-6 py-16 md:py-24">
             <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
               <div>
-                <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-synq-accent/30 bg-synq-accent/10 px-3 py-1 text-xs font-semibold tracking-widest text-synq-accent uppercase">
+                <p className="synq-brand-label mb-4 inline-flex items-center gap-2 rounded-full border border-synq-accent/30 bg-synq-accent/10 px-3 py-1">
                   <Zap className="h-3.5 w-3.5" />
                   {dict.hero.tag}
                 </p>
-                <h1 className="font-serif-display text-4xl leading-[1.1] md:text-6xl">
+                <h1 className="font-serif-display text-4xl leading-[1.08] md:text-6xl">
                   <span className="synq-gradient-text">{dict.hero.title}</span>
                 </h1>
                 <p className="mt-6 max-w-xl text-lg text-synq-muted leading-relaxed">{dict.hero.body}</p>
@@ -226,7 +226,7 @@ export default async function SynqHomePage() {
       </main>
 
       <footer className="border-t border-white/5 py-8 text-center text-xs text-synq-muted">
-        © {new Date().getFullYear()} SynqAI Sports · Nexus Labs
+        © {new Date().getFullYear()} SynqAI · Club & Tactics Platform
       </footer>
     </div>
   );
