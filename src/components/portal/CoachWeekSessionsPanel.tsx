@@ -18,6 +18,7 @@ import {
 } from '@/lib/coach-periodization-context';
 import type { CoachTeamContext } from '@/lib/coach-team-context';
 import { computeCoachSessionStats } from '@/lib/coach-team-context';
+import { coachSessionLabels } from '@/lib/coach-session-labels';
 import { exerciseDurationsForSession } from '@/lib/coach-session-metrics';
 import type { CoachPortalTeam } from '@/lib/coach-portal-teams';
 import type { MicrocycleWeek } from '@/lib/periodization';
@@ -57,12 +58,13 @@ const sessionButtonClass = (active: boolean) =>
 export function CoachWeekSessionsPanel({ team, weekContext, teamContext }: Props) {
   const sessions = useMemo<SessionItem[]>(() => {
     const count = weekContext.variant.sessionsPerMicro;
+    const labels = coachSessionLabels(teamContext?.trainingDays, count);
     return Array.from({ length: count }, (_, index) => ({
       id: `session-${index + 1}`,
-      label: `Sesión ${index + 1}`,
+      label: labels[index] ?? `Sesión ${index + 1}`,
       index: index + 1,
     }));
-  }, [weekContext.variant.sessionsPerMicro]);
+  }, [weekContext.variant.sessionsPerMicro, teamContext?.trainingDays]);
 
   const [selectedSessionId, setSelectedSessionId] = useState(sessions[0]?.id ?? '');
   const [requestingChange, setRequestingChange] = useState(false);

@@ -14,6 +14,7 @@ export type CoachTeamContext = {
   facilityName: string | null;
   facilityAddress: string | null;
   trainingDivisionLabel: string | null;
+  trainingDays: string;
   trainingDaysLabel: string;
   trainingTimeLabel: string;
   trainingStart: string;
@@ -56,6 +57,7 @@ function demoContextForTeam(teamId: string, facilities: ClubFacility[]): CoachTe
     trainingDivisionLabel: setup.training_division
       ? TRAINING_DIVISION_LABELS[setup.training_division]
       : null,
+    trainingDays: setup.training_days,
     trainingDaysLabel: days === '—' ? 'Sin días asignados' : days,
     trainingTimeLabel: time === '—' ? 'Sin horario' : time,
     trainingStart: setup.training_start,
@@ -118,6 +120,7 @@ export async function loadCoachTeamContexts(
       trainingDivisionLabel: setup.training_division
         ? TRAINING_DIVISION_LABELS[setup.training_division]
         : null,
+      trainingDays: setup.training_days,
       trainingDaysLabel: days === '—' ? 'Sin días asignados' : days,
       trainingTimeLabel: time === '—' ? 'Sin horario' : time,
       trainingStart: setup.training_start,

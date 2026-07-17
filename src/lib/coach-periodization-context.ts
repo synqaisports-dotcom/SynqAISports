@@ -1,4 +1,6 @@
 import { getCanteraCategory, type CanteraCategorySlug } from '@/lib/cantera-categories';
+import { ensureDemoCoachPeriodization, restoreDemoTeamVariantAssignments } from '@/lib/demo-periodization-seed';
+import { isDemoClient } from '@/lib/periodization-client';
 import { findMccInPlan, type PeriodizationPlan } from '@/lib/periodization';
 import { demoTeamMicrocycleId } from '@/lib/periodization-client';
 import { applyPlanExclusions, findCurrentMccId } from '@/lib/periodization-plan-utils';
@@ -83,6 +85,23 @@ function ensureTeamInVariant(
   };
 }
 
+function seedDemoCoachDocument(
+  document: CategoryPeriodizationDocument,
+  categoryName: string,
+  team: CoachTeamRef
+): { document: CategoryPeriodizationDocument; changed: boolean } {
+  const defaults = defaultCategoryDocument(document.categorySlug, categoryName);
+  const restored = restoreDemoTeamVariantAssignments(document, defaults);
+  let next = restored.document;
+  let changed = restored.changed;
+
+  const seeded = ensureDemoCoachPeriodization(next, { [team.id]: team.name });
+  next = seeded.document;
+  if (seeded.changed) changed = true;
+
+  return { document: next, changed };
+}
+
 /** Carga o crea el documento de ciclos y resuelve la semana visible para la vista entrenador. */
 export function resolveCoachWeekContext(team: CoachTeamRef): CoachWeekContext | null {
   if (!team.category_slug) return null;
@@ -96,6 +115,12 @@ export function resolveCoachWeekContext(team: CoachTeamRef): CoachWeekContext | 
   if (!document) {
     document = defaultCategoryDocument(team.category_slug, category.name);
     seededDocument = true;
+  }
+
+  if (isDemoClient()) {
+    const demoSeed = seedDemoCoachDocument(document, category.name, team);
+    document = demoSeed.document;
+    if (demoSeed.changed) seededDocument = true;
   }
 
   const assigned = ensureTeamInVariant(document, team.id);
