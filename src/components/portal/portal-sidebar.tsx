@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Shield } from 'lucide-react';
+import { SynqBrandLockup } from '@/components/brand/SynqBrandLockup';
 import { portalNavGroups } from '@/config/portal-nav';
 import { PortalNavMenu } from '@/components/portal/PortalNavMenu';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -48,17 +48,18 @@ function SidebarBrand({ clubName, expanded }: { clubName: string; expanded: bool
           expanded ? 'w-full gap-3 px-2 py-2' : 'size-10 justify-center'
         )}
       >
-        <div className="portal-sidebar-logo flex size-9 shrink-0 items-center justify-center rounded-xl text-primary-foreground">
-          <Shield className="size-4" strokeWidth={2.25} />
-        </div>
         {expanded ? (
-          <div className="min-w-0 flex-1 overflow-hidden">
-            <p className="truncate text-sm font-semibold leading-tight tracking-tight text-white">
-              SynqAI Sports
-            </p>
-            <p className="truncate text-[11px] text-sidebar-foreground/55">{clubName}</p>
-          </div>
-        ) : null}
+          <SynqBrandLockup
+            layout="horizontal"
+            iconSize={36}
+            showSportsSuffix
+            subtitle={clubName}
+            subtitleClassName="text-sidebar-foreground/55"
+            priority
+          />
+        ) : (
+          <SynqBrandLockup layout="icon-only" iconSize={36} priority />
+        )}
       </Link>
     </div>
   );

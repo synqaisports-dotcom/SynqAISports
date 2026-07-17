@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" role="img" aria-label="SynqAI">
+  <defs>
+    <linearGradient id="synq-hex-stroke" x1="8" y1="6" x2="40" y2="42" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#66F7FF"/>
+      <stop offset="1" stop-color="#00F2FF"/>
+    </linearGradient>
+    <linearGradient id="synq-hex-fill" x1="24" y1="8" x2="24" y2="40" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0C1824"/>
+      <stop offset="1" stop-color="#050D14"/>
+    </linearGradient>
+    <filter id="synq-glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="1.2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Hexágono exterior -->
+  <path
+    d="M24 5.5 39.9 14.75V33.25L24 42.5 8.1 33.25V14.75L24 5.5Z"
+    stroke="url(#synq-hex-stroke)"
+    stroke-width="1.5"
+    filter="url(#synq-glow)"
+  />
+  <!-- Hexágono interior -->
+  <path
+    d="M24 9 36.2 16.05V29.95L24 37 11.8 29.95V16.05L24 9Z"
+    fill="url(#synq-hex-fill)"
+    stroke="#00F2FF"
+    stroke-opacity="0.35"
+    stroke-width="0.75"
+  />
+
+  <!-- Red táctica / play -->
+  <path d="M15.5 17.5 15.5 30.5 31.5 24Z" stroke="#FFFFFF" stroke-width="1.35" stroke-linejoin="round"/>
+  <path d="M15.5 17.5 31.5 24" stroke="#00F2FF" stroke-width="1" stroke-dasharray="2.5 2" stroke-opacity="0.85"/>
+  <path d="M15.5 30.5 31.5 24" stroke="#00F2FF" stroke-width="1" stroke-dasharray="2.5 2" stroke-opacity="0.85"/>
+  <path d="M15.5 17.5 11.5 14.5" stroke="#00F2FF" stroke-width="0.9" stroke-dasharray="2 2" stroke-opacity="0.7"/>
+  <path d="M15.5 30.5 11.5 33.5" stroke="#00F2FF" stroke-width="0.9" stroke-dasharray="2 2" stroke-opacity="0.7"/>
+  <path d="M31.5 24 35.5 24" stroke="#00F2FF" stroke-width="0.9" stroke-dasharray="2 2" stroke-opacity="0.7"/>
+
+  <!-- Nodos -->
+  <circle cx="15.5" cy="17.5" r="2.1" fill="#FFFFFF"/>
+  <circle cx="15.5" cy="30.5" r="2.1" fill="#FFFFFF"/>
+  <circle cx="31.5" cy="24" r="2.35" fill="#00F2FF"/>
+
+  <!-- Mini play en nodo izquierdo -->
+  <path d="M14.2 17.5 14.2 19.3 16.1 18.4Z" fill="#00F2FF"/>
+</svg>

@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { LogIn, Sparkles } from 'lucide-react';
+import { LogIn } from 'lucide-react';
+import { SynqBrandLockup } from '@/components/brand/SynqBrandLockup';
 import type { Dictionary, Locale } from '@/lib/i18n/dictionaries';
 import { DEMO_ENTRY_PATH } from '@/lib/demo-constants';
 
@@ -30,15 +31,17 @@ export function PublicHeader({
   return (
     <header className="sticky top-0 z-50 border-b border-white/5 synq-glass">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
-        <div>
-          <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.25em] text-synq-muted">
-            <Sparkles className="h-3 w-3 text-synq-accent" />
-            Nexus Labs
-          </p>
-          <Link href="/" className="text-lg font-bold text-white">
-            SynqAI Sports
-          </Link>
-        </div>
+        <Link href="/" className="min-w-0 shrink">
+          <SynqBrandLockup
+            layout="horizontal"
+            iconSize={40}
+            showTagline
+            showSportsSuffix
+            priority
+            className="hidden sm:flex"
+          />
+          <SynqBrandLockup layout="horizontal" iconSize={36} showSportsSuffix priority className="sm:hidden" />
+        </Link>
         <div className="flex items-center gap-3">
           <Link href={portalHref} className="synq-btn-primary shrink-0 !px-4 !py-2">
             <LogIn className="h-4 w-4" />
