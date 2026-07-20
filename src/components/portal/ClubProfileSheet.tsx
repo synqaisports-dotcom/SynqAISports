@@ -1,5 +1,11 @@
 import type { ReactNode } from 'react';
 import type { ClubRow } from '@/lib/portal';
+import {
+  CLUB_PRACTICED_SPORT_LABELS,
+  PRACTICED_SPORT_DRAWING,
+  practicedSportsSummary,
+} from '@/lib/club-practiced-sports';
+import { Badge } from '@/components/ui/badge';
 import { ClubIdentityHero } from '@/components/portal/ClubIdentityHero';
 import { ClubSocialBar } from '@/components/portal/ClubSocialBar';
 import { Card, CardContent } from '@/components/ui/card';
@@ -61,6 +67,29 @@ export function ClubProfileSheet({ club, actions }: Props) {
               </div>
             ))}
           </div>
+        </div>
+
+        <Separator />
+
+        <div>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Deportes del club
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {club.practiced_sports.map((sport) => (
+              <Badge
+                key={sport}
+                variant={PRACTICED_SPORT_DRAWING[sport].boardReady ? 'secondary' : 'outline'}
+                className="text-[10px]"
+              >
+                {CLUB_PRACTICED_SPORT_LABELS[sport]}
+                {!PRACTICED_SPORT_DRAWING[sport].boardReady ? ' · pizarra próx.' : ''}
+              </Badge>
+            ))}
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {practicedSportsSummary(club.practiced_sports)}
+          </p>
         </div>
 
         <Separator />

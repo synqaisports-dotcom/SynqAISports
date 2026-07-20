@@ -22,8 +22,10 @@ export {
   isDemoRequest,
 } from '@/lib/demo-constants';
 
+import { type ClubPracticedSport, parsePracticedSports } from '@/lib/club-practiced-sports';
+
 const CLUB_SELECT =
-  'id, name, slug, country_code, address, phone, email, cover_url, logo_url, website_url, instagram_url, facebook_url, x_url, tiktok_url, youtube_url, organigrama_json, players_count, family_fee_annual_eur, synq_rate_per_user_eur, invite_code, is_founding, founding_until';
+  'id, name, slug, country_code, address, phone, email, cover_url, logo_url, website_url, instagram_url, facebook_url, x_url, tiktok_url, youtube_url, organigrama_json, players_count, family_fee_annual_eur, synq_rate_per_user_eur, invite_code, is_founding, founding_until, practiced_sports';
 
 export async function isDemoActive(): Promise<boolean> {
   if (isDemoModeEnv()) return true;
@@ -56,6 +58,7 @@ export function staticDemoStaffContext(): StaffContext {
       invite_code: 'DEMO2026',
       is_founding: true,
       founding_until: null,
+      practiced_sports: ['football', 'futsal'] as ClubPracticedSport[],
     },
     role: 'admin',
   };
@@ -104,7 +107,15 @@ export async function loadDemoStaffContext(
   supabase: SupabaseClient
 ): Promise<StaffContext> {
   const club = await resolveDemoClub(supabase);
-  return { club, role: 'admin' };
+  return {
+    club: {
+      ...(club as ClubRow),
+      practiced_sports: parsePracticedSports(
+        (club as { practiced_sports?: unknown }).practiced_sports
+      ),
+    },
+    role: 'admin',
+  };
 }
 
 export function isDemoMode(): boolean {

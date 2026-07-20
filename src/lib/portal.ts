@@ -1,4 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { ClubPracticedSport } from '@/lib/club-practiced-sports';
+import { parsePracticedSports } from '@/lib/club-practiced-sports';
 import { isDemoActive, loadDemoStaffContext } from '@/lib/demo';
 
 export type ClubRow = {
@@ -24,6 +26,7 @@ export type ClubRow = {
   invite_code: string | null;
   is_founding: boolean;
   founding_until: string | null;
+  practiced_sports: ClubPracticedSport[];
 };
 
 export type StaffContext = {
@@ -55,14 +58,20 @@ export async function getStaffContext(
   const { data: club, error: clubError } = await supabase
     .from('synq_clubs')
     .select(
-      'id, name, slug, country_code, address, phone, email, cover_url, logo_url, website_url, instagram_url, facebook_url, x_url, tiktok_url, youtube_url, organigrama_json, players_count, family_fee_annual_eur, synq_rate_per_user_eur, invite_code, is_founding, founding_until'
+      'id, name, slug, country_code, address, phone, email, cover_url, logo_url, website_url, instagram_url, facebook_url, x_url, tiktok_url, youtube_url, organigrama_json, players_count, family_fee_annual_eur, synq_rate_per_user_eur, invite_code, is_founding, founding_until, practiced_sports'
     )
     .eq('id', staff.club_id)
     .single();
 
   if (clubError || !club) return null;
 
-  return { club: club as ClubRow, role: staff.role };
+  return {
+    club: {
+      ...(club as ClubRow),
+      practiced_sports: parsePracticedSports((club as { practiced_sports?: unknown }).practiced_sports),
+    },
+    role: staff.role,
+  };
 }
 
 export async function countActivePlayers(

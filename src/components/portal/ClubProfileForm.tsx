@@ -1,9 +1,16 @@
 'use client';
 
+import { useState } from 'react';
 import { useFormState } from 'react-dom';
 import { updateClubProfile, type ClubProfileState } from '@/app/actions/club';
 import { ClubImageFields } from '@/components/portal/ClubImageFields';
+import { ClubSportsSelector } from '@/components/portal/ClubSportsSelector';
 import { CLUB_SOCIAL_FIELDS, CLUB_SOCIAL_FORM_NAMES } from '@/lib/club-social';
+import {
+  parsePracticedSports,
+  practicedSportsSummary,
+  type ClubPracticedSport,
+} from '@/lib/club-practiced-sports';
 import type { ClubRow } from '@/lib/portal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +23,9 @@ type Props = { club: ClubRow };
 export function ClubProfileForm({ club }: Props) {
   const bound = updateClubProfile.bind(null, club.id);
   const [state, action, pending] = useFormState(bound, initial);
+  const [practicedSports, setPracticedSports] = useState<ClubPracticedSport[]>(
+    parsePracticedSports(club.practiced_sports)
+  );
 
   return (
     <form action={action} className="w-full space-y-6">
@@ -57,6 +67,22 @@ export function ClubProfileForm({ club }: Props) {
             step="0.01"
             defaultValue={String(club.family_fee_annual_eur)}
           />
+        </CardContent>
+      </Card>
+
+      <Card className="w-full border border-primary/25">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-base">Deportes del club</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Indica qué deportes se practican en el club. Esto personaliza instalaciones,
+            metodología y, en el futuro, las pizarras tácticas con sus campos correspondientes.
+          </p>
+          <ClubSportsSelector values={practicedSports} onChange={setPracticedSports} />
+          <p className="text-xs text-muted-foreground">
+            Seleccionados: {practicedSportsSummary(practicedSports)}
+          </p>
         </CardContent>
       </Card>
 

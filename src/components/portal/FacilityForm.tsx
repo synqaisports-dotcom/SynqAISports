@@ -31,6 +31,10 @@ import { SynqSelect } from '@/components/portal/SynqSelect';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import {
+  facilitySportOptionsForClub,
+  type ClubPracticedSport,
+} from '@/lib/club-practiced-sports';
 import { cn } from '@/lib/utils';
 
 const initial: FacilityActionState = { ok: false };
@@ -42,9 +46,10 @@ function parseDays(value: string | undefined) {
 type Props = {
   facility?: ClubFacility | null;
   onSaved?: (facilityId: string) => void;
+  practicedSports?: ClubPracticedSport[];
 };
 
-export function FacilityForm({ facility, onSaved }: Props) {
+export function FacilityForm({ facility, practicedSports, onSaved }: Props) {
   const router = useRouter();
   const bound = facility
     ? updateFacility.bind(null, facility.id)
@@ -91,6 +96,10 @@ export function FacilityForm({ facility, onSaved }: Props) {
     String(facility?.advance_booking_days ?? bookingDefaults.advance_booking_days)
   );
 
+  const sportOptionsList = useMemo(
+    () => (practicedSports ? facilitySportOptionsForClub(practicedSports) : sportOptions()),
+    [practicedSports]
+  );
   const kindOptions = useMemo(() => facilityKindOptions(sport), [sport]);
   const surfaceOptions = useMemo(() => surfaceOptionsForKind(facilityKind), [facilityKind]);
   const showDivisionType = facilitySupportsDivisions(facilityKind);
@@ -239,7 +248,7 @@ export function FacilityForm({ facility, onSaved }: Props) {
             <SynqSelect
               value={sport}
               onChange={handleSportChange}
-              options={sportOptions()}
+              options={sportOptionsList}
               placeholder="Seleccionar deporte"
             />
           </div>

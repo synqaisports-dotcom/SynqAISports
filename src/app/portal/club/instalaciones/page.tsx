@@ -38,6 +38,7 @@ export default async function PortalClubInstalacionesLandingPage({ searchParams 
         facilities={facilities}
         trainingSlots={trainingSlots}
         reservations={reservations}
+        practicedSports={ctx.club.practiced_sports}
         initialFacilityId={initialFacilityId}
         initialCreateOpen={initialCreate === '1'}
         initialEditOpen={initialEdit === '1'}

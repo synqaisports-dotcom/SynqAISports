@@ -1,5 +1,6 @@
 'use server';
 
+import { parsePracticedSportsFromForm } from '@/lib/club-practiced-sports';
 import { isDemoActive } from '@/lib/demo';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
@@ -34,6 +35,7 @@ export async function updateClubProfile(
   const youtubeUrl = String(formData.get('youtubeUrl') ?? '').trim();
   const playersCount = parseInt(String(formData.get('playersCount') ?? '0'), 10);
   const familyFee = parseFloat(String(formData.get('familyFee') ?? '12'));
+  const practicedSports = parsePracticedSportsFromForm(formData);
 
   if (!name) return { ok: false, message: 'validation' };
 
@@ -54,6 +56,7 @@ export async function updateClubProfile(
       youtube_url: youtubeUrl || null,
       players_count: playersCount,
       family_fee_annual_eur: familyFee,
+      practiced_sports: practicedSports,
     })
     .eq('id', clubId);
 

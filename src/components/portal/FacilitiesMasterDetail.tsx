@@ -29,11 +29,14 @@ import {
   facilitySupportsDivisions,
   formatDivisionSchedule,
   formatFacilityAvailability,
-  sportOptions,
   type ClubFacility,
   type ClubSport,
 } from '@/lib/club-facilities';
 import type { FacilityReservation } from '@/lib/facility-reservations';
+import {
+  facilitySportOptionsForClub,
+  type ClubPracticedSport,
+} from '@/lib/club-practiced-sports';
 import { buildFacilityDivisionSchedule, type TeamTrainingSlot } from '@/lib/team-setup';
 import { cn } from '@/lib/utils';
 
@@ -47,6 +50,7 @@ type Props = {
   facilities: ClubFacility[];
   trainingSlots: TeamTrainingSlot[];
   reservations: FacilityReservation[];
+  practicedSports: ClubPracticedSport[];
   initialFacilityId?: string | null;
   initialCreateOpen?: boolean;
   initialEditOpen?: boolean;
@@ -88,12 +92,14 @@ function FacilityDetailPanel({
   facility,
   trainingSlots,
   reservations,
+  practicedSports,
   initialEditOpen,
   onEdit,
 }: {
   facility: ClubFacility | null;
   trainingSlots: TeamTrainingSlot[];
   reservations: FacilityReservation[];
+  practicedSports: ClubPracticedSport[];
   initialEditOpen?: boolean;
   onEdit: () => void;
 }) {
@@ -254,6 +260,7 @@ function FacilityDetailPanel({
           <div className="mt-4">
             <FacilityForm
               facility={facility}
+              practicedSports={practicedSports}
               onSaved={() => {
                 setEditOpen(false);
                 router.replace(`/portal/club/instalaciones?facility=${facility.id}`, {
@@ -273,6 +280,7 @@ export function FacilitiesMasterDetail({
   facilities,
   trainingSlots,
   reservations,
+  practicedSports,
   initialFacilityId,
   initialCreateOpen,
   initialEditOpen,
@@ -288,6 +296,11 @@ export function FacilitiesMasterDetail({
     initialFacilityId && facilities.some((facility) => facility.id === initialFacilityId)
       ? initialFacilityId
       : facilities[0]?.id ?? null
+  );
+
+  const sportFilterOptions = useMemo(
+    () => [{ value: 'all', label: 'Todos los ámbitos' }, ...facilitySportOptionsForClub(practicedSports)],
+    [practicedSports]
   );
 
   const filteredFacilities = useMemo(() => {
@@ -399,7 +412,7 @@ export function FacilitiesMasterDetail({
               <SynqSelect
                 value={sportFilter}
                 onChange={(value) => setSportFilter(value as SportFilter)}
-                options={[{ value: 'all', label: 'Todos los ámbitos' }, ...sportOptions()]}
+                options={sportFilterOptions}
                 placeholder="Deporte / ámbito"
               />
               <SynqSelect
@@ -496,6 +509,7 @@ export function FacilitiesMasterDetail({
         facility={selectedFacility}
         trainingSlots={trainingSlots}
         reservations={reservations}
+        practicedSports={practicedSports}
         initialEditOpen={initialEditOpen}
         onEdit={handleEditOpen}
       />
@@ -506,7 +520,7 @@ export function FacilitiesMasterDetail({
             <SheetTitle>Nueva instalación</SheetTitle>
           </SheetHeader>
           <div className="mt-4">
-            <FacilityForm onSaved={handleFacilitySaved} />
+            <FacilityForm practicedSports={practicedSports} onSaved={handleFacilitySaved} />
           </div>
         </SheetContent>
       </Sheet>
