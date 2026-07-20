@@ -1,5 +1,4 @@
-import Link from 'next/link';
-import { ArrowLeft, Pencil } from 'lucide-react';
+import { Pencil } from 'lucide-react';
 import { loadClubPeople } from '@/app/actions/club-people';
 import { loadOrganigramaFromClub } from '@/app/actions/organigrama';
 import {
@@ -13,8 +12,6 @@ import { enrichOrganigramaNodes } from '@/lib/organigrama';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import { redirect } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 
 type Props = {
   searchParams: Promise<{
@@ -39,33 +36,19 @@ export default async function PortalClubOrganigramaPage({ searchParams }: Props)
 
   return (
     <PageContainer>
-      <Card className="mb-4 border border-primary/25">
-        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 space-y-0">
-          <CardTitle className="text-base">Organigrama</CardTitle>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/portal/club">
-                <ArrowLeft className="h-4 w-4" />
-                Volver
-              </Link>
-            </Button>
-            <Button size="sm" asChild>
-              <Link href="/portal/club/organigrama?edit=1">
-                <Pencil className="h-4 w-4" />
-                Modificar
-              </Link>
-            </Button>
-          </div>
-        </CardHeader>
-      </Card>
-
       <OrganigramaHero
         nodes={viewNodes}
         className="mb-4"
         actions={
-          <OrganigramaHeroLinkAction href="/portal/club/estructura">
-            Ver estructura
-          </OrganigramaHeroLinkAction>
+          <>
+            <OrganigramaHeroLinkAction href="/portal/club/estructura" variant="outline">
+              Ver estructura
+            </OrganigramaHeroLinkAction>
+            <OrganigramaHeroLinkAction href="/portal/club/organigrama?edit=1">
+              <Pencil className="size-3.5" />
+              Modificar
+            </OrganigramaHeroLinkAction>
+          </>
         }
       />
 
