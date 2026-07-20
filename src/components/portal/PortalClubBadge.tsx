@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -16,42 +15,34 @@ type Props = {
   className?: string;
 };
 
-/** Escudo + nombre del club en la barra superior del portal. */
+/** Escudo + nombre del club en la barra superior (solo identificación, no interactivo). */
 export function PortalClubBadge({ clubName, clubLogoUrl, className }: Props) {
   const hasLogo = Boolean(clubLogoUrl?.trim());
   const initials = clubInitials(clubName);
 
   return (
-    <Link
-      href="/portal/club/datos"
-      className={cn(
-        'flex min-w-0 max-w-[min(100%,14rem)] items-center gap-2.5 rounded-xl border border-white/[0.08] bg-white/[0.04] px-2.5 py-1.5',
-        'transition-colors hover:border-primary/25 hover:bg-white/[0.06]',
-        className
-      )}
-      title={clubName}
+    <div
+      className={cn('flex min-w-0 max-w-[min(100%,17rem)] items-center gap-2.5', className)}
+      aria-label={`Club activo: ${clubName}`}
     >
       <span
         className={cn(
-          'flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-primary/25',
-          hasLogo ? 'bg-card' : 'bg-primary text-primary-foreground'
+          'flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md border border-primary/20',
+          hasLogo ? 'bg-card/80' : 'bg-primary/90 text-primary-foreground'
         )}
+        aria-hidden
       >
         {hasLogo ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={clubLogoUrl!}
-            alt=""
-            className="size-full object-contain p-1"
-          />
+          <img src={clubLogoUrl!} alt="" className="size-full object-contain p-0.5" />
         ) : (
           <span className="flex flex-col items-center justify-center leading-none">
-            <Shield className="size-3 opacity-80" aria-hidden />
-            <span className="mt-0.5 text-[9px] font-bold tracking-tight">{initials}</span>
+            <Shield className="size-2.5 opacity-80" />
+            <span className="mt-px text-[8px] font-bold tracking-tight">{initials}</span>
           </span>
         )}
       </span>
-      <span className="truncate text-sm font-medium text-white/90">{clubName}</span>
-    </Link>
+      <span className="truncate text-[15px] font-medium leading-none text-white/92">{clubName}</span>
+    </div>
   );
 }
