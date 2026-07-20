@@ -14,6 +14,7 @@ import {
   type ClubSport,
   type FacilityDivisionMode,
   type FacilityKind,
+  defaultBookingConfigForKind,
   defaultDivisionModeForKind,
   facilityAllowsMatchVenue,
   facilityHasSharedDivisions,
@@ -73,6 +74,22 @@ export function FacilityForm({ facility, onSaved }: Props) {
     facility?.division_schedule_end ?? ''
   );
   const [isMatchVenue, setIsMatchVenue] = useState(facility?.is_match_venue ?? false);
+  const bookingDefaults = defaultBookingConfigForKind(facility?.facility_kind ?? 'football_11');
+  const [reservationCapacity, setReservationCapacity] = useState(
+    String(facility?.reservation_capacity ?? bookingDefaults.reservation_capacity)
+  );
+  const [slotDurationMinutes, setSlotDurationMinutes] = useState(
+    String(facility?.slot_duration_minutes ?? bookingDefaults.slot_duration_minutes)
+  );
+  const [maxActiveReservationsPerPlayer, setMaxActiveReservationsPerPlayer] = useState(
+    String(
+      facility?.max_active_reservations_per_player ??
+        bookingDefaults.max_active_reservations_per_player
+    )
+  );
+  const [advanceBookingDays, setAdvanceBookingDays] = useState(
+    String(facility?.advance_booking_days ?? bookingDefaults.advance_booking_days)
+  );
 
   const kindOptions = useMemo(() => facilityKindOptions(sport), [sport]);
   const surfaceOptions = useMemo(() => surfaceOptionsForKind(facilityKind), [facilityKind]);
@@ -97,6 +114,11 @@ export function FacilityForm({ facility, onSaved }: Props) {
       division_schedule_end: divisionScheduleEnd,
       is_match_venue: showMatchVenue ? isMatchVenue : false,
       supports_reservations: showReservations,
+      reservation_capacity: Number(reservationCapacity) || 1,
+      slot_duration_minutes: Number(slotDurationMinutes) || 60,
+      booking_mode: defaultBookingConfigForKind(facilityKind).booking_mode,
+      max_active_reservations_per_player: Number(maxActiveReservationsPerPlayer) || 1,
+      advance_booking_days: Number(advanceBookingDays) || 7,
       availability_note: null,
       notes: facility?.notes ?? null,
       active: true,
@@ -117,6 +139,10 @@ export function FacilityForm({ facility, onSaved }: Props) {
       isMatchVenue,
       showMatchVenue,
       showReservations,
+      reservationCapacity,
+      slotDurationMinutes,
+      maxActiveReservationsPerPlayer,
+      advanceBookingDays,
     ]
   );
 
@@ -162,6 +188,11 @@ export function FacilityForm({ facility, onSaved }: Props) {
     if (!facilityAllowsMatchVenue(nextKind)) {
       setIsMatchVenue(false);
     }
+    const nextBooking = defaultBookingConfigForKind(nextKind);
+    setReservationCapacity(String(nextBooking.reservation_capacity));
+    setSlotDurationMinutes(String(nextBooking.slot_duration_minutes));
+    setMaxActiveReservationsPerPlayer(String(nextBooking.max_active_reservations_per_player));
+    setAdvanceBookingDays(String(nextBooking.advance_booking_days));
   };
 
   const handleDivisionModeChange = (value: string) => {
@@ -294,13 +325,77 @@ export function FacilityForm({ facility, onSaved }: Props) {
           ) : null}
 
           {showReservations ? (
-            <div className="md:col-span-2 rounded-lg border border-primary/25 bg-primary/5 p-4">
-              <p className="text-sm font-medium text-foreground">Gestión de reservas</p>
-              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                Esta instalación admite reservas por franjas horarias. Configura el horario de
-                apertura a continuación; en la ficha podrás consultar la disponibilidad y crear
-                citas.
-              </p>
+            <div className="md:col-span-2 space-y-4">
+              <div className="rounded-lg border border-primary/25 bg-primary/5 p-4">
+                <p className="text-sm font-medium text-foreground">Gestión de reservas</p>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                  Las familias reservan desde <span className="text-primary">/familias</span>.
+                  {facilityKind === 'gym'
+                    ? ' El gimnasio confirma al instante si hay aforo libre.'
+                    : ' La fisioterapia requiere aprobación del fisio.'}
+                </p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Aforo por franja
+                  </label>
+                  <Input
+                    name="reservationCapacity"
+                    type="number"
+                    min={1}
+                    value={reservationCapacity}
+                    onChange={(event) => setReservationCapacity(event.target.value)}
+                    className="border-primary/30 bg-background/80"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Duración franja (min)
+                  </label>
+                  <Input
+                    name="slotDurationMinutes"
+                    type="number"
+                    min={15}
+                    step={15}
+                    value={slotDurationMinutes}
+                    onChange={(event) => setSlotDurationMinutes(event.target.value)}
+                    className="border-primary/30 bg-background/80"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Máx. reservas activas / jugador
+                  </label>
+                  <Input
+                    name="maxActiveReservationsPerPlayer"
+                    type="number"
+                    min={1}
+                    value={maxActiveReservationsPerPlayer}
+                    onChange={(event) => setMaxActiveReservationsPerPlayer(event.target.value)}
+                    className="border-primary/30 bg-background/80"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Antelación máxima (días)
+                  </label>
+                  <Input
+                    name="advanceBookingDays"
+                    type="number"
+                    min={1}
+                    value={advanceBookingDays}
+                    onChange={(event) => setAdvanceBookingDays(event.target.value)}
+                    className="border-primary/30 bg-background/80"
+                  />
+                </div>
+              </div>
+              <input
+                type="hidden"
+                name="bookingMode"
+                value={defaultBookingConfigForKind(facilityKind).booking_mode}
+                readOnly
+              />
             </div>
           ) : null}
 

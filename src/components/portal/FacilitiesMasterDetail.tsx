@@ -33,6 +33,7 @@ import {
   type ClubFacility,
   type ClubSport,
 } from '@/lib/club-facilities';
+import type { FacilityReservation } from '@/lib/facility-reservations';
 import { buildFacilityDivisionSchedule, type TeamTrainingSlot } from '@/lib/team-setup';
 import { cn } from '@/lib/utils';
 
@@ -45,6 +46,7 @@ type MatchVenueFilter = 'all' | 'yes' | 'no';
 type Props = {
   facilities: ClubFacility[];
   trainingSlots: TeamTrainingSlot[];
+  reservations: FacilityReservation[];
   initialFacilityId?: string | null;
   initialCreateOpen?: boolean;
   initialEditOpen?: boolean;
@@ -85,11 +87,13 @@ function FacilityDataRow({ label, value }: { label: string; value: string }) {
 function FacilityDetailPanel({
   facility,
   trainingSlots,
+  reservations,
   initialEditOpen,
   onEdit,
 }: {
   facility: ClubFacility | null;
   trainingSlots: TeamTrainingSlot[];
+  reservations: FacilityReservation[];
   initialEditOpen?: boolean;
   onEdit: () => void;
 }) {
@@ -224,7 +228,7 @@ function FacilityDetailPanel({
         </section>
 
         {facility.supports_reservations ? (
-          <FacilityReservationsPanel facility={facility} />
+          <FacilityReservationsPanel facility={facility} reservations={reservations} />
         ) : null}
 
         <p className="rounded-lg border border-dashed border-primary/20 p-3 text-xs text-muted-foreground">
@@ -268,6 +272,7 @@ function FacilityDetailPanel({
 export function FacilitiesMasterDetail({
   facilities,
   trainingSlots,
+  reservations,
   initialFacilityId,
   initialCreateOpen,
   initialEditOpen,
@@ -490,6 +495,7 @@ export function FacilitiesMasterDetail({
       <FacilityDetailPanel
         facility={selectedFacility}
         trainingSlots={trainingSlots}
+        reservations={reservations}
         initialEditOpen={initialEditOpen}
         onEdit={handleEditOpen}
       />

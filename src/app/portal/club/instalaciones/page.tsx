@@ -1,5 +1,6 @@
 import { getTeamTrainingSlots } from '@/app/actions/cantera';
 import { loadClubFacilities } from '@/app/actions/club-facilities';
+import { loadFacilityReservations } from '@/app/actions/facility-reservations';
 import { FacilitiesMasterDetail } from '@/components/portal/FacilitiesMasterDetail';
 import { PageContainer } from '@/components/portal/PageContainer';
 import { createClient } from '@/lib/supabase/server';
@@ -25,9 +26,10 @@ export default async function PortalClubInstalacionesLandingPage({ searchParams 
   const ctx = await getStaffContext(supabase);
   if (!ctx) redirect('/login');
 
-  const [facilities, trainingSlots] = await Promise.all([
+  const [facilities, trainingSlots, reservations] = await Promise.all([
     loadClubFacilities(ctx.club.id, { includeInactive: true }),
     getTeamTrainingSlots(ctx.club.id),
+    loadFacilityReservations(ctx.club.id),
   ]);
 
   return (
@@ -35,6 +37,7 @@ export default async function PortalClubInstalacionesLandingPage({ searchParams 
       <FacilitiesMasterDetail
         facilities={facilities}
         trainingSlots={trainingSlots}
+        reservations={reservations}
         initialFacilityId={initialFacilityId}
         initialCreateOpen={initialCreate === '1'}
         initialEditOpen={initialEdit === '1'}

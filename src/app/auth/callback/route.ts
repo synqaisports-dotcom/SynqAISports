@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { activateFamilyAccountForUser } from '@/lib/family-auth';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
@@ -8,7 +9,10 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = await createClient();
-    await supabase.auth.exchangeCodeForSession(code);
+    const { data } = await supabase.auth.exchangeCodeForSession(code);
+    if (data.user?.id && data.user.email) {
+      await activateFamilyAccountForUser(data.user.id, data.user.email);
+    }
   }
 
   return NextResponse.redirect(`${origin}${next}`);

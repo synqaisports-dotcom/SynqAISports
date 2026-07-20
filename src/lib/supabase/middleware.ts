@@ -12,7 +12,9 @@ export async function updateSession(request: NextRequest) {
 
   const isProtected =
     request.nextUrl.pathname.startsWith('/portal') ||
-    request.nextUrl.pathname.startsWith('/print');
+    request.nextUrl.pathname.startsWith('/print') ||
+    (request.nextUrl.pathname.startsWith('/familias') &&
+      !request.nextUrl.pathname.startsWith('/familias/login'));
 
   if (!url || !key) {
     if (!isProtected) {
@@ -22,7 +24,9 @@ export async function updateSession(request: NextRequest) {
       return supabaseResponse;
     }
     const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = '/login';
+    loginUrl.pathname = request.nextUrl.pathname.startsWith('/familias')
+      ? '/familias/login'
+      : '/login';
     loginUrl.searchParams.set(
       'next',
       `${request.nextUrl.pathname}${request.nextUrl.search}`
@@ -54,7 +58,9 @@ export async function updateSession(request: NextRequest) {
       return supabaseResponse;
     }
     const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = '/login';
+    loginUrl.pathname = request.nextUrl.pathname.startsWith('/familias')
+      ? '/familias/login'
+      : '/login';
     loginUrl.searchParams.set(
       'next',
       `${request.nextUrl.pathname}${request.nextUrl.search}`

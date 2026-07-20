@@ -1,5 +1,6 @@
 import type { PlayerProfile } from '@/lib/player-profile';
 import { playerFullName } from '@/lib/player-profile';
+import { FamilyInviteButton } from '@/components/familias/FamilyInviteButton';
 
 const sectionClass = 'rounded-xl border border-primary/15 bg-muted/5 p-4';
 
@@ -9,9 +10,10 @@ function guardianName(guardian: PlayerProfile['guardians'][number]) {
 
 type Props = {
   player: PlayerProfile;
+  clubId: string;
 };
 
-export function PlayerGuardiansSummary({ player }: Props) {
+export function PlayerGuardiansSummary({ player, clubId }: Props) {
   if (!player.is_minor) {
     return (
       <section className={sectionClass}>
@@ -75,6 +77,12 @@ export function PlayerGuardiansSummary({ player }: Props) {
                 <p className="mt-0.5 truncate text-sm text-foreground">{guardian.phone || '—'}</p>
               </div>
             </div>
+            <FamilyInviteButton
+              clubId={clubId}
+              playerId={player.id}
+              email={guardian.email}
+              displayName={guardianName(guardian)}
+            />
           </div>
         ))}
       </div>

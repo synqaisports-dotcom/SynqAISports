@@ -349,7 +349,7 @@ function PlayerDetailPanel({
           </div>
         </div>
 
-        <PlayerGuardiansSummary player={player} />
+        <PlayerGuardiansSummary player={player} clubId={clubId} />
 
         <PlayerClubHistorySection player={player} />
 

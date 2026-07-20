@@ -1,4 +1,5 @@
 export type FacilityDivisionMode = 'full' | 'halves_2' | 'quarters_4';
+export type FacilityBookingMode = 'instant' | 'approval';
 
 export type TrainingDivision =
   | 'full'
@@ -56,6 +57,11 @@ export type ClubFacility = {
   division_schedule_end: string;
   is_match_venue: boolean;
   supports_reservations: boolean;
+  reservation_capacity: number;
+  slot_duration_minutes: number;
+  booking_mode: 'instant' | 'approval';
+  max_active_reservations_per_player: number;
+  advance_booking_days: number;
   /** Texto legado / resumen generado al guardar */
   availability_note: string | null;
   notes: string | null;
@@ -170,7 +176,48 @@ export const SURFACE_OPTIONS: Record<FacilityKind, string[]> = {
   other: ['Césped natural', 'Césped artificial', 'Parquet', 'Resina / pavimento', 'Otro'],
 };
 
-export const DEMO_FACILITIES: ClubFacility[] = [
+function withReservationDefaults(
+  facility: Omit<
+    ClubFacility,
+    | 'reservation_capacity'
+    | 'slot_duration_minutes'
+    | 'booking_mode'
+    | 'max_active_reservations_per_player'
+    | 'advance_booking_days'
+  > &
+    Partial<
+      Pick<
+        ClubFacility,
+        | 'reservation_capacity'
+        | 'slot_duration_minutes'
+        | 'booking_mode'
+        | 'max_active_reservations_per_player'
+        | 'advance_booking_days'
+      >
+    >
+): ClubFacility {
+  const defaults = defaultBookingConfigForKind(facility.facility_kind);
+  return {
+    ...facility,
+    reservation_capacity:
+      facility.reservation_capacity ??
+      (facility.supports_reservations ? defaults.reservation_capacity : 1),
+    slot_duration_minutes:
+      facility.slot_duration_minutes ??
+      (facility.supports_reservations ? defaults.slot_duration_minutes : 60),
+    booking_mode:
+      facility.booking_mode ??
+      (facility.supports_reservations ? defaults.booking_mode : 'instant'),
+    max_active_reservations_per_player:
+      facility.max_active_reservations_per_player ??
+      (facility.supports_reservations ? defaults.max_active_reservations_per_player : 1),
+    advance_booking_days:
+      facility.advance_booking_days ??
+      (facility.supports_reservations ? defaults.advance_booking_days : 7),
+  };
+}
+
+const RAW_DEMO_FACILITIES = [
   {
     id: 'demo-facility-main',
     name: 'Campo principal F-11',
@@ -331,7 +378,11 @@ export const DEMO_FACILITIES: ClubFacility[] = [
     notes: 'Secretaría, administración y dirección deportiva.',
     active: true,
   },
-];
+] as const;
+
+export const DEMO_FACILITIES: ClubFacility[] = RAW_DEMO_FACILITIES.map((facility) =>
+  withReservationDefaults(facility)
+);
 
 export function sportOptions() {
   return (Object.keys(SPORT_LABELS) as ClubSport[]).map((sport) => ({
@@ -364,6 +415,40 @@ export function facilityAllowsMatchVenue(kind: FacilityKind): boolean {
 
 export function facilityKindSupportsReservations(kind: FacilityKind): boolean {
   return RESERVATION_KINDS.has(kind);
+}
+
+export function defaultBookingConfigForKind(kind: FacilityKind): {
+  reservation_capacity: number;
+  slot_duration_minutes: number;
+  booking_mode: FacilityBookingMode;
+  max_active_reservations_per_player: number;
+  advance_booking_days: number;
+} {
+  if (kind === 'physiotherapy_room') {
+    return {
+      reservation_capacity: 1,
+      slot_duration_minutes: 45,
+      booking_mode: 'approval',
+      max_active_reservations_per_player: 2,
+      advance_booking_days: 14,
+    };
+  }
+  if (kind === 'gym') {
+    return {
+      reservation_capacity: 8,
+      slot_duration_minutes: 60,
+      booking_mode: 'instant',
+      max_active_reservations_per_player: 3,
+      advance_booking_days: 14,
+    };
+  }
+  return {
+    reservation_capacity: 1,
+    slot_duration_minutes: 60,
+    booking_mode: 'instant',
+    max_active_reservations_per_player: 1,
+    advance_booking_days: 7,
+  };
 }
 
 export function facilityScheduleTitle(kind: FacilityKind): string {
@@ -417,6 +502,8 @@ export function parseFacilityFromForm(formData: FormData) {
     ? formData.get('isMatchVenue') === 'on'
     : false;
   const resolvedDivisionMode = facilitySupportsDivisions(facilityKind) ? divisionMode : 'full';
+  const supportsReservations = facilityKindSupportsReservations(facilityKind);
+  const bookingDefaults = defaultBookingConfigForKind(facilityKind);
 
   return {
     name: String(formData.get('name') ?? '').trim(),
@@ -434,7 +521,31 @@ export function parseFacilityFromForm(formData: FormData) {
       resolvedDivisionMode !== 'full' ? divisionScheduleStart : '',
     division_schedule_end: resolvedDivisionMode !== 'full' ? divisionScheduleEnd : '',
     is_match_venue: isMatchVenue,
-    supports_reservations: facilityKindSupportsReservations(facilityKind),
+    supports_reservations: supportsReservations,
+    reservation_capacity: supportsReservations
+      ? Math.max(1, Number(formData.get('reservationCapacity') ?? bookingDefaults.reservation_capacity))
+      : 1,
+    slot_duration_minutes: supportsReservations
+      ? Math.max(15, Number(formData.get('slotDurationMinutes') ?? bookingDefaults.slot_duration_minutes))
+      : 60,
+    booking_mode: supportsReservations
+      ? (String(formData.get('bookingMode') ?? bookingDefaults.booking_mode) as FacilityBookingMode)
+      : 'instant',
+    max_active_reservations_per_player: supportsReservations
+      ? Math.max(
+          1,
+          Number(
+            formData.get('maxActiveReservationsPerPlayer') ??
+              bookingDefaults.max_active_reservations_per_player
+          )
+        )
+      : 1,
+    advance_booking_days: supportsReservations
+      ? Math.max(
+          1,
+          Number(formData.get('advanceBookingDays') ?? bookingDefaults.advance_booking_days)
+        )
+      : 7,
     notes: String(formData.get('notes') ?? '').trim() || null,
   };
 }
@@ -501,6 +612,11 @@ export function facilityToDbPayload(data: ReturnType<typeof parseFacilityFromFor
     division_schedule_end: data.division_schedule_end || null,
     is_match_venue: data.is_match_venue,
     supports_reservations: data.supports_reservations,
+    reservation_capacity: data.reservation_capacity,
+    slot_duration_minutes: data.slot_duration_minutes,
+    booking_mode: data.booking_mode,
+    max_active_reservations_per_player: data.max_active_reservations_per_player,
+    advance_booking_days: data.advance_booking_days,
     availability_note: buildFacilityAvailabilityNote(data),
     notes: data.notes,
   };
@@ -624,6 +740,6 @@ export function formatTimeRange(start: string | null, end: string | null): strin
 }
 
 const FACILITY_SELECT =
-  'id, name, sport, facility_kind, surface_type, division_mode, address, availability_days, availability_start, availability_end, division_schedule_days, division_schedule_start, division_schedule_end, is_match_venue, supports_reservations, availability_note, notes, active';
+  'id, name, sport, facility_kind, surface_type, division_mode, address, availability_days, availability_start, availability_end, division_schedule_days, division_schedule_start, division_schedule_end, is_match_venue, supports_reservations, reservation_capacity, slot_duration_minutes, booking_mode, max_active_reservations_per_player, advance_booking_days, availability_note, notes, active';
 
 export { FACILITY_SELECT };
