@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Club Demo SynqAI">
+  <path d="M32 4 56 16v20c0 14-10 24-24 28C18 60 8 50 8 36V16L32 4Z" fill="#0A1522" stroke="#00E5FF" stroke-width="2"/>
+  <path d="M32 12 48 20.5V35c0 9.5-6.5 16.5-16 19.5-9.5-3-16-10-16-19.5V20.5L32 12Z" fill="#050A14" stroke="#00E5FF" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="32" y="37" text-anchor="middle" fill="#00E5FF" font-family="system-ui,sans-serif" font-size="14" font-weight="700">CD</text>
+</svg>

@@ -28,6 +28,7 @@ export default async function PortalLayout({ children }: { children: React.React
       <div className="portal-dashboard dark min-h-svh">
         <PortalShell
           clubName={ctx.club.name}
+          clubLogoUrl={ctx.club.logo_url}
           role={ctx.role}
           demoMode={demo}
           demoCanPersist={hasServiceRoleKey()}

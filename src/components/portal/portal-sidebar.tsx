@@ -33,7 +33,7 @@ export function usePortalSidebar() {
   return ctx;
 }
 
-function SidebarBrand({ clubName, expanded }: { clubName: string; expanded: boolean }) {
+function SidebarBrand({ expanded }: { expanded: boolean }) {
   return (
     <div
       className={cn(
@@ -50,13 +50,7 @@ function SidebarBrand({ clubName, expanded }: { clubName: string; expanded: bool
         title="SynqAI Sports"
       >
         {expanded ? (
-          <SynqBrandLockup
-            layout="horizontal"
-            iconSize={34}
-            wordmarkSize="sm"
-            subtitle={clubName}
-            subtitleClassName="text-sidebar-foreground/55"
-          />
+          <SynqBrandLockup layout="horizontal" iconSize={34} wordmarkSize="sm" />
         ) : (
           <SynqBrandLockup layout="icon-only" iconSize={30} />
         )}
@@ -94,10 +88,10 @@ function SidebarFooter({ expanded }: { expanded: boolean }) {
   );
 }
 
-function SidebarPanel({ clubName, expanded }: { clubName: string; expanded: boolean }) {
+function SidebarPanel({ expanded }: { expanded: boolean }) {
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <SidebarBrand clubName={clubName} expanded={expanded} />
+      <SidebarBrand expanded={expanded} />
       <SidebarNav expanded={expanded} />
       <SidebarFooter expanded={expanded} />
     </div>
@@ -177,7 +171,7 @@ export function PortalSidebarProvider({ children, clubName }: ProviderProps) {
                 data-expanded={expanded ? 'true' : 'false'}
                 aria-label="Navegación del portal"
               >
-                <SidebarPanel clubName={clubName} expanded={expanded} />
+                <SidebarPanel expanded={expanded} />
               </aside>
             </>
           ) : (
@@ -186,7 +180,7 @@ export function PortalSidebarProvider({ children, clubName }: ProviderProps) {
                 side="left"
                 className="portal-sidebar-surface w-[min(19rem,88vw)] border-primary/20 bg-transparent p-0 text-sidebar-foreground [&>button]:text-sidebar-foreground"
               >
-                <SidebarPanel clubName={clubName} expanded />
+                <SidebarPanel expanded />
               </SheetContent>
             </Sheet>
           )}

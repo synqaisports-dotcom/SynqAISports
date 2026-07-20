@@ -6,6 +6,7 @@ import { PortalSidebarProvider } from '@/components/portal/portal-sidebar';
 type Props = {
   children: React.ReactNode;
   clubName: string;
+  clubLogoUrl?: string | null;
   role: string;
   demoMode?: boolean;
   demoCanPersist?: boolean;
@@ -14,6 +15,7 @@ type Props = {
 export function PortalShell({
   children,
   clubName,
+  clubLogoUrl,
   role,
   demoMode,
   demoCanPersist,
@@ -22,6 +24,7 @@ export function PortalShell({
     <PortalSidebarProvider clubName={clubName}>
       <PortalHeader
         clubName={clubName}
+        clubLogoUrl={clubLogoUrl}
         role={role}
         demoMode={demoMode}
         demoCanPersist={demoCanPersist}

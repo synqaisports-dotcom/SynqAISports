@@ -42,7 +42,7 @@ export function staticDemoStaffContext(): StaffContext {
       phone: '+34 600 000 000',
       email: 'demo@synqai.test',
       cover_url: null,
-      logo_url: null,
+      logo_url: '/demo/club-demo-logo.svg',
       website_url: null,
       instagram_url: null,
       facebook_url: null,
