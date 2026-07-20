@@ -1,11 +1,11 @@
 'use client';
 
+import type { ClubPracticedSport } from '@/lib/club-practiced-sports';
 import {
-  PLAYER_POSITIONS,
-  parsePlayerPositions,
-  serializePlayerPositions,
-  type PlayerPositionCode,
+  parsePositionsForSport,
+  serializePositionsForSport,
 } from '@/lib/player-positions';
+import { positionsForSport } from '@/lib/sport-positions';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
@@ -13,24 +13,31 @@ type Props = {
   value: string | null | undefined;
   onChange?: (serialized: string) => void;
   readOnly?: boolean;
+  sport?: ClubPracticedSport | string;
 };
 
-export function PlayerPositionsPicker({ value, onChange, readOnly = false }: Props) {
-  const selected = new Set(parsePlayerPositions(value));
+export function PlayerPositionsPicker({
+  value,
+  onChange,
+  readOnly = false,
+  sport = 'football',
+}: Props) {
+  const catalog = positionsForSport(sport);
+  const selected = new Set(parsePositionsForSport(sport, value));
 
-  const toggle = (code: PlayerPositionCode) => {
+  const toggle = (code: string) => {
     if (readOnly || !onChange) return;
 
     const next = new Set(selected);
     if (next.has(code)) next.delete(code);
     else next.add(code);
 
-    onChange(serializePlayerPositions(next));
+    onChange(serializePositionsForSport(sport, next));
   };
 
   return (
     <div className="flex flex-wrap gap-1.5">
-      {PLAYER_POSITIONS.map((item) => {
+      {catalog.map((item) => {
         const active = selected.has(item.code);
 
         return (

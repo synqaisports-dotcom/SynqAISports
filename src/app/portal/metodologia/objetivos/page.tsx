@@ -4,6 +4,7 @@ import { ObjectivesMasterDetail } from '@/components/methodology/ObjectivesMaste
 import { PageContainer } from '@/components/portal/PageContainer';
 import { isDemoActive } from '@/lib/demo';
 import { canEditMethodologyObjectives } from '@/lib/methodology-objectives';
+import { parseSportFromSearchParams, resolveActiveSport } from '@/lib/sport-context';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import { redirect } from 'next/navigation';
@@ -12,18 +13,25 @@ type Props = {
   searchParams: Promise<{
     category?: string;
     edit?: string;
+    sport?: string;
   }>;
 };
 
 export default async function ObjetivosPage({ searchParams }: Props) {
-  const { category: initialCategorySlug, edit: initialEdit } = await searchParams;
+  const params = await searchParams;
+  const initialCategorySlug = params.category;
+  const initialEdit = params.edit;
 
   const supabase = await createClient();
   const ctx = await getStaffContext(supabase);
   if (!ctx) redirect('/login');
 
   const demo = await isDemoActive();
-  const objectives = await loadMethodologyObjectives(ctx.club.id);
+  const activeSport = resolveActiveSport(
+    ctx.club.practiced_sports,
+    parseSportFromSearchParams(params)
+  );
+  const objectives = await loadMethodologyObjectives(ctx.club.id, activeSport);
   const canEdit = canEditMethodologyObjectives(ctx.role);
 
   return (
@@ -38,6 +46,8 @@ export default async function ObjetivosPage({ searchParams }: Props) {
         initialCategorySlug={initialCategorySlug}
         initialEditOpen={initialEdit === '1'}
         demoMode={demo}
+        activeSport={activeSport}
+        practicedSports={ctx.club.practiced_sports}
       />
     </PageContainer>
   );

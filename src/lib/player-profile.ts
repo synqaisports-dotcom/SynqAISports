@@ -7,7 +7,9 @@ import {
 import type { PlayerGuardian } from '@/lib/player-guardians';
 import type { PlayerMedicalInfo } from '@/lib/player-medical';
 import type { PlayerClubHistoryEvent } from '@/lib/player-club-history';
-import { positionShort } from '@/lib/player-positions';
+import type { ClubPracticedSport } from '@/lib/club-practiced-sports';
+import type { PlayerTeamMembership } from '@/lib/player-memberships';
+import { positionShortForSport } from '@/lib/player-positions';
 
 export type PlayerProfile = {
   id: string;
@@ -22,6 +24,8 @@ export type PlayerProfile = {
   team_name: string;
   team_category: string;
   team_category_slug?: CanteraCategorySlug | null;
+  primary_sport?: ClubPracticedSport;
+  memberships?: PlayerTeamMembership[];
   active: boolean;
   is_minor: boolean;
   guardians: PlayerGuardian[];
@@ -81,7 +85,8 @@ export function playerDetailFields(player: PlayerProfile) {
 }
 
 export function playerListSubtitle(player: PlayerProfile) {
-  const parts = [positionShort(player.position)];
+  const sport = player.primary_sport ?? 'football';
+  const parts = [positionShortForSport(sport, player.position)];
   if (player.jersey_number != null) parts.push(`#${player.jersey_number}`);
   return parts.filter((part) => part && part !== '—').join(' · ');
 }

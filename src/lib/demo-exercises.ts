@@ -16,6 +16,7 @@ export type DemoExerciseRecord = {
   notes: string;
   sheet_json: ExerciseTaskSheet;
   drawing_json: ExerciseDrawingDocument;
+  sport?: 'football' | 'futsal' | 'basketball' | 'volleyball' | 'handball' | 'waterpolo';
 };
 
 const DEFAULT_STROKE = { color: '#fbbf24', width: 3, dash: false };

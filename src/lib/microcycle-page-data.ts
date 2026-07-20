@@ -2,6 +2,7 @@ import { getDemoExercises } from '@/lib/demo-exercises';
 import { isDemoActive } from '@/lib/demo';
 import { createClient } from '@/lib/supabase/server';
 import { isDemoMicrocycleId } from '@/lib/microcycle-sessions';
+import type { ClubPracticedSport } from '@/lib/club-practiced-sports';
 
 export async function loadMicrocycleBundle(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -39,17 +40,25 @@ export async function loadMicrocycleBundle(
 
 export async function loadExerciseLibrary(
   supabase: Awaited<ReturnType<typeof createClient>>,
-  clubId: string
+  clubId: string,
+  sport?: ClubPracticedSport | string | null
 ) {
   if (await isDemoActive()) {
-    return getDemoExercises();
+    const exercises = getDemoExercises();
+    if (!sport) return exercises;
+    return exercises.filter((exercise) => (exercise.sport ?? 'football') === sport);
   }
 
-  const { data } = await supabase
+  let query = supabase
     .from('synq_exercises')
-    .select('id, title, task_type, objectives, notes, sheet_json, drawing_json, duration_min')
-    .eq('club_id', clubId)
-    .order('title');
+    .select('id, title, task_type, objectives, notes, sheet_json, drawing_json, duration_min, sport')
+    .eq('club_id', clubId);
+
+  if (sport) {
+    query = query.eq('sport', sport);
+  }
+
+  const { data } = await query.order('title');
   return data ?? [];
 }
 

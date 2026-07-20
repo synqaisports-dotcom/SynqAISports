@@ -9,6 +9,7 @@ import { SynqSelect } from '@/components/portal/SynqSelect';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { playerBirthYearOptions } from '@/lib/player-form';
+import type { ClubPracticedSport } from '@/lib/club-practiced-sports';
 import type { PlayerTeamOption } from '@/lib/player-teams';
 
 const initial: ActionState = { ok: false };
@@ -26,6 +27,12 @@ export function PlayerCreateForm({ teams, fixedTeamId, demoMode, onCreated }: Pr
   const [birthYear, setBirthYear] = useState('');
   const [teamId, setTeamId] = useState(fixedTeamId ?? '');
   const [positions, setPositions] = useState('');
+
+  const selectedTeam = useMemo(
+    () => teams.find((team) => team.id === (fixedTeamId ?? teamId)) ?? null,
+    [teams, fixedTeamId, teamId]
+  );
+  const sport: ClubPracticedSport = selectedTeam?.sport ?? 'football';
 
   const birthYearOptions = useMemo(() => playerBirthYearOptions(), []);
   const teamOptions = useMemo(
@@ -120,7 +127,7 @@ export function PlayerCreateForm({ teams, fixedTeamId, demoMode, onCreated }: Pr
           <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Posiciones
           </label>
-          <PlayerPositionsPicker value={positions} onChange={setPositions} />
+          <PlayerPositionsPicker value={positions} onChange={setPositions} sport={sport} />
           <input type="hidden" name="position" value={positions} readOnly />
           <p className="mt-1.5 text-xs text-muted-foreground">Opcional. Puedes ajustarlas después.</p>
         </div>

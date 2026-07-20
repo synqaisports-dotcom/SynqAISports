@@ -25,6 +25,9 @@ import {
   stageForCategory,
   type MethodologyObjectivesMap,
 } from '@/lib/methodology-objectives';
+import type { ClubPracticedSport } from '@/lib/club-practiced-sports';
+import { CLUB_PRACTICED_SPORT_SHORT } from '@/lib/club-practiced-sports';
+import { appendSportParam, clubIsMultisport } from '@/lib/sport-context';
 import { cn } from '@/lib/utils';
 
 type StageFilter = 'all' | (typeof METHODOLOGY_STAGES)[number]['id'];
@@ -35,6 +38,8 @@ type Props = {
   initialCategorySlug?: string | null;
   initialEditOpen?: boolean;
   demoMode?: boolean;
+  activeSport?: ClubPracticedSport;
+  practicedSports?: ClubPracticedSport[];
 };
 
 const actionButtonClass =
@@ -118,12 +123,14 @@ function ObjectivesDetailPanel({
   canEdit,
   demoMode,
   initialEditOpen,
+  activeSport = 'football',
 }: {
   categorySlug: CanteraCategorySlug | null;
   objectives: MethodologyObjectivesMap;
   canEdit: boolean;
   demoMode?: boolean;
   initialEditOpen?: boolean;
+  activeSport?: ClubPracticedSport;
 }) {
   const router = useRouter();
   const [editOpen, setEditOpen] = useState(Boolean(initialEditOpen));
@@ -212,11 +219,13 @@ function ObjectivesDetailPanel({
                 objectives={objectives}
                 canEdit={canEdit}
                 demoMode={demoMode}
+                activeSport={activeSport}
                 onSaved={() => {
                   setEditOpen(false);
-                  router.replace(`/portal/metodologia/objetivos?category=${categorySlug}`, {
-                    scroll: false,
-                  });
+                  router.replace(
+                    appendSportParam(`/portal/metodologia/objetivos?category=${categorySlug}`, activeSport),
+                    { scroll: false }
+                  );
                   router.refresh();
                 }}
               />
@@ -234,6 +243,8 @@ export function ObjectivesMasterDetail({
   initialCategorySlug,
   initialEditOpen,
   demoMode,
+  activeSport = 'football',
+  practicedSports = ['football'],
 }: Props) {
   const router = useRouter();
   const [search, setSearch] = useState('');
@@ -297,8 +308,13 @@ export function ObjectivesMasterDetail({
 
   const handleSelect = (slug: CanteraCategorySlug) => {
     setSelectedSlug(slug);
-    router.replace(`/portal/metodologia/objetivos?category=${slug}`, { scroll: false });
+    router.replace(
+      appendSportParam(`/portal/metodologia/objetivos?category=${slug}`, activeSport),
+      { scroll: false }
+    );
   };
+
+  const showSportFilter = clubIsMultisport(practicedSports);
 
   return (
     <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
@@ -311,6 +327,19 @@ export function ObjectivesMasterDetail({
             </CardDescription>
           </div>
           <div className="space-y-2">
+            {showSportFilter ? (
+              <div className="flex flex-wrap gap-1.5">
+                {practicedSports.map((sport) => (
+                  <Link
+                    key={sport}
+                    href={appendSportParam('/portal/metodologia/objetivos', sport)}
+                    className={filterButtonClass(activeSport === sport)}
+                  >
+                    {CLUB_PRACTICED_SPORT_SHORT[sport]}
+                  </Link>
+                ))}
+              </div>
+            ) : null}
             <PortalSearchField
               value={search}
               onChange={setSearch}
@@ -393,6 +422,7 @@ export function ObjectivesMasterDetail({
         canEdit={canEdit}
         demoMode={demoMode}
         initialEditOpen={initialEditOpen}
+        activeSport={activeSport}
       />
     </div>
   );

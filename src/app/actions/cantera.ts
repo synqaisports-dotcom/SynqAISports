@@ -23,6 +23,11 @@ import {
 } from '@/lib/team-setup';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import type { ClubPracticedSport } from '@/lib/club-practiced-sports';
+import {
+  membershipPayloadFromPlayer,
+  type MembershipDbPayload,
+} from '@/lib/player-memberships';
 
 export type ActionState = {
   ok: boolean;
@@ -40,6 +45,101 @@ const ALLOWED_DOCUMENT_TYPES = new Set([
   'image/webp',
   'application/pdf',
 ]);
+
+const ALLOWED_SPORTS = new Set<ClubPracticedSport>([
+  'football',
+  'futsal',
+  'basketball',
+  'volleyball',
+  'handball',
+  'waterpolo',
+]);
+
+function parseTeamSport(value: string | null | undefined): ClubPracticedSport {
+  const sport = String(value ?? 'football').trim() as ClubPracticedSport;
+  return ALLOWED_SPORTS.has(sport) ? sport : 'football';
+}
+
+async function teamSportForId(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  clubId: string,
+  teamId: string
+): Promise<ClubPracticedSport> {
+  const { data } = await supabase
+    .from('synq_teams')
+    .select('sport')
+    .eq('id', teamId)
+    .eq('club_id', clubId)
+    .maybeSingle();
+  return parseTeamSport(data?.sport);
+}
+
+async function clearPrimaryMembershipFlags(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  playerId: string,
+  exceptTeamId?: string
+) {
+  let query = supabase
+    .from('synq_player_team_memberships')
+    .update({ is_primary: false, updated_at: new Date().toISOString() })
+    .eq('player_id', playerId);
+
+  if (exceptTeamId) {
+    query = query.neq('team_id', exceptTeamId);
+  }
+
+  await query;
+}
+
+async function upsertPrimaryMembership(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  payload: MembershipDbPayload
+) {
+  await clearPrimaryMembershipFlags(supabase, payload.player_id, payload.team_id);
+
+  const { error } = await supabase.from('synq_player_team_memberships').upsert(
+    {
+      ...payload,
+      is_primary: true,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'player_id,team_id' }
+  );
+
+  if (error) {
+    console.error('upsertPrimaryMembership', error);
+    return false;
+  }
+  return true;
+}
+
+async function syncPrimaryMembershipFields(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  clubId: string,
+  playerId: string,
+  jerseyNumber: number | null,
+  position: string | null
+) {
+  const { data: membership } = await supabase
+    .from('synq_player_team_memberships')
+    .select('id')
+    .eq('player_id', playerId)
+    .eq('club_id', clubId)
+    .eq('is_primary', true)
+    .eq('active', true)
+    .maybeSingle();
+
+  if (!membership) return;
+
+  await supabase
+    .from('synq_player_team_memberships')
+    .update({
+      jersey_number: jerseyNumber,
+      position,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', membership.id);
+}
 
 export async function uploadPlayerPhoto(
   clubId: string,
@@ -195,6 +295,8 @@ export async function updatePlayer(
     return { ok: false, message: 'error' };
   }
 
+  await syncPrimaryMembershipFields(supabase, clubId, playerId, jerseyNumber, position);
+
   revalidatePath('/portal/cantera/jugadores');
   revalidatePath(`/portal/cantera/jugadores/${playerId}`);
   revalidatePath(`/portal/cantera/jugadores/${playerId}/editar`);
@@ -220,7 +322,9 @@ export async function movePlayerTeam(
 
   const { data: player } = await supabase
     .from('synq_players')
-    .select('id, team_id, player_history_json, synq_teams(name, category, category_slug)')
+    .select(
+      'id, team_id, jersey_number, position, active, player_history_json, synq_teams(name, category, category_slug)'
+    )
     .eq('id', playerId)
     .eq('club_id', clubId)
     .maybeSingle();
@@ -270,6 +374,29 @@ export async function movePlayerTeam(
     console.error('movePlayerTeam', error);
     return { ok: false, message: 'error' };
   }
+
+  if (player.team_id) {
+    await supabase
+      .from('synq_player_team_memberships')
+      .update({ active: false, is_primary: false, updated_at: new Date().toISOString() })
+      .eq('player_id', playerId)
+      .eq('team_id', player.team_id);
+  }
+
+  const sport = await teamSportForId(supabase, clubId, newTeamId);
+  await upsertPrimaryMembership(
+    supabase,
+    membershipPayloadFromPlayer({
+      clubId,
+      playerId,
+      teamId: newTeamId,
+      sport,
+      jerseyNumber: player.jersey_number,
+      position: player.position,
+      active: player.active !== false,
+      isPrimary: true,
+    })
+  );
 
   revalidatePath('/portal/cantera/jugadores');
   revalidatePath('/portal/cantera/equipos');
@@ -467,7 +594,7 @@ export async function createTeam(
       category: categoryName,
       category_slug: categorySlug,
       team_letter: teamLetter,
-      sport: sport === 'futsal' ? 'futsal' : 'football',
+      sport: parseTeamSport(sport),
       ...teamSetupToDbPayload(setup),
     })
     .select('id')
@@ -533,7 +660,7 @@ export async function updateTeam(
     .update({
       name,
       team_letter: teamLetter,
-      sport: sport === 'futsal' ? 'futsal' : 'football',
+      sport: parseTeamSport(sport),
       ...teamSetupToDbPayload(setup),
     })
     .eq('id', teamId)
@@ -623,14 +750,16 @@ export async function createPlayer(
   const supabase = await createClient();
 
   let teamName: string | null = null;
+  let teamSport: ClubPracticedSport = 'football';
   if (teamId) {
     const { data: team } = await supabase
       .from('synq_teams')
-      .select('name')
+      .select('name, sport')
       .eq('id', teamId)
       .eq('club_id', clubId)
       .maybeSingle();
     teamName = team?.name ?? null;
+    teamSport = parseTeamSport(team?.sport);
   }
 
   const history = buildInitialPlayerHistory(teamName);
@@ -662,6 +791,21 @@ export async function createPlayer(
   if (error) {
     console.error('create player', error);
     return { ok: false, message: 'error' };
+  }
+
+  if (teamId) {
+    await upsertPrimaryMembership(
+      supabase,
+      membershipPayloadFromPlayer({
+        clubId,
+        playerId: data.id,
+        teamId,
+        sport: teamSport,
+        jerseyNumber,
+        position,
+        isPrimary: true,
+      })
+    );
   }
 
   revalidatePath('/portal/cantera');

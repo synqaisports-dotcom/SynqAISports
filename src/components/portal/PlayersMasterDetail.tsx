@@ -37,13 +37,60 @@ import {
 import { playerBirthYearOptions } from '@/lib/player-form';
 import { emptyPlayerGuardian } from '@/lib/player-guardians';
 import type { PlayerTeamOption } from '@/lib/player-teams';
+import type { ClubPracticedSport } from '@/lib/club-practiced-sports';
+import { CLUB_PRACTICED_SPORT_SHORT } from '@/lib/club-practiced-sports';
 import {
-  PLAYER_POSITIONS,
-  playerHasPosition,
-  positionShort,
-  type PlayerPositionCode,
+  membershipSummary,
+  secondaryMemberships,
+  type PlayerTeamMembership,
+} from '@/lib/player-memberships';
+import {
+  positionsForPlayerSport,
+  positionShortForSport,
 } from '@/lib/player-positions';
+import { sportHasPosition } from '@/lib/sport-positions';
 import { cn } from '@/lib/utils';
+
+function playerSport(
+  player: PlayerProfile,
+  teams: PlayerTeamOption[]
+): ClubPracticedSport {
+  return player.primary_sport ?? teams.find((team) => team.id === player.team_id)?.sport ?? 'football';
+}
+
+function OtherMembershipsBlock({
+  memberships,
+}: {
+  memberships: PlayerTeamMembership[];
+}) {
+  const others = secondaryMemberships(memberships);
+  if (others.length === 0) return null;
+
+  return (
+    <div className="rounded-xl border border-primary/15 bg-muted/5 p-4">
+      <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+        Otras asignaciones
+      </p>
+      <ul className="mt-2 space-y-2">
+        {others.map((membership) => (
+          <li key={membership.id} className="text-sm text-foreground">
+            <span className="font-medium">
+              {CLUB_PRACTICED_SPORT_SHORT[membership.sport]}
+            </span>
+            {' · '}
+            {membershipSummary(membership)}
+            {membership.position ? (
+              <span className="text-muted-foreground">
+                {' '}
+                · {positionShortForSport(membership.sport, membership.position)}
+              </span>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 type Props = {
   clubId: string;
@@ -93,6 +140,7 @@ function PlayerDetailForm({
   );
   const tutor1 = player.guardians[0] ?? emptyPlayerGuardian();
   const tutor2 = player.guardians[1] ?? emptyPlayerGuardian();
+  const sport = player.primary_sport ?? 'football';
 
   useEffect(() => {
     setPositions(player.position ?? '');
@@ -175,7 +223,7 @@ function PlayerDetailForm({
           <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Posiciones
           </label>
-          <PlayerPositionsPicker value={positions} onChange={setPositions} />
+          <PlayerPositionsPicker value={positions} onChange={setPositions} sport={sport} />
           <input type="hidden" name="position" value={positions} readOnly />
           <p className="mt-1.5 text-xs text-muted-foreground">
             Puedes seleccionar varias posiciones. Pasa el ratón para ver el nombre completo.
@@ -228,10 +276,12 @@ function PlayerDetailPanel({
   clubId,
   player,
   demoMode,
+  teams,
 }: {
   clubId: string;
   player: PlayerProfile | null;
   demoMode?: boolean;
+  teams: PlayerTeamOption[];
 }) {
   const [editOpen, setEditOpen] = useState(false);
   const [docsOpen, setDocsOpen] = useState(false);
@@ -251,6 +301,7 @@ function PlayerDetailPanel({
   }
 
   const name = playerFullName(player);
+  const sport = playerSport(player, teams);
   const actionButtonClass =
     'inline-flex size-9 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary';
   const sectionClass = 'rounded-xl border border-primary/15 bg-muted/5 p-4';
@@ -324,7 +375,7 @@ function PlayerDetailPanel({
                 Posiciones
               </p>
               <div className="mt-2">
-                <PlayerPositionsPicker value={player.position} readOnly />
+                <PlayerPositionsPicker value={player.position} readOnly sport={sport} />
               </div>
             </div>
 
@@ -348,6 +399,10 @@ function PlayerDetailPanel({
             </div>
           </div>
         </div>
+
+        {player.memberships && player.memberships.length > 1 ? (
+          <OtherMembershipsBlock memberships={player.memberships} />
+        ) : null}
 
         <PlayerGuardiansSummary player={player} clubId={clubId} />
 
@@ -450,14 +505,19 @@ export function PlayersMasterDetail({
 
     if (positionFilter !== 'all') {
       list = list.filter((player) =>
-        playerHasPosition(player.position, positionFilter as PlayerPositionCode)
+        sportHasPosition(playerSport(player, teams), player.position, positionFilter)
       );
     }
 
     list.sort((a, b) => comparePlayersForList(a, b, sortMode));
 
     return list;
-  }, [players, search, positionFilter, teamFilter, sortMode]);
+  }, [players, search, positionFilter, teamFilter, sortMode, teams]);
+
+  const filterSport = useMemo((): ClubPracticedSport => {
+    if (teamFilter === 'all') return 'football';
+    return teams.find((team) => team.id === teamFilter)?.sport ?? 'football';
+  }, [teamFilter, teams]);
 
   const teamFilterLabel = useMemo(() => {
     if (teamFilter === 'all') return null;
@@ -506,7 +566,7 @@ export function PlayersMasterDetail({
 
   const positionOptions = [
     { value: 'all', label: 'Todas las posiciones' },
-    ...PLAYER_POSITIONS.map((item) => ({
+    ...positionsForPlayerSport(filterSport).map((item) => ({
       value: item.code,
       label: `${item.short} · ${item.label}`,
     })),
@@ -613,7 +673,7 @@ export function PlayersMasterDetail({
                           </span>
                         ) : null}
                         <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                          {positionShort(player.position)}
+                          {positionShortForSport(playerSport(player, teams), player.position)}
                         </span>
                       </div>
                     </button>
@@ -629,6 +689,7 @@ export function PlayersMasterDetail({
         clubId={clubId}
         player={selectedPlayer}
         demoMode={demoMode}
+        teams={teams}
       />
 
       <Sheet open={createOpen} onOpenChange={setCreateOpen}>

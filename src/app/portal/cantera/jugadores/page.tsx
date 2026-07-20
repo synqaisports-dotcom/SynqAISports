@@ -3,12 +3,19 @@ import { ArrowLeft, Plus, UsersRound } from 'lucide-react';
 import { PlayersMasterDetail } from '@/components/portal/PlayersMasterDetail';
 import { PageContainer } from '@/components/portal/PageContainer';
 import { DEMO_CANTERA_TEAMS, DEMO_TEAM_PLAYERS } from '@/lib/cantera-teams';
+import { demoMembershipsForPlayer } from '@/lib/demo-memberships';
 import { isDemoActive } from '@/lib/demo';
+import {
+  mapMembershipRow,
+  primaryMembership,
+  MEMBERSHIP_SELECT,
+} from '@/lib/player-memberships';
 import { comparePlayersForList, type PlayerProfile } from '@/lib/player-profile';
 import type { PlayerTeamOption } from '@/lib/player-teams';
 import { sortPlayerTeamsByCategory } from '@/lib/player-teams';
 import { parseGuardiansJson } from '@/lib/player-guardians';
 import { parsePlayerHistoryJson } from '@/lib/player-club-history';
+import type { ClubPracticedSport } from '@/lib/club-practiced-sports';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import { redirect } from 'next/navigation';
@@ -21,7 +28,7 @@ type Props = {
 
 function teamMetaForId(teamId: string | null) {
   if (!teamId) {
-    return { team_name: 'Sin equipo', team_category: '', team_category_slug: null };
+    return { team_name: 'Sin equipo', team_category: '', team_category_slug: null, sport: 'football' as ClubPracticedSport };
   }
   const demoTeam = DEMO_CANTERA_TEAMS.find((team) => team.id === teamId);
   if (demoTeam) {
@@ -29,9 +36,15 @@ function teamMetaForId(teamId: string | null) {
       team_name: demoTeam.name,
       team_category: demoTeam.category,
       team_category_slug: demoTeam.category_slug,
+      sport: (demoTeam.sport as ClubPracticedSport) ?? 'football',
     };
   }
-  return { team_name: 'Sin equipo', team_category: '', team_category_slug: null };
+  return {
+    team_name: 'Sin equipo',
+    team_category: '',
+    team_category_slug: null,
+    sport: 'football' as ClubPracticedSport,
+  };
 }
 
 export default async function PortalCanteraJugadoresPage({ searchParams }: Props) {
@@ -42,11 +55,11 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
 
   const demo = await isDemoActive();
 
-  const [{ data: players }, { data: teams }] = await Promise.all([
+  const [{ data: players }, { data: teams }, { data: membershipRows }] = await Promise.all([
     supabase
       .from('synq_players')
       .select(
-        'id, display_name, first_name, last_name, jersey_number, position, active, photo_url, birth_year, is_minor, guardians_json, medical_until, medical_document_url, player_history_json, created_at, team_id, synq_teams(name, category, category_slug)'
+        'id, display_name, first_name, last_name, jersey_number, position, active, photo_url, birth_year, is_minor, guardians_json, medical_until, medical_document_url, player_history_json, created_at, team_id, synq_teams(name, category, category_slug, sport)'
       )
       .eq('club_id', ctx.club.id)
       .eq('active', true)
@@ -54,16 +67,30 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
       .order('first_name'),
     supabase
       .from('synq_teams')
-      .select('id, name, category, category_slug')
+      .select('id, name, category, category_slug, sport')
+      .eq('club_id', ctx.club.id)
+      .eq('active', true),
+    supabase
+      .from('synq_player_team_memberships')
+      .select(MEMBERSHIP_SELECT)
       .eq('club_id', ctx.club.id)
       .eq('active', true),
   ]);
+
+  const membershipsByPlayer = new Map<string, ReturnType<typeof mapMembershipRow>[]>();
+  for (const row of membershipRows ?? []) {
+    const membership = mapMembershipRow(row as Record<string, unknown>);
+    const list = membershipsByPlayer.get(membership.player_id) ?? [];
+    list.push(membership);
+    membershipsByPlayer.set(membership.player_id, list);
+  }
 
   let teamOptions: PlayerTeamOption[] = (teams ?? []).map((team) => ({
     id: team.id,
     name: team.name,
     category: team.category,
     category_slug: team.category_slug,
+    sport: (team.sport as ClubPracticedSport) ?? 'football',
   }));
 
   if (demo) {
@@ -75,6 +102,7 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
         name: demoTeam.name,
         category: demoTeam.category,
         category_slug: demoTeam.category_slug,
+        sport: (demoTeam.sport as ClubPracticedSport) ?? 'football',
       });
     }
   }
@@ -83,6 +111,8 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
 
   let profiles: PlayerProfile[] = (players ?? []).map((row) => {
     const team = Array.isArray(row.synq_teams) ? row.synq_teams[0] : row.synq_teams;
+    const memberships = membershipsByPlayer.get(row.id) ?? [];
+    const primary = primaryMembership(memberships);
     return {
       id: row.id,
       first_name: row.first_name,
@@ -96,6 +126,8 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
       team_name: team?.name ?? 'Sin equipo',
       team_category: team?.category ?? '',
       team_category_slug: team?.category_slug ?? null,
+      primary_sport: (primary?.sport ?? team?.sport ?? 'football') as ClubPracticedSport,
+      memberships,
       active: row.active,
       is_minor: row.is_minor ?? false,
       guardians: parseGuardiansJson(row.guardians_json),
@@ -111,6 +143,7 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
     for (const demoPlayer of DEMO_TEAM_PLAYERS) {
       if (existingIds.has(demoPlayer.id)) continue;
       const team = teamMetaForId(demoPlayer.team_id);
+      const memberships = demoMembershipsForPlayer(demoPlayer.id);
       profiles.push({
         id: demoPlayer.id,
         first_name: demoPlayer.first_name,
@@ -124,6 +157,8 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
         team_name: team.team_name,
         team_category: team.team_category,
         team_category_slug: team.team_category_slug,
+        primary_sport: team.sport,
+        memberships,
         active: true,
         is_minor: demoPlayer.id === 'demo-pl-ale-1',
         guardians:

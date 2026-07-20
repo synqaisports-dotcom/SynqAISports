@@ -14,6 +14,7 @@ import {
   type ExerciseTaskSheet,
   type TaskType,
 } from '@/lib/exercise-sheet';
+import type { ClubPracticedSport } from '@/lib/club-practiced-sports';
 import type { DrawingData } from '@/lib/methodology';
 
 export type ExerciseRow = {
@@ -39,6 +40,7 @@ type Props = {
   defaultTaskType?: TaskType;
   categorySlug?: string;
   returnTo?: string;
+  sport?: ClubPracticedSport;
 };
 
 function resolveSheet(exercise?: ExerciseRow): ExerciseTaskSheet {
@@ -63,6 +65,7 @@ export function ExerciseEditor({
   defaultTaskType,
   categorySlug,
   returnTo,
+  sport = 'football',
 }: Props) {
   const isEdit = Boolean(exercise);
   const bound = isEdit
@@ -119,6 +122,7 @@ export function ExerciseEditor({
         </Card>
       ) : null}
       {returnTo ? <input type="hidden" name="returnTo" value={returnTo} /> : null}
+      <input type="hidden" name="sport" value={sport} readOnly />
 
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">

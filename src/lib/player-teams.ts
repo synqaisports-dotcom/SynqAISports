@@ -4,11 +4,14 @@ import {
   type CanteraCategorySlug,
 } from '@/lib/cantera-categories';
 
+import type { ClubPracticedSport } from '@/lib/club-practiced-sports';
+
 export type PlayerTeamOption = {
   id: string;
   name: string;
   category: string;
   category_slug?: CanteraCategorySlug | null;
+  sport?: ClubPracticedSport;
 };
 
 function categoryOrder(team: PlayerTeamOption): number {

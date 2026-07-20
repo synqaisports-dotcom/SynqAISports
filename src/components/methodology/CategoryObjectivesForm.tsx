@@ -10,6 +10,7 @@ import {
 } from '@/lib/methodology-objectives';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import type { ClubPracticedSport } from '@/lib/club-practiced-sports';
 import { cn } from '@/lib/utils';
 
 const initial: ActionState = { ok: false };
@@ -21,6 +22,7 @@ type Props = {
   demoMode?: boolean;
   onSaved?: () => void;
   compact?: boolean;
+  activeSport?: ClubPracticedSport;
 };
 
 export function CategoryObjectivesForm({
@@ -30,6 +32,7 @@ export function CategoryObjectivesForm({
   demoMode,
   onSaved,
   compact,
+  activeSport = 'football',
 }: Props) {
   const bound = updateCategoryObjectives.bind(null, categorySlug);
   const [state, action, pending] = useFormState(bound, initial);
@@ -50,6 +53,7 @@ export function CategoryObjectivesForm({
 
   return (
     <form action={action} className="space-y-4">
+      <input type="hidden" name="sport" value={activeSport} readOnly />
       {!compact ? (
         <p className="text-sm text-muted-foreground">
           Objetivos formativos de <span className="font-medium text-foreground">{category?.name}</span>

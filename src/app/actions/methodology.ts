@@ -21,8 +21,43 @@ import {
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { assertCanEditMethodology } from '@/lib/methodology-access-server';
+import type { ClubPracticedSport } from '@/lib/club-practiced-sports';
+import { resolveActiveSport } from '@/lib/sport-context';
+import { parsePracticedSports } from '@/lib/club-practiced-sports';
 
 export type ActionState = { ok: boolean; message?: string; id?: string };
+
+const ALLOWED_SPORTS = new Set<ClubPracticedSport>([
+  'football',
+  'futsal',
+  'basketball',
+  'volleyball',
+  'handball',
+  'waterpolo',
+]);
+
+function parseSportValue(value: string | null | undefined): ClubPracticedSport {
+  const sport = String(value ?? 'football').trim() as ClubPracticedSport;
+  return ALLOWED_SPORTS.has(sport) ? sport : 'football';
+}
+
+async function clubPracticedSports(clubId: string): Promise<ClubPracticedSport[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from('synq_clubs')
+    .select('practiced_sports')
+    .eq('id', clubId)
+    .maybeSingle();
+  return parsePracticedSports(data?.practiced_sports);
+}
+
+async function resolveMethodologySport(
+  clubId: string,
+  requested?: string | null
+): Promise<ClubPracticedSport> {
+  const practiced = await clubPracticedSports(clubId);
+  return resolveActiveSport(practiced, requested);
+}
 
 async function guardMethodologyWrite(): Promise<ActionState | null> {
   const access = await assertCanEditMethodology();
@@ -93,6 +128,10 @@ export async function createExercise(
   const drawingRaw = String(formData.get('drawingJson') ?? '{"strokes":[]}');
   const categorySlug = String(formData.get('categorySlug') ?? '').trim();
   const returnTo = String(formData.get('returnTo') ?? '').trim();
+  const sport = await resolveMethodologySport(
+    clubId,
+    String(formData.get('sport') ?? '').trim() || null
+  );
 
   let drawing_json;
   try {
@@ -106,6 +145,7 @@ export async function createExercise(
     .from('synq_exercises')
     .insert({
       club_id: clubId,
+      sport,
       title: legacy.title,
       objectives: legacy.objectives,
       duration_min: legacy.duration_min,
@@ -148,6 +188,10 @@ export async function updateExercise(
 
   const legacy = sheetToLegacyFields(sheet);
   const drawingRaw = String(formData.get('drawingJson') ?? '{"strokes":[]}');
+  const sport = await resolveMethodologySport(
+    clubId,
+    String(formData.get('sport') ?? '').trim() || null
+  );
 
   let drawing_json;
   try {
@@ -160,6 +204,7 @@ export async function updateExercise(
   const { error } = await supabase
     .from('synq_exercises')
     .update({
+      sport,
       title: legacy.title,
       objectives: legacy.objectives,
       duration_min: legacy.duration_min,
@@ -248,15 +293,29 @@ export async function createMicrocycle(
   const teamId = String(formData.get('teamId') ?? '').trim() || null;
   const weekStart = String(formData.get('weekStart') ?? '').trim() || null;
   const weekNumber = parseInt(String(formData.get('weekNumber') ?? ''), 10);
+  const sportParam = String(formData.get('sport') ?? '').trim() || null;
 
   if (!title) return { ok: false, message: 'validation' };
 
   const supabase = await createClient();
+
+  let sport = await resolveMethodologySport(clubId, sportParam);
+  if (teamId) {
+    const { data: team } = await supabase
+      .from('synq_teams')
+      .select('sport')
+      .eq('id', teamId)
+      .eq('club_id', clubId)
+      .maybeSingle();
+    if (team?.sport) sport = parseSportValue(team.sport);
+  }
+
   const { data, error } = await supabase
     .from('synq_microcycles')
     .insert({
       club_id: clubId,
       team_id: teamId,
+      sport,
       title,
       week_label: weekLabel,
       week_start: weekStart,
@@ -437,8 +496,11 @@ export async function deleteMicrocycle(microcycleId: string): Promise<ActionStat
 // ——— Objetivos por categoría ———
 
 export async function loadMethodologyObjectives(
-  clubId: string
+  clubId: string,
+  sport?: string | null
 ): Promise<MethodologyObjectivesMap> {
+  const activeSport = await resolveMethodologySport(clubId, sport);
+
   if (await isDemoActive()) {
     return mergeMethodologyObjectives(null);
   }
@@ -448,6 +510,7 @@ export async function loadMethodologyObjectives(
     .from('synq_methodology_objectives')
     .select('objectives_json')
     .eq('club_id', clubId)
+    .eq('sport', activeSport)
     .maybeSingle();
 
   if (error) {
@@ -472,6 +535,10 @@ export async function updateCategoryObjectives(
   if (!clubId) return { ok: false, message: 'unauthorized' };
 
   const slug = categorySlug as CanteraCategorySlug;
+  const sport = await resolveMethodologySport(
+    clubId,
+    String(formData.get('sport') ?? '').trim() || null
+  );
   const dimensions: Partial<CategoryObjectives> = {};
 
   for (const key of ['technique', 'tactics', 'physical', 'psychological', 'rules'] as const) {
@@ -492,6 +559,7 @@ export async function updateCategoryObjectives(
     .from('synq_methodology_objectives')
     .select('objectives_json')
     .eq('club_id', clubId)
+    .eq('sport', sport)
     .maybeSingle();
 
   const current =
@@ -506,6 +574,7 @@ export async function updateCategoryObjectives(
 
   const { error } = await supabase.from('synq_methodology_objectives').upsert({
     club_id: clubId,
+    sport,
     objectives_json: next,
     updated_at: new Date().toISOString(),
   });

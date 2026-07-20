@@ -27,6 +27,9 @@ import {
   readDemoDrawingOverrides,
   updateDemoExerciseDrawing,
 } from '@/lib/demo-exercises-store';
+import type { ClubPracticedSport } from '@/lib/club-practiced-sports';
+import { CLUB_PRACTICED_SPORT_SHORT } from '@/lib/club-practiced-sports';
+import { appendSportParam, clubIsMultisport } from '@/lib/sport-context';
 import { cn } from '@/lib/utils';
 
 export type ExerciseListRecord = {
@@ -44,6 +47,8 @@ type Props = {
   exercises: ExerciseListRecord[];
   initialExerciseId?: string | null;
   demoMode?: boolean;
+  activeSport?: ClubPracticedSport;
+  practicedSports?: ClubPracticedSport[];
 };
 
 const actionButtonClass =
@@ -279,7 +284,13 @@ function ExerciseDetailPanel({
   );
 }
 
-export function ExercisesMasterDetail({ exercises, initialExerciseId, demoMode = false }: Props) {
+export function ExercisesMasterDetail({
+  exercises,
+  initialExerciseId,
+  demoMode = false,
+  activeSport = 'football',
+  practicedSports = ['football'],
+}: Props) {
   const router = useRouter();
   const [drawingOverrides, setDrawingOverrides] = useState<Record<string, unknown>>({});
 
@@ -365,8 +376,12 @@ export function ExercisesMasterDetail({ exercises, initialExerciseId, demoMode =
 
   const handleSelect = (exerciseId: string) => {
     setSelectedId(exerciseId);
-    router.replace(`/portal/metodologia/ejercicios?exercise=${exerciseId}`, { scroll: false });
+    const path = appendSportParam(`/portal/metodologia/ejercicios?exercise=${exerciseId}`, activeSport);
+    router.replace(path, { scroll: false });
   };
+
+  const nuevoHref = appendSportParam('/portal/metodologia/ejercicios/nuevo', activeSport);
+  const showSportFilter = clubIsMultisport(practicedSports);
 
   return (
     <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
@@ -380,7 +395,7 @@ export function ExercisesMasterDetail({ exercises, initialExerciseId, demoMode =
               </CardDescription>
             </div>
             <Link
-              href="/portal/metodologia/ejercicios/nuevo"
+              href={nuevoHref}
               className={actionButtonClass}
               aria-label="Nuevo ejercicio"
               title="Nuevo ejercicio"
@@ -389,6 +404,19 @@ export function ExercisesMasterDetail({ exercises, initialExerciseId, demoMode =
             </Link>
           </div>
           <div className="space-y-2">
+            {showSportFilter ? (
+              <div className="flex flex-wrap gap-1.5">
+                {practicedSports.map((sport) => (
+                  <Link
+                    key={sport}
+                    href={appendSportParam('/portal/metodologia/ejercicios', sport)}
+                    className={filterButtonClass(activeSport === sport)}
+                  >
+                    {CLUB_PRACTICED_SPORT_SHORT[sport]}
+                  </Link>
+                ))}
+              </div>
+            ) : null}
             <PortalSearchField
               value={search}
               onChange={setSearch}

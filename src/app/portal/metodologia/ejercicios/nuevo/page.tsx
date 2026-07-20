@@ -2,6 +2,7 @@ import { ExerciseEditor } from '@/components/methodology/ExerciseEditor';
 import { MethodologySubnav } from '@/components/methodology/MethodologySubnav';
 import { PageContainer } from '@/components/portal/PageContainer';
 import type { TaskType } from '@/lib/exercise-sheet';
+import { parseSportFromSearchParams, resolveActiveSport } from '@/lib/sport-context';
 import { getStaffContext } from '@/lib/portal';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
@@ -11,6 +12,7 @@ type Props = {
     categorySlug?: string;
     taskType?: string;
     returnTo?: string;
+    sport?: string;
   }>;
 };
 
@@ -23,6 +25,7 @@ export default async function NuevoEjercicioPage({ searchParams }: Props) {
   const categorySlug = params.categorySlug?.trim() || undefined;
   const taskType = (params.taskType as TaskType | undefined) ?? undefined;
   const returnTo = params.returnTo?.trim() || undefined;
+  const sport = resolveActiveSport(ctx.club.practiced_sports, parseSportFromSearchParams(params));
 
   return (
     <PageContainer>
@@ -32,6 +35,7 @@ export default async function NuevoEjercicioPage({ searchParams }: Props) {
           defaultTaskType={taskType}
           categorySlug={categorySlug}
           returnTo={returnTo}
+          sport={sport}
         />
       </div>
     </PageContainer>
