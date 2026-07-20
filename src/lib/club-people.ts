@@ -62,7 +62,7 @@ export const DEMO_CLUB_PEOPLE: ClubPerson[] = [
     notes: null,
     photo_url: null,
     medical_until: '2026-08-15',
-    sport_teams: 'Sub-14 A',
+    sport_teams: 'Infantil A',
   },
   {
     id: 'demo-person-sport-2',
@@ -78,7 +78,7 @@ export const DEMO_CLUB_PEOPLE: ClubPerson[] = [
     notes: null,
     photo_url: null,
     medical_until: null,
-    sport_teams: 'Sub-16 B',
+    sport_teams: 'Cadete B',
   },
   {
     id: 'demo-person-sport-3',
@@ -94,7 +94,7 @@ export const DEMO_CLUB_PEOPLE: ClubPerson[] = [
     notes: null,
     photo_url: null,
     medical_until: '2026-11-01',
-    sport_teams: 'Sub-16 A, Sub-18',
+    sport_teams: 'Cadete A, Juvenil A',
   },
   {
     id: 'demo-person-inst-1',

@@ -4,6 +4,7 @@ export type TeamOption = {
   id: string;
   name: string;
   category: string;
+  category_slug?: string | null;
 };
 
 export const DEMO_TEAMS: TeamOption[] = [

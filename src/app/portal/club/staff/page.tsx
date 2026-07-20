@@ -1,20 +1,18 @@
-import Link from 'next/link';
-import { ArrowLeft, BarChart3 } from 'lucide-react';
 import {
   loadClubPersonAssignments,
   loadClubTeams,
   loadSportPeople,
 } from '@/app/actions/club-people';
+import { StaffCategoryOverview } from '@/components/portal/StaffCategoryOverview';
 import { StaffMasterDetail } from '@/components/portal/StaffMasterDetail';
-import { StaffHero, StaffHeroLinkAction } from '@/components/portal/StaffHero';
+import { StaffHero } from '@/components/portal/StaffHero';
 import { PageContainer } from '@/components/portal/PageContainer';
 import { isDemoActive } from '@/lib/demo';
+import { buildStaffCategoryStats } from '@/lib/staff-category-stats';
 import { buildStaffProfile } from '@/lib/staff-profile';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import { redirect } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 
 type Props = {
   searchParams: Promise<{
@@ -54,30 +52,13 @@ export default async function PortalClubStaffLandingPage({ searchParams }: Props
   const profiles = people.map((person) =>
     buildStaffProfile(person, assignmentsByPerson.get(person.id) ?? [], teams)
   );
+  const categoryStats = buildStaffCategoryStats(profiles, teams);
 
   return (
     <PageContainer>
-      <Card className="mb-4 border border-primary/25">
-        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 space-y-0">
-          <CardTitle className="text-base">Staff deportivo</CardTitle>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/portal/club">
-                <ArrowLeft className="h-4 w-4" />
-                Volver
-              </Link>
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/portal/club/staff/categorias">
-                <BarChart3 className="h-4 w-4" />
-                Por categorías
-              </Link>
-            </Button>
-          </div>
-        </CardHeader>
-      </Card>
-
       <StaffHero people={people} className="mb-4" />
+
+      <StaffCategoryOverview categories={categoryStats} />
 
       {demo ? (
         <p className="mb-4 rounded-lg border border-primary/20 bg-muted/10 p-4 text-sm text-muted-foreground">

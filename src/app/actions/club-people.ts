@@ -86,7 +86,7 @@ export async function loadClubTeams(clubId: string): Promise<TeamOption[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('synq_teams')
-    .select('id, name, category')
+    .select('id, name, category, category_slug')
     .eq('club_id', clubId)
     .eq('active', true)
     .order('name');
