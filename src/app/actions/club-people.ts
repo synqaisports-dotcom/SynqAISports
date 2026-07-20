@@ -17,7 +17,7 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
 const PERSON_SELECT =
-  'id, club_id, full_name, email, phone, person_kind, institutional_role, sport_role, access_profile, user_id, notes, photo_url, medical_until, sport_teams';
+  'id, club_id, full_name, email, phone, person_kind, institutional_role, sport_role, access_profile, user_id, notes, photo_url, medical_until, sport_teams, documents_json';
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);

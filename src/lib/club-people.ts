@@ -27,6 +27,7 @@ export type ClubPerson = {
   photo_url: string | null;
   medical_until: string | null;
   sport_teams: string | null;
+  documents_json?: unknown;
 };
 
 export const PERSON_KIND_LABELS: Record<PersonKind, string> = {

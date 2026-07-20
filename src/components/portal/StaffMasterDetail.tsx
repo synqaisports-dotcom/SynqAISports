@@ -4,8 +4,9 @@ import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Mail, Pencil, Phone, Plus, User, UserCog } from 'lucide-react';
+import { Mail, Pencil, Phone, Plus, User, UserCog, FileStack } from 'lucide-react';
 import { SportPersonForm } from '@/components/portal/SportPersonForm';
+import { StaffDocumentsSheet } from '@/components/portal/StaffDocumentsSheet';
 import { PortalSearchField } from '@/components/portal/PortalSearchField';
 import { SynqSelect } from '@/components/portal/SynqSelect';
 import { Badge } from '@/components/ui/badge';
@@ -29,6 +30,7 @@ import {
   type StaffProfile,
 } from '@/lib/staff-profile';
 import { cn } from '@/lib/utils';
+import { countPersonDocuments, loadDemoPersonDocuments, parsePersonDocumentsJson } from '@/lib/person-documents';
 
 type Props = {
   clubId: string;
@@ -38,6 +40,7 @@ type Props = {
   initialTeamFilter?: string | null;
   initialCreateOpen?: boolean;
   initialEditOpen?: boolean;
+  demoMode?: boolean;
 };
 
 function StaffListPhoto({ person }: { person: StaffProfile }) {
@@ -72,14 +75,30 @@ function StaffDetailPanel({
   person,
   teams,
   initialEditOpen,
+  demoMode,
 }: {
   clubId: string;
   person: StaffProfile | null;
   teams: TeamOption[];
   initialEditOpen?: boolean;
+  demoMode?: boolean;
 }) {
   const router = useRouter();
   const [editOpen, setEditOpen] = useState(Boolean(initialEditOpen));
+  const [docsOpen, setDocsOpen] = useState(false);
+  const [documentCount, setDocumentCount] = useState(0);
+
+  useEffect(() => {
+    let data = parsePersonDocumentsJson(person?.documents_json);
+    if (demoMode && person) {
+      const demo = loadDemoPersonDocuments(person.id);
+      data = {
+        fixed: { ...data.fixed, ...demo.fixed },
+        custom: [...data.custom, ...demo.custom],
+      };
+    }
+    setDocumentCount(countPersonDocuments(data));
+  }, [person?.id, person?.documents_json, demoMode, docsOpen]);
   const actionButtonClass =
     'inline-flex size-9 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary';
   const sectionClass = 'rounded-xl border border-primary/15 bg-muted/5 p-4';
@@ -119,15 +138,31 @@ function StaffDetailPanel({
             <p className="mt-1 text-sm text-primary">{person.sport_role}</p>
             <p className="text-xs text-muted-foreground">{staffAccessProfileLabel(person)}</p>
           </div>
-          <button
-            type="button"
-            className={actionButtonClass}
-            aria-label="Modificar ficha"
-            title="Modificar ficha"
-            onClick={() => setEditOpen(true)}
-          >
-            <Pencil className="size-4" />
-          </button>
+          <div className="flex shrink-0 items-center gap-1">
+            <button
+              type="button"
+              className={cn(actionButtonClass, 'relative')}
+              aria-label="Documentación"
+              title="Documentación"
+              onClick={() => setDocsOpen(true)}
+            >
+              <FileStack className="size-4" />
+              {documentCount > 0 ? (
+                <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">
+                  {documentCount > 9 ? '9+' : documentCount}
+                </span>
+              ) : null}
+            </button>
+            <button
+              type="button"
+              className={actionButtonClass}
+              aria-label="Modificar ficha"
+              title="Modificar ficha"
+              onClick={() => setEditOpen(true)}
+            >
+              <Pencil className="size-4" />
+            </button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="min-h-0 flex-1 space-y-4 overflow-y-auto">
@@ -245,6 +280,16 @@ function StaffDetailPanel({
           </div>
         </SheetContent>
       </Sheet>
+
+      <StaffDocumentsSheet
+        open={docsOpen}
+        onOpenChange={setDocsOpen}
+        clubId={clubId}
+        personId={person.id}
+        personName={person.full_name}
+        initialDocuments={person.documents_json}
+        demoMode={demoMode}
+      />
     </Card>
   );
 }
@@ -257,6 +302,7 @@ export function StaffMasterDetail({
   initialTeamFilter,
   initialCreateOpen,
   initialEditOpen,
+  demoMode,
 }: Props) {
   const router = useRouter();
   const [search, setSearch] = useState('');
@@ -467,6 +513,7 @@ export function StaffMasterDetail({
         clubId={clubId}
         person={selectedPerson}
         teams={teams}
+        demoMode={demoMode}
         initialEditOpen={initialEditOpen && selectedPerson?.id === initialPersonId}
       />
 
