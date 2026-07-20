@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import {
+  CheckCircle2,
+  CircleDashed,
   ExternalLink,
+  FileStack,
   FileText,
   Loader2,
   Plus,
@@ -13,7 +16,10 @@ import {
   savePersonDocuments,
   uploadPersonPdfDocument,
 } from '@/app/actions/person-documents';
+import { PortalSectionBadge } from '@/components/portal/PortalSectionShell';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import {
@@ -37,6 +43,8 @@ const UPLOAD_ERRORS: Record<string, string> = {
   no_file: 'Selecciona un archivo PDF.',
   save_error: 'No se pudo guardar la documentación.',
 };
+
+const rowSectionClass = 'rounded-xl border border-primary/15 bg-muted/5 p-4';
 
 type Props = {
   open: boolean;
@@ -64,6 +72,7 @@ function PdfUploadRow({
   const inputRef = useRef<HTMLInputElement>(null);
   const [pending, startUpload] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const uploaded = Boolean(file);
 
   const pick = (picked: File) => {
     startUpload(async () => {
@@ -77,43 +86,73 @@ function PdfUploadRow({
   };
 
   return (
-    <div className="rounded-xl border border-primary/15 bg-muted/5 p-3">
-      <div className="flex items-start gap-3">
-        <div className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-background/80">
-          {pending ? (
-            <Loader2 className="size-5 animate-spin text-primary" />
-          ) : (
-            <FileText className="size-5 text-primary/80" strokeWidth={1.5} />
-          )}
-        </div>
-        <div className="min-w-0 flex-1 space-y-2">
-          <p className="text-sm font-medium leading-snug text-foreground">{label}</p>
-          {file ? (
+    <div className={rowSectionClass}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex min-w-0 flex-1 items-start gap-3">
+          <div
+            className={cn(
+              'flex size-11 shrink-0 items-center justify-center rounded-lg border',
+              uploaded
+                ? 'border-primary/40 bg-primary/10 text-primary'
+                : 'border-primary/25 bg-background/60 text-muted-foreground'
+            )}
+          >
+            {pending ? (
+              <Loader2 className="size-5 animate-spin text-primary" />
+            ) : (
+              <FileText className="size-5" strokeWidth={1.5} />
+            )}
+          </div>
+          <div className="min-w-0 flex-1 space-y-1.5">
             <div className="flex flex-wrap items-center gap-2">
-              <p className="truncate text-xs text-muted-foreground">{file.fileName}</p>
-              <a
-                href={file.url}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+              <p className="text-sm font-semibold leading-snug text-foreground">{label}</p>
+              <Badge
+                variant={uploaded ? 'default' : 'outline'}
+                className={cn('text-[10px]', !uploaded && 'border-primary/30 text-muted-foreground')}
               >
-                Ver PDF
-                <ExternalLink className="size-3" />
-              </a>
-              {onRemove ? (
-                <button
-                  type="button"
-                  className="text-xs text-muted-foreground hover:text-destructive"
-                  onClick={onRemove}
-                  disabled={disabled || pending}
-                >
-                  Quitar
-                </button>
-              ) : null}
+                {uploaded ? (
+                  <>
+                    <CheckCircle2 className="mr-1 size-3" />
+                    Subido
+                  </>
+                ) : (
+                  <>
+                    <CircleDashed className="mr-1 size-3" />
+                    Pendiente
+                  </>
+                )}
+              </Badge>
             </div>
-          ) : (
-            <p className="text-xs text-muted-foreground">Sin documento</p>
-          )}
+            {file ? (
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <p className="truncate text-xs text-muted-foreground">{file.fileName}</p>
+                <a
+                  href={file.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                >
+                  Ver PDF
+                  <ExternalLink className="size-3" />
+                </a>
+                {onRemove ? (
+                  <button
+                    type="button"
+                    className="text-xs text-muted-foreground transition-colors hover:text-destructive"
+                    onClick={onRemove}
+                    disabled={disabled || pending}
+                  >
+                    Quitar
+                  </button>
+                ) : null}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">Formato PDF · máximo 10 MB</p>
+            )}
+          </div>
+        </div>
+
+        <div className="shrink-0 sm:pt-1">
           <input
             ref={inputRef}
             type="file"
@@ -129,16 +168,16 @@ function PdfUploadRow({
             type="button"
             variant="outline"
             size="sm"
-            className="gap-1.5"
+            className="w-full gap-1.5 border-primary/30 bg-background/40 sm:w-auto"
             disabled={disabled || pending}
             onClick={() => inputRef.current?.click()}
           >
             <Upload className="size-3.5" />
-            {file ? 'Reemplazar PDF' : 'Subir PDF'}
+            {file ? 'Reemplazar' : 'Subir PDF'}
           </Button>
-          {error ? <p className="text-xs text-destructive">{error}</p> : null}
         </div>
       </div>
+      {error ? <p className="mt-2 text-xs text-destructive">{error}</p> : null}
     </div>
   );
 }
@@ -158,6 +197,8 @@ export function StaffDocumentsSheet({
   const [customTitle, setCustomTitle] = useState('');
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [saving, startSave] = useTransition();
+
+  const uploadedMandatory = PERSON_DOCUMENT_SLOTS.filter((slot) => documents.fixed[slot.key]).length;
 
   const persist = useCallback(
     async (next: PersonDocumentsData) => {
@@ -269,108 +310,144 @@ export function StaffDocumentsSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full overflow-y-auto border-primary/20 sm:max-w-2xl">
-        <SheetHeader>
-          <SheetTitle>Documentación</SheetTitle>
-          <p className="text-sm text-muted-foreground">{personName}</p>
-        </SheetHeader>
-
-        <p className="mt-4 text-xs text-muted-foreground">
-          Solo archivos PDF (máx. 10 MB) para mantener la ficha ligera.
-        </p>
-
-        <div className="mt-4 space-y-3">
-          {PERSON_DOCUMENT_SLOTS.map((slot) => (
-            <PdfUploadRow
-              key={slot.key}
-              label={slot.label}
-              file={documents.fixed[slot.key]}
-              disabled={saving}
-              onUpload={handleFixedUpload(slot.key)}
-              onRemove={() => handleFixedRemove(slot.key)}
-            />
-          ))}
+      <SheetContent
+        side="right"
+        className="portal-dashboard dark portal-main-surface flex w-full flex-col gap-0 overflow-hidden border-l border-primary/25 p-0 sm:max-w-2xl"
+      >
+        <div className="portal-section-surface shrink-0 rounded-none border-x-0 border-t-0 px-5 py-4">
+          <SheetHeader className="space-y-3 text-left">
+            <PortalSectionBadge icon={<FileStack className="size-3.5" />}>
+              Expediente del empleado
+            </PortalSectionBadge>
+            <div>
+              <SheetTitle className="text-xl tracking-tight">Documentación</SheetTitle>
+              <p className="mt-1 text-sm text-muted-foreground">{personName}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="secondary" className="text-[10px]">
+                {uploadedMandatory}/{PERSON_DOCUMENT_SLOTS.length} obligatorios
+              </Badge>
+              <Badge variant="outline" className="border-primary/30 text-[10px] text-muted-foreground">
+                Solo PDF · 10 MB máx.
+              </Badge>
+            </div>
+          </SheetHeader>
         </div>
 
-        <div className="mt-6 border-t border-primary/15 pt-5">
-          <p className="text-sm font-semibold text-foreground">Otros documentos</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Añade certificados o justificantes con un título personalizado.
-          </p>
-
-          {documents.custom.length > 0 ? (
-            <ul className="mt-3 space-y-2">
-              {documents.custom.map((item) => (
-                <li
-                  key={item.id}
-                  className="flex items-center justify-between gap-2 rounded-lg border border-primary/15 bg-muted/5 px-3 py-2"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{item.title}</p>
-                    <a
-                      href={item.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-xs text-primary hover:underline"
-                    >
-                      {item.fileName}
-                    </a>
-                  </div>
-                  <button
-                    type="button"
-                    className={cn(
-                      'inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground',
-                      'hover:bg-destructive/10 hover:text-destructive'
-                    )}
-                    aria-label={`Eliminar ${item.title}`}
-                    onClick={() => handleCustomRemove(item.id)}
-                    disabled={saving}
-                  >
-                    <Trash2 className="size-4" />
-                  </button>
-                </li>
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 md:p-5">
+          <Card className="border border-primary/25 bg-card/40 shadow-none">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Documentación obligatoria</CardTitle>
+              <CardDescription>
+                Certificados y fichas exigidas para el cuerpo técnico del club.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {PERSON_DOCUMENT_SLOTS.map((slot) => (
+                <PdfUploadRow
+                  key={slot.key}
+                  label={slot.label}
+                  file={documents.fixed[slot.key]}
+                  disabled={saving}
+                  onUpload={handleFixedUpload(slot.key)}
+                  onRemove={() => handleFixedRemove(slot.key)}
+                />
               ))}
-            </ul>
-          ) : null}
+            </CardContent>
+          </Card>
 
-          <div className="mt-3 space-y-2 rounded-xl border border-dashed border-primary/25 bg-muted/5 p-3">
-            <Input
-              placeholder="Título del documento"
-              value={customTitle}
-              onChange={(event) => setCustomTitle(event.target.value)}
-              className="border-primary/30 bg-background/80"
-              disabled={saving}
-            />
-            <input
-              ref={customInputRef}
-              type="file"
-              accept="application/pdf,.pdf"
-              className="sr-only"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) handleCustomUpload(file);
-                event.target.value = '';
-              }}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="gap-1.5"
-              disabled={saving || !customTitle.trim()}
-              onClick={() => customInputRef.current?.click()}
-            >
-              {saving ? (
-                <Loader2 className="size-3.5 animate-spin" />
+          <Card className="border border-primary/25 bg-card/40 shadow-none">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Otros documentos</CardTitle>
+              <CardDescription>
+                Certificados adicionales con título personalizado (delegado, títulos, etc.).
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {documents.custom.length > 0 ? (
+                <ul className="space-y-2">
+                  {documents.custom.map((item) => (
+                    <li
+                      key={item.id}
+                      className={cn(rowSectionClass, 'flex items-center justify-between gap-3 py-3')}
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-foreground">{item.title}</p>
+                        <a
+                          href={item.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-0.5 inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                        >
+                          {item.fileName}
+                          <ExternalLink className="size-3" />
+                        </a>
+                      </div>
+                      <button
+                        type="button"
+                        className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                        aria-label={`Eliminar ${item.title}`}
+                        onClick={() => handleCustomRemove(item.id)}
+                        disabled={saving}
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
               ) : (
-                <Plus className="size-3.5" />
+                <p className="rounded-xl border border-dashed border-primary/20 bg-muted/5 px-4 py-6 text-center text-sm text-muted-foreground">
+                  Aún no hay documentos adicionales.
+                </p>
               )}
-              Añadir otro documento
-            </Button>
-          </div>
-        </div>
 
-        {globalError ? <p className="mt-4 text-sm text-destructive">{globalError}</p> : null}
+              <div className={cn(rowSectionClass, 'border-dashed border-primary/25')}>
+                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Nuevo documento
+                </label>
+                <Input
+                  placeholder="Título del documento"
+                  value={customTitle}
+                  onChange={(event) => setCustomTitle(event.target.value)}
+                  className="border-primary/30 bg-background/80"
+                  disabled={saving}
+                />
+                <input
+                  ref={customInputRef}
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  className="sr-only"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) handleCustomUpload(file);
+                    event.target.value = '';
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-3 gap-1.5 border-primary/30 bg-background/40"
+                  disabled={saving || !customTitle.trim()}
+                  onClick={() => customInputRef.current?.click()}
+                >
+                  {saving ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <Plus className="size-3.5" />
+                  )}
+                  Añadir otro documento
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {globalError ? (
+            <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {globalError}
+            </p>
+          ) : null}
+        </div>
       </SheetContent>
     </Sheet>
   );

@@ -260,7 +260,7 @@ function StaffDetailPanel({
       <Sheet open={editOpen} onOpenChange={setEditOpen}>
         <SheetContent
           side="right"
-          className="w-full overflow-y-auto border-primary/20 sm:max-w-2xl"
+          className="portal-dashboard dark portal-main-surface w-full overflow-y-auto border-l border-primary/25 p-4 sm:max-w-2xl sm:p-6"
         >
           <SheetHeader>
             <SheetTitle>Modificar ficha</SheetTitle>
@@ -520,7 +520,7 @@ export function StaffMasterDetail({
       <Sheet open={createOpen} onOpenChange={setCreateOpen}>
         <SheetContent
           side="right"
-          className="w-full overflow-y-auto border-primary/20 sm:max-w-2xl"
+          className="portal-dashboard dark portal-main-surface w-full overflow-y-auto border-l border-primary/25 p-4 sm:max-w-2xl sm:p-6"
         >
           <SheetHeader>
             <SheetTitle>Nueva ficha de staff</SheetTitle>
