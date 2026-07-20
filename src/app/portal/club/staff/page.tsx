@@ -60,13 +60,6 @@ export default async function PortalClubStaffLandingPage({ searchParams }: Props
 
       <StaffCategoryOverview categories={categoryStats} />
 
-      {demo ? (
-        <p className="mb-4 rounded-lg border border-primary/20 bg-muted/10 p-4 text-sm text-muted-foreground">
-          Vista maestro-detalle con fichas de demo. Usa + para probar el alta y selecciona una ficha
-          para ver asignaciones y contacto.
-        </p>
-      ) : null}
-
       <StaffMasterDetail
         clubId={ctx.club.id}
         people={profiles}

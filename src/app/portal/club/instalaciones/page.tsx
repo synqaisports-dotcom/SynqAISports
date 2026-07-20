@@ -4,7 +4,6 @@ import { getTeamTrainingSlots } from '@/app/actions/cantera';
 import { loadClubFacilities } from '@/app/actions/club-facilities';
 import { FacilitiesMasterDetail } from '@/components/portal/FacilitiesMasterDetail';
 import { PageContainer } from '@/components/portal/PageContainer';
-import { isDemoActive } from '@/lib/demo';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import { redirect } from 'next/navigation';
@@ -30,7 +29,6 @@ export default async function PortalClubInstalacionesLandingPage({ searchParams 
   const ctx = await getStaffContext(supabase);
   if (!ctx) redirect('/login');
 
-  const demo = await isDemoActive();
   const [facilities, trainingSlots] = await Promise.all([
     loadClubFacilities(ctx.club.id, { includeInactive: true }),
     getTeamTrainingSlots(ctx.club.id),
@@ -55,13 +53,6 @@ export default async function PortalClubInstalacionesLandingPage({ searchParams 
           </Button>
         </CardHeader>
       </Card>
-
-      {demo ? (
-        <p className="mb-4 rounded-lg border border-primary/20 bg-muted/10 p-4 text-sm text-muted-foreground">
-          Vista maestro-detalle con instalaciones de demo. Usa + para probar el alta y selecciona
-          una sede para ver horarios y ocupación por zonas.
-        </p>
-      ) : null}
 
       <FacilitiesMasterDetail
         facilities={facilities}

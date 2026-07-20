@@ -33,13 +33,6 @@ export default async function PortalClubEstructuraPage({ searchParams }: Props) 
     <PageContainer>
       <EstructuraHero people={people} className="mb-4" />
 
-      {demo ? (
-        <p className="mb-4 rounded-lg border border-primary/20 bg-muted/10 p-4 text-sm text-muted-foreground">
-          Vista maestro-detalle con fichas de demo. Usa + para probar el alta y selecciona una ficha
-          para ver su contacto y asignarla después en el organigrama.
-        </p>
-      ) : null}
-
       <EstructuraMasterDetail
         clubId={ctx.club.id}
         people={people}

@@ -186,12 +186,6 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
         </CardHeader>
       </Card>
 
-      {demo ? (
-        <p className="mb-4 rounded-lg border border-primary/20 bg-muted/10 p-4 text-sm text-muted-foreground">
-          Vista maestro-detalle con jugadores de demo. Usa + en Plantilla para probar el alta rápida.
-        </p>
-      ) : null}
-
       <PlayersMasterDetail
         clubId={ctx.club.id}
         players={profiles}

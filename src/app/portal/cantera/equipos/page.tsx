@@ -219,13 +219,6 @@ export default async function PortalCanteraEquiposPage({ searchParams }: Props) 
         </CardHeader>
       </Card>
 
-      {demo ? (
-        <p className="mb-4 rounded-lg border border-primary/20 bg-muted/10 p-4 text-sm text-muted-foreground">
-          Vista maestro-detalle con equipos de demo. Usa + para probar el alta y selecciona un equipo
-          para ver datos, plantilla y horarios.
-        </p>
-      ) : null}
-
       <p className="mb-4 text-xs text-muted-foreground">
         {CANTERA_CATEGORIES.length} categorías · {activeCount} equipos activos
         {pausedCount > 0 ? ` · ${pausedCount} pausados` : ''}
