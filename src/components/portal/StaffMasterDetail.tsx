@@ -38,7 +38,6 @@ type Props = {
   initialTeamFilter?: string | null;
   initialCreateOpen?: boolean;
   initialEditOpen?: boolean;
-  demoMode?: boolean;
 };
 
 function StaffListPhoto({ person }: { person: StaffProfile }) {
@@ -72,13 +71,11 @@ function StaffDetailPanel({
   clubId,
   person,
   teams,
-  demoMode,
   initialEditOpen,
 }: {
   clubId: string;
   person: StaffProfile | null;
   teams: TeamOption[];
-  demoMode?: boolean;
   initialEditOpen?: boolean;
 }) {
   const router = useRouter();
@@ -223,12 +220,6 @@ function StaffDetailPanel({
             <p className="mt-2 text-sm text-foreground">{person.notes}</p>
           </section>
         ) : null}
-
-        {demoMode ? (
-          <p className="rounded-lg border border-primary/20 bg-muted/10 p-3 text-xs text-muted-foreground">
-            Ficha de demostración. En tu club real podrás guardar cambios y asignaciones.
-          </p>
-        ) : null}
       </CardContent>
 
       <Sheet open={editOpen} onOpenChange={setEditOpen}>
@@ -266,7 +257,6 @@ export function StaffMasterDetail({
   initialTeamFilter,
   initialCreateOpen,
   initialEditOpen,
-  demoMode,
 }: Props) {
   const router = useRouter();
   const [search, setSearch] = useState('');
@@ -477,7 +467,6 @@ export function StaffMasterDetail({
         clubId={clubId}
         person={selectedPerson}
         teams={teams}
-        demoMode={demoMode}
         initialEditOpen={initialEditOpen && selectedPerson?.id === initialPersonId}
       />
 

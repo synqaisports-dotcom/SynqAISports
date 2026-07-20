@@ -7,7 +7,6 @@ import { StaffCategoryOverview } from '@/components/portal/StaffCategoryOverview
 import { StaffMasterDetail } from '@/components/portal/StaffMasterDetail';
 import { StaffHero } from '@/components/portal/StaffHero';
 import { PageContainer } from '@/components/portal/PageContainer';
-import { isDemoActive } from '@/lib/demo';
 import { buildStaffCategoryStats } from '@/lib/staff-category-stats';
 import { buildStaffProfile } from '@/lib/staff-profile';
 import { createClient } from '@/lib/supabase/server';
@@ -35,7 +34,6 @@ export default async function PortalClubStaffLandingPage({ searchParams }: Props
   const ctx = await getStaffContext(supabase);
   if (!ctx) redirect('/login');
 
-  const demo = await isDemoActive();
   const people = await loadSportPeople(ctx.club.id);
   const [teams, assignments] = await Promise.all([
     loadClubTeams(ctx.club.id),
@@ -68,7 +66,6 @@ export default async function PortalClubStaffLandingPage({ searchParams }: Props
         initialTeamFilter={initialTeamFilter}
         initialCreateOpen={initialCreate === '1'}
         initialEditOpen={initialEdit === '1'}
-        demoMode={demo}
       />
     </PageContainer>
   );
