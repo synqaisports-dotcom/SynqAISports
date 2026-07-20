@@ -46,6 +46,7 @@ function mapFacilityRow(row: Record<string, unknown>): ClubFacility {
     division_schedule_start: divisionScheduleStart,
     division_schedule_end: divisionScheduleEnd,
     is_match_venue: row.is_match_venue === true,
+    supports_reservations: row.supports_reservations === true,
     availability_note: row.availability_note ? String(row.availability_note) : null,
     notes: row.notes ? String(row.notes) : null,
     active: row.active !== false,

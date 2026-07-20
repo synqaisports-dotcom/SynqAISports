@@ -47,6 +47,11 @@ export function FacilityRowCard({ facility }: Props) {
                 Sede
               </Badge>
             ) : null}
+            {facility.supports_reservations ? (
+              <Badge variant="outline" className="border-primary/40 text-[10px] text-primary">
+                Reservas
+              </Badge>
+            ) : null}
           </div>
           <p className="mt-0.5 truncate text-xs text-muted-foreground sm:text-sm">
             {SPORT_LABELS[facility.sport]} · {FACILITY_KIND_LABELS[facility.facility_kind]}

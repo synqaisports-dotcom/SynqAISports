@@ -15,8 +15,12 @@ import {
   type FacilityDivisionMode,
   type FacilityKind,
   defaultDivisionModeForKind,
+  facilityAllowsMatchVenue,
   facilityHasSharedDivisions,
   facilityKindOptions,
+  facilityKindSupportsReservations,
+  facilityScheduleHint,
+  facilityScheduleTitle,
   facilitySupportsDivisions,
   sportOptions,
   surfaceOptionsForKind,
@@ -73,6 +77,8 @@ export function FacilityForm({ facility, onSaved }: Props) {
   const kindOptions = useMemo(() => facilityKindOptions(sport), [sport]);
   const surfaceOptions = useMemo(() => surfaceOptionsForKind(facilityKind), [facilityKind]);
   const showDivisionType = facilitySupportsDivisions(facilityKind);
+  const showMatchVenue = facilityAllowsMatchVenue(facilityKind);
+  const showReservations = facilityKindSupportsReservations(facilityKind);
 
   const draftFacility = useMemo(
     (): ClubFacility => ({
@@ -89,7 +95,8 @@ export function FacilityForm({ facility, onSaved }: Props) {
       division_schedule_days: divisionScheduleDays.join(','),
       division_schedule_start: divisionScheduleStart,
       division_schedule_end: divisionScheduleEnd,
-      is_match_venue: isMatchVenue,
+      is_match_venue: showMatchVenue ? isMatchVenue : false,
+      supports_reservations: showReservations,
       availability_note: null,
       notes: facility?.notes ?? null,
       active: true,
@@ -108,6 +115,8 @@ export function FacilityForm({ facility, onSaved }: Props) {
       divisionScheduleStart,
       divisionScheduleEnd,
       isMatchVenue,
+      showMatchVenue,
+      showReservations,
     ]
   );
 
@@ -150,6 +159,9 @@ export function FacilityForm({ facility, onSaved }: Props) {
     if (!surfaces.find((option) => option.value === surfaceType)) {
       setSurfaceType(surfaces[0]?.value ?? '');
     }
+    if (!facilityAllowsMatchVenue(nextKind)) {
+      setIsMatchVenue(false);
+    }
   };
 
   const handleDivisionModeChange = (value: string) => {
@@ -191,7 +203,7 @@ export function FacilityForm({ facility, onSaved }: Props) {
 
           <div>
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Deporte
+              Deporte / ámbito
             </label>
             <SynqSelect
               value={sport}
@@ -254,30 +266,43 @@ export function FacilityForm({ facility, onSaved }: Props) {
             />
           </div>
 
-          <div className="md:col-span-2">
-            <label
-              className={cn(
-                'flex cursor-pointer items-start gap-3 rounded-lg border border-primary/20 p-3 transition-colors',
-                isMatchVenue && 'border-primary/40 bg-primary/5'
-              )}
-            >
-              <input
-                type="checkbox"
-                name="isMatchVenue"
-                checked={isMatchVenue}
-                onChange={(event) => setIsMatchVenue(event.target.checked)}
-                className="mt-0.5 size-4 rounded border-primary/40 accent-primary"
-              />
-              <span>
-                <span className="block text-sm font-medium text-foreground">
-                  Sede de partidos del club
+          {showMatchVenue ? (
+            <div className="md:col-span-2">
+              <label
+                className={cn(
+                  'flex cursor-pointer items-start gap-3 rounded-lg border border-primary/20 p-3 transition-colors',
+                  isMatchVenue && 'border-primary/40 bg-primary/5'
+                )}
+              >
+                <input
+                  type="checkbox"
+                  name="isMatchVenue"
+                  checked={isMatchVenue}
+                  onChange={(event) => setIsMatchVenue(event.target.checked)}
+                  className="mt-0.5 size-4 rounded border-primary/40 accent-primary"
+                />
+                <span>
+                  <span className="block text-sm font-medium text-foreground">
+                    Sede de partidos del club
+                  </span>
+                  <span className="mt-0.5 block text-xs text-muted-foreground">
+                    Marca si esta instalación puede usarse como sede oficial para jugar partidos.
+                  </span>
                 </span>
-                <span className="mt-0.5 block text-xs text-muted-foreground">
-                  Marca si esta instalación puede usarse como sede oficial para jugar partidos.
-                </span>
-              </span>
-            </label>
-          </div>
+              </label>
+            </div>
+          ) : null}
+
+          {showReservations ? (
+            <div className="md:col-span-2 rounded-lg border border-primary/25 bg-primary/5 p-4">
+              <p className="text-sm font-medium text-foreground">Gestión de reservas</p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                Esta instalación admite reservas por franjas horarias. Configura el horario de
+                apertura a continuación; en la ficha podrás consultar la disponibilidad y crear
+                citas.
+              </p>
+            </div>
+          ) : null}
 
           <div
             className={cn(
@@ -286,8 +311,8 @@ export function FacilityForm({ facility, onSaved }: Props) {
             )}
           >
             <ScheduleBlockFields
-              title="Horario habitual del campo"
-              hint="Días y franja en los que la instalación está disponible en general (L · M · X · J · V · S · D)."
+              title={facilityScheduleTitle(facilityKind)}
+              hint={facilityScheduleHint(facilityKind)}
               days={availabilityDays}
               onDaysChange={setAvailabilityDays}
               start={availabilityStart}

@@ -7,6 +7,7 @@ import { CalendarDays, MapPin, Pencil, Plus } from 'lucide-react';
 import { FacilityDivisionOccupancy } from '@/components/portal/FacilityDivisionOccupancy';
 import { FacilityForm } from '@/components/portal/FacilityForm';
 import { FacilityPauseButton } from '@/components/portal/FacilityPauseButton';
+import { FacilityReservationsPanel } from '@/components/portal/FacilityReservationsPanel';
 import { SynqSelect } from '@/components/portal/SynqSelect';
 import { PortalSearchField } from '@/components/portal/PortalSearchField';
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +24,7 @@ import {
   FACILITY_KIND_LABELS,
   SPORT_LABELS,
   buildAvailabilityNote,
+  facilityAllowsMatchVenue,
   facilityHasSharedDivisions,
   facilitySupportsDivisions,
   formatDivisionSchedule,
@@ -138,6 +140,11 @@ function FacilityDetailPanel({
                   Sede de partidos
                 </Badge>
               ) : null}
+              {facility.supports_reservations ? (
+                <Badge variant="outline" className="border-primary/40 text-[10px] text-primary">
+                  Reservas
+                </Badge>
+              ) : null}
             </div>
             <p className="mt-1 text-sm text-primary">
               {SPORT_LABELS[facility.sport]} · {FACILITY_KIND_LABELS[facility.facility_kind]}
@@ -178,7 +185,7 @@ function FacilityDetailPanel({
             Datos de la instalación
           </p>
           <div className="mt-3 space-y-3 text-sm">
-            <FacilityDataRow label="Deporte" value={SPORT_LABELS[facility.sport]} />
+            <FacilityDataRow label="Deporte / ámbito" value={SPORT_LABELS[facility.sport]} />
             <FacilityDataRow label="Tipo" value={FACILITY_KIND_LABELS[facility.facility_kind]} />
             <FacilityDataRow label="Superficie" value={facility.surface_type ?? '—'} />
             {facilitySupportsDivisions(facility.facility_kind) ? (
@@ -188,10 +195,12 @@ function FacilityDetailPanel({
               />
             ) : null}
             <FacilityDataRow label="Dirección" value={facility.address ?? '—'} />
-            <FacilityDataRow
-              label="Sede de partidos"
-              value={facility.is_match_venue ? 'Sí' : 'No'}
-            />
+            {facilityAllowsMatchVenue(facility.facility_kind) ? (
+              <FacilityDataRow
+                label="Sede de partidos"
+                value={facility.is_match_venue ? 'Sí' : 'No'}
+              />
+            ) : null}
             <FacilityDataRow
               label="Horario habitual"
               value={
@@ -214,9 +223,14 @@ function FacilityDetailPanel({
           ) : null}
         </section>
 
+        {facility.supports_reservations ? (
+          <FacilityReservationsPanel facility={facility} />
+        ) : null}
+
         <p className="rounded-lg border border-dashed border-primary/20 p-3 text-xs text-muted-foreground">
-          Los equipos de Cantera eligen esta instalación al configurar entrenamiento y sede de
-          partidos.
+          {facility.supports_reservations
+            ? 'Los socios y el staff podrán reservar franjas dentro del horario configurado.'
+            : 'Los equipos de Cantera eligen esta instalación al configurar entrenamiento y sede de partidos.'}
         </p>
 
         {divisionSchedule.length > 0 ? (
@@ -380,8 +394,8 @@ export function FacilitiesMasterDetail({
               <SynqSelect
                 value={sportFilter}
                 onChange={(value) => setSportFilter(value as SportFilter)}
-                options={[{ value: 'all', label: 'Todos los deportes' }, ...sportOptions()]}
-                placeholder="Deporte"
+                options={[{ value: 'all', label: 'Todos los ámbitos' }, ...sportOptions()]}
+                placeholder="Deporte / ámbito"
               />
               <SynqSelect
                 value={statusFilter}
@@ -451,6 +465,11 @@ export function FacilitiesMasterDetail({
                           {facility.is_match_venue ? (
                             <Badge variant="secondary" className="text-[9px]">
                               Sede
+                            </Badge>
+                          ) : null}
+                          {facility.supports_reservations ? (
+                            <Badge variant="outline" className="border-primary/40 text-[9px] text-primary">
+                              Reservas
                             </Badge>
                           ) : null}
                         </div>
