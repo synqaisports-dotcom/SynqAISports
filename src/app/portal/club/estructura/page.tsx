@@ -1,5 +1,3 @@
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
 import { loadInstitutionalPeople } from '@/app/actions/club-people';
 import { EstructuraHero } from '@/components/portal/EstructuraHero';
 import { EstructuraMasterDetail } from '@/components/portal/EstructuraMasterDetail';
@@ -8,8 +6,6 @@ import { isDemoActive } from '@/lib/demo';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import { redirect } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 
 type Props = {
   searchParams: Promise<{
@@ -35,18 +31,6 @@ export default async function PortalClubEstructuraPage({ searchParams }: Props) 
 
   return (
     <PageContainer>
-      <Card className="mb-4 border border-primary/25">
-        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 space-y-0">
-          <CardTitle className="text-base">Estructura no deportiva</CardTitle>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/portal/club">
-              <ArrowLeft className="h-4 w-4" />
-              Volver
-            </Link>
-          </Button>
-        </CardHeader>
-      </Card>
-
       <EstructuraHero people={people} className="mb-4" />
 
       {demo ? (
