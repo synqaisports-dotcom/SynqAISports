@@ -1,5 +1,10 @@
 import { loadClubFacilities } from '@/app/actions/club-facilities';
 import { getTeamTrainingSlots } from '@/app/actions/cantera';
+import {
+  loadClubPersonAssignments,
+  loadClubTeams,
+  loadSportPeople,
+} from '@/app/actions/club-people';
 import { TeamsMasterDetail } from '@/components/portal/TeamsMasterDetail';
 import { PageContainer } from '@/components/portal/PageContainer';
 import type { TeamViewPlayer } from '@/components/portal/TeamViewSections';
@@ -16,6 +21,7 @@ import { isDemoActive } from '@/lib/demo';
 import type { TeamProfile } from '@/lib/team-profile';
 import { compareTeamsForList } from '@/lib/team-profile';
 import { parseTeamHistoryJson } from '@/lib/team-club-history';
+import { buildStaffProfile } from '@/lib/staff-profile';
 import {
   DEMO_TEAM_SETUP,
   DEFAULT_TEAM_SETUP,
@@ -94,26 +100,41 @@ export default async function PortalCanteraEquiposPage({ searchParams }: Props) 
 
   const demo = await isDemoActive();
 
-  const [{ data: teams }, { data: players }, facilities, trainingSlots] = await Promise.all([
-    supabase
-      .from('synq_teams')
-      .select(TEAM_SELECT)
-      .eq('club_id', ctx.club.id)
-      .order('team_letter')
-      .order('name'),
-    supabase
-      .from('synq_players')
-      .select('id, team_id, display_name, first_name, last_name, position, photo_url, jersey_number, birth_year')
-      .eq('club_id', ctx.club.id)
-      .eq('active', true)
-      .order('last_name')
-      .order('first_name'),
-    loadClubFacilities(ctx.club.id),
-    getTeamTrainingSlots(ctx.club.id),
-  ]);
+  const [teamsRes, playersRes, facilities, trainingSlots, sportPeople, staffTeams, assignments] =
+    await Promise.all([
+      supabase
+        .from('synq_teams')
+        .select(TEAM_SELECT)
+        .eq('club_id', ctx.club.id)
+        .order('team_letter')
+        .order('name'),
+      supabase
+        .from('synq_players')
+        .select('id, team_id, display_name, first_name, last_name, position, photo_url, jersey_number, birth_year')
+        .eq('club_id', ctx.club.id)
+        .eq('active', true)
+        .order('last_name')
+        .order('first_name'),
+      loadClubFacilities(ctx.club.id),
+      getTeamTrainingSlots(ctx.club.id),
+      loadSportPeople(ctx.club.id),
+      loadClubTeams(ctx.club.id),
+      loadClubPersonAssignments(ctx.club.id),
+    ]);
+
+  const assignmentsByPerson = new Map<string, typeof assignments>();
+  for (const row of assignments) {
+    const list = assignmentsByPerson.get(row.person_id) ?? [];
+    list.push(row);
+    assignmentsByPerson.set(row.person_id, list);
+  }
+
+  const staffProfiles = sportPeople.map((person) =>
+    buildStaffProfile(person, assignmentsByPerson.get(person.id) ?? [], staffTeams)
+  );
 
   const playersByTeam = new Map<string, TeamViewPlayer[]>();
-  for (const row of players ?? []) {
+  for (const row of playersRes.data ?? []) {
     if (!row.team_id) continue;
     const list = playersByTeam.get(row.team_id) ?? [];
     list.push({
@@ -129,7 +150,7 @@ export default async function PortalCanteraEquiposPage({ searchParams }: Props) 
     playersByTeam.set(row.team_id, list);
   }
 
-  let profiles: TeamProfile[] = (teams ?? []).map((team) => {
+  let profiles: TeamProfile[] = (teamsRes.data ?? []).map((team) => {
     const setup = teamSetupFromDb(team);
     const facilityName =
       facilities.find((facility) => facility.id === setup.training_facility_id)?.name ?? null;
@@ -201,6 +222,7 @@ export default async function PortalCanteraEquiposPage({ searchParams }: Props) 
         teams={profiles}
         facilities={facilities}
         trainingSlots={trainingSlots}
+        staff={staffProfiles}
         initialTeamId={initialTeamId}
         initialEditOpen={initialEdit === '1'}
         initialCreateOpen={initialCreate === '1'}

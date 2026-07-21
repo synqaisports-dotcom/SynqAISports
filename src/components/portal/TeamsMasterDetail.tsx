@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { CalendarDays, ClipboardList, Layers, Pencil, Plus, TrendingUp, UserCog } from 'lucide-react';
 import { CategorySeasonPromoteSheet } from '@/components/portal/CategorySeasonPromoteSheet';
 import { TeamClubHistorySection } from '@/components/portal/TeamClubHistorySection';
+import { TeamCoachingStaffSheet } from '@/components/portal/TeamCoachingStaffSheet';
 import { TeamSeasonPromoteSheet } from '@/components/portal/TeamSeasonPromoteSheet';
 import { TeamCreateForm } from '@/components/portal/TeamCreateForm';
 import { TeamEditForm } from '@/components/portal/TeamEditForm';
@@ -45,6 +46,7 @@ import {
   type TeamProfile,
 } from '@/lib/team-profile';
 import type { PlayerTeamOption } from '@/lib/player-teams';
+import type { StaffProfile } from '@/lib/staff-profile';
 import { sortPlayerTeamsByCategory } from '@/lib/player-teams';
 import { cn } from '@/lib/utils';
 
@@ -52,6 +54,7 @@ type Props = {
   teams: TeamProfile[];
   facilities: ClubFacility[];
   trainingSlots: TeamTrainingSlot[];
+  staff: StaffProfile[];
   initialTeamId?: string | null;
   initialEditOpen?: boolean;
   initialCreateOpen?: boolean;
@@ -84,11 +87,13 @@ function TeamDetailActions({
   onEdit,
   onRoster,
   onSeason,
+  onStaff,
 }: {
   team: TeamProfile;
   onEdit: () => void;
   onRoster: () => void;
   onSeason: () => void;
+  onStaff: () => void;
 }) {
   return (
     <div className="flex shrink-0 flex-nowrap items-center gap-0.5">
@@ -119,14 +124,15 @@ function TeamDetailActions({
       >
         <TrendingUp className="size-4" />
       </button>
-      <Link
-        href={`/portal/club/staff?team=${team.id}`}
+      <button
+        type="button"
         className={PORTAL_ACTION_ICON_CLASS}
-        aria-label="Ver staff asignado"
-        title="Ver cuerpo técnico asignado a este equipo"
+        aria-label="Ver cuerpo técnico"
+        title="Ver cuerpo técnico del equipo"
+        onClick={onStaff}
       >
         <UserCog className="size-4" />
-      </Link>
+      </button>
       <Link
         href="/portal/cantera/horarios"
         className={PORTAL_ACTION_ICON_CLASS}
@@ -145,19 +151,20 @@ function TeamDetailPanel({
   facilities,
   trainingSlots,
   teams,
-  demoMode,
+  staff,
   initialEditOpen,
 }: {
   team: TeamProfile | null;
   facilities: ClubFacility[];
   trainingSlots: TeamTrainingSlot[];
   teams: TeamProfile[];
-  demoMode?: boolean;
+  staff: StaffProfile[];
   initialEditOpen?: boolean;
 }) {
   const [editOpen, setEditOpen] = useState(Boolean(initialEditOpen));
   const [rosterOpen, setRosterOpen] = useState(false);
   const [seasonOpen, setSeasonOpen] = useState(false);
+  const [staffOpen, setStaffOpen] = useState(false);
 
   useEffect(() => {
     setEditOpen(Boolean(initialEditOpen));
@@ -166,6 +173,7 @@ function TeamDetailPanel({
   useEffect(() => {
     setRosterOpen(false);
     setSeasonOpen(false);
+    setStaffOpen(false);
   }, [team?.id]);
 
   if (!team) {
@@ -216,6 +224,7 @@ function TeamDetailPanel({
             onEdit={() => setEditOpen(true)}
             onRoster={() => setRosterOpen(true)}
             onSeason={() => setSeasonOpen(true)}
+            onStaff={() => setStaffOpen(true)}
           />
         </div>
       </CardHeader>
@@ -247,6 +256,13 @@ function TeamDetailPanel({
         teamOptions={teamOptions}
         open={seasonOpen}
         onOpenChange={setSeasonOpen}
+      />
+
+      <TeamCoachingStaffSheet
+        team={team}
+        staff={staff}
+        open={staffOpen}
+        onOpenChange={setStaffOpen}
       />
 
       <Sheet open={rosterOpen} onOpenChange={setRosterOpen}>
@@ -285,7 +301,6 @@ function TeamDetailPanel({
               facilities={facilities}
               occupiedSlots={occupiedSlots}
               initialSetup={team.setup}
-              readOnly={demoMode && team.is_demo}
               onSaved={() => setEditOpen(false)}
             />
           </PortalSheetBody>
@@ -299,6 +314,7 @@ export function TeamsMasterDetail({
   teams,
   facilities,
   trainingSlots,
+  staff,
   initialTeamId,
   initialEditOpen,
   initialCreateOpen,
@@ -589,7 +605,7 @@ export function TeamsMasterDetail({
         facilities={facilities}
         trainingSlots={trainingSlots}
         teams={teams}
-        demoMode={demoMode}
+        staff={staff}
         initialEditOpen={initialEditOpen && selectedTeam?.id === initialTeamId}
       />
 

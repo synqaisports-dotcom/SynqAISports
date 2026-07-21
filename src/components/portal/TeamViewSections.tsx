@@ -52,11 +52,6 @@ export function TeamViewSections({ team, category }: Props) {
           <DataRow label="Dirección sede" value={team.externalVenueAddress} />
         ) : null}
         <DataRow label="Estado" value={team.active ? 'Activo' : 'Pausado'} />
-        {category ? (
-          <p className="rounded-lg border border-primary/15 bg-muted/10 p-3 text-xs leading-relaxed text-muted-foreground">
-            {category.description}
-          </p>
-        ) : null}
       </CardContent>
     </Card>
   );
