@@ -1,7 +1,6 @@
 import {
   MATERIAL_CATEGORY_LABELS,
   MATERIAL_UNIT_LABELS,
-  materialsById,
   stockByLocation,
   totalQuantityForMaterial,
   type ClubMaterialItem,
@@ -22,6 +21,11 @@ export type MaterialExportRow = {
   lineValue: number | null;
 };
 
+export type MaterialExportSection = {
+  title: string;
+  rows: MaterialExportRow[];
+};
+
 function escapeCsvCell(value: string | number | null | undefined): string {
   const raw = value == null ? '' : String(value);
   if (/[;"\n\r]/.test(raw)) return `"${raw.replace(/"/g, '""')}"`;
@@ -38,8 +42,6 @@ export function buildMaterialExportRows(input: {
   facilityName?: string;
   teamName?: string;
 }): MaterialExportRow[] {
-  const materialMap = materialsById(input.materials);
-
   if (input.scope === 'total') {
     const rows: MaterialExportRow[] = [];
     for (const material of input.materials) {
@@ -101,6 +103,55 @@ export function buildMaterialExportRows(input: {
   return [];
 }
 
+export function buildFacilitiesExportSections(input: {
+  valued: boolean;
+  materials: ClubMaterialItem[];
+  stock: ClubMaterialStock[];
+  facilities: { id: string; name: string }[];
+  facilityIds: string[];
+}): MaterialExportSection[] {
+  const selectedIds = new Set(input.facilityIds);
+  const facilities = input.facilities.filter((facility) => selectedIds.has(facility.id));
+
+  return facilities
+    .map((facility) => ({
+      title: facility.name,
+      rows: stockByLocation('facility', facility.id, input.materials, input.stock).map((row) => ({
+        material: row.material.name,
+        category: MATERIAL_CATEGORY_LABELS[row.material.category],
+        sku: row.material.sku ?? '',
+        unit: MATERIAL_UNIT_LABELS[row.material.unit],
+        quantity: row.quantity,
+        location: facility.name,
+        unitCost: input.valued ? row.material.unit_cost : null,
+        currency: row.material.currency_code,
+        lineValue:
+          input.valued && row.material.unit_cost != null
+            ? row.material.unit_cost * row.quantity
+            : null,
+      })),
+    }))
+    .filter((section) => section.rows.length > 0);
+}
+
+function rowToCsvCells(row: MaterialExportRow, valued: boolean): string[] {
+  const base = [
+    row.material,
+    row.category,
+    row.sku,
+    row.unit,
+    String(row.quantity),
+    row.location,
+  ];
+  if (!valued) return base;
+  return [
+    ...base,
+    row.unitCost != null ? row.unitCost.toFixed(2).replace('.', ',') : '',
+    row.currency,
+    row.lineValue != null ? row.lineValue.toFixed(2).replace('.', ',') : '',
+  ];
+}
+
 export function materialExportToCsv(rows: MaterialExportRow[], valued: boolean): string {
   const headers = valued
     ? [
@@ -118,26 +169,39 @@ export function materialExportToCsv(rows: MaterialExportRow[], valued: boolean):
 
   const lines = [
     headers.join(';'),
-    ...rows.map((row) => {
-      const base = [
-        row.material,
-        row.category,
-        row.sku,
-        row.unit,
-        row.quantity,
-        row.location,
-      ];
-      if (!valued) return base.map(escapeCsvCell).join(';');
-      return [
-        ...base,
-        row.unitCost != null ? row.unitCost.toFixed(2).replace('.', ',') : '',
-        row.currency,
-        row.lineValue != null ? row.lineValue.toFixed(2).replace('.', ',') : '',
-      ]
-        .map(escapeCsvCell)
-        .join(';');
-    }),
+    ...rows.map((row) => rowToCsvCells(row, valued).map(escapeCsvCell).join(';')),
   ];
+
+  return `\uFEFF${lines.join('\r\n')}`;
+}
+
+export function materialExportSectionsToCsv(
+  sections: MaterialExportSection[],
+  valued: boolean
+): string {
+  const headers = valued
+    ? [
+        'Material',
+        'Categoría',
+        'SKU',
+        'Unidad',
+        'Cantidad',
+        'Ubicación',
+        'Coste unitario',
+        'Moneda',
+        'Valor línea',
+      ]
+    : ['Material', 'Categoría', 'SKU', 'Unidad', 'Cantidad', 'Ubicación'];
+
+  const lines: string[] = [];
+  for (const section of sections) {
+    if (lines.length > 0) lines.push('');
+    lines.push(escapeCsvCell(`INSTALACIÓN: ${section.title}`));
+    lines.push(headers.join(';'));
+    for (const row of section.rows) {
+      lines.push(rowToCsvCells(row, valued).map(escapeCsvCell).join(';'));
+    }
+  }
 
   return `\uFEFF${lines.join('\r\n')}`;
 }

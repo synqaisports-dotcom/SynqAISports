@@ -30,6 +30,8 @@ export type MaterialActionState = {
   materialId?: string;
   stockId?: string;
   handoverId?: string;
+  importedCount?: number;
+  skippedCount?: number;
 };
 
 function mapMaterialRow(row: Record<string, unknown>): ClubMaterialItem {
@@ -393,4 +395,72 @@ export async function createMaterialHandover(
   revalidateMaterialPaths();
   revalidatePath(`/print/material/entrega/${handoverId}`);
   return { ok: true, handoverId };
+}
+
+type MaterialImportPayload = {
+  name: string;
+  category: ClubMaterialItem['category'];
+  unit: ClubMaterialItem['unit'];
+  sku: string | null;
+  currency_code: ClubMaterialItem['currency_code'];
+  unit_cost: number | null;
+  notes: string | null;
+};
+
+export async function importClubMaterials(
+  rowsJson: string
+): Promise<MaterialActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'unauthorized' };
+
+  let rows: MaterialImportPayload[] = [];
+  try {
+    rows = JSON.parse(rowsJson) as MaterialImportPayload[];
+  } catch {
+    return { ok: false, message: 'validation' };
+  }
+
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return { ok: false, message: 'validation' };
+  }
+
+  const validRows = rows.filter((row) => row.name?.trim() && row.category);
+  if (validRows.length === 0) return { ok: false, message: 'validation' };
+
+  if (await isDemoActive()) {
+    revalidateMaterialPaths();
+    return {
+      ok: true,
+      message: 'demo',
+      importedCount: validRows.length,
+      skippedCount: rows.length - validRows.length,
+    };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.from('synq_club_materials').insert(
+    validRows.map((row) => ({
+      club_id: clubId,
+      name: row.name.trim(),
+      category: row.category,
+      unit: row.unit ?? 'unit',
+      sku: row.sku,
+      notes: row.notes,
+      currency_code: row.currency_code ?? 'EUR',
+      unit_cost: row.unit_cost,
+      active: true,
+    }))
+  );
+
+  if (error) {
+    console.error('importClubMaterials', error);
+    return { ok: false, message: 'error' };
+  }
+
+  revalidateMaterialPaths();
+  return {
+    ok: true,
+    importedCount: validRows.length,
+    skippedCount: rows.length - validRows.length,
+  };
 }

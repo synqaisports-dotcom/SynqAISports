@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { FileSpreadsheet, FileText } from 'lucide-react';
+import { MaterialImportActionButton, MaterialImportSheet } from '@/components/portal/MaterialImportSheet';
 import { SynqSelect } from '@/components/portal/SynqSelect';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,16 +15,18 @@ import {
 import type { ClubFacility } from '@/lib/club-facilities';
 import type { ClubMaterialItem, ClubMaterialStock } from '@/lib/club-material';
 import {
+  buildFacilitiesExportSections,
   buildMaterialExportRows,
   downloadMaterialCsv,
+  materialExportSectionsToCsv,
   materialExportToCsv,
   type MaterialExportScope,
 } from '@/lib/material-export';
 import type { TeamOption } from '@/lib/person-assignments';
 import { cn } from '@/lib/utils';
 
-const actionButtonClass =
-  'inline-flex size-9 items-center justify-center rounded-lg border border-primary/25 bg-background/40 text-muted-foreground backdrop-blur-sm transition-colors hover:border-primary/40 hover:bg-primary/10 hover:text-primary';
+const actionIconClass =
+  'inline-flex size-9 items-center justify-center rounded-lg text-primary transition-colors hover:bg-primary/10 hover:text-primary';
 
 type Props = {
   materials: ClubMaterialItem[];
@@ -34,32 +37,70 @@ type Props = {
 
 export function MaterialActionBar({ materials, stock, teams, facilities }: Props) {
   const [exportOpen, setExportOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [scope, setScope] = useState<MaterialExportScope>('total');
   const [valued, setValued] = useState(true);
-  const [facilityId, setFacilityId] = useState(facilities[0]?.id ?? '');
   const [teamId, setTeamId] = useState(teams[0]?.id ?? '');
+  const [selectedFacilityIds, setSelectedFacilityIds] = useState<string[]>(() =>
+    facilities.map((facility) => facility.id)
+  );
+
+  const allFacilitiesSelected = useMemo(
+    () => facilities.length > 0 && selectedFacilityIds.length === facilities.length,
+    [facilities.length, selectedFacilityIds.length]
+  );
+
+  useEffect(() => {
+    setSelectedFacilityIds(facilities.map((facility) => facility.id));
+  }, [facilities]);
+
+  const toggleFacility = (facilityId: string) => {
+    setSelectedFacilityIds((current) =>
+      current.includes(facilityId)
+        ? current.filter((id) => id !== facilityId)
+        : [...current, facilityId]
+    );
+  };
+
+  const toggleAllFacilities = () => {
+    setSelectedFacilityIds(
+      allFacilitiesSelected ? [] : facilities.map((facility) => facility.id)
+    );
+  };
 
   const handleExport = () => {
-    const facility = facilities.find((item) => item.id === facilityId);
     const team = teams.find((item) => item.id === teamId);
+    const valuedSuffix = valued ? '-valorado' : '';
+
+    if (scope === 'facility') {
+      if (selectedFacilityIds.length === 0) return;
+      const sections = buildFacilitiesExportSections({
+        valued,
+        materials,
+        stock,
+        facilities,
+        facilityIds: selectedFacilityIds,
+      });
+      const csv = materialExportSectionsToCsv(sections, valued);
+      const suffix =
+        selectedFacilityIds.length === facilities.length
+          ? 'instalaciones-todas'
+          : `instalaciones-${selectedFacilityIds.length}`;
+      downloadMaterialCsv(`material-${suffix}${valuedSuffix}.csv`, csv);
+      setExportOpen(false);
+      return;
+    }
+
     const rows = buildMaterialExportRows({
       scope,
       valued,
       materials,
       stock,
-      facilityId: scope === 'facility' ? facilityId : null,
       teamId: scope === 'team' ? teamId : null,
-      facilityName: facility?.name,
       teamName: team?.name,
     });
     const csv = materialExportToCsv(rows, valued);
-    const suffix =
-      scope === 'total'
-        ? 'total'
-        : scope === 'facility'
-          ? `instalacion-${facility?.name ?? 'zona'}`
-          : `equipo-${team?.name ?? 'zona'}`;
-    const valuedSuffix = valued ? '-valorado' : '';
+    const suffix = scope === 'total' ? 'total' : `equipo-${team?.name ?? 'zona'}`;
     downloadMaterialCsv(`material-${suffix}${valuedSuffix}.csv`, csv);
     setExportOpen(false);
   };
@@ -69,7 +110,7 @@ export function MaterialActionBar({ materials, stock, teams, facilities }: Props
       <div className="flex flex-wrap items-center gap-1">
         <Link
           href="/portal/club/material/recibis"
-          className={actionButtonClass}
+          className={actionIconClass}
           aria-label="Ver recibís de entrega"
           title="Recibís de entrega"
         >
@@ -77,13 +118,14 @@ export function MaterialActionBar({ materials, stock, teams, facilities }: Props
         </Link>
         <button
           type="button"
-          className={actionButtonClass}
+          className={actionIconClass}
           aria-label="Exportar material a Excel"
           title="Exportar a Excel"
           onClick={() => setExportOpen(true)}
         >
           <FileSpreadsheet className="size-4" />
         </button>
+        <MaterialImportActionButton onClick={() => setImportOpen(true)} />
       </div>
 
       <Sheet open={exportOpen} onOpenChange={setExportOpen}>
@@ -123,17 +165,43 @@ export function MaterialActionBar({ materials, stock, teams, facilities }: Props
 
               {scope === 'facility' ? (
                 <div className="mt-3">
-                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Instalación
-                  </label>
-                  <SynqSelect
-                    value={facilityId}
-                    onChange={setFacilityId}
-                    options={facilities.map((facility) => ({
-                      value: facility.id,
-                      label: facility.name,
-                    }))}
-                  />
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      Instalaciones
+                    </label>
+                    <button
+                      type="button"
+                      onClick={toggleAllFacilities}
+                      className="text-xs font-medium text-primary hover:underline"
+                    >
+                      {allFacilitiesSelected ? 'Deseleccionar todas' : 'Seleccionar todas'}
+                    </button>
+                  </div>
+                  <div className="max-h-48 space-y-1 overflow-y-auto rounded-lg border border-primary/15 p-2">
+                    {facilities.map((facility) => {
+                      const checked = selectedFacilityIds.includes(facility.id);
+                      return (
+                        <label
+                          key={facility.id}
+                          className={cn(
+                            'flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors',
+                            checked ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/40'
+                          )}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggleFacility(facility.id)}
+                            className="size-3.5 accent-primary"
+                          />
+                          <span>{facility.name}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    El informe agrupa cada instalación con su cabecera y el material asignado debajo.
+                  </p>
                 </div>
               ) : null}
 
@@ -186,12 +254,19 @@ export function MaterialActionBar({ materials, stock, teams, facilities }: Props
               </div>
             </div>
 
-            <Button type="button" onClick={handleExport} className="w-full sm:w-auto">
+            <Button
+              type="button"
+              onClick={handleExport}
+              disabled={scope === 'facility' && selectedFacilityIds.length === 0}
+              className="w-full sm:w-auto"
+            >
               Descargar Excel (.csv)
             </Button>
           </div>
         </SheetContent>
       </Sheet>
+
+      <MaterialImportSheet open={importOpen} onOpenChange={setImportOpen} />
     </>
   );
 }
