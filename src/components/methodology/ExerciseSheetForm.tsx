@@ -1,9 +1,11 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import type { ExerciseTaskSheet, TaskType } from '@/lib/exercise-sheet';
 import { SHEET_FIELD_LABELS, TASK_TYPE_LABELS } from '@/lib/exercise-sheet';
 import { ExerciseDrawingTrigger } from '@/components/methodology/drawing/ExerciseDrawingTrigger';
 import { ExerciseEditorLayout } from '@/components/methodology/ExerciseEditorLayout';
+import { SynqSelect } from '@/components/portal/SynqSelect';
 import { Input } from '@/components/ui/input';
 import type { DrawingData } from '@/lib/methodology';
 import { cn } from '@/lib/utils';
@@ -20,6 +22,11 @@ type Props = {
 const fieldClass = 'portal-field-surface';
 const sectionClass = 'rounded-xl border border-primary/15 bg-muted/5 p-4';
 
+const taskTypeOptions = (Object.keys(TASK_TYPE_LABELS) as TaskType[]).map((key) => ({
+  value: key,
+  label: TASK_TYPE_LABELS[key],
+}));
+
 export function ExerciseSheetForm({
   sheet,
   drawingJson,
@@ -29,6 +36,11 @@ export function ExerciseSheetForm({
   showCanvasHeader = true,
 }: Props) {
   const s = sheet;
+  const [taskType, setTaskType] = useState<TaskType>(s?.taskType ?? 'main');
+
+  useEffect(() => {
+    setTaskType(s?.taskType ?? 'main');
+  }, [s?.taskType]);
 
   const identityFields = (
     <div className={sectionClass}>
@@ -41,20 +53,13 @@ export function ExerciseSheetForm({
             <label className="mb-1.5 block text-xs text-muted-foreground">
               Tipo de tarea
             </label>
-            <select
-              name="taskType"
-              defaultValue={s?.taskType ?? 'main'}
-              className={cn(
-                'flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
-                fieldClass
-              )}
-            >
-              {(Object.keys(TASK_TYPE_LABELS) as TaskType[]).map((key) => (
-                <option key={key} value={key}>
-                  {TASK_TYPE_LABELS[key]}
-                </option>
-              ))}
-            </select>
+            <input type="hidden" name="taskType" value={taskType} readOnly />
+            <SynqSelect
+              value={taskType}
+              onChange={(value) => setTaskType(value as TaskType)}
+              options={taskTypeOptions}
+              placeholder="Seleccionar tipo"
+            />
           </div>
         ) : null}
 
