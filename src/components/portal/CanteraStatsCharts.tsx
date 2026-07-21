@@ -44,24 +44,34 @@ function ChartTooltip({
 
 function ChartPanel({
   title,
+  chartHeightClass,
   children,
+  legend,
   className,
 }: {
   title: string;
+  chartHeightClass: string;
   children: ReactNode;
+  legend?: ReactNode;
   className?: string;
 }) {
   return (
-    <div className={cn('portal-section-surface flex min-h-[14rem] flex-col rounded-xl p-4', className)}>
+    <div className={cn('portal-section-surface rounded-xl p-4', className)}>
       <p className="text-[10px] font-semibold uppercase tracking-wider text-primary">{title}</p>
-      <div className="mt-3 min-h-0 flex-1">{children}</div>
+      <div className={cn('mt-3 w-full', chartHeightClass)}>{children}</div>
+      {legend ? <div className="mt-2">{legend}</div> : null}
     </div>
   );
 }
 
-function EmptyChartMessage() {
+function EmptyChartMessage({ className }: { className?: string }) {
   return (
-    <div className="flex h-full min-h-[10rem] items-center justify-center text-sm text-muted-foreground">
+    <div
+      className={cn(
+        'flex h-full items-center justify-center text-sm text-muted-foreground',
+        className
+      )}
+    >
       Sin datos para mostrar
     </div>
   );
@@ -86,9 +96,22 @@ export function CanteraStatsCharts({ stats, className }: Props) {
 
   return (
     <section className={cn('grid gap-4 lg:grid-cols-2', className)}>
-      <ChartPanel title="Total de jugadores · activos vs inactivos">
+      <ChartPanel
+        title="Total de jugadores · activos vs inactivos"
+        chartHeightClass="h-56"
+        legend={
+          <div className="flex flex-wrap justify-center gap-4 text-xs text-muted-foreground">
+            {playerAvailability.map((item) => (
+              <span key={item.name} className="inline-flex items-center gap-1.5">
+                <span className="size-2 rounded-full" style={{ backgroundColor: item.fill }} />
+                {item.name}: {item.value}
+              </span>
+            ))}
+          </div>
+        }
+      >
         {playerAvailability.length > 0 ? (
-          <ResponsiveContainer width="100%" height="100%" minHeight={220}>
+          <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={playerAvailability}
@@ -111,20 +134,25 @@ export function CanteraStatsCharts({ stats, className }: Props) {
         ) : (
           <EmptyChartMessage />
         )}
-        <div className="mt-2 flex flex-wrap justify-center gap-4 text-xs text-muted-foreground">
-          {playerAvailability.map((item) => (
-            <span key={item.name} className="inline-flex items-center gap-1.5">
-              <span className="size-2 rounded-full" style={{ backgroundColor: item.fill }} />
-              {item.name}: {item.value}
-            </span>
-          ))}
-        </div>
       </ChartPanel>
 
       <div className="grid gap-4">
-        <ChartPanel title="Equipos · activos vs inactivos">
+        <ChartPanel
+          title="Equipos · activos vs inactivos"
+          chartHeightClass="h-40"
+          legend={
+            <div className="flex flex-wrap justify-center gap-4 text-xs text-muted-foreground">
+              {teamStatus.map((item) => (
+                <span key={item.name} className="inline-flex items-center gap-1.5">
+                  <span className="size-2 rounded-full" style={{ backgroundColor: item.fill }} />
+                  {item.name}: {item.value}
+                </span>
+              ))}
+            </div>
+          }
+        >
           {teamStatus.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%" minHeight={160}>
+            <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={teamStatus}
@@ -147,19 +175,11 @@ export function CanteraStatsCharts({ stats, className }: Props) {
           ) : (
             <EmptyChartMessage />
           )}
-          <div className="mt-2 flex flex-wrap justify-center gap-4 text-xs text-muted-foreground">
-            {teamStatus.map((item) => (
-              <span key={item.name} className="inline-flex items-center gap-1.5">
-                <span className="size-2 rounded-full" style={{ backgroundColor: item.fill }} />
-                {item.name}: {item.value}
-              </span>
-            ))}
-          </div>
         </ChartPanel>
 
-        <ChartPanel title="Jugadores · activos, inactivos y lesionados">
+        <ChartPanel title="Jugadores · activos, inactivos y lesionados" chartHeightClass="h-40">
           {playerStatusChart.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%" minHeight={160}>
+            <ResponsiveContainer width="100%" height="100%">
               <BarChart data={playerStatusChart} layout="vertical" margin={{ left: 4, right: 12 }}>
                 <XAxis type="number" hide />
                 <YAxis
