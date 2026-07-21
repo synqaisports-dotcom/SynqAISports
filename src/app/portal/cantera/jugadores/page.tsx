@@ -1,5 +1,3 @@
-import Link from 'next/link';
-import { ArrowLeft, Plus, UsersRound } from 'lucide-react';
 import { PlayersMasterDetail } from '@/components/portal/PlayersMasterDetail';
 import { PageContainer } from '@/components/portal/PageContainer';
 import { DEMO_CANTERA_TEAMS, DEMO_TEAM_PLAYERS } from '@/lib/cantera-teams';
@@ -19,8 +17,6 @@ import type { ClubPracticedSport } from '@/lib/club-practiced-sports';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import { redirect } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 
 type Props = {
   searchParams: Promise<{ player?: string; team?: string }>;
@@ -198,29 +194,6 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
 
   return (
     <PageContainer>
-      <Card className="mb-4 border border-primary/25">
-        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 space-y-0">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <UsersRound className="size-4 text-primary" />
-            Jugadores
-          </CardTitle>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/portal/cantera">
-                <ArrowLeft className="h-4 w-4" />
-                Volver
-              </Link>
-            </Button>
-            <Button size="sm" asChild>
-              <Link href="/portal/cantera/equipos">
-                <Plus className="h-4 w-4" />
-                Gestionar en equipos
-              </Link>
-            </Button>
-          </div>
-        </CardHeader>
-      </Card>
-
       <PlayersMasterDetail
         clubId={ctx.club.id}
         players={profiles}
