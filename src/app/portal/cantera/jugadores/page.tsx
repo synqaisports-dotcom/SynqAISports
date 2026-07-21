@@ -56,7 +56,7 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
     supabase
       .from('synq_players')
       .select(
-        'id, display_name, first_name, last_name, jersey_number, position, active, photo_url, birth_year, is_minor, guardians_json, medical_until, medical_document_url, player_history_json, created_at, team_id, synq_teams(name, category, category_slug, sport)'
+        'id, display_name, first_name, last_name, jersey_number, position, active, photo_url, birth_year, is_minor, guardians_json, medical_until, medical_document_url, federation_until, federation_document_url, player_history_json, created_at, team_id, synq_teams(name, category, category_slug, sport)'
       )
       .eq('club_id', ctx.club.id)
       .order('last_name')
@@ -129,6 +129,8 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
       guardians: parseGuardiansJson(row.guardians_json),
       medical_until: row.medical_until ?? null,
       medical_document_url: row.medical_document_url ?? null,
+      federation_until: row.federation_until ?? null,
+      federation_document_url: row.federation_document_url ?? null,
       created_at: row.created_at ?? null,
       history: parsePlayerHistoryJson(row.player_history_json),
     };
@@ -164,6 +166,8 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
             : [],
         medical_until: demoPlayer.id === 'demo-pl-ale-1' ? '2026-12-31' : null,
         medical_document_url: null,
+        federation_until: demoPlayer.id === 'demo-pl-ale-1' ? '2026-06-30' : null,
+        federation_document_url: null,
         created_at:
           demoPlayer.id === 'demo-pl-ale-1'
             ? '2024-09-01T10:00:00.000Z'

@@ -408,7 +408,7 @@ export async function movePlayerTeam(
   return { ok: true, playerId };
 }
 
-export async function updatePlayerMedical(
+export async function updatePlayerDocuments(
   playerId: string,
   _prev: ActionState,
   formData: FormData
@@ -418,8 +418,14 @@ export async function updatePlayerMedical(
 
   const medicalUntil = String(formData.get('medicalUntil') ?? '').trim();
   const medicalDocumentUrl = String(formData.get('medicalDocumentUrl') ?? '').trim();
+  const federationUntil = String(formData.get('federationUntil') ?? '').trim();
+  const federationDocumentUrl = String(formData.get('federationDocumentUrl') ?? '').trim();
 
   if (!medicalUntil || !isValidMedicalDate(medicalUntil)) {
+    return { ok: false, message: 'validation' };
+  }
+
+  if (federationUntil && !isValidMedicalDate(federationUntil)) {
     return { ok: false, message: 'validation' };
   }
 
@@ -435,12 +441,14 @@ export async function updatePlayerMedical(
     .update({
       medical_until: medicalUntil,
       medical_document_url: medicalDocumentUrl || null,
+      federation_until: federationUntil || null,
+      federation_document_url: federationDocumentUrl || null,
     })
     .eq('id', playerId)
     .eq('club_id', clubId);
 
   if (error) {
-    console.error('updatePlayerMedical', error);
+    console.error('updatePlayerDocuments', error);
     return { ok: false, message: 'error' };
   }
 
