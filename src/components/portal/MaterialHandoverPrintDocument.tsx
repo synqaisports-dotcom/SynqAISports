@@ -64,7 +64,13 @@ export function MaterialHandoverPrintDocument({ clubName, clubLogoUrl, handover 
                 <p className="mt-1 text-sm text-gray-600">Temporada {handover.season}</p>
               </div>
             </div>
-            <SynqBrandLockup layout="stacked" iconSize={48} wordmarkSize="sm" showSportsSuffix />
+            <SynqBrandLockup
+              layout="stacked"
+              iconSize={48}
+              wordmarkSize="sm"
+              showSportsSuffix
+              tone="on-light"
+            />
           </div>
         </header>
 

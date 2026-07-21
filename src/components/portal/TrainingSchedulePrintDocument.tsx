@@ -200,7 +200,13 @@ export function TrainingSchedulePrintDocument({
                 <p className="mt-1 text-sm text-gray-600">Calendario semanal · {generatedLabel}</p>
               </div>
             </div>
-            <SynqBrandLockup layout="stacked" iconSize={48} wordmarkSize="sm" showSportsSuffix />
+            <SynqBrandLockup
+              layout="stacked"
+              iconSize={48}
+              wordmarkSize="sm"
+              showSportsSuffix
+              tone="on-light"
+            />
           </div>
         </header>
 
