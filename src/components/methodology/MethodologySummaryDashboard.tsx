@@ -192,14 +192,7 @@ export function MethodologySummaryDashboard({ teams, totalPlayers, totalCoaches,
     <div className="space-y-4">
       <MethodologyReadOnlyBanner role={role} />
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="text-sm font-medium text-foreground">Planificación por equipo</p>
-          <p className="text-xs text-muted-foreground">
-            {stats.globalPendingPercent}% pendiente · {pendingTeamCount} equipo
-            {pendingTeamCount === 1 ? '' : 's'} con tareas
-          </p>
-        </div>
+      <div className="flex flex-wrap items-center justify-end gap-3">
         <div className="w-full sm:w-auto sm:min-w-[12rem]">
           <SynqSelect
             value={stats.activeSeason}

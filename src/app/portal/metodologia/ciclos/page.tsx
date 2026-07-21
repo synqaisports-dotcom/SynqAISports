@@ -84,8 +84,6 @@ export default async function PortalMetodologiaCiclosPage({ searchParams }: Prop
 
   return (
     <PageContainer>
-      <h1 className="text-2xl font-semibold tracking-tight">Ciclos</h1>
-
       <MethodologyReadOnlyBanner role={ctx.role} />
 
       <CategoryCyclesHub

@@ -31,8 +31,6 @@ export default async function EjerciciosListPage({ searchParams }: Props) {
 
   return (
     <PageContainer>
-      <h1 className="text-2xl font-semibold tracking-tight">Ejercicios</h1>
-
       <ExercisesMasterDetail
         exercises={exercises}
         initialExerciseId={initialExerciseId}

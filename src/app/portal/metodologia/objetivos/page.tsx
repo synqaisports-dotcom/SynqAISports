@@ -35,8 +35,6 @@ export default async function ObjetivosPage({ searchParams }: Props) {
 
   return (
     <PageContainer>
-      <h1 className="text-2xl font-semibold tracking-tight">Objetivos</h1>
-
       <ObjectivesMasterDetail
         objectives={objectives}
         canEdit={canEdit}
