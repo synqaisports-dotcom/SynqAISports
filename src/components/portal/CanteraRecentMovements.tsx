@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils';
 type Props = {
   movements: CanteraMovement[];
   className?: string;
+  variant?: 'section' | 'panel';
+  limit?: number;
 };
 
 const KIND_ICON = {
@@ -14,26 +16,42 @@ const KIND_ICON = {
   team_created: Users,
 } as const;
 
-export function CanteraRecentMovements({ movements, className }: Props) {
+export function CanteraRecentMovements({
+  movements,
+  className,
+  variant = 'section',
+  limit,
+}: Props) {
+  const items = limit != null ? movements.slice(0, limit) : movements;
+  const isPanel = variant === 'panel';
+
   return (
-    <section className={cn('portal-section-surface mt-6 rounded-xl px-4 py-4 md:px-5 md:py-4', className)}>
-      <div className="mb-4 flex items-center gap-2">
+    <section
+      className={cn(
+        'portal-section-surface rounded-xl px-4 py-4 md:px-5 md:py-4',
+        isPanel ? 'flex h-full min-h-[28rem] flex-col' : 'mt-6',
+        className
+      )}
+    >
+      <div className={cn('mb-4 flex items-center gap-2', isPanel && 'shrink-0')}>
         <History className="size-4 text-primary" />
-        <h2 className="text-sm font-semibold tracking-tight">Últimos movimientos</h2>
+        <h2 className="text-[10px] font-semibold uppercase tracking-wider text-primary">
+          Últimos movimientos
+        </h2>
       </div>
 
-      {movements.length === 0 ? (
+      {items.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           Aún no hay altas de jugadores ni equipos registrados en la cantera.
         </p>
       ) : (
-        <ul className="space-y-2">
-          {movements.map((movement) => {
+        <ul className={cn('space-y-1.5', isPanel && 'min-h-0 flex-1 overflow-y-auto')}>
+          {items.map((movement) => {
             const Icon = KIND_ICON[movement.kind];
             const row = (
               <>
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-primary/10 text-primary">
-                  <Icon className="size-4" />
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-primary/10 text-primary">
+                  <Icon className="size-3.5" />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-medium text-foreground">{movement.title}</span>
@@ -41,7 +59,7 @@ export function CanteraRecentMovements({ movements, className }: Props) {
                 </span>
                 <time
                   dateTime={movement.occurredAt}
-                  className="shrink-0 text-[11px] tabular-nums text-muted-foreground"
+                  className="shrink-0 text-[10px] tabular-nums text-muted-foreground"
                 >
                   {formatCanteraMovementWhen(movement.occurredAt)}
                 </time>
@@ -53,12 +71,12 @@ export function CanteraRecentMovements({ movements, className }: Props) {
                 {movement.href ? (
                   <Link
                     href={movement.href}
-                    className="flex items-center gap-3 rounded-lg border border-transparent px-2 py-2 transition-colors hover:border-primary/20 hover:bg-primary/5"
+                    className="flex items-center gap-2.5 rounded-lg border border-transparent px-1.5 py-2 transition-colors hover:border-primary/20 hover:bg-primary/5"
                   >
                     {row}
                   </Link>
                 ) : (
-                  <div className="flex items-center gap-3 px-2 py-2">{row}</div>
+                  <div className="flex items-center gap-2.5 px-1.5 py-2">{row}</div>
                 )}
               </li>
             );
