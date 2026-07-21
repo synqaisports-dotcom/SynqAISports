@@ -1,20 +1,21 @@
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
 import { loadClubTeams } from '@/app/actions/club-people';
 import { loadClubFacilities } from '@/app/actions/club-facilities';
-import { loadClubMaterialStock, loadClubMaterials } from '@/app/actions/club-material';
+import {
+  loadClubMaterialHandovers,
+  loadClubMaterialStock,
+  loadClubMaterials,
+} from '@/app/actions/club-material';
+import { MaterialFinancialPanel } from '@/components/portal/MaterialFinancialPanel';
 import { MaterialHero } from '@/components/portal/MaterialHero';
 import {
   MaterialMasterDetail,
   type MaterialViewMode,
 } from '@/components/portal/MaterialMasterDetail';
 import { PageContainer } from '@/components/portal/PageContainer';
-import { isDemoActive } from '@/lib/demo';
+import { immobilizedValueByZones, MATERIAL_HANDOVER_ROLE_LABELS } from '@/lib/club-material';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import { redirect } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 
 type Props = {
   searchParams: Promise<{
@@ -46,35 +47,43 @@ export default async function PortalClubMaterialPage({ searchParams }: Props) {
   const ctx = await getStaffContext(supabase);
   if (!ctx) redirect('/login');
 
-  const demo = await isDemoActive();
-  const [materials, stock, teams, facilities] = await Promise.all([
+  const [materials, stock, teams, facilities, handovers] = await Promise.all([
     loadClubMaterials(ctx.club.id, { includeInactive: true }),
     loadClubMaterialStock(ctx.club.id),
     loadClubTeams(ctx.club.id),
     loadClubFacilities(ctx.club.id, { includeInactive: true }),
+    loadClubMaterialHandovers(ctx.club.id),
   ]);
+
+  const zoneValues = immobilizedValueByZones({ materials, stock, teams, facilities });
 
   return (
     <PageContainer>
-      <Card className="mb-4 border border-primary/25">
-        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 space-y-0">
-          <CardTitle className="text-base">Material</CardTitle>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/portal/club">
-              <ArrowLeft className="h-4 w-4" />
-              Volver
-            </Link>
-          </Button>
-        </CardHeader>
-      </Card>
+      <MaterialHero materials={materials} stock={stock} zoneValues={zoneValues} className="mb-4" />
 
-      <MaterialHero materials={materials} stock={stock} className="mb-4" />
+      <MaterialFinancialPanel zones={zoneValues} className="mb-4" />
 
-      {demo ? (
-        <p className="mb-4 rounded-lg border border-primary/20 bg-muted/10 p-4 text-sm text-muted-foreground">
-          Inventario de demostración. Usa las pestañas Catálogo, Equipos e Instalaciones para ver el
-          stock repartido. Pulsa + para probar el alta de material.
-        </p>
+      {handovers.length > 0 ? (
+        <div className="mb-4 rounded-xl border border-primary/15 bg-muted/5 p-4">
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Últimos recibís de entrega
+          </p>
+          <ul className="mt-2 space-y-1.5">
+            {handovers.slice(0, 5).map((handover) => (
+              <li key={handover.id} className="text-sm">
+                <a
+                  href={`/print/material/entrega/${handover.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  {handover.season} · {handover.location_label} · {handover.recipient_name} (
+                  {MATERIAL_HANDOVER_ROLE_LABELS[handover.recipient_role]})
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : null}
 
       <MaterialMasterDetail

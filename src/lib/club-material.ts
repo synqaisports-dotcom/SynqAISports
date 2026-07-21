@@ -12,6 +12,10 @@ export type MaterialUnit = 'unit' | 'pair' | 'set' | 'box';
 
 export type MaterialLocationType = 'club' | 'team' | 'facility';
 
+export type MaterialCurrency = 'EUR' | 'USD' | 'GBP' | 'CHF';
+
+export type MaterialHandoverRole = 'coordinator' | 'coach' | 'facility_manager' | 'other';
+
 export type ClubMaterialItem = {
   id: string;
   name: string;
@@ -19,6 +23,8 @@ export type ClubMaterialItem = {
   unit: MaterialUnit;
   sku: string | null;
   notes: string | null;
+  currency_code: MaterialCurrency;
+  unit_cost: number | null;
   active: boolean;
 };
 
@@ -36,6 +42,51 @@ export type MaterialInventoryRow = {
   material: ClubMaterialItem;
   quantity: number;
   notes: string | null;
+};
+
+export type MaterialHandoverItem = {
+  material_id: string;
+  material_name: string;
+  quantity: number;
+  unit: MaterialUnit;
+  unit_cost: number | null;
+  currency_code: MaterialCurrency | null;
+};
+
+export type MaterialHandover = {
+  id: string;
+  club_id: string;
+  season: string;
+  recipient_name: string;
+  recipient_role: MaterialHandoverRole;
+  location_type: MaterialLocationType;
+  location_id: string | null;
+  location_label: string;
+  handed_at: string;
+  notes: string | null;
+  items: MaterialHandoverItem[];
+};
+
+export type MaterialZoneValue = {
+  location_type: MaterialLocationType;
+  location_id: string | null;
+  label: string;
+  total_by_currency: Partial<Record<MaterialCurrency, number>>;
+  total_value: number;
+};
+
+export const MATERIAL_CURRENCY_LABELS: Record<MaterialCurrency, string> = {
+  EUR: 'Euro (€)',
+  USD: 'Dólar ($)',
+  GBP: 'Libra (£)',
+  CHF: 'Franco suizo (CHF)',
+};
+
+export const MATERIAL_HANDOVER_ROLE_LABELS: Record<MaterialHandoverRole, string> = {
+  coordinator: 'Coordinador/a',
+  coach: 'Entrenador/a',
+  facility_manager: 'Responsable de instalación',
+  other: 'Otro responsable',
 };
 
 export const MATERIAL_CATEGORY_LABELS: Record<MaterialCategory, string> = {
@@ -57,7 +108,7 @@ export const MATERIAL_UNIT_LABELS: Record<MaterialUnit, string> = {
 };
 
 export const MATERIAL_SELECT =
-  'id, name, category, unit, sku, notes, active';
+  'id, name, category, unit, sku, notes, currency_code, unit_cost, active';
 
 export const MATERIAL_STOCK_SELECT =
   'id, material_id, location_type, location_id, quantity, notes';
@@ -70,6 +121,8 @@ export const DEMO_CLUB_MATERIALS: ClubMaterialItem[] = [
     unit: 'unit',
     sku: 'CONE-ORANGE',
     notes: 'Conos rígidos 23 cm, color naranja.',
+    currency_code: 'EUR',
+    unit_cost: 1.85,
     active: true,
   },
   {
@@ -79,6 +132,8 @@ export const DEMO_CLUB_MATERIALS: ClubMaterialItem[] = [
     unit: 'unit',
     sku: 'BALL-T4',
     notes: 'Categorías prebenjamín y benjamín.',
+    currency_code: 'EUR',
+    unit_cost: 24.5,
     active: true,
   },
   {
@@ -88,6 +143,8 @@ export const DEMO_CLUB_MATERIALS: ClubMaterialItem[] = [
     unit: 'unit',
     sku: 'BALL-T5',
     notes: 'Alevín en adelante.',
+    currency_code: 'EUR',
+    unit_cost: 28,
     active: true,
   },
   {
@@ -97,6 +154,8 @@ export const DEMO_CLUB_MATERIALS: ClubMaterialItem[] = [
     unit: 'set',
     sku: 'BIB-RA',
     notes: 'Juego de 12 petos por set.',
+    currency_code: 'EUR',
+    unit_cost: 42,
     active: true,
   },
   {
@@ -106,6 +165,8 @@ export const DEMO_CLUB_MATERIALS: ClubMaterialItem[] = [
     unit: 'pair',
     sku: 'GOAL-F7',
     notes: 'Pareja de porterías reglamentarias fútbol 7.',
+    currency_code: 'EUR',
+    unit_cost: 320,
     active: true,
   },
   {
@@ -115,6 +176,8 @@ export const DEMO_CLUB_MATERIALS: ClubMaterialItem[] = [
     unit: 'box',
     sku: 'MED-KIT',
     notes: 'Revisión trimestral.',
+    currency_code: 'EUR',
+    unit_cost: 65,
     active: true,
   },
 ];
@@ -248,6 +311,38 @@ export function materialUnitOptions() {
   }));
 }
 
+export function materialCurrencyOptions() {
+  return (Object.keys(MATERIAL_CURRENCY_LABELS) as MaterialCurrency[]).map((currency) => ({
+    value: currency,
+    label: MATERIAL_CURRENCY_LABELS[currency],
+  }));
+}
+
+export function materialHandoverRoleOptions() {
+  return (Object.keys(MATERIAL_HANDOVER_ROLE_LABELS) as MaterialHandoverRole[]).map((role) => ({
+    value: role,
+    label: MATERIAL_HANDOVER_ROLE_LABELS[role],
+  }));
+}
+
+export function formatMaterialMoney(
+  amount: number | null | undefined,
+  currency: MaterialCurrency = 'EUR'
+): string {
+  if (amount == null || Number.isNaN(amount)) return '—';
+  return new Intl.NumberFormat('es-ES', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
+export function lineImmobilizedValue(material: ClubMaterialItem, quantity: number): number {
+  if (material.unit_cost == null || material.unit_cost <= 0) return 0;
+  return material.unit_cost * quantity;
+}
+
 export function materialsById(items: ClubMaterialItem[]): Map<string, ClubMaterialItem> {
   return new Map(items.map((item) => [item.id, item]));
 }
@@ -298,13 +393,143 @@ export function locationLabel(input: {
   return input.facilityName ?? 'Instalación';
 }
 
+function zoneKey(locationType: MaterialLocationType, locationId: string | null): string {
+  return `${locationType}:${locationId ?? 'club'}`;
+}
+
+export function immobilizedValueByZones(input: {
+  materials: ClubMaterialItem[];
+  stock: ClubMaterialStock[];
+  teams: Array<{ id: string; name: string }>;
+  facilities: Array<{ id: string; name: string }>;
+}): MaterialZoneValue[] {
+  const materialMap = materialsById(input.materials);
+  const zones = new Map<string, MaterialZoneValue>();
+
+  const ensureZone = (
+    locationType: MaterialLocationType,
+    locationId: string | null,
+    label: string
+  ) => {
+    const key = zoneKey(locationType, locationId);
+    if (!zones.has(key)) {
+      zones.set(key, {
+        location_type: locationType,
+        location_id: locationId,
+        label,
+        total_by_currency: {},
+        total_value: 0,
+      });
+    }
+    return zones.get(key)!;
+  };
+
+  for (const row of input.stock) {
+    const material = materialMap.get(row.material_id);
+    if (!material) continue;
+    const value = lineImmobilizedValue(material, row.quantity);
+    if (value <= 0) continue;
+
+    const label = locationLabel({
+      location_type: row.location_type,
+      location_id: row.location_id,
+      teamName: input.teams.find((team) => team.id === row.location_id)?.name,
+      facilityName: input.facilities.find((facility) => facility.id === row.location_id)?.name,
+    });
+
+    const zone = ensureZone(row.location_type, row.location_id, label);
+    const currency = material.currency_code;
+    zone.total_by_currency[currency] = (zone.total_by_currency[currency] ?? 0) + value;
+    if (currency === 'EUR') zone.total_value += value;
+  }
+
+  const order: Record<MaterialLocationType, number> = { club: 0, team: 1, facility: 2 };
+  return [...zones.values()].sort((a, b) => {
+    const byType = order[a.location_type] - order[b.location_type];
+    if (byType !== 0) return byType;
+    return a.label.localeCompare(b.label, 'es');
+  });
+}
+
+export function totalImmobilizedByCurrency(
+  zones: MaterialZoneValue[]
+): Partial<Record<MaterialCurrency, number>> {
+  const totals: Partial<Record<MaterialCurrency, number>> = {};
+  for (const zone of zones) {
+    for (const [currency, amount] of Object.entries(zone.total_by_currency) as Array<
+      [MaterialCurrency, number]
+    >) {
+      totals[currency] = (totals[currency] ?? 0) + amount;
+    }
+  }
+  return totals;
+}
+
+export function currentSeasonLabel(date = new Date()): string {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const start = month >= 7 ? year : year - 1;
+  return `${start}-${String(start + 1).slice(-2)}`;
+}
+
+export function handoverItemsFromStock(
+  materials: ClubMaterialItem[],
+  stock: ClubMaterialStock[],
+  locationType: MaterialLocationType,
+  locationId: string | null
+): MaterialHandoverItem[] {
+  const materialMap = materialsById(materials);
+  return stock
+    .filter(
+      (row) =>
+        row.location_type === locationType &&
+        (row.location_id ?? null) === (locationId ?? null) &&
+        row.quantity > 0
+    )
+    .flatMap((row) => {
+      const material = materialMap.get(row.material_id);
+      if (!material) return [];
+      return [
+        {
+          material_id: material.id,
+          material_name: material.name,
+          quantity: row.quantity,
+          unit: material.unit,
+          unit_cost: material.unit_cost,
+          currency_code: material.currency_code,
+        },
+      ];
+    })
+    .sort((a, b) => a.material_name.localeCompare(b.material_name, 'es'));
+}
+
 export function parseMaterialFromForm(formData: FormData) {
+  const unitCostRaw = String(formData.get('unitCost') ?? '').trim();
+  const unitCost = unitCostRaw ? Number.parseFloat(unitCostRaw.replace(',', '.')) : null;
+  const currencyRaw = String(formData.get('currencyCode') ?? 'EUR').trim() as MaterialCurrency;
+
   return {
     name: String(formData.get('name') ?? '').trim(),
     category: String(formData.get('category') ?? '').trim() as MaterialCategory,
     unit: String(formData.get('unit') ?? 'unit').trim() as MaterialUnit,
     sku: String(formData.get('sku') ?? '').trim() || null,
     notes: String(formData.get('notes') ?? '').trim() || null,
+    currency_code: MATERIAL_CURRENCY_LABELS[currencyRaw] ? currencyRaw : 'EUR',
+    unit_cost:
+      unitCost != null && Number.isFinite(unitCost) && unitCost >= 0 ? unitCost : null,
+  };
+}
+
+export function parseMaterialHandoverFromForm(formData: FormData) {
+  return {
+    season: String(formData.get('season') ?? '').trim(),
+    recipientName: String(formData.get('recipientName') ?? '').trim(),
+    recipientRole: String(formData.get('recipientRole') ?? 'coach').trim() as MaterialHandoverRole,
+    locationType: String(formData.get('locationType') ?? '').trim() as MaterialLocationType,
+    locationId: String(formData.get('locationId') ?? '').trim() || null,
+    locationLabel: String(formData.get('locationLabel') ?? '').trim(),
+    notes: String(formData.get('notes') ?? '').trim() || null,
+    itemsJson: String(formData.get('itemsJson') ?? '[]'),
   };
 }
 

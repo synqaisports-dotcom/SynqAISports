@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
+  FileText,
   Layers,
   MapPin,
   Package,
@@ -12,6 +13,7 @@ import {
   Warehouse,
 } from 'lucide-react';
 import { MaterialForm } from '@/components/portal/MaterialForm';
+import { MaterialHandoverForm } from '@/components/portal/MaterialHandoverForm';
 import { MaterialPauseButton } from '@/components/portal/MaterialPauseButton';
 import { MaterialStockForm } from '@/components/portal/MaterialStockForm';
 import { PortalSearchField } from '@/components/portal/PortalSearchField';
@@ -29,12 +31,16 @@ import type { ClubFacility } from '@/lib/club-facilities';
 import {
   MATERIAL_CATEGORY_LABELS,
   MATERIAL_UNIT_LABELS,
+  formatMaterialMoney,
+  handoverItemsFromStock,
+  lineImmobilizedValue,
   locationLabel,
   stockByLocation,
   stockForMaterial,
   totalQuantityForMaterial,
   type ClubMaterialItem,
   type ClubMaterialStock,
+  type MaterialLocationType,
 } from '@/lib/club-material';
 import type { TeamOption } from '@/lib/person-assignments';
 import { cn } from '@/lib/utils';
@@ -183,6 +189,9 @@ function CatalogDetailPanel({
             <p className="mt-1 text-sm text-primary">
               {MATERIAL_CATEGORY_LABELS[material.category]} ·{' '}
               {MATERIAL_UNIT_LABELS[material.unit]}
+              {material.unit_cost != null
+                ? ` · ${formatMaterialMoney(material.unit_cost, material.currency_code)}/ud.`
+                : ''}
             </p>
             {material.sku ? (
               <p className="text-xs text-muted-foreground">Ref. {material.sku}</p>
@@ -352,29 +361,93 @@ function LocationDetailPanel({
   title,
   subtitle,
   rows,
+  locationType,
+  locationId,
+  locationLabelText,
+  materials,
+  stock,
+  onHandoverCreated,
 }: {
   title: string;
   subtitle: string;
   rows: ReturnType<typeof stockByLocation>;
+  locationType: MaterialLocationType;
+  locationId: string | null;
+  locationLabelText: string;
+  materials: ClubMaterialItem[];
+  stock: ClubMaterialStock[];
+  onHandoverCreated: (handoverId: string) => void;
 }) {
+  const [handoverOpen, setHandoverOpen] = useState(false);
   const totalUnits = rows.reduce((sum, row) => sum + row.quantity, 0);
+  const immobilized = rows.reduce(
+    (sum, row) => sum + lineImmobilizedValue(row.material, row.quantity),
+    0
+  );
+  const currency = rows.find((row) => row.material.unit_cost != null)?.material.currency_code ?? 'EUR';
+  const handoverItems = handoverItemsFromStock(materials, stock, locationType, locationId);
 
   return (
     <Card className="flex h-full min-h-[28rem] flex-col border border-primary/25">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-semibold tracking-tight">{title}</CardTitle>
-        <p className="text-sm text-muted-foreground">{subtitle}</p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <CardTitle className="text-lg font-semibold tracking-tight">{title}</CardTitle>
+            <p className="text-sm text-muted-foreground">{subtitle}</p>
+          </div>
+          {handoverItems.length > 0 ? (
+            <button
+              type="button"
+              className={actionButtonClass}
+              aria-label="Generar recibí de entrega"
+              title="Generar recibí de entrega"
+              onClick={() => setHandoverOpen(true)}
+            >
+              <FileText className="size-4" />
+            </button>
+          ) : null}
+        </div>
       </CardHeader>
       <CardContent className="min-h-0 flex-1 space-y-4 overflow-y-auto">
-        <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
-          <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-            Líneas de inventario
-          </p>
-          <p className="mt-1 text-2xl font-semibold text-foreground">{rows.length}</p>
-          <p className="text-xs text-muted-foreground">{totalUnits} unidades contabilizadas</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+            <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+              Líneas de inventario
+            </p>
+            <p className="mt-1 text-2xl font-semibold text-foreground">{rows.length}</p>
+            <p className="text-xs text-muted-foreground">{totalUnits} unidades contabilizadas</p>
+          </div>
+          <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+            <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+              Dinero inmovilizado
+            </p>
+            <p className="mt-1 text-2xl font-semibold text-foreground">
+              {immobilized > 0 ? formatMaterialMoney(immobilized, currency) : '—'}
+            </p>
+          </div>
         </div>
         <StockTable rows={rows} />
       </CardContent>
+
+      <Sheet open={handoverOpen} onOpenChange={setHandoverOpen}>
+        <SheetContent side="right" className="w-full overflow-y-auto border-primary/20 sm:max-w-xl">
+          <SheetHeader>
+            <SheetTitle>Recibí de entrega — {locationLabelText}</SheetTitle>
+          </SheetHeader>
+          <div className="mt-4">
+            <MaterialHandoverForm
+              locationType={locationType}
+              locationId={locationId}
+              locationLabel={locationLabelText}
+              items={handoverItems}
+              onCreated={(handoverId) => {
+                setHandoverOpen(false);
+                onHandoverCreated(handoverId);
+              }}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
     </Card>
   );
 }
@@ -462,6 +535,12 @@ export function MaterialMasterDetail({
     facilities.find((facility) => facility.id === selectedFacilityId) ??
     filteredFacilities[0] ??
     null;
+
+  const handleHandoverCreated = (handoverId: string) => {
+    window.open(`/print/material/entrega/${handoverId}`, '_blank', 'noopener,noreferrer');
+    router.refresh();
+  };
+
 
   const teamInventory = useMemo(
     () =>
@@ -796,6 +875,12 @@ export function MaterialMasterDetail({
               : 'Selecciona un equipo'
           }
           rows={teamInventory}
+          locationType="team"
+          locationId={selectedTeam?.id ?? null}
+          locationLabelText={selectedTeam?.name ?? 'Equipo'}
+          materials={materials}
+          stock={stock}
+          onHandoverCreated={handleHandoverCreated}
         />
       ) : (
         <LocationDetailPanel
@@ -810,6 +895,12 @@ export function MaterialMasterDetail({
               : 'Selecciona una instalación'
           }
           rows={facilityInventory}
+          locationType="facility"
+          locationId={selectedFacility?.id ?? null}
+          locationLabelText={selectedFacility?.name ?? 'Instalación'}
+          materials={materials}
+          stock={stock}
+          onHandoverCreated={handleHandoverCreated}
         />
       )}
 
