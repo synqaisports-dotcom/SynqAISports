@@ -181,7 +181,6 @@ function TeamDetailPanel({
   }
 
   const category = teamCategoryMeta(team);
-  const sportLabel = team.sport === 'futsal' ? 'Fútbol sala' : 'Fútbol';
   const occupiedSlots = trainingSlots.filter((slot) => slot.teamId !== team.id);
   const usedLetters = usedTeamLettersInCategory(
     teams,
@@ -219,21 +218,8 @@ function TeamDetailPanel({
             onSeason={() => setSeasonOpen(true)}
           />
         </div>
-        {category ? (
-          <p className="text-sm text-muted-foreground">
-            Letra {team.team_letter ?? '—'} · {category.ages}
-          </p>
-        ) : (
-          <p className="text-sm text-muted-foreground">{sportLabel}</p>
-        )}
       </CardHeader>
       <CardContent className="min-h-0 flex-1 overflow-y-auto">
-        {demoMode && team.is_demo ? (
-          <p className="mb-4 rounded-lg border border-primary/20 bg-muted/10 p-3 text-xs text-muted-foreground">
-            Equipo de demostración. Puedes revisar instalación, horarios y sede; en tu club real
-            podrás editarlos y guardar los cambios.
-          </p>
-        ) : null}
         <TeamViewSections
           category={category}
           team={{
