@@ -4,6 +4,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 export type CanteraStats = {
   totalTeams: number;
+  activeTeams: number;
+  inactiveTeams: number;
   totalPlayers: number;
   avgPlayersPerTeam: number | null;
   injuredPlayers: number;
@@ -14,7 +16,9 @@ export type CanteraStats = {
 const DEMO_INJURED_PLAYER_IDS = new Set(['demo-pl-ben-1']);
 
 export function demoCanteraStats(): CanteraStats {
-  const totalTeams = DEMO_CANTERA_TEAMS.filter((team) => team.active).length;
+  const activeTeams = DEMO_CANTERA_TEAMS.filter((team) => team.active).length;
+  const inactiveTeams = DEMO_CANTERA_TEAMS.filter((team) => !team.active).length;
+  const totalTeams = activeTeams + inactiveTeams;
   const totalPlayers = DEMO_TEAM_PLAYERS.length;
   const injuredPlayers = DEMO_TEAM_PLAYERS.filter((player) =>
     DEMO_INJURED_PLAYER_IDS.has(player.id)
@@ -24,8 +28,10 @@ export function demoCanteraStats(): CanteraStats {
 
   return {
     totalTeams,
+    activeTeams,
+    inactiveTeams,
     totalPlayers,
-    avgPlayersPerTeam: totalTeams > 0 ? activePlayers / totalTeams : null,
+    avgPlayersPerTeam: activeTeams > 0 ? activePlayers / activeTeams : null,
     injuredPlayers,
     activePlayers,
     inactivePlayers,
@@ -38,13 +44,18 @@ export async function loadCanteraStats(
 ): Promise<CanteraStats> {
   if (await isDemoActive()) return demoCanteraStats();
 
-  const [teamsRes, allPlayersRes, activePlayersRes, inactivePlayersRes, injuredRes] =
+  const [activeTeamsRes, inactiveTeamsRes, allPlayersRes, activePlayersRes, inactivePlayersRes, injuredRes] =
     await Promise.all([
       supabase
         .from('synq_teams')
         .select('id', { count: 'exact', head: true })
         .eq('club_id', clubId)
         .eq('active', true),
+      supabase
+        .from('synq_teams')
+        .select('id', { count: 'exact', head: true })
+        .eq('club_id', clubId)
+        .eq('active', false),
       supabase
         .from('synq_players')
         .select('id', { count: 'exact', head: true })
@@ -67,7 +78,9 @@ export async function loadCanteraStats(
         .eq('active', true),
     ]);
 
-  const totalTeams = teamsRes.count ?? 0;
+  const activeTeams = activeTeamsRes.count ?? 0;
+  const inactiveTeams = inactiveTeamsRes.count ?? 0;
+  const totalTeams = activeTeams + inactiveTeams;
   const totalPlayers = allPlayersRes.count ?? 0;
   const activePlayers = activePlayersRes.count ?? 0;
   const inactivePlayers = inactivePlayersRes.count ?? 0;
@@ -75,8 +88,10 @@ export async function loadCanteraStats(
 
   return {
     totalTeams,
+    activeTeams,
+    inactiveTeams,
     totalPlayers,
-    avgPlayersPerTeam: totalTeams > 0 ? activePlayers / totalTeams : null,
+    avgPlayersPerTeam: activeTeams > 0 ? activePlayers / activeTeams : null,
     injuredPlayers,
     activePlayers,
     inactivePlayers,

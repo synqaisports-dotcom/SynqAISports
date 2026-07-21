@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ArrowRight, CalendarClock, Users, UsersRound } from 'lucide-react';
 import { CanteraRecentMovements } from '@/components/portal/CanteraRecentMovements';
 import { CanteraStatsCards } from '@/components/portal/CanteraStatsCards';
+import { CanteraStatsCharts } from '@/components/portal/CanteraStatsCharts';
 import { PageContainer } from '@/components/portal/PageContainer';
 import { demoCanteraMovements, loadCanteraRecentMovements } from '@/lib/cantera-movements';
 import { loadCanteraStats } from '@/lib/cantera-stats';
@@ -49,7 +50,9 @@ export default async function PortalCanteraLandingPage() {
 
   return (
     <PageContainer>
-      <CanteraStatsCards stats={stats} className="mb-6" />
+      <CanteraStatsCards stats={stats} className="mb-4" />
+
+      <CanteraStatsCharts stats={stats} className="mb-6" />
 
       <div className="grid gap-4 md:grid-cols-3">
         {modules.map(({ title, description, href, icon: Icon, stat }) => (
