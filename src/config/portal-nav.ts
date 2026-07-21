@@ -83,10 +83,10 @@ export const portalNavGroups: PortalNavGroup[] = [
       {
         title: 'Metodología',
         icon: GraduationCap,
-        href: '/portal/metodologia',
-        exact: true,
+        href: '/portal/metodologia/ciclos',
+        exact: false,
         children: [
-          { title: 'Resumen', href: '/portal/metodologia', icon: LayoutGrid, exact: true },
+          { title: 'Resumen', href: '/portal/metodologia/resumen', icon: LayoutGrid, exact: true },
           { title: 'Ciclos', href: '/portal/metodologia/ciclos', icon: GitBranch },
           { title: 'Ejercicios', href: '/portal/metodologia/ejercicios', icon: BookOpen },
           { title: 'Objetivos', href: '/portal/metodologia/objetivos', icon: Target },

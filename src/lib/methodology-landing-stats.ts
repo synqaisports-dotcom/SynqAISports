@@ -1,27 +1,101 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { fetchChangeRequestInbox } from '@/app/actions/change-requests';
-import { loadMethodologyObjectives } from '@/app/actions/methodology';
-import { DEMO_CANTERA_TEAMS } from '@/lib/cantera-teams';
+import { CANTERA_CATEGORIES, type CanteraCategorySlug } from '@/lib/cantera-categories';
 import { isDemoActive } from '@/lib/demo';
-import type { MethodologyObjectivesMap } from '@/lib/methodology-objectives';
 import { loadExerciseLibrary } from '@/lib/microcycle-page-data';
+import { applyPlanExclusions } from '@/lib/periodization-plan-utils';
+import {
+  buildPlanForVariant,
+  defaultCategoryDocument,
+  getExcludedMccIds,
+  parseCategoryDocument,
+  type CategoryPeriodizationDocument,
+} from '@/lib/periodization-document';
 import type { ClubPracticedSport } from '@/lib/club-practiced-sports';
 
 export type MethodologyLandingStats = {
-  totalTeams: number;
+  totalMacrocycles: number;
+  totalMesocycles: number;
+  totalMicrocycles: number;
+  totalSessions: number;
   totalExercises: number;
-  totalObjectives: number;
-  pendingRequests: number;
 };
 
-function countFilledObjectives(objectives: MethodologyObjectivesMap): number {
-  let total = 0;
-  for (const category of Object.values(objectives)) {
-    for (const dimension of Object.values(category)) {
-      if (dimension.content.trim()) total += 1;
+type CycleTotals = Pick<
+  MethodologyLandingStats,
+  'totalMacrocycles' | 'totalMesocycles' | 'totalMicrocycles' | 'totalSessions'
+>;
+
+const EMPTY_CYCLE_TOTALS: CycleTotals = {
+  totalMacrocycles: 0,
+  totalMesocycles: 0,
+  totalMicrocycles: 0,
+  totalSessions: 0,
+};
+
+function countDocumentCycles(document: CategoryPeriodizationDocument): CycleTotals {
+  const variant =
+    document.variants.find((item) => item.id === document.activeVariantId) ?? document.variants[0];
+  if (!variant) return EMPTY_CYCLE_TOTALS;
+
+  const rawPlan = buildPlanForVariant(document, variant.id);
+  if (!rawPlan) return EMPTY_CYCLE_TOTALS;
+
+  const plan = applyPlanExclusions(rawPlan, getExcludedMccIds(document, variant.id));
+
+  let totalMacrocycles = 0;
+  let totalMesocycles = 0;
+  let totalMicrocycles = 0;
+  let totalSessions = 0;
+
+  for (const macro of plan.macrocycles) {
+    totalMacrocycles += 1;
+    for (const meso of macro.mesocycles) {
+      totalMesocycles += 1;
+      for (const micro of meso.microcycles) {
+        totalMicrocycles += 1;
+        totalSessions += micro.sessionsCount;
+      }
     }
   }
-  return total;
+
+  return { totalMacrocycles, totalMesocycles, totalMicrocycles, totalSessions };
+}
+
+function sumCycleTotals(totals: CycleTotals[]): CycleTotals {
+  return totals.reduce(
+    (acc, item) => ({
+      totalMacrocycles: acc.totalMacrocycles + item.totalMacrocycles,
+      totalMesocycles: acc.totalMesocycles + item.totalMesocycles,
+      totalMicrocycles: acc.totalMicrocycles + item.totalMicrocycles,
+      totalSessions: acc.totalSessions + item.totalSessions,
+    }),
+    EMPTY_CYCLE_TOTALS
+  );
+}
+
+async function loadCategoryDocuments(
+  supabase: SupabaseClient,
+  clubId: string,
+  categorySlugs: CanteraCategorySlug[]
+): Promise<CategoryPeriodizationDocument[]> {
+  const { data } = await supabase
+    .from('synq_periodization_plans')
+    .select('category_slug, plan_json')
+    .eq('club_id', clubId)
+    .in('category_slug', categorySlugs);
+
+  const bySlug = new Map<CanteraCategorySlug, CategoryPeriodizationDocument>();
+  for (const row of data ?? []) {
+    const parsed = parseCategoryDocument(row.plan_json);
+    if (parsed) bySlug.set(row.category_slug as CanteraCategorySlug, parsed);
+  }
+
+  return categorySlugs.map((slug) => {
+    const saved = bySlug.get(slug);
+    if (saved) return saved;
+    const category = CANTERA_CATEGORIES.find((item) => item.slug === slug)!;
+    return defaultCategoryDocument(slug, category.name);
+  });
 }
 
 export async function loadMethodologyLandingStats(
@@ -31,34 +105,33 @@ export async function loadMethodologyLandingStats(
 ): Promise<MethodologyLandingStats> {
   const demo = await isDemoActive();
 
-  const [teamsResult, exercises, objectives, requests] = await Promise.all([
-    supabase
-      .from('synq_teams')
-      .select('id', { count: 'exact', head: true })
-      .eq('club_id', clubId)
-      .eq('active', true),
-    loadExerciseLibrary(supabase, clubId, primarySport),
-    loadMethodologyObjectives(clubId, primarySport),
-    fetchChangeRequestInbox({ status: 'pending', limit: 100 }),
-  ]);
+  const { data: teams } = await supabase
+    .from('synq_teams')
+    .select('category_slug')
+    .eq('club_id', clubId)
+    .eq('active', true);
 
-  let totalTeams = teamsResult.count ?? 0;
-  if (demo && totalTeams === 0) {
-    totalTeams = DEMO_CANTERA_TEAMS.length;
-  } else if (demo) {
-    const { data: existingTeams } = await supabase
-      .from('synq_teams')
-      .select('id')
-      .eq('club_id', clubId)
-      .eq('active', true);
-    const existingIds = new Set((existingTeams ?? []).map((team) => team.id));
-    totalTeams += DEMO_CANTERA_TEAMS.filter((team) => !existingIds.has(team.id)).length;
+  const categorySlugs = new Set<CanteraCategorySlug>();
+  for (const team of teams ?? []) {
+    if (team.category_slug) categorySlugs.add(team.category_slug as CanteraCategorySlug);
   }
 
+  if (demo || categorySlugs.size === 0) {
+    for (const category of CANTERA_CATEGORIES) {
+      categorySlugs.add(category.slug);
+    }
+  }
+
+  const slugs = [...categorySlugs];
+  const [documents, exercises] = await Promise.all([
+    loadCategoryDocuments(supabase, clubId, slugs),
+    loadExerciseLibrary(supabase, clubId, primarySport),
+  ]);
+
+  const cycleTotals = sumCycleTotals(documents.map(countDocumentCycles));
+
   return {
-    totalTeams,
+    ...cycleTotals,
     totalExercises: exercises.length,
-    totalObjectives: countFilledObjectives(objectives),
-    pendingRequests: requests.length,
   };
 }
