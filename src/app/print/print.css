@@ -27,6 +27,16 @@
     padding: 0 !important;
     box-shadow: none !important;
   }
+
+  .training-schedule-print-section {
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .training-schedule-print-section:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
 }
 
 @media screen {

@@ -1,8 +1,9 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { CalendarClock, MapPin } from 'lucide-react';
+import { CalendarClock } from 'lucide-react';
 import { SynqSelect } from '@/components/portal/SynqSelect';
+import { TrainingSchedulePrintSheet } from '@/components/portal/TrainingSchedulePrintSheet';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { WEEKDAY_BUTTONS } from '@/lib/club-facilities';
@@ -75,15 +76,12 @@ export function TrainingCalendarView({ events, facilities }: Props) {
       <Card className="border border-primary/25">
         <CardHeader className="pb-3">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-            <div>
+            <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
               <CardTitle className="flex items-center gap-2 text-base">
                 <CalendarClock className="size-4 text-primary" />
                 Calendario semanal de entrenamientos
               </CardTitle>
-              <CardDescription className="mt-1.5 max-w-2xl">
-                Vista habitual de la semana: cada bloque muestra equipo, franja horaria y campo.
-                El color identifica al equipo o a la instalación según el modo elegido.
-              </CardDescription>
+              <TrainingSchedulePrintSheet facilities={facilities} />
             </div>
             <div className="grid w-full gap-3 sm:grid-cols-2 lg:w-auto lg:min-w-[28rem]">
               <div>
@@ -212,10 +210,7 @@ export function TrainingCalendarView({ events, facilities }: Props) {
                               <p className="truncate opacity-90">
                                 {event.start}–{event.end}
                               </p>
-                              <p className="mt-0.5 flex items-center gap-0.5 truncate opacity-80">
-                                <MapPin className="size-2.5 shrink-0" />
-                                {event.facilityName}
-                              </p>
+                              <p className="mt-0.5 truncate opacity-80">{event.facilityName}</p>
                               {event.divisionLabel ? (
                                 <p className="truncate opacity-75">{event.divisionLabel}</p>
                               ) : null}

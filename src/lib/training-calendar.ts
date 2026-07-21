@@ -270,3 +270,24 @@ export function durationToGridHeight(
 ): number {
   return ((endMinutes - startMinutes) / slotMinutes) * CALENDAR_ROW_HEIGHT_PX;
 }
+
+export function groupEventsByFacility(
+  events: TrainingCalendarEvent[],
+  facilities: TrainingCalendarFacility[]
+): { facility: TrainingCalendarFacility; events: TrainingCalendarEvent[] }[] {
+  const eventsByFacility = new Map<string, TrainingCalendarEvent[]>();
+
+  for (const event of events) {
+    const list = eventsByFacility.get(event.facilityId) ?? [];
+    list.push(event);
+    eventsByFacility.set(event.facilityId, list);
+  }
+
+  return facilities
+    .map((facility) => ({
+      facility,
+      events: eventsByFacility.get(facility.id) ?? [],
+    }))
+    .filter((section) => section.events.length > 0)
+    .sort((a, b) => a.facility.name.localeCompare(b.facility.name, 'es'));
+}
