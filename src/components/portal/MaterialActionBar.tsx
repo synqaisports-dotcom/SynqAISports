@@ -4,14 +4,15 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { FileSpreadsheet, FileText } from 'lucide-react';
 import { MaterialImportActionButton, MaterialImportSheet } from '@/components/portal/MaterialImportSheet';
+import {
+  PortalSheetBody,
+  PortalSheetContent,
+  PortalSheetHeader,
+} from '@/components/portal/PortalSheet';
+import { PortalSectionBadge } from '@/components/portal/PortalSectionShell';
 import { SynqSelect } from '@/components/portal/SynqSelect';
 import { Button } from '@/components/ui/button';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+import { Sheet, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import type { ClubFacility } from '@/lib/club-facilities';
 import type { ClubMaterialItem, ClubMaterialStock } from '@/lib/club-material';
 import {
@@ -129,12 +130,20 @@ export function MaterialActionBar({ materials, stock, teams, facilities }: Props
       </div>
 
       <Sheet open={exportOpen} onOpenChange={setExportOpen}>
-        <SheetContent side="right" className="w-full overflow-y-auto border-primary/20 sm:max-w-md">
-          <SheetHeader>
-            <SheetTitle>Exportar inventario</SheetTitle>
-          </SheetHeader>
+        <PortalSheetContent maxWidth="md">
+          <PortalSheetHeader>
+            <SheetHeader className="space-y-3 text-left">
+              <PortalSectionBadge icon={<FileSpreadsheet className="size-3.5" />}>
+                Inventario del club
+              </PortalSectionBadge>
+              <SheetTitle className="text-xl tracking-tight">Exportar inventario</SheetTitle>
+              <p className="text-sm text-muted-foreground">
+                Genera un informe en Excel con el ámbito y valoración que necesites.
+              </p>
+            </SheetHeader>
+          </PortalSheetHeader>
 
-          <div className="mt-4 space-y-4">
+          <PortalSheetBody>
             <div className="portal-section-surface rounded-xl p-4">
               <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                 Ámbito del informe
@@ -262,8 +271,8 @@ export function MaterialActionBar({ materials, stock, teams, facilities }: Props
             >
               Descargar Excel (.csv)
             </Button>
-          </div>
-        </SheetContent>
+          </PortalSheetBody>
+        </PortalSheetContent>
       </Sheet>
 
       <MaterialImportSheet open={importOpen} onOpenChange={setImportOpen} />

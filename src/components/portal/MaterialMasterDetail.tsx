@@ -16,17 +16,18 @@ import { MaterialForm } from '@/components/portal/MaterialForm';
 import { MaterialHandoverForm } from '@/components/portal/MaterialHandoverForm';
 import { MaterialPauseButton } from '@/components/portal/MaterialPauseButton';
 import { MaterialStockForm } from '@/components/portal/MaterialStockForm';
+import {
+  PortalSheetBody,
+  PortalSheetContent,
+  PortalSheetHeader,
+} from '@/components/portal/PortalSheet';
 import { PortalSearchField } from '@/components/portal/PortalSearchField';
+import { PortalSectionBadge } from '@/components/portal/PortalSectionShell';
 import { SynqSelect } from '@/components/portal/SynqSelect';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+import { Sheet, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import type { ClubFacility } from '@/lib/club-facilities';
 import {
   MATERIAL_CATEGORY_LABELS,
@@ -318,11 +319,14 @@ function CatalogDetailPanel({
       </CardContent>
 
       <Sheet open={editOpen} onOpenChange={setEditOpen}>
-        <SheetContent side="right" className="w-full overflow-y-auto border-primary/20 sm:max-w-xl">
-          <SheetHeader>
-            <SheetTitle>Modificar — {material.name}</SheetTitle>
-          </SheetHeader>
-          <div className="mt-4">
+        <PortalSheetContent maxWidth="xl">
+          <PortalSheetHeader>
+            <SheetHeader className="space-y-2 text-left">
+              <PortalSectionBadge icon={<Pencil className="size-3.5" />}>Catálogo</PortalSectionBadge>
+              <SheetTitle className="text-xl tracking-tight">Modificar — {material.name}</SheetTitle>
+            </SheetHeader>
+          </PortalSheetHeader>
+          <PortalSheetBody>
             <MaterialForm
               material={material}
               onSaved={() => {
@@ -331,16 +335,19 @@ function CatalogDetailPanel({
                 router.refresh();
               }}
             />
-          </div>
-        </SheetContent>
+          </PortalSheetBody>
+        </PortalSheetContent>
       </Sheet>
 
       <Sheet open={stockOpen} onOpenChange={setStockOpen}>
-        <SheetContent side="right" className="w-full overflow-y-auto border-primary/20 sm:max-w-lg">
-          <SheetHeader>
-            <SheetTitle>Asignar stock</SheetTitle>
-          </SheetHeader>
-          <div className="mt-4">
+        <PortalSheetContent maxWidth="lg">
+          <PortalSheetHeader>
+            <SheetHeader className="space-y-2 text-left">
+              <PortalSectionBadge icon={<Warehouse className="size-3.5" />}>Stock</PortalSectionBadge>
+              <SheetTitle className="text-xl tracking-tight">Asignar stock</SheetTitle>
+            </SheetHeader>
+          </PortalSheetHeader>
+          <PortalSheetBody>
             <MaterialStockForm
               material={material}
               teams={teams}
@@ -350,8 +357,8 @@ function CatalogDetailPanel({
                 router.refresh();
               }}
             />
-          </div>
-        </SheetContent>
+          </PortalSheetBody>
+        </PortalSheetContent>
       </Sheet>
     </Card>
   );
@@ -430,11 +437,16 @@ function LocationDetailPanel({
       </CardContent>
 
       <Sheet open={handoverOpen} onOpenChange={setHandoverOpen}>
-        <SheetContent side="right" className="w-full overflow-y-auto border-primary/20 sm:max-w-xl">
-          <SheetHeader>
-            <SheetTitle>Recibí de entrega — {locationLabelText}</SheetTitle>
-          </SheetHeader>
-          <div className="mt-4">
+        <PortalSheetContent maxWidth="xl">
+          <PortalSheetHeader>
+            <SheetHeader className="space-y-2 text-left">
+              <PortalSectionBadge icon={<FileText className="size-3.5" />}>
+                Recibí de entrega
+              </PortalSectionBadge>
+              <SheetTitle className="text-xl tracking-tight">{locationLabelText}</SheetTitle>
+            </SheetHeader>
+          </PortalSheetHeader>
+          <PortalSheetBody>
             <MaterialHandoverForm
               locationType={locationType}
               locationId={locationId}
@@ -445,8 +457,8 @@ function LocationDetailPanel({
                 onHandoverCreated(handoverId);
               }}
             />
-          </div>
-        </SheetContent>
+          </PortalSheetBody>
+        </PortalSheetContent>
       </Sheet>
     </Card>
   );
@@ -905,14 +917,17 @@ export function MaterialMasterDetail({
       )}
 
       <Sheet open={createOpen} onOpenChange={setCreateOpen}>
-        <SheetContent side="right" className="w-full overflow-y-auto border-primary/20 sm:max-w-xl">
-          <SheetHeader>
-            <SheetTitle>Nuevo material</SheetTitle>
-          </SheetHeader>
-          <div className="mt-4">
+        <PortalSheetContent maxWidth="xl">
+          <PortalSheetHeader>
+            <SheetHeader className="space-y-2 text-left">
+              <PortalSectionBadge icon={<Plus className="size-3.5" />}>Catálogo</PortalSectionBadge>
+              <SheetTitle className="text-xl tracking-tight">Nuevo material</SheetTitle>
+            </SheetHeader>
+          </PortalSheetHeader>
+          <PortalSheetBody>
             <MaterialForm onSaved={handleMaterialSaved} />
-          </div>
-        </SheetContent>
+          </PortalSheetBody>
+        </PortalSheetContent>
       </Sheet>
     </div>
   );

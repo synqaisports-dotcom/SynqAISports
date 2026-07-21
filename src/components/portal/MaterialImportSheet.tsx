@@ -3,13 +3,14 @@
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { Download, Upload } from 'lucide-react';
 import { importClubMaterials } from '@/app/actions/club-material';
-import { Button } from '@/components/ui/button';
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+  PortalSheetBody,
+  PortalSheetContent,
+  PortalSheetHeader,
+} from '@/components/portal/PortalSheet';
+import { PortalSectionBadge } from '@/components/portal/PortalSectionShell';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import {
   downloadMaterialImportTemplate,
   parseMaterialImportCsv,
@@ -72,16 +73,23 @@ export function MaterialImportSheet({ open, onOpenChange }: Props) {
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full overflow-y-auto border-primary/20 sm:max-w-md">
-        <SheetHeader>
-          <SheetTitle>Importar material</SheetTitle>
-        </SheetHeader>
+      <PortalSheetContent maxWidth="md">
+        <PortalSheetHeader>
+          <SheetHeader className="space-y-3 text-left">
+            <PortalSectionBadge icon={<Upload className="size-3.5" />}>
+              Inventario del club
+            </PortalSectionBadge>
+            <SheetTitle className="text-xl tracking-tight">Importar material</SheetTitle>
+            <p className="text-sm text-muted-foreground">
+              Sube un CSV con las referencias del catálogo o descarga la plantilla de ejemplo.
+            </p>
+          </SheetHeader>
+        </PortalSheetHeader>
 
-        <div className="mt-4 space-y-4">
+        <PortalSheetBody>
           <div className="portal-section-surface rounded-xl p-4">
             <p className="text-sm text-muted-foreground">
-              Sube un archivo CSV con las referencias del catálogo. Usa la plantilla para mantener el
-              formato correcto.
+              El archivo debe incluir nombre, categoría, unidad y, opcionalmente, SKU, moneda y coste.
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <Button
@@ -175,8 +183,8 @@ export function MaterialImportSheet({ open, onOpenChange }: Props) {
           >
             {pending ? 'Importando…' : 'Importar referencias'}
           </Button>
-        </div>
-      </SheetContent>
+        </PortalSheetBody>
+      </PortalSheetContent>
     </Sheet>
   );
 }
