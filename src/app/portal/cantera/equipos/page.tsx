@@ -43,7 +43,7 @@ type Props = {
 };
 
 const TEAM_SELECT =
-  'id, name, category, category_slug, team_letter, sport, active, team_purpose, training_facility_id, training_division, training_days, training_start, training_end, match_venue_type, match_own_single_venue, match_home_mode, match_away_mode, external_venue_name, external_venue_address, team_history_json';
+  'id, name, category, category_slug, team_letter, sport, active, created_at, team_purpose, training_facility_id, training_division, training_days, training_start, training_end, match_venue_type, match_own_single_venue, match_home_mode, match_away_mode, external_venue_name, external_venue_address, team_history_json';
 
 function isCategorySlug(value: string | undefined): value is CanteraCategorySlug {
   return Boolean(value && CANTERA_CATEGORIES.some((category) => category.slug === value));
@@ -69,6 +69,7 @@ function buildTeamProfile(input: {
   facility_name: string | null;
   players: TeamViewPlayer[];
   is_demo: boolean;
+  created_at?: string | null;
 }): TeamProfile {
   return {
     id: input.id,
@@ -84,6 +85,7 @@ function buildTeamProfile(input: {
     players: input.players,
     history: parseTeamHistoryJson(input.team_history_json),
     is_demo: input.is_demo,
+    created_at: input.created_at ?? null,
   };
 }
 
@@ -168,6 +170,7 @@ export default async function PortalCanteraEquiposPage({ searchParams }: Props) 
       facility_name: facilityName,
       players: mapPlayersForTeam(team.id, playersByTeam),
       team_history_json: team.team_history_json,
+      created_at: team.created_at,
       is_demo: false,
     });
   });
@@ -210,6 +213,7 @@ export default async function PortalCanteraEquiposPage({ searchParams }: Props) 
           facility_name: facilityName,
           players: demoPlayers,
           team_history_json: [],
+          created_at: null,
           is_demo: true,
         })
       );

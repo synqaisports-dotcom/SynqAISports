@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { CalendarDays, ClipboardList, Layers, Pencil, Plus, TrendingUp, UserCog } from 'lucide-react';
 import { CategorySeasonPromoteSheet } from '@/components/portal/CategorySeasonPromoteSheet';
+import { TeamsListPrintSheet } from '@/components/portal/TeamsListPrintSheet';
 import { TeamClubHistorySection } from '@/components/portal/TeamClubHistorySection';
 import { TeamCoachingStaffSheet } from '@/components/portal/TeamCoachingStaffSheet';
 import { TeamSeasonPromoteSheet } from '@/components/portal/TeamSeasonPromoteSheet';
@@ -450,6 +451,7 @@ export function TeamsMasterDetail({
               </CardDescription>
             </div>
             <div className="flex items-center gap-1">
+              <TeamsListPrintSheet />
               <button
                 type="button"
                 className={cn(PORTAL_ACTION_ICON_CLASS, 'shrink-0')}
