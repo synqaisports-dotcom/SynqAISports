@@ -186,8 +186,6 @@ export function MethodologySummaryDashboard({ teams, totalPlayers, totalCoaches,
     return computeTeamCharts(selectedTeam.id, documents, seasonFilter);
   }, [selectedTeam, documents, seasonFilter]);
 
-  const pendingTeamCount = stats.teams.filter((team) => team.totalMcc > 0 && !team.isComplete).length;
-
   return (
     <div className="space-y-4">
       <MethodologyReadOnlyBanner role={role} />
