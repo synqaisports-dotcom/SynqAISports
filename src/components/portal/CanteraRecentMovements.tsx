@@ -28,12 +28,12 @@ export function CanteraRecentMovements({
   return (
     <section
       className={cn(
-        'portal-section-surface rounded-xl px-4 py-4 md:px-5 md:py-4',
-        isPanel ? 'flex h-full min-h-[28rem] flex-col' : 'mt-6',
+        'portal-section-surface flex h-full min-h-0 flex-col rounded-xl px-4 py-4 md:px-5 md:py-4',
+        !isPanel && 'mt-6',
         className
       )}
     >
-      <div className={cn('mb-4 flex items-center gap-2', isPanel && 'shrink-0')}>
+      <div className="mb-3 flex shrink-0 items-center gap-2">
         <History className="size-4 text-primary" />
         <h2 className="text-[10px] font-semibold uppercase tracking-wider text-primary">
           Últimos movimientos
@@ -45,7 +45,12 @@ export function CanteraRecentMovements({
           Aún no hay altas de jugadores ni equipos registrados en la cantera.
         </p>
       ) : (
-        <ul className={cn('space-y-1.5', isPanel && 'min-h-0 flex-1 overflow-y-auto')}>
+        <ul
+          className={cn(
+            'min-h-0 flex-1',
+            isPanel ? 'flex flex-col justify-evenly gap-1' : 'space-y-1.5'
+          )}
+        >
           {items.map((movement) => {
             const Icon = KIND_ICON[movement.kind];
             const row = (
