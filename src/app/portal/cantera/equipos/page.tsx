@@ -18,6 +18,7 @@ import {
   DEMO_TEAM_PLAYERS,
 } from '@/lib/cantera-teams';
 import { isDemoActive } from '@/lib/demo';
+import { getDemoPausedTeamIds } from '@/lib/demo-cantera-pause';
 import type { TeamProfile } from '@/lib/team-profile';
 import { compareTeamsForList } from '@/lib/team-profile';
 import { parseTeamHistoryJson } from '@/lib/team-club-history';
@@ -172,6 +173,7 @@ export default async function PortalCanteraEquiposPage({ searchParams }: Props) 
   });
 
   if (demo) {
+    const pausedDemoTeams = await getDemoPausedTeamIds();
     const existingKeys = new Set(
       profiles.map((team) => `${team.category_slug}:${team.team_letter}`)
     );
@@ -203,7 +205,7 @@ export default async function PortalCanteraEquiposPage({ searchParams }: Props) 
           category_slug: demoTeam.category_slug,
           team_letter: demoTeam.team_letter,
           sport: demoTeam.sport,
-          active: demoTeam.active,
+          active: !pausedDemoTeams.has(demoTeam.id),
           setup,
           facility_name: facilityName,
           players: demoPlayers,

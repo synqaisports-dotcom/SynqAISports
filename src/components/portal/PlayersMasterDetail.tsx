@@ -357,7 +357,7 @@ function PlayerDetailPanel({
                 </Link>
               ) : null}
 
-              <PlayerPauseButton playerId={player.id} playerName={name} />
+              <PlayerPauseButton playerId={player.id} playerName={name} active={player.active} />
             </div>
           </div>
 

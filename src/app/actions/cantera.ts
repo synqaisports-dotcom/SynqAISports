@@ -12,6 +12,11 @@ import { buildInitialPlayerHistory, buildTeamMoveHistoryEvent, parsePlayerHistor
 import { isValidMedicalDate } from '@/lib/player-medical';
 import { requireClubId } from '@/lib/auth-staff';
 import { DEMO_CANTERA_TEAMS, formatTeamName } from '@/lib/cantera-teams';
+import {
+  isDemoCanteraEntityId,
+  setDemoPlayerActive,
+  setDemoTeamActive,
+} from '@/lib/demo-cantera-pause';
 import { getCanteraCategory } from '@/lib/cantera-categories';
 import { loadClubFacilities } from '@/app/actions/club-facilities';
 import {
@@ -682,6 +687,13 @@ export async function toggleTeamActive(teamId: string, active: boolean): Promise
   const clubId = await requireClubId();
   if (!clubId) return { ok: false, message: 'unauthorized' };
 
+  if ((await isDemoActive()) && isDemoCanteraEntityId(teamId)) {
+    await setDemoTeamActive(teamId, active);
+    revalidatePath('/portal/cantera');
+    revalidatePath('/portal/cantera/equipos');
+    return { ok: true };
+  }
+
   const supabase = await createClient();
   const { data: team } = await supabase
     .from('synq_teams')
@@ -818,6 +830,13 @@ export async function togglePlayerActive(playerId: string, active: boolean): Pro
   const clubId = await requireClubId();
   if (!clubId) return { ok: false, message: 'unauthorized' };
 
+  if ((await isDemoActive()) && isDemoCanteraEntityId(playerId)) {
+    await setDemoPlayerActive(playerId, active);
+    revalidatePath('/portal/cantera');
+    revalidatePath('/portal/cantera/jugadores');
+    return { ok: true };
+  }
+
   const supabase = await createClient();
   const { error } = await supabase
     .from('synq_players')
@@ -828,6 +847,7 @@ export async function togglePlayerActive(playerId: string, active: boolean): Pro
   if (error) return { ok: false, message: 'error' };
 
   revalidatePath('/portal/cantera');
+  revalidatePath('/portal/cantera/jugadores');
   revalidatePath('/portal');
   return { ok: true };
 }

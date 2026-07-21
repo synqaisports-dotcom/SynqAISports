@@ -3,6 +3,7 @@ import { PageContainer } from '@/components/portal/PageContainer';
 import { DEMO_CANTERA_TEAMS, DEMO_TEAM_PLAYERS } from '@/lib/cantera-teams';
 import { demoMembershipsForPlayer } from '@/lib/demo-memberships';
 import { isDemoActive } from '@/lib/demo';
+import { getDemoPausedPlayerIds } from '@/lib/demo-cantera-pause';
 import {
   mapMembershipRow,
   primaryMembership,
@@ -58,7 +59,6 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
         'id, display_name, first_name, last_name, jersey_number, position, active, photo_url, birth_year, is_minor, guardians_json, medical_until, medical_document_url, player_history_json, created_at, team_id, synq_teams(name, category, category_slug, sport)'
       )
       .eq('club_id', ctx.club.id)
-      .eq('active', true)
       .order('last_name')
       .order('first_name'),
     supabase
@@ -135,6 +135,7 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
   });
 
   if (demo) {
+    const pausedDemoPlayers = await getDemoPausedPlayerIds();
     const existingIds = new Set(profiles.map((player) => player.id));
     for (const demoPlayer of DEMO_TEAM_PLAYERS) {
       if (existingIds.has(demoPlayer.id)) continue;
@@ -155,7 +156,7 @@ export default async function PortalCanteraJugadoresPage({ searchParams }: Props
         team_category_slug: team.team_category_slug,
         primary_sport: team.sport,
         memberships,
-        active: true,
+        active: !pausedDemoPlayers.has(demoPlayer.id),
         is_minor: demoPlayer.id === 'demo-pl-ale-1',
         guardians:
           demoPlayer.id === 'demo-pl-ale-1'
