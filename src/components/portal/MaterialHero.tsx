@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { Package } from 'lucide-react';
 import { PortalSectionBadge, PortalSectionShell } from '@/components/portal/PortalSectionShell';
 import {
@@ -16,10 +17,11 @@ type Props = {
   materials: ClubMaterialItem[];
   stock: ClubMaterialStock[];
   zoneValues?: MaterialZoneValue[];
+  actions?: ReactNode;
   className?: string;
 };
 
-export function MaterialHero({ materials, stock, zoneValues = [], className }: Props) {
+export function MaterialHero({ materials, stock, zoneValues = [], actions, className }: Props) {
   const active = materials.filter((item) => item.active);
   const totalUnits = stock.reduce((sum, row) => sum + row.quantity, 0);
   const teamLines = stock.filter((row) => row.location_type === 'team').length;
@@ -27,11 +29,11 @@ export function MaterialHero({ materials, stock, zoneValues = [], className }: P
   const totals = totalImmobilizedByCurrency(zoneValues);
 
   return (
-    <PortalSectionShell className={className}>
+    <PortalSectionShell actions={actions} className={className}>
       <PortalSectionBadge icon={<Package className="size-3.5" />}>Inventario del club</PortalSectionBadge>
       <h1 className="text-xl font-semibold tracking-tight md:text-2xl">Material deportivo</h1>
       <p className="mt-1.5 max-w-xl text-sm text-muted-foreground">
-        Catálogo de material, stock por zona, costes inmovilizados y recibís de entrega de temporada.
+        Catálogo de material, stock por zona y costes inmovilizados del club.
       </p>
       <div className="mt-2 flex flex-wrap gap-2">
         <Badge variant="secondary">{active.length} referencias</Badge>

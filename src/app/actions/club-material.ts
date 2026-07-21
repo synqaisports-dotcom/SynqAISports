@@ -63,6 +63,7 @@ function mapStockRow(row: Record<string, unknown>): ClubMaterialStock {
 
 function revalidateMaterialPaths() {
   revalidatePath('/portal/club/material');
+  revalidatePath('/portal/club/material/recibis');
 }
 
 export async function loadClubMaterials(
@@ -355,7 +356,7 @@ export async function createMaterialHandover(
       location_type: parsed.locationType,
       location_id: locationId,
       location_label: parsed.locationLabel,
-      handed_at: new Date().toISOString(),
+      handed_at: parsed.handedAt,
       notes: parsed.notes,
       items,
     });
@@ -375,6 +376,7 @@ export async function createMaterialHandover(
       location_type: parsed.locationType,
       location_id: locationId,
       location_label: parsed.locationLabel,
+      handed_at: parsed.handedAt,
       notes: parsed.notes,
       items_json: items,
       created_by: userId,

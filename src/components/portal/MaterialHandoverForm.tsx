@@ -13,6 +13,7 @@ import {
   MATERIAL_UNIT_LABELS,
   currentSeasonLabel,
   formatMaterialMoney,
+  todayDateInputValue,
   materialHandoverRoleOptions,
   type MaterialHandoverItem,
   type MaterialHandoverRole,
@@ -83,6 +84,18 @@ export function MaterialHandoverForm({
             />
           </div>
           <div>
+            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Fecha de entrega
+            </label>
+            <Input
+              name="handedAt"
+              type="date"
+              defaultValue={todayDateInputValue()}
+              required
+              className="border-primary/30 bg-background/80"
+            />
+          </div>
+          <div className="sm:col-span-2">
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Rol del responsable
             </label>

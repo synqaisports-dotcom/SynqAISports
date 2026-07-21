@@ -520,6 +520,20 @@ export function parseMaterialFromForm(formData: FormData) {
   };
 }
 
+export function todayDateInputValue(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+export function parseHandoverDateInput(value: string): string {
+  const raw = value.trim();
+  if (!raw) return new Date().toISOString();
+  const parsed = new Date(`${raw}T12:00:00`);
+  return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+}
+
 export function parseMaterialHandoverFromForm(formData: FormData) {
   return {
     season: String(formData.get('season') ?? '').trim(),
@@ -528,6 +542,7 @@ export function parseMaterialHandoverFromForm(formData: FormData) {
     locationType: String(formData.get('locationType') ?? '').trim() as MaterialLocationType,
     locationId: String(formData.get('locationId') ?? '').trim() || null,
     locationLabel: String(formData.get('locationLabel') ?? '').trim(),
+    handedAt: parseHandoverDateInput(String(formData.get('handedAt') ?? '')),
     notes: String(formData.get('notes') ?? '').trim() || null,
     itemsJson: String(formData.get('itemsJson') ?? '[]'),
   };
