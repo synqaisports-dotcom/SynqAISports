@@ -237,7 +237,7 @@ export function FacilityForm({ facility, practicedSports, onSaved }: Props) {
               defaultValue={facility?.name ?? ''}
               required
               placeholder="Ej. Campo principal F-11"
-              className="border-primary/30 bg-background/80"
+              className="portal-field-surface"
             />
           </div>
 
@@ -302,7 +302,7 @@ export function FacilityForm({ facility, practicedSports, onSaved }: Props) {
               name="address"
               defaultValue={facility?.address ?? ''}
               placeholder="Polideportivo municipal, acceso norte…"
-              className="border-primary/30 bg-background/80"
+              className="portal-field-surface"
             />
           </div>
 
@@ -355,7 +355,7 @@ export function FacilityForm({ facility, practicedSports, onSaved }: Props) {
                     min={1}
                     value={reservationCapacity}
                     onChange={(event) => setReservationCapacity(event.target.value)}
-                    className="border-primary/30 bg-background/80"
+                    className="portal-field-surface"
                   />
                 </div>
                 <div>
@@ -369,7 +369,7 @@ export function FacilityForm({ facility, practicedSports, onSaved }: Props) {
                     step={15}
                     value={slotDurationMinutes}
                     onChange={(event) => setSlotDurationMinutes(event.target.value)}
-                    className="border-primary/30 bg-background/80"
+                    className="portal-field-surface"
                   />
                 </div>
                 <div>
@@ -382,7 +382,7 @@ export function FacilityForm({ facility, practicedSports, onSaved }: Props) {
                     min={1}
                     value={maxActiveReservationsPerPlayer}
                     onChange={(event) => setMaxActiveReservationsPerPlayer(event.target.value)}
-                    className="border-primary/30 bg-background/80"
+                    className="portal-field-surface"
                   />
                 </div>
                 <div>
@@ -395,7 +395,7 @@ export function FacilityForm({ facility, practicedSports, onSaved }: Props) {
                     min={1}
                     value={advanceBookingDays}
                     onChange={(event) => setAdvanceBookingDays(event.target.value)}
-                    className="border-primary/30 bg-background/80"
+                    className="portal-field-surface"
                   />
                 </div>
               </div>
@@ -457,7 +457,7 @@ export function FacilityForm({ facility, practicedSports, onSaved }: Props) {
               rows={3}
               placeholder="Compartido con escuela, acceso por puerta lateral…"
               className={cn(
-                'flex w-full rounded-md border border-primary/30 bg-background/80 px-3 py-2 text-sm',
+                'flex w-full rounded-md border portal-field-surface px-3 py-2 text-sm',
                 'placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary'
               )}
             />

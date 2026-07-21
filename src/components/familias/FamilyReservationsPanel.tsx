@@ -230,7 +230,7 @@ export function FamilyReservationsPanel({ family, facilities, reservations }: Pr
                 onChange={(event) => setNotes(event.target.value)}
                 rows={3}
                 placeholder="Describe el motivo de la cita…"
-                className="flex w-full rounded-md border border-primary/30 bg-background/80 px-3 py-2 text-sm"
+                className="flex w-full rounded-md border portal-field-surface px-3 py-2 text-sm"
               />
             </Field>
           ) : null}

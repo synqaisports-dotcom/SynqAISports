@@ -267,7 +267,7 @@ export function CoachWeekSessionsPanel({ team, weekContext, teamContext }: Props
                       onChange={(event) => setReason(event.target.value)}
                       rows={4}
                       placeholder="Ej. No tengo conos suficientes, propongo rondo 4v4…"
-                      className="w-full rounded-md border border-primary/25 bg-background/80 px-3 py-2 text-sm"
+                      className="w-full rounded-md border border-primary/25 portal-field-surface px-3 py-2 text-sm"
                     />
                     <Button
                       type="button"

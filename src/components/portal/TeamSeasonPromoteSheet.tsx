@@ -184,7 +184,7 @@ export function TeamSeasonPromoteSheet({
               value={seasonLabel}
               onChange={(event) => setSeasonLabel(event.target.value)}
               placeholder="2025/26"
-              className="border-primary/30 bg-background/80"
+              className="portal-field-surface"
             />
           </div>
 

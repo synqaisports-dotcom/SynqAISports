@@ -165,7 +165,7 @@ function PlayerDetailForm({
             setIsMinor(event.target.checked);
             if (!event.target.checked) setShowSecondGuardian(false);
           }}
-          className="size-4 rounded border-primary/40 bg-background/80 text-primary focus:ring-primary"
+          className="size-4 rounded border-primary/40 bg-primary/10 text-primary focus:ring-primary"
         />
         <span className="text-sm font-medium text-foreground">Es menor de edad</span>
       </label>
@@ -180,7 +180,7 @@ function PlayerDetailForm({
             name="firstName"
             defaultValue={player.first_name ?? player.display_name.split(' ')[0] ?? ''}
             required
-            className="border-primary/30 bg-background/80"
+            className="portal-field-surface"
           />
         </div>
         <div>
@@ -192,7 +192,7 @@ function PlayerDetailForm({
             defaultValue={
               player.last_name ?? player.display_name.split(' ').slice(1).join(' ') ?? ''
             }
-            className="border-primary/30 bg-background/80"
+            className="portal-field-surface"
           />
         </div>
         <div>

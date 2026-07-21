@@ -121,7 +121,7 @@ export function MaterialStockForm({
           step={1}
           defaultValue={stock?.quantity ?? 0}
           required
-          className="border-primary/30 bg-background/80"
+          className="portal-field-surface"
         />
       </div>
 
@@ -133,7 +133,7 @@ export function MaterialStockForm({
           name="notes"
           defaultValue={stock?.notes ?? ''}
           placeholder="Ubicación concreta, responsable…"
-          className="border-primary/30 bg-background/80"
+          className="portal-field-surface"
         />
       </div>
 

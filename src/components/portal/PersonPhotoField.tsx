@@ -76,7 +76,7 @@ export function PersonPhotoField({
             placeholder="https://…"
             value={photoUrl}
             onChange={(e) => setPhotoUrl(e.target.value)}
-            className="min-w-0 flex-1 border-primary/30 bg-background/80"
+            className="min-w-0 flex-1 portal-field-surface"
           />
           <input
             ref={inputRef}

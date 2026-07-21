@@ -80,7 +80,7 @@ export function MaterialHandoverForm({
               defaultValue={currentSeasonLabel()}
               required
               placeholder="2025-26"
-              className="border-primary/30 bg-background/80"
+              className="portal-field-surface"
             />
           </div>
           <div>
@@ -92,7 +92,7 @@ export function MaterialHandoverForm({
               type="date"
               defaultValue={todayDateInputValue()}
               required
-              className="border-primary/30 bg-background/80"
+              className="portal-field-surface"
             />
           </div>
           <div className="sm:col-span-2">
@@ -113,7 +113,7 @@ export function MaterialHandoverForm({
               name="recipientName"
               required
               placeholder="Nombre y apellidos"
-              className="border-primary/30 bg-background/80"
+              className="portal-field-surface"
             />
           </div>
           <div className="sm:col-span-2">
@@ -125,7 +125,7 @@ export function MaterialHandoverForm({
               rows={2}
               placeholder="Opcional: condición del material, incidencias…"
               className={cn(
-                'flex w-full rounded-md border border-primary/30 bg-background/80 px-3 py-2 text-sm',
+                'flex w-full rounded-md border portal-field-surface px-3 py-2 text-sm',
                 'placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary'
               )}
             />

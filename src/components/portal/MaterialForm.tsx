@@ -67,7 +67,7 @@ export function MaterialForm({ material, onSaved }: Props) {
               defaultValue={material?.name ?? ''}
               required
               placeholder="Ej. Conos de entrenamiento"
-              className="border-primary/30 bg-background/80"
+              className="portal-field-surface"
             />
           </div>
           <div>
@@ -98,7 +98,7 @@ export function MaterialForm({ material, onSaved }: Props) {
               name="sku"
               defaultValue={material?.sku ?? ''}
               placeholder="CONE-ORANGE"
-              className="border-primary/30 bg-background/80"
+              className="portal-field-surface"
             />
           </div>
         </div>
@@ -132,7 +132,7 @@ export function MaterialForm({ material, onSaved }: Props) {
               onChange={(event) => setUnitCost(event.target.value)}
               inputMode="decimal"
               placeholder="0,00"
-              className="border-primary/30 bg-background/80"
+              className="portal-field-surface"
             />
           </div>
         </div>
@@ -148,7 +148,7 @@ export function MaterialForm({ material, onSaved }: Props) {
           rows={3}
           placeholder="Talla, color, proveedor…"
           className={cn(
-            'flex w-full rounded-md border border-primary/30 bg-background/80 px-3 py-2 text-sm',
+            'flex w-full rounded-md border portal-field-surface px-3 py-2 text-sm',
             'placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary'
           )}
         />

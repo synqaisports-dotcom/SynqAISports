@@ -13,7 +13,7 @@ type Props = {
   onRemoveSecond: () => void;
 };
 
-const inputClass = 'border-primary/30 bg-background/80';
+const inputClass = 'portal-field-surface';
 
 function GuardianFields({
   index,

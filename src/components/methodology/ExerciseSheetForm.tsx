@@ -17,7 +17,7 @@ type Props = {
   showCanvasHeader?: boolean;
 };
 
-const fieldClass = 'border-primary/30 bg-background/80';
+const fieldClass = 'portal-field-surface';
 const sectionClass = 'rounded-xl border border-primary/15 bg-muted/5 p-4';
 
 export function ExerciseSheetForm({

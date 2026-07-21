@@ -67,7 +67,7 @@ export function SportPersonForm({
               defaultValue={person?.full_name ?? ''}
               required
               placeholder="Carlos Méndez"
-              className="border-primary/30 bg-background/80"
+              className="portal-field-surface"
             />
           </div>
           <div>
@@ -79,7 +79,7 @@ export function SportPersonForm({
               defaultValue={person?.sport_role ?? ''}
               required
               placeholder="Entrenador Sub-14 A"
-              className="border-primary/30 bg-background/80"
+              className="portal-field-surface"
             />
           </div>
           <div>
@@ -109,7 +109,7 @@ export function SportPersonForm({
               name="medicalUntil"
               type="date"
               defaultValue={person?.medical_until ?? ''}
-              className="border-primary/30 bg-background/80"
+              className="portal-field-surface"
             />
           </div>
           <div>
@@ -121,7 +121,7 @@ export function SportPersonForm({
               type="email"
               defaultValue={person?.email ?? ''}
               placeholder="tecnico@club.es"
-              className="border-primary/30 bg-background/80"
+              className="portal-field-surface"
             />
           </div>
           <div>
@@ -132,7 +132,7 @@ export function SportPersonForm({
               name="phone"
               defaultValue={person?.phone ?? ''}
               placeholder="+34 600 000 000"
-              className="border-primary/30 bg-background/80"
+              className="portal-field-surface"
             />
           </div>
           <div className="md:col-span-2">
@@ -143,7 +143,7 @@ export function SportPersonForm({
               name="notes"
               defaultValue={person?.notes ?? ''}
               placeholder="Observaciones internas"
-              className="border-primary/30 bg-background/80"
+              className="portal-field-surface"
             />
           </div>
         </CardContent>

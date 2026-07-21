@@ -578,7 +578,7 @@ export function CategoryCyclesHub({
                   onChange={(event) =>
                     updateDocument((current) => ({ ...current, seasonTitle: event.target.value }))
                   }
-                  className="border-primary/30 bg-background/80"
+                  className="portal-field-surface"
                 />
               </div>
               <div className="grid gap-3 sm:grid-cols-2 lg:max-w-xl">

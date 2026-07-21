@@ -90,7 +90,7 @@ export function CategorySeasonPromoteSheet({ teams, open, onOpenChange }: Props)
                 name="seasonLabel"
                 value={seasonLabel}
                 onChange={(event) => setSeasonLabel(event.target.value)}
-                className="border-primary/30 bg-background/80"
+                className="portal-field-surface"
               />
             </div>
 

@@ -136,7 +136,7 @@ export function ChangeRequestsPanel({ requests, role }: Props) {
               name="reason"
               rows={4}
               required
-              className="w-full rounded-lg border border-primary/25 bg-background/80 px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-primary/25 portal-field-surface px-3 py-2 text-sm"
             />
           </div>
           <button
@@ -233,7 +233,7 @@ function Field({
       {as === 'select' ? (
         <select
           name={name}
-          className="w-full rounded-lg border border-primary/25 bg-background/80 px-3 py-2 text-sm"
+          className="w-full rounded-lg border border-primary/25 portal-field-surface px-3 py-2 text-sm"
           defaultValue={options?.[0]?.value}
         >
           {options?.map((option) => (
@@ -246,7 +246,7 @@ function Field({
         <input
           name={name}
           placeholder={placeholder}
-          className="w-full rounded-lg border border-primary/25 bg-background/80 px-3 py-2 text-sm"
+          className="w-full rounded-lg border border-primary/25 portal-field-surface px-3 py-2 text-sm"
         />
       )}
     </div>

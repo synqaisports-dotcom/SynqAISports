@@ -407,7 +407,7 @@ export function StaffDocumentsSheet({
                   placeholder="Título del documento"
                   value={customTitle}
                   onChange={(event) => setCustomTitle(event.target.value)}
-                  className="border-primary/30 bg-background/80"
+                  className="portal-field-surface"
                   disabled={saving}
                 />
                 <input
