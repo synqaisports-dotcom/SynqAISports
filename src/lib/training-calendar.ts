@@ -177,6 +177,25 @@ export function buildTrainingCalendarEvents(
   );
 }
 
+export function countWeeklyTrainingSessions(slots: TeamTrainingSlot[]): number {
+  let count = 0;
+
+  for (const slot of slots) {
+    if (!slot.training_days.trim() || !slot.training_start || !slot.training_end) continue;
+
+    const startMinutes = parseTimeToMinutes(slot.training_start);
+    const endMinutes = parseTimeToMinutes(slot.training_end);
+    if (startMinutes == null || endMinutes == null || endMinutes <= startMinutes) continue;
+
+    count += slot.training_days
+      .split(',')
+      .map((day) => day.trim())
+      .filter(Boolean).length;
+  }
+
+  return count;
+}
+
 export function computeCalendarTimeGrid(
   events: TrainingCalendarEvent[],
   slotMinutes = CALENDAR_SLOT_MINUTES

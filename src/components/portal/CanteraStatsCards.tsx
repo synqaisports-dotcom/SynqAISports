@@ -1,6 +1,8 @@
 import {
   Activity,
   Bandage,
+  CalendarClock,
+  CalendarX,
   Layers,
   PauseCircle,
   Users,
@@ -51,11 +53,23 @@ const cards = [
     icon: PauseCircle,
     format: (stats: CanteraStats) => String(stats.inactivePlayers),
   },
+  {
+    key: 'weeklyConfirmedAbsences',
+    label: 'Ausencias confirmadas',
+    icon: CalendarX,
+    format: (stats: CanteraStats) => String(stats.weeklyConfirmedAbsences),
+  },
+  {
+    key: 'totalSchedules',
+    label: 'Total de horarios',
+    icon: CalendarClock,
+    format: (stats: CanteraStats) => String(stats.totalSchedules),
+  },
 ] as const;
 
 export function CanteraStatsCards({ stats, className }: Props) {
   return (
-    <div className={cn('grid gap-3 sm:grid-cols-2 xl:grid-cols-3', className)}>
+    <div className={cn('grid gap-3 sm:grid-cols-2 xl:grid-cols-4', className)}>
       {cards.map(({ key, label, icon: Icon, format }) => (
         <div
           key={key}
