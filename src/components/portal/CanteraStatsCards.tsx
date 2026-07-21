@@ -1,5 +1,7 @@
+import Link from 'next/link';
 import {
   Activity,
+  ArrowRight,
   Bandage,
   CalendarClock,
   CalendarX,
@@ -21,12 +23,14 @@ const cards = [
     key: 'totalTeams',
     label: 'Total de equipos',
     icon: Layers,
+    href: '/portal/cantera/equipos',
     format: (stats: CanteraStats) => String(stats.totalTeams),
   },
   {
     key: 'totalPlayers',
     label: 'Total de jugadores',
     icon: UsersRound,
+    href: '/portal/cantera/jugadores',
     format: (stats: CanteraStats) => String(stats.totalPlayers),
   },
   {
@@ -63,18 +67,23 @@ const cards = [
     key: 'totalSchedules',
     label: 'Total de horarios',
     icon: CalendarClock,
+    href: '/portal/cantera/horarios',
     format: (stats: CanteraStats) => String(stats.totalSchedules),
   },
 ] as const;
 
+const cardSurfaceClass =
+  'portal-section-surface rounded-xl px-4 py-3.5 transition-colors hover:border-primary/40';
+
+const linkedCardClass =
+  'group block cursor-pointer hover:bg-primary/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50';
+
 export function CanteraStatsCards({ stats, className }: Props) {
   return (
     <div className={cn('grid gap-3 sm:grid-cols-2 xl:grid-cols-4', className)}>
-      {cards.map(({ key, label, icon: Icon, format }) => (
-        <div
-          key={key}
-          className="portal-section-surface rounded-xl px-4 py-3.5 transition-colors hover:border-primary/40"
-        >
+      {cards.map(({ key, label, icon: Icon, format, ...rest }) => {
+        const href = 'href' in rest ? rest.href : undefined;
+        const content = (
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
@@ -84,10 +93,38 @@ export function CanteraStatsCards({ stats, className }: Props) {
                 {format(stats)}
               </p>
             </div>
-            <Icon className="size-5 shrink-0 text-primary/80" strokeWidth={1.75} />
+            <div className="flex shrink-0 items-center gap-1.5">
+              {href ? (
+                <ArrowRight
+                  className="size-3.5 text-primary/50 transition-transform group-hover:translate-x-0.5 group-hover:text-primary"
+                  strokeWidth={2}
+                  aria-hidden
+                />
+              ) : null}
+              <Icon className="size-5 text-primary/80" strokeWidth={1.75} aria-hidden />
+            </div>
           </div>
-        </div>
-      ))}
+        );
+
+        if (href) {
+          return (
+            <Link
+              key={key}
+              href={href}
+              className={cn(cardSurfaceClass, linkedCardClass)}
+              aria-label={`${label}: ${format(stats)}. Ir a la sección`}
+            >
+              {content}
+            </Link>
+          );
+        }
+
+        return (
+          <div key={key} className={cardSurfaceClass}>
+            {content}
+          </div>
+        );
+      })}
     </div>
   );
 }
