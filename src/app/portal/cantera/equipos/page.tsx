@@ -1,5 +1,3 @@
-import Link from 'next/link';
-import { ArrowLeft, Layers } from 'lucide-react';
 import { loadClubFacilities } from '@/app/actions/club-facilities';
 import { getTeamTrainingSlots } from '@/app/actions/cantera';
 import { TeamsMasterDetail } from '@/components/portal/TeamsMasterDetail';
@@ -27,8 +25,6 @@ import {
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import { redirect } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 
 type Props = {
   searchParams: Promise<{
@@ -199,31 +195,8 @@ export default async function PortalCanteraEquiposPage({ searchParams }: Props) 
 
   profiles.sort((a, b) => compareTeamsForList(a, b, 'category'));
 
-  const activeCount = profiles.filter((team) => team.active).length;
-  const pausedCount = profiles.length - activeCount;
-
   return (
     <PageContainer>
-      <Card className="mb-4 border border-primary/25">
-        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 space-y-0">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Layers className="size-4 text-primary" />
-            Equipos
-          </CardTitle>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/portal/cantera">
-              <ArrowLeft className="h-4 w-4" />
-              Volver
-            </Link>
-          </Button>
-        </CardHeader>
-      </Card>
-
-      <p className="mb-4 text-xs text-muted-foreground">
-        {CANTERA_CATEGORIES.length} categorías · {activeCount} equipos activos
-        {pausedCount > 0 ? ` · ${pausedCount} pausados` : ''}
-      </p>
-
       <TeamsMasterDetail
         teams={profiles}
         facilities={facilities}

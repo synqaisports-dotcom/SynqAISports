@@ -91,7 +91,7 @@ function TeamDetailActions({
   onSeason: () => void;
 }) {
   return (
-    <div className="flex shrink-0 flex-nowrap items-center gap-0.5 rounded-xl border border-primary/20 bg-muted/10 p-1">
+    <div className="flex shrink-0 flex-nowrap items-center gap-0.5">
       <button
         type="button"
         className={PORTAL_ACTION_ICON_CLASS}
