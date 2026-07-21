@@ -5,7 +5,6 @@ import {
   CheckCircle2,
   CircleDashed,
   ExternalLink,
-  FileStack,
   FileText,
   Loader2,
   Plus,
@@ -16,12 +15,16 @@ import {
   savePersonDocuments,
   uploadPersonPdfDocument,
 } from '@/app/actions/person-documents';
-import { PortalSectionBadge } from '@/components/portal/PortalSectionShell';
+import {
+  PortalSheetBody,
+  PortalSheetContent,
+  PortalSheetHeader,
+} from '@/components/portal/PortalSheet';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import {
   loadDemoPersonDocuments,
   newCustomDocumentId,
@@ -310,20 +313,17 @@ export function StaffDocumentsSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="right"
-        className="portal-dashboard dark portal-main-surface flex w-full flex-col gap-0 overflow-hidden border-l border-primary/25 p-0 sm:max-w-2xl"
-      >
-        <div className="portal-section-surface shrink-0 rounded-none border-x-0 border-t-0 px-5 py-4">
-          <SheetHeader className="space-y-3 text-left">
-            <PortalSectionBadge icon={<FileStack className="size-3.5" />}>
-              Expediente del empleado
-            </PortalSectionBadge>
-            <div>
-              <SheetTitle className="text-xl tracking-tight">Documentación</SheetTitle>
-              <p className="mt-1 text-sm text-muted-foreground">{personName}</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
+      <PortalSheetContent maxWidth="2xl">
+        <PortalSheetHeader>
+          <SheetHeader className="space-y-2 text-left">
+            <SheetTitle className="text-xl tracking-tight">Documentación</SheetTitle>
+          </SheetHeader>
+        </PortalSheetHeader>
+
+        <PortalSheetBody>
+          <div>
+            <p className="text-sm text-muted-foreground">{personName}</p>
+            <div className="mt-2 flex flex-wrap gap-2">
               <Badge variant="secondary" className="text-[10px]">
                 {uploadedMandatory}/{PERSON_DOCUMENT_SLOTS.length} obligatorios
               </Badge>
@@ -331,10 +331,8 @@ export function StaffDocumentsSheet({
                 Solo PDF · 10 MB máx.
               </Badge>
             </div>
-          </SheetHeader>
-        </div>
+          </div>
 
-        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 md:p-5">
           <Card className="border border-primary/25 bg-card/40 shadow-none">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Documentación obligatoria</CardTitle>
@@ -447,8 +445,8 @@ export function StaffDocumentsSheet({
               {globalError}
             </p>
           ) : null}
-        </div>
-      </SheetContent>
+        </PortalSheetBody>
+      </PortalSheetContent>
     </Sheet>
   );
 }

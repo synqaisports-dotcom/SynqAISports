@@ -14,6 +14,7 @@ import { PlayerGuardiansForm } from '@/components/portal/PlayerGuardiansForm';
 import { PlayerGuardiansSummary } from '@/components/portal/PlayerGuardiansSummary';
 import { PlayerMedicalBadge } from '@/components/portal/PlayerMedicalBadge';
 import { PlayerPauseButton } from '@/components/portal/PlayerPauseButton';
+import { PORTAL_ACTION_ICON_CLASS } from '@/components/portal/PortalActionIcon';
 import { PlayerPhotoField } from '@/components/portal/PlayerPhotoField';
 import { PlayerPositionsPicker } from '@/components/portal/PlayerPositionsPicker';
 import { SynqNumericStepper } from '@/components/portal/SynqNumericStepper';
@@ -23,11 +24,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+  PortalSheetBody,
+  PortalSheetContent,
+  PortalSheetHeader,
+} from '@/components/portal/PortalSheet';
+import { Sheet, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import {
   comparePlayersForList,
   playerFullName,
@@ -302,8 +303,6 @@ function PlayerDetailPanel({
 
   const name = playerFullName(player);
   const sport = playerSport(player, teams);
-  const actionButtonClass =
-    'inline-flex size-9 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary';
   const sectionClass = 'rounded-xl border border-primary/15 bg-muted/5 p-4';
 
   return (
@@ -329,7 +328,7 @@ function PlayerDetailPanel({
             <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-gradient-to-t from-background/95 via-background/55 to-transparent px-2 pb-2 pt-8">
               <button
                 type="button"
-                className={actionButtonClass}
+                className={PORTAL_ACTION_ICON_CLASS}
                 aria-label="Modificar ficha"
                 title="Modificar ficha"
                 onClick={() => setEditOpen(true)}
@@ -339,7 +338,7 @@ function PlayerDetailPanel({
 
               <button
                 type="button"
-                className={actionButtonClass}
+                className={PORTAL_ACTION_ICON_CLASS}
                 aria-label="Documentación del jugador"
                 title="Documentación"
                 onClick={() => setDocsOpen(true)}
@@ -350,7 +349,7 @@ function PlayerDetailPanel({
               {player.team_id ? (
                 <Link
                   href={`/portal/cantera/equipos?team=${player.team_id}`}
-                  className={actionButtonClass}
+                  className={PORTAL_ACTION_ICON_CLASS}
                   aria-label="Ver equipo"
                   title="Ver equipo"
                 >
@@ -409,15 +408,13 @@ function PlayerDetailPanel({
         <PlayerClubHistorySection player={player} />
 
         <Sheet open={editOpen} onOpenChange={setEditOpen}>
-          <SheetContent
-            side="right"
-            className="w-full overflow-y-auto border-primary/20 sm:max-w-md"
-          >
-            <SheetHeader>
-              <SheetTitle>Modificar ficha</SheetTitle>
-            </SheetHeader>
-
-            <div className="mt-4">
+          <PortalSheetContent maxWidth="md">
+            <PortalSheetHeader>
+              <SheetHeader className="space-y-2 text-left">
+                <SheetTitle className="text-xl tracking-tight">Modificar ficha</SheetTitle>
+              </SheetHeader>
+            </PortalSheetHeader>
+            <PortalSheetBody>
               <PlayerDetailForm
                 key={player.id}
                 clubId={clubId}
@@ -425,20 +422,18 @@ function PlayerDetailPanel({
                 demoMode={demoMode}
                 onSaved={() => setEditOpen(false)}
               />
-            </div>
-          </SheetContent>
+            </PortalSheetBody>
+          </PortalSheetContent>
         </Sheet>
 
         <Sheet open={docsOpen} onOpenChange={setDocsOpen}>
-          <SheetContent
-            side="right"
-            className="w-full overflow-y-auto border-primary/20 sm:max-w-md"
-          >
-            <SheetHeader>
-              <SheetTitle>Documentación</SheetTitle>
-            </SheetHeader>
-
-            <div className="mt-4">
+          <PortalSheetContent maxWidth="md">
+            <PortalSheetHeader>
+              <SheetHeader className="space-y-2 text-left">
+                <SheetTitle className="text-xl tracking-tight">Documentación</SheetTitle>
+              </SheetHeader>
+            </PortalSheetHeader>
+            <PortalSheetBody>
               <PlayerDocumentsForm
                 key={player.id}
                 clubId={clubId}
@@ -446,8 +441,8 @@ function PlayerDetailPanel({
                 demoMode={demoMode}
                 onSaved={() => setDocsOpen(false)}
               />
-            </div>
-          </SheetContent>
+            </PortalSheetBody>
+          </PortalSheetContent>
         </Sheet>
       </CardContent>
     </Card>
@@ -473,9 +468,6 @@ export function PlayersMasterDetail({
       ? initialPlayerId
       : players[0]?.id ?? null
   );
-  const rosterActionClass =
-    'inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary';
-
   useEffect(() => {
     if (initialTeamFilter) setTeamFilter(initialTeamFilter);
   }, [initialTeamFilter]);
@@ -586,7 +578,7 @@ export function PlayersMasterDetail({
             </div>
             <button
               type="button"
-              className={rosterActionClass}
+              className={cn(PORTAL_ACTION_ICON_CLASS, 'shrink-0')}
               aria-label="Nuevo jugador"
               title="Nuevo jugador"
               onClick={() => setCreateOpen(true)}
@@ -693,18 +685,20 @@ export function PlayersMasterDetail({
       />
 
       <Sheet open={createOpen} onOpenChange={setCreateOpen}>
-        <SheetContent side="right" className="w-full overflow-y-auto border-primary/20 sm:max-w-md">
-          <SheetHeader>
-            <SheetTitle>Nuevo jugador</SheetTitle>
-          </SheetHeader>
-          <div className="mt-4">
+        <PortalSheetContent maxWidth="md">
+          <PortalSheetHeader>
+            <SheetHeader className="space-y-2 text-left">
+              <SheetTitle className="text-xl tracking-tight">Nuevo jugador</SheetTitle>
+            </SheetHeader>
+          </PortalSheetHeader>
+          <PortalSheetBody>
             <PlayerCreateForm
               teams={teams}
               demoMode={demoMode}
               onCreated={handlePlayerCreated}
             />
-          </div>
-        </SheetContent>
+          </PortalSheetBody>
+        </PortalSheetContent>
       </Sheet>
     </div>
   );

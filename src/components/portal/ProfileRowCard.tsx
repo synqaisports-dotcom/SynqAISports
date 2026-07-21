@@ -3,6 +3,7 @@ import type { LucideIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Camera } from 'lucide-react';
+import { PORTAL_ACTION_ICON_CLASS } from '@/components/portal/PortalActionIcon';
 import { cn } from '@/lib/utils';
 
 export type ProfileRowField = {
@@ -98,11 +99,7 @@ export function ProfileRowAction({ href, label, icon: Icon, className }: Profile
       href={href}
       aria-label={label}
       title={label}
-      className={cn(
-        'inline-flex size-9 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors',
-        'hover:border-primary/30 hover:bg-primary/10 hover:text-primary',
-        className
-      )}
+      className={cn(PORTAL_ACTION_ICON_CLASS, className)}
     >
       <Icon className="size-4" />
     </Link>

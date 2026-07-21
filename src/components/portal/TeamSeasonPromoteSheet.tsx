@@ -12,11 +12,11 @@ import { SynqSelect } from '@/components/portal/SynqSelect';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+  PortalSheetBody,
+  PortalSheetContent,
+  PortalSheetHeader,
+} from '@/components/portal/PortalSheet';
+import { Sheet, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import {
   CANTERA_CATEGORIES,
   type CanteraCategorySlug,
@@ -139,12 +139,14 @@ export function TeamSeasonPromoteSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full overflow-y-auto border-primary/20 sm:max-w-lg">
-        <SheetHeader>
-          <SheetTitle>Cierre de temporada · {team.name}</SheetTitle>
-        </SheetHeader>
+      <PortalSheetContent maxWidth="lg">
+        <PortalSheetHeader>
+          <SheetHeader className="space-y-2 text-left">
+            <SheetTitle className="text-xl tracking-tight">Cierre de temporada · {team.name}</SheetTitle>
+          </SheetHeader>
+        </PortalSheetHeader>
 
-        <div className="mt-4 space-y-4">
+        <PortalSheetBody>
           <div className="grid gap-2 sm:grid-cols-3">
             {(
               [
@@ -372,8 +374,8 @@ export function TeamSeasonPromoteSheet({
               En demo la operación es simulada; con Supabase se guardará en equipos y jugadores.
             </p>
           ) : null}
-        </div>
-      </SheetContent>
+        </PortalSheetBody>
+      </PortalSheetContent>
     </Sheet>
   );
 }

@@ -8,6 +8,7 @@ import { deleteExercise, updateExerciseDrawing } from '@/app/actions/methodology
 import { DrawingPreviewFrame } from '@/components/methodology/drawing/DrawingPreviewFrame';
 import { ExerciseDrawingStudio } from '@/components/methodology/drawing/ExerciseDrawingStudio';
 import { ExercisePreviewOverlay } from '@/components/methodology/ExercisePreviewOverlay';
+import { PORTAL_ACTION_ICON_CLASS } from '@/components/portal/PortalActionIcon';
 import { PortalConfirmDialog } from '@/components/portal/PortalConfirmDialog';
 import { PortalSearchField } from '@/components/portal/PortalSearchField';
 import { Badge } from '@/components/ui/badge';
@@ -50,9 +51,6 @@ type Props = {
   activeSport?: ClubPracticedSport;
   practicedSports?: ClubPracticedSport[];
 };
-
-const actionButtonClass =
-  'inline-flex size-9 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary';
 
 const listItemClass = (active: boolean) =>
   cn(
@@ -197,7 +195,7 @@ function ExerciseDetailPanel({
               <button
                 type="button"
                 onClick={() => setStudioOpen(true)}
-                className={actionButtonClass}
+                className={PORTAL_ACTION_ICON_CLASS}
                 aria-label="Modificar dibujo"
                 title="Modificar dibujo"
               >
@@ -206,7 +204,7 @@ function ExerciseDetailPanel({
               <button
                 type="button"
                 onClick={() => setPreviewOpen(true)}
-                className={actionButtonClass}
+                className={PORTAL_ACTION_ICON_CLASS}
                 aria-label="Previsualizar ejercicio"
                 title="Previsualizar"
               >
@@ -215,7 +213,7 @@ function ExerciseDetailPanel({
               <button
                 type="button"
                 onClick={handlePrint}
-                className={actionButtonClass}
+                className={PORTAL_ACTION_ICON_CLASS}
                 aria-label="Imprimir o guardar PDF"
                 title="Imprimir / PDF"
               >
@@ -225,7 +223,7 @@ function ExerciseDetailPanel({
                 type="button"
                 disabled={deleting}
                 onClick={() => setDeleteOpen(true)}
-                className={cn(actionButtonClass, 'hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive')}
+                className={cn(PORTAL_ACTION_ICON_CLASS, 'hover:text-destructive')}
                 aria-label="Eliminar ejercicio"
                 title="Eliminar ejercicio"
               >
@@ -396,7 +394,7 @@ export function ExercisesMasterDetail({
             </div>
             <Link
               href={nuevoHref}
-              className={actionButtonClass}
+              className={PORTAL_ACTION_ICON_CLASS}
               aria-label="Nuevo ejercicio"
               title="Nuevo ejercicio"
             >

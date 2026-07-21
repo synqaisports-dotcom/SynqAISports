@@ -12,6 +12,7 @@ const PORTAL_SHEET_WIDTH = {
   lg: 'sm:max-w-lg',
   xl: 'sm:max-w-xl',
   '2xl': 'sm:max-w-2xl',
+  full: 'inset-0 h-screen w-screen max-w-none sm:max-w-none',
 } as const;
 
 export type PortalSheetWidth = keyof typeof PORTAL_SHEET_WIDTH;
@@ -20,6 +21,7 @@ export function portalSheetContentClass(maxWidth: PortalSheetWidth = 'md') {
   return cn(
     'portal-dashboard dark portal-main-surface flex w-full flex-col gap-0 overflow-hidden border-l border-primary/25 p-0 text-foreground',
     PORTAL_SHEET_WIDTH[maxWidth],
+    maxWidth === 'full' && 'overflow-y-auto',
     PORTAL_SHEET_CLOSE_BUTTON_CLASS
   );
 }
@@ -49,16 +51,7 @@ export function PortalSheetHeader({
   children: ReactNode;
   className?: string;
 }) {
-  return (
-    <div
-      className={cn(
-        'portal-section-surface shrink-0 rounded-none border-x-0 border-t-0 px-5 py-4',
-        className
-      )}
-    >
-      {children}
-    </div>
-  );
+  return <div className={cn('shrink-0 px-5 pb-2 pt-5', className)}>{children}</div>;
 }
 
 export function PortalSheetBody({
@@ -69,7 +62,7 @@ export function PortalSheetBody({
   className?: string;
 }) {
   return (
-    <div className={cn('min-h-0 flex-1 space-y-4 overflow-y-auto p-4 md:p-5', className)}>
+    <div className={cn('min-h-0 flex-1 space-y-4 overflow-y-auto px-5 pb-5 pt-2 md:px-6 md:pb-6', className)}>
       {children}
     </div>
   );

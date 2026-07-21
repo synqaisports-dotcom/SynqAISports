@@ -2,7 +2,11 @@
 
 import { findMccInPlan, getMccDisplayLabel } from '@/lib/periodization';
 import { CoachMicrocycleReadonlyView } from '@/components/portal/CoachMicrocycleReadonlyView';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
+import {
+  PortalSheetBody,
+  PortalSheetContent,
+} from '@/components/portal/PortalSheet';
+import { Sheet } from '@/components/ui/sheet';
 import type { CoachWeekContext } from '@/lib/coach-periodization-context';
 import { getVariantState } from '@/lib/periodization-document';
 
@@ -14,9 +18,6 @@ type Props = {
   microcycleId: string | null;
   initialSessionIndex?: number;
 };
-
-const COACH_SHEET_CLASS =
-  'portal-dashboard dark portal-main-surface inset-0 h-screen w-screen max-w-none overflow-y-auto border-l border-primary/25 p-4 text-foreground sm:max-w-none md:p-6 [&>button]:rounded-lg [&>button]:border [&>button]:border-primary/25 [&>button]:bg-background/40 [&>button]:text-primary hover:[&>button]:bg-primary/10';
 
 export function CoachMicrocycleOverlay({
   open,
@@ -34,23 +35,25 @@ export function CoachMicrocycleOverlay({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className={COACH_SHEET_CLASS}>
-        <div className="pr-10 pt-1">
-          {microcycleId && mccContext ? (
-            <CoachMicrocycleReadonlyView
-              microcycleId={microcycleId}
-              mccLabel={mccLabel}
-              weekStart={mccContext.micro.weekStart}
-              weekEnd={mccContext.micro.weekEnd}
-              initialSessionIndex={initialSessionIndex}
-            />
-          ) : (
-            <p className="portal-section-surface rounded-xl border border-dashed border-primary/25 p-6 text-center text-sm text-muted-foreground">
-              Este microciclo aún no está vinculado al plan.
-            </p>
-          )}
-        </div>
-      </SheetContent>
+      <PortalSheetContent maxWidth="full">
+        <PortalSheetBody className="p-4 md:p-6">
+          <div className="pr-10 pt-1">
+            {microcycleId && mccContext ? (
+              <CoachMicrocycleReadonlyView
+                microcycleId={microcycleId}
+                mccLabel={mccLabel}
+                weekStart={mccContext.micro.weekStart}
+                weekEnd={mccContext.micro.weekEnd}
+                initialSessionIndex={initialSessionIndex}
+              />
+            ) : (
+              <p className="portal-section-surface rounded-xl border border-dashed border-primary/25 p-6 text-center text-sm text-muted-foreground">
+                Este microciclo aún no está vinculado al plan.
+              </p>
+            )}
+          </div>
+        </PortalSheetBody>
+      </PortalSheetContent>
     </Sheet>
   );
 }

@@ -5,6 +5,10 @@ import { useRouter } from 'next/navigation';
 import { Pause, Play } from 'lucide-react';
 import { toggleTeamActive } from '@/app/actions/cantera';
 import { PortalConfirmDialog } from '@/components/portal/PortalConfirmDialog';
+import {
+  PORTAL_ACTION_ICON_CLASS,
+  PORTAL_ACTION_ICON_DISABLED_CLASS,
+} from '@/components/portal/PortalActionIcon';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -39,9 +43,9 @@ export function TeamPauseButton({ teamId, teamName, active }: Props) {
         }
         onClick={() => setConfirmOpen(true)}
         className={cn(
-          'inline-flex size-9 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors',
-          'hover:border-primary/30 hover:bg-primary/10 hover:text-primary',
-          'disabled:opacity-50'
+          PORTAL_ACTION_ICON_CLASS,
+          PORTAL_ACTION_ICON_DISABLED_CLASS,
+          !active && 'text-muted-foreground'
         )}
       >
         {active ? <Pause className="size-4" /> : <Play className="size-4" />}

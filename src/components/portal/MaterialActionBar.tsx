@@ -1,15 +1,14 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
 import { FileSpreadsheet, FileText } from 'lucide-react';
 import { MaterialImportActionButton, MaterialImportSheet } from '@/components/portal/MaterialImportSheet';
+import { PortalActionIconLink, PORTAL_ACTION_ICON_CLASS } from '@/components/portal/PortalActionIcon';
 import {
   PortalSheetBody,
   PortalSheetContent,
   PortalSheetHeader,
 } from '@/components/portal/PortalSheet';
-import { PortalSectionBadge } from '@/components/portal/PortalSectionShell';
 import { SynqSelect } from '@/components/portal/SynqSelect';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -25,9 +24,6 @@ import {
 } from '@/lib/material-export';
 import type { TeamOption } from '@/lib/person-assignments';
 import { cn } from '@/lib/utils';
-
-const actionIconClass =
-  'inline-flex size-9 items-center justify-center rounded-lg text-primary transition-colors hover:bg-primary/10 hover:text-primary';
 
 type Props = {
   materials: ClubMaterialItem[];
@@ -109,17 +105,15 @@ export function MaterialActionBar({ materials, stock, teams, facilities }: Props
   return (
     <>
       <div className="flex flex-wrap items-center gap-1">
-        <Link
+        <PortalActionIconLink
           href="/portal/club/material/recibis"
-          className={actionIconClass}
-          aria-label="Ver recibís de entrega"
-          title="Recibís de entrega"
+          label="Ver recibís de entrega"
         >
           <FileText className="size-4" />
-        </Link>
+        </PortalActionIconLink>
         <button
           type="button"
-          className={actionIconClass}
+          className={PORTAL_ACTION_ICON_CLASS}
           aria-label="Exportar material a Excel"
           title="Exportar a Excel"
           onClick={() => setExportOpen(true)}
@@ -133,9 +127,6 @@ export function MaterialActionBar({ materials, stock, teams, facilities }: Props
         <PortalSheetContent maxWidth="md">
           <PortalSheetHeader>
             <SheetHeader className="space-y-3 text-left">
-              <PortalSectionBadge icon={<FileSpreadsheet className="size-3.5" />}>
-                Inventario del club
-              </PortalSectionBadge>
               <SheetTitle className="text-xl tracking-tight">Exportar inventario</SheetTitle>
               <p className="text-sm text-muted-foreground">
                 Genera un informe en Excel con el ámbito y valoración que necesites.

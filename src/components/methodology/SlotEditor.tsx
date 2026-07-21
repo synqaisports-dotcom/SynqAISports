@@ -5,11 +5,13 @@ import Link from 'next/link';
 import { ArrowLeft, Loader2, Printer, Save } from 'lucide-react';
 import { updateMicrocycleSlot, type ActionState } from '@/app/actions/methodology';
 import { ExerciseSheetForm } from '@/components/methodology/ExerciseSheetForm';
+import { PORTAL_ACTION_ICON_CLASS, PORTAL_ACTION_ICON_DISABLED_CLASS } from '@/components/portal/PortalActionIcon';
 import { MethodologySubnav } from '@/components/methodology/MethodologySubnav';
 import { updateDemoSlot } from '@/lib/demo-microcycles-store';
 import { isDemoMicrocycleId, slotDisplayLabel } from '@/lib/microcycle-sessions';
 import { legacyToSheet, parseExerciseSheet, sheetFromFormData, sheetToLegacyFields } from '@/lib/exercise-sheet';
 import type { SlotType } from '@/lib/methodology';
+import { cn } from '@/lib/utils';
 import { useState, type FormEvent } from 'react';
 
 export type SlotEditorPayload = {
@@ -31,9 +33,6 @@ type Props = {
 };
 
 const initial: ActionState = { ok: false };
-
-const actionButtonClass =
-  'inline-flex size-9 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary disabled:opacity-50';
 
 function resolveSlotSheet(slot: SlotEditorPayload) {
   const parsed = parseExerciseSheet(slot.sheet_json);
@@ -114,7 +113,7 @@ export function SlotEditor({ slot }: Props) {
             <button
               type="submit"
               disabled={isSaving}
-              className={actionButtonClass}
+              className={cn(PORTAL_ACTION_ICON_CLASS, PORTAL_ACTION_ICON_DISABLED_CLASS)}
               aria-label="Guardar ficha del slot"
               title="Guardar ficha del slot"
             >
@@ -122,7 +121,7 @@ export function SlotEditor({ slot }: Props) {
             </button>
             <Link
               href={backHref}
-              className={actionButtonClass}
+              className={cn(PORTAL_ACTION_ICON_CLASS, PORTAL_ACTION_ICON_DISABLED_CLASS)}
               aria-label="Volver a la sesión"
               title="Volver a la sesión"
             >
@@ -131,7 +130,7 @@ export function SlotEditor({ slot }: Props) {
             {!isDemo ? (
               <Link
                 href={`/print/ficha/slot/${slot.id}`}
-                className={actionButtonClass}
+                className={cn(PORTAL_ACTION_ICON_CLASS, PORTAL_ACTION_ICON_DISABLED_CLASS)}
                 aria-label="Imprimir ficha"
                 title="Imprimir ficha"
               >

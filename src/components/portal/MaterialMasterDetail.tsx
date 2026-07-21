@@ -16,13 +16,13 @@ import { MaterialForm } from '@/components/portal/MaterialForm';
 import { MaterialHandoverForm } from '@/components/portal/MaterialHandoverForm';
 import { MaterialPauseButton } from '@/components/portal/MaterialPauseButton';
 import { MaterialStockForm } from '@/components/portal/MaterialStockForm';
+import { PORTAL_ACTION_ICON_CLASS } from '@/components/portal/PortalActionIcon';
 import {
   PortalSheetBody,
   PortalSheetContent,
   PortalSheetHeader,
 } from '@/components/portal/PortalSheet';
 import { PortalSearchField } from '@/components/portal/PortalSearchField';
-import { PortalSectionBadge } from '@/components/portal/PortalSectionShell';
 import { SynqSelect } from '@/components/portal/SynqSelect';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -62,9 +62,6 @@ type Props = {
   initialCreateOpen?: boolean;
   initialEditOpen?: boolean;
 };
-
-const actionButtonClass =
-  'inline-flex size-9 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary';
 
 function compareMaterials(a: ClubMaterialItem, b: ClubMaterialItem, sort: MaterialListSortMode) {
   const cmp = a.name.localeCompare(b.name, 'es', { sensitivity: 'base' });
@@ -201,7 +198,7 @@ function CatalogDetailPanel({
           <div className="flex shrink-0 flex-nowrap items-center gap-0.5">
             <button
               type="button"
-              className={actionButtonClass}
+              className={PORTAL_ACTION_ICON_CLASS}
               aria-label="Modificar material"
               title="Modificar material"
               onClick={() => setEditOpen(true)}
@@ -210,7 +207,7 @@ function CatalogDetailPanel({
             </button>
             <button
               type="button"
-              className={actionButtonClass}
+              className={PORTAL_ACTION_ICON_CLASS}
               aria-label="Añadir stock"
               title="Añadir o mover stock"
               onClick={() => {
@@ -322,7 +319,6 @@ function CatalogDetailPanel({
         <PortalSheetContent maxWidth="xl">
           <PortalSheetHeader>
             <SheetHeader className="space-y-2 text-left">
-              <PortalSectionBadge icon={<Pencil className="size-3.5" />}>Catálogo</PortalSectionBadge>
               <SheetTitle className="text-xl tracking-tight">Modificar — {material.name}</SheetTitle>
             </SheetHeader>
           </PortalSheetHeader>
@@ -343,7 +339,6 @@ function CatalogDetailPanel({
         <PortalSheetContent maxWidth="lg">
           <PortalSheetHeader>
             <SheetHeader className="space-y-2 text-left">
-              <PortalSectionBadge icon={<Warehouse className="size-3.5" />}>Stock</PortalSectionBadge>
               <SheetTitle className="text-xl tracking-tight">Asignar stock</SheetTitle>
             </SheetHeader>
           </PortalSheetHeader>
@@ -405,7 +400,7 @@ function LocationDetailPanel({
           {handoverItems.length > 0 ? (
             <button
               type="button"
-              className={actionButtonClass}
+              className={PORTAL_ACTION_ICON_CLASS}
               aria-label="Generar recibí de entrega"
               title="Generar recibí de entrega"
               onClick={() => setHandoverOpen(true)}
@@ -440,9 +435,6 @@ function LocationDetailPanel({
         <PortalSheetContent maxWidth="xl">
           <PortalSheetHeader>
             <SheetHeader className="space-y-2 text-left">
-              <PortalSectionBadge icon={<FileText className="size-3.5" />}>
-                Recibí de entrega
-              </PortalSectionBadge>
               <SheetTitle className="text-xl tracking-tight">{locationLabelText}</SheetTitle>
             </SheetHeader>
           </PortalSheetHeader>
@@ -675,7 +667,7 @@ export function MaterialMasterDetail({
             {view === 'catalog' ? (
               <button
                 type="button"
-                className={actionButtonClass}
+                className={PORTAL_ACTION_ICON_CLASS}
                 aria-label="Nuevo material"
                 title="Nuevo material"
                 onClick={() => setCreateOpen(true)}
@@ -920,7 +912,6 @@ export function MaterialMasterDetail({
         <PortalSheetContent maxWidth="xl">
           <PortalSheetHeader>
             <SheetHeader className="space-y-2 text-left">
-              <PortalSectionBadge icon={<Plus className="size-3.5" />}>Catálogo</PortalSectionBadge>
               <SheetTitle className="text-xl tracking-tight">Nuevo material</SheetTitle>
             </SheetHeader>
           </PortalSheetHeader>

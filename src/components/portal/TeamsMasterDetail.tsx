@@ -10,6 +10,7 @@ import { TeamSeasonPromoteSheet } from '@/components/portal/TeamSeasonPromoteShe
 import { TeamCreateForm } from '@/components/portal/TeamCreateForm';
 import { TeamEditForm } from '@/components/portal/TeamEditForm';
 import { TeamPauseButton } from '@/components/portal/TeamPauseButton';
+import { PORTAL_ACTION_ICON_CLASS } from '@/components/portal/PortalActionIcon';
 import { TeamRosterList } from '@/components/portal/TeamRosterList';
 import { TeamViewSections } from '@/components/portal/TeamViewSections';
 import { SynqSelect } from '@/components/portal/SynqSelect';
@@ -18,11 +19,11 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+  PortalSheetBody,
+  PortalSheetContent,
+  PortalSheetHeader,
+} from '@/components/portal/PortalSheet';
+import { Sheet, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import {
   CANTERA_CATEGORIES,
   getCanteraCategory,
@@ -78,9 +79,6 @@ function teamOptionsFromProfiles(teams: TeamProfile[]): PlayerTeamOption[] {
   );
 }
 
-const teamActionButtonClass =
-  'inline-flex size-9 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary';
-
 function TeamDetailActions({
   team,
   onEdit,
@@ -96,7 +94,7 @@ function TeamDetailActions({
     <div className="flex shrink-0 flex-nowrap items-center gap-0.5 rounded-xl border border-primary/20 bg-muted/10 p-1">
       <button
         type="button"
-        className={teamActionButtonClass}
+        className={PORTAL_ACTION_ICON_CLASS}
         aria-label="Editar equipo"
         title="Editar equipo"
         onClick={onEdit}
@@ -105,7 +103,7 @@ function TeamDetailActions({
       </button>
       <button
         type="button"
-        className={teamActionButtonClass}
+        className={PORTAL_ACTION_ICON_CLASS}
         aria-label="Ver plantilla del equipo"
         title="Ver plantilla del equipo"
         onClick={onRoster}
@@ -114,7 +112,7 @@ function TeamDetailActions({
       </button>
       <button
         type="button"
-        className={teamActionButtonClass}
+        className={PORTAL_ACTION_ICON_CLASS}
         aria-label="Cierre de temporada"
         title="Cierre de temporada (ascenso, letra o fusión)"
         onClick={onSeason}
@@ -123,7 +121,7 @@ function TeamDetailActions({
       </button>
       <Link
         href={`/portal/club/staff?team=${team.id}`}
-        className={teamActionButtonClass}
+        className={PORTAL_ACTION_ICON_CLASS}
         aria-label="Ver staff asignado"
         title="Ver cuerpo técnico asignado a este equipo"
       >
@@ -131,7 +129,7 @@ function TeamDetailActions({
       </Link>
       <Link
         href="/portal/cantera/horarios"
-        className={teamActionButtonClass}
+        className={PORTAL_ACTION_ICON_CLASS}
         aria-label="Ver horarios"
         title="Ver horarios del club"
       >
@@ -266,33 +264,31 @@ function TeamDetailPanel({
       />
 
       <Sheet open={rosterOpen} onOpenChange={setRosterOpen}>
-        <SheetContent
-          side="right"
-          className="w-full overflow-y-auto border-primary/20 sm:max-w-md"
-        >
-          <SheetHeader>
-            <SheetTitle>Plantilla · {team.name}</SheetTitle>
-          </SheetHeader>
-          <div className="mt-4">
+        <PortalSheetContent maxWidth="md">
+          <PortalSheetHeader>
+            <SheetHeader className="space-y-2 text-left">
+              <SheetTitle className="text-xl tracking-tight">Plantilla · {team.name}</SheetTitle>
+            </SheetHeader>
+          </PortalSheetHeader>
+          <PortalSheetBody>
             <TeamRosterList
               teamId={team.id}
               teamName={team.name}
               players={team.players}
               teams={teamOptions}
             />
-          </div>
-        </SheetContent>
+          </PortalSheetBody>
+        </PortalSheetContent>
       </Sheet>
 
       <Sheet open={editOpen} onOpenChange={setEditOpen}>
-        <SheetContent
-          side="right"
-          className="w-full overflow-y-auto border-primary/20 sm:max-w-2xl"
-        >
-          <SheetHeader>
-            <SheetTitle>Editar equipo</SheetTitle>
-          </SheetHeader>
-          <div className="mt-4">
+        <PortalSheetContent maxWidth="2xl">
+          <PortalSheetHeader>
+            <SheetHeader className="space-y-2 text-left">
+              <SheetTitle className="text-xl tracking-tight">Editar equipo</SheetTitle>
+            </SheetHeader>
+          </PortalSheetHeader>
+          <PortalSheetBody>
             <TeamEditForm
               key={team.id}
               teamId={team.id}
@@ -306,8 +302,8 @@ function TeamDetailPanel({
               readOnly={demoMode && team.is_demo}
               onSaved={() => setEditOpen(false)}
             />
-          </div>
-        </SheetContent>
+          </PortalSheetBody>
+        </PortalSheetContent>
       </Sheet>
     </Card>
   );
@@ -341,9 +337,6 @@ export function TeamsMasterDetail({
       ? initialTeamId
       : teams[0]?.id ?? null
   );
-  const rosterActionClass =
-    'inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary';
-
   const filteredTeams = useMemo(() => {
     const query = search.trim().toLowerCase();
     let list = [...teams];
@@ -457,7 +450,7 @@ export function TeamsMasterDetail({
             <div className="flex items-center gap-1">
               <button
                 type="button"
-                className={rosterActionClass}
+                className={cn(PORTAL_ACTION_ICON_CLASS, 'shrink-0')}
                 aria-label="Cierre de temporada por categoría"
                 title="Cierre de temporada por categoría"
                 onClick={() => setCategorySeasonOpen(true)}
@@ -466,7 +459,7 @@ export function TeamsMasterDetail({
               </button>
               <button
                 type="button"
-                className={rosterActionClass}
+                className={cn(PORTAL_ACTION_ICON_CLASS, 'shrink-0')}
                 aria-label="Nuevo equipo"
                 title="Nuevo equipo"
                 onClick={() => setCreateOpen(true)}
@@ -621,37 +614,38 @@ export function TeamsMasterDetail({
       />
 
       <Sheet open={createOpen} onOpenChange={setCreateOpen}>
-        <SheetContent
-          side="right"
-          className="w-full overflow-y-auto border-primary/20 sm:max-w-2xl"
-        >
-          <SheetHeader>
-            <SheetTitle>Nuevo equipo</SheetTitle>
-          </SheetHeader>
-          <div className="mt-4 space-y-4">
-            <div>
-              <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Categoría
-              </label>
-              <SynqSelect
-                value={createCategorySlug}
-                onChange={(value) => setCreateCategorySlug(value as CanteraCategorySlug)}
-                options={CANTERA_CATEGORIES.map((category) => ({
-                  value: category.slug,
-                  label: `${category.name} · ${category.ages}`,
-                }))}
+        <PortalSheetContent maxWidth="2xl">
+          <PortalSheetHeader>
+            <SheetHeader className="space-y-2 text-left">
+              <SheetTitle className="text-xl tracking-tight">Nuevo equipo</SheetTitle>
+            </SheetHeader>
+          </PortalSheetHeader>
+          <PortalSheetBody>
+            <div className="space-y-4">
+              <div>
+                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Categoría
+                </label>
+                <SynqSelect
+                  value={createCategorySlug}
+                  onChange={(value) => setCreateCategorySlug(value as CanteraCategorySlug)}
+                  options={CANTERA_CATEGORIES.map((category) => ({
+                    value: category.slug,
+                    label: `${category.name} · ${category.ages}`,
+                  }))}
+                />
+              </div>
+              <TeamCreateForm
+                key={createCategory.slug}
+                category={createCategory}
+                usedLetters={createUsedLetters}
+                facilities={facilities}
+                occupiedSlots={trainingSlots}
+                onCreated={handleTeamCreated}
               />
             </div>
-            <TeamCreateForm
-              key={createCategory.slug}
-              category={createCategory}
-              usedLetters={createUsedLetters}
-              facilities={facilities}
-              occupiedSlots={trainingSlots}
-              onCreated={handleTeamCreated}
-            />
-          </div>
-        </SheetContent>
+          </PortalSheetBody>
+        </PortalSheetContent>
       </Sheet>
     </div>
   );

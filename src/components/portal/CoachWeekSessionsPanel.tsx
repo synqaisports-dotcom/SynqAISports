@@ -9,6 +9,10 @@ import { CoachMicrocycleOverlay } from '@/components/portal/CoachMicrocycleOverl
 import { CoachSeasonProgressPanel } from '@/components/portal/CoachSeasonProgressPanel';
 import { CoachSessionSummaryPanel } from '@/components/portal/CoachSessionSummaryPanel';
 import {
+  PORTAL_ACTION_ICON_CLASS,
+  PORTAL_ACTION_ICON_DISABLED_CLASS,
+} from '@/components/portal/PortalActionIcon';
+import {
   saveCoachChangeRequest,
   type CoachChangeRequest,
 } from '@/lib/coach-change-requests-store';
@@ -45,9 +49,6 @@ const SESSION_ROW_GAP_PX = 6;
 const sessionsBlockMinHeight =
   MAX_SESSIONS_PER_MICRO_LAYOUT * SESSION_ROW_HEIGHT_PX +
   (MAX_SESSIONS_PER_MICRO_LAYOUT - 1) * SESSION_ROW_GAP_PX;
-
-const actionIconClass =
-  'inline-flex size-10 items-center justify-center rounded-lg border border-primary/25 bg-background/40 text-muted-foreground transition-colors hover:border-primary/45 hover:bg-primary/10 hover:text-primary disabled:pointer-events-none disabled:opacity-40';
 
 const sessionButtonClass = (active: boolean) =>
   cn(
@@ -227,7 +228,7 @@ export function CoachWeekSessionsPanel({ team, weekContext, teamContext }: Props
               <div className="mt-4 flex flex-wrap gap-2">
                 <button
                   type="button"
-                  className={actionIconClass}
+                  className={cn(PORTAL_ACTION_ICON_CLASS, PORTAL_ACTION_ICON_DISABLED_CLASS)}
                   title="Solicitar modificación"
                   aria-label="Solicitar modificación"
                   disabled={weekContext.excluded}
@@ -238,7 +239,7 @@ export function CoachWeekSessionsPanel({ team, weekContext, teamContext }: Props
 
                 <button
                   type="button"
-                  className={actionIconClass}
+                  className={cn(PORTAL_ACTION_ICON_CLASS, PORTAL_ACTION_ICON_DISABLED_CLASS)}
                   title="Visualizar sesión"
                   aria-label="Visualizar sesión"
                   disabled={weekContext.excluded || !currentMicrocycleId}
@@ -249,7 +250,7 @@ export function CoachWeekSessionsPanel({ team, weekContext, teamContext }: Props
 
                 <button
                   type="button"
-                  className={actionIconClass}
+                  className={cn(PORTAL_ACTION_ICON_CLASS, PORTAL_ACTION_ICON_DISABLED_CLASS)}
                   title="Ver macrociclo completo"
                   aria-label="Ver macrociclo completo"
                   onClick={() => setMacroOpen(true)}

@@ -11,11 +11,11 @@ import { SynqSelect } from '@/components/portal/SynqSelect';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+  PortalSheetBody,
+  PortalSheetContent,
+  PortalSheetHeader,
+} from '@/components/portal/PortalSheet';
+import { Sheet, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import {
   CANTERA_CATEGORIES,
   getCanteraCategory,
@@ -53,12 +53,14 @@ export function CategorySeasonPromoteSheet({ teams, open, onOpenChange }: Props)
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full overflow-y-auto border-primary/20 sm:max-w-lg">
-        <SheetHeader>
-          <SheetTitle>Cierre de temporada por categoría</SheetTitle>
-        </SheetHeader>
+      <PortalSheetContent maxWidth="lg">
+        <PortalSheetHeader>
+          <SheetHeader className="space-y-2 text-left">
+            <SheetTitle className="text-xl tracking-tight">Cierre de temporada por categoría</SheetTitle>
+          </SheetHeader>
+        </PortalSheetHeader>
 
-        <div className="mt-4 space-y-4">
+        <PortalSheetBody>
           <p className="text-sm text-muted-foreground">
             Ascenderá todos los equipos activos de la categoría origen a la siguiente, manteniendo
             la misma letra (A→A, B→B…).
@@ -120,8 +122,8 @@ export function CategorySeasonPromoteSheet({ teams, open, onOpenChange }: Props)
           {state.message === 'demo' ? (
             <p className="text-sm text-muted-foreground">Simulación en modo demo.</p>
           ) : null}
-        </div>
-      </SheetContent>
+        </PortalSheetBody>
+      </PortalSheetContent>
     </Sheet>
   );
 }

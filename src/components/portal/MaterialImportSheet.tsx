@@ -3,12 +3,12 @@
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { Download, Upload } from 'lucide-react';
 import { importClubMaterials } from '@/app/actions/club-material';
+import { PortalActionIcon } from '@/components/portal/PortalActionIcon';
 import {
   PortalSheetBody,
   PortalSheetContent,
   PortalSheetHeader,
 } from '@/components/portal/PortalSheet';
-import { PortalSectionBadge } from '@/components/portal/PortalSectionShell';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import {
@@ -17,9 +17,6 @@ import {
   type MaterialImportRow,
 } from '@/lib/material-import';
 import { cn } from '@/lib/utils';
-
-const actionIconClass =
-  'inline-flex size-9 items-center justify-center rounded-lg text-primary transition-colors hover:bg-primary/10 hover:text-primary';
 
 type Props = {
   open: boolean;
@@ -76,9 +73,6 @@ export function MaterialImportSheet({ open, onOpenChange }: Props) {
       <PortalSheetContent maxWidth="md">
         <PortalSheetHeader>
           <SheetHeader className="space-y-3 text-left">
-            <PortalSectionBadge icon={<Upload className="size-3.5" />}>
-              Inventario del club
-            </PortalSectionBadge>
             <SheetTitle className="text-xl tracking-tight">Importar material</SheetTitle>
             <p className="text-sm text-muted-foreground">
               Sube un CSV con las referencias del catálogo o descarga la plantilla de ejemplo.
@@ -191,16 +185,8 @@ export function MaterialImportSheet({ open, onOpenChange }: Props) {
 
 export function MaterialImportActionButton({ onClick }: { onClick: () => void }) {
   return (
-    <button
-      type="button"
-      className={actionIconClass}
-      aria-label="Importar material"
-      title="Importar material"
-      onClick={onClick}
-    >
+    <PortalActionIcon label="Importar material" onClick={onClick}>
       <Upload className="size-4" />
-    </button>
+    </PortalActionIcon>
   );
 }
-
-export { actionIconClass as materialActionIconClass };

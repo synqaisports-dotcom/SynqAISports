@@ -2,8 +2,12 @@
 
 import type { ChangeRequestInboxRow } from '@/lib/change-requests';
 import {
+  PortalSheetBody,
+  PortalSheetContent,
+  PortalSheetHeader,
+} from '@/components/portal/PortalSheet';
+import {
   Sheet,
-  SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
@@ -88,75 +92,76 @@ export function CoachChangeRequestChatSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="right"
-        className="flex w-full flex-col border-primary/20 bg-background/95 sm:max-w-md"
-      >
-        <SheetHeader>
-          <SheetTitle>Conversación de solicitud</SheetTitle>
-          <SheetDescription>
-            Canal de comunicación con metodología. Base para mensajería del club.
-          </SheetDescription>
-        </SheetHeader>
+      <PortalSheetContent maxWidth="md">
+        <PortalSheetHeader>
+          <SheetHeader className="space-y-2 text-left">
+            <SheetTitle className="text-xl tracking-tight">Conversación de solicitud</SheetTitle>
+            <SheetDescription>
+              Canal de comunicación con metodología. Base para mensajería del club.
+            </SheetDescription>
+          </SheetHeader>
+        </PortalSheetHeader>
 
-        {requests.length > 1 ? (
-          <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
-            {requests.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => onSelectRequest(item.id)}
-                className={cn(
-                  'shrink-0 rounded-full border px-3 py-1 text-xs transition-colors',
-                  item.id === activeRequest?.id
-                    ? 'border-primary/45 bg-primary/10 text-primary'
-                    : 'border-primary/15 text-muted-foreground hover:border-primary/30 hover:text-foreground'
-                )}
-              >
-                {item.session_label ?? 'Solicitud'} · {statusLabel(item.status)}
-              </button>
-            ))}
-          </div>
-        ) : null}
-
-        <div className="mt-4 min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
-          {!activeRequest ? (
-            <p className="text-sm text-muted-foreground">No hay conversaciones todavía.</p>
-          ) : (
-            <>
-              <ChatBubble
-                align="right"
-                author="Tú"
-                body={activeRequest.reason}
-                time={formatMessageTime(activeRequest.created_at)}
-              />
-
-              {activeRequest.status === 'pending' ? (
-                <ChatBubble
-                  align="center"
-                  author=""
-                  body="Esperando respuesta del director de metodología…"
-                  time=""
-                  tone="system"
-                />
-              ) : (
-                <ChatBubble
-                  align="left"
-                  author="Director de metodología"
-                  body={
-                    activeRequest.resolution_note?.trim() ||
-                    'Solicitud resuelta sin nota adicional.'
-                  }
-                  time={formatMessageTime(
-                    activeRequest.resolved_at ?? activeRequest.created_at
+        <PortalSheetBody>
+          {requests.length > 1 ? (
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {requests.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => onSelectRequest(item.id)}
+                  className={cn(
+                    'shrink-0 rounded-full border px-3 py-1 text-xs transition-colors',
+                    item.id === activeRequest?.id
+                      ? 'border-primary/45 bg-primary/10 text-primary'
+                      : 'border-primary/15 text-muted-foreground hover:border-primary/30 hover:text-foreground'
                   )}
-                  tone={activeRequest.status === 'approved' ? 'success' : 'danger'}
+                >
+                  {item.session_label ?? 'Solicitud'} · {statusLabel(item.status)}
+                </button>
+              ))}
+            </div>
+          ) : null}
+
+          <div className="space-y-3">
+            {!activeRequest ? (
+              <p className="text-sm text-muted-foreground">No hay conversaciones todavía.</p>
+            ) : (
+              <>
+                <ChatBubble
+                  align="right"
+                  author="Tú"
+                  body={activeRequest.reason}
+                  time={formatMessageTime(activeRequest.created_at)}
                 />
-              )}
-            </>
-          )}
-        </div>
-      </SheetContent>
+
+                {activeRequest.status === 'pending' ? (
+                  <ChatBubble
+                    align="center"
+                    author=""
+                    body="Esperando respuesta del director de metodología…"
+                    time=""
+                    tone="system"
+                  />
+                ) : (
+                  <ChatBubble
+                    align="left"
+                    author="Director de metodología"
+                    body={
+                      activeRequest.resolution_note?.trim() ||
+                      'Solicitud resuelta sin nota adicional.'
+                    }
+                    time={formatMessageTime(
+                      activeRequest.resolved_at ?? activeRequest.created_at
+                    )}
+                    tone={activeRequest.status === 'approved' ? 'success' : 'danger'}
+                  />
+                )}
+              </>
+            )}
+          </div>
+        </PortalSheetBody>
+      </PortalSheetContent>
     </Sheet>
   );
 }

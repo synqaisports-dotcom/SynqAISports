@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { Eye, MapPin, Pencil } from 'lucide-react';
 import {
   DIVISION_MODE_LABELS,
@@ -12,6 +11,7 @@ import {
   facilitySupportsDivisions,
 } from '@/lib/club-facilities';
 import { FacilityPauseButton } from '@/components/portal/FacilityPauseButton';
+import { PortalActionIconLink } from '@/components/portal/PortalActionIcon';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
@@ -86,22 +86,18 @@ export function FacilityRowCard({ facility }: Props) {
 
       <div className="flex shrink-0 items-center gap-0.5 self-center sm:gap-1">
         <FacilityPauseButton facilityId={facility.id} active={facility.active} />
-        <Link
+        <PortalActionIconLink
           href={`/portal/club/instalaciones/${facility.id}`}
-          className="inline-flex size-9 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
-          aria-label="Ver instalación"
-          title="Ver"
+          label="Ver instalación"
         >
           <Eye className="size-4" />
-        </Link>
-        <Link
+        </PortalActionIconLink>
+        <PortalActionIconLink
           href={`/portal/club/instalaciones/${facility.id}/editar`}
-          className="inline-flex size-9 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
-          aria-label="Modificar instalación"
-          title="Modificar"
+          label="Modificar instalación"
         >
           <Pencil className="size-4" />
-        </Link>
+        </PortalActionIconLink>
       </div>
     </article>
   );
