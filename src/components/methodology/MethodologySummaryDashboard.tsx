@@ -192,34 +192,24 @@ export function MethodologySummaryDashboard({ teams, totalPlayers, totalCoaches,
     <div className="space-y-4">
       <MethodologyReadOnlyBanner role={role} />
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        <Card className="border border-primary/25">
-          <CardHeader className="pb-2">
-            <CardDescription>% pendiente club</CardDescription>
-            <CardTitle className="text-2xl">{stats.globalPendingPercent}%</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card className="border border-primary/25">
-          <CardHeader className="pb-2">
-            <CardDescription>Equipos con tareas</CardDescription>
-            <CardTitle className="text-2xl">{pendingTeamCount}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card className="border border-primary/25">
-          <CardHeader className="pb-2">
-            <CardDescription>Temporada activa</CardDescription>
-            <div className="mt-1">
-              <SynqSelect
-                value={stats.activeSeason}
-                onChange={setSeasonFilter}
-                options={stats.seasonOptions.map((season) => ({
-                  value: season,
-                  label: season,
-                }))}
-              />
-            </div>
-          </CardHeader>
-        </Card>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium text-foreground">Planificación por equipo</p>
+          <p className="text-xs text-muted-foreground">
+            {stats.globalPendingPercent}% pendiente · {pendingTeamCount} equipo
+            {pendingTeamCount === 1 ? '' : 's'} con tareas
+          </p>
+        </div>
+        <div className="w-full sm:w-auto sm:min-w-[12rem]">
+          <SynqSelect
+            value={stats.activeSeason}
+            onChange={setSeasonFilter}
+            options={stats.seasonOptions.map((season) => ({
+              value: season,
+              label: season,
+            }))}
+          />
+        </div>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2 lg:items-start">

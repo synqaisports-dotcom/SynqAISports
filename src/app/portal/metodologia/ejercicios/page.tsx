@@ -1,5 +1,4 @@
 import { ExercisesMasterDetail } from '@/components/methodology/ExercisesMasterDetail';
-import { MethodologySubnav } from '@/components/methodology/MethodologySubnav';
 import { PageContainer } from '@/components/portal/PageContainer';
 import { loadExerciseLibrary } from '@/lib/microcycle-page-data';
 import { isDemoActive } from '@/lib/demo';
@@ -33,8 +32,6 @@ export default async function EjerciciosListPage({ searchParams }: Props) {
   return (
     <PageContainer>
       <h1 className="text-2xl font-semibold tracking-tight">Ejercicios</h1>
-
-      <MethodologySubnav />
 
       <ExercisesMasterDetail
         exercises={exercises}

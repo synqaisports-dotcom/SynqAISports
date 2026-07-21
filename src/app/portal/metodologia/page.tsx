@@ -1,9 +1,11 @@
-import { MethodologySubnav } from '@/components/methodology/MethodologySubnav';
+import { MethodologyStatsCards } from '@/components/methodology/MethodologyStatsCards';
 import { MethodologySummaryDashboard } from '@/components/methodology/MethodologySummaryDashboard';
 import { PageContainer } from '@/components/portal/PageContainer';
 import { DEMO_CANTERA_TEAMS } from '@/lib/cantera-teams';
 import { isDemoActive } from '@/lib/demo';
+import { loadMethodologyLandingStats } from '@/lib/methodology-landing-stats';
 import { getStaffContext } from '@/lib/portal';
+import { resolveActiveSport } from '@/lib/sport-context';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 
@@ -13,8 +15,9 @@ export default async function MetodologiaHomePage() {
   if (!ctx) redirect('/login');
 
   const demoActive = await isDemoActive();
+  const primarySport = resolveActiveSport(ctx.club.practiced_sports);
 
-  const [teamsResult, playersResult, coachesResult] = await Promise.all([
+  const [teamsResult, playersResult, coachesResult, landingStats] = await Promise.all([
     supabase
       .from('synq_teams')
       .select('id, name, category_slug')
@@ -31,6 +34,7 @@ export default async function MetodologiaHomePage() {
       .select('*', { count: 'exact', head: true })
       .eq('club_id', ctx.club.id)
       .eq('role', 'coach'),
+    loadMethodologyLandingStats(supabase, ctx.club.id, primarySport),
   ]);
 
   let teams = (teamsResult.data ?? []).map((team) => ({
@@ -62,9 +66,7 @@ export default async function MetodologiaHomePage() {
 
   return (
     <PageContainer>
-      <h1 className="text-2xl font-semibold tracking-tight">Resumen</h1>
-
-      <MethodologySubnav />
+      <MethodologyStatsCards stats={landingStats} className="mb-4" />
 
       <MethodologySummaryDashboard
         teams={teams}

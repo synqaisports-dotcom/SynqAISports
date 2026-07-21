@@ -1,5 +1,4 @@
 import { loadMethodologyObjectives } from '@/app/actions/methodology';
-import { MethodologySubnav } from '@/components/methodology/MethodologySubnav';
 import { ObjectivesMasterDetail } from '@/components/methodology/ObjectivesMasterDetail';
 import { PageContainer } from '@/components/portal/PageContainer';
 import { isDemoActive } from '@/lib/demo';
@@ -37,8 +36,6 @@ export default async function ObjetivosPage({ searchParams }: Props) {
   return (
     <PageContainer>
       <h1 className="text-2xl font-semibold tracking-tight">Objetivos</h1>
-
-      <MethodologySubnav />
 
       <ObjectivesMasterDetail
         objectives={objectives}

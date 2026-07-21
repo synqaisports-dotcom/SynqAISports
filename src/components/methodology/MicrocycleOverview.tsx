@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { MethodologySubnav } from '@/components/methodology/MethodologySubnav';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -52,8 +51,6 @@ export function MicrocycleOverview({ micro, slots, backHref = '/portal/metodolog
           {micro.category_slug ? <Badge variant="secondary">{micro.category_slug}</Badge> : null}
         </div>
       </div>
-
-      <MethodologySubnav />
 
       <p className="text-sm text-muted-foreground">
         {sessionsCount} sesiones · {sessionStructureSummary(mainTasks)}

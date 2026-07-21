@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { MethodologySubnav } from '@/components/methodology/MethodologySubnav';
 import {
   ExerciseLibraryPanel,
   type ExerciseLibraryItem,
@@ -110,7 +109,6 @@ export function MicrocycleSessionWorkspace({ microcycle, sessionIndex, exercises
 
   return (
     <div className="space-y-4">
-      <MethodologySubnav />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-2">

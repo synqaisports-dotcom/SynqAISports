@@ -9,6 +9,7 @@ import {
   Landmark,
   Layers,
   LayoutDashboard,
+  LayoutGrid,
   MapPin,
   Network,
   Package,
@@ -85,6 +86,7 @@ export const portalNavGroups: PortalNavGroup[] = [
         href: '/portal/metodologia',
         exact: true,
         children: [
+          { title: 'Resumen', href: '/portal/metodologia', icon: LayoutGrid, exact: true },
           { title: 'Ciclos', href: '/portal/metodologia/ciclos', icon: GitBranch },
           { title: 'Ejercicios', href: '/portal/metodologia/ejercicios', icon: BookOpen },
           { title: 'Objetivos', href: '/portal/metodologia/objetivos', icon: Target },

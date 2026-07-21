@@ -1,6 +1,5 @@
 import { CategoryCyclesHub } from '@/components/portal/CategoryCyclesHub';
 import { MethodologyReadOnlyBanner } from '@/components/methodology/MethodologyReadOnlyBanner';
-import { MethodologySubnav } from '@/components/methodology/MethodologySubnav';
 import { PageContainer } from '@/components/portal/PageContainer';
 import type { CanteraCategorySlug } from '@/lib/cantera-categories';
 import { DEMO_CANTERA_TEAMS } from '@/lib/cantera-teams';
@@ -86,8 +85,6 @@ export default async function PortalMetodologiaCiclosPage({ searchParams }: Prop
   return (
     <PageContainer>
       <h1 className="text-2xl font-semibold tracking-tight">Ciclos</h1>
-
-      <MethodologySubnav />
 
       <MethodologyReadOnlyBanner role={ctx.role} />
 

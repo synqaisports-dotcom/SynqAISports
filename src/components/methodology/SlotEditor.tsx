@@ -6,7 +6,6 @@ import { ArrowLeft, Loader2, Printer, Save } from 'lucide-react';
 import { updateMicrocycleSlot, type ActionState } from '@/app/actions/methodology';
 import { ExerciseSheetForm } from '@/components/methodology/ExerciseSheetForm';
 import { PORTAL_ACTION_ICON_CLASS, PORTAL_ACTION_ICON_DISABLED_CLASS } from '@/components/portal/PortalActionIcon';
-import { MethodologySubnav } from '@/components/methodology/MethodologySubnav';
 import { updateDemoSlot } from '@/lib/demo-microcycles-store';
 import { isDemoMicrocycleId, slotDisplayLabel } from '@/lib/microcycle-sessions';
 import { legacyToSheet, parseExerciseSheet, sheetFromFormData, sheetToLegacyFields } from '@/lib/exercise-sheet';
@@ -81,7 +80,6 @@ export function SlotEditor({ slot }: Props) {
 
   return (
     <div className="space-y-4">
-      <MethodologySubnav />
 
       <form
         action={isDemo ? undefined : action}
