@@ -19,6 +19,7 @@ import {
 } from '@/lib/coach-change-requests-store';
 import { ChangeRequestCard } from '@/components/methodology/ChangeRequestCard';
 import { PortalSearchField } from '@/components/portal/PortalSearchField';
+import { SynqSelect } from '@/components/portal/SynqSelect';
 import { cn } from '@/lib/utils';
 
 export type ChangeRequestRow = ChangeRequestInboxRow;
@@ -66,6 +67,7 @@ export function ChangeRequestsPanel({ requests, role }: Props) {
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>(
     'pending'
   );
+  const [requestType, setRequestType] = useState('methodology');
 
   useEffect(() => {
     setCoachRequests(loadCoachChangeRequests());
@@ -121,11 +123,18 @@ export function ChangeRequestsPanel({ requests, role }: Props) {
           Registra aquí una manual si hace falta.
         </p>
         <form action={action} className="mt-4 grid gap-3">
-          <Field label="Tipo" name="requestType" as="select" options={[
-            { value: 'methodology', label: 'Metodología (planificación)' },
-            { value: 'cantera', label: 'Cantera (equipo / categoría)' },
-            { value: 'mixed', label: 'Mixta' },
-          ]} />
+          <Field
+            label="Tipo"
+            name="requestType"
+            as="select"
+            value={requestType}
+            onSelectChange={setRequestType}
+            options={[
+              { value: 'methodology', label: 'Metodología (planificación)' },
+              { value: 'cantera', label: 'Cantera (equipo / categoría)' },
+              { value: 'mixed', label: 'Mixta' },
+            ]}
+          />
           <Field label="ID ejercicio (opcional)" name="exerciseId" placeholder="uuid" />
           <Field label="ID slot microciclo (opcional)" name="slotId" placeholder="uuid" />
           <div>
@@ -218,30 +227,32 @@ function Field({
   placeholder,
   as,
   options,
+  value,
+  onSelectChange,
 }: {
   label: string;
   name: string;
   placeholder?: string;
   as?: 'select';
   options?: { value: string; label: string }[];
+  value?: string;
+  onSelectChange?: (value: string) => void;
 }) {
   return (
     <div>
       <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
         {label}
       </label>
-      {as === 'select' ? (
-        <select
-          name={name}
-          className="w-full rounded-lg border border-primary/25 portal-field-surface px-3 py-2 text-sm"
-          defaultValue={options?.[0]?.value}
-        >
-          {options?.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+      {as === 'select' && options && value != null && onSelectChange ? (
+        <>
+          <input type="hidden" name={name} value={value} readOnly />
+          <SynqSelect
+            value={value}
+            onChange={onSelectChange}
+            options={options}
+            placeholder="Seleccionar tipo"
+          />
+        </>
       ) : (
         <input
           name={name}
