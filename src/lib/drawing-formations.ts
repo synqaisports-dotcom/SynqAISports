@@ -25,6 +25,8 @@ export type FormationPreset = {
 export type DrawingFormations = {
   home: string | null;
   away: string | null;
+  homePhase?: TacticalPhaseIndex;
+  awayPhase?: TacticalPhaseIndex;
 };
 
 export const FORMATION_NONE_ID = 'none';
@@ -350,7 +352,15 @@ export function normalizeDrawingFormations(
   return {
     home: parseSide(obj.home),
     away: parseSide(obj.away),
+    homePhase: parsePhase(obj.homePhase),
+    awayPhase: parsePhase(obj.awayPhase),
   };
+}
+
+function parsePhase(value: unknown): TacticalPhaseIndex | undefined {
+  if (typeof value !== 'number' || !Number.isInteger(value)) return undefined;
+  if (value < 0 || value >= TACTICAL_ANIMATION_PHASE_COUNT) return undefined;
+  return value as TacticalPhaseIndex;
 }
 
 export function sanitizeFormationsForField(
@@ -494,4 +504,49 @@ export function buildTacticalPhaseElements(
   }
 
   return sortElementsByLayer([...staticElements, ...players]);
+}
+
+/** Aplica una fase táctica solo a un equipo (local o visitante). */
+export function applyTeamTacticalPhase(
+  elements: DrawingElement[],
+  formations: DrawingFormations | undefined,
+  field: FieldTemplate,
+  side: 'home' | 'away',
+  phase: TacticalPhaseIndex
+): DrawingElement[] {
+  const group = formationGroupForField(field);
+  const material = side === 'home' ? 'player-own' : 'player-rival';
+  const otherMaterial = side === 'home' ? 'player-rival' : 'player-own';
+
+  const staticElements = elements.filter(
+    (el) =>
+      !(
+        el.type === 'material' &&
+        (el.material === material || el.material === otherMaterial)
+      )
+  );
+  const otherPlayers = elements.filter(
+    (el) => el.type === 'material' && el.material === otherMaterial
+  );
+
+  const formationId = formations?.[side] ?? null;
+
+  if (formationId && group) {
+    const formation = findFormation(group, formationId);
+    if (formation) {
+      const players = formation.slots.map((slot) => {
+        const isKeeper = slot.label === '1';
+        const adjusted: TeamLocalSlot = {
+          ...slot,
+          depth: phaseDepth(slot.depth, phase, isKeeper),
+        };
+        return createPlayerElement(material, adjusted, side, field);
+      });
+      return sortElementsByLayer([...staticElements, ...otherPlayers, ...players]);
+    }
+  }
+
+  const manual = elements.filter((el) => el.type === 'material' && el.material === material);
+  const shifted = shiftManualPlayersForPhase(manual, field, phase);
+  return sortElementsByLayer([...staticElements, ...otherPlayers, ...shifted]);
 }

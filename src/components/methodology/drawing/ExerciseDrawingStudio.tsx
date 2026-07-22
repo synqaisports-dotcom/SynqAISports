@@ -22,6 +22,8 @@ import {
   X,
 } from 'lucide-react';
 import { ExerciseAnimationTimeline } from '@/components/methodology/drawing/ExerciseAnimationTimeline';
+import { DrawingStudioConfirmDialog } from '@/components/methodology/drawing/DrawingStudioConfirmDialog';
+import { FormationTeamPanel } from '@/components/methodology/drawing/FormationTeamPanel';
 import { KonvaPitchLayer } from '@/components/methodology/drawing/KonvaPitchLayer';
 import { useFieldTransition } from '@/hooks/useFieldTransition';
 import { MATERIAL_SCALE_NORM } from '@/lib/field-engine';
@@ -75,14 +77,11 @@ import {
 } from '@/lib/exercise-drawing';
 import {
   applyFormationToElements,
-  buildTacticalPhaseElements,
+  applyTeamTacticalPhase,
   formationGroupForField,
   formationsForField,
-  hasTacticalFormationSetup,
   reapplyStoredFormations,
   sanitizeFormationsForField,
-  TACTICAL_ANIMATION_PHASE_COUNT,
-  TACTICAL_SCENE_LABELS,
   type TacticalPhaseIndex,
 } from '@/lib/drawing-formations';
 import { cn } from '@/lib/utils';
@@ -161,6 +160,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
   const [materialsOpen, setMaterialsOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [activeSceneIndex, setActiveSceneIndex] = useState(0);
+  const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
   const multiDragRef = useRef<{
     anchorId: string;
     starts: Map<string, { x: number; y: number }>;
@@ -469,36 +469,16 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
   };
 
   const enableAnimation = () => {
-    setDoc((current) => {
-      const useTacticalPhases = hasTacticalFormationSetup(current.formations);
-      const scenes = useTacticalPhases
-        ? renumberAnimationScenes(
-            Array.from({ length: TACTICAL_ANIMATION_PHASE_COUNT }, (_, phase) =>
-              createAnimationScene(
-                buildTacticalPhaseElements(
-                  current.elements,
-                  current.formations,
-                  current.field,
-                  phase as TacticalPhaseIndex
-                ),
-                TACTICAL_SCENE_LABELS[phase as TacticalPhaseIndex]
-              )
-            )
-          )
-        : renumberAnimationScenes([createAnimationScene(current.elements)]);
-
-      return {
-        ...current,
-        animation: {
-          transitionMs: DEFAULT_ANIMATION_TRANSITION_MS,
-          holdMs: DEFAULT_ANIMATION_HOLD_MS,
-          loop: true,
-          playbackSpeed: DEFAULT_ANIMATION_PLAYBACK_SPEED,
-          scenes,
-        },
-        elements: cloneDrawingElements(scenes[0].elements),
-      };
-    });
+    setDoc((current) => ({
+      ...current,
+      animation: {
+        transitionMs: DEFAULT_ANIMATION_TRANSITION_MS,
+        holdMs: DEFAULT_ANIMATION_HOLD_MS,
+        loop: true,
+        playbackSpeed: DEFAULT_ANIMATION_PLAYBACK_SPEED,
+        scenes: renumberAnimationScenes([createAnimationScene(current.elements)]),
+      },
+    }));
     setActiveSceneIndex(0);
   };
 
@@ -624,6 +604,8 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
       const formations = {
         home: saved.formations?.home ?? null,
         away: saved.formations?.away ?? null,
+        homePhase: side === 'home' ? 0 : (saved.formations?.homePhase ?? 0),
+        awayPhase: side === 'away' ? 0 : (saved.formations?.awayPhase ?? 0),
         [side]: formationId,
       };
       let next: ExerciseDrawingDocument = { ...saved, elements: newElements, formations };
@@ -645,8 +627,43 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     setSelectedIds([]);
   };
 
-  const clearBoard = () => {
-    if (!window.confirm('¿Borrar todo el contenido de la pizarra?')) return;
+  const applyTeamPhase = (side: 'home' | 'away', phase: TacticalPhaseIndex) => {
+    if (!doc.formations?.[side]) return;
+    setDoc((current) => {
+      const saved = persistActiveAnimationScene(current, activeSceneIndex);
+      const newElements = applyTeamTacticalPhase(
+        saved.elements,
+        saved.formations,
+        saved.field,
+        side,
+        phase
+      );
+      const formations = {
+        home: saved.formations?.home ?? null,
+        away: saved.formations?.away ?? null,
+        homePhase: side === 'home' ? phase : (saved.formations?.homePhase ?? 0),
+        awayPhase: side === 'away' ? phase : (saved.formations?.awayPhase ?? 0),
+      };
+      let next: ExerciseDrawingDocument = { ...saved, elements: newElements, formations };
+      if (saved.animation?.scenes.length) {
+        next = {
+          ...next,
+          animation: {
+            ...saved.animation,
+            scenes: saved.animation.scenes.map((scene, index) =>
+              index === activeSceneIndex
+                ? { ...scene, elements: cloneDrawingElements(newElements) }
+                : scene
+            ),
+          },
+        };
+      }
+      return next;
+    });
+    setSelectedIds([]);
+  };
+
+  const confirmClearBoard = () => {
     setDoc((d) => ({
       ...d,
       elements: [],
@@ -655,6 +672,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     }));
     setActiveSceneIndex(0);
     setSelectedIds([]);
+    setClearConfirmOpen(false);
   };
 
   const dashArray = (s: StrokeStyle) => (s.dash ? [10, 6] : undefined);
@@ -1162,7 +1180,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
         </Stage>
       </div>
 
-      {/* Barra lateral izquierda — cerrar, animación, borrar */}
+      {/* Barra lateral izquierda — cerrar, animación, formación local */}
       <div className="pointer-events-auto absolute left-4 top-4 z-40 flex flex-col items-center gap-1.5">
         <button
           type="button"
@@ -1183,32 +1201,46 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           onDeleteFrame={deleteFrame}
         />
 
-        <button
-          type="button"
-          onClick={clearBoard}
-          className={cn('size-10', GLASS.danger)}
-          title="Borrar todo"
-          aria-label="Borrar todo el contenido de la pizarra"
-        >
-          <Eraser className="size-4" />
-        </button>
+        {formationGroup ? (
+          <FormationTeamPanel
+            side="home"
+            teamLabel="Local"
+            selectedFormationId={doc.formations?.home ?? null}
+            activePhase={(doc.formations?.homePhase ?? 0) as TacticalPhaseIndex}
+            formations={availableFormations}
+            playerImageSrc={materialImages['player-own']?.src}
+            onFormationSelect={(id) => applyFormationSelection('home', id)}
+            onPhaseSelect={(phase) => applyTeamPhase('home', phase)}
+          />
+        ) : null}
       </div>
 
-      {/* Barra lateral derecha — guardar, deporte, campo, formaciones */}
+      {/* Barra lateral derecha — guardar, deporte, campo, formación visitante */}
       <div className="pointer-events-auto absolute right-4 top-4 z-40 flex max-h-[calc(100vh-2rem)] flex-col items-end gap-1.5 overflow-y-auto overscroll-contain">
-        <button
-          type="button"
-          title="Guardar"
-          aria-label="Guardar"
-          className={cn('size-10', GLASS.iconBtn)}
-          onClick={() => {
-            const saved = persistActiveAnimationScene(doc, activeSceneIndex);
-            onSave(serializeExerciseDrawing(saved));
-            onClose();
-          }}
-        >
-          <Save className="size-4" />
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            title="Guardar"
+            aria-label="Guardar"
+            className={cn('size-10', GLASS.iconBtn)}
+            onClick={() => {
+              const saved = persistActiveAnimationScene(doc, activeSceneIndex);
+              onSave(serializeExerciseDrawing(saved));
+              onClose();
+            }}
+          >
+            <Save className="size-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setClearConfirmOpen(true)}
+            className={cn('size-10', GLASS.danger)}
+            title="Borrar todo"
+            aria-label="Borrar todo el contenido de la pizarra"
+          >
+            <Eraser className="size-4" />
+          </button>
+        </div>
 
         {(Object.keys(SPORT_OPTIONS) as SportKind[]).map((key) => (
           <button
@@ -1233,59 +1265,28 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
         ))}
 
         {formationGroup ? (
-          <>
-            <span className={cn(GLASS.sidebarLabel, 'mt-1')}>Local</span>
-            <button
-              type="button"
-              onClick={() => applyFormationSelection('home', null)}
-              className={cn(
-                GLASS.sidebarSelect,
-                !doc.formations?.home ? GLASS.btnActive : GLASS.btn
-              )}
-            >
-              Sin formación
-            </button>
-            {availableFormations.map((formation) => (
-              <button
-                key={`home-${formation.id}`}
-                type="button"
-                onClick={() => applyFormationSelection('home', formation.id)}
-                className={cn(
-                  GLASS.sidebarSelect,
-                  doc.formations?.home === formation.id ? GLASS.btnActive : GLASS.btn
-                )}
-              >
-                {formation.label}
-              </button>
-            ))}
-
-            <span className={cn(GLASS.sidebarLabel, 'mt-1')}>Visitante</span>
-            <button
-              type="button"
-              onClick={() => applyFormationSelection('away', null)}
-              className={cn(
-                GLASS.sidebarSelect,
-                !doc.formations?.away ? GLASS.btnActive : GLASS.btn
-              )}
-            >
-              Sin formación
-            </button>
-            {availableFormations.map((formation) => (
-              <button
-                key={`away-${formation.id}`}
-                type="button"
-                onClick={() => applyFormationSelection('away', formation.id)}
-                className={cn(
-                  GLASS.sidebarSelect,
-                  doc.formations?.away === formation.id ? GLASS.btnActive : GLASS.btn
-                )}
-              >
-                {formation.label}
-              </button>
-            ))}
-          </>
+          <FormationTeamPanel
+            side="away"
+            teamLabel="Visitante"
+            selectedFormationId={doc.formations?.away ?? null}
+            activePhase={(doc.formations?.awayPhase ?? 0) as TacticalPhaseIndex}
+            formations={availableFormations}
+            playerImageSrc={materialImages['player-rival']?.src}
+            onFormationSelect={(id) => applyFormationSelection('away', id)}
+            onPhaseSelect={(phase) => applyTeamPhase('away', phase)}
+          />
         ) : null}
       </div>
+
+      <DrawingStudioConfirmDialog
+        open={clearConfirmOpen}
+        title="Borrar toda la pizarra"
+        description="Se eliminarán todos los elementos, formaciones y fotogramas de animación. Esta acción no se puede deshacer."
+        confirmLabel="Borrar todo"
+        cancelLabel="Cancelar"
+        onConfirm={confirmClearBoard}
+        onCancel={() => setClearConfirmOpen(false)}
+      />
 
       {/* Propiedades selección */}
       {selected &&
