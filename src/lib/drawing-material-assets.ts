@@ -6,13 +6,14 @@ export type MaterialKind =
   | 'player-neutral'
   | 'cone'
   | 'cone-pole'
+  | 'seta'
   | 'ball'
   | 'goal'
   | 'hurdle'
   | 'ladder';
 
 const TEXTURE_SIZE = 256;
-const CACHE_VERSION = 2;
+const CACHE_VERSION = 3;
 const cache = new Map<string, HTMLImageElement>();
 
 function cacheKey(kind: MaterialKind): string {
@@ -133,6 +134,49 @@ function drawCone(ctx: CanvasRenderingContext2D) {
   ctx.lineTo(s / 2 + 4, 68);
   ctx.lineTo(s / 2 - 4, 68);
   ctx.closePath();
+  ctx.fill();
+}
+
+function drawSeta(ctx: CanvasRenderingContext2D) {
+  const s = TEXTURE_SIZE;
+  const cx = s / 2;
+  const cy = s / 2 + 8;
+  ctx.clearRect(0, 0, s, s);
+
+  ctx.fillStyle = 'rgba(0,0,0,0.22)';
+  ctx.beginPath();
+  ctx.ellipse(cx, s * 0.82, 50, 14, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Base plana
+  const baseGrad = ctx.createRadialGradient(cx, cy + 28, 4, cx, cy + 28, 58);
+  baseGrad.addColorStop(0, '#fde047');
+  baseGrad.addColorStop(0.6, '#facc15');
+  baseGrad.addColorStop(1, '#ca8a04');
+  ctx.fillStyle = baseGrad;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + 30, 58, 22, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(161,98,7,0.55)';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  // Cúpula
+  const domeGrad = ctx.createRadialGradient(cx - 12, cy - 18, 8, cx, cy - 4, 52);
+  domeGrad.addColorStop(0, '#fef08a');
+  domeGrad.addColorStop(0.45, '#facc15');
+  domeGrad.addColorStop(1, '#eab308');
+  ctx.fillStyle = domeGrad;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy - 2, 46, 40, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(161,98,7,0.45)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.fillStyle = 'rgba(255,255,255,0.28)';
+  ctx.beginPath();
+  ctx.ellipse(cx - 14, cy - 18, 16, 10, -0.35, 0, Math.PI * 2);
   ctx.fill();
 }
 
@@ -280,6 +324,9 @@ function renderMaterial(kind: MaterialKind): string {
     case 'cone-pole':
       drawConePole(ctx);
       break;
+    case 'seta':
+      drawSeta(ctx);
+      break;
     case 'ball':
       drawBall(ctx);
       break;
@@ -314,6 +361,7 @@ export const MATERIAL_CATALOG: { kind: MaterialKind; label: string }[] = [
   { kind: 'player-neutral', label: 'Neutro' },
   { kind: 'cone', label: 'Cono' },
   { kind: 'cone-pole', label: 'Pica' },
+  { kind: 'seta', label: 'Seta' },
   { kind: 'ball', label: 'Balón' },
   { kind: 'goal', label: 'Portería' },
   { kind: 'hurdle', label: 'Valla' },

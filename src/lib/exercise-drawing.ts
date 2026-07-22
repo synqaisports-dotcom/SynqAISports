@@ -907,7 +907,8 @@ export function defaultDraftForTool(
         tool === 'ball' ||
         tool === 'goal' ||
         tool === 'hurdle' ||
-        tool === 'ladder'
+        tool === 'ladder' ||
+        tool === 'seta'
       ) {
         return {
           id,
@@ -936,7 +937,8 @@ export function isMaterialTool(tool: StudioTool): tool is MaterialKind {
     tool === 'ball' ||
     tool === 'goal' ||
     tool === 'hurdle' ||
-    tool === 'ladder'
+    tool === 'ladder' ||
+    tool === 'seta'
   );
 }
 

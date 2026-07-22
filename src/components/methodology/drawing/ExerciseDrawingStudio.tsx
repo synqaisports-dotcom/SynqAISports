@@ -137,7 +137,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
   const [sport, setSport] = useState<SportKind>(() => sportForField(parseExerciseDrawing(initialData).field));
   const [tool, setTool] = useState<StudioTool>('select');
   const [stroke, setStroke] = useState<StrokeStyle>(DEFAULT_STROKE);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [draft, setDraft] = useState<DrawingElement | null>(null);
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
   const [materialImages, setMaterialImages] = useState<Partial<Record<MaterialKind, HTMLImageElement>>>({});
@@ -162,7 +162,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     const parsed = parseExerciseDrawing(initialData);
     setDoc(parsed);
     setSport(sportForField(parsed.field));
-    setSelectedId(null);
+    setSelectedIds([]);
     setDraft(null);
     setTool('select');
     setToolsOpen(false);
@@ -194,7 +194,53 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
   const { displayRect, outgoing, blend } = useFieldTransition(doc.field, targetRect);
   const fieldRect = displayRect;
 
-  const selected = doc.elements.find((el) => el.id === selectedId) ?? null;
+  const isSelected = useCallback((id: string) => selectedIds.includes(id), [selectedIds]);
+  const selected =
+    selectedIds.length === 1 ? doc.elements.find((el) => el.id === selectedIds[0]) ?? null : null;
+
+  const selectElement = useCallback(
+    (id: string, shiftKey = false) => {
+      const el = doc.elements.find((e) => e.id === id);
+      if (!el) return;
+      if (shiftKey && el.type === 'material') {
+        setSelectedIds((prev) =>
+          prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+        );
+      } else {
+        setSelectedIds([id]);
+      }
+    },
+    [doc.elements]
+  );
+
+  const handleElementSelect = (
+    id: string,
+    e?: Konva.KonvaEventObject<MouseEvent | TouchEvent>
+  ) => {
+    const shiftKey = Boolean(e?.evt && 'shiftKey' in e.evt && e.evt.shiftKey);
+    selectElement(id, shiftKey);
+  };
+
+  const moveSelectedMaterials = (draggedId: string, nx: number, ny: number) => {
+    const dragged = doc.elements.find((el) => el.id === draggedId);
+    if (!dragged || dragged.type !== 'material') return;
+    const dx = nx - dragged.x;
+    const dy = ny - dragged.y;
+    const idsToMove =
+      selectedIds.includes(draggedId) && selectedIds.length > 1 ? selectedIds : [draggedId];
+    setDoc((d) => ({
+      ...d,
+      elements: d.elements.map((el) => {
+        if (!idsToMove.includes(el.id) || el.type !== 'material') return el;
+        if (el.id === draggedId) return { ...el, x: nx, y: ny };
+        return {
+          ...el,
+          x: Math.max(0, Math.min(1, el.x + dx)),
+          y: Math.max(0, Math.min(1, el.y + dy)),
+        };
+      }),
+    }));
+  };
   const fieldOptions = SPORT_OPTIONS[sport].fields;
   const layeredElements = useMemo(() => sortElementsByLayer(doc.elements), [doc.elements]);
   const shapeElements = useMemo(
@@ -210,9 +256,9 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     (node: Konva.Node | null) => {
       const tr = transformerRef.current;
       if (!tr) return;
-      if (node && (selected?.type === 'material' || selected?.type === 'shape-rect')) {
+      if (node && selected && (selected.type === 'material' || selected.type === 'shape-rect')) {
         tr.nodes([node]);
-        tr.keepRatio(!(selected?.type === 'material' && selected.material === 'ladder'));
+        tr.keepRatio(!(selected.type === 'material' && selected.material === 'ladder'));
       } else {
         tr.nodes([]);
       }
@@ -221,27 +267,37 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     [selected]
   );
 
+  const transformableIds = useMemo(
+    () =>
+      selectedIds.filter((id) => {
+        const el = doc.elements.find((e) => e.id === id);
+        return el?.type === 'material' || el?.type === 'shape-rect';
+      }),
+    [selectedIds, doc.elements]
+  );
+
   useEffect(() => {
     const tr = transformerRef.current;
     if (!tr || !open) return;
-    if (
-      !selectedId ||
-      !selected ||
-      (selected.type !== 'shape-rect' && selected.type !== 'material')
-    ) {
+    if (transformableIds.length === 0) {
       tr.nodes([]);
       tr.getLayer()?.batchDraw();
       return;
     }
     requestAnimationFrame(() => {
       const stage = tr.getStage();
-      const node = stage?.findOne('#' + selectedId);
-      if (!node) return;
-      tr.nodes([node]);
-      tr.keepRatio(!(selected.type === 'material' && selected.material === 'ladder'));
+      if (!stage) return;
+      const nodes = transformableIds
+        .map((id) => stage.findOne('#' + id))
+        .filter((node): node is Konva.Node => node != null);
+      tr.nodes(nodes);
+      const single = transformableIds.length === 1
+        ? doc.elements.find((el) => el.id === transformableIds[0])
+        : null;
+      tr.keepRatio(!(single?.type === 'material' && single.material === 'ladder'));
       tr.getLayer()?.batchDraw();
     });
-  }, [selectedId, selected, open, layeredElements]);
+  }, [transformableIds, open, layeredElements, doc.elements]);
 
   const getPointerNorm = (stage: Konva.Stage) => {
     const pos = stage.getPointerPosition();
@@ -258,7 +314,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     if (!norm) return;
 
     if (tool === 'select') {
-      if (clickedOnEmpty) setSelectedId(null);
+      if (clickedOnEmpty) setSelectedIds([]);
       return;
     }
 
@@ -266,7 +322,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
       const el = defaultDraftForTool(tool, norm.x, norm.y, norm.x, norm.y, stroke);
       if (!el) return;
       setDoc((d) => ({ ...d, elements: sortElementsByLayer([...d.elements, el]) }));
-      setSelectedId(el.id);
+      setSelectedIds([el.id]);
       setTool('select');
       return;
     }
@@ -275,7 +331,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
       const el = defaultDraftForTool(tool, norm.x, norm.y, norm.x, norm.y, stroke);
       if (!el) return;
       setDoc((d) => ({ ...d, elements: sortElementsByLayer([...d.elements, el]) }));
-      setSelectedId(el.id);
+      setSelectedIds([el.id]);
       setTool('select');
       return;
     }
@@ -319,7 +375,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
   const handleStagePointerUp = () => {
     if (draft) {
       setDoc((d) => ({ ...d, elements: [...d.elements, draft] }));
-      setSelectedId(draft.id);
+      setSelectedIds([draft.id]);
       setDraft(null);
       setDragStart(null);
       setTool('select');
@@ -334,27 +390,48 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
   };
 
   const deleteSelected = () => {
-    if (!selectedId) return;
-    setDoc((d) => ({ ...d, elements: d.elements.filter((el) => el.id !== selectedId) }));
-    setSelectedId(null);
+    if (selectedIds.length === 0) return;
+    setDoc((d) => ({ ...d, elements: d.elements.filter((el) => !selectedIds.includes(el.id)) }));
+    setSelectedIds([]);
   };
 
   const duplicateSelected = () => {
-    if (!selected) return;
-    let copy = duplicateDrawingElement(selected);
-    if (
-      selected.type === 'material' &&
-      copy.type === 'material' &&
-      copy.material === 'player-own'
-    ) {
-      const current = parseInt(selected.label ?? '1', 10);
-      copy = { ...copy, label: String(Number.isFinite(current) ? current + 1 : 1) };
-    }
-    setDoc((d) => ({ ...d, elements: sortElementsByLayer([...d.elements, copy]) }));
-    setSelectedId(copy.id);
+    const targets = doc.elements.filter((el) => selectedIds.includes(el.id));
+    if (targets.length === 0) return;
+    const copies = targets.map((el) => {
+      let copy = duplicateDrawingElement(el);
+      if (el.type === 'material' && copy.type === 'material' && copy.material === 'player-own') {
+        const current = parseInt(el.label ?? '1', 10);
+        copy = { ...copy, label: String(Number.isFinite(current) ? current + 1 : 1) };
+      }
+      return copy;
+    });
+    setDoc((d) => ({ ...d, elements: sortElementsByLayer([...d.elements, ...copies]) }));
+    setSelectedIds(copies.map((copy) => copy.id));
   };
 
-  const animationEnabled = Boolean(doc.animation && doc.animation.scenes.length >= 2);
+  const enableAnimation = () => {
+    setDoc((current) => ({
+      ...current,
+      animation: {
+        transitionMs: DEFAULT_ANIMATION_TRANSITION_MS,
+        holdMs: DEFAULT_ANIMATION_HOLD_MS,
+        loop: true,
+        playbackSpeed: DEFAULT_ANIMATION_PLAYBACK_SPEED,
+        scenes: renumberAnimationScenes([createAnimationScene(current.elements)]),
+      },
+    }));
+    setActiveSceneIndex(0);
+  };
+
+  const disableAnimation = () => {
+    setDoc((current) => {
+      const saved = persistActiveAnimationScene(current, activeSceneIndex);
+      const { animation: _removed, ...rest } = saved;
+      return rest;
+    });
+    setActiveSceneIndex(0);
+  };
 
   const switchScene = (index: number) => {
     if (!doc.animation || index === activeSceneIndex) return;
@@ -365,36 +442,10 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
       return { ...saved, elements: cloneDrawingElements(target.elements) };
     });
     setActiveSceneIndex(index);
-    setSelectedId(null);
+    setSelectedIds([]);
   };
 
-  const toggleAnimation = () => {
-    if (animationEnabled) {
-      setDoc((current) => {
-        const saved = persistActiveAnimationScene(current, activeSceneIndex);
-        const { animation: _removed, ...rest } = saved;
-        return rest;
-      });
-      setActiveSceneIndex(0);
-      return;
-    }
-    setDoc((current) => ({
-      ...current,
-      animation: {
-        transitionMs: DEFAULT_ANIMATION_TRANSITION_MS,
-        holdMs: DEFAULT_ANIMATION_HOLD_MS,
-        loop: true,
-        playbackSpeed: DEFAULT_ANIMATION_PLAYBACK_SPEED,
-        scenes: renumberAnimationScenes([
-          createAnimationScene(current.elements),
-          createAnimationScene(current.elements),
-        ]),
-      },
-    }));
-    setActiveSceneIndex(0);
-  };
-
-  const addFrame = () => {
+  const duplicateFrame = () => {
     setDoc((current) => {
       if (!current.animation || current.animation.scenes.length >= MAX_ANIMATION_SCENES) return current;
       const saved = persistActiveAnimationScene(current, activeSceneIndex);
@@ -405,23 +456,21 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             : scene
         )
       );
-      const scenes = renumberAnimationScenes([
-        ...syncedScenes,
-        createAnimationScene(saved.elements),
-      ]);
+      const duplicate = createAnimationScene(cloneDrawingElements(saved.elements));
+      const scenes = renumberAnimationScenes([...syncedScenes, duplicate]);
       const newIndex = scenes.length - 1;
       setActiveSceneIndex(newIndex);
       return {
         ...saved,
         animation: { ...saved.animation!, scenes },
-        elements: cloneDrawingElements(scenes[newIndex].elements),
+        elements: cloneDrawingElements(duplicate.elements),
       };
     });
-    setSelectedId(null);
+    setSelectedIds([]);
   };
 
   const deleteFrame = () => {
-    if (!doc.animation || doc.animation.scenes.length <= 2) return;
+    if (!doc.animation || doc.animation.scenes.length <= 1) return;
     setDoc((current) => {
       const saved = persistActiveAnimationScene(current, activeSceneIndex);
       const scenes = renumberAnimationScenes(
@@ -435,7 +484,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
         elements: cloneDrawingElements(scenes[newIndex].elements),
       };
     });
-    setSelectedId(null);
+    setSelectedIds([]);
   };
 
   const handleSportChange = (next: SportKind) => {
@@ -484,10 +533,10 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             draggable={canDrag}
             onMouseDown={(e) => {
               e.cancelBubble = true;
-              if (canDrag) setSelectedId(element.id);
+              if (canDrag) handleElementSelect(element.id, e);
             }}
             onDragEnd={(e) => finishElementDrag(element, e.target)}
-            onClick={() => !isPreview && setSelectedId(element.id)}
+            onClick={(e) => !isPreview && handleElementSelect(element.id, e)}
           />
         );
       }
@@ -505,10 +554,10 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           draggable={canDrag}
           onMouseDown={(e) => {
             e.cancelBubble = true;
-            if (canDrag) setSelectedId(element.id);
+            if (canDrag) selectElement(element.id);
           }}
           onDragEnd={(e) => finishElementDrag(element, e.target)}
-          onClick={() => !isPreview && setSelectedId(element.id)}
+          onClick={() => !isPreview && selectElement(element.id)}
         />
       );
     }
@@ -535,7 +584,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           draggable={canDrag}
           onMouseDown={(e) => {
             e.cancelBubble = true;
-            if (canDrag) setSelectedId(element.id);
+            if (canDrag) selectElement(element.id);
           }}
           onDragEnd={(e) => {
             const node = e.target;
@@ -548,7 +597,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             const snapped = normToPx(element.x1 + dx, element.y1 + dy, fieldRect);
             node.position({ x: snapped.x, y: snapped.y });
           }}
-          onClick={() => !isPreview && setSelectedId(element.id)}
+          onClick={() => !isPreview && selectElement(element.id)}
         >
           <Rect x={minX} y={minY} width={boxW} height={boxH} fill="rgba(0,0,0,0.001)" />
           <Line
@@ -598,10 +647,10 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           draggable={canDrag}
           onMouseDown={(e) => {
             e.cancelBubble = true;
-            if (canDrag) setSelectedId(element.id);
+            if (canDrag) selectElement(element.id);
           }}
           onDragEnd={(e) => finishElementDrag(element, e.target)}
-          onClick={() => !isPreview && setSelectedId(element.id)}
+          onClick={() => !isPreview && selectElement(element.id)}
         />
       );
     }
@@ -629,9 +678,9 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           draggable={canDrag}
           onMouseDown={(e) => {
             e.cancelBubble = true;
-            if (canDrag) setSelectedId(element.id);
+            if (canDrag) selectElement(element.id);
           }}
-          onClick={() => setSelectedId(element.id)}
+          onClick={(e) => handleElementSelect(element.id, e)}
           onDragEnd={(ev) => {
             const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
             updateElement(element.id, { x: n.x, y: n.y });
@@ -650,7 +699,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             node.scaleY(1);
           }}
           ref={(node) => {
-            if (selectedId === element.id) attachTransformer(node);
+            if (isSelected(element.id)) attachTransformer(node);
           }}
         />
       );
@@ -671,13 +720,13 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           draggable={canDrag}
           onMouseDown={(e) => {
             e.cancelBubble = true;
-            if (canDrag) setSelectedId(element.id);
+            if (canDrag) selectElement(element.id);
           }}
           onDragEnd={(ev) => {
             const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
             updateElement(element.id, { x: n.x, y: n.y });
           }}
-          onClick={() => !isPreview && setSelectedId(element.id)}
+          onClick={() => !isPreview && selectElement(element.id)}
         >
           <Rect
             x={0}
@@ -689,7 +738,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           <Text
             text={element.text}
             fontSize={fontSize}
-            fill={selectedId === element.id && !isPreview ? '#22d3ee' : element.color}
+            fill={isSelected(element.id) && !isPreview ? '#22d3ee' : element.color}
             fontFamily="system-ui, -apple-system, sans-serif"
             fontStyle="bold"
             listening={false}
@@ -711,8 +760,8 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
         const ladderH = scaleYn * base * (unitH / unitW);
         const hw = ladderW / 2;
         const hh = ladderH / 2;
-        const pole = selectedId === element.id && !isPreview ? '#22d3ee' : '#0f172a';
-        const rung = selectedId === element.id && !isPreview ? '#22d3ee' : '#fbbf24';
+        const pole = isSelected(element.id) && !isPreview ? '#22d3ee' : '#0f172a';
+        const rung = isSelected(element.id) && !isPreview ? '#22d3ee' : '#fbbf24';
         const rungs = 5;
         return (
           <Group
@@ -725,15 +774,15 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             draggable={canDrag}
             onMouseDown={(e) => {
               e.cancelBubble = true;
-              if (canDrag) setSelectedId(element.id);
+              if (canDrag) handleElementSelect(element.id, e);
             }}
             onTap={(e) => {
               e.cancelBubble = true;
-              if (canDrag) setSelectedId(element.id);
+              if (canDrag) handleElementSelect(element.id, e);
             }}
             onClick={(e) => {
               e.cancelBubble = true;
-              setSelectedId(element.id);
+              selectElement(element.id);
             }}
             onDragEnd={(ev) => {
               const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
@@ -758,7 +807,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               });
             }}
             ref={(node) => {
-              if (selectedId === element.id) attachTransformer(node);
+              if (isSelected(element.id)) attachTransformer(node);
             }}
           >
             <Rect
@@ -801,19 +850,19 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           draggable={canDrag}
           onMouseDown={(e) => {
             e.cancelBubble = true;
-            if (canDrag) setSelectedId(element.id);
+            if (canDrag) handleElementSelect(element.id, e);
           }}
           onTap={(e) => {
             e.cancelBubble = true;
-            if (canDrag) setSelectedId(element.id);
+            if (canDrag) handleElementSelect(element.id, e);
           }}
           onClick={(e) => {
             e.cancelBubble = true;
-            setSelectedId(element.id);
+            handleElementSelect(element.id, e);
           }}
           onDragEnd={(ev) => {
             const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
-            updateElement(element.id, { x: n.x, y: n.y });
+            moveSelectedMaterials(element.id, n.x, n.y);
           }}
           onTransformEnd={(ev) => {
             const node = ev.target;
@@ -828,7 +877,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             node.scaleY(1);
           }}
           ref={(node) => {
-            if (selectedId === element.id) attachTransformer(node);
+            if (isSelected(element.id)) attachTransformer(node);
           }}
         >
           {img ? (
@@ -951,9 +1000,10 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
       <ExerciseAnimationTimeline
         doc={doc}
         activeSceneIndex={activeSceneIndex}
-        onToggleAnimation={toggleAnimation}
+        onEnableAnimation={enableAnimation}
+        onDisableAnimation={disableAnimation}
         onSwitchScene={switchScene}
-        onAddFrame={addFrame}
+        onDuplicateFrame={duplicateFrame}
         onDeleteFrame={deleteFrame}
       />
 
@@ -1179,6 +1229,38 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
         </div>
       ) : null}
 
+      {selectedIds.length > 1 &&
+      doc.elements.filter((el) => selectedIds.includes(el.id)).every((el) => el.type === 'material') ? (
+        <div
+          className={cn(
+            'pointer-events-none absolute bottom-[5.5rem] left-1/2 z-30 flex max-w-[95vw] -translate-x-1/2 items-center gap-3 rounded-2xl px-4 py-2.5',
+            GLASS.panel
+          )}
+        >
+          <span className={cn('pointer-events-auto text-xs', GLASS.label)}>
+            {selectedIds.length} materiales · Shift+clic para añadir o quitar
+          </span>
+          <button
+            type="button"
+            title="Duplicar selección"
+            aria-label="Duplicar selección"
+            className={cn('pointer-events-auto flex size-8 items-center justify-center rounded-lg', GLASS.btn)}
+            onClick={duplicateSelected}
+          >
+            <Copy className="size-3.5" />
+          </button>
+          <button
+            type="button"
+            title="Eliminar selección"
+            aria-label="Eliminar selección"
+            className={cn('pointer-events-auto flex size-8 items-center justify-center rounded-lg', GLASS.danger)}
+            onClick={deleteSelected}
+          >
+            <Trash2 className="size-3.5" />
+          </button>
+        </div>
+      ) : null}
+
       {selected && selected.type === 'material' ? (
         <div className={cn('pointer-events-none absolute bottom-[5.5rem] left-1/2 z-30 flex max-w-[95vw] -translate-x-1/2 flex-wrap justify-center gap-3 rounded-2xl px-4 py-2.5', GLASS.panel)}>
           <label className={cn('pointer-events-auto flex items-center gap-2', GLASS.label)}>
@@ -1351,7 +1433,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
                     title={item.label}
                     onClick={() => {
                       setTool(item.id);
-                      setSelectedId(null);
+                      setSelectedIds([]);
                     }}
                     className={cn(
                       'flex size-10 items-center justify-center',
