@@ -245,8 +245,9 @@ export type LegacyStroke = {
 };
 
 export const MAX_ANIMATION_SCENES = 5;
-export const DEFAULT_ANIMATION_TRANSITION_MS = 800;
-export const DEFAULT_ANIMATION_HOLD_MS = 600;
+export const DEFAULT_ANIMATION_TRANSITION_MS = 1400;
+export const DEFAULT_ANIMATION_HOLD_MS = 2000;
+export const DEFAULT_ANIMATION_PLAYBACK_SPEED = 0.85;
 
 export type DrawingAnimationScene = {
   id: string;
@@ -258,6 +259,8 @@ export type DrawingAnimation = {
   transitionMs: number;
   holdMs: number;
   loop: boolean;
+  /** < 1 = más lento; 1 = tiempo real */
+  playbackSpeed?: number;
   scenes: DrawingAnimationScene[];
 };
 
@@ -298,6 +301,18 @@ export function createAnimationScene(
   };
 }
 
+/** Etiquetas cortas: 1, 2, 3… */
+export function renumberAnimationScenes(scenes: DrawingAnimationScene[]): DrawingAnimationScene[] {
+  return scenes.map((scene, index) => ({
+    ...scene,
+    label: String(index + 1),
+  }));
+}
+
+export function animationSceneLabel(scene: DrawingAnimationScene, index: number): string {
+  return scene.label?.trim() || String(index + 1);
+}
+
 function parseAnimationScene(raw: unknown): DrawingAnimationScene | null {
   if (!raw || typeof raw !== 'object') return null;
   const obj = raw as Record<string, unknown>;
@@ -316,16 +331,25 @@ function parseDrawingAnimation(raw: unknown): DrawingAnimation | undefined {
   if (!Array.isArray(obj.scenes)) return undefined;
   const scenes = obj.scenes.map(parseAnimationScene).filter((s): s is DrawingAnimationScene => s !== null);
   if (scenes.length === 0) return undefined;
+  let transitionMs =
+    typeof obj.transitionMs === 'number' && Number.isFinite(obj.transitionMs)
+      ? Math.max(200, Math.min(5000, obj.transitionMs))
+      : DEFAULT_ANIMATION_TRANSITION_MS;
+  let holdMs =
+    typeof obj.holdMs === 'number' && Number.isFinite(obj.holdMs)
+      ? Math.max(200, Math.min(5000, obj.holdMs))
+      : DEFAULT_ANIMATION_HOLD_MS;
+  // Migrar timings antiguos demasiado rápidos
+  if (holdMs < 1200) holdMs = DEFAULT_ANIMATION_HOLD_MS;
+  if (transitionMs < 1000) transitionMs = DEFAULT_ANIMATION_TRANSITION_MS;
   return {
-    transitionMs:
-      typeof obj.transitionMs === 'number' && Number.isFinite(obj.transitionMs)
-        ? Math.max(200, Math.min(4000, obj.transitionMs))
-        : DEFAULT_ANIMATION_TRANSITION_MS,
-    holdMs:
-      typeof obj.holdMs === 'number' && Number.isFinite(obj.holdMs)
-        ? Math.max(200, Math.min(4000, obj.holdMs))
-        : DEFAULT_ANIMATION_HOLD_MS,
+    transitionMs,
+    holdMs,
     loop: typeof obj.loop === 'boolean' ? obj.loop : true,
+    playbackSpeed:
+      typeof obj.playbackSpeed === 'number' && Number.isFinite(obj.playbackSpeed)
+        ? Math.max(0.25, Math.min(2, obj.playbackSpeed))
+        : DEFAULT_ANIMATION_PLAYBACK_SPEED,
     scenes: scenes.slice(0, MAX_ANIMATION_SCENES),
   };
 }

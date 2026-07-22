@@ -11,7 +11,13 @@ export type MaterialKind =
   | 'hurdle'
   | 'ladder';
 
-const cache = new Map<MaterialKind, HTMLImageElement>();
+const TEXTURE_SIZE = 256;
+const CACHE_VERSION = 2;
+const cache = new Map<string, HTMLImageElement>();
+
+function cacheKey(kind: MaterialKind): string {
+  return `${CACHE_VERSION}:${kind}`;
+}
 
 function createImage(dataUrl: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -22,180 +28,224 @@ function createImage(dataUrl: string): Promise<HTMLImageElement> {
   });
 }
 
-function drawPlayer(ctx: CanvasRenderingContext2D, fill: string, stroke: string, label: string) {
-  const s = 128;
-  ctx.clearRect(0, 0, s, s);
-  ctx.shadowColor = 'rgba(0,0,0,0.45)';
-  ctx.shadowBlur = 8;
-  ctx.shadowOffsetY = 3;
+function darken(hex: string, amount: number): string {
+  const n = parseInt(hex.slice(1), 16);
+  const r = Math.max(0, ((n >> 16) & 255) * (1 - amount));
+  const g = Math.max(0, ((n >> 8) & 255) * (1 - amount));
+  const b = Math.max(0, (n & 255) * (1 - amount));
+  return `rgb(${r | 0},${g | 0},${b | 0})`;
+}
 
-  const grad = ctx.createRadialGradient(s / 2, s / 2, 8, s / 2, s / 2, 44);
-  grad.addColorStop(0, lighten(fill, 0.25));
-  grad.addColorStop(1, fill);
+function drawPlayer(ctx: CanvasRenderingContext2D, fill: string, stroke: string, label: string) {
+  const s = TEXTURE_SIZE;
+  const cx = s / 2;
+  const cy = s / 2 + 6;
+  ctx.clearRect(0, 0, s, s);
+
+  // Sombra en el césped
+  ctx.fillStyle = 'rgba(0,0,0,0.28)';
+  ctx.beginPath();
+  ctx.ellipse(cx, s * 0.8, 54, 16, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Disco principal — estilo marcador plano visto desde arriba
+  const grad = ctx.createRadialGradient(cx, cy - 12, 8, cx, cy, 72);
+  grad.addColorStop(0, lighten(fill, 0.4));
+  grad.addColorStop(0.55, fill);
+  grad.addColorStop(1, darken(fill, 0.2));
   ctx.fillStyle = grad;
   ctx.beginPath();
-  ctx.arc(s / 2, s / 2, 40, 0, Math.PI * 2);
+  ctx.arc(cx, cy, 62, 0, Math.PI * 2);
   ctx.fill();
-  ctx.shadowBlur = 0;
-  ctx.lineWidth = 3;
+
+  // Anillo exterior
+  ctx.strokeStyle = 'rgba(255,255,255,0.92)';
+  ctx.lineWidth = 6;
+  ctx.stroke();
   ctx.strokeStyle = stroke;
+  ctx.lineWidth = 2.5;
   ctx.stroke();
 
-  ctx.fillStyle = 'rgba(255,255,255,0.2)';
+  // Brillo superior
+  ctx.fillStyle = 'rgba(255,255,255,0.22)';
   ctx.beginPath();
-  ctx.arc(s / 2 - 12, s / 2 - 12, 10, 0, Math.PI * 2);
+  ctx.ellipse(cx - 14, cy - 20, 22, 12, -0.4, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.fillStyle = '#0f172a';
-  ctx.font = 'bold 36px system-ui, sans-serif';
+  // Número
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 54px system-ui, -apple-system, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(label, s / 2, s / 2 + 2);
+  ctx.shadowColor = 'rgba(0,0,0,0.4)';
+  ctx.shadowBlur = 6;
+  ctx.shadowOffsetY = 2;
+  ctx.fillText(label, cx, cy + 4);
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
 
-  ctx.fillStyle = fill;
+  // Indicador de orientación (flecha)
+  ctx.fillStyle = 'rgba(255,255,255,0.95)';
   ctx.beginPath();
-  ctx.moveTo(s / 2, 18);
-  ctx.lineTo(s / 2 - 14, 36);
-  ctx.lineTo(s / 2 + 14, 36);
+  ctx.moveTo(cx, 24);
+  ctx.lineTo(cx - 18, 56);
+  ctx.lineTo(cx + 18, 56);
   ctx.closePath();
   ctx.fill();
-  ctx.strokeStyle = stroke;
-  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+  ctx.lineWidth = 1.5;
   ctx.stroke();
 }
 
 function drawCone(ctx: CanvasRenderingContext2D) {
-  const s = 128;
+  const s = TEXTURE_SIZE;
   ctx.clearRect(0, 0, s, s);
-  ctx.shadowColor = 'rgba(0,0,0,0.4)';
-  ctx.shadowBlur = 6;
-  ctx.shadowOffsetY = 4;
-  const grad = ctx.createLinearGradient(0, 20, 0, 100);
-  grad.addColorStop(0, '#fb923c');
+
+  ctx.fillStyle = 'rgba(0,0,0,0.22)';
+  ctx.beginPath();
+  ctx.ellipse(s / 2, s * 0.82, 48, 12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  const grad = ctx.createLinearGradient(s / 2, 28, s / 2, s * 0.78);
+  grad.addColorStop(0, '#fdba74');
+  grad.addColorStop(0.45, '#f97316');
   grad.addColorStop(1, '#c2410c');
   ctx.fillStyle = grad;
   ctx.beginPath();
-  ctx.moveTo(s / 2, 16);
-  ctx.lineTo(28, 98);
-  ctx.lineTo(100, 98);
+  ctx.moveTo(s / 2, 28);
+  ctx.lineTo(52, s * 0.78);
+  ctx.lineTo(s - 52, s * 0.78);
   ctx.closePath();
   ctx.fill();
-  ctx.shadowBlur = 0;
-  ctx.fillStyle = 'rgba(0,0,0,0.15)';
+
+  ctx.strokeStyle = 'rgba(124,45,18,0.55)';
+  ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.ellipse(s / 2, 100, 38, 10, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = '#7c2d12';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(s / 2, 16);
-  ctx.lineTo(28, 98);
+  ctx.moveTo(s / 2, 28);
+  ctx.lineTo(52, s * 0.78);
   ctx.stroke();
+
+  // Franja reflectante
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.beginPath();
+  ctx.moveTo(s / 2 - 8, 52);
+  ctx.lineTo(s / 2 + 8, 52);
+  ctx.lineTo(s / 2 + 4, 68);
+  ctx.lineTo(s / 2 - 4, 68);
+  ctx.closePath();
+  ctx.fill();
 }
 
 function drawConePole(ctx: CanvasRenderingContext2D) {
-  const s = 128;
+  const s = TEXTURE_SIZE;
   ctx.clearRect(0, 0, s, s);
   ctx.fillStyle = '#facc15';
   ctx.beginPath();
-  ctx.arc(s / 2, 22, 14, 0, Math.PI * 2);
+  ctx.arc(s / 2, 44, 26, 0, Math.PI * 2);
   ctx.fill();
-  const pole = ctx.createLinearGradient(58, 30, 70, 110);
+  const pole = ctx.createLinearGradient(116, 60, 140, 220);
   pole.addColorStop(0, '#f8fafc');
   pole.addColorStop(1, '#94a3b8');
   ctx.fillStyle = pole;
-  ctx.fillRect(58, 30, 12, 82);
+  ctx.fillRect(116, 60, 24, 164);
 }
 
 function drawBall(ctx: CanvasRenderingContext2D) {
-  const s = 128;
+  const s = TEXTURE_SIZE;
+  const cx = s / 2;
+  const cy = s / 2 + 4;
   ctx.clearRect(0, 0, s, s);
-  ctx.shadowColor = 'rgba(0,0,0,0.35)';
-  ctx.shadowBlur = 8;
-  ctx.shadowOffsetY = 4;
-  const grad = ctx.createRadialGradient(48, 44, 4, 64, 64, 46);
+
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  ctx.beginPath();
+  ctx.ellipse(cx, s * 0.8, 40, 11, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  const grad = ctx.createRadialGradient(cx - 18, cy - 18, 6, cx, cy, 52);
   grad.addColorStop(0, '#ffffff');
-  grad.addColorStop(1, '#cbd5e1');
+  grad.addColorStop(0.7, '#e2e8f0');
+  grad.addColorStop(1, '#94a3b8');
   ctx.fillStyle = grad;
   ctx.beginPath();
-  ctx.arc(s / 2, s / 2, 42, 0, Math.PI * 2);
+  ctx.arc(cx, cy, 48, 0, Math.PI * 2);
   ctx.fill();
-  ctx.shadowBlur = 0;
+
   ctx.strokeStyle = '#64748b';
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 2.5;
   ctx.stroke();
-  ctx.strokeStyle = '#94a3b8';
-  ctx.lineWidth = 1.5;
+
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(s / 2, 28);
-  ctx.lineTo(s / 2 + 18, 50);
-  ctx.lineTo(s / 2 + 10, 78);
-  ctx.lineTo(s / 2 - 10, 78);
-  ctx.lineTo(s / 2 - 18, 50);
+  ctx.moveTo(cx, cy - 30);
+  ctx.lineTo(cx + 22, cy - 6);
+  ctx.lineTo(cx + 12, cy + 24);
+  ctx.lineTo(cx - 12, cy + 24);
+  ctx.lineTo(cx - 22, cy - 6);
   ctx.closePath();
   ctx.stroke();
 }
 
 function drawGoal(ctx: CanvasRenderingContext2D) {
-  const s = 128;
+  const s = TEXTURE_SIZE;
   ctx.clearRect(0, 0, s, s);
   ctx.strokeStyle = '#e2e8f0';
-  ctx.lineWidth = 4;
-  ctx.strokeRect(20, 36, 88, 56);
-  ctx.lineWidth = 6;
+  ctx.lineWidth = 8;
+  ctx.strokeRect(40, 72, 176, 112);
+  ctx.lineWidth = 10;
   ctx.beginPath();
-  ctx.moveTo(20, 36);
-  ctx.lineTo(20, 92);
-  ctx.moveTo(108, 36);
-  ctx.lineTo(108, 92);
+  ctx.moveTo(40, 72);
+  ctx.lineTo(40, 184);
+  ctx.moveTo(216, 72);
+  ctx.lineTo(216, 184);
   ctx.stroke();
-  ctx.lineWidth = 1;
+  ctx.lineWidth = 2;
   ctx.strokeStyle = 'rgba(226,232,240,0.45)';
   for (let i = 1; i < 5; i++) {
-    const x = 20 + (88 / 5) * i;
+    const x = 40 + (176 / 5) * i;
     ctx.beginPath();
-    ctx.moveTo(x, 36);
-    ctx.lineTo(x, 92);
+    ctx.moveTo(x, 72);
+    ctx.lineTo(x, 184);
     ctx.stroke();
   }
   for (let j = 1; j < 4; j++) {
-    const y = 36 + (56 / 4) * j;
+    const y = 72 + (112 / 4) * j;
     ctx.beginPath();
-    ctx.moveTo(20, y);
-    ctx.lineTo(108, y);
+    ctx.moveTo(40, y);
+    ctx.lineTo(216, y);
     ctx.stroke();
   }
 }
 
 function drawHurdle(ctx: CanvasRenderingContext2D) {
-  const s = 128;
+  const s = TEXTURE_SIZE;
   ctx.clearRect(0, 0, s, s);
   ctx.fillStyle = '#f97316';
-  ctx.fillRect(24, 48, 80, 8);
+  ctx.fillRect(48, 96, 160, 16);
   ctx.fillStyle = '#94a3b8';
-  ctx.fillRect(30, 56, 6, 44);
-  ctx.fillRect(92, 56, 6, 44);
+  ctx.fillRect(60, 112, 12, 88);
+  ctx.fillRect(184, 112, 12, 88);
 }
 
 function drawLadder(ctx: CanvasRenderingContext2D) {
-  const s = 128;
+  const s = TEXTURE_SIZE;
   ctx.clearRect(0, 0, s, s);
   ctx.strokeStyle = '#0f172a';
-  ctx.lineWidth = 5;
+  ctx.lineWidth = 10;
   ctx.lineCap = 'round';
   ctx.beginPath();
-  ctx.moveTo(36, 30);
-  ctx.lineTo(36, 100);
-  ctx.moveTo(92, 30);
-  ctx.lineTo(92, 100);
+  ctx.moveTo(72, 60);
+  ctx.lineTo(72, 200);
+  ctx.moveTo(184, 60);
+  ctx.lineTo(184, 200);
   ctx.stroke();
   ctx.strokeStyle = '#fbbf24';
-  ctx.lineWidth = 4;
+  ctx.lineWidth = 8;
   for (let i = 0; i < 6; i++) {
-    const y = 34 + i * 12;
+    const y = 68 + i * 24;
     ctx.beginPath();
-    ctx.moveTo(36, y);
-    ctx.lineTo(92, y);
+    ctx.moveTo(72, y);
+    ctx.lineTo(184, y);
     ctx.stroke();
   }
 }
@@ -210,19 +260,19 @@ function lighten(hex: string, amount: number): string {
 
 function renderMaterial(kind: MaterialKind): string {
   const canvas = document.createElement('canvas');
-  canvas.width = 128;
-  canvas.height = 128;
+  canvas.width = TEXTURE_SIZE;
+  canvas.height = TEXTURE_SIZE;
   const ctx = canvas.getContext('2d')!;
 
   switch (kind) {
     case 'player-own':
-      drawPlayer(ctx, '#06b6d4', '#0891b2', '1');
+      drawPlayer(ctx, '#0ea5e9', '#0369a1', '1');
       break;
     case 'player-rival':
-      drawPlayer(ctx, '#ef4444', '#b91c1c', 'X');
+      drawPlayer(ctx, '#f43f5e', '#be123c', 'X');
       break;
     case 'player-neutral':
-      drawPlayer(ctx, '#a78bfa', '#7c3aed', 'N');
+      drawPlayer(ctx, '#f59e0b', '#b45309', 'N');
       break;
     case 'cone':
       drawCone(ctx);
@@ -250,10 +300,11 @@ export async function getMaterialImage(kind: MaterialKind): Promise<HTMLImageEle
   if (typeof document === 'undefined') {
     throw new Error('Material assets require browser');
   }
-  const cached = cache.get(kind);
+  const key = cacheKey(kind);
+  const cached = cache.get(key);
   if (cached) return cached;
   const img = await createImage(renderMaterial(kind));
-  cache.set(kind, img);
+  cache.set(key, img);
   return img;
 }
 
