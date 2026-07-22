@@ -141,8 +141,8 @@ const GLASS = {
     'w-[6.25rem] text-center text-[10px] font-medium uppercase tracking-wide text-cyan-400/55',
 } as const;
 
-/** Altura compartida: paneles Local y Visitante alineados horizontalmente. */
-const FORMATION_PANEL_TOP_CLASS = 'top-[14.5rem]' as const;
+/** Margen inferior: por encima del dock de materiales/herramientas */
+const SIDEBAR_BOTTOM_CLASS = 'bottom-[6.5rem]' as const;
 
 /** Campo a ancho completo, pegado arriba; controles flotan encima */
 const FIELD_INSETS = { top: 0, bottom: 0, left: 4, right: 4 };
@@ -1183,87 +1183,36 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
         </Stage>
       </div>
 
-      {/* Barra lateral izquierda — cerrar y animación */}
-      <div className="pointer-events-auto absolute left-4 top-4 z-40 flex flex-col items-center gap-1.5">
-        <button
-          type="button"
-          onClick={onClose}
-          className={cn('size-10', GLASS.iconBtn)}
-          aria-label="Cerrar"
-        >
-          <X className="size-4" />
-        </button>
-
-        <ExerciseAnimationTimeline
-          doc={doc}
-          activeSceneIndex={activeSceneIndex}
-          onEnableAnimation={enableAnimation}
-          onDisableAnimation={disableAnimation}
-          onSwitchScene={switchScene}
-          onDuplicateFrame={duplicateFrame}
-          onDeleteFrame={deleteFrame}
-        />
-      </div>
-
-      {/* Barra lateral derecha — guardar, deporte y campo */}
-      <div className="pointer-events-auto absolute right-4 top-4 z-40 flex flex-col items-end gap-1.5">
-        <div className="flex items-center gap-1.5">
+      {/* Banda izquierda — arriba: cerrar + animación; abajo: formación local */}
+      <div
+        className={cn(
+          'pointer-events-none absolute left-4 top-4 z-40 flex flex-col items-center justify-between',
+          SIDEBAR_BOTTOM_CLASS
+        )}
+      >
+        <div className="pointer-events-auto flex flex-col items-center gap-1.5">
           <button
             type="button"
-            title="Guardar"
-            aria-label="Guardar"
+            onClick={onClose}
             className={cn('size-10', GLASS.iconBtn)}
-            onClick={() => {
-              const saved = persistActiveAnimationScene(doc, activeSceneIndex);
-              onSave(serializeExerciseDrawing(saved));
-              onClose();
-            }}
+            aria-label="Cerrar"
           >
-            <Save className="size-4" />
+            <X className="size-4" />
           </button>
-          <button
-            type="button"
-            onClick={() => setClearConfirmOpen(true)}
-            className={cn('size-10', GLASS.danger)}
-            title="Borrar todo"
-            aria-label="Borrar todo el contenido de la pizarra"
-          >
-            <Eraser className="size-4" />
-          </button>
+
+          <ExerciseAnimationTimeline
+            doc={doc}
+            activeSceneIndex={activeSceneIndex}
+            onEnableAnimation={enableAnimation}
+            onDisableAnimation={disableAnimation}
+            onSwitchScene={switchScene}
+            onDuplicateFrame={duplicateFrame}
+            onDeleteFrame={deleteFrame}
+          />
         </div>
 
-        {(Object.keys(SPORT_OPTIONS) as SportKind[]).map((key) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => handleSportChange(key)}
-            className={cn(GLASS.sidebarSelect, sport === key ? GLASS.btnActive : GLASS.btn)}
-          >
-            {SPORT_OPTIONS[key].label}
-          </button>
-        ))}
-
-        {fieldOptions.map((field) => (
-          <button
-            key={field}
-            type="button"
-            onClick={() => handleFieldChange(field)}
-            className={cn(GLASS.sidebarSelect, doc.field === field ? GLASS.btnActive : GLASS.btn)}
-          >
-            {FIELD_FORMAT_SHORT[field]}
-          </button>
-        ))}
-      </div>
-
-      {/* Formaciones — misma altura izquierda / derecha */}
-      {formationGroup ? (
-        <>
-          <div
-            className={cn(
-              'pointer-events-auto absolute left-4 z-40',
-              FORMATION_PANEL_TOP_CLASS
-            )}
-          >
+        {formationGroup ? (
+          <div className="pointer-events-auto">
             <FormationTeamPanel
               side="home"
               teamLabel="Local"
@@ -1275,12 +1224,67 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               onPhaseSelect={(phase) => applyTeamPhase('home', phase)}
             />
           </div>
-          <div
-            className={cn(
-              'pointer-events-auto absolute right-4 z-40',
-              FORMATION_PANEL_TOP_CLASS
-            )}
-          >
+        ) : null}
+      </div>
+
+      {/* Banda derecha — arriba: guardar y campo; abajo: formación visitante */}
+      <div
+        className={cn(
+          'pointer-events-none absolute right-4 top-4 z-40 flex flex-col items-end justify-between',
+          SIDEBAR_BOTTOM_CLASS
+        )}
+      >
+        <div className="pointer-events-auto flex flex-col items-end gap-1.5">
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              title="Guardar"
+              aria-label="Guardar"
+              className={cn('size-10', GLASS.iconBtn)}
+              onClick={() => {
+                const saved = persistActiveAnimationScene(doc, activeSceneIndex);
+                onSave(serializeExerciseDrawing(saved));
+                onClose();
+              }}
+            >
+              <Save className="size-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setClearConfirmOpen(true)}
+              className={cn('size-10', GLASS.danger)}
+              title="Borrar todo"
+              aria-label="Borrar todo el contenido de la pizarra"
+            >
+              <Eraser className="size-4" />
+            </button>
+          </div>
+
+          {(Object.keys(SPORT_OPTIONS) as SportKind[]).map((key) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => handleSportChange(key)}
+              className={cn(GLASS.sidebarSelect, sport === key ? GLASS.btnActive : GLASS.btn)}
+            >
+              {SPORT_OPTIONS[key].label}
+            </button>
+          ))}
+
+          {fieldOptions.map((field) => (
+            <button
+              key={field}
+              type="button"
+              onClick={() => handleFieldChange(field)}
+              className={cn(GLASS.sidebarSelect, doc.field === field ? GLASS.btnActive : GLASS.btn)}
+            >
+              {FIELD_FORMAT_SHORT[field]}
+            </button>
+          ))}
+        </div>
+
+        {formationGroup ? (
+          <div className="pointer-events-auto">
             <FormationTeamPanel
               side="away"
               teamLabel="Visitante"
@@ -1292,8 +1296,8 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               onPhaseSelect={(phase) => applyTeamPhase('away', phase)}
             />
           </div>
-        </>
-      ) : null}
+        ) : null}
+      </div>
 
       <DrawingStudioConfirmDialog
         open={clearConfirmOpen}

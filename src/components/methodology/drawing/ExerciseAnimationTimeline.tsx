@@ -63,35 +63,59 @@ export function ExerciseAnimationTimeline({
 
   return (
     <div className="flex flex-col items-center gap-1.5">
-      <button
-        type="button"
-        onClick={handleFilmClick}
-        className={cn('flex size-10 items-center justify-center', GLASS.iconBtn, animationActive && GLASS.btnActive)}
-        title={
-          animationActive
-            ? 'Fotogramas (Shift+clic para desactivar animación)'
-            : 'Activar animación por fotogramas'
-        }
-        aria-label="Animación"
-        aria-expanded={panelOpen}
-      >
-        <Film className="size-4" />
-      </button>
+      <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={handleFilmClick}
+          className={cn('flex size-10 items-center justify-center', GLASS.iconBtn, animationActive && GLASS.btnActive)}
+          title={
+            animationActive
+              ? 'Fotogramas (Shift+clic para desactivar animación)'
+              : 'Activar animación por fotogramas'
+          }
+          aria-label="Animación"
+          aria-expanded={panelOpen}
+        >
+          <Film className="size-4" />
+        </button>
+
+        {animationActive ? (
+          <>
+            {sceneCount < MAX_ANIMATION_SCENES ? (
+              <button
+                type="button"
+                onClick={onDuplicateFrame}
+                className={cn('flex size-10 items-center justify-center', GLASS.iconBtn)}
+                title="Duplicar escena actual y editar la siguiente"
+                aria-label="Duplicar escena"
+              >
+                <Plus className="size-4" />
+              </button>
+            ) : null}
+            {sceneCount > 1 ? (
+              <button
+                type="button"
+                onClick={onDeleteFrame}
+                className={cn('flex size-10 items-center justify-center', GLASS.danger)}
+                title="Eliminar fotograma actual"
+                aria-label="Eliminar fotograma"
+              >
+                <Trash2 className="size-3.5" />
+              </button>
+            ) : null}
+          </>
+        ) : null}
+      </div>
 
       {panelOpen && animationActive ? (
-        <div
-          className={cn(
-            'flex max-h-[7.5rem] flex-col items-center gap-1 overflow-y-auto rounded-2xl p-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
-            GLASS.panel
-          )}
-        >
+        <div className={cn('grid grid-cols-2 gap-1 rounded-2xl p-1.5', GLASS.panel)}>
           {doc.animation!.scenes.map((scene, index) => (
             <button
               key={scene.id}
               type="button"
               onClick={() => onSwitchScene(index)}
               className={cn(
-                'flex size-9 shrink-0 items-center justify-center rounded-xl text-xs font-semibold tabular-nums',
+                'flex size-9 items-center justify-center rounded-xl text-xs font-semibold tabular-nums',
                 index === activeSceneIndex ? GLASS.btnActive : GLASS.btn
               )}
               title={`Fotograma ${index + 1}`}
@@ -101,30 +125,6 @@ export function ExerciseAnimationTimeline({
               {index + 1}
             </button>
           ))}
-
-          {sceneCount < MAX_ANIMATION_SCENES ? (
-            <button
-              type="button"
-              onClick={onDuplicateFrame}
-              className={cn('flex size-9 shrink-0 items-center justify-center rounded-xl', GLASS.iconBtn)}
-              title="Duplicar escena actual y editar la siguiente"
-              aria-label="Duplicar escena"
-            >
-              <Plus className="size-4" />
-            </button>
-          ) : null}
-
-          {sceneCount > 1 ? (
-            <button
-              type="button"
-              onClick={onDeleteFrame}
-              className={cn('flex size-9 shrink-0 items-center justify-center rounded-xl', GLASS.danger)}
-              title="Eliminar fotograma actual"
-              aria-label="Eliminar fotograma"
-            >
-              <Trash2 className="size-3.5" />
-            </button>
-          ) : null}
         </div>
       ) : null}
     </div>
