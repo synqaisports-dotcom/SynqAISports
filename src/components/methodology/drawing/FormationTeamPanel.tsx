@@ -60,7 +60,7 @@ export function FormationTeamPanel({
   const hasFormation = Boolean(selectedFormationId);
 
   return (
-    <div ref={rootRef} className="flex w-[5.75rem] flex-col items-stretch gap-1.5">
+    <div ref={rootRef} className="flex w-[6.25rem] flex-col items-stretch gap-1.5">
       <span className={cn(GLASS.label, 'text-center')}>{teamLabel}</span>
 
       <div className="relative">
@@ -101,7 +101,7 @@ export function FormationTeamPanel({
           <div
             role="listbox"
             className={cn(
-              'absolute top-full z-50 mt-1 max-h-52 w-full overflow-y-auto rounded-xl p-1',
+              'absolute top-full z-50 mt-1 w-full rounded-xl p-1',
               GLASS.panel,
               side === 'home' ? 'left-0' : 'right-0'
             )}

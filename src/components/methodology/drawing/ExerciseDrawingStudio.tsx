@@ -136,10 +136,13 @@ const GLASS = {
     'border-red-400/45 bg-red-500/12 text-red-300 backdrop-blur-md transition-all hover:border-red-400/60 hover:bg-red-500/22',
   label: 'text-xs text-cyan-300/90',
   sidebarSelect:
-    'w-[5.75rem] rounded-lg px-2 py-1.5 text-center text-xs font-medium transition-all',
+    'w-[6.25rem] rounded-lg px-2 py-1.5 text-center text-xs font-medium transition-all',
   sidebarLabel:
-    'w-[5.75rem] text-center text-[10px] font-medium uppercase tracking-wide text-cyan-400/55',
+    'w-[6.25rem] text-center text-[10px] font-medium uppercase tracking-wide text-cyan-400/55',
 } as const;
+
+/** Altura compartida: paneles Local y Visitante alineados horizontalmente. */
+const FORMATION_PANEL_TOP_CLASS = 'top-[14.5rem]' as const;
 
 /** Campo a ancho completo, pegado arriba; controles flotan encima */
 const FIELD_INSETS = { top: 0, bottom: 0, left: 4, right: 4 };
@@ -1180,7 +1183,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
         </Stage>
       </div>
 
-      {/* Barra lateral izquierda — cerrar, animación, formación local */}
+      {/* Barra lateral izquierda — cerrar y animación */}
       <div className="pointer-events-auto absolute left-4 top-4 z-40 flex flex-col items-center gap-1.5">
         <button
           type="button"
@@ -1200,23 +1203,10 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           onDuplicateFrame={duplicateFrame}
           onDeleteFrame={deleteFrame}
         />
-
-        {formationGroup ? (
-          <FormationTeamPanel
-            side="home"
-            teamLabel="Local"
-            selectedFormationId={doc.formations?.home ?? null}
-            activePhase={(doc.formations?.homePhase ?? 0) as TacticalPhaseIndex}
-            formations={availableFormations}
-            playerImageSrc={materialImages['player-own']?.src}
-            onFormationSelect={(id) => applyFormationSelection('home', id)}
-            onPhaseSelect={(phase) => applyTeamPhase('home', phase)}
-          />
-        ) : null}
       </div>
 
-      {/* Barra lateral derecha — guardar, deporte, campo, formación visitante */}
-      <div className="pointer-events-auto absolute right-4 top-4 z-40 flex max-h-[calc(100vh-2rem)] flex-col items-end gap-1.5 overflow-y-auto overscroll-contain">
+      {/* Barra lateral derecha — guardar, deporte y campo */}
+      <div className="pointer-events-auto absolute right-4 top-4 z-40 flex flex-col items-end gap-1.5">
         <div className="flex items-center gap-1.5">
           <button
             type="button"
@@ -1263,20 +1253,47 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             {FIELD_FORMAT_SHORT[field]}
           </button>
         ))}
-
-        {formationGroup ? (
-          <FormationTeamPanel
-            side="away"
-            teamLabel="Visitante"
-            selectedFormationId={doc.formations?.away ?? null}
-            activePhase={(doc.formations?.awayPhase ?? 0) as TacticalPhaseIndex}
-            formations={availableFormations}
-            playerImageSrc={materialImages['player-rival']?.src}
-            onFormationSelect={(id) => applyFormationSelection('away', id)}
-            onPhaseSelect={(phase) => applyTeamPhase('away', phase)}
-          />
-        ) : null}
       </div>
+
+      {/* Formaciones — misma altura izquierda / derecha */}
+      {formationGroup ? (
+        <>
+          <div
+            className={cn(
+              'pointer-events-auto absolute left-4 z-40',
+              FORMATION_PANEL_TOP_CLASS
+            )}
+          >
+            <FormationTeamPanel
+              side="home"
+              teamLabel="Local"
+              selectedFormationId={doc.formations?.home ?? null}
+              activePhase={(doc.formations?.homePhase ?? 0) as TacticalPhaseIndex}
+              formations={availableFormations}
+              playerImageSrc={materialImages['player-own']?.src}
+              onFormationSelect={(id) => applyFormationSelection('home', id)}
+              onPhaseSelect={(phase) => applyTeamPhase('home', phase)}
+            />
+          </div>
+          <div
+            className={cn(
+              'pointer-events-auto absolute right-4 z-40',
+              FORMATION_PANEL_TOP_CLASS
+            )}
+          >
+            <FormationTeamPanel
+              side="away"
+              teamLabel="Visitante"
+              selectedFormationId={doc.formations?.away ?? null}
+              activePhase={(doc.formations?.awayPhase ?? 0) as TacticalPhaseIndex}
+              formations={availableFormations}
+              playerImageSrc={materialImages['player-rival']?.src}
+              onFormationSelect={(id) => applyFormationSelection('away', id)}
+              onPhaseSelect={(phase) => applyTeamPhase('away', phase)}
+            />
+          </div>
+        </>
+      ) : null}
 
       <DrawingStudioConfirmDialog
         open={clearConfirmOpen}

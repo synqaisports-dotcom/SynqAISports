@@ -81,7 +81,7 @@ export function ExerciseAnimationTimeline({
       {panelOpen && animationActive ? (
         <div
           className={cn(
-            'flex max-h-[min(70vh,28rem)] flex-col items-center gap-1 overflow-y-auto rounded-2xl p-1.5',
+            'flex max-h-[7.5rem] flex-col items-center gap-1 overflow-y-auto rounded-2xl p-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
             GLASS.panel
           )}
         >
