@@ -75,10 +75,15 @@ import {
 } from '@/lib/exercise-drawing';
 import {
   applyFormationToElements,
+  buildTacticalPhaseElements,
   formationGroupForField,
   formationsForField,
+  hasTacticalFormationSetup,
   reapplyStoredFormations,
   sanitizeFormationsForField,
+  TACTICAL_ANIMATION_PHASE_COUNT,
+  TACTICAL_SCENE_LABELS,
+  type TacticalPhaseIndex,
 } from '@/lib/drawing-formations';
 import { cn } from '@/lib/utils';
 
@@ -464,16 +469,36 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
   };
 
   const enableAnimation = () => {
-    setDoc((current) => ({
-      ...current,
-      animation: {
-        transitionMs: DEFAULT_ANIMATION_TRANSITION_MS,
-        holdMs: DEFAULT_ANIMATION_HOLD_MS,
-        loop: true,
-        playbackSpeed: DEFAULT_ANIMATION_PLAYBACK_SPEED,
-        scenes: renumberAnimationScenes([createAnimationScene(current.elements)]),
-      },
-    }));
+    setDoc((current) => {
+      const useTacticalPhases = hasTacticalFormationSetup(current.formations);
+      const scenes = useTacticalPhases
+        ? renumberAnimationScenes(
+            Array.from({ length: TACTICAL_ANIMATION_PHASE_COUNT }, (_, phase) =>
+              createAnimationScene(
+                buildTacticalPhaseElements(
+                  current.elements,
+                  current.formations,
+                  current.field,
+                  phase as TacticalPhaseIndex
+                ),
+                TACTICAL_SCENE_LABELS[phase as TacticalPhaseIndex]
+              )
+            )
+          )
+        : renumberAnimationScenes([createAnimationScene(current.elements)]);
+
+      return {
+        ...current,
+        animation: {
+          transitionMs: DEFAULT_ANIMATION_TRANSITION_MS,
+          holdMs: DEFAULT_ANIMATION_HOLD_MS,
+          loop: true,
+          playbackSpeed: DEFAULT_ANIMATION_PLAYBACK_SPEED,
+          scenes,
+        },
+        elements: cloneDrawingElements(scenes[0].elements),
+      };
+    });
     setActiveSceneIndex(0);
   };
 

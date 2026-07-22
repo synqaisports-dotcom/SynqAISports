@@ -65,9 +65,19 @@ function depthLine(depth: number, labels: string[], inset = 0.12): TeamLocalSlot
   }));
 }
 
-function withKeeper(slots: TeamLocalSlot[], keeperDepth = 0.05): TeamLocalSlot[] {
+function withKeeper(slots: TeamLocalSlot[], keeperDepth = 0.04): TeamLocalSlot[] {
   return [{ depth: keeperDepth, lane: 0.5, label: '1' }, ...slots];
 }
+
+/** Profundidades de línea con más separación entre defensa, medio y delantera. */
+const LINE = {
+  def: 0.18,
+  mid2: 0.42,
+  mid: 0.54,
+  mid3: 0.62,
+  fwd: 0.84,
+  fwdSt: 0.88,
+} as const;
 
 export const FORMATIONS_BY_GROUP: Record<FormationFieldGroup, FormationPreset[]> = {
   f11: [
@@ -75,46 +85,46 @@ export const FORMATIONS_BY_GROUP: Record<FormationFieldGroup, FormationPreset[]>
       id: '442',
       label: '4-4-2',
       slots: withKeeper([
-        ...depthLine(0.24, ['2', '3', '4', '5']),
-        ...depthLine(0.5, ['6', '7', '8', '9']),
-        ...depthLine(0.76, ['10', '11']),
+        ...depthLine(LINE.def, ['2', '3', '4', '5']),
+        ...depthLine(LINE.mid, ['6', '7', '8', '9']),
+        ...depthLine(LINE.fwd, ['10', '11']),
       ]),
     },
     {
       id: '433',
       label: '4-3-3',
       slots: withKeeper([
-        ...depthLine(0.24, ['2', '3', '4', '5']),
-        ...depthLine(0.48, ['6', '8', '10']),
-        ...depthLine(0.74, ['7', '9', '11']),
+        ...depthLine(LINE.def, ['2', '3', '4', '5']),
+        ...depthLine(LINE.mid2, ['6', '8', '10']),
+        ...depthLine(LINE.fwd, ['7', '9', '11']),
       ]),
     },
     {
       id: '352',
       label: '3-5-2',
       slots: withKeeper([
-        ...depthLine(0.24, ['3', '4', '5'], 0.22),
-        ...depthLine(0.5, ['2', '6', '8', '10', '7'], 0.08),
-        ...depthLine(0.76, ['9', '11']),
+        ...depthLine(LINE.def, ['3', '4', '5'], 0.22),
+        ...depthLine(LINE.mid, ['2', '6', '8', '10', '7'], 0.08),
+        ...depthLine(LINE.fwd, ['9', '11']),
       ]),
     },
     {
       id: '4231',
       label: '4-2-3-1',
       slots: withKeeper([
-        ...depthLine(0.24, ['2', '3', '4', '5']),
-        ...depthLine(0.44, ['6', '8']),
-        ...depthLine(0.62, ['7', '10', '11']),
-        ...depthLine(0.78, ['9']),
+        ...depthLine(LINE.def, ['2', '3', '4', '5']),
+        ...depthLine(LINE.mid2, ['6', '8']),
+        ...depthLine(LINE.mid3, ['7', '10', '11']),
+        ...depthLine(LINE.fwdSt, ['9']),
       ]),
     },
     {
       id: '343',
       label: '3-4-3',
       slots: withKeeper([
-        ...depthLine(0.24, ['3', '4', '5'], 0.22),
-        ...depthLine(0.48, ['2', '6', '8', '7']),
-        ...depthLine(0.74, ['9', '10', '11']),
+        ...depthLine(LINE.def, ['3', '4', '5'], 0.22),
+        ...depthLine(LINE.mid2, ['2', '6', '8', '7']),
+        ...depthLine(LINE.fwd, ['9', '10', '11']),
       ]),
     },
   ],
@@ -123,27 +133,27 @@ export const FORMATIONS_BY_GROUP: Record<FormationFieldGroup, FormationPreset[]>
       id: '321',
       label: '3-2-1',
       slots: withKeeper([
-        ...depthLine(0.26, ['2', '3', '4'], 0.18),
-        ...depthLine(0.52, ['5', '6']),
-        ...depthLine(0.76, ['7']),
+        ...depthLine(LINE.def, ['2', '3', '4'], 0.18),
+        ...depthLine(LINE.mid, ['5', '6']),
+        ...depthLine(LINE.fwd, ['7']),
       ]),
     },
     {
       id: '231',
       label: '2-3-1',
       slots: withKeeper([
-        ...depthLine(0.26, ['2', '3'], 0.28),
-        ...depthLine(0.52, ['4', '5', '6']),
-        ...depthLine(0.76, ['7']),
+        ...depthLine(LINE.def, ['2', '3'], 0.28),
+        ...depthLine(LINE.mid, ['4', '5', '6']),
+        ...depthLine(LINE.fwd, ['7']),
       ]),
     },
     {
       id: '222',
       label: '2-2-2',
       slots: withKeeper([
-        ...depthLine(0.26, ['2', '3'], 0.28),
-        ...depthLine(0.52, ['4', '5']),
-        ...depthLine(0.76, ['6', '7']),
+        ...depthLine(LINE.def, ['2', '3'], 0.28),
+        ...depthLine(LINE.mid, ['4', '5']),
+        ...depthLine(LINE.fwd, ['6', '7']),
       ]),
     },
   ],
@@ -152,35 +162,35 @@ export const FORMATIONS_BY_GROUP: Record<FormationFieldGroup, FormationPreset[]>
       id: '121',
       label: '1-2-1',
       slots: withKeeper([
-        ...depthLine(0.28, ['2', '3'], 0.28),
-        ...depthLine(0.56, ['4']),
-        ...depthLine(0.78, ['5']),
+        ...depthLine(0.2, ['2', '3'], 0.28),
+        ...depthLine(LINE.mid, ['4']),
+        ...depthLine(LINE.fwd, ['5']),
       ]),
     },
     {
       id: '211',
       label: '2-1-1',
       slots: withKeeper([
-        ...depthLine(0.28, ['2', '3'], 0.28),
-        ...depthLine(0.54, ['4']),
-        ...depthLine(0.78, ['5']),
+        ...depthLine(0.2, ['2', '3'], 0.28),
+        ...depthLine(LINE.mid2, ['4']),
+        ...depthLine(LINE.fwd, ['5']),
       ]),
     },
     {
       id: '112',
       label: '1-1-2',
       slots: withKeeper([
-        ...depthLine(0.28, ['2'], 0.38),
-        ...depthLine(0.54, ['3']),
-        ...depthLine(0.78, ['4', '5'], 0.28),
+        ...depthLine(0.2, ['2'], 0.38),
+        ...depthLine(LINE.mid2, ['3']),
+        ...depthLine(LINE.fwd, ['4', '5'], 0.28),
       ]),
     },
     {
       id: '22',
       label: '2-2',
       slots: withKeeper([
-        ...depthLine(0.3, ['2', '3'], 0.28),
-        ...depthLine(0.72, ['4', '5'], 0.28),
+        ...depthLine(0.22, ['2', '3'], 0.28),
+        ...depthLine(LINE.fwd, ['4', '5'], 0.28),
       ]),
     },
   ],
@@ -189,22 +199,22 @@ export const FORMATIONS_BY_GROUP: Record<FormationFieldGroup, FormationPreset[]>
       id: 'half-442',
       label: '4-1',
       slots: withKeeper([
-        ...depthLine(0.3, ['2', '3', '4', '5']),
-        ...depthLine(0.68, ['6']),
+        ...depthLine(0.26, ['2', '3', '4', '5']),
+        ...depthLine(0.78, ['6']),
       ]),
     },
     {
       id: 'half-321',
       label: '3-2',
       slots: withKeeper([
-        ...depthLine(0.3, ['2', '3', '4'], 0.18),
-        ...depthLine(0.68, ['5', '6']),
+        ...depthLine(0.26, ['2', '3', '4'], 0.18),
+        ...depthLine(0.78, ['5', '6']),
       ]),
     },
     {
       id: 'half-41',
       label: '4',
-      slots: withKeeper([...depthLine(0.55, ['2', '3', '4', '5'])]),
+      slots: withKeeper([...depthLine(0.62, ['2', '3', '4', '5'])]),
     },
   ],
 };
@@ -373,4 +383,115 @@ export function reapplyStoredFormations(
     next = applyFormationToElements(next, 'away', formations.away, group, field);
   }
   return next;
+}
+
+export const TACTICAL_ANIMATION_PHASE_COUNT = 4 as const;
+
+export const TACTICAL_SCENE_LABELS = ['Salida', 'Def→Ataq', 'Ataq→Def', 'Ataque'] as const;
+
+export type TacticalPhaseIndex = 0 | 1 | 2 | 3;
+
+/** Desplazamiento de profundidad local por fase táctica. */
+const PHASE_DEPTH_OFFSET: Record<TacticalPhaseIndex, number> = {
+  0: 0,
+  1: 0.22,
+  2: 0.1,
+  3: 0.34,
+};
+
+export function hasTacticalFormationSetup(formations: DrawingFormations | undefined): boolean {
+  return Boolean(formations?.home || formations?.away);
+}
+
+function isTeamPlayer(el: DrawingElement): el is MaterialElement {
+  return (
+    el.type === 'material' &&
+    (el.material === 'player-own' || el.material === 'player-rival')
+  );
+}
+
+function phaseDepth(baseDepth: number, phase: TacticalPhaseIndex, isKeeper: boolean): number {
+  const offset = PHASE_DEPTH_OFFSET[phase] * (isKeeper ? 0.3 : 1);
+  return clamp01(baseDepth + offset);
+}
+
+function shiftManualPlayersForPhase(
+  players: DrawingElement[],
+  field: FieldTemplate,
+  phase: TacticalPhaseIndex
+): DrawingElement[] {
+  if (phase === 0) return players;
+  const layout = formationLayoutForField(field);
+  const amount = PHASE_DEPTH_OFFSET[phase];
+
+  return players.map((el) => {
+    if (!isTeamPlayer(el)) return el;
+    const isKeeper = el.label === '1';
+    const delta = amount * (isKeeper ? 0.3 : 1);
+
+    if (layout?.kind === 'horizontal') {
+      const span =
+        el.material === 'player-own'
+          ? layout.home.xMax - layout.home.xMin
+          : layout.away.xMax - layout.away.xMin;
+      const dx = el.material === 'player-own' ? delta * span : -delta * span;
+      return { ...el, x: clamp01(el.x + dx) };
+    }
+
+    if (layout?.kind === 'vertical-half') {
+      const span = layout.home.yMax - layout.home.yMin;
+      return { ...el, y: clamp01(el.y + delta * span) };
+    }
+
+    return el;
+  });
+}
+
+/** Genera elementos de una fase táctica (salida, transiciones, ataque). */
+export function buildTacticalPhaseElements(
+  elements: DrawingElement[],
+  formations: DrawingFormations | undefined,
+  field: FieldTemplate,
+  phase: TacticalPhaseIndex
+): DrawingElement[] {
+  const group = formationGroupForField(field);
+  const staticElements = elements.filter((el) => !isTeamPlayer(el));
+
+  if (!formations || !group) {
+    const players = shiftManualPlayersForPhase(
+      elements.filter(isTeamPlayer),
+      field,
+      phase
+    );
+    return sortElementsByLayer([...staticElements, ...players]);
+  }
+
+  const players: DrawingElement[] = [];
+
+  for (const side of ['home', 'away'] as const) {
+    const formationId = formations[side];
+    const material = side === 'home' ? 'player-own' : 'player-rival';
+
+    if (formationId) {
+      const formation = findFormation(group, formationId);
+      if (formation) {
+        for (const slot of formation.slots) {
+          const isKeeper = slot.label === '1';
+          const adjusted: TeamLocalSlot = {
+            ...slot,
+            depth: phaseDepth(slot.depth, phase, isKeeper),
+          };
+          players.push(createPlayerElement(material, adjusted, side, field));
+        }
+        continue;
+      }
+    }
+
+    const manual = elements.filter(
+      (el) => el.type === 'material' && el.material === material
+    );
+    players.push(...shiftManualPlayersForPhase(manual, field, phase));
+  }
+
+  return sortElementsByLayer([...staticElements, ...players]);
 }
