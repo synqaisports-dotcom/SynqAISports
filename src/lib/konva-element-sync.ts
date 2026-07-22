@@ -2,10 +2,6 @@ import type Konva from 'konva';
 import { MATERIAL_SCALE_NORM } from '@/lib/field-engine';
 import type { MaterialKind } from '@/lib/drawing-material-assets';
 import {
-  isPlayerMaterial,
-  playerLabelFontSize,
-} from '@/lib/drawing-material-assets';
-import {
   DEFAULT_WAVE_WAVELENGTH_NORM,
   RECT_STROKE_OPACITY,
   RECT_STROKE_WIDTH_FACTOR,
@@ -142,43 +138,37 @@ export function applyDrawingElementToKonvaNode(
     group.opacity(element.opacity);
     group.visible(element.opacity > 0.01);
 
-    const scaleXn = element.scaleX ?? element.scale;
-    const scaleYn = element.scaleY ?? element.scale;
-    const uniform = element.material !== 'ladder';
-    const imgNode = group.findOne('Image') as Konva.Image | null;
+    if (element.material === 'ladder') {
+      const scaleXn = element.scaleX ?? element.scale;
+      const scaleYn = element.scaleY ?? element.scale;
+      const unitW = 110;
+      const unitH = 56;
+      const ladderW = scaleXn * base;
+      const ladderH = scaleYn * base * (unitH / unitW);
+      const hw = ladderW / 2;
+      const hh = ladderH / 2;
+      const rungs = 5;
+      const lines = group.find('Line');
+      if (lines.length >= 2) {
+        (lines[0] as Konva.Line).points([-hw, -hh, -hw, hh]);
+        (lines[1] as Konva.Line).points([hw, -hh, hw, hh]);
+        for (let i = 0; i < rungs && i + 2 < lines.length; i++) {
+          const y = -hh + (i / (rungs - 1)) * ladderH;
+          (lines[i + 2] as Konva.Line).points([-hw, y, hw, y]);
+        }
+      }
+      return;
+    }
 
+    const imgNode = group.findOne('Image') as Konva.Image | null;
+    const scale = element.scale * base;
     if (imgNode) {
       const img = materialImages[element.material];
       if (img) imgNode.image(img);
-      if (uniform) {
-        const scale = element.scale * base;
-        imgNode.width(scale);
-        imgNode.height(scale);
-        imgNode.offsetX(scale / 2);
-        imgNode.offsetY(scale / 2);
-      } else {
-        const w = scaleXn * base;
-        const h = scaleYn * base;
-        imgNode.width(w);
-        imgNode.height(h);
-        imgNode.offsetX(w / 2);
-        imgNode.offsetY(h / 2);
-      }
-    }
-
-    const labelNode = group.findOne('.player-label') as Konva.Text | null;
-    if (isPlayerMaterial(element.material)) {
-      const scale = element.scale * base;
-      if (labelNode) {
-        labelNode.text(element.label ?? '');
-        labelNode.fontSize(playerLabelFontSize(scale));
-        labelNode.width(scale);
-        labelNode.offsetX(scale / 2);
-        labelNode.offsetY(playerLabelFontSize(scale) * 0.55);
-        labelNode.visible(Boolean(element.label));
-      }
-    } else if (labelNode) {
-      labelNode.visible(false);
+      imgNode.width(scale);
+      imgNode.height(scale);
+      imgNode.offsetX(scale / 2);
+      imgNode.offsetY(scale / 2);
     }
   }
 }

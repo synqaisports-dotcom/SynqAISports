@@ -1,7 +1,4 @@
-/**
- * Materiales de pizarra — PNG de alta calidad en /public/drawing-materials/.
- * Los jugadores usan sprite base + etiqueta dinámica en Konva.
- */
+/** Texturas de material generadas en canvas (alta resolución, no SVG plano). */
 
 export type MaterialKind =
   | 'player-own'
@@ -9,53 +6,294 @@ export type MaterialKind =
   | 'player-neutral'
   | 'cone'
   | 'cone-pole'
-  | 'seta'
   | 'ball'
   | 'goal'
   | 'hurdle'
   | 'ladder';
 
-const CACHE_VERSION = 3;
+const TEXTURE_SIZE = 256;
+const CACHE_VERSION = 2;
 const cache = new Map<string, HTMLImageElement>();
-
-const MATERIAL_ASSET_PATH: Record<MaterialKind, string> = {
-  'player-own': '/drawing-materials/player-own.png',
-  'player-rival': '/drawing-materials/player-rival.png',
-  'player-neutral': '/drawing-materials/player-neutral.png',
-  cone: '/drawing-materials/cone.png',
-  'cone-pole': '/drawing-materials/cone-pole.png',
-  seta: '/drawing-materials/seta.png',
-  ball: '/drawing-materials/ball.png',
-  goal: '/drawing-materials/goal.png',
-  hurdle: '/drawing-materials/hurdle.png',
-  ladder: '/drawing-materials/ladder.png',
-};
 
 function cacheKey(kind: MaterialKind): string {
   return `${CACHE_VERSION}:${kind}`;
 }
 
-function loadImage(src: string): Promise<HTMLImageElement> {
+function createImage(dataUrl: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve(img);
     img.onerror = reject;
-    img.src = src;
+    img.src = dataUrl;
   });
 }
 
-export function isPlayerMaterial(kind: MaterialKind): boolean {
-  return kind === 'player-own' || kind === 'player-rival' || kind === 'player-neutral';
+function darken(hex: string, amount: number): string {
+  const n = parseInt(hex.slice(1), 16);
+  const r = Math.max(0, ((n >> 16) & 255) * (1 - amount));
+  const g = Math.max(0, ((n >> 8) & 255) * (1 - amount));
+  const b = Math.max(0, (n & 255) * (1 - amount));
+  return `rgb(${r | 0},${g | 0},${b | 0})`;
 }
 
-export function playerLabelForKind(kind: MaterialKind): string {
-  if (kind === 'player-rival') return 'X';
-  if (kind === 'player-neutral') return 'N';
-  return '1';
+function drawPlayer(ctx: CanvasRenderingContext2D, fill: string, stroke: string, label: string) {
+  const s = TEXTURE_SIZE;
+  const cx = s / 2;
+  const cy = s / 2 + 6;
+  ctx.clearRect(0, 0, s, s);
+
+  // Sombra en el césped
+  ctx.fillStyle = 'rgba(0,0,0,0.28)';
+  ctx.beginPath();
+  ctx.ellipse(cx, s * 0.8, 54, 16, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Disco principal — estilo marcador plano visto desde arriba
+  const grad = ctx.createRadialGradient(cx, cy - 12, 8, cx, cy, 72);
+  grad.addColorStop(0, lighten(fill, 0.4));
+  grad.addColorStop(0.55, fill);
+  grad.addColorStop(1, darken(fill, 0.2));
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 62, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Anillo exterior
+  ctx.strokeStyle = 'rgba(255,255,255,0.92)';
+  ctx.lineWidth = 6;
+  ctx.stroke();
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  // Brillo superior
+  ctx.fillStyle = 'rgba(255,255,255,0.22)';
+  ctx.beginPath();
+  ctx.ellipse(cx - 14, cy - 20, 22, 12, -0.4, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Número
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 54px system-ui, -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor = 'rgba(0,0,0,0.4)';
+  ctx.shadowBlur = 6;
+  ctx.shadowOffsetY = 2;
+  ctx.fillText(label, cx, cy + 4);
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
+
+  // Indicador de orientación (flecha)
+  ctx.fillStyle = 'rgba(255,255,255,0.95)';
+  ctx.beginPath();
+  ctx.moveTo(cx, 24);
+  ctx.lineTo(cx - 18, 56);
+  ctx.lineTo(cx + 18, 56);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
 }
 
-export function playerLabelFontSize(materialScale: number): number {
-  return Math.max(11, materialScale * 0.36);
+function drawCone(ctx: CanvasRenderingContext2D) {
+  const s = TEXTURE_SIZE;
+  ctx.clearRect(0, 0, s, s);
+
+  ctx.fillStyle = 'rgba(0,0,0,0.22)';
+  ctx.beginPath();
+  ctx.ellipse(s / 2, s * 0.82, 48, 12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  const grad = ctx.createLinearGradient(s / 2, 28, s / 2, s * 0.78);
+  grad.addColorStop(0, '#fdba74');
+  grad.addColorStop(0.45, '#f97316');
+  grad.addColorStop(1, '#c2410c');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.moveTo(s / 2, 28);
+  ctx.lineTo(52, s * 0.78);
+  ctx.lineTo(s - 52, s * 0.78);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.strokeStyle = 'rgba(124,45,18,0.55)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(s / 2, 28);
+  ctx.lineTo(52, s * 0.78);
+  ctx.stroke();
+
+  // Franja reflectante
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.beginPath();
+  ctx.moveTo(s / 2 - 8, 52);
+  ctx.lineTo(s / 2 + 8, 52);
+  ctx.lineTo(s / 2 + 4, 68);
+  ctx.lineTo(s / 2 - 4, 68);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawConePole(ctx: CanvasRenderingContext2D) {
+  const s = TEXTURE_SIZE;
+  ctx.clearRect(0, 0, s, s);
+  ctx.fillStyle = '#facc15';
+  ctx.beginPath();
+  ctx.arc(s / 2, 44, 26, 0, Math.PI * 2);
+  ctx.fill();
+  const pole = ctx.createLinearGradient(116, 60, 140, 220);
+  pole.addColorStop(0, '#f8fafc');
+  pole.addColorStop(1, '#94a3b8');
+  ctx.fillStyle = pole;
+  ctx.fillRect(116, 60, 24, 164);
+}
+
+function drawBall(ctx: CanvasRenderingContext2D) {
+  const s = TEXTURE_SIZE;
+  const cx = s / 2;
+  const cy = s / 2 + 4;
+  ctx.clearRect(0, 0, s, s);
+
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  ctx.beginPath();
+  ctx.ellipse(cx, s * 0.8, 40, 11, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  const grad = ctx.createRadialGradient(cx - 18, cy - 18, 6, cx, cy, 52);
+  grad.addColorStop(0, '#ffffff');
+  grad.addColorStop(0.7, '#e2e8f0');
+  grad.addColorStop(1, '#94a3b8');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 48, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = '#64748b';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - 30);
+  ctx.lineTo(cx + 22, cy - 6);
+  ctx.lineTo(cx + 12, cy + 24);
+  ctx.lineTo(cx - 12, cy + 24);
+  ctx.lineTo(cx - 22, cy - 6);
+  ctx.closePath();
+  ctx.stroke();
+}
+
+function drawGoal(ctx: CanvasRenderingContext2D) {
+  const s = TEXTURE_SIZE;
+  ctx.clearRect(0, 0, s, s);
+  ctx.strokeStyle = '#e2e8f0';
+  ctx.lineWidth = 8;
+  ctx.strokeRect(40, 72, 176, 112);
+  ctx.lineWidth = 10;
+  ctx.beginPath();
+  ctx.moveTo(40, 72);
+  ctx.lineTo(40, 184);
+  ctx.moveTo(216, 72);
+  ctx.lineTo(216, 184);
+  ctx.stroke();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(226,232,240,0.45)';
+  for (let i = 1; i < 5; i++) {
+    const x = 40 + (176 / 5) * i;
+    ctx.beginPath();
+    ctx.moveTo(x, 72);
+    ctx.lineTo(x, 184);
+    ctx.stroke();
+  }
+  for (let j = 1; j < 4; j++) {
+    const y = 72 + (112 / 4) * j;
+    ctx.beginPath();
+    ctx.moveTo(40, y);
+    ctx.lineTo(216, y);
+    ctx.stroke();
+  }
+}
+
+function drawHurdle(ctx: CanvasRenderingContext2D) {
+  const s = TEXTURE_SIZE;
+  ctx.clearRect(0, 0, s, s);
+  ctx.fillStyle = '#f97316';
+  ctx.fillRect(48, 96, 160, 16);
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillRect(60, 112, 12, 88);
+  ctx.fillRect(184, 112, 12, 88);
+}
+
+function drawLadder(ctx: CanvasRenderingContext2D) {
+  const s = TEXTURE_SIZE;
+  ctx.clearRect(0, 0, s, s);
+  ctx.strokeStyle = '#0f172a';
+  ctx.lineWidth = 10;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(72, 60);
+  ctx.lineTo(72, 200);
+  ctx.moveTo(184, 60);
+  ctx.lineTo(184, 200);
+  ctx.stroke();
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 8;
+  for (let i = 0; i < 6; i++) {
+    const y = 68 + i * 24;
+    ctx.beginPath();
+    ctx.moveTo(72, y);
+    ctx.lineTo(184, y);
+    ctx.stroke();
+  }
+}
+
+function lighten(hex: string, amount: number): string {
+  const n = parseInt(hex.slice(1), 16);
+  const r = Math.min(255, ((n >> 16) & 255) + 255 * amount);
+  const g = Math.min(255, ((n >> 8) & 255) + 255 * amount);
+  const b = Math.min(255, (n & 255) + 255 * amount);
+  return `rgb(${r | 0},${g | 0},${b | 0})`;
+}
+
+function renderMaterial(kind: MaterialKind): string {
+  const canvas = document.createElement('canvas');
+  canvas.width = TEXTURE_SIZE;
+  canvas.height = TEXTURE_SIZE;
+  const ctx = canvas.getContext('2d')!;
+
+  switch (kind) {
+    case 'player-own':
+      drawPlayer(ctx, '#0ea5e9', '#0369a1', '1');
+      break;
+    case 'player-rival':
+      drawPlayer(ctx, '#f43f5e', '#be123c', 'X');
+      break;
+    case 'player-neutral':
+      drawPlayer(ctx, '#f59e0b', '#b45309', 'N');
+      break;
+    case 'cone':
+      drawCone(ctx);
+      break;
+    case 'cone-pole':
+      drawConePole(ctx);
+      break;
+    case 'ball':
+      drawBall(ctx);
+      break;
+    case 'goal':
+      drawGoal(ctx);
+      break;
+    case 'hurdle':
+      drawHurdle(ctx);
+      break;
+    case 'ladder':
+      drawLadder(ctx);
+      break;
+  }
+  return canvas.toDataURL('image/png');
 }
 
 export async function getMaterialImage(kind: MaterialKind): Promise<HTMLImageElement> {
@@ -65,8 +303,7 @@ export async function getMaterialImage(kind: MaterialKind): Promise<HTMLImageEle
   const key = cacheKey(kind);
   const cached = cache.get(key);
   if (cached) return cached;
-
-  const img = await loadImage(MATERIAL_ASSET_PATH[kind]);
+  const img = await createImage(renderMaterial(kind));
   cache.set(key, img);
   return img;
 }
@@ -77,7 +314,6 @@ export const MATERIAL_CATALOG: { kind: MaterialKind; label: string }[] = [
   { kind: 'player-neutral', label: 'Neutro' },
   { kind: 'cone', label: 'Cono' },
   { kind: 'cone-pole', label: 'Pica' },
-  { kind: 'seta', label: 'Seta' },
   { kind: 'ball', label: 'Balón' },
   { kind: 'goal', label: 'Portería' },
   { kind: 'hurdle', label: 'Valla' },

@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Stage, Layer, Line, Arrow, Rect, Group, Text } from 'react-konva';
+import { Stage, Layer, Line, Arrow, Rect, Group, Circle, Image as KonvaImage, Text } from 'react-konva';
 import { KonvaPitchLayer } from '@/components/methodology/drawing/KonvaPitchLayer';
-import { MaterialKonvaSprite } from '@/components/methodology/drawing/MaterialKonvaSprite';
+import { MATERIAL_SCALE_NORM } from '@/lib/field-engine';
 import {
   MATERIAL_CATALOG,
   getMaterialImage,
@@ -178,13 +178,64 @@ function ReadonlyElement({
   }
 
   if (element.type === 'material') {
+    const p = normToPx(element.x, element.y, fieldRect);
+    const base = fieldRect.width * MATERIAL_SCALE_NORM;
+
+    if (element.material === 'ladder') {
+      const scaleXn = element.scaleX ?? element.scale;
+      const scaleYn = element.scaleY ?? element.scale;
+      const unitW = 110;
+      const unitH = 56;
+      const ladderW = scaleXn * base;
+      const ladderH = scaleYn * base * (unitH / unitW);
+      const hw = ladderW / 2;
+      const hh = ladderH / 2;
+      const rungs = 5;
+      return (
+        <Group
+          key={element.id}
+          x={p.x}
+          y={p.y}
+          rotation={element.rotation}
+          opacity={element.opacity}
+          listening={false}
+        >
+          <Line points={[-hw, -hh, -hw, hh]} stroke="#0f172a" strokeWidth={2.5} lineCap="round" listening={false} />
+          <Line points={[hw, -hh, hw, hh]} stroke="#0f172a" strokeWidth={2.5} lineCap="round" listening={false} />
+          {Array.from({ length: rungs }).map((_, i) => {
+            const y = -hh + (i / (rungs - 1)) * ladderH;
+            return (
+              <Line
+                key={i}
+                points={[-hw, y, hw, y]}
+                stroke="#fbbf24"
+                strokeWidth={2}
+                lineCap="round"
+                listening={false}
+              />
+            );
+          })}
+        </Group>
+      );
+    }
+
+    const img = materialImages[element.material];
+    const scale = element.scale * base;
     return (
-      <MaterialKonvaSprite
+      <Group
         key={element.id}
-        element={element}
-        fieldRect={fieldRect}
-        materialImages={materialImages}
-      />
+        x={p.x}
+        y={p.y}
+        rotation={element.rotation}
+        opacity={element.opacity}
+        listening={false}
+      >
+        {img ? (
+          <KonvaImage image={img} width={scale} height={scale} offsetX={scale / 2} offsetY={scale / 2} />
+        ) : (
+          <Circle radius={scale / 2} fill="#334155" listening={false} />
+        )}
+      </Group>
     );
   }
 
