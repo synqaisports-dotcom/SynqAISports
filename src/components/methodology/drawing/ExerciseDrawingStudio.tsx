@@ -8,10 +8,12 @@ import {
   ArrowRight,
   BoxSelect,
   Copy,
+  Film,
   Minus,
   MousePointer2,
   Package,
   PenTool,
+  Plus,
   Save,
   Spline,
   Square,
@@ -29,10 +31,15 @@ import {
   type MaterialKind,
 } from '@/lib/drawing-material-assets';
 import {
+  DEFAULT_ANIMATION_HOLD_MS,
+  DEFAULT_ANIMATION_TRANSITION_MS,
   DEFAULT_STROKE,
   FIELD_FORMAT_SHORT,
   DEFAULT_WAVE_WAVELENGTH_NORM,
+  MAX_ANIMATION_SCENES,
   SPORT_OPTIONS,
+  cloneDrawingElements,
+  createAnimationScene,
   type DrawingElement,
   type ExerciseDrawingDocument,
   type FieldTemplate,
@@ -48,6 +55,7 @@ import {
   isTextTool,
   normToPx,
   parseExerciseDrawing,
+  persistActiveAnimationScene,
   pxToNorm,
   quadBezierEndAngle,
   quadBezierLinePoints,
@@ -134,6 +142,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
   const [materialImages, setMaterialImages] = useState<Partial<Record<MaterialKind, HTMLImageElement>>>({});
   const [materialsOpen, setMaterialsOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
+  const [activeSceneIndex, setActiveSceneIndex] = useState(0);
 
   useEffect(() => {
     setMounted(true);
@@ -157,6 +166,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     setTool('select');
     setToolsOpen(false);
     setMaterialsOpen(false);
+    setActiveSceneIndex(0);
   }, [open, initialData]);
 
   useEffect(() => {
@@ -341,6 +351,105 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     }
     setDoc((d) => ({ ...d, elements: sortElementsByLayer([...d.elements, copy]) }));
     setSelectedId(copy.id);
+  };
+
+  const animationEnabled = Boolean(doc.animation && doc.animation.scenes.length >= 2);
+  const sceneCount = doc.animation?.scenes.length ?? 0;
+
+  const switchScene = (index: number) => {
+    if (!doc.animation || index === activeSceneIndex) return;
+    setDoc((current) => {
+      const saved = persistActiveAnimationScene(current, activeSceneIndex);
+      const target = saved.animation?.scenes[index];
+      if (!target) return saved;
+      return { ...saved, elements: cloneDrawingElements(target.elements) };
+    });
+    setActiveSceneIndex(index);
+    setSelectedId(null);
+  };
+
+  const toggleAnimation = () => {
+    if (animationEnabled) {
+      setDoc((current) => {
+        const saved = persistActiveAnimationScene(current, activeSceneIndex);
+        const { animation: _removed, ...rest } = saved;
+        return rest;
+      });
+      setActiveSceneIndex(0);
+      return;
+    }
+    setDoc((current) => ({
+      ...current,
+      animation: {
+        transitionMs: DEFAULT_ANIMATION_TRANSITION_MS,
+        holdMs: DEFAULT_ANIMATION_HOLD_MS,
+        loop: true,
+        scenes: [
+          createAnimationScene(current.elements, 'Escena 1'),
+          createAnimationScene(current.elements, 'Escena 2'),
+        ],
+      },
+    }));
+    setActiveSceneIndex(0);
+  };
+
+  const addScene = () => {
+    setDoc((current) => {
+      if (!current.animation || current.animation.scenes.length >= MAX_ANIMATION_SCENES) return current;
+      const saved = persistActiveAnimationScene(current, activeSceneIndex);
+      const nextScene = createAnimationScene(
+        saved.elements,
+        `Escena ${saved.animation!.scenes.length + 1}`
+      );
+      const scenes = [...saved.animation!.scenes, nextScene];
+      const newIndex = scenes.length - 1;
+      setActiveSceneIndex(newIndex);
+      return {
+        ...saved,
+        animation: { ...saved.animation!, scenes },
+        elements: cloneDrawingElements(nextScene.elements),
+      };
+    });
+    setSelectedId(null);
+  };
+
+  const duplicateScene = () => {
+    setDoc((current) => {
+      if (!current.animation || current.animation.scenes.length >= MAX_ANIMATION_SCENES) return current;
+      const saved = persistActiveAnimationScene(current, activeSceneIndex);
+      const source = saved.animation!.scenes[activeSceneIndex];
+      if (!source) return saved;
+      const copy = createAnimationScene(
+        source.elements,
+        `${source.label?.trim() || `Escena ${activeSceneIndex + 1}`} copia`
+      );
+      const scenes = [...saved.animation!.scenes];
+      scenes.splice(activeSceneIndex + 1, 0, copy);
+      const newIndex = activeSceneIndex + 1;
+      setActiveSceneIndex(newIndex);
+      return {
+        ...saved,
+        animation: { ...saved.animation!, scenes },
+        elements: cloneDrawingElements(copy.elements),
+      };
+    });
+    setSelectedId(null);
+  };
+
+  const deleteScene = () => {
+    if (!doc.animation || doc.animation.scenes.length <= 2) return;
+    setDoc((current) => {
+      const saved = persistActiveAnimationScene(current, activeSceneIndex);
+      const scenes = saved.animation!.scenes.filter((_, index) => index !== activeSceneIndex);
+      const newIndex = Math.min(activeSceneIndex, scenes.length - 1);
+      setActiveSceneIndex(newIndex);
+      return {
+        ...saved,
+        animation: { ...saved.animation!, scenes },
+        elements: cloneDrawingElements(scenes[newIndex].elements),
+      };
+    });
+    setSelectedId(null);
   };
 
   const handleSportChange = (next: SportKind) => {
@@ -852,6 +961,71 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
         <X className="size-4" />
       </button>
 
+      {/* Escenas de animación — superior centro */}
+      <div className="absolute left-1/2 top-4 z-40 flex max-w-[min(94vw,760px)] -translate-x-1/2 flex-wrap items-center justify-center gap-1.5">
+        <button
+          type="button"
+          onClick={toggleAnimation}
+          className={cn(
+            'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium',
+            GLASS.pill,
+            animationEnabled ? GLASS.btnActive : GLASS.btn
+          )}
+          title={animationEnabled ? 'Desactivar animación' : 'Activar animación por escenas'}
+        >
+          <Film className="size-3.5" />
+          Animación
+        </button>
+        {animationEnabled && doc.animation ? (
+          <>
+            {doc.animation.scenes.map((scene, index) => (
+              <button
+                key={scene.id}
+                type="button"
+                onClick={() => switchScene(index)}
+                className={cn(
+                  'rounded-full px-2.5 py-1 text-[11px] font-medium transition-all',
+                  index === activeSceneIndex ? GLASS.btnActive : GLASS.btn
+                )}
+              >
+                {scene.label?.trim() || `Escena ${index + 1}`}
+              </button>
+            ))}
+            {sceneCount < MAX_ANIMATION_SCENES ? (
+              <button
+                type="button"
+                onClick={addScene}
+                className={cn('flex size-8 items-center justify-center rounded-full', GLASS.iconBtn)}
+                title="Añadir escena"
+                aria-label="Añadir escena"
+              >
+                <Plus className="size-3.5" />
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={duplicateScene}
+              className={cn('flex size-8 items-center justify-center rounded-full', GLASS.iconBtn)}
+              title="Duplicar escena actual"
+              aria-label="Duplicar escena"
+            >
+              <Copy className="size-3.5" />
+            </button>
+            {sceneCount > 2 ? (
+              <button
+                type="button"
+                onClick={deleteScene}
+                className={cn('flex size-8 items-center justify-center rounded-full', GLASS.danger)}
+                title="Eliminar escena actual"
+                aria-label="Eliminar escena"
+              >
+                <Trash2 className="size-3.5" />
+              </button>
+            ) : null}
+          </>
+        ) : null}
+      </div>
+
       {/* Controles — superior derecha */}
       <div className="absolute right-4 top-4 z-40 flex max-w-[min(92vw,640px)] flex-wrap items-center justify-end gap-2">
         <div className={cn('flex p-0.5', GLASS.pill)}>
@@ -892,7 +1066,8 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           aria-label="Guardar"
           className={cn('size-10', GLASS.iconBtn)}
           onClick={() => {
-            onSave(serializeExerciseDrawing(doc));
+            const saved = persistActiveAnimationScene(doc, activeSceneIndex);
+            onSave(serializeExerciseDrawing(saved));
             onClose();
           }}
         >

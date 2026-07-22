@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { BookOpen, Eye, Pencil, Plus, Printer, Trash2 } from 'lucide-react';
+import { BookOpen, Eye, Pencil, Play, Plus, Printer, Trash2 } from 'lucide-react';
 import { deleteExercise, updateExerciseDrawing } from '@/app/actions/methodology';
+import { ExerciseAnimationOverlay } from '@/components/methodology/drawing/ExerciseAnimationOverlay';
 import { DrawingPreviewFrame } from '@/components/methodology/drawing/DrawingPreviewFrame';
 import { ExerciseDrawingStudio } from '@/components/methodology/drawing/ExerciseDrawingStudio';
 import { ExercisePreviewOverlay } from '@/components/methodology/ExercisePreviewOverlay';
@@ -15,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   drawingDocumentIsEmpty,
+  hasDrawableAnimation,
   parseExerciseDrawing,
 } from '@/lib/exercise-drawing';
 import {
@@ -107,9 +109,11 @@ function ExerciseDetailPanel({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [studioOpen, setStudioOpen] = useState(false);
+  const [animationOpen, setAnimationOpen] = useState(false);
 
   useEffect(() => {
     setStudioOpen(false);
+    setAnimationOpen(false);
   }, [exercise?.id]);
 
   if (!exercise) {
@@ -133,6 +137,7 @@ function ExerciseDetailPanel({
   const taskLabel = TASK_TYPE_LABELS[taskType] ?? 'Tarea principal';
   const drawingDoc = parseExerciseDrawing(exercise.drawing_json);
   const hasDrawing = !drawingDocumentIsEmpty(drawingDoc);
+  const hasAnimation = hasDrawableAnimation(drawingDoc);
 
   const handleDeleteConfirm = async () => {
     if (!exercise) return;
@@ -210,6 +215,17 @@ function ExerciseDetailPanel({
               >
                 <Eye className="size-4" />
               </button>
+              {hasAnimation ? (
+                <button
+                  type="button"
+                  onClick={() => setAnimationOpen(true)}
+                  className={PORTAL_ACTION_ICON_CLASS}
+                  aria-label="Reproducir animación"
+                  title="Reproducir animación"
+                >
+                  <Play className="size-4" />
+                </button>
+              ) : null}
               <button
                 type="button"
                 onClick={handlePrint}
@@ -256,6 +272,13 @@ function ExerciseDetailPanel({
         exercise={exercise}
         open={previewOpen}
         onOpenChange={setPreviewOpen}
+      />
+
+      <ExerciseAnimationOverlay
+        title={exercise.title}
+        drawingJson={exercise.drawing_json}
+        open={animationOpen}
+        onOpenChange={setAnimationOpen}
       />
 
       <PortalConfirmDialog
