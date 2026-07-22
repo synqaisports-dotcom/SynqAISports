@@ -257,6 +257,26 @@ function clamp01(value: number): number {
   return Math.max(0, Math.min(1, value));
 }
 
+/** Profundidad local con la defensa en el centro del campo (x/y ≈ 0,5). */
+function attackDefAnchorDepth(field: FieldTemplate): number {
+  const layout = formationLayoutForField(field);
+  if (!layout) return 1;
+
+  if (layout.kind === 'horizontal') {
+    const span = layout.home.xMax - layout.home.xMin;
+    return (0.5 - layout.home.xMin) / span;
+  }
+
+  const span = layout.home.yMax - layout.home.yMin;
+  return (0.5 - layout.home.yMin) / span;
+}
+
+function defensiveAnchorDepth(formation: FormationPreset): number {
+  const outfield = formation.slots.filter((slot) => slot.label !== '1');
+  if (outfield.length === 0) return LINE.def;
+  return Math.min(...outfield.map((slot) => slot.depth));
+}
+
 /** Convierte slot local → coordenadas de campo + rotación hacia la portería rival. */
 export function teamSlotToField(
   slot: TeamLocalSlot,
@@ -268,7 +288,7 @@ export function teamSlotToField(
     return { x: 0.5, y: 0.5, rotation: 0 };
   }
 
-  const depth = clamp01(slot.depth);
+  const depth = slot.depth;
   const lane = clamp01(slot.lane);
 
   if (layout.kind === 'horizontal') {
@@ -419,14 +439,26 @@ function lerpNum(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
 
-function phaseDepth(baseDepth: number, phase: TacticalPhaseIndex, isKeeper: boolean): number {
+/**
+ * Desplaza el bloque táctico manteniendo la separación entre líneas.
+ * Salida = profundidades base de la formación; ataque = defensa en el centro del campo.
+ */
+function phaseDepth(
+  baseDepth: number,
+  phase: TacticalPhaseIndex,
+  isKeeper: boolean,
+  defAnchor: number,
+  attackDefDepth: number
+): number {
   const progress = PHASE_PROGRESS[phase];
+  const blockShift = (attackDefDepth - defAnchor) * progress;
+
   if (isKeeper) {
-    return lerpNum(0.04, 0.14, progress);
+    const gkAtaque = attackDefDepth - (defAnchor - baseDepth);
+    return lerpNum(baseDepth, gkAtaque, progress);
   }
-  const salidaDepth = baseDepth * 0.28 + 0.03;
-  const ataqueDepth = baseDepth * 0.38 + 0.55;
-  return clamp01(lerpNum(salidaDepth, ataqueDepth, progress));
+
+  return baseDepth + blockShift;
 }
 
 function shiftManualPlayersForPhase(
@@ -488,12 +520,14 @@ function buildTeamPlayersForPhase(
       .filter((el): el is MaterialElement => el.type === 'material' && el.material === material)
       .map((el) => [el.label ?? el.id, el] as const)
   );
+  const defAnchor = defensiveAnchorDepth(formation);
+  const attackDefDepth = attackDefAnchorDepth(field);
 
   return formation.slots.map((slot) => {
     const isKeeper = slot.label === '1';
     const adjusted: TeamLocalSlot = {
       ...slot,
-      depth: phaseDepth(slot.depth, phase, isKeeper),
+      depth: phaseDepth(slot.depth, phase, isKeeper, defAnchor, attackDefDepth),
     };
     const pos = teamSlotToField(adjusted, side, field);
     const existing = existingByLabel.get(slot.label);
@@ -532,11 +566,13 @@ export function buildTacticalPhaseElements(
     if (formationId) {
       const formation = findFormation(group, formationId);
       if (formation) {
+        const defAnchor = defensiveAnchorDepth(formation);
+        const attackDefDepth = attackDefAnchorDepth(field);
         for (const slot of formation.slots) {
           const isKeeper = slot.label === '1';
           const adjusted: TeamLocalSlot = {
             ...slot,
-            depth: phaseDepth(slot.depth, phase, isKeeper),
+            depth: phaseDepth(slot.depth, phase, isKeeper, defAnchor, attackDefDepth),
           };
           players.push(createPlayerElement(material, adjusted, side, field));
         }
