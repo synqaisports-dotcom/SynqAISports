@@ -77,6 +77,7 @@ import {
   applyFormationToElements,
   formationGroupForField,
   formationsForField,
+  reapplyStoredFormations,
   sanitizeFormationsForField,
 } from '@/lib/drawing-formations';
 import { cn } from '@/lib/utils';
@@ -542,19 +543,43 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
   const handleSportChange = (next: SportKind) => {
     setSport(next);
     const field = defaultFieldForSport(next);
-    setDoc((d) => ({
-      ...d,
-      field,
-      formations: sanitizeFormationsForField(d.formations, field),
-    }));
+    setDoc((d) => {
+      const formations = sanitizeFormationsForField(d.formations, field);
+      const elements = formations
+        ? reapplyStoredFormations(
+            d.elements.filter(
+              (el) =>
+                !(
+                  el.type === 'material' &&
+                  (el.material === 'player-own' || el.material === 'player-rival')
+                )
+            ),
+            formations,
+            field
+          )
+        : d.elements;
+      return { ...d, field, formations, elements };
+    });
   };
 
   const handleFieldChange = (field: FieldTemplate) => {
-    setDoc((d) => ({
-      ...d,
-      field,
-      formations: sanitizeFormationsForField(d.formations, field),
-    }));
+    setDoc((d) => {
+      const formations = sanitizeFormationsForField(d.formations, field);
+      const elements = formations
+        ? reapplyStoredFormations(
+            d.elements.filter(
+              (el) =>
+                !(
+                  el.type === 'material' &&
+                  (el.material === 'player-own' || el.material === 'player-rival')
+                )
+            ),
+            formations,
+            field
+          )
+        : d.elements;
+      return { ...d, field, formations, elements };
+    });
   };
 
   const formationGroup = formationGroupForField(doc.field);
@@ -564,7 +589,13 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     const group = formationGroupForField(doc.field);
     setDoc((current) => {
       const saved = persistActiveAnimationScene(current, activeSceneIndex);
-      const newElements = applyFormationToElements(saved.elements, side, formationId, group);
+      const newElements = applyFormationToElements(
+        saved.elements,
+        side,
+        formationId,
+        group,
+        saved.field
+      );
       const formations = {
         home: saved.formations?.home ?? null,
         away: saved.formations?.away ?? null,

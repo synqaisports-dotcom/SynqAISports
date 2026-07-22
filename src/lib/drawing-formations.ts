@@ -9,16 +9,17 @@ import {
 
 export type FormationFieldGroup = 'f11' | 'f7' | 'futsal' | 'half';
 
-export type FormationSlot = {
-  x: number;
-  y: number;
+/** Coordenadas locales del equipo: profundidad 0 = portería propia, 1 = línea de medio campo. */
+type TeamLocalSlot = {
+  depth: number;
+  lane: number;
   label: string;
 };
 
 export type FormationPreset = {
   id: string;
   label: string;
-  slots: FormationSlot[];
+  slots: TeamLocalSlot[];
 };
 
 export type DrawingFormations = {
@@ -28,18 +29,44 @@ export type DrawingFormations = {
 
 export const FORMATION_NONE_ID = 'none';
 
-function row(y: number, labels: string[], inset = 0.12): FormationSlot[] {
+/** Porterías a izquierda/derecha (F11, F7, sala). */
+type HorizontalLayout = {
+  kind: 'horizontal';
+  home: { xMin: number; xMax: number; rotation: number };
+  away: { xMin: number; xMax: number; rotation: number };
+};
+
+/** Medio campo: portería arriba, línea media abajo. */
+type VerticalHalfLayout = {
+  kind: 'vertical-half';
+  home: { xMin: number; xMax: number; yMin: number; yMax: number; rotation: number };
+  away: { xMin: number; xMax: number; yMin: number; yMax: number; rotation: number };
+};
+
+const HORIZONTAL_LAYOUT: HorizontalLayout = {
+  kind: 'horizontal',
+  home: { xMin: 0.05, xMax: 0.47, rotation: 90 },
+  away: { xMin: 0.53, xMax: 0.95, rotation: -90 },
+};
+
+const VERTICAL_HALF_LAYOUT: VerticalHalfLayout = {
+  kind: 'vertical-half',
+  home: { xMin: 0.06, xMax: 0.44, yMin: 0.1, yMax: 0.88, rotation: 180 },
+  away: { xMin: 0.56, xMax: 0.94, yMin: 0.1, yMax: 0.88, rotation: 180 },
+};
+
+function depthLine(depth: number, labels: string[], inset = 0.12): TeamLocalSlot[] {
   const count = labels.length;
-  const width = 1 - inset * 2;
+  const span = 1 - inset * 2;
   return labels.map((label, index) => ({
-    x: inset + (width * (index + 0.5)) / count,
-    y,
+    depth,
+    lane: inset + (span * (index + 0.5)) / count,
     label,
   }));
 }
 
-function withKeeper(slots: FormationSlot[], keeperLabel = '1'): FormationSlot[] {
-  return [{ x: 0.5, y: 0.9, label: keeperLabel }, ...slots];
+function withKeeper(slots: TeamLocalSlot[], keeperDepth = 0.05): TeamLocalSlot[] {
+  return [{ depth: keeperDepth, lane: 0.5, label: '1' }, ...slots];
 }
 
 export const FORMATIONS_BY_GROUP: Record<FormationFieldGroup, FormationPreset[]> = {
@@ -48,46 +75,46 @@ export const FORMATIONS_BY_GROUP: Record<FormationFieldGroup, FormationPreset[]>
       id: '442',
       label: '4-4-2',
       slots: withKeeper([
-        ...row(0.74, ['2', '3', '4', '5']),
-        ...row(0.54, ['6', '7', '8', '9']),
-        ...row(0.3, ['10', '11']),
+        ...depthLine(0.24, ['2', '3', '4', '5']),
+        ...depthLine(0.5, ['6', '7', '8', '9']),
+        ...depthLine(0.76, ['10', '11']),
       ]),
     },
     {
       id: '433',
       label: '4-3-3',
       slots: withKeeper([
-        ...row(0.74, ['2', '3', '4', '5']),
-        ...row(0.52, ['6', '8', '10']),
-        ...row(0.28, ['7', '9', '11']),
+        ...depthLine(0.24, ['2', '3', '4', '5']),
+        ...depthLine(0.48, ['6', '8', '10']),
+        ...depthLine(0.74, ['7', '9', '11']),
       ]),
     },
     {
       id: '352',
       label: '3-5-2',
       slots: withKeeper([
-        ...row(0.74, ['3', '4', '5'], 0.22),
-        ...row(0.56, ['2', '6', '8', '10', '7'], 0.08),
-        ...row(0.3, ['9', '11']),
+        ...depthLine(0.24, ['3', '4', '5'], 0.22),
+        ...depthLine(0.5, ['2', '6', '8', '10', '7'], 0.08),
+        ...depthLine(0.76, ['9', '11']),
       ]),
     },
     {
       id: '4231',
       label: '4-2-3-1',
       slots: withKeeper([
-        ...row(0.74, ['2', '3', '4', '5']),
-        ...row(0.58, ['6', '8']),
-        ...row(0.4, ['7', '10', '11']),
-        ...row(0.26, ['9']),
+        ...depthLine(0.24, ['2', '3', '4', '5']),
+        ...depthLine(0.44, ['6', '8']),
+        ...depthLine(0.62, ['7', '10', '11']),
+        ...depthLine(0.78, ['9']),
       ]),
     },
     {
       id: '343',
       label: '3-4-3',
       slots: withKeeper([
-        ...row(0.74, ['3', '4', '5'], 0.22),
-        ...row(0.52, ['2', '6', '8', '7']),
-        ...row(0.28, ['9', '10', '11']),
+        ...depthLine(0.24, ['3', '4', '5'], 0.22),
+        ...depthLine(0.48, ['2', '6', '8', '7']),
+        ...depthLine(0.74, ['9', '10', '11']),
       ]),
     },
   ],
@@ -96,27 +123,27 @@ export const FORMATIONS_BY_GROUP: Record<FormationFieldGroup, FormationPreset[]>
       id: '321',
       label: '3-2-1',
       slots: withKeeper([
-        ...row(0.72, ['2', '3', '4'], 0.18),
-        ...row(0.5, ['5', '6']),
-        ...row(0.28, ['7']),
+        ...depthLine(0.26, ['2', '3', '4'], 0.18),
+        ...depthLine(0.52, ['5', '6']),
+        ...depthLine(0.76, ['7']),
       ]),
     },
     {
       id: '231',
       label: '2-3-1',
       slots: withKeeper([
-        ...row(0.72, ['2', '3'], 0.28),
-        ...row(0.5, ['4', '5', '6']),
-        ...row(0.28, ['7']),
+        ...depthLine(0.26, ['2', '3'], 0.28),
+        ...depthLine(0.52, ['4', '5', '6']),
+        ...depthLine(0.76, ['7']),
       ]),
     },
     {
       id: '222',
       label: '2-2-2',
       slots: withKeeper([
-        ...row(0.72, ['2', '3'], 0.28),
-        ...row(0.5, ['4', '5']),
-        ...row(0.28, ['6', '7']),
+        ...depthLine(0.26, ['2', '3'], 0.28),
+        ...depthLine(0.52, ['4', '5']),
+        ...depthLine(0.76, ['6', '7']),
       ]),
     },
   ],
@@ -125,35 +152,35 @@ export const FORMATIONS_BY_GROUP: Record<FormationFieldGroup, FormationPreset[]>
       id: '121',
       label: '1-2-1',
       slots: withKeeper([
-        ...row(0.68, ['2', '3'], 0.28),
-        ...row(0.38, ['4']),
-        ...row(0.22, ['5']),
+        ...depthLine(0.28, ['2', '3'], 0.28),
+        ...depthLine(0.56, ['4']),
+        ...depthLine(0.78, ['5']),
       ]),
     },
     {
       id: '211',
       label: '2-1-1',
       slots: withKeeper([
-        ...row(0.68, ['2', '3'], 0.28),
-        ...row(0.46, ['4']),
-        ...row(0.24, ['5']),
+        ...depthLine(0.28, ['2', '3'], 0.28),
+        ...depthLine(0.54, ['4']),
+        ...depthLine(0.78, ['5']),
       ]),
     },
     {
       id: '112',
       label: '1-1-2',
       slots: withKeeper([
-        ...row(0.68, ['2'], 0.38),
-        ...row(0.46, ['3']),
-        ...row(0.24, ['4', '5'], 0.28),
+        ...depthLine(0.28, ['2'], 0.38),
+        ...depthLine(0.54, ['3']),
+        ...depthLine(0.78, ['4', '5'], 0.28),
       ]),
     },
     {
       id: '22',
       label: '2-2',
       slots: withKeeper([
-        ...row(0.62, ['2', '3'], 0.28),
-        ...row(0.3, ['4', '5'], 0.28),
+        ...depthLine(0.3, ['2', '3'], 0.28),
+        ...depthLine(0.72, ['4', '5'], 0.28),
       ]),
     },
   ],
@@ -162,22 +189,22 @@ export const FORMATIONS_BY_GROUP: Record<FormationFieldGroup, FormationPreset[]>
       id: 'half-442',
       label: '4-1',
       slots: withKeeper([
-        ...row(0.62, ['2', '3', '4', '5']),
-        ...row(0.34, ['6']),
+        ...depthLine(0.3, ['2', '3', '4', '5']),
+        ...depthLine(0.68, ['6']),
       ]),
     },
     {
       id: 'half-321',
       label: '3-2',
       slots: withKeeper([
-        ...row(0.62, ['2', '3', '4'], 0.18),
-        ...row(0.34, ['5', '6']),
+        ...depthLine(0.3, ['2', '3', '4'], 0.18),
+        ...depthLine(0.68, ['5', '6']),
       ]),
     },
     {
       id: 'half-41',
       label: '4',
-      slots: withKeeper([...row(0.42, ['2', '3', '4', '5'])]),
+      slots: withKeeper([...depthLine(0.55, ['2', '3', '4', '5'])]),
     },
   ],
 };
@@ -197,6 +224,14 @@ export function formationGroupForField(field: FieldTemplate): FormationFieldGrou
   }
 }
 
+export function formationLayoutForField(
+  field: FieldTemplate
+): HorizontalLayout | VerticalHalfLayout | null {
+  const group = formationGroupForField(field);
+  if (!group) return null;
+  return field === 'football-half' ? VERTICAL_HALF_LAYOUT : HORIZONTAL_LAYOUT;
+}
+
 export function formationsForField(field: FieldTemplate): FormationPreset[] {
   const group = formationGroupForField(field);
   return group ? FORMATIONS_BY_GROUP[group] : [];
@@ -206,19 +241,54 @@ export function findFormation(group: FormationFieldGroup, id: string): Formation
   return FORMATIONS_BY_GROUP[group].find((formation) => formation.id === id);
 }
 
+function clamp01(value: number): number {
+  return Math.max(0, Math.min(1, value));
+}
+
+/** Convierte slot local → coordenadas de campo + rotación hacia la portería rival. */
+export function teamSlotToField(
+  slot: TeamLocalSlot,
+  side: 'home' | 'away',
+  field: FieldTemplate
+): { x: number; y: number; rotation: number } {
+  const layout = formationLayoutForField(field);
+  if (!layout) {
+    return { x: 0.5, y: 0.5, rotation: 0 };
+  }
+
+  const depth = clamp01(slot.depth);
+  const lane = clamp01(slot.lane);
+
+  if (layout.kind === 'horizontal') {
+    const team = side === 'home' ? layout.home : layout.away;
+    const xSpan = team.xMax - team.xMin;
+    const x =
+      side === 'home'
+        ? team.xMin + depth * xSpan
+        : team.xMax - depth * xSpan;
+    return { x: clamp01(x), y: lane, rotation: team.rotation };
+  }
+
+  const team = side === 'home' ? layout.home : layout.away;
+  const x = team.xMin + lane * (team.xMax - team.xMin);
+  const y = team.yMin + depth * (team.yMax - team.yMin);
+  return { x: clamp01(x), y: clamp01(y), rotation: team.rotation };
+}
+
 function createPlayerElement(
   material: 'player-own' | 'player-rival',
-  slot: FormationSlot,
-  side: 'home' | 'away'
+  slot: TeamLocalSlot,
+  side: 'home' | 'away',
+  field: FieldTemplate
 ): MaterialElement {
-  const mirrored = side === 'away';
+  const { x, y, rotation } = teamSlotToField(slot, side, field);
   return {
     id: createElementId(),
     type: 'material',
     material,
-    x: slot.x,
-    y: mirrored ? 1 - slot.y : slot.y,
-    rotation: mirrored ? 180 : 0,
+    x,
+    y,
+    rotation,
     scale: 1,
     label: slot.label,
     opacity: DEFAULT_ELEMENT_OPACITY,
@@ -229,7 +299,8 @@ export function applyFormationToElements(
   elements: DrawingElement[],
   side: 'home' | 'away',
   formationId: string | null,
-  group: FormationFieldGroup | null
+  group: FormationFieldGroup | null,
+  field: FieldTemplate
 ): DrawingElement[] {
   const material = side === 'home' ? 'player-own' : 'player-rival';
   const withoutTeam = elements.filter(
@@ -243,7 +314,9 @@ export function applyFormationToElements(
   const formation = findFormation(group, formationId);
   if (!formation) return withoutTeam;
 
-  const players = formation.slots.map((slot) => createPlayerElement(material, slot, side));
+  const players = formation.slots.map((slot) =>
+    createPlayerElement(material, slot, side, field)
+  );
   return sortElementsByLayer([...withoutTeam, ...players]);
 }
 
@@ -281,5 +354,23 @@ export function sanitizeFormationsForField(
   const keep = (id: string | null) => (id && validIds.has(id) ? id : null);
   const next = { home: keep(formations.home), away: keep(formations.away) };
   if (!next.home && !next.away) return undefined;
+  return next;
+}
+
+/** Reaplica formaciones guardadas (p. ej. tras cambiar de campo). */
+export function reapplyStoredFormations(
+  elements: DrawingElement[],
+  formations: DrawingFormations | undefined,
+  field: FieldTemplate
+): DrawingElement[] {
+  const group = formationGroupForField(field);
+  if (!group || !formations) return elements;
+  let next = elements;
+  if (formations.home) {
+    next = applyFormationToElements(next, 'home', formations.home, group, field);
+  }
+  if (formations.away) {
+    next = applyFormationToElements(next, 'away', formations.away, group, field);
+  }
   return next;
 }
