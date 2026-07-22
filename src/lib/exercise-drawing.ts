@@ -4,6 +4,13 @@
  */
 
 import type { MaterialKind } from '@/lib/drawing-material-assets';
+import {
+  normalizeDrawingFormations,
+  sanitizeFormationsForField,
+  type DrawingFormations,
+} from '@/lib/drawing-formations';
+
+export type { DrawingFormations } from '@/lib/drawing-formations';
 
 export const DRAWING_DOC_VERSION = 3 as const;
 
@@ -270,6 +277,7 @@ export type ExerciseDrawingDocument = {
   elements: DrawingElement[];
   legacyStrokes?: LegacyStroke[];
   animation?: DrawingAnimation;
+  formations?: DrawingFormations;
 };
 
 export const EMPTY_DRAWING_DOC: ExerciseDrawingDocument = {
@@ -562,16 +570,18 @@ export function parseExerciseDrawing(raw: unknown): ExerciseDrawingDocument {
 
   if (obj.version === DRAWING_DOC_VERSION && Array.isArray(obj.elements)) {
     const animation = parseDrawingAnimation(obj.animation);
+    const field = isFieldTemplate(obj.field) ? obj.field : 'football-full';
     const elements = sortElementsByLayer(obj.elements.filter(isV3Element).map(normalizeElementOpacity));
     return {
       version: DRAWING_DOC_VERSION,
-      field: isFieldTemplate(obj.field) ? obj.field : 'football-full',
+      field,
       elements:
         animation?.scenes[0]?.elements.length
           ? cloneDrawingElements(animation.scenes[0].elements)
           : elements,
       legacyStrokes: parseLegacyStrokes(obj.legacyStrokes),
       animation,
+      formations: sanitizeFormationsForField(normalizeDrawingFormations(obj.formations, field), field),
     };
   }
 
@@ -611,6 +621,7 @@ export function serializeExerciseDrawing(doc: ExerciseDrawingDocument): string {
     elements: sortElementsByLayer(synced.elements.map(normalizeElementOpacity)),
   };
   if (synced.legacyStrokes?.length) payload.legacyStrokes = synced.legacyStrokes;
+  if (synced.formations) payload.formations = synced.formations;
   if (synced.animation && synced.animation.scenes.length >= 2) {
     payload.animation = {
       ...synced.animation,

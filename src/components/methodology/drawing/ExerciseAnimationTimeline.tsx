@@ -62,7 +62,7 @@ export function ExerciseAnimationTimeline({
   };
 
   return (
-    <div className="pointer-events-auto absolute left-4 top-[4.5rem] z-40 flex flex-col items-center gap-1.5">
+    <div className="flex flex-col items-center gap-1.5">
       <button
         type="button"
         onClick={handleFilmClick}

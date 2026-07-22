@@ -7,6 +7,7 @@ import type Konva from 'konva';
 import {
   ArrowRight,
   BoxSelect,
+  Eraser,
   Copy,
   Minus,
   MousePointer2,
@@ -72,6 +73,12 @@ import {
   type TextFontSize,
   wavePathPoints,
 } from '@/lib/exercise-drawing';
+import {
+  applyFormationToElements,
+  formationGroupForField,
+  formationsForField,
+  sanitizeFormationsForField,
+} from '@/lib/drawing-formations';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -123,6 +130,10 @@ const GLASS = {
   danger:
     'border-red-400/45 bg-red-500/12 text-red-300 backdrop-blur-md transition-all hover:border-red-400/60 hover:bg-red-500/22',
   label: 'text-xs text-cyan-300/90',
+  sidebarSelect:
+    'w-[5.75rem] rounded-lg px-2 py-1.5 text-center text-xs font-medium transition-all',
+  sidebarLabel:
+    'w-[5.75rem] text-center text-[10px] font-medium uppercase tracking-wide text-cyan-400/55',
 } as const;
 
 /** Campo a ancho completo, pegado arriba; controles flotan encima */
@@ -531,7 +542,63 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
   const handleSportChange = (next: SportKind) => {
     setSport(next);
     const field = defaultFieldForSport(next);
-    setDoc((d) => ({ ...d, field }));
+    setDoc((d) => ({
+      ...d,
+      field,
+      formations: sanitizeFormationsForField(d.formations, field),
+    }));
+  };
+
+  const handleFieldChange = (field: FieldTemplate) => {
+    setDoc((d) => ({
+      ...d,
+      field,
+      formations: sanitizeFormationsForField(d.formations, field),
+    }));
+  };
+
+  const formationGroup = formationGroupForField(doc.field);
+  const availableFormations = formationsForField(doc.field);
+
+  const applyFormationSelection = (side: 'home' | 'away', formationId: string | null) => {
+    const group = formationGroupForField(doc.field);
+    setDoc((current) => {
+      const saved = persistActiveAnimationScene(current, activeSceneIndex);
+      const newElements = applyFormationToElements(saved.elements, side, formationId, group);
+      const formations = {
+        home: saved.formations?.home ?? null,
+        away: saved.formations?.away ?? null,
+        [side]: formationId,
+      };
+      let next: ExerciseDrawingDocument = { ...saved, elements: newElements, formations };
+      if (saved.animation?.scenes.length) {
+        next = {
+          ...next,
+          animation: {
+            ...saved.animation,
+            scenes: saved.animation.scenes.map((scene, index) =>
+              index === activeSceneIndex
+                ? { ...scene, elements: cloneDrawingElements(newElements) }
+                : scene
+            ),
+          },
+        };
+      }
+      return next;
+    });
+    setSelectedIds([]);
+  };
+
+  const clearBoard = () => {
+    if (!window.confirm('¿Borrar todo el contenido de la pizarra?')) return;
+    setDoc((d) => ({
+      ...d,
+      elements: [],
+      formations: undefined,
+      animation: undefined,
+    }));
+    setActiveSceneIndex(0);
+    setSelectedIds([]);
   };
 
   const dashArray = (s: StrokeStyle) => (s.dash ? [10, 6] : undefined);
@@ -1039,61 +1106,40 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
         </Stage>
       </div>
 
-      {/* Cerrar — superior izquierda */}
-      <button
-        type="button"
-        onClick={onClose}
-        className={cn('absolute left-4 top-4 z-40 size-10', GLASS.iconBtn)}
-        aria-label="Cerrar"
-      >
-        <X className="size-4" />
-      </button>
+      {/* Barra lateral izquierda — cerrar, animación, borrar */}
+      <div className="pointer-events-auto absolute left-4 top-4 z-40 flex flex-col items-center gap-1.5">
+        <button
+          type="button"
+          onClick={onClose}
+          className={cn('size-10', GLASS.iconBtn)}
+          aria-label="Cerrar"
+        >
+          <X className="size-4" />
+        </button>
 
-      {/* Timeline de animación — inferior, no interfiere con selectores */}
-      <ExerciseAnimationTimeline
-        doc={doc}
-        activeSceneIndex={activeSceneIndex}
-        onEnableAnimation={enableAnimation}
-        onDisableAnimation={disableAnimation}
-        onSwitchScene={switchScene}
-        onDuplicateFrame={duplicateFrame}
-        onDeleteFrame={deleteFrame}
-      />
+        <ExerciseAnimationTimeline
+          doc={doc}
+          activeSceneIndex={activeSceneIndex}
+          onEnableAnimation={enableAnimation}
+          onDisableAnimation={disableAnimation}
+          onSwitchScene={switchScene}
+          onDuplicateFrame={duplicateFrame}
+          onDeleteFrame={deleteFrame}
+        />
 
-      {/* Controles — superior derecha */}
-      <div className="absolute right-4 top-4 z-40 flex max-w-[min(92vw,640px)] flex-wrap items-center justify-end gap-2">
-        <div className={cn('flex p-0.5', GLASS.pill)}>
-          {(Object.keys(SPORT_OPTIONS) as SportKind[]).map((key) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => handleSportChange(key)}
-              className={cn(
-                'rounded-full px-3.5 py-1.5 text-xs font-medium transition-all',
-                sport === key ? GLASS.btnActive : GLASS.btn
-              )}
-            >
-              {SPORT_OPTIONS[key].label}
-            </button>
-          ))}
-        </div>
+        <button
+          type="button"
+          onClick={clearBoard}
+          className={cn('size-10', GLASS.danger)}
+          title="Borrar todo"
+          aria-label="Borrar todo el contenido de la pizarra"
+        >
+          <Eraser className="size-4" />
+        </button>
+      </div>
 
-        <div className={cn('flex flex-wrap justify-end gap-1 rounded-2xl px-2 py-1.5', GLASS.panel)}>
-          {fieldOptions.map((field) => (
-            <button
-              key={field}
-              type="button"
-              onClick={() => setDoc((d) => ({ ...d, field }))}
-              className={cn(
-                'rounded-lg px-2.5 py-1 text-xs font-medium transition-all',
-                doc.field === field ? GLASS.btnActive : GLASS.btn
-              )}
-            >
-              {FIELD_FORMAT_SHORT[field]}
-            </button>
-          ))}
-        </div>
-
+      {/* Barra lateral derecha — guardar, deporte, campo, formaciones */}
+      <div className="pointer-events-auto absolute right-4 top-4 z-40 flex max-h-[calc(100vh-2rem)] flex-col items-end gap-1.5 overflow-y-auto overscroll-contain">
         <button
           type="button"
           title="Guardar"
@@ -1107,6 +1153,82 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
         >
           <Save className="size-4" />
         </button>
+
+        {(Object.keys(SPORT_OPTIONS) as SportKind[]).map((key) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => handleSportChange(key)}
+            className={cn(GLASS.sidebarSelect, sport === key ? GLASS.btnActive : GLASS.btn)}
+          >
+            {SPORT_OPTIONS[key].label}
+          </button>
+        ))}
+
+        {fieldOptions.map((field) => (
+          <button
+            key={field}
+            type="button"
+            onClick={() => handleFieldChange(field)}
+            className={cn(GLASS.sidebarSelect, doc.field === field ? GLASS.btnActive : GLASS.btn)}
+          >
+            {FIELD_FORMAT_SHORT[field]}
+          </button>
+        ))}
+
+        {formationGroup ? (
+          <>
+            <span className={cn(GLASS.sidebarLabel, 'mt-1')}>Local</span>
+            <button
+              type="button"
+              onClick={() => applyFormationSelection('home', null)}
+              className={cn(
+                GLASS.sidebarSelect,
+                !doc.formations?.home ? GLASS.btnActive : GLASS.btn
+              )}
+            >
+              Sin formación
+            </button>
+            {availableFormations.map((formation) => (
+              <button
+                key={`home-${formation.id}`}
+                type="button"
+                onClick={() => applyFormationSelection('home', formation.id)}
+                className={cn(
+                  GLASS.sidebarSelect,
+                  doc.formations?.home === formation.id ? GLASS.btnActive : GLASS.btn
+                )}
+              >
+                {formation.label}
+              </button>
+            ))}
+
+            <span className={cn(GLASS.sidebarLabel, 'mt-1')}>Visitante</span>
+            <button
+              type="button"
+              onClick={() => applyFormationSelection('away', null)}
+              className={cn(
+                GLASS.sidebarSelect,
+                !doc.formations?.away ? GLASS.btnActive : GLASS.btn
+              )}
+            >
+              Sin formación
+            </button>
+            {availableFormations.map((formation) => (
+              <button
+                key={`away-${formation.id}`}
+                type="button"
+                onClick={() => applyFormationSelection('away', formation.id)}
+                className={cn(
+                  GLASS.sidebarSelect,
+                  doc.formations?.away === formation.id ? GLASS.btnActive : GLASS.btn
+                )}
+              >
+                {formation.label}
+              </button>
+            ))}
+          </>
+        ) : null}
       </div>
 
       {/* Propiedades selección */}
