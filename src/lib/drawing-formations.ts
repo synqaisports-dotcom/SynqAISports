@@ -399,15 +399,70 @@ export const TACTICAL_ANIMATION_PHASE_COUNT = 4 as const;
 
 export const TACTICAL_SCENE_LABELS = ['Salida', 'Def→Ataq', 'Ataq→Def', 'Ataque'] as const;
 
+export const TACTICAL_TRANSITION_MS = 1200;
+
 export type TacticalPhaseIndex = 0 | 1 | 2 | 3;
 
-/** Desplazamiento de profundidad local por fase táctica. */
-const PHASE_DEPTH_OFFSET: Record<TacticalPhaseIndex, number> = {
+/**
+ * Progresión táctica en el medio campo del equipo:
+ * 0 = línea roja (salida, cerca de portería propia)
+ * 1 = línea azul (ataque, cerca del medio campo)
+ */
+const PHASE_PROGRESS: Record<TacticalPhaseIndex, number> = {
   0: 0,
-  1: 0.22,
-  2: 0.1,
-  3: 0.34,
+  1: 0.58,
+  2: 0.32,
+  3: 1,
 };
+
+function lerpNum(a: number, b: number, t: number): number {
+  return a + (b - a) * t;
+}
+
+function phaseDepth(baseDepth: number, phase: TacticalPhaseIndex, isKeeper: boolean): number {
+  const progress = PHASE_PROGRESS[phase];
+  if (isKeeper) {
+    return lerpNum(0.04, 0.14, progress);
+  }
+  const salidaDepth = baseDepth * 0.28 + 0.03;
+  const ataqueDepth = baseDepth * 0.38 + 0.55;
+  return clamp01(lerpNum(salidaDepth, ataqueDepth, progress));
+}
+
+function shiftManualPlayersForPhase(
+  players: DrawingElement[],
+  field: FieldTemplate,
+  phase: TacticalPhaseIndex,
+  fromPhase: TacticalPhaseIndex = 0
+): DrawingElement[] {
+  if (phase === fromPhase) return players;
+  const layout = formationLayoutForField(field);
+  const fromProgress = PHASE_PROGRESS[fromPhase];
+  const toProgress = PHASE_PROGRESS[phase];
+  const delta = toProgress - fromProgress;
+
+  return players.map((el) => {
+    if (!isTeamPlayer(el)) return el;
+    const isKeeper = el.label === '1';
+    const amount = delta * (isKeeper ? 0.3 : 1);
+
+    if (layout?.kind === 'horizontal') {
+      const span =
+        el.material === 'player-own'
+          ? layout.home.xMax - layout.home.xMin
+          : layout.away.xMax - layout.away.xMin;
+      const dx = el.material === 'player-own' ? amount * span : -amount * span;
+      return { ...el, x: clamp01(el.x + dx) };
+    }
+
+    if (layout?.kind === 'vertical-half') {
+      const span = layout.home.yMax - layout.home.yMin;
+      return { ...el, y: clamp01(el.y + amount * span) };
+    }
+
+    return el;
+  });
+}
 
 export function hasTacticalFormationSetup(formations: DrawingFormations | undefined): boolean {
   return Boolean(formations?.home || formations?.away);
@@ -420,40 +475,32 @@ function isTeamPlayer(el: DrawingElement): el is MaterialElement {
   );
 }
 
-function phaseDepth(baseDepth: number, phase: TacticalPhaseIndex, isKeeper: boolean): number {
-  const offset = PHASE_DEPTH_OFFSET[phase] * (isKeeper ? 0.3 : 1);
-  return clamp01(baseDepth + offset);
-}
-
-function shiftManualPlayersForPhase(
-  players: DrawingElement[],
+function buildTeamPlayersForPhase(
+  elements: DrawingElement[],
+  formation: FormationPreset,
+  material: 'player-own' | 'player-rival',
+  side: 'home' | 'away',
   field: FieldTemplate,
   phase: TacticalPhaseIndex
-): DrawingElement[] {
-  if (phase === 0) return players;
-  const layout = formationLayoutForField(field);
-  const amount = PHASE_DEPTH_OFFSET[phase];
+): MaterialElement[] {
+  const existingByLabel = new Map(
+    elements
+      .filter((el): el is MaterialElement => el.type === 'material' && el.material === material)
+      .map((el) => [el.label ?? el.id, el] as const)
+  );
 
-  return players.map((el) => {
-    if (!isTeamPlayer(el)) return el;
-    const isKeeper = el.label === '1';
-    const delta = amount * (isKeeper ? 0.3 : 1);
-
-    if (layout?.kind === 'horizontal') {
-      const span =
-        el.material === 'player-own'
-          ? layout.home.xMax - layout.home.xMin
-          : layout.away.xMax - layout.away.xMin;
-      const dx = el.material === 'player-own' ? delta * span : -delta * span;
-      return { ...el, x: clamp01(el.x + dx) };
+  return formation.slots.map((slot) => {
+    const isKeeper = slot.label === '1';
+    const adjusted: TeamLocalSlot = {
+      ...slot,
+      depth: phaseDepth(slot.depth, phase, isKeeper),
+    };
+    const pos = teamSlotToField(adjusted, side, field);
+    const existing = existingByLabel.get(slot.label);
+    if (existing) {
+      return { ...existing, x: pos.x, y: pos.y, rotation: pos.rotation };
     }
-
-    if (layout?.kind === 'vertical-half') {
-      const span = layout.home.yMax - layout.home.yMin;
-      return { ...el, y: clamp01(el.y + delta * span) };
-    }
-
-    return el;
+    return createPlayerElement(material, adjusted, side, field);
   });
 }
 
@@ -534,19 +581,20 @@ export function applyTeamTacticalPhase(
   if (formationId && group) {
     const formation = findFormation(group, formationId);
     if (formation) {
-      const players = formation.slots.map((slot) => {
-        const isKeeper = slot.label === '1';
-        const adjusted: TeamLocalSlot = {
-          ...slot,
-          depth: phaseDepth(slot.depth, phase, isKeeper),
-        };
-        return createPlayerElement(material, adjusted, side, field);
-      });
+      const players = buildTeamPlayersForPhase(
+        elements,
+        formation,
+        material,
+        side,
+        field,
+        phase
+      );
       return sortElementsByLayer([...staticElements, ...otherPlayers, ...players]);
     }
   }
 
   const manual = elements.filter((el) => el.type === 'material' && el.material === material);
-  const shifted = shiftManualPlayersForPhase(manual, field, phase);
+  const fromPhase = (formations?.[side === 'home' ? 'homePhase' : 'awayPhase'] ?? 0) as TacticalPhaseIndex;
+  const shifted = shiftManualPlayersForPhase(manual, field, phase, fromPhase);
   return sortElementsByLayer([...staticElements, ...otherPlayers, ...shifted]);
 }

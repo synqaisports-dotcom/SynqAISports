@@ -82,8 +82,10 @@ import {
   formationsForField,
   reapplyStoredFormations,
   sanitizeFormationsForField,
+  TACTICAL_TRANSITION_MS,
   type TacticalPhaseIndex,
 } from '@/lib/drawing-formations';
+import { easeInOutCubic } from '@/lib/exercise-animation';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -144,6 +146,15 @@ const GLASS = {
 /** Margen inferior: por encima del dock de materiales/herramientas */
 const SIDEBAR_BOTTOM_CLASS = 'bottom-[6.5rem]' as const;
 
+function lerpNum(a: number, b: number, t: number): number {
+  return a + (b - a) * t;
+}
+
+function lerpAngle(from: number, to: number, t: number): number {
+  const delta = ((to - from + 180) % 360) - 180;
+  return from + delta * t;
+}
+
 /** Campo a ancho completo, pegado arriba; controles flotan encima */
 const FIELD_INSETS = { top: 0, bottom: 0, left: 4, right: 4 };
 
@@ -168,6 +179,13 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     anchorId: string;
     starts: Map<string, { x: number; y: number }>;
   } | null>(null);
+  const tacticalAnimRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (tacticalAnimRef.current) cancelAnimationFrame(tacticalAnimRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     setMounted(true);
@@ -597,13 +615,6 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     const group = formationGroupForField(doc.field);
     setDoc((current) => {
       const saved = persistActiveAnimationScene(current, activeSceneIndex);
-      const newElements = applyFormationToElements(
-        saved.elements,
-        side,
-        formationId,
-        group,
-        saved.field
-      );
       const formations = {
         home: saved.formations?.home ?? null,
         away: saved.formations?.away ?? null,
@@ -611,59 +622,114 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
         awayPhase: side === 'away' ? 0 : (saved.formations?.awayPhase ?? 0),
         [side]: formationId,
       };
-      let next: ExerciseDrawingDocument = { ...saved, elements: newElements, formations };
-      if (saved.animation?.scenes.length) {
-        next = {
-          ...next,
-          animation: {
-            ...saved.animation,
-            scenes: saved.animation.scenes.map((scene, index) =>
-              index === activeSceneIndex
-                ? { ...scene, elements: cloneDrawingElements(newElements) }
-                : scene
-            ),
-          },
-        };
-      }
-      return next;
+      const newElements =
+        formationId && group
+          ? applyTeamTacticalPhase(saved.elements, formations, saved.field, side, 0)
+          : applyFormationToElements(saved.elements, side, formationId, group, saved.field);
+      return syncSceneElements({ ...saved, formations }, newElements, activeSceneIndex);
     });
     setSelectedIds([]);
   };
 
+  const syncSceneElements = (
+    document: ExerciseDrawingDocument,
+    elements: DrawingElement[],
+    sceneIndex: number
+  ): ExerciseDrawingDocument => {
+    if (!document.animation?.scenes.length) {
+      return { ...document, elements };
+    }
+    return {
+      ...document,
+      elements,
+      animation: {
+        ...document.animation,
+        scenes: document.animation.scenes.map((scene, index) =>
+          index === sceneIndex ? { ...scene, elements: cloneDrawingElements(elements) } : scene
+        ),
+      },
+    };
+  };
+
   const applyTeamPhase = (side: 'home' | 'away', phase: TacticalPhaseIndex) => {
     if (!doc.formations?.[side]) return;
-    setDoc((current) => {
-      const saved = persistActiveAnimationScene(current, activeSceneIndex);
-      const newElements = applyTeamTacticalPhase(
-        saved.elements,
-        saved.formations,
-        saved.field,
-        side,
-        phase
-      );
-      const formations = {
-        home: saved.formations?.home ?? null,
-        away: saved.formations?.away ?? null,
-        homePhase: side === 'home' ? phase : (saved.formations?.homePhase ?? 0),
-        awayPhase: side === 'away' ? phase : (saved.formations?.awayPhase ?? 0),
-      };
-      let next: ExerciseDrawingDocument = { ...saved, elements: newElements, formations };
-      if (saved.animation?.scenes.length) {
-        next = {
-          ...next,
-          animation: {
-            ...saved.animation,
-            scenes: saved.animation.scenes.map((scene, index) =>
-              index === activeSceneIndex
-                ? { ...scene, elements: cloneDrawingElements(newElements) }
-                : scene
-            ),
-          },
-        };
+    if (tacticalAnimRef.current) cancelAnimationFrame(tacticalAnimRef.current);
+
+    const saved = persistActiveAnimationScene(doc, activeSceneIndex);
+    const formations = {
+      home: saved.formations?.home ?? null,
+      away: saved.formations?.away ?? null,
+      homePhase: side === 'home' ? phase : (saved.formations?.homePhase ?? 0),
+      awayPhase: side === 'away' ? phase : (saved.formations?.awayPhase ?? 0),
+    };
+    const material = side === 'home' ? 'player-own' : 'player-rival';
+    const targetElements = applyTeamTacticalPhase(
+      saved.elements,
+      formations,
+      saved.field,
+      side,
+      phase
+    );
+
+    const starts = new Map<string, { x: number; y: number; rotation: number }>();
+    for (const el of saved.elements) {
+      if (el.type === 'material' && el.material === material) {
+        starts.set(el.id, { x: el.x, y: el.y, rotation: el.rotation });
       }
-      return next;
-    });
+    }
+    const targets = new Map<string, { x: number; y: number; rotation: number }>();
+    for (const el of targetElements) {
+      if (el.type === 'material' && el.material === material) {
+        targets.set(el.id, { x: el.x, y: el.y, rotation: el.rotation });
+      }
+    }
+
+    setDoc(syncSceneElements({ ...saved, formations }, saved.elements, activeSceneIndex));
     setSelectedIds([]);
+
+    const startMs = performance.now();
+    const tick = (now: number) => {
+      const raw = Math.min(1, (now - startMs) / TACTICAL_TRANSITION_MS);
+      const t = easeInOutCubic(raw);
+
+      setDoc((live) => {
+        const elements = live.elements.map((el) => {
+          const start = starts.get(el.id);
+          const target = targets.get(el.id);
+          if (!start || !target || el.type !== 'material' || el.material !== material) return el;
+          return {
+            ...el,
+            x: lerpNum(start.x, target.x, t),
+            y: lerpNum(start.y, target.y, t),
+            rotation: lerpAngle(start.rotation, target.rotation, t),
+          };
+        });
+        return syncSceneElements(
+          { ...live, formations },
+          elements,
+          activeSceneIndex
+        );
+      });
+
+      if (raw < 1) {
+        tacticalAnimRef.current = requestAnimationFrame(tick);
+        return;
+      }
+
+      tacticalAnimRef.current = null;
+      setDoc((live) => {
+        const finalElements = applyTeamTacticalPhase(
+          live.elements,
+          formations,
+          live.field,
+          side,
+          phase
+        );
+        return syncSceneElements({ ...live, formations }, finalElements, activeSceneIndex);
+      });
+    };
+
+    tacticalAnimRef.current = requestAnimationFrame(tick);
   };
 
   const confirmClearBoard = () => {
