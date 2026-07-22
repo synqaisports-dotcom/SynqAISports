@@ -13,6 +13,12 @@ import {
   YAxis,
 } from 'recharts';
 import { CanteraRecentMovements } from '@/components/portal/CanteraRecentMovements';
+import {
+  SYNQ_CHART_ACTIVE_BAR,
+  SYNQ_CHART_CURSOR,
+  SynqChartTooltip,
+  renderSynqPieActiveShape,
+} from '@/components/portal/SynqChartPrimitives';
 import type { CanteraMovement } from '@/lib/cantera-movements';
 import type { CanteraStats } from '@/lib/cantera-stats';
 import { cn } from '@/lib/utils';
@@ -30,25 +36,6 @@ type Props = {
   movements: CanteraMovement[];
   className?: string;
 };
-
-function ChartTooltip({
-  active,
-  payload,
-}: {
-  active?: boolean;
-  payload?: { name: string; value: number; payload: { fill: string; name?: string } }[];
-}) {
-  if (!active || !payload?.length) return null;
-  const entry = payload[0];
-  const label = entry.payload.name ?? entry.name;
-  return (
-    <div className="rounded-lg border border-primary/25 bg-background/95 px-3 py-2 text-xs shadow-lg backdrop-blur">
-      <p style={{ color: entry.payload.fill }}>
-        {label}: <span className="font-semibold">{entry.value}</span>
-      </p>
-    </div>
-  );
-}
 
 function ChartPanel({
   title,
@@ -112,12 +99,17 @@ function DonutChart({ data }: { data: { name: string; value: number; fill: strin
           outerRadius={DONUT_OUTER}
           paddingAngle={3}
           stroke="transparent"
+          activeShape={renderSynqPieActiveShape}
         >
           {data.map((entry) => (
-            <Cell key={entry.name} fill={entry.fill} />
+            <Cell key={entry.name} fill={entry.fill} stroke="transparent" />
           ))}
         </Pie>
-        <Tooltip content={<ChartTooltip />} />
+        <Tooltip
+          cursor={false}
+          content={<SynqChartTooltip />}
+          wrapperStyle={{ outline: 'none' }}
+        />
       </PieChart>
     </ResponsiveContainer>
   );
@@ -198,8 +190,17 @@ export function CanteraStatsCharts({ stats, movements, className }: Props) {
                 tickLine={false}
               />
               <YAxis hide allowDecimals={false} domain={[0, absenceMax]} />
-              <Tooltip content={<ChartTooltip />} />
-              <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={16}>
+              <Tooltip
+                cursor={SYNQ_CHART_CURSOR}
+                content={<SynqChartTooltip />}
+                wrapperStyle={{ outline: 'none' }}
+              />
+              <Bar
+                dataKey="value"
+                radius={[4, 4, 0, 0]}
+                barSize={16}
+                activeBar={SYNQ_CHART_ACTIVE_BAR}
+              >
                 {weeklyAbsences.map((entry) => (
                   <Cell key={entry.name} fill={entry.fill} />
                 ))}
@@ -232,8 +233,17 @@ export function CanteraStatsCharts({ stats, movements, className }: Props) {
                 axisLine={false}
                 tickLine={false}
               />
-              <Tooltip content={<ChartTooltip />} />
-              <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={20}>
+              <Tooltip
+                cursor={SYNQ_CHART_CURSOR}
+                content={<SynqChartTooltip />}
+                wrapperStyle={{ outline: 'none' }}
+              />
+              <Bar
+                dataKey="value"
+                radius={[0, 6, 6, 0]}
+                barSize={20}
+                activeBar={SYNQ_CHART_ACTIVE_BAR}
+              >
                 {playerStatusChart.map((entry) => (
                   <Cell key={entry.name} fill={entry.fill} />
                 ))}
