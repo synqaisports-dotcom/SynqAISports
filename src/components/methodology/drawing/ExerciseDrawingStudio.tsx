@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { ExerciseAnimationTimeline } from '@/components/methodology/drawing/ExerciseAnimationTimeline';
 import { KonvaPitchLayer } from '@/components/methodology/drawing/KonvaPitchLayer';
+import { MaterialKonvaSprite } from '@/components/methodology/drawing/MaterialKonvaSprite';
 import { useFieldTransition } from '@/hooks/useFieldTransition';
 import { MATERIAL_SCALE_NORM } from '@/lib/field-engine';
 import {
@@ -699,144 +700,49 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     }
 
     if (element.type === 'material') {
-      const p = normToPx(element.x, element.y, fieldRect);
-      const base = fieldRect.width * MATERIAL_SCALE_NORM;
-
-      if (element.material === 'ladder') {
-        const scaleXn = element.scaleX ?? element.scale;
-        const scaleYn = element.scaleY ?? element.scale;
-        const unitW = 110;
-        const unitH = 56;
-        const ladderW = scaleXn * base;
-        const ladderH = scaleYn * base * (unitH / unitW);
-        const hw = ladderW / 2;
-        const hh = ladderH / 2;
-        const pole = selectedId === element.id && !isPreview ? '#22d3ee' : '#0f172a';
-        const rung = selectedId === element.id && !isPreview ? '#22d3ee' : '#fbbf24';
-        const rungs = 5;
-        return (
-          <Group
-            key={key}
-            id={element.id}
-            x={p.x}
-            y={p.y}
-            rotation={element.rotation}
-            opacity={element.opacity}
-            draggable={canDrag}
-            onMouseDown={(e) => {
-              e.cancelBubble = true;
-              if (canDrag) setSelectedId(element.id);
-            }}
-            onTap={(e) => {
-              e.cancelBubble = true;
-              if (canDrag) setSelectedId(element.id);
-            }}
-            onClick={(e) => {
-              e.cancelBubble = true;
-              setSelectedId(element.id);
-            }}
-            onDragEnd={(ev) => {
-              const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
-              updateElement(element.id, { x: n.x, y: n.y });
-            }}
-            onTransformEnd={(ev) => {
-              const node = ev.target;
-              const n = pxToNorm(node.x(), node.y(), fieldRect);
-              const ratioX = node.scaleX();
-              const ratioY = node.scaleY();
-              node.scaleX(1);
-              node.scaleY(1);
-              const nextScaleX = Math.abs(ratioX - 1) >= 0.001 ? scaleXn * ratioX : scaleXn;
-              const nextScaleY = Math.abs(ratioY - 1) >= 0.001 ? scaleYn * ratioY : scaleYn;
+      return (
+        <MaterialKonvaSprite
+          key={key}
+          element={element}
+          fieldRect={fieldRect}
+          materialImages={materialImages}
+          listening
+          draggable={canDrag}
+          onSelect={() => setSelectedId(element.id)}
+          onDragEnd={(x, y) => {
+            const n = pxToNorm(x, y, fieldRect);
+            updateElement(element.id, { x: n.x, y: n.y });
+          }}
+          onTransformEnd={(node) => {
+            const n = pxToNorm(node.x, node.y, fieldRect);
+            if (element.material === 'ladder') {
+              const scaleXn = element.scaleX ?? element.scale;
+              const scaleYn = element.scaleY ?? element.scale;
+              const nextScaleX =
+                Math.abs(node.scaleX - 1) >= 0.001 ? scaleXn * node.scaleX : scaleXn;
+              const nextScaleY =
+                Math.abs(node.scaleY - 1) >= 0.001 ? scaleYn * node.scaleY : scaleYn;
               updateElement(element.id, {
                 x: n.x,
                 y: n.y,
-                rotation: node.rotation(),
+                rotation: node.rotation,
                 scaleX: nextScaleX,
                 scaleY: nextScaleY,
                 scale: Math.max(nextScaleX, nextScaleY),
               });
-            }}
-            ref={(node) => {
-              if (selectedId === element.id) attachTransformer(node);
-            }}
-          >
-            <Rect
-              x={-hw}
-              y={-hh}
-              width={ladderW}
-              height={ladderH}
-              fill="rgba(0,0,0,0.001)"
-              listening
-            />
-            <Line points={[-hw, -hh, -hw, hh]} stroke={pole} strokeWidth={2.5} lineCap="round" listening={false} />
-            <Line points={[hw, -hh, hw, hh]} stroke={pole} strokeWidth={2.5} lineCap="round" listening={false} />
-            {Array.from({ length: rungs }).map((_, i) => {
-              const y = -hh + (i / (rungs - 1)) * ladderH;
-              return (
-                <Line
-                  key={i}
-                  points={[-hw, y, hw, y]}
-                  stroke={rung}
-                  strokeWidth={2}
-                  lineCap="round"
-                  listening={false}
-                />
-              );
-            })}
-          </Group>
-        );
-      }
-
-      const img = materialImages[element.material];
-      const scale = element.scale * base;
-      return (
-        <Group
-          key={key}
-          id={element.id}
-          x={p.x}
-          y={p.y}
-          rotation={element.rotation}
-          opacity={element.opacity}
-          draggable={canDrag}
-          onMouseDown={(e) => {
-            e.cancelBubble = true;
-            if (canDrag) setSelectedId(element.id);
+            } else {
+              updateElement(element.id, {
+                x: n.x,
+                y: n.y,
+                rotation: node.rotation,
+                scale: element.scale * Math.max(node.scaleX, node.scaleY),
+              });
+            }
           }}
-          onTap={(e) => {
-            e.cancelBubble = true;
-            if (canDrag) setSelectedId(element.id);
-          }}
-          onClick={(e) => {
-            e.cancelBubble = true;
-            setSelectedId(element.id);
-          }}
-          onDragEnd={(ev) => {
-            const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
-            updateElement(element.id, { x: n.x, y: n.y });
-          }}
-          onTransformEnd={(ev) => {
-            const node = ev.target;
-            const n = pxToNorm(node.x(), node.y(), fieldRect);
-            updateElement(element.id, {
-              x: n.x,
-              y: n.y,
-              rotation: node.rotation(),
-              scale: element.scale * Math.max(node.scaleX(), node.scaleY()),
-            });
-            node.scaleX(1);
-            node.scaleY(1);
-          }}
-          ref={(node) => {
+          innerRef={(node) => {
             if (selectedId === element.id) attachTransformer(node);
           }}
-        >
-          {img ? (
-            <KonvaImage image={img} width={scale} height={scale} offsetX={scale / 2} offsetY={scale / 2} />
-          ) : (
-            <Circle radius={scale / 2} fill="#334155" />
-          )}
-        </Group>
+        />
       );
     }
 

@@ -30,6 +30,7 @@ type Props = {
   onDeleteFrame: () => void;
 };
 
+/** Timeline vertical en lateral izquierdo — no interfiere con dock central ni selectores superiores. */
 export function ExerciseAnimationTimeline({
   doc,
   activeSceneIndex,
@@ -43,30 +44,25 @@ export function ExerciseAnimationTimeline({
   const sceneCount = scenes.length;
 
   return (
-    <div
-      className={cn(
-        'pointer-events-none absolute inset-x-3 bottom-[6.25rem] z-35 sm:inset-x-6',
-        'flex max-w-full items-center gap-2'
-      )}
-    >
+    <div className="pointer-events-none absolute left-4 top-[4.75rem] z-40 flex max-h-[calc(100vh-12rem)] flex-col gap-2">
       <button
         type="button"
         onClick={onToggleAnimation}
         className={cn(
-          'pointer-events-auto flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium',
+          'pointer-events-auto flex shrink-0 items-center gap-1.5 rounded-2xl px-3 py-2 text-xs font-medium',
           GLASS.panel,
           animationEnabled ? GLASS.btnActive : GLASS.btn
         )}
         title={animationEnabled ? 'Desactivar animación' : 'Activar animación por fotogramas'}
       >
-        <Film className="size-3.5" />
-        <span className="hidden sm:inline">Animación</span>
+        <Film className="size-3.5 shrink-0" />
+        <span>Animación</span>
       </button>
 
       {animationEnabled ? (
         <div
           className={cn(
-            'pointer-events-auto flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto rounded-2xl px-2 py-1.5',
+            'pointer-events-auto flex min-h-0 flex-col gap-1.5 overflow-y-auto rounded-2xl p-2',
             GLASS.panel,
             '[scrollbar-width:thin]'
           )}
@@ -77,7 +73,7 @@ export function ExerciseAnimationTimeline({
               type="button"
               onClick={() => onSwitchScene(index)}
               className={cn(
-                'flex size-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold tabular-nums transition-all',
+                'flex size-9 shrink-0 items-center justify-center rounded-xl text-xs font-semibold tabular-nums transition-all',
                 index === activeSceneIndex ? GLASS.btnActive : GLASS.btn
               )}
               title={`Fotograma ${animationSceneLabel(scene, index)}`}
@@ -85,32 +81,34 @@ export function ExerciseAnimationTimeline({
               {animationSceneLabel(scene, index)}
             </button>
           ))}
-          {sceneCount < MAX_ANIMATION_SCENES ? (
-            <button
-              type="button"
-              onClick={onAddFrame}
-              className={cn('flex size-8 shrink-0 items-center justify-center rounded-full', GLASS.iconBtn)}
-              title="Añadir fotograma desde el estado actual"
-              aria-label="Añadir fotograma"
-            >
-              <Plus className="size-3.5" />
-            </button>
-          ) : null}
-          {sceneCount > 2 ? (
-            <button
-              type="button"
-              onClick={onDeleteFrame}
-              className={cn('flex size-8 shrink-0 items-center justify-center rounded-full', GLASS.danger)}
-              title="Eliminar fotograma actual"
-              aria-label="Eliminar fotograma"
-            >
-              <Trash2 className="size-3.5" />
-            </button>
-          ) : null}
+          <div className="mt-1 flex flex-col gap-1.5 border-t border-cyan-400/20 pt-2">
+            {sceneCount < MAX_ANIMATION_SCENES ? (
+              <button
+                type="button"
+                onClick={onAddFrame}
+                className={cn('flex size-9 items-center justify-center rounded-xl', GLASS.iconBtn)}
+                title="Añadir fotograma"
+                aria-label="Añadir fotograma"
+              >
+                <Plus className="size-4" />
+              </button>
+            ) : null}
+            {sceneCount > 2 ? (
+              <button
+                type="button"
+                onClick={onDeleteFrame}
+                className={cn('flex size-9 items-center justify-center rounded-xl', GLASS.danger)}
+                title="Eliminar fotograma actual"
+                aria-label="Eliminar fotograma"
+              >
+                <Trash2 className="size-4" />
+              </button>
+            ) : null}
+          </div>
         </div>
       ) : (
-        <p className="pointer-events-none hidden text-[11px] text-cyan-300/60 sm:block">
-          Activa animación para definir fotogramas del ejercicio
+        <p className="pointer-events-none max-w-[7.5rem] text-[10px] leading-snug text-cyan-300/55">
+          Fotogramas del movimiento del ejercicio
         </p>
       )}
     </div>
