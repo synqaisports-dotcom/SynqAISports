@@ -144,6 +144,10 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
   const [materialsOpen, setMaterialsOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [activeSceneIndex, setActiveSceneIndex] = useState(0);
+  const multiDragRef = useRef<{
+    anchorId: string;
+    starts: Map<string, { x: number; y: number }>;
+  } | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -198,11 +202,17 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
   const selected =
     selectedIds.length === 1 ? doc.elements.find((el) => el.id === selectedIds[0]) ?? null : null;
 
+  const isMultiSelectModifier = (e?: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
+    const evt = e?.evt;
+    if (!evt || !('shiftKey' in evt)) return false;
+    return Boolean(evt.shiftKey || evt.metaKey || evt.ctrlKey);
+  };
+
   const selectElement = useCallback(
-    (id: string, shiftKey = false) => {
+    (id: string, additive = false) => {
       const el = doc.elements.find((e) => e.id === id);
       if (!el) return;
-      if (shiftKey && el.type === 'material') {
+      if (additive && el.type === 'material') {
         setSelectedIds((prev) =>
           prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
         );
@@ -217,8 +227,23 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     id: string,
     e?: Konva.KonvaEventObject<MouseEvent | TouchEvent>
   ) => {
-    const shiftKey = Boolean(e?.evt && 'shiftKey' in e.evt && e.evt.shiftKey);
-    selectElement(id, shiftKey);
+    selectElement(id, isMultiSelectModifier(e));
+  };
+
+  const beginMaterialDrag = (elementId: string) => {
+    if (selectedIds.includes(elementId) && selectedIds.length > 1) {
+      const starts = new Map<string, { x: number; y: number }>();
+      for (const id of selectedIds) {
+        const el = doc.elements.find((item) => item.id === id);
+        if (el?.type === 'material') starts.set(id, { x: el.x, y: el.y });
+      }
+      multiDragRef.current = { anchorId: elementId, starts };
+      return;
+    }
+    multiDragRef.current = null;
+    if (!selectedIds.includes(elementId)) {
+      setSelectedIds([elementId]);
+    }
   };
 
   const moveSelectedMaterials = (draggedId: string, nx: number, ny: number) => {
@@ -241,6 +266,36 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
       }),
     }));
   };
+
+  const moveMaterialDuringDrag = (elementId: string, nx: number, ny: number) => {
+    const ref = multiDragRef.current;
+    if (ref && ref.anchorId === elementId && ref.starts.size > 1) {
+      const anchorStart = ref.starts.get(elementId);
+      if (!anchorStart) return;
+      const dx = nx - anchorStart.x;
+      const dy = ny - anchorStart.y;
+      setDoc((d) => ({
+        ...d,
+        elements: d.elements.map((el) => {
+          const start = ref.starts.get(el.id);
+          if (!start || el.type !== 'material') return el;
+          return {
+            ...el,
+            x: Math.max(0, Math.min(1, start.x + dx)),
+            y: Math.max(0, Math.min(1, start.y + dy)),
+          };
+        }),
+      }));
+      return;
+    }
+    moveSelectedMaterials(elementId, nx, ny);
+  };
+
+  const finishMaterialDrag = (elementId: string, nx: number, ny: number) => {
+    moveMaterialDuringDrag(elementId, nx, ny);
+    multiDragRef.current = null;
+  };
+
   const fieldOptions = SPORT_OPTIONS[sport].fields;
   const layeredElements = useMemo(() => sortElementsByLayer(doc.elements), [doc.elements]);
   const shapeElements = useMemo(
@@ -250,21 +305,6 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
   const materialElements = useMemo(
     () => layeredElements.filter((el) => el.type === 'material'),
     [layeredElements]
-  );
-
-  const attachTransformer = useCallback(
-    (node: Konva.Node | null) => {
-      const tr = transformerRef.current;
-      if (!tr) return;
-      if (node && selected && (selected.type === 'material' || selected.type === 'shape-rect')) {
-        tr.nodes([node]);
-        tr.keepRatio(!(selected.type === 'material' && selected.material === 'ladder'));
-      } else {
-        tr.nodes([]);
-      }
-      tr.getLayer()?.batchDraw();
-    },
-    [selected]
   );
 
   const transformableIds = useMemo(
@@ -279,7 +319,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
   useEffect(() => {
     const tr = transformerRef.current;
     if (!tr || !open) return;
-    if (transformableIds.length === 0) {
+    if (transformableIds.length !== 1) {
       tr.nodes([]);
       tr.getLayer()?.batchDraw();
       return;
@@ -287,13 +327,14 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     requestAnimationFrame(() => {
       const stage = tr.getStage();
       if (!stage) return;
-      const nodes = transformableIds
-        .map((id) => stage.findOne('#' + id))
-        .filter((node): node is Konva.Node => node != null);
-      tr.nodes(nodes);
-      const single = transformableIds.length === 1
-        ? doc.elements.find((el) => el.id === transformableIds[0])
-        : null;
+      const node = stage.findOne('#' + transformableIds[0]);
+      if (!node) {
+        tr.nodes([]);
+        tr.getLayer()?.batchDraw();
+        return;
+      }
+      tr.nodes([node]);
+      const single = doc.elements.find((el) => el.id === transformableIds[0]);
       tr.keepRatio(!(single?.type === 'material' && single.material === 'ladder'));
       tr.getLayer()?.batchDraw();
     });
@@ -494,6 +535,20 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
   };
 
   const dashArray = (s: StrokeStyle) => (s.dash ? [10, 6] : undefined);
+  const multiMaterialSelection = transformableIds.length > 1;
+
+  const materialDragHandlers = (elementId: string) => ({
+    onDragStart: () => beginMaterialDrag(elementId),
+    onDragMove: (ev: Konva.KonvaEventObject<DragEvent>) => {
+      if (!multiDragRef.current) return;
+      const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
+      moveMaterialDuringDrag(elementId, n.x, n.y);
+    },
+    onDragEnd: (ev: Konva.KonvaEventObject<DragEvent>) => {
+      const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
+      finishMaterialDrag(elementId, n.x, n.y);
+    },
+  });
   const cursorClass = tool === 'select' ? 'cursor-default' : 'cursor-crosshair';
 
   const finishElementDrag = (element: DrawingElement, node: Konva.Node) => {
@@ -698,9 +753,6 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             node.scaleX(1);
             node.scaleY(1);
           }}
-          ref={(node) => {
-            if (isSelected(element.id)) attachTransformer(node);
-          }}
         />
       );
     }
@@ -780,14 +832,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               e.cancelBubble = true;
               if (canDrag) handleElementSelect(element.id, e);
             }}
-            onClick={(e) => {
-              e.cancelBubble = true;
-              selectElement(element.id);
-            }}
-            onDragEnd={(ev) => {
-              const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
-              updateElement(element.id, { x: n.x, y: n.y });
-            }}
+            {...materialDragHandlers(element.id)}
             onTransformEnd={(ev) => {
               const node = ev.target;
               const n = pxToNorm(node.x(), node.y(), fieldRect);
@@ -806,10 +851,19 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
                 scale: Math.max(nextScaleX, nextScaleY),
               });
             }}
-            ref={(node) => {
-              if (isSelected(element.id)) attachTransformer(node);
-            }}
           >
+            {isSelected(element.id) && !isPreview ? (
+              <Rect
+                x={-hw - 6}
+                y={-hh - 6}
+                width={ladderW + 12}
+                height={ladderH + 12}
+                stroke="#22d3ee"
+                strokeWidth={2}
+                dash={[6, 4]}
+                listening={false}
+              />
+            ) : null}
             <Rect
               x={-hw}
               y={-hh}
@@ -856,14 +910,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             e.cancelBubble = true;
             if (canDrag) handleElementSelect(element.id, e);
           }}
-          onClick={(e) => {
-            e.cancelBubble = true;
-            handleElementSelect(element.id, e);
-          }}
-          onDragEnd={(ev) => {
-            const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
-            moveSelectedMaterials(element.id, n.x, n.y);
-          }}
+          {...materialDragHandlers(element.id)}
           onTransformEnd={(ev) => {
             const node = ev.target;
             const n = pxToNorm(node.x(), node.y(), fieldRect);
@@ -876,10 +923,16 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             node.scaleX(1);
             node.scaleY(1);
           }}
-          ref={(node) => {
-            if (isSelected(element.id)) attachTransformer(node);
-          }}
         >
+          {isSelected(element.id) && !isPreview ? (
+            <Circle
+              radius={scale / 2 + 6}
+              stroke="#22d3ee"
+              strokeWidth={2}
+              dash={[6, 4]}
+              listening={false}
+            />
+          ) : null}
           {img ? (
             <KonvaImage image={img} width={scale} height={scale} offsetX={scale / 2} offsetY={scale / 2} />
           ) : (
@@ -976,8 +1029,8 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             {renderAnchors()}
             <Transformer
               ref={transformerRef}
-              rotateEnabled
-              enabledAnchors={[...TRANSFORMER_ANCHORS]}
+              rotateEnabled={!multiMaterialSelection}
+              enabledAnchors={multiMaterialSelection ? [] : [...TRANSFORMER_ANCHORS]}
               borderStroke="#22d3ee"
               anchorStroke="#22d3ee"
               anchorFill="#67e8f9"
@@ -1238,7 +1291,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           )}
         >
           <span className={cn('pointer-events-auto text-xs', GLASS.label)}>
-            {selectedIds.length} materiales · Shift+clic para añadir o quitar
+            {selectedIds.length} materiales · Shift/Ctrl+clic para añadir o quitar
           </span>
           <button
             type="button"

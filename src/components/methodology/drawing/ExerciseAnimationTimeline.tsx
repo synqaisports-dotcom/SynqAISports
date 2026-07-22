@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Film, Plus, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Film, Plus, Trash2 } from 'lucide-react';
 import {
   MAX_ANIMATION_SCENES,
   type ExerciseDrawingDocument,
@@ -43,6 +43,10 @@ export function ExerciseAnimationTimeline({
   const animationActive = Boolean(doc.animation?.scenes.length);
   const sceneCount = doc.animation?.scenes.length ?? 0;
 
+  useEffect(() => {
+    if (animationActive) setPanelOpen(true);
+  }, [animationActive]);
+
   const handleFilmClick = (event: React.MouseEvent) => {
     if (event.shiftKey && animationActive) {
       onDisableAnimation();
@@ -58,16 +62,11 @@ export function ExerciseAnimationTimeline({
   };
 
   return (
-    <>
-      {/* Icono animación — alineado a la izquierda, debajo de cerrar */}
+    <div className="pointer-events-auto absolute left-4 top-[4.5rem] z-40 flex flex-col items-center gap-1.5">
       <button
         type="button"
         onClick={handleFilmClick}
-        className={cn(
-          'pointer-events-auto absolute left-4 top-[4.5rem] z-40 flex size-10 items-center justify-center',
-          GLASS.iconBtn,
-          animationActive && GLASS.btnActive
-        )}
+        className={cn('flex size-10 items-center justify-center', GLASS.iconBtn, animationActive && GLASS.btnActive)}
         title={
           animationActive
             ? 'Fotogramas (Shift+clic para desactivar animación)'
@@ -79,54 +78,35 @@ export function ExerciseAnimationTimeline({
         <Film className="size-4" />
       </button>
 
-      {/* Barra compacta abajo: solo escena actual + duplicar */}
       {panelOpen && animationActive ? (
         <div
           className={cn(
-            'pointer-events-auto absolute bottom-[6.25rem] left-4 z-40',
-            'flex items-center gap-1.5 rounded-2xl px-2 py-1.5',
+            'flex max-h-[min(70vh,28rem)] flex-col items-center gap-1 overflow-y-auto rounded-2xl p-1.5',
             GLASS.panel
           )}
         >
-          {sceneCount > 1 ? (
+          {doc.animation!.scenes.map((scene, index) => (
             <button
+              key={scene.id}
               type="button"
-              disabled={activeSceneIndex <= 0}
-              onClick={() => onSwitchScene(activeSceneIndex - 1)}
-              className={cn('flex size-8 items-center justify-center rounded-full', GLASS.btn)}
-              aria-label="Fotograma anterior"
+              onClick={() => onSwitchScene(index)}
+              className={cn(
+                'flex size-9 shrink-0 items-center justify-center rounded-xl text-xs font-semibold tabular-nums',
+                index === activeSceneIndex ? GLASS.btnActive : GLASS.btn
+              )}
+              title={`Fotograma ${index + 1}`}
+              aria-label={`Fotograma ${index + 1}`}
+              aria-current={index === activeSceneIndex ? 'step' : undefined}
             >
-              <ChevronLeft className="size-4" />
+              {index + 1}
             </button>
-          ) : null}
-
-          <div
-            className={cn(
-              'flex size-9 items-center justify-center rounded-xl text-xs font-semibold tabular-nums',
-              GLASS.btnActive
-            )}
-            title={`Fotograma ${activeSceneIndex + 1} de ${sceneCount}`}
-          >
-            {activeSceneIndex + 1}
-          </div>
-
-          {sceneCount > 1 ? (
-            <button
-              type="button"
-              disabled={activeSceneIndex >= sceneCount - 1}
-              onClick={() => onSwitchScene(activeSceneIndex + 1)}
-              className={cn('flex size-8 items-center justify-center rounded-full', GLASS.btn)}
-              aria-label="Fotograma siguiente"
-            >
-              <ChevronRight className="size-4" />
-            </button>
-          ) : null}
+          ))}
 
           {sceneCount < MAX_ANIMATION_SCENES ? (
             <button
               type="button"
               onClick={onDuplicateFrame}
-              className={cn('flex size-9 items-center justify-center rounded-xl', GLASS.iconBtn)}
+              className={cn('flex size-9 shrink-0 items-center justify-center rounded-xl', GLASS.iconBtn)}
               title="Duplicar escena actual y editar la siguiente"
               aria-label="Duplicar escena"
             >
@@ -138,7 +118,7 @@ export function ExerciseAnimationTimeline({
             <button
               type="button"
               onClick={onDeleteFrame}
-              className={cn('flex size-9 items-center justify-center rounded-xl', GLASS.danger)}
+              className={cn('flex size-9 shrink-0 items-center justify-center rounded-xl', GLASS.danger)}
               title="Eliminar fotograma actual"
               aria-label="Eliminar fotograma"
             >
@@ -147,6 +127,6 @@ export function ExerciseAnimationTimeline({
           ) : null}
         </div>
       ) : null}
-    </>
+    </div>
   );
 }

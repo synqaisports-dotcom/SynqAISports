@@ -244,7 +244,7 @@ export type LegacyStroke = {
   width: number;
 };
 
-export const MAX_ANIMATION_SCENES = 5;
+export const MAX_ANIMATION_SCENES = 10;
 export const DEFAULT_ANIMATION_TRANSITION_MS = 1400;
 export const DEFAULT_ANIMATION_HOLD_MS = 2000;
 export const DEFAULT_ANIMATION_PLAYBACK_SPEED = 0.85;
