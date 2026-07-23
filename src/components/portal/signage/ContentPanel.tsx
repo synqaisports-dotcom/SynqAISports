@@ -27,6 +27,11 @@ import {
   type SignageExerciseOption,
   type SignageSponsor,
 } from '@/lib/signage';
+import {
+  SIGNAGE_IMAGE_EXTENSIONS,
+  SIGNAGE_VIDEO_EXTENSIONS,
+  signageUploadErrorMessage,
+} from '@/lib/signage-media';
 import { cn } from '@/lib/utils';
 import { Film, ImageIcon, Pencil, Plus } from 'lucide-react';
 
@@ -47,6 +52,7 @@ export function ContentPanel({ assets, sponsors, exercises }: Props) {
   const [orientation, setOrientation] = useState<SignageContentOrientation>('both');
   const [mediaUrl, setMediaUrl] = useState('');
   const [active, setActive] = useState(true);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
   const [createState, createAction, creating] = useActionState(createSignageAsset, initial);
@@ -65,8 +71,12 @@ export function ContentPanel({ assets, sponsors, exercises }: Props) {
     setActive(true);
   }
 
-  function openCreate() {
+  const busy = creating || updating || uploading;
+  const isEdit = Boolean(editing);
+
+  function handleOpenCreate() {
     resetForm();
+    setUploadError(null);
     setOpen(true);
   }
 
@@ -83,15 +93,20 @@ export function ContentPanel({ assets, sponsors, exercises }: Props) {
 
   async function handleUpload(file: File) {
     setUploading(true);
+    setUploadError(null);
     const fd = new FormData();
     fd.set('file', file);
     const result = await uploadSignageMedia(fd);
-    if (result.ok && result.url) setMediaUrl(result.url);
+    if (result.ok && result.url) {
+      setMediaUrl(result.url);
+    } else {
+      setUploadError(signageUploadErrorMessage(result.message));
+      setMediaUrl('');
+    }
     setUploading(false);
   }
 
-  const busy = creating || updating || uploading;
-  const isEdit = Boolean(editing);
+  const needsMedia = !isEdit && (assetType === 'image' || assetType === 'video');
 
   return (
     <div className="space-y-4">
@@ -99,7 +114,7 @@ export function ContentPanel({ assets, sponsors, exercises }: Props) {
         <p className="text-sm text-muted-foreground">
           Vídeos, imágenes, slides y animaciones. Edita, pausa o elimina desde cada tarjeta.
         </p>
-        <Button type="button" size="sm" onClick={openCreate}>
+        <Button type="button" size="sm" onClick={handleOpenCreate}>
           <Plus className="mr-1 size-4" />
           Subir contenido
         </Button>
@@ -216,12 +231,15 @@ export function ContentPanel({ assets, sponsors, exercises }: Props) {
                   <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     {isEdit ? 'Reemplazar archivo' : 'Archivo'}
                   </label>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Imágenes: {SIGNAGE_IMAGE_EXTENSIONS} (máx. 10 MB). Vídeos: {SIGNAGE_VIDEO_EXTENSIONS} (máx. 200 MB).
+                  </p>
                   <Input
                     type="file"
                     accept={
                       (isEdit ? editing?.asset_type : assetType) === 'video'
                         ? 'video/mp4,video/webm'
-                        : 'image/*'
+                        : 'image/jpeg,image/png,image/webp,image/gif'
                     }
                     className="mt-1"
                     onChange={(e) => {
@@ -229,6 +247,7 @@ export function ContentPanel({ assets, sponsors, exercises }: Props) {
                       if (file) void handleUpload(file);
                     }}
                   />
+                  {uploadError ? <p className="mt-2 text-sm text-destructive">{uploadError}</p> : null}
                   {mediaUrl ? (
                     editing?.asset_type === 'video' || assetType === 'video' ? (
                       <p className="mt-2 truncate text-xs text-muted-foreground">{mediaUrl}</p>
@@ -288,9 +307,19 @@ export function ContentPanel({ assets, sponsors, exercises }: Props) {
                 />
                 Activo en pantallas
               </label>
-              <Button type="submit" disabled={busy} className="w-full">
+              <Button type="submit" disabled={busy || (needsMedia && !mediaUrl)} className="w-full">
                 {busy ? 'Guardando…' : isEdit ? 'Guardar cambios' : 'Añadir a biblioteca'}
               </Button>
+              {needsMedia && !mediaUrl ? (
+                <p className="text-center text-xs text-amber-400/90">
+                  Espera a que termine la subida del archivo antes de guardar.
+                </p>
+              ) : null}
+              {createState.ok || updateState.ok ? (
+                <p className="text-center text-sm text-emerald-400">
+                  Guardado. Añádelo en <strong>Programación</strong> para que salga en pantalla.
+                </p>
+              ) : null}
             </form>
           </PortalSheetBody>
         </PortalSheetContent>

@@ -1,28 +1,38 @@
 import { ensureSignageDefaults, loadSignageBundle } from '@/app/actions/signage';
-import { ProgrammingPanel } from '@/components/portal/signage/ProgrammingPanel';
+import { ProgrammingHub } from '@/components/portal/signage/ProgrammingHub';
 import { SignageHero } from '@/components/portal/signage/SignageHero';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
 import { resolveEffectiveSchedule } from '@/lib/signage';
 import { redirect } from 'next/navigation';
 
-export default async function PortalSignageProgrammingPage() {
+type Props = {
+  searchParams: Promise<{ playlist?: string }>;
+};
+
+export default async function PortalSignageProgrammingPage({ searchParams }: Props) {
+  const { playlist: playlistParam } = await searchParams;
   const supabase = await createClient();
   const ctx = await getStaffContext(supabase);
   if (!ctx) redirect('/login');
 
   await ensureSignageDefaults(ctx.club.id);
   const bundle = await loadSignageBundle(ctx.club.id);
-  const defaultPlaylist = bundle.playlists.find((p) => p.is_default) ?? bundle.playlists[0];
-  if (!defaultPlaylist) redirect('/portal/signage');
+  if (!bundle.playlists.length) redirect('/portal/signage');
+
+  const selectedId =
+    bundle.playlists.find((p) => p.id === playlistParam)?.id ??
+    bundle.playlists.find((p) => p.is_default)?.id ??
+    bundle.playlists[0].id;
 
   const schedule = resolveEffectiveSchedule(null, bundle.schedules);
 
   return (
     <div className="space-y-6">
       <SignageHero sponsors={bundle.sponsors} devices={bundle.devices} playlists={bundle.playlists} />
-      <ProgrammingPanel
-        playlist={defaultPlaylist}
+      <ProgrammingHub
+        playlists={bundle.playlists}
+        selectedPlaylistId={selectedId}
         schedule={schedule}
         sponsors={bundle.sponsors}
         assets={bundle.assets}

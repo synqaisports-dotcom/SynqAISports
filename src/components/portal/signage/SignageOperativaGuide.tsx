@@ -36,14 +36,21 @@ export function SignageOperativaGuide() {
           </p>
         </li>
         <li className="rounded-lg border border-primary/10 bg-background/30 p-3">
-          <p className="font-medium text-foreground">4. Playlist por pantalla (opcional)</p>
+          <p className="font-medium text-foreground">4. Playlists por zona (opcional)</p>
           <p className="mt-1 text-muted-foreground">
-            Si el gym necesita otro contenido que la cafetería, edita la pantalla en <strong>Pantallas</strong> y
-            asigna una playlist específica. Si dejas &quot;Por defecto del club&quot;, usará la playlist principal.
+            En <strong>Programación</strong> puedes crear playlists distintas (Gym, Cafetería…). En{' '}
+            <strong>Pantallas</strong> asigna la playlist correspondiente a cada TV.
           </p>
         </li>
         <li className="rounded-lg border border-primary/10 bg-background/30 p-3">
-          <p className="font-medium text-foreground">5. Reproducción automática</p>
+          <p className="font-medium text-foreground">5. Formatos de archivo</p>
+          <p className="mt-1 text-muted-foreground">
+            Imágenes: <strong>JPG, PNG, WebP, GIF</strong> (máx. 10 MB). Vídeos: <strong>MP4, WebM</strong> (máx. 200 MB).
+            Las fotos HEIC de iPhone no son compatibles — exporta como JPG antes de subir.
+          </p>
+        </li>
+        <li className="rounded-lg border border-primary/10 bg-background/30 p-3">
+          <p className="font-medium text-foreground">6. Reproducción automática</p>
           <p className="mt-1 text-muted-foreground">
             Tras emparejar, la TV redirige a <code className="text-cyan-300">/play/&#123;token&#125;</code> y rota el
             contenido. Fuera del horario activo muestra el escudo del club (standby). Pausar una pantalla la desactiva

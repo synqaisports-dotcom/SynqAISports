@@ -35,27 +35,20 @@ export function SignageWebPlayer({
   }, [deviceToken]);
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black">
-      <div
-        className={
-          device.orientation === 'portrait'
-            ? 'h-full w-auto max-w-full'
-            : 'h-full w-full'
-        }
-      >
-        <SignagePlaylistPlayer
-          orientation={device.orientation}
-          playlist={playlist}
-          schedule={schedule}
-          sponsors={sponsors}
-          assets={assets}
-          exercises={exercises}
-          clubName={clubName}
-          clubLogoUrl={clubLogoUrl}
-          autoPlay
-          className="h-full w-full [&>div]:h-full [&>div]:max-h-none [&>div]:rounded-none [&>div]:border-0"
-        />
-      </div>
+    <div className="fixed inset-0 h-screen w-screen bg-black">
+      <SignagePlaylistPlayer
+        orientation={device.orientation}
+        playlist={playlist}
+        schedule={schedule}
+        sponsors={sponsors}
+        assets={assets}
+        exercises={exercises}
+        clubName={clubName}
+        clubLogoUrl={clubLogoUrl}
+        autoPlay
+        fullscreen
+        className="h-full w-full"
+      />
     </div>
   );
 }

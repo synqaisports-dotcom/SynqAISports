@@ -185,7 +185,12 @@ export function ProgrammingPanel({
           </div>
 
           <form action={playlistAction} className="mt-4 space-y-3 border-t border-primary/10 pt-4">
-            <input type="hidden" name="name" value={playlist.name} />
+            <div>
+              <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Nombre de la playlist
+              </label>
+              <Input name="name" defaultValue={playlist.name} className="mt-1" />
+            </div>
             <input type="hidden" name="items_json" value={JSON.stringify(items)} />
             <input type="hidden" name="rotation_mode" value={playlist.rotation_mode} />
             <input type="hidden" name="is_default" value={playlist.is_default ? 'true' : 'false'} />

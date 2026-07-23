@@ -27,6 +27,7 @@ type Props = {
   clubLogoUrl: string | null;
   preview?: boolean;
   autoPlay?: boolean;
+  fullscreen?: boolean;
   className?: string;
 };
 
@@ -49,9 +50,12 @@ function SlideContent({
   const [playing, setPlaying] = useState(true);
   const [progress, setProgress] = useState(0);
 
+  const [imageError, setImageError] = useState(false);
+
   useEffect(() => {
     setPlaying(true);
     setProgress(0);
+    setImageError(false);
     if (videoRef) {
       videoRef.currentTime = 0;
       void videoRef.play().catch(() => undefined);
@@ -88,9 +92,45 @@ function SlideContent({
     );
   }
 
-  if ((slide.asset_type === 'image' || slide.asset_type === 'club_branding') && slide.media_url) {
+  const isImageSlide =
+    slide.asset_type === 'image' || slide.item.type === 'image' || slide.item.type === 'sponsor_slide';
+
+  if (isImageSlide && slide.media_url && !imageError) {
     return (
-      <img src={slide.media_url} alt={slide.title} className="h-full w-full object-contain bg-black" />
+      <div className="flex h-full w-full items-center justify-center bg-black p-2">
+        <img
+          src={slide.media_url}
+          alt={slide.title}
+          className="max-h-full max-w-full object-contain"
+          onError={() => setImageError(true)}
+        />
+      </div>
+    );
+  }
+
+  if (isImageSlide && (imageError || !slide.media_url)) {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-[#060a12] p-8 text-center">
+        <p className="text-lg font-medium text-white">{slide.title}</p>
+        <p className="max-w-md text-sm text-cyan-300/60">
+          {imageError
+            ? 'No se pudo cargar la imagen. Vuelve a subirla en JPG, PNG o WebP (máx. 10 MB).'
+            : 'Sin archivo de imagen. Edita el contenido y sube una imagen válida.'}
+        </p>
+      </div>
+    );
+  }
+
+  if (slide.asset_type === 'club_branding' && slide.media_url) {
+    return (
+      <div className="flex h-full w-full items-center justify-center bg-black p-2">
+        <img
+          src={slide.media_url}
+          alt={slide.title}
+          className="max-h-full max-w-full object-contain"
+          onError={() => setImageError(true)}
+        />
+      </div>
     );
   }
 
@@ -138,6 +178,7 @@ export function SignagePlaylistPlayer({
   clubLogoUrl,
   preview = false,
   autoPlay = true,
+  fullscreen = false,
   className,
 }: Props) {
   const resolved = useMemo(
@@ -166,8 +207,9 @@ export function SignagePlaylistPlayer({
     return () => window.clearTimeout(timer);
   }, [active, advance, autoPlay, inSchedule]);
 
-  const frameClass =
-    orientation === 'portrait'
+  const frameClass = fullscreen
+    ? 'h-full w-full'
+    : orientation === 'portrait'
       ? 'aspect-[9/16] max-h-full w-auto max-w-full'
       : 'aspect-video w-full max-w-full';
 
@@ -208,7 +250,10 @@ export function SignagePlaylistPlayer({
     <div className={cn('relative', className)}>
       <div
         className={cn(
-          'relative mx-auto overflow-hidden rounded-xl border border-cyan-400/30 bg-black shadow-[0_8px_40px_rgba(34,211,238,0.12)]',
+          'relative mx-auto overflow-hidden bg-black',
+          fullscreen
+            ? 'h-full w-full rounded-none border-0'
+            : 'rounded-xl border border-cyan-400/30 shadow-[0_8px_40px_rgba(34,211,238,0.12)]',
           frameClass
         )}
       >

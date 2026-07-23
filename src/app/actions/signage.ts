@@ -5,6 +5,11 @@ import { DEMO_SIGNAGE_CLUB_ID, getDemoSignageStore } from '@/lib/demo-signage-st
 import { isDemoActive } from '@/lib/demo';
 import { hasDrawableAnimation, parseExerciseDrawing } from '@/lib/exercise-drawing';
 import {
+  fileExtensionForMime,
+  fileToDataUrl,
+  validateSignageUpload,
+} from '@/lib/signage-media';
+import {
   ASSET_SELECT,
   DEVICE_SELECT,
   generateDeviceToken,
@@ -280,23 +285,37 @@ export async function uploadSignageMedia(
 
   const file = formData.get('file');
   if (!(file instanceof File) || file.size === 0) return { ok: false, message: 'no_file' };
-  if (file.size > 200 * 1024 * 1024) return { ok: false, message: 'too_large' };
 
-  if (await isDemoActive()) {
-    return { ok: true, url: URL.createObjectURL(file) };
-  }
+  const validation = validateSignageUpload(file);
+  if (!validation.ok) return { ok: false, message: validation.message };
 
-  const ext = file.name.split('.').pop() ?? 'bin';
+  const ext = fileExtensionForMime(file.type, file.name);
   const path = `${clubId}/signage/${Date.now()}.${ext}`;
   const supabase = await createClient();
+
   const { error } = await supabase.storage.from('signage-media').upload(path, file, {
     cacheControl: '3600',
     upsert: true,
     contentType: file.type,
   });
-  if (error) return { ok: false, message: 'upload_error' };
-  const { data } = supabase.storage.from('signage-media').getPublicUrl(path);
-  return { ok: true, url: data.publicUrl };
+
+  if (!error) {
+    const { data } = supabase.storage.from('signage-media').getPublicUrl(path);
+    return { ok: true, url: data.publicUrl };
+  }
+
+  // Fallback demo: data URL embebida (válida en cualquier pantalla)
+  if ((await isDemoActive()) && file.type.startsWith('image/')) {
+    try {
+      const url = await fileToDataUrl(file);
+      return { ok: true, url };
+    } catch {
+      return { ok: false, message: 'upload_error' };
+    }
+  }
+
+  console.error('uploadSignageMedia', error);
+  return { ok: false, message: 'upload_error' };
 }
 
 export async function createSignageAsset(
@@ -321,6 +340,10 @@ export async function createSignageAsset(
     orientation: String(formData.get('orientation') ?? 'both'),
     active: true,
   };
+
+  if ((asset_type === 'image' || asset_type === 'video') && !payload.media_url) {
+    return { ok: false, message: 'no_file' };
+  }
 
   if (await isDemoActive()) {
     const store = getDemoSignageStore();
@@ -528,6 +551,95 @@ export async function deleteDevice(deviceId: string): Promise<SignageActionState
   if (error) return { ok: false, message: 'error' };
   revalidateSignage();
   return { ok: true, id: deviceId };
+}
+
+export async function createPlaylist(
+  _prev: SignageActionState,
+  formData: FormData
+): Promise<SignageActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'unauthorized' };
+
+  const name = String(formData.get('name') ?? '').trim();
+  if (!name) return { ok: false, message: 'validation' };
+
+  if (await isDemoActive()) {
+    const store = getDemoSignageStore();
+    const id = `demo-playlist-${Date.now()}`;
+    store.playlists.push({
+      id,
+      name,
+      scope: 'club',
+      device_id: null,
+      is_default: false,
+      rotation_mode: 'sequential',
+      items: [],
+      active: true,
+    });
+    revalidateSignage();
+    return { ok: true, id };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('synq_signage_playlists')
+    .insert({
+      club_id: clubId,
+      name,
+      scope: 'club',
+      is_default: false,
+      items_json: [],
+    })
+    .select('id')
+    .single();
+  if (error) return { ok: false, message: 'error' };
+  revalidateSignage();
+  return { ok: true, id: String(data.id) };
+}
+
+export async function deletePlaylist(playlistId: string): Promise<SignageActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'unauthorized' };
+
+  if (await isDemoActive()) {
+    const store = getDemoSignageStore();
+    const playlist = store.playlists.find((p) => p.id === playlistId);
+    if (!playlist) return { ok: false, message: 'not_found' };
+    if (playlist.is_default) return { ok: false, message: 'cannot_delete_default' };
+    store.playlists = store.playlists.filter((p) => p.id !== playlistId);
+    store.devices.forEach((d, i) => {
+      if (d.playlist_id === playlistId) {
+        store.devices[i] = { ...d, playlist_id: null };
+      }
+    });
+    revalidateSignage();
+    return { ok: true, id: playlistId };
+  }
+
+  const supabase = await createClient();
+  const { data: playlist } = await supabase
+    .from('synq_signage_playlists')
+    .select('is_default')
+    .eq('id', playlistId)
+    .eq('club_id', clubId)
+    .maybeSingle();
+  if (!playlist) return { ok: false, message: 'not_found' };
+  if (playlist.is_default) return { ok: false, message: 'cannot_delete_default' };
+
+  await supabase
+    .from('synq_signage_devices')
+    .update({ playlist_id: null })
+    .eq('playlist_id', playlistId)
+    .eq('club_id', clubId);
+
+  const { error } = await supabase
+    .from('synq_signage_playlists')
+    .delete()
+    .eq('id', playlistId)
+    .eq('club_id', clubId);
+  if (error) return { ok: false, message: 'error' };
+  revalidateSignage();
+  return { ok: true, id: playlistId };
 }
 
 export async function updatePlaylist(
