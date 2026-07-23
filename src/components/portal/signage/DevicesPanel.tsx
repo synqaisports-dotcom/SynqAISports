@@ -1,8 +1,9 @@
 'use client';
 
 import { useActionState, useState } from 'react';
-import { claimPairingCode, updateDevice, type SignageActionState } from '@/app/actions/signage';
+import { claimPairingCode, deleteDevice, toggleDeviceActive, updateDevice, type SignageActionState } from '@/app/actions/signage';
 import { PortalSheetBody, PortalSheetContent, PortalSheetHeader } from '@/components/portal/PortalSheet';
+import { SignageItemActions } from '@/components/portal/signage/SignageItemActions';
 import { SynqSelect } from '@/components/portal/SynqSelect';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,7 @@ import {
   type SignagePlaylist,
   type SignageZoneType,
 } from '@/lib/signage';
+import { cn } from '@/lib/utils';
 import { Copy, Link2, Monitor, Pencil } from 'lucide-react';
 import Link from 'next/link';
 
@@ -59,7 +61,8 @@ export function DevicesPanel({ devices, playlists }: Props) {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
-          Empareja TVs con un código de 6 dígitos. Abre{' '}
+          Cada TV es una pantalla independiente. Para añadir otra, repite el emparejamiento en la nueva TV.
+          Abre{' '}
           <Link href="/play/pair" className="text-cyan-300 hover:underline" target="_blank">
             /play/pair
           </Link>{' '}
@@ -76,18 +79,19 @@ export function DevicesPanel({ devices, playlists }: Props) {
           const online = deviceIsOnline(device.last_seen_at);
           const playlist = playlists.find((p) => p.id === device.playlist_id);
           return (
-            <div key={device.id} className="portal-section-surface rounded-xl p-4">
+            <div key={device.id} className={cn('portal-section-surface rounded-xl p-4', !device.active && 'opacity-60')}>
               <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3">
-                  <div className="flex size-11 items-center justify-center rounded-lg border border-primary/25 bg-primary/5">
+                <div className="flex min-w-0 flex-1 items-start gap-3">
+                  <div className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-primary/5">
                     <Monitor className="size-5 text-primary/80" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="font-medium">{device.name}</p>
                     <div className="mt-1 flex flex-wrap gap-1">
                       <Badge variant="outline">{SIGNAGE_ZONE_LABELS[device.zone_type]}</Badge>
                       <Badge variant="outline">{SIGNAGE_ORIENTATION_LABELS[device.orientation]}</Badge>
                       <Badge variant={online ? 'default' : 'secondary'}>{online ? 'En línea' : 'Offline'}</Badge>
+                      {!device.active ? <Badge variant="destructive">Pausada</Badge> : null}
                     </div>
                     {playlist ? (
                       <p className="mt-2 text-xs text-muted-foreground">Playlist: {playlist.name}</p>
@@ -97,6 +101,13 @@ export function DevicesPanel({ devices, playlists }: Props) {
                   </div>
                 </div>
                 <div className="flex gap-1">
+                  <SignageItemActions
+                    active={device.active}
+                    onToggle={() => toggleDeviceActive(device.id, !device.active)}
+                    onDelete={() => deleteDevice(device.id)}
+                    pauseLabel="Pausar pantalla"
+                    resumeLabel="Reactivar pantalla"
+                  />
                   <Button type="button" size="icon" variant="ghost" onClick={() => copyPlayUrl(device.device_token)}>
                     <Copy className="size-4" />
                   </Button>
@@ -106,7 +117,7 @@ export function DevicesPanel({ devices, playlists }: Props) {
                 </div>
               </div>
               <div className="mt-3 flex gap-2">
-                <Button asChild size="sm" variant="outline">
+                <Button asChild size="sm" variant="outline" disabled={!device.active}>
                   <Link href={`/play/${device.device_token}`} target="_blank">
                     Abrir reproductor
                   </Link>

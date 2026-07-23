@@ -348,6 +348,188 @@ export async function createSignageAsset(
   return { ok: true, id: String(data.id) };
 }
 
+export async function updateSignageAsset(
+  assetId: string,
+  _prev: SignageActionState,
+  formData: FormData
+): Promise<SignageActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'unauthorized' };
+
+  const title = String(formData.get('title') ?? '').trim();
+  if (!title) return { ok: false, message: 'validation' };
+
+  const payload = {
+    title,
+    media_url: String(formData.get('media_url') ?? '').trim() || null,
+    thumbnail_url: String(formData.get('thumbnail_url') ?? '').trim() || null,
+    duration_sec: Number(formData.get('duration_sec') ?? 10),
+    orientation: String(formData.get('orientation') ?? 'both'),
+    active: formData.get('active') !== 'false',
+  };
+
+  if (await isDemoActive()) {
+    const store = getDemoSignageStore();
+    const idx = store.assets.findIndex((a) => a.id === assetId);
+    if (idx < 0) return { ok: false, message: 'not_found' };
+    store.assets[idx] = {
+      ...store.assets[idx],
+      ...payload,
+      orientation: payload.orientation as SignageAsset['orientation'],
+    };
+    revalidateSignage();
+    return { ok: true, id: assetId };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('synq_signage_assets')
+    .update(payload)
+    .eq('id', assetId)
+    .eq('club_id', clubId);
+  if (error) return { ok: false, message: 'error' };
+  revalidateSignage();
+  return { ok: true, id: assetId };
+}
+
+export async function toggleSponsorActive(sponsorId: string, active: boolean): Promise<SignageActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'unauthorized' };
+
+  if (await isDemoActive()) {
+    const store = getDemoSignageStore();
+    const idx = store.sponsors.findIndex((s) => s.id === sponsorId);
+    if (idx < 0) return { ok: false, message: 'not_found' };
+    store.sponsors[idx] = { ...store.sponsors[idx], active };
+    revalidateSignage();
+    return { ok: true, id: sponsorId };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('synq_sponsors')
+    .update({ active })
+    .eq('id', sponsorId)
+    .eq('club_id', clubId);
+  if (error) return { ok: false, message: 'error' };
+  revalidateSignage();
+  return { ok: true, id: sponsorId };
+}
+
+export async function deleteSponsor(sponsorId: string): Promise<SignageActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'unauthorized' };
+
+  if (await isDemoActive()) {
+    const store = getDemoSignageStore();
+    store.sponsors = store.sponsors.filter((s) => s.id !== sponsorId);
+    revalidateSignage();
+    return { ok: true, id: sponsorId };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('synq_sponsors')
+    .delete()
+    .eq('id', sponsorId)
+    .eq('club_id', clubId);
+  if (error) return { ok: false, message: 'error' };
+  revalidateSignage();
+  return { ok: true, id: sponsorId };
+}
+
+export async function toggleSignageAssetActive(assetId: string, active: boolean): Promise<SignageActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'unauthorized' };
+
+  if (await isDemoActive()) {
+    const store = getDemoSignageStore();
+    const idx = store.assets.findIndex((a) => a.id === assetId);
+    if (idx < 0) return { ok: false, message: 'not_found' };
+    store.assets[idx] = { ...store.assets[idx], active };
+    revalidateSignage();
+    return { ok: true, id: assetId };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('synq_signage_assets')
+    .update({ active })
+    .eq('id', assetId)
+    .eq('club_id', clubId);
+  if (error) return { ok: false, message: 'error' };
+  revalidateSignage();
+  return { ok: true, id: assetId };
+}
+
+export async function deleteSignageAsset(assetId: string): Promise<SignageActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'unauthorized' };
+
+  if (await isDemoActive()) {
+    const store = getDemoSignageStore();
+    store.assets = store.assets.filter((a) => a.id !== assetId);
+    revalidateSignage();
+    return { ok: true, id: assetId };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('synq_signage_assets')
+    .delete()
+    .eq('id', assetId)
+    .eq('club_id', clubId);
+  if (error) return { ok: false, message: 'error' };
+  revalidateSignage();
+  return { ok: true, id: assetId };
+}
+
+export async function toggleDeviceActive(deviceId: string, active: boolean): Promise<SignageActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'unauthorized' };
+
+  if (await isDemoActive()) {
+    const store = getDemoSignageStore();
+    const idx = store.devices.findIndex((d) => d.id === deviceId);
+    if (idx < 0) return { ok: false, message: 'not_found' };
+    store.devices[idx] = { ...store.devices[idx], active };
+    revalidateSignage();
+    return { ok: true, id: deviceId };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('synq_signage_devices')
+    .update({ active })
+    .eq('id', deviceId)
+    .eq('club_id', clubId);
+  if (error) return { ok: false, message: 'error' };
+  revalidateSignage();
+  return { ok: true, id: deviceId };
+}
+
+export async function deleteDevice(deviceId: string): Promise<SignageActionState> {
+  const clubId = await requireClubId();
+  if (!clubId) return { ok: false, message: 'unauthorized' };
+
+  if (await isDemoActive()) {
+    const store = getDemoSignageStore();
+    store.devices = store.devices.filter((d) => d.id !== deviceId);
+    revalidateSignage();
+    return { ok: true, id: deviceId };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('synq_signage_devices')
+    .delete()
+    .eq('id', deviceId)
+    .eq('club_id', clubId);
+  if (error) return { ok: false, message: 'error' };
+  revalidateSignage();
+  return { ok: true, id: deviceId };
+}
+
 export async function updatePlaylist(
   playlistId: string,
   _prev: SignageActionState,

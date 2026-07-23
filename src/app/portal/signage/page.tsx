@@ -1,5 +1,6 @@
 import { ensureSignageDefaults, loadSignageBundle } from '@/app/actions/signage';
 import { SignageHero } from '@/components/portal/signage/SignageHero';
+import { SignageOperativaGuide } from '@/components/portal/signage/SignageOperativaGuide';
 import { SignagePlaylistPlayer } from '@/components/portal/signage/SignagePlaylistPlayer';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/portal';
@@ -34,23 +35,7 @@ export default async function PortalSignagePage() {
       />
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="portal-section-surface rounded-xl p-4">
-          <h2 className="font-medium">Accesos rápidos</h2>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            <Button asChild variant="outline" className="justify-start">
-              <Link href="/portal/signage/patrocinadores">Patrocinadores</Link>
-            </Button>
-            <Button asChild variant="outline" className="justify-start">
-              <Link href="/portal/signage/contenido">Biblioteca de contenido</Link>
-            </Button>
-            <Button asChild variant="outline" className="justify-start">
-              <Link href="/portal/signage/pantallas">Pantallas y emparejamiento</Link>
-            </Button>
-            <Button asChild variant="outline" className="justify-start">
-              <Link href="/portal/signage/programacion">Programación y preview</Link>
-            </Button>
-          </div>
-        </div>
+        <SignageOperativaGuide />
 
         <div className="portal-section-surface rounded-xl p-4">
           <h2 className="mb-3 font-medium">Vista previa playlist principal</h2>

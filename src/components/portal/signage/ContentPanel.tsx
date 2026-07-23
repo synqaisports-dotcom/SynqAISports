@@ -1,8 +1,16 @@
 'use client';
 
 import { useActionState, useState } from 'react';
-import { createSignageAsset, uploadSignageMedia, type SignageActionState } from '@/app/actions/signage';
+import {
+  createSignageAsset,
+  deleteSignageAsset,
+  toggleSignageAssetActive,
+  updateSignageAsset,
+  uploadSignageMedia,
+  type SignageActionState,
+} from '@/app/actions/signage';
 import { PortalSheetBody, PortalSheetContent, PortalSheetHeader } from '@/components/portal/PortalSheet';
+import { SignageItemActions } from '@/components/portal/signage/SignageItemActions';
 import { SynqSelect } from '@/components/portal/SynqSelect';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,7 +27,8 @@ import {
   type SignageExerciseOption,
   type SignageSponsor,
 } from '@/lib/signage';
-import { Film, ImageIcon, Plus } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Film, ImageIcon, Pencil, Plus } from 'lucide-react';
 
 const initial: SignageActionState = { ok: false };
 
@@ -31,13 +40,46 @@ type Props = {
 
 export function ContentPanel({ assets, sponsors, exercises }: Props) {
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<SignageAsset | null>(null);
   const [assetType, setAssetType] = useState<SignageAssetType>('image');
   const [sponsorId, setSponsorId] = useState('');
   const [exerciseId, setExerciseId] = useState('');
   const [orientation, setOrientation] = useState<SignageContentOrientation>('both');
   const [mediaUrl, setMediaUrl] = useState('');
+  const [active, setActive] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [state, action, pending] = useActionState(createSignageAsset, initial);
+
+  const [createState, createAction, creating] = useActionState(createSignageAsset, initial);
+  const [updateState, updateAction, updating] = useActionState(
+    editing ? updateSignageAsset.bind(null, editing.id) : createSignageAsset,
+    initial
+  );
+
+  function resetForm() {
+    setEditing(null);
+    setAssetType('image');
+    setMediaUrl('');
+    setSponsorId('');
+    setExerciseId('');
+    setOrientation('both');
+    setActive(true);
+  }
+
+  function openCreate() {
+    resetForm();
+    setOpen(true);
+  }
+
+  function openEdit(asset: SignageAsset) {
+    setEditing(asset);
+    setAssetType(asset.asset_type);
+    setMediaUrl(asset.media_url ?? '');
+    setSponsorId(asset.sponsor_id ?? '');
+    setExerciseId(asset.exercise_id ?? '');
+    setOrientation(asset.orientation);
+    setActive(asset.active);
+    setOpen(true);
+  }
 
   async function handleUpload(file: File) {
     setUploading(true);
@@ -48,24 +90,16 @@ export function ContentPanel({ assets, sponsors, exercises }: Props) {
     setUploading(false);
   }
 
+  const busy = creating || updating || uploading;
+  const isEdit = Boolean(editing);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
-          Vídeos, imágenes, slides de patrocinadores y animaciones de ejercicios.
+          Vídeos, imágenes, slides y animaciones. Edita, pausa o elimina desde cada tarjeta.
         </p>
-        <Button
-          type="button"
-          size="sm"
-          onClick={() => {
-            setAssetType('image');
-            setMediaUrl('');
-            setSponsorId('');
-            setExerciseId('');
-            setOrientation('both');
-            setOpen(true);
-          }}
-        >
+        <Button type="button" size="sm" onClick={openCreate}>
           <Plus className="mr-1 size-4" />
           Subir contenido
         </Button>
@@ -73,71 +107,138 @@ export function ContentPanel({ assets, sponsors, exercises }: Props) {
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {assets.map((asset) => (
-          <div key={asset.id} className="portal-section-surface rounded-xl p-4">
+          <div
+            key={asset.id}
+            className={cn('portal-section-surface rounded-xl p-4', !asset.active && 'opacity-60')}
+          >
             <div className="flex items-start gap-3">
-              <div className="flex size-12 items-center justify-center rounded-lg border border-primary/20 bg-primary/5">
-                {asset.asset_type === 'video' ? (
-                  <Film className="size-5 text-primary/80" />
-                ) : (
-                  <ImageIcon className="size-5 text-primary/80" />
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-medium">{asset.title}</p>
-                <div className="mt-1 flex flex-wrap gap-1">
-                  <Badge variant="outline">{SIGNAGE_ASSET_TYPE_LABELS[asset.asset_type]}</Badge>
-                  <Badge variant="secondary">{asset.duration_sec}s</Badge>
+              <button
+                type="button"
+                onClick={() => openEdit(asset)}
+                className="flex min-w-0 flex-1 items-start gap-3 text-left"
+              >
+                <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-primary/20 bg-primary/5">
+                  {asset.media_url && (asset.asset_type === 'image' || asset.asset_type === 'video') ? (
+                    asset.asset_type === 'video' ? (
+                      <Film className="size-5 text-primary/80" />
+                    ) : (
+                      <img src={asset.media_url} alt="" className="size-full object-cover" />
+                    )
+                  ) : asset.asset_type === 'video' ? (
+                    <Film className="size-5 text-primary/80" />
+                  ) : (
+                    <ImageIcon className="size-5 text-primary/80" />
+                  )}
                 </div>
-              </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium">{asset.title}</p>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    <Badge variant="outline">{SIGNAGE_ASSET_TYPE_LABELS[asset.asset_type]}</Badge>
+                    <Badge variant="secondary">{asset.duration_sec}s</Badge>
+                    {!asset.active ? <Badge variant="destructive">Pausado</Badge> : null}
+                  </div>
+                </div>
+              </button>
+              <SignageItemActions
+                active={asset.active}
+                onToggle={() => toggleSignageAssetActive(asset.id, !asset.active)}
+                onDelete={() => deleteSignageAsset(asset.id)}
+                pauseLabel="Pausar contenido"
+                resumeLabel="Reactivar contenido"
+              />
             </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="mt-2 w-full justify-start text-muted-foreground"
+              onClick={() => openEdit(asset)}
+            >
+              <Pencil className="mr-2 size-3.5" />
+              Editar
+            </Button>
           </div>
         ))}
       </div>
+
+      {assets.length === 0 ? (
+        <p className="text-center text-sm text-muted-foreground">Aún no hay contenido en la biblioteca.</p>
+      ) : null}
 
       <Sheet open={open} onOpenChange={setOpen}>
         <PortalSheetContent maxWidth="md">
           <PortalSheetHeader>
             <SheetHeader>
-              <SheetTitle>Nuevo contenido</SheetTitle>
+              <SheetTitle>{isEdit ? 'Editar contenido' : 'Nuevo contenido'}</SheetTitle>
             </SheetHeader>
           </PortalSheetHeader>
           <PortalSheetBody>
-            <form action={action} className="space-y-4">
+            <form
+              action={isEdit ? updateAction : createAction}
+              className="space-y-4"
+              onSubmit={() => {
+                if (createState.ok || updateState.ok) setOpen(false);
+              }}
+            >
               <input type="hidden" name="media_url" value={mediaUrl} />
-              <input type="hidden" name="asset_type" value={assetType} />
-              <input type="hidden" name="sponsor_id" value={sponsorId} />
-              <input type="hidden" name="exercise_id" value={exerciseId} />
+              {!isEdit ? (
+                <>
+                  <input type="hidden" name="asset_type" value={assetType} />
+                  <input type="hidden" name="sponsor_id" value={sponsorId} />
+                  <input type="hidden" name="exercise_id" value={exerciseId} />
+                </>
+              ) : null}
               <input type="hidden" name="orientation" value={orientation} />
+              <input type="hidden" name="active" value={active ? 'true' : 'false'} />
               <div>
                 <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Título</label>
-                <Input name="title" required className="mt-1" />
+                <Input name="title" defaultValue={editing?.title ?? ''} required className="mt-1" />
               </div>
-              <div>
-                <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Tipo</label>
-                <SynqSelect
-                  value={assetType}
-                  onChange={(value) => setAssetType(value as SignageAssetType)}
-                  options={SIGNAGE_ASSET_TYPES.map((type) => ({
-                    value: type,
-                    label: SIGNAGE_ASSET_TYPE_LABELS[type],
-                  }))}
-                />
-              </div>
-              {(assetType === 'video' || assetType === 'image') && (
+              {!isEdit ? (
                 <div>
-                  <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Archivo</label>
+                  <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Tipo</label>
+                  <SynqSelect
+                    value={assetType}
+                    onChange={(value) => setAssetType(value as SignageAssetType)}
+                    options={SIGNAGE_ASSET_TYPES.map((type) => ({
+                      value: type,
+                      label: SIGNAGE_ASSET_TYPE_LABELS[type],
+                    }))}
+                  />
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Tipo: <strong>{editing ? SIGNAGE_ASSET_TYPE_LABELS[editing.asset_type] : ''}</strong>
+                </p>
+              )}
+              {(assetType === 'video' || assetType === 'image' || (isEdit && editing?.media_url)) && (
+                <div>
+                  <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    {isEdit ? 'Reemplazar archivo' : 'Archivo'}
+                  </label>
                   <Input
                     type="file"
-                    accept={assetType === 'video' ? 'video/mp4,video/webm' : 'image/*'}
+                    accept={
+                      (isEdit ? editing?.asset_type : assetType) === 'video'
+                        ? 'video/mp4,video/webm'
+                        : 'image/*'
+                    }
                     className="mt-1"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) void handleUpload(file);
                     }}
                   />
+                  {mediaUrl ? (
+                    editing?.asset_type === 'video' || assetType === 'video' ? (
+                      <p className="mt-2 truncate text-xs text-muted-foreground">{mediaUrl}</p>
+                    ) : (
+                      <img src={mediaUrl} alt="" className="mt-2 max-h-24 object-contain" />
+                    )
+                  ) : null}
                 </div>
               )}
-              {assetType === 'sponsor_slide' && (
+              {!isEdit && assetType === 'sponsor_slide' && (
                 <div>
                   <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Patrocinador</label>
                   <SynqSelect
@@ -147,7 +248,7 @@ export function ContentPanel({ assets, sponsors, exercises }: Props) {
                   />
                 </div>
               )}
-              {assetType === 'exercise_animation' && (
+              {!isEdit && assetType === 'exercise_animation' && (
                 <div>
                   <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Ejercicio</label>
                   <SynqSelect
@@ -159,7 +260,13 @@ export function ContentPanel({ assets, sponsors, exercises }: Props) {
               )}
               <div>
                 <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Duración (s)</label>
-                <Input name="duration_sec" type="number" min={0} defaultValue={assetType === 'video' ? 0 : 10} className="mt-1" />
+                <Input
+                  name="duration_sec"
+                  type="number"
+                  min={0}
+                  defaultValue={editing?.duration_sec ?? (assetType === 'video' ? 0 : 10)}
+                  className="mt-1"
+                />
               </div>
               <div>
                 <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Orientación</label>
@@ -172,10 +279,18 @@ export function ContentPanel({ assets, sponsors, exercises }: Props) {
                   }))}
                 />
               </div>
-              <Button type="submit" disabled={pending || uploading} className="w-full">
-                {pending || uploading ? 'Guardando…' : 'Añadir a biblioteca'}
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={active}
+                  onChange={(e) => setActive(e.target.checked)}
+                  className="rounded border-primary/30"
+                />
+                Activo en pantallas
+              </label>
+              <Button type="submit" disabled={busy} className="w-full">
+                {busy ? 'Guardando…' : isEdit ? 'Guardar cambios' : 'Añadir a biblioteca'}
               </Button>
-              {state.ok ? <p className="text-center text-sm text-emerald-400">Contenido creado</p> : null}
             </form>
           </PortalSheetBody>
         </PortalSheetContent>
