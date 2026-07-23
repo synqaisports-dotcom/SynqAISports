@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Stage, Layer, Line, Arrow, Rect, Group, Circle, Image as KonvaImage, Text } from 'react-konva';
 import { KonvaPitchLayer } from '@/components/methodology/drawing/KonvaPitchLayer';
+import { PlayerKonvaMarker } from '@/components/methodology/drawing/PlayerKonvaMarker';
 import { MATERIAL_SCALE_NORM } from '@/lib/field-engine';
 import {
   MATERIAL_CATALOG,
@@ -231,7 +232,16 @@ function ReadonlyElement({
         listening={false}
       >
         {img ? (
-          <KonvaImage image={img} width={scale} height={scale} offsetX={scale / 2} offsetY={scale / 2} />
+          element.material.startsWith('player') ? (
+            <PlayerKonvaMarker
+              material={element.material}
+              label={element.label}
+              scale={scale}
+              image={img}
+            />
+          ) : (
+            <KonvaImage image={img} width={scale} height={scale} offsetX={scale / 2} offsetY={scale / 2} listening={false} />
+          )
         ) : (
           <Circle radius={scale / 2} fill="#334155" listening={false} />
         )}

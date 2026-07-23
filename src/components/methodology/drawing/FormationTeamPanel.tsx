@@ -17,6 +17,10 @@ const GLASS = {
     'border-cyan-400/80 bg-cyan-400/20 text-cyan-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_0_20px_rgba(34,211,238,0.28)]',
   btnDisabled: 'cursor-not-allowed border-cyan-400/15 bg-cyan-950/10 text-cyan-500/40',
   label: 'text-[10px] font-medium uppercase tracking-wide text-cyan-400/55',
+  panelEmphasis:
+    'border border-cyan-400/45 bg-[#060a12]/88 shadow-[0_8px_28px_rgba(0,0,0,0.65)] backdrop-blur-xl',
+  btnEmphasis:
+    'border border-cyan-400/45 bg-[#060a12]/75 text-cyan-100 backdrop-blur-md transition-all hover:border-cyan-400/65 hover:bg-[#060a12]/90',
 } as const;
 
 type Props = {
@@ -26,6 +30,7 @@ type Props = {
   activePhase: TacticalPhaseIndex;
   formations: FormationPreset[];
   playerImageSrc?: string;
+  emphasized?: boolean;
   onFormationSelect: (formationId: string | null) => void;
   onPhaseSelect: (phase: TacticalPhaseIndex) => void;
 };
@@ -37,6 +42,7 @@ export function FormationTeamPanel({
   activePhase,
   formations,
   playerImageSrc,
+  emphasized = false,
   onFormationSelect,
   onPhaseSelect,
 }: Props) {
@@ -58,6 +64,8 @@ export function FormationTeamPanel({
   }, [open]);
 
   const hasFormation = Boolean(selectedFormationId);
+  const panelClass = emphasized ? GLASS.panelEmphasis : GLASS.panel;
+  const btnClass = emphasized ? GLASS.btnEmphasis : GLASS.btn;
 
   return (
     <div ref={rootRef} className="flex w-[6.25rem] flex-col items-stretch gap-1.5">
@@ -69,7 +77,7 @@ export function FormationTeamPanel({
           onClick={() => setOpen((value) => !value)}
           className={cn(
             'flex w-full items-center gap-1.5 rounded-xl px-2 py-2 text-left',
-            GLASS.panel,
+            panelClass,
             open && GLASS.btnActive
           )}
           aria-expanded={open}
@@ -102,7 +110,7 @@ export function FormationTeamPanel({
             role="listbox"
             className={cn(
               'absolute top-full z-50 mt-1 w-full rounded-xl p-1',
-              GLASS.panel,
+              panelClass,
               side === 'home' ? 'left-0' : 'right-0'
             )}
           >
@@ -116,7 +124,7 @@ export function FormationTeamPanel({
               }}
               className={cn(
                 'flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[10px] font-medium',
-                selectedFormationId === null ? GLASS.btnActive : GLASS.btn
+                selectedFormationId === null ? GLASS.btnActive : btnClass
               )}
             >
               {playerImageSrc ? (
@@ -136,7 +144,7 @@ export function FormationTeamPanel({
                 }}
                 className={cn(
                   'flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[10px] font-medium',
-                  selectedFormationId === formation.id ? GLASS.btnActive : GLASS.btn
+                  selectedFormationId === formation.id ? GLASS.btnActive : btnClass
                 )}
               >
                 {playerImageSrc ? (
@@ -162,7 +170,7 @@ export function FormationTeamPanel({
               onClick={() => onPhaseSelect(phase)}
               className={cn(
                 'rounded-lg px-1.5 py-1.5 text-center text-[9px] font-medium leading-tight',
-                !hasFormation ? GLASS.btnDisabled : isActive ? GLASS.btnActive : GLASS.btn
+                !hasFormation ? GLASS.btnDisabled : isActive ? GLASS.btnActive : btnClass
               )}
             >
               {label}

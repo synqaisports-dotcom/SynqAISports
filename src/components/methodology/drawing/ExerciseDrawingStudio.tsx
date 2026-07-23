@@ -21,6 +21,7 @@ import {
   Waves,
   X,
 } from 'lucide-react';
+import { PlayerKonvaMarker } from '@/components/methodology/drawing/PlayerKonvaMarker';
 import { ExerciseAnimationTimeline } from '@/components/methodology/drawing/ExerciseAnimationTimeline';
 import { DrawingStudioConfirmDialog } from '@/components/methodology/drawing/DrawingStudioConfirmDialog';
 import { FormationTeamPanel } from '@/components/methodology/drawing/FormationTeamPanel';
@@ -80,8 +81,6 @@ import {
   applyTeamTacticalPhase,
   formationGroupForField,
   formationsForField,
-  reapplyStoredFormations,
-  sanitizeFormationsForField,
   TACTICAL_TRANSITION_MS,
   type TacticalPhaseIndex,
 } from '@/lib/drawing-formations';
@@ -141,6 +140,11 @@ const GLASS = {
     'w-[6.25rem] rounded-lg px-2 py-1.5 text-center text-xs font-medium transition-all',
   sidebarLabel:
     'w-[6.25rem] text-center text-[10px] font-medium uppercase tracking-wide text-cyan-400/55',
+  /** Paneles laterales más legibles sobre campos que ocupan casi todo el lienzo (p. ej. sala). */
+  sidebarEmphasis:
+    'rounded-2xl border border-cyan-400/25 bg-[#060a12]/82 p-2 shadow-[0_10px_40px_rgba(0,0,0,0.72)] backdrop-blur-xl',
+  sidebarSelectEmphasis:
+    'border-cyan-400/50 bg-[#060a12]/88 text-cyan-100 shadow-[0_4px_20px_rgba(0,0,0,0.55)]',
 } as const;
 
 /** Margen inferior: por encima del dock de materiales/herramientas */
@@ -171,6 +175,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
   const [draft, setDraft] = useState<DrawingElement | null>(null);
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
   const [materialImages, setMaterialImages] = useState<Partial<Record<MaterialKind, HTMLImageElement>>>({});
+  const [pixelRatio, setPixelRatio] = useState(1);
   const [materialsOpen, setMaterialsOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [activeSceneIndex, setActiveSceneIndex] = useState(0);
@@ -189,6 +194,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
 
   useEffect(() => {
     setMounted(true);
+    setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   }, []);
 
   useEffect(() => {
@@ -335,6 +341,9 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
   };
 
   const fieldOptions = SPORT_OPTIONS[sport].fields;
+  const isDenseField = doc.field === 'futsal';
+  const sidebarShellClass = isDenseField ? GLASS.sidebarEmphasis : undefined;
+  const sidebarBtnClass = isDenseField ? GLASS.sidebarSelectEmphasis : GLASS.btn;
   const layeredElements = useMemo(() => sortElementsByLayer(doc.elements), [doc.elements]);
   const shapeElements = useMemo(
     () => layeredElements.filter((el) => el.type !== 'material'),
@@ -566,46 +575,35 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     setSelectedIds([]);
   };
 
+  const stripTeamPlayers = (elements: DrawingElement[]) =>
+    elements.filter(
+      (el) =>
+        !(
+          el.type === 'material' &&
+          (el.material === 'player-own' || el.material === 'player-rival')
+        )
+    );
+
   const handleSportChange = (next: SportKind) => {
     setSport(next);
     const field = defaultFieldForSport(next);
     setDoc((d) => {
-      const formations = sanitizeFormationsForField(d.formations, field);
-      const elements = formations
-        ? reapplyStoredFormations(
-            d.elements.filter(
-              (el) =>
-                !(
-                  el.type === 'material' &&
-                  (el.material === 'player-own' || el.material === 'player-rival')
-                )
-            ),
-            formations,
-            field
-          )
-        : d.elements;
-      return { ...d, field, formations, elements };
+      const saved = persistActiveAnimationScene(d, activeSceneIndex);
+      const elements = stripTeamPlayers(saved.elements);
+      const nextDoc = { ...saved, field, formations: undefined, elements };
+      return syncSceneElements(nextDoc, elements, activeSceneIndex);
     });
+    setSelectedIds([]);
   };
 
   const handleFieldChange = (field: FieldTemplate) => {
     setDoc((d) => {
-      const formations = sanitizeFormationsForField(d.formations, field);
-      const elements = formations
-        ? reapplyStoredFormations(
-            d.elements.filter(
-              (el) =>
-                !(
-                  el.type === 'material' &&
-                  (el.material === 'player-own' || el.material === 'player-rival')
-                )
-            ),
-            formations,
-            field
-          )
-        : d.elements;
-      return { ...d, field, formations, elements };
+      const saved = persistActiveAnimationScene(d, activeSceneIndex);
+      const elements = stripTeamPlayers(saved.elements);
+      const nextDoc = { ...saved, field, formations: undefined, elements };
+      return syncSceneElements(nextDoc, elements, activeSceneIndex);
     });
+    setSelectedIds([]);
   };
 
   const formationGroup = formationGroupForField(doc.field);
@@ -1144,7 +1142,16 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             />
           ) : null}
           {img ? (
-            <KonvaImage image={img} width={scale} height={scale} offsetX={scale / 2} offsetY={scale / 2} />
+            element.material.startsWith('player') ? (
+              <PlayerKonvaMarker
+                material={element.material}
+                label={element.label}
+                scale={scale}
+                image={img}
+              />
+            ) : (
+              <KonvaImage image={img} width={scale} height={scale} offsetX={scale / 2} offsetY={scale / 2} />
+            )
           ) : (
             <Circle radius={scale / 2} fill="#334155" />
           )}
@@ -1211,6 +1218,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
         <Stage
           width={size.width}
           height={size.height}
+          pixelRatio={pixelRatio}
           onMouseDown={handleStagePointerDown}
           onMousemove={handleStagePointerMove}
           onMouseup={handleStagePointerUp}
@@ -1256,7 +1264,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           SIDEBAR_BOTTOM_CLASS
         )}
       >
-        <div className="pointer-events-auto flex flex-col items-center gap-1.5">
+        <div className={cn('pointer-events-auto flex flex-col items-center gap-1.5', sidebarShellClass)}>
           <button
             type="button"
             onClick={onClose}
@@ -1278,10 +1286,11 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
         </div>
 
         {formationGroup ? (
-          <div className="pointer-events-auto">
+          <div className={cn('pointer-events-auto', sidebarShellClass)}>
             <FormationTeamPanel
               side="home"
               teamLabel="Local"
+              emphasized={isDenseField}
               selectedFormationId={doc.formations?.home ?? null}
               activePhase={(doc.formations?.homePhase ?? 0) as TacticalPhaseIndex}
               formations={availableFormations}
@@ -1300,7 +1309,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           SIDEBAR_BOTTOM_CLASS
         )}
       >
-        <div className="pointer-events-auto flex flex-col items-end gap-1.5">
+        <div className={cn('pointer-events-auto flex flex-col items-end gap-1.5', sidebarShellClass)}>
           <div className="flex items-center gap-1.5">
             <button
               type="button"
@@ -1331,29 +1340,38 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               key={key}
               type="button"
               onClick={() => handleSportChange(key)}
-              className={cn(GLASS.sidebarSelect, sport === key ? GLASS.btnActive : GLASS.btn)}
+              className={cn(
+                GLASS.sidebarSelect,
+                sport === key ? GLASS.btnActive : sidebarBtnClass
+              )}
             >
               {SPORT_OPTIONS[key].label}
             </button>
           ))}
 
-          {fieldOptions.map((field) => (
-            <button
-              key={field}
-              type="button"
-              onClick={() => handleFieldChange(field)}
-              className={cn(GLASS.sidebarSelect, doc.field === field ? GLASS.btnActive : GLASS.btn)}
-            >
-              {FIELD_FORMAT_SHORT[field]}
-            </button>
-          ))}
+          {fieldOptions.length > 1
+            ? fieldOptions.map((field) => (
+                <button
+                  key={field}
+                  type="button"
+                  onClick={() => handleFieldChange(field)}
+                  className={cn(
+                    GLASS.sidebarSelect,
+                    doc.field === field ? GLASS.btnActive : sidebarBtnClass
+                  )}
+                >
+                  {FIELD_FORMAT_SHORT[field]}
+                </button>
+              ))
+            : null}
         </div>
 
         {formationGroup ? (
-          <div className="pointer-events-auto">
+          <div className={cn('pointer-events-auto', sidebarShellClass)}>
             <FormationTeamPanel
               side="away"
               teamLabel="Visitante"
+              emphasized={isDenseField}
               selectedFormationId={doc.formations?.away ?? null}
               activePhase={(doc.formations?.awayPhase ?? 0) as TacticalPhaseIndex}
               formations={availableFormations}
@@ -1670,7 +1688,10 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             style={{ '--dock-panel-w': materialsPanelW } as React.CSSProperties}
           >
             <div
-              className={cn('mr-2 rounded-2xl p-2.5', GLASS.panel)}
+              className={cn(
+                'mr-2 rounded-2xl p-2.5',
+                isDenseField ? GLASS.sidebarEmphasis : GLASS.panel
+              )}
               style={{ width: materialsPanelW }}
             >
               <div className="flex flex-nowrap items-center justify-center gap-1.5 overflow-x-auto">
@@ -1702,7 +1723,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           </div>
 
           {/* Hub central — solo iconos */}
-          <div className={cn('relative z-10 flex overflow-hidden', GLASS.pill)}>
+          <div className={cn('relative z-10 flex overflow-hidden', isDenseField ? GLASS.sidebarEmphasis : GLASS.pill)}>
             <button
               type="button"
               title="Material"
