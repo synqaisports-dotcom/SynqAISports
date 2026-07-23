@@ -4,12 +4,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Konva from 'konva';
 import { Stage, Layer, Line, Arrow, Rect, Group, Circle, Image as KonvaImage, Text } from 'react-konva';
 import { KonvaPitchLayer } from '@/components/methodology/drawing/KonvaPitchLayer';
-import { PlayerKonvaMarker } from '@/components/methodology/drawing/PlayerKonvaMarker';
 import { MATERIAL_SCALE_NORM } from '@/lib/field-engine';
 import {
   MATERIAL_CATALOG,
   getMaterialImage,
+  getPlayerImage,
+  isPlayerMaterial,
+  playerImageKey,
   type MaterialKind,
+  type PlayerMaterialKind,
 } from '@/lib/drawing-material-assets';
 import {
   elapsedMsFromGlobalProgress,
@@ -56,11 +59,13 @@ function InitialElement({
   element,
   fieldRect,
   materialImages,
+  playerImages,
   registerNode,
 }: {
   element: DrawingElement;
   fieldRect: FieldRect;
   materialImages: Partial<Record<MaterialKind, HTMLImageElement>>;
+  playerImages: Record<string, HTMLImageElement>;
   registerNode: (id: string, node: Konva.Node | null) => void;
 }) {
   if (element.type === 'shape-line') {
@@ -232,7 +237,9 @@ function InitialElement({
       );
     }
 
-    const img = materialImages[element.material];
+    const img = isPlayerMaterial(element.material)
+      ? playerImages[playerImageKey(element.material, element.label)]
+      : materialImages[element.material];
     const scale = element.scale * base;
     return (
       <Group
@@ -244,16 +251,7 @@ function InitialElement({
         listening={false}
       >
         {img ? (
-          element.material.startsWith('player') ? (
-            <PlayerKonvaMarker
-              material={element.material}
-              label={element.label}
-              scale={scale}
-              image={img}
-            />
-          ) : (
-            <KonvaImage image={img} width={scale} height={scale} offsetX={scale / 2} offsetY={scale / 2} />
-          )
+          <KonvaImage image={img} width={scale} height={scale} offsetX={scale / 2} offsetY={scale / 2} />
         ) : (
           <Circle radius={scale / 2} fill="#334155" listening={false} />
         )}
@@ -279,6 +277,7 @@ export function DrawingKonvaAnimator({
   const progressEmitRef = useRef(0);
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [materialImages, setMaterialImages] = useState<Partial<Record<MaterialKind, HTMLImageElement>>>({});
+  const [playerImages, setPlayerImages] = useState<Record<string, HTMLImageElement>>({});
 
   const animation = document.animation!;
 
@@ -314,6 +313,23 @@ export function DrawingKonvaAnimator({
     return sortElementsByLayer(union);
   }, [animation.scenes]);
 
+  useEffect(() => {
+    const keys = new Set<string>();
+    for (const el of unionElements) {
+      if (el.type === 'material' && isPlayerMaterial(el.material)) {
+        keys.add(playerImageKey(el.material, el.label));
+      }
+    }
+    for (const key of keys) {
+      const sep = key.indexOf(':');
+      const kind = key.slice(0, sep) as PlayerMaterialKind;
+      const label = key.slice(sep + 1);
+      void getPlayerImage(kind, label).then((img) => {
+        setPlayerImages((prev) => (prev[key] ? prev : { ...prev, [key]: img }));
+      });
+    }
+  }, [unionElements]);
+
   const shapeElements = useMemo(
     () => unionElements.filter((el) => el.type !== 'material'),
     [unionElements]
@@ -339,7 +355,8 @@ export function DrawingKonvaAnimator({
           nodeRefs.current.get(element.id),
           element,
           fieldRect,
-          materialImages
+          materialImages,
+          playerImages
         );
       }
 
@@ -359,7 +376,7 @@ export function DrawingKonvaAnimator({
         }
       }
     },
-    [animation, fieldRect, materialImages, onProgressChange]
+    [animation, fieldRect, materialImages, playerImages, onProgressChange]
   );
 
   useEffect(() => {
@@ -414,6 +431,7 @@ export function DrawingKonvaAnimator({
               element={element}
               fieldRect={fieldRect}
               materialImages={materialImages}
+              playerImages={playerImages}
               registerNode={registerNode}
             />
           ))}
@@ -423,6 +441,7 @@ export function DrawingKonvaAnimator({
               element={element}
               fieldRect={fieldRect}
               materialImages={materialImages}
+              playerImages={playerImages}
               registerNode={registerNode}
             />
           ))}

@@ -1,7 +1,7 @@
 import type Konva from 'konva';
 import { MATERIAL_SCALE_NORM } from '@/lib/field-engine';
 import type { MaterialKind } from '@/lib/drawing-material-assets';
-import { isPlayerMaterial, playerLabelFor } from '@/lib/drawing-material-assets';
+import { isPlayerMaterial, playerImageKey } from '@/lib/drawing-material-assets';
 import {
   DEFAULT_WAVE_WAVELENGTH_NORM,
   RECT_STROKE_OPACITY,
@@ -26,7 +26,8 @@ export function applyDrawingElementToKonvaNode(
   node: Konva.Node | undefined,
   element: DrawingElement,
   fieldRect: FieldRect,
-  materialImages: Partial<Record<MaterialKind, HTMLImageElement>>
+  materialImages: Partial<Record<MaterialKind, HTMLImageElement>>,
+  playerImages: Record<string, HTMLImageElement> = {}
 ) {
   if (!node) return;
 
@@ -164,24 +165,14 @@ export function applyDrawingElementToKonvaNode(
     const imgNode = group.findOne('Image') as Konva.Image | null;
     const scale = element.scale * base;
     if (imgNode) {
-      const img = materialImages[element.material];
+      const img = isPlayerMaterial(element.material)
+        ? playerImages[playerImageKey(element.material, element.label)]
+        : materialImages[element.material];
       if (img) imgNode.image(img);
       imgNode.width(scale);
       imgNode.height(scale);
       imgNode.offsetX(scale / 2);
       imgNode.offsetY(scale / 2);
-    }
-
-    if (isPlayerMaterial(element.material)) {
-      const labelNode = group.findOne('.player-label') as Konva.Text | null;
-      if (labelNode) {
-        const fontSize = Math.max(8, scale * 0.36);
-        labelNode.text(playerLabelFor(element.material, element.label));
-        labelNode.fontSize(fontSize);
-        labelNode.x(-scale / 2);
-        labelNode.y(-fontSize * 0.55);
-        labelNode.width(scale);
-      }
     }
   }
 }

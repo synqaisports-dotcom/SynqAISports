@@ -21,7 +21,6 @@ import {
   Waves,
   X,
 } from 'lucide-react';
-import { PlayerKonvaMarker } from '@/components/methodology/drawing/PlayerKonvaMarker';
 import { ExerciseAnimationTimeline } from '@/components/methodology/drawing/ExerciseAnimationTimeline';
 import { DrawingStudioConfirmDialog } from '@/components/methodology/drawing/DrawingStudioConfirmDialog';
 import { FormationTeamPanel } from '@/components/methodology/drawing/FormationTeamPanel';
@@ -31,7 +30,11 @@ import { MATERIAL_SCALE_NORM } from '@/lib/field-engine';
 import {
   MATERIAL_CATALOG,
   getMaterialImage,
+  getPlayerImage,
+  isPlayerMaterial,
+  playerImageKey,
   type MaterialKind,
+  type PlayerMaterialKind,
 } from '@/lib/drawing-material-assets';
 import {
   DEFAULT_ANIMATION_HOLD_MS,
@@ -175,6 +178,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
   const [draft, setDraft] = useState<DrawingElement | null>(null);
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
   const [materialImages, setMaterialImages] = useState<Partial<Record<MaterialKind, HTMLImageElement>>>({});
+  const [playerImages, setPlayerImages] = useState<Record<string, HTMLImageElement>>({});
   const [pixelRatio, setPixelRatio] = useState(1);
   const [materialsOpen, setMaterialsOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
@@ -224,6 +228,25 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
       (entries) => setMaterialImages(Object.fromEntries(entries))
     );
   }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const keys = new Set<string>();
+    for (const el of doc.elements) {
+      if (el.type === 'material' && isPlayerMaterial(el.material)) {
+        keys.add(playerImageKey(el.material, el.label));
+      }
+    }
+    for (const key of keys) {
+      if (playerImages[key]) continue;
+      const sep = key.indexOf(':');
+      const kind = key.slice(0, sep) as PlayerMaterialKind;
+      const label = key.slice(sep + 1);
+      void getPlayerImage(kind, label).then((img) => {
+        setPlayerImages((prev) => (prev[key] ? prev : { ...prev, [key]: img }));
+      });
+    }
+  }, [open, doc.elements]);
 
   useEffect(() => {
     if (!open || !containerRef.current) return;
@@ -1099,7 +1122,9 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
         );
       }
 
-      const img = materialImages[element.material];
+      const img = isPlayerMaterial(element.material)
+        ? playerImages[playerImageKey(element.material, element.label)]
+        : materialImages[element.material];
       const scale = element.scale * base;
       return (
         <Group
@@ -1142,16 +1167,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             />
           ) : null}
           {img ? (
-            element.material.startsWith('player') ? (
-              <PlayerKonvaMarker
-                material={element.material}
-                label={element.label}
-                scale={scale}
-                image={img}
-              />
-            ) : (
-              <KonvaImage image={img} width={scale} height={scale} offsetX={scale / 2} offsetY={scale / 2} />
-            )
+            <KonvaImage image={img} width={scale} height={scale} offsetX={scale / 2} offsetY={scale / 2} />
           ) : (
             <Circle radius={scale / 2} fill="#334155" />
           )}
@@ -1762,7 +1778,10 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             style={{ '--dock-panel-w': toolsPanelW } as React.CSSProperties}
           >
             <div
-              className={cn('ml-2 rounded-2xl p-2.5', GLASS.panel)}
+              className={cn(
+                'ml-2 rounded-2xl p-2.5',
+                isDenseField ? GLASS.sidebarEmphasis : GLASS.panel
+              )}
               style={{ width: toolsPanelW }}
             >
               <div className="flex flex-nowrap items-center justify-center gap-1.5 overflow-x-auto">

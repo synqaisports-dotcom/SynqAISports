@@ -12,8 +12,8 @@ export type MaterialKind =
   | 'hurdle'
   | 'ladder';
 
-const TEXTURE_SIZE = 384;
-const CACHE_VERSION = 4;
+const TEXTURE_SIZE = 256;
+const CACHE_VERSION = 5;
 const cache = new Map<string, HTMLImageElement>();
 
 function cacheKey(kind: MaterialKind): string {
@@ -37,7 +37,7 @@ function darken(hex: string, amount: number): string {
   return `rgb(${r | 0},${g | 0},${b | 0})`;
 }
 
-function drawPlayer(ctx: CanvasRenderingContext2D, fill: string, stroke: string) {
+function drawPlayer(ctx: CanvasRenderingContext2D, fill: string, stroke: string, label: string) {
   const s = TEXTURE_SIZE;
   const cx = s / 2;
   const cy = s / 2 + 6;
@@ -73,7 +73,19 @@ function drawPlayer(ctx: CanvasRenderingContext2D, fill: string, stroke: string)
   ctx.ellipse(cx - 14, cy - 20, 22, 12, -0.4, 0, Math.PI * 2);
   ctx.fill();
 
-  // Etiqueta se dibuja en Konva (dinámica por jugador)
+  // Número
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 54px system-ui, -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor = 'rgba(0,0,0,0.4)';
+  ctx.shadowBlur = 6;
+  ctx.shadowOffsetY = 2;
+  ctx.fillText(label, cx, cy + 4);
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
+
+  // Indicador de orientación (flecha)
   ctx.fillStyle = 'rgba(255,255,255,0.95)';
   ctx.beginPath();
   ctx.moveTo(cx, 24);
@@ -298,13 +310,13 @@ function renderMaterial(kind: MaterialKind): string {
 
   switch (kind) {
     case 'player-own':
-      drawPlayer(ctx, '#0ea5e9', '#0369a1');
+      drawPlayer(ctx, '#0ea5e9', '#0369a1', '1');
       break;
     case 'player-rival':
-      drawPlayer(ctx, '#f43f5e', '#be123c');
+      drawPlayer(ctx, '#f43f5e', '#be123c', 'X');
       break;
     case 'player-neutral':
-      drawPlayer(ctx, '#f59e0b', '#b45309');
+      drawPlayer(ctx, '#f59e0b', '#b45309', 'N');
       break;
     case 'cone':
       drawCone(ctx);
@@ -329,6 +341,46 @@ function renderMaterial(kind: MaterialKind): string {
       break;
   }
   return canvas.toDataURL('image/png');
+}
+
+export type PlayerMaterialKind = 'player-own' | 'player-rival' | 'player-neutral';
+
+const PLAYER_COLORS: Record<PlayerMaterialKind, [string, string]> = {
+  'player-own': ['#0ea5e9', '#0369a1'],
+  'player-rival': ['#f43f5e', '#be123c'],
+  'player-neutral': ['#f59e0b', '#b45309'],
+};
+
+export function playerImageKey(kind: MaterialKind, label?: string): string {
+  if (!isPlayerMaterial(kind)) return kind;
+  return `${kind}:${playerLabelFor(kind, label)}`;
+}
+
+function renderPlayerMaterial(kind: PlayerMaterialKind, label: string): string {
+  const canvas = document.createElement('canvas');
+  canvas.width = TEXTURE_SIZE;
+  canvas.height = TEXTURE_SIZE;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Canvas 2d unavailable');
+  const [fill, stroke] = PLAYER_COLORS[kind];
+  drawPlayer(ctx, fill, stroke, label);
+  return canvas.toDataURL('image/png');
+}
+
+export async function getPlayerImage(
+  kind: PlayerMaterialKind,
+  label?: string
+): Promise<HTMLImageElement> {
+  if (typeof document === 'undefined') {
+    throw new Error('Material assets require browser');
+  }
+  const resolved = playerLabelFor(kind, label);
+  const key = `${CACHE_VERSION}:player:${kind}:${resolved}`;
+  const cached = cache.get(key);
+  if (cached) return cached;
+  const img = await createImage(renderPlayerMaterial(kind, resolved));
+  cache.set(key, img);
+  return img;
 }
 
 export async function getMaterialImage(kind: MaterialKind): Promise<HTMLImageElement> {
