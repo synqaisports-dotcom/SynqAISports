@@ -1,15 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { X } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Maximize2, Minimize2, Pause, Play, X } from 'lucide-react';
 import {
   ExerciseAnimationControls,
   ExerciseAnimationPlayer,
 } from '@/components/methodology/drawing/ExerciseAnimationPlayer';
-import { Badge } from '@/components/ui/badge';
 import {
   FIELD_TEMPLATES,
-  drawingPreviewAspectRatio,
   hasDrawableAnimation,
   parseExerciseDrawing,
   type ExerciseDrawingDocument,
@@ -22,6 +20,8 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
+
+const CONTROLS_HIDE_MS = 2800;
 
 export function ExerciseAnimationOverlay({ title, drawingJson, open, onOpenChange }: Props) {
   const [playing, setPlaying] = useState(false);
@@ -54,7 +54,7 @@ export function ExerciseAnimationOverlay({ title, drawingJson, open, onOpenChang
   if (!open || !canPlay || !drawingDoc.animation) return null;
 
   return (
-    <AnimationOverlayContent
+    <CinemaAnimationOverlay
       title={title}
       document={drawingDoc}
       playing={playing}
@@ -66,9 +66,9 @@ export function ExerciseAnimationOverlay({ title, drawingJson, open, onOpenChang
   );
 }
 
-function AnimationOverlayContent({
+function CinemaAnimationOverlay({
   title,
-  document,
+  document: drawingDocument,
   playing,
   onPlayingChange,
   progress,
@@ -83,65 +83,176 @@ function AnimationOverlayContent({
   onProgressChange: (value: number) => void;
   onClose: () => void;
 }) {
-  const previewAspect = drawingPreviewAspectRatio(document.field);
-  const fieldLabel = FIELD_TEMPLATES[document.field].label;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [controlsVisible, setControlsVisible] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const fieldLabel = FIELD_TEMPLATES[drawingDocument.field].label;
+  const sceneCount = drawingDocument.animation?.scenes.length ?? 0;
+
+  const clearHideTimer = useCallback(() => {
+    if (hideTimerRef.current) {
+      clearTimeout(hideTimerRef.current);
+      hideTimerRef.current = null;
+    }
+  }, []);
+
+  const scheduleHide = useCallback(() => {
+    clearHideTimer();
+    if (!playing) return;
+    hideTimerRef.current = setTimeout(() => setControlsVisible(false), CONTROLS_HIDE_MS);
+  }, [clearHideTimer, playing]);
+
+  const revealControls = useCallback(() => {
+    setControlsVisible(true);
+    scheduleHide();
+  }, [scheduleHide]);
+
+  useEffect(() => {
+    if (!playing) {
+      clearHideTimer();
+      setControlsVisible(true);
+      return;
+    }
+    scheduleHide();
+    return clearHideTimer;
+  }, [playing, scheduleHide, clearHideTimer]);
+
+  useEffect(() => {
+    const onFullscreenChange = () => {
+      setIsFullscreen(Boolean(window.document.fullscreenElement));
+    };
+    window.document.addEventListener('fullscreenchange', onFullscreenChange);
+    return () => window.document.removeEventListener('fullscreenchange', onFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = async () => {
+    const el = containerRef.current;
+    if (!el) return;
+    try {
+      if (!window.document.fullscreenElement) {
+        await el.requestFullscreen();
+      } else {
+        await window.document.exitFullscreen();
+      }
+    } catch {
+      /* ignorar si el navegador no permite pantalla completa */
+    }
+  };
+
+  const handleStagePointer = () => {
+    if (controlsVisible && playing) {
+      setControlsVisible(false);
+      clearHideTimer();
+      return;
+    }
+    revealControls();
+  };
+
+  const handleTogglePlay = () => {
+    if (!playing && progress >= 0.999) {
+      onProgressChange(0);
+    }
+    onPlayingChange(!playing);
+    revealControls();
+  };
 
   return (
     <div
-      className="portal-dashboard fixed inset-0 z-[100] flex flex-col"
+      ref={containerRef}
+      className="fixed inset-0 z-[100] bg-[#060a12] text-white"
       role="dialog"
       aria-modal="true"
       aria-label={`Animación: ${title}`}
+      onMouseMove={playing ? revealControls : undefined}
     >
-      <header className="shrink-0 px-4 py-3 sm:px-6">
-        <div className="portal-section-surface flex items-start justify-between gap-3 rounded-xl px-4 py-3 sm:px-5">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className="truncate text-base font-semibold text-foreground sm:text-lg">{title}</h2>
-              <Badge variant="outline" className="border-primary/40 bg-primary/10 text-[10px] text-primary">
-                Animación
-              </Badge>
-            </div>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {fieldLabel} · {document.animation?.scenes.length ?? 0} escenas · Espacio para pausar
+      <div className="absolute inset-0">
+        <ExerciseAnimationPlayer
+          document={drawingDocument}
+          playing={playing}
+          onPlayingChange={onPlayingChange}
+          progress={progress}
+          onProgressChange={onProgressChange}
+          className="h-full w-full"
+        />
+      </div>
+
+      <button
+        type="button"
+        className="absolute inset-0 z-10 cursor-default"
+        aria-label={controlsVisible ? 'Ocultar controles' : 'Mostrar controles'}
+        onClick={handleStagePointer}
+      />
+
+      <div
+        className={cn(
+          'pointer-events-none absolute inset-0 z-20 transition-opacity duration-300',
+          controlsVisible ? 'opacity-100' : 'opacity-0'
+        )}
+      >
+        <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/80 via-black/35 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
+
+        <header className="pointer-events-auto absolute inset-x-0 top-0 flex items-start justify-between gap-3 px-3 py-3 sm:px-5">
+          <div className="min-w-0 pt-0.5">
+            <h2 className="truncate text-sm font-semibold sm:text-base">{title}</h2>
+            <p className="mt-0.5 text-[11px] text-white/55">
+              {fieldLabel} · {sceneCount} escenas
             </p>
           </div>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                void toggleFullscreen();
+              }}
+              className="flex size-9 items-center justify-center rounded-full border border-white/15 bg-black/35 text-white/80 backdrop-blur-sm transition-colors hover:border-white/30 hover:bg-black/50 hover:text-white"
+              aria-label={isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
+            >
+              {isFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+            </button>
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onClose();
+              }}
+              className="flex size-9 items-center justify-center rounded-full border border-white/15 bg-black/35 text-white/80 backdrop-blur-sm transition-colors hover:border-white/30 hover:bg-black/50 hover:text-white"
+              aria-label="Cerrar"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
+        </header>
+
+        {!playing ? (
           <button
             type="button"
-            onClick={onClose}
-            className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-primary/25 text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
-            aria-label="Cerrar"
+            onClick={(event) => {
+              event.stopPropagation();
+              handleTogglePlay();
+            }}
+            className="pointer-events-auto absolute left-1/2 top-1/2 flex size-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-cyan-300/40 bg-cyan-400/20 text-cyan-100 shadow-[0_8px_40px_rgba(34,211,238,0.25)] backdrop-blur-md transition-transform hover:scale-105 hover:bg-cyan-400/30 sm:size-[4.5rem]"
+            aria-label="Reproducir animación"
           >
-            <X className="size-4" />
+            <Play className="ml-1 size-7 fill-current sm:size-8" />
           </button>
-        </div>
-      </header>
+        ) : null}
 
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-6 sm:px-6">
         <div
-          className={cn(
-            'portal-section-surface mx-auto w-full max-w-5xl overflow-hidden rounded-xl',
-            'bg-[#060a12]'
-          )}
-          style={{ aspectRatio: previewAspect, maxHeight: 'min(70vh, 52rem)' }}
+          className="pointer-events-auto absolute inset-x-0 bottom-0 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6"
+          onClick={(event) => event.stopPropagation()}
         >
-          <ExerciseAnimationPlayer
-            document={document}
-            playing={playing}
-            onPlayingChange={onPlayingChange}
-            progress={progress}
-            onProgressChange={onProgressChange}
-            className="h-full"
-          />
-        </div>
-
-        <div className="portal-section-surface mx-auto w-full max-w-5xl rounded-xl p-4">
           <ExerciseAnimationControls
-            document={document}
+            document={drawingDocument}
             playing={playing}
             onPlayingChange={onPlayingChange}
             progress={progress}
             onProgressChange={onProgressChange}
+            variant="cinema"
+            onInteract={revealControls}
           />
         </div>
       </div>
