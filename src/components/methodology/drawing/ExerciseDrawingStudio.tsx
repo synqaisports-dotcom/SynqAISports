@@ -153,6 +153,10 @@ const GLASS = {
 /** Margen inferior: por encima del dock de materiales/herramientas */
 const SIDEBAR_BOTTOM_CLASS = 'bottom-[6.5rem]' as const;
 
+/** Barra de propiedades: una sola fila; scroll horizontal si no cabe. */
+const PROPERTY_BAR_CLASS =
+  'pointer-events-none absolute bottom-[5.5rem] left-1/2 z-30 flex w-max max-w-[min(95vw,56rem)] -translate-x-1/2 flex-nowrap items-center gap-2 overflow-x-auto rounded-2xl px-3 py-2';
+
 function lerpNum(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
@@ -1615,8 +1619,8 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
       ) : null}
 
       {selected && selected.type === 'material' ? (
-        <div className={cn('pointer-events-none absolute bottom-[5.5rem] left-1/2 z-30 flex max-w-[95vw] -translate-x-1/2 flex-wrap justify-center gap-3 rounded-2xl px-4 py-2.5', GLASS.panel)}>
-          <label className={cn('pointer-events-auto flex items-center gap-2', GLASS.label)}>
+        <div className={cn(PROPERTY_BAR_CLASS, GLASS.panel)}>
+          <label className={cn('pointer-events-auto flex shrink-0 items-center gap-1.5', GLASS.label)}>
             Transparencia
             <input
               type="range"
@@ -1625,10 +1629,10 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               step={0.05}
               value={selected.opacity}
               onChange={(e) => updateElement(selected.id, { opacity: Number(e.target.value) })}
-              className="w-24"
+              className="w-20"
             />
           </label>
-          <label className={cn('pointer-events-auto flex items-center gap-2', GLASS.label)}>
+          <label className={cn('pointer-events-auto flex shrink-0 items-center gap-1.5', GLASS.label)}>
             Escala
             <input
               type="range"
@@ -1644,10 +1648,10 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
                   updateElement(selected.id, { scale: v });
                 }
               }}
-              className="w-24"
+              className="w-20"
             />
           </label>
-          <label className={cn('pointer-events-auto flex items-center gap-2', GLASS.label)}>
+          <label className={cn('pointer-events-auto flex shrink-0 items-center gap-1.5', GLASS.label)}>
             Rotación
             <input
               type="range"
@@ -1655,18 +1659,18 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
               max={180}
               value={selected.rotation}
               onChange={(e) => updateElement(selected.id, { rotation: Number(e.target.value) })}
-              className="w-24"
+              className="w-20"
             />
           </label>
           {selected.material.startsWith('player') ? (
-            <label className={cn('pointer-events-auto flex items-center gap-2', GLASS.label)}>
+            <label className={cn('pointer-events-auto flex shrink-0 items-center gap-1.5', GLASS.label)}>
               Etiqueta
               <input
                 type="text"
                 maxLength={3}
                 value={selected.label ?? ''}
                 onChange={(e) => updateElement(selected.id, { label: e.target.value })}
-                className="w-12 rounded border border-cyan-400/35 bg-cyan-400/10 px-1.5 py-0.5 text-center text-xs text-cyan-200"
+                className="w-10 rounded border border-cyan-400/35 bg-cyan-400/10 px-1 py-0.5 text-center text-xs text-cyan-200"
               />
             </label>
           ) : null}
@@ -1674,7 +1678,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             type="button"
             title="Duplicar"
             aria-label="Duplicar"
-            className={cn('pointer-events-auto flex size-8 items-center justify-center rounded-lg', GLASS.btn)}
+            className={cn('pointer-events-auto flex size-8 shrink-0 items-center justify-center rounded-lg', GLASS.btn)}
             onClick={duplicateSelected}
           >
             <Copy className="size-3.5" />
@@ -1683,7 +1687,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             type="button"
             title="Eliminar"
             aria-label="Eliminar"
-            className={cn('pointer-events-auto flex size-8 items-center justify-center rounded-lg text-red-300', GLASS.danger)}
+            className={cn('pointer-events-auto flex size-8 shrink-0 items-center justify-center rounded-lg text-red-300', GLASS.danger)}
             onClick={deleteSelected}
           >
             <Trash2 className="size-3.5" />
