@@ -149,11 +149,15 @@ export const FORMATIONS_BY_GROUP: Record<FormationFieldGroup, FormationPreset[]>
     {
       id: '321',
       label: '3-2-1',
-      slots: withKeeper([
-        ...depthLine('def', LINE.def, ['2', '3', '4'], 0.18, true),
-        ...depthLine('mid', LINE.mid, ['5', '6']),
-        ...depthLine('fwd', LINE.fwd, ['7']),
-      ]),
+      slots: [
+        { depth: LINE.def, lane: 0.5, label: '1', line: 'gk' },
+        { depth: LINE.def, lane: 0.1, label: '2', line: 'defWide' },
+        { depth: LINE.def, lane: 0.5, label: '3', line: 'def' },
+        { depth: LINE.def, lane: 0.9, label: '4', line: 'defWide' },
+        { depth: LINE.mid, lane: 0.34, label: '5', line: 'mid' },
+        { depth: LINE.mid, lane: 0.66, label: '6', line: 'mid' },
+        { depth: LINE.fwd, lane: 0.5, label: '7', line: 'fwd' },
+      ],
     },
     {
       id: '231',
@@ -283,7 +287,8 @@ const HORIZONTAL_TACTICAL_STRIPE: Record<
   TacticalPhaseIndex,
   Record<TacticalLineRole, number>
 > = {
-  0: { gk: 1, def: 4, defWide: 5, mid: 7.5, midHigh: 8, fwd: 10 },
+  /** Salida: bloque en tercio propio, líneas separadas, sin llegar al centro. */
+  0: { gk: 1, def: 3, defWide: 4, mid: 6, midHigh: 6.5, fwd: 8 },
   1: { gk: 1.6, def: 3.6, defWide: 8.2, mid: 6.4, midHigh: 7.5, fwd: 10.6 },
   2: { gk: 0.6, def: 5, defWide: 5, mid: 10, midHigh: 10, fwd: 12 },
   3: { gk: 3, def: 9, defWide: 11, mid: 14, midHigh: 15, fwd: 17 },
@@ -294,7 +299,7 @@ const VERTICAL_TACTICAL_STRIPE: Record<
   TacticalPhaseIndex,
   Record<TacticalLineRole, number>
 > = {
-  0: { gk: 0.5, def: 2, defWide: 2.5, mid: 3.75, midHigh: 4, fwd: 5 },
+  0: { gk: 0.5, def: 1.5, defWide: 2, mid: 3, midHigh: 3.25, fwd: 4 },
   1: { gk: 0.8, def: 1.8, defWide: 4.1, mid: 3.2, midHigh: 3.75, fwd: 5.3 },
   2: { gk: 0.3, def: 2.5, defWide: 2.5, mid: 5, midHigh: 5, fwd: 6 },
   3: { gk: 1.5, def: 4.5, defWide: 5.5, mid: 7, midHigh: 7.5, fwd: 8.5 },
@@ -314,6 +319,13 @@ function stripeToFieldX(stripe: number, side: 'home' | 'away', field: FieldTempl
   return side === 'home' ? clamp01(x) : clamp01(1 - x);
 }
 
+function resolveTacticalLane(slot: TeamLocalSlot): number {
+  if (slot.line === 'defWide') {
+    return slot.lane < 0.5 ? 0.1 : 0.9;
+  }
+  return clamp01(slot.lane);
+}
+
 /** Posición táctica absoluta en campo (mantiene proporción entre líneas por fase). */
 function tacticalSlotToField(
   slot: TeamLocalSlot,
@@ -326,7 +338,7 @@ function tacticalSlotToField(
     return { x: 0.5, y: 0.5, rotation: 0 };
   }
 
-  const lane = clamp01(slot.lane);
+  const lane = resolveTacticalLane(slot);
   const stripe = stripeForPhase(slot.line, phase, field);
 
   if (layout.kind === 'horizontal') {
@@ -467,20 +479,21 @@ export function sanitizeFormationsForField(
   return next;
 }
 
-/** Reaplica formaciones guardadas (p. ej. tras cambiar de campo). */
+/** Reaplica formaciones guardadas respetando la fase táctica activa de cada equipo. */
 export function reapplyStoredFormations(
   elements: DrawingElement[],
   formations: DrawingFormations | undefined,
   field: FieldTemplate
 ): DrawingElement[] {
-  const group = formationGroupForField(field);
-  if (!group || !formations) return elements;
+  if (!formations) return elements;
   let next = elements;
   if (formations.home) {
-    next = applyFormationToElements(next, 'home', formations.home, group, field);
+    const phase = (formations.homePhase ?? 0) as TacticalPhaseIndex;
+    next = applyTeamTacticalPhase(next, formations, field, 'home', phase);
   }
   if (formations.away) {
-    next = applyFormationToElements(next, 'away', formations.away, group, field);
+    const phase = (formations.awayPhase ?? 0) as TacticalPhaseIndex;
+    next = applyTeamTacticalPhase(next, formations, field, 'away', phase);
   }
   return next;
 }
