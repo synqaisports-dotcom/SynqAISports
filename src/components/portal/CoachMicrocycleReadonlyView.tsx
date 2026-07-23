@@ -1,14 +1,15 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, Circle, FileText, Flame, Target, Wind } from 'lucide-react';
+import { CheckCircle2, Circle, FileText, Flame, Play, Target, Wind } from 'lucide-react';
 import {
   ExercisePreviewOverlay,
   type ExercisePreviewRecord,
 } from '@/components/methodology/ExercisePreviewOverlay';
 import { DrawingPreviewFrame } from '@/components/methodology/drawing/DrawingPreviewFrame';
+import { ExerciseAnimationOverlay } from '@/components/methodology/drawing/ExerciseAnimationOverlay';
 import { loadOrHydrateDemoMicrocycle } from '@/lib/demo-microcycle-hydrate';
-import { drawingDocumentIsEmpty, parseExerciseDrawing } from '@/lib/exercise-drawing';
+import { drawingDocumentIsEmpty, hasDrawableAnimation, parseExerciseDrawing } from '@/lib/exercise-drawing';
 import type { SlotType } from '@/lib/methodology';
 import {
   groupSlotsBySession,
@@ -32,13 +33,13 @@ const sectionTitleClass =
 
 const sessionButtonClass = (active: boolean) =>
   cn(
-    'rounded-lg border px-3 py-2 text-sm font-medium transition-colors',
+    'rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
     active
       ? 'border-primary/55 bg-primary/10 shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.35)]'
       : 'border-primary/15 bg-background/30 hover:border-primary/35 hover:bg-primary/5'
   );
 
-const viewFichaButtonClass =
+const slotActionButtonClass =
   'inline-flex size-8 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-background/40 text-muted-foreground transition-colors hover:border-primary/45 hover:bg-primary/10 hover:text-primary disabled:pointer-events-none disabled:opacity-35';
 
 function pickDefaultSlotId(slots: SlotRowBase[]): string | null {
@@ -74,6 +75,8 @@ export function CoachMicrocycleReadonlyView({
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
   const [previewExercise, setPreviewExercise] = useState<ExercisePreviewRecord | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [animationExercise, setAnimationExercise] = useState<ExercisePreviewRecord | null>(null);
+  const [animationOpen, setAnimationOpen] = useState(false);
 
   useEffect(() => {
     setMicro(loadOrHydrateDemoMicrocycle(microcycleId));
@@ -83,6 +86,8 @@ export function CoachMicrocycleReadonlyView({
     setSessionIndex(initialSessionIndex);
     setPreviewOpen(false);
     setPreviewExercise(null);
+    setAnimationOpen(false);
+    setAnimationExercise(null);
     setSelectedSlotId(null);
   }, [microcycleId, initialSessionIndex]);
 
@@ -115,12 +120,22 @@ export function CoachMicrocycleReadonlyView({
     [selectedPreview]
   );
   const hasDrawing = !drawingDocumentIsEmpty(drawingDoc);
+  const hasAnimation = hasDrawableAnimation(drawingDoc);
 
   const openExercisePreview = (slot: SlotRowBase) => {
     const record = resolveSlotExercisePreview(slot);
     if (!record) return;
     setPreviewExercise(record);
     setPreviewOpen(true);
+  };
+
+  const openExerciseAnimation = (slot: SlotRowBase) => {
+    const record = resolveSlotExercisePreview(slot);
+    if (!record) return;
+    const doc = parseExerciseDrawing(record.drawing_json);
+    if (!hasDrawableAnimation(doc)) return;
+    setAnimationExercise(record);
+    setAnimationOpen(true);
   };
 
   if (!micro) {
@@ -132,37 +147,45 @@ export function CoachMicrocycleReadonlyView({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="portal-section-surface rounded-xl p-4">
-        <p className={sectionTitleClass}>Semana planificada</p>
-        <p className="mt-2 text-lg font-semibold text-foreground">
-          {mccLabel} · {micro.title}
-        </p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {weekStart} → {weekEnd}
-        </p>
-        <p className="mt-2 text-xs text-primary/90">Vista de entrenador · solo lectura</p>
+    <div className="space-y-3">
+      <div className="portal-section-surface rounded-xl px-4 py-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              <p className={sectionTitleClass}>Semana planificada</p>
+              <span className="text-[10px] text-primary/75">· Vista entrenador</span>
+            </div>
+            <p className="truncate text-sm font-semibold text-foreground">
+              {mccLabel} · {micro.title}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {weekStart} → {weekEnd}
+            </p>
+          </div>
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          {Array.from({ length: sessionsCount }, (_, index) => index + 1).map((index) => (
-            <button
-              key={index}
-              type="button"
-              onClick={() => {
-                setSessionIndex(index);
-                setPreviewOpen(false);
-                setPreviewExercise(null);
-                setSelectedSlotId(null);
-              }}
-              className={sessionButtonClass(sessionIndex === index)}
-            >
-              Sesión {index}
-            </button>
-          ))}
+          <div className="flex shrink-0 flex-wrap gap-1.5">
+            {Array.from({ length: sessionsCount }, (_, index) => index + 1).map((index) => (
+              <button
+                key={index}
+                type="button"
+                onClick={() => {
+                  setSessionIndex(index);
+                  setPreviewOpen(false);
+                  setPreviewExercise(null);
+                  setAnimationOpen(false);
+                  setAnimationExercise(null);
+                  setSelectedSlotId(null);
+                }}
+                className={sessionButtonClass(sessionIndex === index)}
+              >
+                Sesión {index}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="grid min-h-[min(70vh,560px)] grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className="grid min-h-[min(72vh,600px)] grid-cols-1 gap-3 lg:grid-cols-2">
         <div className="portal-section-surface flex min-h-0 flex-col rounded-xl p-4">
           <p className={sectionTitleClass}>Sesión {sessionIndex}</p>
           <ul className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto">
@@ -174,6 +197,8 @@ export function CoachMicrocycleReadonlyView({
               slots.map((slot) => {
                 const assigned = Boolean(slot.exercise_id || slot.title?.trim());
                 const preview = resolveSlotExercisePreview(slot);
+                const slotDoc = preview ? parseExerciseDrawing(preview.drawing_json) : null;
+                const slotHasAnimation = slotDoc ? hasDrawableAnimation(slotDoc) : false;
                 const isSelected = slot.id === selectedSlotId;
 
                 return (
@@ -202,28 +227,52 @@ export function CoachMicrocycleReadonlyView({
                           {slot.title?.trim() || 'Sin asignar'}
                         </p>
                       </div>
-                      <span
-                        role="button"
-                        tabIndex={preview ? 0 : -1}
-                        className={viewFichaButtonClass}
-                        title={preview ? 'Ver ficha del ejercicio' : 'Sin ficha disponible'}
-                        aria-label="Ver ficha del ejercicio"
-                        aria-disabled={!preview}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          openExercisePreview(slot);
-                        }}
-                        onKeyDown={(event) => {
-                          if (!preview) return;
-                          if (event.key === 'Enter' || event.key === ' ') {
-                            event.preventDefault();
+                      <div className="flex shrink-0 items-center gap-1">
+                        {slotHasAnimation ? (
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            className={cn(slotActionButtonClass, 'text-primary')}
+                            title="Reproducir animación"
+                            aria-label="Reproducir animación"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              openExerciseAnimation(slot);
+                            }}
+                            onKeyDown={(event) => {
+                              if (event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                openExerciseAnimation(slot);
+                              }
+                            }}
+                          >
+                            <Play className="size-3.5" />
+                          </span>
+                        ) : null}
+                        <span
+                          role="button"
+                          tabIndex={preview ? 0 : -1}
+                          className={slotActionButtonClass}
+                          title={preview ? 'Ver ficha del ejercicio' : 'Sin ficha disponible'}
+                          aria-label="Ver ficha del ejercicio"
+                          aria-disabled={!preview}
+                          onClick={(event) => {
                             event.stopPropagation();
                             openExercisePreview(slot);
-                          }
-                        }}
-                      >
-                        <FileText className="size-3.5" />
-                      </span>
+                          }}
+                          onKeyDown={(event) => {
+                            if (!preview) return;
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              openExercisePreview(slot);
+                            }
+                          }}
+                        >
+                          <FileText className="size-3.5" />
+                        </span>
+                      </div>
                     </button>
                   </li>
                 );
@@ -233,7 +282,20 @@ export function CoachMicrocycleReadonlyView({
         </div>
 
         <div className="portal-section-surface flex min-h-0 flex-col rounded-xl p-4">
-          <p className={sectionTitleClass}>Plano del ejercicio</p>
+          <div className="flex items-center justify-between gap-2">
+            <p className={sectionTitleClass}>Plano del ejercicio</p>
+            {selectedPreview && hasAnimation && selectedSlot ? (
+              <button
+                type="button"
+                onClick={() => openExerciseAnimation(selectedSlot)}
+                className={cn(slotActionButtonClass, 'text-primary')}
+                title="Reproducir animación"
+                aria-label="Reproducir animación"
+              >
+                <Play className="size-3.5" />
+              </button>
+            ) : null}
+          </div>
           <div className="mt-3 flex min-h-0 flex-1 flex-col">
             {selectedPreview ? (
               <>
@@ -266,6 +328,15 @@ export function CoachMicrocycleReadonlyView({
         open={previewOpen}
         onOpenChange={setPreviewOpen}
       />
+
+      {animationExercise ? (
+        <ExerciseAnimationOverlay
+          title={animationExercise.title}
+          drawingJson={animationExercise.drawing_json}
+          open={animationOpen}
+          onOpenChange={setAnimationOpen}
+        />
+      ) : null}
     </div>
   );
 }
