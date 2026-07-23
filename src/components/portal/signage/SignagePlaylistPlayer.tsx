@@ -1,0 +1,250 @@
+'use client';
+
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
+import { ExerciseAnimationPlayer } from '@/components/methodology/drawing/ExerciseAnimationPlayer';
+import { hasDrawableAnimation, parseExerciseDrawing } from '@/lib/exercise-drawing';
+import {
+  isWithinSchedule,
+  resolvePlaylistItems,
+  type ResolvedPlaylistItem,
+  type SignageAsset,
+  type SignageDevice,
+  type SignagePlaylist,
+  type SignageSchedule,
+  type SignageSponsor,
+} from '@/lib/signage';
+import { cn } from '@/lib/utils';
+
+type Props = {
+  orientation: SignageDevice['orientation'] | 'landscape' | 'portrait';
+  playlist: SignagePlaylist | null;
+  schedule: SignageSchedule | null;
+  sponsors: SignageSponsor[];
+  assets: SignageAsset[];
+  exercises: { id: string; title: string; drawing_json: unknown }[];
+  clubName: string;
+  clubLogoUrl: string | null;
+  preview?: boolean;
+  autoPlay?: boolean;
+  className?: string;
+};
+
+function SlideContent({
+  slide,
+  clubName,
+  clubLogoUrl,
+  onEnded,
+}: {
+  slide: ResolvedPlaylistItem;
+  clubName: string;
+  clubLogoUrl: string | null;
+  onEnded?: () => void;
+}) {
+  const [videoRef, setVideoRef] = useState<HTMLVideoElement | null>(null);
+  const drawingDoc = slide.exercise_drawing_json
+    ? parseExerciseDrawing(slide.exercise_drawing_json)
+    : null;
+  const canAnimate = drawingDoc ? hasDrawableAnimation(drawingDoc) : false;
+  const [playing, setPlaying] = useState(true);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    setPlaying(true);
+    setProgress(0);
+    if (videoRef) {
+      videoRef.currentTime = 0;
+      void videoRef.play().catch(() => undefined);
+    }
+  }, [slide.item.id, videoRef]);
+
+  if (slide.item.type === 'sponsor' || slide.asset_type === 'sponsor_slide') {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center gap-6 bg-gradient-to-br from-[#060a12] via-[#0a1628] to-[#060a12] p-8">
+        {slide.logo_url ? (
+          <img src={slide.logo_url} alt={slide.title} className="max-h-[40%] max-w-[70%] object-contain" />
+        ) : (
+          <div className="flex size-32 items-center justify-center rounded-2xl border border-cyan-400/30 bg-cyan-400/10 text-4xl font-bold text-cyan-200">
+            {slide.title.slice(0, 1)}
+          </div>
+        )}
+        <p className="text-center text-2xl font-semibold tracking-wide text-white">{slide.title}</p>
+        <p className="text-sm uppercase tracking-[0.3em] text-cyan-400/60">Patrocinador oficial</p>
+      </div>
+    );
+  }
+
+  if (slide.asset_type === 'video' && slide.media_url) {
+    return (
+      <video
+        ref={setVideoRef}
+        src={slide.media_url}
+        className="h-full w-full object-contain bg-black"
+        muted
+        playsInline
+        autoPlay
+        onEnded={onEnded}
+      />
+    );
+  }
+
+  if ((slide.asset_type === 'image' || slide.asset_type === 'club_branding') && slide.media_url) {
+    return (
+      <img src={slide.media_url} alt={slide.title} className="h-full w-full object-contain bg-black" />
+    );
+  }
+
+  if (slide.asset_type === 'club_branding' && !slide.media_url) {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center gap-4 bg-gradient-to-br from-[#060a12] to-[#0f1f35]">
+        {clubLogoUrl ? (
+          <Image src={clubLogoUrl} alt={clubName} width={160} height={160} className="rounded-2xl object-contain" />
+        ) : null}
+        <p className="text-3xl font-semibold text-white">{clubName}</p>
+      </div>
+    );
+  }
+
+  if (canAnimate && drawingDoc) {
+    return (
+      <div className="relative h-full w-full bg-[#060a12]">
+        <ExerciseAnimationPlayer
+          document={drawingDoc}
+          playing={playing}
+          onPlayingChange={setPlaying}
+          progress={progress}
+          onProgressChange={setProgress}
+          className="h-full w-full"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-full w-full items-center justify-center bg-[#060a12] text-cyan-200/70">
+      {slide.title}
+    </div>
+  );
+}
+
+export function SignagePlaylistPlayer({
+  orientation,
+  playlist,
+  schedule,
+  sponsors,
+  assets,
+  exercises,
+  clubName,
+  clubLogoUrl,
+  preview = false,
+  autoPlay = true,
+  className,
+}: Props) {
+  const resolved = useMemo(
+    () => resolvePlaylistItems(playlist, sponsors, assets, exercises),
+    [playlist, sponsors, assets, exercises]
+  );
+
+  const [index, setIndex] = useState(0);
+  const active = resolved[index] ?? null;
+  const inSchedule = !schedule || preview || isWithinSchedule(schedule);
+
+  const advance = useCallback(() => {
+    if (!resolved.length) return;
+    setIndex((value) => (value + 1) % resolved.length);
+  }, [resolved.length]);
+
+  useEffect(() => {
+    if (!autoPlay || !active || !inSchedule) return;
+    const durationMs = (active.item.duration_sec || 10) * 1000;
+    if (active.asset_type === 'video') return;
+    if (active.asset_type === 'exercise_animation') {
+      const timer = window.setTimeout(advance, Math.max(durationMs, 30_000));
+      return () => window.clearTimeout(timer);
+    }
+    const timer = window.setTimeout(advance, durationMs);
+    return () => window.clearTimeout(timer);
+  }, [active, advance, autoPlay, inSchedule]);
+
+  const frameClass =
+    orientation === 'portrait'
+      ? 'aspect-[9/16] max-h-full w-auto max-w-full'
+      : 'aspect-video w-full max-w-full';
+
+  if (!inSchedule) {
+    return (
+      <div
+        className={cn(
+          'relative overflow-hidden rounded-xl border border-cyan-400/25 bg-[#060a12] shadow-[0_8px_40px_rgba(0,0,0,0.5)]',
+          frameClass,
+          className
+        )}
+      >
+        <div className="flex h-full w-full flex-col items-center justify-center gap-4 p-8">
+          {schedule?.standby_mode === 'logo' && clubLogoUrl ? (
+            <Image src={clubLogoUrl} alt={clubName} width={120} height={120} className="opacity-80" />
+          ) : null}
+          <p className="text-sm text-cyan-300/50">Fuera de horario activo</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!resolved.length) {
+    return (
+      <div
+        className={cn(
+          'relative flex items-center justify-center overflow-hidden rounded-xl border border-dashed border-cyan-400/25 bg-[#060a12]/80 p-8 text-sm text-cyan-300/60',
+          frameClass,
+          className
+        )}
+      >
+        Añade contenido a la playlist para previsualizar
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn('relative', className)}>
+      <div
+        className={cn(
+          'relative mx-auto overflow-hidden rounded-xl border border-cyan-400/30 bg-black shadow-[0_8px_40px_rgba(34,211,238,0.12)]',
+          frameClass
+        )}
+      >
+        {active ? (
+          <SlideContent
+            slide={active}
+            clubName={clubName}
+            clubLogoUrl={clubLogoUrl}
+            onEnded={advance}
+          />
+        ) : null}
+        {preview ? (
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-4 py-3">
+            <p className="truncate text-sm font-medium text-white">{active?.title}</p>
+            <p className="text-xs text-cyan-300/70">
+              {index + 1} / {resolved.length}
+            </p>
+          </div>
+        ) : null}
+      </div>
+      {preview && resolved.length > 1 ? (
+        <div className="mt-3 flex justify-center gap-2">
+          {resolved.map((slide, i) => (
+            <button
+              key={slide.item.id}
+              type="button"
+              onClick={() => setIndex(i)}
+              className={cn(
+                'h-1.5 rounded-full transition-all',
+                i === index ? 'w-8 bg-cyan-400' : 'w-3 bg-cyan-400/25'
+              )}
+              aria-label={`Ir a ${slide.title}`}
+            />
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
