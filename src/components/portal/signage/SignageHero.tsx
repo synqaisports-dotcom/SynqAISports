@@ -1,8 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { Tv } from 'lucide-react';
-import { PortalSectionBadge, PortalSectionShell } from '@/components/portal/PortalSectionShell';
+import { PortalSectionShell } from '@/components/portal/PortalSectionShell';
 import { Badge } from '@/components/ui/badge';
 import { deviceIsOnline, type SignageDevice, type SignagePlaylist, type SignageSponsor } from '@/lib/signage';
 
@@ -21,7 +20,6 @@ export function SignageHero({ sponsors, devices, playlists, actions, className }
 
   return (
     <PortalSectionShell actions={actions} className={className}>
-      <PortalSectionBadge icon={<Tv className="size-3.5" />}>Digital signage</PortalSectionBadge>
       <h1 className="text-xl font-semibold tracking-tight md:text-2xl">Pantallas del club</h1>
       <p className="mt-1.5 max-w-2xl text-sm text-muted-foreground">
         Gestiona patrocinadores, contenido multimedia, emparejamiento de TVs y programación horaria.
