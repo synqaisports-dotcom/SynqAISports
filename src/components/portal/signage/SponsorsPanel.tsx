@@ -23,7 +23,7 @@ import {
   type SponsorTier,
 } from '@/lib/signage';
 import { cn } from '@/lib/utils';
-import { Pencil, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 const initial: SignageActionState = { ok: false };
 
@@ -118,22 +118,14 @@ export function SponsorsPanel({ sponsors }: Props) {
               </button>
               <SignageItemActions
                 active={sponsor.active}
+                onEdit={() => openEdit(sponsor)}
                 onToggle={() => toggleSponsorActive(sponsor.id, !sponsor.active)}
                 onDelete={() => deleteSponsor(sponsor.id)}
                 pauseLabel="Pausar patrocinador"
                 resumeLabel="Reactivar patrocinador"
+                editLabel="Editar patrocinador"
               />
             </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="mt-2 w-full justify-start text-muted-foreground"
-              onClick={() => openEdit(sponsor)}
-            >
-              <Pencil className="mr-2 size-3.5" />
-              Editar
-            </Button>
           </div>
         ))}
       </div>

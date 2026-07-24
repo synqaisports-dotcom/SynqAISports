@@ -2,7 +2,7 @@
 
 import { useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { Pause, Play, Trash2 } from 'lucide-react';
+import { Pause, Pencil, Play, Trash2 } from 'lucide-react';
 import {
   PORTAL_ACTION_ICON_CLASS,
   PORTAL_ACTION_ICON_DISABLED_CLASS,
@@ -12,18 +12,22 @@ import { cn } from '@/lib/utils';
 type Props = {
   active: boolean;
   onToggle: () => Promise<unknown>;
+  onEdit?: () => void;
   onDelete?: () => Promise<unknown>;
   pauseLabel?: string;
   resumeLabel?: string;
+  editLabel?: string;
   deleteLabel?: string;
 };
 
 export function SignageItemActions({
   active,
   onToggle,
+  onEdit,
   onDelete,
   pauseLabel = 'Pausar',
   resumeLabel = 'Reactivar',
+  editLabel = 'Editar',
   deleteLabel = 'Eliminar',
 }: Props) {
   const router = useRouter();
@@ -31,6 +35,17 @@ export function SignageItemActions({
 
   return (
     <div className="flex shrink-0 gap-1">
+      {onEdit ? (
+        <button
+          type="button"
+          aria-label={editLabel}
+          title={editLabel}
+          onClick={onEdit}
+          className={cn(PORTAL_ACTION_ICON_CLASS, PORTAL_ACTION_ICON_DISABLED_CLASS)}
+        >
+          <Pencil className="size-4" />
+        </button>
+      ) : null}
       <button
         type="button"
         disabled={pending}

@@ -33,7 +33,7 @@ import {
   signageUploadErrorMessage,
 } from '@/lib/signage-media';
 import { cn } from '@/lib/utils';
-import { Film, ImageIcon, Pencil, Plus } from 'lucide-react';
+import { Film, ImageIcon, Plus } from 'lucide-react';
 
 const initial: SignageActionState = { ok: false };
 
@@ -156,22 +156,14 @@ export function ContentPanel({ assets, sponsors, exercises }: Props) {
               </button>
               <SignageItemActions
                 active={asset.active}
+                onEdit={() => openEdit(asset)}
                 onToggle={() => toggleSignageAssetActive(asset.id, !asset.active)}
                 onDelete={() => deleteSignageAsset(asset.id)}
                 pauseLabel="Pausar contenido"
                 resumeLabel="Reactivar contenido"
+                editLabel="Editar contenido"
               />
             </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="mt-2 w-full justify-start text-muted-foreground"
-              onClick={() => openEdit(asset)}
-            >
-              <Pencil className="mr-2 size-3.5" />
-              Editar
-            </Button>
           </div>
         ))}
       </div>
