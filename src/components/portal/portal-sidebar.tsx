@@ -21,6 +21,8 @@ type PortalSidebarContextValue = {
   mobileOpen: boolean;
   setMobileOpen: (open: boolean) => void;
   toggleMobile: () => void;
+  expand: (pin?: boolean) => void;
+  collapse: () => void;
 };
 
 const PortalSidebarContext = React.createContext<PortalSidebarContextValue | null>(null);
@@ -34,6 +36,8 @@ export function usePortalSidebar() {
 }
 
 function SidebarBrand({ expanded }: { expanded: boolean }) {
+  const { collapse } = usePortalSidebar();
+
   return (
     <div
       className={cn(
@@ -48,6 +52,7 @@ function SidebarBrand({ expanded }: { expanded: boolean }) {
           expanded ? 'flex w-full min-w-0 items-center gap-2.5 px-2 py-2' : 'flex size-10 items-center justify-center'
         )}
         title="SynqAI Sports"
+        onClick={() => collapse()}
       >
         {expanded ? (
           <SynqBrandLockup layout="horizontal" iconSize={34} wordmarkSize="sm" />
@@ -106,22 +111,44 @@ type ProviderProps = {
 export function PortalSidebarProvider({ children, clubName }: ProviderProps) {
   const isMobile = useIsMobile();
   const [hovered, setHovered] = React.useState(false);
+  const [pinned, setPinned] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const collapseTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const expanded = isMobile ? mobileOpen : hovered;
+  const expanded = isMobile ? mobileOpen : hovered || pinned;
 
-  const handlePointerEnter = () => {
-    if (isMobile) return;
+  const clearCollapseTimer = () => {
     if (collapseTimer.current) {
       clearTimeout(collapseTimer.current);
       collapseTimer.current = null;
     }
+  };
+
+  const expand = React.useCallback((pin = false) => {
+    if (isMobile) {
+      setMobileOpen(true);
+      return;
+    }
+    clearCollapseTimer();
+    if (pin) setPinned(true);
+    setHovered(true);
+  }, [isMobile]);
+
+  const collapse = React.useCallback(() => {
+    clearCollapseTimer();
+    setHovered(false);
+    setPinned(false);
+    setMobileOpen(false);
+  }, []);
+
+  const handlePointerEnter = (e: React.PointerEvent<HTMLElement>) => {
+    if (isMobile || e.pointerType !== 'mouse') return;
+    clearCollapseTimer();
     setHovered(true);
   };
 
-  const handlePointerLeave = () => {
-    if (isMobile) return;
+  const handlePointerLeave = (e: React.PointerEvent<HTMLElement>) => {
+    if (isMobile || e.pointerType !== 'mouse') return;
     collapseTimer.current = setTimeout(() => {
       setHovered(false);
       collapseTimer.current = null;
@@ -129,9 +156,7 @@ export function PortalSidebarProvider({ children, clubName }: ProviderProps) {
   };
 
   React.useEffect(() => {
-    return () => {
-      if (collapseTimer.current) clearTimeout(collapseTimer.current);
-    };
+    return () => clearCollapseTimer();
   }, []);
 
   const toggleMobile = React.useCallback(() => {
@@ -145,8 +170,10 @@ export function PortalSidebarProvider({ children, clubName }: ProviderProps) {
       mobileOpen,
       setMobileOpen,
       toggleMobile,
+      expand,
+      collapse,
     }),
-    [expanded, isMobile, mobileOpen, toggleMobile]
+    [expanded, isMobile, mobileOpen, toggleMobile, expand, collapse]
   );
 
   return (
@@ -166,8 +193,8 @@ export function PortalSidebarProvider({ children, clubName }: ProviderProps) {
                     : 'overflow-hidden shadow-[4px_0_24px_hsl(0_0%_0%_/_0.35)]'
                 )}
                 style={{ width: expanded ? EXPANDED_PX : RAIL_PX }}
-                onMouseEnter={handlePointerEnter}
-                onMouseLeave={handlePointerLeave}
+                onPointerEnter={handlePointerEnter}
+                onPointerLeave={handlePointerLeave}
                 data-expanded={expanded ? 'true' : 'false'}
                 aria-label="Navegación del portal"
               >
