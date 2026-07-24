@@ -795,13 +795,37 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
     }
   };
 
+  /** Selección y arrastre en tablet: materiales ya usaban onTap; las formas solo onMouseDown. */
+  const shapeInteractionHandlers = (
+    elementId: string,
+    isPreview: boolean,
+    canDrag: boolean
+  ) => ({
+    onMouseDown: (e: Konva.KonvaEventObject<MouseEvent>) => {
+      e.cancelBubble = true;
+      if (canDrag) handleElementSelect(elementId, e);
+    },
+    onTouchStart: (e: Konva.KonvaEventObject<TouchEvent>) => {
+      e.cancelBubble = true;
+      if (canDrag) handleElementSelect(elementId, e);
+    },
+    onTap: (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
+      e.cancelBubble = true;
+      if (canDrag) handleElementSelect(elementId, e);
+    },
+    onDragStart: () => {
+      if (!isPreview && tool === 'select') handleElementSelect(elementId);
+    },
+  });
+
   const renderElement = (element: DrawingElement, isPreview = false) => {
     const key = isPreview ? `draft-${element.id}` : element.id;
     const canDrag = tool === 'select' && !isPreview;
     const hitStroke =
       element.type === 'material' || element.type === 'shape-text'
-        ? 16
-        : Math.max(16, element.style.width * 5);
+        ? 24
+        : Math.max(24, element.style.width * 5);
+    const interact = shapeInteractionHandlers(element.id, isPreview, canDrag);
 
     if (element.type === 'shape-line') {
       const p1 = normToPx(element.x1, element.y1, fieldRect);
@@ -821,12 +845,8 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             pointerWidth={10}
             hitStrokeWidth={hitStroke}
             draggable={canDrag}
-            onMouseDown={(e) => {
-              e.cancelBubble = true;
-              if (canDrag) handleElementSelect(element.id, e);
-            }}
+            {...interact}
             onDragEnd={(e) => finishElementDrag(element, e.target)}
-            onClick={(e) => !isPreview && handleElementSelect(element.id, e)}
           />
         );
       }
@@ -842,12 +862,8 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           lineCap="round"
           hitStrokeWidth={hitStroke}
           draggable={canDrag}
-          onMouseDown={(e) => {
-            e.cancelBubble = true;
-            if (canDrag) selectElement(element.id);
-          }}
+          {...interact}
           onDragEnd={(e) => finishElementDrag(element, e.target)}
-          onClick={() => !isPreview && selectElement(element.id)}
         />
       );
     }
@@ -872,10 +888,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           y={p1.y}
           opacity={element.opacity}
           draggable={canDrag}
-          onMouseDown={(e) => {
-            e.cancelBubble = true;
-            if (canDrag) selectElement(element.id);
-          }}
+          {...interact}
           onDragEnd={(e) => {
             const node = e.target;
             const n = pxToNorm(node.x(), node.y(), fieldRect);
@@ -887,7 +900,6 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             const snapped = normToPx(element.x1 + dx, element.y1 + dy, fieldRect);
             node.position({ x: snapped.x, y: snapped.y });
           }}
-          onClick={() => !isPreview && selectElement(element.id)}
         >
           <Rect x={minX} y={minY} width={boxW} height={boxH} fill="rgba(0,0,0,0.001)" />
           <Line
@@ -935,12 +947,8 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           lineCap="round"
           hitStrokeWidth={hitStroke}
           draggable={canDrag}
-          onMouseDown={(e) => {
-            e.cancelBubble = true;
-            if (canDrag) selectElement(element.id);
-          }}
+          {...interact}
           onDragEnd={(e) => finishElementDrag(element, e.target)}
-          onClick={() => !isPreview && selectElement(element.id)}
         />
       );
     }
@@ -966,11 +974,7 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           opacity={element.opacity}
           dash={dashArray(element.style)}
           draggable={canDrag}
-          onMouseDown={(e) => {
-            e.cancelBubble = true;
-            if (canDrag) selectElement(element.id);
-          }}
-          onClick={(e) => handleElementSelect(element.id, e)}
+          {...interact}
           onDragEnd={(ev) => {
             const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
             updateElement(element.id, { x: n.x, y: n.y });
@@ -1005,15 +1009,11 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
           y={p.y}
           opacity={element.opacity}
           draggable={canDrag}
-          onMouseDown={(e) => {
-            e.cancelBubble = true;
-            if (canDrag) selectElement(element.id);
-          }}
+          {...interact}
           onDragEnd={(ev) => {
             const n = pxToNorm(ev.target.x(), ev.target.y(), fieldRect);
             updateElement(element.id, { x: n.x, y: n.y });
           }}
-          onClick={() => !isPreview && selectElement(element.id)}
         >
           <Rect
             x={0}
@@ -1060,6 +1060,10 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             opacity={element.opacity}
             draggable={canDrag}
             onMouseDown={(e) => {
+              e.cancelBubble = true;
+              if (canDrag) handleElementSelect(element.id, e);
+            }}
+            onTouchStart={(e) => {
               e.cancelBubble = true;
               if (canDrag) handleElementSelect(element.id, e);
             }}
@@ -1143,6 +1147,10 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             e.cancelBubble = true;
             if (canDrag) handleElementSelect(element.id, e);
           }}
+          onTouchStart={(e) => {
+            e.cancelBubble = true;
+            if (canDrag) handleElementSelect(element.id, e);
+          }}
           onTap={(e) => {
             e.cancelBubble = true;
             if (canDrag) handleElementSelect(element.id, e);
@@ -1199,12 +1207,19 @@ export function ExerciseDrawingStudio({ open, initialData, onClose, onSave }: Pr
             key={a.role}
             x={p.x}
             y={p.y}
-            radius={a.role === 'control' ? 8 : 9}
+            radius={a.role === 'control' ? 10 : 11}
+            hitStrokeWidth={28}
             fill="#22d3ee"
             stroke="#0f172a"
             strokeWidth={2}
             draggable
             onMouseDown={(e) => {
+              e.cancelBubble = true;
+            }}
+            onTouchStart={(e) => {
+              e.cancelBubble = true;
+            }}
+            onTap={(e) => {
               e.cancelBubble = true;
             }}
             onDragEnd={(ev) => {
