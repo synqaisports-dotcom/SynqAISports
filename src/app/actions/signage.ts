@@ -15,9 +15,11 @@ import {
   generateDeviceToken,
   generatePairingCode,
   parsePlaylistItems,
+  parseScheduleDayparts,
   PLAYLIST_SELECT,
   SCHEDULE_SELECT,
   serializePlaylistItems,
+  serializeScheduleDayparts,
   SPONSOR_SELECT,
   type PlaylistItem,
   type SignageAsset,
@@ -98,6 +100,10 @@ function mapPlaylist(row: Record<string, unknown>): SignagePlaylist {
     rotation_mode: row.rotation_mode as SignagePlaylist['rotation_mode'],
     items: parsePlaylistItems(row.items_json),
     active: row.active !== false,
+    background_audio_asset_id: row.background_audio_asset_id ? String(row.background_audio_asset_id) : null,
+    audio_volume: Number(row.audio_volume ?? 40),
+    audio_loop: row.audio_loop !== false,
+    audio_duck_during_video: row.audio_duck_during_video !== false,
   };
 }
 
@@ -109,6 +115,7 @@ function mapSchedule(row: Record<string, unknown>): SignageSchedule {
     active_to_hour: Number(row.active_to_hour ?? 22),
     days_mask: Number(row.days_mask ?? 127),
     standby_mode: row.standby_mode as SignageSchedule['standby_mode'],
+    dayparts: parseScheduleDayparts(row.dayparts_json),
   };
 }
 
@@ -341,7 +348,7 @@ export async function createSignageAsset(
     active: true,
   };
 
-  if ((asset_type === 'image' || asset_type === 'video') && !payload.media_url) {
+  if ((asset_type === 'image' || asset_type === 'video' || asset_type === 'audio') && !payload.media_url) {
     return { ok: false, message: 'no_file' };
   }
 
@@ -575,6 +582,10 @@ export async function createPlaylist(
       rotation_mode: 'sequential',
       items: [],
       active: true,
+      background_audio_asset_id: null,
+      audio_volume: 40,
+      audio_loop: true,
+      audio_duck_during_video: true,
     });
     revalidateSignage();
     return { ok: true, id };
@@ -666,6 +677,10 @@ export async function updatePlaylist(
     items_json: serializePlaylistItems(items),
     is_default: formData.get('is_default') === 'true',
     active: formData.get('active') !== 'false',
+    background_audio_asset_id: String(formData.get('background_audio_asset_id') ?? '').trim() || null,
+    audio_volume: Math.min(100, Math.max(0, Number(formData.get('audio_volume') ?? 40))),
+    audio_loop: formData.get('audio_loop') !== 'false',
+    audio_duck_during_video: formData.get('audio_duck_during_video') !== 'false',
   };
 
   if (await isDemoActive()) {
@@ -679,6 +694,10 @@ export async function updatePlaylist(
       items,
       is_default: payload.is_default,
       active: payload.active,
+      background_audio_asset_id: payload.background_audio_asset_id,
+      audio_volume: payload.audio_volume,
+      audio_loop: payload.audio_loop,
+      audio_duck_during_video: payload.audio_duck_during_video,
     };
     if (payload.is_default) {
       store.playlists.forEach((p, i) => {
@@ -721,6 +740,10 @@ export async function createDefaultPlaylist(clubId: string): Promise<string | nu
       rotation_mode: 'sequential',
       items: [],
       active: true,
+      background_audio_asset_id: null,
+      audio_volume: 40,
+      audio_loop: true,
+      audio_duck_during_video: true,
     });
     return id;
   }
@@ -763,7 +786,16 @@ export async function updateSchedule(
     days_mask: Number(formData.get('days_mask') ?? 127),
     standby_mode: String(formData.get('standby_mode') ?? 'logo'),
     device_id: String(formData.get('device_id') ?? '').trim() || null,
+    dayparts_json: [] as ReturnType<typeof serializeScheduleDayparts>,
   };
+
+  try {
+    payload.dayparts_json = serializeScheduleDayparts(
+      parseScheduleDayparts(JSON.parse(String(formData.get('dayparts_json') ?? '[]')))
+    );
+  } catch {
+    return { ok: false, message: 'validation' };
+  }
 
   if (await isDemoActive()) {
     const store = getDemoSignageStore();
@@ -776,13 +808,19 @@ export async function updateSchedule(
         active_to_hour: payload.active_to_hour,
         days_mask: payload.days_mask,
         standby_mode: payload.standby_mode as SignageSchedule['standby_mode'],
+        dayparts: payload.dayparts_json,
       });
       revalidateSignage();
       return { ok: true, id };
     }
     const idx = store.schedules.findIndex((s) => s.id === scheduleId);
     if (idx < 0) return { ok: false, message: 'not_found' };
-    store.schedules[idx] = { ...store.schedules[idx], ...payload, standby_mode: payload.standby_mode as SignageSchedule['standby_mode'] };
+    store.schedules[idx] = {
+      ...store.schedules[idx],
+      ...payload,
+      standby_mode: payload.standby_mode as SignageSchedule['standby_mode'],
+      dayparts: payload.dayparts_json,
+    };
     revalidateSignage();
     return { ok: true, id: scheduleId };
   }
@@ -988,9 +1026,12 @@ export async function loadPlayerPayload(deviceToken: string) {
       store.playlists.find((p) => p.id === device.playlist_id) ??
       store.playlists.find((p) => p.is_default);
     const schedule = store.schedules.find((s) => !s.device_id) ?? null;
+    const { resolvePlaylistForSchedule } = await import('@/lib/signage');
+    const effectivePlaylist = resolvePlaylistForSchedule(device, store.playlists, schedule) ?? playlist;
     return {
       device,
-      playlist,
+      playlist: effectivePlaylist,
+      playlists: store.playlists,
       schedule,
       club: { name: 'Club Demo SynqAI', logo_url: '/demo/club-demo-logo.svg' },
       sponsors: store.sponsors,
@@ -1018,10 +1059,12 @@ export async function loadPlayerPayload(deviceToken: string) {
   ]);
 
   const playlists = (playlistsRes.data ?? []).map((r) => mapPlaylist(r as Record<string, unknown>));
+  const schedules = (schedulesRes.data ?? []).map((r) => mapSchedule(r as Record<string, unknown>));
   const mappedDevice = mapDevice(device as Record<string, unknown>);
-  const playlist =
-    playlists.find((p) => p.id === mappedDevice.playlist_id) ??
-    playlists.find((p) => p.is_default && p.scope === 'club');
+  const schedule =
+    schedules.find((s) => s.device_id === mappedDevice.id) ?? schedules.find((s) => !s.device_id) ?? null;
+  const { resolvePlaylistForSchedule } = await import('@/lib/signage');
+  const playlist = resolvePlaylistForSchedule(mappedDevice, playlists, schedule);
 
   const exerciseIds = (playlist?.items ?? [])
     .filter((i) => i.type === 'exercise_animation')
@@ -1044,12 +1087,11 @@ export async function loadPlayerPayload(deviceToken: string) {
     .update({ last_seen_at: new Date().toISOString() })
     .eq('id', mappedDevice.id);
 
-  const schedules = (schedulesRes.data ?? []).map((r) => mapSchedule(r as Record<string, unknown>));
-
   return {
     device: mappedDevice,
     playlist: playlist ?? null,
-    schedule: schedules.find((s) => s.device_id === mappedDevice.id) ?? schedules.find((s) => !s.device_id) ?? null,
+    playlists,
+    schedule,
     club: clubRes.data ?? { name: 'Club', logo_url: null },
     sponsors: (sponsorsRes.data ?? []).map((r) => mapSponsor(r as Record<string, unknown>)),
     assets: (assetsRes.data ?? []).map((r) => mapAsset(r as Record<string, unknown>)),

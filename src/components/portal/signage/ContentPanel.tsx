@@ -27,13 +27,9 @@ import {
   type SignageExerciseOption,
   type SignageSponsor,
 } from '@/lib/signage';
-import {
-  SIGNAGE_IMAGE_EXTENSIONS,
-  SIGNAGE_VIDEO_EXTENSIONS,
-  signageUploadErrorMessage,
-} from '@/lib/signage-media';
+import { Film, ImageIcon, Music2, Plus } from 'lucide-react';
+import { SIGNAGE_AUDIO_EXTENSIONS, SIGNAGE_IMAGE_EXTENSIONS, SIGNAGE_VIDEO_EXTENSIONS, signageUploadErrorMessage } from '@/lib/signage-media';
 import { cn } from '@/lib/utils';
-import { Film, ImageIcon, Plus } from 'lucide-react';
 
 const initial: SignageActionState = { ok: false };
 
@@ -106,13 +102,13 @@ export function ContentPanel({ assets, sponsors, exercises }: Props) {
     setUploading(false);
   }
 
-  const needsMedia = !isEdit && (assetType === 'image' || assetType === 'video');
+  const needsMedia = !isEdit && (assetType === 'image' || assetType === 'video' || assetType === 'audio');
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
-          Vídeos, imágenes, slides y animaciones. Edita, pausa o elimina desde cada tarjeta.
+          Vídeos, imágenes, audio, slides y animaciones. Edita, pausa o elimina desde cada tarjeta.
         </p>
         <Button type="button" size="sm" onClick={handleOpenCreate}>
           <Plus className="mr-1 size-4" />
@@ -139,6 +135,8 @@ export function ContentPanel({ assets, sponsors, exercises }: Props) {
                     ) : (
                       <img src={asset.media_url} alt="" className="size-full object-cover" />
                     )
+                  ) : asset.asset_type === 'audio' ? (
+                    <Music2 className="size-5 text-primary/80" />
                   ) : asset.asset_type === 'video' ? (
                     <Film className="size-5 text-primary/80" />
                   ) : (
@@ -218,20 +216,26 @@ export function ContentPanel({ assets, sponsors, exercises }: Props) {
                   Tipo: <strong>{editing ? SIGNAGE_ASSET_TYPE_LABELS[editing.asset_type] : ''}</strong>
                 </p>
               )}
-              {(assetType === 'video' || assetType === 'image' || (isEdit && editing?.media_url)) && (
+              {(assetType === 'video' ||
+                assetType === 'image' ||
+                assetType === 'audio' ||
+                (isEdit && editing?.media_url)) && (
                 <div>
                   <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     {isEdit ? 'Reemplazar archivo' : 'Archivo'}
                   </label>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    Imágenes: {SIGNAGE_IMAGE_EXTENSIONS} (máx. 10 MB). Vídeos: {SIGNAGE_VIDEO_EXTENSIONS} (máx. 200 MB).
+                    Imágenes: {SIGNAGE_IMAGE_EXTENSIONS} (máx. 10 MB). Vídeos: {SIGNAGE_VIDEO_EXTENSIONS} (máx. 200
+                    MB). Audio: {SIGNAGE_AUDIO_EXTENSIONS} (máx. 20 MB).
                   </p>
                   <Input
                     type="file"
                     accept={
                       (isEdit ? editing?.asset_type : assetType) === 'video'
                         ? 'video/mp4,video/webm'
-                        : 'image/jpeg,image/png,image/webp,image/gif'
+                        : (isEdit ? editing?.asset_type : assetType) === 'audio'
+                          ? 'audio/mpeg,audio/mp3,audio/wav'
+                          : 'image/jpeg,image/png,image/webp,image/gif'
                     }
                     className="mt-1"
                     onChange={(e) => {
@@ -243,6 +247,8 @@ export function ContentPanel({ assets, sponsors, exercises }: Props) {
                   {mediaUrl ? (
                     editing?.asset_type === 'video' || assetType === 'video' ? (
                       <p className="mt-2 truncate text-xs text-muted-foreground">{mediaUrl}</p>
+                    ) : editing?.asset_type === 'audio' || assetType === 'audio' ? (
+                      <p className="mt-2 truncate text-xs text-muted-foreground">Audio listo para usar en Programación</p>
                     ) : (
                       <img src={mediaUrl} alt="" className="mt-2 max-h-24 object-contain" />
                     )
@@ -279,17 +285,19 @@ export function ContentPanel({ assets, sponsors, exercises }: Props) {
                   className="mt-1"
                 />
               </div>
-              <div>
-                <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Orientación</label>
-                <SynqSelect
-                  value={orientation}
-                  onChange={(value) => setOrientation(value as SignageContentOrientation)}
-                  options={SIGNAGE_CONTENT_ORIENTATIONS.map((o) => ({
-                    value: o,
-                    label: o === 'both' ? 'Ambas' : SIGNAGE_ORIENTATION_LABELS[o],
-                  }))}
-                />
-              </div>
+              {assetType !== 'audio' ? (
+                <div>
+                  <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Orientación</label>
+                  <SynqSelect
+                    value={orientation}
+                    onChange={(value) => setOrientation(value as SignageContentOrientation)}
+                    options={SIGNAGE_CONTENT_ORIENTATIONS.map((o) => ({
+                      value: o,
+                      label: o === 'both' ? 'Ambas' : SIGNAGE_ORIENTATION_LABELS[o],
+                    }))}
+                  />
+                </div>
+              ) : null}
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"

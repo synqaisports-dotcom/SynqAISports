@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useActionState, useState } from 'react';
 import { createPlaylist, deletePlaylist } from '@/app/actions/signage';
-import { ProgrammingPanel } from '@/components/portal/signage/ProgrammingPanel';
+import { PlaylistStudio } from '@/components/portal/signage/PlaylistStudio';
 import { SynqSelect } from '@/components/portal/SynqSelect';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -113,9 +113,10 @@ export function ProgrammingHub({
         ))}
       </div>
 
-      <ProgrammingPanel
+      <PlaylistStudio
         key={selected.id}
         playlist={selected}
+        playlists={playlists}
         schedule={schedule}
         sponsors={sponsors}
         assets={assets}

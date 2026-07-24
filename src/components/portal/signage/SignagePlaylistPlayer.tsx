@@ -29,6 +29,12 @@ type Props = {
   autoPlay?: boolean;
   fullscreen?: boolean;
   className?: string;
+  currentIndex?: number;
+  onIndexChange?: (index: number) => void;
+  backgroundAudioUrl?: string | null;
+  audioVolume?: number;
+  audioLoop?: boolean;
+  audioDuckDuringVideo?: boolean;
 };
 
 function SlideContent({
@@ -180,20 +186,58 @@ export function SignagePlaylistPlayer({
   autoPlay = true,
   fullscreen = false,
   className,
+  currentIndex,
+  onIndexChange,
+  backgroundAudioUrl,
+  audioVolume,
+  audioLoop,
+  audioDuckDuringVideo,
 }: Props) {
   const resolved = useMemo(
     () => resolvePlaylistItems(playlist, sponsors, assets, exercises),
     [playlist, sponsors, assets, exercises]
   );
 
-  const [index, setIndex] = useState(0);
+  const [internalIndex, setInternalIndex] = useState(0);
+  const index = currentIndex ?? internalIndex;
+  const setIndex = useCallback(
+    (value: number | ((prev: number) => number)) => {
+      const next = typeof value === 'function' ? value(index) : value;
+      if (onIndexChange) onIndexChange(next);
+      else setInternalIndex(next);
+    },
+    [index, onIndexChange]
+  );
+
   const active = resolved[index] ?? null;
   const inSchedule = !schedule || preview || isWithinSchedule(schedule);
+
+  const resolvedAudioUrl =
+    backgroundAudioUrl ??
+    (playlist?.background_audio_asset_id
+      ? assets.find((asset) => asset.id === playlist.background_audio_asset_id)?.media_url ?? null
+      : null);
+  const volume = audioVolume ?? playlist?.audio_volume ?? 40;
+  const loop = audioLoop ?? playlist?.audio_loop ?? true;
+  const duck = audioDuckDuringVideo ?? playlist?.audio_duck_during_video ?? true;
+  const isVideoSlide = active?.asset_type === 'video';
+  const effectiveVolume = duck && isVideoSlide ? Math.round(volume * 0.2) : volume;
+  const [audioRef, setAudioRef] = useState<HTMLAudioElement | null>(null);
 
   const advance = useCallback(() => {
     if (!resolved.length) return;
     setIndex((value) => (value + 1) % resolved.length);
-  }, [resolved.length]);
+  }, [resolved.length, setIndex]);
+
+  useEffect(() => {
+    if (index >= resolved.length) setIndex(0);
+  }, [index, resolved.length, setIndex]);
+
+  useEffect(() => {
+    if (!audioRef) return;
+    audioRef.volume = Math.min(1, Math.max(0, effectiveVolume / 100));
+    if (autoPlay) void audioRef.play().catch(() => undefined);
+  }, [audioRef, effectiveVolume, autoPlay, resolvedAudioUrl]);
 
   useEffect(() => {
     if (!autoPlay || !active || !inSchedule) return;
@@ -248,6 +292,17 @@ export function SignagePlaylistPlayer({
 
   return (
     <div className={cn('relative', className)}>
+      {resolvedAudioUrl ? (
+        <audio
+          key={resolvedAudioUrl}
+          ref={setAudioRef}
+          src={resolvedAudioUrl}
+          autoPlay
+          loop={loop}
+          preload="auto"
+          className="hidden"
+        />
+      ) : null}
       <div
         className={cn(
           'relative mx-auto overflow-hidden bg-black',

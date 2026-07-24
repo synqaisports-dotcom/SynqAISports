@@ -20,6 +20,7 @@ export const SIGNAGE_ASSET_TYPES = [
   'sponsor_slide',
   'exercise_animation',
   'club_branding',
+  'audio',
 ] as const;
 export type SignageAssetType = (typeof SIGNAGE_ASSET_TYPES)[number];
 
@@ -94,6 +95,18 @@ export type SignagePlaylist = {
   rotation_mode: PlaylistRotationMode;
   items: PlaylistItem[];
   active: boolean;
+  background_audio_asset_id: string | null;
+  audio_volume: number;
+  audio_loop: boolean;
+  audio_duck_during_video: boolean;
+};
+
+export type ScheduleDaypart = {
+  id: string;
+  label: string;
+  from_hour: number;
+  to_hour: number;
+  playlist_id?: string | null;
 };
 
 export type SignageSchedule = {
@@ -103,6 +116,7 @@ export type SignageSchedule = {
   active_to_hour: number;
   days_mask: number;
   standby_mode: 'logo' | 'black';
+  dayparts: ScheduleDaypart[];
 };
 
 export type SignageExerciseOption = {
@@ -138,6 +152,7 @@ export const SIGNAGE_ASSET_TYPE_LABELS: Record<SignageAssetType, string> = {
   sponsor_slide: 'Slide patrocinador',
   exercise_animation: 'Animación ejercicio',
   club_branding: 'Branding club',
+  audio: 'Audio / música',
 };
 
 export const PLAYLIST_ITEM_TYPE_LABELS: Record<PlaylistItemType, string> = {
@@ -210,11 +225,83 @@ export function formatDaysMask(daysMask: number): string {
   return active.join(' · ') || 'Sin días';
 }
 
+export function parseScheduleDayparts(raw: unknown): ScheduleDaypart[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((item, index) => {
+      if (!item || typeof item !== 'object') return null;
+      const o = item as Record<string, unknown>;
+      const from = Number(o.from_hour);
+      const to = Number(o.to_hour);
+      if (!Number.isFinite(from) || !Number.isFinite(to) || to <= from) return null;
+      return {
+        id: String(o.id ?? `daypart-${index}`),
+        label: String(o.label ?? `Franja ${index + 1}`),
+        from_hour: from,
+        to_hour: to,
+        playlist_id: o.playlist_id ? String(o.playlist_id) : null,
+      };
+    })
+    .filter((item) => item !== null) as ScheduleDaypart[];
+}
+
+export function serializeScheduleDayparts(dayparts: ScheduleDaypart[]): ScheduleDaypart[] {
+  return dayparts.map((part, index) => ({
+    id: part.id || `daypart-${index}`,
+    label: part.label,
+    from_hour: part.from_hour,
+    to_hour: part.to_hour,
+    ...(part.playlist_id ? { playlist_id: part.playlist_id } : {}),
+  }));
+}
+
+export function defaultScheduleDayparts(schedule: Pick<SignageSchedule, 'active_from_hour' | 'active_to_hour'>): ScheduleDaypart[] {
+  const from = schedule.active_from_hour;
+  const to = schedule.active_to_hour;
+  const span = to - from;
+  if (span < 3) {
+    return [{ id: 'all-day', label: 'Activo', from_hour: from, to_hour: to }];
+  }
+  const third = Math.floor(span / 3);
+  const mid = from + third;
+  const late = from + third * 2;
+  return [
+    { id: 'morning', label: 'Mañana', from_hour: from, to_hour: mid },
+    { id: 'afternoon', label: 'Tarde', from_hour: mid, to_hour: late },
+    { id: 'evening', label: 'Noche', from_hour: late, to_hour: to },
+  ];
+}
+
+export function getScheduleDayparts(schedule: SignageSchedule): ScheduleDaypart[] {
+  if (schedule.dayparts.length) return schedule.dayparts;
+  return defaultScheduleDayparts(schedule);
+}
+
 export function isWithinSchedule(schedule: SignageSchedule, date = new Date()): boolean {
   const day = (date.getDay() + 6) % 7;
   if (!isDayActive(schedule.days_mask, day)) return false;
   const hour = date.getHours();
+  const dayparts = getScheduleDayparts(schedule);
+  if (dayparts.length) {
+    return dayparts.some((part) => hour >= part.from_hour && hour < part.to_hour);
+  }
   return hour >= schedule.active_from_hour && hour < schedule.active_to_hour;
+}
+
+export function resolvePlaylistForSchedule(
+  device: SignageDevice | null,
+  playlists: SignagePlaylist[],
+  schedule: SignageSchedule | null,
+  date = new Date()
+): SignagePlaylist | null {
+  const base = resolveEffectivePlaylist(device, playlists);
+  if (!schedule || !isWithinSchedule(schedule, date)) return base;
+  const hour = date.getHours();
+  const daypart = getScheduleDayparts(schedule).find((part) => hour >= part.from_hour && hour < part.to_hour);
+  if (daypart?.playlist_id) {
+    return playlists.find((p) => p.id === daypart.playlist_id && p.active) ?? base;
+  }
+  return base;
 }
 
 export function formatScheduleHours(schedule: SignageSchedule): string {
@@ -313,6 +400,6 @@ export const ASSET_SELECT =
 export const DEVICE_SELECT =
   'id, name, zone_type, facility_id, orientation, device_token, playlist_id, last_seen_at, active';
 export const PLAYLIST_SELECT =
-  'id, name, scope, device_id, is_default, rotation_mode, items_json, active';
+  'id, name, scope, device_id, is_default, rotation_mode, items_json, active, background_audio_asset_id, audio_volume, audio_loop, audio_duck_during_video';
 export const SCHEDULE_SELECT =
-  'id, device_id, active_from_hour, active_to_hour, days_mask, standby_mode';
+  'id, device_id, active_from_hour, active_to_hour, days_mask, standby_mode, dayparts_json';

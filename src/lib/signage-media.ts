@@ -7,11 +7,15 @@ export const SIGNAGE_IMAGE_MIME_TYPES = [
 
 export const SIGNAGE_VIDEO_MIME_TYPES = ['video/mp4', 'video/webm'] as const;
 
+export const SIGNAGE_AUDIO_MIME_TYPES = ['audio/mpeg', 'audio/mp3', 'audio/wav'] as const;
+
 export const SIGNAGE_IMAGE_EXTENSIONS = 'JPG, PNG, WebP, GIF';
 export const SIGNAGE_VIDEO_EXTENSIONS = 'MP4, WebM';
+export const SIGNAGE_AUDIO_EXTENSIONS = 'MP3, WAV';
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 200 * 1024 * 1024;
+const MAX_AUDIO_BYTES = 20 * 1024 * 1024;
 
 export function isSignageImageMime(type: string): boolean {
   return (SIGNAGE_IMAGE_MIME_TYPES as readonly string[]).includes(type);
@@ -19,6 +23,10 @@ export function isSignageImageMime(type: string): boolean {
 
 export function isSignageVideoMime(type: string): boolean {
   return (SIGNAGE_VIDEO_MIME_TYPES as readonly string[]).includes(type);
+}
+
+export function isSignageAudioMime(type: string): boolean {
+  return (SIGNAGE_AUDIO_MIME_TYPES as readonly string[]).includes(type);
 }
 
 export function validateSignageUpload(file: File): { ok: true } | { ok: false; message: string } {
@@ -31,6 +39,12 @@ export function validateSignageUpload(file: File): { ok: true } | { ok: false; m
   if (isSignageVideoMime(file.type)) {
     if (file.size > MAX_VIDEO_BYTES) {
       return { ok: false, message: 'too_large_video' };
+    }
+    return { ok: true };
+  }
+  if (isSignageAudioMime(file.type)) {
+    if (file.size > MAX_AUDIO_BYTES) {
+      return { ok: false, message: 'too_large_audio' };
     }
     return { ok: true };
   }
@@ -51,6 +65,8 @@ export function signageUploadErrorMessage(code?: string): string {
       return 'La imagen supera 10 MB. Comprímela o usa una resolución menor.';
     case 'too_large_video':
       return 'El vídeo supera 200 MB.';
+    case 'too_large_audio':
+      return 'El audio supera 20 MB.';
     case 'upload_error':
       return 'No se pudo subir el archivo. Comprueba que la migración signage-media está aplicada en Supabase.';
     case 'no_file':
@@ -72,5 +88,7 @@ export function fileExtensionForMime(type: string, filename: string): string {
   if (type === 'image/gif') return 'gif';
   if (type === 'video/mp4') return 'mp4';
   if (type === 'video/webm') return 'webm';
+  if (type === 'audio/mpeg' || type === 'audio/mp3') return 'mp3';
+  if (type === 'audio/wav') return 'wav';
   return filename.split('.').pop()?.toLowerCase() ?? 'bin';
 }

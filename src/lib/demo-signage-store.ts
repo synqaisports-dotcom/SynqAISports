@@ -79,6 +79,10 @@ export const DEMO_SIGNAGE_PLAYLISTS: SignagePlaylist[] = [
       { id: 'pi-3', type: 'sponsor', ref_id: 'demo-sponsor-2', duration_sec: 20 },
     ],
     active: true,
+    background_audio_asset_id: null,
+    audio_volume: 40,
+    audio_loop: true,
+    audio_duck_during_video: true,
   },
 ];
 
@@ -90,6 +94,7 @@ export const DEMO_SIGNAGE_SCHEDULES: SignageSchedule[] = [
     active_to_hour: 22,
     days_mask: 127,
     standby_mode: 'logo',
+    dayparts: [],
   },
 ];
 
