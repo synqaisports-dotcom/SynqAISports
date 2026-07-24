@@ -15,11 +15,10 @@ export function SignageOperativaGuide() {
           </p>
         </li>
         <li className="rounded-lg border border-primary/10 bg-background/30 p-3">
-          <p className="font-medium text-foreground">2. Montar la playlist</p>
+          <p className="font-medium text-foreground">2. Montar la playlist (Studio)</p>
           <p className="mt-1 text-muted-foreground">
-            En <strong>Programación</strong> añade ítems a la playlist principal, define duración de cada slide y el
-            horario activo (por defecto 10:00–22:00). Usa el previsualizador para comprobar el resultado antes de
-            publicar.
+            En <strong>Programación</strong> arrastra contenido desde la biblioteca, reordena la secuencia y revisa la
+            línea de tiempo. Puedes añadir música de fondo y definir franjas horarias (mañana/tarde/noche).
           </p>
         </li>
         <li className="rounded-lg border border-primary/10 bg-background/30 p-3">
