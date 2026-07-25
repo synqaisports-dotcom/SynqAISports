@@ -5,8 +5,12 @@ import Image from 'next/image';
 import { ExerciseAnimationPlayer } from '@/components/methodology/drawing/ExerciseAnimationPlayer';
 import { hasDrawableAnimation, parseExerciseDrawing } from '@/lib/exercise-drawing';
 import {
+  getPlaylistItemWeight,
   isWithinSchedule,
+  pickWeightedPlaylistIndex,
   resolvePlaylistItems,
+  shufflePlaylistOrder,
+  type PlaylistRotationMode,
   type ResolvedPlaylistItem,
   type SignageAsset,
   type SignageDevice,
@@ -86,7 +90,14 @@ function SlideContent({
   }, [slide.item.id, videoRef]);
 
   if (slide.sponsors_list?.length) {
-    return <SponsorWallSlide sponsors={slide.sponsors_list} />;
+    return (
+      <SponsorWallSlide
+        sponsors={slide.sponsors_list}
+        clubName={clubName}
+        clubLogoUrl={clubLogoUrl}
+        entrance={slide.wall_entrance ?? slide.item.wall_entrance ?? 'stagger-fade'}
+      />
+    );
   }
 
   if (slide.item.type === 'sponsor' || slide.asset_type === 'sponsor_slide') {
@@ -244,11 +255,43 @@ export function SignagePlaylistPlayer({
   const isVideoSlide = active?.asset_type === 'video';
   const effectiveVolume = duck && isVideoSlide ? Math.round(volume * 0.2) : volume;
   const [audioRef, setAudioRef] = useState<HTMLAudioElement | null>(null);
+  const [shuffleOrder, setShuffleOrder] = useState<number[]>([]);
+  const [shuffleStep, setShuffleStep] = useState(0);
+
+  const rotationMode: PlaylistRotationMode = playlist?.rotation_mode ?? 'sequential';
+
+  useEffect(() => {
+    if (rotationMode !== 'shuffle' || !resolved.length) return;
+    const order = shufflePlaylistOrder(resolved.length);
+    setShuffleOrder(order);
+    setShuffleStep(0);
+    if (!onIndexChange) setIndex(order[0] ?? 0);
+  }, [rotationMode, playlist?.id, resolved.length, onIndexChange, setIndex]);
 
   const advance = useCallback(() => {
     if (!resolved.length) return;
+    if (rotationMode === 'weighted') {
+      setIndex((current) => {
+        const weights = resolved.map((slide) => getPlaylistItemWeight(slide.item, sponsors));
+        return pickWeightedPlaylistIndex(resolved.length, weights, current);
+      });
+      return;
+    }
+    if (rotationMode === 'shuffle' && shuffleOrder.length === resolved.length) {
+      const nextStep = (shuffleStep + 1) % resolved.length;
+      if (nextStep === 0) {
+        const order = shufflePlaylistOrder(resolved.length);
+        setShuffleOrder(order);
+        setShuffleStep(0);
+        setIndex(order[0] ?? 0);
+      } else {
+        setShuffleStep(nextStep);
+        setIndex(shuffleOrder[nextStep] ?? 0);
+      }
+      return;
+    }
     setIndex((value) => (value + 1) % resolved.length);
-  }, [resolved.length, setIndex]);
+  }, [resolved, rotationMode, shuffleOrder, shuffleStep, sponsors, setIndex]);
 
   useEffect(() => {
     if (index >= resolved.length) setIndex(0);

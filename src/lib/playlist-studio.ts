@@ -1,5 +1,21 @@
-import type { PlaylistItem, PlaylistItemType, SignageAsset, SignageExerciseOption, SignageSponsor, SignageTransition } from '@/lib/signage';
-import { PLAYLIST_ITEM_TYPE_LABELS, SPONSOR_TIER_LABELS, sponsorsForWall } from '@/lib/signage';
+import type {
+  PlaylistItem,
+  PlaylistItemType,
+  SignageAsset,
+  SignageExerciseOption,
+  SignageSponsor,
+  SignageTransition,
+  SponsorWallEntrance,
+} from '@/lib/signage';
+import { PLAYLIST_ITEM_TYPE_LABELS, SPONSOR_TIER_LABELS, SPONSOR_TIER_META, sponsorsForWall } from '@/lib/signage';
+import { parseSponsorWallEntrance } from '@/lib/sponsor-wall';
+
+const WALL_ENTRANCE_STORAGE_KEY = 'signage-sponsor-wall-entrance';
+
+function preferredWallEntrance(): SponsorWallEntrance {
+  if (typeof window === 'undefined') return 'stagger-fade';
+  return parseSponsorWallEntrance(localStorage.getItem(WALL_ENTRANCE_STORAGE_KEY));
+}
 
 export type StudioContentOption = {
   key: string;
@@ -95,14 +111,18 @@ export function buildStudioContentOptions(
 
 export function studioOptionToPlaylistItem(
   option: StudioContentOption,
-  defaultTransition: SignageTransition = 'fade'
+  defaultTransition: SignageTransition = 'fade',
+  sponsors: SignageSponsor[] = []
 ): PlaylistItem {
+  const sponsor = option.type === 'sponsor' ? sponsors.find((s) => s.id === option.id) : null;
   return {
     id: `item-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     type: option.type,
     ref_id: option.id,
     duration_sec: option.duration,
     transition: option.defaultTransition ?? defaultTransition,
+    ...(option.type === 'sponsor_wall' ? { wall_entrance: preferredWallEntrance() } : {}),
+    ...(sponsor ? { weight: SPONSOR_TIER_META[sponsor.tier].weight } : {}),
   };
 }
 

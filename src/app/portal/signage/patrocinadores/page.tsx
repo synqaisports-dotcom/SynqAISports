@@ -16,7 +16,11 @@ export default async function PortalSignageSponsorsPage() {
   return (
     <div className="space-y-6">
       <SignageHero sponsors={bundle.sponsors} devices={bundle.devices} playlists={bundle.playlists} />
-      <SponsorsPanel sponsors={bundle.sponsors} />
+      <SponsorsPanel
+        sponsors={bundle.sponsors}
+        clubName={ctx.club.name}
+        clubLogoUrl={ctx.club.logo_url}
+      />
     </div>
   );
 }

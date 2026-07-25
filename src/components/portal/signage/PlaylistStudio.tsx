@@ -42,6 +42,7 @@ import {
   formatScheduleHours,
   isDayActive,
   PLAYLIST_ROTATION_MODES,
+  PLAYLIST_ROTATION_MODE_LABELS,
   toggleDayMask,
   type PlaylistItem,
   type SignageAsset,
@@ -53,7 +54,12 @@ import {
   SIGNAGE_TRANSITION_LABELS,
   SIGNAGE_TRANSITIONS,
   type SignageTransition,
+  type SponsorWallEntrance,
 } from '@/lib/signage';
+import {
+  SPONSOR_WALL_ENTRANCE_LABELS,
+  SPONSOR_WALL_ENTRANCES,
+} from '@/lib/sponsor-wall';
 import { cn } from '@/lib/utils';
 import { Film, GripVertical, ImageIcon, LayoutGrid, Megaphone, Music2, Plus, Sparkles, Trash2 } from 'lucide-react';
 
@@ -149,6 +155,7 @@ function SequenceRow({
   onSelect,
   onDurationChange,
   onTransitionChange,
+  onWallEntranceChange,
   onRemove,
 }: {
   item: PlaylistItem;
@@ -159,6 +166,7 @@ function SequenceRow({
   onSelect: () => void;
   onDurationChange: (value: number) => void;
   onTransitionChange: (value: SignageTransition) => void;
+  onWallEntranceChange: (value: SponsorWallEntrance) => void;
   onRemove: () => void;
 }) {
   const meta = resolveStudioItemLabel(item, options, sponsors);
@@ -217,6 +225,18 @@ function SequenceRow({
           options={SIGNAGE_TRANSITIONS.map((t) => ({ value: t, label: SIGNAGE_TRANSITION_LABELS[t] }))}
         />
       </div>
+      {item.type === 'sponsor_wall' ? (
+        <div className="w-[140px]" onClick={(e) => e.stopPropagation()}>
+          <SynqSelect
+            value={item.wall_entrance ?? 'stagger-fade'}
+            onChange={(value) => onWallEntranceChange(value as SponsorWallEntrance)}
+            options={SPONSOR_WALL_ENTRANCES.map((e) => ({
+              value: e,
+              label: SPONSOR_WALL_ENTRANCE_LABELS[e],
+            }))}
+          />
+        </div>
+      ) : null}
       <Button
         type="button"
         size="icon"
@@ -359,6 +379,7 @@ export function PlaylistStudio({
   const [previewIndex, setPreviewIndex] = useState(0);
   const [activeDrag, setActiveDrag] = useState<StudioContentOption | null>(null);
   const [defaultTransition, setDefaultTransition] = useState<SignageTransition>('fade');
+  const [rotationMode, setRotationMode] = useState(playlist.rotation_mode);
   const [backgroundAudioAssetId, setBackgroundAudioAssetId] = useState(playlist.background_audio_asset_id ?? '');
   const [audioVolume, setAudioVolume] = useState(playlist.audio_volume);
   const [audioLoop, setAudioLoop] = useState(playlist.audio_loop);
@@ -391,19 +412,20 @@ export function PlaylistStudio({
     () => ({
       ...playlist,
       items,
+      rotation_mode: rotationMode,
       background_audio_asset_id: backgroundAudioAssetId || null,
       audio_volume: audioVolume,
       audio_loop: audioLoop,
       audio_duck_during_video: audioDuck,
     }),
-    [playlist, items, backgroundAudioAssetId, audioVolume, audioLoop, audioDuck]
+    [playlist, items, rotationMode, backgroundAudioAssetId, audioVolume, audioLoop, audioDuck]
   );
 
   const backgroundAudioUrl =
     audioAssets.find((asset) => asset.id === backgroundAudioAssetId)?.media_url ?? null;
 
   function addOption(option: StudioContentOption) {
-    const next = studioOptionToPlaylistItem(option, defaultTransition);
+    const next = studioOptionToPlaylistItem(option, defaultTransition, sponsors);
     setItems((prev) => {
       setPreviewIndex(prev.length);
       return [...prev, next];
@@ -473,7 +495,7 @@ export function PlaylistStudio({
                   {items.length} ítems · {formatPlaylistDuration(playlistTotalDuration(items))}
                 </p>
               </div>
-              <Badge variant="outline">{PLAYLIST_ROTATION_MODES.includes(playlist.rotation_mode) ? playlist.rotation_mode : 'sequential'}</Badge>
+              <Badge variant="outline">{PLAYLIST_ROTATION_MODE_LABELS[rotationMode]}</Badge>
             </div>
 
             <TimelineStrip
@@ -534,6 +556,9 @@ export function PlaylistStudio({
                     onTransitionChange={(value) =>
                       setItems((prev) => prev.map((row, i) => (i === index ? { ...row, transition: value } : row)))
                     }
+                    onWallEntranceChange={(value) =>
+                      setItems((prev) => prev.map((row, i) => (i === index ? { ...row, wall_entrance: value } : row)))
+                    }
                     onRemove={() =>
                       setItems((prev) => {
                         const next = prev.filter((row) => row.id !== item.id);
@@ -556,7 +581,7 @@ export function PlaylistStudio({
 
             <form action={playlistAction} className="mt-4 space-y-4 border-t border-primary/10 pt-4">
               <input type="hidden" name="items_json" value={JSON.stringify(items)} />
-              <input type="hidden" name="rotation_mode" value={playlist.rotation_mode} />
+              <input type="hidden" name="rotation_mode" value={rotationMode} />
               <input type="hidden" name="is_default" value={playlist.is_default ? 'true' : 'false'} />
               <input type="hidden" name="background_audio_asset_id" value={backgroundAudioAssetId} />
               <input type="hidden" name="audio_volume" value={String(audioVolume)} />
@@ -566,10 +591,29 @@ export function PlaylistStudio({
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Modo de rotación
+                  </label>
+                  <SynqSelect
+                    value={rotationMode}
+                    onChange={(value) => setRotationMode(value as typeof rotationMode)}
+                    options={PLAYLIST_ROTATION_MODES.map((mode) => ({
+                      value: mode,
+                      label: PLAYLIST_ROTATION_MODE_LABELS[mode],
+                    }))}
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Ponderada usa el peso oro (3), plata (2) y bronce (1) en patrocinadores.
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Nombre de la playlist
                   </label>
                   <Input name="name" defaultValue={playlist.name} className="mt-1" />
                 </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Música de fondo

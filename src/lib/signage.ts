@@ -30,6 +30,12 @@ export type SignageContentOrientation = (typeof SIGNAGE_CONTENT_ORIENTATIONS)[nu
 export const PLAYLIST_ROTATION_MODES = ['sequential', 'shuffle', 'weighted'] as const;
 export type PlaylistRotationMode = (typeof PLAYLIST_ROTATION_MODES)[number];
 
+export const PLAYLIST_ROTATION_MODE_LABELS: Record<PlaylistRotationMode, string> = {
+  sequential: 'Secuencial',
+  shuffle: 'Aleatorio',
+  weighted: 'Ponderada (por nivel)',
+};
+
 export const PLAYLIST_ITEM_TYPES = [
   'sponsor',
   'sponsor_wall',
@@ -86,10 +92,14 @@ export type PlaylistItem = {
   duration_sec: number;
   weight?: number;
   transition?: SignageTransition;
+  wall_entrance?: SponsorWallEntrance;
 };
 
 export const SIGNAGE_TRANSITIONS = ['none', 'fade', 'slide-left', 'slide-up', 'zoom'] as const;
 export type SignageTransition = (typeof SIGNAGE_TRANSITIONS)[number];
+
+export const SPONSOR_WALL_ENTRANCES = ['stagger-fade', 'stagger-up', 'stagger-scale', 'pop', 'wave'] as const;
+export type SponsorWallEntrance = (typeof SPONSOR_WALL_ENTRANCES)[number];
 
 export const SIGNAGE_TRANSITION_LABELS: Record<SignageTransition, string> = {
   none: 'Sin transición',
@@ -156,19 +166,19 @@ export const SPONSOR_TIER_META: Record<
   { description: string; weight: number; defaultDurationSec: number; gridCols: string }
 > = {
   gold: {
-    description: 'Patrocinio principal: más segundos en rotación individual y logo más grande en el muro.',
+    description: 'Patrocinio principal: 4 celdas en el muro (2×2), más segundos y mayor peso en rotación.',
     weight: 3,
     defaultDurationSec: 45,
     gridCols: 'col-span-2 row-span-2',
   },
   silver: {
-    description: 'Patrocinio estándar: presencia equilibrada en pantallas y muro.',
+    description: 'Patrocinio estándar: 2 celdas en el muro (2×1) y peso intermedio.',
     weight: 2,
     defaultDurationSec: 30,
-    gridCols: 'col-span-1 row-span-1',
+    gridCols: 'col-span-2 row-span-1',
   },
   bronze: {
-    description: 'Patrocinio de apoyo: menor peso en rotación ponderada y logo compacto.',
+    description: 'Patrocinio de apoyo: 1 celda en el muro (1×1) y menor peso en rotación.',
     weight: 1,
     defaultDurationSec: 20,
     gridCols: 'col-span-1 row-span-1',
@@ -188,6 +198,46 @@ export function sponsorsForWall(sponsors: SignageSponsor[], refId: string): Sign
     return sortSponsorsByTier(active.filter((s) => s.tier === refId));
   }
   return sortSponsorsByTier(active);
+}
+
+export function getPlaylistItemWeight(item: PlaylistItem, sponsors: SignageSponsor[]): number {
+  if (item.weight != null && item.weight > 0) return item.weight;
+  if (item.type === 'sponsor') {
+    const sponsor = sponsors.find((s) => s.id === item.ref_id);
+    return sponsor ? SPONSOR_TIER_META[sponsor.tier].weight : 1;
+  }
+  return 1;
+}
+
+export function pickWeightedPlaylistIndex(
+  length: number,
+  weights: number[],
+  currentIndex: number
+): number {
+  if (length <= 1) return 0;
+  const total = weights.reduce((sum, w) => sum + w, 0);
+  if (total <= 0) return (currentIndex + 1) % length;
+
+  let roll = Math.random() * total;
+  let picked = currentIndex;
+  for (let i = 0; i < length; i += 1) {
+    roll -= weights[i];
+    if (roll <= 0) {
+      picked = i;
+      break;
+    }
+  }
+  if (picked === currentIndex) return (currentIndex + 1) % length;
+  return picked;
+}
+
+export function shufflePlaylistOrder(length: number): number[] {
+  const order = Array.from({ length }, (_, i) => i);
+  for (let i = order.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  return order;
 }
 
 export const SIGNAGE_ZONE_LABELS: Record<SignageZoneType, string> = {
@@ -259,6 +309,9 @@ export function parsePlaylistItems(raw: unknown): PlaylistItem[] {
         transition: SIGNAGE_TRANSITIONS.includes(transition as SignageTransition)
           ? (transition as SignageTransition)
           : 'fade',
+        wall_entrance: SPONSOR_WALL_ENTRANCES.includes(String(o.wall_entrance ?? '') as SponsorWallEntrance)
+          ? (String(o.wall_entrance) as SponsorWallEntrance)
+          : undefined,
       };
     })
     .filter((item) => item !== null) as PlaylistItem[];
@@ -272,6 +325,7 @@ export function serializePlaylistItems(items: PlaylistItem[]): PlaylistItem[] {
     duration_sec: item.duration_sec,
     ...(item.weight != null ? { weight: item.weight } : {}),
     ...(item.transition && item.transition !== 'fade' ? { transition: item.transition } : {}),
+    ...(item.wall_entrance ? { wall_entrance: item.wall_entrance } : {}),
   }));
 }
 
@@ -409,6 +463,7 @@ export type ResolvedPlaylistItem = {
   exercise_drawing_json?: unknown;
   asset_type?: SignageAssetType;
   sponsors_list?: SignageSponsor[];
+  wall_entrance?: SponsorWallEntrance;
 };
 
 export function resolvePlaylistItems(
@@ -433,6 +488,7 @@ export function resolvePlaylistItems(
           media_url: null,
           logo_url: null,
           sponsors_list: list,
+          wall_entrance: item.wall_entrance ?? 'stagger-fade',
         };
       }
       if (item.type === 'sponsor') {

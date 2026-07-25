@@ -27,22 +27,41 @@ import {
   type SignageSponsor,
   type SponsorTier,
 } from '@/lib/signage';
+import {
+  SPONSOR_TIER_GRID_SPAN,
+  SPONSOR_WALL_ENTRANCE_LABELS,
+  SPONSOR_WALL_ENTRANCES,
+  type SponsorWallEntrance,
+} from '@/lib/sponsor-wall';
 import { cn } from '@/lib/utils';
-import { Plus } from 'lucide-react';
+import { Play, Plus } from 'lucide-react';
+
+const WALL_ENTRANCE_STORAGE_KEY = 'signage-sponsor-wall-entrance';
 
 const initial: SignageActionState = { ok: false };
 
 type Props = {
   sponsors: SignageSponsor[];
+  clubName: string;
+  clubLogoUrl: string | null;
 };
 
-export function SponsorsPanel({ sponsors }: Props) {
+export function SponsorsPanel({ sponsors, clubName, clubLogoUrl }: Props) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<SignageSponsor | null>(null);
   const [logoUrl, setLogoUrl] = useState('');
   const [tier, setTier] = useState<SponsorTier>('silver');
   const [durationSec, setDurationSec] = useState(SPONSOR_TIER_META.silver.defaultDurationSec);
   const [active, setActive] = useState(true);
+  const [wallEntrance, setWallEntrance] = useState<SponsorWallEntrance>(() => {
+    if (typeof window === 'undefined') return 'stagger-fade';
+    const saved = localStorage.getItem(WALL_ENTRANCE_STORAGE_KEY);
+    return SPONSOR_WALL_ENTRANCES.includes(saved as SponsorWallEntrance)
+      ? (saved as SponsorWallEntrance)
+      : 'stagger-fade';
+  });
+  const [previewKey, setPreviewKey] = useState(0);
+  const [previewing, setPreviewing] = useState(false);
 
   const [createState, createAction, creating] = useActionState(createSponsor, initial);
   const [updateState, updateAction, updating] = useActionState(
@@ -102,7 +121,8 @@ export function SponsorsPanel({ sponsors }: Props) {
               <p className="font-medium text-foreground">{SPONSOR_TIER_LABELS[tierKey]}</p>
               <p className="mt-1 text-xs text-muted-foreground">{SPONSOR_TIER_META[tierKey].description}</p>
               <p className="mt-2 text-[11px] text-cyan-300/70">
-                {SPONSOR_TIER_META[tierKey].defaultDurationSec}s sugeridos · peso {SPONSOR_TIER_META[tierKey].weight}
+                Muro {SPONSOR_TIER_GRID_SPAN[tierKey].cols}×{SPONSOR_TIER_GRID_SPAN[tierKey].rows} ·{' '}
+                {SPONSOR_TIER_META[tierKey].defaultDurationSec}s · peso {SPONSOR_TIER_META[tierKey].weight}
               </p>
             </div>
           ))}
@@ -111,21 +131,62 @@ export function SponsorsPanel({ sponsors }: Props) {
 
       {wallPreviewSponsors.length >= 2 ? (
         <div className="portal-section-surface overflow-hidden rounded-xl p-4">
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h3 className="font-medium">Muro de patrocinadores</h3>
-              <p className="text-sm text-muted-foreground">
-                Un solo slide con todos los logos y animación de entrada. Añádelo en Programación como{' '}
-                <strong>Muro de patrocinadores</strong>.
-              </p>
+          <div className="mb-3">
+            <h3 className="font-medium">Muro de patrocinadores</h3>
+            <p className="text-sm text-muted-foreground">
+              Cuadrícula invisible 6×4: oro 2×2, plata 2×1, bronce 1×1. Marca de agua SynqAI y deportes en
+              fondo. Añádelo en Programación.
+            </p>
+          </div>
+          <div className="mb-3 flex flex-wrap items-end gap-3">
+            <div className="min-w-[200px] flex-1">
+              <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Transición de aparición
+              </label>
+              <SynqSelect
+                value={wallEntrance}
+                onChange={(value) => {
+                  const next = value as SponsorWallEntrance;
+                  setWallEntrance(next);
+                  localStorage.setItem(WALL_ENTRANCE_STORAGE_KEY, next);
+                }}
+                options={SPONSOR_WALL_ENTRANCES.map((e) => ({
+                  value: e,
+                  label: SPONSOR_WALL_ENTRANCE_LABELS[e],
+                }))}
+              />
             </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setPreviewKey((k) => k + 1);
+                setPreviewing(true);
+              }}
+            >
+              <Play className="mr-1 size-4" />
+              Previsualizar
+            </Button>
             <Button asChild size="sm" variant="outline">
               <Link href="/portal/signage/programacion">Ir a Programación</Link>
             </Button>
           </div>
           <div className="aspect-video overflow-hidden rounded-lg border border-primary/15">
-            <SponsorWallSlide sponsors={wallPreviewSponsors} compact />
+            <SponsorWallSlide
+              key={previewKey}
+              sponsors={wallPreviewSponsors}
+              clubName={clubName}
+              clubLogoUrl={clubLogoUrl}
+              entrance={wallEntrance}
+              compact
+            />
           </div>
+          {previewing ? (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Esta transición se aplicará al añadir el muro en Programación (se guarda como preferencia).
+            </p>
+          ) : null}
         </div>
       ) : null}
 
