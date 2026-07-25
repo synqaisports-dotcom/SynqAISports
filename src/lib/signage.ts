@@ -32,6 +32,7 @@ export type PlaylistRotationMode = (typeof PLAYLIST_ROTATION_MODES)[number];
 
 export const PLAYLIST_ITEM_TYPES = [
   'sponsor',
+  'sponsor_wall',
   'video',
   'image',
   'sponsor_slide',
@@ -84,6 +85,18 @@ export type PlaylistItem = {
   ref_id: string;
   duration_sec: number;
   weight?: number;
+  transition?: SignageTransition;
+};
+
+export const SIGNAGE_TRANSITIONS = ['none', 'fade', 'slide-left', 'slide-up', 'zoom'] as const;
+export type SignageTransition = (typeof SIGNAGE_TRANSITIONS)[number];
+
+export const SIGNAGE_TRANSITION_LABELS: Record<SignageTransition, string> = {
+  none: 'Sin transición',
+  fade: 'Fundido',
+  'slide-left': 'Deslizar',
+  'slide-up': 'Subir',
+  zoom: 'Zoom suave',
 };
 
 export type SignagePlaylist = {
@@ -132,6 +145,51 @@ export const SPONSOR_TIER_LABELS: Record<SponsorTier, string> = {
   bronze: 'Bronce',
 };
 
+export const SPONSOR_TIER_ORDER: Record<SponsorTier, number> = {
+  gold: 0,
+  silver: 1,
+  bronze: 2,
+};
+
+export const SPONSOR_TIER_META: Record<
+  SponsorTier,
+  { description: string; weight: number; defaultDurationSec: number; gridCols: string }
+> = {
+  gold: {
+    description: 'Patrocinio principal: más segundos en rotación individual y logo más grande en el muro.',
+    weight: 3,
+    defaultDurationSec: 45,
+    gridCols: 'col-span-2 row-span-2',
+  },
+  silver: {
+    description: 'Patrocinio estándar: presencia equilibrada en pantallas y muro.',
+    weight: 2,
+    defaultDurationSec: 30,
+    gridCols: 'col-span-1 row-span-1',
+  },
+  bronze: {
+    description: 'Patrocinio de apoyo: menor peso en rotación ponderada y logo compacto.',
+    weight: 1,
+    defaultDurationSec: 20,
+    gridCols: 'col-span-1 row-span-1',
+  },
+};
+
+export function sortSponsorsByTier(sponsors: SignageSponsor[]): SignageSponsor[] {
+  return [...sponsors].sort(
+    (a, b) => SPONSOR_TIER_ORDER[a.tier] - SPONSOR_TIER_ORDER[b.tier] || a.name.localeCompare(b.name)
+  );
+}
+
+export function sponsorsForWall(sponsors: SignageSponsor[], refId: string): SignageSponsor[] {
+  const active = sponsors.filter((s) => s.active);
+  if (refId === 'all') return sortSponsorsByTier(active);
+  if (refId === 'gold' || refId === 'silver' || refId === 'bronze') {
+    return sortSponsorsByTier(active.filter((s) => s.tier === refId));
+  }
+  return sortSponsorsByTier(active);
+}
+
 export const SIGNAGE_ZONE_LABELS: Record<SignageZoneType, string> = {
   cafeteria: 'Cafetería',
   waiting: 'Sala de espera',
@@ -157,6 +215,7 @@ export const SIGNAGE_ASSET_TYPE_LABELS: Record<SignageAssetType, string> = {
 
 export const PLAYLIST_ITEM_TYPE_LABELS: Record<PlaylistItemType, string> = {
   sponsor: 'Patrocinador',
+  sponsor_wall: 'Muro de patrocinadores',
   video: 'Vídeo',
   image: 'Imagen',
   sponsor_slide: 'Slide patrocinador',
@@ -189,13 +248,17 @@ export function parsePlaylistItems(raw: unknown): PlaylistItem[] {
       const type = String(o.type ?? '');
       if (!PLAYLIST_ITEM_TYPES.includes(type as PlaylistItemType)) return null;
       const refId = String(o.ref_id ?? '');
-      if (!refId) return null;
+      if (!refId && type !== 'sponsor_wall') return null;
+      const transition = String(o.transition ?? 'fade');
       return {
         id: String(o.id ?? `item-${index}`),
         type: type as PlaylistItemType,
-        ref_id: refId,
+        ref_id: refId || 'all',
         duration_sec: Number(o.duration_sec ?? 10),
         weight: o.weight != null ? Number(o.weight) : undefined,
+        transition: SIGNAGE_TRANSITIONS.includes(transition as SignageTransition)
+          ? (transition as SignageTransition)
+          : 'fade',
       };
     })
     .filter((item) => item !== null) as PlaylistItem[];
@@ -208,6 +271,7 @@ export function serializePlaylistItems(items: PlaylistItem[]): PlaylistItem[] {
     ref_id: item.ref_id,
     duration_sec: item.duration_sec,
     ...(item.weight != null ? { weight: item.weight } : {}),
+    ...(item.transition && item.transition !== 'fade' ? { transition: item.transition } : {}),
   }));
 }
 
@@ -344,6 +408,7 @@ export type ResolvedPlaylistItem = {
   logo_url: string | null;
   exercise_drawing_json?: unknown;
   asset_type?: SignageAssetType;
+  sponsors_list?: SignageSponsor[];
 };
 
 export function resolvePlaylistItems(
@@ -355,6 +420,21 @@ export function resolvePlaylistItems(
   if (!playlist) return [];
   return playlist.items
     .map((item) => {
+      if (item.type === 'sponsor_wall') {
+        const list = sponsorsForWall(sponsors, item.ref_id);
+        if (!list.length) return null;
+        const title =
+          item.ref_id === 'all'
+            ? 'Muro de patrocinadores'
+            : `Muro · ${SPONSOR_TIER_LABELS[item.ref_id as SponsorTier] ?? item.ref_id}`;
+        return {
+          item: { ...item, duration_sec: item.duration_sec || 45 },
+          title,
+          media_url: null,
+          logo_url: null,
+          sponsors_list: list,
+        };
+      }
       if (item.type === 'sponsor') {
         const sponsor = sponsors.find((s) => s.id === item.ref_id && s.active);
         if (!sponsor) return null;

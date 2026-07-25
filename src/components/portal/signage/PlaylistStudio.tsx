@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useMemo, useState } from 'react';
+import { useActionState, useMemo, useRef, useState } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -50,9 +50,12 @@ import {
   type SignageSchedule,
   type SignageSponsor,
   type ScheduleDaypart,
+  SIGNAGE_TRANSITION_LABELS,
+  SIGNAGE_TRANSITIONS,
+  type SignageTransition,
 } from '@/lib/signage';
 import { cn } from '@/lib/utils';
-import { Film, GripVertical, ImageIcon, Megaphone, Music2, Sparkles, Trash2 } from 'lucide-react';
+import { Film, GripVertical, ImageIcon, LayoutGrid, Megaphone, Music2, Plus, Sparkles, Trash2 } from 'lucide-react';
 
 const initial: SignageActionState = { ok: false };
 
@@ -76,8 +79,10 @@ function LibraryThumb({ option }: { option: StudioContentOption }) {
   const Icon =
     option.type === 'video'
       ? Film
-      : option.type === 'sponsor' || option.type === 'sponsor_slide'
-        ? Megaphone
+      : option.type === 'sponsor' || option.type === 'sponsor_slide' || option.type === 'sponsor_wall'
+        ? option.type === 'sponsor_wall'
+          ? LayoutGrid
+          : Megaphone
         : option.type === 'exercise_animation'
           ? Sparkles
           : ImageIcon;
@@ -88,31 +93,50 @@ function LibraryThumb({ option }: { option: StudioContentOption }) {
   );
 }
 
-function LibraryCard({ option }: { option: StudioContentOption }) {
+function LibraryCard({
+  option,
+  onAdd,
+}: {
+  option: StudioContentOption;
+  onAdd: (option: StudioContentOption) => void;
+}) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `lib-${option.key}`,
     data: { source: 'library', option },
   });
 
   return (
-    <button
+    <div
       ref={setNodeRef}
-      type="button"
-      {...listeners}
-      {...attributes}
       className={cn(
-        'flex w-full items-center gap-2 rounded-lg border border-primary/10 bg-background/40 p-2 text-left transition-colors hover:border-cyan-400/30 hover:bg-cyan-400/5',
+        'flex items-center gap-1 rounded-lg border border-primary/10 bg-background/40 p-1.5 transition-colors hover:border-cyan-400/30 hover:bg-cyan-400/5',
         isDragging && 'opacity-40'
       )}
     >
-      <div className="size-10 shrink-0 overflow-hidden rounded-md border border-primary/15">
-        <LibraryThumb option={option} />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium">{option.label}</p>
-        <p className="text-[11px] text-muted-foreground">{option.duration}s</p>
-      </div>
-    </button>
+      <button
+        type="button"
+        className="flex size-8 shrink-0 cursor-grab items-center justify-center rounded-md text-muted-foreground/50 active:cursor-grabbing"
+        {...listeners}
+        {...attributes}
+        aria-label="Arrastrar"
+      >
+        <GripVertical className="size-4" />
+      </button>
+      <button
+        type="button"
+        onClick={() => onAdd(option)}
+        className="flex min-w-0 flex-1 items-center gap-2 text-left"
+      >
+        <div className="size-10 shrink-0 overflow-hidden rounded-md border border-primary/15">
+          <LibraryThumb option={option} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium">{option.label}</p>
+          <p className="text-[11px] text-muted-foreground">{option.duration}s · clic para añadir</p>
+        </div>
+        <Plus className="size-4 shrink-0 text-cyan-400/70 opacity-0 transition-opacity group-hover:opacity-100" />
+      </button>
+    </div>
   );
 }
 
@@ -120,20 +144,24 @@ function SequenceRow({
   item,
   index,
   options,
+  sponsors,
   selected,
   onSelect,
   onDurationChange,
+  onTransitionChange,
   onRemove,
 }: {
   item: PlaylistItem;
   index: number;
   options: StudioContentOption[];
+  sponsors: SignageSponsor[];
   selected: boolean;
   onSelect: () => void;
   onDurationChange: (value: number) => void;
+  onTransitionChange: (value: SignageTransition) => void;
   onRemove: () => void;
 }) {
-  const meta = resolveStudioItemLabel(item, options);
+  const meta = resolveStudioItemLabel(item, options, sponsors);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
     data: { source: 'sequence', item },
@@ -144,7 +172,7 @@ function SequenceRow({
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
-        'flex items-center gap-3 rounded-lg border px-3 py-2',
+        'flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 sm:flex-nowrap sm:gap-3',
         selected ? 'border-cyan-400/40 bg-cyan-400/10' : 'border-primary/10 bg-background/40',
         isDragging && 'z-10 opacity-80 shadow-lg'
       )}
@@ -175,12 +203,20 @@ function SequenceRow({
       </div>
       <Input
         type="number"
-        min={0}
+        min={3}
+        max={300}
         value={item.duration_sec}
         onClick={(e) => e.stopPropagation()}
         onChange={(e) => onDurationChange(Number(e.target.value))}
         className="w-16 text-center"
       />
+      <div className="w-[118px]" onClick={(e) => e.stopPropagation()}>
+        <SynqSelect
+          value={item.transition ?? 'fade'}
+          onChange={(value) => onTransitionChange(value as SignageTransition)}
+          options={SIGNAGE_TRANSITIONS.map((t) => ({ value: t, label: SIGNAGE_TRANSITION_LABELS[t] }))}
+        />
+      </div>
       <Button
         type="button"
         size="icon"
@@ -199,17 +235,37 @@ function SequenceRow({
 function TimelineStrip({
   items,
   options,
+  sponsors,
   selectedId,
   currentIndex,
   onSelect,
+  onDurationChange,
 }: {
   items: PlaylistItem[];
   options: StudioContentOption[];
+  sponsors: SignageSponsor[];
   selectedId: string | null;
   currentIndex: number;
   onSelect: (id: string, index: number) => void;
+  onDurationChange: (id: string, duration: number) => void;
 }) {
+  const trackRef = useRef<HTMLDivElement>(null);
   const total = playlistTotalDuration(items);
+
+  function startResize(itemId: string, startDuration: number, startX: number) {
+    const trackWidth = trackRef.current?.getBoundingClientRect().width ?? 1;
+    const onMove = (ev: PointerEvent) => {
+      const deltaPx = ev.clientX - startX;
+      const deltaSec = Math.round((deltaPx / trackWidth) * Math.max(total, 1));
+      onDurationChange(itemId, Math.min(300, Math.max(3, startDuration + deltaSec)));
+    };
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  }
   if (!items.length) {
     return (
       <div className="flex h-12 items-center justify-center rounded-lg border border-dashed border-primary/15 text-xs text-muted-foreground">
@@ -227,26 +283,39 @@ function TimelineStrip({
 
   return (
     <div className="space-y-2">
-      <div className="relative h-12 overflow-hidden rounded-lg border border-primary/15 bg-background/40">
+      <div ref={trackRef} className="relative h-12 overflow-hidden rounded-lg border border-primary/15 bg-background/40">
         <div className="absolute inset-0 flex">
           {items.map((item, index) => {
             const width = (Math.max(item.duration_sec, 1) / Math.max(total, 1)) * 100;
-            const meta = resolveStudioItemLabel(item, options);
+            const meta = resolveStudioItemLabel(item, options, sponsors);
             return (
-              <button
+              <div
                 key={item.id}
-                type="button"
-                onClick={() => onSelect(item.id, index)}
                 className={cn(
-                  'relative h-full min-w-[2px] border-r border-black/20 px-1 text-[10px] font-medium text-black/80 transition-opacity hover:opacity-100',
+                  'group relative h-full min-w-[12px] border-r border-black/20',
                   TIMELINE_TYPE_COLORS[item.type],
                   selectedId === item.id ? 'ring-2 ring-inset ring-white/70' : 'opacity-90'
                 )}
                 style={{ width: `${width}%` }}
-                title={`${meta.label} · ${item.duration_sec}s`}
               >
-                <span className="block truncate">{meta.label}</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => onSelect(item.id, index)}
+                  className="flex h-full w-full items-center px-1 text-[10px] font-medium text-black/80"
+                  title={`${meta.label} · ${item.duration_sec}s`}
+                >
+                  <span className="block truncate">{meta.label}</span>
+                </button>
+                <button
+                  type="button"
+                  aria-label="Ajustar duración"
+                  className="absolute inset-y-0 right-0 w-2 cursor-ew-resize bg-white/0 transition-colors hover:bg-white/35"
+                  onPointerDown={(e) => {
+                    e.stopPropagation();
+                    startResize(item.id, item.duration_sec, e.clientX);
+                  }}
+                />
+              </div>
             );
           })}
         </div>
@@ -258,6 +327,7 @@ function TimelineStrip({
       </div>
       <p className="text-xs text-muted-foreground">
         Duración total: <strong className="text-foreground">{formatPlaylistDuration(total)}</strong>
+        <span className="ml-2 text-muted-foreground/80">· arrastra el borde derecho de un bloque para ajustar</span>
       </p>
     </div>
   );
@@ -288,6 +358,7 @@ export function PlaylistStudio({
   const [selectedId, setSelectedId] = useState<string | null>(playlist.items[0]?.id ?? null);
   const [previewIndex, setPreviewIndex] = useState(0);
   const [activeDrag, setActiveDrag] = useState<StudioContentOption | null>(null);
+  const [defaultTransition, setDefaultTransition] = useState<SignageTransition>('fade');
   const [backgroundAudioAssetId, setBackgroundAudioAssetId] = useState(playlist.background_audio_asset_id ?? '');
   const [audioVolume, setAudioVolume] = useState(playlist.audio_volume);
   const [audioLoop, setAudioLoop] = useState(playlist.audio_loop);
@@ -332,10 +403,12 @@ export function PlaylistStudio({
     audioAssets.find((asset) => asset.id === backgroundAudioAssetId)?.media_url ?? null;
 
   function addOption(option: StudioContentOption) {
-    const next = studioOptionToPlaylistItem(option);
-    setItems((prev) => [...prev, next]);
+    const next = studioOptionToPlaylistItem(option, defaultTransition);
+    setItems((prev) => {
+      setPreviewIndex(prev.length);
+      return [...prev, next];
+    });
     setSelectedId(next.id);
-    setPreviewIndex(items.length);
   }
 
   function handleDragStart(event: DragStartEvent) {
@@ -381,8 +454,8 @@ export function PlaylistStudio({
           <p className="mt-1 text-xs text-muted-foreground">Arrastra al centro o pulsa para añadir</p>
           <div className="mt-3 max-h-[min(70vh,640px)] space-y-2 overflow-y-auto pr-1">
             {contentOptions.map((option) => (
-              <div key={option.key} onDoubleClick={() => addOption(option)}>
-                <LibraryCard option={option} />
+              <div key={option.key} className="group">
+                <LibraryCard option={option} onAdd={addOption} />
               </div>
             ))}
             {contentOptions.length === 0 ? (
@@ -406,10 +479,37 @@ export function PlaylistStudio({
             <TimelineStrip
               items={items}
               options={contentOptions}
+              sponsors={sponsors}
               selectedId={selectedId}
               currentIndex={previewIndex}
               onSelect={selectItem}
+              onDurationChange={(id, duration) =>
+                setItems((prev) => prev.map((row) => (row.id === id ? { ...row, duration_sec: duration } : row)))
+              }
             />
+
+            <div className="mt-3 flex flex-wrap items-end gap-3">
+              <div className="min-w-[180px] flex-1">
+                <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Transición por defecto (nuevos ítems)
+                </label>
+                <SynqSelect
+                  value={defaultTransition}
+                  onChange={(value) => setDefaultTransition(value as SignageTransition)}
+                  options={SIGNAGE_TRANSITIONS.map((t) => ({ value: t, label: SIGNAGE_TRANSITION_LABELS[t] }))}
+                />
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  setItems((prev) => prev.map((row) => ({ ...row, transition: defaultTransition })))
+                }
+              >
+                Aplicar a todos
+              </Button>
+            </div>
 
             <div
               ref={setDropRef}
@@ -425,10 +525,14 @@ export function PlaylistStudio({
                     item={item}
                     index={index}
                     options={contentOptions}
+                    sponsors={sponsors}
                     selected={selectedId === item.id}
                     onSelect={() => selectItem(item.id, index)}
                     onDurationChange={(value) =>
                       setItems((prev) => prev.map((row, i) => (i === index ? { ...row, duration_sec: value } : row)))
+                    }
+                    onTransitionChange={(value) =>
+                      setItems((prev) => prev.map((row, i) => (i === index ? { ...row, transition: value } : row)))
                     }
                     onRemove={() =>
                       setItems((prev) => {

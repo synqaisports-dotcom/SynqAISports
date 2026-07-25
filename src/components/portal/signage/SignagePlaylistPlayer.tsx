@@ -13,8 +13,25 @@ import {
   type SignagePlaylist,
   type SignageSchedule,
   type SignageSponsor,
+  type SignageTransition,
 } from '@/lib/signage';
 import { cn } from '@/lib/utils';
+import { SponsorWallSlide } from '@/components/portal/signage/SponsorWallSlide';
+
+function transitionClass(transition?: SignageTransition): string {
+  switch (transition) {
+    case 'none':
+      return '';
+    case 'slide-left':
+      return 'signage-transition-slide-left';
+    case 'slide-up':
+      return 'signage-transition-slide-up';
+    case 'zoom':
+      return 'signage-transition-zoom';
+    default:
+      return 'signage-transition-fade';
+  }
+}
 
 type Props = {
   orientation: SignageDevice['orientation'] | 'landscape' | 'portrait';
@@ -67,6 +84,10 @@ function SlideContent({
       void videoRef.play().catch(() => undefined);
     }
   }, [slide.item.id, videoRef]);
+
+  if (slide.sponsors_list?.length) {
+    return <SponsorWallSlide sponsors={slide.sponsors_list} />;
+  }
 
   if (slide.item.type === 'sponsor' || slide.asset_type === 'sponsor_slide') {
     return (
@@ -312,14 +333,21 @@ export function SignagePlaylistPlayer({
           frameClass
         )}
       >
+        <div className="relative h-full w-full">
         {active ? (
-          <SlideContent
-            slide={active}
-            clubName={clubName}
-            clubLogoUrl={clubLogoUrl}
-            onEnded={advance}
-          />
+          <div
+            key={active.item.id}
+            className={cn('absolute inset-0', transitionClass(active.item.transition))}
+          >
+            <SlideContent
+              slide={active}
+              clubName={clubName}
+              clubLogoUrl={clubLogoUrl}
+              onEnded={advance}
+            />
+          </div>
         ) : null}
+        </div>
         {preview ? (
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-4 py-3">
             <p className="truncate text-sm font-medium text-white">{active?.title}</p>

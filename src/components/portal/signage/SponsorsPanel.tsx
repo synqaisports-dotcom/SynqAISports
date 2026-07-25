@@ -1,6 +1,7 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useActionState, useMemo, useState } from 'react';
+import Link from 'next/link';
 import {
   createSponsor,
   deleteSponsor,
@@ -11,14 +12,18 @@ import {
 } from '@/app/actions/signage';
 import { PortalSheetBody, PortalSheetContent, PortalSheetHeader } from '@/components/portal/PortalSheet';
 import { SignageItemActions } from '@/components/portal/signage/SignageItemActions';
+import { SponsorWallSlide } from '@/components/portal/signage/SponsorWallSlide';
 import { SynqSelect } from '@/components/portal/SynqSelect';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import {
+  sortSponsorsByTier,
   SPONSOR_TIER_LABELS,
+  SPONSOR_TIER_META,
   SPONSOR_TIERS,
+  sponsorsForWall,
   type SignageSponsor,
   type SponsorTier,
 } from '@/lib/signage';
@@ -36,6 +41,7 @@ export function SponsorsPanel({ sponsors }: Props) {
   const [editing, setEditing] = useState<SignageSponsor | null>(null);
   const [logoUrl, setLogoUrl] = useState('');
   const [tier, setTier] = useState<SponsorTier>('silver');
+  const [durationSec, setDurationSec] = useState(SPONSOR_TIER_META.silver.defaultDurationSec);
   const [active, setActive] = useState(true);
 
   const [createState, createAction, creating] = useActionState(createSponsor, initial);
@@ -45,11 +51,14 @@ export function SponsorsPanel({ sponsors }: Props) {
   );
 
   const [uploading, setUploading] = useState(false);
+  const activeSponsors = useMemo(() => sortSponsorsByTier(sponsors.filter((s) => s.active)), [sponsors]);
+  const wallPreviewSponsors = sponsorsForWall(sponsors, 'all');
 
   function openCreate() {
     setEditing(null);
     setLogoUrl('');
     setTier('silver');
+    setDurationSec(SPONSOR_TIER_META.silver.defaultDurationSec);
     setActive(true);
     setOpen(true);
   }
@@ -58,8 +67,14 @@ export function SponsorsPanel({ sponsors }: Props) {
     setEditing(sponsor);
     setLogoUrl(sponsor.logo_url ?? '');
     setTier(sponsor.tier);
+    setDurationSec(sponsor.default_duration_sec);
     setActive(sponsor.active);
     setOpen(true);
+  }
+
+  function handleTierChange(nextTier: SponsorTier) {
+    setTier(nextTier);
+    if (!editing) setDurationSec(SPONSOR_TIER_META[nextTier].defaultDurationSec);
   }
 
   async function handleLogoUpload(file: File) {
@@ -75,9 +90,48 @@ export function SponsorsPanel({ sponsors }: Props) {
 
   return (
     <div className="space-y-4">
+      <div className="portal-section-surface rounded-xl p-4">
+        <h3 className="font-medium">Niveles oro, plata y bronce</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Clasifican el peso comercial del patrocinio. No es decoración: define duración sugerida, tamaño en el muro
+          conjunto y prioridad cuando uses rotación ponderada.
+        </p>
+        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+          {SPONSOR_TIERS.map((tierKey) => (
+            <div key={tierKey} className="rounded-lg border border-primary/10 bg-background/30 p-3 text-sm">
+              <p className="font-medium text-foreground">{SPONSOR_TIER_LABELS[tierKey]}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{SPONSOR_TIER_META[tierKey].description}</p>
+              <p className="mt-2 text-[11px] text-cyan-300/70">
+                {SPONSOR_TIER_META[tierKey].defaultDurationSec}s sugeridos · peso {SPONSOR_TIER_META[tierKey].weight}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {wallPreviewSponsors.length >= 2 ? (
+        <div className="portal-section-surface overflow-hidden rounded-xl p-4">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="font-medium">Muro de patrocinadores</h3>
+              <p className="text-sm text-muted-foreground">
+                Un solo slide con todos los logos y animación de entrada. Añádelo en Programación como{' '}
+                <strong>Muro de patrocinadores</strong>.
+              </p>
+            </div>
+            <Button asChild size="sm" variant="outline">
+              <Link href="/portal/signage/programacion">Ir a Programación</Link>
+            </Button>
+          </div>
+          <div className="aspect-video overflow-hidden rounded-lg border border-primary/15">
+            <SponsorWallSlide sponsors={wallPreviewSponsors} compact />
+          </div>
+        </div>
+      ) : null}
+
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
-          Patrocinadores que rotan en las pantallas. Pausa para ocultar sin borrar.
+          {activeSponsors.length} patrocinadores activos. Pausa para ocultar sin borrar.
         </p>
         <Button type="button" size="sm" onClick={openCreate}>
           <Plus className="mr-1 size-4" />
@@ -89,10 +143,7 @@ export function SponsorsPanel({ sponsors }: Props) {
         {sponsors.map((sponsor) => (
           <div
             key={sponsor.id}
-            className={cn(
-              'portal-section-surface rounded-xl p-4',
-              !sponsor.active && 'opacity-60'
-            )}
+            className={cn('portal-section-surface rounded-xl p-4', !sponsor.active && 'opacity-60')}
           >
             <div className="flex items-start gap-3">
               <button
@@ -110,7 +161,16 @@ export function SponsorsPanel({ sponsors }: Props) {
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium">{sponsor.name}</p>
                   <div className="mt-1 flex flex-wrap gap-1">
-                    <Badge variant="outline">{SPONSOR_TIER_LABELS[sponsor.tier]}</Badge>
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        sponsor.tier === 'gold' && 'border-amber-400/40 text-amber-200',
+                        sponsor.tier === 'silver' && 'border-slate-300/30 text-slate-200',
+                        sponsor.tier === 'bronze' && 'border-orange-400/30 text-orange-200'
+                      )}
+                    >
+                      {SPONSOR_TIER_LABELS[sponsor.tier]}
+                    </Badge>
                     <Badge variant="secondary">{sponsor.default_duration_sec}s</Badge>
                     {!sponsor.active ? <Badge variant="destructive">Pausado</Badge> : null}
                   </div>
@@ -156,9 +216,10 @@ export function SponsorsPanel({ sponsors }: Props) {
                 <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Nivel</label>
                 <SynqSelect
                   value={tier}
-                  onChange={(value) => setTier(value as SponsorTier)}
+                  onChange={(value) => handleTierChange(value as SponsorTier)}
                   options={SPONSOR_TIERS.map((t) => ({ value: t, label: SPONSOR_TIER_LABELS[t] }))}
                 />
+                <p className="mt-1.5 text-xs text-muted-foreground">{SPONSOR_TIER_META[tier].description}</p>
               </div>
               <div>
                 <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Duración (s)</label>
@@ -167,7 +228,8 @@ export function SponsorsPanel({ sponsors }: Props) {
                   type="number"
                   min={5}
                   max={120}
-                  defaultValue={editing?.default_duration_sec ?? 30}
+                  value={durationSec}
+                  onChange={(e) => setDurationSec(Number(e.target.value))}
                   className="mt-1"
                 />
               </div>

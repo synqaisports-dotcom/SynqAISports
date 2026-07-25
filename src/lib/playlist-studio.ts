@@ -1,5 +1,5 @@
-import type { PlaylistItem, PlaylistItemType, SignageAsset, SignageExerciseOption, SignageSponsor } from '@/lib/signage';
-import { PLAYLIST_ITEM_TYPE_LABELS } from '@/lib/signage';
+import type { PlaylistItem, PlaylistItemType, SignageAsset, SignageExerciseOption, SignageSponsor, SignageTransition } from '@/lib/signage';
+import { PLAYLIST_ITEM_TYPE_LABELS, SPONSOR_TIER_LABELS, sponsorsForWall } from '@/lib/signage';
 
 export type StudioContentOption = {
   key: string;
@@ -8,6 +8,7 @@ export type StudioContentOption = {
   type: PlaylistItemType;
   duration: number;
   thumb_url: string | null;
+  defaultTransition?: SignageTransition;
 };
 
 export function buildStudioContentOptions(
@@ -16,6 +17,32 @@ export function buildStudioContentOptions(
   exercises: SignageExerciseOption[]
 ): StudioContentOption[] {
   const options: StudioContentOption[] = [];
+  const activeSponsors = sponsors.filter((s) => s.active);
+
+  if (activeSponsors.length >= 2) {
+    options.push({
+      key: 'sponsor_wall:all',
+      id: 'all',
+      label: 'Muro de patrocinadores',
+      type: 'sponsor_wall',
+      duration: 45,
+      thumb_url: null,
+    });
+  }
+
+  for (const tier of ['gold', 'silver', 'bronze'] as const) {
+    const tierSponsors = activeSponsors.filter((s) => s.tier === tier);
+    if (tierSponsors.length >= 2) {
+      options.push({
+        key: `sponsor_wall:${tier}`,
+        id: tier,
+        label: `Muro · ${SPONSOR_TIER_LABELS[tier]}`,
+        type: 'sponsor_wall',
+        duration: 35,
+        thumb_url: null,
+      });
+    }
+  }
 
   for (const sponsor of sponsors.filter((s) => s.active)) {
     options.push({
@@ -66,19 +93,32 @@ export function buildStudioContentOptions(
   return options;
 }
 
-export function studioOptionToPlaylistItem(option: StudioContentOption): PlaylistItem {
+export function studioOptionToPlaylistItem(
+  option: StudioContentOption,
+  defaultTransition: SignageTransition = 'fade'
+): PlaylistItem {
   return {
     id: `item-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     type: option.type,
     ref_id: option.id,
     duration_sec: option.duration,
+    transition: option.defaultTransition ?? defaultTransition,
   };
 }
 
 export function resolveStudioItemLabel(
   item: PlaylistItem,
-  options: StudioContentOption[]
+  options: StudioContentOption[],
+  sponsors: SignageSponsor[] = []
 ): { label: string; thumb_url: string | null; typeLabel: string } {
+  if (item.type === 'sponsor_wall') {
+    const count = sponsorsForWall(sponsors, item.ref_id).length;
+    const label =
+      item.ref_id === 'all'
+        ? `Muro de patrocinadores (${count})`
+        : `Muro · ${SPONSOR_TIER_LABELS[item.ref_id as keyof typeof SPONSOR_TIER_LABELS] ?? item.ref_id} (${count})`;
+    return { label, thumb_url: null, typeLabel: PLAYLIST_ITEM_TYPE_LABELS.sponsor_wall };
+  }
   const option = options.find((o) => o.id === item.ref_id && o.type === item.type);
   return {
     label: option?.label ?? item.ref_id,
@@ -105,6 +145,7 @@ export function playlistTotalDuration(items: PlaylistItem[]): number {
 
 export const TIMELINE_TYPE_COLORS: Record<PlaylistItemType, string> = {
   sponsor: 'bg-amber-400/80',
+  sponsor_wall: 'bg-orange-400/85',
   video: 'bg-violet-400/80',
   image: 'bg-cyan-400/80',
   sponsor_slide: 'bg-amber-300/70',
