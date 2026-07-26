@@ -82,8 +82,9 @@ export function zoneRowCount(placements: SponsorWallPlacement[], tier: SponsorTi
 export function zoneFlexWeight(placements: SponsorWallPlacement[], tier: SponsorTier): number {
   const rows = zoneRowCount(placements, tier);
   if (rows === 0) return 0;
-  // Oro ocupa más altura por bloque 2×2
-  return tier === 'gold' ? rows * 1.35 : tier === 'silver' ? rows * 1.1 : rows;
+  const span = SPONSOR_TIER_GRID_SPAN[tier];
+  // Reparto vertical proporcional al espacio que necesita cada categoría
+  return rows * span.rows;
 }
 
 const TIER_ORDER: Record<SponsorTier, number> = { gold: 0, silver: 1, bronze: 2 };

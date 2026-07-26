@@ -9,12 +9,12 @@ type Props = {
 };
 
 const SPORT_ICONS = [
-  { Icon: Circle, className: 'left-[6%] top-[14%] size-[45px] -rotate-12' },
-  { Icon: Volleyball, className: 'right-[8%] top-[18%] size-[41px] rotate-12' },
-  { Icon: Goal, className: 'left-[10%] bottom-[16%] size-[49px] rotate-6' },
-  { Icon: Dumbbell, className: 'right-[8%] bottom-[20%] size-[45px] -rotate-6' },
-  { Icon: Trophy, className: 'left-[4%] top-[48%] size-[37px] opacity-45' },
-  { Icon: Circle, className: 'right-[5%] top-[44%] size-[33px] opacity-40' },
+  { Icon: Circle, className: 'left-[5%] top-[12%] size-[45px] -rotate-12' },
+  { Icon: Volleyball, className: 'right-[6%] top-[16%] size-[41px] rotate-12' },
+  { Icon: Goal, className: 'left-[8%] bottom-[14%] size-[49px] rotate-6' },
+  { Icon: Dumbbell, className: 'right-[6%] bottom-[18%] size-[45px] -rotate-6' },
+  { Icon: Trophy, className: 'left-[3%] top-[46%] size-[37px] opacity-45' },
+  { Icon: Circle, className: 'right-[4%] top-[42%] size-[33px] opacity-40' },
 ];
 
 function TechCyanLines({ compact }: { compact: boolean }) {
@@ -50,21 +50,25 @@ function TechCyanLines({ compact }: { compact: boolean }) {
 export function SponsorWallWatermark({ compact = false }: Props) {
   return (
     <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden>
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(187_80%_45%/_0.1),transparent_58%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(187_80%_45%/_0.12),transparent_55%)]" />
       <TechCyanLines compact={compact} />
 
-      {/* Logo SynqAI grande, centro-inferior, menos transparente */}
       <div
         className={cn(
-          'absolute left-1/2 flex -translate-x-1/2 flex-col items-center justify-center opacity-[0.36]',
-          compact ? 'bottom-[6%] w-[72%]' : 'bottom-[4%] w-[min(62vw,58%)]'
+          'absolute left-1/2 top-[58%] flex flex-col items-center justify-center opacity-[0.44]',
+          compact ? 'w-[78%]' : 'w-[min(76vw,74%)]'
         )}
+        style={{
+          transform: compact
+            ? 'translate(-50%, -50%) scale(1)'
+            : 'translate(-50%, -50%) scale(clamp(1.6, 5.2vmin, 2.9))',
+        }}
       >
         <SynqBrandLockup
           layout="stacked"
-          iconSize={compact ? 96 : 200}
-          wordmarkSize={compact ? 'lg' : 'xl'}
-          className="w-full scale-100 [&_svg]:max-w-full"
+          iconSize={compact ? 88 : 200}
+          wordmarkSize="xl"
+          className="w-full [&_svg]:max-w-full"
         />
       </div>
 

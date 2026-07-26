@@ -46,16 +46,13 @@ function TierZone({
 
   return (
     <section
-      className="flex min-h-0 w-full items-center justify-center [container-type:size]"
+      className="flex min-h-0 w-full"
       style={{ flex: flexWeight }}
       aria-label={SPONSOR_TIER_LABELS[tier]}
     >
       <div
-        className={cn('grid', compact ? 'gap-1' : 'gap-2 md:gap-3')}
+        className={cn('grid h-full min-h-0 w-full', compact ? 'gap-1' : 'gap-2 md:gap-3 lg:gap-4')}
         style={{
-          aspectRatio: `${SPONSOR_WALL_GRID_COLS} / ${rows}`,
-          width: `min(100cqw, calc(100cqh * ${SPONSOR_WALL_GRID_COLS} / ${rows}))`,
-          height: `min(100cqh, calc(100cqw * ${rows} / ${SPONSOR_WALL_GRID_COLS}))`,
           gridTemplateColumns: `repeat(${SPONSOR_WALL_GRID_COLS}, minmax(0, 1fr))`,
           gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`,
         }}
@@ -128,7 +125,7 @@ export function SponsorWallSlide({
         <span>{clubName}</span>
       </div>
 
-      <div className="relative z-10 flex h-full w-full min-h-0 flex-col gap-1 md:gap-2">
+      <div className="relative z-10 flex h-full w-full min-h-0 flex-col">
         {SPONSOR_WALL_TIER_ZONES.map((tier) => (
           <TierZone
             key={tier}
