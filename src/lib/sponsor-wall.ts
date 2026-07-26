@@ -20,7 +20,6 @@ export const SPONSOR_WALL_ENTRANCE_LABELS: Record<SponsorWallEntrance, string> =
 };
 
 export const SPONSOR_WALL_GRID_COLS = 6;
-export const SPONSOR_WALL_GRID_ROWS = 4;
 
 export const SPONSOR_TIER_GRID_SPAN: Record<SponsorTier, { cols: number; rows: number }> = {
   gold: { cols: 2, rows: 2 },
@@ -28,65 +27,79 @@ export const SPONSOR_TIER_GRID_SPAN: Record<SponsorTier, { cols: number; rows: n
   bronze: { cols: 1, rows: 1 },
 };
 
+/** Zonas verticales: oro arriba, plata centro, bronce abajo. */
+export const SPONSOR_WALL_TIER_ZONES: SponsorTier[] = ['gold', 'silver', 'bronze'];
+
 export type SponsorWallPlacement = {
   sponsor: SignageSponsor;
+  zone: SponsorTier;
   col: number;
   row: number;
   cols: number;
   rows: number;
 };
 
-function canPlace(
-  occupied: boolean[][],
-  col: number,
-  row: number,
-  cols: number,
-  rows: number
-): boolean {
-  for (let r = row; r < row + rows; r += 1) {
-    for (let c = col; c < col + cols; c += 1) {
-      if (occupied[r]?.[c]) return false;
-    }
-  }
-  return true;
+function sponsorsInTier(sponsors: SignageSponsor[], tier: SponsorTier): SignageSponsor[] {
+  return sortSponsorsByTier(sponsors).filter((s) => s.tier === tier);
 }
 
-function markPlace(
-  occupied: boolean[][],
-  col: number,
-  row: number,
-  cols: number,
-  rows: number
-) {
-  for (let r = row; r < row + rows; r += 1) {
-    for (let c = col; c < col + cols; c += 1) {
-      if (occupied[r]) occupied[r][c] = true;
-    }
-  }
+function layoutTierZone(sponsors: SignageSponsor[], tier: SponsorTier): SponsorWallPlacement[] {
+  const tierSponsors = sponsorsInTier(sponsors, tier);
+  if (tierSponsors.length === 0) return [];
+
+  const span = SPONSOR_TIER_GRID_SPAN[tier];
+  const blocksPerRow = Math.floor(SPONSOR_WALL_GRID_COLS / span.cols);
+  const placements: SponsorWallPlacement[] = [];
+
+  tierSponsors.forEach((sponsor, index) => {
+    const blockRow = Math.floor(index / blocksPerRow);
+    const blockCol = index % blocksPerRow;
+    placements.push({
+      sponsor,
+      zone: tier,
+      col: blockCol * span.cols,
+      row: blockRow * span.rows,
+      cols: span.cols,
+      rows: span.rows,
+    });
+  });
+
+  return placements;
 }
 
 export function layoutSponsorsOnWall(sponsors: SignageSponsor[]): SponsorWallPlacement[] {
-  const occupied = Array.from({ length: SPONSOR_WALL_GRID_ROWS }, () =>
-    Array.from({ length: SPONSOR_WALL_GRID_COLS }, () => false)
-  );
-  const placements: SponsorWallPlacement[] = [];
+  return SPONSOR_WALL_TIER_ZONES.flatMap((tier) => layoutTierZone(sponsors, tier));
+}
 
-  for (const sponsor of sortSponsorsByTier(sponsors)) {
-    const span = SPONSOR_TIER_GRID_SPAN[sponsor.tier];
-    let placed = false;
-    for (let row = 0; row <= SPONSOR_WALL_GRID_ROWS - span.rows && !placed; row += 1) {
-      for (let col = 0; col <= SPONSOR_WALL_GRID_COLS - span.cols; col += 1) {
-        if (canPlace(occupied, col, row, span.cols, span.rows)) {
-          markPlace(occupied, col, row, span.cols, span.rows);
-          placements.push({ sponsor, col, row, cols: span.cols, rows: span.rows });
-          placed = true;
-          break;
-        }
-      }
-    }
-  }
+export function zoneRowCount(placements: SponsorWallPlacement[], tier: SponsorTier): number {
+  const zonePlacements = placements.filter((p) => p.zone === tier);
+  if (zonePlacements.length === 0) return 0;
+  const span = SPONSOR_TIER_GRID_SPAN[tier];
+  const maxRow = Math.max(...zonePlacements.map((p) => p.row));
+  return maxRow + span.rows;
+}
 
-  return placements;
+export function zoneFlexWeight(placements: SponsorWallPlacement[], tier: SponsorTier): number {
+  const rows = zoneRowCount(placements, tier);
+  if (rows === 0) return 0;
+  // Oro ocupa más altura por bloque 2×2
+  return tier === 'gold' ? rows * 1.35 : tier === 'silver' ? rows * 1.1 : rows;
+}
+
+const TIER_ORDER: Record<SponsorTier, number> = { gold: 0, silver: 1, bronze: 2 };
+
+/** Orden de aparición: oro → plata → bronce, un logo cada segundo. */
+export function sponsorWallEntranceDelays(placements: SponsorWallPlacement[]): Map<string, number> {
+  const sorted = [...placements].sort((a, b) => {
+    const tierDiff = TIER_ORDER[a.sponsor.tier] - TIER_ORDER[b.sponsor.tier];
+    if (tierDiff !== 0) return tierDiff;
+    return a.row - b.row || a.col - b.col;
+  });
+  const delays = new Map<string, number>();
+  sorted.forEach((placement, index) => {
+    delays.set(placement.sponsor.id, index * SPONSOR_WALL_STAGGER_MS);
+  });
+  return delays;
 }
 
 export function sponsorWallEntranceClass(entrance: SponsorWallEntrance): string {
@@ -104,12 +117,21 @@ export function parseSponsorWallEntrance(value: unknown): SponsorWallEntrance {
   return SPONSOR_WALL_ENTRANCES.includes(v as SponsorWallEntrance) ? (v as SponsorWallEntrance) : 'stagger-fade';
 }
 
-export const SPONSOR_WALL_TOTAL_CELLS = SPONSOR_WALL_GRID_COLS * SPONSOR_WALL_GRID_ROWS;
+/** Filas visibles estimadas en 1080p por zona (referencia para capacidad). */
+const ESTIMATED_ZONE_ROWS_1080P: Record<SponsorTier, number> = {
+  gold: 2,
+  silver: 2,
+  bronze: 2,
+};
 
 export const SPONSOR_WALL_MAX_BY_TIER: Record<SponsorTier, number> = {
-  gold: Math.floor(SPONSOR_WALL_TOTAL_CELLS / SPONSOR_TIER_GRID_SPAN.gold.cols / SPONSOR_TIER_GRID_SPAN.gold.rows),
-  silver: Math.floor(SPONSOR_WALL_TOTAL_CELLS / SPONSOR_TIER_GRID_SPAN.silver.cols / SPONSOR_TIER_GRID_SPAN.silver.rows),
-  bronze: SPONSOR_WALL_TOTAL_CELLS,
+  gold:
+    Math.floor(SPONSOR_WALL_GRID_COLS / SPONSOR_TIER_GRID_SPAN.gold.cols) *
+    Math.floor(ESTIMATED_ZONE_ROWS_1080P.gold / SPONSOR_TIER_GRID_SPAN.gold.rows),
+  silver:
+    Math.floor(SPONSOR_WALL_GRID_COLS / SPONSOR_TIER_GRID_SPAN.silver.cols) *
+    ESTIMATED_ZONE_ROWS_1080P.silver,
+  bronze: SPONSOR_WALL_GRID_COLS * ESTIMATED_ZONE_ROWS_1080P.bronze,
 };
 
 export type SponsorWallCapacityCounts = {
@@ -118,38 +140,8 @@ export type SponsorWallCapacityCounts = {
   bronze: number;
 };
 
-function syntheticSponsors(counts: SponsorWallCapacityCounts): SignageSponsor[] {
-  const sponsors: SignageSponsor[] = [];
-  let id = 0;
-  (['gold', 'silver', 'bronze'] as const).forEach((tier) => {
-    for (let i = 0; i < counts[tier]; i += 1) {
-      sponsors.push({
-        id: `cap-${tier}-${id++}`,
-        name: tier,
-        tier,
-        logo_url: null,
-        url: null,
-        notes: null,
-        default_duration_sec: 10,
-        active_from: null,
-        active_until: null,
-        active: true,
-      });
-    }
-  });
-  return sponsors;
-}
-
-/** Cuántos patrocinadores caben con el empaquetado actual (oro → plata → bronce). */
-export function countSponsorsThatFitOnWall(counts: SponsorWallCapacityCounts): number {
-  return layoutSponsorsOnWall(syntheticSponsors(counts)).length;
-}
-
 export type SponsorWallCapacitySummary = {
-  totalCells: number;
   maxByTier: Record<SponsorTier, number>;
-  minSponsorsToFillWall: number;
-  maxSponsorsOnWall: number;
   currentFit: SponsorWallCapacityCounts & { total: number };
 };
 
@@ -160,19 +152,15 @@ export function summarizeSponsorWallCapacity(sponsors: SignageSponsor[]): Sponso
     silver: active.filter((s) => s.tier === 'silver').length,
     bronze: active.filter((s) => s.tier === 'bronze').length,
   };
-  const fit = countSponsorsThatFitOnWall(currentCounts);
 
   return {
-    totalCells: SPONSOR_WALL_TOTAL_CELLS,
     maxByTier: SPONSOR_WALL_MAX_BY_TIER,
-    minSponsorsToFillWall: SPONSOR_WALL_MAX_BY_TIER.gold,
-    maxSponsorsOnWall: SPONSOR_WALL_MAX_BY_TIER.bronze,
     currentFit: {
       ...currentCounts,
-      total: fit,
+      total: currentCounts.gold + currentCounts.silver + currentCounts.bronze,
     },
   };
 }
 
-/** Retraso entre cada logo en la animación escalonada (ms). */
-export const SPONSOR_WALL_STAGGER_MS = 360;
+/** Un logo cada segundo; orden oro → plata → bronce. */
+export const SPONSOR_WALL_STAGGER_MS = 1000;

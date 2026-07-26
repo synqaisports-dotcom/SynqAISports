@@ -154,27 +154,22 @@ export function SponsorsPanel({ sponsors, clubName, clubLogoUrl }: Props) {
           ))}
         </div>
         <div className="mt-4 rounded-lg border border-cyan-400/15 bg-cyan-400/5 p-3 text-sm">
-          <p className="font-medium text-cyan-100">Capacidad del muro (cuadrícula 6×4 = 24 celdas)</p>
+          <p className="font-medium text-cyan-100">Distribución del muro por zonas</p>
           <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
             <li>
-              <span className="text-foreground">Máximo por categoría:</span> oro {wallCapacity.maxByTier.gold} · plata{' '}
-              {wallCapacity.maxByTier.silver} · bronce {wallCapacity.maxByTier.bronze}
+              <span className="text-foreground">Zonas:</span> oro arriba · plata en el centro · bronce abajo
             </li>
             <li>
-              <span className="text-foreground">Total en pantalla:</span> mínimo {wallCapacity.minSponsorsToFillWall}{' '}
-              (solo oro) · máximo {wallCapacity.maxSponsorsOnWall} (solo bronce)
+              <span className="text-foreground">Referencia 1080p:</span> hasta {wallCapacity.maxByTier.gold} oro,{' '}
+              {wallCapacity.maxByTier.silver} plata y {wallCapacity.maxByTier.bronze} bronce visibles cómodamente
             </li>
             <li>
               <span className="text-foreground">Tus activos:</span> {wallCapacity.currentFit.gold} oro,{' '}
-              {wallCapacity.currentFit.silver} plata, {wallCapacity.currentFit.bronze} bronce → caben{' '}
-              <span className="font-medium text-cyan-200">{wallCapacity.currentFit.total}</span> a la vez
-              {wallCapacity.currentFit.total <
-              wallCapacity.currentFit.gold + wallCapacity.currentFit.silver + wallCapacity.currentFit.bronze ? (
-                <span className="text-amber-200/90">
-                  {' '}
-                  (algunos quedan fuera por espacio; añade otro slide de muro o reduce categorías grandes)
-                </span>
-              ) : null}
+              {wallCapacity.currentFit.silver} plata, {wallCapacity.currentFit.bronze} bronce (
+              {wallCapacity.currentFit.total} en total). En 4K caben más filas por zona.
+            </li>
+            <li>
+              <span className="text-foreground">Aparición:</span> un logo cada segundo, en orden oro → plata → bronce
             </li>
           </ul>
         </div>
@@ -185,8 +180,8 @@ export function SponsorsPanel({ sponsors, clubName, clubLogoUrl }: Props) {
           <div className="mb-3">
             <h3 className="font-medium">Muro de patrocinadores</h3>
             <p className="text-sm text-muted-foreground">
-              Cuadrícula invisible 6×4: oro 2×2, plata 2×1, bronce 1×1. Marca de agua SynqAI y deportes en
-              fondo. Añádelo en Programación.
+              Zonas oro arriba, plata al centro y bronce abajo. Marca de agua SynqAI en el centro. Añádelo en
+              Programación.
             </p>
           </div>
           <div className="mb-3 flex flex-wrap items-end gap-3">
