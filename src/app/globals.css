@@ -238,23 +238,23 @@ body {
   }
 
   .signage-wall-stagger-fade {
-    animation: signage-wall-in-fade 0.55s ease-out both;
+    animation: signage-wall-in-fade 1.25s ease-out both;
   }
 
   .signage-wall-stagger-up {
-    animation: signage-wall-in-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: signage-wall-in-up 1.35s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
   .signage-wall-stagger-scale {
-    animation: signage-wall-in-scale 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: signage-wall-in-scale 1.25s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
   .signage-wall-pop {
-    animation: signage-wall-in-pop 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: signage-wall-in-pop 1.4s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
   .signage-wall-wave {
-    animation: signage-wall-in-wave 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: signage-wall-in-wave 1.35s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
   .synq-btn-primary {

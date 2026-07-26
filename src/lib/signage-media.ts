@@ -3,13 +3,14 @@ export const SIGNAGE_IMAGE_MIME_TYPES = [
   'image/png',
   'image/webp',
   'image/gif',
+  'image/svg+xml',
 ] as const;
 
 export const SIGNAGE_VIDEO_MIME_TYPES = ['video/mp4', 'video/webm'] as const;
 
 export const SIGNAGE_AUDIO_MIME_TYPES = ['audio/mpeg', 'audio/mp3', 'audio/wav'] as const;
 
-export const SIGNAGE_IMAGE_EXTENSIONS = 'JPG, PNG, WebP, GIF';
+export const SIGNAGE_IMAGE_EXTENSIONS = 'JPG, PNG, WebP, GIF, SVG';
 export const SIGNAGE_VIDEO_EXTENSIONS = 'MP4, WebM';
 export const SIGNAGE_AUDIO_EXTENSIONS = 'MP3, WAV';
 
@@ -21,6 +22,12 @@ export function isSignageImageMime(type: string): boolean {
   return (SIGNAGE_IMAGE_MIME_TYPES as readonly string[]).includes(type);
 }
 
+export function isSignageImageFile(file: File): boolean {
+  if (isSignageImageMime(file.type)) return true;
+  const lower = file.name.toLowerCase();
+  return lower.endsWith('.svg') || lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.png') || lower.endsWith('.webp') || lower.endsWith('.gif');
+}
+
 export function isSignageVideoMime(type: string): boolean {
   return (SIGNAGE_VIDEO_MIME_TYPES as readonly string[]).includes(type);
 }
@@ -30,7 +37,7 @@ export function isSignageAudioMime(type: string): boolean {
 }
 
 export function validateSignageUpload(file: File): { ok: true } | { ok: false; message: string } {
-  if (isSignageImageMime(file.type)) {
+  if (isSignageImageFile(file)) {
     if (file.size > MAX_IMAGE_BYTES) {
       return { ok: false, message: 'too_large_image' };
     }
@@ -76,9 +83,10 @@ export function signageUploadErrorMessage(code?: string): string {
   }
 }
 
-export async function fileToDataUrl(file: File): Promise<string> {
+export async function fileToDataUrl(file: File, mimeOverride?: string): Promise<string> {
   const buffer = Buffer.from(await file.arrayBuffer());
-  return `data:${file.type};base64,${buffer.toString('base64')}`;
+  const mime = mimeOverride || file.type || 'application/octet-stream';
+  return `data:${mime};base64,${buffer.toString('base64')}`;
 }
 
 export function fileExtensionForMime(type: string, filename: string): string {
@@ -86,6 +94,7 @@ export function fileExtensionForMime(type: string, filename: string): string {
   if (type === 'image/png') return 'png';
   if (type === 'image/webp') return 'webp';
   if (type === 'image/gif') return 'gif';
+  if (type === 'image/svg+xml') return 'svg';
   if (type === 'video/mp4') return 'mp4';
   if (type === 'video/webm') return 'webm';
   if (type === 'audio/mpeg' || type === 'audio/mp3') return 'mp3';

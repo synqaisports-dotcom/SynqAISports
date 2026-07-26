@@ -7,6 +7,7 @@ import { hasDrawableAnimation, parseExerciseDrawing } from '@/lib/exercise-drawi
 import {
   fileExtensionForMime,
   fileToDataUrl,
+  isSignageImageFile,
   validateSignageUpload,
 } from '@/lib/signage-media';
 import {
@@ -296,14 +297,17 @@ export async function uploadSignageMedia(
   const validation = validateSignageUpload(file);
   if (!validation.ok) return { ok: false, message: validation.message };
 
-  const ext = fileExtensionForMime(file.type, file.name);
+  const contentType =
+    file.type ||
+    (file.name.toLowerCase().endsWith('.svg') ? 'image/svg+xml' : 'application/octet-stream');
+  const ext = fileExtensionForMime(contentType, file.name);
   const path = `${clubId}/signage/${Date.now()}.${ext}`;
   const supabase = await createClient();
 
   const { error } = await supabase.storage.from('signage-media').upload(path, file, {
     cacheControl: '3600',
     upsert: true,
-    contentType: file.type,
+    contentType,
   });
 
   if (!error) {
@@ -312,9 +316,9 @@ export async function uploadSignageMedia(
   }
 
   // Fallback demo: data URL embebida (válida en cualquier pantalla)
-  if ((await isDemoActive()) && file.type.startsWith('image/')) {
+  if ((await isDemoActive()) && isSignageImageFile(file)) {
     try {
-      const url = await fileToDataUrl(file);
+      const url = await fileToDataUrl(file, contentType);
       return { ok: true, url };
     } catch {
       return { ok: false, message: 'upload_error' };

@@ -103,3 +103,76 @@ export function parseSponsorWallEntrance(value: unknown): SponsorWallEntrance {
   const v = String(value ?? 'stagger-fade');
   return SPONSOR_WALL_ENTRANCES.includes(v as SponsorWallEntrance) ? (v as SponsorWallEntrance) : 'stagger-fade';
 }
+
+export const SPONSOR_WALL_TOTAL_CELLS = SPONSOR_WALL_GRID_COLS * SPONSOR_WALL_GRID_ROWS;
+
+export const SPONSOR_WALL_MAX_BY_TIER: Record<SponsorTier, number> = {
+  gold: Math.floor(SPONSOR_WALL_TOTAL_CELLS / SPONSOR_TIER_GRID_SPAN.gold.cols / SPONSOR_TIER_GRID_SPAN.gold.rows),
+  silver: Math.floor(SPONSOR_WALL_TOTAL_CELLS / SPONSOR_TIER_GRID_SPAN.silver.cols / SPONSOR_TIER_GRID_SPAN.silver.rows),
+  bronze: SPONSOR_WALL_TOTAL_CELLS,
+};
+
+export type SponsorWallCapacityCounts = {
+  gold: number;
+  silver: number;
+  bronze: number;
+};
+
+function syntheticSponsors(counts: SponsorWallCapacityCounts): SignageSponsor[] {
+  const sponsors: SignageSponsor[] = [];
+  let id = 0;
+  (['gold', 'silver', 'bronze'] as const).forEach((tier) => {
+    for (let i = 0; i < counts[tier]; i += 1) {
+      sponsors.push({
+        id: `cap-${tier}-${id++}`,
+        name: tier,
+        tier,
+        logo_url: null,
+        url: null,
+        notes: null,
+        default_duration_sec: 10,
+        active_from: null,
+        active_until: null,
+        active: true,
+      });
+    }
+  });
+  return sponsors;
+}
+
+/** Cuántos patrocinadores caben con el empaquetado actual (oro → plata → bronce). */
+export function countSponsorsThatFitOnWall(counts: SponsorWallCapacityCounts): number {
+  return layoutSponsorsOnWall(syntheticSponsors(counts)).length;
+}
+
+export type SponsorWallCapacitySummary = {
+  totalCells: number;
+  maxByTier: Record<SponsorTier, number>;
+  minSponsorsToFillWall: number;
+  maxSponsorsOnWall: number;
+  currentFit: SponsorWallCapacityCounts & { total: number };
+};
+
+export function summarizeSponsorWallCapacity(sponsors: SignageSponsor[]): SponsorWallCapacitySummary {
+  const active = sponsors.filter((s) => s.active);
+  const currentCounts: SponsorWallCapacityCounts = {
+    gold: active.filter((s) => s.tier === 'gold').length,
+    silver: active.filter((s) => s.tier === 'silver').length,
+    bronze: active.filter((s) => s.tier === 'bronze').length,
+  };
+  const fit = countSponsorsThatFitOnWall(currentCounts);
+
+  return {
+    totalCells: SPONSOR_WALL_TOTAL_CELLS,
+    maxByTier: SPONSOR_WALL_MAX_BY_TIER,
+    minSponsorsToFillWall: SPONSOR_WALL_MAX_BY_TIER.gold,
+    maxSponsorsOnWall: SPONSOR_WALL_MAX_BY_TIER.bronze,
+    currentFit: {
+      ...currentCounts,
+      total: fit,
+    },
+  };
+}
+
+/** Retraso entre cada logo en la animación escalonada (ms). */
+export const SPONSOR_WALL_STAGGER_MS = 360;

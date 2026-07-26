@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useMemo, useState } from 'react';
+import { useActionState, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
   createSponsor,
@@ -31,8 +31,10 @@ import {
   SPONSOR_TIER_GRID_SPAN,
   SPONSOR_WALL_ENTRANCE_LABELS,
   SPONSOR_WALL_ENTRANCES,
+  summarizeSponsorWallCapacity,
   type SponsorWallEntrance,
 } from '@/lib/sponsor-wall';
+import { signageUploadErrorMessage } from '@/lib/signage-media';
 import { cn } from '@/lib/utils';
 import { Play, Plus } from 'lucide-react';
 
@@ -50,6 +52,8 @@ export function SponsorsPanel({ sponsors, clubName, clubLogoUrl }: Props) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<SignageSponsor | null>(null);
   const [logoUrl, setLogoUrl] = useState('');
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [tier, setTier] = useState<SponsorTier>('silver');
   const [durationSec, setDurationSec] = useState(SPONSOR_TIER_META.silver.defaultDurationSec);
   const [active, setActive] = useState(true);
@@ -72,10 +76,19 @@ export function SponsorsPanel({ sponsors, clubName, clubLogoUrl }: Props) {
   const [uploading, setUploading] = useState(false);
   const activeSponsors = useMemo(() => sortSponsorsByTier(sponsors.filter((s) => s.active)), [sponsors]);
   const wallPreviewSponsors = sponsorsForWall(sponsors, 'all');
+  const wallCapacity = useMemo(() => summarizeSponsorWallCapacity(sponsors), [sponsors]);
+
+  useEffect(() => {
+    return () => {
+      if (logoPreviewUrl?.startsWith('blob:')) URL.revokeObjectURL(logoPreviewUrl);
+    };
+  }, [logoPreviewUrl]);
 
   function openCreate() {
     setEditing(null);
     setLogoUrl('');
+    setLogoPreviewUrl(null);
+    setUploadError(null);
     setTier('silver');
     setDurationSec(SPONSOR_TIER_META.silver.defaultDurationSec);
     setActive(true);
@@ -85,6 +98,8 @@ export function SponsorsPanel({ sponsors, clubName, clubLogoUrl }: Props) {
   function openEdit(sponsor: SignageSponsor) {
     setEditing(sponsor);
     setLogoUrl(sponsor.logo_url ?? '');
+    setLogoPreviewUrl(sponsor.logo_url ?? null);
+    setUploadError(null);
     setTier(sponsor.tier);
     setDurationSec(sponsor.default_duration_sec);
     setActive(sponsor.active);
@@ -98,10 +113,21 @@ export function SponsorsPanel({ sponsors, clubName, clubLogoUrl }: Props) {
 
   async function handleLogoUpload(file: File) {
     setUploading(true);
+    setUploadError(null);
+    const localPreview = URL.createObjectURL(file);
+    setLogoPreviewUrl((prev) => {
+      if (prev?.startsWith('blob:')) URL.revokeObjectURL(prev);
+      return localPreview;
+    });
     const fd = new FormData();
     fd.set('file', file);
     const result = await uploadSignageMedia(fd);
-    if (result.ok && result.url) setLogoUrl(result.url);
+    if (result.ok && result.url) {
+      setLogoUrl(result.url);
+      setLogoPreviewUrl(result.url);
+    } else {
+      setUploadError(signageUploadErrorMessage(result.message));
+    }
     setUploading(false);
   }
 
@@ -126,6 +152,31 @@ export function SponsorsPanel({ sponsors, clubName, clubLogoUrl }: Props) {
               </p>
             </div>
           ))}
+        </div>
+        <div className="mt-4 rounded-lg border border-cyan-400/15 bg-cyan-400/5 p-3 text-sm">
+          <p className="font-medium text-cyan-100">Capacidad del muro (cuadrícula 6×4 = 24 celdas)</p>
+          <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+            <li>
+              <span className="text-foreground">Máximo por categoría:</span> oro {wallCapacity.maxByTier.gold} · plata{' '}
+              {wallCapacity.maxByTier.silver} · bronce {wallCapacity.maxByTier.bronze}
+            </li>
+            <li>
+              <span className="text-foreground">Total en pantalla:</span> mínimo {wallCapacity.minSponsorsToFillWall}{' '}
+              (solo oro) · máximo {wallCapacity.maxSponsorsOnWall} (solo bronce)
+            </li>
+            <li>
+              <span className="text-foreground">Tus activos:</span> {wallCapacity.currentFit.gold} oro,{' '}
+              {wallCapacity.currentFit.silver} plata, {wallCapacity.currentFit.bronze} bronce → caben{' '}
+              <span className="font-medium text-cyan-200">{wallCapacity.currentFit.total}</span> a la vez
+              {wallCapacity.currentFit.total <
+              wallCapacity.currentFit.gold + wallCapacity.currentFit.silver + wallCapacity.currentFit.bronze ? (
+                <span className="text-amber-200/90">
+                  {' '}
+                  (algunos quedan fuera por espacio; añade otro slide de muro o reduce categorías grandes)
+                </span>
+              ) : null}
+            </li>
+          </ul>
         </div>
       </div>
 
@@ -302,14 +353,19 @@ export function SponsorsPanel({ sponsors, clubName, clubLogoUrl }: Props) {
                 <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Logo</label>
                 <Input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml,.svg"
                   className="mt-1"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) void handleLogoUpload(file);
                   }}
                 />
-                {logoUrl ? <img src={logoUrl} alt="" className="mt-2 h-16 object-contain" /> : null}
+                <p className="mt-1 text-xs text-muted-foreground">JPG, PNG, WebP, GIF o SVG (recomendado para logos).</p>
+                {uploading ? <p className="mt-2 text-xs text-cyan-300/80">Subiendo logo…</p> : null}
+                {uploadError ? <p className="mt-2 text-xs text-destructive">{uploadError}</p> : null}
+                {logoPreviewUrl ? (
+                  <img src={logoPreviewUrl} alt="" className="mt-2 h-20 max-w-full object-contain" />
+                ) : null}
               </div>
               <div>
                 <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Notas</label>
