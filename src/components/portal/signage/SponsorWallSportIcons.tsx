@@ -1,9 +1,6 @@
 'use client';
 
-import {
-  VolleyballBallArt,
-  WaterPoloBallArt,
-} from '@/components/portal/signage/sponsor-wall-sport-art';
+import { WaterPoloBallArt } from '@/components/portal/signage/sponsor-wall-sport-art';
 import { cn } from '@/lib/utils';
 import { useId, type ComponentType, type SVGProps } from 'react';
 
@@ -36,12 +33,16 @@ export function BasketballBallIcon({ className }: IconProps) {
   );
 }
 
-export function VolleyballBallIcon({ className, ...props }: IconProps) {
-  const uid = useId().replace(/:/g, '');
+export function VolleyballBallIcon({ className }: IconProps) {
   return (
-    <svg viewBox="0 0 100 100" className={className} fill="none" aria-hidden {...props}>
-      <VolleyballBallArt uid={uid} />
-    </svg>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={SPONSOR_WALL_SPORT_ASSETS.volleyball}
+      alt=""
+      aria-hidden
+      draggable={false}
+      className={className}
+    />
   );
 }
 
@@ -57,7 +58,7 @@ export function WaterPoloBallIcon({ className, ...props }: IconProps) {
 export const SPONSOR_WALL_SPORT_ASSETS = {
   football: '/signage/watermark/football.svg',
   basketball: '/signage/watermark/basketball.svg',
-  volleyball: '/signage/watermark/volleyball.svg',
+  volleyball: '/signage/watermark/volleyball.png',
   waterpolo: '/signage/watermark/waterpolo.svg',
 } as const;
 
@@ -78,8 +79,8 @@ export const SPONSOR_WALL_SPORT_WATERMARKS: SportWatermark[] = [
   {
     id: 'volleyball-tr',
     Icon: VolleyballBallIcon,
-    className: 'right-[3%] top-[8%] size-[100px] rotate-[10deg]',
-    opacity: 'opacity-[0.44]',
+    className: 'right-[3%] top-[8%] size-[110px] rotate-[10deg]',
+    opacity: 'opacity-[0.48]',
   },
   {
     id: 'basketball-bl',
