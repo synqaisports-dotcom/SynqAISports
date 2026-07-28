@@ -133,153 +133,176 @@ export function SponsorsPanel({ sponsors, clubName, clubLogoUrl }: Props) {
   }
 
   const busy = creating || updating || uploading;
+  const canPreviewWall = wallPreviewSponsors.length >= 2;
 
   return (
-    <div className="space-y-4">
-      {wallPreviewSponsors.length >= 2 ? (
-        <div className="portal-section-surface overflow-hidden rounded-xl p-4">
-          <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h3 className="font-medium">Muro de patrocinadores</h3>
-              <p className="text-sm text-muted-foreground">
-                Zonas oro arriba, plata al centro y bronce abajo. Marca de agua SynqAI en el centro. Añádelo en
-                Programación.
-              </p>
-            </div>
-            <Button
-              type="button"
-              size="icon"
-              variant="outline"
-              className="shrink-0"
-              onClick={() => setInfoOpen(true)}
-              aria-label="Información de niveles y muro"
-              title="Información"
-            >
-              <Info className="size-4" />
-            </Button>
-          </div>
-          <div className="mb-3 flex flex-wrap items-end gap-3">
-            <div className="min-w-[200px] flex-1">
-              <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Transición de aparición
-              </label>
-              <SynqSelect
-                value={wallEntrance}
-                onChange={(value) => {
-                  const next = value as SponsorWallEntrance;
-                  setWallEntrance(next);
-                  localStorage.setItem(WALL_ENTRANCE_STORAGE_KEY, next);
-                }}
-                options={SPONSOR_WALL_ENTRANCES.map((e) => ({
-                  value: e,
-                  label: SPONSOR_WALL_ENTRANCE_LABELS[e],
-                }))}
-              />
-            </div>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                setPreviewKey((k) => k + 1);
-                setPreviewing(true);
-              }}
-            >
-              <Play className="mr-1 size-4" />
-              Previsualizar
-            </Button>
-            <Button asChild size="sm" variant="outline">
-              <Link href="/portal/signage/programacion">Ir a Programación</Link>
-            </Button>
-          </div>
-          <SponsorWallPreviewFrame
-            sponsors={wallPreviewSponsors}
-            clubName={clubName}
-            clubLogoUrl={clubLogoUrl}
-            entrance={wallEntrance}
-            replayKey={previewKey}
-          />
-          {previewing ? (
-            <p className="mt-2 text-xs text-muted-foreground">
-              Esta transición se aplicará al añadir el muro en Programación (se guarda como preferencia).
-            </p>
-          ) : null}
+    <div className="portal-section-surface rounded-xl p-4">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="font-medium">Muro de patrocinadores</h3>
+          <p className="text-sm text-muted-foreground">
+            Gestiona patrocinadores a la izquierda y previsualiza el muro a la derecha.
+          </p>
         </div>
-      ) : null}
-
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">
-          {activeSponsors.length} patrocinadores activos. Pausa para ocultar sin borrar.
-        </p>
-        <div className="flex items-center gap-2">
-          {wallPreviewSponsors.length < 2 ? (
-            <Button
-              type="button"
-              size="icon"
-              variant="outline"
-              onClick={() => setInfoOpen(true)}
-              aria-label="Información de niveles y muro"
-              title="Información"
-            >
-              <Info className="size-4" />
-            </Button>
-          ) : null}
-          <Button type="button" size="sm" onClick={openCreate}>
-            <Plus className="mr-1 size-4" />
-            Nuevo patrocinador
-          </Button>
-        </div>
+        <Button
+          type="button"
+          size="icon"
+          variant="outline"
+          className="shrink-0"
+          onClick={() => setInfoOpen(true)}
+          aria-label="Información de niveles y muro"
+          title="Información"
+        >
+          <Info className="size-4" />
+        </Button>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {sponsors.map((sponsor) => (
-          <div
-            key={sponsor.id}
-            className={cn('portal-section-surface rounded-xl p-4', !sponsor.active && 'opacity-60')}
-          >
-            <div className="flex items-start gap-3">
-              <button
-                type="button"
-                onClick={() => openEdit(sponsor)}
-                className="flex min-w-0 flex-1 items-start gap-3 text-left"
-              >
-                <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-primary/20 bg-primary/5">
-                  {sponsor.logo_url ? (
-                    <img src={sponsor.logo_url} alt="" className="max-h-full max-w-full object-contain p-1" />
-                  ) : (
-                    <span className="text-lg font-semibold text-primary/70">{sponsor.name.slice(0, 1)}</span>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{sponsor.name}</p>
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        sponsor.tier === 'gold' && 'border-amber-400/40 text-amber-200',
-                        sponsor.tier === 'silver' && 'border-slate-300/30 text-slate-200',
-                        sponsor.tier === 'bronze' && 'border-orange-400/30 text-orange-200'
-                      )}
-                    >
-                      {SPONSOR_TIER_LABELS[sponsor.tier]}
-                    </Badge>
-                    <Badge variant="secondary">{sponsor.default_duration_sec}s</Badge>
-                    {!sponsor.active ? <Badge variant="destructive">Pausado</Badge> : null}
-                  </div>
-                </div>
-              </button>
-              <SignageItemActions
-                active={sponsor.active}
-                onEdit={() => openEdit(sponsor)}
-                onToggle={() => toggleSponsorActive(sponsor.id, !sponsor.active)}
-                onDelete={() => deleteSponsor(sponsor.id)}
-                pauseLabel="Pausar patrocinador"
-                resumeLabel="Reactivar patrocinador"
-                editLabel="Editar patrocinador"
-              />
-            </div>
+      <div className="grid gap-4 lg:grid-cols-2 lg:items-stretch lg:gap-6">
+        {/* Columna izquierda: listado */}
+        <div className="flex min-h-0 flex-col gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm text-muted-foreground">
+              {activeSponsors.length} activos · pausa para ocultar sin borrar
+            </p>
+            <Button type="button" size="sm" onClick={openCreate}>
+              <Plus className="mr-1 size-4" />
+              Nuevo
+            </Button>
           </div>
-        ))}
+
+          <div className="flex max-h-[min(70vh,560px)] flex-col gap-2 overflow-y-auto pr-1">
+            {sponsors.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-primary/20 px-4 py-8 text-center text-sm text-muted-foreground">
+                Aún no hay patrocinadores. Crea el primero para empezar.
+              </div>
+            ) : (
+              sponsors.map((sponsor) => (
+                <div
+                  key={sponsor.id}
+                  className={cn(
+                    'flex items-center gap-2 rounded-lg border border-primary/10 bg-background/30 p-2.5',
+                    !sponsor.active && 'opacity-60'
+                  )}
+                >
+                  <button
+                    type="button"
+                    onClick={() => openEdit(sponsor)}
+                    className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
+                  >
+                    <div className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-md border border-primary/20 bg-primary/5">
+                      {sponsor.logo_url ? (
+                        <img src={sponsor.logo_url} alt="" className="max-h-full max-w-full object-contain p-0.5" />
+                      ) : (
+                        <span className="text-base font-semibold text-primary/70">{sponsor.name.slice(0, 1)}</span>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{sponsor.name}</p>
+                      <div className="mt-0.5 flex flex-wrap gap-1">
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            'h-5 px-1.5 text-[10px]',
+                            sponsor.tier === 'gold' && 'border-amber-400/40 text-amber-200',
+                            sponsor.tier === 'silver' && 'border-slate-300/30 text-slate-200',
+                            sponsor.tier === 'bronze' && 'border-orange-400/30 text-orange-200'
+                          )}
+                        >
+                          {SPONSOR_TIER_LABELS[sponsor.tier]}
+                        </Badge>
+                        <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                          {sponsor.default_duration_sec}s
+                        </Badge>
+                        {!sponsor.active ? (
+                          <Badge variant="destructive" className="h-5 px-1.5 text-[10px]">
+                            Pausado
+                          </Badge>
+                        ) : null}
+                      </div>
+                    </div>
+                  </button>
+                  <SignageItemActions
+                    active={sponsor.active}
+                    onEdit={() => openEdit(sponsor)}
+                    onToggle={() => toggleSponsorActive(sponsor.id, !sponsor.active)}
+                    onDelete={() => deleteSponsor(sponsor.id)}
+                    pauseLabel="Pausar patrocinador"
+                    resumeLabel="Reactivar patrocinador"
+                    editLabel="Editar patrocinador"
+                  />
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Columna derecha: visualizador */}
+        <div className="flex min-h-0 flex-col gap-3">
+          {canPreviewWall ? (
+            <>
+              <div className="flex flex-wrap items-end gap-2">
+                <div className="min-w-[160px] flex-1">
+                  <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Transición
+                  </label>
+                  <SynqSelect
+                    value={wallEntrance}
+                    onChange={(value) => {
+                      const next = value as SponsorWallEntrance;
+                      setWallEntrance(next);
+                      localStorage.setItem(WALL_ENTRANCE_STORAGE_KEY, next);
+                    }}
+                    options={SPONSOR_WALL_ENTRANCES.map((e) => ({
+                      value: e,
+                      label: SPONSOR_WALL_ENTRANCE_LABELS[e],
+                    }))}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setPreviewKey((k) => k + 1);
+                    setPreviewing(true);
+                  }}
+                >
+                  <Play className="mr-1 size-4" />
+                  Previsualizar
+                </Button>
+                <Button asChild size="sm" variant="outline">
+                  <Link href="/portal/signage/programacion">Programación</Link>
+                </Button>
+              </div>
+
+              <SponsorWallPreviewFrame
+                embedded
+                sponsors={wallPreviewSponsors}
+                clubName={clubName}
+                clubLogoUrl={clubLogoUrl}
+                entrance={wallEntrance}
+                replayKey={previewKey}
+              />
+
+              {previewing ? (
+                <p className="text-xs text-muted-foreground">
+                  Esta transición se aplicará al añadir el muro en Programación (se guarda como preferencia).
+                </p>
+              ) : null}
+            </>
+          ) : (
+            <div className="flex min-h-[260px] flex-1 flex-col items-center justify-center rounded-lg border border-dashed border-primary/20 bg-background/20 px-6 py-10 text-center">
+              <p className="text-sm font-medium text-foreground">Vista previa del muro</p>
+              <p className="mt-2 max-w-xs text-sm text-muted-foreground">
+                Añade al menos 2 patrocinadores activos para previsualizar cómo se verán en pantalla.
+              </p>
+              <Button type="button" size="sm" className="mt-4" onClick={openCreate}>
+                <Plus className="mr-1 size-4" />
+                Nuevo patrocinador
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
 
       <Sheet open={infoOpen} onOpenChange={setInfoOpen}>

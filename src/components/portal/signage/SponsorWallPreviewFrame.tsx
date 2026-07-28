@@ -6,6 +6,7 @@ import { SponsorWallSlide } from '@/components/portal/signage/SponsorWallSlide';
 import { Button } from '@/components/ui/button';
 import type { SignageSponsor } from '@/lib/signage';
 import type { SponsorWallEntrance } from '@/lib/sponsor-wall';
+import { cn } from '@/lib/utils';
 import { Maximize2, Minimize2 } from 'lucide-react';
 
 type Props = {
@@ -14,6 +15,8 @@ type Props = {
   clubLogoUrl: string | null;
   entrance: SponsorWallEntrance;
   replayKey?: number;
+  /** Ocupa la altura del panel lateral (columna derecha). */
+  embedded?: boolean;
 };
 
 export function SponsorWallPreviewFrame({
@@ -22,6 +25,7 @@ export function SponsorWallPreviewFrame({
   clubLogoUrl,
   entrance,
   replayKey = 0,
+  embedded = false,
 }: Props) {
   const [fullscreen, setFullscreen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -39,8 +43,18 @@ export function SponsorWallPreviewFrame({
 
   return (
     <>
-      <div className="relative overflow-hidden rounded-lg border border-primary/15 bg-black/40">
-        <div className="aspect-video max-h-44 w-full sm:max-h-48">
+      <div
+        className={cn(
+          'relative overflow-hidden rounded-lg border border-primary/15 bg-black/40',
+          embedded && 'min-h-[260px] flex-1'
+        )}
+      >
+        <div
+          className={cn(
+            'w-full',
+            embedded ? 'aspect-video h-full min-h-[260px]' : 'aspect-video max-h-44 sm:max-h-48'
+          )}
+        >
           <SponsorWallSlide
             key={replayKey}
             sponsors={sponsors}
