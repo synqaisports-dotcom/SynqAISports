@@ -36,7 +36,7 @@ import {
 } from '@/lib/sponsor-wall';
 import { signageUploadErrorMessage } from '@/lib/signage-media';
 import { cn } from '@/lib/utils';
-import { Play, Plus } from 'lucide-react';
+import { Info, Play, Plus } from 'lucide-react';
 
 const WALL_ENTRANCE_STORAGE_KEY = 'signage-sponsor-wall-entrance';
 
@@ -50,6 +50,7 @@ type Props = {
 
 export function SponsorsPanel({ sponsors, clubName, clubLogoUrl }: Props) {
   const [open, setOpen] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
   const [editing, setEditing] = useState<SignageSponsor | null>(null);
   const [logoUrl, setLogoUrl] = useState('');
   const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
@@ -135,54 +136,27 @@ export function SponsorsPanel({ sponsors, clubName, clubLogoUrl }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="portal-section-surface rounded-xl p-4">
-        <h3 className="font-medium">Niveles oro, plata y bronce</h3>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Clasifican el peso comercial del patrocinio. No es decoración: define duración sugerida, tamaño en el muro
-          conjunto y prioridad cuando uses rotación ponderada.
-        </p>
-        <div className="mt-3 grid gap-2 sm:grid-cols-3">
-          {SPONSOR_TIERS.map((tierKey) => (
-            <div key={tierKey} className="rounded-lg border border-primary/10 bg-background/30 p-3 text-sm">
-              <p className="font-medium text-foreground">{SPONSOR_TIER_LABELS[tierKey]}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{SPONSOR_TIER_META[tierKey].description}</p>
-              <p className="mt-2 text-[11px] text-cyan-300/70">
-                Muro {SPONSOR_TIER_GRID_SPAN[tierKey].cols}×{SPONSOR_TIER_GRID_SPAN[tierKey].rows} ·{' '}
-                {SPONSOR_TIER_META[tierKey].defaultDurationSec}s · peso {SPONSOR_TIER_META[tierKey].weight}
-              </p>
-            </div>
-          ))}
-        </div>
-        <div className="mt-4 rounded-lg border border-cyan-400/15 bg-cyan-400/5 p-3 text-sm">
-          <p className="font-medium text-cyan-100">Distribución del muro por zonas</p>
-          <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
-            <li>
-              <span className="text-foreground">Zonas:</span> oro arriba · plata en el centro · bronce abajo
-            </li>
-            <li>
-              <span className="text-foreground">Referencia 1080p:</span> hasta {wallCapacity.maxByTier.gold} oro,{' '}
-              {wallCapacity.maxByTier.silver} plata y {wallCapacity.maxByTier.bronze} bronce visibles cómodamente
-            </li>
-            <li>
-              <span className="text-foreground">Tus activos:</span> {wallCapacity.currentFit.gold} oro,{' '}
-              {wallCapacity.currentFit.silver} plata, {wallCapacity.currentFit.bronze} bronce (
-              {wallCapacity.currentFit.total} en total). En 4K caben más filas por zona.
-            </li>
-            <li>
-              <span className="text-foreground">Aparición:</span> un logo cada segundo, en orden oro → plata → bronce
-            </li>
-          </ul>
-        </div>
-      </div>
-
       {wallPreviewSponsors.length >= 2 ? (
         <div className="portal-section-surface overflow-hidden rounded-xl p-4">
-          <div className="mb-3">
-            <h3 className="font-medium">Muro de patrocinadores</h3>
-            <p className="text-sm text-muted-foreground">
-              Zonas oro arriba, plata al centro y bronce abajo. Marca de agua SynqAI en el centro. Añádelo en
-              Programación.
-            </p>
+          <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 className="font-medium">Muro de patrocinadores</h3>
+              <p className="text-sm text-muted-foreground">
+                Zonas oro arriba, plata al centro y bronce abajo. Marca de agua SynqAI en el centro. Añádelo en
+                Programación.
+              </p>
+            </div>
+            <Button
+              type="button"
+              size="icon"
+              variant="outline"
+              className="shrink-0"
+              onClick={() => setInfoOpen(true)}
+              aria-label="Información de niveles y muro"
+              title="Información"
+            >
+              <Info className="size-4" />
+            </Button>
           </div>
           <div className="mb-3 flex flex-wrap items-end gap-3">
             <div className="min-w-[200px] flex-1">
@@ -240,10 +214,24 @@ export function SponsorsPanel({ sponsors, clubName, clubLogoUrl }: Props) {
         <p className="text-sm text-muted-foreground">
           {activeSponsors.length} patrocinadores activos. Pausa para ocultar sin borrar.
         </p>
-        <Button type="button" size="sm" onClick={openCreate}>
-          <Plus className="mr-1 size-4" />
-          Nuevo patrocinador
-        </Button>
+        <div className="flex items-center gap-2">
+          {wallPreviewSponsors.length < 2 ? (
+            <Button
+              type="button"
+              size="icon"
+              variant="outline"
+              onClick={() => setInfoOpen(true)}
+              aria-label="Información de niveles y muro"
+              title="Información"
+            >
+              <Info className="size-4" />
+            </Button>
+          ) : null}
+          <Button type="button" size="sm" onClick={openCreate}>
+            <Plus className="mr-1 size-4" />
+            Nuevo patrocinador
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -296,6 +284,58 @@ export function SponsorsPanel({ sponsors, clubName, clubLogoUrl }: Props) {
           </div>
         ))}
       </div>
+
+      <Sheet open={infoOpen} onOpenChange={setInfoOpen}>
+        <PortalSheetContent maxWidth="lg">
+          <PortalSheetHeader>
+            <SheetHeader>
+              <SheetTitle>Niveles y muro de patrocinadores</SheetTitle>
+            </SheetHeader>
+          </PortalSheetHeader>
+          <PortalSheetBody className="space-y-4">
+            <div>
+              <h3 className="font-medium">Niveles oro, plata y bronce</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Clasifican el peso comercial del patrocinio. No es decoración: define duración sugerida, tamaño en el
+                muro conjunto y prioridad cuando uses rotación ponderada.
+              </p>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {SPONSOR_TIERS.map((tierKey) => (
+                <div key={tierKey} className="rounded-lg border border-primary/10 bg-background/30 p-3 text-sm">
+                  <p className="font-medium text-foreground">{SPONSOR_TIER_LABELS[tierKey]}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{SPONSOR_TIER_META[tierKey].description}</p>
+                  <p className="mt-2 text-[11px] text-cyan-300/70">
+                    Muro {SPONSOR_TIER_GRID_SPAN[tierKey].cols}×{SPONSOR_TIER_GRID_SPAN[tierKey].rows} ·{' '}
+                    {SPONSOR_TIER_META[tierKey].defaultDurationSec}s · peso {SPONSOR_TIER_META[tierKey].weight}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <div className="rounded-lg border border-cyan-400/15 bg-cyan-400/5 p-3 text-sm">
+              <p className="font-medium text-cyan-100">Distribución del muro por zonas</p>
+              <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                <li>
+                  <span className="text-foreground">Zonas:</span> oro arriba · plata en el centro · bronce abajo
+                </li>
+                <li>
+                  <span className="text-foreground">Referencia 1080p:</span> hasta {wallCapacity.maxByTier.gold} oro,{' '}
+                  {wallCapacity.maxByTier.silver} plata y {wallCapacity.maxByTier.bronze} bronce visibles cómodamente
+                </li>
+                <li>
+                  <span className="text-foreground">Tus activos:</span> {wallCapacity.currentFit.gold} oro,{' '}
+                  {wallCapacity.currentFit.silver} plata, {wallCapacity.currentFit.bronze} bronce (
+                  {wallCapacity.currentFit.total} en total). En 4K caben más filas por zona.
+                </li>
+                <li>
+                  <span className="text-foreground">Aparición:</span> un logo cada segundo, en orden oro → plata →
+                  bronce
+                </li>
+              </ul>
+            </div>
+          </PortalSheetBody>
+        </PortalSheetContent>
+      </Sheet>
 
       <Sheet open={open} onOpenChange={setOpen}>
         <PortalSheetContent maxWidth="md">
