@@ -95,9 +95,9 @@ export function SynqIcon({ size = 32, className }: Props) {
 
       <g stroke={SYNQ_BRAND.cyan} strokeWidth="1.3" strokeLinecap="round">
         <path d="M72 34 l3.5 3.5M75.5 34 l-3.5 3.5" />
-        <path d="M24 74 l3 3M27 74 l-3 3" />
+        <path d="M28 66 l3.5 3.5M31.5 66 l-3.5 3.5" />
       </g>
-      <circle cx="74" cy="70" r="2.6" stroke={SYNQ_BRAND.cyan} strokeWidth="1.3" fill="none" />
+      <circle cx="72" cy="67" r="2.6" stroke={SYNQ_BRAND.cyan} strokeWidth="1.3" fill="none" />
     </svg>
   );
 }
