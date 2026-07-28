@@ -166,16 +166,16 @@ export const SPONSOR_TIER_META: Record<
   { description: string; weight: number; defaultDurationSec: number; gridCols: string }
 > = {
   gold: {
-    description: 'Patrocinio principal: 4 celdas en el muro (2×2), más segundos y mayor peso en rotación.',
+    description: 'Patrocinio principal: doble ancho en el muro (2×1), más segundos y mayor peso en rotación.',
     weight: 3,
     defaultDurationSec: 45,
-    gridCols: 'col-span-2 row-span-2',
+    gridCols: 'col-span-2 row-span-1',
   },
   silver: {
-    description: 'Patrocinio estándar: 2 celdas en el muro (2×1) y peso intermedio.',
+    description: 'Patrocinio estándar: 1 celda en el muro (1×1) y peso intermedio.',
     weight: 2,
     defaultDurationSec: 30,
-    gridCols: 'col-span-2 row-span-1',
+    gridCols: 'col-span-1 row-span-1',
   },
   bronze: {
     description: 'Patrocinio de apoyo: 1 celda en el muro (1×1) y menor peso en rotación.',

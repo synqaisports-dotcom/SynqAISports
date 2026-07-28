@@ -12,7 +12,7 @@ import {
 } from '@/app/actions/signage';
 import { PortalSheetBody, PortalSheetContent, PortalSheetHeader } from '@/components/portal/PortalSheet';
 import { SignageItemActions } from '@/components/portal/signage/SignageItemActions';
-import { SponsorWallSlide } from '@/components/portal/signage/SponsorWallSlide';
+import { SponsorWallPreviewFrame } from '@/components/portal/signage/SponsorWallPreviewFrame';
 import { SynqSelect } from '@/components/portal/SynqSelect';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -192,16 +192,13 @@ export function SponsorsPanel({ sponsors, clubName, clubLogoUrl }: Props) {
               <Link href="/portal/signage/programacion">Ir a Programación</Link>
             </Button>
           </div>
-          <div className="aspect-video overflow-hidden rounded-lg border border-primary/15">
-            <SponsorWallSlide
-              key={previewKey}
-              sponsors={wallPreviewSponsors}
-              clubName={clubName}
-              clubLogoUrl={clubLogoUrl}
-              entrance={wallEntrance}
-              compact
-            />
-          </div>
+          <SponsorWallPreviewFrame
+            sponsors={wallPreviewSponsors}
+            clubName={clubName}
+            clubLogoUrl={clubLogoUrl}
+            entrance={wallEntrance}
+            replayKey={previewKey}
+          />
           {previewing ? (
             <p className="mt-2 text-xs text-muted-foreground">
               Esta transición se aplicará al añadir el muro en Programación (se guarda como preferencia).
@@ -319,13 +316,13 @@ export function SponsorsPanel({ sponsors, clubName, clubLogoUrl }: Props) {
                   <span className="text-foreground">Zonas:</span> oro arriba · plata en el centro · bronce abajo
                 </li>
                 <li>
-                  <span className="text-foreground">Referencia 1080p:</span> hasta {wallCapacity.maxByTier.gold} oro,{' '}
-                  {wallCapacity.maxByTier.silver} plata y {wallCapacity.maxByTier.bronze} bronce visibles cómodamente
+                  <span className="text-foreground">Capacidad por zona:</span> hasta {wallCapacity.maxByTier.gold}{' '}
+                  oro, {wallCapacity.maxByTier.silver} plata y {wallCapacity.maxByTier.bronze} bronce en un slide
                 </li>
                 <li>
                   <span className="text-foreground">Tus activos:</span> {wallCapacity.currentFit.gold} oro,{' '}
-                  {wallCapacity.currentFit.silver} plata, {wallCapacity.currentFit.bronze} bronce (
-                  {wallCapacity.currentFit.total} en total). En 4K caben más filas por zona.
+                  {wallCapacity.currentFit.silver} plata, {wallCapacity.currentFit.bronze} bronce → caben{' '}
+                  <span className="font-medium text-cyan-200">{wallCapacity.currentFit.total}</span> en el muro
                 </li>
                 <li>
                   <span className="text-foreground">Aparición:</span> un logo cada segundo, en orden oro → plata →

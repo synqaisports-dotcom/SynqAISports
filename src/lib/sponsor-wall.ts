@@ -21,14 +21,26 @@ export const SPONSOR_WALL_ENTRANCE_LABELS: Record<SponsorWallEntrance, string> =
 
 export const SPONSOR_WALL_GRID_COLS = 6;
 
+/** Tamaños reducidos para más capacidad: oro ancho, plata y bronce compactos. */
 export const SPONSOR_TIER_GRID_SPAN: Record<SponsorTier, { cols: number; rows: number }> = {
-  gold: { cols: 2, rows: 2 },
-  silver: { cols: 2, rows: 1 },
+  gold: { cols: 2, rows: 1 },
+  silver: { cols: 1, rows: 1 },
   bronze: { cols: 1, rows: 1 },
 };
 
-/** Zonas verticales: oro arriba, plata centro, bronce abajo. */
+/** Filas fijas por zona vertical (oro arriba, plata centro, bronce abajo). */
+export const SPONSOR_WALL_ZONE_ROWS: Record<SponsorTier, number> = {
+  gold: 3,
+  silver: 2,
+  bronze: 3,
+};
+
 export const SPONSOR_WALL_TIER_ZONES: SponsorTier[] = ['gold', 'silver', 'bronze'];
+
+export const SPONSOR_WALL_GRID_ROWS = SPONSOR_WALL_TIER_ZONES.reduce(
+  (sum, tier) => sum + SPONSOR_WALL_ZONE_ROWS[tier],
+  0
+);
 
 export type SponsorWallPlacement = {
   sponsor: SignageSponsor;
@@ -43,22 +55,40 @@ function sponsorsInTier(sponsors: SignageSponsor[], tier: SponsorTier): SignageS
   return sortSponsorsByTier(sponsors).filter((s) => s.tier === tier);
 }
 
+export function zoneStartRow(tier: SponsorTier): number {
+  let start = 0;
+  for (const zone of SPONSOR_WALL_TIER_ZONES) {
+    if (zone === tier) return start;
+    start += SPONSOR_WALL_ZONE_ROWS[zone];
+  }
+  return 0;
+}
+
+export function maxSponsorsInZone(tier: SponsorTier): number {
+  const span = SPONSOR_TIER_GRID_SPAN[tier];
+  const zoneRows = SPONSOR_WALL_ZONE_ROWS[tier];
+  const blocksPerRow = Math.floor(SPONSOR_WALL_GRID_COLS / span.cols);
+  const rowBands = Math.floor(zoneRows / span.rows);
+  return blocksPerRow * rowBands;
+}
+
 function layoutTierZone(sponsors: SignageSponsor[], tier: SponsorTier): SponsorWallPlacement[] {
   const tierSponsors = sponsorsInTier(sponsors, tier);
   if (tierSponsors.length === 0) return [];
 
   const span = SPONSOR_TIER_GRID_SPAN[tier];
   const blocksPerRow = Math.floor(SPONSOR_WALL_GRID_COLS / span.cols);
+  const capacity = maxSponsorsInZone(tier);
   const placements: SponsorWallPlacement[] = [];
 
-  tierSponsors.forEach((sponsor, index) => {
+  tierSponsors.slice(0, capacity).forEach((sponsor, index) => {
     const blockRow = Math.floor(index / blocksPerRow);
     const blockCol = index % blocksPerRow;
     placements.push({
       sponsor,
       zone: tier,
       col: blockCol * span.cols,
-      row: blockRow * span.rows,
+      row: zoneStartRow(tier) + blockRow * span.rows,
       cols: span.cols,
       rows: span.rows,
     });
@@ -71,20 +101,10 @@ export function layoutSponsorsOnWall(sponsors: SignageSponsor[]): SponsorWallPla
   return SPONSOR_WALL_TIER_ZONES.flatMap((tier) => layoutTierZone(sponsors, tier));
 }
 
-export function zoneRowCount(placements: SponsorWallPlacement[], tier: SponsorTier): number {
-  const zonePlacements = placements.filter((p) => p.zone === tier);
-  if (zonePlacements.length === 0) return 0;
-  const span = SPONSOR_TIER_GRID_SPAN[tier];
-  const maxRow = Math.max(...zonePlacements.map((p) => p.row));
-  return maxRow + span.rows;
-}
-
-export function zoneFlexWeight(placements: SponsorWallPlacement[], tier: SponsorTier): number {
-  const rows = zoneRowCount(placements, tier);
-  if (rows === 0) return 0;
-  const span = SPONSOR_TIER_GRID_SPAN[tier];
-  // Reparto vertical proporcional al espacio que necesita cada categoría
-  return rows * span.rows;
+export function sponsorWallGridTemplateRows(): string {
+  return SPONSOR_WALL_TIER_ZONES.map((tier) => `repeat(${SPONSOR_WALL_ZONE_ROWS[tier]}, minmax(0, 1fr))`).join(
+    ' '
+  );
 }
 
 const TIER_ORDER: Record<SponsorTier, number> = { gold: 0, silver: 1, bronze: 2 };
@@ -118,21 +138,10 @@ export function parseSponsorWallEntrance(value: unknown): SponsorWallEntrance {
   return SPONSOR_WALL_ENTRANCES.includes(v as SponsorWallEntrance) ? (v as SponsorWallEntrance) : 'stagger-fade';
 }
 
-/** Filas visibles estimadas en 1080p por zona (referencia para capacidad). */
-const ESTIMATED_ZONE_ROWS_1080P: Record<SponsorTier, number> = {
-  gold: 2,
-  silver: 2,
-  bronze: 2,
-};
-
 export const SPONSOR_WALL_MAX_BY_TIER: Record<SponsorTier, number> = {
-  gold:
-    Math.floor(SPONSOR_WALL_GRID_COLS / SPONSOR_TIER_GRID_SPAN.gold.cols) *
-    Math.floor(ESTIMATED_ZONE_ROWS_1080P.gold / SPONSOR_TIER_GRID_SPAN.gold.rows),
-  silver:
-    Math.floor(SPONSOR_WALL_GRID_COLS / SPONSOR_TIER_GRID_SPAN.silver.cols) *
-    ESTIMATED_ZONE_ROWS_1080P.silver,
-  bronze: SPONSOR_WALL_GRID_COLS * ESTIMATED_ZONE_ROWS_1080P.bronze,
+  gold: maxSponsorsInZone('gold'),
+  silver: maxSponsorsInZone('silver'),
+  bronze: maxSponsorsInZone('bronze'),
 };
 
 export type SponsorWallCapacityCounts = {
@@ -153,12 +162,13 @@ export function summarizeSponsorWallCapacity(sponsors: SignageSponsor[]): Sponso
     silver: active.filter((s) => s.tier === 'silver').length,
     bronze: active.filter((s) => s.tier === 'bronze').length,
   };
+  const fit = layoutSponsorsOnWall(active).length;
 
   return {
     maxByTier: SPONSOR_WALL_MAX_BY_TIER,
     currentFit: {
       ...currentCounts,
-      total: currentCounts.gold + currentCounts.silver + currentCounts.bronze,
+      total: fit,
     },
   };
 }

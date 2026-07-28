@@ -60,13 +60,13 @@ export function SponsorWallWatermark({ compact = false }: Props) {
         )}
         style={{
           transform: compact
-            ? 'translate(-50%, -50%) scale(1)'
-            : 'translate(-50%, -50%) scale(clamp(1.6, 5.2vmin, 2.9))',
+            ? 'translate(-50%, -50%) scale(0.85)'
+            : 'translate(-50%, -50%) scale(clamp(1.4, 4.8vmin, 2.6))',
         }}
       >
         <SynqBrandLockup
           layout="stacked"
-          iconSize={compact ? 88 : 200}
+          iconSize={compact ? 64 : 200}
           wordmarkSize="xl"
           className="w-full [&_svg]:max-w-full"
         />
