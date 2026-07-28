@@ -2,7 +2,6 @@
 
 import {
   BasketballBallArt,
-  FootballBallArt,
   VolleyballBallArt,
   WaterPoloBallArt,
 } from '@/components/portal/signage/sponsor-wall-sport-art';
@@ -11,12 +10,17 @@ import { useId, type ComponentType, type SVGProps } from 'react';
 
 type IconProps = SVGProps<SVGSVGElement>;
 
-export function FootballBallIcon({ className, ...props }: IconProps) {
-  const uid = useId().replace(/:/g, '');
+/** Balón de fútbol — asset vectorial real del usuario (Google Drive). */
+export function FootballBallIcon({ className }: IconProps) {
   return (
-    <svg viewBox="0 0 100 100" className={className} fill="none" aria-hidden {...props}>
-      <FootballBallArt uid={uid} />
-    </svg>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={SPONSOR_WALL_SPORT_ASSETS.football}
+      alt=""
+      aria-hidden
+      draggable={false}
+      className={className}
+    />
   );
 }
 
@@ -65,8 +69,8 @@ export const SPONSOR_WALL_SPORT_WATERMARKS: SportWatermark[] = [
   {
     id: 'football-tl',
     Icon: FootballBallIcon,
-    className: 'left-[2%] top-[6%] size-[104px] -rotate-[14deg]',
-    opacity: 'opacity-[0.42]',
+    className: 'left-[2%] top-[6%] size-[110px] -rotate-[14deg]',
+    opacity: 'opacity-[0.48]',
   },
   {
     id: 'volleyball-tr',
@@ -88,7 +92,7 @@ export const SPONSOR_WALL_SPORT_WATERMARKS: SportWatermark[] = [
   },
 ];
 
-/** Capa de marca de agua deportiva — SVG inline de alta calidad. */
+/** Capa de marca de agua deportiva. */
 export function SportBallLayer({ compact }: { compact?: boolean }) {
   const scale = compact ? 'scale-[0.84]' : 'scale-100';
 
@@ -98,7 +102,7 @@ export function SportBallLayer({ compact }: { compact?: boolean }) {
         <Icon
           key={id}
           className={cn(
-            'absolute drop-shadow-[0_0_28px_rgba(0,229,255,0.5)]',
+            'absolute select-none drop-shadow-[0_0_28px_rgba(0,229,255,0.5)]',
             scale,
             opacity ?? 'opacity-[0.42]',
             className
