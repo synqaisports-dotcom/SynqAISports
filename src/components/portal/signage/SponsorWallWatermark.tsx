@@ -49,27 +49,28 @@ function TechCyanLines({ compact }: { compact: boolean }) {
 
 export function SponsorWallWatermark({ compact = false }: Props) {
   return (
-    <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden>
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(187_80%_45%/_0.12),transparent_55%)]" />
+    <div
+      className="pointer-events-none absolute inset-0 z-0 overflow-hidden [container-type:size]"
+      aria-hidden
+    >
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(187_80%_45%/_0.16),transparent_52%)]" />
       <TechCyanLines compact={compact} />
 
-      <div
-        className={cn(
-          'absolute left-1/2 top-[58%] flex flex-col items-center justify-center opacity-[0.44]',
-          compact ? 'w-[78%]' : 'w-[min(76vw,74%)]'
-        )}
-        style={{
-          transform: compact
-            ? 'translate(-50%, -50%) scale(0.85)'
-            : 'translate(-50%, -50%) scale(clamp(1.4, 4.8vmin, 2.6))',
-        }}
-      >
-        <SynqBrandLockup
-          layout="stacked"
-          iconSize={compact ? 64 : 200}
-          wordmarkSize="xl"
-          className="w-full [&_svg]:max-w-full"
-        />
+      {/* Marca de agua centrada: misma proporción en preview y pantalla completa */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div
+          className="flex flex-col items-center justify-center opacity-[0.52]"
+          style={{
+            width: 'min(86cqw, 78cqh, 960px)',
+          }}
+        >
+          <SynqBrandLockup
+            layout="stacked"
+            iconSize={compact ? 140 : 220}
+            wordmarkSize="xl"
+            className="w-full [&_svg]:h-auto [&_svg]:max-w-full"
+          />
+        </div>
       </div>
 
       {SPORT_ICONS.map(({ Icon, className }, index) => (

@@ -374,6 +374,7 @@ export function SponsorsPanel({ sponsors, clubName, clubLogoUrl }: Props) {
               </p>
             </div>
             <div className="rounded-lg border border-cyan-400/15 bg-cyan-400/5 p-3 text-sm">
+              <p className="font-medium text-cyan-100">Distribución del muro por zonas</p>
               <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
                 <li>
                   <span className="text-foreground">Zonas:</span> oro arriba · plata en el centro · bronce abajo
