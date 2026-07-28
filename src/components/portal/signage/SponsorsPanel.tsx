@@ -28,6 +28,10 @@ import {
   type SponsorTier,
 } from '@/lib/signage';
 import {
+  buildFullWallDemoSponsors,
+  FULL_WALL_DEMO_SPONSOR_COUNT,
+} from '@/lib/sponsor-wall-demo';
+import {
   SPONSOR_TIER_GRID_SPAN,
   SPONSOR_WALL_ENTRANCE_LABELS,
   SPONSOR_WALL_ENTRANCES,
@@ -36,7 +40,7 @@ import {
 } from '@/lib/sponsor-wall';
 import { signageUploadErrorMessage } from '@/lib/signage-media';
 import { cn } from '@/lib/utils';
-import { Info, Play, Plus } from 'lucide-react';
+import { Info, Plus } from 'lucide-react';
 
 const WALL_ENTRANCE_STORAGE_KEY = 'signage-sponsor-wall-entrance';
 
@@ -66,7 +70,10 @@ export function SponsorsPanel({ sponsors, clubName, clubLogoUrl }: Props) {
       : 'stagger-fade';
   });
   const [previewKey, setPreviewKey] = useState(0);
-  const [previewing, setPreviewing] = useState(false);
+  const [useDemoWall, setUseDemoWall] = useState(false);
+  const [fullscreenOpen, setFullscreenOpen] = useState(false);
+
+  const demoWallSponsors = useMemo(() => buildFullWallDemoSponsors(), []);
 
   const [createState, createAction, creating] = useActionState(createSponsor, initial);
   const [updateState, updateAction, updating] = useActionState(
@@ -134,30 +141,33 @@ export function SponsorsPanel({ sponsors, clubName, clubLogoUrl }: Props) {
 
   const busy = creating || updating || uploading;
   const canPreviewWall = wallPreviewSponsors.length >= 2;
+  const previewSponsors = useDemoWall ? demoWallSponsors : wallPreviewSponsors;
+
+  function replayPreview() {
+    setPreviewKey((k) => k + 1);
+  }
+
+  function openDemoFullscreen() {
+    setUseDemoWall(true);
+    setPreviewKey((k) => k + 1);
+    setFullscreenOpen(true);
+  }
 
   return (
-    <div className="portal-section-surface rounded-xl p-4">
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h3 className="font-medium">Muro de patrocinadores</h3>
-          <p className="text-sm text-muted-foreground">
-            Gestiona patrocinadores a la izquierda y previsualiza el muro a la derecha.
-          </p>
-        </div>
-        <Button
-          type="button"
-          size="icon"
-          variant="outline"
-          className="shrink-0"
-          onClick={() => setInfoOpen(true)}
-          aria-label="Información de niveles y muro"
-          title="Información"
-        >
-          <Info className="size-4" />
-        </Button>
-      </div>
+    <div className="portal-section-surface relative rounded-xl p-4">
+      <Button
+        type="button"
+        size="icon"
+        variant="outline"
+        className="absolute right-4 top-4 z-10 shrink-0"
+        onClick={() => setInfoOpen(true)}
+        aria-label="Información de niveles y muro"
+        title="Información"
+      >
+        <Info className="size-4" />
+      </Button>
 
-      <div className="grid gap-4 lg:grid-cols-2 lg:items-stretch lg:gap-6">
+      <div className="grid gap-4 pt-1 lg:grid-cols-2 lg:items-stretch lg:gap-6">
         {/* Columna izquierda: listado */}
         <div className="flex min-h-0 flex-col gap-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -238,68 +248,72 @@ export function SponsorsPanel({ sponsors, clubName, clubLogoUrl }: Props) {
 
         {/* Columna derecha: visualizador */}
         <div className="flex min-h-0 flex-col gap-3">
-          {canPreviewWall ? (
-            <>
-              <div className="flex flex-wrap items-end gap-2">
-                <div className="min-w-[160px] flex-1">
-                  <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Transición
-                  </label>
-                  <SynqSelect
-                    value={wallEntrance}
-                    onChange={(value) => {
-                      const next = value as SponsorWallEntrance;
-                      setWallEntrance(next);
-                      localStorage.setItem(WALL_ENTRANCE_STORAGE_KEY, next);
-                    }}
-                    options={SPONSOR_WALL_ENTRANCES.map((e) => ({
-                      value: e,
-                      label: SPONSOR_WALL_ENTRANCE_LABELS[e],
-                    }))}
-                  />
-                </div>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setPreviewKey((k) => k + 1);
-                    setPreviewing(true);
-                  }}
-                >
-                  <Play className="mr-1 size-4" />
-                  Previsualizar
-                </Button>
-                <Button asChild size="sm" variant="outline">
-                  <Link href="/portal/signage/programacion">Programación</Link>
-                </Button>
-              </div>
-
-              <SponsorWallPreviewFrame
-                embedded
-                sponsors={wallPreviewSponsors}
-                clubName={clubName}
-                clubLogoUrl={clubLogoUrl}
-                entrance={wallEntrance}
-                replayKey={previewKey}
+          <div className="flex flex-wrap items-end gap-2 pr-10">
+            <div className="min-w-[160px] flex-1">
+              <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Transición
+              </label>
+              <SynqSelect
+                value={wallEntrance}
+                onChange={(value) => {
+                  const next = value as SponsorWallEntrance;
+                  setWallEntrance(next);
+                  localStorage.setItem(WALL_ENTRANCE_STORAGE_KEY, next);
+                }}
+                options={SPONSOR_WALL_ENTRANCES.map((e) => ({
+                  value: e,
+                  label: SPONSOR_WALL_ENTRANCE_LABELS[e],
+                }))}
               />
+            </div>
+            <Button type="button" size="sm" variant="outline" onClick={openDemoFullscreen}>
+              Slide completo ({FULL_WALL_DEMO_SPONSOR_COUNT})
+            </Button>
+            <Button asChild size="sm" variant="outline">
+              <Link href="/portal/signage/programacion">Programación</Link>
+            </Button>
+          </div>
 
-              {previewing ? (
-                <p className="text-xs text-muted-foreground">
-                  Esta transición se aplicará al añadir el muro en Programación (se guarda como preferencia).
-                </p>
-              ) : null}
-            </>
+          {useDemoWall ? (
+            <p className="text-xs text-cyan-300/80">
+              Mostrando ejemplo con capacidad máxima: {FULL_WALL_DEMO_SPONSOR_COUNT} patrocinadores en un slide.
+              <button
+                type="button"
+                className="ml-1 underline underline-offset-2 hover:text-cyan-200"
+                onClick={() => setUseDemoWall(false)}
+              >
+                Ver los tuyos
+              </button>
+            </p>
+          ) : null}
+
+          {canPreviewWall || useDemoWall ? (
+            <SponsorWallPreviewFrame
+              embedded
+              sponsors={previewSponsors}
+              clubName={clubName}
+              clubLogoUrl={clubLogoUrl}
+              entrance={wallEntrance}
+              replayKey={previewKey}
+              fullscreenOpen={fullscreenOpen}
+              onFullscreenOpenChange={setFullscreenOpen}
+              onPreview={replayPreview}
+            />
           ) : (
             <div className="flex min-h-[260px] flex-1 flex-col items-center justify-center rounded-lg border border-dashed border-primary/20 bg-background/20 px-6 py-10 text-center">
               <p className="text-sm font-medium text-foreground">Vista previa del muro</p>
               <p className="mt-2 max-w-xs text-sm text-muted-foreground">
-                Añade al menos 2 patrocinadores activos para previsualizar cómo se verán en pantalla.
+                Añade al menos 2 patrocinadores activos o prueba el slide completo de ejemplo.
               </p>
-              <Button type="button" size="sm" className="mt-4" onClick={openCreate}>
-                <Plus className="mr-1 size-4" />
-                Nuevo patrocinador
-              </Button>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                <Button type="button" size="sm" onClick={openCreate}>
+                  <Plus className="mr-1 size-4" />
+                  Nuevo patrocinador
+                </Button>
+                <Button type="button" size="sm" variant="outline" onClick={openDemoFullscreen}>
+                  Slide completo ({FULL_WALL_DEMO_SPONSOR_COUNT})
+                </Button>
+              </div>
             </div>
           )}
         </div>

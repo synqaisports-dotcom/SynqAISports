@@ -15,8 +15,10 @@ type Props = {
   clubLogoUrl: string | null;
   entrance: SponsorWallEntrance;
   replayKey?: number;
-  /** Ocupa la altura del panel lateral (columna derecha). */
   embedded?: boolean;
+  fullscreenOpen?: boolean;
+  onFullscreenOpenChange?: (open: boolean) => void;
+  onPreview?: () => void;
 };
 
 export function SponsorWallPreviewFrame({
@@ -26,9 +28,18 @@ export function SponsorWallPreviewFrame({
   entrance,
   replayKey = 0,
   embedded = false,
+  fullscreenOpen,
+  onFullscreenOpenChange,
+  onPreview,
 }: Props) {
-  const [fullscreen, setFullscreen] = useState(false);
+  const [internalFullscreen, setInternalFullscreen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const fullscreen = fullscreenOpen ?? internalFullscreen;
+
+  function setFullscreen(open: boolean) {
+    if (fullscreenOpen === undefined) setInternalFullscreen(open);
+    onFullscreenOpenChange?.(open);
+  }
 
   useEffect(() => setMounted(true), []);
 
@@ -40,6 +51,11 @@ export function SponsorWallPreviewFrame({
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [fullscreen]);
+
+  function openFullscreenPreview() {
+    onPreview?.();
+    setFullscreen(true);
+  }
 
   return (
     <>
@@ -69,9 +85,9 @@ export function SponsorWallPreviewFrame({
           size="icon"
           variant="secondary"
           className="absolute right-2 top-2 size-8 border border-primary/20 bg-background/85 shadow-sm backdrop-blur-sm"
-          onClick={() => setFullscreen(true)}
-          aria-label="Ver muro en pantalla completa"
-          title="Maximizar"
+          onClick={openFullscreenPreview}
+          aria-label="Previsualizar patrocinadores en pantalla completa"
+          title="Previsualizar patrocinadores"
         >
           <Maximize2 className="size-4" />
         </Button>
@@ -86,8 +102,8 @@ export function SponsorWallPreviewFrame({
                 variant="outline"
                 className="absolute right-4 top-4 z-10 bg-background/80 backdrop-blur-sm"
                 onClick={() => setFullscreen(false)}
-                aria-label="Cerrar pantalla completa"
-                title="Minimizar"
+                aria-label="Cerrar previsualización"
+                title="Cerrar"
               >
                 <Minimize2 className="size-4" />
               </Button>
