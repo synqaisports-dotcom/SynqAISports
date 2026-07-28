@@ -257,6 +257,48 @@ body {
     animation: signage-wall-in-wave 0.95s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
+  @keyframes signage-wall-tech-pulse {
+    0%, 100% { opacity: 0.45; }
+    50% { opacity: 0.85; }
+  }
+
+  @keyframes signage-wall-tech-dash {
+    to { stroke-dashoffset: -48; }
+  }
+
+  @keyframes signage-wall-tech-scan {
+    0% { transform: translateY(-100%); opacity: 0; }
+    15% { opacity: 0.5; }
+    85% { opacity: 0.35; }
+    100% { transform: translateY(100%); opacity: 0; }
+  }
+
+  @keyframes signage-wall-tech-dot {
+    0%, 100% { r: 8; opacity: 0.12; }
+    50% { r: 11; opacity: 0.28; }
+  }
+
+  .signage-wall-tech-lines {
+    animation: signage-wall-tech-pulse 5s ease-in-out infinite;
+  }
+
+  .signage-wall-tech-dash-h,
+  .signage-wall-tech-dash-v {
+    animation: signage-wall-tech-dash 14s linear infinite;
+  }
+
+  .signage-wall-tech-dash-delay {
+    animation-delay: -7s;
+  }
+
+  .signage-wall-tech-scan {
+    animation: signage-wall-tech-scan 8s ease-in-out infinite;
+  }
+
+  .signage-wall-tech-pulse-dot {
+    animation: signage-wall-tech-dot 3s ease-in-out infinite;
+  }
+
   .synq-btn-primary {
     @apply inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-synq-pitch to-synq-cyan px-6 py-3 text-sm font-semibold text-synq-navy shadow-lg shadow-synq-cyan/25 transition-all hover:shadow-synq-electric/40 hover:brightness-110;
   }
