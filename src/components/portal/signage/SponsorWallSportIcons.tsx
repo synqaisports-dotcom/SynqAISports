@@ -51,7 +51,7 @@ const WATERPOLO_BALL_PATH =
 
 export function WaterPoloBallIcon({ className }: IconProps) {
   return (
-    <svg viewBox="0 0 3002 3002" className={className} fill="none" aria-hidden>
+    <svg viewBox="720 720 1560 1560" className={className} fill="none" aria-hidden>
       <path fillRule="evenodd" fill="#00E5FF" d={WATERPOLO_BALL_PATH} />
     </svg>
   );
@@ -93,7 +93,7 @@ export const SPONSOR_WALL_SPORT_WATERMARKS: SportWatermark[] = [
   {
     id: 'waterpolo-br',
     Icon: WaterPoloBallIcon,
-    className: 'right-[2%] bottom-[6%] size-[110px] -rotate-[6deg]',
+    className: 'right-[1%] bottom-[5%] size-[148px] -rotate-[6deg]',
     opacity: 'opacity-[0.48]',
   },
 ];
