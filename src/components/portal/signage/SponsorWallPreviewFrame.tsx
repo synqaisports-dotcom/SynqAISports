@@ -9,6 +9,9 @@ import type { SponsorWallEntrance } from '@/lib/sponsor-wall';
 import { cn } from '@/lib/utils';
 import { Maximize2, Minimize2 } from 'lucide-react';
 
+const SIGNAGE_GHOST_ICON_CLASS =
+  'inline-flex items-center justify-center text-cyan-400 transition-colors hover:text-cyan-300';
+
 type Props = {
   sponsors: SignageSponsor[];
   clubName: string;
@@ -82,14 +85,15 @@ export function SponsorWallPreviewFrame({
         </div>
         <Button
           type="button"
-          size="icon"
-          variant="secondary"
-          className="absolute right-2 top-2 size-8 border border-primary/20 bg-background/85 shadow-sm backdrop-blur-sm"
+          className={cn(
+            SIGNAGE_GHOST_ICON_CLASS,
+            'absolute right-2 top-2 z-10 size-8 rounded-md bg-black/25 backdrop-blur-[2px]'
+          )}
           onClick={openFullscreenPreview}
           aria-label="Previsualizar patrocinadores en pantalla completa"
           title="Previsualizar patrocinadores"
         >
-          <Maximize2 className="size-4" />
+          <Maximize2 className="size-5" strokeWidth={1.75} />
         </Button>
       </div>
 
@@ -98,14 +102,12 @@ export function SponsorWallPreviewFrame({
             <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/95 p-3 sm:p-6">
               <Button
                 type="button"
-                size="icon"
-                variant="outline"
-                className="absolute right-4 top-4 z-10 bg-background/80 backdrop-blur-sm"
+                className={cn(SIGNAGE_GHOST_ICON_CLASS, 'absolute right-4 top-4 z-10 size-9 bg-black/40')}
                 onClick={() => setFullscreen(false)}
                 aria-label="Cerrar previsualización"
                 title="Cerrar"
               >
-                <Minimize2 className="size-4" />
+                <Minimize2 className="size-5" strokeWidth={1.75} />
               </Button>
               <div className="aspect-video h-full max-h-full w-full max-w-[min(100vw,calc((100vh-3rem)*16/9))] overflow-hidden rounded-xl border border-primary/25 shadow-2xl">
                 <SponsorWallSlide

@@ -33,6 +33,7 @@ import {
 } from '@/lib/sponsor-wall-demo';
 import {
   SPONSOR_TIER_GRID_SPAN,
+  SPONSOR_TIER_LOGO_SPECS,
   SPONSOR_WALL_ENTRANCE_LABELS,
   SPONSOR_WALL_ENTRANCES,
   summarizeSponsorWallCapacity,
@@ -43,6 +44,9 @@ import { cn } from '@/lib/utils';
 import { Info, Plus } from 'lucide-react';
 
 const WALL_ENTRANCE_STORAGE_KEY = 'signage-sponsor-wall-entrance';
+
+const SIGNAGE_GHOST_ICON_CLASS =
+  'inline-flex items-center justify-center text-cyan-400 transition-colors hover:text-cyan-300';
 
 const initial: SignageActionState = { ok: false };
 
@@ -154,20 +158,8 @@ export function SponsorsPanel({ sponsors, clubName, clubLogoUrl }: Props) {
   }
 
   return (
-    <div className="portal-section-surface relative rounded-xl p-4">
-      <Button
-        type="button"
-        size="icon"
-        variant="outline"
-        className="absolute right-4 top-4 z-10 shrink-0"
-        onClick={() => setInfoOpen(true)}
-        aria-label="Información de niveles y muro"
-        title="Información"
-      >
-        <Info className="size-4" />
-      </Button>
-
-      <div className="grid gap-4 pt-1 lg:grid-cols-2 lg:items-stretch lg:gap-6">
+    <div className="portal-section-surface rounded-xl p-4">
+      <div className="grid gap-4 lg:grid-cols-2 lg:items-stretch lg:gap-6">
         {/* Columna izquierda: listado */}
         <div className="flex min-h-0 flex-col gap-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -247,8 +239,18 @@ export function SponsorsPanel({ sponsors, clubName, clubLogoUrl }: Props) {
         </div>
 
         {/* Columna derecha: visualizador */}
-        <div className="flex min-h-0 flex-col gap-3">
-          <div className="flex flex-wrap items-end gap-2 pr-10">
+        <div className="relative flex min-h-0 flex-col gap-3">
+          <button
+            type="button"
+            className={cn(SIGNAGE_GHOST_ICON_CLASS, 'absolute left-0 top-0 z-10 size-8')}
+            onClick={() => setInfoOpen(true)}
+            aria-label="Información de niveles, muro y tamaños de logo"
+            title="Información"
+          >
+            <Info className="size-5" strokeWidth={1.75} />
+          </button>
+
+          <div className="flex flex-wrap items-end gap-2 pl-9">
             <div className="min-w-[160px] flex-1">
               <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Transición
@@ -335,19 +337,43 @@ export function SponsorsPanel({ sponsors, clubName, clubLogoUrl }: Props) {
               </p>
             </div>
             <div className="grid gap-2 sm:grid-cols-3">
-              {SPONSOR_TIERS.map((tierKey) => (
-                <div key={tierKey} className="rounded-lg border border-primary/10 bg-background/30 p-3 text-sm">
-                  <p className="font-medium text-foreground">{SPONSOR_TIER_LABELS[tierKey]}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{SPONSOR_TIER_META[tierKey].description}</p>
-                  <p className="mt-2 text-[11px] text-cyan-300/70">
-                    Muro {SPONSOR_TIER_GRID_SPAN[tierKey].cols}×{SPONSOR_TIER_GRID_SPAN[tierKey].rows} ·{' '}
-                    {SPONSOR_TIER_META[tierKey].defaultDurationSec}s · peso {SPONSOR_TIER_META[tierKey].weight}
-                  </p>
-                </div>
-              ))}
+              {SPONSOR_TIERS.map((tierKey) => {
+                const logoSpec = SPONSOR_TIER_LOGO_SPECS[tierKey];
+                return (
+                  <div key={tierKey} className="rounded-lg border border-primary/10 bg-background/30 p-3 text-sm">
+                    <p className="font-medium text-foreground">{SPONSOR_TIER_LABELS[tierKey]}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{SPONSOR_TIER_META[tierKey].description}</p>
+                    <p className="mt-2 text-[11px] text-cyan-300/70">
+                      Muro {SPONSOR_TIER_GRID_SPAN[tierKey].cols}×{SPONSOR_TIER_GRID_SPAN[tierKey].rows} ·{' '}
+                      {SPONSOR_TIER_META[tierKey].defaultDurationSec}s · peso {SPONSOR_TIER_META[tierKey].weight}
+                    </p>
+                    <div className="mt-2 space-y-1 border-t border-primary/10 pt-2 text-[11px] text-muted-foreground">
+                      <p>
+                        <span className="text-foreground">Pantalla 1080p:</span> {logoSpec.displayPx1080p}
+                      </p>
+                      <p>
+                        <span className="text-foreground">Pantalla 4K:</span> {logoSpec.displayPx4k}
+                      </p>
+                      <p>
+                        <span className="text-foreground">Subir:</span> {logoSpec.recommendedUploadPx}
+                      </p>
+                      <p>
+                        <span className="text-foreground">Proporción:</span> {logoSpec.aspect} · {logoSpec.formats}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
             <div className="rounded-lg border border-cyan-400/15 bg-cyan-400/5 p-3 text-sm">
-              <p className="font-medium text-cyan-100">Distribución del muro por zonas</p>
+              <p className="font-medium text-cyan-100">Consejo para logos oro</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Usa PNG o SVG con <span className="text-foreground">fondo transparente</span>. Los logos con bloque
+                de color sólido (como carteles horizontales) se recortan al banner 2×1; un archivo limpio encaja
+                mucho mejor en pantalla.
+              </p>
+            </div>
+            <div className="rounded-lg border border-cyan-400/15 bg-cyan-400/5 p-3 text-sm">
               <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
                 <li>
                   <span className="text-foreground">Zonas:</span> oro arriba · plata en el centro · bronce abajo

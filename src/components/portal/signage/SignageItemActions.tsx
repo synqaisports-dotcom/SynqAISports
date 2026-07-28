@@ -4,10 +4,12 @@ import { useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Pause, Pencil, Play, Trash2 } from 'lucide-react';
 import {
-  PORTAL_ACTION_ICON_CLASS,
   PORTAL_ACTION_ICON_DISABLED_CLASS,
 } from '@/components/portal/PortalActionIcon';
 import { cn } from '@/lib/utils';
+
+export const SIGNAGE_ACTION_ICON_CLASS =
+  'inline-flex size-9 items-center justify-center rounded-lg text-cyan-400 transition-colors hover:bg-cyan-400/10 hover:text-cyan-300';
 
 type Props = {
   active: boolean;
@@ -41,7 +43,7 @@ export function SignageItemActions({
           aria-label={editLabel}
           title={editLabel}
           onClick={onEdit}
-          className={cn(PORTAL_ACTION_ICON_CLASS, PORTAL_ACTION_ICON_DISABLED_CLASS)}
+          className={cn(SIGNAGE_ACTION_ICON_CLASS, PORTAL_ACTION_ICON_DISABLED_CLASS)}
         >
           <Pencil className="size-4" />
         </button>
@@ -58,9 +60,9 @@ export function SignageItemActions({
           });
         }}
         className={cn(
-          PORTAL_ACTION_ICON_CLASS,
+          SIGNAGE_ACTION_ICON_CLASS,
           PORTAL_ACTION_ICON_DISABLED_CLASS,
-          !active && 'text-muted-foreground'
+          !active && 'text-cyan-400/45'
         )}
       >
         {active ? <Pause className="size-4" /> : <Play className="size-4" />}
@@ -79,7 +81,7 @@ export function SignageItemActions({
             });
           }}
           className={cn(
-            PORTAL_ACTION_ICON_CLASS,
+            SIGNAGE_ACTION_ICON_CLASS,
             PORTAL_ACTION_ICON_DISABLED_CLASS,
             'hover:bg-destructive/10 hover:text-destructive'
           )}

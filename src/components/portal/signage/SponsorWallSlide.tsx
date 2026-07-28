@@ -21,6 +21,50 @@ type Props = {
   replayKey?: number;
 };
 
+function SponsorLogoCell({
+  sponsor,
+  compact,
+}: {
+  sponsor: SignageSponsor;
+  compact: boolean;
+}) {
+  const isGold = sponsor.tier === 'gold';
+
+  if (!sponsor.logo_url) {
+    return (
+      <div
+        className={cn(
+          'flex size-full items-center justify-center rounded-md border border-cyan-400/20 bg-cyan-400/5 font-bold text-cyan-100',
+          isGold ? (compact ? 'text-sm' : 'text-lg md:text-xl') : compact ? 'text-xs' : 'text-base md:text-lg'
+        )}
+      >
+        {sponsor.name.slice(0, 1)}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        'flex size-full min-h-0 min-w-0 items-center justify-center overflow-hidden',
+        isGold ? (compact ? 'px-1 py-0.5' : 'px-2 py-1 md:px-3') : compact ? 'p-0.5' : 'p-1'
+      )}
+    >
+      <img
+        src={sponsor.logo_url}
+        alt={sponsor.name}
+        className={cn(
+          'object-contain object-center drop-shadow-[0_2px_12px_rgba(0,0,0,0.4)]',
+          isGold
+            ? 'h-full max-h-full w-full max-w-full'
+            : 'max-h-full max-w-full'
+        )}
+        style={isGold ? { objectFit: 'contain', objectPosition: 'center' } : undefined}
+      />
+    </div>
+  );
+}
+
 export function SponsorWallSlide({
   sponsors,
   clubName,
@@ -58,8 +102,7 @@ export function SponsorWallSlide({
           <div
             key={placement.sponsor.id}
             className={cn(
-              'flex items-center justify-center rounded-md',
-              compact ? 'p-0.5' : 'p-1 md:p-1.5',
+              'flex min-h-0 min-w-0 items-stretch justify-stretch overflow-hidden rounded-md',
               sponsorWallEntranceClass(entrance)
             )}
             style={{
@@ -68,32 +111,7 @@ export function SponsorWallSlide({
               animationDelay: `${entranceDelays.get(placement.sponsor.id) ?? 0}ms`,
             }}
           >
-            {placement.sponsor.logo_url ? (
-              <img
-                src={placement.sponsor.logo_url}
-                alt={placement.sponsor.name}
-                className="max-h-full max-w-full object-contain drop-shadow-[0_2px_12px_rgba(0,0,0,0.4)]"
-              />
-            ) : (
-              <div
-                className={cn(
-                  'flex size-full items-center justify-center rounded-md border border-cyan-400/20 bg-cyan-400/5 font-bold text-cyan-100',
-                  placement.sponsor.tier === 'gold'
-                    ? compact
-                      ? 'text-sm'
-                      : 'text-lg md:text-xl'
-                    : placement.sponsor.tier === 'silver'
-                      ? compact
-                        ? 'text-xs'
-                        : 'text-base md:text-lg'
-                      : compact
-                        ? 'text-[10px]'
-                        : 'text-sm md:text-base'
-                )}
-              >
-                {placement.sponsor.name.slice(0, 1)}
-              </div>
-            )}
+            <SponsorLogoCell sponsor={placement.sponsor} compact={compact} />
           </div>
         ))}
       </div>

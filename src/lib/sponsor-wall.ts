@@ -173,5 +173,52 @@ export function summarizeSponsorWallCapacity(sponsors: SignageSponsor[]): Sponso
   };
 }
 
-/** Un logo cada segundo; orden oro → plata → bronce. */
 export const SPONSOR_WALL_STAGGER_MS = 1000;
+
+const REF_WIDTH = 1920;
+const REF_HEIGHT = 1080;
+const CELL_W = REF_WIDTH / SPONSOR_WALL_GRID_COLS;
+const CELL_H = REF_HEIGHT / SPONSOR_WALL_GRID_ROWS;
+
+export type SponsorLogoSpec = {
+  displayPx1080p: string;
+  displayPx4k: string;
+  recommendedUploadPx: string;
+  aspect: string;
+  formats: string;
+};
+
+function slotPx(cols: number, rows: number) {
+  const w = Math.round(CELL_W * cols);
+  const h = Math.round(CELL_H * rows);
+  return { w, h, w4k: w * 2, h4k: h * 2 };
+}
+
+export const SPONSOR_TIER_LOGO_SPECS: Record<SponsorTier, SponsorLogoSpec> = (() => {
+  const gold = slotPx(SPONSOR_TIER_GRID_SPAN.gold.cols, SPONSOR_TIER_GRID_SPAN.gold.rows);
+  const silver = slotPx(SPONSOR_TIER_GRID_SPAN.silver.cols, SPONSOR_TIER_GRID_SPAN.silver.rows);
+  const bronze = slotPx(SPONSOR_TIER_GRID_SPAN.bronze.cols, SPONSOR_TIER_GRID_SPAN.bronze.rows);
+  return {
+    gold: {
+      displayPx1080p: `${gold.w}×${gold.h} px`,
+      displayPx4k: `${gold.w4k}×${gold.h4k} px`,
+      recommendedUploadPx: `${gold.w4k}×${Math.round(gold.h4k * 1.2)} px (horizontal, fondo transparente)`,
+      aspect: 'Banner horizontal ~5:1',
+      formats: 'SVG, PNG transparente',
+    },
+    silver: {
+      displayPx1080p: `${silver.w}×${silver.h} px`,
+      displayPx4k: `${silver.w4k}×${silver.h4k} px`,
+      recommendedUploadPx: `${silver.w4k}×${silver.w4k} px (cuadrado o horizontal)`,
+      aspect: 'Cuadrado o 2:1',
+      formats: 'SVG, PNG transparente',
+    },
+    bronze: {
+      displayPx1080p: `${bronze.w}×${bronze.h} px`,
+      displayPx4k: `${bronze.w4k}×${bronze.h4k} px`,
+      recommendedUploadPx: `${bronze.w4k}×${bronze.w4k} px (cuadrado)`,
+      aspect: 'Cuadrado 1:1',
+      formats: 'SVG, PNG transparente',
+    },
+  };
+})();
