@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  BasketballBallArt,
   VolleyballBallArt,
   WaterPoloBallArt,
 } from '@/components/portal/signage/sponsor-wall-sport-art';
@@ -24,12 +23,16 @@ export function FootballBallIcon({ className }: IconProps) {
   );
 }
 
-export function BasketballBallIcon({ className, ...props }: IconProps) {
-  const uid = useId().replace(/:/g, '');
+export function BasketballBallIcon({ className }: IconProps) {
   return (
-    <svg viewBox="0 0 100 100" className={className} fill="none" aria-hidden {...props}>
-      <BasketballBallArt uid={uid} />
-    </svg>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={SPONSOR_WALL_SPORT_ASSETS.basketball}
+      alt=""
+      aria-hidden
+      draggable={false}
+      className={className}
+    />
   );
 }
 
@@ -81,8 +84,8 @@ export const SPONSOR_WALL_SPORT_WATERMARKS: SportWatermark[] = [
   {
     id: 'basketball-bl',
     Icon: BasketballBallIcon,
-    className: 'left-[4%] bottom-[8%] size-[106px] rotate-[8deg]',
-    opacity: 'opacity-[0.43]',
+    className: 'left-[4%] bottom-[8%] size-[110px] rotate-[8deg]',
+    opacity: 'opacity-[0.48]',
   },
   {
     id: 'waterpolo-br',
